@@ -27,6 +27,7 @@
 #pragma once
 
 #include <hipblaslt/hipblaslt.h>
+#include <iostream>
 
 HIPBLASLT_EXPORT
 constexpr const char* hipblas_status_to_string(hipblasStatus_t status)
@@ -159,6 +160,18 @@ constexpr hipDataType string_to_hip_datatype(const std::string& value)
 }
 
 HIPBLASLT_EXPORT
+constexpr hipDataType string_to_hip_datatype_assert(const std::string& value)
+{
+    auto datatype = string_to_hip_datatype(value);
+    if(static_cast<int>(datatype) == 0)
+    {
+        std::cout << "The supported types are f32_r, f64_r, f16_r, bf16_r, f8_r, bf8_r, i8_r, i32_r." << std::endl;
+        exit(1);
+    }
+    return datatype;
+}
+
+HIPBLASLT_EXPORT
 constexpr hipblasComputeType_t string_to_hipblas_computetype(const std::string& value)
 {
     return
@@ -169,6 +182,49 @@ constexpr hipblasComputeType_t string_to_hipblas_computetype(const std::string& 
         value == "f32_f16_r" ? HIPBLAS_COMPUTE_32F_FAST_16F :
         value == "f32_bf16_r" ? HIPBLAS_COMPUTE_32F_FAST_16BF :
         static_cast<hipblasComputeType_t>(0);
+}
+
+HIPBLASLT_EXPORT
+constexpr hipblasComputeType_t string_to_hipblas_computetype_assert(const std::string& value)
+{
+    auto computetytpe = string_to_hipblas_computetype(value);
+    if(static_cast<int>(computetytpe) == 0)
+    {
+        std::cout << "The supported types are f32_r, xf32_r, f64_r, i32_r, f32_f16_r." << std::endl;
+        exit(1);
+    }
+    return computetytpe;
+}
+
+HIPBLASLT_EXPORT
+constexpr hipblasLtEpilogue_t string_to_epilogue_type(const std::string& value)
+{
+    return
+        value == "HIPBLASLT_EPILOGUE_RELU" ? HIPBLASLT_EPILOGUE_RELU :
+        value == "HIPBLASLT_EPILOGUE_BIAS" ? HIPBLASLT_EPILOGUE_BIAS :
+        value == "HIPBLASLT_EPILOGUE_RELU_BIAS" ? HIPBLASLT_EPILOGUE_RELU_BIAS :
+        value == "HIPBLASLT_EPILOGUE_GELU" ? HIPBLASLT_EPILOGUE_GELU :
+        value == "HIPBLASLT_EPILOGUE_GELU_BIAS" ? HIPBLASLT_EPILOGUE_GELU_BIAS :
+        value == "HIPBLASLT_EPILOGUE_GELU_AUX" ? HIPBLASLT_EPILOGUE_GELU_AUX :
+        value == "HIPBLASLT_EPILOGUE_GELU_AUX_BIAS" ? HIPBLASLT_EPILOGUE_GELU_AUX_BIAS :
+        value == "HIPBLASLT_EPILOGUE_DGELU" ? HIPBLASLT_EPILOGUE_DGELU :
+        value == "HIPBLASLT_EPILOGUE_DGELU_BGRAD" ? HIPBLASLT_EPILOGUE_DGELU_BGRAD :
+        value == "HIPBLASLT_EPILOGUE_BGRADA" ? HIPBLASLT_EPILOGUE_BGRADA :
+        value == "HIPBLASLT_EPILOGUE_BGRADB" ? HIPBLASLT_EPILOGUE_BGRADB :
+        value == "HIPBLASLT_EPILOGUE_DEFAULT" || value == "" ? HIPBLASLT_EPILOGUE_DEFAULT :
+        static_cast<hipblasLtEpilogue_t>(0);
+}
+
+HIPBLASLT_EXPORT
+constexpr hipblasLtEpilogue_t string_to_epilogue_type_assert(const std::string& value)
+{
+    auto epilogue = string_to_epilogue_type(value);
+    if(static_cast<int>(epilogue) == 0)
+    {
+        std::cout << "See hipblasLtEpilogue_t for more info." << std::endl;
+        exit(1);
+    }
+    return epilogue;
 }
 // clang-format on
 

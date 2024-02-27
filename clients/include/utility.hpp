@@ -91,6 +91,23 @@
 #define TOO_MANY_DEVICES_STRING_GTEST "Succeeded\n" TOO_MANY_DEVICES_STRING
 #define HMM_NOT_SUPPORTED_GTEST "Succeeded\n" HMM_NOT_SUPPORTED
 
+inline bool is_bias_enabled(hipblasLtEpilogue_t value_)
+{
+    switch(value_)
+    {
+    case HIPBLASLT_EPILOGUE_BIAS:
+    case HIPBLASLT_EPILOGUE_GELU_BIAS:
+    case HIPBLASLT_EPILOGUE_RELU_BIAS:
+    case HIPBLASLT_EPILOGUE_GELU_AUX_BIAS:
+    case HIPBLASLT_EPILOGUE_DGELU_BGRAD:
+    case HIPBLASLT_EPILOGUE_BGRADA:
+    case HIPBLASLT_EPILOGUE_BGRADB:
+        return true;
+    default:
+        return false;
+    }
+};
+
 enum class hipblaslt_batch_type
 {
     none = 0,
