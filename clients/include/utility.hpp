@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -90,6 +90,23 @@
 #define LIMITED_MEMORY_STRING_GTEST "Succeeded\n" LIMITED_MEMORY_STRING
 #define TOO_MANY_DEVICES_STRING_GTEST "Succeeded\n" TOO_MANY_DEVICES_STRING
 #define HMM_NOT_SUPPORTED_GTEST "Succeeded\n" HMM_NOT_SUPPORTED
+
+inline bool is_bias_enabled(hipblasLtEpilogue_t value_)
+{
+    switch(value_)
+    {
+    case HIPBLASLT_EPILOGUE_BIAS:
+    case HIPBLASLT_EPILOGUE_GELU_BIAS:
+    case HIPBLASLT_EPILOGUE_RELU_BIAS:
+    case HIPBLASLT_EPILOGUE_GELU_AUX_BIAS:
+    case HIPBLASLT_EPILOGUE_DGELU_BGRAD:
+    case HIPBLASLT_EPILOGUE_BGRADA:
+    case HIPBLASLT_EPILOGUE_BGRADB:
+        return true;
+    default:
+        return false;
+    }
+};
 
 enum class hipblaslt_batch_type
 {
