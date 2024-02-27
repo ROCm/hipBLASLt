@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -99,7 +99,13 @@ add_executable( hipblaslt-bench-extop-layernorm client_extop_layernorm.cpp ../co
 add_executable( hipblaslt-bench-extop-matrixtransform client_extop_matrixtransform.cpp ../common/hipblaslt_random.cpp)
 add_executable( hipblaslt-bench-extop-softmax client_extop_softmax.cpp ../common/hipblaslt_random.cpp)
 add_executable( hipblaslt-bench-extop-amax client_extop_amax.cpp  ../common/hipblaslt_random.cpp)
-set(ext_bench_list_all hipblaslt-bench-groupedgemm-fixed-mk hipblaslt-bench-extop-layernorm hipblaslt-bench-extop-matrixtransform hipblaslt-bench-extop-softmax hipblaslt-bench-extop-amax)
+add_executable( hipblaslt-sequence client_sequence.cpp ../common/hipblaslt_random.cpp)
+find_package(LLVM REQUIRED CONFIG)
+find_library(LLVMObjectYAML_LIBRARY
+NAMES LLVMObjectYAML
+PATHS ${LLVM_LIBRARY_DIR})
+target_link_libraries(hipblaslt-sequence PRIVATE LLVMObjectYAML )
+set(ext_bench_list_all hipblaslt-bench-groupedgemm-fixed-mk hipblaslt-bench-extop-layernorm hipblaslt-bench-extop-matrixtransform hipblaslt-bench-extop-softmax hipblaslt-bench-extop-amax hipblaslt-sequence)
 
 foreach( exe ${ext_bench_list_all} )
   target_link_libraries( ${exe} PRIVATE roc::hipblaslt )
@@ -140,6 +146,20 @@ endforeach( )
 foreach( exe ${ext_bench_list_all} )
   rocm_install(TARGETS ${exe} COMPONENT benchmarks)
 endforeach( )
+
+set( HIPBLASLT_SEQUENCE_YAML "${PROJECT_BINARY_DIR}/staging/sequence.yaml")
+add_custom_command( OUTPUT "${HIPBLASLT_SEQUENCE_YAML}"
+                    COMMAND ${CMAKE_COMMAND} -E copy sequence.yaml "${HIPBLASLT_SEQUENCE_YAML}"
+                    DEPENDS sequence.yaml
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
+
+add_custom_target( hipblaslt-sequence-yaml DEPENDS "${HIPBLASLT_SEQUENCE_YAML}" )
+add_dependencies( hipblaslt-sequence hipblaslt-sequence-yaml )
+rocm_install(
+  FILES ${HIPBLASLT_SEQUENCE_YAML}
+  DESTINATION "${CMAKE_INSTALL_BINDIR}"
+  COMPONENT benchmarks
+)
 
 # Add tests for special cases
 add_test(NAME hipblaslt-bench-groupedgemm-fixed-mk

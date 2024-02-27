@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 #pragma once
 
 #include <hipblaslt/hipblaslt.h>
+#include <iostream>
 
 HIPBLASLT_EXPORT
 constexpr const char* hipblas_status_to_string(hipblasStatus_t status)
@@ -154,6 +155,17 @@ constexpr hipblasltDatatype_t string_to_hipblaslt_datatype(const std::string& va
         static_cast<hipblasltDatatype_t>(0);
 }
 
+constexpr hipblasltDatatype_t string_to_hipblaslt_datatype_assert(const std::string& value)
+{
+    auto datatype = string_to_hipblaslt_datatype(value);
+    if(static_cast<int>(datatype) == 0)
+    {
+        std::cout << "The supported types are f32_r, f64_r, f16_r, bf16_r, f8_r, bf8_r, i8_r, i32_r." << std::endl;
+        exit(1);
+    }
+    return datatype;
+}
+
 HIPBLASLT_EXPORT
 constexpr hipblasLtComputeType_t string_to_hipblaslt_computetype(const std::string& value)
 {
@@ -164,6 +176,36 @@ constexpr hipblasLtComputeType_t string_to_hipblaslt_computetype(const std::stri
         value == "i32_r" || value == "i" ? HIPBLASLT_COMPUTE_I32 :
         value == "f32_f16_r" ? HIPBLASLT_COMPUTE_F32_FAST_F16 :
         static_cast<hipblasLtComputeType_t>(0);
+}
+
+constexpr hipblasLtComputeType_t string_to_hipblaslt_computetype_assert(const std::string& value)
+{
+    auto computetytpe = string_to_hipblaslt_computetype(value);
+    if(static_cast<int>(computetytpe) == 0)
+    {
+        std::cout << "The supported types are f32_r, xf32_r, f64_r, i32_r, f32_f16_r." << std::endl;
+        exit(1);
+    }
+    return computetytpe;
+}
+
+constexpr hipblasLtEpilogue_t string_to_epilogue_type(const std::string& value)
+{
+    return
+        value == "HIPBLASLT_EPILOGUE_BIAS" ? HIPBLASLT_EPILOGUE_BIAS  :
+        value == "HIPBLASLT_EPILOGUE_DEFAULT" || value == "" ? HIPBLASLT_EPILOGUE_DEFAULT :
+        static_cast<hipblasLtEpilogue_t>(0);
+}
+
+constexpr hipblasLtEpilogue_t string_to_epilogue_type_assert(const std::string& value)
+{
+    auto epilogue = string_to_epilogue_type(value);
+    if(static_cast<int>(epilogue) == 0)
+    {
+        std::cout << "Currently supported types are HIPBLASLT_EPILOGUE_DEFAULT, HIPBLASLT_EPILOGUE_BIAS." << std::endl;
+        exit(1);
+    }
+    return epilogue;
 }
 // clang-format on
 
