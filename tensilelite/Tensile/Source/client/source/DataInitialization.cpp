@@ -349,7 +349,7 @@ namespace Tensile
                                          TensorDescriptor const& tensorMeta,
                                          size_t                  dim)
         {
-            throw std::runtime_error("SparseMatrix don't support Int8x4.");
+            throw std::runtime_error("SparseMatrix doesn't support Int8x4.");
         }
 
         template <typename T>
@@ -418,6 +418,24 @@ namespace Tensile
                 initGPUSparseInputTemplate((int8_t*)(dstCompressed),
                                            (unsigned char*)(dstMeta),
                                            (int8_t*)srcBuffer,
+                                           tensor,
+                                           tensorC,
+                                           tensorMeta,
+                                           dim);
+                break;
+            case DataType::Float8:
+                initGPUSparseInputTemplate((Float8*)(dstCompressed),
+                                           (unsigned char*)(dstMeta),
+                                           (Float8*)srcBuffer,
+                                           tensor,
+                                           tensorC,
+                                           tensorMeta,
+                                           dim);
+                break;
+            case DataType::BFloat8:
+                initGPUSparseInputTemplate((BFloat8*)(dstCompressed),
+                                           (unsigned char*)(dstMeta),
+                                           (BFloat8*)srcBuffer,
                                            tensor,
                                            tensorC,
                                            tensorMeta,
@@ -1252,6 +1270,18 @@ namespace Tensile
                                                          t,
                                                          tDim);
                                         break;
+                                    case DataType::Float8:
+                                        pruneSparseArray((Float8*)p.second.cpuInput.valid.get()
+                                                             + gemmInitOffset,
+                                                         t,
+                                                         tDim);
+                                        break;
+                                    case DataType::BFloat8:
+                                        pruneSparseArray((BFloat8*)p.second.cpuInput.valid.get()
+                                                             + gemmInitOffset,
+                                                         t,
+                                                         tDim);
+                                        break;
                                     default:
                                         throw std::runtime_error("SparseMatrix doesn't support");
                                     }
@@ -1313,6 +1343,14 @@ namespace Tensile
                                 case DataType::Int8:
                                     pruneSparseArray(
                                         (int8_t*)p.second.cpuInput.valid.get(), t, tDim);
+                                    break;
+                                case DataType::Float8:
+                                    pruneSparseArray(
+                                        (Float8*)p.second.cpuInput.valid.get(), t, tDim);
+                                    break;
+                                case DataType::BFloat8:
+                                    pruneSparseArray(
+                                        (BFloat8*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
                                 default:
                                     throw std::runtime_error("SparseMatrix doesn't support");
