@@ -386,8 +386,12 @@ validSMFMA["H"] = [[32,32,16,1], [16,16,32,1]]
 validSMFMA["B"] = [[32,32,16,1], [16,16,32,1]]
 validSMFMA["4xi8"] = [[32,32,32,1], [16,16,64,1]]
 validSMFMA["I8"] = validSMFMA["4xi8"]
+validSMFMA["F8"] = [[32,32,32,1], [16,16,64,1]]
+validSMFMA["B8"] = validSMFMA["F8"]
+validSMFMA["F8B8"] = validSMFMA["F8"]
+validSMFMA["B8F8"] = validSMFMA["F8"]
 validSMFMA["_format9"] = []
-for SMFMA in [validSMFMA["H"], validSMFMA["B"], validSMFMA["4xi8"]]:
+for SMFMA in [validSMFMA["H"], validSMFMA["B"], validSMFMA["4xi8"], validSMFMA["F8"]]:
   for MI in SMFMA:
     for bm in range(int(math.log(MI[3],2))+1):
       for tt0 in range(1,validTT+1):
