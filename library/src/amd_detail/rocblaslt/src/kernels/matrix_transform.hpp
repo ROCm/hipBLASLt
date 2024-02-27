@@ -101,21 +101,21 @@ namespace amd_detail
               uint32_t NumThreadsM,
               uint32_t NumThreadsN,
               uint32_t VectorWidth>
-    __global__ void __launch_bounds__(256, 4) transform(DType*       c,
-                                                        const DType* a,
-                                                        const DType* b,
-                                                        ScaleType    alpha,
-                                                        const ScaleType*   alphaPtr,
-                                                        ScaleType    beta,
-                                                        const ScaleType*   betaPtr,
-                                                        uint32_t     numRows,
-                                                        uint32_t     numCols,
-                                                        uint32_t     ldA,
-                                                        uint32_t     ldB,
-                                                        uint32_t     ldC,
-                                                        uint32_t     batchStride,
-                                                        bool         transA,
-                                                        bool         transB)
+    __global__ void __launch_bounds__(256, 4) transform(DType*           c,
+                                                        const DType*     a,
+                                                        const DType*     b,
+                                                        ScaleType        alpha,
+                                                        const ScaleType* alphaPtr,
+                                                        ScaleType        beta,
+                                                        const ScaleType* betaPtr,
+                                                        uint32_t         numRows,
+                                                        uint32_t         numCols,
+                                                        uint32_t         ldA,
+                                                        uint32_t         ldB,
+                                                        uint32_t         ldC,
+                                                        uint32_t         batchStride,
+                                                        bool             transA,
+                                                        bool             transB)
     {
         constexpr auto TileM              = RowMajC ? NumThreadsM : NumThreadsM * VectorWidth;
         constexpr auto TileN              = RowMajC ? NumThreadsN * VectorWidth : NumThreadsN;
@@ -131,13 +131,13 @@ namespace amd_detail
         const auto tCol      = getThreadLocalColIdx<RowMajC, TileM, TileN, VectorWidth>(tId);
         const auto row       = blockRow + tRow;
         const auto col       = blockCol + tCol;
-        
-        if (alphaPtr)
+
+        if(alphaPtr)
         {
             alpha = *alphaPtr;
         }
 
-        if (betaPtr)
+        if(betaPtr)
         {
             beta = *betaPtr;
         }
@@ -146,13 +146,14 @@ namespace amd_detail
 
         if constexpr(VectorWidth == 1)
         {
-            if(row < numRows && col < numCols) {
-                const auto offsetA
-                    = (transA ? getOffset<RowMajA>(col, row, ldA) : getOffset<RowMajA>(row, col, ldA))
-                    + batchOffset;
-                const auto offsetB
-                    = (transB ? getOffset<RowMajB>(col, row, ldB) : getOffset<RowMajB>(row, col, ldB))
-                    + batchOffset;
+            if(row < numRows && col < numCols)
+            {
+                const auto offsetA = (transA ? getOffset<RowMajA>(col, row, ldA)
+                                             : getOffset<RowMajA>(row, col, ldA))
+                                     + batchOffset;
+                const auto offsetB = (transB ? getOffset<RowMajB>(col, row, ldB)
+                                             : getOffset<RowMajB>(row, col, ldB))
+                                     + batchOffset;
                 const ScaleType aData = a ? static_cast<ScaleType>(a[offsetA]) : 0;
                 const ScaleType bData = b ? static_cast<ScaleType>(b[offsetB]) : 0;
                 const DType     cData = static_cast<DType>(aData * alpha + bData * beta);
@@ -172,14 +173,18 @@ namespace amd_detail
             ScaleType  aData[VectorWidth] = {};
             ScaleType  bData[VectorWidth] = {};
 
-            if constexpr(RowMajC) {
-                if (row >= numRows) {
+            if constexpr(RowMajC)
+            {
+                if(row >= numRows)
+                {
                     return;
                 }
             }
 
-            if constexpr(!RowMajC) {
-                if (col >= numCols) {
+            if constexpr(!RowMajC)
+            {
+                if(col >= numCols)
+                {
                     return;
                 }
             }

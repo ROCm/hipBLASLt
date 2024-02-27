@@ -56,21 +56,31 @@ namespace
     {
         TypedMatrixTransformIO(int64_t m, int64_t n, int64_t b)
         {
-            auto err = hipMalloc(&this->a, m * n * b * sizeof(DType));
+            constexpr std::size_t alignment = 2 * 1024 * 1024;
+            const auto            bufSize   = m * n * b * sizeof(DType);
+            const auto            res       = bufSize % alignment;
+            const auto            allocSize = bufSize + (res ? (alignment - res) : 0);
+            auto                  err       = hipMalloc(&this->aBase, allocSize);
             EXPECT_EQ(err, hipSuccess);
-            err = hipMalloc(&this->b, m * n * b * sizeof(DType));
+            err = hipMalloc(&this->bBase, allocSize);
             EXPECT_EQ(err, hipSuccess);
-            err = hipMalloc(&this->c, m * n * b * sizeof(DType));
+            err = hipMalloc(&this->cBase, allocSize);
             EXPECT_EQ(err, hipSuccess);
+            this->a = reinterpret_cast<DType*>(aBase + (allocSize - bufSize));
+            this->b = reinterpret_cast<DType*>(bBase + (allocSize - bufSize));
+            this->c = reinterpret_cast<DType*>(cBase + (allocSize - bufSize));
             init(this->a, m * n * b);
             init(this->b, m * n * b);
         }
 
         ~TypedMatrixTransformIO() override
         {
-            auto err = hipFree(a);
-            err      = hipFree(b);
-            err      = hipFree(c);
+            auto err = hipFree(aBase);
+            err      = hipFree(bBase);
+            err      = hipFree(cBase);
+            aBase    = nullptr;
+            bBase    = nullptr;
+            cBase    = nullptr;
             EXPECT_EQ(err, hipSuccess);
         }
 
@@ -104,6 +114,9 @@ namespace
         DType* a{};
         DType* b{};
         DType* c{};
+        char*  aBase{};
+        char*  bBase{};
+        char*  cBase{};
     };
 
     using MatrixTransformIOPtr = std::unique_ptr<MatrixTransformIO>;
