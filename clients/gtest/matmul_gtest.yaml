@@ -530,7 +530,6 @@ Tests:
   bias_vector: [0, 1]
   scaleAlpha_vector: [0, 1]
 
-# TODO: change bias to bf16_r
 - name: matmul_f8_bf8_dst_fp32
   category: pre_checkin
   function:
@@ -544,7 +543,7 @@ Tests:
   scaleA: [ 0, 1]
   scaleB: [ 0, 1]
   bias_vector: [0, 1]
-  bias_type: f32_r
+  bias_type: bf16_r
   unit_check: 1
   gpu_arch: '94?'
 
@@ -622,9 +621,8 @@ Tests:
   scaleB: [0, 1]
   scaleC: [0, 1]
   scaleD: [0, 1]
-  # TODO- support bias types other than Tscale or To
-  # bias_vector: [0, 1]
-  # bias_type: f16_r
+  bias_vector: [0, 1]
+  bias_type: f16_r
   unit_check: 1
   gpu_arch: '94?'
 
@@ -642,9 +640,8 @@ Tests:
   scaleB: [0, 1]
   scaleC: [0, 1]
   scaleD: [0, 1]
-  # TODO- support bias types other than Tscale or To
-  # bias_vector: [0, 1]
-  # bias_type: f16_r
+  bias_vector: [0, 1]
+  bias_type: f16_r
   unit_check: 1
   gpu_arch: '94?'
 

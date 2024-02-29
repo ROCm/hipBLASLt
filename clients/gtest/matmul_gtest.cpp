@@ -123,8 +123,7 @@ namespace
                 if(arg.bias_vector)
                 {
                     name << "_BIAS" << hipblaslt_bias_source_to_string(arg.bias_source);
-                    if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
-                        name << hip_datatype_to_string(arg.bias_type);
+                    name << "_" << hip_datatype_to_string(arg.bias_type);
                 }
 
                 if(arg.gradient)
