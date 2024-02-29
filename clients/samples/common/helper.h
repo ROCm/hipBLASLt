@@ -507,3 +507,6 @@ struct OptAMaxRunner
     hipStream_t       stream;
     hipblasLtHandle_t handle;
 };
+
+template<typename Type>
+using OptSoftmaxRunner = OptAMaxRunner<Type>;
