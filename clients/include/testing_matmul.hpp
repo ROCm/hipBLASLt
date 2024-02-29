@@ -2127,10 +2127,12 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         int    flush_iter      = 100000;
         double flush_time_used = 0;
+        hipDeviceProp_t deviceProps;
+        CHECK_HIP_ERROR(hipGetDeviceProperties(&deviceProps, 0));
         if(arg.flush)
         {
             for(int i = 0; i < flush_iter; i++)
-                hipLaunchKernelGGL(flush_icache, dim3(1024), dim3(1), 0, stream);
+                hipLaunchKernelGGL(flush_icache, dim3(deviceProps.multiProcessorCount*60), dim3(64), 0, stream);
 
             if(arg.use_gpu_timer)
                 CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
@@ -2140,7 +2142,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                 flush_time_used = get_time_us_sync(stream);
             }
             for(int i = 0; i < flush_iter; i++)
-                hipLaunchKernelGGL(flush_icache, dim3(1024), dim3(1), 0, stream);
+                hipLaunchKernelGGL(flush_icache, dim3(deviceProps.multiProcessorCount*60), dim3(64), 0, stream);
             if(arg.use_gpu_timer)
             {
                 CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
@@ -2183,7 +2185,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                     {
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
                         if(arg.flush)
-                            hipLaunchKernelGGL(flush_icache, dim3(1024), dim3(1), 0, stream);
+                            hipLaunchKernelGGL(flush_icache, dim3(deviceProps.multiProcessorCount*60), dim3(64), 0, stream);
                     }
                 }
                 else
@@ -2254,7 +2256,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                                                               stream),
                                               HIPBLAS_STATUS_SUCCESS);
                         if(arg.flush)
-                            hipLaunchKernelGGL(flush_icache, dim3(1024), dim3(1), 0, stream);
+                            hipLaunchKernelGGL(flush_icache, dim3(deviceProps.multiProcessorCount*60), dim3(64), 0, stream);
                     }
                 }
                 if(arg.use_gpu_timer)
