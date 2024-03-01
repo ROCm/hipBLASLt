@@ -314,6 +314,7 @@ CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblasLtHalf, hipbla
 CREATEFUNCTION(float, float, float, float, float, float)
 CREATEFUNCTION(double, double, double, double, double, double)
 CREATEFUNCTION(int8_t, int8_t, int32_t, int32_t, int8_t, int8_t)
+CREATEFUNCTION(int8_t, int8_t, int8_t, int32_t, int8_t, int8_t)
 // Mix precision
 // FP16FP8 mix FP16 in MFMA
 CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, hipblasLtHalf, hipblasLtHalf)

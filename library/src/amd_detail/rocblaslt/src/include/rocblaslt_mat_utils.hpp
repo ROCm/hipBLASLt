@@ -111,7 +111,7 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
     }
 
     // data type of matrics must be the same
-    if(type_a != type_b || type_a != type_c || type_a != type_c)
+    if(type_a != type_b || type_a != type_c || type_a != type_d)
         return rocblaslt_status_invalid_value;
 
     switch(type_a)
@@ -121,6 +121,10 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
             return rocblaslt_status_invalid_value;
         break;
     case HIP_R_32I:
+        if(compute_type != rocblaslt_compute_i32)
+            return rocblaslt_status_invalid_value;
+        break;
+    case HIP_R_8I:
         if(compute_type != rocblaslt_compute_i32)
             return rocblaslt_status_invalid_value;
         break;
@@ -335,8 +339,10 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
              && matD->type == HIP_R_32F)
            && compute_type == rocblaslt_compute_f32_fast_xf32)
             status = rocblaslt_status_not_implemented;
-        if(!(matA->type == HIP_R_8I && matB->type == HIP_R_8I && matC->type == HIP_R_32I
-             && matD->type == HIP_R_32I)
+        if(!((matA->type == HIP_R_8I && matB->type == HIP_R_8I && matC->type == HIP_R_32I
+              && matD->type == HIP_R_32I)
+             || (matA->type == HIP_R_8I && matB->type == HIP_R_8I && matC->type == HIP_R_8I
+                 && matD->type == HIP_R_8I))
            && compute_type == rocblaslt_compute_i32)
             status = rocblaslt_status_not_implemented;
     }

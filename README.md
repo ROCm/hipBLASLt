@@ -35,6 +35,7 @@ gfx94x platform.
 | fp8   | fp8/bf8  | fp16   | fp16  | fp32  |
 | bf8   | fp8  | fp32  | fp32  | fp32  |
 | bf8   | fp8  | fp16  | fp16  | fp32  |
+| int8  | int8 | int8  | int8  | int32 |
 
 ## Documentation
 
