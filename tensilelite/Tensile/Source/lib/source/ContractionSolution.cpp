@@ -701,9 +701,14 @@ namespace Tensile
                 args.template append<uint32_t>("bias_type",
                                                static_cast<uint32_t>(problem.bias().dataType()));
                 if(problem.useBias())
-                    args.template append<uint32_t>(
-                        "strideBias",
-                        static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
+                {
+                    if(bias.dimensions())
+                    {
+                        args.template append<uint32_t>(
+                            "strideBias",
+                            static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
+                    }
+                }
                 if(problemType.useBias == 3)
                 {
                     args.template append<uint32_t>(
@@ -1142,10 +1147,13 @@ namespace Tensile
            && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
-            rv.args.append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
-            if(problemType.useBias == 3)
-                rv.args.template append<uint32_t>("biasDim",
-                                                  (uint32_t)problem.getParams().biasDim());
+            if(bias.dimensions())
+            {
+                rv.args.append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
+                if(problemType.useBias == 3)
+                    rv.args.template append<uint32_t>("biasDim",
+                                                      (uint32_t)problem.getParams().biasDim());
+            }
         }
 
         int idx = 0;
@@ -1365,7 +1373,10 @@ namespace Tensile
         if(useBias && problem.useBias())
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
-            args.template append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
+            if(bias.dimensions())
+            {
+                args.template append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
+            }
         }
 
         int i = 0;
