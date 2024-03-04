@@ -174,6 +174,7 @@ namespace Tensile
 
             if(args.count("compute-input-type"))
             {
+                //accept mix-types (i.g. Float8BFloat8); there no need to set m_computeInputTypeA and m_computeInputTypeB
                 m_computeInputType = args["compute-input-type"].as<DataType>();
             }
 

@@ -105,6 +105,8 @@ void Arguments::init()
     c_type       = HIP_R_16F;
     d_type       = HIP_R_16F;
     compute_type = HIPBLAS_COMPUTE_32F;
+    compute_input_typeA = HIPBLASLT_DATATYPE_INVALID;
+    compute_input_typeB = HIPBLASLT_DATATYPE_INVALID;
     scale_type   = HIP_R_32F;
 
     initialization = hipblaslt_initialization::hpl;

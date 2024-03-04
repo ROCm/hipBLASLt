@@ -46,6 +46,8 @@ namespace
               typename TiB = TiA,
               typename To  = TiB,
               typename Tc  = To,
+              typename TciA  = TiA,
+              typename TciB  = TiB,
               typename     = void>
     struct aux_testing : hipblaslt_test_invalid
     {
@@ -53,12 +55,14 @@ namespace
 
     // When Ti = To = Tc != void, this test applies.
     // When converted to bool, this functor returns true.
-    template <typename TiA, typename TiB, typename To, typename Tc>
+    template <typename TiA, typename TiB, typename To, typename Tc, typename TciA, typename TciB>
     struct aux_testing<
         TiA,
         TiB,
         To,
         Tc,
+        TciA,
+        TciB,
         std::enable_if_t<
             (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
             || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
