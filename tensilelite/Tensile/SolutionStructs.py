@@ -2345,6 +2345,8 @@ class Solution(collections.abc.Mapping):
         state["StoreVectorWidth"] = state["MIOutputVectorWidth"]
         if state["VectorWidthA"] * state["MIOutputVectorWidth"] <= 4 / state["ProblemType"]["DestDataType"].numRegisters():
           state["StoreVectorWidth"] = state["VectorWidthA"] * state["MIOutputVectorWidth"]
+        if state["LocalSplitU"] > 1:
+          state["StoreVectorWidth"] = state["VectorWidthA"]
 
     if state["EnableMatrixInstruction"]:
       if state["SourceSwap"]:
@@ -2394,16 +2396,14 @@ class Solution(collections.abc.Mapping):
     if state["LocalSplitU"] > 1:
       if state["GlobalSplitU"] > 1:
         reject(state, "TODO: LSU doesn't support GSU>1.")
-      if state["LocalSplitU"] != 4:
-        reject(state, "TODO: LSU doesn't support LSU!=4.")
-      if not state["SourceSwap"]:
-        reject(state, "TODO: LSU doesn't support SourceSwap=0.")
-      if state["TransposeLDS"] != 2:
-        reject(state, "TODO: LSU doesn't support TLDS!=2.")
-      if state["MIWaveGroup"][0]*state["MIWaveGroup"][1]*state["LocalSplitU"] != 4:
-        reject(state, "LSU only support 4 waves per workgroup.")
+        return
+      if not state["SourceSwap"] and state["StoreVectorWidth"] > state["VectorWidthA"]:
+        reject(state, "LSU and non-SourceSwap doesn't support StoreVectorWidth(%u)>VWA(%u)." \
+            % (state["StoreVectorWidth"], state["VectorWidthA"]))
+        return
       if not state["ProblemType"]["ComputeDataType"].isSingle():
         reject(state, "TODO: LSU doesn't support ComputeDataType!=single.")
+        return
       if state["NumThreads"] % state["MacroTile0"] != 0:
         reject(state, "LocalSplitU but NumThreads=%u not divisible by MT0=%u for sideways store" \
             % (state["NumThreads"], state["MacroTile0"]))
