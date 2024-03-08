@@ -499,9 +499,9 @@ try
          value<int>(&device_id)->default_value(0),
          "Set default device to be used for subsequent program runs")
 
-        ("c_noalias_d",
-         bool_switch(&arg.c_noalias_d)->default_value(false),
-         "C and D are stored in separate memory")
+        ("c_equal_d",
+         bool_switch(&arg.c_equal_d)->default_value(false),
+         "C and D are stored in same memory")
 
         ("workspace",
          value<size_t>(&arg.user_allocated_workspace)->default_value(0),

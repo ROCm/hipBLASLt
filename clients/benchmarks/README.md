@@ -60,7 +60,7 @@ cd hipBLASLt; cd build/release
 --grouped_gemm             Use grouped_gemm.
 --use_user_args            Use UserArguments located in device memory for grouped gemm.
 --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
---c_noalias_d              C and D are stored in separate memory
+--c_equal_d                C and D are stored in same memory
 --workspace <value>        Set fixed workspace memory size instead of using hipblaslt managed memory           (Default value is: 0)
 --log_function_name        Function name precedes other items.
 --function_filter <value>  Simple strstr filter on function name only without wildcards

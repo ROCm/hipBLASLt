@@ -245,6 +245,20 @@ void testing_matmul_bad_arg(const Arguments& arg)
     hipStream_t stream = nullptr;
 }
 
+template <typename T>
+void copy_gemm_to_host(hipStream_t                     stream,
+                       const uint32_t&                 gemm_count,
+                       std::vector<host_vector<T>*>&   hDst,
+                       std::vector<device_vector<T>*>& dSrc)
+{
+
+    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+    for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+    {
+        CHECK_HIP_ERROR(hDst[gemmIdx]->transfer_from(*(dSrc[gemmIdx])));
+    }
+}
+
 template <typename To, typename Tbias>
 void check(hipStream_t                         stream,
            const Arguments&                    arg,
@@ -273,7 +287,6 @@ void check(hipStream_t                         stream,
 
     for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
     {
-        CHECK_HIP_ERROR(hD_1[gemmIdx]->transfer_from(*(dD[gemmIdx])));
         if(!arg.gradient && arg.use_e)
             CHECK_HIP_ERROR(hE[gemmIdx]->transfer_from(*(dE[gemmIdx])));
         if(arg.gradient && arg.bias_vector)
@@ -518,9 +531,17 @@ void testing_matmul_with_bias(const Arguments& arg)
             = stride_c[i] == 0 ? ldc[i] * N[i] * num_batches[i] : stride_c[i] * num_batches[i];
         size_D[i]
             = stride_d[i] == 0 ? ldd[i] * N[i] * num_batches[i] : stride_d[i] * num_batches[i];
-        size_E[i]             = arg.use_e ? (stride_e[i] == 0 ? lde[i] * N[i] * num_batches[i]
-                                                              : stride_e[i] * num_batches[i])
-                                          : 0;
+
+        size_E[i] = arg.use_e ? (stride_e[i] == 0 ? lde[i] * N[i] * num_batches[i]
+                                                  : stride_e[i] * num_batches[i])
+                              : 0;
+        if(arg.c_equal_d)
+        {
+            ldd[i]      = arg.ldc[i];
+            stride_d[i] = stride_c[i];
+            size_D[i]   = size_C[i];
+        }
+
         size_D_copy[i]        = arg.unit_check || arg.norm_check ? size_D[i] : 0;
         size_scaleAlphaVec[i] = arg.scaleAlpha_vector ? M[i] : 0;
         if(arg.bias_vector)
@@ -703,17 +724,21 @@ void testing_matmul_with_bias(const Arguments& arg)
         }
 
         // allocate memory on device
-        dA[i]             = new device_vector<TiA>(size_A[i] * block_count, 1, HMM);
-        dB[i]             = new device_vector<TiB>(size_B[i] * block_count, 1, HMM);
-        dC[i]             = new device_vector<To>(size_C[i] * block_count, 1, HMM);
-        dD[i]             = new device_vector<To>(size_D[i] * block_count, 1, HMM);
+        dA[i] = new device_vector<TiA>(size_A[i] * block_count, 1, HMM);
+        dB[i] = new device_vector<TiB>(size_B[i] * block_count, 1, HMM);
+        dC[i] = new device_vector<To>(size_C[i] * block_count, 1, HMM);
+        if(!arg.c_equal_d)
+            dD[i] = new device_vector<To>(size_D[i] * block_count, 1, HMM);
+        else
+            dD[i] = dC[i];
         dBias[i]          = new device_vector<Tbias>(size_bias[i] * block_count, 1, HMM);
         dScaleAlphaVec[i] = new device_vector<Talpha>(size_scaleAlphaVec[i] * block_count, 1, HMM);
 
         CHECK_DEVICE_ALLOCATION(dA[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dB[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dC[i]->memcheck());
-        CHECK_DEVICE_ALLOCATION(dD[i]->memcheck());
+        if(!arg.c_equal_d)
+            CHECK_DEVICE_ALLOCATION(dD[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dBias[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dScaleAlphaVec[i]->memcheck());
         if(arg.use_e)
@@ -2095,6 +2120,8 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         double hipblaslt_error = 0.0;
         if(arg.unit_check || arg.norm_check)
+        {
+            copy_gemm_to_host(stream, gemm_count, hD_1, dD);
             check(stream,
                   arg,
                   gemm_count,
@@ -2116,6 +2143,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                   hBias,
                   dBias,
                   hipblaslt_error);
+        }
     }
     else
     {
@@ -2124,13 +2152,14 @@ void testing_matmul_with_bias(const Arguments& arg)
         CHECK_HIP_ERROR(hipGetDeviceProperties(&deviceProps, 0));
         int32_t gpu_block3 = deviceProps.multiProcessorCount * 60;
 
-        size_t      best_sol          = -1;
-        double      best_flops        = 0.0;
-        double      best_gpu_time     = std::numeric_limits<double>::max();
-        std::string best_s_name       = "";
-        std::string best_k_name       = "";
-        int         number_cold_calls = arg.cold_iters;
-        int         number_hot_calls  = arg.iters;
+        size_t      best_sol      = -1;
+        double      best_flops    = 0.0;
+        double      best_gpu_time = std::numeric_limits<double>::max();
+        std::string best_s_name   = "";
+        std::string best_k_name   = "";
+        int         number_cold_calls
+            = ((arg.unit_check || arg.norm_check) && arg.cold_iters == 0) ? 1 : arg.cold_iters;
+        int number_hot_calls = arg.iters;
 
         int    flush_iter      = 100000;
         double flush_time_used = 0;
@@ -2177,7 +2206,11 @@ void testing_matmul_with_bias(const Arguments& arg)
                                                   tuningVec[heuristicTuningIndex[sol]],
                                                   *dWorkspace));
                     for(int i = 0; i < number_cold_calls; i++)
+                    {
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
+                        if(i == 0 && (arg.unit_check || arg.norm_check))
+                            copy_gemm_to_host(stream, gemm_count, hD_1, dD);
+                    }
                     if(arg.use_gpu_timer)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
@@ -2223,6 +2256,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                                                               workspace_size,
                                                               stream),
                                               HIPBLAS_STATUS_SUCCESS);
+                        if(i == 0 && (arg.unit_check || arg.norm_check))
+                            copy_gemm_to_host(stream, gemm_count, hD_1, dD);
                     }
 
                     if(arg.use_gpu_timer)
@@ -2302,9 +2337,12 @@ void testing_matmul_with_bias(const Arguments& arg)
                     }
 
                     for(int i = 0; i < number_cold_calls; i++)
+                    {
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(
                             d_userArgsVec[i % block_count], stream));
-
+                        if(i == 0 && (arg.unit_check || arg.norm_check))
+                            copy_gemm_to_host(stream, gemm_count, hD_1, dD);
+                    }
                     if(arg.use_gpu_timer)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
@@ -2344,8 +2382,11 @@ void testing_matmul_with_bias(const Arguments& arg)
                             stream));
 
                     for(int i = 0; i < number_cold_calls; i++)
+                    {
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
-
+                        if(i == 0 && (arg.unit_check || arg.norm_check))
+                            copy_gemm_to_host(stream, gemm_count, hD_1, dD);
+                    }
                     if(arg.use_gpu_timer)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
@@ -2531,7 +2572,8 @@ void testing_matmul_with_bias(const Arguments& arg)
         delete dA[i];
         delete dB[i];
         delete dC[i];
-        delete dD[i];
+        if(!arg.c_equal_d)
+            delete dD[i];
         delete dBias[i];
         delete dScaleAlphaVec[i];
         if(arg.scaleA)
