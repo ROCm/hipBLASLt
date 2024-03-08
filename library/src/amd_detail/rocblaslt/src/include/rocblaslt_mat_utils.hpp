@@ -111,7 +111,7 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
     }
 
     // data type of matrics must be the same
-    if(type_a != type_b || type_a != type_c || type_a != type_d)
+    if(type_a != type_b || type_a != type_c || type_a != type_c)
         return rocblaslt_status_invalid_value;
 
     switch(type_a)
