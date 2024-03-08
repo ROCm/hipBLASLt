@@ -4936,10 +4936,10 @@ class KernelWriterAssembly(KernelWriter):
             module.add(self.notLocalSplitUGlobalWriteIndices(kernel))
 
             # add stores for opt NLL
-            (fullVw, elements) = self.notLocalFullTileElements(kernel, False)
+            (fullVw, elements, fullVw_1, elements_1) = self.notLocalFullTileElements(kernel, False)
             alpha = False
             beta = False
-            module.add(self.globalWriteElements(kernel, tPA, tPB, [fullVw], [elements], True, applyAlpha=alpha, betas=[beta], edges=[False]))
+            module.add(self.globalWriteElements(kernel, tPA, tPB, [fullVw], [fullVw_1], [elements], [elements_1], True, applyAlpha=alpha, betas=[beta], edges=[False]))
 
             self.cleanupGlobalWrite(kernel)
             module.addSpaceLine()
@@ -7793,17 +7793,21 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def notLocalSplitUGlobalWrite(self, kernel, tPA, tPB):
     if not self.do["PostLoop"]: return ""
-    elements = [[] for y in range(2)] # 2D array for Full, Edge
+    elements   = [[] for y in range(2)] # 2D array for Full, Edge
+    elements_1 = [[] for y in range(2)] # 2D array for Full, Edge
 
-    (fullVw, elements[False]) = self.notLocalFullTileElements(kernel, False)
-    (edgeVw, elements[True])  = self.notLocalFullTileElements(kernel, True)
+    (fullVw, elements[False], fullVw_1, elements_1[False]) = self.notLocalFullTileElements(kernel, False)
+    (edgeVw, elements[True], edgeVw_1, elements_1[True] )  = self.notLocalFullTileElements(kernel, True)
 
     # print("len(elements[False])= ", len(elements[False]))
     # print("len(elements[True])= ", len(elements[True]))
-    vectorWidths = [fullVw, edgeVw]
+    vectorWidths   = [fullVw, edgeVw]
+    vectorWidths_1 = [fullVw, edgeVw_1]
+
+
 
     module = Module("notLocalSplitUGlobalWrite")
-    module.add(self.globalWriteElements(kernel, tPA, tPB, vectorWidths, elements))
+    module.add(self.globalWriteElements(kernel, tPA, tPB, vectorWidths, vectorWidths_1, elements, elements_1))
 
     self.cleanupGlobalWrite(kernel)
 
@@ -7816,7 +7820,8 @@ class KernelWriterAssembly(KernelWriter):
     if not self.do["PostLoop"]: return ""
 
     fullVw = kernel["GlobalWriteVectorWidth"] if kernel["_VectorStore"] else 1
-    fullVw = min(fullVw, self.maxGwvw(kernel))
+    gsuBackup = kernel["GlobalSplitU"]
+    kernel["GlobalSplitU"] = 2
     elements = [[] for y in range(2)] # 2D array for Full, Edge
     # Full tile loop:
     for tt1 in range(0, kernel["NumGlobalWriteVectorsPerThread"]):
@@ -7839,9 +7844,34 @@ class KernelWriterAssembly(KernelWriter):
             element = (tt1, tt0, vc1, vc0)
             elements[True].append(element)
 
-    vectorWidths = [fullVw, edgeVw]
+    kernel["GlobalSplitU"] = 1
+    elements_1 = [[] for y in range(2)] # 2D array for Full, Edge
+    # Full tile loop:
+    for tt1 in range(0, kernel["NumGlobalWriteVectorsPerThread"]):
+      for vc1 in range(0, 1):
+        for tt0 in range(0, 1):
+          for vc0 in range(0, kernel["GlobalWriteVectorWidth"], fullVw): # note step by fullVw
+            element = (tt1, tt0, vc1, vc0)
+            elements_1[False].append(element)
+
+    # Edge tile loop - note if we know AF0EM we can can use a larger vector
+    # and reduce the boundary checks accordingly.  But if no AF0EM guarantee
+    # then use a conservative 1
+    edgeVw_1 = kernel["GlobalWriteVectorWidth"] if kernel["_VectorStore"] else 1
+    edgeVw_1 = min(edgeVw_1, self.maxGwvw(kernel), kernel["AssertFree0ElementMultiple"])
+    assert(kernel["GlobalWriteVectorWidth"]%edgeVw_1 == 0)
+    for tt1 in range(0, kernel["NumGlobalWriteVectorsPerThread"]):
+      for vc1 in range(0, 1):
+        for tt0 in range(0, 1):
+          for vc0 in range(0, kernel["GlobalWriteVectorWidth"], edgeVw_1):
+            element = (tt1, tt0, vc1, vc0)
+            elements_1[True].append(element)
+    kernel["GlobalSplitU"] = gsuBackup
+
+    vectorWidths   = [fullVw, edgeVw]
+    vectorWidths_1 = [fullVw, edgeVw_1]
     module = Module("localSplitUGlobalWrite")
-    module.add(self.globalWriteElements(kernel, tPA, tPB, vectorWidths, elements))
+    module.add(self.globalWriteElements(kernel, tPA, tPB, vectorWidths, vectorWidths_1, elements, elements_1))
     self.cleanupGlobalWrite(kernel)
     self.vgprPool.checkIn(self.accVgprLdsReduction)
     return module
@@ -8004,7 +8034,7 @@ class KernelWriterAssembly(KernelWriter):
     sgprOffsetBack: int = -1
     vgprActCopy: int = -1
 
-  def globalWriteElements(self, kernel, tPA, tPB, vectorWidths, elements,
+  def globalWriteElements(self, kernel, tPA, tPB, vectorWidths_2, vectorWidths_1, elements_2, elements_1,
                           noGSUBranch=False,
                           applyAlpha=True, # defaults to generating *=alpha codes
                           betas=None, # if left unspecified, then let global parameter decide
@@ -8043,6 +8073,8 @@ class KernelWriterAssembly(KernelWriter):
           kernel["ActivationFuncCall"] = False
           kernel["GlobalSplitU"] = 2
           kernel["_GlobalAccumulation"] = kernel["_GlobalAccumulation"]
+          vectorWidths = vectorWidths_2
+          elements     = elements_2
         else:
           module.add(gsuLabel)
           self.states.bpeCexternal = self.states.bpeCexternalGSU1
@@ -8051,13 +8083,19 @@ class KernelWriterAssembly(KernelWriter):
           kernel["ActivationFuncCall"] = afcBackup
           kernel["GlobalSplitU"] = 1
           kernel["_GlobalAccumulation"] = None
+          vectorWidths = vectorWidths_1
+          elements     = elements_1
       else:
         if kernel["GlobalSplitU"] > 1:
           self.states.useBias = self.states.useBias if self.states.useBias == DataDirection.WRITE else DataDirection.NONE
           kernel["LdsOffsetBias"] = kernel["LdsOffsetBiasGSU"]
           kernel["ActivationFuncCall"] = False
+          vectorWidths = vectorWidths_2
+          elements     = elements_2
         else:
           kernel["LdsOffsetBias"] = kernel["LdsOffsetBiasNonGSU"]
+          vectorWidths = vectorWidths_1
+          elements     = elements_1
       '''
       Post process for loop
       '''
@@ -8424,12 +8462,14 @@ class KernelWriterAssembly(KernelWriter):
 
       # allocate tmps for the store header (before the batch implementations)
       # branch B1 or B0
-      betaLabel = Label("GW_Beta", "") if (gsuLimit > 1) and (kernel["GlobalSplitU"] > 1) else Label(self.labels.getNameInc("GW_Beta"), "")
+      betaLabel = Label(self.labels.getNameInc("GW_Beta"), "")
 
       betaModules = Module("Betas")
       currentInstLength = 0
       for idx0 in reversed(range(len(betas))):
         beta = betas[idx0]
+        if beta and kernel["_GlobalAccumulation"] == "SingleBuffer" and kernel["GlobalSplitU"] > 1:
+          continue
         betaModule = Module("Beta_%u"%idx0)
         # start B1
         if beta:
