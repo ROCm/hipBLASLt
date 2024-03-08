@@ -325,8 +325,8 @@ bool norm_check(double norm_error)
     if(std::is_same<T, hipblasLtInt32>{})
         return norm_error < 0.0001;
     if(std::is_same<T, hipblaslt_f8_fnuz>{})
-       return norm_error < 0.125;
+        return norm_error < 0.125;
     if(std::is_same<T, hipblaslt_bf8_fnuz>{})
-        return norm_error < 0.25;    
+        return norm_error < 0.25;
     return false;
 }
