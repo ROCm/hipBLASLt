@@ -3,10 +3,10 @@
 - {Architecture: gfx90a, CUCount: 104}
 - [Device 0050, Device 0051, Device 0052, Device 0054, Device 0062, Device 7400, Device
     740c]
-- Activation: true
+- Activation: false
   ActivationComputeDataType: 6
   ActivationNoGuard: false
-  ActivationType: all
+  ActivationType: none
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
   Batched: true
@@ -72,11 +72,11 @@
   UseInitialStridesAB: false
   UseInitialStridesCD: false
   UseScaleAB: false
-  UseScaleAlphaVec: true
+  UseScaleAlphaVec: false
   UseScaleCD: false
-- - 1LDSBuffer: 0
+- - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: true
+    ActivationFuncCall: false
     ActivationFused: true
     AssertFree0ElementMultiple: 1
     AssertFree1ElementMultiple: 1
@@ -114,20 +114,20 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_AI_SAV_UserArgs_MT32x32x32_MI16x16x1_SN_LDSB0_CLR1_GRVWA4_GRVWB4_LBSPPA128_LBSPPB128_LPA16_LPB16_MIAV0_MIWT1_1_PLR1_SS1_SVW1_VWA1_VWB1_WSGRA0_WSGRB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT32x32x32_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_LBSPPA128_LBSPPB128_LPA16_LPB16_MIAV0_MIWT1_1_SS1_SVW1_VWA1_VWB1_WSGRA1_WSGRB1_WG32_8_1
     LSCA: 32
     LSCB: 32
-    LSPA: 32
+    LSPA: 8
     LSPB: 8
     LVCA: 8
     LVCB: 8
-    LVPA: 8
+    LVPA: 2
     LVPB: 2
     LdsBlockSizePerPadA: 128
     LdsBlockSizePerPadB: 128
     LdsBlockSizePerPadMetadata: 0
     LdsInitCVgprs: false
-    LdsNumElements: 6528
+    LdsNumElements: 2560
     LdsNumElementsAlignedA: 1280
     LdsNumElementsAlignedB: 1280
     LdsNumElementsAlignedMetadata: 0
@@ -138,7 +138,7 @@
     LdsOffsetBias: 0
     LdsOffsetBiasGSU: 0
     LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 1280
+    LdsOffsetMetadata: 2560
     LdsOffsetMetadata_Blk: 5376
     LdsPadA: 16
     LdsPadB: 16
@@ -208,10 +208,10 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: 1
     ProblemType:
-      Activation: true
+      Activation: false
       ActivationComputeDataType: 6
       ActivationNoGuard: false
-      ActivationType: all
+      ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -277,15 +277,15 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
-      UseScaleAlphaVec: true
+      UseScaleAlphaVec: false
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Ailk_Bjlk_I8BH_AI_SAV_UserArgs_MT32x32x32_MI16x16x1_SN_LDSB0_CLR1_GRVWA4_GRVWB4_GSU1_LBSPPA128_LBSPPB128_LPA16_LPB16_MIAV0_MIWT1_1_PLR1_SS1_SU32_SUM0_SUS256_SVW1_VWA1_VWB1_WSGRA0_WSGRB1_WG32_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT32x32x32_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_GSU1_LBSPPA128_LBSPPB128_LPA16_LPB16_MIAV0_MIWT1_1_SS1_SU16_SUM0_SUS256_SVW1_VWA1_VWB1_WSGRA1_WSGRB1_WG32_8_1_WGM1
     SourceSwap: 1
-    StaggerU: 32
+    StaggerU: 16
     StaggerUMapping: 0
     StaggerUStride: 256
     StorePriorityOpt: 0
@@ -314,7 +314,7 @@
     VectorStore: -1
     VectorWidthA: 1
     VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
+    WaveSeparateGlobalReadA: 1
     WaveSeparateGlobalReadB: 1
     WaveSeparateGlobalReadMetadata: 0
     WavefrontSize: 64
@@ -333,9 +333,9 @@
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 4
     _staggerStrideShift: 3
-  - 1LDSBuffer: 0
+  - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: true
+    ActivationFuncCall: false
     ActivationFused: true
     AssertFree0ElementMultiple: 1
     AssertFree1ElementMultiple: 1
@@ -373,7 +373,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_AI_SAV_UserArgs_MT128x128x32_MI16x16x1_SN_LDSB0_CLR1_GRVWA16_GRVWB16_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV0_MIWT4_4_PLR1_SS1_SVW4_VWA4_VWB4_WSGRA1_WSGRB0_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT128x128x32_MI16x16x1_SN_LDSB1_GRVWA16_GRVWB16_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV0_MIWT4_4_SS1_SVW4_VWA4_VWB4_WSGRA1_WSGRB0_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 8
@@ -386,7 +386,7 @@
     LdsBlockSizePerPadB: 512
     LdsBlockSizePerPadMetadata: 0
     LdsInitCVgprs: false
-    LdsNumElements: 25600
+    LdsNumElements: 9216
     LdsNumElementsAlignedA: 4608
     LdsNumElementsAlignedB: 4608
     LdsNumElementsAlignedMetadata: 0
@@ -397,7 +397,7 @@
     LdsOffsetBias: 0
     LdsOffsetBiasGSU: 0
     LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 4608
+    LdsOffsetMetadata: 9216
     LdsOffsetMetadata_Blk: 20992
     LdsPadA: 64
     LdsPadB: 64
@@ -467,10 +467,10 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: 1
     ProblemType:
-      Activation: true
+      Activation: false
       ActivationComputeDataType: 6
       ActivationNoGuard: false
-      ActivationType: all
+      ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -536,15 +536,15 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
-      UseScaleAlphaVec: true
+      UseScaleAlphaVec: false
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Ailk_Bjlk_I8BH_AI_SAV_UserArgs_MT128x128x32_MI16x16x1_SN_LDSB0_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV0_MIWT4_4_PLR1_SS1_SU16_SUM0_SUS256_SVW4_VWA4_VWB4_WSGRA1_WSGRB0_WG32_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT128x128x32_MI16x16x1_SN_LDSB1_GRVWA16_GRVWB16_GSU1_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV0_MIWT4_4_SS1_SU32_SUM0_SUS256_SVW4_VWA4_VWB4_WSGRA1_WSGRB0_WG32_8_1_WGM1
     SourceSwap: 1
-    StaggerU: 16
+    StaggerU: 32
     StaggerUMapping: 0
     StaggerUStride: 256
     StorePriorityOpt: 0
@@ -592,9 +592,9 @@
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 4
     _staggerStrideShift: 3
-  - 1LDSBuffer: 0
+  - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: true
+    ActivationFuncCall: false
     ActivationFused: true
     AssertFree0ElementMultiple: 1
     AssertFree1ElementMultiple: 1
@@ -632,20 +632,20 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_AI_SAV_UserArgs_MT128x128x32_MI16x16x1_SN_LDSB0_CLR1_GRVWA16_GRVWB16_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV1_MIWT4_4_PLR1_SS1_SVW4_VWA4_VWB4_WSGRA1_WSGRB0_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT128x128x32_MI16x16x1_SN_LDSB1_GRVWA16_GRVWB16_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV0_MIWT4_4_SS1_SVW4_VWA4_VWB4_WSGRA0_WSGRB1_WG32_8_1
     LSCA: 128
     LSCB: 128
-    LSPA: 8
-    LSPB: 32
+    LSPA: 32
+    LSPB: 8
     LVCA: 8
     LVCB: 8
-    LVPA: 1
-    LVPB: 2
+    LVPA: 2
+    LVPB: 1
     LdsBlockSizePerPadA: 512
     LdsBlockSizePerPadB: 512
     LdsBlockSizePerPadMetadata: 0
     LdsInitCVgprs: false
-    LdsNumElements: 25600
+    LdsNumElements: 9216
     LdsNumElementsAlignedA: 4608
     LdsNumElementsAlignedB: 4608
     LdsNumElementsAlignedMetadata: 0
@@ -656,7 +656,7 @@
     LdsOffsetBias: 0
     LdsOffsetBiasGSU: 0
     LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 4608
+    LdsOffsetMetadata: 9216
     LdsOffsetMetadata_Blk: 20992
     LdsPadA: 64
     LdsPadB: 64
@@ -669,7 +669,7 @@
     LoopIters: 2
     LoopUnroll: 32
     MFMA_BF16_1K: false
-    MIArchVgpr: 1
+    MIArchVgpr: 0
     MIBlock: [16, 16, 16, 1, 1, 1]
     MIInputPerThread: 4
     MIInputPerThreadA: 4
@@ -726,10 +726,10 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: 1
     ProblemType:
-      Activation: true
+      Activation: false
       ActivationComputeDataType: 6
       ActivationNoGuard: false
-      ActivationType: all
+      ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -795,13 +795,13 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
-      UseScaleAlphaVec: true
+      UseScaleAlphaVec: false
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 2
-    SolutionNameMin: Cijk_Ailk_Bjlk_I8BH_AI_SAV_UserArgs_MT128x128x32_MI16x16x1_SN_LDSB0_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV1_MIWT4_4_PLR1_SS1_SU32_SUM0_SUS256_SVW4_VWA4_VWB4_WSGRA1_WSGRB0_WG32_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT128x128x32_MI16x16x1_SN_LDSB1_GRVWA16_GRVWB16_GSU1_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV0_MIWT4_4_SS1_SU32_SUM0_SUS256_SVW4_VWA4_VWB4_WSGRA0_WSGRB1_WG32_8_1_WGM1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -832,8 +832,8 @@
     VectorStore: -1
     VectorWidthA: 4
     VectorWidthB: 4
-    WaveSeparateGlobalReadA: 1
-    WaveSeparateGlobalReadB: 0
+    WaveSeparateGlobalReadA: 0
+    WaveSeparateGlobalReadB: 1
     WaveSeparateGlobalReadMetadata: 0
     WavefrontSize: 64
     WorkGroup: [32, 8, 1]
@@ -853,7 +853,7 @@
     _staggerStrideShift: 3
   - 1LDSBuffer: 0
     ActivationAlt: false
-    ActivationFuncCall: true
+    ActivationFuncCall: false
     ActivationFused: true
     AssertFree0ElementMultiple: 1
     AssertFree1ElementMultiple: 1
@@ -891,14 +891,14 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_AI_SAV_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB0_CLR1_GRVWA16_GRVWB16_LBSPPA256_LBSPPB256_LPA32_LPB32_MIAV1_MIWT2_2_PLR1_SS1_SVW2_VWA2_VWB2_WSGRA0_WSGRB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB0_GRVWA16_GRVWB16_LBSPPA256_LBSPPB256_LPA32_LPB32_MIAV0_MIWT2_2_SS1_SVW2_VWA2_VWB2_WSGRA1_WSGRB1_WG32_8_1
     LSCA: 64
     LSCB: 64
-    LSPA: 64
+    LSPA: 16
     LSPB: 16
     LVCA: 4
     LVCB: 4
-    LVPA: 4
+    LVPA: 1
     LVPB: 1
     LdsBlockSizePerPadA: 256
     LdsBlockSizePerPadB: 256
@@ -928,7 +928,7 @@
     LoopIters: 4
     LoopUnroll: 64
     MFMA_BF16_1K: false
-    MIArchVgpr: 1
+    MIArchVgpr: 0
     MIBlock: [16, 16, 16, 1, 1, 1]
     MIInputPerThread: 4
     MIInputPerThreadA: 4
@@ -985,10 +985,10 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: 1
     ProblemType:
-      Activation: true
+      Activation: false
       ActivationComputeDataType: 6
       ActivationNoGuard: false
-      ActivationType: all
+      ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -1054,15 +1054,15 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
-      UseScaleAlphaVec: true
+      UseScaleAlphaVec: false
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 3
-    SolutionNameMin: Cijk_Ailk_Bjlk_I8BH_AI_SAV_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB0_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA256_LBSPPB256_LPA32_LPB32_MIAV1_MIWT2_2_PLR1_SS1_SU32_SUM0_SUS256_SVW2_VWA2_VWB2_WSGRA0_WSGRB1_WG32_8_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB0_GRVWA16_GRVWB16_GSU1_LBSPPA256_LBSPPB256_LPA32_LPB32_MIAV0_MIWT2_2_SS1_SU16_SUM0_SUS256_SVW2_VWA2_VWB2_WSGRA1_WSGRB1_WG32_8_1_WGM1
     SourceSwap: 1
-    StaggerU: 32
+    StaggerU: 16
     StaggerUMapping: 0
     StaggerUStride: 256
     StorePriorityOpt: 0
@@ -1091,12 +1091,12 @@
     VectorStore: -1
     VectorWidthA: 2
     VectorWidthB: 2
-    WaveSeparateGlobalReadA: 0
+    WaveSeparateGlobalReadA: 1
     WaveSeparateGlobalReadB: 1
     WaveSeparateGlobalReadMetadata: 0
     WavefrontSize: 64
     WorkGroup: [32, 8, 1]
-    WorkGroupMapping: 8
+    WorkGroupMapping: 1
     WorkGroupMappingXCC: 1
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
@@ -1112,7 +1112,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: true
+    ActivationFuncCall: false
     ActivationFused: true
     AssertFree0ElementMultiple: 1
     AssertFree1ElementMultiple: 1
@@ -1150,15 +1150,15 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_AI_SAV_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB1_CLR1_GRVWA16_GRVWB16_LBSPPA256_LBSPPB256_LPA32_LPB32_MIAV1_MIWT2_2_PLR1_SS1_SVW2_VWA2_VWB2_WSGRA1_WSGRB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB1_GRVWA16_GRVWB16_LBSPPA256_LBSPPB256_LPA32_LPB32_MIAV1_MIWT2_2_SS1_SVW2_VWA2_VWB2_WSGRA1_WSGRB0_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 16
-    LSPB: 16
+    LSPB: 64
     LVCA: 4
     LVCB: 4
     LVPA: 1
-    LVPB: 1
+    LVPB: 4
     LdsBlockSizePerPadA: 256
     LdsBlockSizePerPadB: 256
     LdsBlockSizePerPadMetadata: 0
@@ -1244,10 +1244,10 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: 1
     ProblemType:
-      Activation: true
+      Activation: false
       ActivationComputeDataType: 6
       ActivationNoGuard: false
-      ActivationType: all
+      ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -1313,13 +1313,13 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
-      UseScaleAlphaVec: true
+      UseScaleAlphaVec: false
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 4
-    SolutionNameMin: Cijk_Ailk_Bjlk_I8BH_AI_SAV_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB1_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA256_LBSPPB256_LPA32_LPB32_MIAV1_MIWT2_2_PLR1_SS1_SU16_SUM0_SUS256_SVW2_VWA2_VWB2_WSGRA1_WSGRB1_WG32_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB1_GRVWA16_GRVWB16_GSU1_LBSPPA256_LBSPPB256_LPA32_LPB32_MIAV1_MIWT2_2_SS1_SU16_SUM0_SUS256_SVW2_VWA2_VWB2_WSGRA1_WSGRB0_WG32_8_1_WGM1
     SourceSwap: 1
     StaggerU: 16
     StaggerUMapping: 0
@@ -1351,7 +1351,7 @@
     VectorWidthA: 2
     VectorWidthB: 2
     WaveSeparateGlobalReadA: 1
-    WaveSeparateGlobalReadB: 1
+    WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0
     WavefrontSize: 64
     WorkGroup: [32, 8, 1]
@@ -1371,15 +1371,15 @@
     _staggerStrideShift: 2
 - [2, 3, 0, 1]
 - - - [128, 128, 1, 128, 128, 128, 128, 128]
-    - [0, 576.521]
+    - [0, 611.852]
   - - [512, 512, 1, 512, 512, 512, 512, 512]
-    - [3, 22532.4]
+    - [3, 24489.4]
   - - [1024, 1024, 1, 1024, 1024, 1024, 1024, 1024]
-    - [4, 67136.8]
+    - [4, 69769.5]
   - - [2048, 2048, 1, 2048, 2048, 2048, 2048, 2048]
-    - [1, 109179.0]
+    - [1, 114327.0]
   - - [4096, 4096, 1, 4096, 4096, 4096, 4096, 4096]
-    - [2, 142582.0]
+    - [2, 135348.0]
 - null
 - null
 - DeviceEfficiency
