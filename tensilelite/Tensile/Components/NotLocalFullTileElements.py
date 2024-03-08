@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,8 @@ class NotLocalFullTileElementsMFMA(NotLocalFullTileElements):
         elements        = []
         storeVectorWidth = 0
 
+        gsuBackup = kernel["GlobalSplitU"]
+        kernel["GlobalSplitU"] = 2
         if edge:
             storeVectorWidth = kernel["StoreVectorWidth"] if kernel["_VectorStore"] else 1
             storeVectorWidth = min(storeVectorWidth, writer.maxGwvw(kernel), kernel["AssertFree0ElementMultiple"])
@@ -68,4 +70,22 @@ class NotLocalFullTileElementsMFMA(NotLocalFullTileElements):
                         element = (tt1, tt0, vc1, vc0)
                         elements.append(element)
 
-        return (storeVectorWidth, elements)
+        kernel["GlobalSplitU"] = 1
+        elements_1         = []
+        storeVectorWidth_1 = 0
+        if edge:
+            storeVectorWidth_1 = kernel["StoreVectorWidth"] if kernel["_VectorStore"] else 1
+            storeVectorWidth_1 = min(storeVectorWidth_1, writer.maxGwvw(kernel), kernel["AssertFree0ElementMultiple"])
+        else:
+            storeVectorWidth_1 = kernel["StoreVectorWidth"] if kernel["_VectorStore"] else 1
+            storeVectorWidth_1 = min(storeVectorWidth_1, writer.maxGwvw(kernel))
+
+        for tt1 in range(0, ceil(totalTT1//vectorWidth1)):
+            for vc1 in range(0, vectorWidth1):
+                for tt0 in range(0, ceil(totalTT0//vectorWidth0)):
+                    for vc0 in range(0, vectorWidth0, storeVectorWidth_1): # note step by storeVectorWidth
+                        element = (tt1, tt0, vc1, vc0)
+                        elements_1.append(element)
+        kernel["GlobalSplitU"] = gsuBackup
+
+        return (storeVectorWidth, elements, storeVectorWidth_1, elements_1)
