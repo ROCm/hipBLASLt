@@ -510,13 +510,11 @@ class SizeMapping:
 
     @classmethod
     def FromOriginalState(cls, d):
-        globalAccum = 2
-        # FIXME: Restore this after the yamls are fixed
-        # globalAccum = 0
-        # if d['GlobalSplitUAlgorithm'] == 'SingleBuffer':
-        #     globalAccum = 1
-        # if d['GlobalSplitUAlgorithm'] == 'MultipleBuffer':
-        #     globalAccum = 2
+        globalAccum = 0
+        if d['GlobalSplitUAlgorithm'] == 'SingleBuffer':
+            globalAccum = 1
+        if d['GlobalSplitUAlgorithm'] == 'MultipleBuffer':
+            globalAccum = 2
         if d['_GlobalAccumulation'] == 'MultipleBufferSingleKernel':
             globalAccum = 3
         return cls(waveNum                  = d['NumThreads'] // d['WavefrontSize'],

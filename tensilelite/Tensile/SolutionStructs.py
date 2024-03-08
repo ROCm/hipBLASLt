@@ -1918,10 +1918,6 @@ class Solution(collections.abc.Mapping):
     elif state["GlobalSplitU"] > 1 and state["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel':
           state["_GlobalAccumulation"] = 'MultipleBufferSingleKernel'
 
-    if state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
-      # maxGWVW is not fixed yet, thus can't generate universal singlebuffer kernels.
-      reject("Currently universal kernel does not support SingleBuffer.")
-
     if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
       state["SynchronizerSizeCheck"] = 1
     #   state["BatchSizeEqual"] = 1
