@@ -139,7 +139,7 @@ void Arguments::init()
     scaleE            = false;
     scaleAlpha_vector = false;
     grouped_gemm      = 0;
-    c_noalias_d       = false;
+    c_equal_d         = false;
     HMM               = false;
     use_e             = false;
     gradient          = false;
