@@ -13,6 +13,7 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 * `GemmTuning` extension parameter to set split-k by user
 * Support for mixed-precision datatype: FP16/FP8 in with FP16 out
 * Add CMake support for documentation
+* Support for datatype: Int8 in Int8 out
 
 ## hipBLASLt 0.6.0
 
