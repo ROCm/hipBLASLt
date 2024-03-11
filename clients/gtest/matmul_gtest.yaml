@@ -607,7 +607,7 @@ Tests:
   unit_check: 1
   gpu_arch: '94?'
 
-- name: matmul_real_1b_dst_f8
+- name: matmul_real_1b_dst_f8_SCDInt1
   category: pre_checkin
   function:
     matmul: *real_precisions_1b_dst_f8
@@ -619,14 +619,34 @@ Tests:
   beta: [ 0.0, 2.0 ]
   scaleA: [0, 1]
   scaleB: [0, 1]
-  scaleC: [0, 1]
-  scaleD: [0, 1]
+  scaleC: [0] # will use default value '1' 
+  scaleD: [0] # will use default value '1' 
   bias_vector: [0, 1]
   bias_type: f16_r
   unit_check: 1
   gpu_arch: '94?'
 
-- name: matmul_real_1b_dst_bf8
+- name: matmul_real_1b_dst_f8_SCDNotInt
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_dst_f8
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [0, 1]
+  scaleB: [0, 1]
+  scaleC: [1] # will use random value from 0.0 to 1.0 
+  scaleD: [1] # will use random value from 0.0 to 1.0 
+  bias_vector: [0, 1]
+  bias_type: f16_r
+  unit_check: 0
+  norm_check: 1
+  gpu_arch: '94?'
+
+- name: matmul_real_1b_dst_bf8_SCDInt1
   category: pre_checkin
   function:
     matmul: *real_precisions_1b_dst_bf8
@@ -638,11 +658,31 @@ Tests:
   beta: [ 0.0, 2.0 ]
   scaleA: [0, 1]
   scaleB: [0, 1]
-  scaleC: [0, 1]
-  scaleD: [0, 1]
-  bias_vector: [0, 1]
+  scaleC: [0] # will use default value '1' 
+  scaleD: [0] # will use default value '1' 
+  bias_vector: [0,1]
   bias_type: f16_r
   unit_check: 1
+  gpu_arch: '94?'
+
+- name: matmul_real_1b_dst_bf8_SCDNotInt
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_dst_bf8
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [0, 1]
+  scaleB: [0, 1]
+  scaleC: [1] # will use random value from 0.0 to 1.0 
+  scaleD: [1] # will use random value from 0.0 to 1.0 
+  bias_vector: [0, 1]
+  bias_type: f16_r
+  unit_check: 0
+  norm_check: 1
   gpu_arch: '94?'
 
 - name: matmul_fallback_equality_NN_batch16

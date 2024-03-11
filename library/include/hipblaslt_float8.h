@@ -76,7 +76,7 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_fnuz
     // default constructor
     HIP_HOST_DEVICE hipblaslt_f8_fnuz() = default;
 
-#if defined(__gfx940__)
+#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
     // device specific optimized F8 down-conversion code
 
     template <bool stochastic_rounding = false>
@@ -116,7 +116,7 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_fnuz
 #endif // __gfx940__
 
     // constructor from float
-#if defined(__gfx940__)
+#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
 
     // NOTE: ON-DEVICE... always optimal bias
     explicit HIP_DEVICE hipblaslt_f8_fnuz(float                          v,
@@ -187,7 +187,7 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_fnuz
     }
 
     // convert to float
-#if defined(__gfx940__)
+#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
     // upcast using device specific intrinsic
     explicit inline HIP_DEVICE operator float() const
     {
@@ -258,7 +258,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz
     // default constructor
     HIP_HOST_DEVICE hipblaslt_bf8_fnuz() = default;
 
-#if defined(__gfx940__)
+#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
     // device specific optimized F8 down-conversion code
 
     template <bool stochastic_rounding = false>
@@ -298,7 +298,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz
 #endif // __gfx940__
 
     // constructor from float
-#if defined(__gfx940__)
+#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
 
     // NOTE: ON-DEVICE... always optimal bias
     explicit HIP_DEVICE hipblaslt_bf8_fnuz(float                          v,
@@ -369,7 +369,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz
     }
 
     // convert to float
-#if defined(__gfx940__)
+#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
     // upcast using device specific intrinsic
     explicit inline HIP_DEVICE operator float() const
     {
