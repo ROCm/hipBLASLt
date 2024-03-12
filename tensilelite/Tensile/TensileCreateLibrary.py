@@ -244,7 +244,7 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
       hipFlags = ["--genco", "-D__HIP_HCC_COMPAT_MODE__=1"] #needs to be fixed when Maneesh's change is made available
 
       hipFlags += ['-I', outputPath]
-      hipFlags += ["-Xoffload-linker", "--build-id"]
+      hipFlags += ["-Xoffload-linker", "--build-id=%s"%globalParameters["BuildIdKind"]]
       hipFlags += ['-std=c++17']
       if globalParameters["SaveTemps"]:
         hipFlags += ['--save-temps']
@@ -1269,6 +1269,7 @@ def TensileCreateLibrary():
                          help="Generate solution-yaml matching table")
   argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
                          help="Keep debug information for built code objects")
+  argParser.add_argument("--build-id", dest="BuildIdKind", action="store", default="sha1")                         
 
   args = argParser.parse_args()
 
@@ -1310,6 +1311,7 @@ def TensileCreateLibrary():
   arguments["PrintLevel"] = args.PrintLevel
   arguments["PrintTiming"] = args.PrintTiming
   arguments["AsmDebug"] = args.AsmDebug
+  arguments["BuildIdKind"] = args.BuildIdKind
 
   for key, value in args.global_parameters:
     arguments[key] = value

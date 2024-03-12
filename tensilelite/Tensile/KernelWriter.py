@@ -4631,7 +4631,7 @@ for codeObjectFileName in codeObjectFileNames:
 
   def getLinkCodeObjectArgs(self, objectFileNames, coFileName, *moreArgs):
     return getAsmLinkCodeObjectArgs(globalParameters['AssemblerPath'], \
-      objectFileNames, coFileName, *moreArgs)
+      objectFileNames, coFileName, globalParameters['BuildIdKind'], *moreArgs)
 
   def setTensileInstructions(self, ti):
     self.ti = ti
