@@ -58,8 +58,8 @@ BenchmarkProblems:
         - VectorWidthA: [1]
         - VectorWidthB: [1]
         - GlobalReadVectorWidthB: [4]
-        #- GlobalSplitU: [1,2]
-        #- GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitU: [1,2]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - SourceSwap: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:

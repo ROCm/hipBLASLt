@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (C) 2021-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2021-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,6 +47,9 @@
 #elif defined(__gfx1030__) // special device
 #define USE_GFX_BUFFER_INTRINSIC
 #define BUFFER_RESOURCE_3RD_DWORD 0x31014000
+#elif defined(__gfx1100__) || defined(__gfx1101__) || defined(__gfx1102__)
+#define USE_GFX_BUFFER_INTRINSIC
+#define BUFFER_RESOURCE_3RD_DWORD 0x31004000
 #else // not support
 #define BUFFER_RESOURCE_3RD_DWORD -1
 #endif

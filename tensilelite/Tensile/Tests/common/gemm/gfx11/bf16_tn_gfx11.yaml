@@ -150,8 +150,8 @@ BenchmarkProblems:
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - 1LDSBuffer: [-1]
-        #- GlobalSplitU: [1] #,2]
-        #- GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitU: [1, 2]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - SourceSwap: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
