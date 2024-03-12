@@ -274,6 +274,8 @@ globalParameters["UseUserArgs"] = False
 
 globalParameters["RotatingBufferSize"] = 0 # Size in MB
 
+globalParameters["BuildIdKind"] = "sha1"
+
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
 

@@ -39,7 +39,8 @@ function(TensileCreateLibraryCmake
     Tensile_LIBRARY_PRINT_DEBUG
     Tensile_CPU_THREADS
     Tensile_SEPARATE_ARCHITECTURES
-    Tensile_LAZY_LIBRARY_LOADING)
+    Tensile_LAZY_LIBRARY_LOADING,
+    Tensile_BUILD_ID)
 
 # make Tensile_PACKAGE_LIBRARY and optional parameter
 # to avoid breaking applications which us this
@@ -105,6 +106,10 @@ function(TensileCreateLibraryCmake
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--cxx-compiler=${Tensile_COMPILER}")
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--library-format=${Tensile_LIBRARY_FORMAT}")
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--jobs=${Tensile_CPU_THREADS}")
+
+  if(Tensile_BUILD_ID)
+    set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--build-id=${Tensile_BUILD_ID}")
+  endif()
 
   # TensileLibraryWriter positional arguments
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND}

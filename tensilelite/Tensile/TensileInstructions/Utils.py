@@ -259,9 +259,9 @@ def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, \
     return rv
 
 def getAsmLinkCodeObjectArgs(assemblerPath: str, objectFileNames: List[str], \
-    coFileName: str, *moreArgs):
+    coFileName: str, buildIdKind: str, *moreArgs):
     rv = [assemblerPath, '-target', 'amdgcn-amd-amdhsa']
-    rv += ["-Xlinker", "--build-id"]
+    rv += ["-Xlinker", "--build-id=%s"%(buildIdKind)]
     rv += moreArgs
     rv += ['-o', coFileName] + objectFileNames
     return rv
