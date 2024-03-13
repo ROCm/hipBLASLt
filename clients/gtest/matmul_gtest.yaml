@@ -374,6 +374,20 @@ Tests:
     - { M:  960, N: 1024, K: 1024 }
     - { M: 1024, N: 1024, K: 1024 }
 
+- name: matmul_bf16_fp32dst
+  category: quick
+  function:
+    matmul: *hpa_half_bf16_fp32dst_precision
+  transA: T
+  transB: N
+  alpha: 1
+  beta: 0
+  matrix_size:
+    - { M:  512, N:  512, K:  512 }
+    - { M:  960, N: 1024, K: 1024 }
+    - { M: 1024, N: 1024, K: 1024 }
+  gpu_arch: '94?'
+
 - name: matmul_small2
   category: pre_checkin
   transA: N
@@ -619,8 +633,8 @@ Tests:
   beta: [ 0.0, 2.0 ]
   scaleA: [0, 1]
   scaleB: [0, 1]
-  scaleC: [0] # will use default value '1' 
-  scaleD: [0] # will use default value '1' 
+  scaleC: [0] # will use default value '1'
+  scaleD: [0] # will use default value '1'
   bias_vector: [0, 1]
   bias_type: f16_r
   unit_check: 1
@@ -638,8 +652,8 @@ Tests:
   beta: [ 0.0, 2.0 ]
   scaleA: [0, 1]
   scaleB: [0, 1]
-  scaleC: [1] # will use random value from 0.0 to 1.0 
-  scaleD: [1] # will use random value from 0.0 to 1.0 
+  scaleC: [1] # will use random value from 0.0 to 1.0
+  scaleD: [1] # will use random value from 0.0 to 1.0
   bias_vector: [0, 1]
   bias_type: f16_r
   unit_check: 0
@@ -658,8 +672,8 @@ Tests:
   beta: [ 0.0, 2.0 ]
   scaleA: [0, 1]
   scaleB: [0, 1]
-  scaleC: [0] # will use default value '1' 
-  scaleD: [0] # will use default value '1' 
+  scaleC: [0] # will use default value '1'
+  scaleD: [0] # will use default value '1'
   bias_vector: [0,1]
   bias_type: f16_r
   unit_check: 1
@@ -677,8 +691,8 @@ Tests:
   beta: [ 0.0, 2.0 ]
   scaleA: [0, 1]
   scaleB: [0, 1]
-  scaleC: [1] # will use random value from 0.0 to 1.0 
-  scaleD: [1] # will use random value from 0.0 to 1.0 
+  scaleC: [1] # will use random value from 0.0 to 1.0
+  scaleD: [1] # will use random value from 0.0 to 1.0
   bias_vector: [0, 1]
   bias_type: f16_r
   unit_check: 0
