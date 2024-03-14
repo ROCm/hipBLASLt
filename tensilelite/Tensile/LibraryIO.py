@@ -182,7 +182,7 @@ def readYAML(filename):
     return data
 
 def readJson(filename):
-    """Reads and returns YAML data from file."""
+    """Reads and returns JSON data from file."""
     with open(filename, "r") as f:
         data = json.loads(f.read())
     return data
