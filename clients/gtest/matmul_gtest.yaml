@@ -378,8 +378,7 @@ Tests:
   category: quick
   function:
     matmul: *hpa_half_bf16_fp32dst_precision
-  transA: T
-  transB: N
+  transA_transB: *deepbench_transA_transB_range
   alpha: 1
   beta: 0
   matrix_size:
@@ -387,6 +386,7 @@ Tests:
     - { M:  960, N: 1024, K: 1024 }
     - { M: 1024, N: 1024, K: 1024 }
   gpu_arch: '94?'
+
 
 - name: matmul_small2
   category: pre_checkin
