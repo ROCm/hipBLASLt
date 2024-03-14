@@ -387,7 +387,6 @@ Tests:
     - { M: 1024, N: 1024, K: 1024 }
   gpu_arch: '94?'
 
-
 - name: matmul_small2
   category: pre_checkin
   transA: N
