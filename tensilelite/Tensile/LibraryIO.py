@@ -30,6 +30,22 @@ from . import Common
 from . import SolutionLibrary
 
 from typing import NamedTuple, List
+import os
+import sys
+
+try:
+    import orjson as json
+except ImportError:
+    try:
+        import ujson as json
+        printWarning("orjson not installed. Fallback to ujson.")
+    except ImportError:
+        try:
+            import simplejson as json
+            printWarning("orjson, ujson not installed. Fallback to simplejson.")
+        except ImportError:
+            import json
+            printWarning("orjson, ujson, simplejson not installed. Fallback to json.")
 
 try:
     import yaml
@@ -57,10 +73,12 @@ def write(filename_noExt, data, format="yaml"):
     """Writes data to file with specified format; extension is appended based on format."""
     if format == "yaml":
         writeYAML(filename_noExt + ".yaml", data)
+    elif format == "json":
+        writeJson(filename_noExt + ".json", data)
     elif format == "msgpack":
         writeMsgPack(filename_noExt + ".dat", data)
     else:
-        printExit("Unrecognized format {}".format(format))
+        printExit("Unrecognized write format {}".format(format))
 
 
 def writeYAML(filename, data, **kwargs):
@@ -76,6 +94,11 @@ def writeYAML(filename, data, **kwargs):
     with open(filename, "w") as f:
         yaml.dump(data, f, **kwargs)
 
+def writeJson(filename, data):
+    """Writes data to file in json format."""
+    with open(filename, "w") as f:
+        json_object = json.dumps(data, option=json.OPT_INDENT_2).decode("utf-8") if 'orjson' in sys.modules else json.dumps(data, indent=2)
+        f.write(json_object)
 
 def writeMsgPack(filename, data):
     """Writes data to file in Message Pack format."""
@@ -89,7 +112,7 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
     solutionStates = []
 
     if cache:
-        solYaml = readYAML(filename)
+        solYaml = read(filename)
         if biasTypeArgs and activationArgs:
             solutionStates = solYaml[4:]
         elif biasTypeArgs or activationArgs:
@@ -143,16 +166,30 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
 ###############################
 # Reading and parsing functions
 ###############################
+def read(filename):
+    name, extension = os.path.splitext(filename)
+    if extension == ".yaml":
+        return readYAML(filename)
+    if extension == ".json":
+        return readJson(filename)
+    else:
+        printExit("Unrecognized read format {}".format(extension))
+
 def readYAML(filename):
     """Reads and returns YAML data from file."""
     with open(filename, "r") as f:
         data = yaml.load(f, yamlLoader)
     return data
 
+def readJson(filename):
+    """Reads and returns JSON data from file."""
+    with open(filename, "r") as f:
+        data = json.loads(f.read())
+    return data
 
 def parseSolutionsFile(filename):
     """Wrapper function to read and parse a solutions file."""
-    return parseSolutionsData(readYAML(filename), filename)
+    return parseSolutionsData(read(filename), filename)
 
 
 def parseSolutionsData(data, srcFile="?"):
@@ -202,7 +239,7 @@ class LibraryLogic(NamedTuple):
 
 def parseLibraryLogicFile(filename, archs=None):
     """Wrapper function to read and parse a library logic file."""
-    return parseLibraryLogicData(readYAML(filename), filename, archs)
+    return parseLibraryLogicData(read(filename), filename, archs)
 
 
 def parseLibraryLogicData(data, srcFile="?", archs=None):

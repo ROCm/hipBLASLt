@@ -252,7 +252,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
         cacheValid = False
         if useCache and os.path.isfile(cachePath):
-            c = LibraryIO.readYAML(cachePath)
+            c = LibraryIO.read(cachePath)
             if c["ConstantParams"] == benchmarkStep.constantParams and \
                     c["ForkParams"] == benchmarkStep.forkParams and \
                     c["ParamGroups"] == benchmarkStep.paramGroups and \

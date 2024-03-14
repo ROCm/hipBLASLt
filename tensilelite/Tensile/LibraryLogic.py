@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1477,13 +1477,18 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
     logicTuple = analyzeProblemType(problemType, problemTypes[problemType], analysisParameters)
 
     filename = os.path.join(globalParameters["WorkingPath"], \
-        "{}_{}".format(analysisParameters["ScheduleName"], str(problemType) + ".yaml"))
+        "{}_{}".format(analysisParameters["ScheduleName"], str(problemType)))
 
     print2("# writing library logic YAML {}".format(filename))
     data = LibraryIO.createLibraryLogic(analysisParameters["ScheduleName"], \
         analysisParameters["ArchitectureName"], analysisParameters["DeviceNames"], analysisParameters["LibraryType"], logicTuple)
 
-    LibraryIO.writeYAML(filename, data, explicit_start=False, explicit_end=False)
+  if globalParameters["LogicFormat"] == "yaml":
+    LibraryIO.writeYAML(filename + ".yaml", data, explicit_start=False, explicit_end=False)
+  elif globalParameters["LogicFormat"] == "json":
+    LibraryIO.write(filename, data, "json")
+  else:
+    printExit("Unrecognized LogicFormat", globalParameters["LogicFormat"])
 
   currentTime = time.time()
   elapsedTime = currentTime - startTime
