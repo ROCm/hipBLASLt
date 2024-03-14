@@ -527,7 +527,7 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
 {
     // TODO: confirm if HIP_R_64F, HIP_R_32I are neccessary for biastype
     static const std::set<hipDataType> supported_bias_types
-        = {HIP_R_32F, HIP_R_16F, HIP_R_16BF, HIP_R_64F, HIP_R_32I};
+        = {HIP_R_32F, HIP_R_16F, HIP_R_16BF};
 
     hipDataType real_bias_type = arg.bias_type;
 
@@ -2820,8 +2820,9 @@ void testing_matmul_with_bias(const Arguments& arg)
 
 #define argument_param                                                                             \
     e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a,  \
-        e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, e_d_type, e_compute_type, \
-        e_activation_type, e_bias_vector, e_rotating
+        e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, e_a_type, e_b_type,       \
+        e_c_type, e_d_type, e_compute_type, e_scaleA, e_scaleB, e_scaleC, e_scaleD,                \
+        e_activation_type, e_bias_vector, e_bias_type, e_rotating
 
             int32_t     solutionIndex = -1;
             std::string solutionName  = "";

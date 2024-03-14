@@ -1,0 +1,53 @@
+---
+include: ../../../include/hipblaslt_common.yaml
+include: ../../../gtest/matmul_common.yaml
+
+Definitions:
+  - &alpha_beta_range
+    - { alpha:  5, beta:  0 }
+    - { alpha:  0, beta:  3 }
+    - { alpha:  1, beta:  3 }
+    - { alpha:  1, beta:  1 }
+
+  - &alpha_beta_range_small
+    - { alpha: 2, alphai: 2, beta: -1.0, betai: 2.0 }
+
+  - &transA_transB_range
+    - { transA: N, transB: N }
+    - { transA: N, transB: T }
+    - { transA: T, transB: N }
+    - { transA: T, transB: T }
+
+  - &deepbench_alpha_beta_range
+    - { alpha: 1, beta: 0 }
+    - { alpha: 1, beta: 1 }
+
+  - &deepbench_transA_transB_range
+    - { transA: N, transB: N }
+    - { transA: N, transB: T }
+    - { transA: T, transB: N }
+
+  - &ldd_transA_transB_range
+    - { transA: N, transB: N }
+    - { transA: N, transB: T }
+    - { transA: T, transB: N }
+    - { transA: T, transB: T }
+
+
+Tests:
+- name: matmul_f8_bf8_dst_fp32
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_dst_f32
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 2.0 ]
+  scaleA: [1]
+  scaleB: [1]
+  bias_vector: [0, 1]
+  bias_type: bf16_r
+  # print_kernel_info: true
+...

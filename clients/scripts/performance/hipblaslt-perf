@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+
+"""Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell cop-
+   ies of the Software, and to permit persons to whom the Software is furnished
+   to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IM-
+   PLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+   COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+   IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNE-
+   CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"""
+
+import sys
+# from os import path
+import pathlib
+import os
+import argparse
+import logging
+import bench
+from pathlib import Path
+from git_info import create_github_file
+from specs import get_machine_specs
+
+console = logging.StreamHandler()
+
+# Parameters for output csv file
+trackedParamList = ['transA','transB','grouped_gemm','batch_count','m','n','k','alpha','lda','stride_a','beta','ldb','stride_b',
+                    'ldc','stride_c','ldd','stride_d','a_type','b_type','c_type','d_type','compute_type','scaleA','scaleB','scaleC',
+                    'scaleD','activation_type','bias_vector','bias_type','gflops','us']
+
+#d is default dict or contains a superset of trackedParams
+def extractTrackedParams(d):
+    return [d[p] for p in trackedParamList]
+
+def runBenchmark(benchCmd, problemsYaml, out_csv_File = ""):
+
+    csvKeys, benchResults, success = bench.run_yaml(benchCmd, problemsYaml, True)
+
+    content = ''
+    content += ','.join([str(key) for key in csvKeys])+'\n'
+
+    for eachResult in benchResults:
+        extracted = extractTrackedParams(eachResult)
+        content += ','.join([str(e) for e in extracted])+'\n'
+
+    if out_csv_File != "":
+        with open(out_csv_File, 'w') as f:
+            print("\nWriting results to {}".format(out_csv_File))
+            f.write(content)
+    else:
+        print(content)
+
+def command_perf(arguments, problem_folder):
+    """Run bench"""
+
+    if arguments.workspace:
+        print(f'output data to {arguments.workspace}')
+    else:
+        print("Workspace not set. use -w /path/of/workspace")
+        return
+
+    if arguments.benchexe:
+        print(f'running bench executable: {arguments.benchexe}')
+    else:
+        print("bench executable not set. use -benchexe /path/of/bench_executable")
+        return
+
+    if arguments.suite:
+        # TODO: a function to construct problem combinations
+        filenames = [ os.path.join(problem_folder, arguments.suite + '_bench.yaml') ]
+    else:
+        print("test problems not set, use --suite for testing problems")
+        return
+
+    out_folder = arguments.workspace
+    benchCmd = arguments.benchexe
+
+    needExportCSV = (arguments.csv == True) or (arguments.pts == True)
+
+    logging.info("Start bench.")
+
+    for filename in filenames:
+        print("\n==================================\n|| Running benchmarks from {}\n==================================".format(filename))
+        filePrefix = Path(filename).stem
+        subDirectory = os.path.join(out_folder, "hipBLASLt_PTS_Benchmarks_"+filePrefix, arguments.tag)
+        Path(subDirectory).mkdir(parents=True, exist_ok=True)
+
+        # check if we need to output csv files
+        outputName, _ = os.path.splitext(os.path.basename(filename))
+        out_csv_file = os.path.join(subDirectory, outputName+'_benchmark.csv') if needExportCSV else ""
+
+        runBenchmark(benchCmd,
+                     filename,
+                     out_csv_file)
+
+        # check if we need to output other files for pts
+        if arguments.pts == True:
+            # Will only be correct if script is run from directory of the git repo associated
+            # with the hipblaslt-bench executable
+            create_github_file(os.path.join(subDirectory, 'hipBLASLt-commit-hash.txt'))
+            get_machine_specs(os.path.join(subDirectory, 'specs.txt'))
+
+    logging.info("Finish bench.")
+
+
+def main():
+
+    parser = argparse.ArgumentParser(prog='hipblaslt-perf')
+
+    dir_of_this_script = pathlib.Path(os.path.dirname(os.path.realpath(__file__))).resolve()
+    dir_of_this_repo = pathlib.Path(os.path.join(dir_of_this_script, '../../../')).resolve()
+    dir_of_bench_problems = pathlib.Path(os.path.join(dir_of_this_script, 'problems/')).resolve()
+    print(f'dir of this script = {dir_of_this_script}')
+    print(f'dir of this repos = {dir_of_this_repo}')
+    print(f'dir of bench yaml problems = {dir_of_bench_problems}')
+
+    parser.add_argument('-w',
+                        '--workspace',
+                        type=str,
+                        help='workspace folder keeping the perf data',
+                        default=os.path.join(dir_of_this_repo, "hipBlasLt_benchmark/"))
+
+    parser.add_argument('--benchexe',
+                        type=str,
+                        help='hipblaslt-bench executable path',
+                        default=os.path.join(dir_of_this_repo, "build/release/clients/staging/hipblaslt-bench"))
+
+    parser.add_argument('--suite',
+                        type=str,
+                        help='the name test suite: e.g. matmul = matmul_bench.yaml under problems/, and all=all problems under problems/',
+                        default='matmul')
+
+    parser.add_argument('--tag',
+                        type=str,
+                        help='subfolder under workspace, (optional, useful for comparing two commits)',
+                        default='')
+
+    parser.add_argument('--csv',
+                        help='dump result to csv files, default is False',
+                        action='store_true',
+                        default=True)
+
+    parser.add_argument('--pts',
+                        help='dump several required files for pts system: csv, commit-hash, spec, default is False',
+                        action='store_true',
+                        default=False)
+
+    arguments = parser.parse_args()
+
+    command_perf(arguments, dir_of_bench_problems)
+
+    sys.exit(0)
+
+if __name__=='__main__':
+    logging.basicConfig(filename='hipblaslt-perf.log',
+                        format='%(asctime)s %(levelname)s: %(message)s',
+                        level=logging.DEBUG)
+
+    console.setLevel(logging.WARNING)
+    console.setFormatter(logging.Formatter('%(levelname)-8s: %(message)s'))
+    logging.getLogger('').addHandler(console)
+
+    main()
