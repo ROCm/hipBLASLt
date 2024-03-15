@@ -1107,6 +1107,42 @@ void testing_matmul(const Arguments& arg)
     std::vector<std::vector<void*>> dc(block_count, std::vector<void*>(gemm_count));
     std::vector<std::vector<void*>> dd(block_count, std::vector<void*>(gemm_count));
 
+    // Setup amax if needed
+    struct amaxBlocks
+    {
+        int   m, n;
+        void* input;
+        void* scale;
+    };
+    uint8_t*                             dScale = nullptr;
+    std::vector<std::vector<amaxBlocks>> amax;
+    if(((arg.a_type == HIPBLASLT_R_8F_E4M3 && arg.b_type == HIPBLASLT_R_16F)
+        || (arg.a_type == HIPBLASLT_R_16F && arg.b_type == HIPBLASLT_R_8F_E4M3))
+       && HIPBLASLT_COMPUTE_F32)
+    {
+        static_cast<void>(hipMalloc(&dScale, block_count * sizeof(float)));
+        amax.resize(block_count, std::vector<amaxBlocks>(gemm_count));
+        for(int32_t b = 0; b < block_count; b++)
+        {
+            for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+            {
+                if(arg.a_type == HIPBLASLT_R_16F)
+                {
+                    amax[b][gemmIdx].input = (void*)((*dA[gemmIdx]) + b * size_A[gemmIdx]);
+                    amax[b][gemmIdx].m     = A_row[gemmIdx];
+                    amax[b][gemmIdx].n     = A_col[gemmIdx];
+                }
+                else
+                {
+                    amax[b][gemmIdx].input = (void*)((*dB[gemmIdx]) + b * size_B[gemmIdx]);
+                    amax[b][gemmIdx].m     = B_row[gemmIdx];
+                    amax[b][gemmIdx].n     = B_col[gemmIdx];
+                }
+                amax[b][gemmIdx].scale = (void*)((*dScale) + b * sizeof(float));
+            }
+        }
+    }
+
     for(int32_t b = 0; b < block_count; b++)
     {
         gemmVec.push_back(hipblaslt_ext::Gemm(handle,
@@ -1160,15 +1196,33 @@ void testing_matmul(const Arguments& arg)
                     extepilogue[gemmIdx].aux_stride     = stride_e[gemmIdx];
                 }
 
-                extinputs[b][gemmIdx].a        = (void*)((*dA[gemmIdx]) + b * size_A[gemmIdx]);
-                extinputs[b][gemmIdx].b        = (void*)((*dB[gemmIdx]) + b * size_B[gemmIdx]);
-                extinputs[b][gemmIdx].c        = (void*)((*dC[gemmIdx]) + b * size_C[gemmIdx]);
-                extinputs[b][gemmIdx].d        = (void*)((*dD[gemmIdx]) + b * size_D[gemmIdx]);
-                extinputs[b][gemmIdx].alpha    = &h_alpha[gemmIdx];
-                extinputs[b][gemmIdx].beta     = &h_beta[gemmIdx];
-                extinputs[b][gemmIdx].bias     = bias_addr;
-                extinputs[b][gemmIdx].scaleA   = arg.scaleA ? *dScaleA[gemmIdx] : nullptr;
-                extinputs[b][gemmIdx].scaleB   = arg.scaleB ? *dScaleB[gemmIdx] : nullptr;
+                extinputs[b][gemmIdx].a     = (void*)((*dA[gemmIdx]) + b * size_A[gemmIdx]);
+                extinputs[b][gemmIdx].b     = (void*)((*dB[gemmIdx]) + b * size_B[gemmIdx]);
+                extinputs[b][gemmIdx].c     = (void*)((*dC[gemmIdx]) + b * size_C[gemmIdx]);
+                extinputs[b][gemmIdx].d     = (void*)((*dD[gemmIdx]) + b * size_D[gemmIdx]);
+                extinputs[b][gemmIdx].alpha = &h_alpha[gemmIdx];
+                extinputs[b][gemmIdx].beta  = &h_beta[gemmIdx];
+                extinputs[b][gemmIdx].bias  = bias_addr;
+                if(((arg.a_type == HIPBLASLT_R_8F_E4M3 && arg.b_type == HIPBLASLT_R_16F)
+                    || (arg.a_type == HIPBLASLT_R_16F && arg.b_type == HIPBLASLT_R_8F_E4M3))
+                   && HIPBLASLT_COMPUTE_F32)
+                {
+                    if(arg.a_type == HIPBLASLT_R_16F)
+                    {
+                        extinputs[b][gemmIdx].scaleA = amax[b][gemmIdx].input;
+                        extinputs[b][gemmIdx].scaleB = nullptr;
+                    }
+                    else
+                    {
+                        extinputs[b][gemmIdx].scaleA = nullptr;
+                        extinputs[b][gemmIdx].scaleB = amax[b][gemmIdx].input;
+                    }
+                }
+                else
+                {
+                    extinputs[b][gemmIdx].scaleA = arg.scaleA ? *dScaleA[gemmIdx] : nullptr;
+                    extinputs[b][gemmIdx].scaleB = arg.scaleB ? *dScaleB[gemmIdx] : nullptr;
+                }
                 extinputs[b][gemmIdx].scaleC   = arg.scaleC ? *dScaleC[gemmIdx] : nullptr;
                 extinputs[b][gemmIdx].scaleD   = arg.scaleD ? *dScaleD[gemmIdx] : nullptr;
                 extinputs[b][gemmIdx].scaleAux = arg.scaleE ? *dScaleE[gemmIdx] : nullptr;
@@ -2192,14 +2246,15 @@ void testing_matmul(const Arguments& arg)
         int         number_cold_calls = arg.cold_iters;
         int         number_hot_calls  = arg.iters;
 
-        int    flush_iter      = 100000;
-        double flush_time_used = 0;
+        int             flush_iter      = 100000;
+        double          flush_time_used = 0;
         hipDeviceProp_t deviceProps;
         CHECK_HIP_ERROR(hipGetDeviceProperties(&deviceProps, 0));
         if(arg.flush)
         {
             for(int i = 0; i < flush_iter; i++)
-                hipLaunchKernelGGL(flush_icache, dim3(deviceProps.multiProcessorCount*60), dim3(64), 0, stream);
+                hipLaunchKernelGGL(
+                    flush_icache, dim3(deviceProps.multiProcessorCount * 60), dim3(64), 0, stream);
 
             if(arg.use_gpu_timer)
                 CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
@@ -2209,7 +2264,8 @@ void testing_matmul(const Arguments& arg)
                 flush_time_used = get_time_us_sync(stream);
             }
             for(int i = 0; i < flush_iter; i++)
-                hipLaunchKernelGGL(flush_icache, dim3(deviceProps.multiProcessorCount*60), dim3(64), 0, stream);
+                hipLaunchKernelGGL(
+                    flush_icache, dim3(deviceProps.multiProcessorCount * 60), dim3(64), 0, stream);
             if(arg.use_gpu_timer)
             {
                 CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
@@ -2250,9 +2306,22 @@ void testing_matmul(const Arguments& arg)
 
                     for(int i = 0; i < number_hot_calls; i++)
                     {
+                        if(dScale)
+                            static_cast<void>(hipblasltExtAMax(HIPBLASLT_R_16F,
+                                                               HIPBLASLT_R_32F,
+                                                               amax[i % block_count][0].scale,
+                                                               amax[i % block_count][0].input,
+                                                               amax[i % block_count][0].m,
+                                                               amax[i % block_count][0].n,
+                                                               stream));
+
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
                         if(arg.flush)
-                            hipLaunchKernelGGL(flush_icache, dim3(deviceProps.multiProcessorCount*60), dim3(64), 0, stream);
+                            hipLaunchKernelGGL(flush_icache,
+                                               dim3(deviceProps.multiProcessorCount * 60),
+                                               dim3(64),
+                                               0,
+                                               stream);
                     }
                 }
                 else
@@ -2323,7 +2392,11 @@ void testing_matmul(const Arguments& arg)
                                                               stream),
                                               HIPBLAS_STATUS_SUCCESS);
                         if(arg.flush)
-                            hipLaunchKernelGGL(flush_icache, dim3(deviceProps.multiProcessorCount*60), dim3(64), 0, stream);
+                            hipLaunchKernelGGL(flush_icache,
+                                               dim3(deviceProps.multiProcessorCount * 60),
+                                               dim3(64),
+                                               0,
+                                               stream);
                     }
                 }
                 if(arg.use_gpu_timer)
@@ -2573,6 +2646,8 @@ void testing_matmul(const Arguments& arg)
         CHECK_HIP_ERROR(hipFree(it));
     }
 
+    if(dScale != nullptr)
+        CHECK_HIP_ERROR(hipFree(dScale));
     if(dWorkspace != nullptr)
         delete dWorkspace;
     if(userArgs != nullptr)
