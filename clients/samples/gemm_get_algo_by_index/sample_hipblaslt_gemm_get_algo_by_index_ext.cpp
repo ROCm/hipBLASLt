@@ -128,8 +128,12 @@ void simpleGemmGetAlgoByIndexExt(hipblasLtHandle_t  handle,
         std::iota(std::begin(algoIndex), std::end(algoIndex), algoIndexCount);
         algoIndexCount += algoIndexInc;
         std::vector<hipblasLtMatmulHeuristicResult_t> testResults;
-        CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, testResults));
-
+        if(HIPBLAS_STATUS_INVALID_VALUE
+           == hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, testResults))
+        {
+            std::cout << "Indexes are all out of bound." << std::endl;
+            break;
+        }
         bool foundAlgo = false;
         for(size_t i = 0; i < testResults.size(); i++)
         {
@@ -149,11 +153,8 @@ void simpleGemmGetAlgoByIndexExt(hipblasLtHandle_t  handle,
                 }
             }
         }
-
-        if(foundAlgo || (testResults.size() == 0))
-        {
+        if(foundAlgo)
             break;
-        }
     }
 
     if(heuristicResult.empty())

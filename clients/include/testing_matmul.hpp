@@ -1304,7 +1304,11 @@ void testing_matmul_with_bias(const Arguments& arg)
                 algoIndex.resize(1);
                 algoIndex[0] = arg.solution_index;
             }
-            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, tmpAlgo));
+            if(HIPBLAS_STATUS_INVALID_VALUE
+               == hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, tmpAlgo))
+            {
+                break;
+            }
             returnedAlgoCount = tmpAlgo.size();
 
             if(!do_grouped_gemm)
@@ -1463,7 +1467,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                 CHECK_SOLUTION_FOUND(foundAlgo);
                 foundAlgo = true;
             }
-            if(foundAlgo || (tmpAlgo.size() == 0))
+            if(foundAlgo)
             {
                 break;
             }

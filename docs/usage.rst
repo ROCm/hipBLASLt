@@ -736,9 +736,15 @@ Example code
     // Save the index to disk or somewhere else for later use.
 
     // Get the index from previous state.
-    std::vector<int> algoIndex(index);
+    std::vector<int> algoIndex{index};
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResults;
-    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, heuristicResults));
+    // If the index is out of the bound of solutions, getAlgosFromIndex will return HIPBLAS_STATUS_INVALID_VALUE
+    if(HIPBLAS_STATUS_INVALID_VALUE
+        == hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, heuristicResults))
+    {
+        std::cout << "Indexes are all out of bound." << std::endl;
+        break;
+    }
 
 [Grouped Gemm] Fixed MK
 -----------------------

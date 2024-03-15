@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -50,6 +50,12 @@ if( BUILD_WITH_TENSILE )
   endif()
   if(PACKAGE_TENSILE_LIBRARY)
     set(Tensile_Options ${Tensile_Options} GENERATE_PACKAGE)
+  endif()
+  if(Tensile_SEPARATE_ARCHITECTURES)
+    set(Tensile_Options ${Tensile_Options} SEPARATE_ARCHITECTURES)
+  endif()
+  if(Tensile_LAZY_LIBRARY_LOADING)
+    set(Tensile_Options ${Tensile_Options} LAZY_LIBRARY_LOADING)
   endif()
 
   # Add a build target for Tensile kernel library

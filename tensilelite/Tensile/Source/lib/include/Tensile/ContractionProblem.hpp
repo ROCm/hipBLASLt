@@ -86,7 +86,7 @@ namespace Tensile
         int biasDim() const
         {
             return m_biasDim;
-        } 
+        }
         void setActivationEnum(ActivationType activationEnum)
         {
             m_activationType = activationEnum;
@@ -1055,20 +1055,25 @@ namespace Tensile
                            double              beta,
                            size_t              workspaceSize);
 
-        static ContractionProblemGemm createDefaultProblem(bool     transA,
-                                                           bool     transB,
-                                                           DataType typeA,
-                                                           DataType typeB,
-                                                           DataType typeC,
-                                                           DataType typeD,
-                                                           DataType alphaType,
-                                                           DataType betaType,
-                                                           DataType typeComputeInput,
-                                                           DataType typeCompute,
-                                                           double   alpha,
-                                                           double   beta,
-                                                           bool     isGroupedGemm,
-                                                           size_t   maxWorkspaceBytes);
+        static ContractionProblemGemm
+            createDefaultProblem(bool                   transA,
+                                 bool                   transB,
+                                 DataType               typeA,
+                                 DataType               typeB,
+                                 DataType               typeC,
+                                 DataType               typeD,
+                                 DataType               typeAlpha,
+                                 DataType               typeBeta,
+                                 DataType               typeComputeInput,
+                                 DataType               typeCompute,
+                                 double                 alpha,
+                                 double                 beta,
+                                 bool                   useBias,
+                                 bool                   useGradient,
+                                 std::vector<DataType>& biasDataTypeWhiteList,
+                                 std::vector<int>&      biasSrcWhiteList,
+                                 bool                   isGroupedGemm,
+                                 size_t                 maxWorkspaceBytes);
 
     private:
         std::string m_sumNames;
