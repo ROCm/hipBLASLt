@@ -89,6 +89,10 @@ option(BUILD_CODE_COVERAGE "Build hipBLASLt with code coverage enabled" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build hipBLASLt with address sanitizer enabled" OFF)
 # Find CUDA if the user wants a CUDA version.
 option(USE_CUDA "Look for CUDA and use that as a backend if found" OFF)
+# For lazy library loading
+option(Tensile_MERGE_FILES "Tensile to merge kernels and solutions files?" ON)
+option(Tensile_SEPARATE_ARCHITECTURES "Tensile to use GPU architecture specific files?" ON)
+option(Tensile_LAZY_LIBRARY_LOADING "Tensile to load kernels on demand?" ON)
 
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
@@ -163,11 +167,11 @@ else()
     option( Tensile_MERGE_FILES "Tensile to merge kernels and solutions files?" ON )
     option( Tensile_SHORT_FILENAMES "Tensile to use short file names? Use if compiler complains they're too long." OFF )
     option( Tensile_PRINT_DEBUG "Tensile to print runtime debug info?" OFF )
-  
+
     if (NOT Tensile_BUILD_ID)
       set(Tensile_BUILD_ID "sha1" CACHE STRING "Build ID Kind for Tensile" FORCE)
     endif()
-    
+
     set( Tensile_TEST_LOCAL_PATH "" CACHE PATH "Use local Tensile directory instead of fetching a GitHub branch" )
 
     set_property( CACHE Tensile_LOGIC PROPERTY STRINGS aldebaran asm_full asm_lite asm_miopen hip_lite other )
@@ -206,6 +210,16 @@ else()
     # setup hipblaslt defines used for both the library and clients
     if( BUILD_WITH_TENSILE )
         list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=1)
+        if(Tensile_SEPARATE_ARCHITECTURES)
+          list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=1)
+        else()
+          list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=0)
+        endif()
+        if(Tensile_LAZY_LIBRARY_LOADING)
+          list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=1)
+        else()
+          list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=0)
+        endif()
     else()
         list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=0)
     endif()
