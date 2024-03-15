@@ -563,6 +563,17 @@ class AMaxKernelGenerator:
             mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
         elif self.i_type.toChar() == 'S' and self.o_type.toChar() == "H":
             mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
+
+        mod.add(ti.VMovB32(ti.vgpr("Tmp"), 240))
+        mod.add(ti.VCvtU32toF32(ti.vgpr("Tmp"), ti.vgpr("Tmp")))
+        if self.o_type.toChar() == "H":
+            mod.add(ti.VCvtF32toF16(ti.vgpr("Tmp"), ti.vgpr("Tmp")))
+            mod.add(ti.VRcpF16(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.VMulF16(ti.vgpr("Output"), ti.vgpr("Output"), ti.vgpr("Tmp")))
+        elif self.o_type.toChar() == "S":
+            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.vgpr("Tmp")))
+
         mod.add(BufferStorex1(ti.vgpr("Output"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))
         mod.addSpaceLine()
 
