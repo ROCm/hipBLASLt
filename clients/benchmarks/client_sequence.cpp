@@ -474,9 +474,10 @@ int main(int argc, char** argv)
                       << std::endl;
 
             std::vector<int> algoIndex = {l.algo_index};
-            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, tmpResult));
-            if((*l.gemms)[0].isAlgoSupported(tmpResult[0].algo, workspaceSizeInBytes)
-               != HIPBLAS_STATUS_SUCCESS)
+            auto status = hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, tmpResult);
+            if(HIPBLAS_STATUS_INVALID_VALUE == status
+               || (*l.gemms)[0].isAlgoSupported(tmpResult[0].algo, workspaceSizeInBytes)
+                      != HIPBLAS_STATUS_SUCCESS)
             {
                 std::cout << "Error invalid index for layer " << i << "." << std::endl;
                 exit(1);

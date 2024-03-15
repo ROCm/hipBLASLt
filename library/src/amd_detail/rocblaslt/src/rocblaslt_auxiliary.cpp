@@ -1404,10 +1404,7 @@ rocblaslt_status rocblaslt_matmul_get_algos_from_index_cpp(
         status = getSolutionsFromIndex(handle, solutionIndex, heuristicResults, maxWorkspaceSize);
 
         log_api(__func__, "returnAlogCount", heuristicResults.size());
-        if(status != rocblaslt_status_success)
-        {
-            throw status;
-        }
+        return status;
     }
     catch(const rocblaslt_status& status)
     {

@@ -360,9 +360,8 @@ namespace hipblaslt_ext
         * successfully.
         */
         HIPBLASLT_EXPORT
-        hipblasStatus_t run(hipStream_t stream,
-                            hipEvent_t  start = nullptr,
-                            hipEvent_t  stop = nullptr);
+        hipblasStatus_t
+            run(hipStream_t stream, hipEvent_t start = nullptr, hipEvent_t stop = nullptr);
 
         HIPBLASLT_EXPORT GemmType getGemmType();
         HIPBLASLT_EXPORT size_t   getGemmCount();
@@ -953,7 +952,7 @@ namespace hipblaslt_ext
      * heuristicResults.size() > 0.state for the status of the
      * results. \retval HIPBLAS_STATUS_NOT_SUPPORTED     If no heuristic function
      * available for current configuration. \retval HIPBLAS_STATUS_INVALID_VALUE If
-     * no solution is found.
+     * query indexes are all out of bound of solution map.
      */
     HIPBLASLT_EXPORT
     hipblasStatus_t

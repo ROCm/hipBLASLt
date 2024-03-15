@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -1223,20 +1223,25 @@ namespace Tensile
         return rv.str();
     }
 
-    ContractionProblemGemm ContractionProblemGemm::createDefaultProblem(bool     transA,
-                                                                        bool     transB,
-                                                                        DataType typeA,
-                                                                        DataType typeB,
-                                                                        DataType typeC,
-                                                                        DataType typeD,
-                                                                        DataType typeAlpha,
-                                                                        DataType typeBeta,
-                                                                        DataType typeComputeInput,
-                                                                        DataType typeCompute,
-                                                                        double   alpha,
-                                                                        double   beta,
-                                                                        bool     isGroupedGemm,
-                                                                        size_t   maxWorkspaceBytes)
+    ContractionProblemGemm
+        ContractionProblemGemm::createDefaultProblem(bool                   transA,
+                                                     bool                   transB,
+                                                     DataType               typeA,
+                                                     DataType               typeB,
+                                                     DataType               typeC,
+                                                     DataType               typeD,
+                                                     DataType               typeAlpha,
+                                                     DataType               typeBeta,
+                                                     DataType               typeComputeInput,
+                                                     DataType               typeCompute,
+                                                     double                 alpha,
+                                                     double                 beta,
+                                                     bool                   useBias,
+                                                     bool                   useGradient,
+                                                     std::vector<DataType>& biasDataTypeWhiteList,
+                                                     std::vector<int>&      biasSrcWhiteList,
+                                                     bool                   isGroupedGemm,
+                                                     size_t                 maxWorkspaceBytes)
     {
         assert(typeBeta == typeCompute);
         // Tensor descriptors for a, b
@@ -1354,6 +1359,16 @@ namespace Tensile
             problem.setUseDeviceUserArguments(true);
 
         problem.setAlphaRestriction(toScalarValueEnum(alpha));
+
+        // set bias mode
+        if(useBias)
+        {
+            DataType                                biasType = biasDataTypeWhiteList[0];
+            Tensile::ContractionProblemGemm::TENSOR biasSrc
+                = static_cast<Tensile::ContractionProblemGemm::TENSOR>(biasSrcWhiteList[0]);
+            problem.setBias(biasType, 1, 0, useGradient, biasSrc);
+            problem.setParams().setBiasEnum(Tensile::DataType::None);
+        }
 
         // Add problem predicates for CEqualsD
         problem.setCEqualsD(false);

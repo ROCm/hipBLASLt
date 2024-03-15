@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,12 @@
 
 #include <Tensile/MasterSolutionLibrary.hpp>
 #include <Tensile/PlaceholderLibrary.hpp>
-#include <regex>
+//Replace std::regex, as it crashes when matching long lines(GCC Bug #86164).
+#ifdef WIN32
+#include "shlwapi.h"
+#else
+#include <fnmatch.h>
+#endif
 
 namespace Tensile
 {
@@ -68,7 +73,11 @@ namespace Tensile
                     for(auto condition : ctx->preloaded)
                     {
                         std::string pattern = RegexPattern(condition);
-                        if(std::regex_search(lib.filePrefix, std::regex(pattern)))
+#ifdef WIN32
+                        if(PathMatchSpecA(lib.filePrefix.c_str(), pattern.c_str()))
+#else
+                        if(fnmatch(pattern.c_str(), lib.filePrefix.c_str(), 0) == 0)
+#endif
                         {
                             lib.loadPlaceholderLibrary();
                             break;
