@@ -123,6 +123,11 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         {
             return TEST<hipblasLtHalf, hipblasLtHalf, float, float>{}(arg);
         }
+        else if(TiA == HIP_R_16BF && TiB == HIP_R_16BF && To == HIP_R_32F
+                && Tc == HIPBLAS_COMPUTE_32F)
+        {
+            return TEST<hip_bfloat16, hip_bfloat16, float, float>{}(arg);
+        }
         else if(TiA == HIP_R_8F_E4M3_FNUZ && TiB == HIP_R_8F_E4M3_FNUZ && To == HIP_R_32F
                 && Tc == HIPBLAS_COMPUTE_32F)
         {
