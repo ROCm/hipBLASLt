@@ -118,7 +118,8 @@ globalParameters["UnrollLoopEfficiencyEnable"] = False   # if True split(S) MAC&
 ########################################
 globalParameters["CMakeBuildType"] = "Release"            # whether benchmark clients and library client should be release or debug
 globalParameters["PrintSolutionRejectionReason"] = False  # when a solution is marked as invalid, print why
-globalParameters["LibraryFormat"] = "yaml"                # set library backend (either yaml or msgpack)
+globalParameters["LogicFormat"] = "yaml"                  # set library backend (yaml, or json)
+globalParameters["LibraryFormat"] = "yaml"                # set library backend (yaml, or msgpack)
 globalParameters["EmbedLibrary"] = None                   # whether library should be embedded or not
 
 # True/False: CSV will/won't export WinnerGFlops, WinnerTimeUS, WinnerIdx, WinnerName.
@@ -273,6 +274,8 @@ globalParameters["LazyLibraryLoading"] = False # Load library and code object fi
 globalParameters["UseUserArgs"] = False
 
 globalParameters["RotatingBufferSize"] = 0 # Size in MB
+
+globalParameters["BuildIdKind"] = "sha1"
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
@@ -943,9 +946,9 @@ validParameters = {
     # is added (readOffset aware of the pad and adjusts offset value based on this parameter value).
     # Only support LdsBlockSizePerPad >= unrollDepth * BPE
     # 0 means disable LdsBlockSizePerPad
-    "LdsBlockSizePerPadA":         [-1, 0, 64, 128, 256, 512, 1024],
-    "LdsBlockSizePerPadB":         [-1, 0, 64, 128, 256, 512, 1024],
-    "LdsBlockSizePerPadMetadata":  [-1, 0, 64, 128, 256, 512, 1024],
+    "LdsBlockSizePerPadA":         [-1, 0, 64, 128, 256, 512, 1024, 2048],
+    "LdsBlockSizePerPadB":         [-1, 0, 64, 128, 256, 512, 1024, 2048],
+    "LdsBlockSizePerPadMetadata":  [-1, 0, 64, 128, 256, 512, 1024, 2048],
 
     # Transpose LDS format. Local store in coalesced dimension , same as optimized global fetch dimension . applicable only in TLU=0 case for miSIMD(s)
     # -1 : keep LDS layout same as global fetch dimension for both A and B
@@ -1022,6 +1025,9 @@ validParameters = {
 
     # 4:2 Structured Sparse A Matrix, 0=Non Sparse, 1=Sparse Matrix A, 2=Sparse Matrix B
     "Sparse":                      [0, 1, 2],
+
+    # in mix mode F8 need to convert to F16, do this before(0) ds or after(1) ds
+    "ConvertAfterDS":              [False, True],
     }
 
 
@@ -1112,8 +1118,9 @@ defaultBenchmarkCommonParameters = [
     {"ActivationFused":           [ True  ] },
     {"ActivationFuncCall":        [ True  ] },
     {"ActivationAlt":             [ False ] },
-    {"WorkGroupReduction":        [ False ] }
-    ]
+    {"WorkGroupReduction":        [ False ] },
+    {"ConvertAfterDS":            [ False ] }
+]
 
 # dictionary of defaults comprised of default option for each parameter
 defaultSolution = {}

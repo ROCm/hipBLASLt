@@ -785,8 +785,33 @@ class KernelWriter(metaclass=abc.ABCMeta):
         instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
       else:
         instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
-      instPerPackA    = int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack) if not kernel["UnrollMajorLDSA"] else 0
-      instPerPackB    = int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack) if not kernel["UnrollMajorLDSB"] else 0
+      instPerPackA    = 0 if kernel["UnrollMajorLDSA"] else int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
+      instPerPackB    = 0 if kernel["UnrollMajorLDSB"] else int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
+      if kernel["ConvertAfterDS"]:
+         if kernel["ProblemType"]["DataTypeA"].isFloat8():
+             if kernel["UnrollMajorLDSA"]:
+                 instPerPackA = 6 if (self.states.numReadsIterCoalescedA == 1) else 6 * kernel["MIWaveTile"][0]
+             elif self.states.lrvwTileA == 1:
+                 instPerPackA = 8
+             elif self.states.lrvwTileA == 2:
+                 instPerPackA = 16
+             elif self.states.lrvwTileA == 4:
+                 instPerPackA = 36
+             elif self.states.lrvwTileA == 8:
+                 instPerPackA = 76
+
+         if kernel["ProblemType"]["DataTypeB"].isFloat8():
+             if kernel["UnrollMajorLDSB"]:
+                 instPerPackB = 6 if (self.states.numReadsIterCoalescedB == 1) else 6 * kernel["MIWaveTile"][1]
+             elif self.states.lrvwTileB == 1:
+                 instPerPackB = 8
+             elif self.states.lrvwTileB == 2:
+                 instPerPackB = 16
+             elif self.states.lrvwTileB == 4:
+                 instPerPackB = 36
+             elif self.states.lrvwTileB == 8:
+                 instPerPackB = 76
+
       instPerPackM = 0
       if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"] and not kernel["UnrollMajorLDSMetadata"]:
         instPerPackM = 1.5 if self.states.lrvwTileMetadata > 1 and kernel["MIInputPerThreadMetadata"] == 1 else 1
@@ -809,6 +834,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if not packM:
           packM = Module()
         packMItems = packM.flatitems()
+
         if packAItems:
           for j in range(self.states.numReadsIterCoalescedA):
             for n in range(instPerPackA):
@@ -1096,16 +1122,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
           # calculate the data index of this mfma used for A and B
           # if i // kernel["MIWaveTile"][0]==0, mfma will use new A (need to take iu into account)
           # if i % kernel["MIWaveTile"][0]==0, mfma will use new B
-          packAIdx += instPerPackA if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
-          packBIdx += instPerPackB if i % kernel["MIWaveTileA"] == 0 else 0
+          packAIdx += instPerPackA * self.states.numReadsIterCoalescedA if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
+          packBIdx += instPerPackB * self.states.numReadsIterCoalescedB if i % kernel["MIWaveTileA"] == 0 else 0
           if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             if kernel["ProblemType"]["Sparse"] == 2:
               packMIdx += instPerPackM if i % kernel["MIWaveTileA"] == 0 else 0
             else:
               packMIdx += instPerPackM if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
           # blockWidth < 1, means 0.5 or 0.25 (BF,H,Int8)
-          packAIdx = packAIdx if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"] else 0
-          packBIdx = packBIdx if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"] else 0
+          packAIdx = packAIdx if tPA["bpe"] < 4 and (not kernel["UnrollMajorLDSA"] or kernel["ConvertAfterDS"]) else 0
+          packBIdx = packBIdx if tPB["bpe"] < 4 and (not kernel["UnrollMajorLDSB"] or kernel["ConvertAfterDS"]) else 0
           numPack = (packAIdx + packBIdx)
           if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             packMIdx = packMIdx if not kernel["UnrollMajorLDSMetadata"] else 0
@@ -1115,7 +1141,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
           else:
             iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u" %(packAIdx,packBIdx))
           # we put 2 pack in each mfma
-          for j in range(instPerPackA):
+          multipier = self.states.numReadsIterCoalescedA if kernel["ConvertAfterDS"] else 1
+          for j in range(instPerPackA * multipier):
             if packItems:
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
@@ -1124,7 +1151,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
               if packItems:
                 iterCode.add(packItems.pop(0))
                 curPackIdx += 1
-          for j in range(instPerPackB):
+          multipier = self.states.numReadsIterCoalescedB if kernel["ConvertAfterDS"] else 1
+          for j in range(instPerPackB * multipier):
             if packItems:
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
@@ -1135,8 +1163,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
             else:
-              iterCode.add(SNop(waitState=0, comment="VALU packing writes to be consumed by matrix instruction"))
+              iterCode.add(SNop(waitState=1, comment="VALU packing writes to be consumed by matrix instruction"))
               curPackIdx += 1
+              break
         if i == numMfmaPerIter - 1:
           while packItems:
             iterCode.add(packItems.pop(0))
@@ -3048,12 +3077,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # global reads per instruction
     tensorParametersA["nrcvpi"] = int((tensorParametersA["globalReadInstruction"].totalWidth*self.states.bpr)/tensorParametersA["bpeGR"])
     tensorParametersB["nrcvpi"] = int((tensorParametersB["globalReadInstruction"].totalWidth*self.states.bpr)/tensorParametersB["bpeGR"])
-    tensorParametersA["nwcvpi"] = int((tensorParametersA["localWriteInstruction"].totalWidth*self.states.bpr)/tensorParametersA["bpe"])
-    tensorParametersB["nwcvpi"] = int((tensorParametersB["localWriteInstruction"].totalWidth*self.states.bpr)/tensorParametersB["bpe"])
+    tensorParametersA["nwcvpi"] = int((tensorParametersA["localWriteInstruction"].totalWidth*self.states.bpr)/tensorParametersA["bpeDS"])
+    tensorParametersB["nwcvpi"] = int((tensorParametersB["localWriteInstruction"].totalWidth*self.states.bpr)/tensorParametersB["bpeDS"])
 
     if tensorParametersM is not None:
-      tensorParametersM["nrcvpi"] = int((tensorParametersM["globalReadInstruction"].totalWidth*self.states.bpr)/tensorParametersM["bpe"])
-      tensorParametersM["nwcvpi"] = int((tensorParametersM["localWriteInstruction"].totalWidth*self.states.bpr)/tensorParametersM["bpe"])
+      tensorParametersM["nrcvpi"] = int((tensorParametersM["globalReadInstruction"].totalWidth*self.states.bpr)/tensorParametersM["bpeDS"])
+      tensorParametersM["nwcvpi"] = int((tensorParametersM["localWriteInstruction"].totalWidth*self.states.bpr)/tensorParametersM["bpeDS"])
     ####################################
     # VGPR Allocation
     ####################################
@@ -3103,7 +3132,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     numVgprG2Local = 0
     numVgprG2LAllocatedLocal = 0
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
-      bpeMax = max(tensorParametersA["bpeGR"], tensorParametersA["bpe"])
+      bpeMax = tensorParametersA["bpeDS"] if kernel["ConvertAfterDS"] else max(tensorParametersA["bpeGR"], tensorParametersA["bpe"])
       self.states.a.numVgprG2L = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
         kernel["GlobalReadVectorWidthA"] * bpeMax) / (float)(self.states.bpr))
       numVgprG2Local = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
@@ -3126,7 +3155,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     numVgprG2Local = 0
     numVgprG2LAllocatedLocal = 0
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
-      bpeMax = max(tensorParametersB["bpeGR"], tensorParametersB["bpe"])
+      bpeMax = tensorParametersB["bpeDS"] if kernel["ConvertAfterDS"] else max(tensorParametersB["bpeGR"], tensorParametersB["bpe"])
       self.states.b.numVgprG2L = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
         kernel["GlobalReadVectorWidthB"] * bpeMax) / (float)(self.states.bpr))
       numVgprG2Local = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
@@ -3149,9 +3178,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ProblemType"]["Sparse"]:
       if not kernel["DirectToVgprSparseMetadata"]:
         self.states.m.numVgprG2L = roundUp((kernel["NumLoadsCoalescedMetadata"] * kernel["NumLoadsPerpendicularMetadata"] * \
-          kernel["GlobalReadVectorWidthMetadata"] * tensorParametersM["bpe"]) / (float)(self.states.bpr))
+          kernel["GlobalReadVectorWidthMetadata"] * tensorParametersM["bpeDS"]) / (float)(self.states.bpr))
         if self.states.archCaps["HasEccHalf"]:
-          tpM = self.states.bpr if tensorParametersM["bpe"] * vwm < self.states.bpr else tensorParametersM["bpe"] * vwm
+          tpM = self.states.bpr if tensorParametersM["bpeDS"] * vwm < self.states.bpr else tensorParametersM["bpeDS"] * vwm
           self.states.m.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedMetadata"] * kernel["NumLoadsPerpendicularMetadata"] * \
             tpM) / (float)(self.states.bpr))
         # using _ds_store_b8: need one more vgpr space to do lshr
@@ -3272,7 +3301,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if self.states.lrvwTileA > 1:
         numVgprValuPackA = ceil(kernel["VectorWidthA"] * tensorParametersA["bpe"] / self.states.bpr) * kernel["MIWaveTileA"] // kernel["VectorWidthA"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadA"]
       else:
-        numVgprValuPackA = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackA * (int(4/tensorParametersA["bpe"]) - 1)
+        numVgprValuPackA = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackA * (int(4/tensorParametersA["bpeDS"]) - 1)
     vgprIdx += numVgprValuPackA
     self.states.a.startVgprG2L = None
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
@@ -3295,7 +3324,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if self.states.lrvwTileB > 1:
         numVgprValuPackB = ceil(kernel["VectorWidthB"] * tensorParametersB["bpe"] / self.states.bpr) * kernel["MIWaveTileB"] // kernel["VectorWidthB"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadB"]
       else:
-        numVgprValuPackB = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackB * (int(4/tensorParametersB["bpe"]) - 1)
+        numVgprValuPackB = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackB * (int(4/tensorParametersB["bpeDS"]) - 1)
     vgprIdx += numVgprValuPackB
     self.states.b.startVgprG2L = None
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
@@ -3324,6 +3353,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.a.startVgprValuPackTemp = vgprIdx
       self.states.b.startVgprValuPackTemp = vgprIdx
       vgprIdx += 1
+
+    if kernel["ConvertAfterDS"]:
+      self.states.a.startVgprValuCvtTemp = -1
+      self.states.b.startVgprValuCvtTemp = -1
+      if ((tensorParametersA["bpe"] > tensorParametersA["bpeDS"]) and kernel["ProblemType"]["DataTypeA"].is8bitFloat()):
+        self.states.a.startVgprValuCvtTemp = vgprIdx
+      if ((tensorParametersB["bpe"] > tensorParametersB["bpeDS"]) and kernel["ProblemType"]["DataTypeB"].is8bitFloat()):
+        self.states.b.startVgprValuCvtTemp = vgprIdx
+      if self.states.a.startVgprValuCvtTemp != -1 or self.states.b.startVgprValuCvtTemp != -1:
+        vgprIdx += 2
 
     if kernel["ProblemType"]["Sparse"]:
       if kernel["DirectToVgprSparseMetadata"]:
@@ -3865,8 +3904,15 @@ class KernelWriter(metaclass=abc.ABCMeta):
     tP["isA"] = (cM == "A")                                      # is this tensor A
     tP["isB"] = (cM == "B")                                      # is this tensor B
     tP["isM"] = (cM == "Metadata")                               # is this tensor Metadata
-    tP["bpe"] = int(4*kernel["ProblemType"]["DataType"].numRegisters()) if not tP["isM"] else 1
-    tP["bpeGR"] = int(4*kernel["ProblemType"]["DataType%s"%cM].numRegisters()) if not tP["isM"] else 1
+
+    bpe = int(kernel["ProblemType"]["DataType"].numBytes()) if not tP["isM"] else 1
+    bpetc = int(kernel["ProblemType"]["DataType%s"%cM].numBytes()) if not tP["isM"] else 1
+    bpeA = int(kernel["ProblemType"]["DataTypeA"].numBytes()) if not tP["isM"] else 1
+
+    tP["bpe"] = bpe
+    tP["bpeA"]  = (bpeA if kernel["ConvertAfterDS"] else bpe)
+    tP["bpeGR"] = bpetc
+    tP["bpeDS"] = (bpetc if kernel["ConvertAfterDS"] else bpe)
     tP["tensorChar"] = cM                                        # tensor character A/B
     tP["tileIdx"] = kernel["ProblemType"]["Index01%s"%cM]        # is the tile dimension of A the 0th or 1th index, i.e. Aki, tileIdx=0
     tP["tile01Idx"] = 1 if tP["tileIdx"] else 0
@@ -3893,8 +3939,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     tP["wtc"] = itP[cM].writeTileDimComponents                   # write vector components along tile dimension
     tP["idx"] = kernel["ProblemType"]["Index%d"%tP["tensorIdx"]] # index 0 is tile dimension belonging to A. Note 'idx' may not be in tP['ia'].
     tP["NonTemporal"] = kernel["NonTemporal%s"%cM]               # non-temporal read type
-    tP["shiftGR"] = 0 if (tP["bpeGR"] >= tP["bpe"]) else int(tP["glvw"] // 2 * (tP["bpe"] / self.states.bpr))  # Shift global read register for cvt spaces
-    tP["bpeRatio"] = tP["bpe"] // tP["bpeGR"] if tP["bpeGR"] < tP["bpe"] else 1                                # g2lIdx multiplier
+    tP["shiftGR"] = 0 if (tP["bpeGR"] >= tP["bpeDS"]) else int(tP["glvw"] // 2 * (tP["bpeDS"] / self.states.bpr))  # Shift global read register for cvt spaces
+    tP["bpeRatio"] = tP["bpeDS"] // tP["bpeGR"] if tP["bpeGR"] < tP["bpeDS"] else 1                                # g2lIdx multiplier
 
     tP["is_sparse"] = (kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] == 1 and tP["isA"])
     # KernelWriterAssembly
@@ -4631,7 +4677,7 @@ for codeObjectFileName in codeObjectFileNames:
 
   def getLinkCodeObjectArgs(self, objectFileNames, coFileName, *moreArgs):
     return getAsmLinkCodeObjectArgs(globalParameters['AssemblerPath'], \
-      objectFileNames, coFileName, *moreArgs)
+      objectFileNames, coFileName, globalParameters['BuildIdKind'], *moreArgs)
 
   def setTensileInstructions(self, ti):
     self.ti = ti

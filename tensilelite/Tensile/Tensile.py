@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -122,6 +122,8 @@ def addCommonArguments(argParser):
         help="kernels and solutions written to individual files")
     argParser.add_argument("--cxx-compiler", dest="CxxCompiler", choices=["hipcc"], \
         action="store", default="hipcc", help="select which compiler to use")
+    argParser.add_argument("--logic-format", dest="LogicFormat", choices=["yaml", "json"], \
+        action="store", default="yaml", help="select which logic format to use")
     argParser.add_argument("--library-format", dest="LibraryFormat", choices=["yaml", "msgpack"], \
         action="store", default="yaml", help="select which library format to use")
     argParser.add_argument("--client-build-path", default=None)
@@ -235,18 +237,20 @@ def Tensile(userArgs):
     # CxxCompiler and LibraryFormat needs to be updated before assignGlobalParameters.
     if args.CxxCompiler:
         globalParameters['CxxCompiler'] = args.CxxCompiler
+    if args.LogicFormat:
+        globalParameters['LogicFormat'] = args.LogicFormat
     if args.LibraryFormat:
         globalParameters['LibraryFormat'] = args.LibraryFormat
 
     # default config format
     if not altFormat:
-        config = LibraryIO.readYAML(configPaths[0])
+        config = LibraryIO.read(configPaths[0])
     # convert alternate format into default format
     else:
-        base = LibraryIO.readYAML(configPaths[0])
+        base = LibraryIO.read(configPaths[0])
         sizes = []
         if len(configPaths) == 2:
-            sizes = LibraryIO.readYAML(configPaths[1])
+            sizes = LibraryIO.read(configPaths[1])
 
         config = {"GlobalParameters": base.get("GlobalParameters")}
         if "LibraryLogic" in base and len(sizes) > 0:

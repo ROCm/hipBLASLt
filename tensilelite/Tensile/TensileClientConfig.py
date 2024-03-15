@@ -129,7 +129,7 @@ def TensileClientConfig(userArgs):
     args = argParser.parse_args(userArgs)
 
     # loop through all configs and parse out all the data we can
-    configs = [LibraryIO.readYAML(x) for x in args.ConfigYaml]
+    configs = [LibraryIO.read(x) for x in args.ConfigYaml]
 
     globalParams = {}
     problemDict = None

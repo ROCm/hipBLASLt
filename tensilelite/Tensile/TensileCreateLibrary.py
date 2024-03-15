@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -244,7 +244,7 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
       hipFlags = ["--genco", "-D__HIP_HCC_COMPAT_MODE__=1"] #needs to be fixed when Maneesh's change is made available
 
       hipFlags += ['-I', outputPath]
-      hipFlags += ["-Xoffload-linker", "--build-id"]
+      hipFlags += ["-Xoffload-linker", "--build-id=%s"%globalParameters["BuildIdKind"]]
       hipFlags += ['-std=c++17']
       if globalParameters["SaveTemps"]:
         hipFlags += ['--save-temps']
@@ -1246,6 +1246,8 @@ def TensileCreateLibrary():
   argParser.add_argument("--version", help="Version string to embed into library file.")
   argParser.add_argument("--generate-manifest-and-exit",   dest="GenerateManifestAndExit", action="store_true",
                           default=False, help="Output manifest file with list of expected library objects and exit.")
+  argParser.add_argument("--logic-format", dest="LogicFormat", choices=["yaml", "json"], \
+                         action="store", default="yaml", help="select which logic format to use")
   argParser.add_argument("--library-format", dest="LibraryFormat", choices=["yaml", "msgpack"],
                          action="store", default="msgpack", help="select which library format to use")
   argParser.add_argument("--generate-sources-and-exit",   dest="GenerateSourcesAndExit", action="store_true",
@@ -1269,6 +1271,7 @@ def TensileCreateLibrary():
                          help="Generate solution-yaml matching table")
   argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
                          help="Keep debug information for built code objects")
+  argParser.add_argument("--build-id", dest="BuildIdKind", action="store", default="sha1")                         
 
   args = argParser.parse_args()
 
@@ -1294,6 +1297,7 @@ def TensileCreateLibrary():
   arguments["LibraryPrintDebug"] = args.LibraryPrintDebug
   arguments["CodeFromFiles"] = False
   arguments["EmbedLibrary"] = args.EmbedLibrary
+  arguments["LogicFormat"]  = args.LogicFormat
   arguments["LibraryFormat"] = args.LibraryFormat
   if args.no_enumerate:
     arguments["ROCmAgentEnumeratorPath"] = False
@@ -1310,6 +1314,7 @@ def TensileCreateLibrary():
   arguments["PrintLevel"] = args.PrintLevel
   arguments["PrintTiming"] = args.PrintTiming
   arguments["AsmDebug"] = args.AsmDebug
+  arguments["BuildIdKind"] = args.BuildIdKind
 
   for key, value in args.global_parameters:
     arguments[key] = value
@@ -1339,10 +1344,18 @@ def TensileCreateLibrary():
     printExit("--lazy-library-loading requires --merge-files and --separate-architectures enabled")
 
   # Recursive directory search
+  logicExtFormat = ".yaml"
+  if args.LogicFormat == "yaml":
+    pass
+  elif args.LogicFormat == "json":
+    logicExtFormat = ".json"
+  else:
+    printExit("Unrecognized LogicFormat", args.LogicFormat)
+
   logicFiles = []
   for root, dirs, files in os.walk(logicPath):
     logicFiles += [os.path.join(root, f) for f in files
-                       if os.path.splitext(f)[1]==".yaml" \
+                       if os.path.splitext(f)[1]==logicExtFormat \
                        and (any(logicArch in os.path.splitext(f)[0] for logicArch in logicArchs) \
                        or "hip" in os.path.splitext(f)[0]) ]
 

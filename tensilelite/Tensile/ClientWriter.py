@@ -666,7 +666,7 @@ def CreateBenchmarkClientParametersForSizes(libraryRootPath, problemSizes, dataF
       metaDataFilePath = os.path.join(libraryPath, "metadata.yaml")
       if not os.path.exists(metaDataFilePath):
         printExit ("meta data file %s does not exist" % metaDataFilePath)
-      metaData = LibraryIO.readYAML(metaDataFilePath)
+      metaData = LibraryIO.read(metaDataFilePath)
       problemTypeDict = metaData["ProblemType"]
       problemType = ContractionsProblemType.FromOriginalState(problemTypeDict)
 

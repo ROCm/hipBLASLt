@@ -42,7 +42,7 @@ import sys
 
 
 def parseCurrentLibrary(libPath, sizePath):
-    libYaml = LibraryIO.readYAML(libPath)
+    libYaml = LibraryIO.read(libPath)
     # parseLibraryLogicData mutates the original data, so make a copy
     fields = LibraryIO.parseLibraryLogicData(copy.deepcopy(libYaml), libPath)
     (_, _, problemType, solutions, exactLogic, _, _) = fields
@@ -57,7 +57,7 @@ def parseCurrentLibrary(libPath, sizePath):
         for (size, mapping) in exactLogic:
             sizes.append({"Exact": size})
     else:
-        sizes = LibraryIO.readYAML(sizePath)
+        sizes = LibraryIO.read(sizePath)
 
     # remove duplicate solutions and reindex
     solutions = [v1 for i, v1 in enumerate(solutions) if not any(v1 == v2 for v2 in solutions[:i])]
@@ -183,7 +183,7 @@ def TensileRetuneLibrary(userArgs):
         print1(HR)
         print1("# Reading update file from Benchmarking Client")
         updateFile = os.path.join(outPath, "Data", "update.yaml")
-        updateLogic = LibraryIO.readYAML(updateFile)
+        updateLogic = LibraryIO.read(updateFile)
         rawYaml[7] = updateLogic
 
         # write updated library logic (does not overwrite original)

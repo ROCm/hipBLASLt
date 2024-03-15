@@ -544,8 +544,13 @@ namespace Tensile
                 idx++;
             }
         }
+        bool singleWSD = false;
+        if(sizeMapping.globalAccumulation == 1
+           && (problemType.computeType != problemType.dType
+               || problemType.activationType != ActivationType::None))
+            singleWSD = true;
         if(gsu > 1
-           && ((sizeMapping.globalAccumulation == 2)
+           && ((singleWSD || sizeMapping.globalAccumulation == 2)
                || (sizeMapping.globalAccumulation == 3 && !problemType.groupedGemm)))
         {
             args.template append<void const*>("ws_d", (uint8_t*)inputs.ws + workspaceOffsetInByte);
@@ -1381,8 +1386,10 @@ namespace Tensile
             args.template append<uint32_t>(concatenate_if<T_Debug>("size_", i), size);
             i++;
         }
-        uint32_t gsu
-            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+        uint32_t gsu = sizeMapping.globalAccumulation == 1
+                           ? 1
+                           : (problem.getParams().gsu() > 0 ? problem.getParams().gsu()
+                                                            : sizeMapping.globalSplitU);
         args.template append<uint32_t>(concatenate_if<T_Debug>("gsu"), gsu);
         if(useBias)
         {
@@ -2122,8 +2129,11 @@ namespace Tensile
         else
             rv.push_back(generateSingleCall<false>(problem, inputs));
 
-        if((sizeMapping.customKernelName == "" && (sizeMapping.globalAccumulation != 3)) && gsu > 1
-           && sizeMapping.globalAccumulation)
+        if((sizeMapping.customKernelName == "" && sizeMapping.globalAccumulation != 3) && gsu > 1
+           && (sizeMapping.globalAccumulation == 2
+               || (sizeMapping.globalAccumulation == 1
+                   && (problemType.computeType != problemType.dType
+                       || problemType.activationType != ActivationType::None))))
         {
             if(debug)
                 rv.push_back(generateOutputConversionCall<true>(problem, inputs));

@@ -26,6 +26,7 @@
 archStr=$1
 dst=$2
 venv=$3
+build_id_kind=$4
 
 rocm_path=/opt/rocm
 if ! [ -z ${ROCM_PATH+x} ]; then
@@ -72,7 +73,7 @@ for arch in "${archs[@]}"; do
         done
     fi
     wait
-    ${toolchain} -target amdgcn-amdhsa -Xlinker --build-id -o $dst/extop_$arch.co ${objs[@]}
+    ${toolchain} -target amdgcn-amdhsa -Xlinker --build-id=$build_id_kind -o $dst/extop_$arch.co ${objs[@]}
     python3 ./ExtOpCreateLibrary.py --src=$dst --co=$dst/extop_$arch.co --output=$dst --arch=$arch
 done
 
