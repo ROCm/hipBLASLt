@@ -42,6 +42,7 @@
   SetConstStrideB: []
   SilentHighPrecisionAccumulate: false
   StridedBatched: true
+  SupportUserArgs: false
   TLUA: true
   TLUB: false
   Tensor0: 0
@@ -212,6 +213,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -429,6 +431,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -646,6 +649,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -863,6 +867,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -1080,6 +1085,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -1297,6 +1303,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -1520,6 +1527,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -1745,6 +1753,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -1966,6 +1975,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -2184,6 +2194,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -2402,6 +2413,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -2620,6 +2632,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -2838,6 +2851,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -3056,6 +3070,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -3274,6 +3289,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -3492,6 +3508,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: false
       TLUA: true
       TLUB: false
       Tensor0: 0
