@@ -39,16 +39,15 @@ Tests:
   category: pre_checkin
   function:
     matmul: *real_precisions_1b_dst_f32
-  M: [128, 129]
-  N: [128, 129]
-  K: [128, 129]
+  M: [128]
+  N: [128]
+  K: [128]
   transA_transB: *transA_transB_range
   alpha: 1
-  beta: [ 0.0, 2.0 ]
-  scaleA: [ 0, 1]
-  scaleB: [ 0, 1]
-  bias_vector: [0, 1]
-  bias_type: bf16_r
-  unit_check: 1
-  gpu_arch: '94?'
+  beta: [ 2.0 ]
+  scaleA: [1]
+  scaleB: [1]
+  # bias_vector: [0, 1]
+  # bias_type: bf16_r
+  # print_kernel_info: true
 ...

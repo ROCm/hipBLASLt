@@ -15,11 +15,11 @@ benchmarks_list = [
 
 # Path for executable benchmark (new dataset)
 # TODO- root folder in /roblemos/
-path_executable_new_dataset = "/root/repos/hipBLASLt/build/release/clients/staging/rocblas-bench"
+path_executable_new_dataset = "/root/repos/hipBLASLt/build/release/clients/staging/hipblaslt-bench"
 
 # Path for executable benchmark (reference dataset)
 # TODO- root folder in /roblemos/
-path_executable_reference_dataset = "/root/repos/hipBLASLt/build/release/clients/staging/rocblas-bench"
+path_executable_reference_dataset = "/root/repos/hipBLASLt/build/release/clients/staging/hipblaslt-bench"
 
 # Path for script
 path_script = "clients/scripts/pts/problems/"
