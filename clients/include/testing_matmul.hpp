@@ -1912,6 +1912,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                         {
                             heuristicResult.push_back(tmpAlgo[j]);
                             heuristicTuningIndex.push_back(t);
+                            workspace_size = std::max(workspace_size, tmpWorkspaceSize);
                         }
                     }
                 }
