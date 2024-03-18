@@ -42,7 +42,9 @@
 #include "handle.h"
 //#include "tuple_helper.hpp"
 #include "utility.hpp"
+#include <Tensile/ContractionProblem.hpp>
 #include <Tensile/DataTypes.hpp>
+#include <Tensile/Tensile.hpp>
 #include <atomic>
 
 // Return the value category for a value, as a double precision value, such
@@ -287,6 +289,23 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
                                        RocblasltContractionProblem const& problem,
                                        std::shared_ptr<void>              gemmData);
 
+rocblaslt_status runGemmDefault(const rocblaslt_handle       handle,
+                                const rocblaslt_matmul_desc  matmul_descr,
+                                const void*                  A,
+                                const void*                  B,
+                                const void*                  C,
+                                void*                        D,
+                                rocblaslt_matrix_layout      matA,
+                                rocblaslt_matrix_layout      matB,
+                                rocblaslt_matrix_layout      matC,
+                                rocblaslt_matrix_layout      matD,
+                                const void*                  alpha,
+                                const void*                  beta,
+                                const rocblaslt_matmul_algo* algo,
+                                void*                        workspace,
+                                size_t                       workspaceSizeInBytes,
+                                hipStream_t                  stream);
+
 rocblaslt_status gemmCreate(RocblasltContractionProblem const& problem,
                             std::shared_ptr<void>&             gemmData,
                             size_t&                            gemmCount);
@@ -310,7 +329,12 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                                          std::shared_ptr<void>  gemmData,
                                          hipStream_t            stream,
                                          hipEvent_t             start = nullptr,
-                                         hipEvent_t             stop = nullptr);
+                                         hipEvent_t             stop  = nullptr);
+
+rocblaslt_status runGemmDefaultExt(rocblaslt_handle       handle,
+                                   rocblaslt::RocGemmType gemmType,
+                                   std::shared_ptr<void>  gemmData,
+                                   hipStream_t            stream);
 
 rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_handle       handle,
                                                                     rocblaslt::RocGemmType gemmType,
@@ -436,3 +460,66 @@ inline Tensile::DataType hipDataType_to_tensile_type(hipDataType type)
         return Tensile::DataType::None;
     }
 }
+
+inline hipDataType tensile_type_to_hipDatatype(Tensile::DataType type)
+{
+    switch(type)
+    {
+    case Tensile::DataType::Half:
+        return HIP_R_16F;
+    case Tensile::DataType::Float:
+        return HIP_R_32F;
+    case Tensile::DataType::Double:
+        return HIP_R_64F;
+    case Tensile::DataType::BFloat16:
+        return HIP_R_16BF;
+    case Tensile::DataType::Float8:
+        return HIP_R_8F_E4M3_FNUZ;
+    case Tensile::DataType::BFloat8:
+        return HIP_R_8F_E5M2_FNUZ;
+    case Tensile::DataType::Int8:
+        return HIP_R_8I;
+    case Tensile::DataType::Int32:
+        return HIP_R_32I;
+    default:
+        assert(!"tensile_type_to_hipDatatype: non-supported type");
+        return HIPBLASLT_DATATYPE_INVALID;
+    }
+}
+
+inline rocblaslt_compute_type tensile_type_to_rocblaslt_compute_type(Tensile::DataType type)
+{
+    switch(type)
+    {
+    case Tensile::DataType::Float:
+        return rocblaslt_compute_f32;
+    case Tensile::DataType::Double:
+        return rocblaslt_compute_f64;
+    case Tensile::DataType::Int32:
+        return rocblaslt_compute_i32;
+    default:
+        assert(!"tensile_type_to_rocblaslt_compute_type: non-supported type");
+        return rocblaslt_compute_invalid;
+    }
+}
+
+struct TensileDataGemm
+{
+    bool                                   enableEpilogue = true;
+    Tensile::ContractionProblemGemm        problem;
+    Tensile::ContractionInputs             inputs;
+    std::vector<Tensile::KernelInvocation> kernels;
+    int                                    algoIndex = std::numeric_limits<int>::max();
+};
+
+struct TensileDataGroupedGemm
+{
+    bool                                   enableEpilogue = true;
+    Tensile::ContractionProblemGroupedGemm problem;
+    Tensile::ContractionGroupedInputs      inputs;
+    std::vector<Tensile::KernelInvocation> kernels;
+    int                                    algoIndex = std::numeric_limits<int>::max();
+    std::shared_ptr<void>                  hipHostMemory;
+    size_t                                 hipHostMemorySize;
+    bool                                   useUserArgs = false;
+};

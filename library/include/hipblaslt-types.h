@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,9 @@ extern "C" {
 
 /*! \brief Single precision floating point type */
 typedef float hipblasLtFloat;
+
+/*! \brief double precision floating point type */
+typedef double hipblasLtDouble;
 
 #ifdef ROCM_USE_FLOAT16
 typedef _Float16 hipblasLtHalf;
