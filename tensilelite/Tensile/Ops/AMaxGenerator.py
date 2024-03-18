@@ -269,6 +269,12 @@ class AMaxKernelGenerator:
         self.defineVgpr("Value",   self.num_load_count * self.num_load_size, self.num_load_size)
         self.defineVgpr("Tmp",     4, 1)
         if self.is_scale:
+            if self.scale_type == ti.DataType("F8"):
+                self.defineVgpr("FP8Min", 1, 1)
+                self.defineVgpr("FP8Max", 1, 1)
+            elif self.scale_type == ti.DataType("B8"):
+                self.defineVgpr("BF8Min", 1, 1)
+                self.defineVgpr("BF8Max", 1, 1)
             self.defineVgpr("OffsetD", self.num_load_count * self.num_load_size, 1)
             self.defineVgpr("OutputD", self.num_load_count * self.num_load_size, self.num_load_size)
             self.defineVgpr("TmpD",    4, 1)
@@ -349,6 +355,14 @@ class AMaxKernelGenerator:
         mod.addSpaceLine()
 
         mod.add(ti.VMovB32(ti.vgpr("Output"), 0))
+        if self.is_scale:
+            if self.scale_type == ti.DataType("F8"):
+                mod.add(ti.VMovB32(ti.vgpr("FP8Min"), "0xc3700000"))
+                mod.add(ti.VMovB32(ti.vgpr("FP8Max"), "0x43700000"))
+            elif self.scale_type == ti.DataType("B8"):
+                mod.add(ti.VMovB32(ti.vgpr("BF8Min"), "0xc7600000"))
+                mod.add(ti.VMovB32(ti.vgpr("BF8Max"), "0x47600000"))
+        mod.addSpaceLine()
 
         if self.is_scale:
             mod.add(ti.SMovB32(ti.sgpr("DstD+0"), ti.sgpr("AddressOutD+0")))
@@ -358,7 +372,6 @@ class AMaxKernelGenerator:
             for i in range(self.num_load_count * self.num_load_size):
                 mod.add(ti.VMovB32(ti.vgpr(f"OutputD+{i}"), 0))
 
-        mod.addSpaceLine()
         mod.addSpaceLine()
         return mod
 
@@ -407,8 +420,10 @@ class AMaxKernelGenerator:
         if self.is_scale:
             mod.add(ti.VMulF32(ti.vgpr(f"OutputD+{i}"), ti.sgpr("Scale"), ti.vgpr(f"Value+{i}")))
             if self.scale_type == ti.DataType("F8"):
+                mod.add(ti.VMed3F32(dst=ti.vgpr(f"OutputD+{i}"), src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("FP8Min"), src2=ti.vgpr("FP8Max")))
                 mod.add(ti.VCvtPkF32toFP8(ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}")))
             elif self.scale_type == ti.DataType("B8"):
+                mod.add(ti.VMed3F32(dst=ti.vgpr(f"OutputD+{i}"), src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("BF8Min"), src2=ti.vgpr("BF8Max")))
                 mod.add(ti.VCvtPkF32toBF8(ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}")))
 
         return mod
