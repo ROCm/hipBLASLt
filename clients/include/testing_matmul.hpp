@@ -1674,6 +1674,7 @@ void testing_matmul(const Arguments& arg)
                         {
                             heuristicResult.push_back(tmpAlgo[j]);
                             heuristicTuningIndex.push_back(t);
+                            workspace_size = std::max(workspace_size, tmpWorkspaceSize);
                         }
                     }
                 }
