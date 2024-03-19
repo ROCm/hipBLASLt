@@ -24,7 +24,9 @@ endfunction()
 
 function(virtualenv_install)
     virtualenv_create()
-
+    execute_process(
+      COMMAND ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install --upgrade pip
+    )
     message("${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install ${ARGN}")
     execute_process(
       RESULT_VARIABLE rc
