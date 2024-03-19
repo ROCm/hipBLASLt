@@ -178,6 +178,9 @@ namespace
                 if(arg.amaxScaleB)
                     name << "_ASB";
 
+                if(arg.amaxD)
+                    name << "_AMaxD";
+
                 if(arg.grouped_gemm > 0)
                     name << "_GG" << arg.grouped_gemm;
 
