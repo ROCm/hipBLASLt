@@ -151,6 +151,7 @@ struct _rocblaslt_matmul_desc
     void*       scaleD      = nullptr;
     void*       scaleE      = nullptr;
     void*       pointermode = nullptr;
+    void*       amax_ptr    = nullptr;
     hipDataType bias_type   = HIPBLASLT_DATATYPE_INVALID;
     // E
     void*   e        = nullptr;
