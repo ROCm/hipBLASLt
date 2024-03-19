@@ -659,6 +659,23 @@ Tests:
   norm_check: 1
   gpu_arch: '94?'
 
+- name: matmul_real_1b_dst_f8_amaxD
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_dst_f8
+  M: [127, 129]
+  N: [127, 129]
+  K: [127, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0]
+  scaleA: [1]
+  scaleB: [1]
+  scaleD: [1]
+  amaxD: [1]
+  unit_check: 1
+  gpu_arch: '94?'
+
 - name: matmul_real_1b_dst_bf8_SCDInt1
   category: pre_checkin
   function:
@@ -1194,7 +1211,7 @@ Tests:
   unit_check: 1
   gpu_arch: '94?'
 
-- name: matmul_gemm_amax_mix_precisions_fp8
+- name: matmul_gemm_amaxAB_mix_precisions_fp8
   category: pre_checkin
   function:
     matmul: *real_mix_precisions_fp8
