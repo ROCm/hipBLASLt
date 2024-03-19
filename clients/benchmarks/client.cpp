@@ -479,6 +479,10 @@ try
          bool_switch(&arg.amaxScaleB)->default_value(false),
          "Apply scale for B buffer by abs max of B buffer")
 
+        ("amaxD",
+         bool_switch(&arg.amaxD)->default_value(false),
+         "Output Amax of intermediate D matrix")
+
         ("use_e",
          bool_switch(&arg.use_e)->default_value(false),
          "Apply AUX output/ gradient input")

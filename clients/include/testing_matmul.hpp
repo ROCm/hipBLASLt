@@ -75,6 +75,7 @@ void epilogue_func(int64_t m,
                    Ti*     in,
                    To*     out,
                    Tc*     out_raw,
+                   Tc*     amaxD,
                    To*     e,
                    Tc      scaleD,
                    Tc      scaleE,
@@ -86,9 +87,18 @@ void epilogue_func(int64_t m,
                    bool    gradient)
 {
     auto saturate_o = [](Tact val) { return static_cast<To>(val); };
-
     for(int i = 0; i < m; i++)
     {
+        if(amaxD != nullptr)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                auto pos = j * ld + i;
+                *amaxD   = *amaxD > fabs(static_cast<Tc>(*(in + pos)))
+                               ? *amaxD
+                               : fabs(static_cast<Tc>(*(in + pos)));
+            }
+        }
         Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
 #pragma omp parallel for
         for(int j = 0; j < n; j++)
@@ -117,6 +127,7 @@ void epilogue_func(int64_t m,
                    Ti*     in,
                    To*     out,
                    Tc*     out_raw,
+                   Tc*     amaxD,
                    To*     e,
                    Tc      scaleD,
                    Tc      scaleE,
@@ -128,6 +139,16 @@ void epilogue_func(int64_t m,
 
     for(int i = 0; i < m; i++)
     {
+        if(amaxD != nullptr)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                auto pos = j * ld + i;
+                *amaxD   = *amaxD > fabs(static_cast<Tc>(*(in + pos)))
+                               ? *amaxD
+                               : fabs(static_cast<Tc>(*(in + pos)));
+            }
+        }
         Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
 #pragma omp parallel for
         for(int j = 0; j < n; j++)
@@ -259,7 +280,7 @@ void copy_gemm_to_host(hipStream_t                     stream,
     }
 }
 
-template <typename To, typename Tbias>
+template <typename To, typename Tc, typename Tbias>
 void check(hipStream_t                         stream,
            const Arguments&                    arg,
            const uint32_t&                     gemm_count,
@@ -274,6 +295,9 @@ void check(hipStream_t                         stream,
            std::vector<host_vector<To>*>&      hD_gold,
            std::vector<host_vector<To>*>&      hD_1,
            std::vector<device_vector<To>*>&    dD,
+           std::vector<host_vector<Tc>*>&      hAmaxD_gold,
+           std::vector<host_vector<Tc>*>&      hAmaxD,
+           std::vector<device_vector<Tc>*>&    dAmaxD,
            std::vector<host_vector<To>*>&      hE_gold,
            std::vector<host_vector<To>*>&      hE,
            std::vector<device_vector<To>*>&    dE,
@@ -290,6 +314,10 @@ void check(hipStream_t                         stream,
     {
         if(!arg.gradient && arg.use_e)
             CHECK_HIP_ERROR(hE[gemmIdx]->transfer_from(*(dE[gemmIdx])));
+        if(arg.amaxD)
+        {
+            CHECK_HIP_ERROR(hAmaxD[gemmIdx]->transfer_from(*(dAmaxD[gemmIdx])));
+        }
         if(arg.gradient && arg.bias_vector)
         {
             CHECK_HIP_ERROR(hBias[gemmIdx]->transfer_from(*(dBias[gemmIdx])));
@@ -316,6 +344,30 @@ void check(hipStream_t                         stream,
                                        *(hD_gold[gemmIdx]),
                                        *(hD_1[gemmIdx]),
                                        num_batches[gemmIdx]);
+            }
+            if(arg.amaxD)
+            {
+                if(tol[gemmIdx] != 0)
+                {
+                    near_check_general<Tc>(1,
+                                           1,
+                                           1,
+                                           1,
+                                           *(hAmaxD_gold[gemmIdx]),
+                                           *(hAmaxD[gemmIdx]),
+                                           num_batches[gemmIdx],
+                                           tol[gemmIdx]);
+                }
+                else
+                {
+                    unit_check_general<Tc>(1,
+                                           1,
+                                           1,
+                                           1,
+                                           *(hAmaxD_gold[gemmIdx]),
+                                           *(hAmaxD[gemmIdx]),
+                                           num_batches[gemmIdx]);
+                }
             }
             if(!arg.gradient && arg.use_e)
             {
@@ -381,6 +433,20 @@ void check(hipStream_t                         stream,
             if(arg.norm_check_assert)
                 CHECK_SUCCESS(norm_check<To>(norm_error));
 
+            if(arg.amaxD)
+            {
+                double norm_error = std::abs(norm_check_general<Tc>('F',
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    1,
+                                                                    *(hAmaxD_gold[gemmIdx]),
+                                                                    *(hAmaxD[gemmIdx]),
+                                                                    num_batches[gemmIdx]));
+                hipblaslt_error += norm_error;
+                if(arg.norm_check_assert)
+                    CHECK_SUCCESS(norm_check<Tc>(norm_error));
+            }
             if(!arg.gradient && arg.use_e)
             {
                 double norm_error = std::abs(norm_check_general<To>('F',
@@ -525,7 +591,8 @@ void testing_matmul_with_bias(const Arguments& arg)
     std::vector<device_vector<TiB>*>    dB(gemm_count);
     std::vector<device_vector<To>*>     dC(gemm_count), dD(gemm_count);
     std::vector<device_vector<Talpha>*> dScaleAlphaVec(gemm_count), dScaleA(gemm_count),
-        dScaleB(gemm_count), dScaleC(gemm_count), dScaleD(gemm_count), dScaleE(gemm_count);
+        dScaleB(gemm_count), dScaleC(gemm_count), dScaleD(gemm_count), dScaleE(gemm_count),
+        dAmaxD(gemm_count);
     std::vector<device_vector<To>*>    dE(gemm_count);
     std::vector<device_vector<Tbias>*> dBias(gemm_count);
 
@@ -534,7 +601,8 @@ void testing_matmul_with_bias(const Arguments& arg)
     std::vector<host_vector<To>*>     hC(gemm_count), hD_gold(gemm_count), hD_1(gemm_count);
     std::vector<host_vector<Talpha>*> hD_gold_epl(gemm_count), hScaleAlphaVec(gemm_count),
         hD_gold_ScaleAlpha(gemm_count), hBias_gold_epl(gemm_count), hScaleA(gemm_count),
-        hScaleB(gemm_count), hScaleC(gemm_count), hScaleD(gemm_count), hScaleE(gemm_count);
+        hScaleB(gemm_count), hScaleC(gemm_count), hScaleD(gemm_count), hScaleE(gemm_count),
+        hAmaxD_gold(gemm_count), hAmaxD(gemm_count);
     std::vector<host_vector<To>*>    hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
     std::vector<void*>               alpha_in(gemm_count);
     std::vector<host_vector<Tbias>*> hBias(gemm_count), hBias_gold(gemm_count);
@@ -816,6 +884,12 @@ void testing_matmul_with_bias(const Arguments& arg)
             dScaleD[i] = new device_vector<Talpha>(1, 1, HMM);
             CHECK_DEVICE_ALLOCATION(dScaleD[i]->memcheck());
         }
+        if(arg.amaxD)
+        {
+            epilogue_on[i] = true;
+            dAmaxD[i]      = new device_vector<Talpha>(1, 1, HMM);
+            CHECK_DEVICE_ALLOCATION(dAmaxD[i]->memcheck());
+        }
         if(arg.scaleE)
         {
             dScaleE[i] = new device_vector<Talpha>(1, 1, HMM);
@@ -843,6 +917,11 @@ void testing_matmul_with_bias(const Arguments& arg)
             hScaleC[i] = new host_vector<Talpha>(1);
         if(arg.scaleD)
             hScaleD[i] = new host_vector<Talpha>(1);
+        if(arg.amaxD)
+        {
+            hAmaxD_gold[i] = new host_vector<Talpha>(1);
+            hAmaxD[i]      = new host_vector<Talpha>(1);
+        }
         if(arg.scaleE)
             hScaleE[i] = new host_vector<Talpha>(1);
 
@@ -961,6 +1040,9 @@ void testing_matmul_with_bias(const Arguments& arg)
                 hipblaslt_init<Talpha>(*hScaleD[i], 1, 1, 1);
             }
         }
+
+        if(arg.amaxD)
+            hipblaslt_init_zero<Talpha>(*hAmaxD_gold[i], 1, 1, 1);
 
         if(arg.scaleE)
             hipblaslt_init<Talpha>(*hScaleE[i], 1, 1, 1);
@@ -1103,6 +1185,13 @@ void testing_matmul_with_bias(const Arguments& arg)
             void* scaleD_addr = *dScaleD[i];
             CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
                 matmul[0][i], HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, &scaleD_addr, sizeof(void*)));
+        }
+
+        if(arg.scaleD)
+        {
+            void* amaxD_addr = *dAmaxD[i];
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+                matmul[0][i], HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER, &amaxD_addr, sizeof(void*)));
         }
 
         if(arg.scaleE)
@@ -1903,10 +1992,11 @@ void testing_matmul_with_bias(const Arguments& arg)
                 }
             }
 
-#define epilogue_param                                                                  \
-    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos,                \
-        *(hD_gold[gemmIdx]) + pos, *(hBias_gold_epl[gemmIdx]) + pos, ePos, scaleDValue, \
-        scaleEValue, applyBias
+#define epilogue_param                                                                     \
+    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos,                   \
+        *(hD_gold[gemmIdx]) + pos, *(hBias_gold_epl[gemmIdx]) + pos,                       \
+        arg.amaxD ? *(hAmaxD_gold[gemmIdx]) + 0 : nullptr, ePos, scaleDValue, scaleEValue, \
+        applyBias
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
             auto alpha    = h_alpha[gemmIdx];
@@ -1922,50 +2012,25 @@ void testing_matmul_with_bias(const Arguments& arg)
             {
                 if(epilogue_on[gemmIdx])
                 {
-                    if(arg.scaleAlpha_vector)
-                    {
-                        cblas_gemm<TiA, TiB, Talpha, Talpha, Tci>(
-                            transA,
-                            transB,
-                            M[gemmIdx],
-                            N[gemmIdx],
-                            K[gemmIdx],
-                            alpha,
-                            *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
-                            lda[gemmIdx],
-                            *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
-                            ldb[gemmIdx],
-                            betaTemp,
-                            *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
-                            ldd[gemmIdx],
-                            *(hScaleAlphaVec[gemmIdx]) + 0,
-                            scaleAValue,
-                            scaleBValue,
-                            1,
-                            false);
-                    }
-                    else
-                    {
-                        cblas_gemm<TiA, TiB, Talpha, Talpha, Tci>(
-                            transA,
-                            transB,
-                            M[gemmIdx],
-                            N[gemmIdx],
-                            K[gemmIdx],
-                            alpha,
-                            *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
-                            lda[gemmIdx],
-                            *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
-                            ldb[gemmIdx],
-                            betaTemp,
-                            *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
-                            ldd[gemmIdx],
-                            nullptr,
-                            scaleAValue,
-                            scaleBValue,
-                            1,
-                            false);
-                    }
+                    cblas_gemm<TiA, TiB, Talpha, Talpha, Tci>(
+                        transA,
+                        transB,
+                        M[gemmIdx],
+                        N[gemmIdx],
+                        K[gemmIdx],
+                        alpha,
+                        *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
+                        lda[gemmIdx],
+                        *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
+                        ldb[gemmIdx],
+                        betaTemp,
+                        *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
+                        ldd[gemmIdx],
+                        arg.scaleAlpha_vector ? *(hScaleAlphaVec[gemmIdx]) + 0 : nullptr,
+                        scaleAValue,
+                        scaleBValue,
+                        1,
+                        false);
                     auto pos    = stride_d[gemmIdx] * batchIdx;
                     auto hEInst = arg.gradient ? hE : hE_gold;
                     auto ePos = (hEInst[gemmIdx] == nullptr) ? nullptr : (*(hEInst[gemmIdx]) + pos);
@@ -2167,7 +2232,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             }
         }
 
-        double               hipblaslt_error = 0.0;
+        double              hipblaslt_error = 0.0;
         std::vector<double> tol(gemm_count);
         if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
            && sizeof(TiB) == 2)
@@ -2194,6 +2259,9 @@ void testing_matmul_with_bias(const Arguments& arg)
                   hD_gold,
                   hD_1,
                   dD,
+                  hAmaxD_gold,
+                  hAmaxD,
+                  dAmaxD,
                   hE_gold,
                   hE,
                   dE,
@@ -2491,7 +2559,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                 }
             }
 
-            double               hipblaslt_error = 0.0;
+            double              hipblaslt_error = 0.0;
             std::vector<double> tol(gemm_count);
             if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
                && sizeof(TiB) == 2)
@@ -2516,6 +2584,9 @@ void testing_matmul_with_bias(const Arguments& arg)
                       hD_gold,
                       hD_1,
                       dD,
+                      hAmaxD_gold,
+                      hAmaxD,
+                      dAmaxD,
                       hE_gold,
                       hE,
                       dE,
@@ -2664,6 +2735,12 @@ void testing_matmul_with_bias(const Arguments& arg)
         {
             delete hScaleD[i];
             delete dScaleD[i];
+        }
+        if(arg.amaxD)
+        {
+            delete hAmaxD_gold[i];
+            delete hAmaxD[i];
+            delete dAmaxD[i];
         }
         if(arg.scaleE)
         {
