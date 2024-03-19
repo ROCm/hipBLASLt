@@ -2611,7 +2611,14 @@ class KernelWriterAssembly(KernelWriter):
             or isPackedIndex(kernel, idx):
           stride = self.strideRef(tc,idx)
           size =   self.sizeRef(idx)
-          module.add(SSubU32(dst=sgpr(stmp), src0=size, src1=0x1, comment="(size-1)"))
+          # The sizeL of a structure sparsity 2:4 matrix is half of the dense matrix.
+          if (idx in kernel["ProblemType"]["IndicesSummation"]) and     \
+             ((tP["isA"] and kernel["ProblemType"]["Sparse"] == 1) or   \
+             (tP["isB"] and kernel["ProblemType"]["Sparse"] == 2)) :
+            module.add(SLShiftRightB32(dst=sgpr(stmp), src=size, shiftHex=0x1, comment="(size/2)"))
+            module.add(SSubU32(dst=sgpr(stmp), src0=sgpr(stmp), src1=0x1, comment="(size/2-1)"))
+          else:
+            module.add(SSubU32(dst=sgpr(stmp), src0=size, src1=0x1, comment="(size-1)"))
           module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp), sgpr(stmp+1), stride, \
                       sgpr(stmp), "stride x (size-1)"))
           module.add(SAddU32(dst=sgpr(tensor2dSize0), src0=sgpr(tensor2dSize0), src1=sgpr(stmp+0), comment="sum tensor size"))
