@@ -170,7 +170,7 @@ def exportBenchmarkCVS(benchCmd, problemsYaml, samples, outputFile):
 
 def main(args):
     if len(args) < 4:
-        print('Usage:\n\tpython3 write_pts_report.py bench_executable path tag benchfile1 benchfile2...')
+        print('Usage:\n\tpython3 bench_pts_data.py bench_executable path tag benchfile1 benchfile2...')
         return 0
 
     benchCmd  = args[0]
