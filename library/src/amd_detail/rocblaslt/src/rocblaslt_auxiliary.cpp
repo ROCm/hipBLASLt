@@ -788,6 +788,15 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
+            case ROCBLASLT_MATMUL_DESC_AMAX_D_POINTER:
+                if(sizeof(void*) <= sizeInBytes)
+                    memcpy(&matmulDesc->amax_ptr, buf, sizeof(void*));
+                else
+                {
+                    log_error(__func__, "invalid e buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
             default:
                 log_error(__func__, "invalid attribute", matmulAttr);
                 return rocblaslt_status_invalid_value;
@@ -924,6 +933,16 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 memcpy(buf, &matmulDesc->bias_type, sizeof(int32_t));
+                break;
+            case ROCBLASLT_MATMUL_DESC_AMAX_D_POINTER:
+                if(sizeWritten)
+                    *sizeWritten = sizeof(void*);
+                if(sizeInBytes < sizeof(void*))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->amax_ptr, sizeof(void*));
                 break;
             default:
                 log_error(__func__, "invalid attribute", matmulAttr);
@@ -1217,7 +1236,12 @@ rocblaslt_status
         hipDataType            d_type       = matD->type;
         rocblaslt_compute_type compute_type = matmul_desc->compute_type;
         auto&                  tensile_data = matmul_desc->m_data;
-
+        if(matmul_desc->amax_ptr != nullptr
+           && (matD->type == HIP_R_8F_E4M3_FNUZ || matD->type == HIP_R_8F_E5M2_FNUZ))
+        {
+            matC->type = HIP_R_32F;
+            matD->type = HIP_R_32F;
+        }
         int8_t alpha[16] = {0};
         int8_t beta[16]  = {0};
         assignAlphaBeta1(compute_type, (void*)alpha, (void*)beta);
@@ -1274,6 +1298,37 @@ rocblaslt_status
                 }
 
                 log_api(__func__, "final returnAlogCount", *returnAlgoCount);
+            }
+        }
+
+        if(matmul_desc->amax_ptr != nullptr
+           && (d_type == HIP_R_8F_E4M3_FNUZ || d_type == HIP_R_8F_E5M2_FNUZ)
+           && *returnAlgoCount >= 1)
+        {
+
+            size_t amax_workspace_size = matD->m * matD->n * 4; //only support fp32 D temp
+            int    new_returnAlgoCount = *returnAlgoCount;
+            //reset C D type
+            matC->type = c_type;
+            matD->type = d_type;
+            //log_api(__func__, "matD->type ", matD->type);
+
+            for(int i = 0; i < *returnAlgoCount; i++)
+            {
+                heuristicResultsArray[i].workspaceSize
+                    = heuristicResultsArray[i].workspaceSize + amax_workspace_size;
+                if(pref->max_workspace_bytes < heuristicResultsArray[i].workspaceSize)
+                {
+                    *returnAlgoCount = 0;
+                    log_api(__func__, "max workspace size is not enough for amax");
+                    break;
+                }
+            }
+
+            if(matD->ld != matD->m || matD->batch_count > 1)
+            {
+                log_api(__func__, "Amax doesn't support ld != m and multiple batch so far.");
+                *returnAlgoCount = 0;
             }
         }
 

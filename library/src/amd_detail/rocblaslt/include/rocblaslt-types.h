@@ -248,17 +248,19 @@ typedef enum rocblaslt_status_
  */
 typedef enum rocblaslt_compute_type_
 {
-    rocblaslt_compute_f16           = 0,    /**< 16-bit floating-point precision. */
-    rocblaslt_compute_f16_pedantic  = 1,    /**< compute will be exactly 16-bit precision */
-    rocblaslt_compute_f32           = 2,    /**< 32-bit floating-point precision. */
-    rocblaslt_compute_f32_pedantic  = 3,    /**< compute will be exactly 32-bit precision */
-    rocblaslt_compute_f32_fast_f16  = 4,    /**< F16 compute for 16-bit input and 32-bit output matrices */
-    rocblaslt_compute_f32_fast_bf16 = 5,    /**< BF16 compute for 16-bit input and 32-bit output matrices */
-    rocblaslt_compute_f32_fast_xf32 = 6,    /**< XF32 compute for 32-bit input and output matrices */
-    rocblaslt_compute_f64           = 7,    /**< 64-bit floating-point precision. */
-    rocblaslt_compute_f64_pedantic  = 8,    /**< compute will be exactly 64-bit precision */
-    rocblaslt_compute_i32           = 9,    /**< 32-bit integer precision. */
-    rocblaslt_compute_i32_pedantic  = 10,   /**< compute will be exactly 32-bit integer precision */
+    rocblaslt_compute_f16          = 0, /**< 16-bit floating-point precision. */
+    rocblaslt_compute_f16_pedantic = 1, /**< compute will be exactly 16-bit precision */
+    rocblaslt_compute_f32          = 2, /**< 32-bit floating-point precision. */
+    rocblaslt_compute_f32_pedantic = 3, /**< compute will be exactly 32-bit precision */
+    rocblaslt_compute_f32_fast_f16
+    = 4, /**< F16 compute for 16-bit input and 32-bit output matrices */
+    rocblaslt_compute_f32_fast_bf16
+    = 5, /**< BF16 compute for 16-bit input and 32-bit output matrices */
+    rocblaslt_compute_f32_fast_xf32 = 6, /**< XF32 compute for 32-bit input and output matrices */
+    rocblaslt_compute_f64           = 7, /**< 64-bit floating-point precision. */
+    rocblaslt_compute_f64_pedantic  = 8, /**< compute will be exactly 64-bit precision */
+    rocblaslt_compute_i32           = 9, /**< 32-bit integer precision. */
+    rocblaslt_compute_i32_pedantic  = 10, /**< compute will be exactly 32-bit integer precision */
 } rocblaslt_compute_type;
 
 /*! \ingroup types_module
@@ -322,6 +324,7 @@ typedef enum rocblaslt_matmul_desc_attributes_
     ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD            = 11,
     ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE  = 12,
     ROCBLASLT_MATMUL_DESC_POINTER_MODE               = 13,
+    ROCBLASLT_MATMUL_DESC_AMAX_D_POINTER             = 14,
     ROCBLASLT_MATMUL_DESC_MAX                        = 101
 } rocblaslt_matmul_desc_attributes;
 

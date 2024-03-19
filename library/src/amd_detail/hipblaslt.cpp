@@ -26,6 +26,7 @@
 
 #include "hipblaslt.h"
 #include "exceptions.hpp"
+#include "hipblaslt-ext-op.h"
 #include "hipblaslt_internal.hpp"
 
 #include <hip/hip_runtime_api.h>
@@ -399,22 +400,84 @@ hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
                                 hipStream_t                  stream)
 try
 {
-    return RocBlasLtStatusToHIPStatus(rocblaslt_matmul((rocblaslt_handle)handle,
-                                                       (rocblaslt_matmul_desc)matmul_descr,
-                                                       alpha,
-                                                       A,
-                                                       (rocblaslt_matrix_layout)matA,
-                                                       B,
-                                                       (rocblaslt_matrix_layout)matB,
-                                                       beta,
-                                                       C,
-                                                       (rocblaslt_matrix_layout)matC,
-                                                       D,
-                                                       (rocblaslt_matrix_layout)matD,
-                                                       (const rocblaslt_matmul_algo*)algo,
-                                                       workspace,
-                                                       workspaceSizeInBytes,
-                                                       stream));
+    hipblasStatus_t return_status = HIPBLAS_STATUS_SUCCESS;
+
+    if(((rocblaslt_matmul_desc)matmul_descr)->amax_ptr == nullptr)
+    {
+        return_status
+            = RocBlasLtStatusToHIPStatus(rocblaslt_matmul((rocblaslt_handle)handle,
+                                                          (rocblaslt_matmul_desc)matmul_descr,
+                                                          alpha,
+                                                          A,
+                                                          (rocblaslt_matrix_layout)matA,
+                                                          B,
+                                                          (rocblaslt_matrix_layout)matB,
+                                                          beta,
+                                                          C,
+                                                          (rocblaslt_matrix_layout)matC,
+                                                          D,
+                                                          (rocblaslt_matrix_layout)matD,
+                                                          (const rocblaslt_matmul_algo*)algo,
+                                                          workspace,
+                                                          workspaceSizeInBytes,
+                                                          stream));
+    }
+    else //Amax path
+    {
+        rocblaslt_matrix_layout tmp_matC = (rocblaslt_matrix_layout)matC;
+        rocblaslt_matrix_layout tmp_matD = (rocblaslt_matrix_layout)matD;
+        size_t amax_workspace_size       = tmp_matD->m * tmp_matD->n * 4; //only support fp32 D temp
+        void*  scaleD                    = ((rocblaslt_matmul_desc)matmul_descr)->scaleD;
+        if(!(tmp_matD->type == HIP_R_8F_E4M3_FNUZ || tmp_matD->type == HIP_R_8F_E5M2_FNUZ)
+           || tmp_matD->m != tmp_matD->ld || *(float*)beta != 0 || tmp_matD->batch_count > 1
+           || workspaceSizeInBytes < amax_workspace_size || scaleD == nullptr)
+            return HIPBLAS_STATUS_INTERNAL_ERROR;
+        hipDataType c_type                            = tmp_matD->type;
+        hipDataType d_type                            = tmp_matD->type;
+        void*       D_TEMP                            = workspace;
+        tmp_matC->type                                = HIP_R_32F;
+        tmp_matD->type                                = HIP_R_32F;
+        ((rocblaslt_matmul_desc)matmul_descr)->scaleD = nullptr;
+        char* new_workspace                           = (char*)workspace;
+        new_workspace += amax_workspace_size;
+        workspaceSizeInBytes -= amax_workspace_size;
+        return_status
+            = RocBlasLtStatusToHIPStatus(rocblaslt_matmul((rocblaslt_handle)handle,
+                                                          (rocblaslt_matmul_desc)matmul_descr,
+                                                          alpha,
+                                                          A,
+                                                          (rocblaslt_matrix_layout)matA,
+                                                          B,
+                                                          (rocblaslt_matrix_layout)matB,
+                                                          beta,
+                                                          C,
+                                                          (rocblaslt_matrix_layout)matC,
+                                                          D_TEMP,
+                                                          (rocblaslt_matrix_layout)matD,
+                                                          (const rocblaslt_matmul_algo*)algo,
+                                                          new_workspace,
+                                                          workspaceSizeInBytes,
+                                                          stream));
+        //reset matD type
+        tmp_matC->type                                = c_type;
+        tmp_matD->type                                = d_type;
+        ((rocblaslt_matmul_desc)matmul_descr)->scaleD = scaleD;
+        if(return_status != HIPBLAS_STATUS_SUCCESS)
+            return return_status;
+
+        return_status = hipblasltExtAMaxWithScale(HIP_R_32F,
+                                                  HIP_R_32F,
+                                                  d_type,
+                                                  ((rocblaslt_matmul_desc)matmul_descr)->amax_ptr,
+                                                  D,
+                                                  D_TEMP,
+                                                  scaleD,
+                                                  tmp_matD->m,
+                                                  tmp_matD->n,
+                                                  stream);
+    }
+
+    return return_status;
 }
 catch(...)
 {

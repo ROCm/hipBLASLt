@@ -56,7 +56,7 @@ int main()
      *  c = d = (m, n). ldc = ldd = m
      */
     Runner<hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, float> runner(
-        1024, 512, 1024, 1, 1.f, 1.f, 32 * 1024 * 1024);
+        1024, 512, 1024, 1, 1.f, 0.f, 32 * 1024 * 1024);
 
     runner.run([&runner] {
         simpleGemmAmaxWithScale(runner.handle,
@@ -101,11 +101,9 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
     void *out_tmp, *in_scale, *out_amax; // host
     void *d_out_tmp, *d_in_scale, *d_out_amax; // device
 
-    CHECK_HIP_ERROR(hipMalloc(&d_out_tmp, m * n * sizeof(float)));
     CHECK_HIP_ERROR(hipMalloc(&d_in_scale, 1 * sizeof(float)));
     CHECK_HIP_ERROR(hipMalloc(&d_out_amax, 1 * sizeof(float)));
 
-    CHECK_HIP_ERROR(hipHostMalloc(&out_tmp, m * n * sizeof(float)));
     CHECK_HIP_ERROR(hipHostMalloc(&in_scale, 1 * sizeof(float)));
     CHECK_HIP_ERROR(hipHostMalloc(&out_amax, 1 * sizeof(float)));
 
@@ -118,8 +116,8 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
     hipblasLtMatrixLayout_t matA, matB, matC, matD;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIP_R_8F_E4M3_FNUZ, m, k, m));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, HIP_R_8F_E4M3_FNUZ, k, n, k));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_32F, m, n, m));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_32F, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_8F_E4M3_FNUZ, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_8F_E4M3_FNUZ, m, n, m));
 
     hipblasLtMatmulDesc_t matmul;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, HIPBLAS_COMPUTE_32F, HIP_R_32F));
@@ -131,6 +129,10 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
     hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER, &d_out_amax, sizeof(void*)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, &d_in_scale, sizeof(void*)));
 
     // Set User Preference attributes
     hipblasLtMatmulPreference_t pref;
@@ -161,7 +163,7 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
         return;
     }
 
-    uint64_t workspace_size = 0;
+    uint64_t workspace_size = max_workspace_size;
     for(int i = 0; i < returnedAlgoCount; i++)
         workspace_size = max(workspace_size, heuristicResult[i].workspaceSize);
     // In this sample, the workspace is already allocated with max_workspace_size
@@ -178,31 +180,17 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
                                           &beta,
                                           d_c,
                                           matC,
-                                          d_out_tmp,
+                                          d_d,
                                           matD,
                                           &heuristicResult[0].algo,
                                           d_workspace,
                                           workspace_size,
                                           stream));
 
-    // run amax
-    CHECK_HIPBLASLT_ERROR(hipblasltExtAMaxWithScale(HIP_R_32F,
-                                                    HIP_R_32F,
-                                                    HIP_R_8F_E4M3_FNUZ,
-                                                    d_out_amax,
-                                                    d_d,
-                                                    d_out_tmp,
-                                                    d_in_scale,
-                                                    m,
-                                                    n,
-                                                    stream));
-
     // deallocate memory space of amax
-    CHECK_HIP_ERROR(hipFree(d_out_tmp));
     CHECK_HIP_ERROR(hipFree(d_in_scale));
     CHECK_HIP_ERROR(hipFree(d_out_amax));
 
-    CHECK_HIP_ERROR(hipFree(out_tmp));
     CHECK_HIP_ERROR(hipFree(in_scale));
     CHECK_HIP_ERROR(hipFree(out_amax));
 
