@@ -351,6 +351,8 @@ void AMaxTestWithScale(
     auto hipblasltErr = hipblasltExtAMaxWithScale(
         type, dtype, scaleType, gpuOutput, gpuOutputD, gpuInput, gpuInputScale, m, n, stream);
 
+    hipErr = hipDeviceSynchronize();
+
     hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, outNumBytes);
     hipErr = hipMemcpyDtoH(cpuOutputD.data(), gpuOutputD, m * n * scaleNumBytes);
 
