@@ -700,14 +700,11 @@ namespace Tensile
             {
                 args.template append<uint32_t>("bias_type",
                                                static_cast<uint32_t>(problem.bias().dataType()));
-                if(problem.useBias())
+                if(problem.useBias() && bias.dimensions())
                 {
-                    if(bias.dimensions())
-                    {
-                        args.template append<uint32_t>(
-                            "strideBias",
-                            static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
-                    }
+                    args.template append<uint32_t>(
+                        "strideBias",
+                        static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
                 }
                 if(problemType.useBias == 3)
                 {
