@@ -910,9 +910,12 @@ namespace
     {
         // The library object
         std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> m_library;
+#if ROCBLASLT_TENSILE_LAZY_LOAD
         std::unordered_set<Tensile::LazyLoadingInit>                      m_deviceSet;
         std::unordered_map<std::string, std::shared_ptr<hipDeviceProp_t>> m_devicePropMap;
-
+#else
+        std::shared_ptr<hipDeviceProp_t> m_deviceProp;
+#endif
         // The adapter object. mutable is used to allow adapters to be modified
         // even when they are stored in a const vector which is immutable in size
         struct adapter_s
@@ -961,12 +964,17 @@ namespace
         {
             return m_library;
         }
-
+#if ROCBLASLT_TENSILE_LAZY_LOAD
         auto& get_device_property(const std::string& deviceName) const
         {
             return m_devicePropMap.at(deviceName);
         }
-
+#else
+        auto& get_device_property() const
+        {
+            return m_deviceProp;
+        }
+#endif
         auto& get_adapters() const
         {
             return m_adapters;
@@ -1090,7 +1098,7 @@ namespace
             static int once = [&] {
                 // Determine library path
                 std::string tensileLibPath;
-#ifdef ROCBLASLT_TENSILE_LAZY_LOAD
+#if ROCBLASLT_TENSILE_LAZY_LOAD
 #ifdef TENSILE_YAML
                 tensileLibPath = path + "/TensileLibrary_lazy_" + processor + ".yaml";
 #else
@@ -1110,7 +1118,7 @@ namespace
                     // rocblaslt_abort();
                 }
 
-#ifdef ROCBLASLT_TENSILE_LAZY_LOAD
+#if ROCBLASLT_TENSILE_LAZY_LOAD
                 // Get devices
                 hipDeviceProp_t prop;
                 int             count;
@@ -1137,6 +1145,11 @@ namespace
                     tensileLibPath,
                     std::vector<Tensile::LazyLoadingInit>{m_deviceSet.begin(), m_deviceSet.end()});
 #else
+                // Get device prop
+                hipDeviceProp_t prop;
+                HIP_CHECK_EXC(hipGetDeviceProperties(&prop, deviceId));
+                m_deviceProp = std::make_shared<hipDeviceProp_t>(prop);
+
                 // Load library
                 auto lib
                     = Tensile::LoadLibraryFile<Tensile::ContractionProblemGemm>(tensileLibPath);
@@ -1203,7 +1216,11 @@ namespace
         if(library)
             *library = host.get_library();
         if(deviceProp)
+#if ROCBLASLT_TENSILE_LAZY_LOAD
             *deviceProp = host.get_device_property(rocblaslt_internal_get_arch_name());
+#else
+            *deviceProp = host.get_device_property();
+#endif
 
         return adapter;
     }
