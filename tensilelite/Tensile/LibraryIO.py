@@ -283,9 +283,7 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
                 isp = solutionState["InternalSupportParams"]
             customConfig = getCustomKernelConfig(solutionState["CustomKernelName"], isp)
             for key, value in customConfig.items():
-                # to prevent original ProblemType from being overwritten by custom kernel
-                if key != "ProblemType":
-                    solutionState[key] = value
+                solutionState[key] = value
         solutionObject = Solution(solutionState)
         if solutionObject["ProblemType"] != problemType:
             printExit(f"ProblemType in library logic file {srcFile} doesn't match solution: {problemType} != {solutionObject['ProblemType']}")
