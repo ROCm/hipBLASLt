@@ -78,7 +78,7 @@ namespace {
         for(int j=0; j<length; j++) {
             m = max(m, abs(in[j]));
         }
-        out[0] = To(m);
+        out[0] = To(240.0f) / To(m);
     }
 }
 
