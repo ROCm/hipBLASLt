@@ -1148,12 +1148,10 @@ namespace Tensile
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
             if(bias.dimensions())
-            {
                 rv.args.append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
-                if(problemType.useBias == 3)
-                    rv.args.template append<uint32_t>("biasDim",
-                                                      (uint32_t)problem.getParams().biasDim());
-            }
+            if(problemType.useBias == 3)
+                rv.args.template append<uint32_t>("biasDim",
+                                                  (uint32_t)problem.getParams().biasDim());
         }
 
         int idx = 0;
