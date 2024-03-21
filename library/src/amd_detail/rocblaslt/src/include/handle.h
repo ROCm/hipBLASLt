@@ -175,6 +175,7 @@ struct _rocblaslt_matmul_desc
         this->scaleD       = src.scaleD;
         this->scaleE       = src.scaleE;
         this->pointermode  = src.pointermode;
+        this->amax_ptr     = src.amax_ptr;
         this->bias_type    = src.bias_type;
         this->e            = src.e;
         this->lde          = src.lde;
