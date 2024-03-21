@@ -491,8 +491,11 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
     // when bias type is unset.
     if(arg.bias_type == HIPBLASLT_DATATYPE_INVALID)
     {
-        if(arg.compute_type == HIPBLAS_COMPUTE_32I
-           || arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
+        if(arg.compute_type == HIPBLAS_COMPUTE_32I)
+        {
+            real_bias_type = HIP_R_32I;
+        }
+        else if(arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
         {
             real_bias_type = HIP_R_32F;
         }
@@ -525,26 +528,59 @@ void testing_matmul(const Arguments& arg)
     // after this, real bias type should not be invalid
     hipDataType real_bias_type = derive_unset_bias_type(arg);
 
-    if(real_bias_type == HIP_R_16F)
+    // for all f8/bf8 cases including mix mode
+    if constexpr((sizeof(TiA) == 1 || sizeof(TiB) == 1) && !std::is_same<Tc, int32_t>::value)
     {
-        return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, hipblasLtHalf>(arg);
+        if(real_bias_type == HIP_R_16F)
+        {
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, hipblasLtHalf>(arg);
+        }
+        else if(real_bias_type == HIP_R_16BF)
+        {
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, hip_bfloat16>(arg);
+        }
+        else
+        {
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, float>(arg);
+        }
     }
-    else if(real_bias_type == HIP_R_16BF)
+    else if constexpr(std::is_same<To, hipblasLtHalf>::value)
     {
-        return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, hip_bfloat16>(arg);
+        if(real_bias_type == HIP_R_16F)
+        {
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, hipblasLtHalf>(arg);
+        }
+        else
+        {
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, float>(arg);
+        }
     }
-    else if(real_bias_type == HIP_R_32F)
+    else if constexpr(std::is_same<To, hip_bfloat16>::value)
+    {
+        if(real_bias_type == HIP_R_16BF)
+        {
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, hip_bfloat16>(arg);
+        }
+        else
+        {
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, float>(arg);
+        }
+    }
+    else if constexpr(std::is_same<To, float>::value)
     {
         return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, float>(arg);
     }
-    else if(real_bias_type == HIP_R_32I)
+    else if constexpr(std::is_same<To, int32_t>::value)
     {
         return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, int32_t>(arg);
     }
-    else // if(real_bias_type == HIP_R_64F)
+    else if constexpr(std::is_same<To, double>::value)
     {
         return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, double>(arg);
     }
+    // shouldn't arrive here
+    CHECK_SUCCESS(false);
+    return;
 }
 
 template <typename TiA, typename TiB, typename To, typename Tc, typename Tci, typename Tbias>
