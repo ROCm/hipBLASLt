@@ -201,7 +201,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: true
+    PreloadKernArgs: false
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -455,7 +455,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: true
+    PreloadKernArgs: false
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -709,7 +709,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: true
+    PreloadKernArgs: false
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0

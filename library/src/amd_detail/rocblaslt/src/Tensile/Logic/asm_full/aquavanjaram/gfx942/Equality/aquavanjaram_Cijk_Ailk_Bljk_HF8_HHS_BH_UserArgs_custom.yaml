@@ -208,7 +208,7 @@
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
     # PreloadKernArgs: 1
-    PreloadKernArgs: 1
+    PreloadKernArgs: 0
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -468,7 +468,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: 1
+    PreloadKernArgs: 0
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -727,7 +727,7 @@
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
     # PreloadKernArgs: 1
-    PreloadKernArgs: 1
+    PreloadKernArgs: 0
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -989,7 +989,7 @@
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
     # PreloadKernArgs: 1
-    PreloadKernArgs: 1
+    PreloadKernArgs: 0
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -1251,7 +1251,7 @@
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
     # PreloadKernArgs: 1
-    PreloadKernArgs: 1
+    PreloadKernArgs: 0
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -1511,7 +1511,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: 1
+    PreloadKernArgs: 0
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -1769,7 +1769,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: 1
+    PreloadKernArgs: 0
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -2027,7 +2027,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: 1
+    PreloadKernArgs: 0
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
