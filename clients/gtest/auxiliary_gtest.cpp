@@ -126,7 +126,7 @@ namespace
         // Filter for which types apply to this suite
         static bool type_filter(const Arguments& arg)
         {
-            return hipblaslt_matmul_dispatch<type_filter_functor>(arg);
+            return hipblaslt_simple_dispatch<type_filter_functor>(arg);
         }
 
         // Filter for which functions apply to this suite
@@ -168,7 +168,7 @@ namespace
 
     TEST_P(aux_test, conversion)
     {
-        RUN_TEST_ON_THREADS_STREAMS(hipblaslt_matmul_dispatch<aux_testing>(GetParam()));
+        RUN_TEST_ON_THREADS_STREAMS(hipblaslt_simple_dispatch<aux_testing>(GetParam()));
     }
     INSTANTIATE_TEST_CATEGORIES(aux_test);
 
