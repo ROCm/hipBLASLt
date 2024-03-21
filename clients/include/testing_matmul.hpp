@@ -1223,7 +1223,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                 matmul[0][i], HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, &scaleD_addr, sizeof(void*)));
         }
 
-        if(arg.scaleD)
+        if(arg.amaxD)
         {
             void* amaxD_addr = *dAmaxD[i];
             CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
