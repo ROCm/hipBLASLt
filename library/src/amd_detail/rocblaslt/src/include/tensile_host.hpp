@@ -243,7 +243,7 @@ struct RocblasltContractionProblem
             // FIXME: Currently the default bias_type is set to match the yamls' configuration, should add the default type when the yamls are fixed.
             if(this->compute_type == rocblaslt_compute_i32)
             {
-                this->bias_type = HIP_R_32F;
+                this->bias_type = HIP_R_32I;
             }
             else if(this->compute_type == rocblaslt_compute_f32_fast_xf32)
             {
@@ -310,7 +310,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                                          std::shared_ptr<void>  gemmData,
                                          hipStream_t            stream,
                                          hipEvent_t             start = nullptr,
-                                         hipEvent_t             stop = nullptr);
+                                         hipEvent_t             stop  = nullptr);
 
 rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_handle       handle,
                                                                     rocblaslt::RocGemmType gemmType,
