@@ -97,8 +97,9 @@ public:
     std::shared_ptr<std::vector<hipblaslt_ext::Gemm>> gemms;
 
     // Internal related
-    int algo_index = -1;
-    int block_count;
+    bool tune       = false;
+    int  algo_index = -1;
+    int  block_count;
 
     void setData(int                         m,
                  int                         n,
@@ -356,7 +357,9 @@ namespace llvm
                     l.epilogue.bias_data_type = string_to_hipblaslt_datatype_assert(datatype);
                 }
 
-                // Algo index
+                // Tuning and Algo index
+                // algo index will be ignored if Tuning is set to true.
+                io.mapOptional("Tuning", l.tune);
                 io.mapOptional("AlgoIndex", l.algo_index);
             }
         };
@@ -429,9 +432,18 @@ int main(int argc, char** argv)
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
 
+    struct layer_bench
+    {
+        float       time  = std::numeric_limits<float>::max();
+        size_t      index = -1;
+        std::string solutionName;
+        std::string kernelName;
+    };
+    std::vector<layer_bench>      best_layers(layer.size(), layer_bench());
     hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
-    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResults;
+    std::vector<std::vector<hipblasLtMatmulHeuristicResult_t>> heuristicResults;
+    bool                                                       tuning_more_than_one = false;
     for(size_t i = 0; i < layer.size(); i++)
     {
         Layer& l = layer[i];
@@ -478,39 +490,90 @@ int main(int argc, char** argv)
 
         std::vector<hipblasLtMatmulHeuristicResult_t> tmpResult;
         size_t                                        workspaceSizeInBytes = 0;
-        if(l.algo_index != -1)
+        if(l.tune)
         {
-            std::cout << "Selected index for layer " << i << " is: " << l.algo_index << "."
-                      << std::endl;
-
-            std::vector<int> algoIndex = {l.algo_index};
-            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, tmpResult));
-            if((*l.gemms)[0].isAlgoSupported(tmpResult[0].algo, workspaceSizeInBytes)
-               != HIPBLAS_STATUS_SUCCESS)
+            CHECK_HIPBLASLT_ERROR(
+                hipblaslt_ext::getAllAlgos(handle,
+                                           hipblaslt_ext::GemmType::HIPBLASLT_GEMM,
+                                           l.problem.op_a,
+                                           l.problem.op_b,
+                                           l.problem.type_a,
+                                           l.problem.type_b,
+                                           l.problem.type_c,
+                                           l.problem.type_d,
+                                           l.problem.type_compute,
+                                           tmpResult));
+            size_t                                        workspace_size = 0;
+            std::vector<hipblasLtMatmulHeuristicResult_t> tmpAlgo;
+            for(size_t a = 0; a < tmpResult.size(); a++)
             {
-                std::cout << "Error invalid index for layer " << i << "." << std::endl;
-                exit(1);
+                if((*l.gemms)[0].isAlgoSupported(tmpResult[a].algo, workspaceSizeInBytes)
+                   == HIPBLAS_STATUS_SUCCESS)
+                {
+                    tmpAlgo.push_back(tmpResult[a]);
+                    workspace_size = std::max(workspace_size, workspaceSizeInBytes);
+                }
             }
+
+            if(l.algo_index != 1)
+            {
+                for(size_t a = 0; a < tmpAlgo.size(); a++)
+                {
+                    int algo_index = hipblaslt_ext::getIndexFromAlgo(tmpAlgo[a].algo);
+                    if(algo_index == l.algo_index)
+                    {
+                        best_layers[i].index = a;
+                        break;
+                    }
+                }
+            }
+            heuristicResults.push_back(tmpAlgo);
+            workspaceSizeInBytes = workspace_size;
+            tuning_more_than_one = true;
         }
         else
         {
-            tmpResult.clear();
-            (*l.gemms)[0].algoGetHeuristic(1, gemmPref, tmpResult);
-            if(tmpResult.size() == 0)
+            if(l.algo_index != -1)
             {
-                std::cout << "No Solution found for layer " << i << "." << std::endl;
-                exit(1);
+                std::cout << "Selected index for layer " << i << " is: " << l.algo_index << "."
+                          << std::endl;
+
+                std::vector<int> algoIndex = {l.algo_index};
+                CHECK_HIPBLASLT_ERROR(
+                    hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, tmpResult));
+                if((*l.gemms)[0].isAlgoSupported(tmpResult[0].algo, workspaceSizeInBytes)
+                   != HIPBLAS_STATUS_SUCCESS)
+                {
+                    std::cout << "Error invalid index for layer " << i << "." << std::endl;
+                    exit(1);
+                }
             }
-            if((*l.gemms)[0].isAlgoSupported(tmpResult[0].algo, workspaceSizeInBytes)
-               != HIPBLAS_STATUS_SUCCESS)
+            else
             {
-                std::cout << "Error invalid index for layer " << i << "." << std::endl;
-                exit(1);
+                tmpResult.clear();
+                (*l.gemms)[0].algoGetHeuristic(1, gemmPref, tmpResult);
+                if(tmpResult.size() == 0)
+                {
+                    std::cout << "No Solution found for layer " << i << "." << std::endl;
+                    exit(1);
+                }
+                if((*l.gemms)[0].isAlgoSupported(tmpResult[0].algo, workspaceSizeInBytes)
+                   != HIPBLAS_STATUS_SUCCESS)
+                {
+                    std::cout << "Error invalid index for layer " << i << "." << std::endl;
+                    exit(1);
+                }
             }
+            heuristicResults.push_back(std::vector<hipblasLtMatmulHeuristicResult_t>{tmpResult[0]});
         }
-        heuristicResults.push_back(tmpResult[0]);
+
         l.ws_size = workspaceSizeInBytes;
         CHECK_HIP_ERROR(hipMalloc(&l.ws, workspaceSizeInBytes));
+    }
+
+    if(tuning_more_than_one)
+    {
+        std::cout << "Tuning more than one layer will require a longer time." << std::endl;
     }
 
     // Get device information
@@ -518,98 +581,153 @@ int main(int argc, char** argv)
     CHECK_HIP_ERROR(hipGetDeviceProperties(&deviceProps, 0));
     int32_t gpu_block3 = deviceProps.multiProcessorCount * 60;
 
-    for(int b = 0; b < block_count; b++)
-        for(size_t gemmIdx = 0; gemmIdx < layer.size(); gemmIdx++)
-        {
-            if(layer[gemmIdx].type == Layer::TYPE::GEMM)
-                CHECK_HIPBLASLT_ERROR((*layer[gemmIdx].gemms)[b].initialize(
-                    heuristicResults[gemmIdx].algo, layer[gemmIdx].ws));
-        }
-
-    hipEvent_t event_gpu_time_start, event_gpu_time_end;
-    CHECK_HIP_ERROR(hipEventCreate(&event_gpu_time_start));
-    CHECK_HIP_ERROR(hipEventCreate(&event_gpu_time_end));
-
-    for(int i = 0; i < cold_iters; i++)
+    // Get max tuning runs
+    std::vector<size_t> total_run;
+    for(size_t gemm_layer = 0; gemm_layer < heuristicResults.size(); gemm_layer++)
     {
-        for(size_t gemmIdx = 0; gemmIdx < layer.size(); gemmIdx++)
-        {
-            if(layer[gemmIdx].type == Layer::TYPE::GEMM)
-                static_cast<void>((*layer[gemmIdx].gemms)[i % block_count].run(stream));
-        }
+        total_run.push_back(heuristicResults[gemm_layer].size());
     }
 
-    CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_start));
-    CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
-    hipGraph_t graph = NULL;
-    if(rv.gs.graph_mode)
-    {
-        hipStreamCaptureMode mode = hipStreamCaptureModeGlobal;
-        CHECK_HIP_ERROR(hipStreamBeginCapture(stream, mode));
-    }
-
-    for(int i = 0; i < iters; i++)
-    {
-        for(size_t gemmIdx = 0; gemmIdx < layer.size(); gemmIdx++)
+    // lambda function here to avoid indent
+    auto execBench = [&](size_t gemm_layer, size_t algo) {
+        std::vector<int> algo_index_vec(layer.size(), -1);
+        for(int b = 0; b < block_count; b++)
         {
-            switch(layer[gemmIdx].type)
+            for(size_t gemmIdx = 0; gemmIdx < layer.size(); gemmIdx++)
             {
-            case Layer::TYPE::GEMM:
-                static_cast<void>((*layer[gemmIdx].gemms)[i % block_count].run(stream));
-                break;
-            case Layer::TYPE::FLUSH:
-                hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
-                break;
-            default:
-                break;
+                auto fixed_index = layer[gemmIdx].tune && (best_layers[gemmIdx].index != -1)
+                                       ? best_layers[gemmIdx].index
+                                       : 0;
+                auto index       = gemmIdx == gemm_layer ? algo : fixed_index;
+                if(layer[gemmIdx].type == Layer::TYPE::GEMM)
+                    CHECK_HIPBLASLT_ERROR((*layer[gemmIdx].gemms)[b].initialize(
+                        heuristicResults[gemmIdx][index].algo, layer[gemmIdx].ws));
+                algo_index_vec[gemmIdx] = index;
             }
         }
-    }
 
-    if(rv.gs.graph_mode)
-    {
-        CHECK_HIP_ERROR(hipStreamEndCapture(stream, &graph));
-    }
-    CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
-    CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
+        hipEvent_t event_gpu_time_start, event_gpu_time_end;
+        CHECK_HIP_ERROR(hipEventCreate(&event_gpu_time_start));
+        CHECK_HIP_ERROR(hipEventCreate(&event_gpu_time_end));
 
-    if(rv.gs.graph_mode)
-    {
-        hipGraphExec_t graph_exec = NULL;
-        CHECK_HIP_ERROR(hipGraphInstantiate(&graph_exec, graph, nullptr, nullptr, 0));
+        for(int i = 0; i < cold_iters; i++)
+        {
+            for(size_t gemmIdx = 0; gemmIdx < layer.size(); gemmIdx++)
+            {
+                if(layer[gemmIdx].type == Layer::TYPE::GEMM)
+                    static_cast<void>((*layer[gemmIdx].gemms)[i % block_count].run(stream));
+            }
+        }
+
         CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_start));
         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
-        hipGraphLaunch(graph_exec, stream);
-        CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
-        CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
-        CHECK_HIP_ERROR(hipGraphExecDestroy(graph_exec));
-    }
-    float gpu_time_ms;
-    CHECK_HIP_ERROR(hipEventElapsedTime(&gpu_time_ms, event_gpu_time_start, event_gpu_time_end));
-    auto gpu_time_used = gpu_time_ms * 1000; // ms to us
-    std::cout << "Time: " << gpu_time_used / iters << std::endl;
 
-    // Print kernel info
-    if(rv.gs.print_kernel_info)
-    {
-        std::cout << "Kernel Information:" << std::endl;
-        for(size_t gemmIdx = 0; gemmIdx < layer.size(); gemmIdx++)
+        hipGraph_t graph = NULL;
+        if(rv.gs.graph_mode)
         {
-            if(layer[gemmIdx].type == Layer::TYPE::GEMM)
+            hipStreamCaptureMode mode = hipStreamCaptureModeGlobal;
+            CHECK_HIP_ERROR(hipStreamBeginCapture(stream, mode));
+        }
+
+        for(int i = 0; i < iters; i++)
+        {
+            for(size_t gemmIdx = 0; gemmIdx < layer.size(); gemmIdx++)
             {
-                auto kernelname = (*layer[gemmIdx].gemms)[0].getSolutionName();
-                std::cout << "[" << gemmIdx << "] " << kernelname << std::endl;
+                switch(layer[gemmIdx].type)
+                {
+                case Layer::TYPE::GEMM:
+                    static_cast<void>((*layer[gemmIdx].gemms)[i % block_count].run(stream));
+                    break;
+                case Layer::TYPE::FLUSH:
+                    hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
+                    break;
+                default:
+                    break;
+                }
             }
         }
+
+        if(rv.gs.graph_mode)
+        {
+            CHECK_HIP_ERROR(hipStreamEndCapture(stream, &graph));
+        }
+        CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
+        CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
+
+        if(rv.gs.graph_mode)
+        {
+            hipGraphExec_t graph_exec = NULL;
+            CHECK_HIP_ERROR(hipGraphInstantiate(&graph_exec, graph, nullptr, nullptr, 0));
+            CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_start));
+            CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
+            hipGraphLaunch(graph_exec, stream);
+            CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
+            CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
+            CHECK_HIP_ERROR(hipGraphExecDestroy(graph_exec));
+        }
+        float gpu_time_ms;
+        CHECK_HIP_ERROR(
+            hipEventElapsedTime(&gpu_time_ms, event_gpu_time_start, event_gpu_time_end));
+        auto gpu_time_used = gpu_time_ms * 1000 / iters; // ms to us
+        std::cout << "[Layer " << gemm_layer << "][Algo " << algo << "] Time: " << gpu_time_used
+                  << " us" << std::endl;
+
+        // Print kernel inf11o
+        if(rv.gs.print_kernel_info)
+        {
+            std::cout << " - Kernel Information:" << std::endl;
+            for(size_t gemmIdx = 0; gemmIdx < layer.size(); gemmIdx++)
+            {
+                if(layer[gemmIdx].type == Layer::TYPE::GEMM)
+                {
+                    auto solutionIndex = hipblaslt_ext::getIndexFromAlgo(
+                        heuristicResults[gemmIdx][algo_index_vec[gemmIdx]].algo);
+                    auto kernelname = (*layer[gemmIdx].gemms)[0].getSolutionName();
+                    std::cout << " - - [Layer " << gemmIdx << "][Index " << solutionIndex << "] "
+                              << kernelname << std::endl;
+                }
+            }
+        }
+
+        if(best_layers[gemm_layer].time > gpu_time_used)
+        {
+            best_layers[gemm_layer].time         = gpu_time_used;
+            best_layers[gemm_layer].index        = algo_index_vec[gemm_layer];
+            best_layers[gemm_layer].solutionName = (*layer[gemm_layer].gemms)[0].getSolutionName();
+            best_layers[gemm_layer].kernelName   = (*layer[gemm_layer].gemms)[0].getKernelName();
+        }
+        CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_start));
+        CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_end));
+        if(graph)
+        {
+            CHECK_HIP_ERROR(hipGraphDestroy(graph));
+        }
+    };
+
+    for(size_t gemm_layer = 0; gemm_layer < total_run.size(); gemm_layer++)
+    {
+        for(size_t algo = 0; algo < total_run[gemm_layer]; algo++)
+        {
+            execBench(gemm_layer, algo);
+        }
+    }
+
+    // Get tuned results
+    std::cout << std::endl << "===Final results===" << std::endl << std::endl;
+    std::cout << "Total Time: " << best_layers[heuristicResults.size() - 1].time << " us"
+              << std::endl;
+    for(size_t gemm_layer = 0; gemm_layer < heuristicResults.size(); gemm_layer++)
+    {
+        auto solutionIndex = hipblaslt_ext::getIndexFromAlgo(
+            heuristicResults[gemm_layer][best_layers[gemm_layer].index].algo);
+        std::cout << "Solution index for layer " << gemm_layer << " is " << solutionIndex
+                  << "(Index: " << best_layers[gemm_layer].index << ")" << std::endl;
+        std::cout << " - Solution name " << best_layers[gemm_layer].solutionName << std::endl;
+        std::cout << " - Kernel name " << best_layers[gemm_layer].kernelName << std::endl;
+        std::cout << std::endl;
     }
 
     CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
-    CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_start));
-    CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_end));
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
-    if(graph)
-    {
-        CHECK_HIP_ERROR(hipGraphDestroy(graph));
-    }
     return 0;
 }

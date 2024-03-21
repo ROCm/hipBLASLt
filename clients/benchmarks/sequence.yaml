@@ -18,7 +18,6 @@ Layers:
       DataTypeD: f16_r
       ComputeType: f32_f16_r
       Epilogue: HIPBLASLT_EPILOGUE_DEFAULT
-      AlgoIndex: 60
     - LayerType: GEMM
       Size: [256, 256, 256, 1]
       Alpha: 1.0
@@ -32,5 +31,4 @@ Layers:
       ComputeType: f32_r
       Epilogue: HIPBLASLT_EPILOGUE_BIAS
       BiasType: f16_r
-      AlgoIndex: 35023
     - LayerType: FLUSH
