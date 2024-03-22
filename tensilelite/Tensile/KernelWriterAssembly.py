@@ -4833,11 +4833,21 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SCBranchSCC1(labelName=shadowName, \
               comment="skip to ShadowInitStart iter b/c numIter==0"))
         else:
-          loopChar = self.states.indexChars[ \
-              kernel["ProblemType"]["IndicesSummation"][self.states.unrollIdx]]
-          labelName = Label.getFormatting("LoopEnd%s"%loopChar)
-          module.add(SCBranchSCC1(labelName=labelName, \
-                    comment="skip to unrollLoop end loop%s iter b/c numIter==0" % loopChar))
+          # This branch could potentially be very far e.g. > SIMM16
+          module.addComment1("after InitC, skip to end of prefetch last iter if numIter==0")
+          # use positive offset only long jump
+          if kernel["SuppressNoLoadLoop"]:
+            loopChar = self.states.indexChars[ \
+                kernel["ProblemType"]["IndicesSummation"][self.states.unrollIdx]]
+            lastIterEnd = Label("LoopEnd%s"%loopChar, "")
+            module.add(SCBranchSCC1(labelName=lastIterEnd, \
+                       comment="skip to unrollLoop end loop%s iter b/c numIter==0" % loopChar))
+          else:
+            lastIterEnd = Label("PrefetchGlobalLastIterEnd", "")
+            # use positive offset only long jump
+            with self.allocTmpSgpr(3) as tmpSgprInfo:
+              module.add(self.longBranchScc1(lastIterEnd, posNeg=1, tmpSgprInfo=tmpSgprInfo))
+
     elif isOptNLL:
       skipOptNLL = Label("OptNLL_End", "")
       with self.allocTmpSgpr(4) as tmpSgprInfo:

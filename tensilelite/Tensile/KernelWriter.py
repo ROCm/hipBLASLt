@@ -2569,13 +2569,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.otherSummations      = kernel["ProblemType"]["NumIndicesSummation"]-1 # not loops but summations vars
 
     # doShadowInit performs initialization in the 'shadow' of the global mem prefetch
-    if kernel["PrefetchGlobalRead"]:
-      if self.states.actualSummationLoops == 1:
-        self.states.doShadowInit = 2 # 2 is both store setup and initC
-      else:
-        # can't do shadow initC with multiple summation since this resets the ValuC counters
-        # on each unroll iteration.
-        self.states.doShadowInit = 1 # 1 is just store setup
+    if not kernel["ForceDisableShadowInit"]:
+      if kernel["PrefetchGlobalRead"]:
+        if self.states.actualSummationLoops == 1:
+          self.states.doShadowInit = 2 # 2 is both store setup and initC
+        else:
+          # can't do shadow initC with multiple summation since this resets the ValuC counters
+          # on each unroll iteration.
+          self.states.doShadowInit = 1 # 1 is just store setup
 
     self.states.indexChars = []
     for i in range(0, len(globalParameters["IndexChars"])):
