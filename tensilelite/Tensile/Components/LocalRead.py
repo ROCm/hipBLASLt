@@ -81,7 +81,7 @@ class LocalReadMFMA(LocalRead):
             lrvwTile = writer.states.lrvwTileMetadata
         else:
             lrvwTile = 1
-        numElementPerRead = int(blockWidth * 4) // tP['bpeDS'] // lrvwTile
+        numElementPerRead = 1 if kernel["ConvertAfterDS"] else (int(blockWidth * 4) // tP['bpe'] // lrvwTile)
 
         # pack register
         if writer.states.archCaps["HasEccHalf"]:
