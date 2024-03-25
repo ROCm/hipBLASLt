@@ -13,6 +13,7 @@ Datatypes:
         bf16_r: 14
         f8_r: 1000
         bf8_r: 1001
+        hipblaslt_datatype_invalid: 255
   - hipblasComputeType_t:
       bases: [ c_int ]
       attr:
@@ -147,6 +148,14 @@ Real precisions f32_bf16_r: &real_precisions_intermeddiate_bf16
   - &hpa_half_fp16dst_bf16computeIn_precision
     { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_fast_bf16_r, scale_type: f32_r}
 
+Real precisions f32_f8_r: &real_precisions_intermeddiate_f8
+  - &hpa_half_fp16dst_f8computeIn_precision
+    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, compute_input_typeA: f8_r, compute_input_typeB: f8_r, scale_type: f32_r}
+  - &hpa_half_fp16dst_f8bf8computeIn_precision
+    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, compute_input_typeA: f8_r, compute_input_typeB: bf8_r, scale_type: f32_r}
+  - &hpa_half_fp16dst_bf8f8computeIn_precision
+    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, compute_input_typeA: bf8_r, compute_input_typeB: f8_r, scale_type: f32_r}
+
 Real precisions xf32: &real_precisions_intermeddiate
   - &xf32_precision
     { a_type: f32_r, b_type: f32_r, c_type: f32_r, d_type: f32_r, compute_type: c_xf32_r , scale_type: f32_r}
@@ -223,6 +232,8 @@ Arguments:
   - c_type: hipDataType
   - d_type: hipDataType
   - compute_type: hipblasComputeType_t
+  - compute_input_typeA: hipDataType
+  - compute_input_typeB: hipDataType
   - scale_type: hipDataType
   - initialization: hipblaslt_initialization
   - gpu_arch: c_char*4
@@ -364,3 +375,5 @@ Defaults:
   print_solution_found: false
   print_kernel_info: false
   flush: false
+  compute_input_typeA: hipblaslt_datatype_invalid
+  compute_input_typeB: hipblaslt_datatype_invalid

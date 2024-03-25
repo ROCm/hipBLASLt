@@ -767,24 +767,39 @@ namespace Tensile
                                          && sizeof(typename Inputs::BType)
                                                 > sizeof(typename Inputs::ComputeInputType))
                             {
-                                typename Inputs::ComputeInputType aValCast, bValCast;
-                                if(problem.useScaleAB())
+                                if(std::is_same<Float8BFloat8, typename Inputs::ComputeInputType>::value)
                                 {
-                                    Accumulator scaleA = GetValue<Accumulator>(
-                                        problem.alphaType(), inputs.scaleA, 0, aConjugate);
-                                    auto tmp = div<Accumulator>(aVal, scaleA);
-                                    aValCast = static_cast<typename Inputs::ComputeInputType>(tmp);
-                                    Accumulator scaleB = GetValue<Accumulator>(
-                                        problem.alphaType(), inputs.scaleB, 0, aConjugate);
-                                    tmp      = div<Accumulator>(bVal, scaleB);
-                                    bValCast = static_cast<typename Inputs::ComputeInputType>(tmp);
+                                    auto aValCast = static_cast<Tensile::Float8>(aVal);
+                                    auto bValCast = static_cast<Tensile::BFloat8>(bVal);
+                                    value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
+                                }
+                                else if(std::is_same<BFloat8Float8, typename Inputs::ComputeInputType>::value)
+                                {
+                                    auto aValCast = static_cast<Tensile::BFloat8>(aVal);
+                                    auto bValCast = static_cast<Tensile::Float8>(bVal);
+                                    value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                                 }
                                 else
                                 {
-                                    aValCast = static_cast<typename Inputs::ComputeInputType>(aVal);
-                                    bValCast = static_cast<typename Inputs::ComputeInputType>(bVal);
+                                    typename Inputs::ComputeInputType aValCast, bValCast;
+                                    if(problem.useScaleAB())
+                                    {
+                                        Accumulator scaleA = GetValue<Accumulator>(
+                                            problem.alphaType(), inputs.scaleA, 0, aConjugate);
+                                        auto tmp = div<Accumulator>(aVal, scaleA);
+                                        aValCast = static_cast<typename Inputs::ComputeInputType>(tmp);
+                                        Accumulator scaleB = GetValue<Accumulator>(
+                                            problem.alphaType(), inputs.scaleB, 0, aConjugate);
+                                        tmp      = div<Accumulator>(bVal, scaleB);
+                                        bValCast = static_cast<typename Inputs::ComputeInputType>(tmp);
+                                    }
+                                    else
+                                    {
+                                        aValCast = static_cast<typename Inputs::ComputeInputType>(aVal);
+                                        bValCast = static_cast<typename Inputs::ComputeInputType>(bVal);
+                                    }
+                                    value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                                 }
-                                value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                             }
                             else if constexpr(sizeof(typename Inputs::AType)
                                               > sizeof(typename Inputs::ComputeInputType))
@@ -1271,7 +1286,27 @@ namespace Tensile
                 return ReferenceSolution<TypedGemm_B8F8_B8_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
+            case TypedGemm_H_F8B8_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_H_F8B8_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_H_B8F8_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_H_B8F8_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
 #ifdef TENSILE_USE_HALF
+            case TypedGemm_H_F8_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_H_F8_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_H_B8_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_H_B8_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
             case TypedGemm_HF8_H_S_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_HF8_H_S_S, float>::SolveCPU(

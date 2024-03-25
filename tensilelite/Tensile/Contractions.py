@@ -129,7 +129,7 @@ class ProblemType:
 
         rv.transA = bool(d['TransposeA'])
         rv.transB = bool(d['TransposeB'])
-        if 'DataTypeA' in d:
+        if 'DataTypeA' in d: #it will either be set as d['DataType'] or a specified input
             rv.aType = DataType(d['DataTypeA'])
         else:
             rv.aType = srcType
@@ -137,17 +137,18 @@ class ProblemType:
             rv.bType = DataType(d['DataTypeB'])
         else:
             rv.bType = srcType
+
+        if rv.aType.isFloat8BFloat8() or rv.bType.isFloat8BFloat8():
+            rv.aType = DataType("F8")
+            rv.bType = DataType("B8")
+        elif rv.aType.isBFloat8Float8() or rv.bType.isBFloat8Float8():
+            rv.aType = DataType("B8")
+            rv.bType = DataType("F8")
+
         if 'DataTypeE' in d:
             rv.eType = DataType(d['DataTypeE'])
         else:
             rv.eType = dstType
-        # for hybrid 8bit float types, we need to split the type into a_type and b_type
-        if srcType.isFloat8BFloat8():
-            rv.aType = DataType("F8")
-            rv.bType = DataType("B8")
-        elif srcType.isBFloat8Float8():
-            rv.aType = DataType("B8")
-            rv.bType = DataType("F8")
 
         rv.computeInputType = srcType
         rv.cType = dstType

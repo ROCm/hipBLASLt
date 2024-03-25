@@ -97,6 +97,8 @@ struct Arguments
     hipDataType          c_type;
     hipDataType          d_type;
     hipblasComputeType_t compute_type;
+    hipDataType          compute_input_typeA;
+    hipDataType          compute_input_typeB;
     hipDataType          scale_type;
 
     hipblaslt_initialization initialization;
@@ -206,6 +208,8 @@ struct Arguments
     OPER(c_type) SEP                 \
     OPER(d_type) SEP                 \
     OPER(compute_type) SEP           \
+    OPER(compute_input_typeA) SEP    \
+    OPER(compute_input_typeB) SEP    \
     OPER(scale_type) SEP             \
     OPER(initialization) SEP         \
     OPER(gpu_arch) SEP               \

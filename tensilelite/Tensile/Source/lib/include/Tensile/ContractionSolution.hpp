@@ -467,6 +467,7 @@ namespace Tensile
             std::vector<int>      biasSrcWhiteList;
             std::vector<DataType> biasDataTypeWhiteList;
             int                   sparse                     = 0;
+            bool                  stochasticRounding         = false;
             bool                  supportDeviceUserArguments = false;
         };
 

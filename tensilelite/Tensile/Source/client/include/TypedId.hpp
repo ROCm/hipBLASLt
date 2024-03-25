@@ -139,8 +139,12 @@ namespace Tensile
         = TypedGemm<Float8, BFloat8, BFloat8, BFloat8, float, float, Float8BFloat8>;
     using TypedGemm_B8F8_B8_S
         = TypedGemm<BFloat8, Float8, BFloat8, BFloat8, float, float, BFloat8Float8>;
+    using TypedGemm_H_F8B8_H_S = TypedGemm<Half, Half, Half, Half, float, float, Float8BFloat8>;
+    using TypedGemm_H_B8F8_H_S = TypedGemm<Half, Half, Half, Half, float, float, BFloat8Float8>;
 #ifdef TENSILE_USE_HALF
     // Mix precision
+    using TypedGemm_H_F8_H_S      = TypedGemm<Half, Half, Half, Half, float, float, Float8>;
+    using TypedGemm_H_B8_H_S      = TypedGemm<Half, Half, Half, Half, float, float, BFloat8>;
     using TypedGemm_HF8_H_S_S     = TypedGemm<Half, Float8, float, float, float, float, Half>;
     using TypedGemm_F8H_H_S_S     = TypedGemm<Float8, Half, float, float, float, float, Half>;
     using TypedGemm_HF8_H_H_S     = TypedGemm<Half, Float8, Half, Half, float, float, Half>;

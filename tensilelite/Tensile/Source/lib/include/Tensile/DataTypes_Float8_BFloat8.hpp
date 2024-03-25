@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2019-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2019-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -198,6 +198,7 @@ namespace Tensile
                            hip_f8_rounding_mode rm  = hip_f8_rounding_mode::standard,
                            uint32_t             rng = 0)
         {
+            assert(T == hip_f8_type::fp8 || T == hip_f8_type::bf8);
             // NOTE: made clipping default again
             if(T == hip_f8_type::bf8)
             {
@@ -270,6 +271,7 @@ namespace Tensile
                            hip_f8_rounding_mode rm  = hip_f8_rounding_mode::standard,
                            uint32_t             rng = 0)
         {
+            assert(T == hip_f8_type::fp8 || T == hip_f8_type::bf8);
             // NOTE: made clipping default again
             if(T == hip_f8_type::bf8)
             {
@@ -347,6 +349,7 @@ namespace Tensile
         explicit inline HIP_HOST_DEVICE operator float() const
 #endif
         {
+            assert(T == hip_f8_type::fp8 || T == hip_f8_type::bf8);
             if(T == hip_f8_type::bf8)
             {
                 if(get_hip_f8_bias_mode())
@@ -406,6 +409,7 @@ namespace Tensile
         explicit inline HIP_HOST_DEVICE operator _Float16() const
 #endif
         {
+            assert(T == hip_f8_type::fp8 || T == hip_f8_type::bf8);
             if(T == hip_f8_type::bf8)
             {
                 if(get_hip_f8_bias_mode())

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,6 @@ namespace Tensile
     template struct TypedGemm<int8_t, int8_t, int32_t, int32_t>;
     template struct TypedGemm<int8_t, int8_t, int32_t, int32_t, float, float>;
     template struct TypedGemm<int8_t, int8_t, int8_t, int8_t, float, float>;
-
 #ifdef TENSILE_USE_HALF
     template struct TypedGemm<Half>;
     template struct TypedGemm<Half, Half, Half, Half, float, float>;
@@ -49,6 +48,9 @@ namespace Tensile
     template struct TypedGemm<BFloat16, BFloat16, float, float>;
 #endif
 #ifdef TENSILE_USE_FP8_BF8
+    template struct TypedGemm<Half, Half, Half, Half, float, float, Float8>;
+    template struct TypedGemm<Half, Half, Half, Half, float, float, Float8BFloat8>;
+    template struct TypedGemm<Half, Half, Half, Half, float, float, BFloat8Float8>;
     template struct TypedGemm<Float8, Float8, Float8, Float8, float, float>;
     template struct TypedGemm<Float8, Float8, float, float>;
     template struct TypedGemm<BFloat8, BFloat8, BFloat8, BFloat8, float, float>;

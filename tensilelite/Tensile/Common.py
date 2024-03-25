@@ -1161,6 +1161,8 @@ defaultProblemType = {
     "ComplexConjugateA":        False,            # complex data should be conjugated for "C" transpose case
     "ComplexConjugateB":        False,
 
+    "StochasticRounding":       False,            # By default, IEEE RNE rounding
+
     # for OperationType == GEMM
     "TransposeA":               False,            # =True means transA="T" or "C", =False means transA = "N"
     "TransposeB":               True,
