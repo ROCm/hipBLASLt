@@ -651,7 +651,7 @@ pushd .
 
   # library type
   if [[ "${build_static}" == true ]]; then
-    cmake_common_options="{cmake_common_options} -DBUILD_SHARED_LIBS=OFF"
+    cmake_common_options="${cmake_common_options} -DBUILD_SHARED_LIBS=OFF"
   fi
 
   # clients

@@ -55,7 +55,7 @@ target_include_directories( hipblaslt-test
     $<BUILD_INTERFACE:${GTEST_INCLUDE_DIRS}>
 )
 message("BLIS_INCLUDE_DIR=" ${BLIS_INCLUDE_DIR})
-target_link_libraries( hipblaslt-test PRIVATE ${BLAS_LIBRARY} ${GTEST_BOTH_LIBRARIES} roc::hipblaslt )
+target_link_libraries( hipblaslt-test PRIVATE ${BLAS_LIBRARY} ${GTEST_BOTH_LIBRARIES} roc::hipblaslt ${CMAKE_CURRENT_SOURCE_DIR}/../../build/release/Tensile/lib/librocblaslt-tensile.a)
 
 if( NOT BUILD_CUDA )
   target_link_libraries( hipblaslt-test PRIVATE hip::host hip::device )

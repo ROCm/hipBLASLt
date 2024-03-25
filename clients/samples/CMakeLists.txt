@@ -96,7 +96,7 @@ foreach( exe ${sample_list_all} )
 endforeach( )
 
 foreach( exe ${sample_list_hip_device} )
-  target_link_libraries( ${exe} PRIVATE hip::device )
+  target_link_libraries( ${exe} PRIVATE hip::device ${CMAKE_CURRENT_SOURCE_DIR}/../../build/release/Tensile/lib/librocblaslt-tensile.a)
 endforeach( )
 
 foreach( exe ${sample_list_all} )
