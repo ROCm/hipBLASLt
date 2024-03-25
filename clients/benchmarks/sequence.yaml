@@ -1,17 +1,17 @@
 GeneralSettings:
-    PrintKernelInfo: True      # Optional, default is false
+    PrintKernelInfo: true      # Optional, default is false
     Rotating: 512              # Optional, default is 0
     ColdIter: 1000             # Optional, default is 1000
     Iter: 10                   # Optional, default is 10
     MaxWorkspaceSize: 33554432 # Optional, default is 33554432
-    UseGraphMode: False        # Optional, default is false
+    UseGraphMode: false        # Optional, default is false
 Layers:
     - LayerType: GEMM
       Size: [256, 256, 256, 1]
       Alpha: 1.0
       Beta: 0
-      TransposeA: False
-      TransposeB: False
+      TransposeA: false
+      TransposeB: false
       DataTypeA: f8_r
       DataTypeB: f16_r
       DataTypeC: f16_r
@@ -23,8 +23,8 @@ Layers:
       Size: [256, 256, 256, 1]
       Alpha: 1.0
       Beta: 0
-      TransposeA: False
-      TransposeB: False
+      TransposeA: false
+      TransposeB: false
       DataTypeA: f16_r
       DataTypeB: f16_r
       DataTypeC: f16_r
