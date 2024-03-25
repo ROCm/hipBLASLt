@@ -81,7 +81,7 @@ class AddrCalculation:
             module.add(VAddU32(dst=destV, src0=src0, src1=src1, comment=comment))
         else:
             module.add(SMulI32(dst=sgpr(tmpS01), src0=src1, src1=scale1, comment="scale stride"))
-            module.add(VAddU32(dst=destV, src0=src0, src1=sgpr(tmpS01), comment=comment))
+            module.add(VAddI32(dst=destV, src0=src0, src1=sgpr(tmpS01), comment=comment))
         return module
 
 
@@ -463,7 +463,7 @@ class AddrCalculation:
         # Move the row ptr VGPR
         # optSrdIncForRow moves the SRD so don't move here
         if not ss.optSrdIncForRow and kernel["BufferStore"]:
-            if self.rowInc > 0:
+            if self.rowInc != 0:
                 self.rowIncDirtyRowPtr = 1
                 #assert (not kernel["ProblemType"]["UseInitialStridesCD"])
                 module.addComment1("Fix for UseInitialStridesCD, emitAddressSetupCode")
@@ -618,10 +618,15 @@ class AddrCalculation:
                     strideCD1 = "Size%s" % "I" if index == 0 else ("J" if index == 1 else (self.kernelWriter.states.indexChars[index]))
                 else:
                     strideCD1 = "Stride%s%s"%(tc,self.kernelWriter.states.indexChars[packedC1[0]])
-                if numRows > 1 or numRows < 0:
+                if numRows > 1:
                     module.add(SMulI32(dst=sgpr(stmp), \
                                 src0=sgpr(strideCD1), \
                                 src1=numRows*tmpBpe, \
+                                comment="scale Stride%s *= numRows(%u) * bpe"%(tc,numRows)))
+                elif numRows < 0:
+                    module.add(SMulI32(dst=sgpr(stmp), \
+                                src0=sgpr(strideCD1), \
+                                src1=(-numRows)*tmpBpe, \
                                 comment="scale Stride%s *= numRows(%u) * bpe"%(tc,numRows)))
                 else:
                     module.add(SLShiftLeftB32(dst=sgpr(stmp), \

@@ -274,14 +274,9 @@ class StoreState:
     #
     # Also create an AddrCalc for each memory operation.
     ##############################################################################
-    def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL, biasDim):
-
-        self.elementAddr     = []
-        self.elementDataE    = []
-        self.elementData     = []  # VGPR to use for element data, needed for atomic or beta
-        self.elementDataBias = []
-        self.elementDataScaleAlphaVec = []
-        self.elementMask     = []  # SGPR to use for element mask
+    def getStoreElementsInfoForBatch(self, kernel, batchElements):
+        self.elementCoord0 = []
+        self.elementCoord1 = []
         self.elementSumIdx = []
 
         kw = self.kernelWriter
@@ -292,21 +287,7 @@ class StoreState:
             matrixInstBM = 1                                                if (kernel["MatrixInstM"] == 4) else kernel["MatrixInstBM"]
             matrixInstBN = 1                                                if (kernel["MatrixInstN"] == 4) else kernel["MatrixInstBN"]
 
-        biasVgprMap = {}
-        scaleAlphaVecVgprMap = {}
-        lastData = 0
         for elementIdx in range(0, len(batchElements)):
-            # Create the AddrCalc for each memory load/store
-            # This is the control code that sets up the dest, source, offsets, etc and
-            # identifies cases where the AddrCalc is a new row and therefore needs some
-            # additional math.  Each AddrCalc contains isolated state sufficient to
-            # perform any needed range checks and address calculations for the element.
-            #
-            # The AddrCalc creation code here maintains state across elements (including
-            # across write batches) to remove replicated calculations.
-            #
-            # Later the AddrCalc::emitAddressSetupCode will emit the necessary code
-            # Also allocate VGPR resources here, if needed.
 
             element = batchElements[elementIdx]
             (d1,d0,vc1,vc0) = element
@@ -330,15 +311,8 @@ class StoreState:
                 coordOffset1 += wtIdex * matrixInstN *  matrixInstBN * kernel["MIWaveGroup"][1]
                 coordOffset1  = coordOffset1 * vectorWidth + vc1
 
-                # LSU part
-                if kernel["LocalSplitU"] == 2 and kernel["SourceSwap"]:
-                    # if LSU==4, we have exact 4 group per MI output. Hence, no offset needed.
-                    if kernel["NumGlobalWriteVectorsPerThread"] >= kernel["LocalSplitU"]:
-                        lsu_d1 = d1 // (kernel["NumGlobalWriteVectorsPerThread"] // kernel["LocalSplitU"])
-                        lsuStep = OutputsPerMIMN // kernel["LocalSplitU"]
-                        coordOffset1 += lsu_d1 * lsuStep
-
             newCoord1 = (self.firstBatch and elementIdx==0) or (coordOffset1 != self.lastCoordOffset1)
+            self.elementCoord1.append(coordOffset1)
 
             # gpr and offset assignments for element
             coordOffset0 = 0
@@ -359,13 +333,47 @@ class StoreState:
                 coordOffset0 += wtIdex * matrixInstM * matrixInstBM * kernel["MIWaveGroup"][0]
                 coordOffset0  = coordOffset0 * vectorWidth + vc0
 
-                # LSU part
-                if kernel["LocalSplitU"] == 2 and not kernel["SourceSwap"]:
-                    # if LSU==4, we have exact 4 group per MI output. Hence, no offset needed.
-                    if kernel["NumGlobalWriteVectorsPerThread"] >= kernel["LocalSplitU"]:
-                        lsu_d1 = d0 // (kernel["NumGlobalWriteVectorsPerThread"] // kernel["LocalSplitU"])
-                        lsuStep = OutputsPerMIMN // kernel["LocalSplitU"]
-                        coordOffset0 += lsu_d1 * lsuStep
+            self.elementCoord0.append(coordOffset0)
+
+        return self.elementCoord0, self.elementCoord1
+
+    def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL, biasDim):
+
+        self.elementAddr              = []
+        self.elementDataE             = []
+        self.elementData              = []  # VGPR to use for element data, needed for atomic or beta
+        self.elementDataBias          = []
+        self.elementDataScaleAlphaVec = []
+        self.elementMask              = []  # SGPR to use for element mask
+        self.elementSumIdx            = []
+        self.elementCoord0            = []
+        self.elementCoord1            = []
+
+        #generate elementCoord0/1
+        self.getStoreElementsInfoForBatch(kernel, batchElements)
+        kw = self.kernelWriter
+
+        biasVgprMap = {}
+        scaleAlphaVecVgprMap = {}
+        lastData = 0
+
+        for elementIdx in range(0, len(batchElements)):
+            # Create the AddrCalc for each memory load/store
+            # This is the control code that sets up the dest, source, offsets, etc and
+            # identifies cases where the AddrCalc is a new row and therefore needs some
+            # additional math.  Each AddrCalc contains isolated state sufficient to
+            # perform any needed range checks and address calculations for the element.
+            #
+            # The AddrCalc creation code here maintains state across elements (including
+            # across write batches) to remove replicated calculations.
+            #
+            # Later the AddrCalc::emitAddressSetupCode will emit the necessary code
+            # Also allocate VGPR resources here, if needed.
+
+            element      = batchElements[elementIdx]
+            coordOffset0 = self.elementCoord0[elementIdx]
+            coordOffset1 = self.elementCoord1[elementIdx]
+            newCoord1    = (self.firstBatch and elementIdx==0) or (coordOffset1 != self.lastCoordOffset1)
 
             if self.optSingleColVgpr:
                 # use same address vgpr for all
@@ -502,7 +510,10 @@ class StoreState:
             #print "Edge=", edge, element
             sumIdx = 0
             if kernel["LocalSplitU"] > 1:
-                sumIdx = kw.states.c.startVgprValu + vc0 + d1*kernel["VectorWidthA"]
+                if len(self.elementSumIdx) == 0:
+                    sumIdx = kw.states.c.startVgprValu
+                else:
+                    sumIdx = self.elementSumIdx[-1] + self.cfg.numVgprPerValuC * self.cfg.gwvw
             else:
                 bestVw                  = kernel["VectorWidthA"]
                 elementsLoadedPerVw     = kernel["NumThreads"] * bestVw

@@ -37,6 +37,11 @@ class NotLocalFullTileElementsMFMA(NotLocalFullTileElements):
         elements        = []
         storeVectorWidth = 0
 
+        # When singleBuffer/atomic is enabled. We will have 2 different type of store.
+        # One is GSU=1 normal store and another is GSU>1 atomic store.
+        # storeVectorWidth indicates the atomic store vectorWidth.
+        # storeVectorWidth_1 indicates the normal store vectorWidth.
+        # For non-atomic cases, these two are the same.
         gsuBackup = kernel["GlobalSplitU"]
         kernel["GlobalSplitU"] = 2
         if edge:
