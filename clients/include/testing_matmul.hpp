@@ -224,7 +224,7 @@ auto _dgelu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
     return static_cast<decltype(in)>(0.5f * tanh(xx) + x1 * x2 + 0.5f);
 };
 
-template <typename TiA, typename TiB, typename To, typename Tc, typename Tci>
+template <typename TiA, typename TiB, typename To, typename Tc, typename TciA=TiA, typename TciB=TiB>
 void testing_matmul_bad_arg(const Arguments& arg)
 {
     const int64_t M = 128;
@@ -255,7 +255,7 @@ void testing_matmul_bad_arg(const Arguments& arg)
     hipblaslt_local_matrix_layout matB(K, N, ldb, arg.b_type);
     hipblaslt_local_matrix_layout matC(M, N, ldc, arg.c_type);
     hipblaslt_local_matrix_layout matD(M, N, ldc, arg.d_type);
-    hipblaslt_local_matmul_descr  matmul(transA, transB, arg.compute_type, arg.scale_type);
+    hipblaslt_local_matmul_descr  matmul(transA, transB, arg.compute_type, arg.scale_type, arg.compute_input_typeA, arg.compute_input_typeB);
 
     size_t                     workspace_size = 0;
     hipblaslt_local_preference pref;
@@ -522,7 +522,7 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
     return real_bias_type;
 }
 
-template <typename TiA, typename TiB, typename To, typename Tc, typename Tci>
+template <typename TiA, typename TiB, typename To, typename Tc, typename TciA=TiA, typename TciB=TiB>
 void testing_matmul(const Arguments& arg)
 {
     // after this, real bias type should not be invalid
@@ -533,57 +533,57 @@ void testing_matmul(const Arguments& arg)
     {
         if(real_bias_type == HIP_R_16F)
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, hipblasLtHalf>(arg);
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hipblasLtHalf>(arg);
         }
         else if(real_bias_type == HIP_R_16BF)
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, hip_bfloat16>(arg);
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hip_bfloat16>(arg);
         }
         else
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, float>(arg);
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
         }
     }
     else if constexpr(std::is_same<To, hipblasLtHalf>::value)
     {
         if(real_bias_type == HIP_R_16F)
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, hipblasLtHalf>(arg);
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hipblasLtHalf>(arg);
         }
         else
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, float>(arg);
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
         }
     }
     else if constexpr(std::is_same<To, hip_bfloat16>::value)
     {
         if(real_bias_type == HIP_R_16BF)
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, hip_bfloat16>(arg);
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hip_bfloat16>(arg);
         }
         else
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, float>(arg);
+            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
         }
     }
     else if constexpr(std::is_same<To, float>::value)
     {
-        return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, float>(arg);
+        return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
     }
     else if constexpr(std::is_same<To, int32_t>::value)
     {
-        return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, int32_t>(arg);
+        return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, int32_t>(arg);
     }
     else if constexpr(std::is_same<To, double>::value)
     {
-        return testing_matmul_with_bias<TiA, TiB, To, Tc, Tci, double>(arg);
+        return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, double>(arg);
     }
     // shouldn't arrive here
     CHECK_SUCCESS(false);
     return;
 }
 
-template <typename TiA, typename TiB, typename To, typename Tc, typename Tci, typename Tbias>
+template <typename TiA, typename TiB, typename To, typename Tc, typename TciA, typename TciB, typename Tbias>
 void testing_matmul_with_bias(const Arguments& arg)
 {
     double gpu_time_used, cpu_time_used;
@@ -599,6 +599,9 @@ void testing_matmul_with_bias(const Arguments& arg)
 
     hipblasOperation_t transA(char_to_hipblas_operation(arg.transA));
     hipblasOperation_t transB(char_to_hipblas_operation(arg.transB));
+
+    hipDataType tciA = arg.compute_input_typeA;
+    hipDataType tciB = arg.compute_input_typeB;
 
     using Talpha = Tc;
 
@@ -781,8 +784,21 @@ void testing_matmul_with_bias(const Arguments& arg)
                 HIPBLAS_STATUS_SUCCESS);
         }
 
-        CHECK_HIPBLASLT_ERROR(
-            hipblasLtMatmulDescCreate(&(matmul[0][i]), arg.compute_type, arg.scale_type));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&(matmul[0][i]), arg.compute_type, arg.scale_type));
+
+        EXPECT_HIPBLAS_STATUS(
+            hipblasLtMatmulDescSetAttribute(matmul[0][i],
+                                            HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT,
+                                            &tciA,
+                                            sizeof(void*)),
+            HIPBLAS_STATUS_SUCCESS);
+
+        EXPECT_HIPBLAS_STATUS(
+            hipblasLtMatmulDescSetAttribute(matmul[0][i],
+                                            HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT,
+                                            &tciB,
+                                            sizeof(void*)),
+            HIPBLAS_STATUS_SUCCESS);
 
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
             matmul[0][i], HIPBLASLT_MATMUL_DESC_TRANSA, &transA, sizeof(int32_t)));
@@ -1254,9 +1270,23 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         for(int32_t b = 1; b < matmul.size(); b++)
         {
-            CHECK_HIPBLASLT_ERROR(
-                hipblasLtMatmulDescCreate(&(matmul[b][i]), arg.compute_type, arg.scale_type));
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&(matmul[b][i]), arg.compute_type, arg.scale_type));
             CHECK_HIPBLASLT_ERROR(hipblaslt_ext::copyMatmul(matmul[0][i], matmul[b][i]));
+
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatmulDescSetAttribute(matmul[b][i],
+                                                HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT,
+                                                &tciA,
+                                                sizeof(void*)),
+                HIPBLAS_STATUS_SUCCESS);
+
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatmulDescSetAttribute(matmul[b][i],
+                                                HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT,
+                                                &tciB,
+                                                sizeof(void*)),
+                HIPBLAS_STATUS_SUCCESS);
+
             // Update bias, E
             if(arg.bias_vector)
             {
@@ -2048,7 +2078,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             {
                 if(epilogue_on[gemmIdx])
                 {
-                    cblas_gemm<TiA, TiB, Talpha, Talpha, Tci>(
+                    cblas_gemm<TiA, TiB, Talpha, Talpha, TciA, TciB>(
                         transA,
                         transB,
                         M[gemmIdx],
@@ -2176,7 +2206,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                 }
                 else
                 {
-                    cblas_gemm<TiA, TiB, To, Talpha, Tci>(
+                    cblas_gemm<TiA, TiB, To, Talpha, TciA, TciB>(
                         transA,
                         transB,
                         M[gemmIdx],
@@ -2793,4 +2823,5 @@ void testing_matmul_with_bias(const Arguments& arg)
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
     CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_start));
     CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_end));
+
 }

@@ -227,6 +227,10 @@ namespace
         case rocblaslt_compute_f32_fast_xf32:
         case rocblaslt_compute_f32_fast_f16:
         case rocblaslt_compute_f32_fast_bf16:
+        case rocblaslt_compute_f32_fast_f8_fnuz:
+        case rocblaslt_compute_f32_fast_bf8_fnuz:
+        case rocblaslt_compute_f32_fast_f8bf8_fnuz:
+        case rocblaslt_compute_f32_fast_bf8f8_fnuz:
             return Tensile::DataType::Float;
         case rocblaslt_compute_f64:
             return Tensile::DataType::Double;
@@ -249,6 +253,14 @@ namespace
             return Tensile::DataType::Half;
         case rocblaslt_compute_f32_fast_bf16:
             return Tensile::DataType::BFloat16;
+        case rocblaslt_compute_f32_fast_f8_fnuz:
+            return Tensile::DataType::Float8;
+        case rocblaslt_compute_f32_fast_bf8_fnuz:
+            return Tensile::DataType::BFloat8;
+        case rocblaslt_compute_f32_fast_f8bf8_fnuz:
+            return Tensile::DataType::Float8BFloat8;
+        case rocblaslt_compute_f32_fast_bf8f8_fnuz:
+            return Tensile::DataType::BFloat8Float8;
         default:;
         }
 

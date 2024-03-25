@@ -78,19 +78,21 @@ template <typename TiA,
           typename TiB = TiA,
           typename To  = TiB,
           typename Tc  = To,
-          typename Tci = TiA,
+          typename TciA = TiA,
+          typename TciB = TiB,
           typename     = void>
 struct perf_matmul : hipblaslt_test_invalid
 {
 };
 
-template <typename TiA, typename TiB, typename To, typename Tc, typename Tci>
+template <typename TiA, typename TiB, typename To, typename Tc, typename TciA, typename TciB>
 struct perf_matmul<
     TiA,
     TiB,
     To,
     Tc,
-    Tci,
+    TciA,
+    TciB,
     std::enable_if_t<
         (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
         || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
@@ -107,7 +109,7 @@ struct perf_matmul<
 {
     void operator()(const Arguments& arg)
     {
-        static const func_map map = {{"matmul", testing_matmul<TiA, TiB, To, Tc, Tci>}};
+        static const func_map map = {{"matmul", testing_matmul<TiA, TiB, To, Tc, TciA, TciB>}};
         run_function(map, arg);
     }
 };
@@ -268,6 +270,8 @@ try
     std::string c_type;
     std::string d_type;
     std::string compute_type;
+    std::string compute_input_typeA;
+    std::string compute_input_typeB;
     std::string scale_type;
     std::string bias_type;
     std::string bias_source;
@@ -385,6 +389,14 @@ try
         ("compute_type",
          value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
          "Options: s,f32_r,x,xf32_r,f64_r,i32_r")
+
+        ("compute_input_typeA",
+         value<std::string>(&compute_input_typeA), "Precision of computation input A. "
+         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the compute_input_typeA has no effect.")
+
+        ("compute_input_typeB",
+         value<std::string>(&compute_input_typeB), "Precision of computation input B. "
+         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the compute_input_typeA has no effect.")
 
         ("scale_type",
          value<std::string>(&scale_type), "Precision of scalar. "
@@ -766,6 +778,15 @@ try
         = compute_type == "" ? (HIPBLAS_COMPUTE_32F) : string_to_hipblas_computetype(compute_type);
     if(arg.compute_type == static_cast<hipblasComputeType_t>(0))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
+
+    //The value HIPBLASLT_DATATYPE_INVALID indicates that the compute_input_typeA has no effect.
+    arg.compute_input_typeA = (compute_input_typeA != "") ? string_to_hip_datatype(compute_input_typeA) : HIPBLASLT_DATATYPE_INVALID;
+    if(arg.compute_input_typeA == HIPBLASLT_DATATYPE_INVALID && compute_input_typeA != "")
+        throw std::invalid_argument("Invalid value for --compute_input_typeA " + compute_input_typeA);
+
+    arg.compute_input_typeB = (compute_input_typeB != "") ? string_to_hip_datatype(compute_input_typeB) : HIPBLASLT_DATATYPE_INVALID;
+    if(arg.compute_input_typeB == HIPBLASLT_DATATYPE_INVALID && compute_input_typeB != "")
+        throw std::invalid_argument("Invalid value for --compute_input_typeB " + compute_input_typeB);
 
     if(string_to_hip_datatype(bias_type) == HIPBLASLT_DATATYPE_INVALID && bias_type != ""
        && bias_type != "default")

@@ -32,6 +32,7 @@
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/Utils.hpp>
 
+#include <random>
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
@@ -867,8 +868,16 @@ namespace Tensile
             rv.args.append<uint32_t>("GSUSync", 0);
         }
 
+        if(problemType.stochasticRounding)
+        {
+            // generate seed from random generator
+            std::random_device                      rd;
+            std::mt19937                            gen(rd());
+            std::uniform_int_distribution<uint32_t> distribution(0, 0xFFFFFFFF);
+            uint32_t                                seed = distribution(gen);
+            rv.args.append<uint32_t>("RNDSeed", seed);
+        }
         rv.codeObjectFile = codeObjectFilename.load();
-
         return rv;
     }
 
@@ -1429,6 +1438,15 @@ namespace Tensile
         //@TODO determine if this is needed, may not end up in the same code object file
         rv.codeObjectFile = codeObjectFilename.load();
 
+        if(problemType.stochasticRounding)
+        {
+            // generate seed from random generator
+            std::random_device                      rd;
+            std::mt19937                            gen(rd());
+            std::uniform_int_distribution<uint32_t> distribution(0, 0xFFFFFFFF);
+            uint32_t                                seed = distribution(gen);
+            rv.args.append<uint32_t>("RNDSeed", seed);
+        }
         return rv;
     }
 

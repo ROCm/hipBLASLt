@@ -553,6 +553,10 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             case rocblaslt_compute_i32:
             case rocblaslt_compute_f32_fast_f16:
             case rocblaslt_compute_f32_fast_bf16:
+            case rocblaslt_compute_f32_fast_f8_fnuz:
+            case rocblaslt_compute_f32_fast_bf8_fnuz:
+            case rocblaslt_compute_f32_fast_f8bf8_fnuz:
+            case rocblaslt_compute_f32_fast_bf8f8_fnuz:
                 break;
             default:
                 log_error(__func__, "invalid compute type", computeType);
@@ -566,7 +570,9 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             }
 
             *matmulDesc                 = new _rocblaslt_matmul_desc();
+
             (*matmulDesc)->compute_type = computeType;
+            (*matmulDesc)->compute_type_original = computeType;
             (*matmulDesc)->scale_type   = scaleType;
             auto computeTypeInit        = computeType == rocblaslt_compute_f32_fast_xf32
                                               ? rocblaslt_compute_f32
@@ -628,6 +634,28 @@ rocblaslt_status rocblaslt_matmul_desc_destroy(const rocblaslt_matmul_desc matmu
         return status;
     }
     return rocblaslt_status_success;
+}
+
+rocblaslt_compute_type _matmul_desc_determine_compute_type(rocblaslt_matmul_desc matmulDesc)
+{
+    if(matmulDesc->compute_type_original == rocblaslt_compute_f32)
+    {
+        auto tciA = matmulDesc->compute_input_typeA;
+        auto tciB = matmulDesc->compute_input_typeB;
+        if(tciA == tciB && tciA == HIP_R_16F)
+            return rocblaslt_compute_f32_fast_f16;
+        else if(tciA == tciB && tciA == HIP_R_16BF)
+            return rocblaslt_compute_f32_fast_bf16;
+        else if(tciA == tciB && tciA == HIP_R_8F_E4M3_FNUZ)
+            return rocblaslt_compute_f32_fast_f8_fnuz;
+        else if(tciA == tciB && tciA == HIP_R_8F_E5M2_FNUZ)
+            return rocblaslt_compute_f32_fast_bf8_fnuz;
+        else if(tciA == HIP_R_8F_E4M3_FNUZ && tciB == HIP_R_8F_E5M2_FNUZ)
+            return rocblaslt_compute_f32_fast_f8bf8_fnuz;
+        else if(tciA == HIP_R_8F_E5M2_FNUZ && tciB == HIP_R_8F_E4M3_FNUZ)
+            return rocblaslt_compute_f32_fast_bf8f8_fnuz;
+    }
+    return matmulDesc->compute_type_original;
 }
 
 /********************************************************************************
@@ -797,6 +825,30 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
+            case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT:
+                if(sizeof(int32_t) <= sizeInBytes)
+                {
+                    memcpy(&matmulDesc->compute_input_typeA, buf, sizeof(int32_t));
+                    matmulDesc->compute_type = _matmul_desc_determine_compute_type(matmulDesc);
+                }
+                else
+                {
+                    log_error(__func__, "invalid compute_input_typeA buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT:
+                if(sizeof(int32_t) <= sizeInBytes)
+                {
+                    memcpy(&matmulDesc->compute_input_typeB, buf, sizeof(int32_t));
+                    matmulDesc->compute_type = _matmul_desc_determine_compute_type(matmulDesc);
+                }
+                else
+                {
+                    log_error(__func__, "invalid compute_input_typeB buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
             default:
                 log_error(__func__, "invalid attribute", matmulAttr);
                 return rocblaslt_status_invalid_value;
@@ -943,6 +995,26 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 memcpy(buf, &matmulDesc->amax_ptr, sizeof(void*));
+                break;
+            case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT:
+                if(sizeWritten)
+                    *sizeWritten = sizeof(int32_t);
+                if(sizeInBytes < sizeof(int32_t))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->compute_input_typeA, sizeof(int32_t));
+                break;
+            case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT:
+                if(sizeWritten)
+                    *sizeWritten = sizeof(int32_t);
+                if(sizeInBytes < sizeof(int32_t))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->compute_input_typeB, sizeof(int32_t));
                 break;
             default:
                 log_error(__func__, "invalid attribute", matmulAttr);
@@ -1245,7 +1317,6 @@ rocblaslt_status
         int8_t alpha[16] = {0};
         int8_t beta[16]  = {0};
         assignAlphaBeta1(compute_type, (void*)alpha, (void*)beta);
-
         auto prob = construct_rocblaslt_problem(
             handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta, pref->max_workspace_bytes);
         status = getBestSolutions(prob,
@@ -1255,7 +1326,6 @@ rocblaslt_status
                                   heuristicResultsArray,
                                   returnAlgoCount,
                                   pref->max_workspace_bytes);
-
         log_api(__func__, "returnAlogCount", *returnAlgoCount);
 
         //Try to get size independent solutions from getAllSolutions()

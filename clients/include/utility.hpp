@@ -211,7 +211,9 @@ public:
     hipblaslt_local_matmul_descr(hipblasOperation_t   opA,
                                  hipblasOperation_t   opB,
                                  hipblasComputeType_t compute_type,
-                                 hipDataType          scale_type)
+                                 hipDataType          scale_type,
+                                 hipDataType          compute_input_typeA=HIPBLASLT_DATATYPE_INVALID,
+                                 hipDataType          compute_input_typeB=HIPBLASLT_DATATYPE_INVALID)
     {
         this->m_status = hipblasLtMatmulDescCreate(&this->m_descr, compute_type, scale_type);
 
@@ -219,6 +221,9 @@ public:
             this->m_descr, HIPBLASLT_MATMUL_DESC_TRANSA, &opA, sizeof(int32_t));
         hipblasLtMatmulDescSetAttribute(
             this->m_descr, HIPBLASLT_MATMUL_DESC_TRANSB, &opB, sizeof(int32_t));
+
+        hipblasLtMatmulDescSetAttribute(this->m_descr, HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT, &compute_input_typeA, sizeof(void*));
+        hipblasLtMatmulDescSetAttribute(this->m_descr, HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT, &compute_input_typeB, sizeof(void*));
     }
 
     ~hipblaslt_local_matmul_descr() {}

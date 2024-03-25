@@ -159,6 +159,9 @@ struct _rocblaslt_matmul_desc
     int64_t stride_e = 0;
     //
     rocblaslt_compute_type compute_type;
+    rocblaslt_compute_type compute_type_original;
+    hipDataType compute_input_typeA;
+    hipDataType compute_input_typeB;
     hipDataType            scale_type = HIPBLASLT_DATATYPE_INVALID;
 
     std::shared_ptr<void> m_data; // Tensile data
@@ -181,6 +184,9 @@ struct _rocblaslt_matmul_desc
         this->lde          = src.lde;
         this->stride_e     = src.stride_e;
         this->compute_type = src.compute_type;
+        this->compute_type_original = src.compute_type_original;
+        this->compute_input_typeA = src.compute_input_typeA;
+        this->compute_input_typeB = src.compute_input_typeB;
         this->scale_type   = src.scale_type;
     }
 };
