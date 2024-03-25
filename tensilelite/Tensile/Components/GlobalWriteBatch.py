@@ -849,7 +849,12 @@ class GlobalWriteBatchWriter:
       # Activation
       activationModule = None
       isActivationInsertAfter = False
-      gradientInput = dataE if self.kernel["ProblemType"]["Gradient"] and (self.kernel["GlobalSplitU"] == 1) else self.ss.elementSumIdx[elementIdx]
+      if self.kernel["ProblemType"]["Gradient"] and (self.kernel["GlobalSplitU"] == 1):
+        gradientInput = dataE
+        enableValuC   = False
+      else:
+        gradientInput = self.ss.elementSumIdx[elementIdx]
+        enableValuC   = True
       if self.kernel["ActivationFuncCall"]:
         if (activationCDataType == self.kernel["ProblemType"]["DestDataType"]) and \
           (activationCDataType != self.kernel["ProblemType"]["ComputeDataType"]) and ((self.kernel["ProblemType"]["UseScaleCD"] == False) or (self.kernel["ProblemType"]["UseScaleAlphaVec"] == False)):
@@ -873,7 +878,7 @@ class GlobalWriteBatchWriter:
             SaturateTypeInt8 = SaturateCastType.DO_NOTHING
             satInt8 = True
         activationModule = self.parentWriter.getActivationActivationComputeType(self.kernel, self.activation, \
-          self.activationTypeStr, self.gwvw, gradientInput, gradientInput, self.tmpVgpr, self.tmpSgpr, satInt8)
+          self.activationTypeStr, self.gwvw, gradientInput, gradientInput, self.tmpVgpr, self.tmpSgpr, satInt8, enableValuC)
       # Add C *= GradientAct
       if self.kernel["ProblemType"]["ActivationType"] != 'none' and self.kernel["ProblemType"]["Gradient"] and (self.kernel["GlobalSplitU"] == 1):
         if isActivationInsertAfter:
