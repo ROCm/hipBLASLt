@@ -220,6 +220,7 @@ class StateValues:
   nonPostLoopSgpr: List[str]             = field(init=False)
   userArgsInfo: UserArgumentsInfo        = field(default_factory=UserArgumentsInfo)
   numSgprToLoad: int                     = 0 # For kernel args
+  preloadGuard: List[int]                = field(init=False)  # For preload kernel args guard
   numSgprPreload: int                    = 0 # For kernel args
   numSgprAlpha: int                      = 0 # For user arguments
   numSgprBeta: int                       = 0 # For user arguments
@@ -284,6 +285,8 @@ class StateValues:
     self.numStoreSgprNameSizes = []
 
     self.nonPostLoopSgpr = []
+
+    self.preloadGuard = []
 
 @dataclass
 class StateVgprs:
@@ -2058,6 +2061,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     expand = kernel["ExpandPointerSwap"]
     self.dontAppendCode = False
 
+    tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
+
     ####################################
     # Begin String
     moduleKernelBody = KernelBody("kernelBody")
@@ -2068,85 +2073,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     fs = self.functionSignature()
     moduleKernelBody.addSignature(fs)
 
-    self.defineVariableSgprs(kernel)
-
-    ####################################
-    # Local Read Addresses
-    ####################################
-    lralwaMod = Module("local")
-
-    # C regs are not used during initialization so mark them as available -
-    # we will claim then just before the start of the unroll loop:
-    self.vgprPool.add(self.states.a.startVgprValu , \
-        self.states.lastValuAB - self.states.a.startVgprValu , "ValuAB") # Add as available
-    lralwaMod.addComment0("init: add vgpr [%u...%u) to pool" % \
-                         (self.states.a.startVgprValu, self.states.lastValuAB+self.states.a.startVgprValu))
-
-    self.vgprPool.add(self.states.c.startVgprValu, \
-      self.states.c.numVgprValu, "ValuC-Block") # Add as available
-    lralwaMod.addComment0("init: add vgpr [%u...%u) to pool" % \
-                         (self.states.c.startVgprValu, self.states.c.startVgprValu+self.states.c.numVgprValu))
-
-    numAccvgprs = self.states.totalAgprs
-    self.agprPool.add(0, numAccvgprs, "ValuC-Block")
-    lralwaMod.addComment0("init: add agpr [%u...%u) to pool" % \
-                         (0, numAccvgprs))
-
-    lralwaMod.addComment2("Local Read Addresses")
-
-    # tile assignments
-    lralwaMod.addComment1("local read addresses: tile assignments a/b")
-    lralwaMod.add(self.lraTileAssignment(kernel, tensorParametersA, tensorParametersB))
-
-    tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
-
-    # final offsets
-    lralwaMod.addComment1("local read addresses: final offsets a")
-    lralwaMod.add(self.lraFinalOffset(kernel, tensorParametersA))
-    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-      lralwaMod.addComment1("local read addresses: final offsets metadata")
-      lralwaMod.add(self.lraFinalOffset(kernel, tPM))
-    lralwaMod.addComment1("local read addresses: final offsets b")
-    lralwaMod.add(self.lraFinalOffset(kernel, tensorParametersB))
-
-    # declare addresses
-    lralwaMod.addComment1("local read addresses: declare addresses a")
-    lralwaMod.add(self.lraDeclareAddresses(kernel, tensorParametersA))
-    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-      lralwaMod.addComment1("local read addresses: declare addresses metadata")
-      lralwaMod.add(self.lraDeclareAddresses(kernel, tPM))
-    lralwaMod.addComment1("local read addresses: declare addresses b")
-    lralwaMod.add(self.lraDeclareAddresses(kernel, tensorParametersB))
-
-
-    ####################################
-    # Local Write Addresses
-    ####################################
-    lralwaMod.addComment2("Local Write Addresses")
-
-    # tile assignments
-    lralwaMod.add(self.lwaTileAssignment(kernel, tensorParametersA))
-    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-      lralwaMod.add(self.lwaTileAssignment(kernel, tPM))
-    lralwaMod.add(self.lwaTileAssignment(kernel, tensorParametersB))
-
-    # unroll assignments
-    lralwaMod.add(self.lwaUnrollAssignment(kernel, tensorParametersA))
-    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-      lralwaMod.add(self.lwaUnrollAssignment(kernel, tPM))
-    lralwaMod.add(self.lwaUnrollAssignment(kernel, tensorParametersB))
-
-    # first offsets
-    lralwaMod.addComment1("local write addresses: first offset a")
-    lralwaMod.add(self.lwaFirstOffset(kernel, tensorParametersA))
-    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-      lralwaMod.addComment1("local write addresses: first offset metadata")
-      lralwaMod.add(self.lwaFirstOffset(kernel, tPM))
-    lralwaMod.addComment1("local write addresses: first offset b")
-    lralwaMod.add(self.lwaFirstOffset(kernel, tensorParametersB))
-
     module = Module("body")
-    module.add(self.defineAndResources(kernel, tensorParametersA, tensorParametersB, lralwaMod))
+    module.add(self.defineAndResources(kernel, tensorParametersA, tensorParametersB, tPM))
 
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
@@ -3632,6 +3560,26 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("NumWorkGroups0", 1)
     self.defineSgpr("NumWorkGroups1", 1)
 
+    # Calculate numSgpr preload
+    self.states.preloadGuard = []
+    self.states.numSgprPreload = 0
+    if kernel["PreloadKernArgs"]:
+      # Max num spgrs can be setup by CP is only 16 for now
+      # kernel argument buffer address needs 2 sgprs
+      # Workgroup ID x, y, z need 3 sgprs
+      numWorkgroupIDSgpr = kernel["ProblemType"]["NumIndicesC"]
+      self.states.numSgprPreload = 16 - self.states.rpga - kernel["ProblemType"]["NumIndicesC"]
+
+      # Safe guard for preload arguments
+      while(1):
+        tmpSgpr = self.sgprPool.checkOut(1, preventOverflow=0)
+        if tmpSgpr >= 16:
+          self.sgprPool.checkIn(tmpSgpr)
+          break
+        self.states.preloadGuard.append(tmpSgpr)
+
+
+
     ###################################
     # Get kernel argument start here
     ###################################
@@ -3679,15 +3627,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
 
-    # Calculate numSgpr preload
-    self.states.numSgprPreload = 0
-    if kernel["PreloadKernArgs"]:
-      # Max num spgrs can be setup by CP is only 16 for now
-      # kernel argument buffer address needs 2 sgprs
-      # Workgroup ID x, y, z need 3 sgprs
-      numWorkgroupIDSgpr = kernel["ProblemType"]["NumIndicesC"]
-      self.states.numSgprPreload = 16 - self.states.rpga - kernel["ProblemType"]["NumIndicesC"]
-
     #------------------------
     # Registers defined below this point are not available in the post-loop
     # Post-loop is after tail loop exits, ie the store code.
@@ -3732,6 +3671,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     while SgprSlot:
       tempSgpr = SgprSlot.pop(0)
       self.sgprPool.checkIn(tempSgpr)
+
+    if self.sgprPool.size() > self.consts.maxSgprs:
+      print ("warning: Number of first half of defined SGPRS (%d) overflowed max SGPRS (%d)." \
+               % (self.sgprPool.size(), self.consts.maxSgprs))
 
     ########################################
     # Register Pools
@@ -3847,6 +3790,74 @@ class KernelWriter(metaclass=abc.ABCMeta):
     else:
       self.states.needBiasType = False
 
+    #########################################################
+    # Below calculates the number of sgprs needed in epilogue
+    #########################################################
+    self.states.numStoreSgprNames = []
+    self.states.numStoreSgprNameSizes = []
+    storeSgprLoad = 0
+    if kernel["ProblemType"]["UseScaleAB"]:
+      self.states.numSgprAddressScaleA = self.states.rpga if (not self.states.preloadScaleA) else 0
+      self.states.numSgprAddressScaleB = self.states.rpga if (not self.states.preloadScaleB) else 0
+      storeSgprLoad += self.states.numSgprAddressScaleA + self.states.numSgprAddressScaleB
+      if self.states.numSgprAddressScaleA:
+        self.states.numStoreSgprNames.append("AddressScaleA")
+        self.states.numStoreSgprNameSizes.append(self.states.numSgprAddressScaleA)
+      if self.states.numSgprAddressScaleB:
+        self.states.numStoreSgprNames.append("AddressScaleB")
+        self.states.numStoreSgprNameSizes.append(self.states.numSgprAddressScaleB)
+    if kernel["ProblemType"]["UseScaleCD"]:
+      self.states.numSgprAddressScaleC = self.states.rpga
+      self.states.numSgprAddressScaleD = self.states.rpga
+      storeSgprLoad += self.states.numSgprAddressScaleC + self.states.numSgprAddressScaleD
+      if self.states.numSgprAddressScaleC:
+        self.states.numStoreSgprNames.append("AddressScaleC")
+        self.states.numStoreSgprNameSizes.append(self.states.numSgprAddressScaleC)
+      if self.states.numSgprAddressScaleD:
+        self.states.numStoreSgprNames.append("AddressScaleD")
+        self.states.numStoreSgprNameSizes.append(self.states.numSgprAddressScaleD)
+    if kernel["ProblemType"]["UseScaleAlphaVec"]:
+        storeSgprLoad += self.states.rpga
+        self.states.numStoreSgprNames.append("AddressScaleAlphaVec")
+        self.states.numStoreSgprNameSizes.append(self.states.rpga)
+    if self.states.useBias != DataDirection.NONE:
+      # Does not support atomic yet
+      self.states.BiasType   = 0
+      self.states.BiasStride = 0
+      self.states.numSgprAddressBias = self.states.rpga # 64-bit
+      self.states.numStoreSgprNames.append("AddressBias")
+      self.states.numStoreSgprNameSizes.append(self.states.numSgprAddressBias)
+      if self.states.needBiasType:
+        self.states.BiasType   = 1
+        self.states.BiasStride = 1
+        self.states.numStoreSgprNames.append("BiasType")
+        self.states.numStoreSgprNameSizes.append(self.states.BiasType)
+        self.states.numStoreSgprNames.append("BiasStride")
+        self.states.numStoreSgprNameSizes.append(self.states.BiasStride)
+        self.states.BiasDim = kernel["ProblemType"]["UseBias"]
+        if self.states.BiasDim == 3:
+          self.states.numStoreSgprNames.append("BiasDim")
+          self.states.numStoreSgprNameSizes.append(1)
+      storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride + (1 if self.states.BiasDim == 3 else 0)
+    if kernel["ProblemType"]["UseE"]:
+      storeSgprLoad += self.states.rpga + self.states.e.numSgprStrides
+      self.states.numStoreSgprNames.append("AddressE")
+      self.states.numStoreSgprNameSizes.append(self.states.rpga)
+      self.states.numStoreSgprNames.append("StridesE")
+      self.states.numStoreSgprNameSizes.append(self.states.e.numSgprStrides)
+    runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') \
+        and kernel["ActivationFused"]) else False
+    if runActivation:
+      for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
+        self.states.numStoreSgprNames.append(name)
+        self.states.numStoreSgprNameSizes.append(self.states.numActivationArgSize)
+      if kernel["ProblemType"]["ActivationType"] == 'all':
+        self.states.numActivationTypeArgSize = 1
+        self.states.numStoreSgprNames.append("ActivationType")
+        self.states.numStoreSgprNameSizes.append(1)
+      storeSgprLoad += self.states.numActivationTypeArgSize + self.states.numactivationArgTotalSize
+    self.states.numStoreSgprToLoad = storeSgprLoad
+
     if self.db["InitLds"] : print ("\n***WARNING: InitLds enabled, may impact performance\n")
     if self.db["InitSgpr"] : print ("\n***WARNING: InitSgpr enabled, may impact performance\n")
     if self.db["InitVgpr"] : print ("\n***WARNING: InitVgpr enabled, may impact performance\n")
@@ -3875,11 +3886,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # Allocate Resources
   ##############################################################################
   @abc.abstractmethod
-  def defineVariableSgprs(self, kernel):
-    return ""
-
-  @abc.abstractmethod
-  def defineAndResources(self, kernel, tPA, tPB, lralwaCode):
+  def defineAndResources(self, kernel, tPA, tPB, tPM):
     return ""
 
   ##############################################################################
@@ -4028,13 +4035,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   @abc.abstractmethod
   def graIncrements(self, kernel, loopIdx, tP):
-    return ""
-
-  ##############################################################################
-  # Local Write Addresses: Tile Assignment A/B
-  ##############################################################################
-  @abc.abstractmethod
-  def lwaTileAssignment(self, kernel, tP):
     return ""
 
   ##############################################################################
