@@ -948,7 +948,8 @@ class GlobalWriteBatchWriter:
           if vi%2 == 1:
             formatVgpr = formatting(sumIdxV, "ValuC+", self.parentWriter.states.c.startVgprValu)
             d = self.ss.elementSumIdx[elementIdx] + vi//2
-            packModule.add(VPackF16toB32(dst=vgpr(d), src0=vgpr(formatting(sumIdxV-1, "ValuC+", self.parentWriter.states.c.startVgprValu)), src1=vgpr(formatVgpr), \
+            dVgpr = formatting(d, "ValuC+", self.parentWriter.states.c.startVgprValu)
+            packModule.add(VPackF16toB32(dst=vgpr(dVgpr), src0=vgpr(formatting(sumIdxV-1, "ValuC+", self.parentWriter.states.c.startVgprValu)), src1=vgpr(formatVgpr), \
                           comment="Pack with neighbor"))
 
       biasReductionModule = Module("biasReductionModule")
