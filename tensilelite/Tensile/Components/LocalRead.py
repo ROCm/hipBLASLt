@@ -39,7 +39,7 @@ class LocalReadMFMA(LocalRead):
     def __call__(self, writer, kernel, bufferIdx, iui, epsi, tP):
         imod = Module("LocalReadDo%s_I%s" % (tP["tensorChar"],iui))
 
-        tc               = tP["tensorChar"]
+        tc = tP["tensorChar"]
         if tc == "A":
             writer.states.localReadDoCntA += 1
         elif tc == "Metadata":
