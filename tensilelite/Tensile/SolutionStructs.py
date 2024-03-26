@@ -2394,9 +2394,6 @@ class Solution(collections.abc.Mapping):
 
     # LocalSplitU but can't NumThreads%MacroTile doesn't support sideways store
     if state["LocalSplitU"] > 1:
-      if state["GlobalSplitU"] > 1:
-        reject(state, "TODO: LSU doesn't support GSU>1.")
-        return
       if not state["SourceSwap"] and state["StoreVectorWidth"] > state["VectorWidthA"]:
         reject(state, "LSU and non-SourceSwap doesn't support StoreVectorWidth(%u)>VWA(%u)." \
             % (state["StoreVectorWidth"], state["VectorWidthA"]))
