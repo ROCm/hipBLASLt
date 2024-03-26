@@ -9966,14 +9966,15 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   def getActivationActivationComputeType(self, kernel, activation, activationTypeStr: str, gwvw, \
-    elementSumIdxIn, elementSumIdxOut, tmpVgpr, tmpSgpr, satInt8=False):
+    elementSumIdxIn, elementSumIdxOut, tmpVgpr, tmpSgpr, satInt8=False, enableValuCPrefix=False):
     module = Module("ActivationBeforePack")
     if satInt8:
       activation.setSaturationForInt8(True)
-    if not kernel["ProblemType"]["Gradient"]:
+    if enableValuCPrefix:
+      # The register is from ValuC allocation instead of allocated by itself
       activation.setVgprPrefixFormat("ValuC+%u")
     for vi in range(0, gwvw):
-      vgprIn  = elementSumIdxIn + vi - self.states.c.startVgprValu
+      vgprIn  = elementSumIdxIn + vi
       vgprOut = elementSumIdxOut + vi
       actModule = activation.getModule(kernel["ProblemType"]["ActivationComputeDataType"], activationTypeStr, vgprIn, vgprOut)
       module.add(activation.assignGpr(actModule, tmpVgpr, tmpSgpr))
