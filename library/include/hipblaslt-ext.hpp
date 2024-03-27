@@ -382,8 +382,6 @@ namespace hipblaslt_ext
 
         hipblasLtHandle_t     m_handle;
         std::shared_ptr<void> m_data;
-        struct ConversionHelper;
-        std::unique_ptr<ConversionHelper> m_conversion_helper;
     };
 
     /*! \ingroup types_module
