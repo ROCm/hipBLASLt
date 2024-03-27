@@ -87,7 +87,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT128x16x128_MI16x16x1_19_gfx942'
+    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT128x16x128_MI16x16x1_0_Equality_gfx942'
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -349,7 +349,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT64x16x128_MI16x16x1_10_gfx942'
+    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT64x16x128_MI16x16x1_1_Equality_gfx942'
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -374,7 +374,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_HF8_HHS_BH_MT64x16x128_MI16x16x1_SN_LDSB0_GSUM_GSUAMBSK_LBSPPA1024_LBSPPB256_LPA16_MIWT1_1_MO2_NTB1_NTD0_NLCA1_SS0_SVW4_VWA1_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_MT64x16x128_MI16x16x1_SN_LDSB0_GSUM_GSUAMBSK_LBSPPA1024_LBSPPB256_LPA16_MIWT1_1_MO2_NTB1_NTD0_NLCA1_SS0_SVW4_VWA1_WG64_4_1
     LSCA: 64
     LSCB: 128
     LSPA: 8
@@ -543,7 +543,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Ailk_Bljk_HF8_HHS_BH_MT64x16x128_MI16x16x1_SN_LDSB0_GSU6_GSUAMBSK_LBSPPA1024_LBSPPB256_LPA16_MIWT1_1_MO2_NTB1_NTD0_NLCA1_SS0_SVW4_VWA1_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_MT64x16x128_MI16x16x1_SN_LDSB0_GSU6_GSUAMBSK_LBSPPA1024_LBSPPB256_LPA16_MIWT1_1_MO2_NTB1_NTD0_NLCA1_SS0_SVW4_VWA1_WG64_4_1_WGM1
     SourceSwap: 0
     StaggerU: 4
     StaggerUMapping: 1
@@ -607,7 +607,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT32x16x128_MI16x16x1_9_gfx942'
+    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT32x16x128_MI16x16x1_2_Equality_gfx942'
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -868,7 +868,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x192x128_MI16x16x1_8_gfx942'
+    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x192x128_MI16x16x1_3_Equality_gfx942'
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -1129,7 +1129,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x96x128_MI16x16x1_7_gfx942'
+    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x96x128_MI16x16x1_4_Equality_gfx942'
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -1154,7 +1154,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_HF8_HHS_BH_MT16x96x128_MI16x16x1_SN_LDSB1_GSUM_GSUAMBSK_LBSPPB256_MIWT1_3_MO2_NTB1_NTD1_SS0_SVW4_WG16_8_1
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_MT16x96x128_MI16x16x1_SN_LDSB1_GSUM_GSUAMBSK_LBSPPB256_MIWT1_3_MO2_NTB1_NTD1_SS0_SVW4_WG16_8_1
     LSCA: 16
     LSCB: 128
     LSPA: 32
@@ -1323,7 +1323,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 4
-    SolutionNameMin: Cijk_Ailk_Bljk_HF8_HHS_BH_MT16x96x128_MI16x16x1_SN_LDSB1_GSU7_GSUAMBSK_LBSPPB256_MIWT1_3_MO2_NTB1_NTD1_SS0_SVW4_WG16_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_MT16x96x128_MI16x16x1_SN_LDSB1_GSU7_GSUAMBSK_LBSPPB256_MIWT1_3_MO2_NTB1_NTD1_SS0_SVW4_WG16_8_1_WGM1
     SourceSwap: 0
     StaggerU: 4
     StaggerUMapping: 1
@@ -1387,7 +1387,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x64x128_MI16x16x1_4_gfx942'
+    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x64x128_MI16x16x1_5_Equality_gfx942'
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -1646,7 +1646,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x16x128_MI16x16x1_0_gfx942'
+    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x16x128_MI16x16x1_6_Equality_gfx942'
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -1904,7 +1904,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x16x256_MI16x16x1_1_gfx942'
+    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x16x256_MI16x16x1_7_Equality_gfx942'
     DepthU: 256
     DirectToLds: false
     DirectToLdsA: false
@@ -2162,7 +2162,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x16x256_MI16x16x1_2_gfx942'
+    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x16x256_MI16x16x1_8_Equality_gfx942'
     DepthU: 256
     DirectToLds: false
     DirectToLdsA: false
