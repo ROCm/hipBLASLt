@@ -798,7 +798,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["ConvertAfterDS"]:
          if kernel["ProblemType"]["DataTypeA"].isFloat8():
              if kernel["UnrollMajorLDSA"]:
-                 instPerPackA = 6 if (self.states.numReadsIterCoalescedA == 1) else 6 * kernel["MIWaveTile"][0]
+                 instPerPackA = 6 * self.states.numReadsIterCoalescedA if(iteration % self.states.numReadsIterCoalescedA == 0) else 0
              elif self.states.lrvwTileA == 1:
                  instPerPackA = 8
              elif self.states.lrvwTileA == 2:
@@ -810,7 +810,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
          if kernel["ProblemType"]["DataTypeB"].isFloat8():
              if kernel["UnrollMajorLDSB"]:
-                 instPerPackB = 6 if (self.states.numReadsIterCoalescedB == 1) else 6 * kernel["MIWaveTile"][1]
+                 instPerPackB = 6 * self.states.numReadsIterCoalescedB if(iteration % self.states.numReadsIterCoalescedB == 0) else 0
              elif self.states.lrvwTileB == 1:
                  instPerPackB = 8
              elif self.states.lrvwTileB == 2:
@@ -844,9 +844,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
         packMItems = packM.flatitems()
 
         if packAItems:
-          for j in range(self.states.numReadsIterCoalescedA):
+          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeA"].isFloat8():
             for n in range(instPerPackA):
-              packINtems[j].append(packAItems.pop(0))
+              packINtems[0].append(packAItems.pop(0))
+          else:
+            for j in range(self.states.numReadsIterCoalescedA):
+              for n in range(instPerPackA):
+                packINtems[j].append(packAItems.pop(0))
+
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
           for j in range(self.states.numReadsIterCoalescedMetadata):
             for n in range(ceil(instPerPackM)):
@@ -854,14 +859,25 @@ class KernelWriter(metaclass=abc.ABCMeta):
                 packINtems[j].append(packMItems.pop(0))
               else:
                 break
+
         if packBItems:
-          for j in range(self.states.numReadsIterCoalescedB):
+          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeB"].isFloat8():
             for n in range(instPerPackB):
-              packINtems[j].append(packBItems.pop(0))
+              packINtems[0].append(packBItems.pop(0))
+          else:
+            for j in range(self.states.numReadsIterCoalescedB):
+              for n in range(instPerPackB):
+                packINtems[j].append(packBItems.pop(0))
+
         while packAItems:
-          for j in range(self.states.numReadsIterCoalescedA):
+          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeA"].isFloat8():
             for n in range(instPerPackA):
-              packINtems[j].append(packAItems.pop(0))
+              packINtems[0].append(packAItems.pop(0))
+          else:
+            for j in range(self.states.numReadsIterCoalescedA):
+              for n in range(instPerPackA):
+                packINtems[j].append(packAItems.pop(0))
+
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
           while packMItems:
             for j in range(self.states.numReadsIterCoalescedMetadata):
@@ -870,10 +886,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
                   packINtems[j].append(packMItems.pop(0))
                 else:
                   break
+
         while packBItems:
-          for j in range(self.states.numReadsIterCoalescedB):
+          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeB"].isFloat8():
             for n in range(instPerPackB):
-              packINtems[j].append(packBItems.pop(0))
+              packINtems[0].append(packBItems.pop(0))
+          else:
+            for j in range(self.states.numReadsIterCoalescedB):
+              for n in range(instPerPackB):
+                packINtems[j].append(packBItems.pop(0))
+
         for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB)):
           packItems += packINtems.pop(0)
 
@@ -1130,8 +1152,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
           # calculate the data index of this mfma used for A and B
           # if i // kernel["MIWaveTile"][0]==0, mfma will use new A (need to take iu into account)
           # if i % kernel["MIWaveTile"][0]==0, mfma will use new B
-          packAIdx += instPerPackA * self.states.numReadsIterCoalescedA if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
-          packBIdx += instPerPackB * self.states.numReadsIterCoalescedB if i % kernel["MIWaveTileA"] == 0 else 0
+          packAIdx += instPerPackA if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
+          packBIdx += instPerPackB if i % kernel["MIWaveTileA"] == 0 else 0
           if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             if kernel["ProblemType"]["Sparse"] == 2:
               packMIdx += instPerPackM if i % kernel["MIWaveTileA"] == 0 else 0
@@ -1153,8 +1175,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           else:
             iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u" %(packAIdx,packBIdx))
           # we put 2 pack in each mfma
-          multipier = self.states.numReadsIterCoalescedA if kernel["ConvertAfterDS"] else 1
-          for j in range(instPerPackA * multipier):
+          for j in range(instPerPackA):
             if packItems:
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
@@ -1163,8 +1184,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
               if packItems:
                 iterCode.add(packItems.pop(0))
                 curPackIdx += 1
-          multipier = self.states.numReadsIterCoalescedB if kernel["ConvertAfterDS"] else 1
-          for j in range(instPerPackB * multipier):
+          for j in range(instPerPackB):
             if packItems:
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
@@ -1840,6 +1860,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       for plrIdx in range(0, self.states.numItersPLR):
         pack[plrIdx] = Module()
         for iui in range(0,kernel["InnerUnroll"]):
+
           if iui*self.states.numReadsIterCoalescedA < kernel["InnerUnroll"]:
             module.addComment1("prefetch local a")
             localReadCodeA, packCodeA = self.localReadDo(kernel, plrIdx*self.states.numIterPerCoalescedReadA, iui*self.states.numReadsIterCoalescedA, 0, tensorParametersA)
@@ -1856,6 +1877,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             localReadCodeB, packCodeB = self.localReadDo(kernel, plrIdx*self.states.numIterPerCoalescedReadB, iui*self.states.numReadsIterCoalescedB, 0, tensorParametersB)
             module.add(localReadCodeB)
             pack[plrIdx].add(packCodeB)
+
           if iui*self.states.numReadsIterCoalescedA < kernel["InnerUnroll"]:
             module.addComment0("local read increment a")
             module.add(self.localReadInc(kernel, iui, tensorParametersA))

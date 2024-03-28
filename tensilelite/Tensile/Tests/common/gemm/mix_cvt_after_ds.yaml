@@ -49,6 +49,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [True]
         - MatrixInstruction:
           - [16, 16, 16, 1,  1,   2, 2,  2,2 ] #16
+          - [16, 16, 16, 1,  1,   2, 1,  1,1 ] #16
         - AssertFree0ElementMultiple: [1]
         - AssertFree1ElementMultiple: [1]
         - AssertSummationElementMultiple: [1]
@@ -128,6 +129,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [True]
         - MatrixInstruction:
           - [16, 16, 16, 1,  1,   2, 2,  2,2 ] #16
+          - [16, 16, 16, 1,  1,   2, 1,  1,1 ] #16
         - AssertFree0ElementMultiple: [1]
         - AssertFree1ElementMultiple: [1]
         - AssertSummationElementMultiple: [1]
@@ -207,6 +209,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [True]
         - MatrixInstruction:
           - [16, 16, 16, 1,  1,   2, 2,  2,2 ] #16
+          - [16, 16, 16, 1,  1,   2, 1,  1,1 ] #16
         - AssertFree0ElementMultiple: [1]
         - AssertFree1ElementMultiple: [1]
         - AssertSummationElementMultiple: [1]
@@ -286,6 +289,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [True]
         - MatrixInstruction:
           - [16, 16, 16, 1,  1,   2, 2,  2,2 ] #16
+          - [16, 16, 16, 1,  1,   2, 1,  1,1 ] #16
         - AssertFree0ElementMultiple: [1]
         - AssertFree1ElementMultiple: [1]
         - AssertSummationElementMultiple: [1]
@@ -365,6 +369,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [True]
         - MatrixInstruction:
           - [16, 16, 16, 1,  1,   2, 2,  2,2 ] #16
+          - [16, 16, 16, 1,  1,   2, 1,  1,1 ] #16
         - AssertFree0ElementMultiple: [1]
         - AssertFree1ElementMultiple: [1]
         - AssertSummationElementMultiple: [1]
@@ -444,6 +449,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [True]
         - MatrixInstruction:
           - [16, 16, 16, 1,  1,   2, 2,  2,2 ] #16
+          - [16, 16, 16, 1,  1,   2, 1,  1,1 ] #16
         - AssertFree0ElementMultiple: [1]
         - AssertFree1ElementMultiple: [1]
         - AssertSummationElementMultiple: [1]
@@ -523,6 +529,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [True]
         - MatrixInstruction:
           - [16, 16, 16, 1,  1,   2, 2,  2,2 ] #16
+          - [16, 16, 16, 1,  1,   2, 1,  1,1 ] #16
         - AssertFree0ElementMultiple: [1]
         - AssertFree1ElementMultiple: [1]
         - AssertSummationElementMultiple: [1]
@@ -602,6 +609,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [True]
         - MatrixInstruction:
           - [16, 16, 16, 1,  1,   2, 2,  2,2 ] #16
+          - [16, 16, 16, 1,  1,   2, 1,  1,1 ] #16
         - AssertFree0ElementMultiple: [1]
         - AssertFree1ElementMultiple: [1]
         - AssertSummationElementMultiple: [1]
