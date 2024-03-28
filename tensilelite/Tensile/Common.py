@@ -1028,6 +1028,9 @@ validParameters = {
 
     # in mix mode F8 need to convert to F16, do this before(0) ds or after(1) ds
     "ConvertAfterDS":              [False, True],
+
+    # Force disable shadow init to release more sgpr in preloop
+    "ForceDisableShadowInit":      [False, True],
     }
 
 
@@ -1119,7 +1122,8 @@ defaultBenchmarkCommonParameters = [
     {"ActivationFuncCall":        [ True  ] },
     {"ActivationAlt":             [ False ] },
     {"WorkGroupReduction":        [ False ] },
-    {"ConvertAfterDS":            [ False ] }
+    {"ConvertAfterDS":            [ False ] },
+    {"ForceDisableShadowInit":    [ False ] }
 ]
 
 # dictionary of defaults comprised of default option for each parameter
