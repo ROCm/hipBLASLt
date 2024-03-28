@@ -56,21 +56,31 @@ namespace
     {
         TypedMatrixTransformIO(int64_t m, int64_t n, int64_t b)
         {
-            auto err = hipMalloc(&this->a, m * n * b * sizeof(DType));
+            constexpr std::size_t alignment = 2 * 1024 * 1024;
+            const auto            bufSize   = m * n * b * sizeof(DType);
+            const auto            res       = bufSize % alignment;
+            const auto            allocSize = bufSize + (res ? (alignment - res) : 0);
+            auto                  err       = hipMalloc(&this->aBase, allocSize);
             EXPECT_EQ(err, hipSuccess);
-            err = hipMalloc(&this->b, m * n * b * sizeof(DType));
+            err = hipMalloc(&this->bBase, allocSize);
             EXPECT_EQ(err, hipSuccess);
-            err = hipMalloc(&this->c, m * n * b * sizeof(DType));
+            err = hipMalloc(&this->cBase, allocSize);
             EXPECT_EQ(err, hipSuccess);
+            this->a = reinterpret_cast<DType*>(aBase + (allocSize - bufSize));
+            this->b = reinterpret_cast<DType*>(bBase + (allocSize - bufSize));
+            this->c = reinterpret_cast<DType*>(cBase + (allocSize - bufSize));
             init(this->a, m * n * b);
             init(this->b, m * n * b);
         }
 
         ~TypedMatrixTransformIO() override
         {
-            auto err = hipFree(a);
-            err      = hipFree(b);
-            err      = hipFree(c);
+            auto err = hipFree(aBase);
+            err      = hipFree(bBase);
+            err      = hipFree(cBase);
+            aBase    = nullptr;
+            bBase    = nullptr;
+            cBase    = nullptr;
             EXPECT_EQ(err, hipSuccess);
         }
 
@@ -104,6 +114,9 @@ namespace
         DType* a{};
         DType* b{};
         DType* c{};
+        char*  aBase{};
+        char*  bBase{};
+        char*  cBase{};
     };
 
     using MatrixTransformIOPtr = std::unique_ptr<MatrixTransformIO>;
@@ -385,7 +398,9 @@ namespace
     }
 }
 
-class MatrixTransformTest : public ::testing::TestWithParam<std::tuple<hipDataType,
+class MatrixTransformTest : public ::testing::TestWithParam<std::tuple<int64_t,
+                                                                       int64_t,
+                                                                       hipDataType,
                                                                        hipDataType,
                                                                        hipblasOperation_t,
                                                                        hipblasOperation_t,
@@ -397,16 +412,16 @@ class MatrixTransformTest : public ::testing::TestWithParam<std::tuple<hipDataTy
 
 TEST_P(MatrixTransformTest, Basic)
 {
-    int64_t                     m             = 1024;
-    int64_t                     n             = 1024;
+    int64_t                     m             = std::get<0>(GetParam());
+    int64_t                     n             = std::get<1>(GetParam());
     int32_t                     batchSize     = 1;
-    auto                        datatype      = std::get<0>(GetParam());
-    auto                        scaleDatatype = std::get<1>(GetParam());
-    auto                        opA           = std::get<2>(GetParam());
-    auto                        opB           = std::get<3>(GetParam());
-    auto                        orderA        = std::get<4>(GetParam());
-    auto                        orderB        = std::get<5>(GetParam());
-    auto                        orderC        = std::get<6>(GetParam());
+    auto                        datatype      = std::get<2>(GetParam());
+    auto                        scaleDatatype = std::get<3>(GetParam());
+    auto                        opA           = std::get<4>(GetParam());
+    auto                        opB           = std::get<5>(GetParam());
+    auto                        orderA        = std::get<6>(GetParam());
+    auto                        orderB        = std::get<7>(GetParam());
+    auto                        orderC        = std::get<8>(GetParam());
     float                       alpha         = 1;
     float                       beta          = 1;
     int64_t                     batchStride   = m * n;
@@ -773,7 +788,7 @@ TEST(MatrixTransformTest, NullA)
     auto                        orderA        = HIPBLASLT_ORDER_ROW;
     auto                        orderB        = HIPBLASLT_ORDER_ROW;
     auto                        orderC        = HIPBLASLT_ORDER_COL;
-    float                       alpha         = 1;
+    float                       alpha         = 0;
     float                       beta          = 1;
     int64_t                     batchStride   = m * n;
     std::pair<int64_t, int64_t> shapeA;
@@ -782,9 +797,6 @@ TEST(MatrixTransformTest, NullA)
     shapeA.second = opA == HIPBLAS_OP_T ? m : n;
     shapeB.first  = opB == HIPBLAS_OP_T ? n : m;
     shapeB.second = opB == HIPBLAS_OP_T ? m : n;
-    uint32_t ldA  = (orderA == HIPBLASLT_ORDER_ROW)
-                        ? getLeadingDimSize<true>(shapeA.first, shapeA.second)
-                        : getLeadingDimSize<false>(shapeA.first, shapeA.second);
     uint32_t ldB  = (orderB == HIPBLASLT_ORDER_ROW)
                         ? getLeadingDimSize<true>(shapeB.first, shapeB.second)
                         : getLeadingDimSize<false>(shapeB.first, shapeB.second);
@@ -792,7 +804,6 @@ TEST(MatrixTransformTest, NullA)
                                                     : getLeadingDimSize<false>(m, n);
 
     auto  inputs = makeMatrixTransformIOPtr(datatype, m, n, batchSize);
-    void* dA     = inputs->getBuf(0);
     void* dB     = inputs->getBuf(1);
     void* dC     = inputs->getBuf(2);
 
@@ -811,17 +822,10 @@ TEST(MatrixTransformTest, NullA)
         desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA, &opA, sizeof(opA));
     hipblasLtErr = hipblasLtMatrixTransformDescSetAttribute(
         desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB, &opB, sizeof(opB));
-    hipblasLtMatrixLayout_t layoutA, layoutB, layoutC;
-    hipblasLtErr
-        = hipblasLtMatrixLayoutCreate(&layoutA, datatype, shapeA.first, shapeA.second, ldA);
+    hipblasLtMatrixLayout_t layoutB, layoutC;
     hipblasLtErr
         = hipblasLtMatrixLayoutCreate(&layoutB, datatype, shapeB.first, shapeB.second, ldB);
     hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutC, datatype, m, n, ldC);
-    hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
-        layoutA,
-        hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
-        &orderA,
-        sizeof(orderA));
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
         layoutB,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
@@ -833,11 +837,6 @@ TEST(MatrixTransformTest, NullA)
         &orderC,
         sizeof(orderC));
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
-        layoutA,
-        hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
-        &batchSize,
-        sizeof(batchSize));
-    hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
         layoutB,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
         &batchSize,
@@ -847,11 +846,6 @@ TEST(MatrixTransformTest, NullA)
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
         &batchSize,
         sizeof(batchSize));
-    hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
-        layoutA,
-        hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
-        &batchStride,
-        sizeof(batchStride));
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
         layoutB,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
@@ -865,13 +859,12 @@ TEST(MatrixTransformTest, NullA)
     hipblasLtHandle_t handle{};
     hipblasLtErr = hipblasLtCreate(&handle);
     hipblasLtErr = hipblasLtMatrixTransform(
-        handle, desc, &alpha, nullptr, layoutA, &beta, dB, layoutB, dC, layoutC, nullptr);
+        handle, desc, nullptr, nullptr, nullptr, &beta, dB, layoutB, dC, layoutC, nullptr);
     ASSERT_EQ(hipblasLtErr, HIPBLAS_STATUS_SUCCESS);
     ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
 
     hipblasLtErr = hipblasLtMatrixTransformDescDestroy(desc);
     hipblasLtErr = hipblasLtDestroy(handle);
-    hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutA);
     hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutB);
     hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutC);
     auto rowMajA = (orderA == HIPBLASLT_ORDER_ROW);
@@ -886,7 +879,7 @@ TEST(MatrixTransformTest, NullA)
                       beta,
                       m,
                       n,
-                      ldA,
+                      0,
                       ldB,
                       ldC,
                       batchSize,
@@ -911,7 +904,7 @@ TEST(MatrixTransformTest, NullB)
     auto                        orderB        = HIPBLASLT_ORDER_ROW;
     auto                        orderC        = HIPBLASLT_ORDER_COL;
     float                       alpha         = 1;
-    float                       beta          = 1;
+    float                       beta          = 0;
     int64_t                     batchStride   = m * n;
     std::pair<int64_t, int64_t> shapeA;
     std::pair<int64_t, int64_t> shapeB;
@@ -922,15 +915,11 @@ TEST(MatrixTransformTest, NullB)
     uint32_t ldA  = (orderA == HIPBLASLT_ORDER_ROW)
                         ? getLeadingDimSize<true>(shapeA.first, shapeA.second)
                         : getLeadingDimSize<false>(shapeA.first, shapeA.second);
-    uint32_t ldB  = (orderB == HIPBLASLT_ORDER_ROW)
-                        ? getLeadingDimSize<true>(shapeB.first, shapeB.second)
-                        : getLeadingDimSize<false>(shapeB.first, shapeB.second);
     uint32_t ldC  = (orderC == HIPBLASLT_ORDER_ROW) ? getLeadingDimSize<true>(m, n)
                                                     : getLeadingDimSize<false>(m, n);
 
     auto  inputs = makeMatrixTransformIOPtr(datatype, m, n, batchSize);
     void* dA     = inputs->getBuf(0);
-    void* dB     = inputs->getBuf(1);
     void* dC     = inputs->getBuf(2);
 
     hipblasLtMatrixTransformDesc_t desc;
@@ -948,22 +937,15 @@ TEST(MatrixTransformTest, NullB)
         desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA, &opA, sizeof(opA));
     hipblasLtErr = hipblasLtMatrixTransformDescSetAttribute(
         desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB, &opB, sizeof(opB));
-    hipblasLtMatrixLayout_t layoutA, layoutB, layoutC;
+    hipblasLtMatrixLayout_t layoutA, layoutC;
     hipblasLtErr
         = hipblasLtMatrixLayoutCreate(&layoutA, datatype, shapeA.first, shapeA.second, ldA);
-    hipblasLtErr
-        = hipblasLtMatrixLayoutCreate(&layoutB, datatype, shapeB.first, shapeB.second, ldB);
     hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutC, datatype, m, n, ldC);
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
         layoutA,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
         &orderA,
         sizeof(orderA));
-    hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
-        layoutB,
-        hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
-        &orderB,
-        sizeof(orderB));
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
         layoutC,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
@@ -975,22 +957,12 @@ TEST(MatrixTransformTest, NullB)
         &batchSize,
         sizeof(batchSize));
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
-        layoutB,
-        hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
-        &batchSize,
-        sizeof(batchSize));
-    hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
         layoutC,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
         &batchSize,
         sizeof(batchSize));
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
         layoutA,
-        hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
-        &batchStride,
-        sizeof(batchStride));
-    hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
-        layoutB,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
         &batchStride,
         sizeof(batchStride));
@@ -1002,14 +974,13 @@ TEST(MatrixTransformTest, NullB)
     hipblasLtHandle_t handle{};
     hipblasLtErr = hipblasLtCreate(&handle);
     hipblasLtErr = hipblasLtMatrixTransform(
-        handle, desc, &alpha, dA, layoutA, &beta, nullptr, nullptr, dC, layoutC, nullptr);
+        handle, desc, &alpha, dA, layoutA, nullptr, nullptr, nullptr, dC, layoutC, nullptr);
     ASSERT_EQ(hipblasLtErr, HIPBLAS_STATUS_SUCCESS);
     ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
 
     hipblasLtErr = hipblasLtMatrixTransformDescDestroy(desc);
     hipblasLtErr = hipblasLtDestroy(handle);
     hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutA);
-    hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutB);
     hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutC);
     auto rowMajA = (orderA == HIPBLASLT_ORDER_ROW);
     auto rowMajB = (orderB == HIPBLASLT_ORDER_ROW);
@@ -1024,7 +995,7 @@ TEST(MatrixTransformTest, NullB)
                       m,
                       n,
                       ldA,
-                      ldB,
+                      0,
                       ldC,
                       batchSize,
                       batchStride,
@@ -1183,7 +1154,9 @@ TEST(MatrixTransformTest, ScalarsOnDevice)
 INSTANTIATE_TEST_SUITE_P(
     AllCombinations,
     MatrixTransformTest,
-    ::testing::Combine(::testing::ValuesIn({HIP_R_32F, HIP_R_16F, HIP_R_16BF, HIP_R_8I, HIP_R_32I}),
+    ::testing::Combine(::testing::ValuesIn({int64_t(1), int64_t(127), int64_t(1024)}),
+                       ::testing::ValuesIn({int64_t(1), int64_t(127), int64_t(1024)}),
+                       ::testing::ValuesIn({HIP_R_32F, HIP_R_16F, HIP_R_16BF, HIP_R_8I, HIP_R_32I}),
                        ::testing::ValuesIn({HIP_R_32F}),
                        ::testing::ValuesIn({HIPBLAS_OP_N, HIPBLAS_OP_T}),
                        ::testing::ValuesIn({HIPBLAS_OP_N, HIPBLAS_OP_T}),
