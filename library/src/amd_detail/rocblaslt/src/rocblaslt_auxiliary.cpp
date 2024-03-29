@@ -1563,8 +1563,7 @@ rocblaslt_status
     }
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
     {
-        log_api(__func__, "not implement for groupedgemm, please use get_all_algos instead");
-        return rocblaslt_status_success;
+        log_api(__func__, "will be deprecated for groupedgemm in the future, please use get_all_algos instead");
     }
     rocblaslt_status status = rocblaslt_status_success;
     try
