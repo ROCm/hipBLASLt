@@ -14,6 +14,10 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 * Support for mixed-precision datatype: FP16/FP8 in with FP16 out
 * Add CMake support for documentation
 
+### Deprecations
+
+* algoGetHeuristic() ext API for GroupGemm will be deprecated in a future release of hipBLASLt
+
 ## hipBLASLt 0.6.0
 
 ### Additions
