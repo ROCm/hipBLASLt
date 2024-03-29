@@ -32,7 +32,7 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           scalarUInt32RegDivide, scalarUInt32DivideAndRemainder, vectorUInt32CeilDivideAndRemainder, \
                           scalarStaticDivideAndRemainder, scalarStaticCeilDivide, sMagicDiv, staticMultiply, \
                           scalarStaticMultiply, MacroVMagicDiv, MacroVDynamicScalarDiv, \
-                          RegisterPool, allocTmpGpr, RegisterPoolResource, Holder, \
+                          RegisterPool, allocTmpGpr, allocTmpGprList, RegisterPoolResource, Holder, \
                           vgpr, sgpr, accvgpr, mgpr, log2, ceilDivide, DataType, fastdeepcopy, \
                           dataTypeToMfmaInstTypePair, getGlcBitName, getSlcBitName, dataTypeNameAbbrevToInstType, PseudoRandomGenerator
 from .TensileInstructions.Instructions import *
@@ -339,6 +339,15 @@ class KernelWriterAssembly(KernelWriter):
         raise e
 
     tmpSgpr = allocTmpGpr(self.sgprPool, num, self.consts.maxSgprs, alignment, tag, overflowListener)
+    return tmpSgpr
+
+  def allocTmpSgprList(self, nums: List[int], alignments: Optional[List[int]]=None, tag=None):
+    def overflowListener(e):
+      self.states.overflowedResources = 2
+      if self.db["AssertOnSgprOverflow"]:
+        raise e
+
+    tmpSgpr = allocTmpGprList(self.sgprPool, nums, self.consts.maxSgprs, alignments, tag, overflowListener)
     return tmpSgpr
 
   def defineSgpr(self, name, numSgprs, align=1):
@@ -1904,19 +1913,12 @@ class KernelWriterAssembly(KernelWriter):
     wgmLabel = Label(label=self.labels.getNameInc("WGM"), comment="")
     module.add(SCmpLeU32(src0=sgpr("WGM"), src1=1, comment="WGM <= 1 ?"))
     module.add(SCBranchSCC1(labelName=wgmLabel.getLabelName(), comment="branch if WGM <= 1"))
-    with self.allocTmpSgpr(4, alignment=1) as tmpSgprInfo:
-      if tmpSgprInfo.idx % 2 == 0:
-        wgmDivisor = tmpSgprInfo.idx+0
-        wgmDivisor2 = tmpSgprInfo.idx+1
-        blockId2 = tmpSgprInfo.idx+2
-        wgSerial2 = tmpSgprInfo.idx+3
-        wgmDivisorMagicNumber = tmpSgprInfo.idx+1
-      else:
-        wgmDivisor = tmpSgprInfo.idx+1
-        wgmDivisor2 = tmpSgprInfo.idx+2
-        blockId2 = tmpSgprInfo.idx+3
-        wgSerial2 = tmpSgprInfo.idx+0
-        wgmDivisorMagicNumber = tmpSgprInfo.idx+2
+    with self.allocTmpSgprList(nums=[2,1,1]) as tmpSgprInfoList:
+      wgmDivisor = tmpSgprInfoList[0].idx
+      wgmDivisor2 = tmpSgprInfoList[0].idx + 1
+      blockId2 = tmpSgprInfoList[1].idx
+      wgSerial2 = tmpSgprInfoList[2].idx
+      wgmDivisorMagicNumber = tmpSgprInfoList[0].idx + 1
 
       # note this overwrites blockId2+1
       module.add(scalarUInt32DivideAndRemainder(qReg=blockId2, dReg="WorkGroup1", divReg="WGM", rReg=wgSerial2, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False, comment="WGM"))
