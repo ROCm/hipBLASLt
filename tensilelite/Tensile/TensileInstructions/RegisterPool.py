@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -379,3 +379,60 @@ def allocTmpGpr(pool: RegisterPool, num: int, upperLimit: int, alignment: Option
     yield RegisterPoolResource(idx=allocatedSgprIdx, size=num)
   finally:
     pool.checkIn(allocatedSgprIdx) # type: ignore
+
+@contextmanager
+def allocTmpGprList(pool: RegisterPool, nums: List[int], upperLimit: int, alignments: Optional[List[int]]=None, tag: Optional[str]=None, overflowListener=None):
+  """
+  A context-manager based temporary resource allocator for given RegisterPool object.
+
+  :param pool: `RegisterPool` Resource pool
+  :param num: `int` Size to allocate
+  :param alignment: `Optional[bool]` Resource to be aligned to spcified alignment. If not specified, alignment set to 2 if `num` > 1 else 1
+  :param tag: `Optional[str]` Specified tag string for code generation
+  :raises `RegisterPool.ResourceOverflowException` if cannot allocate resource
+  :returns: `(offset, size)`, offset: `int` Start offset of allocated resource
+    size: `int` Size of allocated resource
+  """
+
+  if alignments:
+    if len(alignments) == 1:
+      for num in nums:
+        if num % alignments[0] != 0:
+          print("Mod %% hint must == 0")
+          assert 0
+      alignments = [alignments[0]] * len(nums)
+    else:
+      assert len(nums) == len(alignments)
+      for num, alignment in zip(nums, alignments):
+        if num % alignment != 0:
+          print("Mod %% hint must == 0")
+          assert 0
+  else:
+    alignments = []
+    for num in nums:
+      alignments.append(1 if num == 1 else 2)
+
+  try:
+    allocatedSgprIdxList = []
+    for num, alignment in zip(nums, alignments):
+      if tag is None:
+        tag = f"allocTmp{pool.type.upper()}gpr({num})"
+
+      allocatedSgprIdx = pool.checkOutAligned(num, alignment, tag, False)
+
+      if allocatedSgprIdx + num > upperLimit:
+        exception = RegisterPool.ResourceOverflowException(f"{pool.type.upper()}gpr overflow")
+        if overflowListener:
+          overflowListener(exception)
+        else:
+          raise exception
+      allocatedSgprIdxList.append([allocatedSgprIdx, num])
+
+    registerPoolResourceList = []
+    for allocatedSgprIdx, num in allocatedSgprIdxList:
+      registerPoolResourceList.append(RegisterPoolResource(idx=allocatedSgprIdx, size=num))
+
+    yield registerPoolResourceList
+  finally:
+    for allocatedSgprIdx, _ in allocatedSgprIdxList:
+      pool.checkIn(allocatedSgprIdx) # type: ignore
