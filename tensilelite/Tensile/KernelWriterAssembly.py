@@ -350,7 +350,7 @@ class KernelWriterAssembly(KernelWriter):
     tmpSgpr = allocTmpGprList(self.sgprPool, nums, self.consts.maxSgprs, alignments, tag, overflowListener)
     return tmpSgpr
 
-  def defineSgpr(self, name, numSgprs, align=1):
+  def defineSgprIdx(self, name, numSgprs, align=1):
     if numSgprs == 0: return
 
     sgprIdx = self.sgprPool.checkOutAligned(numSgprs, align, tag=name, preventOverflow=0)
@@ -360,7 +360,10 @@ class KernelWriterAssembly(KernelWriter):
 
     return sgprIdx
 
-  def defineMultiSgprs(self, names: List[str], numSgprs: List[int], align=1):
+  def defineSgpr(self, name, numSgprs, align=1):
+    return RegSet("s", "sgpr"+name, self.defineSgprIdx(name, numSgprs, align))
+
+  def defineMultiSgprIndex(self, names: List[str], numSgprs: List[int], align=1):
     assert(len(names) == len(numSgprs))
 
     sgprIdxVec = self.sgprPool.checkOutMulti(numSgprs, align, tags=names)
@@ -378,6 +381,7 @@ class KernelWriterAssembly(KernelWriter):
     return ValueSet(name="sgpr"+name, value="UNDEF", format = -1)
 
   def defineVariableSgprs(self, kernel):
+    module = Module("DefineVariableSgpr")
     #------------------------
     # Registers defined below this point are not available in the post-loop
     # Post-loop is after tail loop exits, ie the store code.
@@ -386,66 +390,69 @@ class KernelWriterAssembly(KernelWriter):
     # for conditionals
     if kernel["BufferLoad"]:
        # resource descriptor (SRD) A and B, must be aligned on 4-SGPR boundary
-      self.defineSgpr("SrdA", 4, 4)
-      self.defineSgpr("SrdB", 4, 4)
+      module.add(self.defineSgpr("SrdA", 4, 4))
+      module.add(self.defineSgpr("SrdB", 4, 4))
       if kernel["ProblemType"]["Sparse"]:
-        self.defineSgpr("SrdMetadata", 4, 4)
+        module.add(self.defineSgpr("SrdMetadata", 4, 4))
 
     if self.states.use64bShadowLimit:
-      self.defineSgpr("ShadowLimitA", 2, 2)
-      self.defineSgpr("ShadowLimitB", 2, 2)
+      module.add(self.defineSgpr("ShadowLimitA", 2, 2))
+      module.add(self.defineSgpr("ShadowLimitB", 2, 2))
       if kernel["ProblemType"]["Sparse"]:
-        self.defineSgpr("ShadowLimitMetadata", 2, 2)
+        module.add(self.defineSgpr("ShadowLimitMetadata", 2, 2))
 
-    self.defineSgpr("StaggerUIter", 1)  # stagger loop iterations, used for various iter counts in the code
-    self.defineSgpr("WrapUA", 2)  # Bytes to add to SrdA to reset address from N-1 iter to AddressA
-    self.defineSgpr("WrapUB", 2)  # Bytes to add to SrdB to reset address from N-1 iter to AddressB
+    module.add(self.defineSgpr("StaggerUIter", 1))  # stagger loop iterations, used for various iter counts in the code
+    module.add(self.defineSgpr("WrapUA", 2))  # Bytes to add to SrdA to reset address from N-1 iter to AddressA
+    module.add(self.defineSgpr("WrapUB", 2))  # Bytes to add to SrdB to reset address from N-1 iter to AddressB
     if kernel["ProblemType"]["Sparse"]:
-      self.defineSgpr("WrapUMetadata", 2)  # Bytes to add to SrdMetadata to reset address from N-1 iter to AddressMetadata
+      module.add(self.defineSgpr("WrapUMetadata", 2))  # Bytes to add to SrdMetadata to reset address from N-1 iter to AddressMetadata
 
-    self.defineSgpr("GlobalReadIncsA", self.states.a.numSgprGlobalReadIncs)
-    self.defineSgpr("GlobalReadIncsB", self.states.b.numSgprGlobalReadIncs)
+    module.add(self.defineSgpr("GlobalReadIncsA", self.states.a.numSgprGlobalReadIncs))
+    module.add(self.defineSgpr("GlobalReadIncsB", self.states.b.numSgprGlobalReadIncs))
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-      self.defineSgpr("GlobalReadIncsMetadata", self.states.m.numSgprGlobalReadIncs)
+      module.add(self.defineSgpr("GlobalReadIncsMetadata", self.states.m.numSgprGlobalReadIncs))
 
     if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1 or self.states.lrvwTileMetadata > 1:
       if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() \
          or kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat():
-        self.defineSgpr("PackKForV0", 1)
-        self.defineSgpr("PackKForV1", 1)
+        module.add(self.defineSgpr("PackKForV0", 1))
+        module.add(self.defineSgpr("PackKForV1", 1))
         if (self.states.lrvwTileA > 2 or self.states.lrvwTileB > 2 or self.states.lrvwTileMetadata > 2) and \
             (kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()):
-          self.defineSgpr("PackKForV2", 1)
-          self.defineSgpr("PackKForV3", 1)
+          module.add(self.defineSgpr("PackKForV2", 1))
+          module.add(self.defineSgpr("PackKForV3", 1))
 
     if kernel["ProblemType"]["StochasticRounding"]:
-      self.defineSgpr("RNDSeed", 1)
+      module.add(self.defineSgpr("RNDSeed", 1))
 
     if kernel["LocalWriteUseSgprA"]:
-        self.defineSgpr("LocalWriteAddrA", 1)
+        module.add(self.defineSgpr("LocalWriteAddrA", 1))
     if kernel["LocalWriteUseSgprB"]:
-        self.defineSgpr("LocalWriteAddrB", 1)
+        module.add(self.defineSgpr("LocalWriteAddrB", 1))
 
     if kernel["_UseSgprForGRO"]:
       needFirstSgprOffset = kernel["DirectToLdsA"] and kernel["UseInstOffsetForGRO"]
       numberOfSgpr = self.states.a.numVgprGlobalReadOffsets if needFirstSgprOffset else (self.states.a.numVgprGlobalReadOffsets-1)
-      self.defineSgpr("ScalarGlobalReadOffsetA", numberOfSgpr)
+      if numberOfSgpr > 0:
+        module.add(self.defineSgpr("ScalarGlobalReadOffsetA", numberOfSgpr))
 
       needFirstSgprOffset = kernel["DirectToLdsB"] and kernel["UseInstOffsetForGRO"]
       numberOfSgpr = self.states.b.numVgprGlobalReadOffsets if needFirstSgprOffset else (self.states.b.numVgprGlobalReadOffsets-1)
-      self.defineSgpr("ScalarGlobalReadOffsetB", numberOfSgpr)
+      if numberOfSgpr > 0:
+        module.add(self.defineSgpr("ScalarGlobalReadOffsetB", numberOfSgpr))
 
       if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
         needFirstSgprOffset = kernel["DirectToLdsMetadata"] and kernel["UseInstOffsetForGRO"]
         numberOfSgpr = self.states.m.numVgprGlobalReadOffsets if needFirstSgprOffset else (self.states.m.numVgprGlobalReadOffsets-1)
-        self.defineSgpr("ScalarGlobalReadOffsetMetadata", numberOfSgpr)
+        if numberOfSgpr > 0:
+          module.add(self.defineSgpr("ScalarGlobalReadOffsetMetadata", numberOfSgpr))
 
     # debug flag to allocate dummy / unused sgpr
     # useful when comparing code that adds new kernel arguments to see what
     # was actually changed
     numDummySgpr= 0
     for i in range(numDummySgpr):
-      self.defineSgpr("DummySgpr%d"%i, 1)
+      module.add(self.defineSgpr("DummySgpr%d"%i, 1))
 
     if self.sgprPool.size() > self.consts.maxSgprs:
       print ("warning: Number of defined SGPRS (%d) overflowed max SGPRS (%d)." \
@@ -472,6 +479,8 @@ class KernelWriterAssembly(KernelWriter):
       self.states.numStoreSgprNameSizes2.append(self.states.rpga)
 
     self.states.numStoreSgprToLoad2 = storeSgprLoad2
+
+    return module
 
   ##############################################################################
   def functionSignature(self) -> SignatureBase:
@@ -1730,10 +1739,7 @@ class KernelWriterAssembly(KernelWriter):
       sgprNumsOfGemm = None
 
     # define the rest of sgprs
-    self.defineVariableSgprs(kernel)
-    skeysList = list(self.sgprs.keys())
-    for skey in skeysList[skeysList.index("SrdA"):]:
-      module.add(RegSet("s", "sgpr"+skey, self.sgprs[skey]))
+    module.addModuleAsFlatItems(self.defineVariableSgprs(kernel))
 
     if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1 or self.states.lrvwTileMetadata > 1:
       if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
@@ -4327,7 +4333,7 @@ class KernelWriterAssembly(KernelWriter):
       return (item, startVgprName, numStoreSgprToLoad)
 
     if self.states.numStoreSgprToLoad:
-      sgpxIdxVec = self.defineMultiSgprs(self.states.numStoreSgprNames, self.states.numStoreSgprNameSizes, align=4)
+      sgpxIdxVec = self.defineMultiSgprIndex(self.states.numStoreSgprNames, self.states.numStoreSgprNameSizes, align=4)
       for name in self.states.numStoreSgprNames:
           module.add(RegSet("s", "sgpr"+name, self.sgprs[name]))
       if noSkipLoad:
