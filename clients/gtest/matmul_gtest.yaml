@@ -64,6 +64,7 @@ Tests:
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
+  c_equal_d: [false, true]
 
 - name: matmul_medium
   category: pre_checkin
