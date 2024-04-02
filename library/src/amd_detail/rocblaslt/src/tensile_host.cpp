@@ -2190,6 +2190,13 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
     int i = 0;
     for(auto solution : solutions)
     {
+        //workaround: findAllSolutions should get all solutions without duplications
+        bool duplicated_sol = false;
+        for(int j = 0; j < i; j++)
+            if(*(int*)(heuristicResults[j].algo.data) == solution->index)
+               duplicated_sol = true;
+        if(duplicated_sol)
+          continue;
         memset(&heuristicResults[i], 0, sizeof(rocblaslt_matmul_heuristic_result));
         memset(heuristicResults[i].algo.data, 0, sizeof(heuristicResults[i].algo.data));
         int* solutionIndex                           = (int*)(heuristicResults[i].algo.data);
@@ -2203,6 +2210,8 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
             heuristicResults[i].workspaceSize = 0;
         i++;
     }
+    heuristicResults.resize(i);
+    log_api(__func__, "Final hardware solutions: ", heuristicResults.size());
 
     return rocblaslt_status_success;
 }
