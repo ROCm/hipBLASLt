@@ -262,7 +262,7 @@ Arguments:
   - amaxScaleA: c_bool
   - amaxScaleB: c_bool
   - amaxD: c_bool
-  - c_noalias_d: c_bool
+  - c_equal_d: c_bool
   - HMM: c_bool
   - use_e: c_bool
   - gradient: c_bool
@@ -343,7 +343,7 @@ Defaults:
   category: nightly
   known_bug_platforms: ''
   name: hipblaslt-bench
-  c_noalias_d: false
+  c_equal_d: false
   user_allocated_workspace: 0
   activation_type: none
   activation_arg1: 0
