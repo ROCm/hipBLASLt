@@ -49,6 +49,29 @@ typedef enum
     HIPBLAS_STATUS_UNKNOWN           = 11, /**<  back-end returned an unsupported status code */
 } hipblasStatus_t;
 
+
+#define HIPBLAS_DATATYPE_INVALID hipDataType(31) // Temporary until hipblasDatatype_t is gone.
+
+/*! \brief The compute type to be used. Currently only used with GemmEx with the HIPBLAS_V2 interface.
+ *         Note that support for compute types is largely dependent on backend. */
+typedef enum
+{
+    // Note that these types are taken from cuBLAS. With the rocBLAS backend, currently hipBLAS will
+    // convert to rocBLAS types to get equivalent functionality where supported.
+    HIPBLAS_COMPUTE_16F           = 0, /**< compute will be at least 16-bit precision */
+    HIPBLAS_COMPUTE_16F_PEDANTIC  = 1, /**< compute will be exactly 16-bit precision */
+    HIPBLAS_COMPUTE_32F           = 2, /**< compute will be at least 32-bit precision */
+    HIPBLAS_COMPUTE_32F_PEDANTIC  = 3, /**< compute will be exactly 32-bit precision */
+    HIPBLAS_COMPUTE_32F_FAST_16F  = 4, /**< 32-bit input can use 16-bit compute */
+    HIPBLAS_COMPUTE_32F_FAST_16BF = 5, /**< 32-bit input can is bf16 compute */
+    HIPBLAS_COMPUTE_32F_FAST_TF32
+    = 6, /**< 32-bit input can use tensor cores w/ TF32 compute. Only supported with cuBLAS backend currently */
+    HIPBLAS_COMPUTE_64F          = 7, /**< compute will be at least 64-bit precision */
+    HIPBLAS_COMPUTE_64F_PEDANTIC = 8, /**< compute will be exactly 64-bit precision */
+    HIPBLAS_COMPUTE_32I          = 9, /**< compute will be at least 32-bit integer precision */
+    HIPBLAS_COMPUTE_32I_PEDANTIC = 10, /**< compute will be exactly 32-bit integer precision */
+} hipblasComputeType_t;
+
 #ifndef HIPBLAS_OPERATION_DECLARED
 #define HIPBLAS_OPERATION_DECLARED
 /*! \brief Used to specify whether the matrix is to be transposed or not. */
