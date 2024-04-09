@@ -1105,6 +1105,8 @@ Tests:
   function:
     matmul: *integer8_precisions
   matrix_size:
+    - { M:  1,    N:  131,  K:  131  }
+    - { M:  131,  N:  1,    K:  131  }
     - { M:  128,  N:  128,  K:  128  }
     - { M:  131,  N:  131,  K:  131  }
     - { M:  1024, N:  1024, K:  1024 }
