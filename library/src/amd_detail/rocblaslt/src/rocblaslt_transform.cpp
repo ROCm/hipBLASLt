@@ -41,6 +41,12 @@ namespace
         return &layout;
     }
 
+    template<typename T>
+    const T *dummyScalarPtr() {
+        static T scalar{};
+        return &scalar;
+    }
+
     template <typename DType,
               typename ScaleType,
               bool     RowMajA,
@@ -86,6 +92,14 @@ namespace
         }
         else
         {
+            if (!alphaPtr) {
+                alphaPtr = dummyScalarPtr<ScaleType>();
+            }
+
+            if (!betaPtr) {
+                betaPtr = dummyScalarPtr<ScaleType>();
+            }
+
             amd_detail::transform<DType,
                                   ScaleType,
                                   RowMajA,
