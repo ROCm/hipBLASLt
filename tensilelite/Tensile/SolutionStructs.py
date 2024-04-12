@@ -3581,7 +3581,7 @@ class Solution(collections.abc.Mapping):
       hipccver = globalParameters['HipClangVersion'].split(".")
       hipccMaj = int(hipccver[0])
       hipccPatch = int(hipccver[2].split("-")[0])
-      if not (hipccMaj >= 6 and hipccPatch >= 32650 and (isa == (9, 0, 10) or isa == (9, 4))):
+      if not (hipccMaj >= 6 and hipccPatch >= 32650 and (isa == (9, 0, 10) or isa[:2] == (9, 4))):
         #print("Force to Disable PreloadKernArgs since this hipcc version doesn't support",)
         state["PreloadKernArgs"] = 0
 
