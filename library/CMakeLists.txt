@@ -91,10 +91,18 @@ if( BUILD_WITH_TENSILE )
     target_compile_definitions( hipblaslt PRIVATE ${TensileHost_DEFINES} )
 
     get_target_property( TensileHost_LIBDIR TensileHost BINARY_DIR )
+    get_target_property( TensileHost_SOURCES TensileHost SOURCES )
+    get_target_property( TensileHost_SOURCE_DIR TensileHost SOURCE_DIR )
 
     message (STATUS "TensileHost_INCLUDES == ${TensileHost_INCLUDES}")
     message (STATUS "TensileHost_DEFINES == ${TensileHost_DEFINES}")
     message (STATUS "TensileHost_LIBDIR == ${TensileHost_LIBDIR}")
+    message (STATUS "TensileHost_SOURCE_DIR == ${TensileHost_SOURCE_DIR}")
+    message (STATUS "TensileHost_SOURCES == ${TensileHost_SOURCES}")
+    cmake_path(SET seperator NORMALIZE "/")
+    list(TRANSFORM TensileHost_SOURCES PREPEND "${TensileHost_SOURCE_DIR}${seperator}")
+    # add dependent sources from TensileHost for static build
+    target_sources(hipblaslt PRIVATE ${TensileHost_SOURCES})
 
     # recreate LLVM static dependencies
     if (${Tensile_LIBRARY_FORMAT} STREQUAL "yaml")
@@ -112,11 +120,6 @@ if( BUILD_WITH_TENSILE )
 
       target_link_libraries(hipblaslt PRIVATE LLVMObjectYAML )  # match tensile
     endif()
-
-    # to get TensileHost built first, not to link target
-    # as dependency chain can not be created
-    add_dependencies(hipblaslt TensileHost)
-
   endif()
 
   target_compile_definitions(hipblaslt PRIVATE ${TENSILE_DEFINES} )

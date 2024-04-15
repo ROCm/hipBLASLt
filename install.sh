@@ -46,6 +46,7 @@ function display_help()
   echo "    [--static] build static library"
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
+  echo "    [--gprof] enable profiling functionality with GNU gprof"
 }
 
 # This function is helpful for dockerfiles that do not have sudo installed, but the default user is root
@@ -368,6 +369,7 @@ tensile_version=
 build_tensile=true
 tensile_msgpack_backend=true
 update_cmake=true
+enable_gprof=false
 
 
 rocm_path=/opt/rocm
@@ -382,7 +384,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -483,6 +485,9 @@ while true; do
             shift ;;
         --cmake_install)
             update_cmake=true
+            shift ;;
+        --gprof)
+            enable_gprof=true
             shift ;;
         --) shift ; break ;;
         *)  echo "Unexpected command line parameter received: '${1}'; aborting";
@@ -651,7 +656,7 @@ pushd .
 
   # library type
   if [[ "${build_static}" == true ]]; then
-    cmake_common_options="{cmake_common_options} -DBUILD_SHARED_LIBS=OFF"
+    cmake_common_options="${cmake_common_options} -DBUILD_SHARED_LIBS=OFF"
   fi
 
   # clients
@@ -713,6 +718,14 @@ pushd .
 
   if [[ "${build_release}" == false ]]; then
     tensile_opt="${tensile_opt} -DTensile_ASM_DEBUG=ON"
+  fi
+
+  if [[ "${enable_gprof}" == true ]]; then
+    if [[ "${build_static}" == false ]]; then
+      printf "'--gprof' can only be enabled for static build.\n"
+      exit 2
+    fi
+    cmake_common_options="${cmake_common_options} -DCMAKE_CXX_FLAGS=-pg -DCMAKE_C_FLAGS=-pg"
   fi
 
   echo $cmake_common_options
