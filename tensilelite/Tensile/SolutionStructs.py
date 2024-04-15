@@ -2401,6 +2401,9 @@ class Solution(collections.abc.Mapping):
       if not state["ProblemType"]["ComputeDataType"].isSingle():
         reject(state, "TODO: LSU doesn't support ComputeDataType!=single.")
         return
+      if state["StoreRemapVectorWidth"] > 0:
+        reject(state, "TODO: LSU doesn't support StoreRemapVectorWidth>0.")
+        return
       if state["NumThreads"] % state["MacroTile0"] != 0:
         reject(state, "LocalSplitU but NumThreads=%u not divisible by MT0=%u for sideways store" \
             % (state["NumThreads"], state["MacroTile0"]))
