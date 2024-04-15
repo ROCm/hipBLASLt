@@ -2,8 +2,16 @@
 hipBLASLtExt Reference
 ********************************
 
-hipBLASLtExt Datatypes Reference
-================================
+hipBLASLt has extension APIs with namespace ``hipblaslt_ext``. It is only C++ compatible. The extensions support:
+
+1. :ref:`Gemm <gemm>`
+
+2. :ref:`Grouped gemm <grouped-gemm>`
+
+3. :ref:`Get all algorithms <get-all-algo>`
+
+hipBLASLtExt datatypes reference
+=================================
 
 GemmType
 -------------------------------------
@@ -83,23 +91,16 @@ matmulIsAlgoSupported()
 hipblasLtExt Usage
 ================================
 
-Introduction
---------------
+Here are the three use-cases supported by the hipBLASLtExt APIs.
 
-hipBLASLt has extension APIs with namespace hipblaslt_ext. It is C++ compatible only. The extensions support:
-
-1. Gemm
-
-2. Grouped gemm
-
-3. Get all algorithms
+.. _Gemm:
 
 Gemm
 --------------
 
 hipblasLt has its own instance.
 
-The user must assign the problem type when construct or import the problem from hipBLAS API.
+You must assign the problem type when constructing or importing the problem from hipBLAS API.
 
 .. code-block:: c++
 
@@ -125,10 +126,10 @@ The user must assign the problem type when construct or import the problem from 
                                    void*                   D,
                                    hipblasLtMatrixLayout_t matD);
 
-After the instance is created, the user can set the problem with the API.
-The API may requires the following structures:
+After the instance is created, you can set the problem using the API.
+The API may require the following structures:
 
-GemmProblemType lets user able to change the problem type after the instance is initialized.
+``GemmProblemType`` allows you to change the problem type after the instance is initialized.
 
 .. code-block:: c++
 
@@ -143,7 +144,7 @@ GemmProblemType lets user able to change the problem type after the instance is 
         hipblasComputeType_t type_compute;
     };
 
-GemmEpilogue lets user to control the epilogue of the problem.
+``GemmEpilogue`` allows the user to control the epilogue of the problem.
 
 .. code-block:: c++
 
@@ -155,7 +156,7 @@ GemmEpilogue lets user to control the epilogue of the problem.
         int                 aux_stride;
     };
 
-GemmInputs is the problem inputs.
+``GemmInputs`` specifies the problem inputs.
 
 .. code-block:: c++
 
@@ -249,6 +250,8 @@ The user can get heuristic and make kernel arguments with the instance. If the p
         gemm.run(stream);
     }
 
+.. _grouped-gemm:
+
 Grouped Gemm
 --------------
 
@@ -341,7 +344,7 @@ Note that currently only supports problemtype size equals to 1 (Only one GemmPro
     problemtypes.push_back(problemtype);
     groupedgemm.setProblem(m, n, k, batch_count, lda, ldb, ldc, ldd, strideA, strideB, strideC, strideD, epilogue, inputs, problemtypes);
 
-UserArguments
+User arguments
 ^^^^^^^^^^^^^^^^^^
 
 Grouped gemm supports using external device memory to run the kernel. This will be helpful if some of the arguments are from the output of the pervious kernel. Please refer to section Fixed MK if you want to change the size (m, n, k, batch) related arguments.
@@ -496,6 +499,8 @@ This is the base class of class Gemm and GroupedGemm.
     // Run the problem.
     HIPBLASLT_EXPORT hipblasStatus_t run(hipStream_t stream);
 
+.. _get-all-algo:
+
 Get all algorithms
 ------------------
 
@@ -566,7 +571,7 @@ The API will return the required workspace size in bytes if success.
 Using extension APIs.
 
 Gemm
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^
 
 .. code-block:: c++
 

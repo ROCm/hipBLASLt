@@ -27,9 +27,6 @@ hipblasltExtAMaxWithScale()
 hipblasLtExt Operation Usage
 ================================
 
-Introduction
---------------
-
 hipBLASLt has extension operation APIs which is independent to gemm operation with. These extensions support:
 
 1. hipblasltExtSoftmax
