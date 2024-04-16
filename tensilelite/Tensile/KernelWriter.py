@@ -233,6 +233,7 @@ class StateValues:
   numStoreSgprInst: int                  = 0 # For pose-loop kernel args
   numStoreSgprInstExt: int               = 0 # For pose-loop kernel args
   numSgprAddressBias: int                = 0
+  numSgprAddressGSUSync: int             = 0
   BiasType: int                          = 0
   BiasStride: int                        = 0
   BiasDim: int                           = 0
@@ -3585,8 +3586,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("NumWorkGroups0", 1)
     self.defineSgpr("NumWorkGroups1", 1)
 
-    if self.states.doShadowInit and kernel["BufferStore"] and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
-      self.defineSgpr("SrdSync", 4, 4)
+    if kernel["BufferStore"] and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
       self.defineSgpr("WSDstart", 2, 2)
 
     # Calculate numSgpr preload
@@ -3648,7 +3648,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("MagicShiftSize%s"%idxChar, 1)
 
     GSUAMBSK = 0
-    if (kernel["GlobalSplitU"] > 1) and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
+    if (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
       GSUAMBSK = 1
 
     self.defineSgpr("Alpha", numSgprAlpha, numSgprAlpha)
@@ -3659,11 +3659,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
 
-    if kernel["ProblemType"]["GroupedGemm"]:
-      if GSUAMBSK:
-        self.defineSgpr("GSUSync", 1)
-        self.defineSgpr("AddressTD", numSgprAddressD)
-        self.defineSgpr("Synchronizer", 2)
+    if GSUAMBSK:
+      self.defineSgpr("GSUSync", 1)
+      self.states.numSgprAddressGSUSync += 1
+      self.defineSgpr("AddressTD", numSgprAddressD)
+      self.states.numSgprAddressGSUSync += numSgprAddressD
+      self.defineSgpr("Synchronizer", 2)
+      self.states.numSgprAddressGSUSync += 2
 
     #------------------------
     # Registers defined below this point are not available in the post-loop

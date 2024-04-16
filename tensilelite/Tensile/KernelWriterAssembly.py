@@ -452,12 +452,12 @@ class KernelWriterAssembly(KernelWriter):
     self.states.numStoreSgprNameSizes2 = []
     storeSgprLoad2 = 0
 
-    if not kernel["ProblemType"]["GroupedGemm"] and kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
+    if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
       storeSgprLoad2 += self.states.rpga
       self.states.numStoreSgprNames2.append("AddressTD")
       self.states.numStoreSgprNameSizes2.append(self.states.rpga)
 
-    if not kernel["ProblemType"]["GroupedGemm"] and kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
+    if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
       storeSgprLoad2 += self.states.rpga
       self.states.numStoreSgprNames2.append("Synchronizer")
       self.states.numStoreSgprNameSizes2.append(self.states.rpga)
@@ -1125,11 +1125,6 @@ class KernelWriterAssembly(KernelWriter):
       commonArgs.add(self.argLoader.loadKernArg(sgprNumsOfGemm, "KernArgAddress", hex(0), dword=1))
       commonArgs.addComment1("Load GSU data")
       commonArgs.add(self.argLoader.loadKernArg("GSU", "KernArgAddress", hex(4), dword=1))
-
-      if (kernel["GlobalSplitU"] > 1 and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
-            commonArgs.addComment1("Grouped Gemm: Load address of external kernel arguments")
-            commonArgs.add(self.argLoader.loadKernArg("AddressTD", "KernArgAddress", hex(28), dword=2))
-            commonArgs.add(self.argLoader.loadKernArg("Synchronizer", "KernArgAddress", hex(36), dword=2))
       loadedCommonArgs = 8 # TODO: Need to make this automatically calculated
       ########################################
       # kernel args parameters
@@ -1150,6 +1145,18 @@ class KernelWriterAssembly(KernelWriter):
       moduleArgs.add(SWaitCnt(0))
       moduleArgs.add(SLShiftRightB32(dst=sgpr(sgprArgType), shiftHex=hex(30), src=sgpr(sgprNumsOfGemm), comment="Get arg type"))
       moduleArgs.add(SAndB32(dst=sgpr(sgprNumsOfGemm), src0=hex(0x3FFFFFFF), src1=sgpr(sgprNumsOfGemm), comment="Get nums of gemm"))
+
+      if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
+        extReadEpilogueLabeltmp    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
+        moduleArgs.addComment0("Check if custom structure pointer is null")
+        if kernel["ProblemType"]["SupportUserArgs"]:
+          moduleArgs.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=2, comment="ArgType == 2 ?"))
+          moduleArgs.add(SCBranchSCC0(labelName=extReadEpilogueLabeltmp.getLabelName()))
+        moduleArgs.addComment1("Grouped Gemm: Load address of external kernel arguments")
+        moduleArgs.add(self.argLoader.loadKernArg("AddressTD", "KernArgAddress", hex(28), dword=2))
+        moduleArgs.add(self.argLoader.loadKernArg("Synchronizer", "KernArgAddress", hex(20), dword=2))
+        moduleArgs.add(extReadEpilogueLabeltmp)
+
       moduleArgs.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=(0), comment="Is kernel args"))
       labelHBM = Label("HBMArgs", comment="")
       labelLoadEnd = Label("LoadArgsEnd", comment="")
@@ -1186,11 +1193,18 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.add(SAndB32(dst=sgpr(sgprNumsOfGemm), src0=hex(0x3FFFFFFF), src1=sgpr(preloadSgprStartIdx), comment="Get nums of gemm"))
         moduleArgs.add(SLShiftRightB32(dst=sgpr(sgprArgType), shiftHex=hex(30), src=sgpr(preloadSgprStartIdx), comment="Get arg type"))
 
-        if (kernel["GlobalSplitU"] > 1 and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
-              moduleArgs.add(SMovB32(dst=sgpr("Synchronizer+1"), src=sgpr(preloadSgprStartIdx+10), comment="Load Synchronizer data"))
-              moduleArgs.add(SMovB32(dst=sgpr("Synchronizer"), src=sgpr(preloadSgprStartIdx+9), comment="Load Synchronizer data"))
-              moduleArgs.add(SMovB32(dst=sgpr("AddressTD+1"), src=sgpr(preloadSgprStartIdx+8), comment="Load AddressTD data"))
-              moduleArgs.add(SMovB32(dst=sgpr("AddressTD"), src=sgpr(preloadSgprStartIdx+7), comment="Load AddressTD data"))
+        if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
+          extReadEpilogueLabeltmp    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
+          moduleArgs.addComment0("Check if custom structure pointer is null")
+          if kernel["ProblemType"]["SupportUserArgs"]:
+            moduleArgs.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=2, comment="ArgType == 2 ?"))
+            moduleArgs.add(SCBranchSCC0(labelName=extReadEpilogueLabeltmp.getLabelName()))
+          moduleArgs.add(SMovB32(dst=sgpr("Synchronizer+1"), src=sgpr(preloadSgprStartIdx+6), comment="Load Synchronizer data"))
+          moduleArgs.add(SMovB32(dst=sgpr("Synchronizer"), src=sgpr(preloadSgprStartIdx+5), comment="Load Synchronizer data"))
+          moduleArgs.add(SMovB32(dst=sgpr("AddressTD+1"), src=sgpr(preloadSgprStartIdx+8), comment="Load AddressTD data"))
+          moduleArgs.add(SMovB32(dst=sgpr("AddressTD"), src=sgpr(preloadSgprStartIdx+7), comment="Load AddressTD data"))
+          moduleArgs.add(extReadEpilogueLabeltmp)
+
         moduleArgs.add(SMovB32(dst=sgpr("GSU"), src=sgpr(preloadSgprStartIdx+1), comment="Preload internal args"))
         moduleArgs.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=(0), comment="Is kernel args"))
         preloadLabelHBM = Label("Preload_HBMArgs", comment="")
@@ -1219,12 +1233,6 @@ class KernelWriterAssembly(KernelWriter):
       moduleRegInit.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr("GSU"), src1=hex(0xFFFF0000), comment="Restore StaggerU related vars"))
       moduleRegInit.add(SLShiftRightB32(dst=sgpr("StaggerU"), shiftHex=hex(16), src=sgpr("StaggerU")))
       moduleRegInit.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF), comment="Restore GSU"))
-
-      if kernel["ProblemType"]["GroupedGemm"]:
-          if (kernel["GlobalSplitU"] > 1 and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
-            moduleWg.add(SMovB64(dst=sgpr("SrdSync",2), src=sgpr("AddressD",2)))
-            moduleWg.add(SMovB64(dst=sgpr("AddressD",2), src=sgpr("AddressTD",2)))
-            moduleWg.add(SMovB64(dst=sgpr("AddressTD",2), src=sgpr("SrdSync",2)))
 
       if kernel["ProblemType"]["SupportUserArgs"]:
         moduleRegInit.add(SMovB32(dst=sgpr("ArgType"),src=sgpr(sgprArgType)))
@@ -1344,11 +1352,6 @@ class KernelWriterAssembly(KernelWriter):
         if kernel["ProblemType"]["SupportUserArgs"]:
           moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u/%u bytes of kern args" % \
                         (self.argLoader.getOffset() - (self.states.numSgprPreload*4), self.externalArgLoader.getOffset())))
-
-          if (kernel["GlobalSplitU"] > 1 and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
-            moduleWg.add(SMovB64(dst=sgpr("SrdSync",2), src=sgpr("AddressD",2)))
-            moduleWg.add(SMovB64(dst=sgpr("AddressD",2), src=sgpr("AddressTD",2)))
-            moduleWg.add(SMovB64(dst=sgpr("AddressTD",2), src=sgpr("SrdSync",2)))
         else:
           moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % \
                               (self.argLoader.getOffset() - (self.states.numSgprPreload*4))))
@@ -1488,7 +1491,10 @@ class KernelWriterAssembly(KernelWriter):
           module.addComment1("Check if custom structure pointer is null")
           module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
           module.add(SCBranchSCC1(labelName=extValidLabel.getLabelName(), comment="branch if ArgType == 2"))
-          module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
+          if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
+            module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4) + (self.states.numSgprAddressGSUSync)*4)))
+          else:
+            module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
           module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(sgprNumsOfGemm), src1=4)) # offset wgTable
           module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
           module.add(SBranch(extValidLabelEnd.getLabelName()))
@@ -1531,14 +1537,20 @@ class KernelWriterAssembly(KernelWriter):
         label_FOUND = Label("FOUND", "")
         module.add(SCBranchSCC1(labelName=label_FOUND.getLabelName()))
 
-        if (kernel["GlobalSplitU"] > 1 and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
-              module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgprM), src1=sgpr(tmpSgprN)))
-              module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr("GSU")))
-              module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr0), src=sgpr(tmpSgpr0), shiftHex=(2)))
-              module.add(SAddU32(dst=sgpr("AddressTD"), src0=sgpr("AddressTD"), src1=sgpr(tmpSgpr0)))
-              module.add(SAddCU32(dst=sgpr("AddressTD+1"), src0=sgpr("AddressTD+1"), src1=hex(0)))
-              module.add(SAddU32(dst=sgpr("Synchronizer"), src0=sgpr("Synchronizer"), src1=hex(4096)))
-              module.add(SAddCU32(dst=sgpr("Synchronizer+1"), src0=sgpr("Synchronizer+1"), src1=hex(0)))
+        if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
+          extReadEpilogueLabeltmp    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
+          module.addComment0("Check if custom structure pointer is null")
+          if kernel["ProblemType"]["SupportUserArgs"]:
+            module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
+            module.add(SCBranchSCC0(labelName=extReadEpilogueLabeltmp.getLabelName()))
+          module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgprM), src1=sgpr(tmpSgprN)))
+          module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr("GSU")))
+          module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr0), src=sgpr(tmpSgpr0), shiftHex=(2)))
+          module.add(SAddU32(dst=sgpr("AddressTD"), src0=sgpr("AddressTD"), src1=sgpr(tmpSgpr0)))
+          module.add(SAddCU32(dst=sgpr("AddressTD+1"), src0=sgpr("AddressTD+1"), src1=hex(0)))
+          module.add(SAddU32(dst=sgpr("Synchronizer"), src0=sgpr("Synchronizer"), src1=hex(4096)))
+          module.add(SAddCU32(dst=sgpr("Synchronizer+1"), src0=sgpr("Synchronizer+1"), src1=hex(0)))
+          module.add(extReadEpilogueLabeltmp)
         module.add(SAddU32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprAddrM), src1=sgpr(tmpSgprArgOffsett)))
         module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgprAddrM), dword=4))
         module.add(SAddU32(dst=sgpr(tmpSgprLoopCounter), src0=sgpr(tmpSgprLoopCounter), src1=1))
@@ -1583,8 +1595,12 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SLShiftLeft2AddU32(dst=sgpr("KernArgAddress"), src0=sgpr(sgprNumsOfGemm), src1=sgpr("KernArgAddress")))
         module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
         module.addComment0("Grouped Gemm: offset address from args_start to gemm_start")
-        module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),\
-                          src1=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
+        if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
+          module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),\
+                            src1=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4) + (self.states.numSgprAddressGSUSync)*4)))
+        else:
+          module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),\
+                            src1=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
         module.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
         module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
         module.add(self.getKernelArgLoadModule(kernel, sgprStart, load, 4))
@@ -1614,6 +1630,17 @@ class KernelWriterAssembly(KernelWriter):
           self.externalArgLoader.setOffset(offset)
           module.add(moduleExternalArgs)
           module.add(extLabelEnd)
+
+      if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
+        extReadEpilogueLabeltmp    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
+        module.addComment0("Check if custom structure pointer is null")
+        if kernel["ProblemType"]["SupportUserArgs"]:
+          module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
+          module.add(SCBranchSCC0(labelName=extReadEpilogueLabeltmp.getLabelName()))
+        module.add(SMovB64(dst=sgpr("WSDstart",2), src=sgpr("AddressD",2)))
+        module.add(SMovB64(dst=sgpr("AddressD",2), src=sgpr("AddressTD",2)))
+        module.add(SMovB64(dst=sgpr("AddressTD",2), src=sgpr("WSDstart",2)))
+        module.add(extReadEpilogueLabeltmp)
 
       # Update label
       labels = []
@@ -4412,22 +4439,32 @@ class KernelWriterAssembly(KernelWriter):
 
     # Define sgprs for kernel args
     if self.states.numStoreSgprToLoad2:
-      sgpxIdxVec = self.defineMultiSgprs(self.states.numStoreSgprNames2, self.states.numStoreSgprNameSizes2, align=4)
       for name in self.states.numStoreSgprNames2:
           module.add(RegSet("s", "sgpr"+name, self.sgprs[name]))
 
       argOffset = self.argLoader.getOffset() # Backup offset
       if kernel["ProblemType"]["UseScaleAB"] and (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters() or kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
         self.argLoader.setOffset(argOffset + (self.states.numStoreSgprToLoad)*4 + (self.states.rpga * self.states.bpr)) # Restore offset
-      # elif kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
-      #   self.argLoader.setOffset(argOffset + (self.states.numStoreSgprToLoad)*4 + (self.states.rpga * self.states.bpr)) # Restore offset
       else:
         self.argLoader.setOffset(argOffset + (self.states.numStoreSgprToLoad)*4) # Restore offset
-      startVgprName = sgpxIdxVec[0]
       numStoreSgprToLoad = self.states.numStoreSgprToLoad2
 
-      loadModule = module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(startVgprName, "KernArgAddress", numStoreSgprToLoad))
-      self.states.numStoreSgprInst = loadModule.countType(SMemLoadInstruction)
+      if kernel["ProblemType"]["UseScaleAB"] and (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters() or kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
+        argOffsettmp = (argOffset + (self.states.numStoreSgprToLoad)*4 + (self.states.rpga * self.states.bpr)) # Restore offset
+      else:
+        argOffsettmp = (argOffset + (self.states.numStoreSgprToLoad)*4) # Restore offset
+
+      extReadEpilogueLabeltmp    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
+      module.addComment0("Check if custom structure pointer is null")
+      if kernel["ProblemType"]["SupportUserArgs"]:
+        module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
+        module.add(SCBranchSCC1(labelName=extReadEpilogueLabeltmp.getLabelName()))
+
+      module.add(self.argLoader.loadKernArg("AddressTD", "KernArgAddress", sgprOffset=hex(argOffsettmp), dword=2))
+      module.add(self.argLoader.loadKernArg("Synchronizer", "KernArgAddress", sgprOffset=hex(argOffsettmp + (2)*4), dword=2))
+
+      module.add(extReadEpilogueLabeltmp)
+
       self.argLoader.setOffset(argOffset) # Restore offset
 
     # define the rest sgprs
@@ -4466,6 +4503,10 @@ class KernelWriterAssembly(KernelWriter):
       assert kernel["ProblemType"]["ComputeDataType"].isSingle()
       self.defineSgpr("ScaleD", 2, 2)
       module.add(RegSet("s", "sgprScaleD", self.sgprs["ScaleD"]))
+
+    if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
+      self.defineSgpr("SrdSync", 4, 4)
+      module.add(RegSet("s", "sgprSrdSync", self.sgprs["SrdSync"]))
 
     # Load kernel args end
     ########################################
