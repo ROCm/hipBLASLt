@@ -419,8 +419,11 @@ class ProblemPredicate(Properties.Predicate):
             valuepredicates = [];
             valuepredicates.append(state["MacroTile0"])
             valuepredicates.append(state["MacroTile1"])
-            valuepredicates.append(state["NumElementsPerThread"])
-            valuepredicates.append(state["StoreVectorWidth"])
+            valuepredicates.append(state["MIWaveTile"][0]*state["MIWaveTile"][1])
+            if state["NumElementsPerBatchStore"] != 0:
+                valuepredicates.append(int((state["NumElementsPerThread"])/state["NumElementsPerBatchStore"]))
+            else:
+                valuepredicates.append(1)
             valuepredicates.append(state["NumThreads"])
             rv += [cls('SynchronizerSizeCheck', index=0, value=valuepredicates)]
 

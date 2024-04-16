@@ -47,7 +47,7 @@ BenchmarkProblems:
         - VectorWidthA: [1, 2]
         - VectorWidthB: [1, 2]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkForkParameters:
       JoinParameters:
@@ -87,7 +87,7 @@ BenchmarkProblems:
         - VectorWidthA: [1, 2]
         - VectorWidthB: [1, 2]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkForkParameters:
       JoinParameters:
@@ -127,7 +127,7 @@ BenchmarkProblems:
         - VectorWidthA: [1, 2]
         - VectorWidthB: [1, 2]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkForkParameters:
       JoinParameters:
@@ -167,7 +167,7 @@ BenchmarkProblems:
         - VectorWidthA: [1, 2]
         - VectorWidthB: [1, 2]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkForkParameters:
       JoinParameters:

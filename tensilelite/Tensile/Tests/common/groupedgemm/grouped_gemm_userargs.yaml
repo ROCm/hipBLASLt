@@ -68,7 +68,7 @@ BenchmarkProblems:
         - NumElementsPerBatchStore: [-1]
         - GlobalSplitU: [1, 2]
         - PreloadKernArgs: [0, 1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -120,7 +120,7 @@ BenchmarkProblems:
         - SourceSwap: [1]
         - NumElementsPerBatchStore: [-1]
         - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -173,7 +173,7 @@ BenchmarkProblems:
         - SourceSwap: [1]
         - NumElementsPerBatchStore: [-1]
         - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:

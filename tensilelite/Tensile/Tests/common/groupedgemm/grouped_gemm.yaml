@@ -57,7 +57,7 @@ BenchmarkProblems:
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1,2]
         - PreloadKernArgs: [0, 1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -107,7 +107,7 @@ BenchmarkProblems:
         - LdsPadB: [-1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -157,7 +157,7 @@ BenchmarkProblems:
         - LdsPadB: [-1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -207,7 +207,7 @@ BenchmarkProblems:
         - LdsPadB: [-1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:

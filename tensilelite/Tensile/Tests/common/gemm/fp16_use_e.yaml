@@ -12,6 +12,7 @@ GlobalParameters:
   CSVMergeSameProblemID: 1
   Device: 0
   MaxWorkspaceSize: 3355443200
+  # PrintSolutionRejectionReason: True
 
 BenchmarkProblems:
   ########################################
@@ -54,7 +55,7 @@ BenchmarkProblems:
         - LdsPadB: [-1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -117,7 +118,7 @@ BenchmarkProblems:
         - StorePriorityOpt: [1]
         - ActivationFuncCall: [0, 1]
         - GlobalSplitU: [1,5]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:

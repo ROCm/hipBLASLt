@@ -3582,6 +3582,16 @@ class Solution(collections.abc.Mapping):
     if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
       if ((state["MIWaveTile"][0]*state["MIWaveTile"][1]>4) and (state["MIWaveGroup"][0]==2 and state["MIWaveGroup"][1]==2)) or (state["NumElementsPerBatchStore"] == 1):
         reject(state, "Occupancy limit!! overflowed resources MultipleBufferSingleKernel does not support")
+      if state["ProblemType"]["UseScaleCD"]:
+        reject(state, "MultipleBufferSingleKernel not support UseScaleCD yet")
+      if state["ProblemType"]["UseE"]:
+        reject(state, "MultipleBufferSingleKernel not support UseE yet")
+      if state["ProblemType"]["BiasSrc"] != "D":
+        reject(state, "MultipleBufferSingleKernel not support BiasSrc not D yet")
+      if state["ProblemType"]["DataType"].isDouble():
+        reject(state, "MultipleBufferSingleKernel not support " + str(state["ProblemType"]["DataType"])  + " yet")
+      if state["ProblemType"]["Sparse"] != 0:
+        reject(state, "MultipleBufferSingleKernel not support sparse yet")
 
     #Need to force disabling PreloadKernArgs if compiler does not support
     #Can not just reject the solution since the user library may find any solutions
