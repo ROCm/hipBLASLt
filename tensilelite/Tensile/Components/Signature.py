@@ -233,6 +233,12 @@ class SignatureDefault(Signature):
                 signature.addArg(                   name, SVK.SIG_VALUE,        actValueType)
             if kernel["ProblemType"]["ActivationType"] == 'all':
                 signature.addArg(       "activationType", SVK.SIG_VALUE,               "u32")
+
+        if (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
+            signature.addArg(    "dstD", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
+            signature.addArg(               "Synchronizer", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+            signature.addArg(               "GSUSync", SVK.SIG_VALUE,              "u32")
+
         activationType = ActivationType("all")
         for name in activationType.getAdditionalArgStringList():
             userArgumentsInfo.activationSize += userArgumentsInfo.actMaxSize
