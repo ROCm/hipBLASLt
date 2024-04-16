@@ -2,11 +2,11 @@
 Clients
 ============================
 
-There are 2 main client executables that can be used with hipBLASLt.
+The following client executables are available for use with hipBLASLt:
 
-1. hipblaslt-test
+1. ``hipblaslt-test``
 
-2. hipblaslt-bench
+2. ``hipblaslt-bench``
 
 These clients can be built by following the instructions in the `Build and Install hipBLASLt github page <https://github.com/ROCmSoftwarePlatform/hipBLASLt>`_ . After building the hipBLASLt clients, they can be found in the directory ``hipBLASLt/build/release/clients/staging``.
 The next section will cover a brief explanation and the usage of each hipBLASLt clients.
