@@ -4417,22 +4417,15 @@ class KernelWriterAssembly(KernelWriter):
           module.add(RegSet("s", "sgpr"+name, self.sgprs[name]))
 
       argOffset = self.argLoader.getOffset() # Backup offset
-      self.argLoader.setOffset(argOffset + (self.states.numStoreSgprToLoad)*4) # Restore offset
+      if kernel["ProblemType"]["UseScaleAB"] and (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters() or kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
+        self.argLoader.setOffset(argOffset + (self.states.numStoreSgprToLoad)*4 + (self.states.rpga * self.states.bpr)) # Restore offset
+      # elif kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+      #   self.argLoader.setOffset(argOffset + (self.states.numStoreSgprToLoad)*4 + (self.states.rpga * self.states.bpr)) # Restore offset
+      else:
+        self.argLoader.setOffset(argOffset + (self.states.numStoreSgprToLoad)*4) # Restore offset
       startVgprName = sgpxIdxVec[0]
       numStoreSgprToLoad = self.states.numStoreSgprToLoad2
-      # if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
-      if kernel["ProblemType"]["UseScaleAB"] and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
-        if (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()) and (kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
-          self.argLoader.setOffset(argOffset + ((self.states.rpga * self.states.bpr) * 2))
-        elif kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
-          assert sgpxIdxVec[0] == self.sgprs["AddressScaleB"]
-          self.argLoader.setOffset(argOffset + (self.states.rpga * self.states.bpr))
-        elif kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
-          assert sgpxIdxVec[0] == self.sgprs["AddressScaleA"]
-          module.add(self.argLoader.loadKernArg(self.sgprs["AddressScaleA"], "KernArgAddress", dword=2))
-          startVgprName = sgpxIdxVec[1]
-          numStoreSgprToLoad -= self.states.rpga
-          self.argLoader.setOffset(argOffset + ((self.states.rpga * self.states.bpr) * 2))
+
       loadModule = module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(startVgprName, "KernArgAddress", numStoreSgprToLoad))
       self.states.numStoreSgprInst = loadModule.countType(SMemLoadInstruction)
       self.argLoader.setOffset(argOffset) # Restore offset
