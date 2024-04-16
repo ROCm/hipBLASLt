@@ -20,9 +20,7 @@ Our documentation is structured as follows:
   .. grid-item-card:: Tutorial
 
     * :ref:`installation`
-    * :ref:`windows-installation`
-    * :ref:`supported-targets`
-
+    
   .. grid-item-card:: API reference
 
     * :ref:`datatypes`
