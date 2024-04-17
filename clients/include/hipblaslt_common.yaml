@@ -261,6 +261,10 @@ Arguments:
   - scaleAlpha_vector: c_bool
   - amaxScaleA: c_bool
   - amaxScaleB: c_bool
+  - isScaleAmaxDivisorA: c_bool
+  - isScaleAmaxDivisorB: c_bool
+  - amaxDividendA: c_float
+  - amaxDividendB: c_float
   - amaxD: c_bool
   - c_equal_d: c_bool
   - HMM: c_bool
@@ -361,6 +365,10 @@ Defaults:
   scaleAlpha_vector: false
   amaxScaleA: false
   amaxScaleB: false
+  isScaleAmaxDivisorA: false
+  isScaleAmaxDivisorB: false
+  amaxDividendA: 240.0
+  amaxDividendB: 240.0
   amaxD: false
   grouped_gemm: 0
   norm_check_assert: true

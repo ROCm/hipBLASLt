@@ -69,6 +69,43 @@ extern "C" __global__ void flush_icache()
                          :);
 }
 
+template <typename T>
+T absoluteValue(T in)
+{
+    return (float(in) > 0) ? in : T(-float(in));
+}
+
+template <typename T>
+T maxValue(T sr1, T sr2)
+{
+    return (float(sr1) > float(sr2)) ? sr1 : sr2;
+
+}
+
+template <typename Ti, typename To>
+void cpuAMax(To* out, Ti* in, std::uint32_t length)
+{
+    // calculate amax
+    Ti m = Ti(0);
+    for(int j = 0; j < length; j++)
+    {
+        m = maxValue(m, absoluteValue(in[j]));
+    }
+    out[0] = To(m);
+}
+
+template <typename Ti, typename To>
+void cpuValueDividedByAMax(To* out, Ti* in, std::uint32_t length, float value)
+{
+    // calculate amax
+    Ti m = Ti(0);
+    for(int j = 0; j < length; j++)
+    {
+        m = maxValue(m, absoluteValue(in[j]));
+    }
+    out[0] = To(value/ float(m));
+}
+
 template <typename Ti, typename Tc, typename To, typename Tbias, typename Tact, typename F>
 void epilogue_func(int64_t m,
                    int64_t n,
@@ -683,6 +720,10 @@ void testing_matmul_with_bias(const Arguments& arg)
         dAmaxD(gemm_count);
     std::vector<device_vector<To>*>    dE(gemm_count);
     std::vector<device_vector<Tbias>*> dBias(gemm_count);
+    std::vector<device_vector<TiA>*> dWorkSpaceA(gemm_count);
+    std::vector<device_vector<std::int32_t>*> dSyncA(gemm_count);
+    std::vector<device_vector<TiB>*> dWorkSpaceB(gemm_count);
+    std::vector<device_vector<std::int32_t>*> dSyncB(gemm_count);
 
     std::vector<host_vector<TiA>*>    hA(gemm_count);
     std::vector<host_vector<TiB>*>    hB(gemm_count);
@@ -691,9 +732,14 @@ void testing_matmul_with_bias(const Arguments& arg)
         hD_gold_ScaleAlpha(gemm_count), hBias_gold_epl(gemm_count), hScaleA(gemm_count),
         hScaleB(gemm_count), hScaleC(gemm_count), hScaleD(gemm_count), hScaleE(gemm_count),
         hAmaxD_gold(gemm_count), hAmaxD(gemm_count);
+
     std::vector<host_vector<To>*>    hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
     std::vector<void*>               alpha_in(gemm_count);
     std::vector<host_vector<Tbias>*> hBias(gemm_count), hBias_gold(gemm_count);
+    std::vector<host_vector<TiA>*>     hWorkSpaceA(gemm_count);
+    std::vector<host_vector<int32_t>*> hSyncA(gemm_count);
+    std::vector<host_vector<TiB>*>     hWorkSpaceB(gemm_count);
+    std::vector<host_vector<int32_t>*> hSyncB(gemm_count);
 
     // Need to split into two for loop to calculate the rotating buffer
     int64_t totalRotatingSizeNeeded = 0;
@@ -944,7 +990,6 @@ void testing_matmul_with_bias(const Arguments& arg)
             dD[i] = dC[i];
         dBias[i]          = new device_vector<Tbias>(size_bias[i] * block_count, 1, HMM);
         dScaleAlphaVec[i] = new device_vector<Talpha>(size_scaleAlphaVec[i] * block_count, 1, HMM);
-
         CHECK_DEVICE_ALLOCATION(dA[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dB[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dC[i]->memcheck());
@@ -993,6 +1038,20 @@ void testing_matmul_with_bias(const Arguments& arg)
             dScaleE[i] = new device_vector<Talpha>(1, 1, HMM);
             CHECK_DEVICE_ALLOCATION(dScaleE[i]->memcheck());
         }
+        if (arg.amaxScaleA)
+        {
+            dWorkSpaceA[i]  = new device_vector<TiA>(4096, 1, HMM);
+            dSyncA[i]       = new device_vector<std::int32_t>(1, 1, HMM);
+            CHECK_DEVICE_ALLOCATION(dWorkSpaceA[i]->memcheck());
+            CHECK_DEVICE_ALLOCATION(dSyncA[i]->memcheck());
+        }
+        if (arg.amaxScaleB)
+        {
+            dWorkSpaceB[i]  = new device_vector<TiB>(4096, 1, HMM);
+            dSyncB[i]       = new device_vector<std::int32_t>(1, 1, HMM);
+            CHECK_DEVICE_ALLOCATION(dWorkSpaceB[i]->memcheck());
+            CHECK_DEVICE_ALLOCATION(dSyncB[i]->memcheck());
+        }
 
         // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
         hA[i]                 = new host_vector<TiA>(size_A[i]);
@@ -1022,6 +1081,17 @@ void testing_matmul_with_bias(const Arguments& arg)
         }
         if(arg.scaleE)
             hScaleE[i] = new host_vector<Talpha>(1);
+        if(arg.amaxScaleA)
+        {
+            hWorkSpaceA[i] = new host_vector<TiA>(4096);
+            hSyncA[i]      = new host_vector<std::int32_t>(1);
+        }
+        if(arg.amaxScaleB)
+        {
+            hWorkSpaceB[i] = new host_vector<TiB>(4096);
+            hSyncB[i]      = new host_vector<std::int32_t>(1);
+        }
+
 
         if(arg.use_e)
         {
@@ -1145,6 +1215,16 @@ void testing_matmul_with_bias(const Arguments& arg)
         if(arg.scaleE)
             hipblaslt_init<Talpha>(*hScaleE[i], 1, 1, 1);
 
+        if (arg.amaxScaleA) {
+            hipblaslt_init_zero<TiA>(*hWorkSpaceA[i], 4096, 1, 1);
+            hipblaslt_init_zero<std::int32_t>(*hSyncA[i], 1, 1, 1);
+        }
+
+        if (arg.amaxScaleB) {
+            hipblaslt_init_zero<TiB>(*hWorkSpaceB[i], 4096, 1, 1);
+            hipblaslt_init_zero<std::int32_t>(*hSyncB[i], 1, 1, 1);
+        }
+
         if(arg.scaleAlpha_vector)
             hipblaslt_init<Talpha>(*hScaleAlphaVec[i], M[i], 1, M[i]);
 
@@ -1170,14 +1250,23 @@ void testing_matmul_with_bias(const Arguments& arg)
         else
             alpha_in[i] = &(h_alpha[i]);
 
+        if (arg.amaxScaleA) {
+            CHECK_HIP_ERROR(dSyncA[i]->transfer_from(*hSyncA[i]));
+            CHECK_HIP_ERROR(dWorkSpaceA[i]->transfer_from(*hWorkSpaceA[i]));
+        }
+
+        if (arg.amaxScaleB) {
+            CHECK_HIP_ERROR(dSyncB[i]->transfer_from(*hSyncB[i]));
+            CHECK_HIP_ERROR(dWorkSpaceB[i]->transfer_from(*hWorkSpaceB[i]));
+        }
+
         if(arg.scaleA)
         {
             if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
-            {
-                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(
-                    arg.a_type, HIP_R_32F, *dScaleA[i], *dA[i], A_row[i], A_col[i], stream));
-                CHECK_HIP_ERROR(hScaleA[i]->transfer_from(*dScaleA[i]));
-            }
+                if (arg.isScaleAmaxDivisorA)
+                    cpuValueDividedByAMax((*hScaleA[i]).data(), (*hA[i]).data(), A_row[i] * A_col[i], arg.amaxDividendA);
+                else
+                    cpuAMax((*hScaleA[i]).data(), (*hA[i]).data(), A_row[i] * A_col[i]);
             else
                 CHECK_HIP_ERROR(dScaleA[i]->transfer_from(*hScaleA[i]));
         }
@@ -1185,11 +1274,10 @@ void testing_matmul_with_bias(const Arguments& arg)
         if(arg.scaleB)
         {
             if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
-            {
-                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(
-                    arg.b_type, HIP_R_32F, *dScaleB[i], *dB[i], B_row[i], B_col[i], stream));
-                CHECK_HIP_ERROR(hScaleB[i]->transfer_from(*dScaleB[i]));
-            }
+                if (arg.isScaleAmaxDivisorB)
+                    cpuValueDividedByAMax((*hScaleB[i]).data(), (*hB[i]).data(), B_row[i] * B_col[i], arg.amaxDividendB);
+                else
+                    cpuAMax((*hScaleB[i]).data(), (*hB[i]).data(), B_row[i] * B_col[i]);
             else
                 CHECK_HIP_ERROR(dScaleB[i]->transfer_from(*hScaleB[i]));
         }
@@ -1202,6 +1290,7 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         if(arg.scaleE)
             CHECK_HIP_ERROR(dScaleE[i]->transfer_from(*hScaleE[i]));
+
         //// copy data from CPU to device end
 
         if(size_D_copy[i])
@@ -2362,8 +2451,43 @@ void testing_matmul_with_bias(const Arguments& arg)
     {
         if(!do_grouped_gemm)
         {
+            if(arg.scaleA)
+            {
+                if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
+                {
+                    if (arg.isScaleAmaxDivisorA)
+                    {
+                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                            arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], arg.amaxDividendA, stream));
+                    }
+                    else
+                    {
+                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                            arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], stream));
+                    }
+                }
+            }
+
+            if(arg.scaleB)
+            {
+                if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
+                {
+                    if (arg.isScaleAmaxDivisorB)
+                    {
+                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                            arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], arg.amaxDividendB, stream));
+                    }
+                    else
+                    {
+                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                            arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], stream));
+                    }
+                }
+            }
+
             if(arg.use_ext)
             {
+
                 CHECK_HIPBLASLT_ERROR(gemmVec[0].initialize(
                     heuristicResult[0].algo, tuningVec[heuristicTuningIndex[0]], *dWorkspace));
 
@@ -2393,6 +2517,46 @@ void testing_matmul_with_bias(const Arguments& arg)
         }
         else
         {
+            if(arg.scaleA)
+            {
+                if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
+                {
+                    for(int i=0; i<gemm_count; i++)
+                    {
+                        if (arg.isScaleAmaxDivisorA)
+                        {
+                            CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                arg.a_type, HIP_R_32F, *dScaleA[i], *dA[i], *dWorkSpaceA[i], *dSyncA[i], A_row[i], A_col[i], arg.amaxDividendA, stream));
+                        }
+                        else
+                        {
+                            CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                arg.a_type, HIP_R_32F, *dScaleA[i], *dA[i], *dWorkSpaceA[i], *dSyncA[i], A_row[i], A_col[i], stream));
+                        }
+                    }
+                }
+            }
+
+            if(arg.scaleB)
+            {
+                if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
+                {
+                    for(int i=0; i<gemm_count; i++)
+                    {
+                        if (arg.isScaleAmaxDivisorB)
+                        {
+                            CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                arg.b_type, HIP_R_32F, *dScaleB[i], *dB[i], *dWorkSpaceB[i], *dSyncB[i], B_row[i], B_col[i], arg.amaxDividendB, stream));
+                        }
+                        else
+                        {
+                            CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                arg.b_type, HIP_R_32F, *dScaleB[i], *dB[i], *dWorkSpaceB[i], *dSyncB[i], B_row[i], B_col[i], stream));
+                        }
+                    }
+                }
+            }
+
             if(arg.use_user_args)
             {
                 //grouped gemm
@@ -2522,6 +2686,39 @@ void testing_matmul_with_bias(const Arguments& arg)
                                                   *dWorkspace));
                     for(int i = 0; i < number_cold_calls; i++)
                     {
+                        if(arg.scaleA)
+                        {
+                            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
+                            {
+                                if (arg.isScaleAmaxDivisorA)
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], arg.amaxDividendA, stream));
+                                }
+                                else
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], stream));
+                                }
+                            }
+                        }
+
+                        if(arg.scaleB)
+                        {
+                            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
+                            {
+                                if (arg.isScaleAmaxDivisorB)
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], arg.amaxDividendB, stream));
+                                }
+                                else
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], stream));
+                                }
+                            }
+                        }
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
                         if(i == 0 && (arg.unit_check || arg.norm_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, dD);
@@ -2536,6 +2733,39 @@ void testing_matmul_with_bias(const Arguments& arg)
 
                     for(int i = 0; i < number_hot_calls; i++)
                     {
+                        if(arg.scaleA)
+                        {
+                            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
+                            {
+                                if (arg.isScaleAmaxDivisorA)
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], arg.amaxDividendA, stream));
+                                }
+                                else
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], stream));
+                                }
+                            }
+                        }
+
+                        if(arg.scaleB)
+                        {
+                            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
+                            {
+                                if (arg.isScaleAmaxDivisorB)
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], arg.amaxDividendB, stream));
+                                }
+                                else
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], stream));
+                                }
+                            }
+                        }
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
                         if(arg.flush)
                             hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
@@ -2545,6 +2775,40 @@ void testing_matmul_with_bias(const Arguments& arg)
                 {
                     for(int i = 0; i < number_cold_calls; i++)
                     {
+                        if(arg.scaleA)
+                        {
+                            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
+                            {
+                                if (arg.isScaleAmaxDivisorA)
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], arg.amaxDividendA, stream));
+                                }
+                                else
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], stream));
+                                }
+                            }
+                        }
+
+                        if(arg.scaleB)
+                        {
+                            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
+                            {
+                                if (arg.isScaleAmaxDivisorB)
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], arg.amaxDividendB, stream));
+                                }
+                                else
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], stream));
+                                }
+                            }
+                        }
+
                         TiA* ptr_dA     = *(dA[0]) + (i % block_count) * size_A[0];
                         TiB* ptr_dB     = *(dB[0]) + (i % block_count) * size_B[0];
                         To*  ptr_dC     = *(dC[0]) + (i % block_count) * size_C[0];
@@ -2583,6 +2847,40 @@ void testing_matmul_with_bias(const Arguments& arg)
                     }
                     for(int i = 0; i < number_hot_calls; i++)
                     {
+                        if(arg.scaleA)
+                        {
+                            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
+                            {
+                                if (arg.isScaleAmaxDivisorA)
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], arg.amaxDividendA, stream));
+                                }
+                                else
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], stream));
+                                }
+                            }
+                        }
+
+                        if(arg.scaleB)
+                        {
+                            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
+                            {
+                                if (arg.isScaleAmaxDivisorB)
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], arg.amaxDividendB, stream));
+                                }
+                                else
+                                {
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], stream));
+                                }
+                            }
+                        }
+
                         TiA* ptr_dA     = *(dA[0]) + (i % block_count) * size_A[0];
                         TiB* ptr_dB     = *(dB[0]) + (i % block_count) * size_B[0];
                         To*  ptr_dC     = *(dC[0]) + (i % block_count) * size_C[0];
@@ -2654,6 +2952,46 @@ void testing_matmul_with_bias(const Arguments& arg)
 
                     for(int i = 0; i < number_cold_calls; i++)
                     {
+                        if(arg.scaleA)
+                        {
+                            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
+                            {
+                                for (int j=0; j<gemm_count; j++)
+                                {
+                                    if (arg.isScaleAmaxDivisorA)
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], arg.amaxDividendA, stream));
+                                    }
+                                    else
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], stream));
+                                    }
+                                }
+                            }
+                        }
+
+                        if(arg.scaleB)
+                        {
+                            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
+                            {
+                                for (int j=0; j<gemm_count; j++)
+                                {
+                                    if (arg.isScaleAmaxDivisorB)
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                            arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], arg.amaxDividendB, stream));
+                                    }
+                                    else
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                            arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], stream));
+                                    }
+                                }
+                            }
+                        }
+
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(
                             d_userArgsVec[i % block_count], stream));
                         if(i == 0 && (arg.unit_check || arg.norm_check))
@@ -2668,8 +3006,49 @@ void testing_matmul_with_bias(const Arguments& arg)
                     }
 
                     for(int i = 0; i < number_hot_calls; i++)
+                    {
+                        if(arg.scaleA)
+                        {
+                            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
+                            {
+                                for (int j=0; j<gemm_count; j++)
+                                {
+                                    if (arg.isScaleAmaxDivisorA)
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], arg.amaxDividendA, stream));
+                                    }
+                                    else
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], stream));
+                                    }
+                                }
+                            }
+                        }
+
+                        if(arg.scaleB)
+                        {
+                            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
+                            {
+                                for (int j=0; j<gemm_count; j++)
+                                {
+                                    if (arg.isScaleAmaxDivisorB)
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                            arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], arg.amaxDividendB, stream));
+                                    }
+                                    else
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                            arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], stream));
+                                    }
+                                }
+                            }
+                        }
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(
                             d_userArgsVec[i % block_count], stream));
+                    }
 
                     if(arg.use_gpu_timer)
                     {
@@ -2699,6 +3078,46 @@ void testing_matmul_with_bias(const Arguments& arg)
 
                     for(int i = 0; i < number_cold_calls; i++)
                     {
+                        if(arg.scaleA)
+                        {
+                            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
+                            {
+                                for (int j=0; j<gemm_count; j++)
+                                {
+                                    if (arg.isScaleAmaxDivisorA)
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], arg.amaxDividendA, stream));
+                                    }
+                                    else
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], stream));
+                                    }
+                                }
+                            }
+                        }
+
+                        if(arg.scaleB)
+                        {
+                            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
+                            {
+                                for (int j=0; j<gemm_count; j++)
+                                {
+                                    if (arg.isScaleAmaxDivisorB)
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                            arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], arg.amaxDividendB, stream));
+                                    }
+                                    else
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                            arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], stream));
+                                    }
+                                }
+                            }
+                        }
+
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
                         if(i == 0 && (arg.unit_check || arg.norm_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, dD);
@@ -2712,7 +3131,49 @@ void testing_matmul_with_bias(const Arguments& arg)
                     freq_monitor.start();
 
                     for(int i = 0; i < number_hot_calls; i++)
+                    {
+                        if(arg.scaleA)
+                        {
+                            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
+                            {
+                                for (int j=0; j<gemm_count; j++)
+                                {
+                                    if (arg.isScaleAmaxDivisorA)
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], arg.amaxDividendA, stream));
+                                    }
+                                    else
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], stream));
+                                    }
+                                }
+                            }
+                        }
+
+                        if(arg.scaleB)
+                        {
+                            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
+                            {
+                                for (int j=0; j<gemm_count; j++)
+                                {
+                                    if (arg.isScaleAmaxDivisorB)
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                            arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], arg.amaxDividendB, stream));
+                                    }
+                                    else
+                                    {
+                                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
+                                            arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], stream));
+                                    }
+                                }
+                            }
+                        }
+
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
+                    }
 
                     if(arg.use_gpu_timer)
                     {
@@ -2938,6 +3399,20 @@ void testing_matmul_with_bias(const Arguments& arg)
         {
             delete hScaleE[i];
             delete dScaleE[i];
+        }
+        if (arg.amaxScaleA)
+        {
+            delete dWorkSpaceA[i];
+            delete hWorkSpaceA[i];
+            delete dSyncA[i];
+            delete hSyncA[i];
+        }
+        if (arg.amaxScaleB)
+        {
+            delete dWorkSpaceB[i];
+            delete hWorkSpaceB[i];
+            delete dSyncB[i];
+            delete hSyncB[i];
         }
         if(arg.use_e)
         {

@@ -38,6 +38,8 @@ void simpleAMaxWithScale(hipDataType type,
                          void*       d_outD,
                          void*       d_in,
                          void*       d_in_scale,
+                         void*       d_workspace,
+                         void*       d_sync,
                          int64_t     m,
                          int64_t     n,
                          hipStream_t stream);
@@ -59,6 +61,8 @@ int  main()
                             runnerF32.d_outD,
                             runnerF32.d_in,
                             runnerF32.d_in_scale,
+                            runnerF32.d_workspace,
+                            runnerF32.d_sync,
                             runnerF32.m,
                             runnerF32.n,
                             runnerF32.stream);
@@ -74,10 +78,12 @@ void simpleAMaxWithScale(hipDataType type,
                          void*       d_outD,
                          void*       d_in,
                          void*       d_in_scale,
+                         void*       d_workspace,
+                         void*       d_sync,
                          int64_t     m,
                          int64_t     n,
                          hipStream_t stream)
 {
-    CHECK_HIPBLASLT_ERROR(hipblasltExtAMaxWithScale(
-        type, dtype, scaleType, d_out, d_outD, d_in, d_in_scale, m, n, stream));
+    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMaxWithScale(
+        type, dtype, scaleType, d_out, d_outD, d_in, d_in_scale, d_workspace, d_sync,  m, n, stream));
 }

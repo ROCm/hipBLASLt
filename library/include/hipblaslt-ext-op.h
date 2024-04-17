@@ -172,6 +172,106 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
                                                   hipStream_t       stream);
 
 /*! \ingroup library_module
+ *  \brief Perform absmax  with fast algorithm on given 2-D tensor and output one value absmax(tensor) value.
+ *
+ *  \details
+ *  This function computes amax on given 2D-tensor.
+ *
+ *  @param[in]
+ *  datatype Datatype of input tensor, currently support HIP_R_32F and HIP_R_16F only.
+ *
+ *  @param[in]
+ *  outDatatype Datatype of output tensor, currently support HIP_R_32F and HIP_R_16F only.
+ *
+ *  @param[out]
+ *  output Amax tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  input 2-D tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  workSpace Amax tensor buffer (4k). can't be nullptr.
+ *
+ *  @param[in]
+ *  sync for Amax tensor buffer (1 int32_t). can't be nullptr. Must reset device memory to 0
+ *
+ *  @param[in]
+ *  m The first dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  n The second dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  stream The HIP stream where all the GPU work will be submitted.
+ *
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
+ *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m or n is 0, or input or output is nullptr.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p datatype is not (HIP_R_32F or HIP_R_16F).
+ */
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastAMax(const hipDataType datatype,
+                                                      const hipDataType outDatatype,
+                                                      void*             output,
+                                                      void*             input,
+                                                      void*             workSpace,
+                                                      void*             sync,
+                                                      uint32_t          m,
+                                                      uint32_t          n,
+                                                      hipStream_t       stream);
+
+/*! \ingroup library_module
+ *  \brief Perform absmax  with fast algorithm on given 2-D tensor and output one value absmax(tensor) value.
+ *
+ *  \details
+ *  This function computes amax on given 2D-tensor.
+ *
+ *  @param[in]
+ *  datatype Datatype of input tensor, currently support HIP_R_32F and HIP_R_16F only.
+ *
+ *  @param[in]
+ *  outDatatype Datatype of output tensor, currently support HIP_R_32F and HIP_R_16F only.
+ *
+ *  @param[out]
+ *  output Amax tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  input 2-D tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  workSpace Amax tensor buffer (4k). can't be nullptr.
+ *
+ *  @param[in]
+ *  sync for Amax tensor buffer (1 int32_t). can't be nullptr. Must reset device memory to 0
+ *
+ *  @param[in]
+ *  m The first dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  n The second dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  div output value = div/amax(input)
+ *
+ *  @param[in]
+ *  stream The HIP stream where all the GPU work will be submitted.
+ *
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
+ *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m or n is 0, or input or output is nullptr.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p datatype is not (HIP_R_32F or HIP_R_16F).
+ */
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastValueDevidedByAMax(const hipDataType datatype,
+                                                                    const hipDataType outDatatype,
+                                                                    void*             output,
+                                                                    void*             input,
+                                                                    void*             workSpace,
+                                                                    void*             sync,
+                                                                    uint32_t          m,
+                                                                    uint32_t          n,
+                                                                    float             div,
+                                                                    hipStream_t       stream);
+
+/*! \ingroup library_module
  *  \brief Perform absmax and scaling on given 2-D tensor. Generate one absmax value and scaled 2-D tensor output.
  *
  *  \details
@@ -222,6 +322,65 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType dat
                                                            uint32_t          m,
                                                            uint32_t          n,
                                                            hipStream_t       stream);
+/*! \ingroup library_module
+ *  \brief Perform absmax and scaling on given 2-D tensor with fast algorithm. Generate one absmax value and scaled 2-D tensor output.
+ *
+ *  \details
+ *  This function computes amax and scaling on given 2D-tensor.
+ *
+ *  @param[in]
+ *  datatype Datatype of input tensor, currently support HIP_R_32F only.
+ *
+ *  @param[in]
+ *  outDatatype Datatype of output tensor, currently support HIP_R_32F and HIP_R_16F only.
+ *
+ *  @param[in]
+ *  scaleDatatype Datatype of outputD tensor, currently support HIP_R_8F_E4M3_FNUZ and HIP_R_8F_E5M2_FNUZ only.
+ *
+ *  @param[out]
+ *  output Amax tensor buffer. can't be nullptr.
+ *
+ *  @param[out]
+ *  outputD scaled 2-D tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  input 2-D tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  inputScale 1-D tensor buffer. can't be nullptr. only support float.
+ *
+ *  @param[in]
+ *  workSpace Amax tensor buffer (4k). can't be nullptr.
+ *
+ *  @param[in]
+ *  sync for Amax tensor buffer (1 int32_t). can't be nullptr. Must reset device memory to 0
+ *
+ *  @param[in]
+ *  m The first dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  n The second dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  stream The HIP stream where all the GPU work will be submitted.
+ *
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
+ *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m or n is 0, or input, inputScale, output, or outputD is nullptr.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p datatype is not HIP_R_32F, or scaleDatatype is not HIP_R_8F_E4M3_FNUZ or HIP_R_8F_E5M2_FNUZ.
+ */
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastAMaxWithScale(const hipDataType datatype,
+                                                               const hipDataType outDatatype,
+                                                               const hipDataType scaleDatatype,
+                                                               void*             output,
+                                                               void*             outputD,
+                                                               void*             input,
+                                                               void*             inputScale,
+                                                               void*             workSpace,
+                                                               void*             sync,
+                                                               uint32_t          m,
+                                                               uint32_t          n,
+                                                               hipStream_t       stream);
 #ifdef __cplusplus
 }
 #endif

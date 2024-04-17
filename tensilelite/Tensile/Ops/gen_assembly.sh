@@ -56,19 +56,19 @@ for arch in "${archs[@]}"; do
         python3 ./SoftmaxGenerator.py -o $s -m $1 -n $2 --arch $arch --toolchain $toolchain &
         objs+=($o)
     done
-    for i in "S S 256 4" "H H 256 4" "H S 256 4" "S H 256 4"; do
+    for i in "S S" "H H" "H S" "S H"; do
         set -- $i
         s=$dst/A_$1_$2_$3_$4_$arch.s
         o=$dst/A_$1_$2_$3_$4_$arch.o
-        python3 ./AMaxGenerator.py -o $s -t $1 -d $2 -w $3 -c $4 --arch $arch --toolchain $toolchain &
+        python3 ./AMaxGenerator.py -o $s -t $1 -d $2 --arch $arch --toolchain $toolchain &
         objs+=($o)
     done
     if [[ $arch =~ gfx94[0-9] ]]; then
-        for i in "S S F8 256 4" "S S B8 256 4" "S H F8 256 4" "S H B8 256 4"; do
+        for i in "S S F8" "S S B8" "S H F8" "S H B8"; do
             set -- $i
             s=$dst/A_$1_$2_$3_$4_$5_$arch.s
             o=$dst/A_$1_$2_$3_$4_$5_$arch.o
-            python3 ./AMaxGenerator.py --is-scale -o $s -t $1 -d $2 -s $3 -w $4 -c $5 --arch $arch --toolchain $toolchain &
+            python3 ./AMaxGenerator.py --is-scale -o $s -t $1 -d $2 -s $3 --arch $arch --toolchain $toolchain &
             objs+=($o)
         done
     fi
