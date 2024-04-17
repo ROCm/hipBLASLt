@@ -291,7 +291,7 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
 
     solutions = [solutionStateToSolution(solutionState) for solutionState in data["Solutions"]]
 
-    newLibrary = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions)
+    newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions)
 
     return LibraryLogic(data["ScheduleName"], data["ArchitectureName"], problemType, solutions, \
             data.get("ExactLogic"), newLibrary, srcFile)

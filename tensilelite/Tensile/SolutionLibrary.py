@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -288,7 +288,8 @@ class MasterSolutionLibrary:
                           origData,
                           origSolutions,
                           solutionClass=Contractions.Solution,
-                          libraryOrder=None):
+                          libraryOrder=None,
+                          placeholderName='TensileLibrary'):
 
         # functions for creating each "level" of the library
         def hardware(d, problemType, solutions, library, placeholderName):
@@ -382,6 +383,35 @@ class MasterSolutionLibrary:
             else:
                 assert 0 and "Unrecognized LibraryType."
 
+            if Common.globalParameters["LazyLibraryLoading"]:
+                placeholderName += '_' + str(problemType.aType) + str(problemType.bType)
+                placeholderName += '_' + str(problemType.cType) + str(problemType.computeInputType)
+                if problemType.activationType != 'none':
+                    if str(problemType.activationType).upper() == 'ALL':
+                        placeholderName += "_A"
+                    else:
+                        placeholderName += "_%s"%str(problemType.activationType).upper()
+                if problemType.useBias:
+                    placeholderName += '_Bias'
+                if problemType.useE:
+                    placeholderName += '_Grad' if problemType.useGradient else '_Aux'
+                if problemType.groupedGemm:
+                    placeholderName += "_GG"
+                else:
+                    placeholderName += "" if problemType.stridedBatched else "_GB" # legacy
+                if problemType.useScaleAB:
+                    placeholderName += '_SAB'
+                if problemType.useScaleCD:
+                    placeholderName += '_SCD'
+                if problemType.useScaleAlphaVec:
+                    placeholderName += '_SAV'
+                if problemType.sparse:
+                    placeholderName += '_SPB' if problemType.sparse == 2 else '_SPA'
+                if not problemType.f32XdlMathOp.isSingle() and problemType.computeInputType.isSingle():
+                    placeholderName += '_M' + str(problemType.f32XdlMathOp)
+                if problemType.supportDeviceUserArguments:
+                    placeholderName += '_UA'
+
             return library, placeholderName
 
         # end library creation functions
@@ -402,9 +432,12 @@ class MasterSolutionLibrary:
         lazyLibrary = None
         if placeholder in libraryOrder:
             placeholderIndex = libraryOrder.index(placeholder) + 1
-            lazyLibrary = MasterSolutionLibrary.FromOriginalState(origData, origSolutions,
-                                                                  solutionClass,
-                                                                  libraryOrder[placeholderIndex:])
+            lazyLibrary, placeholderName = \
+                MasterSolutionLibrary.FromOriginalState(origData,
+                                                        origSolutions,
+                                                        solutionClass,
+                                                        libraryOrder[placeholderIndex:],
+                                                        placeholderName)
             libraryOrder = libraryOrder[0:placeholderIndex]
             origSolutions = []
 
@@ -414,7 +447,6 @@ class MasterSolutionLibrary:
 
         # library is constructed in reverse order i.e. bottom-up
         library = None
-        placeholderName = "TensileLibrary"
         placeholderLibrary = None
         for libName in reversed(libraryOrder):
             library, placeholderName = libName(origData, problemType, allSolutions, library,
@@ -428,7 +460,7 @@ class MasterSolutionLibrary:
             rv.lazyLibraries[placeholderName] = lazyLibrary
             placeholderLibrary.filenamePrefix = placeholderName
 
-        return rv
+        return rv, placeholderName
 
     @classmethod
     def BenchmarkingLibrary(cls, solutions):
