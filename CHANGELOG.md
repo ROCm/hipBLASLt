@@ -12,6 +12,10 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 * Added `GemmTuning` extension parameter to set split-k by user
 * Support for mix precision datatype: fp16/fp8 in with fp16 out
 
+### Deprecations
+
+* algoGetHeuristic() ext API for GroupGemm will be deprecated in a future release of hipBLASLt
+
 ## hipBLASLt 0.6.0
 
 ### Additions
