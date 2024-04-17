@@ -2,7 +2,7 @@
 # These comments will also be removed.
 root: index
 subtrees:
-  - caption: Tutorial
+  - caption: Install
     entries:
     - file: installation    
   - caption: API reference
