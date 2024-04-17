@@ -46,6 +46,8 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
                                void*              d_d,
                                void*              d_workspace,
                                int64_t            max_workspace_size,
+                               void*              d_d_workspace2,
+                               void*              d_sync,
                                hipStream_t        stream);
 
 int main()
@@ -75,6 +77,8 @@ int main()
                                   runner.d_d,
                                   runner.d_workspace,
                                   runner.max_workspace_size,
+                                  runner.d_workspace2,
+                                  runner.d_sync,
                                   runner.stream);
     });
 
@@ -96,6 +100,8 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
                                void*              d_d,
                                void*              d_workspace,
                                int64_t            max_workspace_size,
+                               void*              d_workspace2,
+                               void*              d_sync,
                                hipStream_t        stream)
 {
     hipblaslt_ext::GemmPreference gemmPref;
@@ -112,7 +118,7 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
     // Copy scaleA to device memory
     void* d_scaleA = nullptr;
     CHECK_HIP_ERROR(hipMalloc(&d_scaleA, sizeof(float)));
-    CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(HIP_R_16F, HIP_R_32F, d_scaleA, d_a, m, k, stream));
+    CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(HIP_R_16F, HIP_R_32F, d_scaleA, d_a, d_workspace2, d_sync, k, n, stream));
 
     hipblaslt_ext::GemmEpilogue epilogue;
     hipblaslt_ext::GemmInputs   inputs;

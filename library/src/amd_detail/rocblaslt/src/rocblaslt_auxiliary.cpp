@@ -1385,7 +1385,7 @@ rocblaslt_status
            && *returnAlgoCount >= 1)
         {
 
-            size_t amax_workspace_size = matD->m * matD->n * 4; //only support fp32 D temp
+            size_t amax_workspace_size = matD->m * matD->n * 4 + 4096; //only support fp32 D temp
             int    new_returnAlgoCount = *returnAlgoCount;
             //reset C D type
             matC->type = c_type;

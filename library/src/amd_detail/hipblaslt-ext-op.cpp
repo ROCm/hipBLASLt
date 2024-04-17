@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <algorithm>
 #include <hip/hip_ext.h>
 #include <hip/hip_runtime_api.h>
 #include <libgen.h>
@@ -95,6 +96,8 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
                                  const hipDataType outDatatype,
                                  void*             output,
                                  void*             input,
+                                 void*             workSpace,
+                                 void*             sync,
                                  uint32_t          m,
                                  uint32_t          n,
                                  hipStream_t       stream);
@@ -106,6 +109,8 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
                                           void*             outputD,
                                           void*             input,
                                           void*             inputScale,
+                                          void*             workSpace,
+                                          void*             sync,
                                           uint32_t          m,
                                           uint32_t          n,
                                           hipStream_t       stream);
@@ -114,11 +119,13 @@ hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
                                  const hipDataType outDatatype,
                                  void*             output,
                                  void*             input,
+                                 void*             workSpace,
+                                 void*             sync,
                                  uint32_t          m,
                                  uint32_t          n,
                                  hipStream_t       stream)
 {
-    return hipblasltAMaxRun(datatype, outDatatype, output, input, m, n, stream);
+    return hipblasltAMaxRun(datatype, outDatatype, output, input, workSpace, sync, m, n, stream);
 }
 
 hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType datatype,
@@ -128,12 +135,14 @@ hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType datatype,
                                           void*             outputD,
                                           void*             input,
                                           void*             inputScale,
+                                          void*             workSpace,
+                                          void*             sync,
                                           uint32_t          m,
                                           uint32_t          n,
                                           hipStream_t       stream)
 {
     return hipblasltAMaxWithScaleRun(
-        datatype, outDatatype, scaleDatatype, output, outputD, input, inputScale, m, n, stream);
+        datatype, outDatatype, scaleDatatype, output, outputD, input, inputScale, workSpace, sync, m, n, stream);
 }
 
 namespace
@@ -406,6 +415,8 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
                                  const hipDataType outDatatype,
                                  void*             output,
                                  void*             input,
+                                 void*             workSpace,
+                                 void*             sync,
                                  uint32_t          m,
                                  uint32_t          n,
                                  hipStream_t       stream)
@@ -415,7 +426,12 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
         return HIPBLAS_STATUS_NOT_SUPPORTED;
     }
 
-    if(output == nullptr || input == nullptr || m == 0 || n == 0)
+    if(outDatatype != HIP_R_32F && outDatatype != HIP_R_16F)
+    {
+        return HIPBLAS_STATUS_NOT_SUPPORTED;
+    }
+
+    if(output == nullptr || input == nullptr || workSpace == nullptr || sync == nullptr || m == 0 || n == 0)
         return HIPBLAS_STATUS_INVALID_VALUE;
 
     uint32_t    len = m * n;
@@ -434,6 +450,9 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
                                     *gpu);
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
+    int workSize          = 131072;
+    int numGroups         = 128;
+    numGroups             = std::min(int((len + workSize - 1) / workSize), int(numGroups));
 
     Tensile::KernelInvocation invocation;
     invocation.kernelName      = kernelName;
@@ -441,18 +460,22 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     invocation.workGroupSize.x = sol->getNumWorkitems();
     invocation.workGroupSize.y = 1;
     invocation.workGroupSize.z = 1;
-    invocation.numWorkGroups.x = 1;
+    invocation.numWorkGroups.x = numGroups;
     invocation.numWorkGroups.y = 1;
     invocation.numWorkGroups.z = 1;
-    invocation.numWorkItems.x  = sol->getNumWorkitems();
+    invocation.numWorkItems.x  = sol->getNumWorkitems() * numGroups;
     invocation.numWorkItems.y  = 1;
     invocation.numWorkItems.z  = 1;
     invocation.sharedMemBytes  = 32 * sizeof(float);
     invocation.args            = Tensile::KernelArguments(false);
-    invocation.args.reserve(20, 3);
+    invocation.args.reserve(64, 7);
     invocation.args.append("output", output);
     invocation.args.append("input", input);
+    invocation.args.append("workSpace", workSpace);
+    invocation.args.append("sync", sync);
     invocation.args.append("length", len);
+    invocation.args.append("workSize", workSize);
+    invocation.args.append("numGroups", numGroups);
 
     err = adapter->launchKernel(invocation, stream, nullptr, nullptr);
 
@@ -471,6 +494,8 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
                                           void*             outputD,
                                           void*             input,
                                           void*             inputScale,
+                                          void*             workSpace,
+                                          void*             sync,
                                           uint32_t          m,
                                           uint32_t          n,
                                           hipStream_t       stream)
@@ -481,7 +506,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
         return HIPBLAS_STATUS_NOT_SUPPORTED;
     }
 
-    if(!output || !outputD || !input || !inputScale || !m || !n)
+    if(!output || !outputD || !input || !inputScale || !workSpace || !sync || !m || !n)
     {
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
@@ -511,6 +536,9 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
 
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
+    int workSize          = 131072;
+    int numGroups         = 128;
+    numGroups             = std::min(int((len + workSize - 1) / workSize), int(numGroups));
 
     Tensile::KernelInvocation invocation;
     invocation.kernelName      = kernelName;
@@ -518,20 +546,24 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     invocation.workGroupSize.x = sol->getNumWorkitems();
     invocation.workGroupSize.y = 1;
     invocation.workGroupSize.z = 1;
-    invocation.numWorkGroups.x = 1;
+    invocation.numWorkGroups.x = numGroups;
     invocation.numWorkGroups.y = 1;
     invocation.numWorkGroups.z = 1;
-    invocation.numWorkItems.x  = sol->getNumWorkitems();
+    invocation.numWorkItems.x  = sol->getNumWorkitems() * numGroups;
     invocation.numWorkItems.y  = 1;
     invocation.numWorkItems.z  = 1;
     invocation.sharedMemBytes  = 32 * sizeof(float);
     invocation.args            = Tensile::KernelArguments(false);
-    invocation.args.reserve(20, 3);
+    invocation.args.reserve(64, 9);
     invocation.args.append("output", output);
     invocation.args.append("outputD", outputD);
     invocation.args.append("input", input);
     invocation.args.append("inputScae", inputScale);
+    invocation.args.append("workSpace", workSpace);
+    invocation.args.append("sync", sync);
     invocation.args.append("length", len);
+    invocation.args.append("workSize", workSize);
+    invocation.args.append("numGroups", numGroups);
 
     err = adapter->launchKernel(invocation, stream, nullptr, nullptr);
 

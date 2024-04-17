@@ -106,7 +106,7 @@ int parseArgs(int                       argc,
             }
             else if(arg == "-m" || arg == "--m")
             {
-                n = std::stoul(argv[++i]);
+                m = std::stoul(argv[++i]);
             }
             else if(arg == "-n" || arg == "--n")
             {
@@ -190,29 +190,39 @@ template <typename Ti, typename To>
 int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, hipblaslt_initialization& init)
 {
     int         numElements = m * n;
-    std::size_t tiNumBytes  = sizeof(Ti);
-    std::size_t toNumBytes  = sizeof(To);
 
     To* gpuOutput{nullptr};
     Ti* gpuInput{nullptr};
+    Ti* gpuWorkSpace{nullptr};
+    std::uint32_t* gpuSync{nullptr};
 
-    auto hipErr = hipMalloc(&gpuOutput, toNumBytes);
-    hipErr      = hipMalloc(&gpuInput, m * n * tiNumBytes);
+    auto hipErr = hipMalloc(&gpuOutput, sizeof(To));
+    hipErr      = hipMalloc(&gpuInput, m * n * sizeof(Ti));
+    hipErr      = hipMalloc(&gpuWorkSpace, 4096 * sizeof(Ti));
+    hipErr      = hipMalloc(&gpuSync, sizeof(std::uint32_t));
 
-    std::vector<To> cpuOutput(1, 0.f);
-    std::vector<Ti> cpuInput(m * n, 0.f);
-    std::vector<To> refOutput(1, 0.f);
+    std::vector<To>            cpuOutput(1, 0.f);
+    std::vector<Ti>            cpuInput(m * n, 0.f);
+    std::vector<Ti>            cpuWorkSpace(4096, 0.f);
+    std::vector<std::uint32_t> cpuSync(1, 0.f);
+
+    std::vector<To>            refOutput(1, 0.f);
 
     initData(cpuInput.data(), numElements, init);
 
-    hipErr = hipMemcpyHtoD(gpuInput, cpuInput.data(), m * n * tiNumBytes);
+    hipErr = hipMemset(gpuOutput, 0, sizeof(To));
+    hipErr = hipMemcpyHtoD(gpuInput, cpuInput.data(), m * n * sizeof(Ti));
+    hipErr = hipMemset(gpuWorkSpace, 0, 4096 * sizeof(Ti));
+    hipErr = hipMemset(gpuSync, 0, sizeof(std::uint32_t));
 
     hipStream_t stream{};
     hipErr = hipStreamCreate(&stream);
     //warmup
-    auto hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
+    auto hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, stream);
 
-    hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, toNumBytes);
+    hipErr = hipStreamSynchronize(stream);
+
+    hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, sizeof(To));
 
     cpuAMax(refOutput.data(), cpuInput.data(), m * n);
 
@@ -230,7 +240,7 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, hipblaslt_initia
 
     for(int i = 0; i < numRuns; ++i)
     {
-        hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
+        hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, stream);
     }
     hipErr = hipEventRecord(end, stream);
     hipErr = hipEventSynchronize(end);
@@ -246,15 +256,18 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, hipblaslt_initia
     hipErr = hipStreamDestroy(stream);
     hipErr = hipFree(gpuOutput);
     hipErr = hipFree(gpuInput);
+    hipErr = hipFree(gpuWorkSpace);
+    hipErr = hipFree(gpuSync);
     return 0;
 }
 
 int main(int argc, char** argv)
 {
-    std::string              type{"S"};
-    std::string              dtype{"S"};
-    std::size_t              m{64};
-    std::size_t              n{64};
+    std::string type{"S"};
+    std::string dtype{"S"};
+    std::size_t m{64};
+    std::size_t n{64};
+
     hipblaslt_initialization init{hipblaslt_initialization::hpl};
 
     if(auto err = parseArgs(argc, argv, type, dtype, m, n, init))

@@ -84,14 +84,18 @@ struct Runner
         CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipMalloc(&d_alphaVec, m * batch_count * sizeof(float)));
 
+        if(max_workspace_size > 0)
+            CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
+
+        CHECK_HIP_ERROR(hipMalloc(&d_workspace2, 4096 * batch_count * sizeof(InTypeB)));
+        CHECK_HIP_ERROR(hipMalloc(&d_sync, batch_count * sizeof(std::int32_t)));
+
         CHECK_HIP_ERROR(hipHostMalloc(&a, m * k * batch_count * sizeof(InTypeA)));
         CHECK_HIP_ERROR(hipHostMalloc(&b, n * k * batch_count * sizeof(InTypeB)));
         CHECK_HIP_ERROR(hipHostMalloc(&c, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipHostMalloc(&d, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipHostMalloc(&alphaVec, m * batch_count * sizeof(float)));
-
-        if(max_workspace_size > 0)
-            CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
+        CHECK_HIP_ERROR(hipHostMalloc(&sync, batch_count * sizeof(std::int32_t)));
 
         for(int i = 0; i < m * k * batch_count; i++)
             ((InTypeA*)a)[i] = static_cast<InTypeA>((rand() % 7) - 3);
@@ -101,21 +105,26 @@ struct Runner
             ((OutType*)c)[i] = static_cast<OutType>((rand() % 7) - 3);
         for(int i = 0; i < m * batch_count; ++i)
             ((float*)alphaVec)[i] = static_cast<float>((rand() % 7) - 3);
+        for(int i = 0; i < batch_count; ++i)
+            ((std::int32_t*)sync)[i] = static_cast<std::int32_t>(0);
     }
 
     ~Runner()
     {
-        CHECK_HIP_ERROR(hipFree(d_workspace));
         CHECK_HIP_ERROR(hipFree(a));
         CHECK_HIP_ERROR(hipFree(b));
         CHECK_HIP_ERROR(hipFree(c));
         CHECK_HIP_ERROR(hipFree(d));
         CHECK_HIP_ERROR(hipFree(alphaVec));
+        CHECK_HIP_ERROR(hipFree(sync));
         CHECK_HIP_ERROR(hipFree(d_a));
         CHECK_HIP_ERROR(hipFree(d_b));
         CHECK_HIP_ERROR(hipFree(d_c));
         CHECK_HIP_ERROR(hipFree(d_d));
         CHECK_HIP_ERROR(hipFree(d_alphaVec));
+        CHECK_HIP_ERROR(hipFree(d_sync));
+        CHECK_HIP_ERROR(hipFree(d_workspace2));
+        CHECK_HIP_ERROR(hipFree(d_workspace));
         CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
         CHECK_HIP_ERROR(hipStreamDestroy(stream));
 
@@ -169,6 +178,9 @@ struct Runner
         if(biasVec)
             CHECK_HIP_ERROR(hipMemcpyAsync(
                 d_biasVec, biasVec, biasElems * sizeof(BiasType), hipMemcpyHostToDevice, stream));
+
+        CHECK_HIP_ERROR(hipMemcpyAsync(
+            d_sync, sync, batch_count * sizeof(std::int32_t), hipMemcpyHostToDevice, stream));
     }
 
     void deviceToHost()
@@ -194,10 +206,9 @@ struct Runner
     AlphaType alpha;
     BetaType  beta;
 
-    void *a, *b, *c, *d, *alphaVec; // host
-    void *d_a, *d_b, *d_c, *d_d, *d_alphaVec; // device
+    void *a, *b, *c, *d, *alphaVec, *sync; // host
+    void *d_a, *d_b, *d_c, *d_d, *d_alphaVec, *d_sync, *d_workspace, *d_workspace2; // device
 
-    void*   d_workspace;
     int64_t max_workspace_size;
 
     int64_t biasElems = 0;
@@ -459,12 +470,17 @@ struct OptAMaxRunner
 
         CHECK_HIP_ERROR(hipMalloc(&d_out, sizeof(Type)));
         CHECK_HIP_ERROR(hipMalloc(&d_in, m * n * sizeof(Type)));
+        CHECK_HIP_ERROR(hipMalloc(&d_workspace, 4096 * sizeof(Type)));
+        CHECK_HIP_ERROR(hipMalloc(&d_sync, sizeof(int32_t)));
 
         CHECK_HIP_ERROR(hipHostMalloc(&out, sizeof(Type)));
         CHECK_HIP_ERROR(hipHostMalloc(&in, m * n * sizeof(Type)));
+        CHECK_HIP_ERROR(hipHostMalloc(&workspace, 4096 * sizeof(Type)));
+        CHECK_HIP_ERROR(hipHostMalloc(&sync, sizeof(int32_t)));
 
         for(int i = 0; i < m * n; i++)
             ((Type*)in)[i] = static_cast<Type>((rand() % 7) - 3);
+        ((int32_t*)sync)[0] = static_cast<int32_t>(0);
     }
 
     ~OptAMaxRunner()
@@ -483,6 +499,8 @@ struct OptAMaxRunner
     {
         CHECK_HIP_ERROR(
             hipMemcpyAsync(d_in, in, m * n * sizeof(Type), hipMemcpyHostToDevice, stream));
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(d_sync, sync, sizeof(int32_t), hipMemcpyHostToDevice, stream));
     }
 
     void deviceToHost()
@@ -503,8 +521,8 @@ struct OptAMaxRunner
     int64_t m;
     int64_t n;
 
-    void *in, *out; // host
-    void *d_in, *d_out; // device
+    void *in, *out, *workspace, *sync; // host
+    void *d_in, *d_out, *d_workspace, *d_sync; // device
 
     hipStream_t       stream;
     hipblasLtHandle_t handle;
@@ -524,15 +542,19 @@ struct OptAMaxWithScaleRunner
         CHECK_HIP_ERROR(hipMalloc(&d_outD, m * n * sizeof(Ts)));
         CHECK_HIP_ERROR(hipMalloc(&d_in, m * n * sizeof(T)));
         CHECK_HIP_ERROR(hipMalloc(&d_in_scale, 1 * sizeof(float)));
+        CHECK_HIP_ERROR(hipMalloc(&d_workspace, 4096 * sizeof(T)));
+        CHECK_HIP_ERROR(hipMalloc(&d_sync, sizeof(int32_t)));
 
         CHECK_HIP_ERROR(hipHostMalloc(&out, sizeof(T)));
         CHECK_HIP_ERROR(hipHostMalloc(&outD, m * n * sizeof(Ts)));
         CHECK_HIP_ERROR(hipHostMalloc(&in, m * n * sizeof(T)));
         CHECK_HIP_ERROR(hipHostMalloc(&in_scale, 1 * sizeof(float)));
+        CHECK_HIP_ERROR(hipHostMalloc(&sync, sizeof(int32_t)));
 
         for(int i = 0; i < m * n; i++)
             ((T*)in)[i] = static_cast<T>((rand() % 7) - 3);
-        *(float*)in_scale = static_cast<float>(0.5);
+        ((float*)in_scale)[0] = static_cast<float>(0.5);
+        ((int32_t*)sync)[0] = static_cast<int32_t>(0);
     }
 
     ~OptAMaxWithScaleRunner()
@@ -556,6 +578,8 @@ struct OptAMaxWithScaleRunner
         CHECK_HIP_ERROR(hipMemcpyAsync(d_in, in, m * n * sizeof(T), hipMemcpyHostToDevice, stream));
         CHECK_HIP_ERROR(
             hipMemcpyAsync(d_in_scale, in_scale, 1 * sizeof(float), hipMemcpyHostToDevice, stream));
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(d_sync, sync, sizeof(int32_t), hipMemcpyHostToDevice, stream));
     }
 
     void deviceToHost()
@@ -578,8 +602,8 @@ struct OptAMaxWithScaleRunner
     int64_t m;
     int64_t n;
 
-    void *in, *in_scale, *out, *outD; // host
-    void *d_in, *d_in_scale, *d_out, *d_outD; // device
+    void *in, *in_scale, *out, *outD, *sync; // host
+    void *d_in, *d_in_scale, *d_out, *d_outD, *d_sync, *d_workspace; // device
 
     hipStream_t       stream;
     hipblasLtHandle_t handle;

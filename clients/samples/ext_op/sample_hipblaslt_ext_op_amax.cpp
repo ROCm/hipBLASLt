@@ -35,6 +35,8 @@ void simpleAMax(hipDataType type,
                 hipDataType dtype,
                 void*       d_out,
                 void*       d_in,
+                void*       d_workspace,
+                void*       d_sync,
                 int64_t     m,
                 int64_t     n,
                 hipStream_t stream);
@@ -51,6 +53,8 @@ int  main()
                    HIP_R_32F,
                    runnerF32.d_out,
                    runnerF32.d_in,
+                   runnerF32.d_workspace,
+                   runnerF32.d_sync,
                    runnerF32.m,
                    runnerF32.n,
                    runnerF32.stream);
@@ -63,6 +67,8 @@ int  main()
                    HIP_R_16F,
                    runnerF16.d_out,
                    runnerF16.d_in,
+                   runnerF16.d_workspace,
+                   runnerF16.d_sync,
                    runnerF16.m,
                    runnerF16.n,
                    runnerF16.stream);
@@ -75,9 +81,11 @@ void simpleAMax(hipDataType type,
                 hipDataType dtype,
                 void*       d_out,
                 void*       d_in,
+                void*       d_workspace,
+                void*       d_sync,
                 int64_t     m,
                 int64_t     n,
                 hipStream_t stream)
 {
-    CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(type, dtype, d_out, d_in, m, n, stream));
+    CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(type, dtype, d_out, d_in, d_workspace, d_sync,  m, n, stream));
 }

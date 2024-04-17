@@ -104,6 +104,7 @@ class AMaxKernelGenerator:
                  o_type: ti.DataType,
                  scale_type: ti.DataType,
                  num_workitems: int,
+                 wave_size: int,
                  num_load_count: int,
                  num_load_size: int,
                  arch: str,
@@ -112,19 +113,29 @@ class AMaxKernelGenerator:
         self.o_type = o_type
         self.scale_type = scale_type
         self.bpe = i_type.numBytes()
+        self.bpr = i_type.numRegisters()
+        self.max_workgoups = num_workitems
         self.num_workitems = num_workitems
+        self.wave_size = wave_size
         self.num_load_count = num_load_count
         self.num_load_size = num_load_size
-        self.sgpr_pool = ti.RegisterPool(24, 's', True)
-        self.vgpr_pool = ti.RegisterPool(40, 'v', True)
-        self.sgpr_pool.add(0, 23) #TODO: estimate this
-        self.vgpr_pool.add(0, 39) #TODO: estimate this
+        if is_scale:
+            self.sgpr_pool = ti.RegisterPool(64, 's', True)
+            self.vgpr_pool = ti.RegisterPool(128, 'v', True)
+            self.sgpr_pool.add(0, 63) #TODO: estimate this
+            self.vgpr_pool.add(0, 127) #TODO: estimate this
+        else:
+            self.sgpr_pool = ti.RegisterPool(40, 's', True)
+            self.vgpr_pool = ti.RegisterPool(64, 'v', True)
+            self.sgpr_pool.add(0, 39) #TODO: estimate this
+            self.vgpr_pool.add(0, 63) #TODO: estimate this
         self.debug_label = True
         self.arch = arch
         self.is_scale = is_scale
         self.op = 'AMax'
         self.sgprs  = collections.OrderedDict()
         self.vgprs  = collections.OrderedDict()
+        self.label_reduction = ti.Label("reduction", 'reduction')
 
     @property
     def lds_usage_byte(self) -> int:
@@ -135,8 +146,8 @@ class AMaxKernelGenerator:
     @property
     def func_name(self):
         if self.is_scale:
-            return f'AMax_Ti_{self.i_type}_To_{self.o_type}_Ts_{self.scale_type}_W_{self.num_workitems}_C_{self.num_load_count}'
-        return f'AMax_Ti_{self.i_type}_To_{self.o_type}_W_{self.num_workitems}_C_{self.num_load_count}'
+            return f'AMax_Ti_{self.i_type}_To_{self.o_type}_Ts_{self.scale_type}'
+        return f'AMax_Ti_{self.i_type}_To_{self.o_type}'
 
     def dumps(self, format: str) -> str:
         param_dict = {
@@ -163,14 +174,14 @@ class AMaxKernelGenerator:
             f.write(s)
 
 
-    def local_read_inst_type(self, num_elements: int):
-        if self.i_type.isSingle():
+    def local_read_inst_type(self, num_elements: int, dataType: ti.DataType):
+        if dataType.isSingle():
             insts = {
                 1: ti.DSLoadB32,
                 2: ti.DSLoadB64,
                 4: ti.DSLoadB128
             }
-        elif self.i_type.isHalf():
+        elif dataType.isHalf():
             insts = {
                 1: ti.DSLoadU16,
                 2: ti.DSLoadB32,
@@ -180,14 +191,14 @@ class AMaxKernelGenerator:
         return insts[num_elements]
 
 
-    def local_write_inst_type(self, num_elements: int):
-        if self.i_type.isSingle():
+    def local_write_inst_type(self, num_elements: int, dataType: ti.DataType):
+        if dataType.isSingle():
             insts = {
                 1: ti.DSStoreB32,
                 2: ti.DSStoreB64,
                 4: ti.DSStoreB128
             }
-        elif self.i_type.isHalf():
+        elif dataType.isHalf():
             insts = {
                 1: ti.DSStoreB16,
                 2: ti.DSStoreB32,
@@ -197,14 +208,14 @@ class AMaxKernelGenerator:
         return insts[num_elements]
 
 
-    def global_read_inst_type(self, num_elements: int):
-        if self.i_type.isSingle():
+    def global_read_inst_type(self, num_elements: int, dataType: ti.DataType):
+        if dataType.isSingle():
             insts = {
                 1: ti.BufferLoadB32,
                 2: ti.BufferLoadB64,
                 4: ti.BufferLoadB128
             }
-        elif self.i_type.isHalf():
+        elif dataType.isHalf():
             insts = {
                 1: ti.BufferLoadD16B16,
                 2: ti.BufferLoadB32,
@@ -215,14 +226,14 @@ class AMaxKernelGenerator:
             raise NotImplementedError
         return insts[num_elements]
 
-    def global_write_inst_type(self, num_elements: int):
-        if self.o_type.isSingle():
+    def global_write_inst_type(self, num_elements: int, dataType: ti.DataType):
+        if dataType.isSingle():
             insts = {
                 1: ti.BufferStoreB32,
                 2: ti.BufferStoreB64,
                 4: ti.BufferStoreB128
             }
-        elif self.o_type.isHalf():
+        elif dataType.isHalf():
             insts = {
                 1: ti.BufferStoreB16,
                 2: ti.BufferStoreB32,
@@ -250,14 +261,22 @@ class AMaxKernelGenerator:
 
     def kernel_args(self):
         if self.is_scale:
-            return (KernelArgument(8, 0,  'global_buffer', 'global'),
-                    KernelArgument(8, 8,  'global_buffer', 'global'),
+            return (KernelArgument(8,  0, 'global_buffer', 'global'),
+                    KernelArgument(8,  8, 'global_buffer', 'global'),
                     KernelArgument(8, 16, 'global_buffer', 'global'),
                     KernelArgument(8, 24, 'global_buffer', 'global'),
-                    KernelArgument(4, 32, 'by_value'))
+                    KernelArgument(8, 32, 'global_buffer', 'global'),
+                    KernelArgument(8, 40, 'global_buffer', 'global'),
+                    KernelArgument(4, 48, 'by_value'),
+                    KernelArgument(4, 52, 'by_value'),
+                    KernelArgument(4, 56, 'by_value'))
         return (KernelArgument(8,  0, 'global_buffer', 'global'),
                 KernelArgument(8,  8, 'global_buffer', 'global'),
-                KernelArgument(4, 16, 'by_value'))
+                KernelArgument(8, 16, 'global_buffer', 'global'),
+                KernelArgument(8, 24, 'global_buffer', 'global'),
+                KernelArgument(4, 32, 'by_value'),
+                KernelArgument(4, 36, 'by_value'),
+                KernelArgument(4, 40, 'by_value'))
 
 
     def defineVariables(self):
@@ -265,42 +284,52 @@ class AMaxKernelGenerator:
         self.defineVgpr("Output",  1, 1)
         self.defineVgpr("OutputB", 1, 1)
         self.defineVgpr("Widx",    1, 1)
-        self.defineVgpr("Offset",  4, 1)
-        self.defineVgpr("Value",   self.num_load_count * self.num_load_size, self.num_load_size)
-        self.defineVgpr("Tmp",     4, 1)
+        self.defineVgpr("Offset",  self.num_load_count, 1)
+        self.defineVgpr("Value",   int(self.num_load_count * self.num_load_size * self.bpr), 4)
         if self.is_scale:
-            self.defineVgpr("OffsetD", self.num_load_count * self.num_load_size, 1)
-            self.defineVgpr("OutputD", self.num_load_count * self.num_load_size, self.num_load_size)
-            self.defineVgpr("TmpD",    4, 1)
+            self.defineVgpr("OffsetD", int(self.num_load_count * self.num_load_size * self.bpr), 1)
+            self.defineVgpr("OutputD", int(self.num_load_count * self.num_load_size * self.bpr), int(self.num_load_size * self.bpr))
             if self.scale_type == ti.DataType("F8"):
                 self.defineVgpr("Fp8NanInf", 1, 1)
                 self.defineVgpr("Fp8Max",    1, 1)
-                self.defineVgpr("Fp8Min",    1, 1)
-                self.defineVgpr("Fp8Tmp",    1, 1)
+                self.defineVgpr("Fp8Max", 1)
+                self.defineVgpr("Fp8Min", 1)
+                self.defineVgpr("Fp8Tmp", 1)
             elif self.scale_type == ti.DataType("B8"):
                 self.defineVgpr("BF8NanInf", 1, 1)
                 self.defineVgpr("BF8Max",    1, 1)
-                self.defineVgpr("BF8Min",    1, 1)
-                self.defineVgpr("BF8Tmp",    1, 1)
+                self.defineVgpr("BF8Max", 1)
+                self.defineVgpr("BF8Min", 1)
+                self.defineVgpr("BF8Tmp", 1)
+        self.defineVgpr("Tmp",     4, 1)
 
         self.defineSgpr("KernelArg", 2)
         self.defineSgpr("WorkGroup0", 1)
         self.defineSgpr("WorkGroup1", 1)
         self.defineSgpr("WorkGroup2", 1)
         self.defineSgpr("AddressOut", 2, 2)
-        self.defineSgpr("AddressOutD", 2, 2)
-        self.defineSgpr("AddressIn", 2, 2)
-        self.defineSgpr("AddressScale", 2, 2)
+        if self.is_scale:
+            self.defineSgpr("AddressOutD", 2, 2)
+        self.defineSgpr("AddressIn",  2, 2)
+        if self.is_scale:
+            self.defineSgpr("AddressScale", 2, 2)
+        self.defineSgpr("AddressWk",  2, 2)
+        self.defineSgpr("AddressSy",  2, 2)
         self.defineSgpr("SizeLength", 1)
+        self.defineSgpr("WorkSize",   1)
+        self.defineSgpr("NumGroup",   1)
+
         self.defineSgpr("MainLoop", 1)
         self.defineSgpr("Offset", 1)
+        self.defineSgpr("LogWorkSize", 1)
+        self.defineSgpr("WGIdx", 1)
         self.defineSgpr("Src", 4, 4)
         self.defineSgpr("Dst", 4, 4)
-        self.defineSgpr("Tmp", 6, 2)
         if self.is_scale:
             self.defineSgpr("DstD", 4, 4)
-            self.defineSgpr("TmpD", 6, 2)
             self.defineSgpr("Scale", 1)
+            self.defineSgpr("OffsetD", 1)
+        self.defineSgpr("Tmp", 6, 2)
 
         mod = ti.Module("defineVariables")
 
@@ -321,17 +350,37 @@ class AMaxKernelGenerator:
     def load_kernel_args(self):
         mod = ti.Module('Load kernel args')
         mod.addComment0('Load kernel args')
+        offset = 0
         if self.is_scale:
             mod.add(ti.SLoadB64(ti.sgpr("AddressOut", 2),    ti.sgpr("KernelArg", 2),  0))
             mod.add(ti.SLoadB64(ti.sgpr("AddressOutD", 2),   ti.sgpr("KernelArg", 2),  8))
             mod.add(ti.SLoadB64(ti.sgpr("AddressIn", 2),     ti.sgpr("KernelArg", 2),  16))
             mod.add(ti.SLoadB64(ti.sgpr("AddressScale", 2),  ti.sgpr("KernelArg", 2),  24))
-            mod.add(ti.SLoadB32(ti.sgpr("SizeLength"),       ti.sgpr("KernelArg", 2),  32))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressWk", 2),     ti.sgpr("KernelArg", 2),  32))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressSy", 2),     ti.sgpr("KernelArg", 2),  40))
+            mod.add(ti.SLoadB32(ti.sgpr("SizeLength"),       ti.sgpr("KernelArg", 2),  48))
+            mod.add(ti.SLoadB32(ti.sgpr("WorkSize"),         ti.sgpr("KernelArg", 2),  52))
+            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),         ti.sgpr("KernelArg", 2),  56))
         else:
-            mod.add(ti.SLoadB64(ti.sgpr("AddressOut", 2),    ti.sgpr("KernelArg", 2),  0))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressIn", 2),     ti.sgpr("KernelArg", 2),  8))
-            mod.add(ti.SLoadB32(ti.sgpr("SizeLength"),       ti.sgpr("KernelArg", 2),  16))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressOut", 2),    ti.sgpr("KernelArg", 2),   0))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressIn", 2),     ti.sgpr("KernelArg", 2),   8))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressWk", 2),     ti.sgpr("KernelArg", 2),  16))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressSy", 2),     ti.sgpr("KernelArg", 2),  24))
+            mod.add(ti.SLoadB32(ti.sgpr("SizeLength"),       ti.sgpr("KernelArg", 2),  32))
+            mod.add(ti.SLoadB32(ti.sgpr("WorkSize"),         ti.sgpr("KernelArg", 2),  36))
+            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),         ti.sgpr("KernelArg", 2),  40))
+
         mod.add(ti.SWaitCnt(lgkmcnt=0))
+        mod.addSpaceLine()
+
+        mod.add(ti.VMovB32(ti.vgpr("Tmp"), ti.sgpr("WorkSize")))
+        mod.add(ti.VCvtU32toF32(ti.vgpr("Tmp"), ti.vgpr("Tmp")))
+        mod.add(ti.VLogF32(ti.vgpr("Tmp"), ti.vgpr("Tmp")))
+        mod.add(ti.SNop(0))
+        mod.add(ti.VCvtF32toU32(ti.vgpr("Tmp"), ti.vgpr("Tmp")))
+        mod.add(ti.SNop(0))
+        mod.add(ti.VReadfirstlaneB32(ti.sgpr("LogWorkSize"), ti.vgpr("Tmp")))
+
         mod.addSpaceLine()
         mod.addSpaceLine()
         return mod
@@ -340,13 +389,19 @@ class AMaxKernelGenerator:
     def init_param(self) -> ti.Module:
         mod = ti.Module("init_param")
         mod.addComment0("init_param")
-        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), int(log2(self.bpe)), ti.sgpr("SizeLength")))
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), int(log2(self.bpe)), ti.sgpr("WorkSize")))
+        mod.add(ti.SMulI32(ti.sgpr("Tmp"), ti.sgpr("WorkGroup0"), ti.sgpr("Tmp")))
         mod.addSpaceLine()
 
-        mod.add(ti.SMovB32(ti.sgpr("Dst+0"), ti.sgpr("AddressOut+0")))
-        mod.add(ti.SMovB32(ti.sgpr("Dst+1"), ti.sgpr("AddressOut+1")))
-        mod.add(ti.SMovB32(ti.sgpr("Dst+2"), self.o_type.numBytes()))
-        mod.add(ti.SMovB32(ti.sgpr("Dst+3"), "Srd127_96"))
+        mod.add(ti.SAddU32(ti.sgpr("Src+0"), ti.sgpr("AddressIn+0"), ti.sgpr("Tmp")))
+        mod.add(ti.SAddCU32(ti.sgpr("Src+1"), ti.sgpr("AddressIn+1"), 0))
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Src+2"), int(log2(self.bpe)), ti.sgpr("SizeLength")))
+        mod.add(ti.SSubU32(ti.sgpr("Src+2"), ti.sgpr("Src+2"),ti.sgpr("Tmp")))
+        mod.add(ti.SMovB32(ti.sgpr("Src+3"), "Srd127_96"))
+        mod.addSpaceLine()
+
+        mod.add(ti.VMovB32(ti.vgpr("Output"), 0))
+        mod.add(ti.SMovB32(ti.sgpr("WGIdx"),ti.sgpr("WorkGroup0")))
         mod.addSpaceLine()
 
         if self.is_scale: # init inputScale
@@ -354,14 +409,6 @@ class AMaxKernelGenerator:
             mod.add(ti.SWaitCnt(lgkmcnt=0))
             mod.addSpaceLine()
 
-        mod.add(ti.SMovB32(ti.sgpr("Src+0"), ti.sgpr("AddressIn+0")))
-        mod.add(ti.SMovB32(ti.sgpr("Src+1"), ti.sgpr("AddressIn+1")))
-        mod.add(ti.SMovB32(ti.sgpr("Src+2"), ti.sgpr("Tmp")))
-        mod.add(ti.SMovB32(ti.sgpr("Src+3"), "Srd127_96"))
-        mod.addSpaceLine()
-
-        mod.add(ti.VMovB32(ti.vgpr("Output"), 0))
-        if self.is_scale:
             if self.scale_type == ti.DataType("F8"):
                 mod.add(ti.VMovB32(ti.vgpr("Fp8NanInf"), "0x207", "Nan and +/- inf"))
                 mod.add(ti.VMovB32(ti.vgpr("Fp8Max"), "0x43700000", "Fp8 Max value 240 as float32"))
@@ -370,54 +417,245 @@ class AMaxKernelGenerator:
                 mod.add(ti.VMovB32(ti.vgpr("BF8NanInf"), "0x207", "Nan and +/- inf"))
                 mod.add(ti.VMovB32(ti.vgpr("BF8Max"), "0x47600000", "BF8 Max value 57344 as float32"))
                 mod.add(ti.VMovB32(ti.vgpr("BF8Min"), "0xc7600000", "BF8 Min value -57344 as float32"))
-        mod.addSpaceLine()
 
-        if self.is_scale:
-            mod.add(ti.SMovB32(ti.sgpr("DstD+0"), ti.sgpr("AddressOutD+0")))
-            mod.add(ti.SMovB32(ti.sgpr("DstD+1"), ti.sgpr("AddressOutD+1")))
-            mod.add(ti.SMovB32(ti.sgpr("DstD+2"), ti.sgpr("SizeLength")))
+            mod.addSpaceLine()
+
+            mod.add(ti.SMulI32(ti.sgpr("Tmp"), ti.sgpr("WorkGroup0"), ti.sgpr("WorkSize")))
+
+            mod.add(ti.SAddU32(ti.sgpr("DstD+0"), ti.sgpr("AddressOutD+0"), ti.sgpr("Tmp")))
+            mod.add(ti.SAddCU32(ti.sgpr("DstD+1"), ti.sgpr("AddressOutD+1"), 0))
+            mod.add(ti.SSubU32(ti.sgpr("DstD+2"), ti.sgpr("SizeLength"), ti.sgpr("Tmp")))
             mod.add(ti.SMovB32(ti.sgpr("DstD+3"), "Srd127_96"))
-            for i in range(self.num_load_count * self.num_load_size):
+            for i in range(int(self.num_load_count * self.num_load_size * self.bpr)):
                 mod.add(ti.VMovB32(ti.vgpr(f"OutputD+{i}"), 0))
+            mod.addSpaceLine()
 
         mod.addSpaceLine()
+
         return mod
 
 
     def calculate_global_address(self) -> ti.Module:
         mod = ti.Module("calculate_global_address")
         mod.addComment0("calculate_global_address")
+
         # offset for buffer load
-        # total load size = dwordx4 = 16 bytes per PE
-        mod.add(ti.VLShiftLeftB32(ti.vgpr("Offset+0"), hex(int(log2(self.num_load_size * 4))), ti.vgpr("Serial")))
-        mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.num_workitems * self.num_load_size * 4))
+        mod.add(ti.VLShiftRightB32(ti.vgpr("Widx"), int(log2(self.wave_size)), ti.vgpr("Serial")))
+        mod.add(ti.VAndB32(ti.vgpr("Offset+0"), self.wave_size-1, ti.vgpr("Serial")))
+        mod.add(ti.VLShiftLeftB32(ti.vgpr("Offset+0"), int(log2(self.num_load_size * self.bpe)), ti.vgpr("Offset+0")))
+        mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.wave_size * self.num_load_size * self.bpe))
         for i in range(0, self.num_load_count-1):
             mod.add(ti.VAddU32(ti.vgpr(f"Offset+{i+1}"), ti.vgpr(f"Offset+{i}"), ti.sgpr("Tmp")))
         mod.addSpaceLine()
 
-        if self.is_scale: # offset for buffer store
-            # total store size = 1byte x 4 = 4 bytes per PE
-            mod.add(ti.VLShiftLeftB32(ti.vgpr("OffsetD+0"), hex(int(log2(4))), ti.vgpr("Serial")))
-            mod.add(ti.SMovB32(ti.sgpr("TmpD"), 1))
-            for i in range(self.num_load_size - 1):
-                mod.add(ti.VAddU32(ti.vgpr(f"OffsetD+{i+1}"), ti.vgpr(f"OffsetD+{i}"), ti.sgpr("TmpD")))
-            mod.add(ti.SMovB32(ti.sgpr("TmpD"), self.num_workitems * 4))
-            for i in range(0, self.num_load_count-1):
-                for j in range(0, self.num_load_size):
-                    mod.add(ti.VAddU32(ti.vgpr(f"OffsetD+{j+(i+1)*self.num_load_size}"), \
-                                       ti.vgpr(f"OffsetD+{j+i*self.num_load_size}"), ti.sgpr("TmpD")))
-
+        offset = self.num_load_count * self.wave_size * self.num_load_size * self.bpe
+        mod.add(ti.VLShiftLeftB32(ti.vgpr("Tmp"), int(log2(offset)), ti.vgpr("Widx")))
+        for i in range(0, self.num_load_count):
+            mod.add(ti.VAddU32(ti.vgpr(f"Offset+{i}"), ti.vgpr(f"Offset+{i}"), ti.vgpr("Tmp")))
         mod.addSpaceLine()
+
+        if self.is_scale: # offset for buffer store
+            mod.add(ti.VLShiftRightB32(ti.vgpr("Widx"), int(log2(self.wave_size)), ti.vgpr("Serial")))
+            mod.add(ti.VAndB32(ti.vgpr("OffsetD+0"), self.wave_size-1, ti.vgpr("Serial")))
+            mod.add(ti.VLShiftLeftB32(ti.vgpr("OffsetD+0"), int(log2(self.num_load_size * self.scale_type.numBytes())), ti.vgpr("OffsetD+0")))
+            for i in range(1, self.num_load_size):
+                mod.add(ti.VAddU32(ti.vgpr(f"OffsetD+{i}"), ti.vgpr(f"OffsetD+{i-1}"), self.scale_type.numBytes()))
+            mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.wave_size * self.num_load_size * self.scale_type.numBytes()))
+            for i in range(1, self.num_load_count):
+                for j in range(0, self.num_load_size):
+                    mod.add(ti.VAddU32(ti.vgpr(f"OffsetD+{j+i*self.num_load_size}"), ti.vgpr(f"OffsetD+{j+(i-1)*self.num_load_size}"), ti.sgpr("Tmp")))
+            mod.addSpaceLine()
+
+            offset = self.wave_size * self.num_load_count * self.num_load_size *self.scale_type.numBytes()
+            mod.add(ti.VLShiftLeftB32(ti.vgpr("Tmp"), int(log2(offset)), ti.vgpr("Widx")))
+            for i in range(self.num_load_count * self.num_load_size):
+                mod.add(ti.VAddU32(ti.vgpr(f"OffsetD+{i}"), ti.vgpr(f"OffsetD+{i}"), ti.vgpr("Tmp")))
+        mod.addSpaceLine()
+
+        return mod
+
+
+    def block_max(self, wait, last=False) -> ti.Module:
+        vgprs = int(self.num_load_size * self.bpr)
+        buffer_load = self.global_read_inst_type(self.num_load_size, self.i_type)
+        vgpr_per_load = int(self.num_load_size * self.bpr)
+
+        mod = ti.Module("block_max")
+        mod.addComment0("block_max")
+
+        for i in range(0, self.num_load_count):
+            mod.add(ti.SWaitCnt(vmcnt=wait))
+            for j in range(0, vgprs):
+                mod.add(self.max_per_data(i*vgprs+j, 1 / self.i_type.numRegisters()))
+                if self.is_scale:
+                    mod.add(self.scale_per_data(i*vgprs+j))
+                    mod.add(ti.BufferStoreB8(ti.vgpr(f"OutputD+{i*vgprs+j}"), \
+                                             ti.vgpr(f"OffsetD+{i*vgprs+j}"), \
+                                             ti.sgpr("DstD",4), ti.sgpr("OffsetD"), ti.MUBUFModifiers(offen=True)))
+            if last:
+                wait = wait - 1
+            else:
+                mod.add(buffer_load(ti.vgpr(f"Value+{i*vgpr_per_load}", int(vgpr_per_load)), ti.vgpr(f"Offset+{i}"), ti.sgpr("Src",4),  ti.sgpr("Offset"), ti.MUBUFModifiers(offen=True)))
+
         mod.addSpaceLine()
         return mod
 
 
-    def max_per_data(self, i) -> ti.Module:
+    def sum_per_blocksize(self) -> ti.Module:
+        mod = ti.Module("sum_per_blocksize")
+        mod.addComment0("sum_per_blocksize")
+
+        label_sum_per_blocksize = ti.Label("sum_per_blocksize", 'sum_per_blocksize')
+        label_loop = ti.Label("loop", 'loop')
+        label_last_loop = ti.Label("last_loop", 'last_loop')
+        label_loop_end = ti.Label("loop_end", 'loop_end')
+        label_sum_per_blocksize_end = ti.Label("sum_per_blocksize_end", 'sum_per_blocksize_end')
+
+        mod.add(ti.SLShiftRightB32(ti.sgpr("MainLoop"), ti.sgpr("LogWorkSize"), ti.sgpr("SizeLength")))
+        mod.add(label_sum_per_blocksize)
+        mod.add(ti.SCmpGeI32(ti.sgpr("WGIdx"), ti.sgpr("MainLoop")))
+        mod.add(ti.SCBranchSCC1(label_sum_per_blocksize_end.getLabelName()))
+        mod.addSpaceLine()
+
+        if self.is_scale:
+            mod.add(ti.SMovB32(ti.sgpr("OffsetD"), 0))
+        mod.add(ti.SMovB32(ti.sgpr("Offset"), 0))
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), 1, ti.sgpr("WorkSize")))
+        mod.add(ti.SCmpGeI32(ti.sgpr("Offset"), ti.sgpr("Tmp")))
+        mod.add(ti.SCBranchSCC1(label_loop_end.getLabelName()))
+        mod.addSpaceLine()
+
+        buffer_load = self.global_read_inst_type(self.num_load_size, self.i_type)
+        vgpr_per_load = int(self.num_load_size * self.bpr)
+        for i in range(0, self.num_load_count):
+            mod.add(buffer_load(ti.vgpr(f"Value+{i*vgpr_per_load}", int(vgpr_per_load)), ti.vgpr(f"Offset+{i}"), ti.sgpr("Src",4), ti.sgpr("Offset"), ti.MUBUFModifiers(offen=True)))
+        mod.addSpaceLine()
+
+        offset = self.num_load_count * self.num_workitems * self.num_load_size * self.bpe
+        mod.add(ti.SAddI32(ti.sgpr("Offset"), ti.sgpr("Offset"), offset))
+        mod.addSpaceLine()
+
+        mod.add(label_loop)
+        mod.addSpaceLine()
+
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), int(log2(self.bpe)), ti.sgpr("WorkSize")))
+        mod.add(ti.SCmpGeI32(ti.sgpr("Offset"), ti.sgpr("Tmp")))
+        mod.add(ti.SCBranchSCC1(label_last_loop.getLabelName()))
+        mod.addSpaceLine()
+
+        mod.add(self.block_max(self.num_load_count-1, False))
+
+        if self.is_scale:
+            offsetD = self.num_load_count * self.num_workitems * self.num_load_size * self.scale_type.numBytes()
+            mod.add(ti.SAddI32(ti.sgpr("OffsetD"), ti.sgpr("OffsetD"), offsetD))
+        mod.add(ti.SAddI32(ti.sgpr("Offset"), ti.sgpr("Offset"), offset))
+        mod.add(ti.SBranch(label_loop.getLabelName()))
+        mod.addSpaceLine()
+
+        mod.add(label_last_loop)
+        mod.addSpaceLine()
+
+        mod.add(self.block_max(self.num_load_count-1, True))
+        mod.addSpaceLine()
+
+        mod.add(label_loop_end)
+        mod.addSpaceLine()
+
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), int(log2(self.bpe)), ti.sgpr("WorkSize")))
+        mod.add(ti.SMulI32(ti.sgpr("Tmp"), ti.sgpr("Tmp"), ti.sgpr("NumGroup")))
+        for i in range(0, self.num_load_count):
+           mod.add(ti.VAddU32(ti.vgpr(f"Offset+{i}"), ti.vgpr(f"Offset+{i}"), ti.sgpr("Tmp")))
+        mod.addSpaceLine()
+
+        if self.is_scale:
+            mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), int(log2(self.scale_type.numBytes())), ti.sgpr("WorkSize")))
+            mod.add(ti.SMulI32(ti.sgpr("Tmp"), ti.sgpr("Tmp"), ti.sgpr("NumGroup")))
+            for i in range(0, self.num_load_count * self.num_load_size):
+               mod.add(ti.VAddU32(ti.vgpr(f"OffsetD+{i}"), ti.vgpr(f"OffsetD+{i}"), ti.sgpr("Tmp")))
+            mod.addSpaceLine()
+
+        mod.add(ti.SAddI32( ti.sgpr("WGIdx"), ti.sgpr("WGIdx"), ti.sgpr("NumGroup")))
+        mod.add(ti.SBranch(label_sum_per_blocksize.getLabelName()))
+        mod.addSpaceLine()
+
+        mod.add(label_sum_per_blocksize_end)
+        mod.addSpaceLine()
+
+        mod.addSpaceLine()
+
+        return mod
+
+    def adjust_global_address(self) -> ti.Module:
+        mod = ti.Module("adjust_global_address")
+        mod.addComment0("adjust_global_address")
+
+        mod.add(ti.SSubU32(ti.sgpr("Tmp"), ti.sgpr("WorkSize"), 1))
+        mod.add(ti.SAndB32(ti.sgpr("Tmp"), ti.sgpr("SizeLength"), ti.sgpr("Tmp")))
+        mod.add(ti.SCmpEQU32(ti.sgpr("Tmp"), 0))
+        mod.add(ti.SCBranchSCC1(self.label_reduction.getLabelName()))
+        mod.addSpaceLine()
+
+        mod.add(ti.SLShiftRightB32(ti.sgpr("Tmp"), ti.sgpr("LogWorkSize"), ti.sgpr("SizeLength")))
+        mod.add(ti.SCmpEQU32(ti.sgpr("WGIdx"), ti.sgpr("Tmp")))
+        mod.add(ti.SCBranchSCC0(self.label_reduction.getLabelName()))
+        mod.addSpaceLine()
+
+        mod.add(ti.SLShiftRightB32(ti.sgpr("Tmp"), ti.sgpr("LogWorkSize"), ti.sgpr("SizeLength")))
+        mod.add(ti.SAddU32(ti.sgpr("Tmp+1"), ti.sgpr("LogWorkSize"), int(log2(self.bpe))))
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), ti.sgpr("Tmp+1"), ti.sgpr("Tmp")))
+        mod.addSpaceLine()
+
+        mod.add(ti.SAddU32(ti.sgpr("Src+0"), ti.sgpr("AddressIn+0"), ti.sgpr("Tmp")))
+        mod.add(ti.SAddCU32(ti.sgpr("Src+1"), ti.sgpr("AddressIn+1"), 0))
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Src+2"), int(log2(self.bpe)), ti.sgpr("SizeLength")))
+        mod.add(ti.SSubU32(ti.sgpr("Src+2"), ti.sgpr("Src+2"), ti.sgpr("Tmp")))
+        mod.add(ti.SMovB32(ti.sgpr("Src+3"), "Srd127_96"))
+        mod.addSpaceLine()
+
+
+        mod.add(ti.VLShiftLeftB32(ti.vgpr("Offset"), int(log2(self.num_load_size * self.bpe)), ti.vgpr("Serial")))
+        mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.num_workitems * self.num_load_size * self.bpe))
+        for i in range(0, 3):
+            mod.add(ti.VAddU32(ti.vgpr(f"Offset+{i+1}"), ti.vgpr(f"Offset+{i}"), ti.sgpr("Tmp")))
+        mod.addSpaceLine()
+
+        if self.is_scale:
+            mod.add(ti.SLShiftRightB32(ti.sgpr("Tmp"), ti.sgpr("LogWorkSize"), ti.sgpr("SizeLength")))
+            mod.add(ti.SAddU32(ti.sgpr("Tmp+1"), ti.sgpr("LogWorkSize"), int(log2(self.scale_type.numBytes()))))
+            mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), ti.sgpr("Tmp+1"), ti.sgpr("Tmp")))
+            mod.addSpaceLine()
+
+            mod.add(ti.SAddU32(ti.sgpr("DstD+0"), ti.sgpr("AddressOutD+0"), ti.sgpr("Tmp")))
+            mod.add(ti.SAddCU32(ti.sgpr("DstD+1"), ti.sgpr("AddressOutD+1"), 0))
+            mod.add(ti.SLShiftLeftB32(ti.sgpr("DstD+2"), int(log2(self.scale_type.numBytes())), ti.sgpr("SizeLength")))
+            mod.add(ti.SSubU32(ti.sgpr("DstD+2"), ti.sgpr("DstD+2"), ti.sgpr("Tmp")))
+            mod.add(ti.SMovB32(ti.sgpr("DstD+3"), "Srd127_96"))
+            mod.addSpaceLine()
+
+            mod.add(ti.VLShiftLeftB32(ti.vgpr("OffsetD"), int(log2(self.num_load_size * self.scale_type.numBytes())), ti.vgpr("Serial")))
+            for i in range(0, self.num_load_size-1):
+                mod.add(ti.VAddU32(ti.vgpr(f"OffsetD+{i+1}"), ti.vgpr(f"OffsetD+{i}"), self.scale_type.numBytes()))
+            mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.num_workitems * self.num_load_size * self.scale_type.numBytes()))
+            for i in range(1, 4):
+                for j in range(0, self.num_load_size):
+                    mod.add(ti.VAddU32(ti.vgpr(f"OffsetD+{i*self.num_load_size+j}"), ti.vgpr(f"OffsetD+{(i-1)*self.num_load_size+j}"), ti.sgpr("Tmp")))
+
+            mod.addSpaceLine()
+
+        mod.add(ti.SSubU32(ti.sgpr("Tmp"), ti.sgpr("WorkSize"), 1))
+        mod.add(ti.SAndB32(ti.sgpr("SizeLength"), ti.sgpr("SizeLength"), ti.sgpr("Tmp")))
+
+        mod.addSpaceLine()
+        return mod
+
+
+    def max_per_data(self, i, numElement) -> ti.Module:
         mod = ti.Module("max_per_data")
         if (self.i_type.isHalf()):
             mod.add(ti.VMaxF16(ti.vgpr("Output"), ti.vgpr("Output"), ti.SrcAbs(ti.vgpr(f"Value+{i}"))))
-            mod.add(ti.VLShiftRightB32(ti.vgpr(f"Value+{i}"), 16, ti.vgpr(f"Value+{i}")))
-            mod.add(ti.VMaxF16(ti.vgpr("Output"), ti.vgpr("Output"), ti.SrcAbs(ti.vgpr(f"Value+{i}"))))
+            if numElement == 2:
+                mod.add(ti.VLShiftRightB32(ti.vgpr(f"Value+{i}"), 16, ti.vgpr(f"Value+{i}")))
+                mod.add(ti.VMaxF16(ti.vgpr("Output"), ti.vgpr("Output"), ti.SrcAbs(ti.vgpr(f"Value+{i}"))))
         elif (self.i_type.isSingle()):
             mod.add(ti.VMaxF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.SrcAbs(ti.vgpr(f"Value+{i}"))))
         return mod
@@ -425,64 +663,62 @@ class AMaxKernelGenerator:
 
     def scale_per_data(self, i) -> ti.Module:
         mod = ti.Module("scale_per_data")
-        if self.is_scale:
-            mod.add(ti.VMulF32(ti.vgpr(f"OutputD+{i}"), ti.sgpr("Scale"), ti.vgpr(f"Value+{i}")))
-            if self.scale_type == ti.DataType("F8"):
-                mod.add(ti.VCmpClassF32(dst="vcc", src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("Fp8NanInf")))
-                mod.add(ti.VMed3F32(dst=ti.vgpr("Fp8Tmp"), src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("Fp8Min"), src2=ti.vgpr("Fp8Max")))
-                mod.add(ti.VCndMaskB32(dst=ti.vgpr(f"OutputD+{i}"), src0=ti.vgpr("Fp8Tmp"), src1=ti.vgpr(f"OutputD+{i}"), src2="vcc"))
-                mod.add(ti.VCvtPkF32toFP8(ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}")))
-            elif self.scale_type == ti.DataType("B8"):
-                mod.add(ti.VCmpClassF32(dst="vcc", src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("BF8NanInf")))
-                mod.add(ti.VMed3F32(dst=ti.vgpr("BF8Tmp"), src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("BF8Min"), src2=ti.vgpr("BF8Max")))
-                mod.add(ti.VCndMaskB32(dst=ti.vgpr(f"OutputD+{i}"), src0=ti.vgpr("BF8Tmp"), src1=ti.vgpr(f"OutputD+{i}"), src2="vcc"))
-                mod.add(ti.VCvtPkF32toBF8(ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}")))
+        mod.add(ti.VMulF32(ti.vgpr(f"OutputD+{i}"), ti.sgpr("Scale"), ti.vgpr(f"Value+{i}")))
+        if self.scale_type == ti.DataType("F8"):
+            mod.add(ti.VCmpClassF32(dst="vcc", src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("Fp8NanInf")))
+            mod.add(ti.VMed3F32(dst=ti.vgpr("Fp8Tmp"), src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("Fp8Min"), src2=ti.vgpr("Fp8Max")))
+            mod.add(ti.VCndMaskB32(dst=ti.vgpr(f"OutputD+{i}"), src0=ti.vgpr("Fp8Tmp"), src1=ti.vgpr(f"OutputD+{i}"), src2="vcc"))
+            mod.add(ti.VCvtPkF32toFP8(ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}")))
+        elif self.scale_type == ti.DataType("B8"):
+            mod.add(ti.VCmpClassF32(dst="vcc", src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("BF8NanInf")))
+            mod.add(ti.VMed3F32(dst=ti.vgpr("BF8Tmp"), src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("BF8Min"), src2=ti.vgpr("BF8Max")))
+            mod.add(ti.VCndMaskB32(dst=ti.vgpr(f"OutputD+{i}"), src0=ti.vgpr("BF8Tmp"), src1=ti.vgpr(f"OutputD+{i}"), src2="vcc"))
+            mod.add(ti.VCvtPkF32toBF8(ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}")))
         return mod
 
 
-    def sum_per_threadxN(self) -> ti.Module:
-        mod = ti.Module("sum_per_threadxN")
-        mod.addComment0("sum_per_threadxN")
+    def sum_per_threadx4x4(self) -> ti.Module:
+        mod = ti.Module("sum_per_threadxdwordx4x4")
+        mod.addComment0("sum_per_threadxdwordx4x4")
         mod.add(ti.SLShiftRightB32(ti.sgpr("MainLoop"), \
-                                   int(log2(self.num_workitems * self.num_load_count * self.num_load_size * (4 // self.bpe))), \
+                                   int(log2(self.num_workitems * 4 * self.num_load_size)), \
                                    ti.sgpr("SizeLength")))
-        with asm_loop(mod, "sum_per_threadxN", "MainLoop"):
-            for i in range(0, self.num_load_count): # unroll
-                mod.add(ti.BufferLoadB128(ti.vgpr(f"Value+{i*self.num_load_size}",4), \
+        with asm_loop(mod, "sum_per_threadx4x4", "MainLoop"):
+            num_load_registers = int(self.num_load_size * self.bpr)
+            for i in range(0, 4): # unroll
+                mod.add(ti.BufferLoadB128(ti.vgpr(f"Value+{i*num_load_registers}",4), \
                                           ti.vgpr(f"Offset+{i}"), ti.sgpr("Src",4), 0, ti.MUBUFModifiers(offen=True)))
             mod.addSpaceLine()
             # max operation
-            for i in range(0, self.num_load_count): # unroll
-                mod.add(ti.SWaitCnt(vmcnt=(self.num_load_count-i-1)))
-                for j in range(0, self.num_load_size): # dwordx4
-                    mod.add(self.max_per_data(i * self.num_load_size + j))
-            mod.addSpaceLine()
-            # scale operation
-            for i in range(0, self.num_load_count): # unroll
-                for j in range(0, self.num_load_size): # dwordx4
-                    mod.add(self.scale_per_data(i * self.num_load_size + j))
-            mod.addSpaceLine()
-            if self.is_scale: # buffer store fp8
-                for i in range(0, self.num_load_count): # unroll
-                    for j in range(0, self.num_load_size): # dwordx4
-                        mod.add(ti.BufferStoreB8(ti.vgpr(f"OutputD+{i*self.num_load_size+j}"), \
-                                                 ti.vgpr(f"OffsetD+{i*self.num_load_size+j}"), \
+            for i in range(0, 4): # unroll
+                mod.add(ti.SWaitCnt(vmcnt=(4-i-1)))
+                for j in range(0, num_load_registers): # dwordx4
+                    index = i * num_load_registers + j
+                    mod.add(self.max_per_data(index, 1 / self.bpr))
+                    if self.is_scale:
+                        mod.add(self.scale_per_data(index))
+                        mod.add(ti.BufferStoreB8(ti.vgpr(f"OutputD+{i*num_load_registers+j}"), \
+                                                 ti.vgpr(f"OffsetD+{i*num_load_registers+j}"), \
                                                  ti.sgpr("DstD",4), 0, ti.MUBUFModifiers(offen=True)))
-                mod.addSpaceLine()
+                        mod.addSpaceLine()
+            mod.addSpaceLine()
+
+
             # adjust offset of buffer load
             # total bytes = num_workitems * num_unroll * load_size_in_bytes
             # num_unroll = num_load_count
             # load_size_in_bytes = dwordx4 = num_load_size * 4
-            mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.num_workitems * self.num_load_count * self.num_load_size * 4))
-            for i in range(0, self.num_load_count):
+            mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.num_workitems * 4 * self.num_load_size * self.bpe))
+            for i in range(0, 4):
                 mod.add(ti.VAddU32(ti.vgpr(f"Offset+{i}"), ti.vgpr(f"Offset+{i}"), ti.sgpr("Tmp")))
             mod.addSpaceLine()
+
             if self.is_scale: # adjust offset of buffer store fp8
-                mod.add(ti.SMovB32(ti.sgpr("TmpD"), self.num_workitems * self.num_load_count * 4))
-                for i in range(0, self.num_load_count):
+                mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.num_workitems * 4 * 4))
+                for i in range(0, 4):
                     for j in range(0, self.num_load_size):
                         mod.add(ti.VAddU32(ti.vgpr(f"OffsetD+{i*self.num_load_size+j}"), \
-                                           ti.vgpr(f"OffsetD+{i*self.num_load_size+j}"), ti.sgpr("TmpD")))
+                                           ti.vgpr(f"OffsetD+{i*self.num_load_size+j}"), ti.sgpr("Tmp")))
                 mod.addSpaceLine()
         mod.addSpaceLine()
         return mod
@@ -492,43 +728,39 @@ class AMaxKernelGenerator:
         mod = ti.Module("sum_per_threadx4")
         mod.addComment0("sum_per_threadx4")
         mod.add(ti.SLShiftRightB32(ti.sgpr("MainLoop"), \
-                                   int(log2(self.num_workitems * self.num_load_size * (4 // self.bpe))), \
+                                   int(log2(self.num_workitems * self.num_load_size)), \
                                    ti.sgpr("SizeLength")))
-        mod.add(ti.SAndB32(ti.sgpr("MainLoop"), hex(self.num_load_count-1), ti.sgpr("MainLoop")))
+        mod.add(ti.SAndB32(ti.sgpr("MainLoop"), 4-1, ti.sgpr("MainLoop")))
         with asm_loop(mod, "sum_per_threadx4", "MainLoop"):
+            num_regsters_per_load = int(self.num_load_size * self.bpr)
             mod.add(ti.BufferLoadB128(ti.vgpr("Value",4), ti.vgpr("Offset"), ti.sgpr("Src",4), 0, ti.MUBUFModifiers(offen=True)))
             mod.addSpaceLine()
             mod.add(ti.SWaitCnt(vmcnt=0))
             # max operation
-            for i in range(0, self.num_load_size): # dwordx4
-                mod.add(self.max_per_data(i))
-            mod.addSpaceLine()
-            # scale operation
-            for i in range(0, self.num_load_size): # dwordx4
-                mod.add(self.scale_per_data(i))
-            mod.addSpaceLine()
-            if self.is_scale: # buffer store fp8
-                for i in range(0, self.num_load_size): # dwordx4
+            for i in range(0, num_regsters_per_load): # dwordx4
+                mod.add(self.max_per_data(i, 1 / self.i_type.numRegisters()))
+                if self.is_scale: # buffer store fp8
+                    mod.add(self.scale_per_data(i))
                     mod.add(ti.BufferStoreB8(ti.vgpr(f"OutputD+{i}"), \
                                              ti.vgpr(f"OffsetD+{i}"), \
                                              ti.sgpr("DstD",4), 0, ti.MUBUFModifiers(offen=True)))
-                mod.addSpaceLine()
+            mod.addSpaceLine()
             # adjust offset of buffer load
-            mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.num_workitems * self.num_load_size * 4))
+            mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.num_workitems * self.num_load_size * self.bpe))
             mod.add(ti.VAddU32(ti.vgpr("Offset"), ti.vgpr("Offset"), ti.sgpr("Tmp")))
             if self.is_scale: # adjust offset of buffer store fp8
-                mod.add(ti.SMovB32(ti.sgpr("TmpD"), self.num_workitems * 4))
+                mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.num_workitems * 4))
                 for i in range(0, self.num_load_size):
                     mod.add(ti.VAddU32(ti.vgpr(f"OffsetD+{i}"), \
-                                       ti.vgpr(f"OffsetD+{i}"), ti.sgpr("TmpD")))
+                                       ti.vgpr(f"OffsetD+{i}"), ti.sgpr("Tmp")))
                 mod.addSpaceLine()
         mod.addSpaceLine()
         return mod
 
 
-    def adjust_global_address(self) -> ti.Module:
-        mod = ti.Module("adjust_global_address")
-        mod.addComment0("adjust_global_address")
+    def adjust_global_address_2(self) -> ti.Module:
+        mod = ti.Module("adjust_global_address_2")
+        mod.addComment0("adjust_global_address_2")
 
         # adjust buffer load offset
         #    buffer_load_dwordx4 = byte * 4 * 4
@@ -544,8 +776,8 @@ class AMaxKernelGenerator:
         mod.addSpaceLine()
 
         if self.is_scale: # adjust buffer store offset
-            mod.add(ti.VMulLOU32(ti.vgpr("TmpD"), 3, ti.vgpr("Serial")))
-            mod.add(ti.VSubU32(ti.vgpr("OffsetD"), ti.vgpr("OffsetD"), ti.vgpr("TmpD")))
+            mod.add(ti.VMulLOU32(ti.vgpr("Tmp"), 3, ti.vgpr("Serial")))
+            mod.add(ti.VSubU32(ti.vgpr("OffsetD"), ti.vgpr("OffsetD"), ti.vgpr("Tmp")))
 
         mod.addSpaceLine()
         mod.addSpaceLine()
@@ -557,17 +789,15 @@ class AMaxKernelGenerator:
         mod = ti.Module("sum_per_thread")
         mod.addComment0("sum_per_thread")
         mod.add(ti.SLShiftRightB32(ti.sgpr("MainLoop"), int(log2(offset)), ti.sgpr("SizeLength")))
-        mod.add(ti.SAndB32(ti.sgpr("MainLoop"), ti.sgpr("MainLoop"), self.num_load_size * (4 // self.bpe) - 1))
+        mod.add(ti.SAndB32(ti.sgpr("MainLoop"), ti.sgpr("MainLoop"), self.num_load_size - 1))
         with asm_loop(mod, "sum_per_thread", "MainLoop"):
-            BufferLoadx1 = self.global_read_inst_type(1)
+            BufferLoadx1 = self.global_read_inst_type(1, self.i_type)
             mod.add(BufferLoadx1(ti.vgpr("Value"), ti.vgpr("Offset"), ti.sgpr("Src",4), 0, ti.MUBUFModifiers(offen=True)))
             mod.add(ti.SWaitCnt(vmcnt=0))
             mod.addSpaceLine()
-            mod.add(self.max_per_data(0))
-            mod.addSpaceLine()
-            mod.add(self.scale_per_data(0))
-            mod.addSpaceLine()
+            mod.add(self.max_per_data(0, 1))
             if self.is_scale:
+                mod.add(self.scale_per_data(0))
                 mod.add(ti.BufferStoreB8(ti.vgpr("OutputD"),
                                          ti.vgpr("OffsetD"), ti.sgpr("DstD",4), 0, ti.MUBUFModifiers(offen=True)))
                 mod.addSpaceLine()
@@ -575,10 +805,9 @@ class AMaxKernelGenerator:
             mod.add(ti.VAddU32(ti.vgpr("Offset"), ti.vgpr("Offset"), ti.sgpr("Tmp")))
             mod.addSpaceLine()
             if self.is_scale:
-                mod.add(ti.SMovB32(ti.sgpr("TmpD"), self.num_workitems))
-                mod.add(ti.VAddU32(ti.vgpr("OffsetD"), ti.vgpr("OffsetD"), ti.sgpr("TmpD")))
+                mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.num_workitems))
+                mod.add(ti.VAddU32(ti.vgpr("OffsetD"), ti.vgpr("OffsetD"), ti.sgpr("Tmp")))
                 mod.addSpaceLine()
-        mod.addSpaceLine()
         return mod
 
 
@@ -591,15 +820,13 @@ class AMaxKernelGenerator:
         mod.add(ti.SCBranchVCCZ(label_sum_end.getLabelName()))
         mod.add(ti.SMovB64("exec", "vcc"))
         mod.add(ti.SNop(1))
-        BufferLoadx1 = self.global_read_inst_type(1)
+        BufferLoadx1 = self.global_read_inst_type(1, self.i_type)
         mod.add(BufferLoadx1(ti.vgpr("Value"), ti.vgpr("Offset"), ti.sgpr("Src",4), 0, ti.MUBUFModifiers(offen=True)))
         mod.add(ti.SWaitCnt(vmcnt=0))
         mod.addSpaceLine()
-        mod.add(self.max_per_data(0))
-        mod.addSpaceLine()
-        mod.add(self.scale_per_data(0))
-        mod.addSpaceLine()
+        mod.add(self.max_per_data(0, 1))
         if self.is_scale:
+            mod.add(self.scale_per_data(0))
             mod.add(ti.BufferStoreB8(ti.vgpr("OutputD"),
                                      ti.vgpr("OffsetD"), ti.sgpr("DstD",4), 0, ti.MUBUFModifiers(offen=True)))
             mod.addSpaceLine()
@@ -621,8 +848,8 @@ class AMaxKernelGenerator:
         return mod
 
 
-    def intra_wave_reduction(self) -> ti.Module:
-        label = ti.Label("permute", "permute")
+    def intra_wave_reduction(self, postfix) -> ti.Module:
+        label = ti.Label(f"permute_{postfix}", f"permute_{postfix}")
         mod = ti.Module("intra_wave_reduction")
         mod.addComment0("intra_wave_reduction")
         mod.add(ti.SMovB32(ti.sgpr("Tmp"), 1))
@@ -644,50 +871,51 @@ class AMaxKernelGenerator:
 
 
     def inter_wave_reduction(self) -> ti.Module:
-        label_inter = ti.Label("inter", f'inter')
-        label_upper = ti.Label("upper", f'upper')
-        label_lower = ti.Label("lower", f'lower')
-        label_empty = ti.Label("empty", f'empty')
-        label_end   = ti.Label("end", f'end')
+        label_wave_inter = ti.Label("wave_inter", 'wave_inter')
+        label_wave_upper = ti.Label("wave_upper", 'wave_upper')
+        label_wave_lower = ti.Label("wave_lower", 'wave_lower')
+        label_wave_empty = ti.Label("wave_empty", 'wave_empty')
+        label_wave_end   = ti.Label("wave_end",   'wave_end')
+
         mod = ti.Module("inter_wave_reduction")
         mod.addComment0("inter_wave_reduction")
-        mod.add(ti.VLShiftRightB32(ti.vgpr("Widx"), 6, ti.vgpr("Serial")))
-        mod.add(ti.SMovB32(ti.sgpr("Offset"), self.num_workitems // 64))
-        mod.add(label_inter)
+        mod.add(ti.VLShiftRightB32(ti.vgpr("Widx"), int(log2(self.wave_size)), ti.vgpr("Serial")))
+        mod.add(ti.SMovB32(ti.sgpr("Offset"), self.num_workitems // self.wave_size))
+        mod.add(label_wave_inter)
         mod.add(ti.SLShiftRightB32(ti.sgpr("Offset"), 1, ti.sgpr("Offset")))
         mod.add(ti.SCmpEQU32(ti.sgpr("Offset"), 0))
-        mod.add(ti.SCBranchSCC1(label_end.getLabelName()))
+        mod.add(ti.SCBranchSCC1(label_wave_end.getLabelName()))
         mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), 1, ti.sgpr("Offset")))
         mod.add(ti.VCmpLtU32(ti.sgpr("Tmp+2",2), ti.vgpr("Widx"), ti.sgpr("Tmp")))
         mod.add(ti.VCmpGEU32(ti.sgpr("Tmp+4",2), ti.vgpr("Widx"), ti.sgpr("Offset")))
         mod.add(ti.SAndB64("vcc", ti.sgpr("Tmp+2",2), ti.sgpr("Tmp+4",2)))
-        mod.add(ti.SCBranchVCCNZ(label_upper.getLabelName()))
+        mod.add(ti.SCBranchVCCNZ(label_wave_upper.getLabelName()))
         mod.add(ti.VCmpLtU32("vcc", ti.vgpr("Widx"), ti.sgpr("Offset")))
-        mod.add(ti.SCBranchVCCNZ(label_lower.getLabelName()))
-        mod.add(ti.SBranch(label_empty.getLabelName()))
+        mod.add(ti.SCBranchVCCNZ(label_wave_lower.getLabelName()))
+        mod.add(ti.SBranch(label_wave_empty.getLabelName()))
 
-        mod.add(label_upper)
+        mod.add(label_wave_upper)
         mod.add(ti.VSubU32(ti.vgpr("Tmp"), ti.vgpr("Widx"), ti.sgpr("Offset")))
         mod.add(ti.VLShiftLeftB32(ti.vgpr("Tmp"), int(log2(self.bpe)), ti.vgpr("Tmp")))
         ds = ti.DSModifiers(offset=0)
-        DSStorex1 = self.local_write_inst_type(1)
+        DSStorex1 = self.local_write_inst_type(1, self.i_type)
         mod.add(DSStorex1(ti.vgpr("Tmp"), ti.vgpr("Output"), ds))
         mod.add(ti.SWaitCnt(lgkmcnt=0))
         mod.add(ti.SBarrier())
-        mod.add(ti.SBranch(label_inter.getLabelName()))
-        mod.add(label_lower)
+        mod.add(ti.SBranch(label_wave_inter.getLabelName()))
+        mod.add(label_wave_lower)
         mod.add(ti.SBarrier())
         mod.add(ti.VLShiftLeftB32(ti.vgpr("Tmp"), int(log2(self.bpe)), ti.vgpr("Widx")))
         ds = ti.DSModifiers(offset=0)
-        DSLoadx1 = self.local_read_inst_type(1)
+        DSLoadx1 = self.local_read_inst_type(1, self.i_type)
         mod.add(DSLoadx1(ti.vgpr("OutputB"), ti.vgpr("Tmp"), ds))
         mod.add(ti.SWaitCnt(lgkmcnt=0))
         mod.add(self.merge_sum())
-        mod.add(ti.SBranch(label_inter.getLabelName()))
-        mod.add(label_empty)
+        mod.add(ti.SBranch(label_wave_inter.getLabelName()))
+        mod.add(label_wave_empty)
         mod.add(ti.SBarrier())
-        mod.add(ti.SBranch(label_inter.getLabelName()))
-        mod.add(label_end)
+        mod.add(ti.SBranch(label_wave_inter.getLabelName()))
+        mod.add(label_wave_end)
         mod.addSpaceLine()
         return mod
 
@@ -701,7 +929,7 @@ class AMaxKernelGenerator:
         mod.add(ti.VCmpEQU32("vcc", ti.vgpr("Widx"), 0))
         mod.add(ti.SCBranchVCCZ(label_lower.getLabelName()))
         ds = ti.DSModifiers(offset=0)
-        DSStorex1 = self.local_write_inst_type(1)
+        DSStorex1 = self.local_write_inst_type(1, self.i_type)
         mod.add(DSStorex1(ti.vgpr("Widx"), ti.vgpr("Output"), ds))
         mod.add(ti.SWaitCnt(lgkmcnt=0))
         mod.add(ti.SBarrier())
@@ -710,10 +938,11 @@ class AMaxKernelGenerator:
         mod.add(ti.SBarrier())
         mod.add(ti.VMovB32(ti.vgpr("Tmp"), 0))
         ds = ti.DSModifiers(offset=0)
-        DSLoadx1 = self.local_read_inst_type(1)
+        DSLoadx1 = self.local_read_inst_type(1, self.i_type)
         mod.add(DSLoadx1(ti.vgpr("Output"), ti.vgpr("Tmp"), ds))
         mod.add(ti.SWaitCnt(lgkmcnt=0))
         mod.add(label_end)
+        mod.addSpaceLine()
         mod.addSpaceLine()
         return mod
 
@@ -721,17 +950,102 @@ class AMaxKernelGenerator:
     def output_result(self) -> ti.Module:
         mod = ti.Module("output_result")
         mod.addComment0("output_result")
-        BufferStorex1 = self.global_write_inst_type(1)
 
+        label_end = ti.Label("end", 'end')
+        label_final_loop = ti.Label("final_loop", 'final_loop')
+        label_final_output = ti.Label("final_output", 'final_output')
+        mod.addSpaceLine()
+
+        mod.add(ti.VReadfirstlaneB32(ti.sgpr("Tmp"), ti.vgpr("Serial")))
+        mod.add(ti.SCmpEQU32(ti.sgpr("Tmp"), 0))
+        mod.add(ti.SCBranchSCC0(label_end.getLabelName()))
+        mod.addSpaceLine()
+
+        mod.add(ti.SCmpEQU32(ti.sgpr("NumGroup"), 1))
+        mod.add(ti.SCBranchSCC1(label_final_output.getLabelName()))
+
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp+0"), int(log2(self.i_type.numBytes())), ti.sgpr("WorkGroup0")))
+        mod.add(ti.SMovB32(ti.sgpr("Dst+0"), ti.sgpr("AddressWk+0")))
+        mod.add(ti.SMovB32(ti.sgpr("Dst+1"), ti.sgpr("AddressWk+1")))
+        mod.add(ti.SAddU32(ti.sgpr("Dst+0"), ti.sgpr("Dst+0"), ti.sgpr("Tmp+0")))
+        mod.add(ti.SAddCU32(ti.sgpr("Dst+1"), ti.sgpr("Dst+1"), 0x0))
+        mod.add(ti.SMovB32(ti.sgpr("Dst+2"), self.i_type.numBytes()))
+        mod.add(ti.SMovB32(ti.sgpr("Dst+3"), "Srd127_96"))
+
+        BufferStorex1 = self.global_write_inst_type(1, self.i_type)
         mod.add(ti.VMovB32(ti.vgpr("Offset"), 0))
+        mod.add(BufferStorex1(ti.vgpr("Output"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True, glc=True)))
+        mod.add(ti.SWaitCnt(vmcnt=0))
+        mod.addSpaceLine()
+
+        mod.add(ti.SSubI32(ti.sgpr("Tmp"), ti.sgpr("NumGroup"), 1))
+        mod.add(ti.SAtomicDec(ti.sgpr("Tmp"), ti.sgpr("AddressSy",2), ti.SMEMModifiers(glc=True)))
+        mod.add(ti.SWaitCnt(vmcnt=0, lgkmcnt=0))
+        mod.add(ti.SCmpEQU32(ti.sgpr("Tmp"), 1))
+        mod.add(ti.SCBranchSCC0(label_end.getLabelName()))
+        mod.addSpaceLine()
+
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), int(log2(self.i_type.numBytes())), ti.sgpr("NumGroup")))
+        mod.add(ti.SMovB32(ti.sgpr("Src+0"), ti.sgpr("AddressWk+0")))
+        mod.add(ti.SMovB32(ti.sgpr("Src+1"), ti.sgpr("AddressWk+1")))
+        mod.add(ti.SMovB32(ti.sgpr("Src+2"), ti.sgpr("Tmp")))
+        mod.add(ti.SMovB32(ti.sgpr("Src+3"), "Srd127_96"))
+        mod.addSpaceLine()
+
+        mod.add(ti.VLShiftLeftB32(ti.vgpr("Offset"), int(log2(self.bpe)), ti.vgpr("Serial")))
+        mod.addSpaceLine()
+
+        mod.add(ti.VMovB32(ti.vgpr("Output"), "0"))
+        mod.addSpaceLine()
+
+        mod.add(label_final_loop)
+        BufferLoadx1 = self.global_read_inst_type(1, self.i_type)
+        for i in range(0, 4):
+            mod.add(BufferLoadx1(ti.vgpr(f"Value+{i}"), ti.vgpr("Offset"), ti.sgpr("Src",4), 0, ti.MUBUFModifiers(offen=True, offset12=int(self.wave_size * self.i_type.numBytes() * i))))
+        mod.add(ti.SWaitCnt(vmcnt=0))
+        mod.addSpaceLine()
+
+        for i in range(0, 4):
+            mod.add(self.max_per_data(i, 1))
+        mod.addSpaceLine()
+
+        mod.add(ti.SMovB32(ti.sgpr("Tmp"), self.wave_size * self.i_type.numBytes() * 4))
+        mod.add(ti.VAddU32(ti.vgpr("Offset"), ti.vgpr("Offset"), ti.sgpr("Tmp")))
+        mod.addSpaceLine()
+
+        mod.add(ti.SSubI32(ti.sgpr("NumGroup"), ti.sgpr("NumGroup"), 256))
+        mod.add(ti.SCmpGtI32(ti.sgpr("NumGroup"), 0))
+        mod.add(ti.SCBranchSCC1(label_final_loop.getLabelName()))
+        mod.addSpaceLine()
+
+        mod.add(self.intra_wave_reduction("final"))
+        mod.addSpaceLine()
+
+        mod.add(label_final_output)
+
+        mod.add(ti.SMovB32(ti.sgpr("Dst+0"), ti.sgpr("AddressOut+0")))
+        mod.add(ti.SMovB32(ti.sgpr("Dst+1"), ti.sgpr("AddressOut+1")))
+        mod.add(ti.SMovB32(ti.sgpr("Dst+2"), self.o_type.numBytes()))
+        mod.add(ti.SMovB32(ti.sgpr("Dst+3"), "Srd127_96"))
+        mod.addSpaceLine()
+
+        BufferStorex1 = self.global_write_inst_type(1, self.o_type)
+
         if self.i_type.toChar() == 'H' and self.o_type.toChar() == "S":
             mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
         elif self.i_type.toChar() == 'S' and self.o_type.toChar() == "H":
             mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
+        mod.add(ti.VMovB32(ti.vgpr("Offset"), 0))
         mod.add(BufferStorex1(ti.vgpr("Output"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))
         mod.addSpaceLine()
 
+        mod.addSpaceLine()
+        mod.add(label_end)
+        mod.addSpaceLine()
+        mod.addSpaceLine()
+
         return mod
+
 
     def amax_kernel_body(self) -> ti.Module:
         mod = ti.Module(self.func_name)
@@ -740,12 +1054,15 @@ class AMaxKernelGenerator:
             mod.add(self.load_kernel_args())
             mod.add(self.init_param())
             mod.add(self.calculate_global_address())
-            mod.add(self.sum_per_threadxN())
-            mod.add(self.sum_per_threadx4())
+            mod.add(self.sum_per_blocksize())
             mod.add(self.adjust_global_address())
+            mod.add(self.sum_per_threadx4x4())
+            mod.add(self.sum_per_threadx4())
+            mod.add(self.adjust_global_address_2())
             mod.add(self.sum_per_thread())
             mod.add(self.sum_in_some_thread())
-            mod.add(self.intra_wave_reduction())
+            mod.add(self.label_reduction)
+            mod.add(self.intra_wave_reduction("middle"))
             mod.add(self.inter_wave_reduction())
             mod.add(self.broadcast())
             mod.add(self.output_result())
@@ -816,15 +1133,13 @@ def meta_str(kernels: Tuple[KernelMeta]):
 if __name__ == '__main__':
     ap = ArgumentParser()
     ap.add_argument('-o', '--output', type=str, required=True, help='Output path of compiled binary')
-    ap.add_argument('-t', type=str, default="S", help='data type')
-    ap.add_argument('-d', type=str, default="None", help='dest data type')
+    ap.add_argument('-t', type=str, default="H", help='data type')
+    ap.add_argument('-d', type=str, default="S", help='dest data type')
     ap.add_argument('-s', type=str, default="F8", help='scale data type')
-    ap.add_argument('-w', type=int, default=256, help='workitem')
-    ap.add_argument('-c', type=int, default=4, help='load conut per iteration')
     ap.add_argument('--toolchain', type=str, default='/opt/rocm/llvm/bin/clang++', help='Path to ROCm compiler')
     ap.add_argument('--debug-build', action='store_true', dest='debug_build', help='Build with debug information')
     ap.add_argument('--is-scale', action='store_true', dest='is_scale', help='Enable scaled output or not')
-    ap.add_argument('--arch', type=str, default='gfx90a', help='Target architecture for assembler, e.g. gfx908. Default is gfx90a')
+    ap.add_argument('--arch', type=str, default='gfx942', help='Target architecture for assembler, e.g. gfx908. Default is gfx90a')
     ap.set_defaults(debug_build=False)
 
     args = ap.parse_args()
@@ -832,8 +1147,9 @@ if __name__ == '__main__':
     t: str = args.t
     d: str = t if (args.d =="None") else args.d
     s: str = args.s
-    w: int = args.w
-    c: int = args.c
+    num_workitem: int = 256
+    wave_size: int = 64
+    c: int = 8
     toolchain_path: str = args.toolchain
     debug_build: bool = args.debug_build
     arch: str = args.arch
@@ -849,11 +1165,11 @@ if __name__ == '__main__':
         toolchain_path = globalParameters['AssemblerPath']
 
     ti.Base._global_ti.init(isa, toolchain_path, False)
-    amax = AMaxKernelGenerator(ti.DataType(t), ti.DataType(d), ti.DataType(s), w, c, 4, arch, is_scale)
+    amax = AMaxKernelGenerator(ti.DataType(t), ti.DataType(d), ti.DataType(s), num_workitem, wave_size, c, int(4 / ti.DataType(t).numRegisters()), arch, is_scale)
     kernel_body = amax.amax_kernel_body()
     args = amax.kernel_args()
     func_name = amax.func_name
-    meta = KernelMeta(func_name, amax.vgpr_pool.size(), amax.sgpr_pool.size(), 0, amax.lds_usage_byte, 64, w, 8, args)
+    meta = KernelMeta(func_name, amax.vgpr_pool.size(), amax.sgpr_pool.size(), 0, amax.lds_usage_byte, wave_size, num_workitem, 8, args)
     meta.update_args_offsets()
     k_str = '\n'.join([kernel_header(func_name, arch, amax.vgpr_pool.size(), amax.sgpr_pool.size(), amax.lds_usage_byte),
                        meta_str((meta,)),

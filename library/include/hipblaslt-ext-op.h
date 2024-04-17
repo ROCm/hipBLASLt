@@ -150,6 +150,12 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtLayerNorm(hipDataType datatype,
  *  input 2-D tensor buffer. can't be nullptr.
  *
  *  @param[in]
+ *  workspace Amax tensor buffer (4k). can't be nullptr.
+ *
+ *  @param[in]
+ *  sync for Amax tensor buffer (1 int32_t). can't be nullptr.
+ *
+ *  @param[in]
  *  m The first dimension of input/output tensor.
  *
  *  @param[in]
@@ -167,6 +173,8 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
                                                   const hipDataType outDatatype,
                                                   void*             output,
                                                   void*             input,
+                                                  void*             workSpace,
+                                                  void*             sync,
                                                   uint32_t          m,
                                                   uint32_t          n,
                                                   hipStream_t       stream);
@@ -199,6 +207,12 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
  *  inputScale 1-D tensor buffer. can't be nullptr. only support float.
  *
  *  @param[in]
+ *  workspace Amax tensor buffer (4k). can't be nullptr.
+ *
+ *  @param[in]
+ *  sync for Amax tensor buffer (1 int32_t). can't be nullptr.
+ *
+ *  @param[in]
  *  m The first dimension of input/output tensor.
  *
  *  @param[in]
@@ -219,6 +233,8 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType dat
                                                            void*             outputD,
                                                            void*             input,
                                                            void*             inputScale,
+                                                           void*             workSpace,
+                                                           void*             sync,
                                                            uint32_t          m,
                                                            uint32_t          n,
                                                            hipStream_t       stream);
