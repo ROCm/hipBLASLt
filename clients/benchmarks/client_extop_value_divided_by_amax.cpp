@@ -45,8 +45,8 @@ void printUsage(char* programName)
               << "\t-d, --dtype\t\t\tDest Type of problem, default is S.\n"
               << "\t-m, --m\t\t\t\tSize of dim 0, default is 64\n"
               << "\t-n, --n\t\t\t\tSize of dim 1, default is 64\n"
+              << "\t-v, --n\t\t\t\tValue is divided by AMax, default is 240\n"
               << "\t-i, --i\t\t\t\titeration\n"
-              << "\t--no_workspace \t\t\t\titeration\n"
               << "\t--initialization \t\tInitialize matrix data. Options: rand_int, trig_float, "
                  "hpl(floating), special, zero. (default is hpl)\n";
 }
@@ -64,7 +64,7 @@ T max(T a, T b)
 }
 
 template <typename Ti, typename To>
-void cpuAMax(To* out, Ti* in, std::uint32_t length)
+void cpuAMax(To* out, Ti* in, std::uint32_t length, float value)
 {
     // calculate amax
     Ti m = 0;
@@ -72,7 +72,7 @@ void cpuAMax(To* out, Ti* in, std::uint32_t length)
     {
         m = max(m, abs(in[j]));
     }
-    out[0] = To(m);
+    out[0] = To(value / float(m));
 }
 
 int parseArgs(int                       argc,
@@ -81,9 +81,9 @@ int parseArgs(int                       argc,
               std::string&              dtype,
               size_t&                   m,
               size_t&                   n,
+              float&                    v,
               size_t&                   iter,
-              hipblaslt_initialization& init,
-              bool&                     workspace)
+              hipblaslt_initialization& init)
 {
     if(argc <= 1)
     {
@@ -116,6 +116,10 @@ int parseArgs(int                       argc,
             {
                 n = std::stoul(argv[++i]);
             }
+            else if(arg == "-v" || arg == "--value")
+            {
+                v = std::stof(argv[++i]);
+            }
             else if(arg == "-i" || arg == "--i")
             {
                 iter = std::stoul(argv[++i]);
@@ -131,10 +135,6 @@ int parseArgs(int                       argc,
                 }
 
                 init = string2hipblaslt_initialization(initStr);
-            }
-            else if (arg == "--no_workspace" || arg == "--no_wk")
-            {
-                workspace = false;
             }
         }
         else
@@ -199,7 +199,7 @@ void initData(DType* data, std::size_t numElements, hipblaslt_initialization ini
 }
 
 template <typename Ti, typename To>
-int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, int iter, hipblaslt_initialization& init, bool& workspace)
+int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, float v, int iter, hipblaslt_initialization& init)
 {
     int         numElements = m * n;
 
@@ -211,11 +211,8 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, int iter, hipbla
     auto hipErr = hipMalloc(&gpuOutput, sizeof(To));
     hipErr      = hipMalloc(&gpuInput, m * n * sizeof(Ti));
 
-    if (workspace)
-    {
-        hipErr = hipMalloc(&gpuWorkSpace, 4096 * sizeof(Ti));
-        hipErr = hipMalloc(&gpuSync, sizeof(std::uint32_t));
-    }
+    hipErr = hipMalloc(&gpuWorkSpace, 4096 * sizeof(Ti));
+    hipErr = hipMalloc(&gpuSync, sizeof(std::uint32_t));
 
     std::vector<To>            cpuOutput(1, 0.f);
     std::vector<Ti>            cpuInput(m * n, 0.f);
@@ -226,25 +223,19 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, int iter, hipbla
 
     initData(cpuInput.data(), numElements, init);
 
-    cpuAMax(refOutput.data(), cpuInput.data(), m * n);
+    cpuAMax(refOutput.data(), cpuInput.data(), m * n, v);
 
     hipErr = hipMemset(gpuOutput, 0, sizeof(To));
     hipErr = hipMemcpyHtoD(gpuInput, cpuInput.data(), m * n * sizeof(Ti));
 
-    if (workspace)
-    {
-        hipErr = hipMemset(gpuWorkSpace, 0, 4096 * sizeof(Ti));
-        hipErr = hipMemset(gpuSync, 0, sizeof(std::uint32_t));
-    }
+    hipErr = hipMemset(gpuWorkSpace, 0, 4096 * sizeof(Ti));
+    hipErr = hipMemset(gpuSync, 0, sizeof(std::uint32_t));
 
     hipStream_t stream{};
     hipErr = hipStreamCreate(&stream);
     //warmup
     hipblasStatus_t hipblasltErr;
-    if (workspace)
-        hipblasltErr = hipblasltExtFastAMax(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, stream);
-    else
-        hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
+    hipblasltErr = hipblasltExtFastValueDevidedByAMax(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, v, stream);
 
     hipErr = hipStreamSynchronize(stream);
 
@@ -259,10 +250,7 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, int iter, hipbla
     // warm up
     for(int i = 0; i < iter; ++i)
     {
-        if (workspace)
-            hipblasltErr = hipblasltExtFastAMax(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, stream);
-        else
-            hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
+        hipblasltErr = hipblasltExtFastValueDevidedByAMax(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, v, stream);
     }
     hipErr = hipStreamSynchronize(stream);
 
@@ -273,10 +261,7 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, int iter, hipbla
 
     for(int i = 0; i < iter; ++i)
     {
-        if (workspace)
-            hipblasltErr = hipblasltExtFastAMax(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, stream);
-        else
-            hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
+        hipblasltErr = hipblasltExtFastValueDevidedByAMax(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, v, stream);
     }
 
     hipErr = hipEventRecord(end, stream);
@@ -293,11 +278,9 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, int iter, hipbla
     hipErr = hipStreamDestroy(stream);
     hipErr = hipFree(gpuOutput);
     hipErr = hipFree(gpuInput);
-    if (workspace)
-    {
-       hipErr = hipFree(gpuWorkSpace);
-       hipErr = hipFree(gpuSync);
-    }
+    hipErr = hipFree(gpuWorkSpace);
+    hipErr = hipFree(gpuSync);
+
     return 0;
 }
 
@@ -307,28 +290,28 @@ int main(int argc, char** argv)
     std::string dtype{"S"};
     std::size_t m{64};
     std::size_t n{64};
+    float       v{240.f};
     std::size_t i{200};
-    bool workspace{true};
 
     hipblaslt_initialization init{hipblaslt_initialization::hpl};
 
-    if(auto err = parseArgs(argc, argv, type, dtype, m, n, i, init, workspace))
+    if(auto err = parseArgs(argc, argv, type, dtype, m, n, v, i, init))
     {
-        std::cout << "m " << m << " n " << n << " i " << i << " workspace " << workspace << std::endl;
+        std::cout << "m " << m << " n " << n << " v " << v << " i " << i << std::endl;
         printUsage(argv[0]);
         return err;
     }
 
-    std::cout << "m " << m << " n " << n << " i " << i << " workspace " << workspace << std::endl;
+    std::cout << "m " << m << " n " << n << " i " << i << std::endl;
 
     if((type == "S" || type == "s") && (type == dtype))
-        return AmaxTest<float, float>(HIP_R_32F, HIP_R_32F, m, n, i, init, workspace);
+        return AmaxTest<float, float>(HIP_R_32F, HIP_R_32F, m, n, v, i, init);
     else if((type == "S" || type == "s") && (dtype == "H" || dtype == "H"))
-        return AmaxTest<float, hipblasLtHalf>(HIP_R_32F, HIP_R_16F, m, n, i, init, workspace);
+        return AmaxTest<float, hipblasLtHalf>(HIP_R_32F, HIP_R_16F, m, n, v, i, init);
     else if((type == "H" || type == "h") && (type == dtype))
-        return AmaxTest<hipblasLtHalf, hipblasLtHalf>(HIP_R_16F, HIP_R_16F, m, n, i, init, workspace);
+        return AmaxTest<hipblasLtHalf, hipblasLtHalf>(HIP_R_16F, HIP_R_16F, m, n, v, i, init);
     else if((type == "H" || type == "h") && (dtype == "S" || dtype == "s"))
-        return AmaxTest<hipblasLtHalf, float>(HIP_R_16F, HIP_R_32F, m, n, i, init, workspace);
+        return AmaxTest<hipblasLtHalf, float>(HIP_R_16F, HIP_R_32F, m, n, i, v, init);
     else
         std::cout << "Unsupported data type " << type << std::endl;
 

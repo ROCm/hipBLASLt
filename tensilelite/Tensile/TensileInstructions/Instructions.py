@@ -432,6 +432,48 @@ class MacroInstruction(Instruction):
     def __str__(self) -> str:
         return self.formatWithComment(self.name + self.getArgStr())
 
+class SAtomicInstruction(Instruction):
+    def __init__(self, instType: InstType, dst, vaddr, offset, \
+                 smem: Optional[SMEMModifiers]=None, \
+                 comment="") -> None:
+        super().__init__(instType, comment)
+        self.dst    = dst
+        self.vaddr  = vaddr
+        self.offset = offset
+        self.smem   = smem
+
+    def getArgStr(self) -> str:
+        kStr = ""
+        kStr += str(self.dst)
+        kStr += ", "
+        kStr += str(self.vaddr)
+        kStr += ", "
+        kStr += str(self.offset)
+        return kStr
+
+    def getParams(self) -> list:
+        l = []
+        l.append(self.dst)
+        l.extend(self.vaddr)
+        l.extend(self.offset)
+        return l
+
+    def toList(self) -> list:
+        self.preStr()
+        l = [self.instStr]
+        l.append(self.dst)
+        l.append(self.vaddr)
+        l.append(self.offset)
+        l.extend(self.smem.toList()) if self.smem else ""
+        l.append(self.comment)
+        return l
+
+    def __str__(self) -> str:
+        self.preStr()
+        kStr = self.instStr + " " + self.getArgStr()
+        kStr += str(self.smem) if self.smem else ""
+        return self.formatWithComment(kStr)
+
 class ReadWriteInstruction(Instruction):
     class RWType(Enum):
         RW_TYPE0 = 1
@@ -1265,6 +1307,11 @@ class SCmpGeU32(CommonInstruction):
         super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
         self.setInst("s_cmp_ge_u32")
 
+class SCmpGtI32(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_I32, None, [src0, src1], None, None, comment)
+        self.setInst("s_cmp_gt_i32")
+
 class SCmpLeI32(CommonInstruction):
     def __init__(self, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_I32, None, [src0, src1], None, None, comment)
@@ -2091,6 +2138,13 @@ class VRcpIFlagF32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, [src], None, None, comment)
         self.setInst("v_rcp_iflag_f32")
+
+#Log
+class VLogF32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src], None, None, comment)
+        self.setInst("v_log_f32")
+
 
 # Rsq,
 class VRsqF16(CommonInstruction):

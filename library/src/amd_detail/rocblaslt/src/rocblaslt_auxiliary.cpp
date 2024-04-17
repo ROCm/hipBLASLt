@@ -1386,7 +1386,7 @@ rocblaslt_status
            && (d_type == HIP_R_8F_E4M3_FNUZ || d_type == HIP_R_8F_E5M2_FNUZ))
         {
 
-            size_t amax_workspace_size = matD->m * matD->n * 4; //only support fp32 D temp
+            size_t amax_workspace_size = matD->m * matD->n * sizeof(float); //only support fp32 D temp
             int    new_returnAlgoCount = *returnAlgoCount;
 
             //restore setting
