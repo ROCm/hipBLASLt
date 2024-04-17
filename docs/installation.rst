@@ -16,10 +16,10 @@ Prerequisites
 * A ROCm enabled platform, for more information refer to `ROCm Documentation <https://rocm.docs.amd.com/>`_.
 * A compatible version of hipBLAS
 
-Installing pre-built packages
+Installing prebuilt packages
 =============================
 
-Download pre-built packages either from `ROCm's native package manager <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/tutorial/quick-start.html#native-package-manager>`_ or by going to the `GitHub releases <https://github.com/ROCm/hipBLAS/releases>`_ and manually downloading, which could be newer.  Release notes are available for each release on the releases tab.
+Download prebuilt packages either from `ROCm's native package manager <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/tutorial/quick-start.html#native-package-manager>`_ or by going to the `GitHub releases <https://github.com/ROCm/hipBLAS/releases>`_ and manually downloading, which could be newer.  Release notes are available for each release on the releases tab.
 
 .. code-block::bash
    sudo apt update && sudo apt install hipblaslt
@@ -163,7 +163,7 @@ The hipBLASLt samples have no external dependencies, but unit test and benchmark
 - `Lapack <https://github.com/Reference-LAPACK/lapack-release>`_,  Lapack itself brings a dependency on a fortran compiler
 - `googletest <https://github.com/google/googletest>`_
 
-Googletest and Lapack are not easy to install. Many distros don't provide a googletest package with pre-compiled libraries and the Lapack packages don't have the necessary ``cmake`` config files for ``cmake`` to configure linking the ``cblas`` library. hipBLASLt provides a ``cmake`` script that builds the above dependencies from source. This is an optional step; you can provide your own builds of these dependencies and help ``cmake`` find them by setting the ``CMAKE_PREFIX_PATH`` definition. The following is a sequence of steps to build dependencies and install them to the ``cmake`` default ``/usr/local``.
+Googletest and Lapack are not easy to install. Many distros don't provide a googletest package with precompiled libraries and the Lapack packages don't have the necessary ``cmake`` config files for ``cmake`` to configure linking the ``cblas`` library. hipBLASLt provides a ``cmake`` script that builds the above dependencies from source. This is an optional step; you can provide your own builds of these dependencies and help ``cmake`` find them by setting the ``CMAKE_PREFIX_PATH`` definition. The following is a sequence of steps to build dependencies and install them to the ``cmake`` default ``/usr/local``.
 
 One-time optional step
 ~~~~~~~~~~~~~~~~~~~~~~~~~
