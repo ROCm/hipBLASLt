@@ -19,7 +19,7 @@ Prerequisites
 Installing pre-built packages
 =============================
 
-Download pre-built packages either from `ROCm's package servers <https://rocm.github.io/install.html#installing-from-amd-rocm-repositories>`_ or by clicking the GitHub releases tab and manually downloading, which could be newer.  Release notes are available for each release on the releases tab.
+Download pre-built packages either from `ROCm's native package manager <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/tutorial/quick-start.html#native-package-manager>`_ or by going to the `GitHub releases <https://github.com/ROCm/hipBLAS/releases>`_ and manually downloading, which could be newer.  Release notes are available for each release on the releases tab.
 
 .. code-block::bash
    sudo apt update && sudo apt install hipblaslt
