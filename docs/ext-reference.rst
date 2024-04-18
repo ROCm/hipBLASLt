@@ -600,7 +600,7 @@ Sample codes
 Here are the sample codes demonstrating use cases of the extension APIs.
 
 Gemm
-*****
+---------
 
 .. code-block:: c++
 
@@ -667,7 +667,7 @@ Gemm
     }
 
 Grouped gemm
-*************
+--------------
 
 .. code-block:: c++
 
@@ -742,7 +742,7 @@ Grouped gemm
     }
 
 Algorithm index
-****************
+-----------------
 
 .. code-block:: c++
 
@@ -763,7 +763,7 @@ Algorithm index
 .. _fixed-mk:
 
 [Grouped Gemm] Fixed MK
-*************************
+------------------------
 
 hipBLASLt extension supports changing the sizes (m, n, k, batch) from the device memory ``UserArguments``, but the setup is a bit different from the normal routing.
 
