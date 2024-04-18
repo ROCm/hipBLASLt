@@ -4,6 +4,12 @@
 
 .. _logging-heuristics:
 
+=======================
+Logging and heuristics
+=======================
+
+This document contains information for debugging and improving the application performance when using hipBLASLt APIs.
+
 Logging
 ==========
 

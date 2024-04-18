@@ -12,7 +12,6 @@ subtrees:
     - file: ext-reference
     - file: ext-ops
     - file: logging-heuristics
-      title: Heuristics
   - caption: Contribution
     entries:
     - file: source-org

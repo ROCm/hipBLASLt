@@ -6,7 +6,6 @@
 
 
 import re
-import sys
 
 from rocm_docs import ROCmDocs
 
