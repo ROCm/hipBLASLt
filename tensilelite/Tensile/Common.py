@@ -277,6 +277,8 @@ globalParameters["RotatingBufferSize"] = 0 # Size in MB
 
 globalParameters["BuildIdKind"] = "sha1"
 
+globalParameters["MakeProgram"] = None
+
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
 
@@ -1501,8 +1503,13 @@ def assignGlobalParameters( config ):
     globalParameters["ROCmPath"] = os.environ.get("ROCM_PATH")
   if "TENSILE_ROCM_PATH" in os.environ:
     globalParameters["ROCmPath"] = os.environ.get("TENSILE_ROCM_PATH")
-  if os.name == "nt" and "HIP_DIR" in os.environ:
-    globalParameters["ROCmPath"] = os.environ.get("HIP_DIR") # windows has no ROCM
+  if os.name == "nt":
+    possibleHipPaths = ('HIP_DIR', 'HIP_PATH',)
+
+    for p in possibleHipPaths:
+      if p in os.environ:
+        globalParameters["ROCmPath"] = os.environ.get(p) # windows has no ROCM
+        break # use the first non-null one
   globalParameters["CmakeCxxCompiler"] = None
   if "CMAKE_CXX_COMPILER" in os.environ:
     globalParameters["CmakeCxxCompiler"] = os.environ.get("CMAKE_CXX_COMPILER")

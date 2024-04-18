@@ -496,7 +496,11 @@ int main(int argc, const char* argv[])
 
     auto filename = args["library-file"].as<std::string>();
 
+    #if _WIN32
+    size_t      directoryPos     = filename.rfind('\\');
+    #else
     size_t      directoryPos     = filename.rfind('/');
+    #endif
     std::string libraryDirectory = filename;
     if(directoryPos != std::string::npos)
         libraryDirectory.resize(directoryPos + 1);

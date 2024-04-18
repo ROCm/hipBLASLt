@@ -59,7 +59,7 @@
 #include <type_traits>
 #include <vector>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <io.h>
 #else
@@ -1022,7 +1022,7 @@ namespace
         void initialize(Tensile::hip::SolutionAdapter& adapter, int32_t deviceId)
         {
             std::string path;
-#ifndef WIN32
+#ifndef _WIN32
             path.reserve(PATH_MAX);
 #endif
 
@@ -1042,7 +1042,7 @@ namespace
                 // Fall back on hard-coded path if static library or not found
 
 #ifndef HIPBLASLT_STATIC_LIB
-#ifdef WIN32
+#ifdef _WIN32
                 std::vector<TCHAR> dll_path(MAX_PATH + 1);
                 if(GetModuleFileNameA(
                        GetModuleHandleA("hipblaslt.dll"), dll_path.data(), MAX_PATH + 1))
@@ -1078,7 +1078,7 @@ namespace
             auto dir = path + "/*" + processor + "*co";
 
             bool no_match = false;
-#ifdef WIN32
+#ifdef _WIN32
             std::replace(dir.begin(), dir.end(), '/', '\\');
             WIN32_FIND_DATAA finddata;
             HANDLE           hfine = FindFirstFileA(dir.c_str(), &finddata);

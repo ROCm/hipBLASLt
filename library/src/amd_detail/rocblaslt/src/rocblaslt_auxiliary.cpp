@@ -31,7 +31,7 @@
 #include "tensile_host.hpp"
 #include "utility.hpp"
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <link.h>
 #endif
 
@@ -1627,14 +1627,14 @@ std::string rocblaslt_internal_get_arch_name()
 
 bool rocblaslt_internal_test_path(const std::string& path)
 {
-#ifdef WIN32
+#ifdef _WIN32
     return ((_access(path.c_str(), 4) != -1) || (_access(path.c_str(), 6) != -1));
 #else
     return access(path.c_str(), R_OK) == 0;
 #endif
 }
 
-#ifndef WIN32
+#ifndef _WIN32
 int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info* hdr_info, size_t size, void* data)
 {
     // uncomment to see all dependent .so files

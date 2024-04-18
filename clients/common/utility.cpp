@@ -32,7 +32,7 @@
 #include <stdexcept>
 #include <stdlib.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <libloaderapi.h>
 #else
@@ -55,7 +55,7 @@ namespace fs = std::experimental::filesystem;
 // Return path of this executable
 std::string hipblaslt_exepath()
 {
-#ifdef WIN32
+#ifdef _WIN32
     std::vector<TCHAR> result(MAX_PATH + 1);
     // Ensure result is large enough to accommodate the path
     DWORD length = 0;
@@ -99,11 +99,11 @@ std::string hipblaslt_exepath()
 // Temp directory rooted random path
 std::string hipblaslt_tempname()
 {
-#ifdef WIN32
+#ifdef _WIN32
     // Generate "/tmp/rocblas-XXXXXX" like file name
     const std::string alphanum     = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv";
     int               stringlength = alphanum.length() - 1;
-    std::string       uniquestr    = "rocblas-";
+    std::string       uniquestr    = "hipblaslt-";
 
     for(auto n : {0, 1, 2, 3, 4, 5})
         uniquestr += alphanum.at(rand() % stringlength);

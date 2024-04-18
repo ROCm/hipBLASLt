@@ -45,7 +45,7 @@
 #include <map>
 #include <omp.h>
 #include <set>
-#ifdef WIN32
+#ifdef _WIN32
 #include <cstdlib>
 #include <numeric>
 #endif

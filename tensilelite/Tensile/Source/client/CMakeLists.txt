@@ -73,6 +73,10 @@ target_include_directories(TensileClient PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/inc
 #target_link_libraries(TensileClient PRIVATE TensileHost ${Boost_LIBRARIES} rocm_smi)
 target_link_libraries(TensileClient PRIVATE TensileHost ${Boost_LIBRARIES})
 
+if (WIN32)
+    target_link_libraries(TensileClient PRIVATE TensileHost shlwapi)
+endif()
+
 if(NOT WIN32)
     target_link_libraries(TensileClient PRIVATE TensileHost rocm_smi)
 endif()

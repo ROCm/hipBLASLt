@@ -20,15 +20,13 @@
    CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import re
-import sys
 import os
 import platform
 import subprocess
 import argparse
 import pathlib
 from xml.dom import minidom
-from fnmatch import fnmatchcase
+import shutil
 
 SCRIPT_VERSION = 0.1
 
@@ -38,7 +36,7 @@ OS_info = {}
 var_subs = {}
 
 vcpkg_script = ['tdir %IDIR%', 
-                'git clone -b 2022.05.10 https://github.com/microsoft/vcpkg %IDIR%', 'cd %IDIR%', 'bootstrap-vcpkg.bat -disableMetrics' ]
+                'git clone -b 2024.03.25 https://github.com/microsoft/vcpkg %IDIR%', 'cd %IDIR%', 'bootstrap-vcpkg.bat -disableMetrics' ]
 
 xml_script = [ '%XML%' ]
 
@@ -73,7 +71,7 @@ def create_dir(dir_path):
 def delete_dir(dir_path) :
     if (not os.path.exists(dir_path)):
         return
-    return run_cmd( "RMDIR" , f"/S /Q {dir_path}")
+    return shutil.rmtree(dir_path, True)
 
 def run_cmd(cmd):
     global args
