@@ -5,7 +5,7 @@
 .. _api-reference:
 
 ***********************
-hipBLASLt API Reference
+hipBLASLt API reference
 ***********************
 
 hipblasLtCreate()

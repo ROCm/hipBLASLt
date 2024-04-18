@@ -12,7 +12,7 @@ subtrees:
     - file: ext-reference
     - file: ext-ops
     - file: logging-heuristics
-      title:  Logging and heuristics
+      title: Logging and heuristics
   - caption: Contribution
     entries:
     - file: source-org
