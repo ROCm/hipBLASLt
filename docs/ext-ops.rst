@@ -29,7 +29,7 @@ These extensions support:
     it is an independent function used to just call and get result.
     For sample code, refer to `sample_hipblaslt_ext_op_amax_with_scale.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/samples/ext_op/sample_hipblaslt_ext_op_amax_with_scale.cpp>`_.
 
-These APIs are explained in detail below:
+These APIs are explained in detail below.
 
 hipblasltExtSoftmax()
 ------------------------------------------
