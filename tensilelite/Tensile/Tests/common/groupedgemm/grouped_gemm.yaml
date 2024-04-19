@@ -30,9 +30,7 @@ BenchmarkProblems:
       Batched: True
       UseBias:       1
       Activation:    True
-      ActivationHPA: True
       GroupedGemm:   True
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -81,9 +79,7 @@ BenchmarkProblems:
       Batched: True
       UseBias:       1
       Activation:    True
-      ActivationHPA: True
       GroupedGemm:   True
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -131,9 +127,7 @@ BenchmarkProblems:
       Batched: True
       UseBias:       1
       Activation:    True
-      ActivationHPA: True
       GroupedGemm:   True
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -181,9 +175,7 @@ BenchmarkProblems:
       Batched: True
       UseBias:       1
       Activation:    True
-      ActivationHPA: True
       GroupedGemm:   True
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:

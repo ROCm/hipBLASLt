@@ -15,7 +15,6 @@ GlobalParameters:
   DataInitTypeBeta: 0
   # DataInitTypeA: 1
   # DataInitTypeB: 1
-  DataInitTypeScaleDVec: 1
   UseUserArgs: False
   NumElementsToValidate: 128
   BoundsCheck: 2

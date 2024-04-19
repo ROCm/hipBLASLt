@@ -33,8 +33,6 @@ BenchmarkProblems:
       UseE: True
       UseBias:       0
       Activation:    True
-      ActivationHPA: True
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -89,8 +87,6 @@ BenchmarkProblems:
       UseE: True
       UseBias:       0
       Activation:    True
-      ActivationHPA: True
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:

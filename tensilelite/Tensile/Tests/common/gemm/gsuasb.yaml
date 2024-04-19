@@ -36,7 +36,6 @@ BenchmarkProblems:
       UseBias:       0
       UseE:          False
       Activation:    False
-      ActivationHPA: False
       UseScaleAB: False
       # SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
