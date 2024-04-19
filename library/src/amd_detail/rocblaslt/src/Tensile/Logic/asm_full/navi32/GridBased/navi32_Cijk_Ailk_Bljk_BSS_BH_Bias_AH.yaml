@@ -4,7 +4,6 @@
 - [Device 73f0]
 - Activation: true
   ActivationComputeDataType: 0
-  ActivationHPA: true
   ActivationNoGuard: false
   ActivationType: all
   AllowNoFreeDims: false
@@ -66,7 +65,6 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleDVec: false
 - - 1LDSBuffer: 0
     ActivationAlt: false
     ActivationFuncCall: true
@@ -196,7 +194,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationNoGuard: false
       ActivationType: all
       AllowNoFreeDims: false
@@ -258,7 +255,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -441,7 +437,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationNoGuard: false
       ActivationType: all
       AllowNoFreeDims: false
@@ -503,7 +498,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -686,7 +680,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationNoGuard: false
       ActivationType: all
       AllowNoFreeDims: false
@@ -748,7 +741,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1

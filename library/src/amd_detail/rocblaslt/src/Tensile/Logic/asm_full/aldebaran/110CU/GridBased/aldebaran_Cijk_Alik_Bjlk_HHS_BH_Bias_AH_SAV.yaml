@@ -5,7 +5,6 @@
     740c]
 - Activation: true
   ActivationComputeDataType: 0
-  ActivationHPA: true
   ActivationType: all
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
@@ -56,7 +55,6 @@
   UseBias: 1
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleDVec: false
   UseScaleAlphaVec: true
 - - 1LDSBuffer: 0
     ActivationFuncCall: true
@@ -174,7 +172,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -225,7 +222,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3

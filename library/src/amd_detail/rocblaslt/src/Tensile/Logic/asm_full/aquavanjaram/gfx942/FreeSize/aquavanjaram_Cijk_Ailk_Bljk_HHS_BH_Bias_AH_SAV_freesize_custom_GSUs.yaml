@@ -4,7 +4,6 @@
 - [Device 0049]
 - Activation: true
   ActivationComputeDataType: 0
-  ActivationHPA: true
   ActivationType: all
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
@@ -58,7 +57,6 @@
   UseInitialStridesAB: false
   UseInitialStridesCD: false
   UseScaleAlphaVec: true
-  UseScaleDVec: false
 - - 1LDSBuffer: 0
     ActivationAlt: false
     ActivationFuncCall: true

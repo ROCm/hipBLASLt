@@ -339,7 +339,6 @@ BenchmarkProblems:
       Batched: True
       UseBias: 1
       Activation: True
-      ActivationHPA: True
       UseScaleAlphaVec: True
       UseScaleAB: True
     - # BenchmarkProblemSizeGroup - Standard - All problem

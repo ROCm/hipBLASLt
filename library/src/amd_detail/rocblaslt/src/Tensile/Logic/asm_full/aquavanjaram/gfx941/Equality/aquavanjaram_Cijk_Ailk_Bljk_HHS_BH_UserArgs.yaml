@@ -55,7 +55,6 @@
   UseBias: 0
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleDVec: false
 - - 1LDSBuffer: 0
     ActivationFuncCall: false
     ActivationFused: true
@@ -224,7 +223,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -440,7 +438,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -656,7 +653,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -872,7 +868,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1088,7 +1083,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1304,7 +1298,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1520,7 +1513,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1736,7 +1728,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1952,7 +1943,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2168,7 +2158,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2384,7 +2373,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2600,7 +2588,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2816,7 +2803,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -3032,7 +3018,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -3248,7 +3233,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -3721,7 +3705,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -3937,7 +3920,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -4153,7 +4135,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -4384,7 +4365,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -4621,7 +4601,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -4858,7 +4837,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -5095,7 +5073,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -5332,7 +5309,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -5569,7 +5545,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -5806,7 +5781,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -6043,7 +6017,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -6286,7 +6259,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -6530,7 +6502,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -6774,7 +6745,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -7018,7 +6988,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -7262,7 +7231,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -7506,7 +7474,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -7744,7 +7711,6 @@
       UseBias: 0
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -7987,7 +7953,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -8231,7 +8196,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -8475,7 +8439,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -8724,7 +8687,6 @@
       UseInitialStridesCD: false
       UseScaleAB: false
       UseScaleAlphaVec: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -8972,7 +8934,6 @@
       UseInitialStridesCD: false
       UseScaleAB: false
       UseScaleAlphaVec: false
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1

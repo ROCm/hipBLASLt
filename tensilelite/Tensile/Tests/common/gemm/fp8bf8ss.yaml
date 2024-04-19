@@ -36,7 +36,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,b]
       UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -109,7 +108,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,b]
       UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:

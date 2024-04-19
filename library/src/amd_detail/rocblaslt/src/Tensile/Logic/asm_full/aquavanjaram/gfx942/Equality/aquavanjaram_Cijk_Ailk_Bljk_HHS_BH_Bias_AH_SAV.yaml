@@ -4,7 +4,6 @@
 - [Device 0049]
 - Activation: true
   ActivationComputeDataType: 0
-  ActivationHPA: true
   ActivationType: all
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
@@ -57,7 +56,6 @@
   UseInitialStridesAB: false
   UseInitialStridesCD: false
   UseScaleAlphaVec: true
-  UseScaleDVec: false
 - - 1LDSBuffer: 0
     ActivationFuncCall: 0
     ActivationFused: true
@@ -174,7 +172,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -227,7 +224,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -391,7 +387,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -444,7 +439,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -608,7 +602,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -661,7 +654,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -825,7 +817,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -878,7 +869,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1041,7 +1031,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1095,7 +1084,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1258,7 +1246,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1312,7 +1299,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1478,7 +1464,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationNoGuard: false
       ActivationType: all
       AllowNoFreeDims: false
@@ -1536,7 +1521,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1704,7 +1688,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1761,7 +1744,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1927,7 +1909,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1981,7 +1962,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2145,7 +2125,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2199,7 +2178,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2363,7 +2341,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2417,7 +2394,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2581,7 +2557,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2635,7 +2610,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2799,7 +2773,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2853,7 +2826,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -3017,7 +2989,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3071,7 +3042,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -3235,7 +3205,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3289,7 +3258,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -3453,7 +3421,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3507,7 +3474,6 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -3689,7 +3655,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3944,7 +3909,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true

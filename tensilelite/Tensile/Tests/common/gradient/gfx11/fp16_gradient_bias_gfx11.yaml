@@ -37,9 +37,7 @@ BenchmarkProblems:
       UseBias: True
       BiasSrc: "D"
       Activation: True
-      ActivationHPA: True
       ActivationGuard: True
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -107,9 +105,7 @@ BenchmarkProblems:
       UseBias: True
       BiasSrc: "A"
       Activation: False
-      ActivationHPA: False
       ActivationGuard: False
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -177,9 +173,7 @@ BenchmarkProblems:
       UseBias: True
       BiasSrc: "A"
       Activation: False
-      ActivationHPA: False
       ActivationGuard: False
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -250,9 +244,7 @@ BenchmarkProblems:
       UseBias: True
       BiasSrc: "A"
       Activation: False
-      ActivationHPA: False
       ActivationGuard: False
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -321,9 +313,7 @@ BenchmarkProblems:
       UseBias: True
       BiasSrc: "B"
       Activation: False
-      ActivationHPA: False
       ActivationGuard: False
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -392,9 +382,7 @@ BenchmarkProblems:
       UseBias: True
       BiasSrc: "B"
       Activation: False
-      ActivationHPA: False
       ActivationGuard: False
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:

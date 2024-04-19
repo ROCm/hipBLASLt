@@ -39,9 +39,7 @@ BenchmarkProblems:
       UseBias:       1
       UseE:          False
       Activation:    True
-      ActivationHPA: True
       GroupedGemm:   True
-      UseScaleDVec:    True
       SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -92,9 +90,7 @@ BenchmarkProblems:
       UseBias:       0
       UseE:          False
       Activation:    False
-      ActivationHPA: False
       GroupedGemm:   True
-      UseScaleDVec:    False
       SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -144,9 +140,7 @@ BenchmarkProblems:
       UseBias:       0
       UseE:          False
       Activation:    False
-      ActivationHPA: False
       GroupedGemm:   True
-      UseScaleDVec:    True
       UseScaleAlphaVec: True
       SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard

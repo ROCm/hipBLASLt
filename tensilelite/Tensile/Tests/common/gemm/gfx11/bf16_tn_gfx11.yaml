@@ -30,7 +30,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:

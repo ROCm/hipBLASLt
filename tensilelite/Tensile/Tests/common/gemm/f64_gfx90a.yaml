@@ -28,7 +28,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: False
-      ActivationHPA: False
       B2BGemm: False
 
 
