@@ -22,11 +22,13 @@ Installing prebuilt packages
 Download prebuilt packages from `ROCm's native package manager <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/tutorial/quick-start.html#native-package-manager>`_ .
 
 .. code-block:: bash
-   
+
    sudo apt update && sudo apt install hipblaslt
 
 Build using script
 ========================
+
+You can use ``install.sh`` script to build and install hipBLASLt and dependencies. The following sections explain the usage of ``install.sh`` script along with various options.
 
 Build library dependencies and library
 ---------------------------------------
