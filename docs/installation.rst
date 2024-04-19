@@ -14,7 +14,7 @@ Prerequisites
 =============
 
 * A ROCm enabled platform. For more information refer to `ROCm Documentation <https://rocm.docs.amd.com/>`_.
-* A compatible version of hipBLAS
+* A compatible version of hipBLAS.
 
 Installing prebuilt packages
 =============================
