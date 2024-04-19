@@ -30,7 +30,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       SetConstStrideBias: [[2, -1]] #set bias stride = -1, strides will be set to M
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -95,7 +94,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       SetConstStrideBias: [[2, -1]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -160,7 +158,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       SetConstStrideBias: [[2, -1]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -225,7 +222,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       SetConstStrideBias: [[2, -1]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -290,7 +286,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       SetConstStrideBias: [[2, -1]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -355,7 +350,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       SetConstStrideBias: [[2, -1]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -420,7 +414,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       SetConstStrideBias: [[2, -1]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -485,7 +478,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       SetConstStrideBias: [[2, -1]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -551,7 +543,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       SetConstStrideBias: [[2, -1]]
       BiasDataTypeList: ['s']
 
@@ -617,7 +608,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       SetConstStrideBias: [[2, -1]]
       BiasDataTypeList: ['s']
 
