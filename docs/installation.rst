@@ -13,7 +13,7 @@ This document provides all the information required to build and install hipBLAS
 Prerequisites
 =============
 
-* A ROCm enabled platform, for more information refer to `ROCm Documentation <https://rocm.docs.amd.com/>`_.
+* A ROCm enabled platform. For more information refer to `ROCm Documentation <https://rocm.docs.amd.com/>`_.
 * A compatible version of hipBLAS
 
 Installing prebuilt packages
@@ -21,7 +21,7 @@ Installing prebuilt packages
 
 Download prebuilt packages from `ROCm's native package manager <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/tutorial/quick-start.html#native-package-manager>`_ .
 
-.. code-block::bash
+.. code-block:: bash
    sudo apt update && sudo apt install hipblaslt
 
 Build using script
@@ -61,7 +61,7 @@ Typical uses of ``install.sh`` to build (library dependencies and library) are l
 |                                           | ``/opt/rocm/hipblaslt``.          |
 |                                           | This prompts for                  |
 |                                           | sudo access and installs          |
-|                                           |for all users.                     |
+|                                           | for all users.                    |
 |                                           | If you want to keep               |
 |                                           | hipBLASLt in your local           |
 |                                           | directory, don't use ``-i`` flag. |
@@ -140,7 +140,7 @@ This section provides information on how to configure cmake and build manually u
 Build library manually
 ----------------------------------------
 
-.. code-block::bash
+.. code-block:: bash
    mkdir -p [HIPBLASLT_BUILD_DIR]/release
    cd [HIPBLASLT_BUILD_DIR]/release
    # Default install location is in /opt/rocm, define -DCMAKE_INSTALL_PREFIX=<path> to specify other
@@ -168,7 +168,8 @@ Googletest and Lapack are not easy to install. Many distros don't provide a goog
 One-time optional step
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block::bash
+.. code-block:: bash
+
    mkdir -p [HIPBLASLT_BUILD_DIR]/release/deps
    cd [HIPBLASLT_BUILD_DIR]/release/deps
    ccmake -DBUILD_BOOST=OFF [HIPBLASLT_SOURCE]/deps   # assuming boost is installed through package manager as above
