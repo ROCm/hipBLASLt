@@ -2,14 +2,19 @@
 # These comments will also be removed.
 root: index
 subtrees:
-  - numbered: False
+  - caption: Install
     entries:
-    - file: install
-    - file: orga
+    - file: installation    
+  - caption: API reference
+    entries:
     - file: datatypes
-    - file: functions
-    - file: usage
+    - file: api-reference
+    - file: ext-reference
     - file: ext-ops
+    - file: logging-heuristics
+  - caption: Contribution
+    entries:
+    - file: source-org
     - file: clients
   - caption: About
     entries:
