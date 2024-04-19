@@ -22,6 +22,7 @@ Installing prebuilt packages
 Download prebuilt packages from `ROCm's native package manager <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/tutorial/quick-start.html#native-package-manager>`_ .
 
 .. code-block:: bash
+   
    sudo apt update && sudo apt install hipblaslt
 
 Build using script
@@ -141,6 +142,7 @@ Build library manually
 ----------------------------------------
 
 .. code-block:: bash
+
    mkdir -p [HIPBLASLT_BUILD_DIR]/release
    cd [HIPBLASLT_BUILD_DIR]/release
    # Default install location is in /opt/rocm, define -DCMAKE_INSTALL_PREFIX=<path> to specify other
@@ -177,7 +179,7 @@ One-time optional step
 
 Once dependencies are available on the system, it is possible to configure the clients to build. This requires a few extra ``cmake`` flags to the library ``cmake`` configure script. If the dependencies are not installed into system defaults (like ``/usr/local`` ), pass the ``CMAKE_PREFIX_PATH`` to ``cmake`` to help find them.
 
-.. code-block::bash
+.. code-block:: bash
 
    -DCMAKE_PREFIX_PATH="<semicolon separated paths>"
    # Default install location is in /opt/rocm, use -DCMAKE_INSTALL_PREFIX=<path> to specify other
