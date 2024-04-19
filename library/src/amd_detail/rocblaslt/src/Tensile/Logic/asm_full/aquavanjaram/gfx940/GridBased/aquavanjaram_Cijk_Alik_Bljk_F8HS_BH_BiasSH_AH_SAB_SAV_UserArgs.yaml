@@ -11,7 +11,7 @@
   AssignedDerivedParameters: true
   Batched: true
   BetaOnlyUseBias: false
-  BiasDataTypeList: [4]
+  BiasDataTypeList: [0, 4]
   BiasSrc: D
   ComplexConjugateA: false
   ComplexConjugateB: false
@@ -207,7 +207,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [4]
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -456,7 +456,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [4]
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
