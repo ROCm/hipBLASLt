@@ -166,11 +166,11 @@ namespace Tensile
                 ("use-default-stream",       po::value<bool>()->default_value(false), "Use default Hip stream to run kernels.")
                 ("platform-idx",             po::value<int>()->default_value(0), "OpenCL Platform Index")
 
-                ("num-warmups",              po::value<int>()->default_value(0), "Number of warmups to run")
+                ("num-warmups",              po::value<int>()->default_value(0), "Number of warmups to run, will affect max-enqueues-per-sync if set")
                 ("sync-after-warmups",       po::value<bool>()->default_value(true), "Synchronize GPU after warmup kernel runs")
                 ("num-benchmarks",           po::value<int>()->default_value(1), "Number of benchmarks to run")
                 ("num-enqueues-per-sync",    po::value<int>()->default_value(1), "Enqueues per sync, will affect by min-flops-per-sync")
-                ("max-enqueues-per-sync",    po::value<int>()->default_value(-1), "Max Enqueues per sync, will affect by min-flops-per-sync")
+                ("max-enqueues-per-sync",    po::value<int>()->default_value(-1), "Max Enqueues per sync, will affect by min-flops-per-sync and num-warmups")
                 ("num-syncs-per-benchmark",  po::value<int>()->default_value(1), "Syncs per benchmark")
                 ("min-flops-per-sync",       po::value<size_t>()->default_value(0), "Minimum number of flops per sync to increase stability for small problems.")
                 ("use-gpu-timer",            po::value<bool>()->default_value(true), "Use GPU timer")
@@ -649,12 +649,11 @@ int main(int argc, const char* argv[])
                                 kernels.push_back(kernel);
                             }
 
-                            size_t       warmupInvocations = listeners.numWarmupRuns();
                             size_t       eventCount        = gpuTimer ? kernels[0].size() : 0;
                             TimingEvents warmupStartEvents(warmupInvocations, eventCount);
                             TimingEvents warmupStopEvents(warmupInvocations, eventCount);
 
-                            for(int i = 0; i < warmupInvocations; i++)
+                            for(int i = 0; i < listeners.numWarmupRuns(); i++)
                             {
                                 size_t kIdx = i % kernels.size();
                                 listeners.preWarmup();
