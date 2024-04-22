@@ -31,10 +31,11 @@ gfx94x platform.
 | fp16  | fp16  | fp16  | fp16  | fp32  |
 | fp16  | fp16  | fp16  | fp32  | fp32  |
 | bf16  | bf16  | bf16  | bf16  | fp32  |
-| fp8   | fp8/bf8  | fp32   | fp32  | fp32  |
-| fp8   | fp8/bf8  | fp16   | fp16  | fp32  |
-| bf8   | fp8  | fp32  | fp32  | fp32  |
-| bf8   | fp8  | fp16  | fp16  | fp32  |
+| fp8/bf8  | fp8/bf8  | fp32   | fp32  | fp32  |
+| fp8/bf8  | fp8/bf8  | fp16   | fp16  | fp32  |
+| fp8/bf8  | fp8/bf8  | bf16   | bf16  | fp32  |
+| fp8/bf8  | fp8/bf8  | fp8   | fp8  | fp32  |
+| fp8/bf8  | fp8/bf8  | bf8   | bf8  | fp32  |
 
 ## Documentation
 
@@ -66,6 +67,7 @@ Required hardware:
 
 * gfx90a card
 * gfx94x card
+* gfx110x card
 
 Required software:
 

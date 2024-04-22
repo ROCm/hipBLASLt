@@ -228,9 +228,9 @@ endif()
 find_package( hipblas REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 
 # Setup version
-set(VERSION_STRING "0.7.0")
+set(VERSION_STRING "0.8.0")
 rocm_setup_version(VERSION ${VERSION_STRING})
-set(hipblaslt_SOVERSION 0.7)
+set(hipblaslt_SOVERSION 0.8)
 
 
 if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
