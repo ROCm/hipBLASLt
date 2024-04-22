@@ -70,7 +70,7 @@ globalParameters["MinFlopsPerSync"] = 1           # Minimum number of flops per 
 globalParameters["NumBenchmarks"] = 1             # how many benchmark data points to collect per problem/solution
 globalParameters["SyncsPerBenchmark"] = 1         # how iterations of the stream synchronization for-loop to do per benchmark data point
 globalParameters["EnqueuesPerSync"] = 1           # how many solution enqueues to perform per synchronization
-globalParameters["MaxEnqueuesPerSync"] = -1       # max solution enqueues to perform per synchronization. This factor will be restricted to 30ms if NumWarmups is set.
+globalParameters["MaxEnqueuesPerSync"] = -1       # max solution enqueues to perform per synchronization. This factor will be restricted if NumWarmups touches 30ms.
 globalParameters["SleepPercent"] = 300            # how long to sleep after every data point: 25 means 25% of solution time. Sleeping lets gpu cool down more.
 # cProfile
 globalParameters["Profiler"] = 0                  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
