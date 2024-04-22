@@ -123,7 +123,9 @@ namespace Tensile
             double_millis m_totalWarmupTime = double_millis::zero();
 
             int m_maxEnqueuesPerSync;
+            int m_initMaxEnqueuesPerSync;
             int m_numWarmups;
+            int m_initNumWarmups;
             int m_totalWarmupCounts = 0;
         };
     } // namespace Client
