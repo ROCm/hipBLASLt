@@ -1991,8 +1991,13 @@ class Solution(collections.abc.Mapping):
           reject(state, "WMMA only support half, bf16 and i8 type")
           return
       if state["InterleaveAlpha"]:
-        reject(state, "Matrix unstruction doesn't support InterleaveAlpha")
+        reject(state, "Matrix instruction doesn't support InterleaveAlpha")
         return
+      if state["ProblemType"]["DataType"].isInt8():
+        if isa[:2] == (9, 4):
+          if tuple(state["MatrixInstruction"])[:3] in ((32, 32, 8), (16, 16, 16)):
+            reject(state, "v_mfma_i32_32x32x8 and v_mfma_i32_16x16x16 have been deprecated in gfx94x")
+            return
       if state["ProblemType"]["ComputeDataType"].isDouble():
         # See [4,4,4,4] snop for more info
         if state["MatrixInstruction"] == [4,4,4,4] and (not state['ISA'] == [9,0,10]) and state["ScheduleIterAlg"] == 3:
