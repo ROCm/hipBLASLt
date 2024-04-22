@@ -57,7 +57,7 @@ namespace Tensile
             , m_totalGPUTime(0)
         {
             m_initMaxEnqueuesPerSync = m_maxEnqueuesPerSync;
-            m_initNumWarmups = m_numWarmups;
+            m_initNumWarmups         = m_numWarmups;
         }
 
         bool BenchmarkTimer::needMoreBenchmarkRuns() const
@@ -178,13 +178,15 @@ namespace Tensile
             m_totalWarmupTime += double_millis(m_endTime - m_startTime);
             m_totalWarmupCounts += 1;
 
-            if (m_totalWarmupTime >= double_millis(30.0)) {
-                std::cout << "Total warmup time is already 30ms, num-warmups is set 0, max-enqueues-per-sync is set "
+            if(m_totalWarmupTime >= double_millis(30.0))
+            {
+                std::cout << "Total warmup time is already 30ms, num-warmups is set 0, "
+                             "max-enqueues-per-sync is set "
                           << m_totalWarmupCounts << std::endl;
-                m_numWarmups = 0;
+                m_numWarmups         = 0;
                 m_maxEnqueuesPerSync = m_totalWarmupCounts;
-                m_totalWarmupTime = double_millis::zero();
-                m_totalWarmupCounts = 0;
+                m_totalWarmupTime    = double_millis::zero();
+                m_totalWarmupCounts  = 0;
             }
         }
 
@@ -275,7 +277,7 @@ namespace Tensile
 
             // recover original values which are changed by postWarmup
             m_maxEnqueuesPerSync = m_initMaxEnqueuesPerSync;
-            m_numWarmups = m_initNumWarmups;
+            m_numWarmups         = m_initNumWarmups;
         }
 
         void BenchmarkTimer::validateEnqueues(std::shared_ptr<ProblemInputs> inputs,

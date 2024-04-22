@@ -649,7 +649,7 @@ int main(int argc, const char* argv[])
                                 kernels.push_back(kernel);
                             }
 
-                            size_t       eventCount        = gpuTimer ? kernels[0].size() : 0;
+                            size_t eventCount = gpuTimer ? kernels[0].size() : 0;
                             TimingEvents warmupStartEvents(warmupInvocations, eventCount);
                             TimingEvents warmupStopEvents(warmupInvocations, eventCount);
 
