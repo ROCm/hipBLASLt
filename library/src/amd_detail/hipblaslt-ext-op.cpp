@@ -35,7 +35,6 @@
 #include <fstream>
 #include <hip/hip_ext.h>
 #include <hip/hip_runtime_api.h>
-#include <libgen.h>
 #include <memory>
 #include <rocblaslt-auxiliary.h>
 #include <sstream>
@@ -475,6 +474,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
                                           uint32_t          n,
                                           hipStream_t       stream)
 {
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
     if(datatype != HIP_R_32F
        || scaleDatatype != HIP_R_8F_E4M3_FNUZ && scaleDatatype != HIP_R_8F_E5M2_FNUZ)
     {
@@ -541,4 +541,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     }
 
     return HIPBLAS_STATUS_SUCCESS;
+#else
+    return HIPBLAS_STATUS_NOT_SUPPORTED;
+#endif
 }

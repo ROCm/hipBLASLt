@@ -561,7 +561,7 @@ namespace hipblaslt_ext
                                              m_gemm_count));
         if(status == HIPBLAS_STATUS_SUCCESS)
         {
-            m_problem_types = tmptype;
+            m_problem_types = std::move(tmptype);
         }
         return status;
     }

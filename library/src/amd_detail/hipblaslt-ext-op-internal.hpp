@@ -33,11 +33,21 @@
 #include <algorithm>
 #include <cstdint>
 #include <fstream>
-#include <libgen.h>
 #include <msgpack.hpp>
+#include <string>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+
+#ifdef _WIN32
+inline std::string dirname(const std::string &dir)
+{
+    const auto pos = dir.find_last_of('\\');
+    return dir.substr(0, pos);
+}
+#else
+#include <libgen.h>
+#endif
 
 class SoftmaxProblem;
 class SoftmaxSolution;

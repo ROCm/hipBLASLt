@@ -60,10 +60,24 @@
 #include "hipblaslt-types.h"
 #endif
 
+#if (HIP_LIBRARY_MAJOR_VERSION < 6)
+typedef hipblasDatatype_t hipblasComputeType_t;
+#define HIPBLAS_COMPUTE_64F HIPBLAS_R_64F
+#define HIPBLAS_COMPUTE_32F HIPBLAS_R_32F
+#define HIPBLAS_COMPUTE_16F HIPBLAS_R_16F
+#define HIPBLAS_COMPUTE_8I HIPBLAS_R_8I
+#define HIPBLAS_COMPUTE_8U HIPBLAS_R_8U
+#define HIPBLAS_COMPUTE_32I HIPBLAS_R_32I
+#define HIPBLAS_COMPUTE_32U HIPBLAS_R_32U
+#define HIPBLAS_COMPUTE_16B HIPBLAS_R_16B
+#define HIPBLASLT_DATATYPE_INVALID static_cast<hipDataType>(31)
+#else
+#define HIPBLASLT_DATATYPE_INVALID static_cast<hipDataType>(255)
+#endif
+
 /* Opaque structures holding information */
 // clang-format off
 
-#define HIPBLASLT_DATATYPE_INVALID static_cast<hipDataType>(255)
 
 /*! \ingroup types_module
  *  \brief Specify the enum type to set the postprocessing options for the epilogue.

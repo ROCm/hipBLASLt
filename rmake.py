@@ -19,11 +19,10 @@
    CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import re
-import sys
 import os
 import platform
 import subprocess
+import shutil
 import argparse
 import pathlib
 
@@ -165,7 +164,7 @@ def create_dir(dir_path):
 def delete_dir(dir_path):
     if (not os.path.exists(dir_path)):
         return
-    run_cmd("RMDIR", f"/S /Q {dir_path}")
+    shutil.rmtree(dir_path)
 
 def cmake_path(os_path):
     return os_path.replace("\\", "/")
@@ -194,6 +193,10 @@ def config_cmd():
 
     # CMAKE_PREFIX_PATH set to rocm_path and HIP_PATH set BY SDK Installer
     raw_rocm_path = cmake_path(os.getenv('HIP_PATH', "C:/hip"))
+
+    if raw_rocm_path:
+        os.environ["HIP_PATH"] = raw_rocm_path
+
     rocm_path = f'"{raw_rocm_path}"' # guard against spaces in path
     # CPACK_PACKAGING_INSTALL_PREFIX= defined as blank as it is appended to end of path for archive creation
     #cmake_platform_opts.append(f"-DCPACK_PACKAGING_INSTALL_PREFIX=")
@@ -270,7 +273,7 @@ def config_cmd():
     if not args.build_tensile:
         cmake_options.append(f"-DBUILD_WITH_TENSILE=OFF")
     else:
-        cmake_options.append(f"-DTensile_CODE_OBJECT_VERSION=V3")
+        cmake_options.append(f"-DTensile_CODE_OBJECT_VERSION=V4")
         if args.tensile_logic:
             cmake_options.append(f"-DTensile_LOGIC={args.tensile_logic}")
         if args.tensile_fork:

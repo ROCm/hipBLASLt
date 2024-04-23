@@ -31,12 +31,16 @@
 #include "tensile_host.hpp"
 #include "utility.hpp"
 
-#ifndef _WIN32
+#if _WIN32
+#include <Windows.h>
+#include <libloaderapi.h>
+#include <io.h>
+#else
 #include <link.h>
+#include <unistd.h>
 #endif
 
 #include <hip/hip_runtime_api.h>
-#include <unistd.h>
 #include <utility>
 
 #define TO_STR2(x) #x
@@ -551,12 +555,14 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             case rocblaslt_compute_f32_fast_xf32:
             case rocblaslt_compute_f64:
             case rocblaslt_compute_i32:
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
             case rocblaslt_compute_f32_fast_f16:
             case rocblaslt_compute_f32_fast_bf16:
             case rocblaslt_compute_f32_fast_f8_fnuz:
             case rocblaslt_compute_f32_fast_bf8_fnuz:
             case rocblaslt_compute_f32_fast_f8bf8_fnuz:
             case rocblaslt_compute_f32_fast_bf8f8_fnuz:
+#endif 
                 break;
             default:
                 log_error(__func__, "invalid compute type", computeType);
@@ -638,6 +644,7 @@ rocblaslt_status rocblaslt_matmul_desc_destroy(const rocblaslt_matmul_desc matmu
 
 rocblaslt_compute_type _matmul_desc_determine_compute_type(rocblaslt_matmul_desc matmulDesc)
 {
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
     if(matmulDesc->compute_type_original == rocblaslt_compute_f32)
     {
         auto tciA = matmulDesc->compute_input_typeA;
@@ -655,6 +662,7 @@ rocblaslt_compute_type _matmul_desc_determine_compute_type(rocblaslt_matmul_desc
         else if(tciA == HIP_R_8F_E5M2_FNUZ && tciB == HIP_R_8F_E4M3_FNUZ)
             return rocblaslt_compute_f32_fast_bf8f8_fnuz;
     }
+#endif
     return matmulDesc->compute_type_original;
 }
 
@@ -1308,12 +1316,14 @@ rocblaslt_status
         hipDataType            d_type       = matD->type;
         rocblaslt_compute_type compute_type = matmul_desc->compute_type;
         auto&                  tensile_data = matmul_desc->m_data;
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
         if(matmul_desc->amax_ptr != nullptr
            && (matD->type == HIP_R_8F_E4M3_FNUZ || matD->type == HIP_R_8F_E5M2_FNUZ))
         {
             matC->type = HIP_R_32F;
             matD->type = HIP_R_32F;
         }
+#endif
         int8_t alpha[16] = {0};
         int8_t beta[16]  = {0};
         assignAlphaBeta1(compute_type, (void*)alpha, (void*)beta);
@@ -1371,6 +1381,7 @@ rocblaslt_status
             }
         }
 
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
         if(matmul_desc->amax_ptr != nullptr
            && (d_type == HIP_R_8F_E4M3_FNUZ || d_type == HIP_R_8F_E5M2_FNUZ)
            && *returnAlgoCount >= 1)
@@ -1401,6 +1412,7 @@ rocblaslt_status
                 *returnAlgoCount = 0;
             }
         }
+#endif
 
         if(status != rocblaslt_status_success)
         {
@@ -1634,7 +1646,8 @@ bool rocblaslt_internal_test_path(const std::string& path)
 #endif
 }
 
-#ifndef _WIN32
+#ifdef _WIN32
+#else
 int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info* hdr_info, size_t size, void* data)
 {
     // uncomment to see all dependent .so files
@@ -1652,9 +1665,16 @@ int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info* hdr_info, size_t siz
 
 std::string rocblaslt_internal_get_so_path(const std::string& keyword)
 {
+#ifdef _WIN32
+    HMODULE mod = GetModuleHandle("hipblaslt.dll");
+    CHAR path[_MAX_PATH] = {};
+    GetModuleFileNameA(mod, path, _MAX_PATH);
+    return std::string(path);
+#else
     std::pair<std::string, std::string> result{"", keyword};
     dl_iterate_phdr(hipblaslt_dl_iterate_phdr_callback, &result);
     return result.first;
+#endif
 }
 
 void rocblaslt_log_error(const char* func, const char* var, const char* msg)

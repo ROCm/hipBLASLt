@@ -499,6 +499,7 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
         {
             real_bias_type = HIP_R_32I;
         }
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
         else if(arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
         {
             real_bias_type = HIP_R_32F;
@@ -513,6 +514,7 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
             else //more default cases once support C != D
                 real_bias_type = HIP_R_16F;
         }
+#endif
         else
         {
             real_bias_type = arg.d_type;
@@ -2051,6 +2053,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             cpu_time_used = get_time_us_no_sync();
         }
 
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
         // For the xf32 xdl math op, cast type of A/B from float to xfloat32 .
         if constexpr(std::is_same<TiA, float>{} && std::is_same<TiB, float>{}
                      && std::is_same<To, float>{} && std::is_same<Tc, float>{})
@@ -2062,6 +2065,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                     type_to_xdl_math_op_type<hipblasLtXfloat32, float>(hB[i]->data(), size_B[i]);
                 }
             }
+#endif
 
 #define epilogue_param                                                                     \
     M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos,                   \
@@ -2165,7 +2169,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                                           &K,
                                           &num_batches,
                                           &gemmIdx,
-                                          &arg]<typename Ti>(Ti* ptr) {
+                                          &arg](auto* ptr) {
                                 if(sumLd)
                                 {
                                     reduction_func<true, float>(ptr,

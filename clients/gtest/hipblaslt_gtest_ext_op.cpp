@@ -392,6 +392,7 @@ TEST_P(ExtOpAMaxTest, amaxSuccess)
     }
 }
 
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
 TEST_P(ExtOpAMaxWithScaleTest, amaxSuccess)
 {
     AMaxWithScaleTestData testdata = GetParam();
@@ -420,6 +421,7 @@ TEST_P(ExtOpAMaxWithScaleTest, amaxSuccess)
             testdata.type, testdata.dtype, testdata.scaleType, testdata.m, testdata.n);
     }
 }
+#endif
 
 TEST_P(ExtOpSoftmaxUnsupportedDatatypeTest, softmaxFailureUnsupportedDatatype)
 {
@@ -492,6 +494,7 @@ INSTANTIATE_TEST_SUITE_P(ExtOpTest,
                          ExtOpAMaxUnsupportedDatatypeTest,
                          testing::Values<hipDataType>(HIP_R_16BF));
 
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
 INSTANTIATE_TEST_SUITE_P(
     ExtOpTest,
     ExtOpAMaxWithScaleTest,
@@ -508,3 +511,4 @@ INSTANTIATE_TEST_SUITE_P(
         AMaxWithScaleTestData{HIP_R_32F, HIP_R_16F, HIP_R_8F_E5M2_FNUZ, 16, 16},
         AMaxWithScaleTestData{HIP_R_32F, HIP_R_16F, HIP_R_8F_E4M3_FNUZ, 1335, 666},
         AMaxWithScaleTestData{HIP_R_32F, HIP_R_16F, HIP_R_8F_E5M2_FNUZ, 1335, 666}));
+#endif

@@ -428,10 +428,12 @@ try
         rocblaslt_matrix_layout tmp_matD = (rocblaslt_matrix_layout)matD;
         size_t amax_workspace_size       = tmp_matD->m * tmp_matD->n * 4; //only support fp32 D temp
         void*  scaleD                    = ((rocblaslt_matmul_desc)matmul_descr)->scaleD;
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
         if(!(tmp_matD->type == HIP_R_8F_E4M3_FNUZ || tmp_matD->type == HIP_R_8F_E5M2_FNUZ)
            || tmp_matD->m != tmp_matD->ld || *(float*)beta != 0 || tmp_matD->batch_count > 1
            || workspaceSizeInBytes < amax_workspace_size || scaleD == nullptr)
             return HIPBLAS_STATUS_INTERNAL_ERROR;
+#endif
         hipDataType c_type                            = tmp_matD->type;
         hipDataType d_type                            = tmp_matD->type;
         void*       D_TEMP                            = workspace;

@@ -30,7 +30,6 @@
 #else
 #include <unistd.h>
 #endif
-LoggerSingleton LoggerSingleton::gInstance;
 std::ostream*   get_logger_os()
 {
     LoggerSingleton& s = LoggerSingleton::getInstance();
@@ -76,10 +75,12 @@ const char* hipDataType_to_string(hipDataType type)
         return "R_32F";
     case HIP_R_64F:
         return "R_64F";
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
     case HIP_R_8F_E4M3_FNUZ:
         return "R_8F_E4M3";
     case HIP_R_8F_E5M2_FNUZ:
         return "R_8F_E5M2";
+#endif
     case HIP_R_8I:
         return "R_8I";
     default:
@@ -103,10 +104,12 @@ const char* hipDataType_to_bench_string(hipDataType type)
         return "i8_r";
     case HIP_R_32I:
         return "i32_r";
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
     case HIP_R_8F_E4M3_FNUZ:
         return "f8_r";
     case HIP_R_8F_E5M2_FNUZ:
         return "bf8_r";
+#endif
     default:
         return "invalid";
     }
@@ -124,10 +127,12 @@ const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type)
         return "COMPUTE_64F";
     case rocblaslt_compute_i32:
         return "COMPUTE_32I";
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
     case rocblaslt_compute_f32_fast_f16:
         return "COMPUTE_32F_16F";
     case rocblaslt_compute_f32_fast_bf16:
         return "COMPUTE_32F_16BF";
+#endif
     default:
         return "Invalid";
     }
@@ -145,10 +150,12 @@ const char* rocblaslt_compute_type_to_bench_string(rocblaslt_compute_type type)
         return "f64_r";
     case rocblaslt_compute_i32:
         return "i32_r";
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
     case rocblaslt_compute_f32_fast_f16:
         return "f32_f16_r";
     case rocblaslt_compute_f32_fast_bf16:
         return "f32_bf16_r";
+#endif
     default:
         return "invalid";
     }

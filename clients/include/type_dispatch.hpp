@@ -38,10 +38,12 @@ constexpr auto hipblaslt_type2datatype()
         return HIP_R_16BF;
     if(std::is_same<T, float>{})
         return HIP_R_32F;
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
     if(std::is_same<T, hipblaslt_f8_fnuz>{})
         return HIP_R_8F_E4M3_FNUZ;
     if(std::is_same<T, hipblaslt_bf8_fnuz>{})
         return HIP_R_8F_E5M2_FNUZ;
+#endif
     if(std::is_same<T, int32_t>{})
         return HIP_R_32I;
     if(std::is_same<T, hipblasLtInt8>{})
@@ -73,10 +75,12 @@ auto hipblaslt_simple_dispatch(const Arguments& arg)
         return TEST<hip_bfloat16>{}(arg);
     case HIP_R_32F:
         return TEST<float>{}(arg);
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
     case HIP_R_8F_E4M3_FNUZ:
         return TEST<hipblaslt_f8_fnuz>{}(arg);
     case HIP_R_8F_E5M2_FNUZ:
         return TEST<hipblaslt_bf8_fnuz>{}(arg);
+#endif
     case HIP_R_8I:
         return TEST<hipblasLtInt8>{}(arg);
     case HIP_R_32I:
@@ -105,27 +109,31 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
                 return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf, hipblasLtHalf>{}(arg);
             else if(TciA == TciB && TciA == HIP_R_16BF)
                 return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hip_bfloat16, hip_bfloat16>{}(arg);
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
             else if(TciA == TciB && TciA == HIP_R_8F_E4M3_FNUZ)
                 return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz>{}(arg);
             else if(TciA == HIP_R_8F_E4M3_FNUZ && TciB == HIP_R_8F_E5M2_FNUZ)
                 return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz>{}(arg);
             else if(TciA == HIP_R_8F_E5M2_FNUZ && TciB == HIP_R_8F_E4M3_FNUZ)
                 return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz>{}(arg);
+#endif
             else
                 return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>{}(arg);
         }
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
         else if(TiA == To && TiB == To && To == HIP_R_16F && Tc == HIPBLAS_COMPUTE_32F_FAST_16BF)
         {
             return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hip_bfloat16, hip_bfloat16>{}(arg);
-        }
-        else if(TiA == To && TiB == To && To == HIP_R_16BF && Tc == HIPBLAS_COMPUTE_32F)
-        {
-            return TEST<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>{}(arg);
         }
         else if(TiA == To && TiB == To && To == HIP_R_32F
                 && (Tc == HIPBLAS_COMPUTE_32F || Tc == HIPBLAS_COMPUTE_32F_FAST_TF32))
         {
             return TEST<float, float, float, float>{}(arg);
+        }
+#endif
+        else if(TiA == To && TiB == To && To == HIP_R_16BF && Tc == HIPBLAS_COMPUTE_32F)
+        {
+            return TEST<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>{}(arg);
         }
         else if(TiA == To && TiB == To && To == HIP_R_64F && (Tc == HIPBLAS_COMPUTE_64F))
         {
@@ -141,6 +149,7 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         {
             return TEST<hip_bfloat16, hip_bfloat16, float, float>{}(arg);
         }
+#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
         else if(TiA == HIP_R_8F_E4M3_FNUZ && TiB == HIP_R_8F_E4M3_FNUZ && To == HIP_R_32F
                 && Tc == HIPBLAS_COMPUTE_32F)
         {
@@ -342,6 +351,7 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         {
             return TEST<hipblasLtHalf, hipblaslt_f8_fnuz, float, float, hipblaslt_f8_fnuz>{}(arg);
         }
+#endif
     }
     return TEST<void>{}(arg);
 }

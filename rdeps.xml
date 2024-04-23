@@ -6,6 +6,7 @@
       <pkg name="google test">gtest:x64-windows</pkg>
       <pkg name="msgpackc">msgpack:x64-windows</pkg>
       <pkg name="OpenBLAS">openblas:x64-windows</pkg>
+      <pkg name="lapack">lapack:x64-windows</pkg>
     </vcpkg>
   </os>
 </dependencies>

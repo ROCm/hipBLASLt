@@ -57,6 +57,11 @@ target_include_directories( hipblaslt-test
 message("BLIS_INCLUDE_DIR=" ${BLIS_INCLUDE_DIR})
 target_link_libraries( hipblaslt-test PRIVATE ${BLAS_LIBRARY} ${GTEST_BOTH_LIBRARIES} roc::hipblaslt )
 
+if(WIN32)
+  find_package(lapack REQUIRED)
+  target_link_libraries( hipblaslt-test PRIVATE ${LAPACK_LIBRARIES})
+endif()
+
 if( NOT BUILD_CUDA )
   target_link_libraries( hipblaslt-test PRIVATE hip::host hip::device )
 else()
@@ -90,14 +95,16 @@ if (NOT WIN32)
   if (NOT BUILD_FORTRAN_CLIENTS)
     list( APPEND COMMON_LINK_LIBS "-lgfortran -lflang -lflangrti") # for lapack
   endif()
+  list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
 else()
   list( APPEND COMMON_LINK_LIBS "libomp")
 endif()
 
-list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
 
 if (NOT BUILD_FORTRAN_CLIENTS)
-  list( APPEND COMMON_LINK_LIBS "-lgfortran -lflang -lflangrti") # for lapack
+  if (NOT WIN32)
+    list( APPEND COMMON_LINK_LIBS "-lgfortran -lflang -lflangrti") # for lapack
+  endif()
 endif()
 
 target_link_libraries( hipblaslt-test PRIVATE ${COMMON_LINK_LIBS} )

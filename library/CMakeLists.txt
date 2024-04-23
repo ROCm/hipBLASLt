@@ -76,6 +76,21 @@ add_library(roc::hipblaslt ALIAS hipblaslt)
 # Target compile definitions
 if(NOT BUILD_CUDA)
 if( BUILD_WITH_TENSILE )
+  if (WIN32)
+    find_package(msgpack-cxx REQUIRED)
+
+    target_compile_definitions(hipblaslt PUBLIC -DTENSILE_MSGPACK=1)
+    get_target_property(msgpack_inc msgpack-cxx INTERFACE_INCLUDE_DIRECTORIES)
+
+    if(DEFINED msgpack_inc)
+        # include C++ headers manually
+        # External header includes included as system files
+        target_include_directories(hipblaslt
+            SYSTEM PRIVATE $<BUILD_INTERFACE:${msgpack_inc}>
+        )
+
+    target_link_libraries(hipblaslt PRIVATE TensileHost shlwapi)
+  endif()
 
   if( BUILD_SHARED_LIBS )
     target_link_libraries( hipblaslt PRIVATE TensileHost )
@@ -121,6 +136,7 @@ if( BUILD_WITH_TENSILE )
       target_link_libraries(hipblaslt PRIVATE LLVMObjectYAML )  # match tensile
     endif()
   endif()
+endif()
 
   target_compile_definitions(hipblaslt PRIVATE ${TENSILE_DEFINES} )
 endif()
