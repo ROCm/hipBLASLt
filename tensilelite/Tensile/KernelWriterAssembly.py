@@ -1188,6 +1188,7 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.addComment1("pad %u snops to satisfy 0x100 code size for Preload Backward Compatibility Prologue" % (64 - total_inst_dwords))
         for i in range(64 - total_inst_dwords):
           moduleArgs.add(SNop(waitState=0, comment=""))
+        moduleArgs.add(Label("Preload_Offset_Start", ""))
         # Common args preload
         preloadSgprStartIdx = self.states.rpga
         moduleArgs.add(SAndB32(dst=sgpr(sgprNumsOfGemm), src0=hex(0x3FFFFFFF), src1=sgpr(preloadSgprStartIdx), comment="Get nums of gemm"))
