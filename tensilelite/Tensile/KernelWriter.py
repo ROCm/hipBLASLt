@@ -2100,6 +2100,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     moduleKernelBody.addSignature(fs)
 
     module = Module("body")
+    module.add(Label("ASM_Start", "Main body of the asm kernel"))
     module.add(self.defineAndResources(kernel, tensorParametersA, tensorParametersB, tPM))
 
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
@@ -2524,6 +2525,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     tpo = TensilePassOptions()
     tpo.removeDupActFunc = kernel["ActivationFuncCall"]
     TensilePass(module, tpo)
+    # Add a label at the end of the asm for indexing.
+    module.add(Label("ASM_End", "The end of the kernel"))
 
     moduleKernelBody.addBody(module)
     self.checkResources(moduleKernelBody) # check resource available or not
@@ -2537,6 +2540,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     TensileInstructionsPass(moduleKernelBody, tipo)
 
     error = self.states.overflowedResources
+
     return (error, str(moduleKernelBody))
 
   ##############################################################################
