@@ -553,6 +553,41 @@ class MUBUFReadInstruction(GlobalReadInstruction):
         kStr += str(self.mubuf) if self.mubuf else ""
         return self.formatWithComment(kStr)
 
+class AtomicReadWriteInstruction(ReadWriteInstruction):
+    def __init__(self, instType: InstType, dst, src, \
+                 comment="") -> None:
+        super().__init__(instType, ReadWriteInstruction.RWType.RW_TYPE1, comment)
+        self.dst            = dst
+        self.srcs            = src
+
+class SMemAtomicDecInstruction(AtomicReadWriteInstruction):
+    def __init__(self, instType: InstType, dst, base, soffset,
+                 smem: Optional[SMEMModifiers]=None, comment="") -> None:
+        super().__init__(instType, dst, comment)
+        self.instStr = "s_atomic_dec"
+        self.base    = base
+        self.soffset = soffset
+        self.smem    = smem
+
+    def getParams(self) -> list:
+        return [self.dst, self.base, self.soffset]
+
+    def getArgStr(self) -> str:
+        return str(self.dst) + ", " + str(self.base) + ", " + str(self.soffset)
+
+    def toList(self) -> list:
+        self.preStr()
+        l = [self.instStr, self.dst, self.base, self.soffset]
+        l.extend(self.smem.toList()) if self.smem else ""
+        l.append(self.comment)
+        return l
+
+    def __str__(self) -> str:
+        self.preStr()
+        kStr = self.instStr + " " + self.getArgStr()
+        kStr += str(self.smem) if self.smem else ""
+        return self.formatWithComment(kStr)
+
 class SMemLoadInstruction(GlobalReadInstruction):
     def __init__(self, instType: InstType, dst, base, soffset,
                  smem: Optional[SMEMModifiers]=None, comment="") -> None:
@@ -1220,6 +1255,11 @@ class SCmpGeI32(CommonInstruction):
         super().__init__(InstType.INST_I32, None, [src0, src1], None, None, comment)
         self.setInst("s_cmp_ge_i32")
 
+class SCmpGtI32(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_I32, None, [src0, src1], None, None, comment)
+        self.setInst("s_cmp_gt_i32")
+
 class SCmpGeU32(CommonInstruction):
     def __init__(self, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
@@ -1240,6 +1280,16 @@ class SCmpLgU32(CommonInstruction):
     def __init__(self, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
         self.setInst("s_cmp_lg_u32")
+
+class SCmpLgI32(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_I32, None, [src0, src1], None, None, comment)
+        self.setInst("s_cmp_lg_i32")
+
+class SCmpLgU64(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_U64, None, [src0, src1], None, None, comment)
+        self.setInst("s_cmp_lg_u64")
 
 class SCmpLtI32(CommonInstruction):
     def __init__(self, src0, src1, comment="") -> None:
@@ -1673,6 +1723,10 @@ class SWaitCnt(CompositeInstruction):
                 vmvscnt = vmcnt + (vmvscnt if vmvscnt != -1 else 0)
             vmvscnt = min(vmvscnt, maxVmcnt)
             self.instructions = [_SWaitCnt(lgkmcnt, vmvscnt, comment)]
+
+class SAtomicDec(SMemAtomicDecInstruction):
+    def __init__(self, dst, base, smem: Optional[SMEMModifiers]=None, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, base, smem, comment)
 
 # S Load
 class SLoadB32(SMemLoadInstruction):

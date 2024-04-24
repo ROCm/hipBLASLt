@@ -552,7 +552,7 @@ namespace Tensile
             singleWSD = true;
         if(gsu > 1
            && ((singleWSD || sizeMapping.globalAccumulation == 2)
-               || (sizeMapping.globalAccumulation == 3 && !problemType.groupedGemm)))
+               || (sizeMapping.globalAccumulation == 3 )))
         {
             args.template append<void const*>("ws_d", (uint8_t*)inputs.ws + workspaceOffsetInByte);
             if(sizeMapping.globalAccumulation == 3)
@@ -989,6 +989,17 @@ namespace Tensile
                 auto problem = problems[idx];
                 singleCallArgs<T_Debug, false>(
                     problem, inputs.grouped[idx], workspaceOffsetInByte, h_args);
+
+                uint32_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu()
+                                                             : sizeMapping.globalSplitU;
+
+                if(sizeMapping.globalAccumulation == 3)
+                {
+                    h_args.template append<void const*>("dstD", inputs.grouped[idx].d);
+                    h_args.template append<void const*>("Synchronizer", inputs.grouped[idx].Synchronizer);
+                    h_args.template append<uint32_t>("GSUSync", 0);
+                }
+
                 if constexpr(std::is_same<KA, KernelArguments>::value)
                     workspaceOffsetInByte += requiredWorkspaceSize(problem);
             }
@@ -1030,10 +1041,11 @@ namespace Tensile
                 kernelArgs<T_Debug, true>(
                     0, (uint32_t)KERNELARGTYPE::NORMAL, rv.args, problems[0].getParams());
             }
+
+            rv.args.append<void const*>("Synchronizer", (void*)inputs.grouped[0].Synchronizer);
             rv.args.append<void const*>(
                 "Workspace",
                 (uint8_t*)inputs.ws + this->requiredHostWorkspaceSizePerProblem * problems.size());
-            rv.args.append<void const*>("Synchronizer", (void*)inputs.grouped[0].Synchronizer);
             rv.codeObjectFile = codeObjectFilename.load();
         }
 

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -86,6 +86,9 @@ class Macro(Item):
         This comment is a single line /* MYCOMMENT  */
         """
         self.add(TextBlock("/* %s */\n"%comment))
+
+    def addselfAsm(self, comment):
+        self.add(TextBlock(comment))
 
     def prettyPrint(self,indent=""):
         ostream = ""
@@ -231,6 +234,9 @@ class Module(Item):
 
     def addComment2(self, comment):
         self.add(TextBlock(block3Line(comment)))
+
+    def addselfAsm(self, comment):
+        self.add(TextBlock(comment))
 
     def prettyPrint(self,indent=""):
         ostream = ""

@@ -230,7 +230,7 @@ namespace Tensile
                     // M/MT0 x N/MT1 x NumElementsPerThread/StoreVectorWidth x x Wavenumbers
                     bool ret = (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
                                 * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
-                                   * (value[2] / value[3]) * (value[4] / 64)
+                                * (value[2]) * (value[4] / 64) * value[3]
                                <= 1024;
                     if(problem.groupedGemm())
                         ret = ret && (problem.groupedGemmCount() <= 16);
@@ -246,8 +246,8 @@ namespace Tensile
                         stream,
                         "prob",
                         (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
-                         * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
-                            * (value[2] / value[3]) * (value[4] / 64),
+                                * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
+                                * (value[2]) * (value[4] / 64) * value[3],
                         "==",
                         "sol",
                         1024);
@@ -2237,13 +2237,13 @@ namespace Tensile
                                 if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A
                                    || problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
                                 {
-                                    auto eLength = (problem.useBias() == 1 || problem.biasSrc() != ContractionProblemGemm::TENSOR::D) 
+                                    auto eLength = (problem.useBias() == 1 || problem.biasSrc() != ContractionProblemGemm::TENSOR::D)
                                                      ? problem.d().sizes()[0]
-                                                     : (problem.useBias() == 2) 
+                                                     : (problem.useBias() == 2)
                                                      ? problem.d().sizes()[1]
                                                      : (problem.useBias() == 3)
                                                      ? (problem.getParams().biasDim() == 1)
-                                                     ? problem.d().sizes()[1] 
+                                                     ? problem.d().sizes()[1]
                                                      : problem.d().sizes()[0]
                                                      : -1;
                                     if(length < eLength)

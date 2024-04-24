@@ -363,6 +363,10 @@ namespace Tensile
                                 m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
                                 rv.back().d().sizes()[0]);
 
+                            rv.back().setSynchronizer(
+                            m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
+                            1024);
+
                             rv.back().setGroupedGemm(m_groupedGemm);
                             rv.back().setF32XdlMathOp(m_f32XdlMathOp);
                             rv.back().setActivationComputeType(m_activationComputeType);
