@@ -94,7 +94,7 @@ add_dependencies( hipblaslt-bench hipblaslt-common )
 rocm_install(TARGETS hipblaslt-bench COMPONENT benchmarks)
 
 # Other bench files
-add_executable( hipblaslt-bench-groupedgemm-fixed-mk client_groupedgemm_fixed_mk.cpp ../common/hipblaslt_random.cpp)
+add_executable( hipblaslt-bench-groupedgemm-fixed-mk client_groupedgemm_fixed_mk.cpp ../common/hipblaslt_random.cpp ../common/hipblaslt_arguments.cpp)
 add_executable( hipblaslt-bench-extop-layernorm client_extop_layernorm.cpp ../common/hipblaslt_random.cpp)
 add_executable( hipblaslt-bench-extop-matrixtransform client_extop_matrixtransform.cpp ../common/hipblaslt_random.cpp)
 add_executable( hipblaslt-bench-extop-softmax client_extop_softmax.cpp ../common/hipblaslt_random.cpp)
