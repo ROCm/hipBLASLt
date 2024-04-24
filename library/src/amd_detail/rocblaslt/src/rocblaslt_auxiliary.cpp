@@ -1317,6 +1317,13 @@ rocblaslt_status
         int8_t alpha[16] = {0};
         int8_t beta[16]  = {0};
         assignAlphaBeta1(compute_type, (void*)alpha, (void*)beta);
+        //bias ptr can be set later after getting solution.
+        bool dummy_bias_address = false;
+        if(matmul_desc->bias == nullptr && is_bias_enabled(matmul_desc->epilogue))
+        {
+            dummy_bias_address = true;
+            matmul_desc->bias = &dummy_bias_address;
+        }
         auto prob = construct_rocblaslt_problem(
             handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta, pref->max_workspace_bytes);
         status = getBestSolutions(prob,
@@ -1326,6 +1333,8 @@ rocblaslt_status
                                   heuristicResultsArray,
                                   returnAlgoCount,
                                   pref->max_workspace_bytes);
+        if(dummy_bias_address)
+            matmul_desc->bias = nullptr;
         log_api(__func__, "returnAlogCount", *returnAlgoCount);
 
         //Try to get size independent solutions from getAllSolutions()
