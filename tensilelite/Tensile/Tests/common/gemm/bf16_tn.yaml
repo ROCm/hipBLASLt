@@ -177,7 +177,7 @@ BenchmarkProblems:
         - LdsPadB: [-1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:

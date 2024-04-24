@@ -80,6 +80,7 @@ namespace Tensile
             bool m_useScaleAB;
             bool m_useScaleCD;
             bool m_useScaleAlphaVec;
+            bool m_useSynchronizer;
             bool m_useE;
             bool m_useGradient = false;
 
