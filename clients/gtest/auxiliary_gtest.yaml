@@ -22,82 +22,82 @@ Tests:
 - name: aux_mat_init_bad_arg
   category: pre_checkin
   function:
-    - aux_mat_init_bad_arg: *real_precisions
+    - aux_mat_init_bad_arg: *hpa_half_precision
 
 - name: aux_mat_destroy_bad_arg
   category: pre_checkin
   function:
-    - aux_mat_destroy_bad_arg: *real_precisions
+    - aux_mat_destroy_bad_arg: *hpa_half_precision
 
 - name: aux_mat_set_attr_bad_arg
   category: pre_checkin
   function:
-    - aux_mat_set_attr_bad_arg: *real_precisions
+    - aux_mat_set_attr_bad_arg: *hpa_half_precision
 
 - name: aux_mat_get_attr_bad_arg
   category: pre_checkin
   function:
-    - aux_mat_get_attr_bad_arg: *real_precisions
+    - aux_mat_get_attr_bad_arg: *hpa_half_precision
 
 - name: aux_mat_set_get_attr
   category: pre_checkin
   function:
-    - aux_mat_set_get_attr: *real_precisions
+    - aux_mat_set_get_attr: *hpa_half_precision
 
 - name: aux_matmul_init_bad_arg
   category: pre_checkin
   function:
-    - aux_matmul_init_bad_arg: *real_precisions
+    - aux_matmul_init_bad_arg: *hpa_half_precision
 
 - name: aux_matmul_init
   category: pre_checkin
   function:
-    - aux_matmul_init: *real_precisions
+    - aux_matmul_init: *hpa_half_precision
 
 - name: aux_matmul_set_attr_bad_arg
   category: pre_checkin
   function:
-    - aux_matmul_set_attr_bad_arg: *real_precisions
+    - aux_matmul_set_attr_bad_arg: *hpa_half_precision
 
 - name: aux_matmul_get_attr_bad_arg
   category: pre_checkin
   function:
-    - aux_matmul_get_attr_bad_arg: *real_precisions
+    - aux_matmul_get_attr_bad_arg: *hpa_half_precision
 
 - name: aux_matmul_set_get_attr
   category: pre_checkin
   function:
-    - aux_matmul_set_get_attr: *real_precisions
+    - aux_matmul_set_get_attr: *hpa_half_precision
 
 - name: aux_matmul_alg_init_bad_arg
   category: pre_checkin
   function:
-    - aux_matmul_alg_init_bad_arg: *real_precisions
+    - aux_matmul_alg_init_bad_arg: *hpa_half_precision
 
 - name: aux_matmul_alg_init
   category: pre_checkin
   function:
-    - aux_matmul_alg_init: *real_precisions
+    - aux_matmul_alg_init: *hpa_half_precision
 
-- name: aux_matmul_alg_set_attr_bad_arg
+- name: aux_get_sol_with_null_biasaddr
   category: pre_checkin
   function:
-    - aux_matmul_alg_set_attr_bad_arg: *real_precisions
+    - aux_get_sol_with_null_biasaddr: *hpa_half_precision
 
 - name: aux_matmul_alg_get_attr_bad_arg
   category: pre_checkin
   function:
-    - aux_matmul_alg_get_attr_bad_arg: *real_precisions
+    - aux_matmul_alg_get_attr_bad_arg: *hpa_half_precision
 
 - name: aux_matmul_pref_init_bad_arg
   category: pre_checkin
   function:
-    - aux_matmul_pref_init_bad_arg: *real_precisions
+    - aux_matmul_pref_init_bad_arg: *hpa_half_precision
 
 - name: aux_matmul_pref_init
   category: pre_checkin
   function:
-    - aux_matmul_pref_init: *real_precisions
+    - aux_matmul_pref_init: *hpa_half_precision
 
 - name: aux_matmul_alg_null_matmul
   category: pre_checkin
