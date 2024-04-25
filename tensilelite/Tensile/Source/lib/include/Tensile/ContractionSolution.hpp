@@ -400,6 +400,12 @@ namespace Tensile
             dim3 threadTile;
             dim3 macroTile;
 
+            std::array<int, 4> matrixInstruction;
+            size_t grvwA              = 1;
+            size_t grvwB              = 1;
+            size_t gwvwC              = 1;
+            size_t gwvwD              = 1;
+
             size_t staggerU           = 0;
             size_t staggerUMapping    = 0;
             size_t depthU             = 0;
