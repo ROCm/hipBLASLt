@@ -83,6 +83,11 @@ namespace Tensile
                 iot::mapRequired(io, "workGroup", s.workGroupSize);
                 iot::mapRequired(io, "threadTile", s.threadTile);
                 iot::mapRequired(io, "macroTile", s.macroTile);
+                iot::mapRequired(io, "matrixInstruction", s.matrixInstruction);
+                iot::mapRequired(io, "grvwA", s.grvwA);
+                iot::mapRequired(io, "grvwB", s.grvwB);
+                iot::mapRequired(io, "gwvwC", s.gwvwC);
+                iot::mapRequired(io, "gwvwD", s.gwvwD);
 
                 iot::mapRequired(io, "staggerU", s.staggerU);
                 iot::mapRequired(io, "staggerUMapping", s.staggerUMapping);
