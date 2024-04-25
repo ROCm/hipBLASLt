@@ -2258,9 +2258,11 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
 
         bool isSupported  = true;
         bool isNormalGemm = true;
+        auto problemWs = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms);
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
             tensile_prob.gemms[i].setWorkspaceSize(algo->max_workspace_bytes);
+            tensile_prob.gemms[i].setWorkspaceSizeGroupedGemm(problemWs);
             tensile_prob.gemms[i].setGroupedGemmCount(tensile_prob.gemms.size());
         }
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
@@ -2344,7 +2346,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
             log_error(__func__, "Solution is not supported");
             return rocblaslt_status_invalid_value;
         }
-        *workspaceSizeInBytes = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms);
+        *workspaceSizeInBytes = problemWs;
     }
     return rocblaslt_status_success;
 }
