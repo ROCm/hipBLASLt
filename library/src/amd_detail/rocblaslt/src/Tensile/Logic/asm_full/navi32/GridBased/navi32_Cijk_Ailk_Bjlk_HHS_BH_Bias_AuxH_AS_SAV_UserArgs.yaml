@@ -1,6 +1,6 @@
 - {MinimumRequiredVersion: 4.33.0}
-- navi31
-- gfx1100
+- navi32
+- gfx1101
 - [Device 73f0]
 - Activation: true
   ActivationComputeDataType: 0
@@ -68,7 +68,7 @@
   TransposeB: 1
   UseBeta: true
   UseBias: 1
-  UseE: false
+  UseE: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
   UseScaleAB: false
@@ -110,7 +110,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -276,7 +276,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -372,7 +372,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -538,7 +538,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -634,7 +634,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -800,7 +800,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -896,7 +896,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -1062,7 +1062,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -1158,7 +1158,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -1324,7 +1324,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -1420,7 +1420,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -1586,7 +1586,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -1682,7 +1682,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -1848,7 +1848,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -1944,7 +1944,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -2110,7 +2110,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -2206,7 +2206,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -2372,7 +2372,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -2468,7 +2468,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -2634,7 +2634,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -2730,7 +2730,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -2896,7 +2896,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -2992,7 +2992,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -3158,7 +3158,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -3254,7 +3254,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -3420,7 +3420,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -3516,7 +3516,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -3682,7 +3682,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -3778,7 +3778,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -3944,7 +3944,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -4040,7 +4040,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -4206,7 +4206,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -4302,7 +4302,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -4468,7 +4468,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -4564,7 +4564,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -4730,7 +4730,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -4826,7 +4826,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -4992,7 +4992,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -5088,7 +5088,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -5254,7 +5254,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -5350,7 +5350,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -5516,7 +5516,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -5612,7 +5612,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -5778,7 +5778,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -5874,7 +5874,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -6040,7 +6040,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -6136,7 +6136,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -6302,7 +6302,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -6398,7 +6398,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -6564,7 +6564,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -6660,7 +6660,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -6826,7 +6826,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -6922,7 +6922,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -7088,7 +7088,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -7184,7 +7184,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -7350,7 +7350,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -7446,7 +7446,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -7612,7 +7612,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -7708,7 +7708,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -7874,7 +7874,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -7970,7 +7970,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -8136,7 +8136,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -8232,7 +8232,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -8398,7 +8398,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -8494,7 +8494,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -8660,7 +8660,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -8756,7 +8756,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -8922,7 +8922,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -9018,7 +9018,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -9184,7 +9184,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -9280,7 +9280,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -9446,7 +9446,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -9542,7 +9542,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -9708,7 +9708,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -9804,7 +9804,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -9970,7 +9970,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -10066,7 +10066,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -10232,7 +10232,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -10328,7 +10328,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -10494,7 +10494,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -10590,7 +10590,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -10756,7 +10756,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -10852,7 +10852,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -11018,7 +11018,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -11114,7 +11114,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -11280,7 +11280,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -11376,7 +11376,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -11542,7 +11542,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -11638,7 +11638,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -11804,7 +11804,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -11900,7 +11900,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -12066,7 +12066,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -12162,7 +12162,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -12328,7 +12328,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -12424,7 +12424,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -12590,7 +12590,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -12686,7 +12686,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -12852,7 +12852,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -12948,7 +12948,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -13114,7 +13114,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false
@@ -13210,7 +13210,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -13376,7 +13376,7 @@
       TransposeB: 1
       UseBeta: true
       UseBias: 1
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleAB: false

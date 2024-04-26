@@ -1,6 +1,6 @@
 - {MinimumRequiredVersion: 4.33.0}
-- navi31
-- gfx1100
+- navi33
+- gfx1102
 - [Device 73f0]
 - Activation: true
   ActivationComputeDataType: 0
@@ -110,7 +110,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -372,7 +372,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -634,7 +634,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -896,7 +896,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -1158,7 +1158,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -1420,7 +1420,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -1682,7 +1682,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -1944,7 +1944,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -2206,7 +2206,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -2468,7 +2468,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -2730,7 +2730,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -2992,7 +2992,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -3254,7 +3254,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -3516,7 +3516,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -3778,7 +3778,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -4040,7 +4040,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -4302,7 +4302,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -4564,7 +4564,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -4826,7 +4826,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -5088,7 +5088,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -5350,7 +5350,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -5612,7 +5612,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -5874,7 +5874,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -6136,7 +6136,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -6398,7 +6398,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -6660,7 +6660,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -6922,7 +6922,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -7184,7 +7184,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -7446,7 +7446,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -7708,7 +7708,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -7970,7 +7970,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -8232,7 +8232,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -8494,7 +8494,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -8756,7 +8756,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -9018,7 +9018,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -9280,7 +9280,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -9542,7 +9542,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -9804,7 +9804,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -10066,7 +10066,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -10328,7 +10328,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -10590,7 +10590,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -10852,7 +10852,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -11114,7 +11114,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -11376,7 +11376,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -11638,7 +11638,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -11900,7 +11900,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -12162,7 +12162,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -12424,7 +12424,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -12686,7 +12686,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -12948,7 +12948,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
@@ -13210,7 +13210,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [11, 0, 0]
+    ISA: [11, 0, 2]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
