@@ -1,7 +1,7 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx940
-- [Device 0049, Device 0050]
+- [Device 0049]
 - Activation: true
   ActivationComputeDataType: 0
   ActivationNoGuard: false
@@ -734,13 +734,13 @@
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
 - [2, 3, 0, 1]
-- - - [4607, 1335, 1, 320, 4607, 4607, 320, 1335]
+- - - [4607, 1335, 1, 320]
     - [1, 20381.2]
-  - - [4608, 1335, 1, 320, 4608, 4608, 320, 1335]
+  - - [4608, 1335, 1, 320]
     - [0, 27784.6]
-  - - [4608, 1408, 1, 320, 4608, 4608, 320, 1408]
+  - - [4608, 1408, 1, 320]
     - [0, 30258.4]
-  - - [128, 128, 1, 320, 128, 128, 320, 128]
+  - - [128, 128, 1, 320]
     - [2, 149.626]
 - null
 - null

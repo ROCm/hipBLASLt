@@ -107,7 +107,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 1]
+    ISA: [9, 4, 0]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -361,7 +361,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 1]
+    ISA: [9, 4, 0]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -582,22 +582,14 @@
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
 - [2, 3, 0, 1]
-- - - [128, 1, 1, 640, 128, 128, 640, 640]
-    - [0, 3.54325]
-  - - [1, 128, 1, 640, 1, 1, 640, 640]
-    - [0, 3.88615]
-  - - [2, 128, 1, 640, 2, 2, 640, 640]
-    - [1, 7.90734]
-  - - [3, 128, 1, 640, 3, 3, 640, 640]
-    - [0, 11.6803]
-  - - [1, 1, 1, 640, 1, 1, 640, 640]
-    - [0, 0.0394089]
-  - - [128, 128, 1, 640, 128, 128, 640, 640]
-    - [0, 509.512]
-  - - [127, 127, 1, 640, 127, 127, 640, 640]
-    - [0, 461.653]
-  - - [129, 129, 1, 640, 129, 129, 640, 640]
-    - [1, 475.457]
+- - - [128, 1, 1, 640]
+    - [1, 3.58042]
+  - - [1, 128, 1, 640]
+    - [0, 3.74406]
+  - - [2, 128, 1, 640]
+    - [0, 7.48812]
+  - - [3, 128, 1, 640]
+    - [1, 11.4198]
 - null
 - null
 - DeviceEfficiency
