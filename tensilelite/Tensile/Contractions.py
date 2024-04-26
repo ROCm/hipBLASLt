@@ -412,6 +412,9 @@ class ProblemPredicate(Properties.Predicate):
     def CompoundPredicates(cls, state, problemType):
         rv = []
 
+        if "GSUTwoStages" in state:
+            rv += [cls('GSUTwoStages', index=0, value=state["GSUTwoStages"])]
+
         if "BatchSizeEqual" in state:
             rv += [cls('BatchSizeEqual', index=0, value=state["BatchSizeEqual"])]
 
@@ -425,6 +428,7 @@ class ProblemPredicate(Properties.Predicate):
             else:
                 valuepredicates.append(1)
             valuepredicates.append(state["NumThreads"])
+            valuepredicates.append(state["GlobalSplitU"])
             rv += [cls('SynchronizerSizeCheck', index=0, value=valuepredicates)]
 
         if not problemType.aType.isInt8x4():
