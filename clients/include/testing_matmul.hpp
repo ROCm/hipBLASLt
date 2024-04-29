@@ -546,17 +546,27 @@ void testing_matmul(const Arguments& arg)
     // for all f8/bf8 cases including mix mode
     if constexpr((sizeof(TiA) == 1 || sizeof(TiB) == 1) && !std::is_same<Tc, int32_t>::value)
     {
-        if(real_bias_type == HIP_R_16F)
+        if constexpr(std::is_same<To, hip_bfloat16>::value || std::is_same<To, float>::value)
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hipblasLtHalf>(arg);
-        }
-        else if(real_bias_type == HIP_R_16BF)
-        {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hip_bfloat16>(arg);
+          if(real_bias_type == HIP_R_16BF)
+          {
+              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hip_bfloat16>(arg);
+          }
+          else
+          {
+              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
+          }
         }
         else
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
+          if(real_bias_type == HIP_R_16F)
+          {
+              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hipblasLtHalf>(arg);
+          }
+          else
+          {
+              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
+          }
         }
     }
     else if constexpr(std::is_same<To, hipblasLtHalf>::value)
