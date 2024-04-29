@@ -184,6 +184,10 @@ class StoreState:
             numCols = len([e for e in elements if e[0] == 0 and e[2] == 0]) # count #elements with row d1=v1==0
             self.numAddrVgpr = numCols
             self.sharedColDVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColDVgprs for packed elements")
+            if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
+                self.sharedGSUSyncVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedGSUSyncVgprs for packed elements")
+            else:
+                self.sharedGSUSyncVgprs = None
             if kernel["GroupLoadStore"] and kernel["ProblemType"]["UseBeta"]:
                 self.sharedColCVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColCVgprs for packed elements")
             else:
@@ -196,16 +200,21 @@ class StoreState:
                 self.sharedColEVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColEVgprs for packed elements")
             else:
                 self.sharedColEVgprs = None
-            if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+            if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
                 self.sharedColScaleAlphaVecVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColScaleAlphaVecVgprs for packed elements")
             else:
                 self.sharedColScaleAlphaVecVgprs = None
         elif self.optSingleColVgpr:
             self.numAddrVgpr = 1
             self.sharedColDVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColDVgprs")
+            if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
+                self.sharedGSUSyncVgprs = kernelWriter.vgprPool.checkOut(1, "sharedGSUSyncVgprs")
+            else:
+                self.sharedGSUSyncVgprs = None
             self.singleColBiasAddrUpdated = False
             self.singleColEAddrUpdated    = False
             self.singleColDAddrUpdated    = False
+            self.singleColTDAddrUpdated   = False
             self.singleColCAddrUpdated    = False
             if kernel["ProblemType"]["UseBeta"]:
                 self.sharedColCVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColCVgprs")
@@ -219,7 +228,7 @@ class StoreState:
                 self.sharedColEVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColEVgprs for packed elements")
             else:
                 self.sharedColEVgprs = None
-            if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+            if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
                 self.sharedColScaleAlphaVecVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColScaleAlphaVecVgprs for packed elements")
             else:
                 self.sharedColScaleAlphaVecVgprs = None
@@ -227,6 +236,7 @@ class StoreState:
             self.numAddrVgpr = 0
             self.sharedColEVgprs    = None
             self.sharedColDVgprs    = None
+            self.sharedGSUSyncVgprs = None
             self.sharedColCVgprs    = None
             self.sharedColBiasVgprs = None
             self.sharedColScaleAlphaVecVgprs = None
@@ -251,7 +261,7 @@ class StoreState:
                 numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
                 self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
 
-        if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+        if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # ScaleAlphaVec address
             numVgprs = int(ceil(kernel["ProblemType"]["DataType"].numRegisters()))
             self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
@@ -379,6 +389,7 @@ class StoreState:
                 # use same address vgpr for all
                 addrEVgpr    = self.sharedColEVgprs
                 addrDVgpr    = self.sharedColDVgprs
+                addrGSUSyncVgprs = self.sharedGSUSyncVgprs
                 addrCVgpr    = self.sharedColCVgprs
                 addrBiasVgpr = self.sharedColBiasVgprs
                 addrScaleAlphaVecVgpr = self.sharedColScaleAlphaVecVgprs
@@ -390,6 +401,10 @@ class StoreState:
                 assert (modf(elementCol)[0] < 0.001)
                 elementCol   = trunc(elementCol)
                 addrDVgpr    = self.sharedColDVgprs+elementCol
+                if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
+                    addrGSUSyncVgprs = self.sharedGSUSyncVgprs+elementCol
+                else:
+                    addrGSUSyncVgprs = None
                 addrCVgpr    = self.sharedColCVgprs+elementCol
                 if self.useBias != DataDirection.NONE:
                     addrBiasVgpr = self.sharedColBiasVgprs+elementCol
@@ -410,6 +425,11 @@ class StoreState:
                 # allocate new VGPR for each element:
                 addrDVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
                     int(ceil(self.cfg.numVgprsPerAddr)), "writeDBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
+                if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
+                    addrGSUSyncVgprs = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
+                        int(ceil(self.cfg.numVgprsPerAddr)), "writeDBatch-addr for ei=%u"%(elementIdx), preventOverflow=0)
+                else:
+                    addrGSUSyncVgprs = None
                 if kernel["GroupLoadStore"] and kernel["ProblemType"]["UseBeta"]:
                     addrCVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
                         int(ceil(self.cfg.numVgprsPerAddr)), "loadCBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
@@ -426,12 +446,12 @@ class StoreState:
                 else:
                     addrEVgpr = None
 
-                if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+                if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
                     addrScaleAlphaVecVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
                         int(ceil(self.cfg.numVgprsPerAddr)), "loadScaleAlphaVecBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
                 else:
                     addrScaleAlphaVecVgpr = None
-            self.elementAddr.append(AddrCalculation(kw, self, addrCVgpr, addrDVgpr, addrEVgpr, addrBiasVgpr, addrScaleAlphaVecVgpr, element, coordOffset0, \
+            self.elementAddr.append(AddrCalculation(kw, self, addrCVgpr, addrDVgpr, addrGSUSyncVgprs, addrEVgpr, addrBiasVgpr, addrScaleAlphaVecVgpr, element, coordOffset0, \
               self.kernelWriter.vgprs.coord1, coordOffset1, coordOffset1 - self.lastCoordOffset1, newCoord1))
             # if numVgprsPerDataPerVI == 0.5, then two consecutive elements
             # should have same data pointer, next should move.
@@ -488,7 +508,7 @@ class StoreState:
                 dataE = 0
             self.elementDataE.append(dataE)
 
-            if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+            if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
                 if coordOffset0 in scaleAlphaVecVgprMap:
                     dataScaleAlphaVec = scaleAlphaVecVgprMap[coordOffset0]
                 else:
@@ -551,6 +571,7 @@ class StoreState:
                 self.singleColBiasAddrUpdated = False
                 self.singleColEAddrUpdated    = False
                 self.singleColDAddrUpdated    = False
+                self.singleColTDAddrUpdated    = False
                 self.singleColCAddrUpdated    = False
             else:
                 pass # Nothing to reset
@@ -569,6 +590,8 @@ class StoreState:
                 self.kernelWriter.vgprPool.checkIn(self.sharedColCVgprs)
                 self.sharedColCVgprs = None
             self.sharedColDVgprs = None
+        if (self.sharedGSUSyncVgprs != None):
+            self.kernelWriter.vgprPool.checkIn(self.sharedGSUSyncVgprs)
         if (self.sharedColBiasVgprs != None):
             self.kernelWriter.vgprPool.checkIn(self.sharedColBiasVgprs)
             self.sharedColBiasVgprs = None

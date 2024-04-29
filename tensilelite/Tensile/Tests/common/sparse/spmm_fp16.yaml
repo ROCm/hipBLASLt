@@ -31,7 +31,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       UseBias: 3
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -109,7 +108,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       UseBias: 3
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -187,7 +185,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       UseBias: 3
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -265,7 +262,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
       UseBias: 3
 
     - # BenchmarkProblemSizeGroup - Standard

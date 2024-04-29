@@ -73,7 +73,7 @@ BenchmarkProblems:
         - LdsPadB: [-1]
         - 1LDSBuffer: [1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -151,7 +151,7 @@ BenchmarkProblems:
         - LdsPadB: [-1]
         - 1LDSBuffer: [1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -227,7 +227,7 @@ BenchmarkProblems:
         - LdsPadB: [0]
         - 1LDSBuffer: [1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -302,7 +302,7 @@ BenchmarkProblems:
         - LdsPadB: [0]
         - 1LDSBuffer: [1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -339,7 +339,6 @@ BenchmarkProblems:
       Batched: True
       UseBias: 1
       Activation: True
-      ActivationHPA: True
       UseScaleAlphaVec: True
       UseScaleAB: True
     - # BenchmarkProblemSizeGroup - Standard - All problem
@@ -383,7 +382,7 @@ BenchmarkProblems:
         - LdsPadB: [-1]
         - 1LDSBuffer: [1]
         - GlobalSplitU: [1,2,9]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:

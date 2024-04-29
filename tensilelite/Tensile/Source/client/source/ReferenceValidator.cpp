@@ -376,6 +376,12 @@ namespace Tensile
                     refPtr = reference.scaleAlphaVec;
                     resPtr = result.scaleAlphaVec;
                 }
+                case ContractionProblemGemm::TENSOR::Synchronizer:
+                {
+                    refPtr = reference.Synchronizer;
+                    resPtr = result.Synchronizer;
+                }
+
                 break;
                 default:
                     throw std::runtime_error("Unrecognized output tensor.");

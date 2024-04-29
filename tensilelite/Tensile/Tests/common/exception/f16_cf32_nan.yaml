@@ -14,6 +14,7 @@ GlobalParameters:
   CSVMergeSameProblemID: 1
   Device: 0
   MaxWorkspaceSize: 3355443200
+  # PrintSolutionRejectionReason: True
 
 BenchmarkProblems:
   ########################################
@@ -34,8 +35,6 @@ BenchmarkProblems:
       UseE: True
       UseBias:       0
       Activation:    True
-      ActivationHPA: True
-      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -62,7 +61,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]

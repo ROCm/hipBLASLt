@@ -37,7 +37,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -110,7 +109,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -173,7 +171,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
