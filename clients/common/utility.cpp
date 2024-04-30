@@ -119,9 +119,9 @@ double get_time_us_sync_device(void)
 /*! \brief  CPU Timer(in microsecond): synchronize with given queue/stream and return wall time */
 double get_time_us_sync(hipStream_t stream)
 {
-    if(hipDeviceSynchronize() != hipSuccess)
+    if(hipStreamSynchronize(stream) != hipSuccess)
     {
-        hipblaslt_cerr << "Synchronizing device failed" << std::endl;
+        hipblaslt_cerr << "Synchronizing stream failed" << std::endl;
     }
 
     auto now = std::chrono::steady_clock::now();
