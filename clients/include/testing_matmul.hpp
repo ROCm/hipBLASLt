@@ -2460,7 +2460,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                 CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
             else
             {
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                 flush_time_used = get_time_us_sync(stream);
             }
             for(int i = 0; i < flush_iter; i++)
@@ -2476,7 +2475,6 @@ void testing_matmul_with_bias(const Arguments& arg)
             }
             else
             {
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                 flush_time_used = get_time_us_sync(stream) - flush_time_used;
             }
             flush_time_used /= flush_iter;
@@ -2503,7 +2501,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream);
                     }
 
@@ -2552,7 +2549,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream);
                     }
                     for(int i = 0; i < number_hot_calls; i++)
@@ -2598,7 +2594,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                 }
                 else
                 {
-                    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                     gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                 }
             }
@@ -2635,7 +2630,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream);
                     }
 
@@ -2654,7 +2648,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                     }
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                     }
                 }
@@ -2679,7 +2672,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream);
                     }
 
@@ -2697,7 +2689,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                     }
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                     }
                 }
