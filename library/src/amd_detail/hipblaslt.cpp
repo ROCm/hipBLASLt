@@ -465,21 +465,16 @@ try
         if(return_status != HIPBLAS_STATUS_SUCCESS)
             return return_status;
 
-        if (workspaceSizeInBytes < 4096)
-            return HIPBLAS_STATUS_INVALID_VALUE;
-
-        return_status = hipblasltExtFastAMaxWithScale(HIP_R_32F,
-                                                      HIP_R_32F,
-                                                      d_type,
-                                                      ((rocblaslt_matmul_desc)matmul_descr)->amax_ptr,
-                                                      D,
-                                                      D_TEMP,
-                                                      scaleD,
-                                                      new_workspace,
-                                                      new_workspace + 4092,
-                                                      tmp_matD->m,
-                                                      tmp_matD->n,
-                                                      stream);
+        return_status = hipblasltExtAMaxWithScale(HIP_R_32F,
+                                                  HIP_R_32F,
+                                                  d_type,
+                                                  ((rocblaslt_matmul_desc)matmul_descr)->amax_ptr,
+                                                  D,
+                                                  D_TEMP,
+                                                  scaleD,
+                                                  tmp_matD->m,
+                                                  tmp_matD->n,
+                                                  stream);
     }
 
     return return_status;
