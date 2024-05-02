@@ -2239,6 +2239,32 @@ rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem>&      
     return getAllSolutions(tensile_probs, handle, heuristicResults, maxWorkSpaceBytes);
 }
 
+rocblaslt_status getAllSolutions(std::shared_ptr<void>                           gemmData,
+                                 rocblaslt_handle                                handle,
+                                 rocblaslt::RocGemmType                          gemmType,
+                                 std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+                                 size_t                                          maxWorkSpaceBytes)
+{
+
+        rocblaslt_status status = rocblaslt_status_success;
+        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+        {
+            std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+            status = getAllSolutions(data->problem, handle, heuristicResults, maxWorkSpaceBytes);
+        }
+        else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+        {
+            std::shared_ptr<TensileDataGroupedGemm> data = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+            status = getAllSolutions(data->problem, handle, heuristicResults, maxWorkSpaceBytes);
+        }
+        else
+        {
+            log_api(__func__, "Invalid gemm type", static_cast<int>(gemmType));
+            status = rocblaslt_status_not_implemented;
+        }
+        return status;
+}
+
 rocblaslt_status
     getSolutionsFromIndex(rocblaslt_handle                                handle,
                           std::vector<int>&                               solutionIndex,

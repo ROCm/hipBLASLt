@@ -1585,6 +1585,41 @@ rocblaslt_status
         {
             throw status;
         }
+        //Try to get size independent solutions from getAllSolutions()
+        if(requestedAlgoCount > results.size())
+        {
+            std::vector<rocblaslt_matmul_heuristic_result> allSolutionsResults;
+            size_t workspaceSizeInBytes =  workspaceBytes;
+            if(rocblaslt_status_success
+               == getAllSolutions(gemmData, handle, gemmType, allSolutionsResults, workspaceSizeInBytes))
+            {
+                int oriReturnAlgoCount = results.size();
+                for(int i = 0;
+                    results.size() < requestedAlgoCount && i < allSolutionsResults.size();
+                    i++)
+                {
+                    bool duplicated_sol = false;
+                    for(int j = 0; j < oriReturnAlgoCount; j++)
+                        if(*(int*)(results[j].algo.data)
+                           == *(int*)(allSolutionsResults[i].algo.data)) //solution index
+                            duplicated_sol = true;
+
+                    if(duplicated_sol == true
+                       || rocblaslt_status_success
+                              != isSolutionSupported(handle,
+                                                     static_cast<const rocblaslt::RocGemmType>(gemmType),
+                                                     gemmData,
+                                                     allSolutionsResults[i].algo,
+                                                     nullptr,
+                                                     workspaceSizeInBytes))
+                        continue;
+
+                    results.push_back(allSolutionsResults[i]);
+                }
+
+                log_api(__func__, "final returnAlogCount", results.size());
+            }
+        }
     }
     catch(const rocblaslt_status& status)
     {
