@@ -119,16 +119,42 @@ hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
                                  const hipDataType outDatatype,
                                  void*             output,
                                  void*             input,
-                                 void*             workSpace,
-                                 void*             sync,
                                  uint32_t          m,
                                  uint32_t          n,
                                  hipStream_t       stream)
+{
+    return hipblasltAMaxRun(datatype, outDatatype, output, input, nullptr, nullptr, m, n, stream);
+}
+
+hipblasStatus_t hipblasltExtFastAMax(const hipDataType datatype,
+                                     const hipDataType outDatatype,
+                                     void*             output,
+                                     void*             input,
+                                     void*             workSpace,
+                                     void*             sync,
+                                     uint32_t          m,
+                                     uint32_t          n,
+                                     hipStream_t       stream)
 {
     return hipblasltAMaxRun(datatype, outDatatype, output, input, workSpace, sync, m, n, stream);
 }
 
 hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType datatype,
+                                          const hipDataType outDatatype,
+                                          const hipDataType scaleDatatype,
+                                          void*             output,
+                                          void*             outputD,
+                                          void*             input,
+                                          void*             inputScale,
+                                          uint32_t          m,
+                                          uint32_t          n,
+                                          hipStream_t       stream)
+{
+    return hipblasltAMaxWithScaleRun(
+        datatype, outDatatype, scaleDatatype, output, outputD, input, inputScale, nullptr, nullptr, m, n, stream);
+}
+
+hipblasStatus_t hipblasltExtFastAMaxWithScale(const hipDataType datatype,
                                           const hipDataType outDatatype,
                                           const hipDataType scaleDatatype,
                                           void*             output,
@@ -431,7 +457,7 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
         return HIPBLAS_STATUS_NOT_SUPPORTED;
     }
 
-    if(output == nullptr || input == nullptr || workSpace == nullptr || sync == nullptr || m == 0 || n == 0)
+    if(output == nullptr || input == nullptr || m == 0 || n == 0)
         return HIPBLAS_STATUS_INVALID_VALUE;
 
     uint32_t    len = m * n;
@@ -451,7 +477,7 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
     int workSize          = 131072;
-    int numGroups         = 128;
+    int numGroups         = (workSpace && sync) ? 128 : 1;
     numGroups             = std::min(int((len + workSize - 1) / workSize), int(numGroups));
 
     Tensile::KernelInvocation invocation;
@@ -506,7 +532,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
         return HIPBLAS_STATUS_NOT_SUPPORTED;
     }
 
-    if(!output || !outputD || !input || !inputScale || !workSpace || !sync || !m || !n)
+    if(!output || !outputD || !input || !inputScale || !m || !n)
     {
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
@@ -537,7 +563,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
     int workSize          = 131072;
-    int numGroups         = 128;
+    int numGroups         = (workSpace && sync) ? 128 : 1;
     numGroups             = std::min(int((len + workSize - 1) / workSize), int(numGroups));
 
     Tensile::KernelInvocation invocation;

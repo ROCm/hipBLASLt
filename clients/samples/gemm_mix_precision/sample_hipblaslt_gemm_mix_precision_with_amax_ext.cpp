@@ -118,7 +118,7 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
     // Copy scaleA to device memory
     void* d_scaleA = nullptr;
     CHECK_HIP_ERROR(hipMalloc(&d_scaleA, sizeof(float)));
-    CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(HIP_R_16F, HIP_R_32F, d_scaleA, d_a, d_workspace2, d_sync, k, n, stream));
+    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(HIP_R_16F, HIP_R_32F, d_scaleA, d_a, d_workspace2, d_sync, k, n, stream));
 
     hipblaslt_ext::GemmEpilogue epilogue;
     hipblaslt_ext::GemmInputs   inputs;

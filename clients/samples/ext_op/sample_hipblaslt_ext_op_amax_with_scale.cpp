@@ -84,6 +84,6 @@ void simpleAMaxWithScale(hipDataType type,
                          int64_t     n,
                          hipStream_t stream)
 {
-    CHECK_HIPBLASLT_ERROR(hipblasltExtAMaxWithScale(
+    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMaxWithScale(
         type, dtype, scaleType, d_out, d_outD, d_in, d_in_scale, d_workspace, d_sync,  m, n, stream));
 }
