@@ -44,7 +44,7 @@ PROJECT_NUMBER         = v0.2.0
 # for a project that appears at the top of each page and should give viewer a
 # quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          = "prototype interfaces compatible with ROCm platform and HIP"
+PROJECT_BRIEF          = "prototype interfaces compatible with ROCm software and HIP"
 
 # With the PROJECT_LOGO tag one can specify a logo or an icon that is included
 # in the documentation. The maximum height of the logo should not exceed 55
@@ -963,7 +963,7 @@ FILTER_SOURCE_PATTERNS =
 # (index.html). This can be useful if you have a project on for instance GitHub
 # and want to reuse the introduction page also for the doxygen output.
 
-USE_MDFILE_AS_MAINPAGE = ../README.md
+# USE_MDFILE_AS_MAINPAGE = ../../README.md
 
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing
@@ -2190,7 +2190,7 @@ HIDE_UNDOC_RELATIONS   = YES
 # set to NO
 # The default value is: NO.
 
-HAVE_DOT               = YES
+HAVE_DOT               = NO
 
 # The DOT_NUM_THREADS specifies the number of dot invocations doxygen is allowed
 # to run in parallel. When set to 0 doxygen will base this on the number of
