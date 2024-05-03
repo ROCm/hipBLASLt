@@ -1,2 +1,4 @@
 docBin
 _doxygen/
+doxygen/html/
+doxygen/xml/
