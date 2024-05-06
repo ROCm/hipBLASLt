@@ -79,6 +79,7 @@ int parseArgs(int                       argc,
               std::string&              dtype,
               size_t&                   m,
               size_t&                   n,
+              size_t&                   iter,
               hipblaslt_initialization& init,
               bool&                     workspace)
 {
@@ -112,6 +113,10 @@ int parseArgs(int                       argc,
             else if(arg == "-n" || arg == "--n")
             {
                 n = std::stoul(argv[++i]);
+            }
+            else if(arg == "-i" || arg == "--i")
+            {
+                iter = std::stoul(argv[++i]);
             }
             else if(arg == "--initialization" || arg == "--init")
             {
@@ -192,7 +197,7 @@ void initData(DType* data, std::size_t numElements, hipblaslt_initialization ini
 }
 
 template <typename Ti, typename To>
-int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, hipblaslt_initialization& init, bool& workspace)
+int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, int iter, hipblaslt_initialization& init, bool& workspace)
 {
     int         numElements = m * n;
 
@@ -249,26 +254,36 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, hipblaslt_initia
     // dumpBuffer("GPU", cpuOutput.data(), 1);
     // dumpBuffer("CPU", refOutput.data(), 1);
 
-    hipEvent_t beg, end;
-    hipErr      = hipEventCreate(&beg);
-    hipErr      = hipEventCreate(&end);
-    int numRuns = 200;
-    hipErr      = hipEventRecord(beg, stream);
-
-    for(int i = 0; i < numRuns; ++i)
+    // warm up
+    for(int i = 0; i < iter; ++i)
     {
         if (workspace)
             hipblasltErr = hipblasltExtFastAMax(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, stream);
         else
             hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
     }
+    hipErr = hipStreamSynchronize(stream);
+
+    hipEvent_t beg, end;
+    hipErr      = hipEventCreate(&beg);
+    hipErr      = hipEventCreate(&end);
+    hipErr      = hipEventRecord(beg, stream);
+
+    for(int i = 0; i < iter; ++i)
+    {
+        if (workspace)
+            hipblasltErr = hipblasltExtFastAMax(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, stream);
+        else
+            hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
+    }
+
     hipErr = hipEventRecord(end, stream);
     hipErr = hipEventSynchronize(end);
     hipErr = hipStreamSynchronize(stream);
 
     float dur{};
     hipErr = hipEventElapsedTime(&dur, beg, end);
-    std::cout << "Time elapsed: " << std::to_string(dur / numRuns) << " ms\n";
+    std::cout << "Time elapsed: " << std::to_string(dur * 1000 / iter) << " us\n";
 
     hipErr = hipEventDestroy(beg);
     hipErr = hipEventDestroy(end);
@@ -290,24 +305,28 @@ int main(int argc, char** argv)
     std::string dtype{"S"};
     std::size_t m{64};
     std::size_t n{64};
+    std::size_t i{200};
     bool workspace{true};
 
     hipblaslt_initialization init{hipblaslt_initialization::hpl};
 
-    if(auto err = parseArgs(argc, argv, type, dtype, m, n, init, workspace))
+    if(auto err = parseArgs(argc, argv, type, dtype, m, n, i, init, workspace))
     {
+        std::cout << "m " << m << " n " << n << " i " << i << " workspace " << workspace << std::endl;
         printUsage(argv[0]);
         return err;
     }
 
+    std::cout << "m " << m << " n " << n << " i " << i << " workspace " << workspace << std::endl;
+
     if((type == "S" || type == "s") && (type == dtype))
-        return AmaxTest<float, float>(HIP_R_32F, HIP_R_32F, m, n, init, workspace);
+        return AmaxTest<float, float>(HIP_R_32F, HIP_R_32F, m, n, i, init, workspace);
     else if((type == "S" || type == "s") && (dtype == "H" || dtype == "H"))
-        return AmaxTest<float, hipblasLtHalf>(HIP_R_32F, HIP_R_16F, m, n, init, workspace);
+        return AmaxTest<float, hipblasLtHalf>(HIP_R_32F, HIP_R_16F, m, n, i, init, workspace);
     else if((type == "H" || type == "h") && (type == dtype))
-        return AmaxTest<hipblasLtHalf, hipblasLtHalf>(HIP_R_16F, HIP_R_16F, m, n, init, workspace);
+        return AmaxTest<hipblasLtHalf, hipblasLtHalf>(HIP_R_16F, HIP_R_16F, m, n, i, init, workspace);
     else if((type == "H" || type == "h") && (dtype == "S" || dtype == "s"))
-        return AmaxTest<hipblasLtHalf, float>(HIP_R_16F, HIP_R_32F, m, n, init, workspace);
+        return AmaxTest<hipblasLtHalf, float>(HIP_R_16F, HIP_R_32F, m, n, i, init, workspace);
     else
         std::cout << "Unsupported data type " << type << std::endl;
 
