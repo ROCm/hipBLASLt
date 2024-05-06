@@ -473,11 +473,13 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     auto       sol        = lib.findBestSolution(AMaxProblem(len,
                                                 hipDataType_to_tensile_type(datatype),
                                                 hipDataType_to_tensile_type(outDatatype)),
-                                    *gpu);
+                                                *gpu);
+
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
     int workSize          = 131072;
     int numGroups         = (workSpace && sync) ? 128 : 1;
+    numGroups             = (archName.find("gfx94") != -1) ? numGroups : 1;
     numGroups             = std::min(int((len + workSize - 1) / workSize), int(numGroups));
 
     Tensile::KernelInvocation invocation;
@@ -564,6 +566,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     err                   = adapter->initKernel(kernelName);
     int workSize          = 131072;
     int numGroups         = (workSpace && sync) ? 128 : 1;
+    numGroups             = (archName.find("gfx94") != -1) ? numGroups : 1;
     numGroups             = std::min(int((len + workSize - 1) / workSize), int(numGroups));
 
     Tensile::KernelInvocation invocation;

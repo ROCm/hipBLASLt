@@ -56,15 +56,13 @@ for arch in "${archs[@]}"; do
         python3 ./SoftmaxGenerator.py -o $s -m $1 -n $2 --arch $arch --toolchain $toolchain &
         objs+=($o)
     done
-    if [[ $arch =~ gfx94[0-9] ]]; then
-        for i in "S S" "H H" "H S" "S H"; do
-            set -- $i
-            s=$dst/A_$1_$2_$3_$4_$arch.s
-            o=$dst/A_$1_$2_$3_$4_$arch.o
-            python3 ./AMaxGenerator.py -o $s -t $1 -d $2 --arch $arch --toolchain $toolchain &
-            objs+=($o)
-        done
-    fi
+    for i in "S S" "H H" "H S" "S H"; do
+        set -- $i
+        s=$dst/A_$1_$2_$3_$4_$arch.s
+        o=$dst/A_$1_$2_$3_$4_$arch.o
+        python3 ./AMaxGenerator.py -o $s -t $1 -d $2 --arch $arch --toolchain $toolchain &
+        objs+=($o)
+    done
     if [[ $arch =~ gfx94[0-9] ]]; then
         for i in "S S F8" "S S B8" "S H F8" "S H B8"; do
             set -- $i
