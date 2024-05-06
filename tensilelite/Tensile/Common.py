@@ -1473,7 +1473,7 @@ def assignGlobalParameters( config ):
     if os.name == "nt":
       globalParameters["AssemblerPath"] = locateExe(globalParameters["ROCmBinPath"], "clang++.exe")
     else:
-      globalParameters["AssemblerPath"] = locateExe(os.path.join(globalParameters["LLVMPath"], "llvm/bin"), "clang++")
+      globalParameters["AssemblerPath"] = locateExe(os.path.join(globalParameters["LLVMPath"], "bin"), "clang++")
 
   globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
 
@@ -1485,7 +1485,7 @@ def assignGlobalParameters( config ):
     if os.name == "nt":
       globalParameters["ClangOffloadBundlerPath"] = locateExe(globalParameters["ROCmBinPath"], "clang-offload-bundler.exe")
     else:
-      globalParameters["ClangOffloadBundlerPath"] = locateExe(os.path.join(globalParameters["LLVMPath"], "llvm/bin"), "clang-offload-bundler")
+      globalParameters["ClangOffloadBundlerPath"] = locateExe(os.path.join(globalParameters["LLVMPath"], "bin"), "clang-offload-bundler")
 
   if "ROCmAgentEnumeratorPath" in config:
     globalParameters["ROCmAgentEnumeratorPath"] = config["ROCmAgentEnumeratorPath"]
