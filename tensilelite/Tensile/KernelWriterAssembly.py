@@ -7104,7 +7104,7 @@ class KernelWriterAssembly(KernelWriter):
     lr1 = self.vgprPool.checkOut(1,"lr1")
     acc2arch, _ = accToArchMapper(kernel)
     NumAccVgprRes = len(acc2arch)*kernel["MIRegPerOut"]
-    accVgprRes = self.vgprPool.checkOut(NumAccVgprRes,"accLSUVgprRes")
+    accVgprRes = self.vgprPool.checkOutAligned(NumAccVgprRes, 4, "accLSUVgprRes")
     for i in range(len(acc2arch)):
       for r in range(kernel["MIRegPerOut"]):
         destIdx = (acc2arch[i]) * kernel["MIRegPerOut"] + r
