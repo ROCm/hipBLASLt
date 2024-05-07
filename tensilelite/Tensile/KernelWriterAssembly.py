@@ -4444,10 +4444,10 @@ class KernelWriterAssembly(KernelWriter):
 
     ########################################
     # Load kernel args needed by global write batch
-    module.addComment0("load store sgprs2")
 
     # Define sgprs for kernel args
     if self.states.numStoreSgprToLoad2:
+      module.addComment0("load store sgprs2")
       for name in self.states.numStoreSgprNames2:
           module.add(RegSet("s", "sgpr"+name, self.sgprs[name]))
 
