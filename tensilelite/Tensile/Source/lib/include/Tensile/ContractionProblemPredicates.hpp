@@ -1825,7 +1825,7 @@ namespace Tensile
             };
 
             // Activation
-            struct ActivationEqual : public Predicate_CRTP<ActivationEqual, ContractionProblemGemm>
+            struct ActivationCheck : public Predicate_CRTP<ActivationCheck, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1834,8 +1834,8 @@ namespace Tensile
                 };
                 ActivationType value;
 
-                ActivationEqual() = default;
-                ActivationEqual(ActivationType value)
+                ActivationCheck() = default;
+                ActivationCheck(ActivationType value)
                     : value(value)
                 {
                 }
@@ -1847,7 +1847,7 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.activationType() == value;
+                    return problem.activationType() == value || value == ActivationType::All;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
@@ -1986,7 +1986,7 @@ namespace Tensile
                 }
             };
 
-            struct UseBiasEqual : public Predicate_CRTP<UseBiasEqual, ContractionProblemGemm>
+            struct UseBiasCheck : public Predicate_CRTP<UseBiasCheck, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1995,8 +1995,8 @@ namespace Tensile
                 };
                 int value;
 
-                UseBiasEqual() = default;
-                UseBiasEqual(int value)
+                UseBiasCheck() = default;
+                UseBiasCheck(int value)
                     : value(value)
                 {
                 }
@@ -2008,14 +2008,16 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.useBias() == value;
+                    return !problem.useBias() || value;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    return debugEvalCmp(
-                        problem, stream, "prob", problem.useBias(), "==", "sol", value);
+                    bool rv = (*this)(problem);
+                    stream << *this << ": prob: " << problem.useBias() <<
+                           ", Is sol support: "<< value << std::endl;
+                    return rv;
                 }
             };
 
@@ -2052,7 +2054,7 @@ namespace Tensile
                 }
             };
 
-            struct UseScaleABEqual : public Predicate_CRTP<UseScaleABEqual, ContractionProblemGemm>
+            struct UseScaleABCheck : public Predicate_CRTP<UseScaleABCheck, ContractionProblemGemm>
             {
                 enum
                 {
@@ -2061,8 +2063,8 @@ namespace Tensile
                 };
                 bool value;
 
-                UseScaleABEqual() = default;
-                UseScaleABEqual(bool value)
+                UseScaleABCheck() = default;
+                UseScaleABCheck(bool value)
                     : value(value)
                 {
                 }
@@ -2074,18 +2076,21 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.useScaleAB() == value;
+                    return !problem.useScaleAB() || value;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    return debugEvalCmp(
-                        problem, stream, "prob", problem.useScaleAB(), "==", "sol", value);
+                    bool rv = (*this)(problem);
+
+                    stream << *this << ": prob: " << problem.useScaleAB() <<
+                           ", Is sol support: "<< value << std::endl;
+                    return rv;
                 }
             };
 
-            struct UseScaleCDEqual : public Predicate_CRTP<UseScaleCDEqual, ContractionProblemGemm>
+            struct UseScaleCDCheck : public Predicate_CRTP<UseScaleCDCheck, ContractionProblemGemm>
             {
                 enum
                 {
@@ -2094,8 +2099,8 @@ namespace Tensile
                 };
                 bool value;
 
-                UseScaleCDEqual() = default;
-                UseScaleCDEqual(bool value)
+                UseScaleCDCheck() = default;
+                UseScaleCDCheck(bool value)
                     : value(value)
                 {
                 }
@@ -2107,19 +2112,22 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.useScaleCD() == value;
+                    return !problem.useScaleCD() || value;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    return debugEvalCmp(
-                        problem, stream, "prob", problem.useScaleCD(), "==", "sol", value);
+                    bool rv = (*this)(problem);
+
+                    stream << *this << ": prob: " << problem.useScaleCD() <<
+                           ", Is sol support: "<< value << std::endl;
+                    return rv;
                 }
             };
 
-            struct UseScaleAlphaVecEqual
-                : public Predicate_CRTP<UseScaleAlphaVecEqual, ContractionProblemGemm>
+            struct UseScaleAlphaVecCheck
+                : public Predicate_CRTP<UseScaleAlphaVecCheck, ContractionProblemGemm>
             {
                 enum
                 {
@@ -2128,8 +2136,8 @@ namespace Tensile
                 };
                 bool value;
 
-                UseScaleAlphaVecEqual() = default;
-                UseScaleAlphaVecEqual(bool value)
+                UseScaleAlphaVecCheck() = default;
+                UseScaleAlphaVecCheck(bool value)
                     : value(value)
                 {
                 }
@@ -2141,14 +2149,17 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.useScaleAlphaVec() == value;
+                    return !problem.useScaleAlphaVec() || value;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    return debugEvalCmp(
-                        problem, stream, "prob", problem.useScaleAlphaVec(), "==", "sol", value);
+                    bool rv = (*this)(problem);
+
+                    stream << *this << ": prob: " << problem.useScaleAlphaVec() <<
+                           ", Is sol support: "<< value << std::endl;
+                    return rv;
                 }
             };
 

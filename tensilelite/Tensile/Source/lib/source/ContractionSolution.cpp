@@ -700,10 +700,12 @@ namespace Tensile
             {
                 args.template append<uint32_t>("bias_type",
                                                static_cast<uint32_t>(problem.bias().dataType()));
-                if(problem.useBias())
+                if(problemType.useBias)
+                {
                     args.template append<uint32_t>(
                         "strideBias",
-                        static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
+                        static_cast<uint32_t>(problem.useBias()? bias.strides()[bias.dimensions() - 1]: 0)); // reserved
+                }
                 if(problemType.useBias == 3)
                 {
                     args.template append<uint32_t>(
@@ -1374,10 +1376,10 @@ namespace Tensile
         for(size_t i = 1; i < c.dimensions(); i++)
             args.template append<uint32_t>(concatenate_if<T_Debug>("strideC", i), c.strides()[i]);
 
-        if(useBias && problem.useBias())
+        if(useBias)
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
-            args.template append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
+            args.template append<uint32_t>("strideBias", problem.useBias()? bias.strides()[bias.dimensions() - 1] : 0);
         }
 
         int i = 0;

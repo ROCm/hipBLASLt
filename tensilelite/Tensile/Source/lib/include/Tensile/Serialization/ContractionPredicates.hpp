@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -98,15 +98,15 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::EqualityMatching>(),
                     Base::template Pair<Predicates::Contraction::FreeSizeMatching>(),
                     Base::template Pair<Predicates::Contraction::UseGradientEqual>(),
-                    Base::template Pair<Predicates::Contraction::ActivationEqual>(),
+                    Base::template Pair<Predicates::Contraction::ActivationCheck>(),
                     Base::template Pair<Predicates::Contraction::ActivationComputeTypeEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationNoGuardEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEnumWhiteList>(),
-                    Base::template Pair<Predicates::Contraction::UseBiasEqual>(),
+                    Base::template Pair<Predicates::Contraction::UseBiasCheck>(),
                     Base::template Pair<Predicates::Contraction::UseEEqual>(),
-                    Base::template Pair<Predicates::Contraction::UseScaleABEqual>(),
-                    Base::template Pair<Predicates::Contraction::UseScaleCDEqual>(),
-                    Base::template Pair<Predicates::Contraction::UseScaleAlphaVecEqual>(),
+                    Base::template Pair<Predicates::Contraction::UseScaleABCheck>(),
+                    Base::template Pair<Predicates::Contraction::UseScaleCDCheck>(),
+                    Base::template Pair<Predicates::Contraction::UseScaleAlphaVecCheck>(),
                     Base::template Pair<Predicates::Contraction::BiasDataTypeWhiteList>(),
                     Base::template Pair<Predicates::Contraction::BiasSrcWhiteList>(),
                     Base::template Pair<Predicates::Contraction::SizeInRange>(),
@@ -384,8 +384,8 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::ActivationEqual, IO>
-            : public AutoMappingTraits<Predicates::Contraction::ActivationEqual, IO>
+        struct MappingTraits<Predicates::Contraction::ActivationCheck, IO>
+            : public AutoMappingTraits<Predicates::Contraction::ActivationCheck, IO>
         {
         };
 
@@ -414,8 +414,8 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::UseBiasEqual, IO>
-            : public AutoMappingTraits<Predicates::Contraction::UseBiasEqual, IO>
+        struct MappingTraits<Predicates::Contraction::UseBiasCheck, IO>
+            : public AutoMappingTraits<Predicates::Contraction::UseBiasCheck, IO>
         {
         };
 
@@ -426,20 +426,20 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::UseScaleABEqual, IO>
-            : public AutoMappingTraits<Predicates::Contraction::UseScaleABEqual, IO>
+        struct MappingTraits<Predicates::Contraction::UseScaleABCheck, IO>
+            : public AutoMappingTraits<Predicates::Contraction::UseScaleABCheck, IO>
         {
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::UseScaleCDEqual, IO>
-            : public AutoMappingTraits<Predicates::Contraction::UseScaleCDEqual, IO>
+        struct MappingTraits<Predicates::Contraction::UseScaleCDCheck, IO>
+            : public AutoMappingTraits<Predicates::Contraction::UseScaleCDCheck, IO>
         {
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::UseScaleAlphaVecEqual, IO>
-            : public AutoMappingTraits<Predicates::Contraction::UseScaleAlphaVecEqual, IO>
+        struct MappingTraits<Predicates::Contraction::UseScaleAlphaVecCheck, IO>
+            : public AutoMappingTraits<Predicates::Contraction::UseScaleAlphaVecCheck, IO>
         {
         };
 
