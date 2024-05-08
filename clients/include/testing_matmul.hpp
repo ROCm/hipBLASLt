@@ -89,34 +89,43 @@ void epilogue_func(int64_t m,
     auto saturate_o = [](Tact val) { return static_cast<To>(val); };
     for(int i = 0; i < m; i++)
     {
-        if(amaxD != nullptr)
+        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
+
+#define CALCULATE_EPILOGUE_ACT                                                   \
+        auto pos     = j * ld + i;                                               \
+        auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;               \
+        if(e && !gradient)                                                       \
+        {                                                                        \
+            *(e + pos) = static_cast<To>(in_Tact * scaleE);                      \
+        }                                                                        \
+        Tact in_Tact_act = 0;                                                    \
+        if(gradient)                                                             \
+            in_Tact_act                                                          \
+                = act_func(static_cast<Tact>(*(e + pos)), arg1, arg2) * in_Tact; \
+        else                                                                     \
+            in_Tact_act = act_func(in_Tact, arg1, arg2);
+
+        if(amaxD == nullptr)
+        {
+#pragma omp parallel for
+            for(int j = 0; j < n; j++)
+            {
+                CALCULATE_EPILOGUE_ACT;
+                *(out + pos)     = saturate_o(in_Tact_act * scaleD);
+                *(out_raw + pos) = static_cast<Tc>(in_Tact_act * scaleD);
+            }
+        }
+        else
         {
             for(int j = 0; j < n; j++)
             {
-                auto pos = j * ld + i;
-                *amaxD   = *amaxD > fabs(static_cast<Tc>(*(in + pos)))
-                               ? *amaxD
-                               : fabs(static_cast<Tc>(*(in + pos)));
+                CALCULATE_EPILOGUE_ACT;
+                *amaxD  = *amaxD > fabs(static_cast<Tc>(in_Tact_act))
+                                ? *amaxD
+                                : fabs(static_cast<Tc>(in_Tact_act));
+                *(out + pos)     = saturate_o(in_Tact_act * scaleD);
+                *(out_raw + pos) = static_cast<Tc>(in_Tact_act * scaleD);
             }
-        }
-        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
-#pragma omp parallel for
-        for(int j = 0; j < n; j++)
-        {
-            auto pos     = j * ld + i;
-            auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;
-            if(e && !gradient)
-            {
-                *(e + pos) = static_cast<To>(in_Tact * scaleE);
-            }
-            Tact in_Tact_act = 0;
-            if(gradient)
-                in_Tact_act
-                    = act_func(static_cast<Tact>(*(e + pos)), arg1, arg2) * in_Tact * scaleD;
-            else
-                in_Tact_act = act_func(in_Tact, arg1, arg2) * scaleD;
-            *(out + pos)     = saturate_o(in_Tact_act);
-            *(out_raw + pos) = static_cast<Tc>(in_Tact_act);
         }
     }
 }
@@ -137,31 +146,41 @@ void epilogue_func(int64_t m,
 {
     auto saturate_o = [](Ti val) { return static_cast<To>(val); };
 
+#define CALCULATE_EPILOGUE_BASIC                                   \
+        auto pos  = j * ld + i;                                    \
+        Tc temp = static_cast<Ti>(*(in + pos)) + bias_data;        \
+        if(e)                                                      \
+        {                                                          \
+            *(e + pos) = static_cast<To>(temp * scaleE);           \
+        }
+
     for(int i = 0; i < m; i++)
     {
-        if(amaxD != nullptr)
+        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
+
+        if(amaxD == nullptr)
+        {
+#pragma omp parallel for
+            for(int j = 0; j < n; j++)
+            {
+                CALCULATE_EPILOGUE_BASIC;
+                temp *= scaleD;
+                *(out + pos)     = saturate_o(temp);
+                *(out_raw + pos) = static_cast<Tc>(temp);
+            }
+        }
+        else
         {
             for(int j = 0; j < n; j++)
             {
-                auto pos = j * ld + i;
-                *amaxD   = *amaxD > fabs(static_cast<Tc>(*(in + pos)))
-                               ? *amaxD
-                               : fabs(static_cast<Tc>(*(in + pos)));
+                CALCULATE_EPILOGUE_BASIC;
+                *amaxD  = *amaxD > fabs(static_cast<Tc>(temp))
+                                ? *amaxD
+                                : fabs(static_cast<Tc>(temp));
+                temp *= scaleD;
+                *(out + pos)     = saturate_o(temp);
+                *(out_raw + pos) = static_cast<Tc>(temp);
             }
-        }
-        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
-#pragma omp parallel for
-        for(int j = 0; j < n; j++)
-        {
-            auto pos  = j * ld + i;
-            auto temp = static_cast<Ti>(*(in + pos)) + bias_data;
-            if(e)
-            {
-                *(e + pos) = static_cast<To>(temp * scaleE);
-            }
-            temp *= scaleD;
-            *(out + pos)     = saturate_o(temp);
-            *(out_raw + pos) = static_cast<Tc>(temp);
         }
     }
 }

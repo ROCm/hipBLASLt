@@ -709,10 +709,13 @@ Tests:
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0.0]
+  bias_vector: [0, 1]
+  bias_type: f16_r
   scaleA: [1]
   scaleB: [1]
   scaleD: [1]
   amaxD: [1]
+  activation_type: [none, relu]
   unit_check: 1
   gpu_arch: '94?'
 
