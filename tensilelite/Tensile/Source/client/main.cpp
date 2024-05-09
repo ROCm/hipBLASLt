@@ -55,6 +55,9 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/program_options.hpp>
 
+// Temporarily import Python for gemmmodel
+#include <Python.h>
+
 #include <cstddef>
 
 namespace po = boost::program_options;
@@ -258,6 +261,9 @@ namespace Tensile
                 ("use-gradient",              po::value<bool>()->default_value(false), "Use gradient.")
                 ("use-user-args",             po::value<bool>()->default_value(false), "Use user argument structure as kernel input.")
                 ("rotating-buffer-size",      po::value<int32_t>()->default_value(0), "Size of rotating buffer in the unit of MB.")
+                ("gemm-predict-threshold",    po::value<float>()->default_value(0), "Threshold of the gemm prediction.")
+                ("gemm-wrapper-path",         po::value<std::string>()->default_value(""), "Path to gemm predict submodule.")
+                ("gemm-predict-debug",        po::value<bool>()->default_value(false), "Only shows ranking results but not filters the kernels.")
                 ;
             // clang-format on
 
@@ -469,6 +475,78 @@ namespace Tensile
     } // namespace Client
 } // namespace Tensile
 
+struct solutionInfo
+{
+    int mt0;
+    int mt1;
+    int unroll;
+    int splitk;
+
+    std::string key()
+    {
+        return std::to_string(mt0) + "_" + std::to_string(mt1) + "_" + std::to_string(unroll) + "_" + std::to_string(splitk);
+    }
+};
+
+inline std::string archShort(std::string arch)
+{
+    if(arch.contains(":"))
+        return arch.substr(0, arch.find_first_of(":"));
+    return arch;
+}
+
+inline std::string tensile2TorchDataType(Tensile::DataType dataType)
+{
+    switch(dataType)
+    {
+    case Tensile::DataType::Half:
+        return "torch.float16";
+    break;
+    case Tensile::DataType::BFloat16:
+        return "torch.bfloat16";
+    break;
+    case Tensile::DataType::Float8:
+        return "torch.float8_e4m3fn";
+    break;
+    case Tensile::DataType::BFloat8:
+        return "torch.float8_e5m2";
+    break;
+    default:
+        std::cerr << "Currently data type " << int(dataType) << " is unsupported." << std::endl;
+    }
+    return "";
+}
+
+std::vector<solutionInfo> pyPredict(PyObject *pFuncPredict, PyObject *pMT, const char *arch, const char* transA, const char* transB, int m, int n, int batch, int k, const char* datatype)
+{
+    // Changed with each call
+    // predict(transA, transB, m, n, batch_count, k, dtype, soc_s='mi300x', b_in_HBM=True, macroTiles=None)
+    PyObject *pArgs = Py_BuildValue("(s, s, i, i, i, i, s)", transA, transB, m, n, batch, k, datatype);
+    PyObject *pKargs = Py_BuildValue("{s:s, s:i, s:O}", "soc_s", arch, "b_in_HBM", 1, "macroTiles", pMT);
+    PyObject *pRes = PyObject_Call(pFuncPredict, pArgs, pKargs);
+    if (pRes == NULL)
+        std::cout << "Failed to call function" << std::endl;
+
+    size_t len = PyList_Size(pRes);
+    std::vector<solutionInfo> info;
+    for(size_t i = 0; i < len; i++)
+    {
+        PyObject *item = PyList_GetItem(pRes, i);
+        PyObject *mt0 = PyList_GetItem(item, 0);
+        PyObject *mt1 = PyList_GetItem(item, 1);
+        PyObject *unroll = PyList_GetItem(item, 2);
+        PyObject *splitk = PyList_GetItem(item, 3);
+        info.push_back({static_cast<int>(PyLong_AsLong(mt0)),
+                        static_cast<int>(PyLong_AsLong(mt1)),
+                        static_cast<int>(PyLong_AsLong(unroll)),
+                        static_cast<int>(PyLong_AsLong(splitk))});
+    }
+    Py_DECREF(pArgs);
+    Py_DECREF(pKargs);
+    Py_DECREF(pRes);
+    return info;
+}
+
 int main(int argc, const char* argv[])
 {
     using namespace Tensile;
@@ -531,6 +609,65 @@ int main(int argc, const char* argv[])
     {
         auto iter = library->solutions.end();
         iter--;
+
+        numSolutions = 0;
+        for (auto iter = library->solutions.begin(); iter != library->solutions.end(); iter++)
+            numSolutions++;
+    }
+
+    // Get solution properties here
+    auto rankingDebug  = args["gemm-predict-debug"].as<bool>();
+    auto testThreshold = args["gemm-predict-threshold"].as<float>();
+    auto testedSolutions = numSolutions * testThreshold;
+    bool runPredict = testThreshold > 0 ? true: false;
+
+    PyObject *pSysPath, *pModule, *pFuncPredict, *pMT;
+    std::map<std::string, int> solutionInfoGroups;
+    std::vector<solutionInfo> solutionInfoList;
+    std::string pArch, pTransA, pTransB, pDataType;
+    if(runPredict)
+    {
+        std::cout << "Gemm prediction enabled. Threshold: " << testThreshold << ". Total solutions: " << numSolutions << "." << std::endl;
+        // Python stuffs
+        Py_Initialize();
+
+        pSysPath = PySys_GetObject("path");
+        auto modelPath = args["gemm-wrapper-path"].as<std::string>();
+        PyList_Append(pSysPath, PyUnicode_FromString(modelPath.c_str()));
+        pModule = PyImport_Import(PyUnicode_FromString("gemmmodel_wrapper"));
+        pFuncPredict = PyObject_GetAttrString(pModule, "predict");
+
+        for (auto iter = library->solutions.begin(); iter != library->solutions.end(); iter++)
+        {
+            // Collect all the solutions , ContractionSolution -> solutionInfo
+            solutionInfo si;
+            si.mt0 = iter->second->sizeMapping.macroTile.x;
+            si.mt1 = iter->second->sizeMapping.macroTile.y;
+            si.unroll = iter->second->sizeMapping.depthU;
+            si.splitk = iter->second->sizeMapping.globalSplitU;
+
+            std::map<std::string, int>::iterator sg;
+            auto solutionKey = si.key();
+            sg = solutionInfoGroups.find(solutionKey);
+            if (sg != solutionInfoGroups.end())
+            {
+                sg->second++;
+            }
+            else
+            {
+                solutionInfoGroups[solutionKey] = 1;
+                solutionInfoList.push_back(si);
+            }
+        }
+        // Create variables for predict
+        pMT = PyList_New(solutionInfoList.size());
+        for(size_t i = 0; i < solutionInfoList.size(); i++)
+            PyList_SetItem(pMT, i, Py_BuildValue("[i, i, i, i]", solutionInfoList[i].mt0, solutionInfoList[i].mt1, solutionInfoList[i].unroll, solutionInfoList[i].splitk));
+        pArch = archShort(hardware->archName());
+        // Trans, datatype
+        pTransA = library->solutions.begin()->second->problemType.transA ? "T" : "N";
+        pTransB = library->solutions.begin()->second->problemType.transB ? "T" : "N";
+        pDataType = tensile2TorchDataType(library->solutions.begin()->second->problemType.aType);
     }
 
     auto* ptr      = new DataInitialization(args, problemFactory);
@@ -609,14 +746,69 @@ int main(int argc, const char* argv[])
             auto inputArr
                 = dataInit->prepareRotatingGPUOutput(maxRotatingBufferNum, problem, inputs);
             bool resetInput = false;
+
+            // Run predict
+            std::vector<solutionInfo> rankedVec;
+            std::map<std::string, int> runSolutions;
+
+            if(runPredict)
+            {
+                if(auto gemm = dynamic_cast<ContractionProblemGemm*>(problem))
+                {
+                    if(gemm->d().dimensions() != 3)
+                        std::cerr << "Wrong dimension " << gemm->d().dimensions() << std::endl;
+                    else
+                    {
+                        int m = gemm->freeSizeA(0);
+                        int n = gemm->freeSizeB(0);
+                        int batch = gemm->batchSize(0);
+                        int k = gemm->boundSize(0);
+
+                        rankedVec = pyPredict(pFuncPredict, pMT, pArch.c_str(), pTransA.c_str(), pTransB.c_str(), m, n, batch, k, pDataType.c_str());
+
+                        std::cout << "Ranked solutions: ";
+                        for(size_t r = 0; r < rankedVec.size(); r++)
+                        {
+                            std::cout << "[" << rankedVec[r].key() << "], ";
+                        }
+                        std::cout << std::endl;
+
+                        int addSols = 0;
+                        for(size_t r = 0; r < rankedVec.size(); r++)
+                        {
+                            auto rk = rankedVec[r].key();
+                            runSolutions[rk] = 1;
+                            addSols += solutionInfoGroups[rk];
+                            if(addSols > testedSolutions)
+                                break;
+                        }
+                    }
+                }
+            }
+
             while(solutionIterator->moreSolutionsInProblem())
             {
                 auto solution = solutionIterator->getSolution();
                 if(solution == nullptr)
                     throw std::runtime_error("Could not find a solution");
 
+                // Check whether we should run this solution
+                bool skipSolution = false;
+                if(rankedVec.size() && !rankingDebug)
+                {
+                    solutionInfo si;
+                    si.mt0 = solution->sizeMapping.macroTile.x;
+                    si.mt1 = solution->sizeMapping.macroTile.y;
+                    si.unroll = solution->sizeMapping.depthU;
+                    si.splitk = solution->sizeMapping.globalSplitU;
+
+                    auto solutionKey = si.key();
+                    if (runSolutions.find(si.key()) == runSolutions.end())
+                        skipSolution = true;
+                }
+
                 listeners.preSolution(*solution);
-                if(solutionIterator->runCurrentSolution() && runKernels)
+                if(solutionIterator->runCurrentSolution() && runKernels && !skipSolution)
                 {
                     try
                     {
@@ -728,6 +920,14 @@ int main(int argc, const char* argv[])
     }
 
     listeners.finalizeReport();
+
+    if(runPredict)
+    {
+        Py_DECREF(pMT);
+        Py_DECREF(pModule);
+        Py_DECREF(pFuncPredict);
+        Py_Finalize();
+    }
 
     // error range in shell is [0-255]
     return std::min(listeners.error(), 255);

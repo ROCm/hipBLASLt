@@ -275,6 +275,9 @@ globalParameters["UseUserArgs"] = False
 
 globalParameters["RotatingBufferSize"] = 0 # Size in MB
 
+globalParameters["GemmModelThreshold"] = 0 # 0 or 1 is off, use a value between 0~1, e.g. 0.4
+globalParameters["GemmModelDebug"] = False # Only shows ranking results but not filters the kernels.
+
 globalParameters["BuildIdKind"] = "sha1"
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen

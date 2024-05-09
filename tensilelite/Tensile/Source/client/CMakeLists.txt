@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -65,14 +65,16 @@ if(TENSILE_USE_OPENMP)
     target_link_libraries(TensileClient PRIVATE custom_openmp_cxx)
 endif()
 
+find_package (Python3 REQUIRED COMPONENTS Interpreter Development)
+
 add_executable(tensile_client main.cpp)
 set_target_properties(tensile_client
                       PROPERTIES
-                      CXX_STANDARD 20
+                      CXX_STANDARD 23
                       CXX_STANDARD_REQUIRED ON
                       CXX_EXTENSIONS OFF)
-
-target_link_libraries(tensile_client PRIVATE TensileHost TensileClient ${Boost_LIBRARIES})
+target_include_directories(tensile_client PRIVATE ${Python3_INCLUDE_DIRS})
+target_link_libraries(tensile_client PRIVATE TensileHost TensileClient ${Boost_LIBRARIES} Python3::Python)
 if(TENSILE_USE_OPENMP)
     target_link_libraries(tensile_client PRIVATE custom_openmp_cxx)
 endif()

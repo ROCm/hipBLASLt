@@ -630,6 +630,18 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs
         param("use-user-args",            globalParameters["UseUserArgs"])
         param("rotating-buffer-size",     globalParameters["RotatingBufferSize"])
 
+        # Gemmmodel
+        wrapperPath = os.path.join(globalParameters["ScriptPath"], "../../submodule")
+        param("gemm-wrapper-path", wrapperPath)
+        submodulePath = os.path.join(wrapperPath, "gemmmodel")
+        if not os.path.isdir(submodulePath) and globalParameters["GemmModelThreshold"] > 0:
+          print("Submodule Gemmmodel not found. Disable threshold")
+          threshold = 0
+        else:
+          threshold = 0 if globalParameters["GemmModelThreshold"] >= 1 else globalParameters["GemmModelThreshold"]
+        param("gemm-predict-threshold", threshold)
+        param("gemm-predict-debug", globalParameters["GemmModelDebug"])
+
 
 def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, biasDimArgs, activationArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
 
