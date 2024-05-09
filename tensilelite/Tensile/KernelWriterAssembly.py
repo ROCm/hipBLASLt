@@ -9153,6 +9153,9 @@ class KernelWriterAssembly(KernelWriter):
           #Only apply when 2 wave optimization features are enabled
           if (kernel["StorePriorityOpt"] or kernel["StoreSyncOpt"]) and beta:
             self.alphaBeforeLoadC = True
+          #When LSU>1, don't use the VGPRs from the endSum.
+          if (kernel["LocalSplitU"] > 1):
+            codeMulAlpha = None
         else:
           codeMulAlpha = None
 
