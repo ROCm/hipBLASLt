@@ -45,6 +45,8 @@ void printUsage(char* programName)
               << "\t-d, --dtype\t\t\tDest Type of problem, default is S.\n"
               << "\t-m, --m\t\t\t\tSize of dim 0, default is 64\n"
               << "\t-n, --n\t\t\t\tSize of dim 1, default is 64\n"
+              << "\t-i, --i\t\t\t\titeration\n"
+              << "\t--no_workspace \t\t\t\titeration\n"
               << "\t--initialization \t\tInitialize matrix data. Options: rand_int, trig_float, "
                  "hpl(floating), special, zero. (default is hpl)\n";
 }
