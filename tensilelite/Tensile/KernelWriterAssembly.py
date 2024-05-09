@@ -7104,7 +7104,7 @@ class KernelWriterAssembly(KernelWriter):
     lr1 = self.vgprPool.checkOut(1,"lr1")
     acc2arch, _ = accToArchMapper(kernel)
     NumAccVgprRes = len(acc2arch)*kernel["MIRegPerOut"]
-    accVgprRes = self.vgprPool.checkOut(NumAccVgprRes,"accLSUVgprRes")
+    accVgprRes = self.vgprPool.checkOutAligned(NumAccVgprRes, 4, "accLSUVgprRes")
     for i in range(len(acc2arch)):
       for r in range(kernel["MIRegPerOut"]):
         destIdx = (acc2arch[i]) * kernel["MIRegPerOut"] + r
@@ -7167,20 +7167,25 @@ class KernelWriterAssembly(KernelWriter):
     bytesPerElem   = kernel["ProblemType"]["ComputeDataType"].numBytes()
     regsPerElem    = kernel["ProblemType"]["ComputeDataType"].numRegisters()
     bytesPerVector = storevw * bytesPerElem
-    bytesPerStep   = min(bytesPerVector, 16)
-    regsPerStep    = int((bytesPerStep+3)//4)
     for i in range(0, len(self.LSUelements)):
       (tt1, tt0, vc1, vc0) = self.LSUelements[i]
       writeOffset = self.LSUelemCoord0[i] + self.LSUelemCoord1[i] * kernel["MacroTile0"]
       regIdx = int(i * regsPerElem * storevw)
-      DSStoreBX = {128: DSStoreB128,
-                         64:  DSStoreB64,
-                         32:  DSStoreB32,
-                         16:  DSStoreB16,
-                         8:   DSStoreB8}[bytesPerStep*8]
-      module.add(DSStoreBX(dstAddr=vgpr(addr), src=vgpr(accVgprRes+regIdx, regsPerStep), \
-          ds=DSModifiers(offset=(writeOffset*self.states.bpeCinternal)),
-          comment="tt1=%u tt0=%u vc1=%u vc0=%u"%(tt1, tt0, vc1, vc0)))
+      regIdxStep  = 0
+      resedualBPV = bytesPerVector
+      while resedualBPV > 0:
+        bps = min(resedualBPV, 16)
+        regsPerStep    = int((bps+3)//4)
+        DSStoreBX = {128: DSStoreB128,
+                          64:  DSStoreB64,
+                          32:  DSStoreB32,
+                          16:  DSStoreB16,
+                          8:   DSStoreB8}[bps*8]
+        module.add(DSStoreBX(dstAddr=vgpr(addr), src=vgpr(accVgprRes+regIdx+regIdxStep, regsPerStep), \
+            ds=DSModifiers(offset=(writeOffset*self.states.bpeCinternal+(regIdxStep*4))),
+            comment="tt1=%u tt0=%u vc1=%u vc0=%u"%(tt1, tt0, vc1, vc0)))
+        regIdxStep += regsPerStep
+        resedualBPV -= bps
 
     self.vgprPool.checkIn(accVgprRes)
     self.vgprPool.checkIn(addr)
@@ -7253,11 +7258,8 @@ class KernelWriterAssembly(KernelWriter):
     bytesPerVector = self.LSUfullVw * bytesPerElem
     regsPerElem    = kernel["ProblemType"]["ComputeDataType"].numRegisters()
     numWaves       = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-    bytesPerStep   = min(bytesPerVector, 16)
-    while (bytesPerVector % bytesPerStep) != 0:
-      bytesPerStep //= 2
-    regsPerStep = int((bytesPerStep+3)//4)
-    elementStep = bytesPerStep // bytesPerElem
+    regsPerStep = int((bytesPerVector+3)//4)
+    elementStep = bytesPerVector // bytesPerElem
     lsuStep   = kernel["MacroTile0"] * kernel["MacroTile1"]
     # alloc resource
     baseAddr                    = self.vgprPool.checkOut(1,"baseAddr")
@@ -7270,10 +7272,6 @@ class KernelWriterAssembly(KernelWriter):
     # reset vgprValuC register
     module.add(RegSet("v", "vgprValuC", self.accVgprLdsReduction))
     self.states.c.startVgprValu = self.accVgprLdsReduction
-    # generate source
-    DSLoadBX = {128: DSLoadB128,
-                64:  DSLoadB64,
-                32:  DSLoadB32}[bytesPerStep*8]
 
     # Calculate offset for wave id and lsu id
     # re-use the vgpr from numTotalAccVgprLdsReduction
@@ -7303,8 +7301,19 @@ class KernelWriterAssembly(KernelWriter):
         offset   = r * lsuStep
         offset  += self.LSUelemCoord0PerLSUWave[i] + self.LSUelemCoord1PerLSUWave[i] * kernel["MacroTile0"]
         regIdx   = int(((i)*self.LSUfullVw + r*kernel["GlobalWriteVectorWidth"]*kernel["NumGlobalWriteVectorsPerThread"]) * regsPerElem)
-        module.add(DSLoadBX(dst=vgpr("LsuReduction+%u"%regIdx,regsPerStep), src=vgpr(baseAddr), \
-            ds=DSModifiers(offset=(offset*self.states.bpeCinternal)), comment="r=%u i=%u"%(r,i)))
+        # generate source
+        regIdxStep  = 0
+        resedualBPV = bytesPerVector
+        while resedualBPV > 0:
+          bps = min(resedualBPV, 16)
+          regsPerStep    = int((bps+3)//4)
+          DSLoadBX = {128: DSLoadB128,
+                      64:  DSLoadB64,
+                      32:  DSLoadB32}[bps*8]
+          module.add(DSLoadBX(dst=vgpr("LsuReduction+%u"%(regIdx + regIdxStep),regsPerStep), src=vgpr(baseAddr), \
+              ds=DSModifiers(offset=(offset*self.states.bpeCinternal+(regIdxStep*4))), comment="r=%u i=%u"%(r,i)))
+          regIdxStep += regsPerStep
+          resedualBPV -= bps
 
     # free resources
     self.vgprPool.checkIn(baseAddr)
