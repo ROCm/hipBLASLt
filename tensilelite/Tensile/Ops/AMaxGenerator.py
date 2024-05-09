@@ -269,14 +269,18 @@ class AMaxKernelGenerator:
                     KernelArgument(8, 40, 'global_buffer', 'global'),
                     KernelArgument(4, 48, 'by_value'),
                     KernelArgument(4, 52, 'by_value'),
-                    KernelArgument(4, 56, 'by_value'))
+                    KernelArgument(4, 56, 'by_value'),
+                    KernelArgument(4, 60, 'by_value'),
+                    KernelArgument(4, 64, 'by_value'))
         return (KernelArgument(8,  0, 'global_buffer', 'global'),
                 KernelArgument(8,  8, 'global_buffer', 'global'),
                 KernelArgument(8, 16, 'global_buffer', 'global'),
                 KernelArgument(8, 24, 'global_buffer', 'global'),
                 KernelArgument(4, 32, 'by_value'),
                 KernelArgument(4, 36, 'by_value'),
-                KernelArgument(4, 40, 'by_value'))
+                KernelArgument(4, 40, 'by_value'),
+                KernelArgument(4, 44, 'by_value'),
+                KernelArgument(4, 48, 'by_value'))
 
 
     def defineVariables(self):
@@ -316,6 +320,8 @@ class AMaxKernelGenerator:
         self.defineSgpr("AddressWk",  2, 2)
         self.defineSgpr("AddressSy",  2, 2)
         self.defineSgpr("SizeLength", 1)
+        self.defineSgpr("IsDivided", 1)
+        self.defineSgpr("Divided", 1)
         self.defineSgpr("WorkSize",   1)
         self.defineSgpr("NumGroup",   1)
 
@@ -359,16 +365,20 @@ class AMaxKernelGenerator:
             mod.add(ti.SLoadB64(ti.sgpr("AddressWk", 2),     ti.sgpr("KernelArg", 2),  32))
             mod.add(ti.SLoadB64(ti.sgpr("AddressSy", 2),     ti.sgpr("KernelArg", 2),  40))
             mod.add(ti.SLoadB32(ti.sgpr("SizeLength"),       ti.sgpr("KernelArg", 2),  48))
-            mod.add(ti.SLoadB32(ti.sgpr("WorkSize"),         ti.sgpr("KernelArg", 2),  52))
-            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),         ti.sgpr("KernelArg", 2),  56))
+            mod.add(ti.SLoadB32(ti.sgpr("IsDivided"),        ti.sgpr("KernelArg", 2),  52))
+            mod.add(ti.SLoadB32(ti.sgpr("Divided"),          ti.sgpr("KernelArg", 2),  56))
+            mod.add(ti.SLoadB32(ti.sgpr("WorkSize"),         ti.sgpr("KernelArg", 2),  60))
+            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),         ti.sgpr("KernelArg", 2),  64))
         else:
             mod.add(ti.SLoadB64(ti.sgpr("AddressOut", 2),    ti.sgpr("KernelArg", 2),   0))
             mod.add(ti.SLoadB64(ti.sgpr("AddressIn", 2),     ti.sgpr("KernelArg", 2),   8))
             mod.add(ti.SLoadB64(ti.sgpr("AddressWk", 2),     ti.sgpr("KernelArg", 2),  16))
             mod.add(ti.SLoadB64(ti.sgpr("AddressSy", 2),     ti.sgpr("KernelArg", 2),  24))
             mod.add(ti.SLoadB32(ti.sgpr("SizeLength"),       ti.sgpr("KernelArg", 2),  32))
-            mod.add(ti.SLoadB32(ti.sgpr("WorkSize"),         ti.sgpr("KernelArg", 2),  36))
-            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),         ti.sgpr("KernelArg", 2),  40))
+            mod.add(ti.SLoadB32(ti.sgpr("IsDivided"),        ti.sgpr("KernelArg", 2),  36))
+            mod.add(ti.SLoadB32(ti.sgpr("Divided"),          ti.sgpr("KernelArg", 2),  40))
+            mod.add(ti.SLoadB32(ti.sgpr("WorkSize"),         ti.sgpr("KernelArg", 2),  44))
+            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),         ti.sgpr("KernelArg", 2),  48))
 
         mod.add(ti.SWaitCnt(lgkmcnt=0))
         mod.addSpaceLine()
@@ -1031,13 +1041,29 @@ class AMaxKernelGenerator:
         mod.add(ti.SMovB32(ti.sgpr("Dst+3"), "Srd127_96"))
         mod.addSpaceLine()
 
-        BufferStorex1 = self.global_write_inst_type(1, self.o_type)
+        mod.add(ti.VMovB32(ti.vgpr("Offset"), 0))
 
+        BufferStorex1 = self.global_write_inst_type(1, self.o_type)
         if self.i_type.toChar() == 'H' and self.o_type.toChar() == "S":
             mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
         elif self.i_type.toChar() == 'S' and self.o_type.toChar() == "H":
             mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
-        mod.add(ti.VMovB32(ti.vgpr("Offset"), 0))
+        mod.add(ti.SNop(1))
+
+        label_divided = ti.Label("divided", 'divided')
+        mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+        mod.add(ti.SCBranchSCC1(label_divided.getLabelName()))
+
+        if self.o_type.toChar() == "S":
+            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+        elif self.o_type.toChar() == "H":
+            mod.add(ti.VRcpF16(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VMulF16(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+        mod.add(label_divided)
+
         mod.add(BufferStorex1(ti.vgpr("Output"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))
         mod.addSpaceLine()
 
