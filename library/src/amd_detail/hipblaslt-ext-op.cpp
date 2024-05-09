@@ -33,7 +33,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
-#include <algorithm>
 #include <hip/hip_ext.h>
 #include <hip/hip_runtime_api.h>
 #include <libgen.h>
@@ -44,6 +43,13 @@
 #include <tensile_host.hpp>
 #include <unordered_map>
 #include <vector>
+
+
+template <typename T>
+T min(T a, T b)
+{
+    return (a > b) ? b : a;
+}
 
 hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
                                     uint32_t    m,
@@ -480,7 +486,7 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     int workSize          = 131072;
     int numGroups         = (workSpace && sync) ? 128 : 1;
     numGroups             = (archName.find("gfx94") != -1) ? numGroups : 1;
-    numGroups             = std::min(int((len + workSize - 1) / workSize), int(numGroups));
+    numGroups             = min(int((len + workSize - 1) / workSize), int(numGroups));
 
     Tensile::KernelInvocation invocation;
     invocation.kernelName      = kernelName;
@@ -567,7 +573,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     int workSize          = 131072;
     int numGroups         = (workSpace && sync) ? 128 : 1;
     numGroups             = (archName.find("gfx94") != -1) ? numGroups : 1;
-    numGroups             = std::min(int((len + workSize - 1) / workSize), int(numGroups));
+    numGroups             = min(int((len + workSize - 1) / workSize), int(numGroups));
 
     Tensile::KernelInvocation invocation;
     invocation.kernelName      = kernelName;
