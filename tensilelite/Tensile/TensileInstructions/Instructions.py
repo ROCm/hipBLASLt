@@ -1260,6 +1260,11 @@ class SCmpGtI32(CommonInstruction):
         super().__init__(InstType.INST_I32, None, [src0, src1], None, None, comment)
         self.setInst("s_cmp_gt_i32")
 
+class SCmpGtU32(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
+        self.setInst("s_cmp_gt_u32")
+
 class SCmpGeU32(CommonInstruction):
     def __init__(self, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
