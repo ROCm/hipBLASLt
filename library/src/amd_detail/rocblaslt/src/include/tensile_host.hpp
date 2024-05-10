@@ -370,6 +370,12 @@ rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem>&      
                                  std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
                                  size_t                                          maxWorkSpaceBytes);
 
+rocblaslt_status getAllSolutions(std::shared_ptr<void>                           gemmData,
+                                 rocblaslt_handle                                handle,
+                                 rocblaslt::RocGemmType                          gemmType,
+                                 std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+                                 size_t                                          maxWorkSpaceBytes);
+
 rocblaslt_status
     getSolutionsFromIndex(rocblaslt_handle                                handle,
                           std::vector<int>&                               solutionIndex,

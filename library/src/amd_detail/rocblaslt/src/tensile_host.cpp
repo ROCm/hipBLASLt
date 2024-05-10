@@ -493,60 +493,28 @@ namespace
                                 isOutput);
         }
 
-        // set bias mode
         auto biasSrc = getBiasSrc(prob.epilogue);
         auto biasSize
             = (biasSrc == Tensile::ContractionProblemGemm::TENSOR::B) ? d.sizes()[1] : d.sizes()[0];
-        if(a_type == Tensile::DataType::Int8 && b_type == Tensile::DataType::Int8)
-        {
-            tensileProblem.setUseBias(0);
-        }
-        else
-        {
-            tensileProblem.setUseBias(1);
-            auto biasType = hipDataType_to_tensile_type(prob.bias_type);
-            tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
-            tensileProblem.setParams().setBiasEnum(
-                tensileUseBias(prob.epilogue) ? biasType : Tensile::DataType::None);
-        }
+        tensileProblem.setUseBias(prob.bias != nullptr);
+        auto biasType = hipDataType_to_tensile_type(prob.bias_type);
+        tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
+        tensileProblem.setParams().setBiasEnum(
+            tensileUseBias(prob.epilogue) ? biasType : Tensile::DataType::None);
 
-        // ScaleAB is only supported on F8/BF8
-        if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
-           || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
-        {
-            tensileProblem.setUseScaleAB(true);
-            if(d_type == Tensile::DataType::Float8 || d_type == Tensile::DataType::BFloat8)
-                tensileProblem.setUseScaleCD(true);
-            else
-                tensileProblem.setUseScaleCD(false);
-            tensileProblem.setScaleA(compute_type);
-            tensileProblem.setScaleB(compute_type);
-            tensileProblem.setScaleC(compute_type);
-            tensileProblem.setScaleD(compute_type);
-            tensileProblem.setUseScaleAlphaVec(true);
-            tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
-        }
-        else
-        {
-            tensileProblem.setUseScaleAB(false);
-            tensileProblem.setUseScaleCD(false);
-            // set ScaleAlphaVec mode
-            tensileProblem.setUseScaleAlphaVec(true);
-            tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
-        }
+        tensileProblem.setUseScaleAB(prob.scaleA != nullptr || prob.scaleB != nullptr);
+        tensileProblem.setUseScaleCD(prob.scaleC != nullptr || prob.scaleD != nullptr);
+        tensileProblem.setUseScaleAlphaVec(prob.scaleAlphaVec != nullptr);
+        tensileProblem.setScaleA(compute_type);
+        tensileProblem.setScaleB(compute_type);
+        tensileProblem.setScaleC(compute_type);
+        tensileProblem.setScaleD(compute_type);
+        tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
 
         // set Actvation
-        // only bias src A/B cannot enabled Act
-        if(!is_biasSrc_AB(prob.epilogue))
-        {
-            tensileProblem.setActivationType(Tensile::ActivationType::All);
-            tensileProblem.setActivationComputeType(compute_type);
-            tensileProblem.setParams().setActivationEnum(getTensileActivationType(prob.epilogue));
-        }
-        else
-        {
-            tensileProblem.setActivationType(Tensile::ActivationType::None);
-        }
+        tensileProblem.setActivationType(is_act_enabled(prob.epilogue)? Tensile::ActivationType::All:Tensile::ActivationType::None);
+        tensileProblem.setActivationComputeType(compute_type);
+        tensileProblem.setParams().setActivationEnum(getTensileActivationType(prob.epilogue));
 
         // set use gradient
         tensileProblem.setUseGradient(is_grad_enabled(prob.epilogue));
@@ -698,58 +666,24 @@ namespace
             auto biasSrc  = getBiasSrc(prob.epilogue);
             auto biasSize = (biasSrc == Tensile::ContractionProblemGemm::TENSOR::B) ? d.sizes()[1]
                                                                                     : d.sizes()[0];
-            if(a_type == Tensile::DataType::Int8 && b_type == Tensile::DataType::Int8)
-            {
-                tensileProblem.setUseBias(0);
-            }
-            else
-            {
-                tensileProblem.setUseBias(1);
-                auto biasType = hipDataType_to_tensile_type(prob.bias_type);
-                tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
-                tensileProblem.setParams().setBiasEnum(
-                    tensileUseBias(prob.epilogue) ? biasType : Tensile::DataType::None);
-            }
-
-            // ScaleAB is only supported on F8/BF8
-            if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
-               || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
-            {
-                tensileProblem.setUseScaleAB(true);
-                if(d_type == Tensile::DataType::Float8 || d_type == Tensile::DataType::BFloat8)
-                    tensileProblem.setUseScaleCD(true);
-                else
-                    tensileProblem.setUseScaleCD(false);
-                tensileProblem.setScaleA(compute_type);
-                tensileProblem.setScaleB(compute_type);
-                tensileProblem.setScaleC(compute_type);
-                tensileProblem.setScaleD(compute_type);
-                tensileProblem.setUseScaleAlphaVec(true);
-                tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
-            }
-            else
-            {
-                tensileProblem.setUseScaleAB(false);
-                tensileProblem.setUseScaleCD(false);
-                // set ScaleAlphaVec mode
-                tensileProblem.setUseScaleAlphaVec(true);
-                tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
-            }
-
+            tensileProblem.setUseBias(prob.bias != nullptr);
+            auto biasType = hipDataType_to_tensile_type(prob.bias_type);
+            tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
+            tensileProblem.setParams().setBiasEnum(
+                tensileUseBias(prob.epilogue) ? biasType : Tensile::DataType::None);
+            tensileProblem.setUseScaleAB(prob.scaleA != nullptr || prob.scaleB != nullptr);
+            tensileProblem.setUseScaleCD(prob.scaleC != nullptr || prob.scaleD != nullptr);
+            tensileProblem.setUseScaleAlphaVec(prob.scaleAlphaVec != nullptr);
+            tensileProblem.setScaleA(compute_type);
+            tensileProblem.setScaleB(compute_type);
+            tensileProblem.setScaleC(compute_type);
+            tensileProblem.setScaleD(compute_type);
+            tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
             // set Actvation
             // only bias src A/B cannot enabled Act
-            if(!is_biasSrc_AB(prob.epilogue))
-            {
-                tensileProblem.setActivationType(Tensile::ActivationType::All);
-                tensileProblem.setActivationComputeType(compute_type);
-                tensileProblem.setParams().setActivationEnum(tensileAct);
-            }
-            else
-            {
-                tensileProblem.setActivationType(Tensile::ActivationType::None);
-                tensileProblem.setParams().setActivationEnum(Tensile::ActivationType::None);
-            }
-
+            tensileProblem.setActivationType(is_act_enabled(prob.epilogue)? Tensile::ActivationType::All:Tensile::ActivationType::None);
+            tensileProblem.setActivationComputeType(compute_type);
+            tensileProblem.setParams().setActivationEnum(getTensileActivationType(prob.epilogue));
             // set E
             if(is_e_enabled(prob.epilogue))
             {
@@ -1633,23 +1567,7 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
 
             data->inputs.ws = workspace;
 
-            // Backup and restore settings
-            int                     useBias          = data->problem.useBias();
-            Tensile::ActivationType actType          = data->problem.activationType();
-            bool                    useScaleAlphaVec = data->problem.useScaleAlphaVec();
-            bool                    useE             = data->problem.useE();
-            bool                    useGrad          = data->problem.useGradient();
-            data->problem.setUseBias(solution->problemType.useBias);
-            data->problem.setActivationType(solution->problemType.activationType);
-            data->problem.setUseScaleAlphaVec(solution->problemType.useScaleAlphaVec);
-            data->problem.setUseE(solution->problemType.useE);
-            data->problem.setUseGradient(solution->problemType.useGradient);
             data->kernels = solution->solve(data->problem, data->inputs, *hardware);
-            data->problem.setUseBias(useBias);
-            data->problem.setActivationType(actType);
-            data->problem.setUseScaleAlphaVec(useScaleAlphaVec);
-            data->problem.setUseE(useE);
-            data->problem.setUseGradient(useGrad);
         }
         else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
@@ -1699,19 +1617,6 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             }
             else
             {
-                // fallback to normal gemm if is normal kernel
-                std::vector<bool>                    useBias, actHPA, useScaleAlphaVec;
-                std::vector<Tensile::ActivationType> actType;
-                for(int i = 0; i < data->problem.gemms.size(); i++)
-                {
-                    useBias.push_back(data->problem.gemms[i].useBias());
-                    actType.push_back(data->problem.gemms[i].activationType());
-                    data->problem.gemms[i].setUseBias(solution->problemType.useBias);
-                    data->problem.gemms[i].setActivationType(solution->problemType.activationType);
-                    data->problem.gemms[i].setUseScaleAlphaVec(
-                        solution->problemType.useScaleAlphaVec);
-                }
-
                 size_t requiedHostSize
                     = solution->requiredHostWorkspaceSizePerProblem * data->problem.gemms.size();
                 if(requiedHostSize > data->hipHostMemorySize)
@@ -1729,12 +1634,6 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
                                                            data->hipHostMemory.get(),
                                                            data->hipHostMemorySize,
                                                            stream);
-                for(int i = 0; i < data->problem.gemms.size(); i++)
-                {
-                    data->problem.gemms[i].setUseBias(useBias[i]);
-                    data->problem.gemms[i].setActivationType(actType[i]);
-                    data->problem.gemms[i].setUseScaleAlphaVec(useScaleAlphaVec[i]);
-                }
             }
         }
         status = rocblaslt_status_success;
@@ -2241,6 +2140,32 @@ rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem>&      
         tensile_probs.gemms[i].setGroupedGemm(true);
     }
     return getAllSolutions(tensile_probs, handle, heuristicResults, maxWorkSpaceBytes);
+}
+
+rocblaslt_status getAllSolutions(std::shared_ptr<void>                           gemmData,
+                                 rocblaslt_handle                                handle,
+                                 rocblaslt::RocGemmType                          gemmType,
+                                 std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+                                 size_t                                          maxWorkSpaceBytes)
+{
+
+        rocblaslt_status status = rocblaslt_status_success;
+        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+        {
+            std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+            status = getAllSolutions(data->problem, handle, heuristicResults, maxWorkSpaceBytes);
+        }
+        else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+        {
+            std::shared_ptr<TensileDataGroupedGemm> data = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+            status = getAllSolutions(data->problem, handle, heuristicResults, maxWorkSpaceBytes);
+        }
+        else
+        {
+            log_api(__func__, "Invalid gemm type", static_cast<int>(gemmType));
+            status = rocblaslt_status_not_implemented;
+        }
+        return status;
 }
 
 rocblaslt_status

@@ -1308,11 +1308,13 @@ rocblaslt_status
         hipDataType            d_type       = matD->type;
         rocblaslt_compute_type compute_type = matmul_desc->compute_type;
         auto&                  tensile_data = matmul_desc->m_data;
+        void*                  scaleD       = matmul_desc->scaleD;
         if(matmul_desc->amax_ptr != nullptr
            && (matD->type == HIP_R_8F_E4M3_FNUZ || matD->type == HIP_R_8F_E5M2_FNUZ))
         {
             matC->type = HIP_R_32F;
             matD->type = HIP_R_32F;
+            matmul_desc->scaleD = nullptr;
         }
         int8_t alpha[16] = {0};
         int8_t beta[16]  = {0};
@@ -1381,15 +1383,16 @@ rocblaslt_status
         }
 
         if(matmul_desc->amax_ptr != nullptr
-           && (d_type == HIP_R_8F_E4M3_FNUZ || d_type == HIP_R_8F_E5M2_FNUZ)
-           && *returnAlgoCount >= 1)
+           && (d_type == HIP_R_8F_E4M3_FNUZ || d_type == HIP_R_8F_E5M2_FNUZ))
         {
 
             size_t amax_workspace_size = matD->m * matD->n * 4; //only support fp32 D temp
             int    new_returnAlgoCount = *returnAlgoCount;
-            //reset C D type
+
+            //restore setting
             matC->type = c_type;
             matD->type = d_type;
+            matmul_desc->scaleD = scaleD;
             //log_api(__func__, "matD->type ", matD->type);
 
             for(int i = 0; i < *returnAlgoCount; i++)
@@ -1584,6 +1587,41 @@ rocblaslt_status
         if(status != rocblaslt_status_success)
         {
             throw status;
+        }
+        //Try to get size independent solutions from getAllSolutions()
+        if(requestedAlgoCount > results.size())
+        {
+            std::vector<rocblaslt_matmul_heuristic_result> allSolutionsResults;
+            size_t workspaceSizeInBytes =  workspaceBytes;
+            if(rocblaslt_status_success
+               == getAllSolutions(gemmData, handle, gemmType, allSolutionsResults, workspaceSizeInBytes))
+            {
+                int oriReturnAlgoCount = results.size();
+                for(int i = 0;
+                    results.size() < requestedAlgoCount && i < allSolutionsResults.size();
+                    i++)
+                {
+                    bool duplicated_sol = false;
+                    for(int j = 0; j < oriReturnAlgoCount; j++)
+                        if(*(int*)(results[j].algo.data)
+                           == *(int*)(allSolutionsResults[i].algo.data)) //solution index
+                            duplicated_sol = true;
+
+                    if(duplicated_sol == true
+                       || rocblaslt_status_success
+                              != isSolutionSupported(handle,
+                                                     static_cast<const rocblaslt::RocGemmType>(gemmType),
+                                                     gemmData,
+                                                     allSolutionsResults[i].algo,
+                                                     nullptr,
+                                                     workspaceSizeInBytes))
+                        continue;
+
+                    results.push_back(allSolutionsResults[i]);
+                }
+
+                log_api(__func__, "final returnAlogCount", results.size());
+            }
         }
     }
     catch(const rocblaslt_status& status)

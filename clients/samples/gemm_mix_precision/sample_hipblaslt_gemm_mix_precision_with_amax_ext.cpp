@@ -103,8 +103,8 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
     hipblaslt_ext::Gemm gemm(handle,
                              trans_a,
                              trans_b,
-                             HIP_R_8F_E4M3_FNUZ,
                              HIP_R_16F,
+                             HIP_R_8F_E4M3_FNUZ,
                              HIP_R_32F,
                              HIP_R_32F,
                              HIPBLAS_COMPUTE_32F_FAST_16F);
@@ -112,7 +112,7 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
     // Copy scaleA to device memory
     void* d_scaleA = nullptr;
     CHECK_HIP_ERROR(hipMalloc(&d_scaleA, sizeof(float)));
-    CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(HIP_R_16F, HIP_R_32F, d_scaleA, d_a, k, n, stream));
+    CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(HIP_R_16F, HIP_R_32F, d_scaleA, d_a, m, k, stream));
 
     hipblaslt_ext::GemmEpilogue epilogue;
     hipblaslt_ext::GemmInputs   inputs;
