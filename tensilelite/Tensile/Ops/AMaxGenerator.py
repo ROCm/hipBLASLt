@@ -1059,9 +1059,14 @@ class AMaxKernelGenerator:
             mod.add(ti.SNop(1))
             mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
         elif self.o_type.toChar() == "H":
-            mod.add(ti.VRcpF16(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
             mod.add(ti.SNop(1))
-            mod.add(ti.VMulF16(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
         mod.add(label_divided)
 
         mod.add(BufferStorex1(ti.vgpr("Output"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))

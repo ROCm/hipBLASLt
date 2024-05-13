@@ -149,6 +149,21 @@ hipblasStatus_t hipblasltExtFastAMax(const hipDataType datatype,
     return hipblasltAMaxRun(datatype, outDatatype, output, input, workSpace, sync, m, n, 0, 0, stream);
 }
 
+hipblasStatus_t hipblasltExtFastValueDevidedByAMax(const hipDataType datatype,
+                                                   const hipDataType outDatatype,
+                                                   void*             output,
+                                                   void*             input,
+                                                   void*             workSpace,
+                                                   void*             sync,
+                                                   uint32_t          m,
+                                                   uint32_t          n,
+                                                   float             div,
+                                                   hipStream_t       stream)
+{
+    return hipblasltAMaxRun(datatype, outDatatype, output, input, workSpace, sync, m, n, 1, div, stream);
+}
+
+
 hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType datatype,
                                           const hipDataType outDatatype,
                                           const hipDataType scaleDatatype,

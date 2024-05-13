@@ -93,6 +93,17 @@ void cpuAMax(To* out, Ti* in, std::uint32_t length)
     out[0] = To(m);
 }
 
+template <typename Ti, typename To>
+void cpuValueDividedByAMax(To* out, Ti* in, std::uint32_t length, float value)
+{
+    // calculate amax
+    Ti m = Ti(0);
+    for(int j = 0; j < length; j++)
+    {
+        m = maxValue(m, absoluteValue(in[j]));
+    }
+    out[0] = To(value/ float(m));
+}
 
 template <typename Ti, typename Tc, typename To, typename Tbias, typename Tact, typename F>
 void epilogue_func(int64_t m,
@@ -1234,7 +1245,7 @@ void testing_matmul_with_bias(const Arguments& arg)
         if(arg.scaleA)
         {
             if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
-                cpuAMax((*hScaleA[i]).data(), (*hA[i]).data(), A_row[i] * A_col[i]);
+                cpuValueDividedByAMax((*hScaleA[i]).data(), (*hA[i]).data(), A_row[i] * A_col[i], 240.0f);
             else
                 CHECK_HIP_ERROR(dScaleA[i]->transfer_from(*hScaleA[i]));
         }
@@ -1242,7 +1253,7 @@ void testing_matmul_with_bias(const Arguments& arg)
         if(arg.scaleB)
         {
             if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
-                cpuAMax((*hScaleB[i]).data(), (*hB[i]).data(), B_row[i] * B_col[i]);
+                cpuValueDividedByAMax((*hScaleB[i]).data(), (*hB[i]).data(), B_row[i] * B_col[i], 240.0f);
             else
                 CHECK_HIP_ERROR(dScaleB[i]->transfer_from(*hScaleB[i]));
         }
@@ -2420,8 +2431,8 @@ void testing_matmul_with_bias(const Arguments& arg)
             {
                 if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
                 {
-                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                        arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], stream));
+                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                        arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], 240.0f, stream));
                 }
             }
 
@@ -2429,8 +2440,8 @@ void testing_matmul_with_bias(const Arguments& arg)
             {
                 if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
                 {
-                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                        arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], stream));
+                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                        arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], 240.0f, stream));
                 }
             }
 
@@ -2472,8 +2483,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                 {
                     for(int i=0; i<gemm_count; i++)
                     {
-                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                            arg.a_type, HIP_R_32F, *dScaleA[i], *dA[i], *dWorkSpaceA[i], *dSyncA[i], A_row[i], A_col[i], stream));
+                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                            arg.a_type, HIP_R_32F, *dScaleA[i], *dA[i], *dWorkSpaceA[i], *dSyncA[i], A_row[i], A_col[i], 240.0f, stream));
                     }
                 }
             }
@@ -2484,8 +2495,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                 {
                     for(int i=0; i<gemm_count; i++)
                     {
-                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                            arg.b_type, HIP_R_32F, *dScaleB[i], *dB[i], *dWorkSpaceB[i], *dSyncB[i], B_row[i], B_col[i], stream));
+                        CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                            arg.b_type, HIP_R_32F, *dScaleB[i], *dB[i], *dWorkSpaceB[i], *dSyncB[i], B_row[i], B_col[i], 240.0f, stream));
                     }
                 }
             }
@@ -2622,8 +2633,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                         {
                             if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
                             {
-                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], stream));
+                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], 240.0f, stream));
                             }
                         }
 
@@ -2631,8 +2642,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                         {
                             if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
                             {
-                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                    arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], stream));
+                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], 240.0f, stream));
                             }
                         }
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
@@ -2652,8 +2663,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                         {
                             if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
                             {
-                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], stream));
+                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], 240.0f, stream));
                             }
                         }
 
@@ -2661,8 +2672,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                         {
                             if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
                             {
-                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                    arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], stream));
+                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], 240.0f, stream));
                             }
                         }
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
@@ -2678,8 +2689,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                         {
                             if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
                             {
-                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], stream));
+                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], 240.0f, stream));
                             }
                         }
 
@@ -2687,8 +2698,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                         {
                             if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
                             {
-                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                    arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], stream));
+                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], 240.0f, stream));
                             }
                         }
 
@@ -2734,8 +2745,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                         {
                             if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
                             {
-                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], stream));
+                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.a_type, HIP_R_32F, *dScaleA[0], *dA[0], *dWorkSpaceA[0], *dSyncA[0], A_row[0], A_col[0], 240.0f, stream));
                             }
                         }
 
@@ -2743,8 +2754,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                         {
                             if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
                             {
-                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                    arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], stream));
+                                CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                    arg.b_type, HIP_R_32F, *dScaleB[0], *dB[0], *dWorkSpaceB[0], *dSyncB[0], B_row[0], B_col[0], 240.0f, stream));
                             }
                         }
 
@@ -2822,8 +2833,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                             {
                                 for (int j=0; j<gemm_count; j++)
                                 {
-                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], stream));
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], 240.0f, stream));
                                 }
                             }
                         }
@@ -2834,8 +2845,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                             {
                                 for (int j=0; j<gemm_count; j++)
                                 {
-                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                        arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], stream));
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], 240.0f, stream));
                                 }
                             }
                         }
@@ -2860,8 +2871,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                             {
                                 for (int j=0; j<gemm_count; j++)
                                 {
-                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], stream));
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], 240.0f, stream));
                                 }
                             }
                         }
@@ -2872,8 +2883,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                             {
                                 for (int j=0; j<gemm_count; j++)
                                 {
-                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                        arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], stream));
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], 240.0f, stream));
                                 }
                             }
                         }
@@ -2914,8 +2925,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                             {
                                 for (int j=0; j<gemm_count; j++)
                                 {
-                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], stream));
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], 240.0f, stream));
                                 }
                             }
                         }
@@ -2926,8 +2937,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                             {
                                 for (int j=0; j<gemm_count; j++)
                                 {
-                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                        arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], stream));
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], 240.0f, stream));
                                 }
                             }
                         }
@@ -2951,8 +2962,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                             {
                                 for (int j=0; j<gemm_count; j++)
                                 {
-                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], stream));
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.a_type, HIP_R_32F, *dScaleA[j], *dA[j], *dWorkSpaceA[j], *dSyncA[j], A_row[j], A_col[j], 240.0f, stream));
                                 }
                             }
                         }
@@ -2963,8 +2974,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                             {
                                 for (int j=0; j<gemm_count; j++)
                                 {
-                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(
-                                        arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], stream));
+                                    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(
+                                        arg.b_type, HIP_R_32F, *dScaleB[j], *dB[j], *dWorkSpaceB[j], *dSyncB[j], B_row[j], B_col[j], 240.0f, stream));
                                 }
                             }
                         }
