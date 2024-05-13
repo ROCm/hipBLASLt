@@ -39,7 +39,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -72,7 +71,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -102,7 +101,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -135,7 +133,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -165,7 +163,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -198,7 +195,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -231,7 +228,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -263,7 +259,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -293,7 +289,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -325,7 +320,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -355,7 +350,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -388,7 +382,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -418,7 +412,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -451,7 +444,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -484,7 +477,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -516,7 +508,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -546,7 +538,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -578,7 +569,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -608,7 +599,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -641,7 +631,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -671,7 +661,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      ActivationHPA: True
       UseScaleAB: True
       UseScaleCD: True
       UseScaleAlphaVec: True
@@ -704,7 +693,7 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]

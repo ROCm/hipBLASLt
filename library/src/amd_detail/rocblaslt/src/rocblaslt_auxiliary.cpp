@@ -1317,6 +1317,13 @@ rocblaslt_status
         int8_t alpha[16] = {0};
         int8_t beta[16]  = {0};
         assignAlphaBeta1(compute_type, (void*)alpha, (void*)beta);
+        //bias ptr can be set later after getting solution.
+        bool dummy_bias_address = false;
+        if(matmul_desc->bias == nullptr && is_bias_enabled(matmul_desc->epilogue))
+        {
+            dummy_bias_address = true;
+            matmul_desc->bias = &dummy_bias_address;
+        }
         auto prob = construct_rocblaslt_problem(
             handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta, pref->max_workspace_bytes);
         status = getBestSolutions(prob,
@@ -1326,6 +1333,8 @@ rocblaslt_status
                                   heuristicResultsArray,
                                   returnAlgoCount,
                                   pref->max_workspace_bytes);
+        if(dummy_bias_address)
+            matmul_desc->bias = nullptr;
         log_api(__func__, "returnAlogCount", *returnAlgoCount);
 
         //Try to get size independent solutions from getAllSolutions()
@@ -1563,8 +1572,7 @@ rocblaslt_status
     }
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
     {
-        log_api(__func__, "not implement for groupedgemm, please use get_all_algos instead");
-        return rocblaslt_status_success;
+        log_api(__func__, "will be deprecated for groupedgemm in the future, please use get_all_algos instead");
     }
     rocblaslt_status status = rocblaslt_status_success;
     try
@@ -1576,6 +1584,41 @@ rocblaslt_status
         if(status != rocblaslt_status_success)
         {
             throw status;
+        }
+        //Try to get size independent solutions from getAllSolutions()
+        if(requestedAlgoCount > results.size())
+        {
+            std::vector<rocblaslt_matmul_heuristic_result> allSolutionsResults;
+            size_t workspaceSizeInBytes =  workspaceBytes;
+            if(rocblaslt_status_success
+               == getAllSolutions(gemmData, handle, gemmType, allSolutionsResults, workspaceSizeInBytes))
+            {
+                int oriReturnAlgoCount = results.size();
+                for(int i = 0;
+                    results.size() < requestedAlgoCount && i < allSolutionsResults.size();
+                    i++)
+                {
+                    bool duplicated_sol = false;
+                    for(int j = 0; j < oriReturnAlgoCount; j++)
+                        if(*(int*)(results[j].algo.data)
+                           == *(int*)(allSolutionsResults[i].algo.data)) //solution index
+                            duplicated_sol = true;
+
+                    if(duplicated_sol == true
+                       || rocblaslt_status_success
+                              != isSolutionSupported(handle,
+                                                     static_cast<const rocblaslt::RocGemmType>(gemmType),
+                                                     gemmData,
+                                                     allSolutionsResults[i].algo,
+                                                     nullptr,
+                                                     workspaceSizeInBytes))
+                        continue;
+
+                    results.push_back(allSolutionsResults[i]);
+                }
+
+                log_api(__func__, "final returnAlogCount", results.size());
+            }
         }
     }
     catch(const rocblaslt_status& status)

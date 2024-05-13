@@ -60,7 +60,6 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleDVec: false
   UseScaleAlphaVec: true
 - - 1LDSBuffer: 0
     ActivationAlt: false
@@ -237,7 +236,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -461,7 +459,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -686,7 +683,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -736,11 +732,11 @@
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
 - [2, 3, 0, 1]
-- - - [511, 256, 1, 1024, 511, 511, 1024, 1024]
+- - - [511, 256, 1, 1024]
     - [1, 2264.29]
-  - - [512, 256, 1, 511, 512, 512, 511, 511]
+  - - [512, 256, 1, 511]
     - [2, 300.255]
-  - - [512, 256, 1, 1023, 512, 512, 1023, 1023]
+  - - [512, 256, 1, 1023]
     - [0, 602.935]
 - null
 - null

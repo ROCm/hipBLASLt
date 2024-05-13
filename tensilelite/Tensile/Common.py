@@ -514,7 +514,8 @@ validParameters = {
     # choose how to do GlobalSplitU
     # 1: use atomic operation to accumulate on one buffer
     # 2: each GSU group write to each own buffer and accumulate by another kernel
-    "GlobalSplitUAlgorithm":      ["SingleBuffer", "MultipleBuffer"],
+    # 3: each GSU group write to each own buffer and accumulate by same kernel
+    "GlobalSplitUAlgorithm":      ["SingleBuffer", "MultipleBuffer", "MultipleBufferSingleKernel"],
 
     # don't create a whole copy of the Unroll loop with loads removed - instead
     # use buffer limits to suppress global loads and ignore unnecessary ds_reads
@@ -1028,6 +1029,9 @@ validParameters = {
 
     # in mix mode F8 need to convert to F16, do this before(0) ds or after(1) ds
     "ConvertAfterDS":              [False, True],
+
+    # Force disable shadow init to release more sgpr in preloop
+    "ForceDisableShadowInit":      [False, True],
     }
 
 
@@ -1119,7 +1123,8 @@ defaultBenchmarkCommonParameters = [
     {"ActivationFuncCall":        [ True  ] },
     {"ActivationAlt":             [ False ] },
     {"WorkGroupReduction":        [ False ] },
-    {"ConvertAfterDS":            [ False ] }
+    {"ConvertAfterDS":            [ False ] },
+    {"ForceDisableShadowInit":    [ False ] }
 ]
 
 # dictionary of defaults comprised of default option for each parameter

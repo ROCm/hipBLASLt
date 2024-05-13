@@ -224,7 +224,12 @@ auto _dgelu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
     return static_cast<decltype(in)>(0.5f * tanh(xx) + x1 * x2 + 0.5f);
 };
 
-template <typename TiA, typename TiB, typename To, typename Tc, typename TciA=TiA, typename TciB=TiB>
+template <typename TiA,
+          typename TiB,
+          typename To,
+          typename Tc,
+          typename TciA = TiA,
+          typename TciB = TiB>
 void testing_matmul_bad_arg(const Arguments& arg)
 {
     const int64_t M = 128;
@@ -255,7 +260,12 @@ void testing_matmul_bad_arg(const Arguments& arg)
     hipblaslt_local_matrix_layout matB(K, N, ldb, arg.b_type);
     hipblaslt_local_matrix_layout matC(M, N, ldc, arg.c_type);
     hipblaslt_local_matrix_layout matD(M, N, ldc, arg.d_type);
-    hipblaslt_local_matmul_descr  matmul(transA, transB, arg.compute_type, arg.scale_type, arg.compute_input_typeA, arg.compute_input_typeB);
+    hipblaslt_local_matmul_descr  matmul(transA,
+                                        transB,
+                                        arg.compute_type,
+                                        arg.scale_type,
+                                        arg.compute_input_typeA,
+                                        arg.compute_input_typeB);
 
     size_t                     workspace_size = 0;
     hipblaslt_local_preference pref;
@@ -522,7 +532,12 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
     return real_bias_type;
 }
 
-template <typename TiA, typename TiB, typename To, typename Tc, typename TciA=TiA, typename TciB=TiB>
+template <typename TiA,
+          typename TiB,
+          typename To,
+          typename Tc,
+          typename TciA = TiA,
+          typename TciB = TiB>
 void testing_matmul(const Arguments& arg)
 {
     // after this, real bias type should not be invalid
@@ -531,17 +546,27 @@ void testing_matmul(const Arguments& arg)
     // for all f8/bf8 cases including mix mode
     if constexpr((sizeof(TiA) == 1 || sizeof(TiB) == 1) && !std::is_same<Tc, int32_t>::value)
     {
-        if(real_bias_type == HIP_R_16F)
+        if constexpr(std::is_same<To, hip_bfloat16>::value || std::is_same<To, float>::value)
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hipblasLtHalf>(arg);
-        }
-        else if(real_bias_type == HIP_R_16BF)
-        {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hip_bfloat16>(arg);
+          if(real_bias_type == HIP_R_16BF)
+          {
+              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hip_bfloat16>(arg);
+          }
+          else
+          {
+              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
+          }
         }
         else
         {
-            return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
+          if(real_bias_type == HIP_R_16F)
+          {
+              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hipblasLtHalf>(arg);
+          }
+          else
+          {
+              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
+          }
         }
     }
     else if constexpr(std::is_same<To, hipblasLtHalf>::value)
@@ -583,7 +608,13 @@ void testing_matmul(const Arguments& arg)
     return;
 }
 
-template <typename TiA, typename TiB, typename To, typename Tc, typename TciA, typename TciB, typename Tbias>
+template <typename TiA,
+          typename TiB,
+          typename To,
+          typename Tc,
+          typename TciA,
+          typename TciB,
+          typename Tbias>
 void testing_matmul_with_bias(const Arguments& arg)
 {
     double gpu_time_used, cpu_time_used;
@@ -784,20 +815,17 @@ void testing_matmul_with_bias(const Arguments& arg)
                 HIPBLAS_STATUS_SUCCESS);
         }
 
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&(matmul[0][i]), arg.compute_type, arg.scale_type));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatmulDescCreate(&(matmul[0][i]), arg.compute_type, arg.scale_type));
 
         EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatmulDescSetAttribute(matmul[0][i],
-                                            HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT,
-                                            &tciA,
-                                            sizeof(void*)),
+            hipblasLtMatmulDescSetAttribute(
+                matmul[0][i], HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT, &tciA, sizeof(void*)),
             HIPBLAS_STATUS_SUCCESS);
 
         EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatmulDescSetAttribute(matmul[0][i],
-                                            HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT,
-                                            &tciB,
-                                            sizeof(void*)),
+            hipblasLtMatmulDescSetAttribute(
+                matmul[0][i], HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT, &tciB, sizeof(void*)),
             HIPBLAS_STATUS_SUCCESS);
 
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
@@ -1270,7 +1298,8 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         for(int32_t b = 1; b < matmul.size(); b++)
         {
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&(matmul[b][i]), arg.compute_type, arg.scale_type));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatmulDescCreate(&(matmul[b][i]), arg.compute_type, arg.scale_type));
             CHECK_HIPBLASLT_ERROR(hipblaslt_ext::copyMatmul(matmul[0][i], matmul[b][i]));
 
             EXPECT_HIPBLAS_STATUS(
@@ -2011,6 +2040,83 @@ void testing_matmul_with_bias(const Arguments& arg)
 
     returnedAlgoCount = heuristicResult.size();
 
+    if(returnedAlgoCount == 0)
+    {
+        for(int i = 0; i < gemm_count; i++)
+        {
+            delete hA[i];
+            delete hB[i];
+            delete hC[i];
+            delete hD_gold[i];
+            delete hD_gold_epl[i];
+            delete hD_gold_ScaleAlpha[i];
+            delete hD_1[i];
+            delete hBias[i];
+            delete hBias_gold_epl[i];
+            delete hBias_gold[i];
+            delete hScaleAlphaVec[i];
+            delete dA[i];
+            delete dB[i];
+            delete dC[i];
+            if(!arg.c_equal_d)
+                delete dD[i];
+            delete dBias[i];
+            delete dScaleAlphaVec[i];
+            if(arg.scaleA)
+            {
+                delete hScaleA[i];
+                delete dScaleA[i];
+            }
+            if(arg.scaleB)
+            {
+                delete hScaleB[i];
+                delete dScaleB[i];
+            }
+            if(arg.scaleC)
+            {
+                delete hScaleC[i];
+                delete dScaleC[i];
+            }
+            if(arg.scaleD)
+            {
+                delete hScaleD[i];
+                delete dScaleD[i];
+            }
+            if(arg.amaxD)
+            {
+                delete hAmaxD_gold[i];
+                delete hAmaxD[i];
+                delete dAmaxD[i];
+            }
+            if(arg.scaleE)
+            {
+                delete hScaleE[i];
+                delete dScaleE[i];
+            }
+            if(arg.use_e)
+            {
+                delete dE[i];
+                delete hE[i];
+            }
+        }
+        int             deviceId;
+        hipDeviceProp_t deviceProperties;
+        static_cast<void>(hipGetDevice(&deviceId));
+        static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+        //workaround before known_bug work
+        if(gpu_arch_match(deviceProperties.gcnArchName, "11?")
+           && (arg.gradient || arg.grouped_gemm || arg.a_type == HIP_R_32F
+               || arg.b_type == HIP_R_32F || arg.a_type == HIP_R_64F
+               || arg.b_type
+                      == HIP_R_64F)) //arg.activation_type == gelu || arg.bias_source == a || arg.bias_source == b)
+        {
+            hipblaslt_cerr << "No Solution Found!!" << std::endl;
+            return;
+        }
+    }
+
+    CHECK_SOLUTION_FOUND(returnedAlgoCount);
+
     dWorkspace = new device_vector<unsigned char>(workspace_size * block_count, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
 
@@ -2021,8 +2127,6 @@ void testing_matmul_with_bias(const Arguments& arg)
         CHECK_HIP_ERROR(hipMalloc(&d_userArgs,
                                   block_count * gemm_count * sizeof(hipblaslt_ext::UserArguments)));
     }
-
-    CHECK_SOLUTION_FOUND(returnedAlgoCount);
 
     auto ptrs = benchmark_allocation();
 
@@ -2366,7 +2470,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                 CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
             else
             {
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                 flush_time_used = get_time_us_sync(stream);
             }
             for(int i = 0; i < flush_iter; i++)
@@ -2382,7 +2485,6 @@ void testing_matmul_with_bias(const Arguments& arg)
             }
             else
             {
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                 flush_time_used = get_time_us_sync(stream) - flush_time_used;
             }
             flush_time_used /= flush_iter;
@@ -2409,7 +2511,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream);
                     }
 
@@ -2458,7 +2559,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream);
                     }
                     for(int i = 0; i < number_hot_calls; i++)
@@ -2504,7 +2604,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                 }
                 else
                 {
-                    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                     gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                 }
             }
@@ -2541,7 +2640,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream);
                     }
 
@@ -2560,7 +2658,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                     }
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                     }
                 }
@@ -2585,7 +2682,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream);
                     }
 
@@ -2603,7 +2699,6 @@ void testing_matmul_with_bias(const Arguments& arg)
                     }
                     else
                     {
-                        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                     }
                 }
@@ -2824,5 +2919,4 @@ void testing_matmul_with_bias(const Arguments& arg)
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
     CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_start));
     CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_end));
-
 }

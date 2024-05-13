@@ -38,7 +38,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -101,7 +100,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -164,7 +162,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -227,7 +224,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -291,7 +287,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -354,7 +349,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -417,7 +411,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -480,7 +473,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -544,7 +536,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -607,7 +598,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -670,7 +660,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -733,7 +722,6 @@ BenchmarkProblems:
       BiasDataTypeList: [s,h]
       #UseScaleAB: True
       Activation:    True
-      ActivationHPA: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:

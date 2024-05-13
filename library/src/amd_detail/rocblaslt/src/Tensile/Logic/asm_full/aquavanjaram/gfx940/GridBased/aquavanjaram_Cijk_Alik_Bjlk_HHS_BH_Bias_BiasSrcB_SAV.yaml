@@ -1,7 +1,7 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx940
-- [Device 0049, Device 0050]
+- [Device 0049]
 - Activation: false
   ActivationComputeDataType: 0
   ActivationNoGuard: false
@@ -60,7 +60,6 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleDVec: false
   UseScaleAlphaVec: true
 - - 1LDSBuffer: 0
     ActivationAlt: false
@@ -237,7 +236,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -461,7 +459,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -511,11 +508,11 @@
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
 - [2, 3, 0, 1]
-- - - [511, 256, 1, 1024, 511, 511, 1024, 256]
+- - - [511, 256, 1, 1024]
     - [1, 606.283]
-  - - [512, 256, 1, 511, 512, 512, 511, 256]
+  - - [512, 256, 1, 511]
     - [0, 303.926]
-  - - [512, 256, 1, 1023, 512, 512, 1023, 256]
+  - - [512, 256, 1, 1023]
     - [1, 607.841]
 - null
 - null

@@ -227,9 +227,13 @@ class StateValues:
   numStoreSgprNames: List[str]           = field(init=False) # For post-loop kernel args
   numStoreSgprNameSizes: List[int]       = field(init=False) # For post-loop kernel args
   numStoreSgprToLoad: int                = 0 # For post-loop kernel args
+  numStoreSgprNames2: List[str]           = field(init=False) # For post-loop kernel args
+  numStoreSgprNameSizes2: List[int]       = field(init=False) # For post-loop kernel args
+  numStoreSgprToLoad2: int                = 0 # For post-loop kernel args
   numStoreSgprInst: int                  = 0 # For pose-loop kernel args
   numStoreSgprInstExt: int               = 0 # For pose-loop kernel args
   numSgprAddressBias: int                = 0
+  numSgprAddressGSUSync: int             = 0
   BiasType: int                          = 0
   BiasStride: int                        = 0
   BiasDim: int                           = 0
@@ -2096,6 +2100,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     moduleKernelBody.addSignature(fs)
 
     module = Module("body")
+    module.add(Label("ASM_Start", "Main body of the asm kernel"))
     module.add(self.defineAndResources(kernel, tensorParametersA, tensorParametersB, tPM))
 
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
@@ -2520,9 +2525,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     tpo = TensilePassOptions()
     tpo.removeDupActFunc = kernel["ActivationFuncCall"]
     TensilePass(module, tpo)
+    # Add a label at the end of the asm for indexing.
+    module.add(Label("ASM_End", "The end of the kernel"))
 
     moduleKernelBody.addBody(module)
-    self.checkResources(moduleKernelBody)
+    self.checkResources(moduleKernelBody) # check resource available or not
 
     # Tensile instruction pass, temporarily disable due to build time.
     # Kernels with epilog especially with activation is too long (50000~ lines).
@@ -2533,6 +2540,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     TensileInstructionsPass(moduleKernelBody, tipo)
 
     error = self.states.overflowedResources
+
     return (error, str(moduleKernelBody))
 
   ##############################################################################
@@ -2591,13 +2599,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.otherSummations      = kernel["ProblemType"]["NumIndicesSummation"]-1 # not loops but summations vars
 
     # doShadowInit performs initialization in the 'shadow' of the global mem prefetch
-    if kernel["PrefetchGlobalRead"]:
-      if self.states.actualSummationLoops == 1:
-        self.states.doShadowInit = 2 # 2 is both store setup and initC
-      else:
-        # can't do shadow initC with multiple summation since this resets the ValuC counters
-        # on each unroll iteration.
-        self.states.doShadowInit = 1 # 1 is just store setup
+    if not kernel["ForceDisableShadowInit"]:
+      if kernel["PrefetchGlobalRead"]:
+        if self.states.actualSummationLoops == 1:
+          self.states.doShadowInit = 2 # 2 is both store setup and initC
+        else:
+          # can't do shadow initC with multiple summation since this resets the ValuC counters
+          # on each unroll iteration.
+          self.states.doShadowInit = 1 # 1 is just store setup
 
     self.states.indexChars = []
     for i in range(0, len(globalParameters["IndexChars"])):
@@ -3582,6 +3591,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("NumWorkGroups0", 1)
     self.defineSgpr("NumWorkGroups1", 1)
 
+    if kernel["BufferStore"] and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
+      self.defineSgpr("WSDstart", 2, 2)
+
     # Calculate numSgpr preload
     self.states.preloadGuard = []
     self.states.numSgprPreload = 0
@@ -3599,8 +3611,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
           self.sgprPool.checkIn(tmpSgpr)
           break
         self.states.preloadGuard.append(tmpSgpr)
-
-
 
     ###################################
     # Get kernel argument start here
@@ -3641,6 +3651,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     for idxChar in kernel["PackedC1IdxChars"][:-1]:
       self.defineSgpr("MagicNumberSize%s"%idxChar, 1)
       self.defineSgpr("MagicShiftSize%s"%idxChar, 1)
+
+    GSUAMBSK = 0
+    if (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
+      GSUAMBSK = 1
+
     self.defineSgpr("Alpha", numSgprAlpha, numSgprAlpha)
     self.states.numSgprAlpha = numSgprAlpha
     if kernel["ProblemType"]["UseBeta"]:
@@ -3648,6 +3663,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.numSgprBeta = numSgprBeta
 
     self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
+
+    if GSUAMBSK:
+      self.defineSgpr("GSUSync", 1)
+      self.states.numSgprAddressGSUSync += 1
+      self.defineSgpr("AddressTD", numSgprAddressD)
+      self.states.numSgprAddressGSUSync += numSgprAddressD
+      self.defineSgpr("Synchronizer", 2)
+      self.states.numSgprAddressGSUSync += 2
 
     #------------------------
     # Registers defined below this point are not available in the post-loop

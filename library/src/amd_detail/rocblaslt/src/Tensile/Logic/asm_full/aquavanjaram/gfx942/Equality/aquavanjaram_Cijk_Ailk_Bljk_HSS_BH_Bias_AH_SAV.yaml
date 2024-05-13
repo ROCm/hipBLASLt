@@ -4,7 +4,6 @@
 - [Device 0049]
 - Activation: true
   ActivationComputeDataType: 0
-  ActivationHPA: true
   ActivationType: all
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
@@ -56,7 +55,6 @@
   UseBias: 1
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleDVec: false
   UseScaleAlphaVec: true
 - - 1LDSBuffer: 0
     ActivationFuncCall: 0
@@ -174,7 +172,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -226,7 +223,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -391,7 +387,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -443,7 +438,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -608,7 +602,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -660,7 +653,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -825,7 +817,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -877,7 +868,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -938,7 +928,6 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SAV_MT32x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU7_K1_LBSPPA512_LPA16_LPB16_LRVW8_MIWT1_1_NTA0_NTB0_NEPBS2_SU0_SUS0_WG32_8_1_WGM1'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -1043,7 +1032,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1095,7 +1083,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1156,7 +1143,6 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SAV_MT32x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU7_K1_LBSPPA512_LPA16_LPB16_LRVW8_MIWT1_1_NTA0_NTB0_NEPBS2_SU4_SUS128_WG32_8_1_WGM2'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -1261,7 +1247,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1313,7 +1298,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1478,7 +1462,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1530,7 +1513,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1695,7 +1677,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1747,7 +1728,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1912,7 +1892,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1964,7 +1943,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -2129,7 +2107,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2181,7 +2158,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -2346,7 +2322,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2398,7 +2373,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -2563,7 +2537,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2615,7 +2588,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -2780,7 +2752,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2832,7 +2803,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -2997,7 +2967,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3049,7 +3018,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -3214,7 +3182,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3266,7 +3233,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -3328,7 +3294,6 @@
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SAV_MT64x16x64_MI16x16x16x1_SN_GRVWA4_GRVWB4_GSU9_K1_LBSPPA0_LPA0_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG64_4_1_WGM8'
     DepthU: 64
     DepthULdsDivisor: 1
     DirectToLds: false
@@ -3432,7 +3397,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3485,7 +3449,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -3547,7 +3510,6 @@
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SAV_MT64x16x64_MI16x16x16x1_SN_GRVWA2_GRVWB4_GSU9_K1_LBSPPA0_LPA0_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG64_4_1_WGM15'
     DepthU: 64
     DepthULdsDivisor: 1
     DirectToLds: false
@@ -3651,7 +3613,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3704,7 +3665,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -3767,7 +3727,6 @@
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SAV_MT16x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU5_K1_LBSPPA128_LPA16_LPB8_LRVW4_MIWT1_1_NTA0_NTB3_NEPBS0_SU0_SUS0_WG16_8_1_WGM0'
     DepthU: 64
     DepthULdsDivisor: 1
     DirectToLds: false
@@ -3872,7 +3831,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationNoGuard: false
       ActivationType: all
       AllowNoFreeDims: false
@@ -3929,7 +3887,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -3994,7 +3951,6 @@
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SAV_MT16x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU5_K1_LBSPPA128_LPA16_LPB8_LRVW4_MIWT1_1_NTA0_NTB3_NEPBS1_SU0_SUS0_WG16_8_1_WGM0'
     DepthU: 64
     DepthULdsDivisor: 1
     DirectToLds: false
@@ -4099,7 +4055,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -4155,7 +4110,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -4219,7 +4173,6 @@
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SAV_MT64x16x64_MI16x16x16x1_SN_GRVWA2_GRVWB2_GSU6_K1_LBSPPA1024_LPA16_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG64_4_1_WGM1'
     DepthU: 64
     DepthULdsDivisor: 1
     DirectToLds: false
@@ -4323,7 +4276,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -4376,7 +4328,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -4438,7 +4389,6 @@
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SAV_MT32x16x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU25_K1_LBSPPA512_LPA16_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG32_4_1_WGM8'
     DepthU: 64
     DepthULdsDivisor: 1
     DirectToLds: false
@@ -4542,7 +4492,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -4595,7 +4544,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -4657,7 +4605,6 @@
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SAV_MT16x16x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU25_K1_LBSPPA256_LPA16_LPB16_LRVW8_MIWT1_1_NTA2_NTB2_NEPBS0_SU0_SUS0_WG16_4_1_WGM1'
     DepthU: 64
     DepthULdsDivisor: 1
     DirectToLds: false
@@ -4761,7 +4708,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -4814,7 +4760,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -4979,7 +4924,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -5032,7 +4976,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -5197,7 +5140,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -5250,7 +5192,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -5415,7 +5356,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -5468,7 +5408,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -5633,7 +5572,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -5686,7 +5624,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -5851,7 +5788,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -5904,7 +5840,6 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3

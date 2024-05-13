@@ -4,7 +4,6 @@
 - [Device 0049, Device 0050]
 - Activation: false
   ActivationComputeDataType: 0
-  ActivationHPA: false
   ActivationNoGuard: false
   ActivationType: none
   AllowNoFreeDims: false
@@ -70,7 +69,6 @@
   UseInitialStridesCD: false
   UseScaleAB: false
   UseScaleAlphaVec: true
-  UseScaleDVec: false
 - - 1LDSBuffer: 1
     ActivationAlt: false
     ActivationFuncCall: false
@@ -200,7 +198,6 @@
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
-      ActivationHPA: false
       ActivationNoGuard: false
       ActivationType: none
       AllowNoFreeDims: false
@@ -266,7 +263,6 @@
       UseInitialStridesCD: false
       UseScaleAB: false
       UseScaleAlphaVec: true
-      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -321,7 +317,7 @@
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
 - [2, 3, 0, 1]
-- - - [5120, 4244, 1, 1280, 5120, 5120, 1280, 4244]
+- - - [5120, 4244, 1, 1280]
     - [0, 67035.1]
 - null
 - null

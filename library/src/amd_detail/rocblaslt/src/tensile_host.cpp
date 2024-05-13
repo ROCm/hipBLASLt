@@ -2190,6 +2190,13 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
     int i = 0;
     for(auto solution : solutions)
     {
+        //workaround: findAllSolutions should get all solutions without duplications
+        bool duplicated_sol = false;
+        for(int j = 0; j < i; j++)
+            if(*(int*)(heuristicResults[j].algo.data) == solution->index)
+               duplicated_sol = true;
+        if(duplicated_sol)
+          continue;
         memset(&heuristicResults[i], 0, sizeof(rocblaslt_matmul_heuristic_result));
         memset(heuristicResults[i].algo.data, 0, sizeof(heuristicResults[i].algo.data));
         int* solutionIndex                           = (int*)(heuristicResults[i].algo.data);
@@ -2203,6 +2210,8 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
             heuristicResults[i].workspaceSize = 0;
         i++;
     }
+    heuristicResults.resize(i);
+    log_api(__func__, "Final hardware solutions: ", heuristicResults.size());
 
     return rocblaslt_status_success;
 }
@@ -2228,6 +2237,32 @@ rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem>&      
         tensile_probs.gemms[i].setGroupedGemm(true);
     }
     return getAllSolutions(tensile_probs, handle, heuristicResults, maxWorkSpaceBytes);
+}
+
+rocblaslt_status getAllSolutions(std::shared_ptr<void>                           gemmData,
+                                 rocblaslt_handle                                handle,
+                                 rocblaslt::RocGemmType                          gemmType,
+                                 std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+                                 size_t                                          maxWorkSpaceBytes)
+{
+
+        rocblaslt_status status = rocblaslt_status_success;
+        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+        {
+            std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+            status = getAllSolutions(data->problem, handle, heuristicResults, maxWorkSpaceBytes);
+        }
+        else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+        {
+            std::shared_ptr<TensileDataGroupedGemm> data = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+            status = getAllSolutions(data->problem, handle, heuristicResults, maxWorkSpaceBytes);
+        }
+        else
+        {
+            log_api(__func__, "Invalid gemm type", static_cast<int>(gemmType));
+            status = rocblaslt_status_not_implemented;
+        }
+        return status;
 }
 
 rocblaslt_status
@@ -2431,9 +2466,11 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
 
         bool isSupported  = true;
         bool isNormalGemm = true;
+        auto problemWs = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms);
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
             tensile_prob.gemms[i].setWorkspaceSize(algo->max_workspace_bytes);
+            tensile_prob.gemms[i].setWorkspaceSizeGroupedGemm(problemWs);
             tensile_prob.gemms[i].setGroupedGemmCount(tensile_prob.gemms.size());
         }
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
@@ -2517,7 +2554,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
             log_error(__func__, "Solution is not supported");
             return rocblaslt_status_invalid_value;
         }
-        *workspaceSizeInBytes = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms);
+        *workspaceSizeInBytes = problemWs;
     }
     return rocblaslt_status_success;
 }

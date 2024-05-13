@@ -4,7 +4,6 @@
 - [Device 0049]
 - Activation: true
   ActivationComputeDataType: 0
-  ActivationHPA: true
   ActivationNoGuard: false
   ActivationType: all
   AllowNoFreeDims: false
@@ -61,7 +60,6 @@
   UseE: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleDVec: false
   UseScaleAlphaVec: true
 - - 1LDSBuffer: 1
     ActivationAlt: false
@@ -182,7 +180,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationNoGuard: false
       ActivationType: all
       AllowNoFreeDims: false
@@ -239,7 +236,6 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -408,7 +404,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationNoGuard: false
       ActivationType: all
       AllowNoFreeDims: false
@@ -465,7 +460,6 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -634,7 +628,6 @@
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: true
       ActivationNoGuard: false
       ActivationType: all
       AllowNoFreeDims: false
@@ -691,7 +684,6 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleDVec: false
       UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -742,13 +734,13 @@
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
 - [2, 3, 0, 1]
-- - - [4607, 1335, 1, 320, 4607, 4607, 4607, 1335]
+- - - [4607, 1335, 1, 320]
     - [1, 19321.7]
-  - - [4608, 1335, 1, 320, 4608, 4608, 4608, 1335]
+  - - [4608, 1335, 1, 320]
     - [0, 26464.2]
-  - - [4608, 1408, 1, 320, 4608, 4608, 4608, 1408]
+  - - [4608, 1408, 1, 320]
     - [0, 30225.4]
-  - - [128, 128, 1, 320, 128, 128, 128, 128]
+  - - [128, 128, 1, 320]
     - [2, 125.428]
 - null
 - null

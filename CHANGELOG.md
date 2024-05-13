@@ -2,6 +2,22 @@
 
 Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hipBLASLt](https://rocm.docs.amd.com/projects/hipBLASLt/en/latest/index.html).
 
+## (Unreleased) hipBLASLt 0.8.0
+
+### Additions
+
+* Extension APIs:
+  * `hipblasltExtAMaxWithScale`
+* `GemmTuning` extension parameter to set wgm by user
+* Support HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER for FP8/BF8 datatype
+* Support for FP8/BF8 input, FP32/FP16/BF16/F8/BF8 output (only for gfx94x platform)
+* Support HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT and HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT for FP16 input datatype to use FP8/BF8 mfma
+* Support for gfx110x
+
+### Optimizations
+
+* Improve library loading time
+
 ## (Unreleased) hipBLASLt 0.7.0
 
 ### Additions
@@ -13,6 +29,10 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 * `GemmTuning` extension parameter to set split-k by user
 * Support for mixed-precision datatype: FP16/FP8 in with FP16 out
 * Add CMake support for documentation
+
+### Deprecations
+
+* algoGetHeuristic() ext API for GroupGemm will be deprecated in a future release of hipBLASLt
 
 ## hipBLASLt 0.6.0
 

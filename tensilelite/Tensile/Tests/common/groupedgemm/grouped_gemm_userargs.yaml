@@ -39,9 +39,7 @@ BenchmarkProblems:
       UseBias:       1
       UseE:          False
       Activation:    True
-      ActivationHPA: True
       GroupedGemm:   True
-      UseScaleDVec:    True
       SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -68,7 +66,7 @@ BenchmarkProblems:
         - NumElementsPerBatchStore: [-1]
         - GlobalSplitU: [1, 2]
         - PreloadKernArgs: [0, 1]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -92,9 +90,7 @@ BenchmarkProblems:
       UseBias:       0
       UseE:          False
       Activation:    False
-      ActivationHPA: False
       GroupedGemm:   True
-      UseScaleDVec:    False
       SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -120,7 +116,7 @@ BenchmarkProblems:
         - SourceSwap: [1]
         - NumElementsPerBatchStore: [-1]
         - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -144,9 +140,7 @@ BenchmarkProblems:
       UseBias:       0
       UseE:          False
       Activation:    False
-      ActivationHPA: False
       GroupedGemm:   True
-      UseScaleDVec:    True
       UseScaleAlphaVec: True
       SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
@@ -173,7 +167,7 @@ BenchmarkProblems:
         - SourceSwap: [1]
         - NumElementsPerBatchStore: [-1]
         - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:

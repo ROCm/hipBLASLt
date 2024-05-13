@@ -1915,7 +1915,11 @@ class Solution(collections.abc.Mapping):
         state["_GlobalAccumulation"] = 'SingleBuffer'
     elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
       state["_GlobalAccumulation"] = 'MultipleBuffer'
-    elif state["GlobalSplitU"] > 1 and state["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel':
+    elif state["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel':
+      if (not globalParameters["SplitGSU"]):
+        state["_GlobalAccumulation"] = 'MultipleBufferSingleKernel'
+      else:
+        if state["GlobalSplitU"] > 1:
           state["_GlobalAccumulation"] = 'MultipleBufferSingleKernel'
 
     if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
@@ -1991,8 +1995,13 @@ class Solution(collections.abc.Mapping):
           reject(state, "WMMA only support half, bf16 and i8 type")
           return
       if state["InterleaveAlpha"]:
-        reject(state, "Matrix unstruction doesn't support InterleaveAlpha")
+        reject(state, "Matrix instruction doesn't support InterleaveAlpha")
         return
+      if state["ProblemType"]["DataType"].isInt8():
+        if isa[:2] == (9, 4):
+          if tuple(state["MatrixInstruction"])[:3] in ((32, 32, 8), (16, 16, 16)):
+            reject(state, "v_mfma_i32_32x32x8 and v_mfma_i32_16x16x16 have been deprecated in gfx94x")
+            return
       if state["ProblemType"]["ComputeDataType"].isDouble():
         # See [4,4,4,4] snop for more info
         if state["MatrixInstruction"] == [4,4,4,4] and (not state['ISA'] == [9,0,10]) and state["ScheduleIterAlg"] == 3:
@@ -2400,6 +2409,9 @@ class Solution(collections.abc.Mapping):
         return
       if not state["ProblemType"]["ComputeDataType"].isSingle():
         reject(state, "TODO: LSU doesn't support ComputeDataType!=single.")
+        return
+      if state["StoreRemapVectorWidth"] > 0:
+        reject(state, "TODO: LSU doesn't support StoreRemapVectorWidth>0.")
         return
       if state["NumThreads"] % state["MacroTile0"] != 0:
         reject(state, "LocalSplitU but NumThreads=%u not divisible by MT0=%u for sideways store" \
@@ -3239,7 +3251,7 @@ class Solution(collections.abc.Mapping):
       if not state["EnableMatrixInstruction"]:
         reject(state, "storeRemap only support MatrixInstruction kernel")
         return
-      if (state["GlobalSplitU"] > 1) and (state["_GlobalAccumulation"] != 'MultipleBuffer' and state["_GlobalAccumulation"] != 'MultipleBufferSingleKernel'):
+      if (state["GlobalSplitU"] > 1) and (state["_GlobalAccumulation"] != 'MultipleBuffer' or state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
         reject(state, "storeRemap doesn't support GlobalSplitU yet, except GSU algorithm 2")
         return
       if packedC0 or packedC1:
@@ -3572,13 +3584,27 @@ class Solution(collections.abc.Mapping):
     #   if state["ProblemType"]["SupportUserArgs"] and state["_GlobalAccumulation"] != 'MultipleBufferSingleKernel':
     #     reject(state, "Currently SupportUserArgs does not support GSU > 1.")
 
+    if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
+      if ((state["MIWaveTile"][0]*state["MIWaveTile"][1]>4) and (state["MIWaveGroup"][0]==2 and state["MIWaveGroup"][1]==2)) or (state["NumElementsPerBatchStore"] == 1):
+        reject(state, "Occupancy limit!! overflowed resources MultipleBufferSingleKernel does not support")
+      if state["ProblemType"]["UseScaleCD"]:
+        reject(state, "MultipleBufferSingleKernel not support UseScaleCD yet")
+      if state["ProblemType"]["UseE"]:
+        reject(state, "MultipleBufferSingleKernel not support UseE yet")
+      if state["ProblemType"]["BiasSrc"] != "D":
+        reject(state, "MultipleBufferSingleKernel not support BiasSrc not D yet")
+      if state["ProblemType"]["DataType"].isDouble():
+        reject(state, "MultipleBufferSingleKernel not support " + str(state["ProblemType"]["DataType"])  + " yet")
+      if state["ProblemType"]["Sparse"] != 0:
+        reject(state, "MultipleBufferSingleKernel not support sparse yet")
+
     #Need to force disabling PreloadKernArgs if compiler does not support
     #Can not just reject the solution since the user library may find any solutions
     if state["PreloadKernArgs"]:
       hipccver = globalParameters['HipClangVersion'].split(".")
       hipccMaj = int(hipccver[0])
       hipccPatch = int(hipccver[2].split("-")[0])
-      if not (hipccMaj >= 6 and hipccPatch >= 32650 and (isa == (9, 0, 10) or isa == (9, 4))):
+      if not (hipccMaj >= 6 and hipccPatch >= 32650 and (isa == (9, 0, 10) or isa[:2] == (9, 4))):
         #print("Force to Disable PreloadKernArgs since this hipcc version doesn't support",)
         state["PreloadKernArgs"] = 0
 
@@ -3649,7 +3675,7 @@ class Solution(collections.abc.Mapping):
     state_copy["ProblemType"]["GroupedGemm"] = False
 
     if globalParameters["SplitGSU"]:
-      state_copy["GlobalSplitU"] = "M" if (state_copy["GlobalSplitU"] > 1 and state["GlobalSplitUAlgorithm"] != 'MultipleBufferSingleKernel') else state_copy["GlobalSplitU"]
+      state_copy["GlobalSplitU"] = "M" if (state_copy["GlobalSplitU"] > 1) else state_copy["GlobalSplitU"]
     else:
       state_copy["GlobalSplitU"] = "M"
     state_copy["WorkGroupMapping"] = "M"
@@ -3702,7 +3728,7 @@ class Solution(collections.abc.Mapping):
 
     if ignoreInternalArgs:
       if globalParameters["SplitGSU"]:
-        state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1 and state["GlobalSplitUAlgorithm"] != 'MultipleBufferSingleKernel') else state["GlobalSplitU"]
+        state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1) else state["GlobalSplitU"]
       else:
         requiredParameters["GlobalSplitU"] = False
       requiredParameters["WorkGroupMapping"] = False

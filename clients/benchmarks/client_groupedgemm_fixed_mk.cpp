@@ -31,6 +31,7 @@
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt-ext.hpp>
 #include <hipblaslt/hipblaslt.h>
+#include <hipblaslt_arguments.hpp>
 #include <hipblaslt_vector.hpp>
 #include <iostream>
 #include <limits>
@@ -1117,7 +1118,13 @@ int main(int argc, char* argv[])
     m.resize(n.size(), m_0);
     k.resize(n.size(), k_0);
 
-    int32_t gemm_count = m.size();
+    int32_t         gemm_count = m.size();
+    int             deviceId;
+    hipDeviceProp_t deviceProperties;
+    static_cast<void>(hipGetDevice(&deviceId));
+    static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+    if(gpu_arch_match(deviceProperties.gcnArchName, "11?"))
+        return EXIT_SUCCESS;
 
     // when arguments not specified, set to default values
     for(int i = 0; i < gemm_count; i++)

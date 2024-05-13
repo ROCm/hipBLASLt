@@ -43,7 +43,7 @@ target_include_directories( hipblaslt-bench
     $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # may be blank if not used
 )
 
-target_link_libraries( hipblaslt-bench PRIVATE ${BLAS_LIBRARY} roc::hipblaslt)
+target_link_libraries( hipblaslt-bench PRIVATE ${BLAS_LIBRARY} roc::hipblaslt )
 
 if( CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # GCC or hip-clang needs specific flags to turn on f16c intrinsics
@@ -94,7 +94,7 @@ add_dependencies( hipblaslt-bench hipblaslt-common )
 rocm_install(TARGETS hipblaslt-bench COMPONENT benchmarks)
 
 # Other bench files
-add_executable( hipblaslt-bench-groupedgemm-fixed-mk client_groupedgemm_fixed_mk.cpp ../common/hipblaslt_random.cpp)
+add_executable( hipblaslt-bench-groupedgemm-fixed-mk client_groupedgemm_fixed_mk.cpp ../common/hipblaslt_random.cpp ../common/hipblaslt_arguments.cpp)
 add_executable( hipblaslt-bench-extop-layernorm client_extop_layernorm.cpp ../common/hipblaslt_random.cpp)
 add_executable( hipblaslt-bench-extop-matrixtransform client_extop_matrixtransform.cpp ../common/hipblaslt_random.cpp)
 add_executable( hipblaslt-bench-extop-softmax client_extop_softmax.cpp ../common/hipblaslt_random.cpp)

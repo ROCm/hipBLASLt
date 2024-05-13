@@ -31,7 +31,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -54,7 +53,7 @@ BenchmarkProblems:
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: [MultipleBuffer]
+        - GlobalSplitUAlgorithm: [MultipleBuffer, MultipleBufferSingleKernel]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0]
         - WorkGroupMapping: [18]
@@ -96,7 +95,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -119,7 +117,7 @@ BenchmarkProblems:
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: [MultipleBuffer]
+        - GlobalSplitUAlgorithm: [MultipleBuffer, MultipleBufferSingleKernel]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0]
         - WorkGroupMapping: [18]
@@ -161,7 +159,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -184,7 +181,7 @@ BenchmarkProblems:
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: [MultipleBuffer]
+        - GlobalSplitUAlgorithm: [MultipleBuffer, MultipleBufferSingleKernel]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0]
         - WorkGroupMapping: [18]
@@ -226,7 +223,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationHPA: True
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -249,7 +245,7 @@ BenchmarkProblems:
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: [MultipleBuffer]
+        - GlobalSplitUAlgorithm: [MultipleBuffer, MultipleBufferSingleKernel]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0]
         - WorkGroupMapping: [18]

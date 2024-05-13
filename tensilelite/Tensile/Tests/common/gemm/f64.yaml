@@ -29,7 +29,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: False
-      ActivationHPA: False
       B2BGemm: False
 
 
@@ -47,7 +46,7 @@ BenchmarkProblems:
         - VectorWidthA: [1, 2]
         - VectorWidthB: [1, 2]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkForkParameters:
       JoinParameters:
@@ -69,7 +68,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: False
-      ActivationHPA: False
       B2BGemm: False
 
 
@@ -87,7 +85,7 @@ BenchmarkProblems:
         - VectorWidthA: [1, 2]
         - VectorWidthB: [1, 2]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkForkParameters:
       JoinParameters:
@@ -109,7 +107,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: False
-      ActivationHPA: False
       B2BGemm: False
 
 
@@ -127,7 +124,7 @@ BenchmarkProblems:
         - VectorWidthA: [1, 2]
         - VectorWidthB: [1, 2]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkForkParameters:
       JoinParameters:
@@ -149,7 +146,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: False
-      ActivationHPA: False
       B2BGemm: False
 
 
@@ -167,7 +163,7 @@ BenchmarkProblems:
         - VectorWidthA: [1, 2]
         - VectorWidthB: [1, 2]
         - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0,1]
       BenchmarkForkParameters:
       JoinParameters:

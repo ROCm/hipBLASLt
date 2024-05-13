@@ -12,9 +12,6 @@ Known bugs:
 - { function: matmul, grouped_gemm: 5, known_bug_platforms: "gfx1100, gfx1101, gfx1102" }
 - { function: matmul, grouped_gemm: 7, known_bug_platforms: "gfx1100, gfx1101, gfx1102" }
 - { function: matmul, gradient: 1, known_bug_platforms: "gfx1100, gfx1101, gfx1102" }
-- { function: matmul, gsu_vector: [4], known_bug_platforms: "gfx1100, gfx1101, gfx1102" }
-- { function: matmul, gsu_vector: [7], known_bug_platforms: "gfx1100, gfx1101, gfx1102" }
-- { function: matmul, gsu_vector: [38], known_bug_platforms: "gfx1100, gfx1101, gfx1102" }
 
 
 
