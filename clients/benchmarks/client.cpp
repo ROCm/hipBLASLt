@@ -491,6 +491,22 @@ try
          bool_switch(&arg.amaxScaleB)->default_value(false),
          "Apply scale for B buffer by abs max of B buffer")
 
+        ("isScaleAmaxDivisorA",
+         bool_switch(&arg.isScaleAmaxDivisorA)->default_value(false),
+         "Apply scale as value divided by amaxA for A buffer")
+
+        ("isScaleAmaxDivisorB",
+         bool_switch(&arg.isScaleAmaxDivisorB)->default_value(false),
+         "Apply scale as value divided by amaxA for B buffer")
+
+        ("amaxDividendA",
+         value<float>(&arg.amaxDividendA)->default_value(0),
+         "Apply scale with value divide amax")
+
+        ("amaxDividendB",
+         value<float>(&arg.amaxDividendB)->default_value(0),
+         "Apply scale with value divide amax")
+
         ("amaxD",
          bool_switch(&arg.amaxD)->default_value(false),
          "Output Amax of intermediate D matrix")

@@ -140,6 +140,10 @@ struct Arguments
     bool                  scaleAlpha_vector;
     bool                  amaxScaleA;
     bool                  amaxScaleB;
+    bool                  isScaleAmaxDivisorA;
+    bool                  isScaleAmaxDivisorB;
+    float                 amaxDividendA;
+    float                 amaxDividendB;
     bool                  amaxD;
     bool                  c_equal_d;
     bool                  HMM;
@@ -237,6 +241,10 @@ struct Arguments
     OPER(scaleAlpha_vector) SEP      \
     OPER(amaxScaleA) SEP             \
     OPER(amaxScaleB) SEP             \
+    OPER(isScaleAmaxDivisorA) SEP    \
+    OPER(isScaleAmaxDivisorB) SEP    \
+    OPER(amaxDividendA) SEP          \
+    OPER(amaxDividendB) SEP          \
     OPER(amaxD) SEP                  \
     OPER(c_equal_d) SEP              \
     OPER(HMM) SEP                    \

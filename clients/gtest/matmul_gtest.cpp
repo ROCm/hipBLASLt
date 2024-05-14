@@ -180,6 +180,18 @@ namespace
                 if(arg.amaxScaleB)
                     name << "_ASB";
 
+                if(arg.isScaleAmaxDivisorA)
+                    name << "_ISADA";
+
+                if(arg.isScaleAmaxDivisorB)
+                    name << "_ISADB";
+
+                if(arg.amaxDividendA)
+                    name << "_ADA" << arg.amaxDividendA;
+
+                if(arg.amaxDividendB)
+                    name << "_ADB" << arg.amaxDividendB;
+
                 if(arg.amaxD)
                     name << "_AMaxD";
 
