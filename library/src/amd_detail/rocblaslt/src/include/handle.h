@@ -144,14 +144,21 @@ struct _rocblaslt_matmul_desc
     // epilogue operation
     rocblaslt_epilogue epilogue = ROCBLASLT_EPILOGUE_DEFAULT;
     // bias vector pointer
-    void*       bias        = nullptr;
-    void*       scaleA      = nullptr;
-    void*       scaleB      = nullptr;
-    void*       scaleC      = nullptr;
-    void*       scaleD      = nullptr;
-    void*       scaleE      = nullptr;
-    void*       pointermode = nullptr;
-    void*       amax_ptr    = nullptr;
+    void*       bias                = nullptr;
+    void*       scaleA              = nullptr;
+    void*       scaleB              = nullptr;
+    void*       scaleC              = nullptr;
+    void*       scaleD              = nullptr;
+    void*       scaleE              = nullptr;
+    void*       pointermode         = nullptr;
+    void*       amax_ptr            = nullptr;
+    bool        amaxScaleA          = false;
+    bool        amaxScaleB          = false;
+    bool        isScaleAmaxDivisorA = false;
+    bool        isScaleAmaxDivisorB = false;
+    float       amaxDividendA       = 240.0f;
+    float       amaxDividendB       = 240.0f;
+
     hipDataType bias_type   = HIPBLASLT_DATATYPE_INVALID;
     // E
     void*   e        = nullptr;
@@ -168,26 +175,32 @@ struct _rocblaslt_matmul_desc
 
     void copy(const _rocblaslt_matmul_desc& src)
     {
-        this->op_A         = src.op_A;
-        this->op_B         = src.op_B;
-        this->epilogue     = src.epilogue;
-        this->bias         = src.bias;
-        this->scaleA       = src.scaleA;
-        this->scaleB       = src.scaleB;
-        this->scaleC       = src.scaleC;
-        this->scaleD       = src.scaleD;
-        this->scaleE       = src.scaleE;
-        this->pointermode  = src.pointermode;
-        this->amax_ptr     = src.amax_ptr;
-        this->bias_type    = src.bias_type;
-        this->e            = src.e;
-        this->lde          = src.lde;
-        this->stride_e     = src.stride_e;
-        this->compute_type = src.compute_type;
+        this->op_A                  = src.op_A;
+        this->op_B                  = src.op_B;
+        this->epilogue              = src.epilogue;
+        this->bias                  = src.bias;
+        this->scaleA                = src.scaleA;
+        this->scaleB                = src.scaleB;
+        this->scaleC                = src.scaleC;
+        this->scaleD                = src.scaleD;
+        this->scaleE                = src.scaleE;
+        this->pointermode           = src.pointermode;
+        this->amax_ptr              = src.amax_ptr;
+        this->amaxScaleA            = src.amaxScaleA;
+        this->amaxScaleB            = src.amaxScaleB;
+        this->isScaleAmaxDivisorA   = src.isScaleAmaxDivisorA;
+        this->isScaleAmaxDivisorB   = src.isScaleAmaxDivisorB;
+        this->amaxDividendA         = src.amaxDividendA;
+        this->amaxDividendB         = src.amaxDividendB;
+        this->bias_type             = src.bias_type;
+        this->e                     = src.e;
+        this->lde                   = src.lde;
+        this->stride_e              = src.stride_e;
+        this->compute_type          = src.compute_type;
         this->compute_type_original = src.compute_type_original;
-        this->compute_input_typeA = src.compute_input_typeA;
-        this->compute_input_typeB = src.compute_input_typeB;
-        this->scale_type   = src.scale_type;
+        this->compute_input_typeA   = src.compute_input_typeA;
+        this->compute_input_typeB   = src.compute_input_typeB;
+        this->scale_type            = src.scale_type;
     }
 };
 

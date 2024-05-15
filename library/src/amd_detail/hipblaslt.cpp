@@ -400,9 +400,30 @@ hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
                                 hipStream_t                  stream)
 try
 {
-    hipblasStatus_t return_status = HIPBLAS_STATUS_SUCCESS;
+    hipblasStatus_t return_status          = HIPBLAS_STATUS_SUCCESS;
+    rocblaslt_matmul_desc roc_matmul_desc  = (rocblaslt_matmul_desc)matmul_descr;
+    rocblaslt_matrix_layout tmp_matA = (rocblaslt_matrix_layout)matA;
+    rocblaslt_matrix_layout tmp_matB = (rocblaslt_matrix_layout)matB;
 
-    if(((rocblaslt_matmul_desc)matmul_descr)->amax_ptr == nullptr)
+    if (roc_matmul_desc->amaxScaleA && (tmp_matA->type == HIP_R_32F || tmp_matA->type == HIP_R_16F))
+    {
+        int* sync = ((int*)((rocblaslt_handle)handle)->Synchronizer);
+        if(roc_matmul_desc->isScaleAmaxDivisorA)
+            hipblasltExtFastValueDevidedByAMax(tmp_matA->type, HIP_R_32F, roc_matmul_desc->scaleA, A, workspace, sync, tmp_matA->m, tmp_matA->n, roc_matmul_desc->amaxDividendA, stream);
+        else
+            hipblasltExtFastAMax(tmp_matA->type, HIP_R_32F, roc_matmul_desc->scaleA, A, workspace, ((rocblaslt_handle)handle)->Synchronizer, tmp_matA->m, tmp_matA->n, stream);
+    }
+
+    if (roc_matmul_desc->amaxScaleB && (tmp_matB->type == HIP_R_32F || tmp_matB->type == HIP_R_16F))
+    {
+        int* sync = ((int*)((rocblaslt_handle)handle)->Synchronizer);
+        if(roc_matmul_desc->isScaleAmaxDivisorB)
+            hipblasltExtFastValueDevidedByAMax(tmp_matB->type, HIP_R_32F, roc_matmul_desc->scaleB, B, workspace, sync, tmp_matB->m, tmp_matB->n, roc_matmul_desc->amaxDividendB, stream);
+        else
+            hipblasltExtFastAMax(tmp_matB->type, HIP_R_32F, roc_matmul_desc->scaleB, B, workspace, sync, tmp_matB->m, tmp_matB->n, stream);
+    }
+
+    if(roc_matmul_desc->amax_ptr == nullptr)
     {
         return_status
             = RocBlasLtStatusToHIPStatus(rocblaslt_matmul((rocblaslt_handle)handle,
@@ -432,6 +453,7 @@ try
            || tmp_matD->m != tmp_matD->ld || *(float*)beta != 0 || tmp_matD->batch_count > 1
            || workspaceSizeInBytes < amax_workspace_size || scaleD == nullptr)
             return HIPBLAS_STATUS_INTERNAL_ERROR;
+
         hipDataType c_type                            = tmp_matD->type;
         hipDataType d_type                            = tmp_matD->type;
         void*       D_TEMP                            = workspace;
