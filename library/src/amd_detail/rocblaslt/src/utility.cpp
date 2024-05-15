@@ -206,6 +206,18 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_POINTER_MODE";
     case ROCBLASLT_MATMUL_DESC_AMAX_D_POINTER:
         return "MATMUL_DESC_AMAX_D_POINTER";
+    case ROCBLASLT_MATMUL_DESC_AMAX_SCALE_A:
+        return "MATMUL_DESC_AMAX_SCALE_A";
+    case ROCBLASLT_MATMUL_DESC_AMAX_SCALE_B:
+        return "MATMUL_DESC_AMAX_SCALE_B";
+    case ROCBLASLT_MATMUL_DESC_IS_SCALE_AMAX_DIVISOR_A:
+        return "MATMUL_DESC_IS_SCALE_AMAX_DIVISOR_A";
+    case ROCBLASLT_MATMUL_DESC_IS_SCALE_AMAX_DIVISOR_B:
+        return "MATMUL_DESC_IS_SCALE_AMAX_DIVISOR_B";
+    case ROCBLASLT_MATMUL_DESC_AMAX_DIVIDED_A:
+        return "MATMUL_DESC_AMAX_DIVIDED_A";
+    case ROCBLASLT_MATMUL_DESC_AMAX_DIVIDED_B:
+        return "MATMUL_DESC_AMAX_DIVIDED_B";
     default:
         return "Invalid";
     }
