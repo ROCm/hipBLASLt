@@ -773,15 +773,22 @@ int main(int argc, const char* argv[])
                         }
                         std::cout << std::endl;
 
-                        int addSols = 0;
-                        for(size_t r = 0; r < rankedVec.size(); r++)
+                        size_t rLimit = rankedVec.size() * testThreshold;
+                        for(size_t r = 0; r <= rLimit; r++)
                         {
                             auto rk = rankedVec[r].key();
                             runSolutions[rk] = 1;
-                            addSols += solutionInfoGroups[rk];
-                            if(addSols > testedSolutions)
-                                break;
                         }
+                        // Re-enable it after its stable enough
+                        // int addSols = 0;
+                        // for(size_t r = 0; r < rankedVec.size(); r++)
+                        // {
+                        //     auto rk = rankedVec[r].key();
+                        //     runSolutions[rk] = 1;
+                        //     addSols += solutionInfoGroups[rk];
+                        //     if(addSols > testedSolutions)
+                        //         break;
+                        // }
                     }
                 }
             }
