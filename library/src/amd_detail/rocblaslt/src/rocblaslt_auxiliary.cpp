@@ -37,10 +37,18 @@
 
 #include <hip/hip_runtime_api.h>
 #include <unistd.h>
+#include <cstdlib>
 #include <utility>
+#include <iostream>
 
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
+
+template <typename T>
+inline T max(T a, T b)
+{
+     return (a > b) ? a : b;
+}
 
 inline void assignAlphaBeta1(const rocblaslt_compute_type& compute_type, void* alpha, void* beta)
 {
@@ -825,6 +833,60 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
+            case ROCBLASLT_MATMUL_DESC_AMAX_SCALE_A:
+                if(sizeof(bool) <= sizeInBytes)
+                    memcpy(&matmulDesc->amaxScaleA, buf, sizeof(bool));
+                else
+                {
+                    log_error(__func__, "invalid is scale by AMAX(bufferA)", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATMUL_DESC_AMAX_SCALE_B:
+                if(sizeof(bool) <= sizeInBytes)
+                    memcpy(&matmulDesc->amaxScaleB, buf, sizeof(bool));
+                else
+                {
+                    log_error(__func__, "invalid is scale by AMAX(bufferB)", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATMUL_DESC_IS_SCALE_AMAX_DIVISOR_A:
+                if(sizeof(bool) <= sizeInBytes)
+                    memcpy(&matmulDesc->isScaleAmaxDivisorA, buf, sizeof(bool));
+                else
+                {
+                    log_error(__func__, "invalid is scale AMax Divisor A", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATMUL_DESC_IS_SCALE_AMAX_DIVISOR_B:
+                if(sizeof(bool) <= sizeInBytes)
+                    memcpy(&matmulDesc->isScaleAmaxDivisorB, buf, sizeof(bool));
+                else
+                {
+                    log_error(__func__, "invalid is scale AMax Divisor B", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATMUL_DESC_AMAX_DIVIDED_A:
+                if(sizeof(float) <= sizeInBytes)
+                    memcpy(&matmulDesc->amaxDividendA, buf, sizeof(float));
+                else
+                {
+                    log_error(__func__, "amax divided A", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATMUL_DESC_AMAX_DIVIDED_B:
+                if(sizeof(float) <= sizeInBytes)
+                    memcpy(&matmulDesc->amaxDividendB, buf, sizeof(float));
+                else
+                {
+                    log_error(__func__, "amax divided B", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
             case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT:
                 if(sizeof(int32_t) <= sizeInBytes)
                 {
@@ -995,6 +1057,66 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 memcpy(buf, &matmulDesc->amax_ptr, sizeof(void*));
+                break;
+            case ROCBLASLT_MATMUL_DESC_AMAX_SCALE_A:
+                if(sizeWritten)
+                    *sizeWritten = sizeof(bool);
+                if(sizeInBytes < sizeof(bool))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->amaxScaleA, sizeof(bool));
+                break;
+            case ROCBLASLT_MATMUL_DESC_AMAX_SCALE_B:
+                if(sizeWritten)
+                    *sizeWritten = sizeof(bool);
+                if(sizeInBytes < sizeof(bool))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->amaxScaleB, sizeof(bool));
+                break;
+            case ROCBLASLT_MATMUL_DESC_IS_SCALE_AMAX_DIVISOR_A:
+                if(sizeWritten)
+                    *sizeWritten = sizeof(bool);
+                if(sizeInBytes < sizeof(bool))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->isScaleAmaxDivisorA, sizeof(bool));
+                break;
+            case ROCBLASLT_MATMUL_DESC_IS_SCALE_AMAX_DIVISOR_B:
+                if(sizeWritten)
+                    *sizeWritten = sizeof(bool);
+                if(sizeInBytes < sizeof(bool))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->isScaleAmaxDivisorB, sizeof(bool));
+                break;
+            case ROCBLASLT_MATMUL_DESC_AMAX_DIVIDED_A:
+                if(sizeWritten)
+                    *sizeWritten = sizeof(float);
+                if(sizeInBytes < sizeof(float))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->amaxDividendA, sizeof(float));
+                break;
+            case ROCBLASLT_MATMUL_DESC_AMAX_DIVIDED_B:
+                if(sizeWritten)
+                    *sizeWritten = sizeof(float);
+                if(sizeInBytes < sizeof(float))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->amaxDividendB, sizeof(float));
                 break;
             case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT:
                 if(sizeWritten)
@@ -1302,18 +1424,41 @@ rocblaslt_status
     rocblaslt_status status = rocblaslt_status_success;
     try
     {
-        hipDataType            a_type       = matA->type;
-        hipDataType            b_type       = matB->type;
-        hipDataType            c_type       = matC->type;
-        hipDataType            d_type       = matD->type;
-        rocblaslt_compute_type compute_type = matmul_desc->compute_type;
-        auto&                  tensile_data = matmul_desc->m_data;
+        hipDataType            a_type              = matA->type;
+        hipDataType            b_type              = matB->type;
+        hipDataType            c_type              = matC->type;
+        hipDataType            d_type              = matD->type;
+        rocblaslt_compute_type compute_type        = matmul_desc->compute_type;
+        auto&                  tensile_data        = matmul_desc->m_data;
+        bool                   amaxScaleB          = matmul_desc->amaxScaleB;
+        bool                   isScaleAmaxDivisorB = matmul_desc->isScaleAmaxDivisorB;
+        float                  amaxDividendB       = matmul_desc->amaxDividendB;
+        const char*            case2               = getenv("CASE2");
+
+        log_api(__func__, "auxiliary compute_type ", matmul_desc->compute_type);
+        log_api(__func__, "auxiliary amaxScaleB ", matmul_desc->amaxScaleB);
+        log_api(__func__, "auxiliary isScaleAmaxDivisorB ", matmul_desc->isScaleAmaxDivisorB);
+        log_api(__func__, "auxiliary amaxDividendB ", matmul_desc->amaxDividendB);
+
+//        if (case2 != nullptr)
+//        {
+////            if(matmul_desc->scaleB != nullptr)
+////                throw rocblaslt_status_internal_error;
+//
+////            matmul_desc->scaleB = handle->Synchronizer;
+////            matmul_desc->compute_type = rocblaslt_compute_f32_fast_f8_fnuz;
+////            matmul_desc->amaxScaleB = true;
+////            matmul_desc->isScaleAmaxDivisorB = true;
+////            matmul_desc->amaxDividendB = 240.0f;
+//        }
+
         if(matmul_desc->amax_ptr != nullptr
            && (matD->type == HIP_R_8F_E4M3_FNUZ || matD->type == HIP_R_8F_E5M2_FNUZ))
         {
             matC->type = HIP_R_32F;
             matD->type = HIP_R_32F;
         }
+
         int8_t alpha[16] = {0};
         int8_t beta[16]  = {0};
         assignAlphaBeta1(compute_type, (void*)alpha, (void*)beta);
@@ -1410,6 +1555,26 @@ rocblaslt_status
                 *returnAlgoCount = 0;
             }
         }
+
+        if(matmul_desc->amaxScaleA || matmul_desc->amaxScaleB)
+        {
+            log_api(__func__, "returnAlgoCount", *returnAlgoCount);
+            for(int i = 0; i < *returnAlgoCount; i++)
+            {
+                heuristicResultsArray[i].workspaceSize = max(heuristicResultsArray[i].workspaceSize, 4096);
+                log_api(__func__, "workspaceSize ", heuristicResultsArray[i].workspaceSize);
+                log_api(__func__, "max_workspace_bytes ", pref->max_workspace_bytes);
+            }
+        }
+
+//        if (case2 != nullptr)
+//        {
+////            matmul_desc->scaleB = nullptr;
+////            matmul_desc->compute_type = compute_type;
+////            matmul_desc->amaxScaleB = amaxScaleB;
+////            matmul_desc->isScaleAmaxDivisorB = isScaleAmaxDivisorB;
+////            matmul_desc->amaxDividendB = amaxDividendB;
+//        }
 
         if(status != rocblaslt_status_success)
         {
