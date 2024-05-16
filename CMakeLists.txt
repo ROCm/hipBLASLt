@@ -225,8 +225,6 @@ else()
     endif()
 endif()
 
-find_package( hipblas-common REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
-
 # Setup version
 set(VERSION_STRING "0.8.0")
 rocm_setup_version(VERSION ${VERSION_STRING})
