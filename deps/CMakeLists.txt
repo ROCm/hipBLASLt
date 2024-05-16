@@ -45,6 +45,7 @@ project( rocblaslt-dependencies NONE )
 
 option( BUILD_GTEST "Download and build googletest library" ON )
 option( BUILD_LAPACK "Download and build lapack library" ON )
+option( BUILD_HIPBLASCOMMON "Download and build hipblas-common library" ON )
 
 # This module scrapes the CMakeCache.txt file and attempts to get all the cli options the user specified to cmake invocation
 include( get-cli-arguments )
@@ -64,6 +65,13 @@ if( BUILD_LAPACK )
   set( lapack_custom_target COMMAND cd ${LAPACK_BINARY_ROOT}$<SEMICOLON> ${CMAKE_COMMAND} --build . --target install )
 endif( )
 
+if( BUILD_HIPBLASCOMMON )
+  include( external-hipblas-common )
+
+  list( APPEND hipblaslt_dependencies hipblascommon )
+  set( hipblascommon_custom_target COMMAND cd ${hipblascommon_BINARY_ROOT}$<SEMICOLON> ${CMAKE_COMMAND} --build . --target install )
+endif( )
+
 # POLICY CMP0037 - "Target names should not be reserved and should match a validity pattern"
 # Familiar target names like 'install' should be OK at the super-build level
 if( POLICY CMP0037 )
@@ -73,5 +81,6 @@ endif( )
 add_custom_target( install
   ${gtest_custom_target}
   ${lapack_custom_target}
+  ${hipblascommon_custom_target}
   DEPENDS ${rocblaslt_dependencies}
 )
