@@ -26,8 +26,10 @@
 
 #pragma once
 
+#include <type_traits>
 #include <Tensile/Debug.hpp>
 #include <Tensile/Predicates.hpp>
+#include <Tensile/ContractionProblemPredicates.hpp>
 #include <Tensile/SolutionLibrary.hpp>
 
 namespace Tensile
@@ -97,6 +99,10 @@ namespace Tensile
                 if(row.first(problem, hardware))
                 {
                     rv = row.second->findBestSolution(problem, hardware, fitness);
+
+                    if (rv && dynamic_cast<Predicates::Contraction::EqualityMatching *>(row.first.value.get()))
+                        rv->tag = MySolution::MatchingTag::Equal;
+
                     if(rv)
                         return rv;
                 }
@@ -163,6 +169,11 @@ namespace Tensile
                 {
                     solutions
                         = row.second->findTopSolutions(problem, hardware, numSolutions - rv.size());
+                    
+                    if (dynamic_cast<Predicates::Contraction::EqualityMatching *>(row.first.value.get()))
+                        for (auto &sol : solutions)
+                            sol->tag = MySolution::MatchingTag::Equal;
+
                     rv.insert(std::end(rv), std::begin(solutions), std::end(solutions));
                     if(rv.size() == numSolutions)
                         return rv;
