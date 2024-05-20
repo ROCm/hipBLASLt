@@ -1034,7 +1034,7 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         if(arg.scaleA)
             hScaleA[i] = new host_vector<Talpha>(1);
-        if(arg.scaleB)
+        if(arg.scaleB || (case2 != nullptr))
             hScaleB[i] = new host_vector<Talpha>(1);
         if(arg.scaleC)
             hScaleC[i] = new host_vector<Talpha>(1);
@@ -1206,11 +1206,11 @@ void testing_matmul_with_bias(const Arguments& arg)
                 CHECK_HIP_ERROR(dScaleA[i]->transfer_from(*hScaleA[i]));
         }
 
-        if(arg.scaleB)
+        if(arg.scaleB || (case2 != nullptr))
         {
-            bool  amaxScaleB          = arg.amaxScaleB;
-            bool  isScaleAmaxDivisorB = arg.isScaleAmaxDivisorB;
-            float amaxDividendB       = arg.amaxDividendB;
+            bool  amaxScaleB          = (case2 != nullptr) ? true : arg.amaxScaleB;
+            bool  isScaleAmaxDivisorB = (case2 != nullptr) ? true : arg.isScaleAmaxDivisorB;
+            float amaxDividendB       = (case2 != nullptr) ? 240.0f : arg.amaxDividendB;
 
             if(amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
                 if (isScaleAmaxDivisorB) {
@@ -2142,7 +2142,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                 delete hScaleA[i];
                 delete dScaleA[i];
             }
-            if(arg.scaleB)
+            if(arg.scaleB || (case2 != nullptr))
             {
                 delete hScaleB[i];
             }
@@ -2253,7 +2253,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             if(arg.scaleC)
                 betaTemp *= (*hScaleC[gemmIdx])[0];
             auto scaleAValue = arg.scaleA ? (*hScaleA[gemmIdx])[0] : 1;
-            auto scaleBValue = arg.scaleB ? (*hScaleB[gemmIdx])[0] : 1;
+            auto scaleBValue = (arg.scaleB || (case2 != nullptr)) ? (*hScaleB[gemmIdx])[0] : 1;
             auto scaleDValue = arg.scaleD ? (*hScaleD[gemmIdx])[0] : 1;
             auto scaleEValue = arg.scaleE ? (*hScaleE[gemmIdx])[0] : 1;
 
@@ -2965,7 +2965,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             delete hScaleA[i];
             delete dScaleA[i];
         }
-        if(arg.scaleB)
+        if(arg.scaleB || (case2 != nullptr))
         {
             delete hScaleB[i];
         }

@@ -1440,17 +1440,17 @@ rocblaslt_status
         log_api(__func__, "auxiliary isScaleAmaxDivisorB ", matmul_desc->isScaleAmaxDivisorB);
         log_api(__func__, "auxiliary amaxDividendB ", matmul_desc->amaxDividendB);
 
-//        if (case2 != nullptr)
-//        {
-////            if(matmul_desc->scaleB != nullptr)
-////                throw rocblaslt_status_internal_error;
-//
-////            matmul_desc->scaleB = handle->Synchronizer;
-////            matmul_desc->compute_type = rocblaslt_compute_f32_fast_f8_fnuz;
-////            matmul_desc->amaxScaleB = true;
-////            matmul_desc->isScaleAmaxDivisorB = true;
-////            matmul_desc->amaxDividendB = 240.0f;
-//        }
+        if (case2 != nullptr)
+        {
+            if(matmul_desc->scaleB != nullptr)
+                throw rocblaslt_status_internal_error;
+
+            matmul_desc->scaleB = handle->Synchronizer;
+            matmul_desc->compute_type = rocblaslt_compute_f32_fast_f8_fnuz;
+            matmul_desc->amaxScaleB = true;
+            matmul_desc->isScaleAmaxDivisorB = true;
+            matmul_desc->amaxDividendB = 240.0f;
+        }
 
         if(matmul_desc->amax_ptr != nullptr
            && (matD->type == HIP_R_8F_E4M3_FNUZ || matD->type == HIP_R_8F_E5M2_FNUZ))
@@ -1562,19 +1562,20 @@ rocblaslt_status
             for(int i = 0; i < *returnAlgoCount; i++)
             {
                 heuristicResultsArray[i].workspaceSize = max(heuristicResultsArray[i].workspaceSize, 4096);
+                heuristicResultsArray[i].workspaceSize = heuristicResultsArray[i].workspaceSize + ((case2 != nullptr) ? 4 : 0);
                 log_api(__func__, "workspaceSize ", heuristicResultsArray[i].workspaceSize);
                 log_api(__func__, "max_workspace_bytes ", pref->max_workspace_bytes);
             }
         }
 
-//        if (case2 != nullptr)
-//        {
-////            matmul_desc->scaleB = nullptr;
-////            matmul_desc->compute_type = compute_type;
-////            matmul_desc->amaxScaleB = amaxScaleB;
-////            matmul_desc->isScaleAmaxDivisorB = isScaleAmaxDivisorB;
-////            matmul_desc->amaxDividendB = amaxDividendB;
-//        }
+        if (case2 != nullptr)
+        {
+            matmul_desc->scaleB = nullptr;
+            matmul_desc->compute_type = compute_type;
+            matmul_desc->amaxScaleB = amaxScaleB;
+            matmul_desc->isScaleAmaxDivisorB = isScaleAmaxDivisorB;
+            matmul_desc->amaxDividendB = amaxDividendB;
+        }
 
         if(status != rocblaslt_status_success)
         {

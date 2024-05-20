@@ -408,7 +408,7 @@ try
     float amaxDividendB                    = roc_matmul_desc->amaxDividendB;
     void* scaleB                           = roc_matmul_desc->scaleB;
     const char* case2                      = getenv("CASE2");
-
+    void* new_workspace                    = workspace;
 
     if (roc_matmul_desc->amaxScaleA)
     {
@@ -419,24 +419,24 @@ try
             hipblasltExtFastAMax(tmp_matA->type, HIP_R_32F, roc_matmul_desc->scaleA, A, workspace, ((rocblaslt_handle)handle)->Synchronizer, tmp_matA->m, tmp_matA->n, stream);
     }
 
+    if (case2 != nullptr)
+    {
+        if(roc_matmul_desc->scaleB != nullptr)
+            throw rocblaslt_status_internal_error;
+
+        roc_matmul_desc->compute_type        = rocblaslt_compute_f32_fast_f8_fnuz;
+        roc_matmul_desc->amaxScaleB          = true;
+        roc_matmul_desc->isScaleAmaxDivisorB = true;
+        roc_matmul_desc->amaxDividendB       = 240.0f;
+        roc_matmul_desc->scaleB              = workspace;
+        new_workspace                        = (void*)((char*)workspace + 4);
+        workspaceSizeInBytes                 = workspaceSizeInBytes - 4;
+    }
+
     std::cout << "API amaxScaleB " << roc_matmul_desc->amaxScaleB << std::endl;
     std::cout << "API isScaleAmaxDivisorB " << roc_matmul_desc->isScaleAmaxDivisorB << std::endl;
     std::cout << "API amaxDividendB " << roc_matmul_desc->amaxDividendB << std::endl;
     std::cout << "API compute_type " << roc_matmul_desc->compute_type << std::endl;
-
-//    if (case2 != nullptr)
-//    {
-//        if(roc_matmul_desc->scaleB != nullptr)
-//            throw rocblaslt_status_internal_error;
-//
-//        roc_matmul_desc->compute_type        = rocblaslt_compute_f32_fast_f8_fnuz;
-//        roc_matmul_desc->amaxScaleB          = true;
-//        roc_matmul_desc->isScaleAmaxDivisorB = true;
-//        roc_matmul_desc->amaxDividendB       = 240.0f;
-//        roc_matmul_desc->scaleB              = workspace;
-//        workspace                            = (void*)((char*)workspace + 4);
-//        workspaceSizeInBytes                 = workspaceSizeInBytes - 4;
-//    }
 
     if (roc_matmul_desc->amaxScaleB)
     {
@@ -444,9 +444,9 @@ try
 
         rocblaslt_matrix_layout tmp_matB = (rocblaslt_matrix_layout)matB;
         if(roc_matmul_desc->isScaleAmaxDivisorB)
-            hipblasltExtFastValueDevidedByAMax(tmp_matB->type, HIP_R_32F, roc_matmul_desc->scaleB, B, workspace, sync, tmp_matB->m, tmp_matB->n, roc_matmul_desc->amaxDividendB, stream);
+            hipblasltExtFastValueDevidedByAMax(tmp_matB->type, HIP_R_32F, roc_matmul_desc->scaleB, B, new_workspace, sync, tmp_matB->m, tmp_matB->n, roc_matmul_desc->amaxDividendB, stream);
         else
-            hipblasltExtFastAMax(tmp_matB->type, HIP_R_32F, roc_matmul_desc->scaleB, B, workspace, sync, tmp_matB->m, tmp_matB->n, stream);
+            hipblasltExtFastAMax(tmp_matB->type, HIP_R_32F, roc_matmul_desc->scaleB, B, new_workspace, sync, tmp_matB->m, tmp_matB->n, stream);
     }
 
     if(roc_matmul_desc->amax_ptr == nullptr)
@@ -465,7 +465,7 @@ try
                                                           D,
                                                           (rocblaslt_matrix_layout)matD,
                                                           (const rocblaslt_matmul_algo*)algo,
-                                                          workspace,
+                                                          new_workspace,
                                                           workspaceSizeInBytes,
                                                           stream));
     }
@@ -482,12 +482,12 @@ try
 
         hipDataType c_type                            = tmp_matD->type;
         hipDataType d_type                            = tmp_matD->type;
-        void*       D_TEMP                            = workspace;
+        void*       D_TEMP                            = new_workspace;
         tmp_matC->type                                = HIP_R_32F;
         tmp_matD->type                                = HIP_R_32F;
         ((rocblaslt_matmul_desc)matmul_descr)->scaleD = nullptr;
-        char* new_workspace                           = (char*)workspace;
-        new_workspace += amax_workspace_size;
+        char* new_workspace2                          = (char*)new_workspace;
+        new_workspace2 += amax_workspace_size;
         workspaceSizeInBytes -= amax_workspace_size;
         return_status
             = RocBlasLtStatusToHIPStatus(rocblaslt_matmul((rocblaslt_handle)handle,
@@ -503,7 +503,7 @@ try
                                                           D_TEMP,
                                                           (rocblaslt_matrix_layout)matD,
                                                           (const rocblaslt_matmul_algo*)algo,
-                                                          new_workspace,
+                                                          new_workspace2,
                                                           workspaceSizeInBytes,
                                                           stream));
         //reset matD type
@@ -525,14 +525,14 @@ try
                                                   stream);
     }
 
-//    if (case2 != nullptr)
-//    {
-//        roc_matmul_desc->compute_type        = compute_type;
-//        roc_matmul_desc->amaxScaleB          = amaxScaleB;
-//        roc_matmul_desc->isScaleAmaxDivisorB = isScaleAmaxDivisorB;
-//        roc_matmul_desc->amaxDividendB       = amaxDividendB;
-//        roc_matmul_desc->scaleB              = scaleB;
-//    }
+    if (case2 != nullptr)
+    {
+        roc_matmul_desc->compute_type        = compute_type;
+        roc_matmul_desc->amaxScaleB          = amaxScaleB;
+        roc_matmul_desc->isScaleAmaxDivisorB = isScaleAmaxDivisorB;
+        roc_matmul_desc->amaxDividendB       = amaxDividendB;
+        roc_matmul_desc->scaleB              = scaleB;
+    }
 
     return return_status;
 }
