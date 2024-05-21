@@ -118,8 +118,7 @@ public:
 
     FrequencyMonitorImp()
     {
-        if(enabled())
-            initThread();
+        initThread();
     }
 
     ~FrequencyMonitorImp()
