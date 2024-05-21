@@ -25,6 +25,7 @@
  *******************************************************************************/
 
 #include "argument_model.hpp"
+#include "frequency_monitor.hpp"
 
 // this should have been a member variable but due to the complex variadic template this singleton allows global control
 
@@ -38,4 +39,43 @@ void ArgumentModel_set_log_function_name(bool f)
 bool ArgumentModel_get_log_function_name()
 {
     return log_function_name;
+}
+
+void ArgumentModel_log_frequencies(hipblaslt_internal_ostream& name_line,
+                                   hipblaslt_internal_ostream& val_line)
+{
+
+    FrequencyMonitor& frequency_monitor = getFrequencyMonitor();
+    if(!frequency_monitor.enabled())
+        return;
+    if(!frequency_monitor.detailedReport())
+    {
+        name_line << ",lowest-avg-freq";
+        val_line << "," << frequency_monitor.getLowestAverageSYSCLK();
+
+        name_line << ",lowest-median-freq";
+        val_line << "," << frequency_monitor.getLowestMedianSYSCLK();
+    }
+    else
+    {
+        auto allAvgSYSCLK = frequency_monitor.getAllAverageSYSCLK();
+        for(int i = 0; i < allAvgSYSCLK.size(); i++)
+        {
+            name_line << ",avg-freq_" << i;
+            val_line << "," << allAvgSYSCLK[i];
+        }
+
+        auto allMedianSYSCLK = frequency_monitor.getAllMedianSYSCLK();
+        for(int i = 0; i < allMedianSYSCLK.size(); i++)
+        {
+            name_line << ",median-freq_" << i;
+            val_line << "," << allMedianSYSCLK[i];
+        }
+    }
+
+    name_line << ",avg-MCLK";
+    val_line << "," << frequency_monitor.getAverageMEMCLK();
+
+    name_line << ",median-MCLK";
+    val_line << "," << frequency_monitor.getMedianMEMCLK();
 }
