@@ -2785,45 +2785,48 @@ void testing_matmul_with_bias(const Arguments& arg)
             int32_t     solutionIndex = -1;
             std::string solutionName  = "";
             std::string kernelName    = "";
-            if(arg.print_kernel_info)
+            if(arg.print_solution_found)
             {
-                if(arg.use_ext)
+                if(arg.print_kernel_info)
                 {
-                    if(!do_grouped_gemm)
+                    if(arg.use_ext)
                     {
-                        solutionName = gemmVec[0].getSolutionName();
-                        kernelName   = gemmVec[0].getKernelName();
+                        if(!do_grouped_gemm)
+                        {
+                            solutionName = gemmVec[0].getSolutionName();
+                            kernelName   = gemmVec[0].getKernelName();
+                        }
+                        else
+                        {
+                            solutionName = groupedGemmVec[0].getSolutionName();
+                            kernelName   = groupedGemmVec[0].getKernelName();
+                        }
                     }
                     else
                     {
-                        solutionName = groupedGemmVec[0].getSolutionName();
-                        kernelName   = groupedGemmVec[0].getKernelName();
+                        solutionName
+                            = hipblaslt_ext::getSolutionNameFromAlgo(handle, heuristicResult[sol].algo);
+                        kernelName
+                            = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
                     }
+                    solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo);
                 }
-                else
-                {
-                    solutionName
-                        = hipblaslt_ext::getSolutionNameFromAlgo(handle, heuristicResult[sol].algo);
-                    kernelName
-                        = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
-                }
-                solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo);
+                ArgumentModel<argument_param>{}.log_args<Tc>(
+                    hipblaslt_cout,
+                    sol,
+                    solutionIndex,
+                    solutionName,
+                    kernelName,
+                    arg,
+                    (uint32_t)tuningVec[heuristicTuningIndex[sol]].splitK,
+                    (uint32_t)tuningVec[heuristicTuningIndex[sol]].wgm,
+                    gpu_time_used,
+                    flush_time_used,
+                    flops,
+                    ArgumentLogging::NA_value,
+                    cpu_time_used,
+                    hipblaslt_error);
             }
-            ArgumentModel<argument_param>{}.log_args<Tc>(
-                hipblaslt_cout,
-                sol,
-                solutionIndex,
-                solutionName,
-                kernelName,
-                arg,
-                (uint32_t)tuningVec[heuristicTuningIndex[sol]].splitK,
-                (uint32_t)tuningVec[heuristicTuningIndex[sol]].wgm,
-                gpu_time_used,
-                flush_time_used,
-                flops,
-                ArgumentLogging::NA_value,
-                cpu_time_used,
-                hipblaslt_error);
             if(best_gpu_time > gpu_time_used)
             {
                 best_sol      = sol;
