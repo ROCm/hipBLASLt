@@ -139,6 +139,7 @@ int parseArgs(int                       argc,
               size_t&                   m,
               size_t&                   n,
               size_t&                   iter,
+              size_t&                   cold_iter,
               hipblaslt_initialization& init,
               bool&                     workspace,
               bool&                     flush,
@@ -195,6 +196,10 @@ int parseArgs(int                       argc,
             else if(arg == "--rotating")
             {
                 rotateBuf = std::stoul(argv[++i]);
+            }
+            else if(arg == "--cold")
+            {
+                cold_iter = std::stoul(argv[++i]);
             }
             else if(arg == "--no_workspace" || arg == "--no_wk")
             {
@@ -272,6 +277,7 @@ int AmaxTest(hipDataType               type,
              int                       m,
              int                       n,
              int                       iter,
+             int                       cold_iter,
              hipblaslt_initialization& init,
              bool&                     workspace,
              bool                      flush,
@@ -280,15 +286,17 @@ int AmaxTest(hipDataType               type,
     int numElemsIn  = m * n;
     int numElemsOut = 1;
 
-    To*            gpuOutput{nullptr};
-    Ti*            gpuInput{nullptr};
-    Ti*            gpuWorkSpace{nullptr};
-    std::uint32_t* gpuSync{nullptr};
+    // flush: Get device information
+    hipDeviceProp_t deviceProps;
+    CHECK_HIP_ERROR(hipGetDeviceProperties(&deviceProps, 0));
+    int32_t gpu_block3 = deviceProps.multiProcessorCount * 60;
 
     // rotating buffer
     int64_t  rotating                = rotateBuf * 1024 * 1024; // bytes
     uint32_t totalRotatingSizeNeeded = 0;
-    totalRotatingSizeNeeded += (numElemsIn * type2Size(type)) + (type2Size(dtype));
+    totalRotatingSizeNeeded += (numElemsIn * type2Size(type)) + (numElemsOut * type2Size(dtype));
+    if(workspace)
+        totalRotatingSizeNeeded += (4096 * sizeof(Ti)) + sizeof(std::uint32_t);
     // Calculating block count
     int32_t block_count = max(1, min(iter, ceil((float)rotating / totalRotatingSizeNeeded)));
     if(rotating > 0)
@@ -299,24 +307,17 @@ int AmaxTest(hipDataType               type,
                   << ")" << std::endl;
     }
 
-    // flush: Get device information
-    hipDeviceProp_t deviceProps;
-    CHECK_HIP_ERROR(hipGetDeviceProperties(&deviceProps, 0));
-    int32_t gpu_block3 = deviceProps.multiProcessorCount * 60;
-
-    auto hipErr = hipMalloc(&gpuOutput, block_count * sizeof(To));
-    hipErr      = hipMalloc(&gpuInput, numElemsIn * block_count * sizeof(Ti));
-
-    if(workspace)
-    {
-        hipErr = hipMalloc(&gpuWorkSpace, 4096 * sizeof(Ti));
-        hipErr = hipMalloc(&gpuSync, sizeof(std::uint32_t));
-    }
+    // init as nullptr for each block
+    std::vector<To*>            gpuOutput(block_count, nullptr);
+    std::vector<Ti*>            gpuInput(block_count, nullptr);
+    std::vector<Ti*>            gpuWorkSpace(block_count, nullptr);
+    std::vector<std::uint32_t*> gpuSync(block_count, nullptr);
 
     hipEvent_t beg, end;
-    hipErr = hipEventCreate(&beg);
-    hipErr = hipEventCreate(&end);
+    CHECK_HIP_ERROR(hipEventCreate(&beg));
+    CHECK_HIP_ERROR(hipEventCreate(&end));
 
+    // host side data
     std::vector<To>            cpuOutput(1, 0.f);
     std::vector<Ti>            cpuInput(numElemsIn, 0.f);
     std::vector<Ti>            cpuWorkSpace(4096, 0.f);
@@ -328,21 +329,34 @@ int AmaxTest(hipDataType               type,
 
     cpuAMax(refOutput.data(), cpuInput.data(), m * n);
 
-    hipErr = hipMemset(gpuOutput, 0, block_count * sizeof(To));
+    // init block, copy for gpu in/out
     for(int b = 0; b < block_count; b++)
     {
-        Ti* gpuInAddr = gpuInput + (numElemsIn * b);
-        hipErr        = hipMemcpyHtoD(gpuInAddr, cpuInput.data(), numElemsIn * sizeof(Ti));
+        // init output and memset
+        CHECK_HIP_ERROR(hipMalloc(&gpuOutput[b], sizeof(To)));
+        CHECK_HIP_ERROR(hipMemset(gpuOutput[b], 0, sizeof(To)));
+
+        // init input and copy
+        CHECK_HIP_ERROR(hipMalloc(&gpuInput[b], numElemsIn * sizeof(Ti)));
+        CHECK_HIP_ERROR(hipMemcpyHtoD(gpuInput[b], cpuInput.data(), numElemsIn * sizeof(Ti)));
     }
 
     if(workspace)
     {
-        hipErr = hipMemset(gpuWorkSpace, 0, 4096 * sizeof(Ti));
-        hipErr = hipMemset(gpuSync, 0, sizeof(std::uint32_t));
+        for(int b = 0; b < block_count; b++)
+        {
+            // init WorkSpace
+            CHECK_HIP_ERROR(hipMalloc(&gpuWorkSpace[b], 4096 * sizeof(Ti)));
+            CHECK_HIP_ERROR(hipMemset(gpuWorkSpace[b], 0, 4096 * sizeof(Ti)));
+
+            // init SyncBuf
+            CHECK_HIP_ERROR(hipMalloc(&gpuSync[b], sizeof(std::uint32_t)));
+            CHECK_HIP_ERROR(hipMemset(gpuSync[b], 0, sizeof(std::uint32_t)));
+        }
     }
 
-    hipStream_t stream{};
-    hipErr = hipStreamCreate(&stream);
+    hipStream_t stream{nullptr};
+    CHECK_HIP_ERROR(hipStreamCreate(&stream));
 
     // estimating time of cache-flush first in order to exclude this time later
     int    flush_iter = 100000;
@@ -369,13 +383,13 @@ int AmaxTest(hipDataType               type,
     hipblasStatus_t hipblasltErr;
     if(workspace)
         hipblasltErr = hipblasltExtFastAMax(
-            type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, stream);
+            type, dtype, gpuOutput[0], gpuInput[0], gpuWorkSpace[0], gpuSync[0], m, n, stream);
     else
-        hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
+        hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput[0], gpuInput[0], m, n, stream);
 
-    hipErr = hipStreamSynchronize(stream);
+    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
 
-    hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, sizeof(To));
+    CHECK_HIP_ERROR(hipMemcpyDtoH(cpuOutput.data(), gpuOutput[0], sizeof(To)));
 
     compare("Output", cpuOutput, refOutput);
 
@@ -384,44 +398,56 @@ int AmaxTest(hipDataType               type,
     // dumpBuffer("CPU", refOutput.data(), 1);
 
     // warm up
-    for(int i = 0; i < iter; ++i)
+    std::cout << "Starting Cold Iterations: " << std::to_string(cold_iter) << std::endl;
+    for(int i = 0; i < cold_iter; ++i)
     {
         // rotating buffer
-        Ti* gpuInAddr  = gpuInput + (numElemsIn * (i % block_count));
-        To* gpuOutAddr = gpuOutput + (numElemsOut * (i % block_count));
+        Ti*            gpuInAddr   = gpuInput[i % block_count];
+        To*            gpuOutAddr  = gpuOutput[i % block_count];
+        Ti*            gpuWSAddr   = gpuWorkSpace[i % block_count];
+        std::uint32_t* gpuSyncAddr = gpuSync[i % block_count];
 
         if(workspace)
             hipblasltErr = hipblasltExtFastAMax(
-                type, dtype, gpuOutAddr, gpuInAddr, gpuWorkSpace, gpuSync, m, n, stream);
+                type, dtype, gpuOutAddr, gpuInAddr, gpuWSAddr, gpuSyncAddr, m, n, stream);
         else
             hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutAddr, gpuInAddr, m, n, stream);
+
+        if(hipblasltErr != HIPBLAS_STATUS_SUCCESS)
+            throw std::runtime_error(hipblas_status_to_string(hipblasltErr));
     }
-    hipErr = hipStreamSynchronize(stream);
+    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
 
     // hot call
-    hipErr = hipEventRecord(beg, stream);
+    std::cout << "Starting Hot Iterations: " << std::to_string(iter) << std::endl;
+    CHECK_HIP_ERROR(hipEventRecord(beg, stream));
     for(int i = 0; i < iter; ++i)
     {
         // rotating buffer
-        Ti* gpuInAddr  = gpuInput + (numElemsIn * (i % block_count));
-        To* gpuOutAddr = gpuOutput + (numElemsOut * (i % block_count));
+        Ti*            gpuInAddr   = gpuInput[i % block_count];
+        To*            gpuOutAddr  = gpuOutput[i % block_count];
+        Ti*            gpuWSAddr   = gpuWorkSpace[i % block_count];
+        std::uint32_t* gpuSyncAddr = gpuSync[i % block_count];
 
         if(workspace)
             hipblasltErr = hipblasltExtFastAMax(
-                type, dtype, gpuOutAddr, gpuInAddr, gpuWorkSpace, gpuSync, m, n, stream);
+                type, dtype, gpuOutAddr, gpuInAddr, gpuWSAddr, gpuSyncAddr, m, n, stream);
         else
             hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutAddr, gpuInAddr, m, n, stream);
+
+        if(hipblasltErr != HIPBLAS_STATUS_SUCCESS)
+            throw std::runtime_error(hipblas_status_to_string(hipblasltErr));
 
         if(flush)
             hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
     }
 
-    hipErr = hipEventRecord(end, stream);
-    hipErr = hipEventSynchronize(end);
-    hipErr = hipStreamSynchronize(stream);
+    CHECK_HIP_ERROR(hipEventRecord(end, stream));
+    CHECK_HIP_ERROR(hipEventSynchronize(end));
+    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
 
     float dur{};
-    hipErr = hipEventElapsedTime(&dur, beg, end);
+    CHECK_HIP_ERROR(hipEventElapsedTime(&dur, beg, end));
 
     float gpu_us = dur * 1000 / iter; // per iteration
     if(flush_us > 0)
@@ -429,16 +455,22 @@ int AmaxTest(hipDataType               type,
 
     std::cout << "Time elapsed: " << std::to_string(gpu_us) << " us\n";
 
-    hipErr = hipEventDestroy(beg);
-    hipErr = hipEventDestroy(end);
+    CHECK_HIP_ERROR(hipEventDestroy(beg));
+    CHECK_HIP_ERROR(hipEventDestroy(end));
 
-    hipErr = hipStreamDestroy(stream);
-    hipErr = hipFree(gpuOutput);
-    hipErr = hipFree(gpuInput);
-    if(workspace)
+    CHECK_HIP_ERROR(hipStreamDestroy(stream));
+
+    // free block
+    for(int b = 0; b < block_count; b++)
     {
-        hipErr = hipFree(gpuWorkSpace);
-        hipErr = hipFree(gpuSync);
+        CHECK_HIP_ERROR(hipFree(gpuOutput[b]));
+        CHECK_HIP_ERROR(hipFree(gpuInput[b]));
+
+        if(workspace)
+        {
+            CHECK_HIP_ERROR(hipFree(gpuWorkSpace[b]));
+            CHECK_HIP_ERROR(hipFree(gpuSync[b]));
+        }
     }
     return 0;
 }
@@ -450,35 +482,35 @@ int main(int argc, char** argv)
     std::size_t m{64};
     std::size_t n{64};
     std::size_t i{200};
+    std::size_t cold_iter{0};
     bool        workspace{true};
     bool        flush{false};
     uint32_t    rotateBuf{0};
 
     hipblaslt_initialization init{hipblaslt_initialization::hpl};
 
-    if(auto err = parseArgs(argc, argv, type, dtype, m, n, i, init, workspace, flush, rotateBuf))
+    if(auto err
+       = parseArgs(argc, argv, type, dtype, m, n, i, cold_iter, init, workspace, flush, rotateBuf))
     {
         std::cout << "m: " << m << ", n: " << n << ", i: " << i << ", workspace: " << workspace
                   << ", flush icache: " << flush << ", rotating (MB): " << rotateBuf << std::endl;
         printUsage(argv[0]);
         return err;
     }
-
-    std::cout << "m: " << m << ", n: " << n << ", i: " << i << ", workspace: " << workspace
-              << ", flush icache: " << flush << ", rotating (MB): " << rotateBuf << std::endl;
+    cold_iter = (cold_iter == 0) ? i : cold_iter;
 
     if((type == "S" || type == "s") && (type == dtype))
         return AmaxTest<float, float>(
-            HIP_R_32F, HIP_R_32F, m, n, i, init, workspace, flush, rotateBuf);
+            HIP_R_32F, HIP_R_32F, m, n, i, cold_iter, init, workspace, flush, rotateBuf);
     else if((type == "S" || type == "s") && (dtype == "H" || dtype == "H"))
         return AmaxTest<float, hipblasLtHalf>(
-            HIP_R_32F, HIP_R_16F, m, n, i, init, workspace, flush, rotateBuf);
+            HIP_R_32F, HIP_R_16F, m, n, i, cold_iter, init, workspace, flush, rotateBuf);
     else if((type == "H" || type == "h") && (type == dtype))
         return AmaxTest<hipblasLtHalf, hipblasLtHalf>(
-            HIP_R_16F, HIP_R_16F, m, n, i, init, workspace, flush, rotateBuf);
+            HIP_R_16F, HIP_R_16F, m, n, i, cold_iter, init, workspace, flush, rotateBuf);
     else if((type == "H" || type == "h") && (dtype == "S" || dtype == "s"))
         return AmaxTest<hipblasLtHalf, float>(
-            HIP_R_16F, HIP_R_32F, m, n, i, init, workspace, flush, rotateBuf);
+            HIP_R_16F, HIP_R_32F, m, n, i, cold_iter, init, workspace, flush, rotateBuf);
     else
         std::cout << "Unsupported data type " << type << std::endl;
 
