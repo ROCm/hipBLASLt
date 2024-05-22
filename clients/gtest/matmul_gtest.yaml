@@ -1292,4 +1292,19 @@ Tests:
   alpha: 1
   beta: 2.0
   unit_check: 1
+
+- name: matmul_request_solution_num
+  category: nightly
+  function:
+    matmul: *hpa_bf16_precision
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: 0
+  requested_solution_num: -1
+  norm_check: 1
+
 ...
+
