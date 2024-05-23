@@ -32,7 +32,7 @@ if ! [ -z ${ROCM_PATH+x} ]; then
     rocm_path=${ROCM_PATH}
 fi
 
-toolchain=${rocm_path}/llvm/bin/clang++
+toolchain=${LLVM_PATH}/bin/clang++
 
 . ${venv}/bin/activate
 
