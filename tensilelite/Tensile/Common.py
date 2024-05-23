@@ -274,6 +274,7 @@ globalParameters["LazyLibraryLoading"] = False # Load library and code object fi
 globalParameters["UseUserArgs"] = False
 
 globalParameters["RotatingBufferSize"] = 0 # Size in MB
+globalParameters["LLVMPath"] = os.environ.get("LLVM_PATH")
 
 globalParameters["BuildIdKind"] = "sha1"
 
@@ -1529,10 +1530,10 @@ def assignGlobalParameters( config ):
     if os.name == "nt":
       globalParameters["AssemblerPath"] = locateExe(globalParameters["ROCmBinPath"], "clang++.exe")
     else:
-      globalParameters["AssemblerPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "clang++")
+      globalParameters["AssemblerPath"] = locateExe(os.path.join(globalParameters["LLVMPath"], "bin"), "clang++")
 
   globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
-  globalParameters["ROCmLdPath"]  = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld")
+  globalParameters["ROCmLdPath"]  = locateExe(os.path.join(globalParameters["LLVMPath"], "bin"), "ld.lld")
 
   globalParameters["ExtractKernelPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "hip/bin"), "extractkernel")
 
@@ -1542,7 +1543,7 @@ def assignGlobalParameters( config ):
     if os.name == "nt":
       globalParameters["ClangOffloadBundlerPath"] = locateExe(globalParameters["ROCmBinPath"], "clang-offload-bundler.exe")
     else:
-      globalParameters["ClangOffloadBundlerPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "clang-offload-bundler")
+      globalParameters["ClangOffloadBundlerPath"] = locateExe(os.path.join(globalParameters["LLVMPath"], "bin"), "clang-offload-bundler")
 
   if "ROCmAgentEnumeratorPath" in config:
     globalParameters["ROCmAgentEnumeratorPath"] = config["ROCmAgentEnumeratorPath"]
