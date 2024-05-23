@@ -1,9 +1,35 @@
-********************************
-hipBLASLtExt Operation Reference
-********************************
+.. meta::
+   :description: A library that provides GEMM operations with flexible APIs and extends functionalities beyond the traditional BLAS library
+   :keywords: hipBLASLt, ROCm, library, API, tool
 
-hipBLASLtExt Operation API Reference
-====================================
+.. _ext-ops:
+
+hipBLASLtExt operation API reference
+======================================
+
+hipBLASLt has the following extension operation APIs that are independent to gemm operations.
+These extensions support:
+
+1. ``hipblasltExtSoftmax``
+    Softmax for 2D-tensor. Currently, it performs softmax on the second dimension of input tensor and assumes the input to be contigious on the second dimension.
+    For sample code, refer to `client_extop_softmax.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/benchmarks/client_extop_softmax.cpp>`_.
+
+2. ``hipblasltExtLayerNorm``
+    Converts a 2D tensor using LayerNorm to generate a new 2D normalized tensor.
+    it is an independent function used to just call and get result.
+    For sample code, refer to `sample_hipblaslt_ext_op_layernorm.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/samples/ext_op/sample_hipblaslt_ext_op_layernorm.cpp>`_.
+
+3. ``hipblasltExtAMax``
+    Abs maximum value of a 2D tensor.
+    it is an independent function used to just call and get result.
+    For sample code, refer to `sample_hipblaslt_ext_op_amax.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/samples/ext_op/sample_hipblaslt_ext_op_amax.cpp>`_.
+
+4. ``hipblasltExtAMaxWithScale``
+    Abs maximum value and scaled output of a 2D tensor.
+    it is an independent function used to just call and get result.
+    For sample code, refer to `sample_hipblaslt_ext_op_amax_with_scale.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/samples/ext_op/sample_hipblaslt_ext_op_amax_with_scale.cpp>`_.
+
+These APIs are explained in detail below.
 
 hipblasltExtSoftmax()
 ------------------------------------------
@@ -19,26 +45,6 @@ hipblasltExtAMax()
 ------------------------------------------
 .. doxygenfunction:: hipblasltExtAMax
 
-
-hipblasLtExt Operation Usage
-================================
-
-Introduction
---------------
-
-hipBLASLt has extension operation APIs which is independent to gemm operation with. These extensions support:
-
-1. hipblasltExtSoftmax
-    | Softmax for 2D-tensor. Currently it performs softmax on second dimension of input tensor and it assumes input is contigious on second dimension.
-    | For sample usage, please refer to clients/benchmarks/client_ext_op_softmax.cpp
-
-2. hipblasltExtLayerNorm
-    | Convert a 2D tensor by LayerNorm to generate a new 2D normalized tensor.
-    | it is a independent function which can just call and get result.
-    | sample code is in clients/samples/ext_op/sample_hipblaslt_ext_op_layernorm.cpp
-
-3. hipblasltExtAMax
-    | Abs Maximum value of a 2D tensor.
-    | it is a independent function which can just call and get result.
-    | sample code is in clients/samples/ext_op/sample_hipblaslt_ext_op_amax.cpp
-
+hipblasltExtAMaxWithScale()
+------------------------------------------
+.. doxygenfunction:: hipblasltExtAMaxWithScale
