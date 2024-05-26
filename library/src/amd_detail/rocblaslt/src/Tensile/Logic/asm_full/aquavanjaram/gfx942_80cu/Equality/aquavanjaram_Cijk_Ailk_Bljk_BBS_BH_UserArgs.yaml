@@ -1,6 +1,6 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
-- gfx942
+- {Architecture: gfx942, CUCount: 80}
 - [Device 0049, Device 0050]
 - Activation: false
   ActivationComputeDataType: 0
