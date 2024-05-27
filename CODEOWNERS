@@ -1,5 +1,6 @@
 * @jichangjichang @KKyang @aazz44ss @vin-huang @imcarsonliao @hcman2 @Serge45 @Jinp800125 @TonyYHsieh
 # Documentation files
-docs/* @ROCm/rocm-documentation @jichangjichang @KKyang @aazz44ss @vin-huang @imcarsonliao @hcman2 @Serge45 @Jinp800125 @TonyYHsieh
+docs/ @ROCm/rocm-documentation @jichangjichang @KKyang @aazz44ss @vin-huang @imcarsonliao @hcman2 @Serge45 @Jinp800125 @TonyYHsieh
 *.md @ROCm/rocm-documentation @jichangjichang @KKyang @aazz44ss @vin-huang @imcarsonliao @hcman2 @Serge45 @Jinp800125 @TonyYHsieh
 *.rst @ROCm/rocm-documentation @jichangjichang @KKyang @aazz44ss @vin-huang @imcarsonliao @hcman2 @Serge45 @Jinp800125 @TonyYHsieh
+.readthedocs.yaml @ROCm/rocm-documentation @jichangjichang @KKyang @aazz44ss @vin-huang @imcarsonliao @hcman2 @Serge45 @Jinp800125 @TonyYHsieh
