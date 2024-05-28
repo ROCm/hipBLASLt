@@ -384,6 +384,7 @@ BenchmarkProblems:
         - GlobalSplitU: [1,2,9]
         - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
+        - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -409,6 +410,9 @@ BenchmarkProblems:
       TransposeB: 0
       UseBeta: True
       Batched: True
+      Activation: True
+      ActivationHPA: True
+      UseScaleAlphaVec: True
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -450,7 +454,10 @@ BenchmarkProblems:
         - GlobalSplitU: [1]
         - GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - SourceSwap: [1]
+        - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Exact: [128,   128,  1, 128]
+        - ActivationArgs:
+          - [Enum: tanh]
