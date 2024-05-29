@@ -47,7 +47,7 @@ namespace Tensile
         public:
             using clock = std::chrono::steady_clock;
 
-            BenchmarkTimer(po::variables_map const& args, Hardware const& hardware);
+            BenchmarkTimer(po::variables_map const& args, Hardware const& hardware, float flushTimeUs);
 
             virtual bool needMoreBenchmarkRuns() const override;
             virtual void preBenchmarkRun() override;
@@ -86,6 +86,10 @@ namespace Tensile
 
             virtual void finalizeReport() override;
             virtual int  error() const override;
+            void setIFlushTimeUs(float timeUs)
+            {
+                m_flushTimeUs = timeUs;
+            }
 
         private:
             const int    m_numWarmups;
@@ -122,6 +126,7 @@ namespace Tensile
 
             double_millis m_timeInSolution;
             double_millis m_totalGPUTime;
+            float m_flushTimeUs;
         };
     } // namespace Client
 } // namespace Tensile

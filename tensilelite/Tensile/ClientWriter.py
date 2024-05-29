@@ -512,7 +512,7 @@ def pruneModeName(mode):
     if mode == 5: return 'Prune0X0X'
     if mode == 6: return 'Prune00XX'
 
-def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
+def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs, icacheFlushArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
 
     with open(parametersFilePath, "w") as f:
         def param(key, value):
@@ -555,6 +555,11 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs
         if biasDimArgs:
           for bdim in biasDimArgs.biasDims:
             param('bias-dim-args', bdim)
+
+        if icacheFlushArgs:
+          for opt in icacheFlushArgs:
+            param('icache-flush-args', opt)
+
         param('sparse',   problemType.sparse)
         param('high-precision-accumulate', problemType.highPrecisionAccumulate)
         param('strided-batched', problemType.stridedBatched)
@@ -631,7 +636,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs
         param("rotating-buffer-size",     globalParameters["RotatingBufferSize"])
 
 
-def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, biasDimArgs, activationArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
+def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, biasDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
 
     if tileAwareSelection:
       filename = os.path.join(globalParameters["WorkingPath"], "%s_Granularity.ini"%configBase)
@@ -649,7 +654,7 @@ def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, biasD
 
     newSolution = next(iter(newLibrary.solutions.values()))
     sourceDir = os.path.join(stepBaseDir, "source")
-    writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
+    writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs, icacheFlushArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
 
     return filename
 
