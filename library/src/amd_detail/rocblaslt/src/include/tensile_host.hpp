@@ -42,6 +42,7 @@
 #include "handle.h"
 //#include "tuple_helper.hpp"
 #include "utility.hpp"
+#include <Tensile/Contractions.hpp>
 #include <Tensile/DataTypes.hpp>
 #include <atomic>
 
@@ -394,6 +395,12 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
                                      rocblaslt_matmul_algo&        algo,
                                      const rocblaslt::RocTuning*   tuning,
                                      size_t&                       workspaceSizeInBytes);
+
+std::vector<std::shared_ptr<Tensile::ContractionSolution>> getBestRawSolutions(RocblasltContractionProblem const& prob,
+                         rocblaslt_handle                   handle,
+                         std::shared_ptr<void>              gemmData,
+                         int                                requestedAlgoCount,
+                         size_t                             maxWorkSpaceBytes);
 
 /*******************************************************************************
  * getBestSolutions() calls finTopSolutions from Tensile and converts to       *

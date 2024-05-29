@@ -126,6 +126,13 @@ rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 han
                                             void*                   C,
                                             rocblaslt_matrix_layout Cdesc,
                                             hipStream_t             stream);
+ 
+int rocblaslt_matmul_is_tuned(rocblaslt_handle handle,
+                              rocblaslt_matmul_desc matmulDesc,
+                              rocblaslt_matrix_layout Adesc,
+                              rocblaslt_matrix_layout Bdesc,
+                              rocblaslt_matrix_layout Cdesc,
+                              rocblaslt_matrix_layout Ddesc);
 #ifdef __cplusplus
 }
 
