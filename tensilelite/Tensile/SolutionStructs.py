@@ -3600,8 +3600,8 @@ class Solution(collections.abc.Mapping):
     #     reject(state, "Currently SupportUserArgs does not support GSU > 1.")
 
     if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
-      if ((state["MIWaveTile"][0]*state["MIWaveTile"][1]>4) and (state["MIWaveGroup"][0]==2 and state["MIWaveGroup"][1]==2)) or (state["NumElementsPerBatchStore"] == 1):
-        reject(state, "Occupancy limit!! overflowed resources MultipleBufferSingleKernel does not support")
+      if (state["NumElementsPerBatchStore"] == 1):
+        reject(state, "too many store at MultipleBufferSingleKernel direct reject")
       if state["ProblemType"]["UseScaleCD"]:
         reject(state, "MultipleBufferSingleKernel not support UseScaleCD yet")
       if state["ProblemType"]["UseE"]:
