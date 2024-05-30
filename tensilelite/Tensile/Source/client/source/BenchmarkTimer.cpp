@@ -41,7 +41,9 @@ namespace Tensile
     {
         static_assert(BenchmarkTimer::clock::is_steady, "Clock must be steady.");
 
-        BenchmarkTimer::BenchmarkTimer(po::variables_map const& args, Hardware const& hardware, float flushTimeUs)
+        BenchmarkTimer::BenchmarkTimer(po::variables_map const& args,
+                                       Hardware const&          hardware,
+                                       float                    flushTimeUs)
             : m_numWarmups(args["num-warmups"].as<int>())
             , m_syncAfterWarmups(args["sync-after-warmups"].as<bool>())
             , m_numBenchmarks(args["num-benchmarks"].as<int>())

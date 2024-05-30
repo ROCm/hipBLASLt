@@ -67,23 +67,23 @@ namespace Tensile
         __global__ void flush_icache()
         {
             asm __volatile__("s_icache_inv \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t"
-                            "s_nop 0 \n\t" ::
-                                :);
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t"
+                             "s_nop 0 \n\t" ::
+                                 :);
         }
 
         uint32_t flush_grid_size()
@@ -96,39 +96,40 @@ namespace Tensile
 
         float estimate_flush_kernel_time(hipStream_t stream, bool useGPUTimer)
         {
-            const int flushIter = 100000;
-            hipEvent_t start, stop;
+            const int                                                   flushIter = 100000;
+            hipEvent_t                                                  start, stop;
             std::chrono::time_point<std::chrono::high_resolution_clock> begTime;
 
-            if (useGPUTimer)
+            if(useGPUTimer)
             {
                 HIP_CHECK_EXC(hipEventCreate(&start));
                 HIP_CHECK_EXC(hipEventCreate(&stop));
             }
 
             //warmup runs
-            for (int i = 0; i < flushIter; i++)
+            for(int i = 0; i < flushIter; i++)
             {
                 hipLaunchKernelGGL(flush_icache, flush_grid_size(), 64, 0, stream);
             }
 
-            if (useGPUTimer)
+            if(useGPUTimer)
             {
                 HIP_CHECK_EXC(hipEventRecord(start, stream));
-            } else
+            }
+            else
             {
                 HIP_CHECK_EXC(hipStreamSynchronize(stream));
                 begTime = std::chrono::high_resolution_clock::now();
             }
 
-            for (int i = 0; i < flushIter; i++)
+            for(int i = 0; i < flushIter; i++)
             {
                 hipLaunchKernelGGL(flush_icache, flush_grid_size(), 64, 0, stream);
             }
 
             float time{};
 
-            if (useGPUTimer)
+            if(useGPUTimer)
             {
                 HIP_CHECK_EXC(hipEventRecord(stop, stream));
                 HIP_CHECK_EXC(hipEventSynchronize(stop));
@@ -136,16 +137,19 @@ namespace Tensile
 
             HIP_CHECK_EXC(hipStreamSynchronize(stream));
 
-            if (useGPUTimer)
+            if(useGPUTimer)
             {
                 HIP_CHECK_EXC(hipEventElapsedTime(&time, start, stop));
                 HIP_CHECK_EXC(hipEventDestroy(start));
                 HIP_CHECK_EXC(hipEventDestroy(stop));
-            } else 
-            {
-                time = std::chrono::duration<float, std::milli>{std::chrono::high_resolution_clock::now() - begTime}.count();
             }
-            std::cout << "icache flush time: " << time / flushIter << " ms\n";
+            else
+            {
+                time = std::chrono::duration<float,
+                                             std::milli>{std::chrono::high_resolution_clock::now()
+                                                         - begTime}
+                           .count();
+            }
             return time / flushIter;
         }
 
@@ -464,7 +468,7 @@ namespace Tensile
 
         void parse_arg_bools(po::variables_map& args, std::string const& name)
         {
-            auto opts = args[name].as<std::vector<bool>>();
+            auto opts             = args[name].as<std::vector<bool>>();
             args.at(name).value() = boost::any(opts);
         }
 
@@ -610,13 +614,13 @@ int main(int argc, const char* argv[])
         numProblems = problems.size();
     int lastProblemIdx = firstProblemIdx + numProblems - 1;
 
-    int  firstSolutionIdx = args["solution-start-idx"].as<int>();
-    int  numSolutions     = args["num-solutions"].as<int>();
-    bool gpuTimer         = args["use-gpu-timer"].as<bool>();
-    bool runKernels       = !args["selection-only"].as<bool>();
-    bool exitOnError      = args["exit-on-error"].as<bool>();
-    bool groupedGemm      = args["grouped-gemm"].as<bool>();
-    const auto &icacheFlushArgs  = args["icache-flush-args"].as<std::vector<bool>>();
+    int         firstSolutionIdx = args["solution-start-idx"].as<int>();
+    int         numSolutions     = args["num-solutions"].as<int>();
+    bool        gpuTimer         = args["use-gpu-timer"].as<bool>();
+    bool        runKernels       = !args["selection-only"].as<bool>();
+    bool        exitOnError      = args["exit-on-error"].as<bool>();
+    bool        groupedGemm      = args["grouped-gemm"].as<bool>();
+    const auto& icacheFlushArgs  = args["icache-flush-args"].as<std::vector<bool>>();
 
     if(firstSolutionIdx < 0)
         firstSolutionIdx = library->solutions.begin()->first;
@@ -638,11 +642,12 @@ int main(int argc, const char* argv[])
     listeners.addListener(solutionIterator);
     listeners.addListener(std::make_shared<ProgressListener>(args));
     std::shared_ptr<BenchmarkTimer> benchmarkTimer;
-    float flushTimeMs{};
+    float                           flushTimeMs{};
 
     if(runKernels)
     {
-        bool hasIcacheFlush = std::any_of(begin(icacheFlushArgs), end(icacheFlushArgs), [](auto i){ return i;});
+        bool hasIcacheFlush
+            = std::any_of(begin(icacheFlushArgs), end(icacheFlushArgs), [](auto i) { return i; });
         flushTimeMs = hasIcacheFlush ? estimate_flush_kernel_time(stream, gpuTimer) : 0.f;
         listeners.addListener(std::make_shared<ReferenceValidator>(args, dataInit));
         benchmarkTimer = std::make_shared<BenchmarkTimer>(args, *hardware, flushTimeMs * 1000);
@@ -690,7 +695,8 @@ int main(int argc, const char* argv[])
     {
         listeners.preBenchmarkRun();
         const auto flushGridSize = flush_grid_size();
-        for (auto icacheFlush : icacheFlushArgs) {
+        for(auto icacheFlush : icacheFlushArgs)
+        {
             benchmarkTimer->setIFlushTimeUs(icacheFlush ? flushTimeMs * 1000 : 0.f);
 
             for(int problemIdx = firstProblemIdx; problemIdx <= lastProblemIdx; problemIdx++)
@@ -699,7 +705,7 @@ int main(int argc, const char* argv[])
 
                 reporters->report(ResultKey::ProblemIndex, problemIdx);
                 reporters->report(ResultKey::ProblemProgress,
-                                concatenate(problemIdx, "/", lastProblemIdx));
+                                  concatenate(problemIdx, "/", lastProblemIdx));
 
                 listeners.preProblem(problem);
                 auto inputs = dataInit->prepareGPUInputs(problem);
@@ -735,20 +741,21 @@ int main(int argc, const char* argv[])
                                 std::vector<std::vector<KernelInvocation>> kernels;
                                 for(size_t r = 0; r < inputArr.size(); r++)
                                 {
-                                    auto kernel = useUserArgs ? solution->solveTensileGPU((*problem),
-                                                                                        *inputArr[r],
-                                                                                        *hardware,
-                                                                                        &dUA,
-                                                                                        &dUAHost,
-                                                                                        nullptr,
-                                                                                        0,
-                                                                                        stream)
-                                                            : solution->solve((*problem),
-                                                                                *inputArr[r],
-                                                                                *hardware,
-                                                                                nullptr,
-                                                                                0,
-                                                                                stream);
+                                    auto kernel = useUserArgs
+                                                      ? solution->solveTensileGPU((*problem),
+                                                                                  *inputArr[r],
+                                                                                  *hardware,
+                                                                                  &dUA,
+                                                                                  &dUAHost,
+                                                                                  nullptr,
+                                                                                  0,
+                                                                                  stream)
+                                                      : solution->solve((*problem),
+                                                                        *inputArr[r],
+                                                                        *hardware,
+                                                                        nullptr,
+                                                                        0,
+                                                                        stream);
                                     kernels.push_back(kernel);
                                 }
 
@@ -794,9 +801,10 @@ int main(int argc, const char* argv[])
                                         HIP_CHECK_EXC(adapter.launchKernels(
                                             kernels[kIdx], stream, nullptr, nullptr));
 
-                                        if (icacheFlush)
+                                        if(icacheFlush)
                                         {
-                                            hipLaunchKernelGGL(flush_icache, flushGridSize, 64, 0, stream);
+                                            hipLaunchKernelGGL(
+                                                flush_icache, flushGridSize, 64, 0, stream);
                                         }
                                     }
 
@@ -816,7 +824,7 @@ int main(int argc, const char* argv[])
                         {
                             reporters->report(ResultKey::Validation, "INVALID");
                             reporters->log(LogLevel::Error,
-                                        concatenate("Exception occurred: ", err.what(), "\n"));
+                                           concatenate("Exception occurred: ", err.what(), "\n"));
                         }
                     }
 
