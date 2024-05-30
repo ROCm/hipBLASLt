@@ -124,6 +124,7 @@ def main( config ):
     #        - [Enum: none]
     #        - [Enum: gelu]
     #        - [Enum: relu]
+    icacheFlushArgs = [False,]
     if len(config) > 0:
       for lc in config[0:]:
         if "ActivationArgs" in lc:
@@ -131,6 +132,8 @@ def main( config ):
           break
         if "BiasDimArgs" in lc:
           biasDimEnums = lc["BiasDimArgs"]
+        if "ICacheFlush" in lc:
+          icacheFlushArgs = lc["ICacheFlush"]
     activationArgs = ActivationArgs(problemType, activationEnums) if problemType["ActivationType"] == 'all' else ""
     biasDimArgs = BiasDimArgs(problemType, biasDimEnums)
     clientParametersPaths.append(writeClientConfig(
@@ -140,6 +143,7 @@ def main( config ):
                                   biasTypeArgs=biasTypeArgs,
                                   biasDimArgs=biasDimArgs,
                                   activationArgs=activationArgs,
+                                  icacheFlushArgs=icacheFlushArgs,
                                   stepName=str(ProblemType(problemType)),
                                   stepBaseDir=globalParameters["WorkingPath"],
                                   newLibrary=newLibrary,
