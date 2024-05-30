@@ -128,12 +128,6 @@ extern "C" {
 hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle)
 try
 {
-    // TODO: Synchronizer size pass into predicate SynchronizerSizeCheck
-    // 1K just for small size now, need to cal corner case if support all situations
-    void* d_Synchronizer = nullptr;
-    CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 1024 * sizeof(int)));
-    CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 1024));
-
     // Check if handle is valid
     if(handle == nullptr)
     {
@@ -147,8 +141,18 @@ try
     err = hipGetDevice(&deviceId);
     if(err == hipSuccess)
     {
+        // TODO: Synchronizer size pass into predicate SynchronizerSizeCheck
+        // 1K just for small size now, need to cal corner case if support all situations
+        void* d_Synchronizer = nullptr;
+        void* d_Workspace    = nullptr;
+
+        CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 1024 * sizeof(int)));
+        CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 1024));
+        CHECK_HIP_ERROR(hipMalloc(&d_Workspace, 16 * 1024 * sizeof(int)));
+
         retval = RocBlasLtStatusToHIPStatus(rocblaslt_create((rocblaslt_handle*)handle));
         (*(rocblaslt_handle*)handle)->Synchronizer = d_Synchronizer;
+        (*(rocblaslt_handle*)handle)->Workspace    = d_Workspace;
     }
     return retval;
 }
@@ -163,6 +167,10 @@ try
     if(handle != nullptr and (*(rocblaslt_handle)handle).Synchronizer != nullptr)
     {
         CHECK_HIP_ERROR(hipFree((*(rocblaslt_handle)handle).Synchronizer));
+    }
+    if(handle != nullptr and (*(rocblaslt_handle)handle).Workspace != nullptr)
+    {
+        CHECK_HIP_ERROR(hipFree((*(rocblaslt_handle)handle).Workspace));
     }
 
     return RocBlasLtStatusToHIPStatus(rocblaslt_destroy((const rocblaslt_handle)handle));
@@ -400,10 +408,16 @@ hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
                                 hipStream_t                  stream)
 try
 {
-    hipblasStatus_t return_status          = HIPBLAS_STATUS_SUCCESS;
-    rocblaslt_matmul_desc roc_matmul_desc  = (rocblaslt_matmul_desc)matmul_descr;
-    rocblaslt_matrix_layout tmp_matA = (rocblaslt_matrix_layout)matA;
-    rocblaslt_matrix_layout tmp_matB = (rocblaslt_matrix_layout)matB;
+    hipblasStatus_t return_status         = HIPBLAS_STATUS_SUCCESS;
+    rocblaslt_matmul_desc roc_matmul_desc = (rocblaslt_matmul_desc)matmul_descr;
+    rocblaslt_matrix_layout tmp_matA      = (rocblaslt_matrix_layout)matA;
+    rocblaslt_matrix_layout tmp_matB      = (rocblaslt_matrix_layout)matB;
+    rocblaslt_compute_type compute_type   = roc_matmul_desc->compute_type;
+    bool amaxScaleB                       = roc_matmul_desc->amaxScaleB;
+    bool isScaleAmaxDivisorB              = roc_matmul_desc->isScaleAmaxDivisorB;
+    float amaxDividendB                   = roc_matmul_desc->amaxDividendB;
+    void* scaleB                          = roc_matmul_desc->scaleB;
+    bool hardcode                         = (getenv("CASE2") && (tmp_matA->type == HIP_R_8F_E4M3_FNUZ) && (tmp_matB->type == HIP_R_16F) && (compute_type == rocblaslt_compute_f32_fast_f16));
 
     if (roc_matmul_desc->amaxScaleA && (tmp_matA->type == HIP_R_32F || tmp_matA->type == HIP_R_16F))
     {
@@ -412,6 +426,18 @@ try
             hipblasltExtFastValueDevidedByAMax(tmp_matA->type, HIP_R_32F, roc_matmul_desc->scaleA, A, workspace, sync, tmp_matA->m, tmp_matA->n, roc_matmul_desc->amaxDividendA, stream);
         else
             hipblasltExtFastAMax(tmp_matA->type, HIP_R_32F, roc_matmul_desc->scaleA, A, workspace, ((rocblaslt_handle)handle)->Synchronizer, tmp_matA->m, tmp_matA->n, stream);
+    }
+
+    if (hardcode)
+    {
+        if(roc_matmul_desc->scaleB != nullptr)
+            throw rocblaslt_status_internal_error;
+
+        roc_matmul_desc->compute_type        = rocblaslt_compute_f32_fast_f8_fnuz;
+        roc_matmul_desc->amaxScaleB          = true;
+        roc_matmul_desc->isScaleAmaxDivisorB = true;
+        roc_matmul_desc->amaxDividendB       = 240.0f;
+        roc_matmul_desc->scaleB              = ((rocblaslt_handle)handle)->Workspace;
     }
 
     if (roc_matmul_desc->amaxScaleB && (tmp_matB->type == HIP_R_32F || tmp_matB->type == HIP_R_16F))
@@ -497,6 +523,15 @@ try
                                                   tmp_matD->m,
                                                   tmp_matD->n,
                                                   stream);
+    }
+
+    if (hardcode)
+    {
+        roc_matmul_desc->compute_type        = compute_type;
+        roc_matmul_desc->amaxScaleB          = amaxScaleB;
+        roc_matmul_desc->isScaleAmaxDivisorB = isScaleAmaxDivisorB;
+        roc_matmul_desc->amaxDividendB       = amaxDividendB;
+        roc_matmul_desc->scaleB              = scaleB;
     }
 
     return return_status;

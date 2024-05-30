@@ -688,6 +688,7 @@ void testing_matmul_with_bias(const Arguments& arg)
 
     hipDataType tciA = arg.compute_input_typeA;
     hipDataType tciB = arg.compute_input_typeB;
+    bool hardcode = (getenv("CASE2") && (arg.a_type == HIP_R_8F_E4M3_FNUZ) && (arg.b_type == HIP_R_16F) && (arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_16F));
 
     using Talpha = Tc;
 
@@ -1050,7 +1051,7 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         if(arg.scaleA)
             hScaleA[i] = new host_vector<Talpha>(1);
-        if(arg.scaleB)
+        if(arg.scaleB || hardcode)
             hScaleB[i] = new host_vector<Talpha>(1);
         if(arg.scaleC)
             hScaleC[i] = new host_vector<Talpha>(1);
@@ -1222,14 +1223,18 @@ void testing_matmul_with_bias(const Arguments& arg)
                 CHECK_HIP_ERROR(dScaleA[i]->transfer_from(*hScaleA[i]));
         }
 
-        if(arg.scaleB)
+        if(arg.scaleB || hardcode)
         {
-            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F) && (!do_grouped_gemm) && (arg.algo_method == 0))
-                if (arg.isScaleAmaxDivisorB)
-                    cpuValueDividedByAMax((*hScaleB[i]).data(), (*hB[i]).data(), B_row[i] * B_col[i], arg.amaxDividendB);
+            bool  amaxScaleB          = (hardcode) ? true : arg.amaxScaleB;
+            bool  isScaleAmaxDivisorB = (hardcode) ? true : arg.isScaleAmaxDivisorB;
+            float amaxDividendB       = (hardcode) ? 240.0f : arg.amaxDividendB;
+
+            if(amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F) && (!do_grouped_gemm) && (arg.algo_method == 0))
+                if (isScaleAmaxDivisorB)
+                    cpuValueDividedByAMax((*hScaleB[i]).data(), (*hB[i]).data(), B_row[i] * B_col[i], amaxDividendB);
                 else
                     cpuAMax((*hScaleB[i]).data(), (*hB[i]).data(), B_row[i] * B_col[i]);
-            else
+            else if (arg.scaleB)
                 CHECK_HIP_ERROR(dScaleB[i]->transfer_from(*hScaleB[i]));
         }
 
@@ -2159,7 +2164,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                 delete hScaleA[i];
                 delete dScaleA[i];
             }
-            if(arg.scaleB)
+            if(arg.scaleB || hardcode)
             {
                 delete hScaleB[i];
             }
@@ -2270,7 +2275,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             if(arg.scaleC)
                 betaTemp *= (*hScaleC[gemmIdx])[0];
             auto scaleAValue = arg.scaleA ? (*hScaleA[gemmIdx])[0] : 1;
-            auto scaleBValue = arg.scaleB ? (*hScaleB[gemmIdx])[0] : 1;
+            auto scaleBValue = (arg.scaleB || hardcode) ? (*hScaleB[gemmIdx])[0] : 1;
             auto scaleDValue = arg.scaleD ? (*hScaleD[gemmIdx])[0] : 1;
             auto scaleEValue = arg.scaleE ? (*hScaleE[gemmIdx])[0] : 1;
 
@@ -2994,7 +2999,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             delete hScaleA[i];
             delete dScaleA[i];
         }
-        if(arg.scaleB)
+        if(arg.scaleB || hardcode)
         {
             delete hScaleB[i];
         }

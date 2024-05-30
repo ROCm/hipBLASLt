@@ -96,6 +96,7 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
     auto       Tc  = arg.compute_type;
     auto       TciA = arg.compute_input_typeA;
     auto       TciB = arg.compute_input_typeB;
+    char*      case2 = getenv("CASE2");
 
     if(arg.d_type == To)
     {
@@ -272,11 +273,16 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
                         hipblasLtHalf,
                         hipblasLtHalf>{}(arg);
         }
+        else if(TiA == HIP_R_8F_E4M3_FNUZ && TiB == HIP_R_16F
+                && To == HIP_R_16F && Tc == HIPBLAS_COMPUTE_32F_FAST_16F && case2 != nullptr)
+        {
+		return TEST<hipblaslt_f8_fnuz, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz>{}(
+                    arg);
+        }
         else if(TiA == HIP_R_8F_E4M3_FNUZ && TiB == HIP_R_16F && To == HIP_R_16F
                 && Tc == HIPBLAS_COMPUTE_32F_FAST_16F)
         {
-            return TEST<hipblaslt_f8_fnuz, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf>{}(
-                arg);
+		return TEST<hipblaslt_f8_fnuz, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf>{}(arg);
         }
         else if(TiA == HIP_R_16F && TiB == HIP_R_8F_E4M3_FNUZ && To == HIP_R_16F
                 && Tc == HIPBLAS_COMPUTE_32F_FAST_16F)
