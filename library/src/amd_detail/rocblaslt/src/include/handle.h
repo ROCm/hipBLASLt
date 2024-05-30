@@ -93,8 +93,7 @@ struct _rocblaslt_handle
     int asic_rev;
 
     void* Synchronizer = nullptr;
-    // pointer mode ; default mode is host
-    rocblaslt_pointer_mode pointer_mode = rocblaslt_pointer_mode_host;
+    void* Workspace = nullptr;
 };
 
 /********************************************************************************

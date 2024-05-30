@@ -1429,6 +1429,23 @@ rocblaslt_status
         rocblaslt_compute_type compute_type        = matmul_desc->compute_type;
         auto&                  tensile_data        = matmul_desc->m_data;
         void*                  scaleD              = matmul_desc->scaleD;
+        void*                  scaleB              = matmul_desc->scaleB;
+        bool                   amaxScaleB          = matmul_desc->amaxScaleB;
+        bool                   isScaleAmaxDivisorB = matmul_desc->isScaleAmaxDivisorB;
+        float                  amaxDividendB       = matmul_desc->amaxDividendB;
+        bool                   hardcode            = (getenv("CASE2")  && (a_type == HIP_R_8F_E4M3_FNUZ) && (b_type == HIP_R_16F) && (compute_type == rocblaslt_compute_f32_fast_f16));
+
+        if (hardcode)
+        {
+            if(matmul_desc->scaleB != nullptr)
+                throw rocblaslt_status_internal_error;
+
+            matmul_desc->scaleB = handle->Workspace;
+            matmul_desc->compute_type = rocblaslt_compute_f32_fast_f8_fnuz;
+            matmul_desc->amaxScaleB = true;
+            matmul_desc->isScaleAmaxDivisorB = true;
+            matmul_desc->amaxDividendB = 240.0f;
+        }
 
         if(matmul_desc->amax_ptr != nullptr
            && (matD->type == HIP_R_8F_E4M3_FNUZ || matD->type == HIP_R_8F_E5M2_FNUZ))
@@ -1544,6 +1561,15 @@ rocblaslt_status
             {
                 heuristicResultsArray[i].workspaceSize = max(heuristicResultsArray[i].workspaceSize, 4096);
             }
+        }
+
+        if (hardcode)
+        {
+            matmul_desc->scaleB = scaleB;
+            matmul_desc->compute_type = compute_type;
+            matmul_desc->amaxScaleB = amaxScaleB;
+            matmul_desc->isScaleAmaxDivisorB = isScaleAmaxDivisorB;
+            matmul_desc->amaxDividendB = amaxDividendB;
         }
 
         if(status != rocblaslt_status_success)

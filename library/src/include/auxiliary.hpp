@@ -152,8 +152,8 @@ constexpr hipDataType string_to_hip_datatype(const std::string& value)
         value == "f64_r" || value == "d" ? HIP_R_64F  :
         value == "f16_r" || value == "h" ? HIP_R_16F  :
         value == "bf16_r"                ? HIP_R_16BF  :
-        value == "f8_r"                ? HIP_R_8F_E4M3_FNUZ  :
-        value == "bf8_r"                ? HIP_R_8F_E5M2_FNUZ  :
+        value == "f8_r"                  ? HIP_R_8F_E4M3_FNUZ  :
+        value == "bf8_r"                 ? HIP_R_8F_E5M2_FNUZ  :
         value == "i8_r" || value == "i8" ? HIP_R_8I  :
         value == "i32_r" || value == "i" ? HIP_R_32I  :
         HIPBLASLT_DATATYPE_INVALID;
