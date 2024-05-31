@@ -1138,8 +1138,15 @@ class Solution(collections.abc.Mapping):
   def initConversionKernelObjects(self):
     self.conversionKernelObjects = []
     load_vector_width = [1, 2] if self["ProblemType"]["DataType"].isDouble() else [1, 2, 4]
+    genPGRPostKernels = True
+    gsuList = [internalParameters["GlobalSplitUPGR"]]
+    if self["GlobalSplitUAlgorithm"] == "SingleBuffer":
+      genPGRPostKernels = False
+      gsuList = [1]
+    elif self["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
+      return
     for vw in load_vector_width:
-      for globalSplitU in [internalParameters["GlobalSplitUPGR"]]:
+      for globalSplitU in gsuList:
         unrollOnly = False if globalSplitU == internalParameters["GlobalSplitUPGR"] else True
         if self["ProblemType"]["UseBias"]:
           typeList = self["ProblemType"]["BiasDataTypeList"]
@@ -1149,6 +1156,7 @@ class Solution(collections.abc.Mapping):
             state["ProblemType"] = deepcopy(self["ProblemType"])
             state["ProblemType"]["GroupedGemm"] = False
             state["ProblemType"]["UseBias"] = 0
+            state["GenPGRPostKernels"] = genPGRPostKernels
             state["KernelLanguage"] = "Source"
             state["GlobalSplitU"] = globalSplitU
             state["UnrollOnly"] = unrollOnly
@@ -1161,6 +1169,7 @@ class Solution(collections.abc.Mapping):
             state["ProblemType"]["GroupedGemm"] = False
             state["ProblemType"]["BiasDataTypeList"] = []
             state["ProblemType"]["BiasDataType"] = deepcopy(btype)
+            state["GenPGRPostKernels"] = genPGRPostKernels
             state["KernelLanguage"] = "Source"
             state["GlobalSplitU"] = globalSplitU
             state["UnrollOnly"] = unrollOnly
@@ -1171,6 +1180,7 @@ class Solution(collections.abc.Mapping):
           state = {}
           state["ProblemType"] = deepcopy(self["ProblemType"])
           state["ProblemType"]["GroupedGemm"] = False
+          state["GenPGRPostKernels"] = genPGRPostKernels
           state["KernelLanguage"] = "Source"
           state["GlobalSplitU"] = globalSplitU
           state["UnrollOnly"] = unrollOnly
