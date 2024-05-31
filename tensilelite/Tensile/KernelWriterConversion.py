@@ -34,6 +34,7 @@ class KernelWriterConversion(KernelWriterBase):
     super().__init__()
 
     self.state["ProblemType"] = deepcopy(state["ProblemType"])
+    self.state["GenPGRPostKernels"] = state["GenPGRPostKernels"]
     self.state["_GlobalAccumulation"] = state["_GlobalAccumulation"]
     self.state["ActivationFused"] = state["ActivationFused"]
     self.state["GlobalSplitU"] = state["GlobalSplitU"]
@@ -75,6 +76,13 @@ class KernelWriterConversion(KernelWriterBase):
     else:
       for idx, arch in enumerate(self.supportedArchs):
         self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
+
+    self.gsuKernels = [self.state["GlobalSplitU"]]
+    if self.state["GenPGRPostKernels"]:
+      pgrgsu = int(self.state["GlobalSplitU"] / 2)
+      while pgrgsu > 1:
+        self.gsuKernels.append(pgrgsu)
+        pgrgsu = int(pgrgsu / 2)
 
   def functionArgument(self):
     kStr = ""
@@ -808,12 +816,21 @@ class KernelWriterConversion(KernelWriterBase):
                                                                       self.state["ProblemType"]["ActivationType"])
       fileString += "\n"
 
-    for toggle in [True, False]:
-      self.state["ProblemType"]["GroupedGemm"] = toggle
-      self.kernelName = self.getKernelName()
-      fileString += self.functionArgument()
-      fileString += self.functionSignature()
-      fileString += ";\n"
+    backupGSU    = self.state["GlobalSplitU"]
+    backupUnroll = self.state["UnrollOnly"]
+    for gsu in self.gsuKernels:
+      for toggle in [True, False]:
+        self.state["GlobalSplitU"] = gsu
+        self.state["ProblemType"]["GroupedGemm"] = toggle
+        self.kernelName = self.getKernelName()
+        fileString += self.functionArgument()
+        fileString += self.functionSignature()
+        fileString += ";\n"
+      if not self.state["UnrollOnly"]:
+        self.state["UnrollOnly"] = True
+    self.state["GlobalSplitU"] = backupGSU
+    self.state["UnrollOnly"] = backupUnroll
+
 
     return fileString
 
@@ -825,11 +842,19 @@ class KernelWriterConversion(KernelWriterBase):
       fileString += "#include \"%s.h\"\n" % self.kernelName
       fileString += "\n"
 
-    for toggle in [True, False]:
-      self.state["ProblemType"]["GroupedGemm"] = toggle
-      self.kernelName = self.getKernelName()
-      fileString += self.functionSignature()
-      fileString += self.kernelBody()
+    backupGSU    = self.state["GlobalSplitU"]
+    backupUnroll = self.state["UnrollOnly"]
+    for gsu in self.gsuKernels:
+      for toggle in [True, False]:
+        self.state["GlobalSplitU"] = gsu
+        self.state["ProblemType"]["GroupedGemm"] = toggle
+        self.kernelName = self.getKernelName()
+        fileString += self.functionSignature()
+        fileString += self.kernelBody()
+      if not self.state["UnrollOnly"]:
+        self.state["UnrollOnly"] = True
+    self.state["GlobalSplitU"] = backupGSU
+    self.state["UnrollOnly"] = backupUnroll
 
     return (0, fileString)
 
