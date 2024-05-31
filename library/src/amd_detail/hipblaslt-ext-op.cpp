@@ -44,7 +44,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 template <typename T>
 T min(T a, T b)
 {
@@ -133,7 +132,8 @@ hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
                                  uint32_t          n,
                                  hipStream_t       stream)
 {
-    return hipblasltAMaxRun(datatype, outDatatype, output, input, nullptr, nullptr, m, n, 0, 0, stream);
+    return hipblasltAMaxRun(
+        datatype, outDatatype, output, input, nullptr, nullptr, m, n, 0, 0, stream);
 }
 
 hipblasStatus_t hipblasltExtFastAMax(const hipDataType datatype,
@@ -146,7 +146,8 @@ hipblasStatus_t hipblasltExtFastAMax(const hipDataType datatype,
                                      uint32_t          n,
                                      hipStream_t       stream)
 {
-    return hipblasltAMaxRun(datatype, outDatatype, output, input, workSpace, sync, m, n, 0, 0, stream);
+    return hipblasltAMaxRun(
+        datatype, outDatatype, output, input, workSpace, sync, m, n, 0, 0, stream);
 }
 
 hipblasStatus_t hipblasltExtFastValueDevidedByAMax(const hipDataType datatype,
@@ -160,9 +161,9 @@ hipblasStatus_t hipblasltExtFastValueDevidedByAMax(const hipDataType datatype,
                                                    float             div,
                                                    hipStream_t       stream)
 {
-    return hipblasltAMaxRun(datatype, outDatatype, output, input, workSpace, sync, m, n, 1, div, stream);
+    return hipblasltAMaxRun(
+        datatype, outDatatype, output, input, workSpace, sync, m, n, 1, div, stream);
 }
-
 
 hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType datatype,
                                           const hipDataType outDatatype,
@@ -175,25 +176,49 @@ hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType datatype,
                                           uint32_t          n,
                                           hipStream_t       stream)
 {
-    return hipblasltAMaxWithScaleRun(
-        datatype, outDatatype, scaleDatatype, output, outputD, input, inputScale, nullptr, nullptr, m, n, 0, 0, stream);
+    return hipblasltAMaxWithScaleRun(datatype,
+                                     outDatatype,
+                                     scaleDatatype,
+                                     output,
+                                     outputD,
+                                     input,
+                                     inputScale,
+                                     nullptr,
+                                     nullptr,
+                                     m,
+                                     n,
+                                     0,
+                                     0,
+                                     stream);
 }
 
 hipblasStatus_t hipblasltExtFastAMaxWithScale(const hipDataType datatype,
-                                          const hipDataType outDatatype,
-                                          const hipDataType scaleDatatype,
-                                          void*             output,
-                                          void*             outputD,
-                                          const void*       input,
-                                          void*             inputScale,
-                                          void*             workSpace,
-                                          void*             sync,
-                                          uint32_t          m,
-                                          uint32_t          n,
-                                          hipStream_t       stream)
+                                              const hipDataType outDatatype,
+                                              const hipDataType scaleDatatype,
+                                              void*             output,
+                                              void*             outputD,
+                                              const void*       input,
+                                              void*             inputScale,
+                                              void*             workSpace,
+                                              void*             sync,
+                                              uint32_t          m,
+                                              uint32_t          n,
+                                              hipStream_t       stream)
 {
-    return hipblasltAMaxWithScaleRun(
-        datatype, outDatatype, scaleDatatype, output, outputD, input, inputScale, workSpace, sync, m, n, 0, 0, stream);
+    return hipblasltAMaxWithScaleRun(datatype,
+                                     outDatatype,
+                                     scaleDatatype,
+                                     output,
+                                     outputD,
+                                     input,
+                                     inputScale,
+                                     workSpace,
+                                     sync,
+                                     m,
+                                     n,
+                                     0,
+                                     0,
+                                     stream);
 }
 
 namespace
@@ -497,15 +522,29 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     const auto& lib
         = masterLib.getLibrary(archName, AMaxSolutionLibrary::opName, hipDataTypeo_char(datatype))
               ->as<AMaxSolutionLibrary>();
-    auto       sol        = lib.findBestSolution(AMaxProblem(len,
+    auto sol = lib.findBestSolution(AMaxProblem(len,
                                                 hipDataType_to_tensile_type(datatype),
                                                 hipDataType_to_tensile_type(outDatatype)),
-                                                *gpu);
+                                    *gpu);
+
+    // based on benchmarks
+    int workSize;
+    int amax_gsu = 128;
+    if(len <= 32768)
+    {
+        workSize = len;
+        amax_gsu = 1;
+    }
+    else if(len <= 1048576)
+        workSize = 16384;
+    else if(len <= 134217728)
+        workSize = 32768;
+    else
+        workSize = 65536;
 
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
-    int workSize          = 131072;
-    int numGroups         = (workSpace && sync) ? 128 : 1;
+    int numGroups         = (workSpace && sync) ? amax_gsu : 1;
     numGroups             = (archName.find("gfx94") != -1) ? numGroups : 1;
     numGroups             = min(int((len + workSize - 1) / workSize), int(numGroups));
 
