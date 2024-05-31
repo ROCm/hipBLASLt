@@ -251,6 +251,27 @@ std::string rocblaslt_get_kernel_name_from_algo(rocblaslt_handle             han
 std::string rocblaslt_get_solution_name_from_algo(rocblaslt_handle             handle,
                                                   const rocblaslt_matmul_algo& algo);
 
+rocblaslt_status rocblaslt_set_amax_data(const rocblaslt::RocGemmType gemmType,
+                                         std::shared_ptr<void> gemmData,
+                                         bool amaxScaleA,
+                                         bool isScaleAmaxDivisorA,
+                                         float amaxDividendA,
+                                         bool amaxScaleB,
+                                         bool isScaleAmaxDivisorB,
+                                         float amaxDividendB);
+
+rocblaslt_status rocblaslt_get_amax_data(const rocblaslt::RocGemmType gemmType,
+                                         std::shared_ptr<void> gemmData,
+                                         bool isA,
+                                         void** scale,
+                                         void** buffer,
+                                         void** workspace,
+                                         int* m,
+                                         int* n,
+                                         bool* amaxScale,
+                                         bool* isScaleAmaxDivisor,
+                                         float* amaxDividend);
+
 #endif
 
 #endif /* _ROCBLASLT_FUNCTIONS_H_ */

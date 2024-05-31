@@ -25,16 +25,23 @@
  *******************************************************************************/
 
 #include "hipblaslt-ext.hpp"
+#include "hipblaslt-ext-op.h"
 #include "exceptions.hpp"
 #include "hipblaslt_internal.hpp"
 #include <algorithm>
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt_float8.h>
-#include <iostream>
 #include <rocblaslt.h>
+#include <iostream>
 
 namespace hipblaslt_ext
 {
+    template <typename T>
+    inline T max(T a, T b)
+    {
+         return (a > b) ? a : b;
+    }
+
     bool currentArchSupportsFp8()
     {
         using std::begin;
@@ -122,6 +129,17 @@ namespace hipblaslt_ext
         return m_gemm_count;
     }
 
+    hipblasStatus_t GemmInstance::setAmaxData(bool  amaxScaleA,
+                                              bool  isScaleAmaxDivisorA,
+                                              float amaxDividendA,
+                                              bool  amaxScaleB,
+                                              bool  isScaleAmaxDivisorB,
+                                              float amaxDividendB)
+    {
+        auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        return RocBlasLtStatusToHIPStatus(rocblaslt_set_amax_data(gemmType, m_data, amaxScaleA, isScaleAmaxDivisorA, amaxDividendA, amaxScaleB, isScaleAmaxDivisorB, amaxDividendB));
+    }
+
     hipblasStatus_t GemmInstance::algoGetHeuristic(
         const int                                      requestedAlgoCount,
         const GemmPreference&                          pref,
@@ -148,8 +166,19 @@ namespace hipblaslt_ext
     {
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocalgo  = reinterpret_cast<rocblaslt_matmul_algo*>(&algo);
-        return RocBlasLtStatusToHIPStatus(rocblaslt_is_algo_supported_cpp(
+        auto status   =  RocBlasLtStatusToHIPStatus(rocblaslt_is_algo_supported_cpp(
             (rocblaslt_handle)m_handle, gemmType, m_data, *rocalgo, nullptr, workspaceSizeInBytes));
+        void* scaleA = nullptr;
+        void* scaleB = nullptr;
+        bool amaxScaleA = false;
+        bool amaxScaleB = false;
+        rocblaslt_get_amax_data(gemmType, m_data, true, &scaleA, nullptr, nullptr, nullptr, nullptr, &amaxScaleA, nullptr, nullptr);
+        rocblaslt_get_amax_data(gemmType, m_data, false, &scaleB, nullptr, nullptr, nullptr, nullptr, &amaxScaleB, nullptr, nullptr);
+
+        if (((scaleA != nullptr) && amaxScaleA) || ((scaleB != nullptr) && amaxScaleB))
+            workspaceSizeInBytes = max(workspaceSizeInBytes, (size_t)4096);
+
+        return status;
     }
     catch(...)
     {
@@ -164,13 +193,20 @@ namespace hipblaslt_ext
         auto gemmType  = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocalgo   = reinterpret_cast<rocblaslt_matmul_algo*>(&algo);
         auto roctuning = reinterpret_cast<rocblaslt::RocTuning*>(&tuning);
-        return RocBlasLtStatusToHIPStatus(
-            rocblaslt_is_algo_supported_cpp((rocblaslt_handle)m_handle,
-                                            gemmType,
-                                            m_data,
-                                            *rocalgo,
-                                            roctuning,
-                                            workspaceSizeInBytes));
+        auto status    = RocBlasLtStatusToHIPStatus(
+            rocblaslt_is_algo_supported_cpp((rocblaslt_handle)m_handle, gemmType, m_data, *rocalgo, roctuning, workspaceSizeInBytes));
+
+        void* scaleA = nullptr;
+        void* scaleB = nullptr;
+        bool amaxScaleA = false;
+        bool amaxScaleB = false;;
+        rocblaslt_get_amax_data(gemmType, m_data, true, &scaleA, nullptr, nullptr, nullptr, nullptr, &amaxScaleA, nullptr, nullptr);
+        rocblaslt_get_amax_data(gemmType, m_data, false, &scaleB, nullptr, nullptr, nullptr, nullptr, &amaxScaleB, nullptr, nullptr);
+
+        if (((scaleA != nullptr) && amaxScaleA) || ((scaleB != nullptr) && amaxScaleB))
+            workspaceSizeInBytes = max(workspaceSizeInBytes, (size_t)4096);
+
+        return status;
     }
     catch(...)
     {
@@ -236,7 +272,72 @@ namespace hipblaslt_ext
             return HIPBLAS_STATUS_INVALID_VALUE;
 
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
-        auto status   = RocBlasLtStatusToHIPStatus(
+        void* sync = (void*)((rocblaslt_handle)m_handle)->Synchronizer;
+        hipDataType type;
+        void* scale;
+        void* buf;
+        void* workspace;
+        int m;
+        int n;
+        bool amaxScale;
+        bool isScaleAmaxDivisor;
+        float amaxDividend;
+
+        //  for A
+        type = m_problem_types[0].type_a;
+        scale = nullptr;
+        buf = nullptr;
+        workspace = nullptr;
+        m = 0;
+        n = 0;
+        amaxScale = false;
+        isScaleAmaxDivisor = false;
+        amaxDividend = 0.0f;
+
+        rocblaslt_get_amax_data(gemmType, m_data, true, &scale, &buf, &workspace, &m, &n, &amaxScale, &isScaleAmaxDivisor, &amaxDividend);
+        if (scale)
+        {
+            if (amaxScale)
+            {
+                if(isScaleAmaxDivisor)
+                {
+                    hipblasltExtFastValueDevidedByAMax(type, HIP_R_32F, scale, buf, workspace, sync, m, n, amaxDividend, stream);
+                }
+                else
+                {
+                    hipblasltExtFastAMax(type, HIP_R_32F, scale, buf, workspace, sync, m, n, stream);
+                }
+            }
+        }
+
+        // for B
+        type = m_problem_types[0].type_b;
+        scale = nullptr;
+        buf = nullptr;
+        workspace = nullptr;
+        m = 0;
+        n = 0;
+        amaxScale = false;
+        isScaleAmaxDivisor = false;
+        amaxDividend = 0.0f;
+
+        rocblaslt_get_amax_data(gemmType, m_data, false, &scale, &buf, &workspace, &m, &n, &amaxScale, &isScaleAmaxDivisor, &amaxDividend);
+        if (scale)
+        {
+            if (amaxScale)
+            {
+                if(isScaleAmaxDivisor)
+                {
+                    hipblasltExtFastValueDevidedByAMax(type, HIP_R_32F, scale, buf, workspace, sync, m, n, amaxDividend, stream);
+                }
+                else
+                {
+                    hipblasltExtFastAMax(type, HIP_R_32F, scale, buf, workspace, sync, m, n, stream);
+                }
+            }
+        }
+
+        auto status = RocBlasLtStatusToHIPStatus(
             rocblaslt_run_cpp((rocblaslt_handle)m_handle, gemmType, m_data, stream, start, stop));
 
         return status;

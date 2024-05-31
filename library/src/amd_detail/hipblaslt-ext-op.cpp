@@ -530,7 +530,7 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     invocation.args.append("sync", sync);
     invocation.args.append("length", len);
     invocation.args.append("is_div", is_div);
-    invocation.args.append("idv", div);
+    invocation.args.append("div", div);
     invocation.args.append("workSize", workSize);
     invocation.args.append("numGroups", numGroups);
 

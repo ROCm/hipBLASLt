@@ -345,6 +345,27 @@ std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_
 std::string getSolutionNameFromAlgoIndex(rocblaslt_handle             handle,
                                          const rocblaslt_matmul_algo& algo);
 
+rocblaslt_status setAmaxData(const rocblaslt::RocGemmType gemmType,
+                             std::shared_ptr<void> gemmData,
+                             bool amaxScaleA,
+                             bool isScaleAmaxDivisorA,
+                             float amaxDividendA,
+                             bool amaxScaleB,
+                             bool isScaleAmaxDivisorB,
+                             float amaxDividendB);
+
+rocblaslt_status getAmaxData(const rocblaslt::RocGemmType gemmType,
+                             std::shared_ptr<void> gemmData,
+                             bool isA,
+                             void** scale,
+                             void** buffer,
+                             void** workspace,
+                             int* m,
+                             int* n,
+                             bool* amaxScale,
+                             bool* isScaleAmaxDivisor,
+                             float* amaxDividend);
+
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for
  *testing) *
@@ -442,3 +463,4 @@ inline Tensile::DataType hipDataType_to_tensile_type(hipDataType type)
         return Tensile::DataType::None;
     }
 }
+

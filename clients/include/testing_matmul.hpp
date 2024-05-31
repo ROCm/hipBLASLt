@@ -1483,6 +1483,12 @@ void testing_matmul_with_bias(const Arguments& arg)
                                                             arg.compute_type));
     }
 
+    for(int32_t b = 0; b < block_count; b++)
+    {
+        gemmVec[b].setAmaxData(arg.amaxScaleA, arg.isScaleAmaxDivisorA, arg.amaxDividendA,
+                               arg.amaxScaleB, arg.isScaleAmaxDivisorB, arg.amaxDividendB);
+    }
+
     std::vector<hipblaslt_ext::GemmEpilogue> extepilogue;
     hipblaslt_ext::GemmProblemType           extproblemtype;
     if(arg.use_ext_setproblem)

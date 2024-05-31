@@ -1840,3 +1840,64 @@ void rocblaslt_log_error(const char* func, const char* var, const char* msg)
 {
     log_error(func, var, msg);
 }
+
+rocblaslt_status rocblaslt_set_amax_data(const rocblaslt::RocGemmType gemmType,
+                                         std::shared_ptr<void> gemmData,
+                                         bool amaxScaleA,
+                                         bool isScaleAmaxDivisorA,
+                                         float amaxDividendA,
+                                         bool amaxScaleB,
+                                         bool isScaleAmaxDivisorB,
+                                         float amaxDividendB)
+
+{
+    rocblaslt_status status = rocblaslt_status_success;
+    try
+    {
+        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+        {
+            status = setAmaxData(gemmType, gemmData, amaxScaleA, isScaleAmaxDivisorA, amaxDividendA, amaxScaleB, isScaleAmaxDivisorB, amaxDividendB);
+            if(status != rocblaslt_status_success)
+            {
+                throw status;
+            }
+        }
+    }
+    catch(const rocblaslt_status& status)
+    {
+        return status;
+    }
+
+    return rocblaslt_status_success;
+}
+
+rocblaslt_status rocblaslt_get_amax_data(const rocblaslt::RocGemmType gemmType,
+                                         std::shared_ptr<void> gemmData,
+                                         bool isA,
+                                         void** scale,
+                                         void** buffer,
+                                         void** workspace,
+                                         int* m,
+                                         int* n,
+                                         bool* amaxScale,
+                                         bool* isScaleAmaxDivisor,
+                                         float* amaxDividend)
+{
+    rocblaslt_status status = rocblaslt_status_success;
+    try
+    {
+        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+            status = getAmaxData(gemmType, gemmData, isA, scale, buffer, workspace, m, n, amaxScale, isScaleAmaxDivisor, amaxDividend);
+            if(status != rocblaslt_status_success)
+            {
+                throw status;
+            }
+    }
+    catch(const rocblaslt_status& status)
+    {
+        return status;
+    }
+
+    return rocblaslt_status_success;
+}
+
