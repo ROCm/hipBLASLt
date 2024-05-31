@@ -1191,9 +1191,20 @@ namespace
 #endif
 } // namespace
 
+struct AMaxScaleData
+{
+    bool  amaxScaleA;
+    bool  isScaleAmaxDivisorA;
+    float amaxDividendA;
+    bool  amaxScaleB;
+    bool  isScaleAmaxDivisorB;
+    float amaxDividendB;
+};
+
 struct TensileDataGemm
 {
     bool                                   enableEpilogue = true;
+    AMaxScaleData                          amaxScale;
     Tensile::ContractionProblemGemm        problem;
     Tensile::ContractionInputs             inputs;
     std::vector<Tensile::KernelInvocation> kernels;
@@ -2525,6 +2536,88 @@ std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblasl
     auto solution      = library->getSolutionByIndex(*solutionIndex);
     return solution->solutionName;
 }
+
+rocblaslt_status setAmaxData(const rocblaslt::RocGemmType gemmType,
+                             std::shared_ptr<void> gemmData,
+                             bool amaxScaleA,
+                             bool isScaleAmaxDivisorA,
+                             float amaxDividendA,
+                             bool amaxScaleB,
+                             bool isScaleAmaxDivisorB,
+                             float amaxDividendB)
+{
+    if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+    {
+        std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+        data->amaxScale.amaxScaleA = amaxScaleA;
+        data->amaxScale.isScaleAmaxDivisorA = isScaleAmaxDivisorA;
+        data->amaxScale.amaxDividendA = amaxDividendA;
+        data->amaxScale.amaxScaleB = amaxScaleB;
+        data->amaxScale.isScaleAmaxDivisorB = isScaleAmaxDivisorB;
+        data->amaxScale.amaxDividendB = amaxDividendB;
+    }
+
+    return rocblaslt_status_success;
+}
+
+rocblaslt_status getAmaxData(const rocblaslt::RocGemmType gemmType,
+                             std::shared_ptr<void> gemmData,
+                             bool isA,
+                             void** scale,
+                             void** buffer,
+                             void** workspace,
+                             int* m,
+                             int* n,
+                             bool* amaxScale,
+                             bool* isScaleAmaxDivisor,
+                             float* amaxDividend)
+{
+    if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+    {
+        std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+        if (isA)
+        {
+            if (scale)
+               (*scale) = const_cast<void*>(data->inputs.scaleA);
+            if (buffer)
+                (*buffer) = const_cast<void*>(data->inputs.a);
+            if (workspace)
+                (*workspace) = data->inputs.ws;
+            if (m)
+                (*m) = data->problem.a().sizes()[0];
+            if (n)
+                (*n) = data->problem.a().sizes()[1];
+            if (amaxScale)
+                (*amaxScale) = data->amaxScale.amaxScaleA;
+            if (isScaleAmaxDivisor)
+                (*isScaleAmaxDivisor) = data->amaxScale.isScaleAmaxDivisorA;
+            if (amaxDividend)
+                (*amaxDividend) = data->amaxScale.amaxDividendA;
+        }
+        else
+        {
+            if (scale)
+               (*scale) = const_cast<void*>(data->inputs.scaleB);
+            if (buffer)
+                (*buffer) = const_cast<void*>(data->inputs.b);
+            if (workspace)
+                (*workspace) = data->inputs.ws;
+            if (m)
+                (*m) = data->problem.b().sizes()[0];
+            if (n)
+                (*n) = data->problem.b().sizes()[1];
+            if (amaxScale)
+                (*amaxScale) = data->amaxScale.amaxScaleB;
+            if (isScaleAmaxDivisor)
+                (*isScaleAmaxDivisor) = data->amaxScale.isScaleAmaxDivisorB;
+            if (amaxDividend)
+                (*amaxDividend) = data->amaxScale.amaxDividendB;
+        }
+    }
+
+    return rocblaslt_status_success;
+}
+
 
 /***************************************************************
  * ! \brief  Initialize rocblaslt for the current HIP device, to *

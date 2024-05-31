@@ -210,6 +210,35 @@ namespace hipblaslt_ext
         *  \brief Retrieve the possible algorithms
         *
         *  \details
+        *  This function set information thosw is used to decide whether use AMax buffer AB
+        *  AMax buffer AB result as scale A/B
+        *
+        *  @param[in]
+        *  amaxScaleA Dose use amax buffer A in scale A or not
+        *  @param[in]
+        *  isScaleAmaxDivisorA Dose use value / amax(bufferA) as scale A
+        *  @param[in]
+        *  amaxDividendA value for parameter 2
+        *  @param[in]
+        *  amaxScaleB Dose use amax buffer B in scale B or not
+        *  @param[in]
+        *  isScaleAmaxDivisorB Dose use value / amax(bufferB) as scale B
+        *  @param[in]
+        *  amaxDividendB value for parameter 2
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS
+        */
+        HIPBLASLT_EXPORT hipblasStatus_t setAmaxData(bool  amaxScaleA,
+                                                     bool  isScaleAmaxDivisorA,
+                                                     float amaxDividendA,
+                                                     bool  amaxScaleB,
+                                                     bool  isScaleAmaxDivisorB,
+                                                     float amaxDividendB);
+
+        /*! \ingroup library_module
+        *  \brief Retrieve the possible algorithms
+        *
+        *  \details
         *  This function retrieves the possible algorithms for the matrix multiply
         * operation hipblasLtMatmul() function with the given data and compute tpye.
         * The output is placed in heuristicResult in the order of increasing
