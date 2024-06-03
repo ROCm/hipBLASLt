@@ -1214,7 +1214,7 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         if(arg.scaleA)
         {
-            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F) && (!do_grouped_gemm) && (arg.algo_method == 0))
+            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F) && (!do_grouped_gemm))
                 if (arg.isScaleAmaxDivisorA)
                     cpuValueDividedByAMax((*hScaleA[i]).data(), (*hA[i]).data(), A_row[i] * A_col[i], arg.amaxDividendA);
                 else
@@ -1229,7 +1229,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             bool  isScaleAmaxDivisorB = (hardcode) ? true : arg.isScaleAmaxDivisorB;
             float amaxDividendB       = (hardcode) ? 240.0f : arg.amaxDividendB;
 
-            if(amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F) && (!do_grouped_gemm) && (arg.algo_method == 0))
+            if(amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F) && (!do_grouped_gemm))
                 if (isScaleAmaxDivisorB)
                     cpuValueDividedByAMax((*hScaleB[i]).data(), (*hB[i]).data(), B_row[i] * B_col[i], amaxDividendB);
                 else
