@@ -528,13 +528,10 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
                                     *gpu);
 
     // based on benchmarks
-    int workSize;
+    int workSize = 16384;
     int amax_gsu = 128;
     if(len <= 32768)
-    {
-        workSize = len;
         amax_gsu = 1;
-    }
     else if(len <= 1048576)
         workSize = 16384;
     else if(len <= 134217728)
