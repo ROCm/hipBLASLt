@@ -1630,6 +1630,12 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
         log_error(__func__, "invalid pointer");
         return rocblaslt_status_invalid_handle;
     }
+
+    bool hardcode = (getenv("CASE2") && (typeA == HIP_R_8F_E4M3_FNUZ) && (typeB == HIP_R_16F) && (typeCompute == rocblaslt_compute_f32_fast_f16) && (typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM));
+
+    if (hardcode)
+        typeCompute = rocblaslt_compute_f32_fast_f8_fnuz;
+
     // Create dummy
     auto initMat = [](_rocblaslt_matrix_layout& mat, hipDataType type) {
         mat.m    = 1;
@@ -1652,6 +1658,29 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
     matmul_desc.scale_type            = typeD;
     rocblaslt_status status           = rocblaslt_status_success;
     size_t           maxWorkspaceSize = std::numeric_limits<size_t>::max();
+
+    if (hardcode)
+    {
+         if (matmul_desc.scaleB != nullptr)
+         {
+             status = rocblaslt_status_invalid_value;
+             std::cout << "CASE2 shouldn't have scaleB " << status << std::endl;
+             return status;
+         }
+
+         matmul_desc.compute_type = rocblaslt_compute_f32_fast_f8_fnuz;
+         matmul_desc.compute_type_original = rocblaslt_compute_f32_fast_f8_fnuz;
+         matmul_desc.compute_input_typeA = HIP_R_8F_E4M3_FNUZ;
+         matmul_desc.compute_input_typeB = HIP_R_8F_E4M3_FNUZ;
+         matmul_desc.scaleB = handle->Workspace;
+         matmul_desc.amaxScaleA = false;
+         matmul_desc.isScaleAmaxDivisorA = false;
+         matmul_desc.amaxDividendA = 0.0f;
+         matmul_desc.amaxScaleB = true;
+         matmul_desc.isScaleAmaxDivisorB = true;
+         matmul_desc.amaxDividendB = 240.0f;
+    }
+
     try
     {
         int8_t alpha[16] = {0};
