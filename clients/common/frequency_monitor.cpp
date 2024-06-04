@@ -308,12 +308,11 @@ private:
     void collect()
     {
         rsmi_frequencies_t freq;
-
         do
         {
-            rsmi_frequencies_t freq;
 #if rocm_smi_VERSION_MAJOR >= 7
             // multi_XCD
+            rsmi_gpu_metrics_t gpuMetrics;
             auto status1 = rsmi_dev_gpu_metrics_info_get(m_smiDeviceIndex, &gpuMetrics);
             if(status1 == RSMI_STATUS_SUCCESS)
             {
@@ -325,7 +324,6 @@ private:
             }
 #else
             //XCD 0
-            rsmi_gpu_metrics_t gpuMetrics;
             auto status1 = rsmi_dev_gpu_clk_freq_get(m_smiDeviceIndex, RSMI_CLK_TYPE_SYS, &freq);
             if(status1 == RSMI_STATUS_SUCCESS)
             {
