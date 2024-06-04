@@ -90,13 +90,18 @@ auto hipblaslt_simple_dispatch(const Arguments& arg)
 template <template <typename...> class TEST>
 auto hipblaslt_matmul_dispatch(const Arguments& arg)
 {
-    const auto TiA = arg.a_type;
-    const auto TiB = arg.b_type;
-    auto       To  = arg.c_type;
-    auto       Tc  = arg.compute_type;
-    auto       TciA = arg.compute_input_typeA;
-    auto       TciB = arg.compute_input_typeB;
-    char*      case2 = getenv("CASE2");
+    const auto TiA      = arg.a_type;
+    const auto TiB      = arg.b_type;
+    auto       To       = arg.c_type;
+    auto       Tc       = arg.compute_type;
+    auto       TciA     = arg.compute_input_typeA;
+    auto       TciB     = arg.compute_input_typeB;
+    bool       hardcode = (getenv("CASE2")
+                           && (TiA == HIP_R_8F_E4M3_FNUZ)
+                           && (TiB == HIP_R_16F)
+                           && (To  == HIP_R_16F)
+                           && (To  == HIP_R_16F)
+                           && (Tc  == HIPBLAS_COMPUTE_32F_FAST_16F));
 
     if(arg.d_type == To)
     {
@@ -274,7 +279,7 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
                         hipblasLtHalf>{}(arg);
         }
         else if(TiA == HIP_R_8F_E4M3_FNUZ && TiB == HIP_R_16F
-                && To == HIP_R_16F && Tc == HIPBLAS_COMPUTE_32F_FAST_16F && case2 != nullptr)
+                && To == HIP_R_16F && Tc == HIPBLAS_COMPUTE_32F_FAST_16F && hardcode)
         {
 		return TEST<hipblaslt_f8_fnuz, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz>{}(
                     arg);
