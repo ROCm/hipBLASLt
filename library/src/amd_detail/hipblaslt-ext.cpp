@@ -470,7 +470,12 @@ namespace hipblaslt_ext
         auto rocepilogue    = reinterpret_cast<rocblaslt::RocGemmEpilogue*>(&epilogue);
         auto rocepinputs    = reinterpret_cast<rocblaslt::RocGemmInputs*>(&gemmInputs);
         auto rocproblemtype = reinterpret_cast<rocblaslt::RocGemmProblemType*>(&gemmProblemType);
-        bool hardcode       = (getenv("CASE2")  && (rocproblemtype->type_a == HIP_R_8F_E4M3_FNUZ) && (rocproblemtype->type_b == HIP_R_16F) && (rocproblemtype->type_compute == rocblaslt_compute_f32_fast_f16));
+        bool hardcode       = (getenv("CASE2")
+                               && (rocproblemtype->type_a == HIP_R_8F_E4M3_FNUZ)
+                               && (rocproblemtype->type_b == HIP_R_16F)
+                               && (rocproblemtype->type_c == HIP_R_16F)
+                               && (rocproblemtype->type_d == HIP_R_16F)
+                               && (rocproblemtype->type_compute == rocblaslt_compute_f32_fast_f16));
 
         if (hardcode)
         {
@@ -529,7 +534,14 @@ namespace hipblaslt_ext
         rocblaslt_matmul_desc descr     =  (rocblaslt_matmul_desc)matmul_descr;
         rocblaslt_matrix_layout rocMatA = (rocblaslt_matrix_layout)matA;
         rocblaslt_matrix_layout rocMatB = (rocblaslt_matrix_layout)matB;
-        bool hardcode                   = (getenv("CASE2")  && (rocMatA->type == HIP_R_8F_E4M3_FNUZ) && (rocMatB->type == HIP_R_16F) && (descr->compute_type == rocblaslt_compute_f32_fast_f16));
+        rocblaslt_matrix_layout rocMatC = (rocblaslt_matrix_layout)matC;
+        rocblaslt_matrix_layout rocMatD = (rocblaslt_matrix_layout)matD;
+        bool hardcode                   = (getenv("CASE2")
+                                           && (rocMatA->type == HIP_R_8F_E4M3_FNUZ)
+                                           && (rocMatB->type == HIP_R_16F)
+                                           && (rocMatC->type == HIP_R_16F)
+                                           && (rocMatD->type == HIP_R_16F)
+                                           && (descr->compute_type == rocblaslt_compute_f32_fast_f16));
         if (hardcode)
         {
              if (descr->scaleB != nullptr)

@@ -1433,7 +1433,12 @@ rocblaslt_status
         bool                   amaxScaleB          = matmul_desc->amaxScaleB;
         bool                   isScaleAmaxDivisorB = matmul_desc->isScaleAmaxDivisorB;
         float                  amaxDividendB       = matmul_desc->amaxDividendB;
-        bool                   hardcode            = (getenv("CASE2")  && (a_type == HIP_R_8F_E4M3_FNUZ) && (b_type == HIP_R_16F) && (compute_type == rocblaslt_compute_f32_fast_f16));
+        bool                   hardcode            = (getenv("CASE2")
+                                                      && (a_type == HIP_R_8F_E4M3_FNUZ)
+                                                      && (b_type == HIP_R_16F)
+                                                      && (c_type == HIP_R_16F)
+                                                      && (d_type == HIP_R_16F)
+                                                      && (compute_type == rocblaslt_compute_f32_fast_f16));
 
         if (hardcode)
         {
@@ -1631,7 +1636,13 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
         return rocblaslt_status_invalid_handle;
     }
 
-    bool hardcode = (getenv("CASE2") && (typeA == HIP_R_8F_E4M3_FNUZ) && (typeB == HIP_R_16F) && (typeCompute == rocblaslt_compute_f32_fast_f16) && (typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM));
+    bool hardcode = (getenv("CASE2")
+                     && (typeA == HIP_R_8F_E4M3_FNUZ)
+                     && (typeB == HIP_R_16F)
+                     && (typeC == HIP_R_16F)
+                     && (typeD == HIP_R_16F)
+                     && (typeCompute == rocblaslt_compute_f32_fast_f16)
+                     && (typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM));
 
     if (hardcode)
         typeCompute = rocblaslt_compute_f32_fast_f8_fnuz;

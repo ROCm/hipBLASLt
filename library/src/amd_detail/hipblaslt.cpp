@@ -412,12 +412,19 @@ try
     rocblaslt_matmul_desc roc_matmul_desc = (rocblaslt_matmul_desc)matmul_descr;
     rocblaslt_matrix_layout tmp_matA      = (rocblaslt_matrix_layout)matA;
     rocblaslt_matrix_layout tmp_matB      = (rocblaslt_matrix_layout)matB;
+    rocblaslt_matrix_layout tmp_matC      = (rocblaslt_matrix_layout)matC;
+    rocblaslt_matrix_layout tmp_matD      = (rocblaslt_matrix_layout)matD;
     rocblaslt_compute_type compute_type   = roc_matmul_desc->compute_type;
     bool amaxScaleB                       = roc_matmul_desc->amaxScaleB;
     bool isScaleAmaxDivisorB              = roc_matmul_desc->isScaleAmaxDivisorB;
     float amaxDividendB                   = roc_matmul_desc->amaxDividendB;
     void* scaleB                          = roc_matmul_desc->scaleB;
-    bool hardcode                         = (getenv("CASE2") && (tmp_matA->type == HIP_R_8F_E4M3_FNUZ) && (tmp_matB->type == HIP_R_16F) && (compute_type == rocblaslt_compute_f32_fast_f16));
+    bool hardcode                         = (getenv("CASE2")
+                                             && (tmp_matA->type == HIP_R_8F_E4M3_FNUZ)
+                                             && (tmp_matB->type == HIP_R_16F)
+                                             && (tmp_matC->type == HIP_R_16F)
+                                             && (tmp_matD->type == HIP_R_16F)
+                                             && (compute_type == rocblaslt_compute_f32_fast_f16));
 
     if (roc_matmul_desc->amaxScaleA && (tmp_matA->type == HIP_R_32F || tmp_matA->type == HIP_R_16F))
     {
