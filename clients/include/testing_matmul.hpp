@@ -688,13 +688,13 @@ void testing_matmul_with_bias(const Arguments& arg)
 
     hipDataType tciA = arg.compute_input_typeA;
     hipDataType tciB = arg.compute_input_typeB;
-    bool hardcode = (getenv("CASE2") && (arg.a_type == HIP_R_8F_E4M3_FNUZ) && (arg.b_type == HIP_R_16F) && (arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_16F));
 
     using Talpha = Tc;
 
     bool    do_grouped_gemm = arg.grouped_gemm > 0;
     int32_t gemm_count      = std::max(1, arg.grouped_gemm);
     int64_t rotating        = arg.rotating * 1024 * 1024;
+    bool hardcode = (getenv("CASE2") && (arg.a_type == HIP_R_8F_E4M3_FNUZ) && (arg.b_type == HIP_R_16F) && (arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_16F) && (!do_grouped_gemm));
 
     std::vector<int64_t> M(gemm_count), N(gemm_count), K(gemm_count), lda(gemm_count),
         ldb(gemm_count), ldc(gemm_count), ldd(gemm_count), lde(gemm_count);

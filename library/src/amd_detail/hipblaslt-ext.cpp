@@ -33,6 +33,7 @@
 #include <hipblaslt/hipblaslt_float8.h>
 #include <rocblaslt.h>
 #include <iostream>
+#include <cstdlib>
 
 namespace hipblaslt_ext
 {
@@ -460,30 +461,49 @@ namespace hipblaslt_ext
                                      GemmInputs&      inputs,
                                      GemmProblemType& problemtype)
     {
-        GemmInputs      gemmInputs      = inputs;
-        GemmProblemType gemmProblemType = problemtype;
+        hipblasStatus_t  status          = HIPBLAS_STATUS_SUCCESS;
+        GemmInputs       gemmInputs      = inputs;
+        GemmProblemType  gemmProblemType = problemtype;
+        rocblaslt_handle handle          = (rocblaslt_handle)m_handle;
+
+        auto gemmType       = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocepilogue    = reinterpret_cast<rocblaslt::RocGemmEpilogue*>(&epilogue);
         auto rocepinputs    = reinterpret_cast<rocblaslt::RocGemmInputs*>(&gemmInputs);
         auto rocproblemtype = reinterpret_cast<rocblaslt::RocGemmProblemType*>(&gemmProblemType);
-        auto status
-            = RocBlasLtStatusToHIPStatus(rocblaslt_gemm_create_cpp((rocblaslt_handle)m_handle,
-                                                                   m,
-                                                                   n,
-                                                                   batch_count,
-                                                                   k,
-                                                                   lda,
-                                                                   ldb,
-                                                                   ldc,
-                                                                   ldd,
-                                                                   strideA,
-                                                                   strideB,
-                                                                   strideC,
-                                                                   strideD,
-                                                                   *rocepilogue,
-                                                                   *rocepinputs,
-                                                                   *rocproblemtype,
-                                                                   m_data,
-                                                                   m_gemm_count));
+        bool hardcode       = (getenv("CASE2")  && (rocproblemtype->type_a == HIP_R_8F_E4M3_FNUZ) && (rocproblemtype->type_b == HIP_R_16F) && (rocproblemtype->type_compute == rocblaslt_compute_f32_fast_f16));
+
+        if (hardcode)
+        {
+             if (rocepinputs->scaleB != nullptr)
+             {
+                 status = HIPBLAS_STATUS_INVALID_VALUE;
+                 std::cout << "CASE2 shouldn't have scaleB " << status << std::endl;
+                 return status;
+             }
+
+             rocepinputs->scaleB = handle->Workspace;
+             rocproblemtype->type_compute = rocblaslt_compute_f32_fast_f8_fnuz;
+             RocBlasLtStatusToHIPStatus(rocblaslt_set_amax_data(gemmType, m_data, false, false, 0.0f, true, true, 240.0f));
+        }
+
+        status = RocBlasLtStatusToHIPStatus(rocblaslt_gemm_create_cpp((rocblaslt_handle)m_handle,
+                                                                       m,
+                                                                       n,
+                                                                       batch_count,
+                                                                       k,
+                                                                       lda,
+                                                                       ldb,
+                                                                       ldc,
+                                                                       ldd,
+                                                                       strideA,
+                                                                       strideB,
+                                                                       strideC,
+                                                                       strideD,
+                                                                       *rocepilogue,
+                                                                       *rocepinputs,
+                                                                       *rocproblemtype,
+                                                                       m_data,
+                                                                       m_gemm_count));
         if(status == HIPBLAS_STATUS_SUCCESS)
         {
             m_problem_types[0] = problemtype;
@@ -503,11 +523,39 @@ namespace hipblaslt_ext
                                      void*                   D,
                                      hipblasLtMatrixLayout_t matD)
     {
-        auto rocproblemtypes
-            = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&m_problem_types);
+        auto gemmType                   = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        auto rocproblemtypes            = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&m_problem_types);
+        rocblaslt_handle handle         = (rocblaslt_handle)m_handle;
+        rocblaslt_matmul_desc descr     =  (rocblaslt_matmul_desc)matmul_descr;
+        rocblaslt_matrix_layout rocMatA = (rocblaslt_matrix_layout)matA;
+        rocblaslt_matrix_layout rocMatB = (rocblaslt_matrix_layout)matB;
+        bool hardcode                   = (getenv("CASE2")  && (rocMatA->type == HIP_R_8F_E4M3_FNUZ) && (rocMatB->type == HIP_R_16F) && (descr->compute_type == rocblaslt_compute_f32_fast_f16));
+        if (hardcode)
+        {
+             if (descr->scaleB != nullptr)
+             {
+                 std::cout << "CASE2 shouldn't have scaleB " << std::endl;
+                 return HIPBLAS_STATUS_INVALID_VALUE;
+             }
+
+             (*rocproblemtypes)[0].type_compute = rocblaslt_compute_f32_fast_f8_fnuz;
+             RocBlasLtStatusToHIPStatus(rocblaslt_set_amax_data(gemmType, m_data, false, false, 0.0f, true, true, 240.0f));
+             descr->compute_type = rocblaslt_compute_f32_fast_f8_fnuz;
+             descr->compute_type_original = rocblaslt_compute_f32_fast_f8_fnuz;
+             descr->compute_input_typeA = HIP_R_8F_E4M3_FNUZ;
+             descr->compute_input_typeB = HIP_R_8F_E4M3_FNUZ;
+             descr->scaleB = handle->Workspace;
+             descr->amaxScaleA = false;
+             descr->isScaleAmaxDivisorA = false;
+             descr->amaxDividendA = 0.0f;
+             descr->amaxScaleB = true;
+             descr->isScaleAmaxDivisorB = true;
+             descr->amaxDividendB = 240.0f;
+        }
+
         return RocBlasLtStatusToHIPStatus(
-            rocblaslt_gemm_create_cpp((rocblaslt_handle)m_handle,
-                                      (rocblaslt_matmul_desc)matmul_descr,
+            rocblaslt_gemm_create_cpp(handle,
+                                      descr,
                                       alpha,
                                       A,
                                       (rocblaslt_matrix_layout)matA,
