@@ -1164,10 +1164,10 @@ Tests:
   unit_check: 1
   gpu_arch: '94?'
 
-- name: matmul_gemm_mix_precisions
+- name: matmul_gemm_mix_precisions_fp32
   category: pre_checkin
   function:
-    matmul: *real_mix_precisions
+    matmul: *real_mix_precisions_fp32
   matrix_size:
   M: [127, 129]
   N: [127, 129]
@@ -1175,6 +1175,12 @@ Tests:
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0, 2 ]
+  scaleA: [0,1]
+  scaleB: [0,1]
+  amaxScaleA: [0, 1]
+  amaxScaleB: [0, 1]
+  isScaleAmaxDivisorA: [0, 1]
+  isScaleAmaxDivisorB: [0, 1]
   use_ext: [1]
   use_ext_setproblem: [1]
   bias_vector: 1
@@ -1200,11 +1206,10 @@ Tests:
   initialization: trig_float
   gpu_arch: '94?'
 
-
-- name: matmul_gemm_mix_precisions2
+- name: matmul_gemm_mix_precisions2_fp32
   category: pre_checkin
   function:
-    matmul: *real_mix_precisions
+    matmul: *real_mix_precisions_fp32
   matrix_size:
     - { M:  1,   N:  1,    K:  1    }
     - { M:  1,   N:  1,    K:  127  }
@@ -1231,6 +1236,30 @@ Tests:
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0, 2 ]
+  scaleA: [0,1]
+  scaleB: [0,1]
+  amaxScaleA: [0, 1]
+  amaxScaleB: [0, 1]
+  isScaleAmaxDivisorA: [0, 1]
+  isScaleAmaxDivisorB: [0, 1]
+  use_ext: [1]
+  use_ext_setproblem: [1]
+  bias_vector: 1
+  bias_type: [f32_r]
+  unit_check: 1
+  gpu_arch: '94?'
+
+- name: matmul_gemm_mix_precisions_fp16
+  category: pre_checkin
+  function:
+    matmul: *real_mix_precisions_fp16
+  matrix_size:
+  M: [128]
+  N: [128]
+  K: [128]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0, 2 ]
   use_ext: [1]
   use_ext_setproblem: [1]
   bias_vector: 1
@@ -1248,6 +1277,12 @@ Tests:
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0.0, 2.0 ]
+  scaleA: [0,1]
+  scaleB: [0,1]
+  amaxScaleA: [0, 1]
+  amaxScaleB: [0, 1]
+  isScaleAmaxDivisorA: [0, 1]
+  isScaleAmaxDivisorB: [0, 1]
   scaleA: [0,1]
   scaleB: [0,1]
   scaleC: [0,1]
