@@ -2322,6 +2322,13 @@ class Solution(collections.abc.Mapping):
             reject(state, "one of DataTypeA or DataTypeB need to be float8")
             return
 
+    def calcOptGRVW(lrvw: int, unrollMajorLDS: bool, datatype: DataType) -> int:
+      # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
+      optGRVW = lrvw if unrollMajorLDS else 4 / datatype.numRegisters()
+      if optGRVW * datatype.numBytes() > 16:
+        optGRVW = 16 // datatype.numBytes()
+      return optGRVW
+
     # Default GlobalReadVectorWidthA
     if state["GlobalReadVectorWidthA"] < 0:
       if state["GlobalReadVectorWidthA"] == -2:
@@ -2330,9 +2337,8 @@ class Solution(collections.abc.Mapping):
         else:
           reject(state, "GRVWA=-2 is set for skinny MT")
       elif state["GlobalReadVectorWidthA"] == -1:
+        optGRVW = calcOptGRVW(state["LocalReadVectorWidth"], state["UnrollMajorLDSA"], state["ProblemType"]["DataTypeA"])
         curGRVW = 1
-        # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
-        optGRVW = state["LocalReadVectorWidth"] if state["UnrollMajorLDSA"] else 4 / state["ProblemType"]["DataTypeA"].numRegisters()
         state["GlobalReadVectorWidthA"] = int(curGRVW)
         while (curGRVW <= optGRVW):
           if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
@@ -2347,9 +2353,8 @@ class Solution(collections.abc.Mapping):
         else:
           reject(state, "GRVWB=-2 is set for skinny MT")
       elif state["GlobalReadVectorWidthB"] == -1:
+        optGRVW = calcOptGRVW(state["LocalReadVectorWidth"], state["UnrollMajorLDSB"], state["ProblemType"]["DataTypeB"])
         curGRVW = 1
-        # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
-        optGRVW = state["LocalReadVectorWidth"] if state["UnrollMajorLDSB"] else 4 / state["ProblemType"]["DataTypeB"].numRegisters()
         state["GlobalReadVectorWidthB"] = int(curGRVW)
         while (curGRVW <= optGRVW):
           if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:
