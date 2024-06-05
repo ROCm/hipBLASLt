@@ -190,6 +190,10 @@ Real mix precisions: &real_mix_precisions
   - &fp16fp8_precision_dst_fp32
     { a_type: f16_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
 
+Real mix precisions fp8 compute: &real_mix_precisions_f8_compute
+  - &fp8fp16_precision_f8_compute_dst_fp16
+    { a_type: f8_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, compute_input_typeA: f8_r, compute_input_typeB: f8_r, scale_type: f32_r}
+
 Real mix precisions fp8: &real_mix_precisions_fp8
   - &fp8fp16_precision_dst_fp8
     { a_type: f8_r, b_type: f16_r, c_type: f8_r, d_type: f8_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
@@ -367,8 +371,8 @@ Defaults:
   amaxScaleB: false
   isScaleAmaxDivisorA: false
   isScaleAmaxDivisorB: false
-  amaxDividendA: 240.0
-  amaxDividendB: 240.0
+  amaxDividendA: 0
+  amaxDividendB: 0
   amaxD: false
   grouped_gemm: 0
   norm_check_assert: true

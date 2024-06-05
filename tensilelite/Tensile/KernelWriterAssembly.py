@@ -1420,9 +1420,12 @@ class KernelWriterAssembly(KernelWriter):
         for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
           if preloadScale:
             moduleWg.add(VMovB32(dst=vgpr(tmpVgpr), src=sgpr("Scale%s"%name)))
-            moduleWg.add(VRcpF32(dst=vgpr(tmpVgpr), src=vgpr(tmpVgpr)))
-            moduleWg.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=sgpr("Scale%s"%name)))
-            moduleWg.add(VReadfirstlaneB32(dst=sgpr("Scale%s"%name), src=vgpr(tmpVgpr), comment="Get Rcp"))
+            moduleWg.add(VRcpF32(dst=vgpr(tmpVgpr), src=vgpr(tmpVgpr), comment="Get 1/scaleB"))
+            if self.states.archCaps["TransOpWait"]:
+              moduleWg.add(SNop(waitState=0, comment="1 wait states"))
+            moduleWg.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=vgpr(tmpVgpr)))
+            if self.states.archCaps["TransOpWait"]:
+              moduleWg.add(SNop(waitState=0, comment="1 wait states"))
         if NeedUpdateAlpha:
           moduleWg.add(VReadfirstlaneB32(dst=sgpr("Alpha"), src=vgpr(newAlphaVgpr), comment="Update Alpha"))
         self.vgprPool.checkIn(tmpVgpr)

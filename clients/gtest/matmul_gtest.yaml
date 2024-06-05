@@ -1182,6 +1182,25 @@ Tests:
   unit_check: 1
   gpu_arch: '94?'
 
+- name: matmul_gemm_mix_precisions_f8_compute
+  category: pre_checkin
+  function:
+    matmul: *real_mix_precisions_f8_compute
+  matrix_size:
+  M: [128]
+  N: [128]
+  K: [128]
+  scaleB: [0, 1]
+  transA: N
+  transB: N
+  alpha: 1
+  beta: 0
+  norm_check: 1
+  unit_check: 0
+  initialization: trig_float
+  gpu_arch: '94?'
+
+
 - name: matmul_gemm_mix_precisions2
   category: pre_checkin
   function:
