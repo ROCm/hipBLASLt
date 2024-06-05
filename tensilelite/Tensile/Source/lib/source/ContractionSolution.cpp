@@ -2602,6 +2602,51 @@ namespace Tensile
         return h_args.size();
     }
 
+    size_t ContractionSolution::getSKGrid(Hardware const& hardware, size_t tiles) const
+    {
+        AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(&hardware);
+        if(pAMDGPU->skFixedGrid > 0)
+            return pAMDGPU->skFixedGrid;
+        assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
+        size_t cuCount = pAMDGPU->computeUnitCount;
+        size_t skGrid  = cuCount;
+        if(pAMDGPU->skDynamicGrid == 2 && tiles > skGrid)
+        {
+            for(size_t i = 1; i <= 32; i *= 2)
+            {
+                size_t tilesPerCU  = CeilDivide(i * tiles, skGrid);
+                size_t reducedGrid = CeilDivide(i * tiles, tilesPerCU);
+                float  utilization = ((float)reducedGrid) / ((float)skGrid);
+                if(utilization > 0.75f)
+                {
+                    if(utilization < 1.0f)
+                        skGrid = reducedGrid;
+                    break;
+                }
+            }
+        }
+        if(pAMDGPU->skMaxCUs > 0)
+            skGrid = min(skGrid, pAMDGPU->skMaxCUs);
+        if(pAMDGPU->skDynamicGrid)
+            skGrid = min(skGrid, tiles);
+        if(pAMDGPU->skGridMultiplier > 1)
+            skGrid = skGrid * pAMDGPU->skGridMultiplier;
+        return skGrid;
+    }
+
+    size_t ContractionSolution::partialTileSize(size_t skGrid) const
+    {
+        size_t size = 0;
+
+        size_t tileSize
+            = sizeMapping.macroTile.x * sizeMapping.macroTile.y * sizeMapping.workspaceSizePerElemC;
+        size += tileSize * skGrid; // Partials tile per WG
+        // TODO batches
+        // TODO round up for alignment?
+
+        return size;
+    }
+
     float ContractionSolution::computeGranularity(float x)
     {
         return x / ceil(x);
