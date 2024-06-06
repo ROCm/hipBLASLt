@@ -517,8 +517,9 @@ namespace Tensile
     template <bool T_Debug, bool insertKernelArgs, typename KA>
     void ContractionSolution::singleCallArgs(ContractionSolution::Problem const& problem,
                                              ContractionInputs const&            inputs,
-                                             uint32_t const& workspaceOffsetInByte,
-                                             KA&             args) const
+                                             uint32_t const&                     workspaceOffsetInByte,
+                                             Hardware const*                     hardware,
+                                             KA&                                 args) const
     {
         if(debugKernel)
         {
@@ -550,7 +551,7 @@ namespace Tensile
            && (problemType.computeType != problemType.dType
                || problemType.activationType != ActivationType::None))
             singleWSD = true;
-        if(gsu > 1
+        if(gsu > 1 && sizeMapping.streamK == 0
            && ((singleWSD || sizeMapping.globalAccumulation == 2)
                || (sizeMapping.globalAccumulation == 3 )))
         {
@@ -590,10 +591,27 @@ namespace Tensile
         if(problemType.sparse)
             args.template append<unsigned char const*>("metadata", inputs.metadata);
 
+        if(sizeMapping.streamK > 0 && sizeMapping.streamKAtomic == 0)
+        {
+            // Assert hardware is not null
+            // For now grouped gemm is not supported and passes nullptr
+            TENSILE_ASSERT_EXC(hardware != nullptr);
+            size_t cuCount = 0;
+            
+            auto   tiles   = problem.getNumTiles(sizeMapping);
+            size_t skGrid  = getSKGrid(*hardware, tiles);
+            // StreamK workspace + flags
+            args.template append<void const*>("ws", inputs.ws);
+            void*  ws          = inputs.ws;
+            size_t flagsOffset = partialTileSize(skGrid);
+            void*  flags       = (void*)(static_cast<char*>(ws) + flagsOffset);
+            args.template append<void*>("Flags", flags);
+        }
+
         size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
         size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
 
-        if(gsu > 1 && sizeMapping.globalAccumulation)
+        if(gsu > 1 && sizeMapping.globalAccumulation && sizeMapping.streamK == 0)
         {
             size_t wsStride = startStrideCD ? d.sizes()[0] : 1;
             for(size_t i = startStrideCD; i < d.dimensions(); i++)
@@ -801,7 +819,8 @@ namespace Tensile
     template <bool T_Debug>
     KernelInvocation
         ContractionSolution::generateSingleCall(ContractionSolution::Problem const& problem,
-                                                ContractionInputs const&            inputs) const
+                                                ContractionInputs const&            inputs,
+                                                Hardware const&                     hardware) const
     {
         TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
 
@@ -847,9 +866,32 @@ namespace Tensile
         rv.numWorkGroups.x = CeilDivide(rv.numWorkGroups.x, sizeMapping.macroTile.x);
         rv.numWorkGroups.y = CeilDivide(rv.numWorkGroups.y, sizeMapping.macroTile.y);
 
+        uint32_t problemNumGroupTiles0 = rv.numWorkGroups.x;
+        uint32_t problemNumGroupTiles1 = rv.numWorkGroups.y;
+        // used only when persistent kernel along batch
+        uint32_t problemNumGroupTiles2 = rv.numWorkGroups.z;
+
         uint32_t gsu
             = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
         rv.numWorkGroups.y *= gsu;
+
+        size_t cuCount = 0;
+        size_t skGrid  = 0;
+        auto   tiles   = problem.getNumTiles(sizeMapping);
+        if(sizeMapping.streamK != 0 || sizeMapping.persistentKernel != 0)
+        {
+            AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(&hardware);
+            assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
+            cuCount = pAMDGPU->computeUnitCount;
+            if(sizeMapping.streamK != 0)
+            {
+                skGrid             = getSKGrid(hardware, tiles);
+                // TODO enable grid size change once code gen changes are implemented
+                // rv.numWorkGroups.x = skGrid;
+                // rv.numWorkGroups.y = 1;
+                // rv.numWorkGroups.z = 1;
+            }
+        }
 
         rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
         rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
@@ -859,13 +901,75 @@ namespace Tensile
 
         if(internalArgsSupport.useUniversalArgs)
             kernelArgs<T_Debug, false>(1, 0, rv.args, problem.getParams());
-        singleCallArgs<T_Debug, true>(problem, inputs, 0, rv.args);
+        singleCallArgs<T_Debug, true>(problem, inputs, 0, &hardware, rv.args);
 
         if(sizeMapping.globalAccumulation == 3)
         {
             rv.args.append<void const*>("dstD", inputs.d);
             rv.args.append<void const*>("Synchronizer", inputs.Synchronizer);
             rv.args.append<uint32_t>("GSUSync", 0);
+        }
+
+        if(sizeMapping.persistentKernel != 0 || sizeMapping.streamK != 0)
+        {
+            uint32_t magicShift;
+            rv.args.append<uint32_t>("magicNumberProblemNumGroupTiles0",
+                                     magicNumber(2, problemNumGroupTiles0, &magicShift));
+            rv.args.append<uint32_t>("magicShiftProblemNumGroupTiles0", magicShift);
+        }
+
+        if(sizeMapping.streamK != 0)
+        {
+            auto     itersPerTile = problem.getItersPerTile(sizeMapping);
+            auto     totalIters   = tiles * itersPerTile;
+            uint32_t magicNumberItersPerTile;
+            uint32_t magicShiftItersPerTile;
+            magicNumberItersPerTile = magicNumber(2, itersPerTile, &magicShiftItersPerTile);
+
+            rv.args.append<uint32_t>("itersPerTile", itersPerTile);
+            rv.args.append<uint32_t>("magicNumberItersPerTile", magicNumberItersPerTile);
+            rv.args.append<uint32_t>("magicShiftItersPerTile", magicShiftItersPerTile);
+
+            uint32_t numGroupTiles0x1 = problemNumGroupTiles0 * problemNumGroupTiles1;
+            uint32_t magicNumProblemNumGroupTiles0By1;
+            uint32_t magicShiftProblemNumGroupTiles0By1;
+            magicNumProblemNumGroupTiles0By1
+                = magicNumber(2, numGroupTiles0x1, &magicShiftProblemNumGroupTiles0By1);
+            rv.args.append<uint32_t>("magicNumProblemNumGroupTiles0By1",
+                                        magicNumProblemNumGroupTiles0By1);
+            rv.args.append<uint32_t>("magicShiftProblemNumGroupTiles0By1",
+                                        magicShiftProblemNumGroupTiles0By1);
+
+            rv.args.append<uint32_t>("totalIters", totalIters);
+            if(sizeMapping.streamK == 1) // Basic SK
+            {
+                uint32_t itersPerWave = CeilDivide(totalIters, rv.numWorkGroups.x);
+                rv.args.append<uint32_t>("SKItersPerWG", itersPerWave);
+            }
+            else if(sizeMapping.streamK >= 2) // Two-tile SK
+            {
+                bool bigEnough = tiles > skGrid;
+                // skTiles is number of Stream-K tiles to complete
+                // Two-tile algorithm causes each WG to run an even number of Stream-K iterations,
+                // followed by an even number of data-parllel tiles.
+                // If total tiles is evenly divisble by grid size,
+                // then no Stream-K tiles are needed, all data-parallel
+                uint32_t skTiles = skGrid;
+                if(tiles % skGrid != 0)
+                {
+                    // Number of data-parallel tiles on each workgroup would be:
+                    // dpTilesPerWG = bigEnough ? (tiles - skTiles) / skGrid : 0;
+                    skTiles = bigEnough ? skGrid + tiles % skGrid : tiles;
+                }
+
+                uint32_t skItersPerWG = skTiles * itersPerTile / skGrid;
+                uint32_t skExtraIters = skTiles * itersPerTile % (skGrid);
+
+                rv.args.append<uint32_t>("SKItersPerWG", skItersPerWG);
+                rv.args.append<uint32_t>("skGrid", skGrid);
+                rv.args.append<uint32_t>("skTiles", skTiles);
+                rv.args.append<uint32_t>("skExtraIters", skExtraIters);
+            }
         }
 
         if(problemType.stochasticRounding)
@@ -988,7 +1092,7 @@ namespace Tensile
             {
                 auto problem = problems[idx];
                 singleCallArgs<T_Debug, false>(
-                    problem, inputs.grouped[idx], workspaceOffsetInByte, h_args);
+                    problem, inputs.grouped[idx], workspaceOffsetInByte, nullptr, h_args);
 
                 uint32_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu()
                                                              : sizeMapping.globalSplitU;
@@ -2152,9 +2256,9 @@ namespace Tensile
         }
 
         if(debug)
-            rv.push_back(generateSingleCall<true>(problem, inputs));
+            rv.push_back(generateSingleCall<true>(problem, inputs, hardware));
         else
-            rv.push_back(generateSingleCall<false>(problem, inputs));
+            rv.push_back(generateSingleCall<false>(problem, inputs, hardware));
 
         if((sizeMapping.globalAccumulation != 3) && gsu > 1
            && sizeMapping.globalAccumulation)

@@ -1016,6 +1016,9 @@ namespace Tensile
             return getOperationDescription();
         }
 
+        size_t getNumTiles(SizeMapping const& sizeMapping) const;
+        size_t getItersPerTile(SizeMapping const& sizeMapping) const;
+
         void checkPersistentKernelEligibility(ContractionSolution const& solution,
                                               Hardware const&            hardware);
 

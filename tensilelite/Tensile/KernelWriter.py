@@ -227,13 +227,14 @@ class StateValues:
   numStoreSgprNames: List[str]           = field(init=False) # For post-loop kernel args
   numStoreSgprNameSizes: List[int]       = field(init=False) # For post-loop kernel args
   numStoreSgprToLoad: int                = 0 # For post-loop kernel args
-  numStoreSgprNames2: List[str]           = field(init=False) # For post-loop kernel args
-  numStoreSgprNameSizes2: List[int]       = field(init=False) # For post-loop kernel args
-  numStoreSgprToLoad2: int                = 0 # For post-loop kernel args
+  numStoreSgprNames2: List[str]          = field(init=False) # For post-loop kernel args
+  numStoreSgprNameSizes2: List[int]      = field(init=False) # For post-loop kernel args
+  numStoreSgprToLoad2: int               = 0 # For post-loop kernel args
   numStoreSgprInst: int                  = 0 # For pose-loop kernel args
   numStoreSgprInstExt: int               = 0 # For pose-loop kernel args
   numSgprAddressBias: int                = 0
   numSgprAddressGSUSync: int             = 0
+  numSgprStreamK: int                    = 0
   BiasType: int                          = 0
   BiasStride: int                        = 0
   BiasDim: int                           = 0
@@ -3479,6 +3480,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     numSgprAddressC = self.states.rpga # til end
     numSgprAddressA = self.states.rpga # til read offsets
     numSgprAddressB = self.states.rpga # til read offsets
+    numSgprAddressWS = self.states.rpga
+    numSgprAddressFlags = self.states.rpga
 
     numSgprAddressMetadata = self.states.rpga if kernel["ProblemType"]["Sparse"] else 0
 
@@ -3634,13 +3637,18 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("AddressB", numSgprAddressB)
     if kernel["ProblemType"]["Sparse"]:
       self.defineSgpr("AddressMetadata", numSgprAddressMetadata)
+    if kernel["StreamK"] > 0 and kernel["StreamKAtomic"] == 0:
+      self.defineSgpr("AddressWS", numSgprAddressWS)
+      self.defineSgpr("AddressFlags", numSgprAddressFlags)
+      self.states.numSgprStreamK += numSgprAddressWS + numSgprAddressFlags
+    
     #asm input interface depen
     self.defineSgpr("StridesD", self.states.d.numSgprStrides)
     self.defineSgpr("StridesC", self.states.c.numSgprStrides)
     self.defineSgpr("StridesA", self.states.a.numSgprStrides)
     self.defineSgpr("StridesB", self.states.b.numSgprStrides)
     if kernel["ProblemType"]["Sparse"]:
-        self.defineSgpr("StridesMetadata", self.states.m.numSgprStrides)
+      self.defineSgpr("StridesMetadata", self.states.m.numSgprStrides)
 
     # for packed batches without stride restrictions need to do something different here
     assert sorted(kernel["PackedC0IdxChars"]+kernel["PackedC1IdxChars"]) == \
@@ -3662,8 +3670,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
       self.states.numSgprBeta = numSgprBeta
 
-    self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
-
     if GSUAMBSK:
       self.defineSgpr("GSUSync", 1)
       self.states.numSgprAddressGSUSync += 1
@@ -3672,6 +3678,27 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("Synchronizer", 2)
       self.states.numSgprAddressGSUSync += 2
 
+    if kernel["StreamK"]:
+      # StreamK args
+      self.defineSgpr("MagicNumberProblemNumGroupTiles0", 1) # Magic number to use for division
+      self.defineSgpr("MagicShiftProblemNumGroupTiles0", 1) # Magic shift/abit to use for division alg 2
+      self.defineSgpr("ItersPerTile", 1)
+      self.defineSgpr("MagicNumberItersPerTile", 1)
+      self.defineSgpr("MagicShiftItersPerTile", 1)
+      self.defineSgpr("MagicNumProblemNumGroupTiles0By1", 1)  # for PKAB, use for Magic Div Alg 2 by (nwg0*nwg1)
+      self.defineSgpr("MagicShiftProblemNumGroupTiles0By1", 1)  # for PKAB, use for Magic Div Alg 2 by (nwg0*nwg1)
+      self.defineSgpr("TotalIters", 1)
+      self.defineSgpr("SKItersPerWG", 1)
+      self.states.numSgprStreamK += 9
+      if kernel["StreamK"] >= 2: # Two-tile SK
+        self.defineSgpr("skGrid", 1)
+        self.defineSgpr("skTiles", 1)
+        self.defineSgpr("skExtraIters", 1)
+        # self.defineSgpr("dpTilesPerWG", 1, kernarg=True)
+        self.states.numSgprStreamK += 3
+
+    self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
+    
     #------------------------
     # Registers defined below this point are not available in the post-loop
     # Post-loop is after tail loop exits, ie the store code.
@@ -3708,6 +3735,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAlpha + numSgprAddressMetadata + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + \
       self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + self.states.b.numSgprStrides + self.states.m.numSgprStrides + \
+      self.states.numSgprStreamK + \
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2
     # Get kernel argument end here
     ###################################

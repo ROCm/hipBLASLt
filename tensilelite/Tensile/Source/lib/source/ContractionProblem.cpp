@@ -640,6 +640,52 @@ namespace Tensile
         return found->i;
     }
 
+    size_t ContractionProblemGemm::getNumTiles(SizeMapping const& sizeMapping) const
+    {
+        // Get the normal WorkGroup numbers by sizeMapping MacroTile
+        dim3 numWG(1, 1, 1);
+        for(size_t i = 0; i < m_freeIndicesA.size(); i++)
+        {
+            numWG.x *= m_freeSizesA.at(i);
+        }
+        for(size_t i = 0; i < m_freeIndicesB.size(); i++)
+        {
+            numWG.y *= m_freeSizesB.at(i);
+        }
+        for(size_t i = 0; i < m_batchIndices.size(); i++)
+        {
+            if(sizeMapping.packBatchDims & 0x1)
+                numWG.x *= m_batchSizes[i];
+            if(sizeMapping.packBatchDims & 0x2)
+                numWG.y *= m_batchSizes[i];
+            if(!sizeMapping.packBatchDims)
+                numWG.z *= m_batchSizes[i];
+        }
+
+        numWG.x = CeilDivide(numWG.x, sizeMapping.macroTile.x);
+        numWG.y = CeilDivide(numWG.y, sizeMapping.macroTile.y);
+        numWG.y *= sizeMapping.globalSplitU;
+
+        size_t problemTiles = numWG.x * numWG.y;
+        if(sizeMapping.persistentKernelAlongBatch || sizeMapping.streamK != 0)
+            problemTiles *= numWG.z;
+
+        return problemTiles;
+    }
+
+    size_t ContractionProblemGemm::getItersPerTile(SizeMapping const& sizeMapping) const
+    {
+        size_t boundSize = 1;
+        for(size_t i = 0; i < m_boundIndices.size(); ++i)
+        {
+            boundSize *= m_boundSizes[i];
+        }
+
+        size_t itersPerTile = CeilDivide(boundSize, sizeMapping.depthU);
+
+        return itersPerTile;
+    }
+
     void ContractionProblemGemm::checkPersistentKernelEligibility(
         ContractionSolution const& solution, Hardware const& hardware)
     {

@@ -445,6 +445,10 @@ class ProblemPredicate(Properties.Predicate):
         if ('GlobalSplitU' in state) and (state['GlobalSplitU'] > 1):
             if ('_GlobalAccumulation' not in state) or (state['_GlobalAccumulation'] != 'MultipleBuffer'):
                 rv += [cls("DeterministicMode", value = False)]
+        
+        if ('StreamK' in state) and (state['StreamK'] > 0) and ('StreamKAtomic' in state) and (state['StreamKAtomic'] == 1):
+            # StreamKAtomic = 1 uses atomic for partial tiles
+            rv += [cls("DeterministicMode", value = False)]
 
         # if bufferload is performed, we output some predication info for host side,
         # to prevent from some extremely large problems from launching and causing bufferload offset limit < 2^32
@@ -474,7 +478,7 @@ class ProblemPredicate(Properties.Predicate):
         if 'BufferStore' in state and state['BufferStore'] == True:
             rv += [cls('BufferStoreOffsetLimitCheck', value=state['MacroTile1'])]
 
-        if '_GlobalAccumulation' in state and state['_GlobalAccumulation'] != None:
+        if '_GlobalAccumulation' in state and state['_GlobalAccumulation'] != None and not state["StreamK"]:
             value = globalParameters['MinKForGSU']
             rv += [cls('GlobalSplitUCheckMinK', value=[value, state["GlobalSplitU"]])]
 
@@ -508,6 +512,8 @@ class SizeMapping:
                  'workGroupMapping',
                  'packBatchDims',
                  'magicDivAlg',
+                 'streamK',
+                 'streamKAtomic',
                  'sourceKernel',
                  'globalAccumulation',
                  'workspaceSizePerElemC',
@@ -526,6 +532,8 @@ class SizeMapping:
             globalAccum = 2
         if d['_GlobalAccumulation'] == 'MultipleBufferSingleKernel':
             globalAccum = 3
+        if d['_GlobalAccumulation'] == 'PartialsBuffer':
+            globalAccum = 4
         return cls(waveNum                  = d['NumThreads'] // d['WavefrontSize'],
                    workGroup                = d['WorkGroup'],
                    macroTile                = cls.ReadOriginalMacroTile(d),
@@ -543,6 +551,8 @@ class SizeMapping:
                    globalSplitU             = d['GlobalSplitU'],
                    staggerStrideShift       = d['_staggerStrideShift'] if '_staggerStrideShift' in d else 0,
                    packBatchDims            = 0,
+                   streamK                  = d['StreamK'] if 'StreamK' in d else 0,
+                   streamKAtomic            = d['StreamKAtomic'] if 'StreamKAtomic' in d else 0,
                    magicDivAlg              = d.get('MagicDivAlg', 1),
                    sourceKernel             = d['KernelLanguage'] == 'Source',
                    globalAccumulation       = globalAccum,

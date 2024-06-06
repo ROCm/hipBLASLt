@@ -103,6 +103,49 @@ namespace Tensile
         size_t depthUorMT1;
     };
 
+    struct SizeMapping
+    {
+        size_t waveNum;
+
+        dim3 workGroupSize;
+        dim3 threadTile;
+        dim3 macroTile;
+
+        std::array<int, 4> matrixInstruction;
+        size_t grvwA              = 1;
+        size_t grvwB              = 1;
+        size_t gwvwC              = 1;
+        size_t gwvwD              = 1;
+
+        size_t staggerU           = 0;
+        size_t staggerUMapping    = 0;
+        size_t depthU             = 0;
+        size_t globalSplitUPGR    = 0;
+        size_t globalSplitU       = 0;
+        size_t staggerStrideShift = 0;
+        int    workGroupMapping   = 0;
+
+        size_t packBatchDims              = 0;
+        int    packSummationDims          = 0;
+        int    magicDivAlg                = 1;
+        int    streamK                    = 0;
+        int    streamKAtomic              = 0;
+        int    persistentKernel           = 0;
+        bool   persistentKernelAlongBatch = false;
+
+        bool sourceKernel = false;
+
+        int    globalAccumulation       = 0;
+        size_t workspaceSizePerElemC    = 0;
+        size_t workspaceSizePerElemBias = 0;
+
+        bool activationFused = true;
+
+        std::string customKernelName;
+
+        int workGroupMappingXCC = 1;
+    };
+
     /**
  * Represents a single kernel or set of kernels that can perform a single
  * tensor contraction.
@@ -316,6 +359,7 @@ namespace Tensile
         void singleCallArgs(Problem const&           problem,
                             ContractionInputs const& inputs,
                             uint32_t const&          workspaceOffsetInByte,
+                            Hardware const*          hardware,
                             KA&                      args) const;
 
         // Common kernel related arguments (e.g. gemm_count, arg type, MT, GSU...)
@@ -334,7 +378,8 @@ namespace Tensile
 
         template <bool T_Debug>
         KernelInvocation generateSingleCall(Problem const&           problem,
-                                            ContractionInputs const& inputs) const;
+                                            ContractionInputs const& inputs,
+                                            Hardware const&          hardware) const;
 
         template <bool T_Debug, typename KA>
         KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const& problems,
@@ -402,47 +447,6 @@ namespace Tensile
                                               size_t                   mt0,
                                               size_t                   mt1,
                                               size_t                   vw) const;
-
-        struct SizeMapping
-        {
-            size_t waveNum;
-
-            dim3 workGroupSize;
-            dim3 threadTile;
-            dim3 macroTile;
-
-            std::array<int, 4> matrixInstruction;
-            size_t grvwA              = 1;
-            size_t grvwB              = 1;
-            size_t gwvwC              = 1;
-            size_t gwvwD              = 1;
-
-            size_t staggerU           = 0;
-            size_t staggerUMapping    = 0;
-            size_t depthU             = 0;
-            size_t globalSplitUPGR    = 0;
-            size_t globalSplitU       = 0;
-            size_t staggerStrideShift = 0;
-            int    workGroupMapping   = 0;
-
-            size_t packBatchDims              = 0;
-            int    packSummationDims          = 0;
-            int    magicDivAlg                = 1;
-            int    persistentKernel           = 0;
-            bool   persistentKernelAlongBatch = false;
-
-            bool sourceKernel = false;
-
-            int    globalAccumulation       = 0;
-            size_t workspaceSizePerElemC    = 0;
-            size_t workspaceSizePerElemBias = 0;
-
-            bool activationFused = true;
-
-            std::string customKernelName;
-
-            int workGroupMappingXCC = 1;
-        };
 
         struct InternalArgsSupport
         {
