@@ -53,6 +53,9 @@ else( )
     set (HIP_PATH $ENV{HIP_PATH} )
 endif( )
 
+# hipBLASLt project
+project(hipblaslt LANGUAGES CXX)
+
 # Dependencies
 include(cmake/Dependencies.cmake)
 
@@ -71,9 +74,6 @@ endif()
 if(POLICY CMP0066)
   cmake_policy(SET CMP0066 NEW)
 endif()
-
-# hipBLASLt project
-project(hipblaslt LANGUAGES CXX)
 
 # Force library install path to lib (CentOS 7 defaults to lib64)
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE INTERNAL "Installation directory for libraries" FORCE)
