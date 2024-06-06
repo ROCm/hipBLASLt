@@ -770,7 +770,7 @@ int test_hipblaslt(hipDataType                 in_datatype,
     }
 
     // Set User Preference attributes
-    uint64_t max_workspace_size = 32 * 1024 * 1024;
+    uint64_t max_workspace_size = 128 * 1024 * 1024;
     void*    d_workspace;
     CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
 
