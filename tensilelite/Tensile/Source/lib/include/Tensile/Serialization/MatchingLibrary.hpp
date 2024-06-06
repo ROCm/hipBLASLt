@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -59,10 +59,38 @@ namespace Tensile
                 if(!iot::outputting(io))
                 {
                     using Entry = typename Table::Entry;
+                    using KEntry = typename Table::KEntry;
                     auto comp   = [](Entry const& e1, Entry const& e2) {
                         return e1.key < e2.key || (e1.key == e2.key && e1.speed > e2.speed);
                     };
                     std::sort(table.table.begin(), table.table.end(), comp);
+
+                    if constexpr(std::is_same<Distance, Matching::GridBasedDistance<Key>>{})
+                    {
+                        if(Debug::Instance().gridBasedKDTree())
+                        {
+                            // Creating K map
+                            for(auto it = table.table.begin(); it != table.table.end(); ++it)
+                            {
+                                auto k = it->key.size() > 3 ? it->key[3] : it->key[2];
+                                auto key = std::tuple(it->key[0], it->key[1]);
+                                if(table.kSolutionMap.find(key) == table.kSolutionMap.end())
+                                {
+                                    std::vector<KEntry> v = {KEntry(k, it->value)};
+                                    table.kSolutionMap[key] = v;
+                                }
+                                else
+                                {
+                                    table.kSolutionMap[key].push_back(KEntry(k,it->value));
+                                }
+                            }
+                            // Creating kd-tree
+                            for(auto it = table.kSolutionMap.begin(); it != table.kSolutionMap.end(); ++it)
+                            {
+                                table.kdTree.insert(get<0>(it->first), get<1>(it->first));
+                            }
+                        }
+                    }
                 }
             }
 

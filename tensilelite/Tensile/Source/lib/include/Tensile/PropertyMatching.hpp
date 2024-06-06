@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@
 #include <cstddef>
 #include <functional>
 #include <iomanip>
+#include <queue>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -38,6 +39,10 @@
 #include <Tensile/ProblemKey.hpp>
 #include <Tensile/Properties.hpp>
 #include <Tensile/Utils.hpp>
+
+// #ifdef ENABLE_ROCTX
+// #include <roctracer/roctx.h>
+// #endif
 
 namespace Tensile
 {
@@ -63,6 +68,13 @@ namespace Tensile
             Key    key;
             Value  value;
             double speed;
+        };
+
+        template <typename Value>
+        struct KEntry
+        {
+            int    k;
+            Value  value;
         };
 
         template <typename Object, typename Value, typename ReturnValue>
@@ -102,6 +114,169 @@ namespace Tensile
             Properties properties;
         };
 
+        struct Point {
+            int32_t x;
+            int32_t y;
+        };
+        class KDTree {
+        private:
+            struct Node {
+                Point point;
+                Node* left;
+                Node* right;
+                Node(const Point& p) : point(p), left(nullptr), right(nullptr) {}
+            };
+
+            Node* root;
+            uint32_t maxM, maxN;
+
+            int64_t distance(const Point& p1, const Point& p2) const
+            {
+                int64_t dx = p1.x - p2.x;
+                int64_t dy = p1.y - p2.y;
+                return dx * dx + dy * dy;
+            }
+
+            void insertNode(Node*& node, const Point& point, int depth)
+            {
+                if (node == nullptr) {
+                    node = new Node(point);
+                } else {
+                    int cd = depth % 2;
+                    if (cd == 0) {
+                        if (point.x < node->point.x) {
+                            insertNode(node->left, point, depth + 1);
+                        } else {
+                            insertNode(node->right, point, depth + 1);
+                        }
+                    } else {
+                        if (point.y < node->point.y) {
+                            insertNode(node->left, point, depth + 1);
+                        } else {
+                            insertNode(node->right, point, depth + 1);
+                        }
+                    }
+                }
+            }
+
+            struct ComparePoints {
+                bool operator()(const std::pair<double, Point>& p1, const std::pair<double, Point>& p2) {
+                    return p1.first > p2.first;
+                }
+            };
+
+            inline void pushToResult(Node* node, const Point& target, int k, std::priority_queue<std::pair<int64_t, Point>, std::vector<std::pair<int64_t, Point>>, ComparePoints>& result, double dist) const
+            {
+                    if (result.size() < k) {
+                        result.push(std::make_pair(dist, node->point));
+                    } else {
+                        std::pair<int64_t, Point> p = result.top();
+                        int64_t maxDist = p.first;
+                        if (dist < maxDist) {
+                            result.pop();
+                            result.push(std::make_pair(dist, node->point));
+                        }
+                    }
+            }
+
+            template<int T>
+            void findNearestPoints(Node* node, const Point& target, int k, std::priority_queue<std::pair<int64_t, Point>, std::vector<std::pair<int64_t, Point>>, ComparePoints>& result, int depth) const
+            {
+                if (node == nullptr) {
+                    return;
+                }
+
+                int64_t dist = distance(node->point, target);
+
+                if constexpr(T == 0)
+                {
+                    if (node->point.x >= target.x && node->point.y >= target.y) {
+                        pushToResult(node, target, k, result, dist);
+                    }
+                }
+                else if constexpr(T == 1)
+                {
+                    if (node->point.y >= target.y) {
+                        pushToResult(node, target, k, result, dist);
+                    }
+                }
+                else if constexpr(T == 2)
+                {
+                    if (node->point.x >= target.x) {
+                        pushToResult(node, target, k, result, dist);
+                    }
+                }
+                else if constexpr(T == 3)
+                {
+                    pushToResult(node, target, k, result, dist);
+                }
+
+                int cd = depth % 2;
+                if (cd == 0) {
+                    if (target.x < node->point.x) {
+                        findNearestPoints<T>(node->left, target, k, result, depth + 1);
+                        if (result.size() < k || std::abs(target.x - node->point.x) < dist) {
+                            findNearestPoints<T>(node->right, target, k, result, depth + 1);
+                        }
+                    } else {
+                        findNearestPoints<T>(node->right, target, k, result, depth + 1);
+                        if (result.size() < k || std::abs(target.x - node->point.x) < dist) {
+                            findNearestPoints<T>(node->left, target, k, result, depth + 1);
+                        }
+                    }
+                } else {
+                    if (target.y < node->point.y) {
+                        findNearestPoints<T>(node->left, target, k, result, depth + 1);
+                        if (result.size() < k || std::abs(target.y - node->point.y) < dist) {
+                            findNearestPoints<T>(node->right, target, k, result, depth + 1);
+                        }
+                    } else {
+                        findNearestPoints<T>(node->right, target, k, result, depth + 1);
+                        if (result.size() < k || std::abs(target.y - node->point.y) < dist) {
+                            findNearestPoints<T>(node->left, target, k, result, depth + 1);
+                        }
+                    }
+                }
+            }
+
+        public:
+            KDTree() : root(nullptr), maxM(0), maxN(0) {}
+
+            void insert(const int32_t x, const int32_t y)
+            {
+                if(maxM < x)
+                    maxM = x;
+                if(maxN < y)
+                    maxN = y;
+                Point point = {static_cast<int32_t>(x), static_cast<int32_t>(y)};
+                insertNode(root, point, 0);
+            }
+
+            std::vector<Point> findKNearestPoints(const int32_t x, const int32_t y, int k) const
+            {
+                Point target = {static_cast<int32_t>(x), static_cast<int32_t>(y)};
+
+                // Create a new priority queue with the updated comparison functor
+                std::priority_queue<std::pair<int64_t, Point>, std::vector<std::pair<int64_t, Point>>, ComparePoints> result;
+                if(x <= maxM && y <= maxN)
+                    findNearestPoints<0>(root, target, k, result, 0);
+                else if(x > maxM && y < maxN)
+                    findNearestPoints<1>(root, target, k, result, 0);
+                else if(x < maxM && y > maxN)
+                    findNearestPoints<2>(root, target, k, result, 0);
+                else
+                    findNearestPoints<3>(root, target, k, result, 0);
+
+                std::vector<Point> points;
+                while(!result.empty())
+                {
+                    points.push_back(result.top().second);
+                    result.pop();
+                }
+                return points;
+            }
+        };
+
         /**
          * Shared code between the generic DistanceMatchingTable and the specialization
          * for the special Equality distance
@@ -115,6 +290,7 @@ namespace Tensile
         {
             using Base       = MatchingTable<Object, Value, ReturnValue>;
             using Entry      = MatchingTableEntry<Key, Value>;
+            using KEntry     = KEntry<Value>;
             using Transform  = typename Base::Transform;
             using Properties = typename Base::Properties;
 
@@ -296,6 +472,9 @@ namespace Tensile
             Distance           distance;
 
             ReturnValue nullValue;
+
+            KDTree kdTree;
+            std::map<std::tuple<int32_t, int32_t>, std::vector<KEntry>> kSolutionMap;
         };
 
         /**
@@ -766,6 +945,58 @@ namespace Tensile
                 bool      Debug = T_Debug;
                 std::cout << std::setprecision(2) << std::fixed;
 
+                if(Debug::Instance().gridBasedKDTree())
+                {
+                    // roctxRangePush("KDTree");
+                    auto compK = [](KEntry<Value> const& e, int const N) {
+                        return e.k < N;
+                    };
+
+                    auto k = key.size() > 3 ? key[3] : key[2];
+                    std::vector<Point> points = this->kdTree.findKNearestPoints(key[0], key[1], numSolutions);
+                    for(auto point : points)
+                    {
+                        if(Debug)
+                            std::cout << "2D point: " << point.x << ", " << point.y << std::endl;
+                        auto iter = this->kSolutionMap.find(std::make_tuple(point.x, point.y));
+                        if(iter != this->kSolutionMap.end())
+                        {
+                            auto lower = std::lower_bound(iter->second.begin(), iter->second.end(), k, compK);
+                            if (lower != iter->second.end()) {
+                                auto prev = lower == iter->second.begin() ? lower : lower--;
+                                if(prev != lower)
+                                {
+                                    if(std::abs(prev->k - k) < std::abs(lower->k - k))
+                                    {
+                                        lower = prev;
+                                    }
+                                }
+                                auto thisMatch = transform(lower->value);
+                                if(thisMatch)
+                                {
+                                    if(bestmatches.size())
+                                    {
+                                        if(std::find(bestmatches.begin(), bestmatches.end(), thisMatch) != bestmatches.end())
+                                        {
+                                            if(Debug)
+                                                std::cout << "Duplicated solution" << std::endl;
+                                            continue;
+                                        }
+                                    }
+                                    if(Debug)
+                                        std::cout << "Final selected points: " << point.x << ", " << point.y << " K: " << lower->k << std::endl;
+
+                                    bestmatches.push_back(thisMatch);
+                                }
+                            }
+                        }
+                    }
+                    // roctxRangePop();
+                    return bestmatches;
+                }
+
+                // roctxRangePush("Binary");
+
                 auto compM = [&count, Debug](Entry const& e, long const M) {
                     if(Debug)
                         printf("[%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2]);
@@ -1006,6 +1237,7 @@ namespace Tensile
                 if(T_Debug && bestmatches.size())
                     std::cout << "Solution index selected: " << bestmatches[0]->index << std::endl;
 
+                // roctxRangePop();
                 return bestmatches;
             }
         };
