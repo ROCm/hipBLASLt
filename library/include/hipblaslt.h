@@ -306,11 +306,15 @@ typedef struct _hipblasLtMatmulAlgo_t{
 } hipblasLtMatmulAlgo_t;
 
 /*! \ingroup types_module
+ *  \struct hipblasLtMatmulHeuristicResult_t
  *  \brief Description of the matrix multiplication algorithm
  *
  *  \details
  *  This is a descriptor that holds the configured matrix multiplication algorithm descriptor and its runtime properties.
  *  This structure can be trivially serialized and later restored for use with the same version of hipBLASLt library to save on selecting the right configuration again.
+ *  @param algo \ref hipblasLtMatmulAlgo_t struct
+ *  @param workspaceSize Actual size of workspace memory required
+ *  @param state Result status. Other fields are valid only if, after call to hipblasLtMatmulAlgoGetHeuristic(), this member is set to HIPBLAS_STATUS_SUCCESS
  */
 typedef struct _hipblasLtMatmulHeuristicResult_t{
   hipblasLtMatmulAlgo_t algo;                      /**<Algo struct*/
