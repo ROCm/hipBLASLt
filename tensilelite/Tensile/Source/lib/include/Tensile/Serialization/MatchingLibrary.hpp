@@ -58,9 +58,9 @@ namespace Tensile
 
                 if(!iot::outputting(io))
                 {
-                    using Entry = typename Table::Entry;
+                    using Entry  = typename Table::Entry;
                     using KEntry = typename Table::KEntry;
-                    auto comp   = [](Entry const& e1, Entry const& e2) {
+                    auto comp    = [](Entry const& e1, Entry const& e2) {
                         return e1.key < e2.key || (e1.key == e2.key && e1.speed > e2.speed);
                     };
                     std::sort(table.table.begin(), table.table.end(), comp);
@@ -72,23 +72,28 @@ namespace Tensile
                             // Creating K map
                             for(auto it = table.table.begin(); it != table.table.end(); ++it)
                             {
-                                auto k = it->key.size() > 3 ? it->key[3] : it->key[2];
+                                auto k   = it->key.size() > 3 ? it->key[3] : it->key[2];
                                 auto key = std::tuple(it->key[0], it->key[1]);
                                 if(table.kSolutionMap.find(key) == table.kSolutionMap.end())
                                 {
-                                    std::vector<KEntry> v = {KEntry(k, it->value)};
+                                    std::vector<KEntry> v   = {KEntry(k, it->value)};
                                     table.kSolutionMap[key] = v;
                                 }
                                 else
                                 {
-                                    table.kSolutionMap[key].push_back(KEntry(k,it->value));
+                                    table.kSolutionMap[key].push_back(KEntry(k, it->value));
                                 }
                             }
+
                             // Creating kd-tree
-                            for(auto it = table.kSolutionMap.begin(); it != table.kSolutionMap.end(); ++it)
+                            std::vector<Matching::PointND<int32_t, 2>> pts;
+                            for(auto it = table.kSolutionMap.begin();
+                                it != table.kSolutionMap.end();
+                                ++it)
                             {
-                                table.kdTree.insert(get<0>(it->first), get<1>(it->first));
+                                pts.push_back({get<0>(it->first), get<1>(it->first)});
                             }
+                            table.kdTree.build(table.kdTree.root, begin(pts), end(pts), 0);
                         }
                     }
                 }
