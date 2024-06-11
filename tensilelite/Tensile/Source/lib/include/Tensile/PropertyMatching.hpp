@@ -146,17 +146,25 @@ namespace Tensile
                 float       distance{};
                 bool        operator<(const SearchResult& rhs) const
                 {
-                    return distance < rhs.distance;
+                    if(distance != rhs.distance)
+                    {
+                        return distance < rhs.distance;
+                    }
+
+                    for(size_t i = 0; i < N; ++i)
+                    {
+                        if(node->pt.coord[i] != rhs.node->pt.coord[i])
+                        {
+                            return node->pt.coord[i] < rhs.node->pt.coord[i];
+                        }
+                    }
+
+                    return false;
                 }
 
                 bool operator>(const SearchResult& rhs) const
                 {
-                    return distance > rhs.distance;
-                }
-
-                bool operator==(const SearchResult& rhs) const
-                {
-                    return distance == rhs.distance;
+                    return rhs < *this;
                 }
             };
 
