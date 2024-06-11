@@ -27,7 +27,6 @@
 #pragma once
 
 #include <array>
-#include <chrono>
 #include <cstddef>
 #include <functional>
 #include <iomanip>
@@ -984,8 +983,10 @@ namespace Tensile
                     target.coord[0] = key[0];
                     target.coord[1] = key[1];
 
-                    std::cout << "Searching space: " << this->kdTree.size() << '\n';
-                    auto t0 = std::chrono::high_resolution_clock::now();
+                    if(Debug)
+                    {
+                        std::cout << "Searching space: " << this->kdTree.size() << '\n';
+                    }
 
                     auto results = this->kdTree.query(
                         target, numSolutions, [this](auto pt, auto best) {
@@ -1054,14 +1055,11 @@ namespace Tensile
                             }
                         }
                     }
-                    auto t1 = std::chrono::high_resolution_clock::now();
-                    std::cout << (t1 - t0).count() / 1000 << " us\n";
                     // roctxRangePop();
                     return bestmatches;
                 }
 
                 // roctxRangePush("Binary");
-                auto t0 = std::chrono::high_resolution_clock::now();
 
                 auto compM = [&count, Debug](Entry const& e, long const M) {
                     if(Debug)
@@ -1304,8 +1302,6 @@ namespace Tensile
                     std::cout << "Solution index selected: " << bestmatches[0]->index << std::endl;
 
                 // roctxRangePop();
-                auto t1 = std::chrono::high_resolution_clock::now();
-                std::cout << "Binary: " << (t1 - t0).count() / 1000 << " us\n";
                 return bestmatches;
             }
         };
