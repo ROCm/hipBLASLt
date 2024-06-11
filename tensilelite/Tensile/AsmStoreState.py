@@ -324,6 +324,12 @@ class StoreState:
                 coordOffset1 += bIdx1 * matrixInstN
                 coordOffset1 += wtIdex * matrixInstN *  matrixInstBN * kernel["MIWaveGroup"][1]
                 coordOffset1  = coordOffset1 * vectorWidth + vc1
+            else: # mac instruction
+                if kernel["LocalSplitU"] > 1:
+                    strideD1 = (kernel["NumThreads"]*kernel["VectorWidthB"]//kernel["MacroTile0"])
+                else:
+                    strideD1 = (kernel["SubGroup1"] * kernel["VectorWidthB"])
+                coordOffset1 = d1 * strideD1 + vc1
 
             newCoord1 = (self.firstBatch and elementIdx==0) or (coordOffset1 != self.lastCoordOffset1)
             self.elementCoord1.append(coordOffset1)
@@ -346,7 +352,8 @@ class StoreState:
                 coordOffset0 += bIdx0 * matrixInstM
                 coordOffset0 += wtIdex * matrixInstM * matrixInstBM * kernel["MIWaveGroup"][0]
                 coordOffset0  = coordOffset0 * vectorWidth + vc0
-
+            else: # mac instruction
+                coordOffset0 = d0 * kernel["SubGroup0"]*kernel["VectorWidthA"] + vc0
             self.elementCoord0.append(coordOffset0)
 
         return self.elementCoord0, self.elementCoord1
@@ -388,6 +395,8 @@ class StoreState:
             coordOffset0 = self.elementCoord0[elementIdx]
             coordOffset1 = self.elementCoord1[elementIdx]
             newCoord1    = (self.firstBatch and elementIdx==0) or (coordOffset1 != self.lastCoordOffset1)
+
+            (d1,d0,vc1,vc0) = element
 
             if self.optSingleColVgpr:
                 # use same address vgpr for all

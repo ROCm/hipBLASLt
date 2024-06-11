@@ -2142,10 +2142,9 @@ void testing_matmul_with_bias(const Arguments& arg)
         static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
         //workaround before known_bug work
         if(gpu_arch_match(deviceProperties.gcnArchName, "11?")
-           && (arg.gradient || arg.grouped_gemm || arg.a_type == HIP_R_32F
-               || arg.b_type == HIP_R_32F || arg.a_type == HIP_R_64F
-               || arg.b_type
-                      == HIP_R_64F)) //arg.activation_type == gelu || arg.bias_source == a || arg.bias_source == b)
+           && (arg.gradient || arg.grouped_gemm 
+               || arg.a_type == HIP_R_64F || arg.b_type == HIP_R_64F)) 
+		//arg.activation_type == gelu || arg.bias_source == a || arg.bias_source == b)
         {
             hipblaslt_cerr << "No Solution Found!!" << std::endl;
             return;

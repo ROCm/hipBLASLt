@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 ################################################################################
 
 from ..TensileInstructions import Module, VAddU32, staticMultiply, vectorStaticDivide, \
-                                vectorStaticRemainder, RegisterPoolResource, vgpr
+                                vectorStaticRemainder, vectorStaticDivideAndRemainder, RegisterPoolResource, vgpr
 from ..Component import LraTileAssignment, LraTileProperties
 from dataclasses import dataclass
 
@@ -36,6 +36,55 @@ class LraTilePropertiesMFMA(LraTileProperties):
    dividedForWaveId: int
    vectorWidth: int
    maxKId: int
+
+class LraTileAssignmentVALU(LraTileAssignment):
+    kernel = {"EnableMatrixInstruction": False}
+
+    """
+    Local Read Addresses: Tile Assignment
+    """
+    def __call__(self, writer, kernel, tP):
+        module = Module("LraTileAssignmentVALU")
+
+        # allocate resources
+        qReg    = writer.vgprPool.checkOut(1,"qReg") # quotient
+        rReg    = writer.vgprPool.checkOut(1,"rReg") # remainder
+
+        with writer.allocTmpSgpr(1) as tmpSgprInfo:
+            if tP["tileIdx"] == 0:
+                # kStr += "%slr%s = serial %% SG%s%s%s" \
+                #         % (writer.commentPrefix, tP["tileChar"], tP["tileChar"], \
+                #         writer.commentSuffix, writer.endLine)
+
+                # constant
+                dividendReg = "Serial" # local serial
+                divisor = kernel["SubGroup0"]
+
+                # generate instruction
+                module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpSgprInfo))
+
+                # release and return resource
+                tP["gpr"]["lro"] = rReg
+                writer.tmplro = qReg
+            else:
+                # kStr += "%slr%s = (serial / SG%s) %% SG%s%s%s" \
+                #         % (writer.commentPrefix, tP["tileChar"], tP["tileChar"], \
+                #         tP["tileChar"], writer.commentSuffix, writer.endLine)
+
+                # constant
+                divisor = kernel["SubGroup1"]
+                dividendReg = writer.tmplro
+
+                # generate instruction
+                module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpSgprInfo))
+
+                # release and return resource
+                tP["gpr"]["lro"] = rReg
+
+                writer.vgprPool.checkIn(writer.tmplro) # old
+                writer.vgprPool.checkIn(qReg)
+
+        return module
 
 class LraTileAssignmentMFMA(LraTileAssignment):
     kernel = {"EnableMatrixInstruction": True}

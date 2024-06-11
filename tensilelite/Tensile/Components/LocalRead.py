@@ -28,6 +28,104 @@ from ..TensileInstructions import Module, DSModifiers, vgpr, sgpr, \
                             VMovB32, VLShiftRightB32, VCvtPkFP8toF32, VCvtF32toF16, VCvtFP8toF32, SDWAModifiers, SelectBit
 from math import ceil
 
+class LocalReadVALU(LocalRead):
+    kernel = {"EnableMatrixInstruction": False}
+
+    """
+    Local Read: Do It A/B
+    iui = Inner Unroll Idx
+    epsi = expand pointer swap index. Only used for PAP
+    """
+    def __call__(self, writer, kernel, bufferIdx, iui, epsi, tP):
+        tc = tP["tensorChar"]
+
+        if tc == "A":
+            writer.states.localReadDoCntA += 1
+        elif tc == "Metadata":
+            writer.states.localReadDoCntMetadata += 1
+        else:
+            writer.states.localReadDoCntB += 1
+
+        tile01            = tP["tile01Idx"]
+        imod              = Module("LocalReadDo%s_I%s"%(tc,iui))
+        pack              = Module("pack%s_I%s"%(tc,iui))
+        instruction       = tP["localReadInstruction"]
+        numOffsets        = instruction.numOffsets
+        blockWidth        = instruction.blockWidth
+        offsetMultiplier  = 1 # instruction.offsetMultiplier
+        valuIdx           = 0
+        numVectorsPerTile = (kernel["ThreadTile%u"%tile01]//kernel["VectorWidthA"])
+        numReadsPerVector = (kernel["VectorWidthA"] * tP["bpe"]) // (blockWidth*4) # bytes/register
+
+        for vIdx in range(0, numVectorsPerTile):
+            for rIdx in range(0, int(numReadsPerVector)):
+                localReadCode = imod.add(Module("LocalRead%s Valu%u"%(tc,valuIdx)))
+                paramList     = []
+                destVgpr      = vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, valuIdx), blockWidth)
+
+                # paramList.append(destVgpr)
+                # paramList.append(vgpr("LocalReadAddr%s"%tc))
+
+                for oIdx in range(0, numOffsets):
+                    paramList.append(((rIdx*blockWidth + kernel["SubGroup%u"%tile01] * (vIdx*numOffsets+oIdx)*kernel["VectorWidthA"] \
+                      + tP["localReadOffset"]) * tP["bpe"] + tP["localReadSwapByteOffset"]) // offsetMultiplier)
+                    # print("Debug: Matrix{}, rIdx offset {}, vIdx offset {}, bpe {}, net offset {}".format( \
+                    #     tP["tensorChar"], \
+                    #     rIdx * blockWidth, \
+                    #     kernel["SubGroup%u" % tP["tensorIdx"]] * (vIdx * numOffsets + oIdx) * kernel["VectorWidth"] + tP["localReadOffset"], \
+                    #     tP["bpe"], \
+                    #     paramList[-1]))
+                # paramTuple = tuple(paramList)
+                if numOffsets == 1:
+                    ds = DSModifiers(na=1, offset=paramList[0])
+                if numOffsets == 2:
+                    ds = DSModifiers(na=2, offset0=paramList[0], offset1=paramList[1])
+                LocalReadX = instruction.getInst()
+                localReadCode.add(LocalReadX(dst=destVgpr, src=vgpr("LocalReadAddr%s"%tc), ds=ds))
+                valuIdx += blockWidth
+
+                # TODO - handle vector-load
+                with writer.allocTmpSgpr(1) as tmpSgprInfo:
+                    tmpSgpr = tmpSgprInfo.idx
+                    if writer.db["CheckValue1%s" % tc]:
+                        dbgVgpr = destVgpr
+                        dbgVgprList = destVgpr.split("v[")
+                        if len(dbgVgprList) == 1: # vIdx, no []
+                            dbgVgpr = dbgVgprList[0]
+                        else:
+                            # We only check the first one now
+                            # TODO: Handle vector, but need to take care the last one
+                            dbgVgprList = (dbgVgprList[1].split("]")[0]).split(':')
+                            dbgVgpr = "v[%s]"%dbgVgprList[0]
+
+                        # localReadCode.addInst("s_waitcnt lgkmcnt(0)", "CheckValue1 wait for LDS read")
+                        localReadCode.add(SWaitCnt(lgkmcnt=0, comment="CheckValue1 wait for lds read"))
+                        if writer.archCaps["SeparateVscnt"]:
+                            # localReadCode.addInst( "s_waitcnt_vscnt", "null", "0", "")
+                            localReadCode.add(SWaitCnt(vmcnt=0, vscnt=0))
+
+                        if kernel["ProblemType"]["DataType"].isHalf():
+                            localReadCode.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(0x3c003c00), comment="CheckValue1: FP16")) # packed 1s
+                            localReadCode.add(writer.assert_eq( dbgVgpr, sgpr(tmpSgpr)))
+
+                        elif kernel["ProblemType"]["DataType"].isBFloat16():
+                            localReadCode.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(0x3f803f80), comment="CheckValue1: BF16")) # packed 1s
+                            localReadCode.add(writer.assert_eq( dbgVgpr, sgpr(tmpSgpr)))
+
+                        # TODO - Check if this works
+                        if kernel["ProblemType"]["DataType"].isInt8():
+                            localReadCode.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(0x01010101), comment="CheckValue1: INT8")) # packed 1s
+                            localReadCode.add(writer.assert_eq( dbgVgpr, sgpr(tmpSgpr)))
+
+                        # TODO - Check if this works
+                        elif kernel["ProblemType"]["DataType"].isInt8x4():
+                            localReadCode.add(writer.assert_eq( dbgVgpr, 1))
+
+                        elif kernel["ProblemType"]["DataType"].isSingle():
+                            localReadCode.add(writer.assert_eq( dbgVgpr, 1.0) )
+
+        return imod, pack
+
 class LocalReadMFMA(LocalRead):
     kernel = {"EnableMatrixInstruction": True}
 
