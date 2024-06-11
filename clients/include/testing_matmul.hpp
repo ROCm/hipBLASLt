@@ -2360,19 +2360,22 @@ void testing_matmul_with_bias(const Arguments& arg)
 
     if(!arg.timing)
     {
-        if(!do_grouped_gemm)
+        for(size_t sol = 0; sol < heuristicResult.size(); sol++)
         {
-            if(arg.use_ext)
+            if(!do_grouped_gemm)
             {
-                CHECK_HIPBLASLT_ERROR(gemmVec[0].initialize(
-                    heuristicResult[0].algo, tuningVec[heuristicTuningIndex[0]], *dWorkspace));
-
-                CHECK_HIPBLASLT_ERROR(gemmVec[0].run(stream));
-            }
-            else
-            {
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
+                if(arg.use_ext)
+                {
+                    CHECK_HIPBLASLT_ERROR(
+                        gemmVec[0].initialize(heuristicResult[sol].algo,
+                                                  tuningVec[heuristicTuningIndex[sol]],
+                                                  *dWorkspace));
+                    CHECK_HIPBLASLT_ERROR(gemmVec[0].run(stream));
+                }
+                else
+                {
+                  CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                  EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
                                                       matmul[0][0],
                                                       alpha_in[0],
                                                       *(dA[0]),
@@ -2384,81 +2387,81 @@ void testing_matmul_with_bias(const Arguments& arg)
                                                       matC[0],
                                                       *(dD[0]),
                                                       matD[0],
-                                                      &heuristicResult[0].algo,
+                                                      &heuristicResult[sol].algo,
                                                       *dWorkspace,
                                                       workspace_size,
                                                       stream),
                                       HIPBLAS_STATUS_SUCCESS);
-            }
-        }
-        else
-        {
-            if(arg.use_user_args)
-            {
-                //grouped gemm
-                CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].initialize(
-                    heuristicResult[0].algo, tuningVec[heuristicTuningIndex[0]], *dWorkspace));
-                groupedGemmVec[0].getDefaultValueForDeviceUserArguments(userArgs);
-                // Copy them to device memory
-                CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
-                                          userArgs,
-                                          gemm_count * sizeof(hipblaslt_ext::UserArguments),
-                                          hipMemcpyHostToDevice));
-
-                CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].run(d_userArgs, stream));
+                }
             }
             else
             {
                 //grouped gemm
-                CHECK_HIPBLASLT_ERROR(
-                    groupedGemmVec[0].initialize(heuristicResult[0].algo,
-                                                 tuningVec[heuristicTuningIndex[0]],
-                                                 *dWorkspace,
-                                                 false,
-                                                 stream));
+                if(arg.use_user_args)
+                {
+                    CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].initialize(
+                        heuristicResult[sol].algo, tuningVec[heuristicTuningIndex[0]], *dWorkspace));
+                    groupedGemmVec[0].getDefaultValueForDeviceUserArguments(userArgs);
+                    // Copy them to device memory
+                    CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
+                                              userArgs,
+                                              gemm_count * sizeof(hipblaslt_ext::UserArguments),
+                                              hipMemcpyHostToDevice));
 
-                CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].run(stream));
+                    CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].run(d_userArgs, stream));
+                }
+                else
+                {
+                    CHECK_HIPBLASLT_ERROR(
+                        groupedGemmVec[0].initialize(heuristicResult[sol].algo,
+                                                     tuningVec[heuristicTuningIndex[0]],
+                                                     *dWorkspace,
+                                                     false,
+                                                     stream));
+
+                    CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].run(stream));
+                }
             }
-        }
 
-        double              hipblaslt_error = 0.0;
-        std::vector<double> tol(gemm_count);
-        if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
-           && sizeof(TiB) == 2)
-        {
-            for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+            double              hipblaslt_error = 0.0;
+            std::vector<double> tol(gemm_count);
+            if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
+               && sizeof(TiB) == 2)
             {
-                tol[gemmIdx] = K[gemmIdx] * sum_error_tolerance_for_gfx11<Tc, TiA, To>;
+                for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+                {
+                    tol[gemmIdx] = K[gemmIdx] * sum_error_tolerance_for_gfx11<Tc, TiA, To>;
+                }
             }
-        }
-        if(arg.unit_check || arg.norm_check)
-        {
-            copy_gemm_to_host(stream, gemm_count, hD_1, dD);
-            check(stream,
-                  arg,
-                  gemm_count,
-                  M,
-                  N,
-                  ldd,
-                  lde,
-                  stride_d,
-                  stride_e,
-                  num_batches,
-                  size_bias,
-                  hD_gold,
-                  hD_1,
-                  dD,
-                  hAmaxD_gold,
-                  hAmaxD,
-                  dAmaxD,
-                  hE_gold,
-                  hE,
-                  dE,
-                  hBias_gold,
-                  hBias,
-                  dBias,
-                  tol,
-                  hipblaslt_error);
+            if(arg.unit_check || arg.norm_check)
+            {
+                copy_gemm_to_host(stream, gemm_count, hD_1, dD);
+                check(stream,
+                      arg,
+                      gemm_count,
+                      M,
+                      N,
+                      ldd,
+                      lde,
+                      stride_d,
+                      stride_e,
+                      num_batches,
+                      size_bias,
+                      hD_gold,
+                      hD_1,
+                      dD,
+                      hAmaxD_gold,
+                      hAmaxD,
+                      dAmaxD,
+                      hE_gold,
+                      hE,
+                      dE,
+                      hBias_gold,
+                      hBias,
+                      dBias,
+                      tol,
+                      hipblaslt_error);
+            }
         }
     }
     else
