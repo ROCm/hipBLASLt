@@ -531,7 +531,7 @@ namespace hipblaslt_ext
         auto gemmType                   = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocproblemtypes            = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&m_problem_types);
         rocblaslt_handle handle         = (rocblaslt_handle)m_handle;
-        rocblaslt_matmul_desc descr     =  (rocblaslt_matmul_desc)matmul_descr;
+        rocblaslt_matmul_desc descr     = (rocblaslt_matmul_desc)matmul_descr;
         rocblaslt_matrix_layout rocMatA = (rocblaslt_matrix_layout)matA;
         rocblaslt_matrix_layout rocMatB = (rocblaslt_matrix_layout)matB;
         rocblaslt_matrix_layout rocMatC = (rocblaslt_matrix_layout)matC;

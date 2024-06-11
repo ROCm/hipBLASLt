@@ -1359,6 +1359,43 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
     return status;
 }
 
+rocblaslt_status validateAMaxArgs(std::shared_ptr<void>& gemmData)
+{
+    rocblaslt_status status = rocblaslt_status_success;
+    std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+    AMaxScaleData& asd = data->amaxScale;
+    Tensile::ContractionProblemGemm& prob = data->problem;
+    const Tensile::TensorDescriptor& a = prob.tensor(Tensile::ContractionProblemGemm::TENSOR::A);
+    const Tensile::TensorDescriptor& b = prob.tensor(Tensile::ContractionProblemGemm::TENSOR::B);
+
+    size_t logA  = a.totalLogicalElements();
+    size_t logB  = b.totalLogicalElements();
+    size_t alocA = a.totalAllocatedElements();
+    size_t alocB = b.totalAllocatedElements();
+    size_t batA  = (a.dimensions() == 3) ? a.sizes()[2] : 1;
+    size_t batB  = (b.dimensions() == 3) ? b.sizes()[2] : 1;
+
+    if (asd.amaxScaleA)
+    {
+        if ((logA != alocA) || (batA != 1))
+        {
+            log_error(__func__, "Amax func didn't support ld or stride");
+            status = rocblaslt_status_invalid_value;
+        }
+    }
+
+    if (asd.amaxScaleB)
+    {
+        if ((logB != alocB) || (batB != 1))
+        {
+            log_error(__func__, "Amax func didn't support ld or stride");
+            status = rocblaslt_status_invalid_value;
+        }
+    }
+
+    return status;
+}
+
 rocblaslt_status gemmCreate(RocblasltContractionProblem const& problem,
                             std::shared_ptr<void>&             gemmData,
                             size_t&                            gemmCount)
@@ -1376,8 +1413,7 @@ rocblaslt_status gemmCreate(RocblasltContractionProblem const& problem,
         gemmCount = 1;
         if(gemmData)
         {
-            std::shared_ptr<TensileDataGemm> data
-                = std::static_pointer_cast<TensileDataGemm>(gemmData);
+            std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
             updateTensileProblem(problem, data->problem);
             data->inputs         = GetTensileInputs(problem);
             data->enableEpilogue = problem.epilogue == ROCBLASLT_EPILOGUE_DEFAULT ? false : true;
@@ -1392,7 +1428,7 @@ rocblaslt_status gemmCreate(RocblasltContractionProblem const& problem,
             gemmData = std::static_pointer_cast<void>(std::make_shared<TensileDataGemm>(data));
         }
 
-        status = rocblaslt_status_success;
+        status = validateAMaxArgs(gemmData);
     }
     catch(const std::exception& e)
     {
