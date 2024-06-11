@@ -1715,7 +1715,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["EnableMatrixInstruction"]:
         macIterCode.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, u, kernel["InnerUnroll"], unrollIdx = u))
       else:
-        printExit("TensileLite does not support MAC instructions.")
+        macIterCode.add(self.macIter(kernel, tensorParametersA, tensorParametersB, luIdx, kernel["InnerUnroll"], True))
       if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
         tP = tensorParametersA if kernel["ProblemType"]["BiasSrc"] == "A" else tensorParametersB
         macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, u, kernel["InnerUnroll"]))
@@ -2041,7 +2041,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["EnableMatrixInstruction"]:
         macIterCode.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, u, kernel["InnerUnroll"], unrollLoopIdx=lc, unrollIdx = u))
       else:
-        printExit("TensileLite does not support MAC instructions.")
+        macIterCode.add(self.macIter(kernel, tensorParametersA, tensorParametersB, luIdx, kernel["InnerUnroll"], True))
       if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
         tP = tensorParametersA if kernel["ProblemType"]["BiasSrc"] == "A" else tensorParametersB
         macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, u, kernel["InnerUnroll"]))
@@ -2428,7 +2428,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(pack[0])
         pack[0] = Module()
 
-        module.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, 0, tailLoopInnerUnroll, tail = True, unrollIdx = mValue))
+        if kernel["EnableMatrixInstruction"]:
+          module.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, 0, tailLoopInnerUnroll, tail = True, unrollIdx = mValue))
+        else: # mac instruction
+          module.add(self.macIter(kernel, tensorParametersA, tensorParametersB, mValue, tailLoopInnerUnroll, True, True))
         if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
           tP = tensorParametersA if kernel["ProblemType"]["BiasSrc"] == "A" else tensorParametersB
           module.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, 0, tailLoopInnerUnroll))
@@ -3060,26 +3063,36 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     ####################################
     # num vgprs: valu
-    #jgolds bpeCinternal because we are allocating accumulation registers here
-    self.states.c.numVgprValu = (kernel["ThreadTile0"]*kernel["ThreadTile1"]*self.states.bpeCinternal)//self.states.bpr
-
-    valuBlocks = (self.states.numVgprBuffer) * kernel["InnerUnroll"]
-    # double the number of VgprValu if self.states.vgprValuDouble is true
-    if self.states.vgprValuDouble:
-      valuBlocks *= 2
     if kernel["EnableMatrixInstruction"]:
+      #jgolds bpeCinternal because we are allocating accumulation registers here
+      self.states.c.numVgprValu = (kernel["ThreadTile0"]*kernel["ThreadTile1"]*self.states.bpeCinternal)//self.states.bpr
+
+      valuBlocks = (self.states.numVgprBuffer) * kernel["InnerUnroll"]
+      # double the number of VgprValu if self.states.vgprValuDouble is true
+      if self.states.vgprValuDouble:
+        valuBlocks *= 2
+
       self.states.a.numVgprValuPerBlock = kernel["MIWaveTileA"] * kernel["MIInputPerThreadA"] * tensorParametersA["bpe"] // self.states.bpr
       self.states.b.numVgprValuPerBlock = kernel["MIWaveTileB"] * kernel["MIInputPerThreadB"] * tensorParametersB["bpe"] // self.states.bpr
-    else:
-      printExit("TensileLite does not support non MFMA.")
 
-    self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * valuBlocks
-    if self.states.lrvwTileA > 1 and tensorParametersA["bpe"] < 4:
-      self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"]
+      self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * valuBlocks
+      if self.states.lrvwTileA > 1 and tensorParametersA["bpe"] < 4:
+        self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"]
 
-    self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocks
-    if self.states.lrvwTileB > 1 and tensorParametersB["bpe"] < 4:
-      self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"]
+      self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocks
+      if self.states.lrvwTileB > 1 and tensorParametersB["bpe"] < 4:
+        self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"]
+
+    else: # mac instruction
+      valuBlocksA = (1 + kernel["PrefetchLocalRead"]) * kernel["InnerUnroll"]
+      valuBlocksB = (1 + kernel["PrefetchLocalRead"]) * kernel["InnerUnroll"]
+
+      self.states.a.numVgprValuPerBlock = kernel["ThreadTileA"] * tensorParametersA["bpe"] // self.states.bpr
+      self.states.b.numVgprValuPerBlock = kernel["ThreadTileB"] * tensorParametersB["bpe"] // self.states.bpr
+
+      self.states.c.numVgprValu = kernel["ThreadTile0"] * kernel["ThreadTile1"] * kernel["ProblemType"]["ComputeDataType"].numRegisters()
+      self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * valuBlocksA
+      self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocksB
 
     if kernel["ProblemType"]["Sparse"]:
       if kernel["DirectToVgprSparseMetadata"]:
@@ -3776,8 +3789,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["InnerUnroll"] >= self.states.numReadsIterCoalescedB:
         numB //= self.states.numReadsIterCoalescedB
 
-    else:
-      printExit("TensileLite does not support non MFMA.")
+    else: # mac instruction
+      numA = kernel["InnerUnroll"]*(kernel["ThreadTile0"] // kernel["VectorWidthA"]) // tensorParametersA["localReadInstruction"].numOffsets
+      numB = kernel["InnerUnroll"]*(kernel["ThreadTile1"] // kernel["VectorWidthB"]) // tensorParametersB["localReadInstruction"].numOffsets
+
     self.states.numReadsPerIterA = numA
     self.states.numReadsPerIterB = numB
     self.states.localReadDoCntA   = 0
