@@ -548,8 +548,8 @@ class MUBUFReadInstruction(GlobalReadInstruction):
         return l
 
     def __str__(self) -> str:
-        self.preStr()
-        kStr = self.instStr + " " + self.getArgStr()
+        # self.preStr()
+        kStr = self.instStr + self.typeConvert() + " " + self.getArgStr()
         kStr += str(self.mubuf) if self.mubuf else ""
         return self.formatWithComment(kStr)
 

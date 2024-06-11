@@ -34,22 +34,26 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           scalarStaticMultiply, MacroVMagicDiv, MacroVDynamicScalarDiv, \
                           RegisterPool, allocTmpGpr, allocTmpGprList, RegisterPoolResource, Holder, \
                           vgpr, sgpr, accvgpr, mgpr, log2, ceilDivide, DataType, fastdeepcopy, \
-                          dataTypeToMfmaInstTypePair, getGlcBitName, getSlcBitName, dataTypeNameAbbrevToInstType, PseudoRandomGenerator
+                          dataTypeToMfmaInstTypePair, getGlcBitName, getSlcBitName, dataTypeNameAbbrevToInstType, PseudoRandomGenerator, \
+                          LabelManager, Assert
 from .TensileInstructions.Instructions import *
 from .TensilePass import getActivationFunctionModuleName, getActivationBranchModuleName
 from .Common import globalParameters, print2, printExit, printWarning, roundUp
 from .TensileInstructions.Containers import HWRegContainer
 from .Component import Component
-from .KernelWriter import KernelWriter
+from .KernelWriter import KernelWriter, ConstValues, StateValues, StateVgprs, CodeModules
 from .KernelWriterModules import *
 from .SolutionStructs import isPackedIndex
 from .AsmStoreState import StoreState
+from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationType
 from .Utils import DataDirection
 
 from math import ceil, log
 from copy import deepcopy
 from typing import NamedTuple
+
+import collections
 
 ################################################################################
 # Assembly Kernel
@@ -1016,6 +1020,21 @@ class KernelWriterAssembly(KernelWriter):
 
     if kernel["ProblemType"]["StochasticRounding"]:
       module.add(PseudoRandomGenerator())
+
+    if not kernel["EnableMatrixInstruction"]:
+      # Macro MAC
+      PLR = kernel["PrefetchLocalRead"] \
+        if kernel["PrefetchLocalRead"] < kernel["LoopIters"] \
+        else kernel["LoopIters"] - 1
+      for m in range(0, 1+PLR):
+          macro = Macro("MAC_%ux%u_X%u" % (kernel["ThreadTile0"], kernel["ThreadTile1"], m), "")
+          component = Component.MAC.find(self)
+          if not component:
+            printExit("Assembly doesn't support datatype %s" % kernel["ProblemType"]["DataType"])
+          innerModule = component(self, tPA, tPB, m, kernel["InnerUnroll"])
+          for item in innerModule.items():
+              macro.add(item)
+          module.add(macro)
 
     module.setNoOpt(True)
     return module
@@ -3341,62 +3360,105 @@ class KernelWriterAssembly(KernelWriter):
 
     tc = tP["tensorChar"]
 
-    # allocate resources
-    wave_id    = self.vgprPool.checkOut(1) # quotient
-    rReg       = self.vgprPool.checkOut(1) # remainder, unused here
-    tmpVgpr    = self.vgprPool.checkOutAligned(2, 2,"tmpVgpr")
-    tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+    if kernel["EnableMatrixInstruction"]:
+      # allocate resources
+      wave_id    = self.vgprPool.checkOut(1) # quotient
+      rReg       = self.vgprPool.checkOut(1) # remainder, unused here
+      tmpVgpr    = self.vgprPool.checkOutAligned(2, 2,"tmpVgpr")
+      tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
 
-    # constant
-    tc          = tP["tensorChar"]
-    tile01      = tP["tile01Idx"]
-    LdsPad      = kernel["LdsPad%s" % tc] if kernel["LdsBlockSizePerPad%s" % tc] == 0 else 0
-    mtAddPad    = kernel["MacroTile%u" % tile01] + LdsPad
-    umlds       = kernel["UnrollMajorLDS%s" % tc]
-    lsu         = kernel["LocalSplitU"]
-    du          = kernel["DepthU"]
-    lsuStride   = du // lsu
-    numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
+      # constant
+      tc          = tP["tensorChar"]
+      tile01      = tP["tile01Idx"]
+      LdsPad      = kernel["LdsPad%s" % tc] if kernel["LdsBlockSizePerPad%s" % tc] == 0 else 0
+      mtAddPad    = kernel["MacroTile%u" % tile01] + LdsPad
+      umlds       = kernel["UnrollMajorLDS%s" % tc]
+      lsu         = kernel["LocalSplitU"]
+      du          = kernel["DepthU"]
+      lsuStride   = du // lsu
+      numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
 
-    # generate instruction
-    module.add(vectorStaticDivide(wave_id, "Serial", kernel["WavefrontSize"], tmpVgprRes))
-    module.add(vectorStaticDivide(wave_id, wave_id, numWaves, tmpVgprRes, comment="LSU offset: Get LSU wave_id"))
-    with self.allocTmpSgpr(1) as tmpSgprInfo:
-      tmpSgpr = tmpSgprInfo.idx
-      if umlds == False:
-        module.add(SMovB32(dst=sgpr(tmpSgpr), src=mtAddPad*lsuStride, \
-          comment="LSU offset: stride = lsuStride(%u)*(MT%u(%u) + PAD%u(%u))" % (lsuStride,tile01, kernel["MacroTile%u" % tile01], tile01, LdsPad)))
-      else:
-        module.add(SMovB32(dst=sgpr(tmpSgpr), src=lsuStride, \
-          comment="LSU offset: stride = lsuStride(%u) when umlds==True" % (lsuStride)))
-      module.add(VMulLOU32(dst=vgpr(wave_id), src0=sgpr(tmpSgpr), src1=vgpr(wave_id), \
-        comment="LSU offset: lsuoffset = wave_id*lsuStride*(MT%u+PAD)"%tile01))
-
-    # final offset
-    finalVgpr = vgpr("LocalReadAddr%s"%tc)
-    if log2(tP["bpeDS"]) > 0:
-      module.add(VAddLShiftLeftU32(dst=finalVgpr, src0=vgpr(wave_id), src1=vgpr(tP["gpr"]["lro"]), shiftHex=hex(log2(tP["bpeDS"])), \
-        comment="Final Offset: offset = (lro%s+lsuoffset)*bpeDS" % tile01 ))
-    else:
-      module.add(VAddU32(dst=finalVgpr, src0=vgpr(wave_id), src1=vgpr(tP["gpr"]["lro"]), \
-        comment="Final Offset: offset = (lro%s+lsuoffset)*bpeDS(1)" % tile01 ))
-
-    # LdsBlockSizePerPad: add padding
-    if kernel["LdsBlockSizePerPad%s"%tc] != 0 and kernel["LdsPad%s"%tc] !=0:
-      module.add(vectorStaticDivide(rReg, "LocalReadAddr%s"%tc, kernel["LdsBlockSizePerPad%s"%tc], tmpVgprRes, \
-        "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
+      # generate instruction
+      module.add(vectorStaticDivide(wave_id, "Serial", kernel["WavefrontSize"], tmpVgprRes))
+      module.add(vectorStaticDivide(wave_id, wave_id, numWaves, tmpVgprRes, comment="LSU offset: Get LSU wave_id"))
       with self.allocTmpSgpr(1) as tmpSgprInfo:
-        module.add(staticMultiply(vgpr(rReg), vgpr(rReg), kernel["LdsPad%s"%tc] * tP["bpeDS"], tmpSgprInfo, \
+        tmpSgpr = tmpSgprInfo.idx
+        if umlds == False:
+          module.add(SMovB32(dst=sgpr(tmpSgpr), src=mtAddPad*lsuStride, \
+            comment="LSU offset: stride = lsuStride(%u)*(MT%u(%u) + PAD%u(%u))" % (lsuStride,tile01, kernel["MacroTile%u" % tile01], tile01, LdsPad)))
+        else:
+          module.add(SMovB32(dst=sgpr(tmpSgpr), src=lsuStride, \
+            comment="LSU offset: stride = lsuStride(%u) when umlds==True" % (lsuStride)))
+        module.add(VMulLOU32(dst=vgpr(wave_id), src0=sgpr(tmpSgpr), src1=vgpr(wave_id), \
+          comment="LSU offset: lsuoffset = wave_id*lsuStride*(MT%u+PAD)"%tile01))
+
+      # final offset
+      finalVgpr = vgpr("LocalReadAddr%s"%tc)
+      if log2(tP["bpeDS"]) > 0:
+        module.add(VAddLShiftLeftU32(dst=finalVgpr, src0=vgpr(wave_id), src1=vgpr(tP["gpr"]["lro"]), shiftHex=hex(log2(tP["bpeDS"])), \
+          comment="Final Offset: offset = (lro%s+lsuoffset)*bpeDS" % tile01 ))
+      else:
+        module.add(VAddU32(dst=finalVgpr, src0=vgpr(wave_id), src1=vgpr(tP["gpr"]["lro"]), \
+          comment="Final Offset: offset = (lro%s+lsuoffset)*bpeDS(1)" % tile01 ))
+
+      # LdsBlockSizePerPad: add padding
+      if kernel["LdsBlockSizePerPad%s"%tc] != 0 and kernel["LdsPad%s"%tc] !=0:
+        module.add(vectorStaticDivide(rReg, "LocalReadAddr%s"%tc, kernel["LdsBlockSizePerPad%s"%tc], tmpVgprRes, \
           "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
-      module.add(VAddU32(dst=vgpr("LocalReadAddr%s"%tc), src0=vgpr(rReg), src1=vgpr("LocalReadAddr%s"%tc), \
-        comment="Final Offset: add padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
+        with self.allocTmpSgpr(1) as tmpSgprInfo:
+          module.add(staticMultiply(vgpr(rReg), vgpr(rReg), kernel["LdsPad%s"%tc] * tP["bpeDS"], tmpSgprInfo, \
+            "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
+        module.add(VAddU32(dst=vgpr("LocalReadAddr%s"%tc), src0=vgpr(rReg), src1=vgpr("LocalReadAddr%s"%tc), \
+          comment="Final Offset: add padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
 
-    # release resources
-    self.vgprPool.checkIn(tmpVgpr)
-    self.vgprPool.checkIn(wave_id)
-    self.vgprPool.checkIn(rReg)
-    self.vgprPool.checkIn(tP["gpr"]["lro"])
+      # release resources
+      self.vgprPool.checkIn(tmpVgpr)
+      self.vgprPool.checkIn(wave_id)
+      self.vgprPool.checkIn(rReg)
+      self.vgprPool.checkIn(tP["gpr"]["lro"])
 
+    else:
+      # constant
+      tile01      = tP["tile01Idx"]
+      LdsPad      = kernel["LdsPad%s" % tc] if kernel["LdsBlockSizePerPad%s" % tc] == 0 else 0
+      divisor     = kernel["SubGroup0"] * kernel["SubGroup1"]
+      mtAddPad    = kernel["MacroTile%u" % tile01] + LdsPad
+
+      # final offset
+      finalVgpr = vgpr("LocalReadAddr%s"%tc)
+
+      # LSU offset
+      with self.allocTmpSgpr(1) as tmpSgprInfo:
+        tmpSgpr = tmpSgprInfo.idx
+        sgid = self.vgprPool.checkOut(1) # quotient
+        module.add(vectorStaticDivide(sgid, "Serial", divisor, tmpSgpr, \
+          "LSU offset: sgid = Serial / subGroup(%u)" % divisor))
+        module.add(staticMultiply(vgpr(sgid), vgpr(sgid), mtAddPad, tmpSgprInfo, \
+          "LSU offset: lsuoffset = sgid*(MT%u+PAD)"%tile01))
+        # module.add(SMovB32(dst=sgpr(tmpSgpr), src=mtAddPad*lsuStride, \
+        #   comment="LSU offset: stride = lsuStride(%u)*(MT%u(%u) + PAD%u(%u))" % (lsuStride,tile01, kernel["MacroTile%u" % tile01], tile01, LdsPad)))
+        module.add(staticMultiply(vgpr(tP["gpr"]["lro"]), vgpr(tP["gpr"]["lro"]), kernel["VectorWidthB"], tmpSgprInfo, \
+          "Final Offset: lr%sOffset * VW" % tc))
+        # Final offset
+        module.add(VAddLShiftLeftU32(dst=finalVgpr, shiftHex=hex(log2(tP["bpe"])), src0=vgpr(sgid), src1=vgpr(tP["gpr"]["lro"]), \
+          comment="Final Offset: add padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
+        self.vgprPool.checkIn(sgid)
+
+      # release resources
+      self.vgprPool.checkIn(tP["gpr"]["lro"])
+
+      # LdsBlockSizePerPad: add padding
+      if kernel["LdsBlockSizePerPad%s"%tc] != 0 and kernel["LdsPad%s"%tc] !=0:
+        with self.allocTmpSgpr(1) as tmpSgprInfo:
+          tmpSgpr = tmpSgprInfo.idx
+          rReg    = self.vgprPool.checkOut(1) # remainder, unused here
+          module.add(vectorStaticDivide(rReg, "LocalReadAddr%s"%tc, kernel["LdsBlockSizePerPad%s"%tc], tmpSgpr, \
+            "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc], kernel["LdsBlockSizePerPad%s"%tc])))
+          module.add(staticMultiply(vgpr(rReg), vgpr(rReg), kernel["LdsPad%s"%tc] * tP["bpe"], tmpSgprInfo, \
+            "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc], kernel["LdsBlockSizePerPad%s"%tc])))
+          module.add(VAddU32(dst=vgpr("LocalReadAddr%s"%tc), src0=vgpr(rReg), src1=vgpr("LocalReadAddr%s"%tc), \
+            comment="Final Offset: add padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
+          self.vgprPool.checkIn(rReg)
     return module
 
   ##############################################################################
@@ -4653,6 +4715,27 @@ class KernelWriterAssembly(KernelWriter):
     return 0
 
   ##############################################################################
+  # MAC Iteration
+  ##############################################################################
+  def macIter(self, kernel, tPA, tPB, bufferIdx, iuiCount, useMacro, isTail=False):
+    imod = Module("macIter_X%u_I%u"%(bufferIdx, iuiCount))
+
+    # if kernel["ProblemType"]["DataType"].isHalf():
+    #   # imod.addText(".align32 8, 0xbf800001", "align v_pk_fma")   # Align v_pk_fma instructions used in MAC_ blocks
+    #   imod.addText(".align32 8, 0xbf800001\n")   # Align v_pk_fma instructions used in MAC_ blocks
+
+    if kernel["InnerUnroll"] > 1 and iuiCount==1:
+      # This it tail-loop case where we just want one IUI,
+      instr = "MAC_%ux%u_X%u_OneIUI" % (kernel["ThreadTile0"],kernel["ThreadTile1"], bufferIdx)
+    else:
+      if not useMacro:
+        printExit("MAC doesn't support useMacro=False")
+      instr = "MAC_%ux%u_X%u" % (kernel["ThreadTile0"],kernel["ThreadTile1"], bufferIdx)
+    imod.add(MacroInstruction(name=instr, args=[]))
+    imod.addSpaceLine()
+    return imod
+
+  ##############################################################################
   # MFMA Iteration
   ##############################################################################
   def mfmaIter(self, kernel, tPA, tPB, u, innerUnroll, unrollLoopIdx = 0, unrollIdx = 0, tail = False, firstIter = False):
@@ -5056,7 +5139,7 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def openSumAtLeastUnroll(self, kernel, prefetch, isOptNLL):
     isLongBranch = False
-    if kernel["ProblemType"]["ActivationType"] == 'all':
+    if kernel["EnableMatrixInstruction"] and kernel["ProblemType"]["ActivationType"] == 'all':
       acclen = getAccToArchLen(kernel)
       # Just a rough calculation
       if acclen > 100 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
@@ -7241,7 +7324,16 @@ class KernelWriterAssembly(KernelWriter):
     waveOffset = ldsStride // numWaves
 
     # new method. output self.vgprs.coord0InMT/coord1InMT
-    module.add(self.computeStoreVgprs(kernel))
+    if kernel["EnableMatrixInstruction"]:
+      module.add(self.computeStoreVgprs(kernel))
+    else:
+      # new method. output self.vgprs.coord0InMT/coord1InMT
+      # lr0 = serial % SG0
+      module.add(self.computeStoreVgprs(kernel, \
+                                        divisor = kernel["MacroTile0"] // kernel["GlobalWriteVectorWidth"], \
+                                        tid0Scale = kernel["GlobalWriteVectorWidth"], \
+                                        tid1Scale = 1))
+
     self.LSUelemCoord0 = []
     self.LSUelemCoord1 = []
     self.LSUelements   = []
@@ -7628,12 +7720,15 @@ class KernelWriterAssembly(KernelWriter):
   # Compute workitem/TT offsets in VGPRS
   # and coord0/coord1
   ##############################################################################
-  def computeStoreVgprs(self, kernel):
+  def computeStoreVgprs(self, kernel, divisor=None, tid0Scale=None, tid1Scale=None):
     module = Module("computeStoreVgprs")
     module.addComment0("computeStoreVgprs")
     component = Component.ComputeStoreVgprs.find(self)
     if component:
-      module.add(component(self, kernel)) #FIXME
+      if kernel["EnableMatrixInstruction"]:
+        module.add(component(self, kernel))
+      else:
+        module.add(component(self, kernel, divisor, tid0Scale, tid1Scale))
     return module
 
   ##############################################################################
@@ -7833,7 +7928,13 @@ class KernelWriterAssembly(KernelWriter):
     if not self.do["PostLoop"]: return ""
     module = Module("notLocalSplitUGlobalWriteIndices")
 
-    module.add(self.computeStoreVgprs(kernel))
+    if kernel["EnableMatrixInstruction"]:
+      module.add(self.computeStoreVgprs(kernel))
+    else:
+      module.add(self.computeStoreVgprs(kernel,
+                                        divisor = kernel["SubGroup0"],
+                                        tid0Scale = kernel["VectorWidthA"],
+                                        tid1Scale = kernel["VectorWidthB"]))
 
     if kernel["BufferStore"]:
       #print "----AddressC-nonLSU-----"
