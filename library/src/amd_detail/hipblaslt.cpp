@@ -426,6 +426,20 @@ try
                                              && (tmp_matD->type == HIP_R_16F)
                                              && (compute_type == rocblaslt_compute_f32_fast_f16));
 
+    if(roc_matmul_desc->amaxScaleA)
+    {
+        size_t len = (tmp_matA->order == HIPBLASLT_ORDER_COL) ? tmp_matA->n : tmp_matA->m;
+        if (len != tmp_matA->ld || tmp_matA->batch_count != 1)
+            throw rocblaslt_status_invalid_value;
+    }
+
+    if(roc_matmul_desc->amaxScaleB)
+    {
+        size_t len = (tmp_matB->order == HIPBLASLT_ORDER_COL) ? tmp_matB->n : tmp_matB->m;
+        if (len != tmp_matB->ld || tmp_matB->batch_count != 1)
+            throw rocblaslt_status_invalid_value;
+    }
+
     if (roc_matmul_desc->amaxScaleA && (tmp_matA->type == HIP_R_32F || tmp_matA->type == HIP_R_16F))
     {
         int* sync = ((int*)((rocblaslt_handle)handle)->Synchronizer);
