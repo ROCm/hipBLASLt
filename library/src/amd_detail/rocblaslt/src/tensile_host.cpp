@@ -797,7 +797,10 @@ namespace
         inputs.Synchronizer = prob.Synchronizer;
 
         // set bias vector
-        inputs.bias          = reinterpret_cast<const void*>(prob.bias);
+        if(is_bias_enabled(prob.epilogue))
+            inputs.bias = reinterpret_cast<const void*>(prob.bias);
+        else
+            inputs.bias = nullptr;
         inputs.scaleA        = reinterpret_cast<const void*>(prob.scaleA);
         inputs.scaleB        = reinterpret_cast<const void*>(prob.scaleB);
         inputs.scaleC        = reinterpret_cast<const void*>(prob.scaleC);
