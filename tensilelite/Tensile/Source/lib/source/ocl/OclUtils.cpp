@@ -188,6 +188,10 @@ namespace Tensile
             {
                 return AMDGPU::Processor::gfx1102;
             }
+            else if(deviceString.find("gfx1150") != std::string::npos)
+            {
+                return AMDGPU::Processor::gfx1150;
+            }
             else
             {
                 return static_cast<AMDGPU::Processor>(0);

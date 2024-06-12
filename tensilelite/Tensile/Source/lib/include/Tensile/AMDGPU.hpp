@@ -68,7 +68,8 @@ namespace Tensile
             gfx1030 = 1030,
             gfx1100 = 1100,
             gfx1101 = 1101,
-            gfx1102 = 1102
+            gfx1102 = 1102,
+            gfx1150 = 1150
         };
 
         static Processor toProcessor(std::string archName)
@@ -133,6 +134,10 @@ namespace Tensile
             {
                 return Processor::gfx1102;
             }
+            else if(archName.find("gfx1150") != std::string::npos)
+            {
+                return Processor::gfx1150;
+            }
             return static_cast<Processor>(0);
         }
 
@@ -170,6 +175,8 @@ namespace Tensile
                 return "gfx1101";
             case AMDGPU::Processor::gfx1102:
                 return "gfx1102";
+            case AMDGPU::Processor::gfx1150:
+                return "gfx1150";
             case AMDGPU::Processor::gfx000:
                 return "gfx000";
             }
