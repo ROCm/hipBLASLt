@@ -28,6 +28,7 @@
 
 #include "cblas_interface.hpp"
 #include "flops.hpp"
+#include "frequency_monitor.hpp"
 #include "hipblaslt_datatype2string.hpp"
 #include "hipblaslt_init.hpp"
 #include "hipblaslt_math.hpp"
@@ -89,34 +90,42 @@ void epilogue_func(int64_t m,
     auto saturate_o = [](Tact val) { return static_cast<To>(val); };
     for(int i = 0; i < m; i++)
     {
-        if(amaxD != nullptr)
+        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
+
+#define CALCULATE_EPILOGUE_ACT                                                       \
+    auto pos     = j * ld + i;                                                       \
+    auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;                       \
+    if(e && !gradient)                                                               \
+    {                                                                                \
+        *(e + pos) = static_cast<To>(in_Tact * scaleE);                              \
+    }                                                                                \
+    Tact in_Tact_act = 0;                                                            \
+    if(gradient)                                                                     \
+        in_Tact_act = act_func(static_cast<Tact>(*(e + pos)), arg1, arg2) * in_Tact; \
+    else                                                                             \
+        in_Tact_act = act_func(in_Tact, arg1, arg2);
+
+        if(amaxD == nullptr)
+        {
+#pragma omp parallel for
+            for(int j = 0; j < n; j++)
+            {
+                CALCULATE_EPILOGUE_ACT;
+                *(out + pos)     = saturate_o(in_Tact_act * scaleD);
+                *(out_raw + pos) = static_cast<Tc>(in_Tact_act * scaleD);
+            }
+        }
+        else
         {
             for(int j = 0; j < n; j++)
             {
-                auto pos = j * ld + i;
-                *amaxD   = *amaxD > fabs(static_cast<Tc>(*(in + pos)))
-                               ? *amaxD
-                               : fabs(static_cast<Tc>(*(in + pos)));
+                CALCULATE_EPILOGUE_ACT;
+                *amaxD           = *amaxD > fabs(static_cast<Tc>(in_Tact_act))
+                                       ? *amaxD
+                                       : fabs(static_cast<Tc>(in_Tact_act));
+                *(out + pos)     = saturate_o(in_Tact_act * scaleD);
+                *(out_raw + pos) = static_cast<Tc>(in_Tact_act * scaleD);
             }
-        }
-        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
-#pragma omp parallel for
-        for(int j = 0; j < n; j++)
-        {
-            auto pos     = j * ld + i;
-            auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;
-            if(e && !gradient)
-            {
-                *(e + pos) = static_cast<To>(in_Tact * scaleE);
-            }
-            Tact in_Tact_act = 0;
-            if(gradient)
-                in_Tact_act
-                    = act_func(static_cast<Tact>(*(e + pos)), arg1, arg2) * in_Tact * scaleD;
-            else
-                in_Tact_act = act_func(in_Tact, arg1, arg2) * scaleD;
-            *(out + pos)     = saturate_o(in_Tact_act);
-            *(out_raw + pos) = static_cast<Tc>(in_Tact_act);
         }
     }
 }
@@ -137,31 +146,40 @@ void epilogue_func(int64_t m,
 {
     auto saturate_o = [](Ti val) { return static_cast<To>(val); };
 
+#define CALCULATE_EPILOGUE_BASIC                          \
+    auto pos  = j * ld + i;                               \
+    Tc   temp = static_cast<Ti>(*(in + pos)) + bias_data; \
+    if(e)                                                 \
+    {                                                     \
+        *(e + pos) = static_cast<To>(temp * scaleE);      \
+    }
+
     for(int i = 0; i < m; i++)
     {
-        if(amaxD != nullptr)
+        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
+
+        if(amaxD == nullptr)
+        {
+#pragma omp parallel for
+            for(int j = 0; j < n; j++)
+            {
+                CALCULATE_EPILOGUE_BASIC;
+                temp *= scaleD;
+                *(out + pos)     = saturate_o(temp);
+                *(out_raw + pos) = static_cast<Tc>(temp);
+            }
+        }
+        else
         {
             for(int j = 0; j < n; j++)
             {
-                auto pos = j * ld + i;
-                *amaxD   = *amaxD > fabs(static_cast<Tc>(*(in + pos)))
-                               ? *amaxD
-                               : fabs(static_cast<Tc>(*(in + pos)));
+                CALCULATE_EPILOGUE_BASIC;
+                *amaxD
+                    = *amaxD > fabs(static_cast<Tc>(temp)) ? *amaxD : fabs(static_cast<Tc>(temp));
+                temp *= scaleD;
+                *(out + pos)     = saturate_o(temp);
+                *(out_raw + pos) = static_cast<Tc>(temp);
             }
-        }
-        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
-#pragma omp parallel for
-        for(int j = 0; j < n; j++)
-        {
-            auto pos  = j * ld + i;
-            auto temp = static_cast<Ti>(*(in + pos)) + bias_data;
-            if(e)
-            {
-                *(e + pos) = static_cast<To>(temp * scaleE);
-            }
-            temp *= scaleD;
-            *(out + pos)     = saturate_o(temp);
-            *(out_raw + pos) = static_cast<Tc>(temp);
         }
     }
 }
@@ -548,25 +566,25 @@ void testing_matmul(const Arguments& arg)
     {
         if constexpr(std::is_same<To, hip_bfloat16>::value || std::is_same<To, float>::value)
         {
-          if(real_bias_type == HIP_R_16BF)
-          {
-              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hip_bfloat16>(arg);
-          }
-          else
-          {
-              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
-          }
+            if(real_bias_type == HIP_R_16BF)
+            {
+                return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hip_bfloat16>(arg);
+            }
+            else
+            {
+                return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
+            }
         }
         else
         {
-          if(real_bias_type == HIP_R_16F)
-          {
-              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hipblasLtHalf>(arg);
-          }
-          else
-          {
-              return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
-          }
+            if(real_bias_type == HIP_R_16F)
+            {
+                return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, hipblasLtHalf>(arg);
+            }
+            else
+            {
+                return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, float>(arg);
+            }
         }
     }
     else if constexpr(std::is_same<To, hipblasLtHalf>::value)
@@ -2494,6 +2512,7 @@ void testing_matmul_with_bias(const Arguments& arg)
         {
             if(!do_grouped_gemm)
             {
+                FrequencyMonitor& freq_monitor = getFrequencyMonitor();
                 if(arg.use_ext)
                 {
                     for(int32_t b = 0; b < block_count; b++)
@@ -2507,6 +2526,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                         if(i == 0 && (arg.unit_check || arg.norm_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, dD);
                     }
+                    freq_monitor.start();
                     if(arg.use_gpu_timer)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
@@ -2554,7 +2574,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                         if(i == 0 && (arg.unit_check || arg.norm_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, dD);
                     }
-
+                    freq_monitor.start();
                     if(arg.use_gpu_timer)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
@@ -2606,9 +2626,12 @@ void testing_matmul_with_bias(const Arguments& arg)
                 {
                     gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                 }
+
+                freq_monitor.stop();
             }
             else
             {
+                FrequencyMonitor& freq_monitor = getFrequencyMonitor();
                 if(arg.use_user_args)
                 {
                     std::vector<unsigned char*> d_userArgsVec(block_count);
@@ -2636,6 +2659,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                         if(i == 0 && (arg.unit_check || arg.norm_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, dD);
                     }
+                    freq_monitor.start();
                     if(arg.use_gpu_timer)
                         CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
                     else
@@ -2660,6 +2684,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                     {
                         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                     }
+                    freq_monitor.stop();
                 }
                 else
                 {
@@ -2684,6 +2709,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                     {
                         gpu_time_used = get_time_us_sync(stream);
                     }
+                    freq_monitor.start();
 
                     for(int i = 0; i < number_hot_calls; i++)
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
@@ -2701,6 +2727,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                     {
                         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                     }
+                    freq_monitor.stop();
                 }
             }
 
@@ -2766,45 +2793,48 @@ void testing_matmul_with_bias(const Arguments& arg)
             int32_t     solutionIndex = -1;
             std::string solutionName  = "";
             std::string kernelName    = "";
-            if(arg.print_kernel_info)
+            if(arg.print_solution_found)
             {
-                if(arg.use_ext)
+                if(arg.print_kernel_info)
                 {
-                    if(!do_grouped_gemm)
+                    if(arg.use_ext)
                     {
-                        solutionName = gemmVec[0].getSolutionName();
-                        kernelName   = gemmVec[0].getKernelName();
+                        if(!do_grouped_gemm)
+                        {
+                            solutionName = gemmVec[0].getSolutionName();
+                            kernelName   = gemmVec[0].getKernelName();
+                        }
+                        else
+                        {
+                            solutionName = groupedGemmVec[0].getSolutionName();
+                            kernelName   = groupedGemmVec[0].getKernelName();
+                        }
                     }
                     else
                     {
-                        solutionName = groupedGemmVec[0].getSolutionName();
-                        kernelName   = groupedGemmVec[0].getKernelName();
+                        solutionName
+                            = hipblaslt_ext::getSolutionNameFromAlgo(handle, heuristicResult[sol].algo);
+                        kernelName
+                            = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
                     }
+                    solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo);
                 }
-                else
-                {
-                    solutionName
-                        = hipblaslt_ext::getSolutionNameFromAlgo(handle, heuristicResult[sol].algo);
-                    kernelName
-                        = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
-                }
-                solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo);
+                ArgumentModel<argument_param>{}.log_args<Tc>(
+                    hipblaslt_cout,
+                    sol,
+                    solutionIndex,
+                    solutionName,
+                    kernelName,
+                    arg,
+                    (uint32_t)tuningVec[heuristicTuningIndex[sol]].splitK,
+                    (uint32_t)tuningVec[heuristicTuningIndex[sol]].wgm,
+                    gpu_time_used,
+                    flush_time_used,
+                    flops,
+                    ArgumentLogging::NA_value,
+                    cpu_time_used,
+                    hipblaslt_error);
             }
-            ArgumentModel<argument_param>{}.log_args<Tc>(
-                hipblaslt_cout,
-                sol,
-                solutionIndex,
-                solutionName,
-                kernelName,
-                arg,
-                (uint32_t)tuningVec[heuristicTuningIndex[sol]].splitK,
-                (uint32_t)tuningVec[heuristicTuningIndex[sol]].wgm,
-                gpu_time_used,
-                flush_time_used,
-                flops,
-                ArgumentLogging::NA_value,
-                cpu_time_used,
-                hipblaslt_error);
             if(best_gpu_time > gpu_time_used)
             {
                 best_sol      = sol;

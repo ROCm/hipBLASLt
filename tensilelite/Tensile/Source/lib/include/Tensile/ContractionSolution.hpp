@@ -117,6 +117,14 @@ namespace Tensile
         using Inputs        = ContractionInputs;
         using GroupedInputs = ContractionGroupedInputs;
 
+ /**
+  * Indicate a solution is equally or estimatedly matched.
+  */
+        enum class MatchingTag {
+            Equal,
+            Estimated
+        };
+
         static std::string Type()
         {
             return "Contraction";
@@ -400,6 +408,12 @@ namespace Tensile
             dim3 threadTile;
             dim3 macroTile;
 
+            std::array<int, 4> matrixInstruction;
+            size_t grvwA              = 1;
+            size_t grvwB              = 1;
+            size_t gwvwC              = 1;
+            size_t gwvwD              = 1;
+
             size_t staggerU           = 0;
             size_t staggerUMapping    = 0;
             size_t depthU             = 0;
@@ -504,6 +518,7 @@ namespace Tensile
         int32_t               libraryLogicIndex = -1;
         std::map<int, double> ideals;
         LinearModel           linearModel;
+        MatchingTag           tag{MatchingTag::Estimated};
 
         uint32_t magicNumberAlg1(uint32_t x, uint32_t* magicShift) const;
         uint32_t magicNumberAlg2(uint32_t x, uint32_t* magicShift) const;

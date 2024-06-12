@@ -364,7 +364,7 @@ BenchmarkProblems:
         - DepthU: [128]
         - VectorWidthA: [-1]
         - VectorWidthB: [-1]
-        - MIArchVgpr: [0]
+        - MIArchVgpr: [0, 1]
         - LocalWritePerMfma: [-1]
         - StaggerU: [4]
         - StaggerUStride: [256]
@@ -384,6 +384,7 @@ BenchmarkProblems:
         - GlobalSplitU: [1,2,9]
         - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
+        - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -409,6 +410,9 @@ BenchmarkProblems:
       TransposeB: 0
       UseBeta: True
       Batched: True
+      Activation: True
+      ActivationHPA: True
+      UseScaleAlphaVec: True
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -429,7 +433,7 @@ BenchmarkProblems:
         - DepthU: [128]
         - VectorWidthA: [-1]
         - VectorWidthB: [-1]
-        - MIArchVgpr: [0]
+        - MIArchVgpr: [0, 1]
         - LocalWritePerMfma: [-1]
         - StaggerU: [4]
         - StaggerUStride: [512]
@@ -450,7 +454,71 @@ BenchmarkProblems:
         - GlobalSplitU: [1]
         - GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - SourceSwap: [1]
+        - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Exact: [128,   128,  1, 128]
+        - ActivationArgs:
+          - [Enum: tanh]
+
+  ########################################
+  # LSU2 - Multi-batches
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: h
+      DestDataType: h
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 1
+      TransposeB: 0
+      UseBeta: True
+      UseBias: 1
+      Batched: True
+    - # BenchmarkProblemSizeGroup - Standard - All problem
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16, 16, 16, 1, 1, 4, 4, 1, 2]
+        - WorkGroup: 
+          - [16, 8, 2]
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - DepthU: [128]
+        - ScheduleIterAlg: [3]
+        - LdsBlockSizePerPadA: [-1]
+        - LdsBlockSizePerPadB: [-1]
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - 1LDSBuffer: [1]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - SourceSwap: [1]
+        - GlobalReadVectorWidthA: [8]
+        - GlobalReadVectorWidthB: [8]
+        - VectorWidthA: [1]
+        - StoreSyncOpt: [0]
+        - StaggerU: [0]
+        - WorkGroupMapping: [1]
+        - MIArchVgpr: [1]
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [1,     127, 1, 127]
+          - Exact: [2,     127, 1, 127]
+          - Exact: [3,     127, 1, 127]
+          - Exact: [1,     1,   1, 127]
+          - Exact: [127,   1,   1, 127]
+          - Exact: [127,   2,   1, 127]
+          - Exact: [127,   3,   1, 127]
+          - Exact: [127,   127, 1, 127]
+          - Exact: [128,   128, 1, 128]
+          - Exact: [129,   129, 1, 129]
+          - Exact: [127,   127, 1, 128]
+          - Exact: [127,   127, 1, 129]
+          - Exact: [127,   128, 1, 640]
+          - Exact: [129,   128, 1, 640]
+        - BiasTypeArgs: ['h']

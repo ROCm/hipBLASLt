@@ -1011,4 +1011,12 @@ namespace hipblaslt_ext
      */
     HIPBLASLT_EXPORT
     hipblasStatus_t copyMatmul(hipblasLtMatmulDesc_t src, hipblasLtMatmulDesc_t dst);
+
+    HIPBLASLT_EXPORT
+    int matmulIsTuned(hipblasLtHandle_t       handle,
+                      hipblasLtMatmulDesc_t   matmulDesc,
+                      hipblasLtMatrixLayout_t Adesc,
+                      hipblasLtMatrixLayout_t Bdesc,
+                      hipblasLtMatrixLayout_t Cdesc,
+                      hipblasLtMatrixLayout_t Ddesc);
 } // End of namespace hipblasltext

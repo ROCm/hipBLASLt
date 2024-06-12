@@ -753,4 +753,19 @@ namespace hipblaslt_ext
             rocblaslt_copy_matmul((rocblaslt_matmul_desc)src, (rocblaslt_matmul_desc)dst));
     }
 
+    int matmulIsTuned(hipblasLtHandle_t       handle,
+                      hipblasLtMatmulDesc_t   matmulDesc,
+                      hipblasLtMatrixLayout_t Adesc,
+                      hipblasLtMatrixLayout_t Bdesc,
+                      hipblasLtMatrixLayout_t Cdesc,
+                      hipblasLtMatrixLayout_t Ddesc)
+    {
+        return rocblaslt_matmul_is_tuned((rocblaslt_handle)handle,
+            (rocblaslt_matmul_desc)matmulDesc,
+            (rocblaslt_matrix_layout)Adesc,
+            (rocblaslt_matrix_layout)Bdesc,
+            (rocblaslt_matrix_layout)Cdesc,
+            (rocblaslt_matrix_layout)Ddesc);
+    }
+
 } // End of namespace hipblasltext
