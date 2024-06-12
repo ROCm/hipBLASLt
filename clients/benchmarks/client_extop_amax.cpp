@@ -241,6 +241,9 @@ void compare(const char* title, const std::vector<T>& cpuOutput, const std::vect
     {
         T err  = abs(refOutput[i] - cpuOutput[i]);
         maxErr = max(maxErr, err);
+
+        std::cout << " refOut : " << float(refOutput[i]) << std::endl;
+        std::cout << " kernelOut : " << float(cpuOutput[i]) << std::endl;
     }
 
     std::cout << title << " max error : " << float(maxErr) << std::endl;
