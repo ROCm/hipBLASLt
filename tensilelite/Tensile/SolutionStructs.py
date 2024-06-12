@@ -2194,6 +2194,10 @@ class Solution(collections.abc.Mapping):
     if state["StaggerU"] == 0:
       state["StaggerUMapping"] = 0
       state["StaggerUStride"] = 0
+
+    if state["StaggerUStride"] == -1:
+      state["StaggerUStride"] = state["DepthU"] * bpeAB
+
     try:
         staggerStrideShift = (int)(math.ceil(math.log(state["StaggerUStride"] / \
                 (state["DepthU"] * bpeAB), 2)))
