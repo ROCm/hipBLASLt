@@ -617,6 +617,10 @@ void testing_matmul(const Arguments& arg)
     {
         return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, int32_t>(arg);
     }
+    else if constexpr(std::is_same<To, int8_t>::value)
+    {
+        return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, int8_t>(arg);
+    }
     else if constexpr(std::is_same<To, double>::value)
     {
         return testing_matmul_with_bias<TiA, TiB, To, Tc, TciA, TciB, double>(arg);

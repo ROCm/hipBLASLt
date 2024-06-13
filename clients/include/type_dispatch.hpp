@@ -243,12 +243,10 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         {
             return TEST<hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, hipblasLtBfloat16, float>{}(arg);
         }
-        /*
-        else if(Ti == HIP_R_8I && To == HIP_R_8I && Tc == HIPBLAS_COMPUTE_32I)
+        else if(TiA == HIP_R_8I && TiB == HIP_R_8I && To == HIP_R_8I && Tc == HIPBLAS_COMPUTE_32I)
         {
-            return TEST<hipblasLtInt8, hipblasLtInt8, int32_t>{}(arg);
+            return TEST<hipblasLtInt8, hipblasLtInt8, hipblasLtInt8, int32_t>{}(arg);
         }
-        */
         else if(TiA == HIP_R_8I && To == HIP_R_32I && Tc == HIPBLAS_COMPUTE_32I)
         {
             return TEST<hipblasLtInt8, hipblasLtInt8, int32_t, int32_t>{}(arg);
