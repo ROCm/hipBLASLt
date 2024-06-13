@@ -374,19 +374,19 @@ try
 
         ("a_type",
          value<std::string>(&a_type), "Precision of matrix A. "
-        "Options: f32_r,f16_r,bf16_r")
+        "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("b_type",
          value<std::string>(&b_type), "Precision of matrix B. "
-        "Options: f32_r,f16_r,bf16_r")
+        "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("c_type",
          value<std::string>(&c_type), "Precision of matrix C. "
-         "Options: f32_r,f16_r,bf16_r")
+         "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("d_type",
          value<std::string>(&d_type), "Precision of matrix D. "
-        "Options: f32_r,f16_r,bf16_r")
+        "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("compute_type",
          value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
