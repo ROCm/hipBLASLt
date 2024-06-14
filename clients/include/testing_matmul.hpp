@@ -1419,6 +1419,10 @@ void testing_matmul_with_bias(const Arguments& arg)
                                                             arg.compute_type));
     }
 
+    // Hack here
+    auto memSpace = new device_vector<uint8_t>(totalRotatingSizeNeeded*block_count, 1, HMM);
+    uint64_t offset = 0;
+
     std::vector<hipblaslt_ext::GemmEpilogue> extepilogue;
     hipblaslt_ext::GemmProblemType           extproblemtype;
     if(arg.use_ext_setproblem)
@@ -1445,10 +1449,16 @@ void testing_matmul_with_bias(const Arguments& arg)
                     extepilogue[gemmIdx].aux_stride     = stride_e[gemmIdx];
                 }
 
-                extinputs[b][gemmIdx].a        = (void*)((*dA[gemmIdx]) + b * size_A[gemmIdx]);
-                extinputs[b][gemmIdx].b        = (void*)((*dB[gemmIdx]) + b * size_B[gemmIdx]);
-                extinputs[b][gemmIdx].c        = (void*)((*dC[gemmIdx]) + b * size_C[gemmIdx]);
-                extinputs[b][gemmIdx].d        = (void*)((*dD[gemmIdx]) + b * size_D[gemmIdx]);
+                uint64_t length = (uint64_t)(size_A[gemmIdx] * sizeof(TiA));
+                CHECK_HIP_ERROR(memSpace->transfer_from(*(reinterpret_cast<host_vector<uint8_t>*>(hA[gemmIdx])), offset, length));
+                extinputs[b][gemmIdx].a        = (void*)((*memSpace) + offset); offset += size_A[gemmIdx] * sizeof(TiA);
+                length = (uint64_t)(size_B[gemmIdx] * sizeof(TiB));
+                CHECK_HIP_ERROR(memSpace->transfer_from(*(reinterpret_cast<host_vector<uint8_t>*>(hB[gemmIdx])), offset, length));
+                extinputs[b][gemmIdx].b        = (void*)((*memSpace) + offset); offset += size_B[gemmIdx] * sizeof(TiB);
+                length = (uint64_t)(size_C[gemmIdx] * sizeof(To));
+                CHECK_HIP_ERROR(memSpace->transfer_from(*(reinterpret_cast<host_vector<uint8_t>*>(hC[gemmIdx])), offset, h_beta[gemmIdx] == 0 ? (uint64_t)(0) : length));
+                extinputs[b][gemmIdx].c        = (void*)((*memSpace) + offset); offset += h_beta[gemmIdx] == 0 ? 0 : size_C[gemmIdx] * sizeof(To);
+                extinputs[b][gemmIdx].d        = (void*)((*memSpace) + offset); offset += size_D[gemmIdx] * sizeof(To);
                 extinputs[b][gemmIdx].alpha    = &h_alpha[gemmIdx];
                 extinputs[b][gemmIdx].beta     = &h_beta[gemmIdx];
                 extinputs[b][gemmIdx].bias     = bias_addr;

@@ -145,6 +145,23 @@ public:
         return hipSuccess;
     }
 
+    hipError_t transfer_from(host_vector<T>& that, uint64_t offset, uint64_t length)
+    {
+        for(int32_t i_block = 0; i_block < 1; i_block++)
+        {
+            hipError_t status
+                = hipMemcpy(reinterpret_cast<uint8_t*>(m_data) + i_block * this->nmemb() + offset,
+                            (const T*)that,
+                            length,
+                            this->use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
+            if(status != hipSuccess)
+            {
+                return status;
+            }
+        }
+        return hipSuccess;
+    }
+
     hipError_t memcheck() const
     {
         return !this->nmemb() || m_data ? hipSuccess : hipErrorOutOfMemory;
