@@ -709,10 +709,13 @@ Tests:
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0.0]
+  bias_vector: [0, 1]
+  bias_type: f16_r
   scaleA: [1]
   scaleB: [1]
   scaleD: [1]
   amaxD: [1]
+  activation_type: [none, relu]
   unit_check: 1
   gpu_arch: '94?'
 
@@ -1125,10 +1128,10 @@ Tests:
   beta: [ 0.0, 2.0 ]
   unit_check: 1
 
-- name: matmul_gemm_i8
+- name: matmul_gemm_i8_dst_i32
   category: pre_checkin
   function:
-    matmul: *integer8_precisions
+    matmul: *i8_precision_dst_i32
   matrix_size:
     - { M:  1,    N:  131,  K:  131  }
     - { M:  131,  N:  1,    K:  131  }
@@ -1142,10 +1145,10 @@ Tests:
   unit_check: 1
   gpu_arch: '90a'
 
-- name: matmul_gemm_i8_94x
+- name: matmul_gemm_i8_dst_i32_94x
   category: pre_checkin
   function:
-    matmul: *integer8_precisions
+    matmul: *i8_precision_dst_i32
   matrix_size:
     - { M:  1,    N:  131,  K:  131  }
     - { M:  131,  N:  1,    K:  131  }
@@ -1157,6 +1160,33 @@ Tests:
   alpha: 1
   beta: [ 0, 2 ]
   scaleAlpha_vector: [0, 1]
+  activation_type: relu
+  unit_check: 1
+  gpu_arch: '94?'
+
+- name: matmul_gemm_i8_dst_i8
+  category: pre_checkin
+  function:
+    matmul: *i8_precision_dst_i8
+  matrix_size:
+    - { M:  128,  N:  128,  K:  128  }
+    - { M:  131,  N:  131,  K:  131  }
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0, 2 ]
+  unit_check: 1
+  gpu_arch: '90a'
+
+- name: matmul_gemm_i8_dst_i8_94x
+  category: pre_checkin
+  function:
+    matmul: *i8_precision_dst_i8
+  matrix_size:
+    - { M:  128,  N:  128,  K:  128  }
+    - { M:  131,  N:  131,  K:  131  }
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0, 2 ]
   activation_type: relu
   unit_check: 1
   gpu_arch: '94?'
@@ -1289,4 +1319,19 @@ Tests:
   alpha: 1
   beta: 2.0
   unit_check: 1
+
+- name: matmul_request_solution_num
+  category: nightly
+  function:
+    matmul: *hpa_bf16_precision
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: 0
+  requested_solution_num: -1
+  norm_check: 1
+
 ...
+

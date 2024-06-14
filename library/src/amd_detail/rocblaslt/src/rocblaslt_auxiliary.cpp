@@ -1350,6 +1350,7 @@ rocblaslt_status
                     i++)
                 {
                     bool duplicated_sol = false;
+                    size_t required_workspace_size = 0;
                     for(int j = 0; j < oriReturnAlgoCount; j++)
                         if(*(int*)(heuristicResultsArray[j].algo.data)
                            == *(int*)(allSolutionsResults[i].algo.data)) //solution index
@@ -1361,7 +1362,7 @@ rocblaslt_status
                                                      prob,
                                                      tensile_data,
                                                      &allSolutionsResults[i].algo,
-                                                     &pref->max_workspace_bytes))
+                                                     &required_workspace_size))
                         continue;
                     //append sol to heuristpicResultsArray
                     memcpy(heuristicResultsArray[*returnAlgoCount].algo.data,
@@ -1372,7 +1373,7 @@ rocblaslt_status
                     heuristicResultsArray[*returnAlgoCount].algo.fallback = false;
                     heuristicResultsArray[*returnAlgoCount].state = rocblaslt_status_success;
                     heuristicResultsArray[*returnAlgoCount].workspaceSize
-                        = allSolutionsResults[i].workspaceSize;
+                        = required_workspace_size;
                     (*returnAlgoCount)++;
                 }
 
@@ -1613,7 +1614,7 @@ rocblaslt_status
                                                      nullptr,
                                                      workspaceSizeInBytes))
                         continue;
-
+                    allSolutionsResults[i].workspaceSize = workspaceSizeInBytes;
                     results.push_back(allSolutionsResults[i]);
                 }
 
@@ -1704,4 +1705,41 @@ std::string rocblaslt_internal_get_so_path(const std::string& keyword)
 void rocblaslt_log_error(const char* func, const char* var, const char* msg)
 {
     log_error(func, var, msg);
+}
+
+extern "C" int rocblaslt_matmul_is_tuned(rocblaslt_handle handle,
+                              rocblaslt_matmul_desc matmul_descr,
+                              rocblaslt_matrix_layout matA,
+                              rocblaslt_matrix_layout matB,
+                              rocblaslt_matrix_layout matC,
+                              rocblaslt_matrix_layout matD)
+{
+    if(handle == nullptr || matmul_descr == nullptr || matA == nullptr || matB == nullptr
+       || matC == nullptr || matD == nullptr)
+    {
+        log_error(__func__, "invalid handle pointer");
+        return -1;
+    }
+
+    hipDataType            a_type       = matA->type;
+    hipDataType            b_type       = matB->type;
+    hipDataType            c_type       = matC->type;
+    hipDataType            d_type       = matD->type;
+    rocblaslt_compute_type compute_type = matmul_descr->compute_type;
+    auto&                  gemmData     = matmul_descr->m_data;
+    float alpha = 1.f;
+    float beta = 0.f;
+    constexpr size_t max_workspace_bytes = 32 * 1024 * 1024;
+    void* alphaf = &alpha;
+    void* betaf  = &beta;
+    auto  prob   = construct_rocblaslt_problem(
+        handle, matmul_descr, matA, matB, matC, matD, alphaf, betaf, max_workspace_bytes);
+    auto &tensile_data = matmul_descr->m_data;
+    auto sols = getBestRawSolutions(prob, handle, tensile_data, 1, max_workspace_bytes);
+
+    if (sols.size() && sols.front()->tag == Tensile::ContractionSolution::MatchingTag::Equal) {
+        return 1;
+    }
+
+    return 0;
 }

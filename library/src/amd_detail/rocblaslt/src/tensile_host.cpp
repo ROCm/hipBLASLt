@@ -797,7 +797,10 @@ namespace
         inputs.Synchronizer = prob.Synchronizer;
 
         // set bias vector
-        inputs.bias          = reinterpret_cast<const void*>(prob.bias);
+        if(is_bias_enabled(prob.epilogue))
+            inputs.bias = reinterpret_cast<const void*>(prob.bias);
+        else
+            inputs.bias = nullptr;
         inputs.scaleA        = reinterpret_cast<const void*>(prob.scaleA);
         inputs.scaleB        = reinterpret_cast<const void*>(prob.scaleB);
         inputs.scaleC        = reinterpret_cast<const void*>(prob.scaleC);
@@ -2083,6 +2086,46 @@ inline auto getSolutions(
         solutions.insert(solutions.begin(), solutions_fallback.begin(), solutions_fallback.end());
     }
     fallbackSize = solutions_fallback.size();
+    return solutions;
+}
+
+std::vector<std::shared_ptr<Tensile::ContractionSolution>> getBestRawSolutions(RocblasltContractionProblem const& prob,
+                         rocblaslt_handle                   handle,
+                         std::shared_ptr<void>              gemmData,
+                         int                                requestedAlgoCount,
+                         size_t                             maxWorkSpaceBytes)
+{
+    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+    std::shared_ptr<Tensile::Hardware>                                               hardware;
+
+    static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
+
+    hardware = Tensile::hip::GetDevice(*deviceProp);
+
+    std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+    updateTensileProblem(false, prob, data->problem);
+
+    bool enableEpilogue = prob.epilogue == ROCBLASLT_EPILOGUE_DEFAULT ? false : true;
+
+    int  fallbackSize = 0;
+    auto solutions    = getSolutions(
+        prob, library, hardware, data->problem, enableEpilogue, requestedAlgoCount, fallbackSize);
+
+    // when there is no solution for xfloat32, fallback comput_type to fp32
+    if(solutions.size() == 0 && prob.compute_type == rocblaslt_compute_f32_fast_xf32)
+    {
+        log_api(__func__, "no solutions found, try to fallback");
+        data->problem.setF32XdlMathOp(Tensile::DataType::Float);
+        solutions = getSolutions(prob,
+                                 library,
+                                 hardware,
+                                 data->problem,
+                                 enableEpilogue,
+                                 requestedAlgoCount,
+                                 fallbackSize);
+    }
+
     return solutions;
 }
 

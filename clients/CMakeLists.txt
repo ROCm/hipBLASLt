@@ -95,10 +95,17 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
     set( BLAS_LIBRARY "blas" )
   endif()
 
+  # Find the package ROCmSMI
+  if(NOT WIN32)
+      find_package(ROCmSMI REQUIRED)
+      list( APPEND COMMON_LINK_LIBS rocm_smi )
+  endif()
+  
   # common source files used in subdirectories benchmarks and gtest thus ../common
   set( hipblaslt_test_bench_common
       ../common/singletons.cpp
       ../common/utility.cpp
+      ../common/frequency_monitor.cpp
       ../common/cblas_interface.cpp
       ../common/argument_model.cpp
       ../common/hipblaslt_parse_data.cpp

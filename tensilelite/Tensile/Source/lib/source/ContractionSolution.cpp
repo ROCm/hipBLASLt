@@ -700,10 +700,10 @@ namespace Tensile
             {
                 args.template append<uint32_t>("bias_type",
                                                static_cast<uint32_t>(problem.bias().dataType()));
-                if(problem.useBias())
+                if(problemType.useBias)
                     args.template append<uint32_t>(
                         "strideBias",
-                        static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
+                        static_cast<uint32_t>(problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0)); // reserved
                 if(problemType.useBias == 3)
                 {
                     args.template append<uint32_t>(
@@ -1154,7 +1154,7 @@ namespace Tensile
            && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
-            rv.args.append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
+            rv.args.append<uint32_t>("strideBias", problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0);
             if(problemType.useBias == 3)
                 rv.args.template append<uint32_t>("biasDim",
                                                   (uint32_t)problem.getParams().biasDim());
@@ -1374,10 +1374,10 @@ namespace Tensile
         for(size_t i = 1; i < c.dimensions(); i++)
             args.template append<uint32_t>(concatenate_if<T_Debug>("strideC", i), c.strides()[i]);
 
-        if(useBias && problem.useBias())
+        if(useBias)
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
-            args.template append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
+            args.template append<uint32_t>("strideBias", problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0);
         }
 
         int i = 0;
@@ -1435,7 +1435,12 @@ namespace Tensile
                 vw = 2;
         }
 
-        rv.kernelName = outputConversionKernelName(problem, inputs, vw, sizeMapping.globalSplitU);
+        uint32_t gsu = sizeMapping.globalAccumulation == 1
+                   ? 1
+                   : (problem.getParams().gsu() > 0 ? problem.getParams().gsu()
+                                                    : sizeMapping.globalSplitU);
+
+        rv.kernelName = outputConversionKernelName(problem, inputs, vw, gsu);
 
         rv.numWorkGroups.x = CeilDivide(wiX * wiY * wiZ, rv.workGroupSize.x * vw);
         rv.numWorkGroups.y = 1;
@@ -1586,10 +1591,15 @@ namespace Tensile
         calculateConversionCallWorkGroupItems(
             problems, vw, rv.workGroupSize, rv.numWorkGroups, rv.numWorkItems, h_args);
 
+        uint32_t gsu = sizeMapping.globalAccumulation == 1
+                   ? 1
+                   : (problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
+                                                    : sizeMapping.globalSplitU);
+
         if constexpr(std::is_same<KA, KernelArguments>::value)
         {
             rv.kernelName = outputConversionKernelName(
-                problems[0], inputs.grouped[0], vw, sizeMapping.globalSplitU);
+                problems[0], inputs.grouped[0], vw, gsu);
         }
 
         uint32_t workspaceOffsetInByte
@@ -1762,7 +1772,15 @@ namespace Tensile
             name += ("_ScaleAlphaVec");
         }
 
-        name += "_PostGSU" + std::to_string(sizeMapping.globalSplitUPGR);
+        uint32_t gsuTemp = gsu - 1;
+        gsuTemp |= gsuTemp >> 1;
+        gsuTemp |= gsuTemp >> 2;
+        gsuTemp |= gsuTemp >> 4;
+        gsuTemp |= gsuTemp >> 8;
+        gsuTemp |= gsuTemp >> 16;
+        gsuTemp++;
+
+        name += "_PostGSU" + std::to_string(std::min((unsigned long)gsuTemp, sizeMapping.globalSplitUPGR));
 
         name += "_VW" + std::to_string(vw);
 

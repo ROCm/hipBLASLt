@@ -27,10 +27,10 @@ cd hipBLASLt; cd build/release
 --beta <value>             specifies the scalar beta                                                           (Default value is: 0)
 --function |-f <value>     BLASLt function to test. Options: matmul                                            (Default value is: matmul)
 --precision |-r <value>    Precision of matrix A,B,C,D  Options: f32_r,f16_r,bf16_r,f64_r,i32_r,i8_r           (Default value is: f16_r)
---a_type <value>           Precision of matrix A. Options: f32_r,f16_r,bf16_r
---b_type <value>           Precision of matrix B. Options: f32_r,f16_r,bf16_r
---c_type <value>           Precision of matrix C. Options: f32_r,f16_r,bf16_r
---d_type <value>           Precision of matrix D. Options: f32_r,f16_r,bf16_r
+--a_type <value>           Precision of matrix A. Options: f32_r,f16_r,bf16_r,i8_r
+--b_type <value>           Precision of matrix B. Options: f32_r,f16_r,bf16_r,i8_r
+--c_type <value>           Precision of matrix C. Options: f32_r,f16_r,bf16_r,i8_r
+--d_type <value>           Precision of matrix D. Options: f32_r,f16_r,bf16_r,i8_r
 --compute_type <value>     Precision of computation. Options: s,f32_r,x,xf32_r,f64_r,i32_r                     (Default value is: f32_r)
 --compute_input_typeA <value>     Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the argument has no effect. (Default value is: INVALID)
 --compute_input_typeB <value>     Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the argument has no effect. (Default value is: INVALID)

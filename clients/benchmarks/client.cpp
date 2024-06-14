@@ -41,6 +41,8 @@
 #include <string>
 #include <type_traits>
 
+#include "frequency_monitor.hpp"
+
 #include "testing_matmul.hpp"
 
 #include "type_dispatch.hpp"
@@ -75,12 +77,12 @@ void run_function(const func_map& map, const Arguments& arg, const std::string& 
 // Template to dispatch testing_matmul for performance tests
 // the test is marked invalid when (TiA, TiB, To, Tc) not in (H/H/S, B/B/S)
 template <typename TiA,
-          typename TiB = TiA,
-          typename To  = TiB,
-          typename Tc  = To,
+          typename TiB  = TiA,
+          typename To   = TiB,
+          typename Tc   = To,
           typename TciA = TiA,
           typename TciB = TiB,
-          typename     = void>
+          typename      = void>
 struct perf_matmul : hipblaslt_test_invalid
 {
 };
@@ -372,19 +374,19 @@ try
 
         ("a_type",
          value<std::string>(&a_type), "Precision of matrix A. "
-        "Options: f32_r,f16_r,bf16_r")
+        "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("b_type",
          value<std::string>(&b_type), "Precision of matrix B. "
-        "Options: f32_r,f16_r,bf16_r")
+        "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("c_type",
          value<std::string>(&c_type), "Precision of matrix C. "
-         "Options: f32_r,f16_r,bf16_r")
+         "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("d_type",
          value<std::string>(&d_type), "Precision of matrix D. "
-        "Options: f32_r,f16_r,bf16_r")
+        "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("compute_type",
          value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
@@ -736,6 +738,9 @@ try
         throw std::invalid_argument("Invalid Device ID");
     set_device(device_id);
 
+    FrequencyMonitor& freq_monitor = getFrequencyMonitor();
+    freq_monitor.set_device_id(device_id);
+
     if(datafile)
         return hipblaslt_bench_datafile(filter, any_stride);
 
@@ -780,13 +785,19 @@ try
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
     //The value HIPBLASLT_DATATYPE_INVALID indicates that the compute_input_typeA has no effect.
-    arg.compute_input_typeA = (compute_input_typeA != "") ? string_to_hip_datatype(compute_input_typeA) : HIPBLASLT_DATATYPE_INVALID;
+    arg.compute_input_typeA = (compute_input_typeA != "")
+                                  ? string_to_hip_datatype(compute_input_typeA)
+                                  : HIPBLASLT_DATATYPE_INVALID;
     if(arg.compute_input_typeA == HIPBLASLT_DATATYPE_INVALID && compute_input_typeA != "")
-        throw std::invalid_argument("Invalid value for --compute_input_typeA " + compute_input_typeA);
+        throw std::invalid_argument("Invalid value for --compute_input_typeA "
+                                    + compute_input_typeA);
 
-    arg.compute_input_typeB = (compute_input_typeB != "") ? string_to_hip_datatype(compute_input_typeB) : HIPBLASLT_DATATYPE_INVALID;
+    arg.compute_input_typeB = (compute_input_typeB != "")
+                                  ? string_to_hip_datatype(compute_input_typeB)
+                                  : HIPBLASLT_DATATYPE_INVALID;
     if(arg.compute_input_typeB == HIPBLASLT_DATATYPE_INVALID && compute_input_typeB != "")
-        throw std::invalid_argument("Invalid value for --compute_input_typeB " + compute_input_typeB);
+        throw std::invalid_argument("Invalid value for --compute_input_typeB "
+                                    + compute_input_typeB);
 
     if(string_to_hip_datatype(bias_type) == HIPBLASLT_DATATYPE_INVALID && bias_type != ""
        && bias_type != "default")
@@ -838,7 +849,9 @@ try
     }
 
     arg.norm_check_assert = false;
-    return run_bench_test(arg, filter, any_stride);
+    int status            = run_bench_test(arg, filter, any_stride);
+    freeFrequencyMonitor();
+    return status;
 }
 catch(const std::invalid_argument& exp)
 {
