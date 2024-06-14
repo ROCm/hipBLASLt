@@ -1350,6 +1350,7 @@ rocblaslt_status
                     i++)
                 {
                     bool duplicated_sol = false;
+                    size_t required_workspace_size = 0;
                     for(int j = 0; j < oriReturnAlgoCount; j++)
                         if(*(int*)(heuristicResultsArray[j].algo.data)
                            == *(int*)(allSolutionsResults[i].algo.data)) //solution index
@@ -1361,7 +1362,7 @@ rocblaslt_status
                                                      prob,
                                                      tensile_data,
                                                      &allSolutionsResults[i].algo,
-                                                     &pref->max_workspace_bytes))
+                                                     &required_workspace_size))
                         continue;
                     //append sol to heuristpicResultsArray
                     memcpy(heuristicResultsArray[*returnAlgoCount].algo.data,
@@ -1372,7 +1373,7 @@ rocblaslt_status
                     heuristicResultsArray[*returnAlgoCount].algo.fallback = false;
                     heuristicResultsArray[*returnAlgoCount].state = rocblaslt_status_success;
                     heuristicResultsArray[*returnAlgoCount].workspaceSize
-                        = allSolutionsResults[i].workspaceSize;
+                        = required_workspace_size;
                     (*returnAlgoCount)++;
                 }
 
@@ -1613,7 +1614,7 @@ rocblaslt_status
                                                      nullptr,
                                                      workspaceSizeInBytes))
                         continue;
-
+                    allSolutionsResults[i].workspaceSize = workspaceSizeInBytes;
                     results.push_back(allSolutionsResults[i]);
                 }
 
