@@ -200,7 +200,7 @@ namespace hipblaslt_ext
     class GemmInstance
     {
     public:
-        HIPBLASLT_EXPORT virtual ~GemmInstance();
+        HIPBLASLT_EXPORT virtual ~GemmInstance() {};
         HIPBLASLT_EXPORT               GemmInstance(const GemmInstance& rhs) = delete;
         HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs)    = delete;
         HIPBLASLT_EXPORT               GemmInstance(GemmInstance&& rhs) noexcept;
