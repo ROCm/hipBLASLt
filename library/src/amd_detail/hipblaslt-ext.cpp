@@ -108,7 +108,6 @@ namespace hipblaslt_ext
     {
     }
 
-    GemmInstance::~GemmInstance() {}
     GemmInstance::GemmInstance(GemmInstance&& rhs) noexcept            = default;
     GemmInstance& GemmInstance::operator=(GemmInstance&& rhs) noexcept = default;
 
