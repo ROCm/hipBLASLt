@@ -9203,6 +9203,9 @@ class KernelWriterAssembly(KernelWriter):
           codeMulAlpha = None
 
         biasLocalBarrierInit = False
+        # If LSU, the VGPRs are from LSU reduction.
+        # We need a variable to read from correct VGPR index when numBatches > 1.
+        ss.lsuStartVgprOffset = 0
         for batchIdx in range(0, numBatches):
           elementStartIdx = batchIdx * numElementsPerBatch
           elementStopIdx = min( elementStartIdx + numElementsPerBatch, len(elements[edgeI]) )

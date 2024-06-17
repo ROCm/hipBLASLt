@@ -703,7 +703,7 @@ namespace Tensile
                 if(problemType.useBias)
                     args.template append<uint32_t>(
                         "strideBias",
-                        static_cast<uint32_t>(problem.useBias() ? bias.strides()[bias.dimensions() - 1] : 0)); // reserved
+                        static_cast<uint32_t>(problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0)); // reserved
                 if(problemType.useBias == 3)
                 {
                     args.template append<uint32_t>(
@@ -1154,7 +1154,7 @@ namespace Tensile
            && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
-            rv.args.append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
+            rv.args.append<uint32_t>("strideBias", problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0);
             if(problemType.useBias == 3)
                 rv.args.template append<uint32_t>("biasDim",
                                                   (uint32_t)problem.getParams().biasDim());
@@ -1377,7 +1377,7 @@ namespace Tensile
         if(useBias)
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
-            args.template append<uint32_t>("strideBias", problem.useBias()? bias.strides()[bias.dimensions() - 1] : 0);
+            args.template append<uint32_t>("strideBias", problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0);
         }
 
         int i = 0;
