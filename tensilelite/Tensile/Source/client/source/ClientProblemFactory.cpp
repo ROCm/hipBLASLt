@@ -365,7 +365,7 @@ namespace Tensile
 
                             rv.back().setSynchronizer(
                             m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
-                            1024);
+                            40960);
 
                             rv.back().setGroupedGemm(m_groupedGemm);
                             rv.back().setF32XdlMathOp(m_f32XdlMathOp);

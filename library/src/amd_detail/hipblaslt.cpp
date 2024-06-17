@@ -131,8 +131,8 @@ try
     // TODO: Synchronizer size pass into predicate SynchronizerSizeCheck
     // 1K just for small size now, need to cal corner case if support all situations
     void* d_Synchronizer = nullptr;
-    CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 1024 * sizeof(int)));
-    CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 1024));
+    CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 40960 * sizeof(int)));
+    CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 40960));
 
     // Check if handle is valid
     if(handle == nullptr)

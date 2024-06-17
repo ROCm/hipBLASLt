@@ -1401,7 +1401,6 @@ class KernelWriterAssembly(KernelWriter):
         waitForArgsToLoad()
         calculateWG()
 
-
       if not kernel["ProblemType"]["StridedBatched"]:
         with self.allocTmpSgpr(self.states.laneSGPRCount) as tmpSgpr:
           moduleWg.add(self.loadBatchedAddress(kernel, "WorkGroup2", tmpSgpr))
@@ -1567,7 +1566,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr0), src=sgpr(tmpSgpr0), shiftHex=(2)))
           module.add(SAddU32(dst=sgpr("AddressTD"), src0=sgpr("AddressTD"), src1=sgpr(tmpSgpr0)))
           module.add(SAddCU32(dst=sgpr("AddressTD+1"), src0=sgpr("AddressTD+1"), src1=hex(0)))
-          module.add(SAddU32(dst=sgpr("Synchronizer"), src0=sgpr("Synchronizer"), src1=hex(4096)))
+          module.add(SAddU32(dst=sgpr("Synchronizer"), src0=sgpr("Synchronizer"), src1=hex(163840)))
           module.add(SAddCU32(dst=sgpr("Synchronizer+1"), src0=sgpr("Synchronizer+1"), src1=hex(0)))
           module.add(extReadEpilogueLabeltmp)
         module.add(SAddU32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprAddrM), src1=sgpr(tmpSgprArgOffsett)))
@@ -1649,17 +1648,6 @@ class KernelWriterAssembly(KernelWriter):
           self.externalArgLoader.setOffset(offset)
           module.add(moduleExternalArgs)
           module.add(extLabelEnd)
-
-      if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
-        extReadEpilogueLabeltmp    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
-        module.addComment0("Check if custom structure pointer is null")
-        if kernel["ProblemType"]["SupportUserArgs"]:
-          module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
-          module.add(SCBranchSCC0(labelName=extReadEpilogueLabeltmp.getLabelName()))
-        module.add(SMovB64(dst=sgpr("WSDstart",2), src=sgpr("AddressD",2)))
-        module.add(SMovB64(dst=sgpr("AddressD",2), src=sgpr("AddressTD",2)))
-        module.add(SMovB64(dst=sgpr("AddressTD",2), src=sgpr("WSDstart",2)))
-        module.add(extReadEpilogueLabeltmp)
 
       # Update label
       labels = []
@@ -1893,6 +1881,18 @@ class KernelWriterAssembly(KernelWriter):
     gsuLabelEnd = Label(label=self.labels.getNameInc("GSU_End"), comment="")
     module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
     module.add(SCBranchSCC1(labelName=gsuLabel.getLabelName(), comment="branch if GSU == 1"))
+
+    if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
+      extReadEpilogueLabeltmp    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
+      module.addComment0("Check if custom structure pointer is null")
+      if kernel["ProblemType"]["SupportUserArgs"]:
+        module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
+        module.add(SCBranchSCC0(labelName=extReadEpilogueLabeltmp.getLabelName()))
+      module.add(SMovB64(dst=sgpr("WSDstart",2), src=sgpr("AddressD",2)))
+      module.add(SMovB64(dst=sgpr("AddressD",2), src=sgpr("AddressTD",2)))
+      module.add(SMovB64(dst=sgpr("AddressTD",2), src=sgpr("WSDstart",2)))
+      module.add(extReadEpilogueLabeltmp)
+
     module.addComment("GSU-not-WGMapRR :nwg1 = (size%s + MT%s - 1) / MT%s;" \
         % (self.states.tileChar1, self.states.tileChar1, self.states.tileChar1))
 
@@ -9190,7 +9190,7 @@ class KernelWriterAssembly(KernelWriter):
         codeMulAlpha = deepcopy(mulAlpha) if self.states.serializedStore else None
 
         self.alphaBeforeLoadC = False
-        if kernel["MIArchVgpr"] and applyAlpha:
+        if kernel["MIArchVgpr"] and applyAlpha and not kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
           codeAccVgprRead = None
 
           #Only apply when 2 wave optimization features are enabled

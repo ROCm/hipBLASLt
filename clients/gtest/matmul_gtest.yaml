@@ -1320,18 +1320,33 @@ Tests:
   beta: 2.0
   unit_check: 1
 
-- name: matmul_request_solution_num
+- name: matmul_heuristic_all_solutions
   category: nightly
   function:
-    matmul: *hpa_bf16_precision
-  M: [128, 129]
-  N: [128, 129]
-  K: [128, 129]
+    matmul: *real_precisions
+  M: [128]
+  N: [128]
+  K: [2048]
+  algo_method: [0,1]
   transA_transB: *transA_transB_range
   alpha: 1
   beta: 0
   requested_solution_num: -1
-  norm_check: 1
+  unit_check: 1
 
+- name: matmul_heuristic_all_solutions_real_1byte
+  category: nightly
+  function:
+    matmul: *real_precisions_1b
+  M: [128]
+  N: [128]
+  K: [2048]
+  algo_method: [0,1]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: 0
+  requested_solution_num: -1
+  unit_check: 1
+  gpu_arch: '94?'
 ...
 

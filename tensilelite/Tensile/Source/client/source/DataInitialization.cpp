@@ -676,7 +676,10 @@ namespace Tensile
                             pristine.maxElements, problem.tensors()[i].totalAllocatedElements());
                         if(m_rotatingBuffer)
                         {
-                            rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                            if(!(m_vdata[i].name == "c" && problem.beta() == 0.0))
+                            {
+                                rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                            }
                         }
                         if(m_vdata[i].name.empty())
                         {
@@ -754,7 +757,10 @@ namespace Tensile
                                 problem.tensors()[i].totalAllocatedElements());
                             if(m_rotatingBuffer)
                             {
-                                rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                                if(!(m_vdata[i].name == "c" && problem.beta() == 0.0))
+                                {
+                                    rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                                }
                             }
                             if(m_vdata[i].name.empty())
                             {
