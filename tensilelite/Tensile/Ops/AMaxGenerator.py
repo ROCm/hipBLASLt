@@ -400,16 +400,6 @@ class AMaxKernelGenerator:
     def init_param(self) -> ti.Module:
         mod = ti.Module("init_param")
         mod.addComment0("init_param")
-        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), int(log2(self.bpe)), ti.sgpr("WorkSize")))
-        mod.add(ti.SMulI32(ti.sgpr("Tmp"), ti.sgpr("WorkGroup0"), ti.sgpr("Tmp")))
-        mod.addSpaceLine()
-
-        mod.add(ti.SAddU32(ti.sgpr("Src+0"), ti.sgpr("AddressIn+0"), ti.sgpr("Tmp")))
-        mod.add(ti.SAddCU32(ti.sgpr("Src+1"), ti.sgpr("AddressIn+1"), 0))
-        mod.add(ti.SLShiftLeftB32(ti.sgpr("Src+2"), int(log2(self.bpe)), ti.sgpr("SizeLength")))
-        mod.add(ti.SSubU32(ti.sgpr("Src+2"), ti.sgpr("Src+2"),ti.sgpr("Tmp")))
-        mod.add(ti.SMovB32(ti.sgpr("Src+3"), "Srd127_96"))
-        mod.addSpaceLine()
 
         mod.add(ti.VMovB32(ti.vgpr("Output"), 0))
         mod.add(ti.SMovB32(ti.sgpr("WGIdx"),ti.sgpr("WorkGroup0")))
@@ -517,23 +507,41 @@ class AMaxKernelGenerator:
         mod.addComment0("sum_per_blocksize")
 
         label_sum_per_blocksize = ti.Label("sum_per_blocksize", 'sum_per_blocksize')
+        label_tail8 = ti.Label("tail8", 'tail8')
         label_loop = ti.Label("loop", 'loop')
         label_last_loop = ti.Label("last_loop", 'last_loop')
-        label_loop_end = ti.Label("loop_end", 'loop_end')
         label_sum_per_blocksize_end = ti.Label("sum_per_blocksize_end", 'sum_per_blocksize_end')
 
         mod.add(ti.SLShiftRightB32(ti.sgpr("MainLoop"), ti.sgpr("LogWorkSize"), ti.sgpr("SizeLength")))
+        mod.add(ti.SSubU32(ti.sgpr("Tmp"), ti.sgpr("WorkSize"), 1))
+        mod.add(ti.SAndB32(ti.sgpr("Tmp"), ti.sgpr("SizeLength"), ti.sgpr("Tmp")))
+        mod.add(ti.SCmpEQU32(ti.sgpr("Tmp"), 0))
+        mod.add(ti.SCBranchSCC1(label_tail8.getLabelName()))
+        mod.add(ti.SAddU32(ti.sgpr("MainLoop"), ti.sgpr("MainLoop"), 1))
+        mod.add(label_tail8)
+        mod.addSpaceLine()
+
         mod.add(label_sum_per_blocksize)
         mod.add(ti.SCmpGeI32(ti.sgpr("WGIdx"), ti.sgpr("MainLoop")))
         mod.add(ti.SCBranchSCC1(label_sum_per_blocksize_end.getLabelName()))
         mod.addSpaceLine()
 
+        mod.add(ti.SSubU32(ti.sgpr("Tmp"), ti.sgpr("MainLoop"), ti.sgpr("WGIdx")))
+        mod.add(ti.SSubU32(ti.sgpr("Tmp"), ti.sgpr("Tmp"), 1))
+        mod.add(ti.SMulI32(ti.sgpr("Tmp"), ti.sgpr("Tmp"), ti.sgpr("WorkSize")))
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), int(log2(self.bpe)), ti.sgpr("Tmp")))
+        mod.addSpaceLine()
+
+        mod.add(ti.SAddU32(ti.sgpr("Src+0"), ti.sgpr("AddressIn+0"), ti.sgpr("Tmp")))
+        mod.add(ti.SAddCU32(ti.sgpr("Src+1"), ti.sgpr("AddressIn+1"), 0))
+        mod.add(ti.SLShiftLeftB32(ti.sgpr("Src+2"), int(log2(self.bpe)), ti.sgpr("SizeLength")))
+        mod.add(ti.SSubU32(ti.sgpr("Src+2"), ti.sgpr("Src+2"),ti.sgpr("Tmp")))
+        mod.add(ti.SMovB32(ti.sgpr("Src+3"), "Srd127_96"))
+        mod.addSpaceLine()
+
         if self.is_scale:
             mod.add(ti.SMovB32(ti.sgpr("OffsetD"), 0))
         mod.add(ti.SMovB32(ti.sgpr("Offset"), 0))
-        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), 1, ti.sgpr("WorkSize")))
-        mod.add(ti.SCmpGeI32(ti.sgpr("Offset"), ti.sgpr("Tmp")))
-        mod.add(ti.SCBranchSCC1(label_loop_end.getLabelName()))
         mod.addSpaceLine()
 
         buffer_load = self.global_read_inst_type(self.num_load_size, self.i_type)
@@ -567,16 +575,6 @@ class AMaxKernelGenerator:
         mod.addSpaceLine()
 
         mod.add(self.block_max(self.num_load_count-1, True))
-        mod.addSpaceLine()
-
-        mod.add(label_loop_end)
-        mod.addSpaceLine()
-
-        mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), int(log2(self.bpe)), ti.sgpr("WorkSize")))
-        mod.add(ti.SMulI32(ti.sgpr("Tmp"), ti.sgpr("Tmp"), ti.sgpr("NumGroup")))
-        for i in range(0, self.num_load_count):
-           mod.add(ti.VAddU32(ti.vgpr(f"Offset+{i}"), ti.vgpr(f"Offset+{i}"), ti.sgpr("Tmp")))
-        mod.addSpaceLine()
 
         if self.is_scale:
             mod.add(ti.SLShiftLeftB32(ti.sgpr("Tmp"), int(log2(self.scale_type.numBytes())), ti.sgpr("WorkSize")))
@@ -1087,12 +1085,12 @@ class AMaxKernelGenerator:
             mod.add(self.init_param())
             mod.add(self.calculate_global_address())
             mod.add(self.sum_per_blocksize())
-            mod.add(self.adjust_global_address())
-            mod.add(self.sum_per_threadx4x4())
-            mod.add(self.sum_per_threadx4())
-            mod.add(self.adjust_global_address_2())
-            mod.add(self.sum_per_thread())
-            mod.add(self.sum_in_some_thread())
+            # mod.add(self.adjust_global_address())
+            # mod.add(self.sum_per_threadx4x4())
+            # mod.add(self.sum_per_threadx4())
+            # mod.add(self.adjust_global_address_2())
+            # mod.add(self.sum_per_thread())
+            # mod.add(self.sum_in_some_thread())
             mod.add(self.label_reduction)
             mod.add(self.intra_wave_reduction("middle"))
             mod.add(self.inter_wave_reduction())
