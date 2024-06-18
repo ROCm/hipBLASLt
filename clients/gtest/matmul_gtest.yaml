@@ -1169,8 +1169,8 @@ Tests:
   function:
     matmul: *i8_precision_dst_i8
   matrix_size:
+    - { M:  127,  N:  127,  K:  127  }
     - { M:  128,  N:  128,  K:  128  }
-    - { M:  131,  N:  131,  K:  131  }
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0, 2 ]
@@ -1182,8 +1182,8 @@ Tests:
   function:
     matmul: *i8_precision_dst_i8
   matrix_size:
+    - { M:  127,  N:  127,  K:  127  }
     - { M:  128,  N:  128,  K:  128  }
-    - { M:  131,  N:  131,  K:  131  }
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0, 2 ]
