@@ -106,9 +106,10 @@ namespace Tensile
     using TypedGemm_I8_H_S       = TypedGemm<int8_t, int8_t, Half, Half, float, float>;
     using TypedGemm_I32_I32_I32  = TypedGemm<int32_t>;
 #ifdef TENSILE_USE_BF16
-    using TypedGemm_B_B_S = TypedGemm<BFloat16, BFloat16, BFloat16, BFloat16, float, float>;
-    using TypedGemm_B_S_S = TypedGemm<BFloat16, BFloat16, float, float>;
+    using TypedGemm_B_B_S   = TypedGemm<BFloat16, BFloat16, BFloat16, BFloat16, float, float>;
+    using TypedGemm_B_S_S   = TypedGemm<BFloat16, BFloat16, float, float>;
     using TypedGemm_H_B_H_S = TypedGemm<Half, Half, Half, Half, float, float, BFloat16>;
+    using TypedGemm_I8_B_S  = TypedGemm<int8_t, int8_t, BFloat16, BFloat16, float, float>;
 #endif // TENSILE_USE_BF16
 #ifdef TENSILE_USE_FP8_BF8
     using TypedGemm_F8_F8_S = TypedGemm<Float8, Float8, Float8, Float8, float, float>;
@@ -132,7 +133,8 @@ namespace Tensile
     using TypedGemm_B8F8_F8_S
         = TypedGemm<BFloat8, Float8, Float8, Float8, float, float, BFloat8Float8>;
     using TypedGemm_B8F8_H_S = TypedGemm<BFloat8, Float8, Half, Half, float, float, BFloat8Float8>;
-    using TypedGemm_B8F8_B_S = TypedGemm<BFloat8, Float8, BFloat16, BFloat16, float, float, BFloat8Float8>;
+    using TypedGemm_B8F8_B_S
+        = TypedGemm<BFloat8, Float8, BFloat16, BFloat16, float, float, BFloat8Float8>;
     using TypedGemm_B8F8_S_S
         = TypedGemm<BFloat8, Float8, float, float, float, float, BFloat8Float8>;
     using TypedGemm_F8B8_B8_S
