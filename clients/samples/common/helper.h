@@ -184,7 +184,7 @@ struct Runner
         static_cast<void>(func());
 
         deviceToHost();
-        hipStreamSynchronize(stream);
+        static_cast<void>(hipStreamSynchronize(stream));
     }
 
     int64_t   m;
@@ -335,7 +335,7 @@ struct RunnerVec
         static_cast<void>(func());
 
         deviceToHost();
-        hipStreamSynchronize(stream);
+        static_cast<void>(hipStreamSynchronize(stream));
     }
 
     std::vector<int64_t>   m;
@@ -434,7 +434,7 @@ struct LayerNormRunner
         static_cast<void>(func());
 
         deviceToHost();
-        hipStreamSynchronize(stream);
+        static_cast<void>(hipStreamSynchronize(stream));
     }
 
     int64_t m;
@@ -497,7 +497,7 @@ struct OptAMaxRunner
         static_cast<void>(func());
 
         deviceToHost();
-        hipStreamSynchronize(stream);
+        static_cast<void>(hipStreamSynchronize(stream));
     }
 
     int64_t m;
@@ -572,7 +572,7 @@ struct OptAMaxWithScaleRunner
         static_cast<void>(func());
 
         deviceToHost();
-        hipStreamSynchronize(stream);
+        static_cast<void>(hipStreamSynchronize(stream));
     }
 
     int64_t m;
