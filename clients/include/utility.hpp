@@ -476,5 +476,43 @@ void print_strided_batched(
     hipblaslt_cout << std::flush;
 }
 
+/* ===================================================================== */
+/*! \brief For special numerical types, to convert a value to such type. */
+template <typename T, typename Accumulator>
+typename std::enable_if<std::is_same<int8_t, T>::value, T>::type
+    saturate_cast(Accumulator val)
+{
+    if constexpr(std::is_same<Accumulator, hipblasLtHalf>::value
+                 || std::is_same<Accumulator, hip_bfloat16>::value)
+    {
+        float tmp = std::nearbyint((float)val); //round to even
+        if(tmp > static_cast<float>(127))
+            tmp = static_cast<float>(127);
+        else if(tmp < static_cast<float>(-128))
+            tmp = static_cast<float>(-128);
+        return static_cast<T>(tmp);
+    }
+    else
+    {
+        if constexpr(std::is_same<Accumulator, float>::value
+                     || std::is_same<Accumulator, double>::value)
+            val = std::nearbyint(val); //round to even
+        if(val > static_cast<Accumulator>(127))
+            val = static_cast<Accumulator>(127);
+        else if(val < static_cast<Accumulator>(-128))
+            val = static_cast<Accumulator>(-128);
+        return static_cast<T>(val);
+    }
+}
+
+/* ==================================================================== */
+/*! \brief For common numerical types, to convert a value to such type. */
+template <typename T, typename Accumulator>
+typename std::enable_if<!std::is_same<int8_t, T>::value, T>::type
+    saturate_cast(Accumulator val)
+{
+    return static_cast<T>(val);
+}
+
 std::vector<void*> benchmark_allocation();
 int32_t hipblaslt_get_arch_major();
