@@ -658,7 +658,8 @@ namespace Tensile
 
             for(auto const& p : problemFactory.problems())
             {
-                int64_t rotatingSize = 0;
+                int64_t rotatingSize    = 0;
+                int64_t nonRotatingSize = 0;
                 if(auto ptr = dynamic_cast<ContractionProblemGemm const*>(p.get()))
                 {
                     const ContractionProblemGemm& problem = (*ptr);
@@ -676,9 +677,16 @@ namespace Tensile
                             pristine.maxElements, problem.tensors()[i].totalAllocatedElements());
                         if(m_rotatingBuffer)
                         {
-                            if(!(m_vdata[i].name == "c" && problem.beta() == 0.0))
+                            if(i <= ContractionProblemGemm::TENSOR::METADATA)
                             {
-                                rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                                if(!(i == ContractionProblemGemm::TENSOR::C && problem.beta() == 0.0))
+                                {
+                                    rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                                }
+                            }
+                            else
+                            {
+                                nonRotatingSize += problem.tensors()[i].totalAllocatedBytes();
                             }
                         }
                         if(m_vdata[i].name.empty())
@@ -700,7 +708,7 @@ namespace Tensile
                         {
                             neededSize += rotatingSize;
                         }
-                        m_rotatingLargestUnitSize = std::max(m_rotatingLargestUnitSize, rotatingSize);
+                        m_rotatingLargestUnitSize = std::max(m_rotatingLargestUnitSize, rotatingSize + nonRotatingSize);
                         m_rotatingAllocatedSize   = std::max(m_rotatingAllocatedSize, neededSize - rotatingSize);
                     }
                     auto constants = problem.constants();
@@ -757,9 +765,16 @@ namespace Tensile
                                 problem.tensors()[i].totalAllocatedElements());
                             if(m_rotatingBuffer)
                             {
-                                if(!(m_vdata[i].name == "c" && problem.beta() == 0.0))
+                                if(i <= ContractionProblemGemm::TENSOR::METADATA)
                                 {
-                                    rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                                    if(!(i == ContractionProblemGemm::TENSOR::C && problem.beta() == 0.0))
+                                    {
+                                        rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                                    }
+                                }
+                                else
+                                {
+                                    nonRotatingSize += problem.tensors()[i].totalAllocatedBytes();
                                 }
                             }
                             if(m_vdata[i].name.empty())
@@ -803,7 +818,7 @@ namespace Tensile
                         {
                             neededSize += rotatingSize;
                         }
-                        m_rotatingLargestUnitSize = std::max(m_rotatingLargestUnitSize, rotatingSize);
+                        m_rotatingLargestUnitSize = std::max(m_rotatingLargestUnitSize, rotatingSize + nonRotatingSize);
                         m_rotatingAllocatedSize   = std::max(m_rotatingAllocatedSize, neededSize - rotatingSize);
                     }
 
