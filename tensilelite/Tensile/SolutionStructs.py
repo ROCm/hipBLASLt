@@ -3160,8 +3160,7 @@ class Solution(collections.abc.Mapping):
         reject(state, "1LDSBuffer must be 0 for directToLds")
 
     if state["1LDSBuffer"] == -1:
-      if state["MIWaveTile"][0] == 1 and state["MIWaveTile"][1] == 1 or \
-          ldsNumBytesAB  <= max(ldsSizeOccupancy,32768) or \
+      if ldsNumBytesAB  <= max(ldsSizeOccupancy,32768) or \
           (state["ProblemType"]["ComputeDataType"].numBytes() * state["MacroTile0"] * state["MacroTile1"] > 32768*4 and \
             not (ldsNumBytesAB > globalParameters["DeviceLDS"])):
         state["1LDSBuffer"] = 0
