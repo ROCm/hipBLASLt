@@ -245,14 +245,14 @@ void cblas_gemm(hipblasOperation_t     transA,
     if(scaleD != 1)
     {
         for(size_t i = 0; i < sizeC; i++)
-            C[i] = static_cast<To>(C_Tc[i] * scaleD);
+            C[i] = saturate_cast<To>(C_Tc[i] * scaleD);
     }
     else
     {
         if constexpr(!std::is_same<To, TcCast>::value)
         {
             for(size_t i = 0; i < sizeC; i++)
-                C[i] = static_cast<To>(C_Tc[i]);
+                C[i] = saturate_cast<To>(C_Tc[i]);
         }
     }
 }

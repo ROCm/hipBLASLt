@@ -87,7 +87,6 @@ void epilogue_func(int64_t m,
                    F&      act_func,
                    bool    gradient)
 {
-    auto saturate_o = [](Tact val) { return static_cast<To>(val); };
     for(int i = 0; i < m; i++)
     {
         Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
@@ -97,7 +96,7 @@ void epilogue_func(int64_t m,
     auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;                       \
     if(e && !gradient)                                                               \
     {                                                                                \
-        *(e + pos) = static_cast<To>(in_Tact * scaleE);                              \
+        *(e + pos) = saturate_cast<To>(in_Tact * scaleE);                            \
     }                                                                                \
     Tact in_Tact_act = 0;                                                            \
     if(gradient)                                                                     \
@@ -111,7 +110,7 @@ void epilogue_func(int64_t m,
             for(int j = 0; j < n; j++)
             {
                 CALCULATE_EPILOGUE_ACT;
-                *(out + pos)     = saturate_o(in_Tact_act * scaleD);
+                *(out + pos)     = saturate_cast<To>(in_Tact_act * scaleD);
                 *(out_raw + pos) = static_cast<Tc>(in_Tact_act * scaleD);
             }
         }
@@ -123,7 +122,7 @@ void epilogue_func(int64_t m,
                 *amaxD           = *amaxD > fabs(static_cast<Tc>(in_Tact_act))
                                        ? *amaxD
                                        : fabs(static_cast<Tc>(in_Tact_act));
-                *(out + pos)     = saturate_o(in_Tact_act * scaleD);
+                *(out + pos)     = saturate_cast<To>(in_Tact_act * scaleD);
                 *(out_raw + pos) = static_cast<Tc>(in_Tact_act * scaleD);
             }
         }
@@ -144,14 +143,12 @@ void epilogue_func(int64_t m,
                    Tbias*  bias,
                    bool    gradient)
 {
-    auto saturate_o = [](Ti val) { return static_cast<To>(val); };
-
 #define CALCULATE_EPILOGUE_BASIC                          \
     auto pos  = j * ld + i;                               \
     Tc   temp = static_cast<Ti>(*(in + pos)) + bias_data; \
     if(e)                                                 \
     {                                                     \
-        *(e + pos) = static_cast<To>(temp * scaleE);      \
+        *(e + pos) = saturate_cast<To>(temp * scaleE);    \
     }
 
     for(int i = 0; i < m; i++)
@@ -165,7 +162,7 @@ void epilogue_func(int64_t m,
             {
                 CALCULATE_EPILOGUE_BASIC;
                 temp *= scaleD;
-                *(out + pos)     = saturate_o(temp);
+                *(out + pos)     = saturate_cast<To>(temp);
                 *(out_raw + pos) = static_cast<Tc>(temp);
             }
         }
@@ -177,7 +174,7 @@ void epilogue_func(int64_t m,
                 *amaxD
                     = *amaxD > fabs(static_cast<Tc>(temp)) ? *amaxD : fabs(static_cast<Tc>(temp));
                 temp *= scaleD;
-                *(out + pos)     = saturate_o(temp);
+                *(out + pos)     = saturate_cast<To>(temp);
                 *(out_raw + pos) = static_cast<Tc>(temp);
             }
         }
@@ -205,7 +202,7 @@ void reduction_func(
                     sum += static_cast<Tc>(workspace[i1 * s1 + i2 * s2 + batch * s3]);
                 }
             }
-            bias[i1] = static_cast<To>(sum);
+            bias[i1] = saturate_cast<To>(sum);
         }
     }
 }
