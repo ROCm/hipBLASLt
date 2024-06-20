@@ -188,6 +188,7 @@ class StateValues:
   unifiedVgprRegs: bool                  = False
   useAtomicAdd: bool                     = False
   serializedStore: bool                  = False
+  gsu_wg_coalesced: bool                 = False
 
   a: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)
   b: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)
@@ -1466,6 +1467,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # increments
     def graIncrementsAB():
+      module.addComment1("global read addresses: increments a")
       for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
         module.add(self.graIncrements(kernel, i, tensorParametersA))
       if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
@@ -3257,6 +3259,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         vgprIdx = 0
         self.states.c.numVgprValu = 0
 
+    self.states.gsu_wg_coalesced = kernel["GlobalSplitUCoalesced"]
+    
     # TODO: alignment hack, figure out a better solution
     vgprIdx = ((vgprIdx+1)//2)*2
     # Avoid bank conflict between VgprA and VgprC
