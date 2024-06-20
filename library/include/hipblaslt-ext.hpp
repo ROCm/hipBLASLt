@@ -848,7 +848,8 @@ namespace hipblaslt_ext
      *  This function retrieves the possible algorithms for the matrix multiply
      * operation hipblasLtMatmul() function with the given data and compute tpye.
      * The output is placed in heuristicResults in the order of increasing
-     * estimated compute time.
+     * estimated compute time. It should use matmulIsAlgoSupported() to check if
+     * the algorithm support the problem before execute hipblasLtMatmul().
      *
      *  @param[in]
      *  handle                  Pointer to the allocated hipBLASLt handle for the
@@ -936,7 +937,9 @@ namespace hipblaslt_ext
      *  This function retrieves the possible algorithms for the matrix multiply
      * operation hipblasLtMatmul() function with the given index.
      * The output is placed in heuristicResult in the order of increasing
-     * estimated compute time.
+     * estimated compute time. A recorded solution index cannot be used across
+     * different verison of library. It should use matmulIsAlgoSupported() to
+     * check if the algorithm support the problem before execute hipblasLtMatmul().
      *
      *  @param[in]
      *  handle                  Pointer to the allocated hipBLASLt handle for the
