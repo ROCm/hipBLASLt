@@ -1015,6 +1015,44 @@ namespace Tensile
                 }
             };
 
+            struct AILessThanEqual : public Predicate_CRTP<AILessThanEqual, ContractionProblem>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+
+                double value;
+
+                AILessThanEqual() = default;
+                AILessThanEqual(double value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "AILessThanEqual";
+                }
+
+                virtual bool operator()(ContractionProblem const& problem) const override
+                {
+                    return problem.arithmeticIntensity() <= value;
+                }
+
+                virtual bool debugEval(ContractionProblem const& problem,
+                                       std::ostream&             stream) const override
+                {
+                    bool rv = (*this)(problem);
+
+                    stream << *this << ": (" << problem.arithmeticIntensity() << " <= " << value
+                           << ") == " << rv;
+
+                    return rv;
+                }
+            };
+
             struct AlphaValue : public Predicate_CRTP<AlphaValue, ContractionProblemGemm>
             {
                 enum

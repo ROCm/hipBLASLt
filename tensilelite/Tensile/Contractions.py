@@ -384,10 +384,17 @@ class ProblemPredicate(Properties.Predicate):
     @classmethod
     def FromOriginalKeyPair(cls, pair):
         (key, value) = pair
+        
+        # Arithmetic intensity assertions
+        if key == "AssertAIGreaterThanEqual":
+            return cls("AIGreaterThanEqual", value=value) if value > 0 else None
+        if key == "AssertAILessThanEqual":
+            return cls("AILessThanEqual", value=value) if value > 0 else None
+
         if key.endswith('Multiple'):
             if value == 1:
                 return None
-
+            
             if key == "AssertFree0ElementMultiple":
                 tag = "Free0SizeMultiple"
                 index = 0
