@@ -394,7 +394,7 @@ class ProblemPredicate(Properties.Predicate):
         if key.endswith('Multiple'):
             if value == 1:
                 return None
-            
+    
             if key == "AssertFree0ElementMultiple":
                 tag = "Free0SizeMultiple"
                 index = 0
