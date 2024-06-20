@@ -677,12 +677,9 @@ namespace Tensile
                             pristine.maxElements, problem.tensors()[i].totalAllocatedElements());
                         if(m_rotatingBuffer)
                         {
-                            if(i <= ContractionProblemGemm::TENSOR::METADATA)
+                            if((i <= ContractionProblemGemm::TENSOR::METADATA) && (!(i == ContractionProblemGemm::TENSOR::C && problem.beta() == 0.0)))
                             {
-                                if(!(i == ContractionProblemGemm::TENSOR::C && problem.beta() == 0.0))
-                                {
-                                    rotatingSize += problem.tensors()[i].totalAllocatedBytes();
-                                }
+                                rotatingSize += problem.tensors()[i].totalAllocatedBytes();
                             }
                             else
                             {
@@ -765,12 +762,9 @@ namespace Tensile
                                 problem.tensors()[i].totalAllocatedElements());
                             if(m_rotatingBuffer)
                             {
-                                if(i <= ContractionProblemGemm::TENSOR::METADATA)
+                                if((i <= ContractionProblemGemm::TENSOR::METADATA) && (!(i == ContractionProblemGemm::TENSOR::C && problem.beta() == 0.0)))
                                 {
-                                    if(!(i == ContractionProblemGemm::TENSOR::C && problem.beta() == 0.0))
-                                    {
-                                        rotatingSize += problem.tensors()[i].totalAllocatedBytes();
-                                    }
+                                    rotatingSize += problem.tensors()[i].totalAllocatedBytes();
                                 }
                                 else
                                 {
@@ -1086,6 +1080,10 @@ namespace Tensile
                         {
                             ptr = std::shared_ptr<void>(tmpPtr, (void*)((uint8_t*)tmpPtr.get() + offset));
                             offset += size;
+                            if(m_rotatingLargestUnitSize < offset)
+                            {
+                                throw std::runtime_error("Out of first allocated size.");
+                            }
                         }
                         else
                         {
