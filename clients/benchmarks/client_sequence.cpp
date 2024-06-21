@@ -247,7 +247,7 @@ public:
     uint32_t rotating           = 0; // Size in MB
     uint32_t cold_iters         = 1000;
     uint32_t iters              = 10;
-    int64_t  max_workspace_size = 32 * 1024 * 1024;
+    int64_t  max_workspace_size = 128 * 1024 * 1024;
     bool     graph_mode         = false;
 };
 
