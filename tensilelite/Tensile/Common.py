@@ -731,7 +731,7 @@ validParameters = {
     # StaggerUStride will be internally increased so it is an integer multiple of DepthU*BpeAB.
     # (the implementation requires this - the unroll iteration accesses data in steps of
     # DepthU*BPE
-    "StaggerUStride":               [16,32,64,128,256,512,1024,2048],
+    "StaggerUStride":               [-1,16,32,64,128,256,512,1024,2048],
 
     # How the tile assignment (wg0, wg1, wg2) controls the initial StaggerU offset:
     # 0: Use wg0
@@ -742,6 +742,10 @@ validParameters = {
     #    to a different bank since all workgroups still start at same point.
     "StaggerUMapping":       [0,1,2,3,4],
 
+    # GSU Workgroup Coalesced Ordering
+    # False: {(wg0,wg1,wg2,wgn)|(wg0,wg1,wg2,wgn)|...|(wg0,wg1,wg2,wgn)}
+    # True:  {(wg0,wg0,wg0)|(wg1,wg1,wg1)|(wg2,wg2,wg2)|...|(wgn,wgn,wgn)}
+    "GlobalSplitUCoalesced":        [False, True],
 
     # 0=don't use magic div (source only)
     # 1=magic div alg #1.  Slightly faster but limited range (if magic number is 2^32)
@@ -1089,6 +1093,7 @@ defaultBenchmarkCommonParameters = [
     {"MagicDivAlg":               [ 2 ] },
     {"GlobalSplitU":              [ 1 ] },
     {"GlobalSplitUAlgorithm":     [ "MultipleBuffer" ] },
+    {"GlobalSplitUCoalesced":     [ False ] },
     {"Use64bShadowLimit":         [ 1 ] },
     {"NumLoadsCoalescedA":        [ 1 ] },
     {"NumLoadsCoalescedB":        [ 1 ] },

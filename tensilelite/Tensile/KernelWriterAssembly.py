@@ -2586,7 +2586,16 @@ class KernelWriterAssembly(KernelWriter):
       module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tileStart), sgpr(tileStart+1), sgpr(tileStart+0), self.sizeRef(unrollSummation[-1]), \
                                 "scaled tile-offset by Summation size"))
 
-      module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), kernel["DepthU"], sgpr("GSUSumIdx"), "gsuOffset = DepthU*bpe*GSUSumIdx"))
+      depthU = kernel["DepthU"]
+      if self.states.gsu_wg_coalesced:
+        gsuOffsetStr = "gsuOffset = DepthU*accumulatedNumOfLoopCounterL"
+        loopCounterName = self.loopCounterName(kernel, self.states.unrollIdx)
+        module.add(SLShiftRightB32(dst=sgpr(loopCounterName), src=sgpr("SizesSum"), shiftHex=log2(depthU), \
+                                    comment="s[%s] = s[sgprSizesSum] / %s"%(loopCounterName, depthU)))
+        module.add(self.calculateLoopNumIterOffsetGsu(kernel, loopCounterName, tmpSgprInfo))
+        module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), sgpr(stmp+0), depthU, gsuOffsetStr))
+      else:
+        module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), depthU, sgpr("GSUSumIdx"), "gsuOffset = DepthU*bpe*GSUSumIdx"))
       module.add(SAddU32(dst=sgpr(tileStart+0), src0=sgpr(tileStart+0), src1=sgpr(stmp+0), comment="accum GsuOffet term to tilestart"))
       module.add(SAddCU32(dst=sgpr(tileStart+1), src0=sgpr(tileStart+1), src1=sgpr(stmp+1), comment="accum GsuOffet term to tilestart"))
 
@@ -2684,7 +2693,8 @@ class KernelWriterAssembly(KernelWriter):
                     strideF, "tlu=0, scaled tile-offset by stride"))
 
         depthU = kernel["DepthU"]
-        gsuOffset_str = "gsuOffset = DepthU*bpeGR*GSUSumIdx"
+        depthUDiv = kernel["DepthU"]
+        gsuOffsetStr = "gsuOffset = DepthU*bpeGR*GSUSumIdx"
         divider = 1
         if kernel["ProblemType"]["Sparse"]:
           if (kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or \
@@ -2693,9 +2703,18 @@ class KernelWriterAssembly(KernelWriter):
           elif tP["isM"]:
             divider = 8
           if divider != 1:
-            depthU = depthU // divider
-            gsuOffset_str = "gsuOffset = DepthU/%s*bpeGR*GSUSumIdx"%(divider)
-        module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), depthU, sgpr("GSUSumIdx"), gsuOffset_str))
+            depthUDiv = depthU // divider
+            gsuOffsetStr = "gsuOffset = DepthU/%s*bpeGR*GSUSumIdx"%(divider)
+        if self.states.gsu_wg_coalesced:
+          gsuOffsetStr = "gsuOffset = DepthU*accumulatedNumOfLoopCounterL"
+          loopCounterName = self.loopCounterName(kernel, self.states.unrollIdx)
+          module.add(SLShiftRightB32(dst=sgpr(loopCounterName), src=sgpr("SizesSum"), shiftHex=log2(depthU), \
+                                     comment="s[%s] = s[sgprSizesSum] / %s"%(loopCounterName, depthU)))
+          module.add(self.calculateLoopNumIterOffsetGsu(kernel, loopCounterName, tmpSgprInfo))
+          module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), sgpr(stmp+0), depthUDiv, gsuOffsetStr))
+        else:
+          gsuOffsetStr = "gsuOffset = DepthU*GSUSumIdx"
+          module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), depthUDiv, sgpr("GSUSumIdx"), gsuOffsetStr))
 
         unrollSummation = [ i for i in tP["ia"] if i in kernel["ProblemType"]["IndicesSummation"] ]
         stride = self.strideRef(tc,unrollSummation[-1])
@@ -2905,7 +2924,10 @@ class KernelWriterAssembly(KernelWriter):
         with self.allocTmpSgpr(3) as tmpSgprInfo:
           tmpSgpr = tmpSgprInfo.idx
           gsuSgpr = tmpSgpr + 2
-          module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*%d"%(tP["bpeGR"])))
+          if self.states.gsu_wg_coalesced:
+            module.add(SMovB32(dst=sgpr(gsuSgpr), src="DepthU*%d"%(tP["bpeGR"])))
+          else:
+            module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*%d"%(tP["bpeGR"])))
           module.add(SMulI32(dst=sgpr(tmpSgpr+0), \
               src0=sgpr(gsuSgpr), src1=stride, \
               comment="incr%s%s = %s*DepthU*bpeGR (unrollIdx)"%(tc, loopChar, stride) ))
@@ -2925,7 +2947,11 @@ class KernelWriterAssembly(KernelWriter):
           gsuSgpr = tmpSgprInfo.idx
 
           tcGR = tc if tc == "Metadata" else (tc + "GR")
-          module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*Bpe%s"%(tcGR)))
+
+          if self.states.gsu_wg_coalesced:
+            module.add(SMovB32(dst=sgpr(gsuSgpr), src="DepthU*Bpe%s"%(tcGR), comment=""))
+          else:
+            module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*Bpe%s"%(tcGR)))
 
           if kernel["ProblemType"]["Sparse"]:
             if tP["is_sparse"]:
@@ -3718,14 +3744,37 @@ class KernelWriterAssembly(KernelWriter):
     self.vgprPool.checkIn(tmpVgpr)
 
     # if gsuSumIdx < numIterPerWgRemainder
-    module.add(SAddU32(dst=sgpr(tmpSgprRes.idx), src0=1, \
-                  src1=loopCounter, comment="tmp<-numIterMyWg+" ))
-    module.add(SCmpLtU32(src0=sgpr("GSUSumIdx"), src1=sgpr("GSUSumIdx+1"), \
-        comment="gsuSumIdx < numIterPerWgRemainder" ))
+    module.add(SAddU32(dst=sgpr(tmpSgprRes.idx), src0=1, src1=loopCounter, comment="tmp<-numIterMyWg+1"))
+    module.add(SCmpLtU32(src0=sgpr("GSUSumIdx"), src1=sgpr("GSUSumIdx+1"), comment="gsuSumIdx < numIterPerWgRemainder"))
     module.add(SCMovB32(dst=loopCounter, src=sgpr(tmpSgprRes.idx), comment="numIterMyWg++ if needed"))
 
     return module
 
+  def calculateLoopNumIterOffsetGsu(self, kernel, destName, tmpSgprRes: RegisterPoolResource):
+    module = Module("calculateLoopNumIterOffsetGsu")
+
+    loopCounter = sgpr(destName)
+    quotient = destName
+    remainder = "GSUSumIdx+1" # numIterPerWgRemainder
+    dividend = destName
+
+    tmpVgpr = self.vgprPool.checkOut(2,"tmp")
+    tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
+    module.add(scalarUInt32DivideAndRemainder(quotient, dividend, "GSU", remainder, tmpVgprRes, wavewidth=kernel["WavefrontSize"]))
+    self.vgprPool.checkIn(tmpVgpr)
+    
+    # calculate offset number of loop iterations for each wg
+    stmp = tmpSgprRes.idx
+    module.add(SMulI32(dst=sgpr(stmp+1), src0=loopCounter, src1=sgpr("GSUSumIdx"), comment="quotient*GSUSumIdx"))
+    module.add(SAddU32(dst=sgpr(stmp+0), src0=1, src1=loopCounter, comment="quotient+1"))
+    module.add(SAddU32(dst=sgpr(stmp+1), src0=sgpr(stmp+1), src1=sgpr("GSUSumIdx+1"), comment="quotient*GSUSumIdx+remainder"))
+    module.add(SMulI32(dst=sgpr(stmp+0), src0=sgpr(stmp+0), src1=sgpr("GSUSumIdx"), comment="(quotient+1)*GSUSumIdx"))
+    # if gsuSumIdx < numIterPerWgRemainder
+    module.add(SCmpLtU32(src0=sgpr("GSUSumIdx"), src1=sgpr("GSUSumIdx+1"), comment="gsuSumIdx < numIterPerWgRemainder"))
+    module.add(SCSelectB32(dst=sgpr(stmp+0), src0=sgpr(stmp+0), src1=sgpr(stmp+1), comment="(quotient+1)*GSUSumIdx if needed"))
+
+    return module
+  
   ##############################################################################
   # Calculate Loop Num Iter
   # loopIdx is the index of the loop (used for contractions with multiple summations)
@@ -3805,10 +3854,26 @@ class KernelWriterAssembly(KernelWriter):
           self.vgprPool.checkIn(wave_id)
           self.vgprPool.checkIn(tmpVgpr)
 
-      # if GSU numIter=0 if gsuSumIdx != remainder
-      module.add(SCmpLgU32(src0=sgpr("GSUSumIdx"), src1=sgpr("GSUSumIdx+1"), \
-          comment="gsuSumIdx == numIterPerWgRemainder"))
-      module.add(SCMovB32(dst=loopCounter, src=hex(0), comment="numIter=0 if gsuSimIdx!=remainder"))
+      if self.states.gsu_wg_coalesced:
+        depthU = kernel["DepthU"]
+        # calculate the lastWg
+        tmpVgpr = self.vgprPool.checkOut(2,"tmp")
+        tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
+        module.add(SLShiftRightB32(dst=sgpr(tmpSgpr+1), src=sgpr("SizesSum"), shiftHex=log2(depthU), \
+                                     comment="s%s = s[sgprSizesSum] / %s"%(tmpSgpr+1,depthU)))
+        module.add(scalarUInt32DivideAndRemainder(tmpSgpr, tmpSgpr+1, "GSU", "GSUSumIdx+1", tmpVgprRes, wavewidth=kernel["WavefrontSize"]))
+        self.vgprPool.checkIn(tmpVgpr)
+        module.add(SSubU32(dst=sgpr(tmpSgpr+1), src0=sgpr("GSU"), src1=1, comment="GSU-1"))
+        module.add(SCmpEQU32(src0=sgpr(tmpSgpr), src1=0, comment="quotient == 0"))
+        module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("GSUSumIdx+1"), src1=sgpr(tmpSgpr+1), \
+                               comment="lastWg = (quotient==0) ? numIterPerWgRemainder : GSU-1"))
+        # if GSU numIter=0 if gsuSumIdx != lastWg
+        module.add(SCmpLgU32(src0=sgpr("GSUSumIdx"), src1=sgpr(tmpSgpr), comment="gsuSumIdx == lastWg"))
+        module.add(SCMovB32(dst=loopCounter, src=hex(0), comment="numIter=0 if gsuSumIdx != lastWg"))
+      else:
+        # if GSU numIter=0 if gsuSumIdx != numIterPerWgRemainder
+        module.add(SCmpLgU32(src0=sgpr("GSUSumIdx"), src1=sgpr("GSUSumIdx+1"), comment="gsuSumIdx == numIterPerWgRemainder"))
+        module.add(SCMovB32(dst=loopCounter, src=hex(0), comment="numIter=0 if gsuSimIdx != numIterPerWgRemainder"))
 
       # if tail numIter == 0 skip altogether
       skipTailLoopLabel = Label.getFormatting("SkipTailLoop%s"%(loopChar) )
@@ -3867,7 +3932,10 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def calculateIncrementMetadata(self, kernel, sgprOut):
     module = Module("calculateIncrementMetadata")
-    module.add(SMulI32(dst=sgpr(sgprOut), src0=kernel["DepthU"], src1=sgpr("GSU")))
+    if self.states.gsu_wg_coalesced:
+      module.add(SMovB32(dst=sgpr(sgprOut), src=kernel["DepthU"], comment="IncsMetadata"))
+    else:
+      module.add(SMulI32(dst=sgpr(sgprOut), src0=kernel["DepthU"], src1=sgpr("GSU"), comment="IncsMetadata"))
     module.add(SLShiftRightB32(dst=sgpr(sgprOut), shiftHex=hex(log2(8)), src=sgpr(sgprOut)))
     return module
 

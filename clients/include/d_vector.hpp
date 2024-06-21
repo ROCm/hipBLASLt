@@ -120,7 +120,7 @@ public:
 #ifdef GOOGLE_TEST
         if(m_guard_len > 0)
         {
-            T host[m_pad];
+            T *host = new T[m_pad];
 
             // Copy device memory after allocated memory to host
             EXPECT_EQ(hipMemcpy(host, d + this->m_size, m_guard_len, hipMemcpyDeviceToHost),
@@ -137,6 +137,8 @@ public:
 
             // Make sure no corruption has occurred
             EXPECT_EQ(memcmp(host, m_guard, m_guard_len), 0);
+
+            delete[] host;
         }
 #endif
     }
@@ -148,7 +150,7 @@ public:
 #ifdef GOOGLE_TEST
             if(m_pad > 0)
             {
-                T host[m_pad];
+                T *host = new T[m_pad];
 
                 // Copy device memory after allocated memory to host
                 EXPECT_EQ(hipMemcpy(host, d + this->m_size, m_guard_len, hipMemcpyDeviceToHost),
@@ -165,6 +167,8 @@ public:
 
                 // Make sure no corruption has occurred
                 EXPECT_EQ(memcmp(host, m_guard, m_guard_len), 0);
+
+                delete[] host;
             }
 #endif
             // Free device memory

@@ -1171,6 +1171,8 @@ Tests:
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
     - { M:  131,  N:  131,  K:  131  }
+    - { M:  1024, N:  1024, K:  1024 }
+    - { M:  1031, N:  1031, K:  1031 }
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0, 2 ]
@@ -1184,9 +1186,12 @@ Tests:
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
     - { M:  131,  N:  131,  K:  131  }
+    - { M:  1024, N:  1024, K:  1024 }
+    - { M:  1031, N:  1031, K:  1031 }
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0, 2 ]
+  scaleAlpha_vector: [0, 1]
   activation_type: relu
   unit_check: 1
   gpu_arch: '94?'
