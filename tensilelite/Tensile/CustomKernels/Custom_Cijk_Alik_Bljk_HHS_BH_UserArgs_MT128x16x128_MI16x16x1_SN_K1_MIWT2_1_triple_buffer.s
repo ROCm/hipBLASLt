@@ -1249,11 +1249,10 @@ s_cmp_eq_u32 s[sgprShadowLimitB+1], 0              // are we within 2^32?
 s_cselect_b32 s[sgprSrdB+2], s[sgprShadowLimitB+0], BufferLimit // Move shadow to real if we are within 2^32
 
 
+/* 2nd set of PGR */
 s_cmp_eq_u32 s[sgprLoopCounterL], 0x1              // PGR=3 but only 1 loop
 s_cbranch_scc1 label_skipPGR1_0                    // PGR=3 but only 1 loop
 
-/* 2nd set of PGR */
-/* Todo: check if we have k=128 or we have only on loop iteration.. jump to appropriate NLL */
 
 buffer_load_dwordx4 v[vgprG2LA1+0:vgprG2LA1+0+3], v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], 0 offen offset:0 nt // G -> Reg 0_0_0_0
 buffer_load_dwordx4 v[vgprG2LA1+4:vgprG2LA1+4+3], v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+0] offen offset:0 nt // G -> Reg 0_0_1_0
@@ -1393,8 +1392,8 @@ ds_write_b128 v[vgprLocalWriteAddrB], v[vgprG2LB+0:vgprG2LB+0+3] offset:0 // lwo
 /* local write swap a */
 
 /* local write swap b */
-s_cmp_le_u32 s[sgprLoopCounterL], 0x2              // PGR=3 but only 1 loop
-s_cbranch_scc1 label_skipPGR2_0                    // PGR=3 but only 1 loop
+s_cmp_le_u32 s[sgprLoopCounterL], 0x2              // PGR=3 but only 2 loop
+s_cbranch_scc1 label_skipPGR2_0                    // PGR=3 but only 2 loop
 
 buffer_load_dwordx4 v[vgprG2LA+0:vgprG2LA+0+3], v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], 0 offen offset:0 nt // G -> Reg 0_0_0_0
 buffer_load_dwordx4 v[vgprG2LA+4:vgprG2LA+4+3], v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+0] offen offset:0 nt // G -> Reg 0_0_1_0
@@ -2264,7 +2263,7 @@ v_mfma_f32_16x16x16_f16 acc[4:7], v[vgprValuB_X6_I0+0+2+0:vgprValuB_X6_I0+0+2+0+
 
 
 /* Last NLL is common for both odd and even exit */
-/* TODO: need any thing for GSU???*/
+
 s_branch label_last_NLL
 
 
