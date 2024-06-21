@@ -1669,6 +1669,10 @@ std::string rocblaslt_internal_get_arch_name()
     static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
     return ArchName{}(deviceProperties);
 }
+rocblaslt_status rocblaslt_is_device_supported()
+{
+   return isDeviceSupported();
+}
 
 bool rocblaslt_internal_test_path(const std::string& path)
 {

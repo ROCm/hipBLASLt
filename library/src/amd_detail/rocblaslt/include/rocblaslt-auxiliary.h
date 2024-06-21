@@ -393,6 +393,7 @@ rocblaslt_status rocblaslt_copy_matmul(rocblaslt_matmul_desc src, rocblaslt_matm
 // for internal use during testing, fetch arch name
 std::string rocblaslt_internal_get_arch_name();
 
+rocblaslt_status rocblaslt_is_device_supported();
 // for internal use of testing existence of path
 bool rocblaslt_internal_test_path(const std::string&);
 
