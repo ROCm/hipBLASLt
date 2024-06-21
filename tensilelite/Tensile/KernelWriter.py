@@ -1465,40 +1465,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.addComment1("global read addresses: addresses b")
       module.add(self.graAddresses(kernel, tensorParametersB))
 
-    # increments
-    def graIncrementsAB():
-      for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-        module.add(self.graIncrements(kernel, i, tensorParametersA))
-      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-        module.addComment1("global read addresses: increments metadata")
-        for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-          module.add(self.graIncrements(kernel, i, tPM))
-      module.addComment1("global read addresses: increments b")
-      for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-        module.add(self.graIncrements(kernel, i, tensorParametersB))
-
-    addBranch = False
-    for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-      if i != self.states.unrollIdx:
-        addBranch = True
-        break
-    if addBranch:
-      gsuBackup   = kernel["GlobalSplitU"]
-      gsuLabel    = Label(label=self.labels.getNameInc("GSU"), comment="")
-      gsuLabelEnd = Label(label=self.labels.getNameInc("GSU_End"), comment="")
-      module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
-      module.add(SCBranchSCC1(labelName=gsuLabel.getLabelName(), comment="branch if GSU == 1"))
-      module.addComment1("global read addresses: increments a")
-      kernel["GlobalSplitU"] = 2
-    graIncrementsAB()
-    if addBranch:
-      module.add(SBranch(gsuLabelEnd.getLabelName()))
-      module.add(gsuLabel)
-      kernel["GlobalSplitU"] = 1
-      graIncrementsAB()
-      kernel["GlobalSplitU"] = gsuBackup
-      module.add(gsuLabelEnd)
-
+    # Add increment code
+    gsuComponent = Component.GSU.find(self)
+    module.add(gsuComponent.setupNewTile(self, kernel, tensorParametersA, tensorParametersB, tPM))
 
     self.dontAppendCode = self.dontAppendCode or forceNoTileCode
 
@@ -2232,45 +2201,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # execute the NLL inside each unroll iteration not just once at the end.
     if kernel["PrefetchGlobalRead"]:
       if not kernel["SuppressNoLoadLoop"]:
-        gsuLabel = Label(label=self.labels.getNameInc("GSU"), comment="")
-        module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
-        noLoadLoopModules = None
-        acclen = 0
-        gsuBackup          = kernel["GlobalSplitU"]
-        gsuAccumBackup     = kernel["_GlobalAccumulation"]
-        bpeCexternalBackup = self.states.bpeCexternal
-        kernel["GlobalSplitU"] = 1
-        kernel["_GlobalAccumulation"] = None
-        self.states.bpeCexternal = self.states.bpeCexternalGSU1
-        if kernel["KernelLanguage"] == "Assembly" and kernel["OptNoLoadLoop"] and \
-           kernel["BufferLoad"] and kernel["BufferStore"] and self.states.doShadowInit and \
-           kernel["LocalSplitU"]==1 and \
-           self.states.actualSummationLoops==1:
-
-          # two different noLoadLoops:
-          # 1. OptNLL & PAP global-read interleaved (only for PAP=ON)
-          # (2. OptNLL : No PAP global-read (For PAP=OFF, or PAP=ON but the last tile))
-          #  -> this is unified with 1. global-read is invalidated at the last tile.
-          # 3. OrdinaryNLL (Not Opt.)
-          self.saveLocalPointers(kernel, tensorParametersA, tensorParametersB)
-          # deepCopy packCode for OptNLL noLoadLoop
-          deepCopyPack = fastdeepcopy(pack)
-          noLoadLoopModules = self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=True, isNGLL=False, pack=deepCopyPack)
-          acclen = noLoadLoopModules.countType(Instruction)
-          self.restoreLocalPointers(kernel, tensorParametersA, tensorParametersB)
-        kernel["GlobalSplitU"] = gsuBackup
-        kernel["_GlobalAccumulation"] = gsuAccumBackup
-        self.states.bpeCexternal = bpeCexternalBackup
-
-        if acclen > 16384:
-          with self.allocTmpSgpr(3) as tmpSgprInfo:
-            module.add(self.longBranchScc0(gsuLabel, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="branch if GSU != 1"))
-        else:
-          module.add(SCBranchSCC0(labelName=gsuLabel.getLabelName(), comment="branch if GSU != 1"))
-
-        if noLoadLoopModules != None:
-          module.add(noLoadLoopModules)
-        module.add(gsuLabel)
+        gsuComponent = Component.GSU.find(self)
+        module.add(gsuComponent.noLoadLoop(self, kernel, tensorParametersA, tensorParametersB, pack))
         module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=False, pack=pack))
 
     if self.states.actualSummationLoops>1:
@@ -3552,9 +3484,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.db["EnableAsserts"]:
       self.defineSgpr("SaveExecMask", 2, 2)
 
-    self.defineSgpr("GSUSumIdx", 2, 2)
-    self.defineSgpr("GSULog2BpeC", 1)
-    self.defineSgpr("GSULog2BpeD", 1)
+    if kernel["GlobalSplitU"] > 0:
+      self.defineSgpr("GSUSumIdx", 2, 2)
+      self.defineSgpr("GSULog2BpeC", 1)
+      self.defineSgpr("GSULog2BpeD", 1)
     self.defineSgpr("StaggerU", 1)
     self.defineSgpr("WGM", 1)
 
@@ -3671,12 +3604,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.numSgprBeta = numSgprBeta
 
     if GSUAMBSK:
+      self.defineSgpr("AddressTD", numSgprAddressD, align=2)
+      self.states.numSgprAddressGSUSync += numSgprAddressD
+      self.defineSgpr("Synchronizer", 2, align=2)
+      self.states.numSgprAddressGSUSync += 2
       self.defineSgpr("GSUSync", 1)
       self.states.numSgprAddressGSUSync += 1
-      self.defineSgpr("AddressTD", numSgprAddressD)
-      self.states.numSgprAddressGSUSync += numSgprAddressD
-      self.defineSgpr("Synchronizer", 2)
-      self.states.numSgprAddressGSUSync += 2
 
     if kernel["StreamK"]:
       # StreamK args
@@ -3697,7 +3630,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         # self.defineSgpr("dpTilesPerWG", 1, kernarg=True)
         self.states.numSgprStreamK += 3
 
-    self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
+    if kernel["GlobalSplitU"] > 0:
+      self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
     
     #------------------------
     # Registers defined below this point are not available in the post-loop

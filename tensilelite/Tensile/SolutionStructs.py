@@ -3691,7 +3691,7 @@ class Solution(collections.abc.Mapping):
 
     if globalParameters["SplitGSU"]:
       state_copy["GlobalSplitU"] = "M" if (state_copy["GlobalSplitU"] > 1) else state_copy["GlobalSplitU"]
-    else:
+    elif state["GlobalSplitU"] > 0:
       state_copy["GlobalSplitU"] = "M"
     state_copy["WorkGroupMapping"] = "M"
     state_copy["StaggerU"] = "M"
@@ -3744,7 +3744,7 @@ class Solution(collections.abc.Mapping):
     if ignoreInternalArgs:
       if globalParameters["SplitGSU"]:
         state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1) else state["GlobalSplitU"]
-      else:
+      elif state["GlobalSplitU"] > 0:
         requiredParameters["GlobalSplitU"] = False
       requiredParameters["WorkGroupMapping"] = False
       requiredParameters["StaggerU"] = False

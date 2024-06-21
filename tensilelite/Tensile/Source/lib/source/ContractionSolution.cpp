@@ -873,7 +873,8 @@ namespace Tensile
 
         uint32_t gsu
             = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
-        rv.numWorkGroups.y *= gsu;
+        if(gsu > 0)
+            rv.numWorkGroups.y *= gsu;
 
         size_t cuCount = 0;
         size_t skGrid  = 0;
@@ -1035,7 +1036,8 @@ namespace Tensile
 
                 uint32_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu()
                                                              : sizeMapping.globalSplitU;
-                numWorkGroups.y *= gsu;
+                if(gsu > 0)
+                    numWorkGroups.y *= gsu;
 
                 numWorkItems.x += (workGroupSize.x * numWorkGroups.x * workGroupSize.y
                                    * numWorkGroups.y * workGroupSize.z * numWorkGroups.z);
@@ -1093,9 +1095,6 @@ namespace Tensile
                 auto problem = problems[idx];
                 singleCallArgs<T_Debug, false>(
                     problem, inputs.grouped[idx], workspaceOffsetInByte, nullptr, h_args);
-
-                uint32_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu()
-                                                             : sizeMapping.globalSplitU;
 
                 if(sizeMapping.globalAccumulation == 3)
                 {
@@ -1193,9 +1192,6 @@ namespace Tensile
         rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
         rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
         rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
-
-        uint32_t gsu
-            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
 
         if(sizeMapping.globalAccumulation)
             rv.args.append<void*>("WS", inputs.ws);
@@ -1303,8 +1299,6 @@ namespace Tensile
 
     std::string ContractionSolution::betaOnlyKernelName(Problem const& problem) const
     {
-        uint32_t gsu
-            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
         std::string name = concatenate(
             "C", problem.cNames(), "_", DataTypeInfo::Get(problem.d().dataType()).abbrev);
 
