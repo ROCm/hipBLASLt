@@ -681,10 +681,6 @@ namespace Tensile
                             {
                                 rotatingSize += problem.tensors()[i].totalAllocatedBytes();
                             }
-                            else
-                            {
-                                nonRotatingSize += problem.tensors()[i].totalAllocatedBytes();
-                            }
                         }
                         if(m_vdata[i].name.empty())
                         {
@@ -705,8 +701,7 @@ namespace Tensile
                         {
                             neededSize += rotatingSize;
                         }
-                        m_rotatingLargestUnitSize = std::max(m_rotatingLargestUnitSize, rotatingSize + nonRotatingSize);
-                        m_rotatingAllocatedSize   = std::max(m_rotatingAllocatedSize, neededSize - rotatingSize);
+                        m_rotatingAllocatedSize = std::max(m_rotatingAllocatedSize, neededSize - rotatingSize);
                     }
                     auto constants = problem.constants();
                     for(size_t i = 0; i < constants.size(); i++)
@@ -766,10 +761,6 @@ namespace Tensile
                                 {
                                     rotatingSize += problem.tensors()[i].totalAllocatedBytes();
                                 }
-                                else
-                                {
-                                    nonRotatingSize += problem.tensors()[i].totalAllocatedBytes();
-                                }
                             }
                             if(m_vdata[i].name.empty())
                             {
@@ -812,8 +803,7 @@ namespace Tensile
                         {
                             neededSize += rotatingSize;
                         }
-                        m_rotatingLargestUnitSize = std::max(m_rotatingLargestUnitSize, rotatingSize + nonRotatingSize);
-                        m_rotatingAllocatedSize   = std::max(m_rotatingAllocatedSize, neededSize - rotatingSize);
+                        m_rotatingAllocatedSize = std::max(m_rotatingAllocatedSize, neededSize - rotatingSize);
                     }
 
                     // Update maxElements
@@ -1048,13 +1038,24 @@ namespace Tensile
             bool enableGuardPage = (m_curBoundsCheck == BoundsCheckMode::GuardPageFront
                                     || m_curBoundsCheck == BoundsCheckMode::GuardPageBack);
 
+            m_rotatingLargestUnitSize = 0;
             std::shared_ptr<void> tmpPtr;
             if(m_rotatingAllocatedSize > 0)
             {
+                for(auto& it : m_vdata)
+                {
+                    for(auto& p : it.pristine)
+                    {
+                        auto&  pUnit = p.second;
+                        size_t size  = DataTypeInfo::Get(p.first).elementSize * pUnit.maxElements;
+                        m_rotatingLargestUnitSize += size;
+                    }
+                }
                 tmpPtr = allocNewGPUBuffer<void>("rotating", m_rotatingAllocatedSize + m_rotatingLargestUnitSize);
             }
 
             size_t offset = 0;
+            uint32_t tensorIdx = 0;
             for(auto& it : m_vdata)
             {
                 for(auto& p : it.pristine)
@@ -1080,6 +1081,7 @@ namespace Tensile
                         {
                             ptr = std::shared_ptr<void>(tmpPtr, (void*)((uint8_t*)tmpPtr.get() + offset));
                             offset += size;
+                            std::cout << "Tensor index: " << tensorIdx << " offset: " << offset << " size: " << size << " rotatingAllocatedSize: " << m_rotatingAllocatedSize << " rotatingLargestUnitSize: " << m_rotatingLargestUnitSize << std::endl;
                             if(m_rotatingLargestUnitSize < offset)
                             {
                                 throw std::runtime_error("Out of first allocated size.");
@@ -1136,6 +1138,7 @@ namespace Tensile
                         pUnit.gpuInput.bad = ptr;
                     }
                 }
+                tensorIdx++;
             }
 
             if(!m_workspacePristine)
