@@ -716,7 +716,8 @@ int main(int argc, const char* argv[])
                 size_t maxRotatingBufferNum = max(warmupInvocations, syncs * enq);
 
                 auto inputArr
-                    = dataInit->prepareRotatingGPUOutput(maxRotatingBufferNum, problem, inputs);
+                    = dataInit->prepareRotatingGPUOutput(maxRotatingBufferNum, problem, inputs, stream);
+                static_cast<void>(hipDeviceSynchronize());
                 bool resetInput = false;
                 while(solutionIterator->moreSolutionsInProblem())
                 {
