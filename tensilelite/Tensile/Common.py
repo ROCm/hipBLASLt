@@ -698,6 +698,12 @@ validParameters = {
 
     # 1 indicates no assertion (since all sizes are multiples of 1)
     "AssertFree1ElementMultiple" : [1,2,4,8,16],
+    
+    # Assertions that require arithmetic intensity to be specified value.
+    # Arithmetic intensity measures the ratio of computation to memory bandwidth required for a problem.
+    # These predicates can be used to adjust solution selection compute-bound or memory-bound problems.
+    "AssertAIGreaterThanEqual": -1,
+    "AssertAILessThanEqual":    -1,
 
     # Stagger the start summation position of the tiles.
     # Elements from the summation dimension are loaded at offsets rather than all starting at 0.
