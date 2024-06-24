@@ -1110,10 +1110,10 @@ class Solution(collections.abc.Mapping):
     self.initReductionKernelObjects()
 
   ########################################
-  # create BetaONly Kernels
+  # create BetaOnly Kernels
   def initBetaOnlyKernelObjects(self):
     self.betaOnlyKernelObjects = []
-    if self["GlobalSplitU"] > 1:
+    if self["GlobalSplitU"] > 1 or (self["StreamK"] > 0 and self["StreamKAtomic"] == 1):
       if self["ProblemType"]["UseBias"]:
         for btype in self["ProblemType"]["BiasDataTypeList"]:
           state = {}
@@ -1920,7 +1920,11 @@ class Solution(collections.abc.Mapping):
     computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
     state["_GlobalAccumulation"] = None
     computeName  = state["ProblemType"]["ComputeDataType"].toName()
-    if state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
+    if state["StreamK"] > 0 and state["StreamKAtomic"] == 0:
+      # StreamK Workspace size
+      computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
+      state["_GlobalAccumulation"] = 'PartialsBuffer'
+    elif state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
       if computeName != state["ProblemType"]["DestDataType"].toName():
         state["_GlobalAccumulation"] = 'SingleBuffer'
     elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
@@ -1935,6 +1939,32 @@ class Solution(collections.abc.Mapping):
     if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
       state["SynchronizerSizeCheck"] = 1
     #   state["BatchSizeEqual"] = 1
+
+    if state["StreamK"] != 0:
+      if state["MIWaveGroup"][0] * state["MIWaveGroup"][1] != 4:
+        reject(state, "Stream-K requries MIWaveGroup0*MIWaveGroup1=4")
+      if state["EnableMatrixInstruction"] and globalParameters["AsmCaps"][isa]["HasWMMA"]:
+        reject(state, "Stream-K untested with WMMA")
+      if state["GlobalSplitU"] > 0:
+        reject(state, "Cannot enable both Stream-K and GSU")
+      # if state["PersistentKernel"]:
+      #   reject(state, "Cannot enable both Stream-K and PersistentKernel")
+      if not state["ProblemType"]["StridedBatched"]:
+        reject(state, "General batch not supported with Stream-K")
+      if state["ProblemType"]["GroupedGemm"]:
+        reject(state, "Grouped gemm not yet supported with Stream-K")
+      if state["StreamKAtomic"] == 1:
+        if not state["ProblemType"]["DataType"].isSingle():
+          reject(state, "Atomic Stream-K currently only tested for SGEMM")
+        if not state["BufferStore"]:
+          reject(state, "Atomic Stream-K requires BufferStore")
+        if state["LocalSplitU"] > 1:
+          reject(state, "Atomic Stream-K not working with LocalSplitU")
+    else:
+      # If not using StreamK, clear other stream-k settings to avoid duplicate kernels
+      state["StreamKAtomic"] = 0
+      state["StreamKXCCMapping"] = 0
+      state["DebugStreamK"] = 0
 
     computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
     state["_WorkspaceSizePerElemC"] = computeBytes
@@ -2730,10 +2760,11 @@ class Solution(collections.abc.Mapping):
       reject(state, "Source KernelLanguage only supports LdsPadA == LdsPadB")
       return
 
-    # NoTailLoop parameter initialization. Set True for the following cases
-    #  1. ASEM is multiple of DepthU. TailLoop code will not be used in this case.
+    # NoTailLoop parameter initialization.
+    # If ASEM is multiple of DepthU TailLoop will not be used.
+    # Unless kernel is Stream-K; Stream-K always requires TailLoop to handle work division.
     state["NoTailLoop"] = False
-    if state["AssertSummationElementMultiple"] % state["DepthU"] == 0:
+    if state["AssertSummationElementMultiple"] % state["DepthU"] == 0 and state["StreamK"] == 0:
       state["NoTailLoop"] = True
 
     ########################################
