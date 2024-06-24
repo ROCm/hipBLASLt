@@ -41,6 +41,9 @@ add_executable( sample_hipblaslt_ext_op_layernorm ext_op/sample_hipblaslt_ext_op
 add_executable( sample_hipblaslt_ext_op_amax ext_op/sample_hipblaslt_ext_op_amax.cpp)
 add_executable( sample_hipblaslt_ext_op_amax_with_scale ext_op/sample_hipblaslt_ext_op_amax_with_scale.cpp)
 
+# TODO move to benchmark
+add_executable( sample_hipblaslt_gemm_mix_precision_ext_3 gemm_mix_precision/sample_hipblaslt_gemm_mix_precision_ext_3.cpp)
+
 set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext
             sample_hipblaslt_gemm_ext_bgradb
@@ -58,7 +61,8 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_groupedgemm_get_all_algos_ext
             sample_hipblaslt_ext_op_layernorm
             sample_hipblaslt_ext_op_amax
-            sample_hipblaslt_ext_op_amax_with_scale)
+            sample_hipblaslt_ext_op_amax_with_scale
+            sample_hipblaslt_gemm_mix_precision_ext_3) # TODO:
 
 set( sample_list_all ${samples})
 
