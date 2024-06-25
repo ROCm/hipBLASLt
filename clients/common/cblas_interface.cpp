@@ -114,9 +114,6 @@ void cblas_gemm(hipblasOperation_t     transA,
         A_Tc.initialize(sizeA);
         if constexpr(sizeof(TiA) > sizeof(TciACast))
         {
-            //hack for mixed mode only, scaleA/B is invisible to user, need to multiply the rcp
-            if constexpr(sizeof(TiB) == sizeof(TciBCast))
-              alpha /= scaleA;
             if(transA == HIPBLAS_OP_N)
             {
                 for(size_t i = 0; i < sizeA; i++)
@@ -155,8 +152,6 @@ void cblas_gemm(hipblasOperation_t     transA,
         A_Tc.initialize(sizeA);
         if constexpr(sizeof(TiA) > sizeof(TciACast))
         {
-            if constexpr(sizeof(TiB) == sizeof(TciBCast))
-              alpha /= scaleA;
             for(size_t i = 0; i < sizeA; i++)
             {
                 A_Tc[i] = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA));
@@ -182,8 +177,6 @@ void cblas_gemm(hipblasOperation_t     transA,
         B_Tc.initialize(sizeB);
         if constexpr(sizeof(TiB) > sizeof(TciBCast))
         {
-            if constexpr(sizeof(TiA) == sizeof(TciACast))
-              alpha /= scaleB;
             for(size_t i = 0; i < sizeB; i++)
             {
                 B_Tc[i] = static_cast<TcCast>(static_cast<TciBCast>(B[i] * scaleB));
