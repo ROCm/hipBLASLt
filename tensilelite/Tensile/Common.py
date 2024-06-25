@@ -418,7 +418,7 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
                    ('H','H','S'), ('H','S','S'), \
                    ('B','B','S'), ('B','S','S'), ('B','H','S'), \
                    ('I8','I','I'), ('4xi8','I','I'), ('I8','I8','I'), \
-                   ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), \
+                   ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), ('I8', 'B', 'S'), \
                    ('F8','S','S'), ('B8','S','S'), \
                    ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
                    ('F8','H','S'), ('B8','H','S'), \
@@ -434,7 +434,7 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
 # *_TiToTc_BH*.yaml where Ti, To, and Tc are the data types of A/B, C/D, and computation, respectively.
 # The name of the library logic files for non-HPA (HPA=F) types is: *_TiB*.yaml.
 HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('B','H','S'), ('I8','I','I'), \
-             ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), \
+             ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), ('I8', 'B', 'S'),\
              ('F8','S','S'), ('B8','S','S'), ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
              ('F8','H','S'), ('B8','H','S'), ('F8B8','H','S'), ('B8F8','H','S'), \
              ('H','F8','S'), ('F8','B','S'), ('F8B8','B','S'), \

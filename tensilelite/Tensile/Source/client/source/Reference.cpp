@@ -448,8 +448,7 @@ namespace Tensile
             else if(new_type == ActivationType::Silu)
             {
                 auto castedVal = static_cast<castT>(val);
-                return static_cast<T>(castedVal
-                                      / (1.f + static_cast<castT>(exp(-castedVal))));
+                return static_cast<T>(castedVal / (1.f + static_cast<castT>(exp(-castedVal))));
             }
             return val;
         }
@@ -886,13 +885,13 @@ namespace Tensile
                 // bias
                 if(problem.useBias() && inputs.bias && !problem.useGradient())
                 {
-                    auto        biasIndex = problem.bias().index(biasCoord);
-                    int         pos       = 0;
+                    auto biasIndex = problem.bias().index(biasCoord);
+                    int  pos       = 0;
                     if(problem.getParams().biasDim())
                         pos = int(dNum / problem.d().sizes()[0]) + biasIndex;
                     else
                         pos = int(dNum % problem.d().sizes()[0]) + biasIndex;
-                    Accumulator bias      = GetValue<Accumulator>(
+                    Accumulator bias = GetValue<Accumulator>(
                         problem.bias().dataType(), inputs.bias, pos, aConjugate);
                     resultD += bias;
                 }
@@ -1187,6 +1186,11 @@ namespace Tensile
                     return ReferenceSolution<TypedGemm_H_B_H_S>::SolveCPU(
                         problem, inputs, elementsToValidate);
                 }
+            }
+            case TypedGemm_I8_B_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_I8_B_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
             }
 #endif // TENSILE_USE_BF16
 #ifdef TENSILE_USE_FP8_BF8
