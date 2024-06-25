@@ -2389,7 +2389,7 @@ class Solution(collections.abc.Mapping):
         ldsNumBytesA = state["_DepthUA"] * (state["MacroTileA"] + ldsPadA) * bpeA
       padInterval = LdsBlockSizePerPadA
       if padInterval != 0:
-        ldsNumBytesA = int((state["_DepthUA"] * state["MacroTileA"] * bpeA) / padInterval * (padInterval + state["LdsPadA"] * bpeA))
+        ldsNumBytesA = int((state["_DepthUA"] * state["MacroTileA"] * bpeA) / padInterval * (padInterval + ldsPadA * bpeA))
       ldsNumBytesAlignedA = roundUpToNearestMultiple(ldsNumBytesA, ldsAlign)
 
       if state["UnrollMajorLDSB"]:
@@ -2398,7 +2398,7 @@ class Solution(collections.abc.Mapping):
         ldsNumBytesB = state["_DepthUB"] * (state["MacroTileB"] + ldsPadB) * bpeB
       padInterval = LdsBlockSizePerPadB
       if padInterval != 0:
-        ldsNumBytesB = int((state["_DepthUB"] * state["MacroTileB"] * bpeB) / padInterval * (padInterval + state["LdsPadB"] * bpeB))
+        ldsNumBytesB = int((state["_DepthUB"] * state["MacroTileB"] * bpeB) / padInterval * (padInterval + ldsPadB * bpeB))
       ldsNumBytesAlignedB = roundUpToNearestMultiple(ldsNumBytesB, ldsAlign)
 
       if state["ProblemType"]["Sparse"] and not state["DirectToVgprSparseMetadata"]:
