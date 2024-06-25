@@ -70,7 +70,7 @@ globalParameters["MinFlopsPerSync"] = 1           # Minimum number of flops per 
 globalParameters["NumBenchmarks"] = 1             # how many benchmark data points to collect per problem/solution
 globalParameters["SyncsPerBenchmark"] = 1         # how iterations of the stream synchronization for-loop to do per benchmark data point
 globalParameters["EnqueuesPerSync"] = 1           # how many solution enqueues to perform per synchronization
-globalParameters["MaxEnqueuesPerSync"] = -1       # max solution enqueues to perform per synchronization
+globalParameters["MaxEnqueuesPerSync"] = -1       # max solution enqueues to perform per synchronization. This factor will be restricted if NumWarmups touches 30ms.
 globalParameters["SleepPercent"] = 300            # how long to sleep after every data point: 25 means 25% of solution time. Sleeping lets gpu cool down more.
 # cProfile
 globalParameters["Profiler"] = 0                  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
@@ -98,7 +98,7 @@ globalParameters["ShowProgressBar"] = True     # if False and library client alr
 globalParameters["WavefrontWidth"] = 64     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["ExitOnFails"] = 1     # 1: Exit after benchmark run if failures detected.  2: Exit during benchmark run.
 globalParameters["CpuThreads"] = -1  # How many CPU threads to use for kernel generation.  0=no threading, -1 == nproc, N=min(nproc,N).  TODO - 0 sometimes fails with a kernel name error?  0 does not check error codes correctly
-globalParameters["NumWarmups"] = 0
+globalParameters["NumWarmups"] = 0   # This factor will be restricted to 30ms if set, and also affect MaxEnqueuesPerSync.
 # FROM MERGE
 #globalParameters["CpuThreads"] = -4         # How many CPU threads to use for kernel generation.  0=no threading, <0 == nproc*abs(CpuThreads), N=min(nproc,N)
 

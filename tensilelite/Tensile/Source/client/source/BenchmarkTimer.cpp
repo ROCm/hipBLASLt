@@ -56,6 +56,8 @@ namespace Tensile
             , m_timeInSolution(0)
             , m_totalGPUTime(0)
         {
+            m_initMaxEnqueuesPerSync = m_maxEnqueuesPerSync;
+            m_initNumWarmups         = m_numWarmups;
         }
 
         bool BenchmarkTimer::needMoreBenchmarkRuns() const
@@ -165,9 +167,28 @@ namespace Tensile
                     "Expected at least", m_numWarmups, " warmup runs, got ", count, "."));
         }
 
-        void BenchmarkTimer::preWarmup() {}
+        void BenchmarkTimer::preWarmup()
+        {
+            m_startTime = clock::now();
+        }
 
-        void BenchmarkTimer::postWarmup() {}
+        void BenchmarkTimer::postWarmup()
+        {
+            m_endTime = clock::now();
+            m_totalWarmupTime += double_millis(m_endTime - m_startTime);
+            m_totalWarmupCounts += 1;
+
+            if(m_totalWarmupTime >= double_millis(30.0))
+            {
+                std::cout << "Total warmup time is already 30ms, num-warmups is set 0, "
+                             "max-enqueues-per-sync is set "
+                          << m_totalWarmupCounts << std::endl;
+                m_numWarmups         = 0;
+                m_maxEnqueuesPerSync = m_totalWarmupCounts;
+                m_totalWarmupTime    = double_millis::zero();
+                m_totalWarmupCounts  = 0;
+            }
+        }
 
         void BenchmarkTimer::validateWarmups(std::shared_ptr<ProblemInputs> inputs,
                                              TimingEvents const&            startEvents,
@@ -253,6 +274,10 @@ namespace Tensile
                 static_cast<void>(hipEventRecord(stop, stream));
                 static_cast<void>(hipEventSynchronize(stop));
             }
+
+            // recover original values which are changed by postWarmup
+            m_maxEnqueuesPerSync = m_initMaxEnqueuesPerSync;
+            m_numWarmups         = m_initNumWarmups;
         }
 
         void BenchmarkTimer::validateEnqueues(std::shared_ptr<ProblemInputs> inputs,

@@ -88,10 +88,8 @@ namespace Tensile
             virtual int  error() const override;
 
         private:
-            const int    m_numWarmups;
             const int    m_numBenchmarks;
             const int    m_numEnqueuesPerSync;
-            const int    m_maxEnqueuesPerSync;
             const int    m_numSyncsPerBenchmark;
             const int    m_numEnqueuesPerSolution;
             const size_t m_minFlopsPerSync = 0;
@@ -122,6 +120,13 @@ namespace Tensile
 
             double_millis m_timeInSolution;
             double_millis m_totalGPUTime;
+            double_millis m_totalWarmupTime = double_millis::zero();
+
+            int m_maxEnqueuesPerSync;
+            int m_initMaxEnqueuesPerSync;
+            int m_numWarmups;
+            int m_initNumWarmups;
+            int m_totalWarmupCounts = 0;
         };
     } // namespace Client
 } // namespace Tensile
