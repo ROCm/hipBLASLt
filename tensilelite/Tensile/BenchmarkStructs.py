@@ -157,6 +157,7 @@ class BenchmarkProcess:
         activationConf = ""
         biasTypesConf  = ""
         biasDimConf  = ""
+        icacheFlush = None
         if "BenchmarkFinalParameters" in config:
             sizes          = config["BenchmarkFinalParameters"][0]["ProblemSizes"]
             for bfp in config["BenchmarkFinalParameters"][1:]:
@@ -172,9 +173,16 @@ class BenchmarkProcess:
                   if biasDimConf:
                     printExit("Duplicated BiasDimArgs.")
                   biasDimConf = bfp["BiasDimArgs"]
+                if "ICacheFlush" in bfp:
+                  if icacheFlush is not None:
+                    printExit("Duplicated BiasDimArgs.")
+                  icacheFlush = bfp["ICacheFlush"]
         else:
             sizes = defaultBatchedBenchmarkFinalProblemSizes if isbatched \
                 else defaultBenchmarkFinalProblemSizes
+
+        if icacheFlush is None:
+          icacheFlush = [False,]
 
         self.problemSizes = ProblemSizes(self.problemType, sizes)
         checkCDBufferAndStrides(self.problemType, self.problemSizes, globalParameters["CEqualD"])
@@ -182,6 +190,7 @@ class BenchmarkProcess:
         self.biasTypesArgs  = BiasTypeArgs(self.problemType, biasTypesConf)
         self.activationArgs = ActivationArgs(self.problemType, activationConf)
         self.biasDimArgs  = BiasDimArgs(self.problemType, biasDimConf)
+        self.icacheFlushArgs = icacheFlush
 
         # validate parameter values
         configParams = {**benchmarkCommonParams, **forkParams}
@@ -234,6 +243,7 @@ class BenchmarkProcess:
                 self.biasTypesArgs, \
                 self.biasDimArgs, \
                 self.activationArgs, \
+                self.icacheFlushArgs, \
                 self.benchmarkStepIdx)
         self.benchmarkSteps.append(benchmarkStep)
         self.benchmarkStepIdx += 1
@@ -294,7 +304,7 @@ def constructForkPermutations(forkParams, paramGroups):
 class BenchmarkStep:
     """A single benchmark step which consists of constant and fork parameters and a set of sizes"""
 
-    def __init__(self, forkParams, constantParams, paramGroups, customKernels, internalSupportParams, problemSizes, biasTypeArgs, biasDimArgs, activationArgs, idx):
+    def __init__(self, forkParams, constantParams, paramGroups, customKernels, internalSupportParams, problemSizes, biasTypeArgs, biasDimArgs, activationArgs, icacheFlushArgs, idx):
         """Basic constructor storing each argument"""
         self.forkParams = forkParams
         self.constantParams = constantParams
@@ -305,6 +315,7 @@ class BenchmarkStep:
         self.biasTypeArgs = biasTypeArgs
         self.biasDimArgs = biasDimArgs
         self.activationArgs = activationArgs
+        self.icacheFlushArgs = icacheFlushArgs
         self.stepIdx = idx
 
         self.customKernelWildcard = False

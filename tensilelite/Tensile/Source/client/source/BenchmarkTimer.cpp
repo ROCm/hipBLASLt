@@ -41,7 +41,9 @@ namespace Tensile
     {
         static_assert(BenchmarkTimer::clock::is_steady, "Clock must be steady.");
 
-        BenchmarkTimer::BenchmarkTimer(po::variables_map const& args, Hardware const& hardware)
+        BenchmarkTimer::BenchmarkTimer(po::variables_map const& args,
+                                       Hardware const&          hardware,
+                                       float                    flushTimeUs)
             : m_numWarmups(args["num-warmups"].as<int>())
             , m_syncAfterWarmups(args["sync-after-warmups"].as<bool>())
             , m_numBenchmarks(args["num-benchmarks"].as<int>())
@@ -55,6 +57,7 @@ namespace Tensile
             , m_sleepPercent(args["sleep-percent"].as<int>())
             , m_timeInSolution(0)
             , m_totalGPUTime(0)
+            , m_flushTimeUs(flushTimeUs)
         {
         }
 
@@ -115,7 +118,7 @@ namespace Tensile
         void BenchmarkTimer::postSolution()
         {
             double timePerEnqueue_us
-                = double_micros(m_timeInSolution).count() / m_numEnqueuesInSolution;
+                = double_micros(m_timeInSolution).count() / m_numEnqueuesInSolution - m_flushTimeUs;
 
             ContractionSolution::ProjectedPerformance pp;
             double                                    flopCount = 0;
