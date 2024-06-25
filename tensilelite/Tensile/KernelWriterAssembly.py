@@ -1413,7 +1413,7 @@ class KernelWriterAssembly(KernelWriter):
       if kernel["ProblemType"]["UseScaleAB"]:
         tmpVgpr = self.vgprPool.checkOut(1)
         newAlphaVgpr = None
-        NeedUpdateAlpha = self.states.preloadScaleA or self.states.preloadScaleB
+        NeedUpdateAlpha = False #self.states.preloadScaleA or self.states.preloadScaleB
         if NeedUpdateAlpha:
           newAlphaVgpr = self.vgprPool.checkOut(1)
           moduleWg.add(VMovB32(dst=vgpr(newAlphaVgpr), src=sgpr("Alpha")))

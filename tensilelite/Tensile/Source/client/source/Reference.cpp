@@ -857,17 +857,12 @@ namespace Tensile
                         = GetValue<Accumulator>(problem.alphaType(), inputs.scaleA, 0, aConjugate);
                     Accumulator scaleB
                         = GetValue<Accumulator>(problem.alphaType(), inputs.scaleB, 0, aConjugate);
-                    //hack for mixed mode only, scaleA/B is invisible to user, need to multiply the rcp
                     if constexpr(sizeof(typename Inputs::AType)
-                                              > sizeof(typename Inputs::ComputeInputType))
-                        alpha /= scaleA;
-                    else
+                                              <= sizeof(typename Inputs::ComputeInputType))
                         alpha *= scaleA;
 
                     if constexpr(sizeof(typename Inputs::BType)
-                                              > sizeof(typename Inputs::ComputeInputType))
-                        alpha /= scaleB;
-                    else
+                                              <= sizeof(typename Inputs::ComputeInputType))
                         alpha *= scaleB;
                 }
 
