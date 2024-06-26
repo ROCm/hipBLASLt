@@ -1906,12 +1906,12 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Global Read Addresses: WorkGroup
   ##############################################################################
-  def graWorkGroup(self, kernel):
+  def graWorkGroup(self, kernel, tPA, tPB):
     module = Module("graWorkGroup")
     module.addComment0("graWorkGroup mapping")
 
     skComponent = Component.StreamK.find(self)
-    module.add(skComponent.graWorkGroup(self, kernel))
+    module.add(skComponent.graWorkGroup(self, kernel, tPA, tPB))
 
     gsuComponent = Component.GSU.find(self)
     module.add(gsuComponent.graWorkGroup(self, kernel))
@@ -6255,8 +6255,8 @@ class KernelWriterAssembly(KernelWriter):
         [tP["localWriteStrideTile"], tP["localWriteStrideUnroll"]] )
     tP["localWriteInstruction"] = self.memoryInstructions["LocalWrite"][newInstIdx]
 
-    skComponent = Component.StreamK.find(self)
-    module.add(skComponent.recalcLocalWriteAddresses(self, kernel))
+    loopComponent = Component.PersistentLoop.find(self)
+    module.add(loopComponent.recalcLocalWriteAddresses(self, kernel, tc))
 
     # local write tile assignments
     module.add(self.lwaTileAssignment(kernel, tP))
@@ -6290,6 +6290,9 @@ class KernelWriterAssembly(KernelWriter):
       # this decrease performance since it require more loop to handle continuous k in each thread.
       # reCalculating localread address because we disable wider local read in tail loop
       if ((self.states.numReadsIterCoalescedA > 1 or self.states.numReadsIterCoalescedB > 1)):
+        loopComponent = Component.PersistentLoop.find(self)
+        imod.add(loopComponent.recalcLocalReadAddressesAB(self, kernel))
+
         self.states.numReadsIterCoalescedA = 1
         self.states.numReadsIterCoalescedB = 1
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:

@@ -1940,6 +1940,8 @@ class Solution(collections.abc.Mapping):
       state["SynchronizerSizeCheck"] = 1
     #   state["BatchSizeEqual"] = 1
 
+    isa = tuple(state["ISA"])
+    
     if state["StreamK"] != 0:
       if state["MIWaveGroup"][0] * state["MIWaveGroup"][1] != 4:
         reject(state, "Stream-K requries MIWaveGroup0*MIWaveGroup1=4")
@@ -1988,8 +1990,6 @@ class Solution(collections.abc.Mapping):
       state["ExpandPointerSwap"] = 1
       state["1LDSBuffer"] = 1
       print2("\nSet SIA=2, force PrefetchLocalRead=1, ExpandPointerSwap=1, 1LDSBuffer=1")
-
-    isa = tuple(state["ISA"])
 
     if state["WavefrontSize"] == 32 and not globalParameters["ArchCaps"][isa]["HasWave32"]:
       reject(state, "WavefrontSize=32 not supported for ISA {}".format(isa))

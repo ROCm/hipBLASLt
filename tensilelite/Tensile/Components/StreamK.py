@@ -22,7 +22,7 @@
 
 from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, sgpr, scalarStaticDivideAndRemainder, \
     SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SCBranchSCC1, SCmpLeU32, VMovB32, vgpr, \
-    SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEqU32
+    SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32
 from ..Component import Component
 import abc
 
@@ -64,20 +64,20 @@ class XCCMappingOn(XCCMapping):
 
             # sGridC = ceil(grid / xccm)
             module.add(SAddU32(dst=sgpr(sXCC), src0=sgpr("skGrid"), src1=hex(kernel["StreamKXCCMapping"] - 1), comment="ceil(grid/xccm)"))
-            module.add(scalarStaticDivideAndRemainder(qReg=sgpr(sGridC), rReg=None, dReg=sgpr(sGridC), divisor=kernel["StreamKXCCMapping"], tmpSgprRes=sTmpRes, doRemainder=0))
+            module.add(scalarStaticDivideAndRemainder(qReg=sGridC, rReg=None, dReg=sGridC, divisor=kernel["StreamKXCCMapping"], tmpSgprRes=sTmpRes, doRemainder=0))
             # sGridF = floor(grid / xccm)
             # sGridM = grid % xccm
-            module.add(scalarStaticDivideAndRemainder(qReg=sgpr(sGridF), rReg=sgpr(sGridM), dReg=sgpr("skGrid"), divisor=kernel["StreamKXCCMapping"], tmpSgprRes=sTmpRes))
+            module.add(scalarStaticDivideAndRemainder(qReg=sGridF, rReg=sGridM, dReg="skGrid", divisor=kernel["StreamKXCCMapping"], tmpSgprRes=sTmpRes))
             # sXCC = wg0 % xccm
             # sqtmp is temp register for quotient for non-power-of-2 case
             # sqtmp overlaps temp registers, works in this case and output is discarded
-            module.add(scalarStaticDivideAndRemainder(qReg=sgpr(sqTmp), rReg=sgpr(sXCC), dReg=sgpr("WorkGroup0"), divisor=kernel["StreamKXCCMapping"], tmpSgprRes=sTmpRes, doRemainder=2))
+            module.add(scalarStaticDivideAndRemainder(qReg=sqTmp, rReg=sXCC, dReg="WorkGroup0", divisor=kernel["StreamKXCCMapping"], tmpSgprRes=sTmpRes, doRemainder=2))
             # Check if current XCC requires a remainder WG or not
             module.add(SCmpLtU32(src0=sgpr(sXCC), src1=sgpr(sGridM), comment="XCCM < Remainder"))
             module.add(SCSelectB32(dst=sgpr(sGridC), src0=sgpr(sGridC), src1=sgpr(sGridF), comment="Select multiplier"))
             module.add(SCSelectB32(dst=sgpr(sGridM), src0=0, src1=sgpr(sGridM), comment="Select remainder"))
             # WG = floor(wg0 / xccm) * xccm + XCCoffset + optional remainder
-            module.add(scalarStaticDivideAndRemainder(qReg=sgpr("WorkGroup0"), rReg=None, dReg=sgpr("WorkGroup0"), divisor=kernel["StreamKXCCMapping"], tmpSgprRes=sTmpRes, doRemainder=0))
+            module.add(scalarStaticDivideAndRemainder(qReg="WorkGroup0", rReg=None, dReg="WorkGroup0", divisor=kernel["StreamKXCCMapping"], tmpSgprRes=sTmpRes, doRemainder=0))
             module.add(SMulI32(dst=sgpr(sXCC), src0=sgpr(sXCC), src1=sgpr(sGridC), comment="XCC group id"))
             module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(sXCC), comment="Add XCC group offset"))
             module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(sGridM), comment="Add remainder offset"))
@@ -92,22 +92,24 @@ class StreamK(Component):
     """
     StreamK code.
     """
+    def __call__(self):
+        assert(0)
 
     @abc.abstractmethod
     def preLoop(self, writer, kernel):
         pass
         
     @abc.abstractmethod
-    def graWorkGroup(self, writer, kernel):
+    def graWorkGroup(self, writer, kernel, tPA, tPB):
         pass
         
-    def skTileIndex(self, writer, kernel, sTmp):
+    def skTileIndex(self, writer, kernel, sTmp, tPA, tPB):
         module = Module("StreamK skTileIndex")
     
         # Always reset pointers to handle odd-exit case which moves LRO to the upper bank
         if kernel["PrefetchGlobalRead"]: # not self.prefetchAcrossPersistent
-            module.add(writer.localReadResetOffsets(kernel, writer.tPA))
-            module.add(writer.localReadResetOffsets(kernel, writer.tPB))
+            module.add(writer.localReadResetOffsets(kernel, tPA))
+            module.add(writer.localReadResetOffsets(kernel, tPB))
 
         module.addComment0("StreamK calculate tile idx and map to WG")
 
@@ -150,6 +152,7 @@ class StreamK(Component):
     def computeLoadSrdCommon(self, writer, kernel, tc, sTmp):
         module = Module("StreamK Common computeLoadSrd")
 
+        tileStart = sTmp + 2
         # StreamK partial tile - offset to tile start index
         module.add(SMulI32(dst=sgpr(sTmp), src0=sgpr("StreamKLocalStart"), src1="DepthU", comment="StreamK tile start offset"))
         strideL = writer.strideRef(tc, kernel["ProblemType"]["IndicesSummation"][0])
@@ -223,7 +226,7 @@ class StreamK(Component):
         module = Module("StreamK Common calculateLoopNumIter")
 
         # Use StreamK params for loop count
-        module.add(SSubU32(dst=sgpr(loopCounterName), src0=sgpr("StreamKLocalEnd"), src1=sgpr("StreamKLocalStart"), common="StreamK loop counter = localEnd - localStart"))
+        module.add(SSubU32(dst=sgpr(loopCounterName), src0=sgpr("StreamKLocalEnd"), src1=sgpr("StreamKLocalStart"), comment="StreamK loop counter = localEnd - localStart"))
         # Adjust loop count for tail loop
         if not kernel["NoTailLoop"]:
             tmpSgpr = tmpSgprInfo.idx
@@ -231,29 +234,15 @@ class StreamK(Component):
             loopChar = writer.states.indexChars[kernel["ProblemType"]["IndicesSummation"][unrollIdx]]
 
             assert kernel["DepthU"] % 2 == 0 # Assuming DepthU is power of 2, if odd DepthU were supported this divide would need 2 more temp registers for divide
-            module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr), rReg=sgpr(tmpSgpr+1), dReg=sgpr("SizesSum+%u" % unrollIdx), divisor=kernel["DepthU"], tmpSgprRes=None, doRemainder=2))
-            module.add(SCmpEqU32(src0=sgpr(tmpSgpr+1), src1=hex(0), comment="numIter%s == 0"%loopChar ))
+            module.add(scalarStaticDivideAndRemainder(qReg=tmpSgpr, rReg=tmpSgpr+1, dReg=("SizesSum+%u" % unrollIdx), divisor=kernel["DepthU"], tmpSgprRes=None, doRemainder=2))
+            module.add(SCmpEQU32(src0=sgpr(tmpSgpr+1), src1=hex(0), comment="numIter%s == 0"%loopChar ))
             module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=0, src1=1, comment="check if size uses tail loop"))
-            module.add(SCmpEqU32(src0=sgpr("StreamKLocalEnd"), src1=sgpr("ItersPerTile"), comment="Check if WG processes final iteration of tile"))
+            module.add(SCmpEQU32(src0=sgpr("StreamKLocalEnd"), src1=sgpr("ItersPerTile"), comment="Check if WG processes final iteration of tile"))
             module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=0, comment="this WG runs tail loop"))
             module.add(SSubU32(dst=sgpr(loopCounterName), src0=sgpr(loopCounterName), src1=sgpr(tmpSgpr), comment="Adjust loop counter for tail loop"))
 
         return module
     
-    @abc.abstractmethod
-    def recalcLocalWriteAddresses(self, writer, kernel, tc):
-        pass
-
-    def recalcLocalWriteAddressesCommon(self, writer, kernel, tc):
-        module = Module("StreamK Common recalcLocalWriteAddresses")
-
-        if getattr(writer, "oriLwa%s" % tc) is None:
-            setattr(writer, "oriLwa%s" % tc, writer.vgprPool.checkOut(1, "OriLocalWriteddr%s" % tc))
-            module.add(VMovB32(dst=vgpr(getattr(writer, "oriLwa%s" % tc)), src=vgpr("LocalWriteAddr%s" % tc), comment="back up LWA for persistent kernel + wider local read"))
-
-        return module
-
-
 class StreamKOff(StreamK):
     kernel = {"StreamK": 0}
 
@@ -261,7 +250,7 @@ class StreamKOff(StreamK):
         module = Module("StreamK Off openLoop")
         return module
 
-    def graWorkGroup(self, writer, kernel):
+    def graWorkGroup(self, writer, kernel, tPA, tPB):
         module = Module("StreamK Off graWorkGroup")
         return module
 
@@ -301,11 +290,6 @@ class StreamKOff(StreamK):
             module.add(scalarStaticDivideAndRemainder(qReg=quotient, rReg=None, dReg=dividend, divisor=divisor, tmpSgprRes=tmpSgprInfo, doRemainder=0))
 
         return module
-    
-    def recalcLocalWriteAddresses(self, writer, kernel, tc):
-        module = Module("StreamK Off recalcLocalWriteAddresses")
-        return module
-
 
 class StreamKBasic(StreamK):
     kernel = {"StreamK": 1}
@@ -327,13 +311,13 @@ class StreamKBasic(StreamK):
 
         return module
 
-    def graWorkGroup(self, writer, kernel):
+    def graWorkGroup(self, writer, kernel, tPA, tPB):
         module = Module("StreamK Basic graWorkGroup")
 
         # StreamK workgroup mapping
         sTmp = writer.sgprPool.checkOutAligned(4, 2, "SKMappingTemp", preventOverflow=0)
 
-        module.add(self.skTileIndex(writer, kernel, sTmp))
+        module.add(self.skTileIndex(writer, kernel, sTmp, tPA, tPB))
 
         # Increment StreamK iteration
         module.add(SMovB32(dst=sgpr("StreamKIter"), src=sgpr(sTmp+2), comment="Increment StreamK Iteration"))
@@ -368,12 +352,7 @@ class StreamKBasic(StreamK):
         module = Module("StreamK Basic calculateLoopNumIter")
         module.add(self.calculateLoopNumIterCommon(writer, kernel, loopCounterName, loopIdx, tmpSgprInfo))
         return module
-
-    def recalcLocalWriteAddresses(self, writer, kernel, tc):
-        module = Module("StreamK Basic recalcLocalWriteAddresses")
-        module.add(self.recalcLocalWriteAddressesCommon(writer, kernel, tc))
-        return module
-
+    
 class StreamKTwoTileOriginal(StreamK):
     kernel = {"StreamK": 2}
 
@@ -412,13 +391,13 @@ class StreamKTwoTileOriginal(StreamK):
 
         return module
 
-    def graWorkGroup(self, writer, kernel):
+    def graWorkGroup(self, writer, kernel, tPA, tPB):
         module = Module("StreamK TwoTileOriginal graWorkGroup")
 
         # StreamK workgroup mapping
         sTmp = writer.sgprPool.checkOutAligned(4, 2, "SKMappingTemp", preventOverflow=0)
 
-        module.add(self.skTileIndex(writer, kernel, sTmp))
+        module.add(self.skTileIndex(writer, kernel, sTmp, tPA, tPB))
 
         # local end (DP tile)
         # TODO This line isnt needed?
@@ -474,11 +453,6 @@ class StreamKTwoTileOriginal(StreamK):
         module.add(self.calculateLoopNumIterCommon(writer, kernel, loopCounterName, loopIdx, tmpSgprInfo))
         return module
 
-    def recalcLocalWriteAddresses(self, writer, kernel, tc):
-        module = Module("StreamK TwoTileOriginal recalcLocalWriteAddresses")
-        module.add(self.recalcLocalWriteAddressesCommon(writer, kernel, tc))
-        return module
-
 class StreamKTwoTileDPFirst(StreamK):
     kernel = {"StreamK": 3}
 
@@ -497,7 +471,7 @@ class StreamKTwoTileDPFirst(StreamK):
         sTmp = writer.sgprPool.checkOut(1, "TotalSKIters", preventOverflow=False)
         module.add(SMulI32(dst=sgpr(sTmp), src0=sgpr("skTiles"), src1=sgpr("ItersPerTile"), comment="Total SK iters"))
         module.add(SCmpLtU32(src0=sgpr(sTmp), src1=sgpr("TotalIters"), comment="Check if there are DP tiles to do"))
-        module.add(SCBranchSCC1(labelName=skInitDone, comment="Done init"))
+        module.add(SCBranchSCC1(labelName=skInitDone.getLabelName(), comment="Done init"))
         writer.sgprPool.checkIn(sTmp)
 
         # If there are no DP tiles to do, regular SK init
@@ -530,13 +504,13 @@ class StreamKTwoTileDPFirst(StreamK):
 
         return module
 
-    def graWorkGroup(self, writer, kernel):
+    def graWorkGroup(self, writer, kernel, tPA, tPB):
         module = Module("StreamK TwoTileDPFirst graWorkGroup")
 
         # StreamK workgroup mapping
         sTmp = writer.sgprPool.checkOutAligned(4, 2, "SKMappingTemp", preventOverflow=0)
 
-        module.add(self.skTileIndex(writer, kernel, sTmp))
+        module.add(self.skTileIndex(writer, kernel, sTmp, tPA, tPB))
 
         skUpdateDone = Label("SK_UpdateDone", "")
         # sTmp+3 = Offset to first SK tile
@@ -547,11 +521,11 @@ class StreamKTwoTileDPFirst(StreamK):
         module.add(SAddU32(dst=sgpr(sTmp+1), src0=sgpr(sTmp+1), src1=sgpr("StreamKIter"), comment="Add DP shift"))
         # if sTmp+1 < sTmp+3, continue DP (add dpShift)
         module.add(SCmpLtU32(src0=sgpr(sTmp+1), src1=sgpr(sTmp+3), comment="Check if still in DP section"))
-        module.add(SCBranchSCC1(labelName=skUpdateDone, comment="Done update"))
+        module.add(SCBranchSCC1(labelName=skUpdateDone.getLabelName(), comment="Done update"))
         # if StreamKIter >= sTmp+3, continue SK (add skShift?)
         module.add(SMovB32(dst=sgpr(sTmp+1), src=sgpr(sTmp+2), comment="SK iterations shift"))
         module.add(SCmpLeU32(src0=sgpr(sTmp+3), src1=sgpr("StreamKIter"), comment="Check if continuing in SK section"))
-        module.add(SCBranchSCC1(labelName=skUpdateDone, comment="Done update"))
+        module.add(SCBranchSCC1(labelName=skUpdateDone.getLabelName(), comment="Done update"))
         # if sTmp+1 > sTmp+3 and StreamKIter < sTmp+3, switch from DP to SK (add dpShift)
         # iter count after all extra iters have been distributed
         module.add(SMulI32(dst=sgpr("StreamKIter"), src0=sgpr("StreamKIdx"), src1=sgpr("SKItersPerWG"), comment="StreamK starting iteration (case: after extra iters)"))
@@ -612,9 +586,4 @@ class StreamKTwoTileDPFirst(StreamK):
     def calculateLoopNumIter(self, writer, kernel, loopCounterName, loopIdx, tmpSgprInfo):
         module = Module("StreamK TwoTileDPFirst calculateLoopNumIter")
         module.add(self.calculateLoopNumIterCommon(writer, kernel, loopCounterName, loopIdx, tmpSgprInfo))
-        return module
-    
-    def recalcLocalWriteAddresses(self, writer, kernel, tc):
-        module = Module("StreamK TwoTileDPFirst recalcLocalWriteAddresses")
-        module.add(self.recalcLocalWriteAddressesCommon(writer, kernel, tc))
         return module

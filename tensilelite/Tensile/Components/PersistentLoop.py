@@ -20,7 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from ..TensileInstructions import Module, Label
+from ..TensileInstructions import Module, Label, VMovB32, vgpr
 from ..Component import Component
 import abc
 
@@ -28,9 +28,21 @@ class PersistentLoop(Component):
     """
     Persistent loop code.
     """
+    def __call__(self):
+        assert(0)
+
     @abc.abstractmethod
     def openPersistentLoop(self, writer, kernel):
         pass
+
+    @abc.abstractmethod
+    def recalcLocalWriteAddresses(self, writer, kernel, tc):
+        pass
+
+    @abc.abstractmethod
+    def recalcLocalReadAddressesAB(self, writer, kernel):
+        pass
+
 
 class PersistentLoopOff(PersistentLoop):
     kernel = {"StreamK": 0}
@@ -38,6 +50,15 @@ class PersistentLoopOff(PersistentLoop):
     def openPersistentLoop(self, writer, kernel):
         module = Module("PersistentLoop Off openPersistentLoop")
         return module
+    
+    def recalcLocalWriteAddresses(self, writer, kernel, tc):
+        module = Module("PersistentLoop Off recalcLocalWriteAddresses")
+        return module
+
+    def recalcLocalReadAddressesAB(self, writer, kernel):
+        module = Module("PersistentLoop Off recalcLocalReadAddressesAB")
+        return module
+    
 
 class PersistentLoopOn(PersistentLoop):
 
@@ -56,4 +77,32 @@ class PersistentLoopOn(PersistentLoop):
         # TODO remove?
         # kStr += inst("s_add_u32", sgpr("PersistentLoopIter"), sgpr("PersistentLoopIter"), hex(1), "Inc PersistentLoop Iter")     # Back-up: not needed now
         #kStr += str(Code.WaitCnt(self.version, 0,0,"wait for outstanding stores"))
+        return module
+    
+    def recalcLocalWriteAddresses(self, writer, kernel, tc):
+        module = Module("PersistentLoop On recalcLocalWriteAddresses")
+
+        if getattr(writer, "oriLwa%s" % tc) is None:
+            setattr(writer, "oriLwa%s" % tc, writer.vgprPool.checkOut(1, "OriLocalWriteddr%s" % tc))
+            module.add(VMovB32(dst=vgpr(getattr(writer, "oriLwa%s" % tc)), src=vgpr("LocalWriteAddr%s" % tc), comment="back up LWA for persistent kernel + wider local read"))
+
+        return module
+    
+    def recalcLocalReadAddressesAB(self, writer, kernel):
+        module = Module("PersistentLoop On recalcLocalReadAddressesAB")
+
+        needRecalc = writer.states.numReadsIterCoalescedA > 1 or writer.states.numReadsIterCoalescedB > 1
+        # backup LocalReadAddr
+        # LdsPad + LBSPP case, need to backup LocalReadAddr even if recalc is not done
+        needBackupLRAddr = needRecalc or (kernel["LdsPadA"] and kernel["LdsBlockSizePerPadA"] or kernel["LdsPadB"] and kernel["LdsBlockSizePerPadB"])
+
+        if needBackupLRAddr:
+            # need to back-up the LRA before reCalculation for wider local read (when no wlr, no need to do this)
+            if writer.oriLraA is None: # and not kernel["DirectToVgprA"]: # no local read code if DirectToVgpr is enabled
+                writer.oriLraA = writer.vgprPool.checkOut(1, "OriLocalReadAddrA")
+                module.add(VMovB32(dst=vgpr(writer.oriLraA), src=vgpr("LocalReadAddrA"), comment="back up LRA for persistent kernel + wider local read"))
+            if writer.oriLraB is None: # and not kernel["DirectToVgprB"]: # no local read code if DirectToVgpr is enabled
+                writer.oriLraB = writer.vgprPool.checkOut(1, "OriLocalReadAddrB")
+                module.add(VMovB32(dst=vgpr(writer.oriLraB), src=vgpr("LocalReadAddrB"), comment="back up LRA for persistent kernel + wider local read"))
+
         return module

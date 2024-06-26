@@ -1347,7 +1347,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # work-group assignments
     module.addComment1("global read addresses: work-group")
     if not forceNoTileCode:
-      module.add(self.graWorkGroup(kernel))
+      module.add(self.graWorkGroup(kernel, tensorParametersA, tensorParametersB))
 
     self.dontAppendCode = forceNoTileCode
 
