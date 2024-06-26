@@ -30,7 +30,7 @@ from asyncio.subprocess import PIPE, STDOUT
 def run_yaml(bench,
              yamlfile,
              verbose=False,
-             timeout=10):
+             timeout=300):
     """Run hipblaslt-bench"""
     cmd = [pathlib.Path(bench).resolve()]
     cmd += ['--yaml', yamlfile]

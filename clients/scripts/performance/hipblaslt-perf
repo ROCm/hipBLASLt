@@ -120,9 +120,9 @@ def main():
     dir_of_this_script = pathlib.Path(os.path.dirname(os.path.realpath(__file__))).resolve()
     dir_of_this_repo = pathlib.Path(os.path.join(dir_of_this_script, '../../../')).resolve()
     dir_of_bench_problems = pathlib.Path(os.path.join(dir_of_this_script, 'problems/')).resolve()
-    print(f'dir of this script = {dir_of_this_script}')
-    print(f'dir of this repos = {dir_of_this_repo}')
-    print(f'dir of bench yaml problems = {dir_of_bench_problems}')
+    # print(f'dir of this script = {dir_of_this_script}')
+    # print(f'dir of this repos = {dir_of_this_repo}')
+    # print(f'dir of bench yaml problems = {dir_of_bench_problems}')
 
     parser.add_argument('-w',
                         '--workspace',
@@ -146,7 +146,7 @@ def main():
                         default='')
 
     parser.add_argument('--csv',
-                        help='dump result to csv files, default is False',
+                        help='dump result to csv files, default is True',
                         action='store_true',
                         default=True)
 

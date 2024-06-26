@@ -3,51 +3,60 @@ include: ../../../include/hipblaslt_common.yaml
 include: ../../../gtest/matmul_common.yaml
 
 Definitions:
-  - &alpha_beta_range
-    - { alpha:  5, beta:  0 }
-    - { alpha:  0, beta:  3 }
-    - { alpha:  1, beta:  3 }
-    - { alpha:  1, beta:  1 }
-
-  - &alpha_beta_range_small
-    - { alpha: 2, alphai: 2, beta: -1.0, betai: 2.0 }
-
-  - &transA_transB_range
-    - { transA: N, transB: N }
-    - { transA: N, transB: T }
-    - { transA: T, transB: N }
-    - { transA: T, transB: T }
-
-  - &deepbench_alpha_beta_range
-    - { alpha: 1, beta: 0 }
-    - { alpha: 1, beta: 1 }
-
-  - &deepbench_transA_transB_range
-    - { transA: N, transB: N }
-    - { transA: N, transB: T }
-    - { transA: T, transB: N }
-
-  - &ldd_transA_transB_range
-    - { transA: N, transB: N }
-    - { transA: N, transB: T }
-    - { transA: T, transB: N }
-    - { transA: T, transB: T }
-
+  # - &transA_transB_range
+  #   - { transA: N, transB: N }
+  #   - { transA: N, transB: T }
+  #   - { transA: T, transB: N }
+  #   - { transA: T, transB: T }
 
 Tests:
-- name: matmul_f8_bf8_dst_fp32
-  category: pre_checkin
+- name: matmul_f8f16_f16
   function:
-    matmul: *real_precisions_1b_dst_f32
-  M: [128, 129]
-  N: [128, 129]
-  K: [128, 129]
-  transA_transB: *transA_transB_range
-  alpha: 1
-  beta: [ 2.0 ]
-  scaleA: [1]
-  scaleB: [1]
-  bias_vector: [0, 1]
-  bias_type: bf16_r
-  # print_kernel_info: true
+    matmul: *fp8fp16_precision_dst_fp16
+  matrix_size:
+    - { M:  16,    N:  16,    K:  1024  }
+    - { M:  16,    N:  16,    K:  8192  }
+    - { M:  16,    N:  16,    K:  65536 }
+    - { M:  16,    N:  2048,  K:  1024  }
+    - { M:  16,    N:  2048,  K:  8192  }
+    - { M:  16,    N:  2048,  K:  65536 }
+    - { M:  16,    N:  8192,  K:  1024  }
+    - { M:  16,    N:  8192,  K:  8192  }
+    - { M:  16,    N:  8192,  K:  65536 }
+    - { M:  2048,  N:  16,    K:  1024  }
+    - { M:  2048,  N:  16,    K:  8192  }
+    - { M:  2048,  N:  16,    K:  65536 }
+    - { M:  2048,  N:  2048,  K:  1024  }
+    - { M:  2048,  N:  2048,  K:  8192  }
+    - { M:  2048,  N:  2048,  K:  65536 }
+    - { M:  2048,  N:  8192,  K:  1024  }
+    - { M:  2048,  N:  8192,  K:  8192  }
+    - { M:  2048,  N:  8192,  K:  65536 }
+    - { M:  8192,  N:  16,    K:  1024  }
+    - { M:  8192,  N:  16,    K:  8192  }
+    - { M:  8192,  N:  16,    K:  65536 }
+    - { M:  8192,  N:  2048,  K:  1024  }
+    - { M:  8192,  N:  2048,  K:  8192  }
+    - { M:  8192,  N:  2048,  K:  65536 }
+    - { M:  8192,  N:  8192,  K:  1024  }
+    - { M:  8192,  N:  8192,  K:  8192  }
+    - { M:  8192,  N:  8192,  K:  65536 }
+    - { M:  2048,  N:  16,    K:  16384 }
+    - { M:  2048,  N:  32,    K:  16384 }
+    - { M:  4096,  N:  16,    K:  16384 }
+    - { M:  4096,  N:  32,    K:  16384 }
+    - { M:  16384, N:  16,    K:  2048  }
+    - { M:  16384, N:  32,    K:  2048  }
+    - { M:  16384, N:  16,    K:  4096  }
+    - { M:  16384, N:  32,    K:  4096  }
+  initialization: trig_float
+  transA: N
+  transB: N
+  iters: 1000
+  cold_iters: 1000
+  algo_method: 0
+  api_method: 2
+  flush: true
+  rotating: 512
+  gpu_arch: '94?'
 ...
