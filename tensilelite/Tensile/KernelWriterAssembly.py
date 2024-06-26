@@ -388,6 +388,17 @@ class KernelWriterAssembly(KernelWriter):
     # (we reclaim them to use as temps, typically for execmasks)
     # Mostly impacts flat kernels and GSU edge since these need SGPR
     # for conditionals
+
+    if kernel["StreamK"]:
+      # StreamK vars
+      module.add(self.defineSgpr("StreamKIdx", 1))
+      module.add(self.defineSgpr("StreamKIter", 1))
+      module.add(self.defineSgpr("StreamKIterEnd", 1))
+      module.add(self.defineSgpr("StreamKLocalStart", 1))
+      module.add(self.defineSgpr("StreamKLocalEnd", 1))
+      if kernel["StreamKAtomic"] == 0:
+        module.add(self.defineSgpr("SrdWS", 4, 4))
+
     if kernel["BufferLoad"]:
        # resource descriptor (SRD) A and B, must be aligned on 4-SGPR boundary
       module.add(self.defineSgpr("SrdA", 4, 4))
@@ -1899,6 +1910,9 @@ class KernelWriterAssembly(KernelWriter):
     module = Module("graWorkGroup")
     module.addComment0("graWorkGroup mapping")
 
+    skComponent = Component.StreamK.find(self)
+    module.add(skComponent.graWorkGroup(self, kernel))
+
     gsuComponent = Component.GSU.find(self)
     module.add(gsuComponent.graWorkGroup(self, kernel))
 
@@ -2671,6 +2685,9 @@ class KernelWriterAssembly(KernelWriter):
         if not self.isConstUnitStride(strideF):
           module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tileStart), sgpr(tileStart+1), sgpr(tileStart+0), \
                     strideF, "tlu=0, scaled tile-offset by stride"))
+
+        skComponent = Component.StreamK.find(self)
+        module.add(skComponent.computeLoadSrd(self, kernel, tc, stmp))
           
         gsuComponent = Component.GSU.find(self)
         module.add(gsuComponent.computeLoadSrd(self, kernel, tP, stmp, tileStart))
@@ -2819,8 +2836,10 @@ class KernelWriterAssembly(KernelWriter):
       #module.add(self.getBomb(0x13)) # after addresses and SRD set
     else:
       tmp = self.vgprPool.checkOut(2, "tmp", self.states.preventVgprOverflowDuringNewTile)
-      module.add(VMovB32(dst=vgpr(tmp+0), src=sgpr("Address%s+0"%tP["tensorChar"])))
-      module.add(VMovB32(dst=vgpr(tmp+1), src=sgpr("Address%s+1"%tP["tensorChar"])))
+
+      skComponent = Component.StreamK.find(self)
+      module.add(skComponent.graAddresses(self, kernel, tc, tmp))
+
       for perp in range(0, tP["nrp"]):
         for sPerp in range(0, tP["nrpv"]):
           for para in range(0, tP["nrc"]):
@@ -3493,6 +3512,10 @@ class KernelWriterAssembly(KernelWriter):
                 comment="Compute actual stagger start for this tile"))
       module.add(SLShiftLeftB32(dst=sgpr("StaggerUIter"), src=sgpr("StaggerUIter"), \
                 shiftHex=sgpr(staggerUStrideShift), comment="shift by StaggerUStride"))
+      
+      skComponent = Component.StreamK.find(self)
+      module.add(skComponent.declareStaggerParms(self, kernel))
+
     return module
 
   ##############################################################################
@@ -3716,6 +3739,9 @@ class KernelWriterAssembly(KernelWriter):
           self.vgprPool.checkIn(wave_id)
           self.vgprPool.checkIn(tmpVgpr)
 
+      skComponent = Component.StreamK.find(self)
+      module.add(skComponent.tailLoopNumIter(self, kernel, loopCounter))
+      
       gsuComponent = Component.GSU.find(self)
       module.add(gsuComponent.tailLoopNumIter(self, kernel, loopCounter))
 
@@ -3733,23 +3759,10 @@ class KernelWriterAssembly(KernelWriter):
       loopCounter = sgpr(loopCounterName)
       if not self.do["PreLoop"]: module.add(ValueEndif())
 
-      sumSize = "SizesSum+%u"%loopIdx
-      #sumSize = self.sumSize(kernel, loopIdx)
-
-      # TODO - use named arguments
       with self.allocTmpSgpr(3) as tmpSgprInfo:
-        tmpSgpr = tmpSgprInfo.idx
-        quotient = loopCounterName
-        dividend = sumSize
-        divisor = kernel["DepthU"]
-        if kernel["NoTailLoop"] and kernel["AssertSummationElementMultiple"] % kernel["DepthU"] != 0:
-          # round up SizesSum/DepthU for noTailLoop case
-          module.add(SAddI32(dst=sgpr(quotient), src0=(divisor - 1), src1=sgpr(dividend), \
-              comment="round up SizeSum / DepthU" ))
-          module.add(scalarStaticDivideAndRemainder(quotient, None, quotient, divisor, tmpSgprInfo, 0))
-        else:
-          module.add(scalarStaticDivideAndRemainder(quotient, None, dividend, divisor, tmpSgprInfo, 0))
-        
+        skComponent = Component.StreamK.find(self)
+        module.add(skComponent.calculateLoopNumIter(self, kernel, loopCounterName, loopIdx, tmpSgprInfo))
+                
         gsuComponent = Component.GSU.find(self)
         module.add(gsuComponent.calculateLoopNumIter(self, kernel, loopCounterName, tmpSgprInfo))
 
@@ -4080,7 +4093,7 @@ class KernelWriterAssembly(KernelWriter):
       module.add(loopLabelEnd)
 
       if tailLoop:
-        if len(kernel["ProblemType"]["IndicesSummation"]) > 1:
+        if len(kernel["ProblemType"]["IndicesSummation"]) > 1 or kernel["StreamK"]:
           # recover the 'damage' done to LRO:
 
           # if LRA is backed-up before (wlr case), we simply restore the addr (sub inc*loop doesn't work)
@@ -4185,6 +4198,7 @@ class KernelWriterAssembly(KernelWriter):
                       (vbegin, vbegin+vsize))
 
     lastRegTag=None
+    
     for i in range(0, self.sgprPool.size()):
       regTag = self.sgprPool.pool[i].tag
       if regTag != lastRegTag:
@@ -4897,9 +4911,12 @@ class KernelWriterAssembly(KernelWriter):
         if self.do["ApplyAlpha"]:
           # (The new hgemm (h,h,h,h,s,s) is included in ComputeType=Single)
           if kernel["ProblemType"]["ComputeDataType"].isHalf():
-            # for (h,h,h,h,h,h) no HPA,
-            module.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(0x3c003c00), comment="Packed alpha==1.0"))
-            module.add(SCmpEQU32(src0=sgpr("Alpha"), src1=sgpr(tmpSgpr), comment="alpha == 1.0?"))
+            if kernel["ProblemType"]["HighPrecisionAccumulate"] and kernel["StreamK"]:
+              module.add(SCmpEQU32(src0=sgpr("Alpha"), src1=1.0, comment="Alpha == 1.0 ?"))
+            else:
+              # for (h,h,h,h,h,h) no HPA,
+              module.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(0x3c003c00), comment="Packed alpha==1.0"))
+              module.add(SCmpEQU32(src0=sgpr("Alpha"), src1=sgpr(tmpSgpr), comment="alpha == 1.0?"))
 
           # Shouldn't go here. Currently, DataType=B->ComputeDataType=S
           # (bf-gemm is included in ComputeType=Single)
@@ -6237,6 +6254,9 @@ class KernelWriterAssembly(KernelWriter):
         tP["localWrite2Coalesced"], tP["localWrite2Perpendicular"],
         [tP["localWriteStrideTile"], tP["localWriteStrideUnroll"]] )
     tP["localWriteInstruction"] = self.memoryInstructions["LocalWrite"][newInstIdx]
+
+    skComponent = Component.StreamK.find(self)
+    module.add(skComponent.recalcLocalWriteAddresses(self, kernel))
 
     # local write tile assignments
     module.add(self.lwaTileAssignment(kernel, tP))

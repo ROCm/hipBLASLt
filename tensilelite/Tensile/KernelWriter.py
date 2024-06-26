@@ -2073,6 +2073,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(Label("ASM_Start", "Main body of the asm kernel"))
     module.add(self.defineAndResources(kernel, tensorParametersA, tensorParametersB, tPM))
 
+    # Initialize stream-k loop
+    skComponent = Component.StreamK.find(self)
+    module.add(skComponent.preLoop(self, kernel))
+    # Open persistent loop
+    loopComponent = Component.PersistentLoop.find(self)
+    module.add(loopComponent.openPersistentLoop(self, kernel))
+        
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
     if self.do["executeToPrefetchEnd"]:
@@ -2095,7 +2102,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # These cases loop back and run the prefetch loop again
       # we need an extra barrier to ensure that the ds_reads (either for SR or MFMA) from previous iteration
       # have finished before we generate the prefetch for the next summation index.
-      if self.states.actualSummationLoops>1:
+      if kernel["StreamK"] > 0 or self.states.actualSummationLoops>1:
         module.add(SBarrier())
 
       # local write
@@ -2848,8 +2855,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.bpeCinternal = int(self.states.bpr * kernel["ProblemType"]["ComputeDataType"].numRegisters())
 
     self.states.bpeCexternalGSU1 = int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
-    self.states.bpeCexternal = self.states.bpeCinternal if kernel["_GlobalAccumulation"] else \
-      self.states.bpeCexternalGSU1
+    self.states.bpeCexternal = self.states.bpeCexternalGSU1
+    if kernel["_GlobalAccumulation"] and kernel["_GlobalAccumulation"] != 'PartialsBuffer':
+      self.states.bpeCexternal = self.states.bpeCinternal
+      
 
     # special case for wmma h and b
     if (kernel["EnableMatrixInstruction"]
@@ -3642,14 +3651,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     for key, _ in self.sgprs.items():
       self.states.nonPostLoopSgpr.append(key)
     # Manually remove some additional unused sgpr
-    self.states.nonPostLoopSgpr.remove("WGM")
     for i in range(kernel["ProblemType"]["NumIndicesSummation"]):
       self.states.nonPostLoopSgpr.remove(self.loopCounterName(kernel,i))
     self.states.nonPostLoopSgpr.remove("OrigLoopCounter")
-    self.states.nonPostLoopSgpr.remove("AddressA")
-    self.states.nonPostLoopSgpr.remove("AddressB")
-    self.states.nonPostLoopSgpr.remove("StridesA")
-    self.states.nonPostLoopSgpr.remove("StridesB")
+
+    if not kernel["StreamK"]:
+      # Persistent loop requires arguments to remain for next tile
+      self.states.nonPostLoopSgpr.remove("WGM")
+      self.states.nonPostLoopSgpr.remove("AddressA")
+      self.states.nonPostLoopSgpr.remove("AddressB")
+      self.states.nonPostLoopSgpr.remove("StridesA")
+      self.states.nonPostLoopSgpr.remove("StridesB")
 
     self.states.preloadScaleA = False
     self.states.preloadScaleB = False
