@@ -119,6 +119,7 @@ struct Arguments
     uint8_t devices;
 
     int8_t norm_check;
+    int8_t allclose_check;
     int8_t unit_check;
     int8_t timing;
 
@@ -219,6 +220,7 @@ struct Arguments
     OPER(streams) SEP                \
     OPER(devices) SEP                \
     OPER(norm_check) SEP             \
+    OPER(allclose_check) SEP         \
     OPER(unit_check) SEP             \
     OPER(timing) SEP                 \
     OPER(transA) SEP                 \
