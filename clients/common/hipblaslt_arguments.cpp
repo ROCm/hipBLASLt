@@ -100,14 +100,14 @@ void Arguments::init()
     solution_index         = -1;
     requested_solution_num = 1;
 
-    a_type       = HIP_R_16F;
-    b_type       = HIP_R_16F;
-    c_type       = HIP_R_16F;
-    d_type       = HIP_R_16F;
-    compute_type = HIPBLAS_COMPUTE_32F;
+    a_type              = HIP_R_16F;
+    b_type              = HIP_R_16F;
+    c_type              = HIP_R_16F;
+    d_type              = HIP_R_16F;
+    compute_type        = HIPBLAS_COMPUTE_32F;
     compute_input_typeA = HIPBLASLT_DATATYPE_INVALID;
     compute_input_typeB = HIPBLASLT_DATATYPE_INVALID;
-    scale_type   = HIP_R_32F;
+    scale_type          = HIP_R_32F;
 
     initialization = hipblaslt_initialization::hpl;
 
@@ -121,9 +121,10 @@ void Arguments::init()
     // bytes
     devices = 0;
 
-    norm_check = 0;
-    unit_check = 1;
-    timing     = 0;
+    norm_check     = 0;
+    allclose_check = 0;
+    unit_check     = 1;
+    timing         = 0;
 
     transA = '*';
     transB = '*';

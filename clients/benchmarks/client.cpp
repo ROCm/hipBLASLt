@@ -827,7 +827,10 @@ try
         throw std::invalid_argument("Invalid value for --function");
 
     if(verify)
-        arg.norm_check = 1;
+    {
+        arg.norm_check     = 1;
+        arg.allclose_check = 1;
+    }
 
     switch(api_method)
     {

@@ -37,6 +37,7 @@
 #include "hipblaslt_vector.hpp"
 #include "near.hpp"
 #include "norm.hpp"
+#include "allclose.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
 #include <cstddef>
@@ -330,7 +331,9 @@ void check(hipStream_t                         stream,
            std::vector<host_vector<Tbias>*>&   hBias,
            std::vector<device_vector<Tbias>*>& dBias,
            std::vector<double>&                tol,
-           double&                             hipblaslt_error)
+           double&                             hipblaslt_error,
+           double&                             hipblaslt_atol,
+           double&                             hipblaslt_rtol)
 {
     // fetch GPU
     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
@@ -500,6 +503,21 @@ void check(hipStream_t                         stream,
                 if(arg.norm_check_assert)
                     CHECK_SUCCESS(norm_check<Tbias>(norm_error));
             }
+        }
+        
+        if(arg.allclose_check)
+        {
+            bool is_allclose = allclose_check_general<To>('F',
+                                                          M[gemmIdx],
+                                                          N[gemmIdx],
+                                                          ldd[gemmIdx],
+                                                          stride_d[gemmIdx],
+                                                          *(hD_gold[gemmIdx]),
+                                                          *(hD_1[gemmIdx]),
+                                                          num_batches[gemmIdx],
+                                                          hipblaslt_atol,
+                                                          hipblaslt_rtol);
+            //TODO: confirm if allclose_check_assert is neccessary
         }
     }
 }
@@ -744,7 +762,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             size_D[i]   = size_C[i];
         }
 
-        size_D_copy[i]        = arg.unit_check || arg.norm_check ? size_D[i] : 0;
+        size_D_copy[i] = (arg.unit_check || arg.norm_check || arg.allclose_check) ? size_D[i] : 0;
         size_scaleAlphaVec[i] = arg.scaleAlpha_vector ? M[i] : 0;
         if(arg.bias_vector)
         {
@@ -2163,7 +2181,7 @@ void testing_matmul_with_bias(const Arguments& arg)
     }
 
     // get CPU result
-    if(arg.unit_check || arg.norm_check)
+    if(arg.unit_check || arg.norm_check || arg.allclose_check)
     {
         if(arg.timing)
         {
@@ -2425,6 +2443,8 @@ void testing_matmul_with_bias(const Arguments& arg)
             }
 
             double              hipblaslt_error = 0.0;
+            double              hipblaslt_atol  = 1;
+            double              hipblaslt_rtol  = 1;
             std::vector<double> tol(gemm_count);
             if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
                && sizeof(TiB) == 2)
@@ -2434,7 +2454,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                     tol[gemmIdx] = K[gemmIdx] * sum_error_tolerance_for_gfx11<Tc, TiA, To>;
                 }
             }
-            if(arg.unit_check || arg.norm_check)
+            if(arg.unit_check || arg.norm_check || arg.allclose_check)
             {
                 copy_gemm_to_host(stream, gemm_count, hD_1, dD);
                 check(stream,
@@ -2461,7 +2481,9 @@ void testing_matmul_with_bias(const Arguments& arg)
                       hBias,
                       dBias,
                       tol,
-                      hipblaslt_error);
+                      hipblaslt_error,
+                      hipblaslt_atol,
+                      hipblaslt_rtol);
             }
         }
     }
@@ -2477,8 +2499,11 @@ void testing_matmul_with_bias(const Arguments& arg)
         double      best_gpu_time = std::numeric_limits<double>::max();
         std::string best_s_name   = "";
         std::string best_k_name   = "";
+        double      best_norm     = 0.0;
+        double      best_atol     = 0.0;
+        double      best_rtol     = 0.0;
         int         number_cold_calls
-            = ((arg.unit_check || arg.norm_check) && arg.cold_iters == 0) ? 1 : arg.cold_iters;
+            = ((arg.unit_check || arg.norm_check || arg.allclose_check) && arg.cold_iters == 0) ? 1 : arg.cold_iters;
         int number_hot_calls = arg.iters;
 
         int    flush_iter      = 100000;
@@ -2527,7 +2552,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                     for(int i = 0; i < number_cold_calls; i++)
                     {
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
-                        if(i == 0 && (arg.unit_check || arg.norm_check))
+                        if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, dD);
                     }
                     freq_monitor.start();
@@ -2575,7 +2600,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                                                               workspace_size,
                                                               stream),
                                               HIPBLAS_STATUS_SUCCESS);
-                        if(i == 0 && (arg.unit_check || arg.norm_check))
+                        if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, dD);
                     }
                     freq_monitor.start();
@@ -2660,7 +2685,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                     {
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(
                             d_userArgsVec[i % block_count], stream));
-                        if(i == 0 && (arg.unit_check || arg.norm_check))
+                        if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, dD);
                     }
                     freq_monitor.start();
@@ -2704,7 +2729,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                     for(int i = 0; i < number_cold_calls; i++)
                     {
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
-                        if(i == 0 && (arg.unit_check || arg.norm_check))
+                        if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, dD);
                     }
                     if(arg.use_gpu_timer)
@@ -2753,6 +2778,8 @@ void testing_matmul_with_bias(const Arguments& arg)
             }
 
             double              hipblaslt_error = 0.0;
+            double              hipblaslt_atol  = 1;
+            double              hipblaslt_rtol  = 1;
             std::vector<double> tol(gemm_count);
             if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
                && sizeof(TiB) == 2)
@@ -2762,7 +2789,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                     tol[gemmIdx] = K[gemmIdx] * sum_error_tolerance_for_gfx11<Tc, TiA, To>;
                 }
             }
-            if(arg.unit_check || arg.norm_check)
+            if(arg.unit_check || arg.norm_check || arg.allclose_check)
                 check(stream,
                       arg,
                       gemm_count,
@@ -2787,7 +2814,9 @@ void testing_matmul_with_bias(const Arguments& arg)
                       hBias,
                       dBias,
                       tol,
-                      hipblaslt_error);
+                      hipblaslt_error,
+                      hipblaslt_atol,
+                      hipblaslt_rtol);
 
 #define argument_param                                                                             \
     e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a,  \
@@ -2837,7 +2866,9 @@ void testing_matmul_with_bias(const Arguments& arg)
                     flops,
                     ArgumentLogging::NA_value,
                     cpu_time_used,
-                    hipblaslt_error);
+                    hipblaslt_error,
+                    hipblaslt_atol,
+                    hipblaslt_rtol);
             }
             if(best_gpu_time > gpu_time_used)
             {
@@ -2846,6 +2877,9 @@ void testing_matmul_with_bias(const Arguments& arg)
                 best_gpu_time = gpu_time_used;
                 best_s_name   = solutionName;
                 best_k_name   = kernelName;
+                best_norm     = hipblaslt_error;
+                best_atol     = hipblaslt_atol;
+                best_rtol     = hipblaslt_rtol;
             }
         }
 
@@ -2876,7 +2910,9 @@ void testing_matmul_with_bias(const Arguments& arg)
                 best_flops,
                 ArgumentLogging::NA_value,
                 cpu_time_used,
-                0.0);
+                best_norm,
+                best_atol,
+                best_rtol);
         }
     }
 
