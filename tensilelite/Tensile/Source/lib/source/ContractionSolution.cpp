@@ -775,27 +775,42 @@ namespace Tensile
         }
 
         uint32_t gsu = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
-        uint32_t wgm = param.wgm() > 0 ? param.wgm() : sizeMapping.workGroupMapping;
-        if(!internalArgsSupport.wgm)
-            wgm = 0;
+        int32_t wgm  = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
 
-        const uint32_t mask         = 0xFF;
-        uint32_t       internalArg0 = mask & gsu;
-        uint32_t       wgShift8     = (mask & wgm) << 8;
-        internalArg0                = internalArg0 | wgShift8;
+        const uint32_t mask16       = 0xFFFF;
+        const uint32_t mask8        = 0xFF;
+        uint32_t       internalArg0 = 0;
+        // FIXME: Temporarily hack, too many custom kernels with different versions
+        if(internalArgsSupport.wgm && sizeMapping.customKernelName != "")
+        {
+            if(wgm > 255)
+                wgm = 255;
+            if(gsu > 255)
+                gsu = 255;
+            uint32_t wgShift8 = (mask8 & (uint32_t)wgm) << 8;
+            internalArg0      = internalArg0 | wgShift8;
+        }
+        internalArg0 = internalArg0 | (mask16 & gsu);
+
         // StaggerU
         if(internalArgsSupport.staggerU)
         {
             const uint32_t staggerMask1    = 0x1F00;
             uint32_t       staggerUMapping = (sizeMapping.staggerUMapping << 13);
             uint32_t       staggerUShift   = staggerMask1 & ((sizeMapping.staggerStrideShift) << 8);
-            uint32_t       staggerU        = mask & sizeMapping.staggerU;
+            uint32_t       staggerU        = mask8 & sizeMapping.staggerU;
             staggerU                       = staggerU | staggerUShift;
             staggerU                       = staggerU | staggerUMapping;
             internalArg0                   = internalArg0 | (staggerU << 16);
         }
 
         args.template append<uint32_t>("internalArgs", internalArg0);
+
+        int32_t internalArg1 = 0;
+        if(internalArgsSupport.wgm && sizeMapping.customKernelName == "")
+        {
+            args.template append<int32_t>("internalArgs1", wgm);
+        }
     }
 
     template <bool T_Debug>

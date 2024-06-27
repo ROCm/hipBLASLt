@@ -146,8 +146,9 @@ class SignatureDefault(Signature):
             userArgumentsInfo.gemmArgumentSize += 4
 
         # General Argument info
-        signature.addArg(  "Gemm info", SVK.SIG_VALUE, "u32")
-        signature.addArg("kernel info", SVK.SIG_VALUE, "u32")
+        signature.addArg(   "Gemm info", SVK.SIG_VALUE, "u32")
+        signature.addArg("kernel info0", SVK.SIG_VALUE, "u32")
+        signature.addArg("kernel info1", SVK.SIG_VALUE, "u32")
 
         if globalParameters["DebugKernel"]:
             signature.addArg("AddressDbg", SVK.SIG_GLOBALBUFFER, "struct", "generic")

@@ -1907,7 +1907,7 @@ rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       hand
                         gemmCount = gemmCount | (2 << 30);
                         memcpy(arg, &gemmCount, sizeof(int));
                     }
-                    memcpy(arg + 8, &deviceUserArgs, sizeof(void*));
+                    memcpy(arg + 12, &deviceUserArgs, sizeof(void*));
                 }
                 else
                 {
