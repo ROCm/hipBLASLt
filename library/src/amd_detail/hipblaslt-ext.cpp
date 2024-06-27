@@ -319,12 +319,12 @@ namespace hipblaslt_ext
             return HIPBLAS_STATUS_INVALID_VALUE;
         }
 
-        int lda     = m_problem_types[0].op_a == HIPBLAS_OP_N ? m : k;
-        int ldb     = m_problem_types[0].op_b == HIPBLAS_OP_N ? k : n;
-        int ldc     = m;
-        int strideA = m * k;
-        int strideB = n * k;
-        int strideC = m * n;
+        int64_t lda     = m_problem_types[0].op_a == HIPBLAS_OP_N ? m : k;
+        int64_t ldb     = m_problem_types[0].op_b == HIPBLAS_OP_N ? k : n;
+        int64_t ldc     = m;
+        int64_t strideA = m * k;
+        int64_t strideB = n * k;
+        int64_t strideC = m * n;
         return setProblem(m,
                           n,
                           k,
