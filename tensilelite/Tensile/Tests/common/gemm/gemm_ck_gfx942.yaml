@@ -1,0 +1,99 @@
+TestParameters:
+  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx940, skip-gfx941, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102] # not supported by arch
+
+GlobalParameters:
+  NumElementsToValidate: -1
+  NumWarmups: 0
+  NumBenchmarks: 1
+  SyncsPerBenchmark: 1
+  EnqueuesPerSync: 1
+  DataInitTypeA: 12
+  DataInitTypeB: 13
+  DataInitTypeBeta: 0
+  DataInitTypeAlpha: 1
+  DataInitTypeBias: 0
+  DataInitTypeScaleAlphaVec: 1
+  CSVExportWinner: 1
+  CSVMergeSameProblemID: 1
+  Device: 0
+  PrintSolutionRejectionReason: True
+
+BenchmarkProblems:
+  ########################################
+  # NN - standard
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: b
+      DestDataType: b
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 1
+      TransposeB: 0
+      UseBeta: True
+      Batched: True
+
+      UseBias: 1
+      BiasTypeList: [S,B]
+      Activation: True
+      ActivationType: all
+      UseScaleAlphaVec: True
+
+      # GroupedGemm: True
+      # SupportUserArgs: True
+    - # BenchmarkProblemSizeGroup - Standard
+      CustomKernels: 
+        [
+          "Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_DTVA"
+        ]
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16, 16,16, 1,  1,   4,16,  4,1 ] # 256x256 (Occupancy 1) 
+
+        - AssertFree0ElementMultiple: [1]
+        - AssertFree1ElementMultiple: [1]
+        # - AssertSummationElementMultiple: [64]
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - DepthU: [64]
+        - VectorWidthA: [-1]
+        - VectorWidthB: [-1]
+        - GlobalReadVectorWidthA: [8]
+        - GlobalReadVectorWidthB: [8]
+        - LocalReadVectorWidth: [8]
+        - TransposeLDS: [1]
+        - LdsBlockSizePerPadA: [-1]
+        - LdsBlockSizePerPadB: [-1]
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - StaggerU: [8]
+        - StaggerUStride: [128]
+        - WorkGroupMapping: [8]
+        - StaggerUMapping: [1]
+        - 1LDSBuffer: [-1]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [-1]
+        - StoreRemapVectorWidth: [0]
+        - StoreVectorWidth: [-1]
+        - SourceSwap: [1]
+        - NumElementsPerBatchStore: [16]
+        - ClusterLocalRead: [1]
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [256, 256, 1, 256]
+          - Exact: [255, 255, 1, 256]
+          - Exact: [256, 256, 1, 255]
+          - Exact: [255, 255, 1, 255]
+        - BiasTypeArgs: ['s']
+        - ActivationArgs:
+          - [Enum: Relu]
+
+LibraryLogic:
+    ScheduleName: "aquavanjaram"
+    DeviceNames: ["Device 0049", "Device 0050"]
+    ArchitectureName: "gfx942"
