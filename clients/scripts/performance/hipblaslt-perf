@@ -27,6 +27,7 @@ import os
 import argparse
 import logging
 import bench
+from generator import SuiteProblemGenerator
 from pathlib import Path
 from git_info import create_github_file
 from specs import get_machine_specs
@@ -34,33 +35,51 @@ from specs import get_machine_specs
 console = logging.StreamHandler()
 
 # Parameters for output csv file
-trackedParamList = ['transA','transB','grouped_gemm','batch_count','m','n','k','alpha','lda','stride_a','beta','ldb','stride_b',
+matmul_paramList = ['transA','transB','grouped_gemm','batch_count','m','n','k','alpha','lda','stride_a','beta','ldb','stride_b',
                     'ldc','stride_c','ldd','stride_d','a_type','b_type','c_type','d_type','compute_type','scaleA','scaleB','scaleC',
-                    'scaleD','activation_type','bias_vector','bias_type','gflops','us']
+                    'scaleD','activation_type','bias_vector','bias_type','rotating_buffer','gflops','us']
+
+amax_paramList = ['m','n','type','dtype','us']
+
+# maps of paramList
+benchTrackedParams = {'matmul' : matmul_paramList,
+                     'amax' : amax_paramList}
+
+# maps of benchmark executable
+benchExecs = {'matmul' : 'hipblaslt-bench',
+              'amax' : 'hipblaslt-bench-extop-amax'}
 
 #d is default dict or contains a superset of trackedParams
-def extractTrackedParams(d):
-    return [d[p] for p in trackedParamList]
+def extractTrackedParams(d, trackedParam):
+    return [d[p] for p in trackedParam]
 
-def runBenchmark(benchCmd, problemsYaml, out_csv_File = ""):
+def runBenchmark(benchType, args, executable_folder, probYamlFolder, out_csv_File, write_csv_header):
 
-    csvKeys, benchResults, success = bench.run_yaml(benchCmd, problemsYaml, True)
+    # get the actual exec-path of this bench type
+    benchExec = benchExecs[benchType]
+    benchCmd = pathlib.Path(os.path.join(executable_folder, benchExec)).resolve()
 
+    csvKeys, benchResults, success = bench.run_bench(benchCmd, probYamlFolder, args, True)
+
+    header = ''
+    header += ','.join([str(key) for key in csvKeys])+'\n'
+
+    # get the actual params we want to track and show in csv of this bench type
+    trackedParams = benchTrackedParams[benchType]
     content = ''
-    content += ','.join([str(key) for key in csvKeys])+'\n'
-
     for eachResult in benchResults:
-        extracted = extractTrackedParams(eachResult)
+        extracted = extractTrackedParams(eachResult, trackedParams)
         content += ','.join([str(e) for e in extracted])+'\n'
 
-    if out_csv_File != "":
-        with open(out_csv_File, 'w') as f:
-            print("\nWriting results to {}".format(out_csv_File))
-            f.write(content)
+    if out_csv_File is not None:
+        if write_csv_header is True:
+            out_csv_File.write(header)
+        out_csv_File.write(content)
     else:
+        print(header)
         print(content)
 
-def command_perf(arguments, problem_folder):
+def command_perf(arguments, executable_folder, probYaml_foler):
     """Run bench"""
 
     if arguments.workspace:
@@ -69,39 +88,39 @@ def command_perf(arguments, problem_folder):
         print("Workspace not set. use -w /path/of/workspace")
         return
 
-    if arguments.benchexe:
-        print(f'running bench executable: {arguments.benchexe}')
-    else:
-        print("bench executable not set. use -benchexe /path/of/bench_executable")
-        return
-
-    if arguments.suite:
-        # TODO: a function to construct problem combinations
-        filenames = [ os.path.join(problem_folder, arguments.suite + '_bench.yaml') ]
-    else:
+    if arguments.suite is None:
         print("test problems not set, use --suite for testing problems")
         return
+    else:
+        generator = SuiteProblemGenerator(arguments.suite)
 
     out_folder = arguments.workspace
-    benchCmd = arguments.benchexe
 
     needExportCSV = (arguments.csv == True) or (arguments.pts == True)
 
     logging.info("Start bench.")
 
-    for filename in filenames:
-        print("\n==================================\n|| Running benchmarks from {}\n==================================".format(filename))
-        filePrefix = Path(filename).stem
-        subDirectory = os.path.join(out_folder, "hipBLASLt_PTS_Benchmarks_"+filePrefix, arguments.tag)
+    for problemSet in generator.generate_problemSet():
+        pSetName = problemSet.get_problemset_name()
+        print("\n==================================\n|| Running benchmarks suite {}\n==================================".format(pSetName))
+        pTypeName = problemSet.benchType
+        subDirectory = os.path.join(out_folder, "hipBLASLt_PTS_Benchmarks_"+pTypeName, arguments.tag)
         Path(subDirectory).mkdir(parents=True, exist_ok=True)
 
         # check if we need to output csv files
-        outputName, _ = os.path.splitext(os.path.basename(filename))
-        out_csv_file = os.path.join(subDirectory, outputName+'_benchmark.csv') if needExportCSV else ""
+        # outputName, _ = os.path.splitext(os.path.basename(filename))
+        out_csv_file = os.path.join(subDirectory, pSetName+'_benchmark.csv') if needExportCSV else ""
+        csv_file = None if out_csv_file == "" else open(out_csv_file, 'w')
 
-        runBenchmark(benchCmd,
-                     filename,
-                     out_csv_file)
+        # only the first time we need to write header
+        writeCSVHeader = True
+        for p in problemSet.generate_problems():
+            runBenchmark(pTypeName, p.args, executable_folder, probYaml_foler, csv_file, writeCSVHeader)
+            writeCSVHeader = False
+
+        if csv_file is not None:
+            print("\nResults written to {}".format(csv_file.name))
+            csv_file.close()
 
         # check if we need to output other files for pts
         if arguments.pts == True:
@@ -119,10 +138,11 @@ def main():
 
     dir_of_this_script = pathlib.Path(os.path.dirname(os.path.realpath(__file__))).resolve()
     dir_of_this_repo = pathlib.Path(os.path.join(dir_of_this_script, '../../../')).resolve()
-    dir_of_bench_problems = pathlib.Path(os.path.join(dir_of_this_script, 'problems/')).resolve()
+    probYaml_folder = pathlib.Path(os.path.join(dir_of_this_script, 'problems/')).resolve()
+    executable_folder = pathlib.Path(os.path.join(dir_of_this_repo, "build/release/clients/staging/")).resolve()
     # print(f'dir of this script = {dir_of_this_script}')
     # print(f'dir of this repos = {dir_of_this_repo}')
-    # print(f'dir of bench yaml problems = {dir_of_bench_problems}')
+    # print(f'dir of bench yaml problems = {probYaml_folder}')
 
     parser.add_argument('-w',
                         '--workspace',
@@ -130,15 +150,9 @@ def main():
                         help='workspace folder keeping the perf data',
                         default=os.path.join(dir_of_this_repo, "hipBlasLt_benchmark/"))
 
-    parser.add_argument('--benchexe',
-                        type=str,
-                        help='hipblaslt-bench executable path',
-                        default=os.path.join(dir_of_this_repo, "build/release/clients/staging/hipblaslt-bench"))
-
     parser.add_argument('--suite',
                         type=str,
-                        help='the name test suite: e.g. matmul = matmul_bench.yaml under problems/, and all=all problems under problems/',
-                        default='matmul')
+                        action='append')
 
     parser.add_argument('--tag',
                         type=str,
@@ -157,7 +171,7 @@ def main():
 
     arguments = parser.parse_args()
 
-    command_perf(arguments, dir_of_bench_problems)
+    command_perf(arguments, executable_folder, probYaml_folder)
 
     sys.exit(0)
 

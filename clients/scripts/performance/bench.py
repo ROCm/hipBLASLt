@@ -19,26 +19,38 @@
 # THE SOFTWARE.
 """Bench launch utils."""
 
+import os
 import logging
 import pathlib
 import asyncio
 import sys
 from collections import defaultdict
+from typing import Dict
 from asyncio.subprocess import PIPE, STDOUT
 
+#####################################
+# for hipblaslt-bench, can use --yaml
+#####################################
+def run_bench(benchExecutable,
+              probYamlFolder,
+              argsDict:Dict[str, str],
+              verbose=False,
+              timeout=300):
+    """Run bench"""
+    cmd = [pathlib.Path(benchExecutable).resolve()]
 
-def run_yaml(bench,
-             yamlfile,
-             verbose=False,
-             timeout=300):
-    """Run hipblaslt-bench"""
-    cmd = [pathlib.Path(bench).resolve()]
-    cmd += ['--yaml', yamlfile]
+    for argKey, argValue in argsDict.items():
+        if len(argValue) != 0:
+            if argKey == "--yaml":
+                argValue = pathlib.Path(os.path.join(probYamlFolder, argValue)).resolve()
+            cmd += [argKey, argValue]
+        else:
+            cmd += [argKey]
 
     cmd = [str(x) for x in cmd]
-    logging.info('hipblaslt-bench: ' + ' '.join(cmd))
+    logging.info('hipblaslt-perf: ' + ' '.join(cmd))
     if verbose:
-        print('hipblaslt-bench: ' + ' '.join(cmd))
+        print('hipblaslt-perf: ' + ' '.join(cmd))
 
     startingToken = "["
     csvKeys = ''
