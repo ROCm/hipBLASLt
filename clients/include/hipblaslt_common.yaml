@@ -245,6 +245,7 @@ Arguments:
   - streams: c_uint16
   - devices: c_uint8
   - norm_check: c_int8
+  - allclose_check: c_int8
   - unit_check: c_int8
   - timing: c_int8
   - transA: c_char
@@ -333,6 +334,7 @@ Defaults:
   devices: 0
   gpu_arch: ''
   norm_check: 0
+  allclose_check: 0
   unit_check: 1
   timing: 0
   iters: 10
