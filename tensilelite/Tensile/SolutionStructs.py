@@ -2559,8 +2559,8 @@ class Solution(collections.abc.Mapping):
         reject(state, "LSU and non-SourceSwap doesn't support StoreVectorWidth(%u)>VWA(%u)." \
             % (state["StoreVectorWidth"], state["VectorWidthA"]))
         return
-      if not state["ProblemType"]["ComputeDataType"].isSingle():
-        reject(state, "TODO: LSU doesn't support ComputeDataType!=single.")
+      if not (state["ProblemType"]["ComputeDataType"].isSingle() or state["ProblemType"]["ComputeDataType"].isInt32()):
+        reject(state, "TODO: LSU doesn't support ComputeDataType!=(single or Int32).")
         return
       if state["StoreRemapVectorWidth"] > 0:
         reject(state, "TODO: LSU doesn't support StoreRemapVectorWidth>0.")
@@ -2572,9 +2572,6 @@ class Solution(collections.abc.Mapping):
       if state["MacroTile0"]*state["MacroTile1"] % state["NumThreads"] != 0:
         reject(state, "LocalSplitU but MT0*MT1=%u elements doesn't divide into NumThreads=%u" \
             % (state["MacroTile0"]*state["MacroTile1"], state["NumThreads"]))
-        return
-      if state["ProblemType"]["DataType"].isInt8():
-        reject(state, "int8 doesn't support LocalSplitU")
         return
 
     # GlobalSplitU doesn't work with some other things:

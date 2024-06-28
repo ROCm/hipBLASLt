@@ -301,7 +301,7 @@ class SaturateCastType(Enum):
     UPPER = 3
     LOWER = 4
 
-def VSaturateCastInt(sumIdxV, tmpVgpr, tmpSgpr, lowerBound, upperBound, type=SaturateCastType.NORMAL, initGpr=True):
+def VSaturateCastInt(vgprSumIdxV, tmpVgpr, tmpSgpr, lowerBound, upperBound, type=SaturateCastType.NORMAL, initGpr=True):
     # SaturateCastType = 0, normal case
     # SaturateCastType = 1, do nothing
     # SaturateCastType = 2, upperbound only
@@ -316,13 +316,13 @@ def VSaturateCastInt(sumIdxV, tmpVgpr, tmpSgpr, lowerBound, upperBound, type=Sat
             upperBoundHex = hex(upperBound)
             module.add(SMovkI32(dst=sgpr(tmpLowerBound), src=lowerBoundHex, comment="%d"%lowerBound ))
             module.add(VMovB32(dst=vgpr(tmpUpperBound), src=upperBoundHex, comment="%d"%upperBound ))
-        module.add(VMed3I32(dst=vgpr("ValuC+%u"%(sumIdxV)), src0=vgpr("ValuC+%u"%(sumIdxV)), src1=sgpr(tmpLowerBound), src2=vgpr(tmpUpperBound), comment="x= min(%d, max(%d, x))"%(upperBound, lowerBound)))
+        module.add(VMed3I32(dst=vgprSumIdxV, src0=vgprSumIdxV, src1=sgpr(tmpLowerBound), src2=vgpr(tmpUpperBound), comment="x= min(%d, max(%d, x))"%(upperBound, lowerBound)))
     elif type == SaturateCastType.DO_NOTHING:
         pass
     elif type == SaturateCastType.UPPER:
-        module.add(VMinI32(dst=vgpr("ValuC+%u"%(sumIdxV)), src0=upperBound, src1=vgpr("ValuC+%u"%(sumIdxV)), comment="x = min(%d, x)"%upperBound))
+        module.add(VMinI32(dst=vgprSumIdxV, src0=upperBound, src1=vgprSumIdxV, comment="x = min(%d, x)"%upperBound))
     elif type == SaturateCastType.LOWER:
-        module.add(VMaxI32(dst=vgpr("ValuC+%u"%(sumIdxV)), src0=lowerBound, src1=vgpr("ValuC+%u"%(sumIdxV)), comment="x = max(%d, x)"%lowerBound))
+        module.add(VMaxI32(dst=vgprSumIdxV, src0=lowerBound, src1=vgprSumIdxV, comment="x = max(%d, x)"%lowerBound))
     return module
 
 ########################################

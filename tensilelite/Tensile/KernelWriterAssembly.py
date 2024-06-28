@@ -7421,6 +7421,9 @@ class KernelWriterAssembly(KernelWriter):
           if kernel["ProblemType"]["ComputeDataType"].isSingle():
             module.add(VAddF32(dst=vgpr("LsuReduction+%u"%cIdx), src0=vgpr(self.accVgprLdsReduction+ regIdx), src1=vgpr(self.accVgprLdsReduction+cIdx), \
                         comment="c[%u] += c[%u]"%(cIdx, regIdx)))
+          elif kernel["ProblemType"]["ComputeDataType"].isInt32():
+            module.add(VAddI32(dst=vgpr("LsuReduction+%u"%cIdx), src0=vgpr(self.accVgprLdsReduction+ regIdx), src1=vgpr(self.accVgprLdsReduction+cIdx), \
+                        comment="c[%u] += c[%u]"%(cIdx, regIdx)))
           else:
             # TODO: hpa_half, int8
             assert(0) # unsupported data type, need to modify here and LSU write/read code
