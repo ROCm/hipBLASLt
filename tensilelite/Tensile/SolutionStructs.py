@@ -2102,7 +2102,9 @@ class Solution(collections.abc.Mapping):
     state["LocalWriteUseSgprA"] = False
     state["LocalWriteUseSgprB"] = False
 
-    state["WorkGroupMapping" ] = abs(state["WorkGroupMapping"])
+    if state["WorkGroupMapping" ] == -1:
+      # -1 code is same as 1. Convert to 1.
+      state["WorkGroupMapping" ] = 1
     state["WorkGroupMappingXCC" ] = abs(state["WorkGroupMappingXCC"])
 
     problemType = state["ProblemType"]
