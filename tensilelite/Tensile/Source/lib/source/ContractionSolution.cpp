@@ -809,6 +809,8 @@ namespace Tensile
         int32_t internalArg1 = 0;
         if(internalArgsSupport.wgm && sizeMapping.customKernelName == "")
         {
+            if(wgm == -1)
+                wgm = 1;
             args.template append<int32_t>("internalArgs1", wgm);
         }
     }
@@ -818,8 +820,6 @@ namespace Tensile
         ContractionSolution::generateSingleCall(ContractionSolution::Problem const& problem,
                                                 ContractionInputs const&            inputs) const
     {
-        TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
-
         KernelInvocation rv;
 
         rv.args = KernelArguments(T_Debug);
@@ -973,7 +973,6 @@ namespace Tensile
         KA&                                              h_args,
         void const*                                      userArgs) const
     {
-        TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
         KernelInvocation rv;
         if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
         {
