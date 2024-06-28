@@ -1517,7 +1517,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
 
     if self.do["executeToInitEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     ####################################
     # prefetch: unrolled loop prefix
@@ -1749,7 +1749,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.noLoadLoopBody(kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast))
 
     if self.do["executeToLoopEnd"] and isOptNLL:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
     module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL))
@@ -2083,7 +2083,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
     if self.do["executeToPrefetchEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     pack = [ Module() for i in range (self.states.numVgprBuffer) ]
     self.preLoopLocalWriteCode = None
@@ -2103,7 +2103,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # we need an extra barrier to ensure that the ds_reads (either for SR or MFMA) from previous iteration
       # have finished before we generate the prefetch for the next summation index.
       if kernel["StreamK"] > 0 or self.states.actualSummationLoops>1:
-        module.add(SBarrier())
+        module.add(SBarrier(comment="For stream-k / persistent loop"))
 
       # local write
       self.preLoopLocalWriteCode = self.preLoopLocalWriteDo(kernel, tensorParametersA, tensorParametersB)
@@ -2385,7 +2385,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
                         (self.states.lastValuAB, self.states.lastVgprForReads))
 
     if self.do["executeToLoopEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     # extra summation loops: global increment and close
     for i in reversed(range(self.states.otherSummationLoops)):
@@ -2443,7 +2443,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.addComment1("LocalSplitU: global write")
       module.add(self.localSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
 
-
     else:
       ####################################
       # NOT LocalSplitU
@@ -2458,7 +2457,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.notLocalSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
 
     # function suffix
-    module.add(self.functionEnd(True))
+    module.add(self.functionEnd(kernel, addLabel=True))
     module.add(self.functionSuffix(kernel))
 
     # Tensile pass
@@ -4372,7 +4371,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # Function End
   ##############################################################################
   @abc.abstractmethod
-  def functionEnd(self, addLabel=True):
+  def functionEnd(self, kernel, addLabel=True):
     return ""
 
   ##############################################################################

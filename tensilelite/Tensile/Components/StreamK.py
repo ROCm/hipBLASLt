@@ -22,7 +22,9 @@
 
 from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, sgpr, scalarStaticDivideAndRemainder, \
     SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SCBranchSCC1, SCmpLeU32, VMovB32, vgpr, \
-    SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32
+    SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
+    log2
+# from ..TensileInstructions.Containers import SMEMModifiers
 from ..Component import Component
 import abc
 
@@ -243,6 +245,98 @@ class StreamK(Component):
 
         return module
     
+    @abc.abstractmethod
+    def storeBranches(self, writer, kernel, skPartialsLabel):
+        pass
+
+    def storeBranchesCommon(self, writer, kernel, skPartialsLabel):
+        module = Module("StreamK Common storeBranches")
+
+        # No branches for atomic mode
+        if kernel["StreamKAtomic"]:
+            return module
+        
+        skFixupLabel = Label(label=writer.labels.getNameInc("SK_Fixup"), comment="")
+        skStoreLabel = Label(label=writer.labels.getNameInc("SK_Store"), comment="")
+
+        # StreamK store branches
+        tmpSgpr = self.sgprPool.checkOut(4, "globalWriteElements", preventOverflow=0)
+        # if we did not start the tile, store partials
+        # branch to beta == 0 store path
+        module.add(SCmpEQU32(src0=sgpr("StreamKLocalStart"), src1=0, comment="does wg start tile?"))
+        module.add(SCBranchSCC0(labelName=skPartialsLabel.getLabelName(), comment="Branch if not start tile, store partials"))
+
+        if kernel["DebugStreamK"] & 1 == 0:
+            # if we started and finished the tile, regular store code
+            # branch to regular store code, skip fixup step
+            module.add(SCmpEQU32(src0=sgpr("StreamKLocalEnd"), src1=sgpr("ItersPerTile"), comment="does wg finish tile?"))
+            module.add(SCBranchSCC1(labelName=skStoreLabel.getLabelName(), comment="Branch if started and finished tile, go to regular store code"))
+
+            # if we started the tile but did not finish it, fix up step
+            # run fixup code before regular store code
+            sCtaIdx = writer.sgprPool.checkOut(1, "CtaIdx", preventOverflow=0) # self.defineSgpr("CtaIdx", 1)
+            module.add(SAddU32(dst=sgpr(sCtaIdx), src0=sgpr("StreamKIdx"), src1=1, comment="input partial tile index"))
+
+            sFixupEnd = writer.sgprPool.checkOut(1, "FixupEnd", preventOverflow=0) # self.defineSgpr("CtaEnd", 1)
+            module.add(sMagicDivAlg2(tmpSgpr, sgpr("StreamKIterEnd"), sgpr("MagicNumberItersPerTile"), sgpr("MagicShiftItersPerTile")))
+            module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=sgpr("ItersPerTile"), comment="start iteration of partial tile"))
+            module.add(SSubU32(dst=sgpr(sFixupEnd), src0=sgpr("StreamKIterEnd"), src1=sgpr(tmpSgpr), comment="calc iterations completed by this WG"))
+
+            module.add(skFixupLabel)
+
+            # Check flag
+            module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr), src=sgpr(sCtaIdx), shiftHex=log2(4), comment="flag offset based on CTA index"))
+            module.add(SLoadB32(dst=sgpr(tmpSgpr+2), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="get flag"))
+
+            module.add(SWaitCnt(lgkmcnt=0, comment="wait for flag load"))
+            if kernel["DebugStreamK"] & 2 == 0:
+                module.add(SCmpEQU32(src0=sgpr(tmpSgpr+2), src1=1, comment="check if ready"))
+                module.add(SCBranchSCC0(labelName=skFixupLabel.getLabelName(), comment="if flag not set, wait and check again"))
+
+            writer.sgprPool.checkIn(tmpSgpr)
+
+            # TODO FIXUP STEP!!!!!!!!!!!!!!!
+            fixupEdge = [False] # Temporary hack to test no edge variant
+            kStr += self.fixupStep(kernel, vectorWidths, elements, fixupEdge, tmpVgpr, tmpCVTVgpr, sCtaIdx, skStoreLabel)
+            
+            if kernel["StreamK"] >= 2:
+                sIterCount = writer.sgprPool.checkOut(1, "iterCount", preventOverflow=0)
+                module.add(SAddU32(dst=sgpr(sIterCount), src0=sgpr("SKItersPerWG"), src1=1, comment="Add extra iter"))
+                module.add(SCmpLtU32(src0=sgpr(sCtaIdx), src1=sgpr("skExtraIters"), comment="Check if next WG had an extra iteration"))
+                module.add(SCSelectB32(dst=sgpr(sIterCount), src0=sgpr(sIterCount), src1=sgpr("SKItersPerWG"), comment="Select correct number of iterations for next WG"))
+                module.add(SAddU32(dst=sgpr(sFixupEnd), src0=sgpr(sFixupEnd), src1=sgpr(sIterCount), comment="next partial tile iteration"))
+                writer.sgprPool.checkIn(sIterCount)
+            module.add(SAddU32(dst=sgpr(sCtaIdx), src0=sgpr(sCtaIdx), src1=1, comment="next partial tile index"))
+            if kernel["StreamK"] == 1:
+                module.add(SAddU32(dst=sgpr(sFixupEnd), src0=sgpr(sFixupEnd), src1=sgpr("SKItersPerWG"), comment="next partial tile iteration"))
+            module.add(SCmpLtU32(src0=sgpr(sFixupEnd), src1=sgpr("ItersPerTile"), comment="done loading partial tiles?"))
+            module.add(SCBranchSCC1(labelName=skFixupLabel.getLabelName(), comment="Branch to continue fixup loop"))
+            
+            writer.sgprPool.checkIn(sFixupEnd)
+            writer.sgprPool.checkIn(sCtaIdx)
+
+        module.add(skStoreLabel)
+
+        return module
+    
+    @abc.abstractmethod
+    def writePartials(self, writer, kernel, skPartialsLabel):
+        pass
+
+    def writePartialsCommon(self, writer, kernel, skPartialsLabel):
+        module = Module("StreamK Common writePartials")
+
+        # No partials for atomic mode
+        if kernel["StreamKAtomic"]:
+            return module
+        
+        module.add(skPartialsLabel.getLabelName())
+        if kernel["DebugStreamK"] & 2 == 0:
+            fixupEdge = [False] # Temporary hack to test no edge variant
+            kStr += self.writePartials(kernel, vectorWidths, elements, fixupEdge, atomic, tmpVgpr, tmpCVTVgpr, isOptNLL, endLabel)
+            
+        return module
+
 class StreamKOff(StreamK):
     kernel = {"StreamK": 0}
 
@@ -289,6 +383,14 @@ class StreamKOff(StreamK):
         else:
             module.add(scalarStaticDivideAndRemainder(qReg=quotient, rReg=None, dReg=dividend, divisor=divisor, tmpSgprRes=tmpSgprInfo, doRemainder=0))
 
+        return module
+    
+    def storeBranches(self, writer, kernel, skPartialsLabel):
+        module = Module("StreamK Off storeBranches")
+        return module
+    
+    def writePartials(self, writer, kernel, skPartialsLabel):
+        module = Module("StreamK Off writePartials")
         return module
 
 class StreamKBasic(StreamK):
@@ -352,7 +454,17 @@ class StreamKBasic(StreamK):
         module = Module("StreamK Basic calculateLoopNumIter")
         module.add(self.calculateLoopNumIterCommon(writer, kernel, loopCounterName, loopIdx, tmpSgprInfo))
         return module
+
+    def storeBranches(self, writer, kernel, skPartialsLabel):
+        module = Module("StreamK Basic storeBranches")
+        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel))
+        return module
     
+    def writePartials(self, writer, kernel, skPartialsLabel):
+        module = Module("StreamK Basic writePartials")
+        module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel))
+        return module
+
 class StreamKTwoTileOriginal(StreamK):
     kernel = {"StreamK": 2}
 
@@ -452,6 +564,17 @@ class StreamKTwoTileOriginal(StreamK):
         module = Module("StreamK TwoTileOriginal calculateLoopNumIter")
         module.add(self.calculateLoopNumIterCommon(writer, kernel, loopCounterName, loopIdx, tmpSgprInfo))
         return module
+        
+    def storeBranches(self, writer, kernel, skPartialsLabel):
+        module = Module("StreamK TwoTileOriginal storeBranches")
+        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel))
+        return module
+
+    def writePartials(self, writer, kernel, skPartialsLabel):
+        module = Module("StreamK TwoTileOriginal writePartials")
+        module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel))
+        return module
+
 
 class StreamKTwoTileDPFirst(StreamK):
     kernel = {"StreamK": 3}
@@ -586,4 +709,14 @@ class StreamKTwoTileDPFirst(StreamK):
     def calculateLoopNumIter(self, writer, kernel, loopCounterName, loopIdx, tmpSgprInfo):
         module = Module("StreamK TwoTileDPFirst calculateLoopNumIter")
         module.add(self.calculateLoopNumIterCommon(writer, kernel, loopCounterName, loopIdx, tmpSgprInfo))
+        return module
+
+    def storeBranches(self, writer, kernel, skPartialsLabel):
+        module = Module("StreamK TwoTileDPFirst storeBranches")
+        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel))
+        return module
+    
+    def writePartials(self, writer, kernel, skPartialsLabel):
+        module = Module("StreamK TwoTileDPFirst writePartials")
+        module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel))
         return module

@@ -5053,7 +5053,7 @@ class KernelWriterAssembly(KernelWriter):
 
             self.cleanupGlobalWrite(kernel)
             module.addSpaceLine()
-            module.add(self.functionEnd(False))
+            module.add(self.functionEnd(kernel, addLabel=False))
             module.add(Label("OptNLL_End", ""))
 
         else:
@@ -8322,6 +8322,11 @@ class KernelWriterAssembly(KernelWriter):
                           biasDims=None):
     if not self.do["PostLoop"]: return Module("GlobalWriteElements (Empty)")
     module = Module("GlobalWriteElements")
+    
+    skPartialsLabel = Label(label=self.labels.getNameInc("SK_Partials"), comment="")
+    skComponent = Component.StreamK.find(self)
+    module.add(skComponent.storeBrances(self, kernel, skPartialsLabel))
+
     module.addComment2("Global Write Elements")
     if self.states.numStoreSgprToLoad or self.states.numStoreSgprToLoad2: # Wait for kernel args
       module.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args."%((self.states.numStoreSgprToLoad+self.states.numStoreSgprToLoad2) * 4)))
@@ -8882,6 +8887,8 @@ class KernelWriterAssembly(KernelWriter):
           module.add(actModules)
         self.sgprPool.checkIn(activationSetPCStruct.sgprOffsetActivation)
         self.sgprPool.checkIn(activationSetPCStruct.sgprOffsetBack)
+
+      module.add(skComponent.writePartials(self, kernel, skPartialsLabel))
 
       # End label
       module.add(endLabel)
@@ -10195,8 +10202,10 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Function End
   ##############################################################################
-  def functionEnd(self, addLabel=True):
+  def functionEnd(self, kernel, addLabel=True):
     imod = Module()
+    loopComponent = Component.PersistentLoop.find(self)
+    imod.add(loopComponent.closePersistentLoop(self, kernel))
     if addLabel:
       imod.add(Label("KernelEnd", ""))
     imod.add(SEndpgm(comment="Kernel End"))

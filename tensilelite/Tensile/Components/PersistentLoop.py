@@ -20,7 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from ..TensileInstructions import Module, Label, VMovB32, vgpr
+from ..TensileInstructions import Module, Label, VMovB32, vgpr, sgpr, SCmpGeU32
 from ..Component import Component
 import abc
 
@@ -43,6 +43,10 @@ class PersistentLoop(Component):
     def recalcLocalReadAddressesAB(self, writer, kernel):
         pass
 
+    @abc.abstractmethod
+    def closePersistentLoop(self, writer, kernel):
+        pass
+
 
 class PersistentLoopOff(PersistentLoop):
     kernel = {"StreamK": 0}
@@ -59,8 +63,13 @@ class PersistentLoopOff(PersistentLoop):
         module = Module("PersistentLoop Off recalcLocalReadAddressesAB")
         return module
     
+    def closePersistentLoop(self, writer, kernel):
+        module = Module("PersistentLoop Off closePersistentLoop")
+        return module
+    
 
 class PersistentLoopOn(PersistentLoop):
+    # Stream-K persistent loop
 
     @classmethod
     def matches(cls, writer, debug=False):
@@ -105,4 +114,12 @@ class PersistentLoopOn(PersistentLoop):
                 writer.oriLraB = writer.vgprPool.checkOut(1, "OriLocalReadAddrB")
                 module.add(VMovB32(dst=vgpr(writer.oriLraB), src=vgpr("LocalReadAddrB"), comment="back up LRA for persistent kernel + wider local read"))
 
+        return module
+    
+    def closePersistentLoop(self, writer, kernel):
+        module = Module("PersistentLoop On closePersistentLoop")
+        # endIter = "StreamKIterEnd" if kernel["StreamK"] == 1 else "TotalIters"
+        endIter = "TotalIters" if kernel["StreamK"] == 2 else "StreamKIterEnd"
+        module.add(SCmpGeU32(src0=sgpr("StreamKIter"), src1=sgpr(endIter), comment="Check if done all StreamK iterations"))
+        module.add(writer.longBranchScc0(Label("PersistentLoopStart", ""), posNeg=-1))
         return module
