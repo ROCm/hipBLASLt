@@ -1954,7 +1954,7 @@ namespace Tensile
             if(src == nullptr)
                 return nullptr;
             void* dstPos = (void*)((uint8_t*)dst + dstOffset);
-            hipMemcpyAsync(dstPos, src, length, hipMemcpyDeviceToDevice, stream);
+            HIP_CHECK_EXC(hipMemcpyAsync(dstPos, src, length, hipMemcpyDeviceToDevice, stream));
             dstOffset += length;
             return dstPos;
         }
