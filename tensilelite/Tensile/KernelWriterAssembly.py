@@ -1950,6 +1950,8 @@ class KernelWriterAssembly(KernelWriter):
       tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
       module.add(scalarUInt32DivideAndRemainder(qReg="WorkGroup0", dReg=wgSerial2, divReg=wgmDivisor, rReg="WorkGroup1", tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"]))
       self.vgprPool.checkIn(tmpVgpr)
+      module.add(SMulI32(dst=sgpr("WorkGroup1"), src0=sgpr("WorkGroup0"), src1=sgpr(wgmDivisor), comment="quotient * non-magic divisor"))
+      module.add(SSubU32(dst=sgpr("WorkGroup1"), src0=sgpr(wgSerial2), src1=sgpr("WorkGroup1"), comment="WorkGroup1=remainder"))
       module.add(SMulI32(dst=sgpr(blockId2), src0=sgpr(blockId2), src1=sgpr("WGM"), comment="blockId * WGM"))
       module.add(SAddU32(dst=sgpr("WorkGroup1"), src0=sgpr("WorkGroup1"), src1=sgpr(blockId2), comment="wg1 += blockId * WGM"))
     module.add(wgmLabel)
