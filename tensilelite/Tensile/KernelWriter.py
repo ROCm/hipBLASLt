@@ -3260,7 +3260,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.c.numVgprValu = 0
 
     self.states.gsu_wg_coalesced = kernel["GlobalSplitUCoalesced"]
-    
+
     # TODO: alignment hack, figure out a better solution
     vgprIdx = ((vgprIdx+1)//2)*2
     # Avoid bank conflict between VgprA and VgprC
@@ -4761,7 +4761,8 @@ for codeObjectFileName in codeObjectFileNames:
     if len(found_phs) == 0:
       return
 
-    for count in reversed(found_phs.keys()):
+    counts = reversed(sorted(found_phs.keys())) if sys.version_info < (3,8) else reversed(found_phs.keys())
+    for count in counts:
       _placeholder = found_phs[count]
       ph_idx = placeholders.index(_placeholder.name)
 
