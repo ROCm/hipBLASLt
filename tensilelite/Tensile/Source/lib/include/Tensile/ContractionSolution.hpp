@@ -40,6 +40,8 @@
 #include <Tensile/Predicates.hpp>
 #include <Tensile/Utils.hpp>
 
+#define TENSILE_COMMON_KERNEL_ARGS_SIZE 12
+
 namespace Tensile
 {
     template <typename TAct>

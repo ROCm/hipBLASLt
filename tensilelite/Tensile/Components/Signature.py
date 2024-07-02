@@ -34,6 +34,9 @@ from dataclasses import dataclass, field
 
 @dataclass
 class UserArgumentsInfo:
+    # Common args
+    commonArgsNum: int  = 0
+    commonArgsSize: int = 0
     # variable related fixed parameters
     alphaMaxSize: int = 16
     alphaMaxRegisterSize: int = field(init=False)
@@ -130,6 +133,15 @@ class SignatureDefault(Signature):
                                     flatWorkGroupSize=(kernel["NumThreads"]),
                                     preloadKernArgs=kernel["PreloadKernArgs"])
 
+       # General Argument info
+        signature.addArg(   "Gemm info", SVK.SIG_VALUE, "u32")
+        signature.addArg("kernel info0", SVK.SIG_VALUE, "u32")
+        signature.addArg("kernel info1", SVK.SIG_VALUE, "u32")
+        # When modify the size, please also update TENSILE_COMMON_KERNEL_ARGS_SIZE in ContractionSolution.hpp
+        userArgumentsInfo.commonArgsNum += 3
+        userArgumentsInfo.commonArgsSize = userArgumentsInfo.commonArgsNum * writer.states.bpr
+
+
         srcValueTypeA = getSrcValueType(kernel, True)
         srcValueTypeB = getSrcValueType(kernel, False)
         dstValueType  = kernel["ProblemType"]["DestDataType"].toNameAbbrev()
@@ -144,11 +156,6 @@ class SignatureDefault(Signature):
         for i in range(0, writer.states.numSgprSizesSum):
             signature.addArg(             "SizesSum%u"%i, SVK.SIG_VALUE,               "u32")
             userArgumentsInfo.gemmArgumentSize += 4
-
-        # General Argument info
-        signature.addArg(   "Gemm info", SVK.SIG_VALUE, "u32")
-        signature.addArg("kernel info0", SVK.SIG_VALUE, "u32")
-        signature.addArg("kernel info1", SVK.SIG_VALUE, "u32")
 
         if globalParameters["DebugKernel"]:
             signature.addArg("AddressDbg", SVK.SIG_GLOBALBUFFER, "struct", "generic")
