@@ -246,10 +246,10 @@ class StreamK(Component):
         return module
     
     @abc.abstractmethod
-    def storeBranches(self, writer, kernel, skPartialsLabel):
+    def storeBranches(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         pass
 
-    def storeBranchesCommon(self, writer, kernel, skPartialsLabel):
+    def storeBranchesCommon(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         module = Module("StreamK Common storeBranches")
 
         # No branches for atomic mode
@@ -320,10 +320,10 @@ class StreamK(Component):
         return module
     
     @abc.abstractmethod
-    def writePartials(self, writer, kernel, skPartialsLabel):
+    def writePartials(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         pass
 
-    def writePartialsCommon(self, writer, kernel, skPartialsLabel):
+    def writePartialsCommon(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         module = Module("StreamK Common writePartials")
 
         # No partials for atomic mode
@@ -332,9 +332,53 @@ class StreamK(Component):
         
         module.add(skPartialsLabel.getLabelName())
         if kernel["DebugStreamK"] & 2 == 0:
-            fixupEdge = [False] # Temporary hack to test no edge variant
-            kStr += self.writePartials(kernel, vectorWidths, elements, fixupEdge, atomic, tmpVgpr, tmpCVTVgpr, isOptNLL, endLabel)
-            
+            return module
+        
+        # fixupEdge = [False] # Temporary hack to test no edge variant
+        edges = [False]
+
+        partialsLabels = {}
+        for edge in edges:
+            partialsLabels[edge] = Label(writer.labels.getNameInc("GW_Partials_E%u" % ( 1 if edge else 0), ""))
+
+        if False in edges and True in edges:
+            with self.allocTmpSgpr(4) as tmpSgprInfo:
+                module.add(writer.checkIsEdge(kernel, tmpSgprInfo, partialsLabels[True], partialsLabels[True]))
+
+        for edge in edges:
+            module.add(partialsLabels[edge])
+            kStr += self.computeWorkspaceSrd(writer, kernel, sgpr("StreamKIdx"))
+            kStr += self.partialsWriteProcedure(kernel, vectorWidths, elements, False, False, edge, atomic, tmpVgpr, tmpCVTVgpr, isOptNLL, endLabel)
+        
+        return module
+
+
+    ##############################################################################
+    # Workspace SRD for FixupStep
+    ##############################################################################
+    def computeWorkspaceSrd(self, writer, kernel, sCtaIdx, tmpSgpr = None):
+        module = Module("StreamK Common computeWorkspaceSrd")
+
+        # Base Address
+        module.add(SMovB32(dst=sgpr("SrdWS+0"), src=sgpr("AddressWS+0"), comment="init SRD base address (lower)"))
+        module.add(SMovB32(dst=sgpr("SrdWS+1"), src=sgpr("AddressWS+1"), comment="init SRD base address (upper) + other fields"))
+        module.add(SMovB32(dst=sgpr("SrdWS+2"), src="BufferOOB", comment=""))
+        module.add(SMovB32(dst=sgpr("SrdWS+3"), src="Srd127_96", comment="Set bits 127_96 in post-loop SRD"))
+
+        tmpLocal = None
+        if tmpSgpr == None:
+            tmpLocal = writer.sgprPool.checkOut(1, "SKMappingTemp", preventOverflow=0)
+            tmpSgpr = tmpLocal
+
+        assert kernel["BufferStore"]
+        module.addSpaceLine()
+        module.add(SMulI32(dst=sgpr(tmpSgpr), src0=hex(kernel["MacroTile0"]*kernel["MacroTile1"]*writer.states.bpeCinternal), src1=sCtaIdx, comment="Offset to correct partials tile"))
+        module.add(SAddU32(dst=sgpr("SrdWS+0"), src0=sgpr("SrdWS+0"), src1=sgpr(tmpSgpr), comment="add lo to SRD"))
+        module.add(SAddCU32(dst=sgpr("SrdWS+1"), src0=sgpr("SrdWS+1"), src1=0, comment="add hi to SRD"))
+
+        if tmpLocal is not None:
+            writer.sgprPool.checkIn(tmpLocal)
+
         return module
 
 class StreamKOff(StreamK):
@@ -385,11 +429,11 @@ class StreamKOff(StreamK):
 
         return module
     
-    def storeBranches(self, writer, kernel, skPartialsLabel):
+    def storeBranches(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         module = Module("StreamK Off storeBranches")
         return module
     
-    def writePartials(self, writer, kernel, skPartialsLabel):
+    def writePartials(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         module = Module("StreamK Off writePartials")
         return module
 
@@ -455,14 +499,14 @@ class StreamKBasic(StreamK):
         module.add(self.calculateLoopNumIterCommon(writer, kernel, loopCounterName, loopIdx, tmpSgprInfo))
         return module
 
-    def storeBranches(self, writer, kernel, skPartialsLabel):
+    def storeBranches(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         module = Module("StreamK Basic storeBranches")
-        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel))
+        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel, vectorWidths, elements))
         return module
     
-    def writePartials(self, writer, kernel, skPartialsLabel):
+    def writePartials(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         module = Module("StreamK Basic writePartials")
-        module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel))
+        module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel, vectorWidths, elements))
         return module
 
 class StreamKTwoTileOriginal(StreamK):
@@ -565,14 +609,14 @@ class StreamKTwoTileOriginal(StreamK):
         module.add(self.calculateLoopNumIterCommon(writer, kernel, loopCounterName, loopIdx, tmpSgprInfo))
         return module
         
-    def storeBranches(self, writer, kernel, skPartialsLabel):
+    def storeBranches(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         module = Module("StreamK TwoTileOriginal storeBranches")
-        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel))
+        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel, vectorWidths, elements))
         return module
 
-    def writePartials(self, writer, kernel, skPartialsLabel):
+    def writePartials(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         module = Module("StreamK TwoTileOriginal writePartials")
-        module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel))
+        module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel, vectorWidths, elements))
         return module
 
 
@@ -711,12 +755,12 @@ class StreamKTwoTileDPFirst(StreamK):
         module.add(self.calculateLoopNumIterCommon(writer, kernel, loopCounterName, loopIdx, tmpSgprInfo))
         return module
 
-    def storeBranches(self, writer, kernel, skPartialsLabel):
+    def storeBranches(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         module = Module("StreamK TwoTileDPFirst storeBranches")
-        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel))
+        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel, vectorWidths, elements))
         return module
     
-    def writePartials(self, writer, kernel, skPartialsLabel):
+    def writePartials(self, writer, kernel, skPartialsLabel, vectorWidths, elements):
         module = Module("StreamK TwoTileDPFirst writePartials")
-        module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel))
+        module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel, vectorWidths, elements))
         return module

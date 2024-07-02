@@ -4641,7 +4641,6 @@ class KernelWriterAssembly(KernelWriter):
         iui = 0
 
         abReg      = self.vgprPool.checkOutAligned(2, 2, "abReg")
-        #sgprShift  = self.getTmpSgpr(3).idx()
         with self.allocTmpSgpr(3) as tmpSgprInfo:
           sgprShift = tmpSgprInfo.idx
           sgpr64bIdx = sgprShift + 1
@@ -8102,8 +8101,6 @@ class KernelWriterAssembly(KernelWriter):
     vectorWidths   = [fullVw, edgeVw]
     vectorWidths_1 = [fullVw, edgeVw_1]
 
-
-
     noGSUBranch = (kernel["GlobalSplitU"] == 0)
     module = Module("notLocalSplitUGlobalWrite")
     module.add(self.globalWriteElements(kernel, tPA, tPB, vectorWidths, vectorWidths_1, elements, elements_1, noGSUBranch=noGSUBranch))
@@ -8185,7 +8182,7 @@ class KernelWriterAssembly(KernelWriter):
 
   ##############################################################################
   # checkIsEdge
-  # tmpSgpr must have at least 6 free SGPR
+  # tmpSgpr must have at least 4 free SGPR
   # isEdgeTarget is the branch target if edges are required
   ##############################################################################
   def checkIsEdge(self, kernel, tmpSgprInfo, isEdgeTargetMT0, isEdgeTargetMT1, isLongBranch=False, placeHolder=None):
@@ -8325,7 +8322,7 @@ class KernelWriterAssembly(KernelWriter):
     
     skPartialsLabel = Label(label=self.labels.getNameInc("SK_Partials"), comment="")
     skComponent = Component.StreamK.find(self)
-    module.add(skComponent.storeBrances(self, kernel, skPartialsLabel))
+    module.add(skComponent.storeBranches(self, kernel, skPartialsLabel, vectorWidths_1, elements_1))
 
     module.addComment2("Global Write Elements")
     if self.states.numStoreSgprToLoad or self.states.numStoreSgprToLoad2: # Wait for kernel args
@@ -8735,7 +8732,7 @@ class KernelWriterAssembly(KernelWriter):
       if kernel["ProblemType"]["DestDataType"].isBFloat16() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
         cvtVgpr = self.vgprPool.checkOut(4)
         cvtVgprStruct = self.BF16CVTVgprStruct(vgprBf16Temp=cvtVgpr, vgprBf16Mask=(cvtVgpr+1), \
-                                                  vgprFp32Nan=(cvtVgpr+2), vgprBf16Inc=(cvtVgpr+3))
+                                               vgprFp32Nan=(cvtVgpr+2), vgprBf16Inc=(cvtVgpr+3))
       elif kernel["ProblemType"]["DestDataType"].isFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
         cvtVgpr = self.vgprPool.checkOut(4)
         cvtVgprStruct = self.FP8CVTVgprStruct(vgprFp8Temp=cvtVgpr, vgprFp8NanInf=(cvtVgpr+1), \
@@ -8888,7 +8885,7 @@ class KernelWriterAssembly(KernelWriter):
         self.sgprPool.checkIn(activationSetPCStruct.sgprOffsetActivation)
         self.sgprPool.checkIn(activationSetPCStruct.sgprOffsetBack)
 
-      module.add(skComponent.writePartials(self, kernel, skPartialsLabel))
+      module.add(skComponent.writePartials(self, kernel, skPartialsLabel, vectorWidths_1, elements_1))
 
       # End label
       module.add(endLabel)
