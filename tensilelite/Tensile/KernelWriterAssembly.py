@@ -1145,8 +1145,6 @@ class KernelWriterAssembly(KernelWriter):
       commonArgs.add(self.argLoader.loadKernArg("GSU", "KernArgAddress", hex(4), dword=1))
       commonArgs.addComment1("Load WGM data")
       commonArgs.add(self.argLoader.loadKernArg("WGM", "KernArgAddress", hex(8), dword=1))
-      self.commonArgNum = 3 # TODO: Need to make this automatically calculated
-      self.loadedCommonArgs = self.commonArgNum * 4
       ########################################
       # kernel args parameters
       load = self.states.numSgprToLoad
@@ -1158,9 +1156,9 @@ class KernelWriterAssembly(KernelWriter):
       if (self.states.kernel["WorkGroupMappingXCC"] > 1):
         tmpSgprNumWorkGroups = self.sgprPool.checkOut(1, preventOverflow=0)
         hbmArgs.addComment1("Grouped Gemm: Load num of WGs")
-        hbmArgs.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(self.loadedCommonArgs+8), dword=1))
+        hbmArgs.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(self.states.userArgsInfo.commonArgsSize+8), dword=1))
       hbmArgs.addComment1("Load address of kernel arguments")
-      hbmArgs.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(self.loadedCommonArgs), dword=2))
+      hbmArgs.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(self.states.userArgsInfo.commonArgsSize), dword=2))
 
       moduleArgs.addModuleAsFlatItems(fastdeepcopy(commonArgs))
       moduleArgs.add(SWaitCnt(0))
@@ -1174,15 +1172,15 @@ class KernelWriterAssembly(KernelWriter):
           moduleArgs.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=2, comment="ArgType == 2 ?"))
           moduleArgs.add(SCBranchSCC0(labelName=extReadEpilogueLabeltmp.getLabelName()))
         moduleArgs.addComment1("Grouped Gemm: Load address of external kernel arguments")
-        moduleArgs.add(self.argLoader.loadKernArg("AddressTD", "KernArgAddress", hex(self.loadedCommonArgs+16), dword=2))
-        moduleArgs.add(self.argLoader.loadKernArg("Synchronizer", "KernArgAddress", hex(self.loadedCommonArgs+8), dword=2))
+        moduleArgs.add(self.argLoader.loadKernArg("AddressTD", "KernArgAddress", hex(self.states.userArgsInfo.commonArgsSize+16), dword=2))
+        moduleArgs.add(self.argLoader.loadKernArg("Synchronizer", "KernArgAddress", hex(self.states.userArgsInfo.commonArgsSize+8), dword=2))
         moduleArgs.add(extReadEpilogueLabeltmp)
 
       moduleArgs.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=(0), comment="Is kernel args"))
       labelHBM = Label("HBMArgs", comment="")
       labelLoadEnd = Label("LoadArgsEnd", comment="")
       moduleArgs.add(SCBranchSCC0(labelName=labelHBM.getLabelName()))
-      moduleArgs.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=hex(self.loadedCommonArgs), comment="Shift common args"))
+      moduleArgs.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=hex(self.states.userArgsInfo.commonArgsSize), comment="Shift common args"))
       moduleArgs.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
       moduleArgs.addModuleAsFlatItems(self.getKernelArgLoadModule(kernel, sgprStart, load, 0))
       if self.states.numSgprPreload > 0:
@@ -1232,12 +1230,12 @@ class KernelWriterAssembly(KernelWriter):
         preloadLabelHBM = Label("Preload_HBMArgs", comment="")
         perloadLabelLoadEnd = Label("Preload_LoadArgsEnd", comment="")
         moduleArgs.add(SCBranchSCC0(labelName=preloadLabelHBM.getLabelName()))
-        moduleArgs.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=hex(self.loadedCommonArgs), comment="Shift common args"))
+        moduleArgs.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=hex(self.states.userArgsInfo.commonArgsSize), comment="Shift common args"))
         moduleArgs.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
         self.argLoader.resetOffset()
-        moduleArgs.addModuleAsFlatItems(self.getKernelArgLoadModule(kernel, sgprStart, load, self.states.numSgprPreload - self.commonArgNum))
-        for i in range(self.commonArgNum, self.states.numSgprPreload):
-          moduleArgs.add(SMovB32(dst=sgpr(sgprStart+i-self.commonArgNum), src=sgpr(preloadSgprStartIdx+i), comment="move preload data to correct sgpr"))
+        moduleArgs.addModuleAsFlatItems(self.getKernelArgLoadModule(kernel, sgprStart, load, self.states.numSgprPreload - self.states.userArgsInfo.commonArgsNum))
+        for i in range(self.states.userArgsInfo.commonArgsNum, self.states.numSgprPreload):
+          moduleArgs.add(SMovB32(dst=sgpr(sgprStart+i-self.states.userArgsInfo.commonArgsNum), src=sgpr(preloadSgprStartIdx+i), comment="move preload data to correct sgpr"))
         moduleArgs.add(SBranch(labelName=perloadLabelLoadEnd.getLabelName()))
         moduleArgs.add(preloadLabelHBM)
         if (self.states.kernel["WorkGroupMappingXCC"] > 1):
