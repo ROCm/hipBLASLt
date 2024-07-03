@@ -28,7 +28,7 @@ set( PREFIX_hipblascommon ${CMAKE_INSTALL_PREFIX} CACHE PATH "Location where hip
 set( hipblascommon_cmake_args -DCMAKE_INSTALL_PREFIX=${PREFIX_hipblascommon} )
 append_cmake_cli_arguments( hipblascommon_cmake_args hipblascommon_cmake_args )
 
-set( hipblascommon_git_repository "git@github.com:ROCm/hipBLAS-common.git" CACHE STRING "URL to download hipblas-common from" )
+set( hipblascommon_git_repository "https://github.com/ROCm/hipBLAS-common.git" CACHE STRING "URL to download hipblas-common from" )
 set( hipblascommon_git_tag "develop" CACHE STRING "git branch" )
 
 ExternalProject_Add(
