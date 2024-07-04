@@ -1146,32 +1146,37 @@ class KernelWriterAssembly(KernelWriter):
       tmpSgpr2 = tmpSgpr1+1
 
       WGMXCC = kernel["WorkGroupMappingXCC"]
-      CU_Count = kernel["CUCount"]
+      CU_Count = kernel["WorkGroupMappingXCCGroup"]
       label_skipWGMXCC = Label(label="skip_WGMXCC", comment="skip WGMXCC if no enough WGs to remap")
       module.addComment0("only remap WGs in the range")
       module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=None, dReg=sgpr(tmpSgprNumWorkGroups), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=0))
       module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=WGMXCC))
       module.add(SCmpGeU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
       module.add(SCBranchSCC1(label_skipWGMXCC.getLabelName()))
-      module.addComment0("temp0 = (wg//%u)*%u"%(CU_Count,CU_Count))
-      module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=None, dReg=sgpr("WorkGroup0"), divisor=CU_Count, tmpSgprRes=tmpSgprRes1, doRemainder=0))
-      module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=CU_Count))
-      module.addComment0("temp1 = (wg%%%u)//%u"%(CU_Count,WGMXCC))
-      module.add(scalarStaticRemainder(qReg=tmpSgpr, rReg=tmpSgpr1, dReg="WorkGroup0", divisor=CU_Count, tmpSgprRes=tmpSgprRes1))
-      module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr1), rReg=None, dReg=sgpr(tmpSgpr1), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=0))
-      module.addComment0("temp0 = temp0 + temp1")
-      module.add(SAddU32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
-      module.addComment0("temp1 = (WGs - (WGs//CU_Count) * CU_Count) if (wg > (WGs//CU_Count) * CU_Count) else CU_Count")
-      module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr1), rReg=None, dReg=sgpr(tmpSgprNumWorkGroups), divisor=CU_Count, tmpSgprRes=tmpSgprRes1, doRemainder=0))
-      module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=CU_Count))
-      module.add(SSubU32(dst=sgpr(tmpSgpr2), src0=sgpr(tmpSgprNumWorkGroups), src1=sgpr(tmpSgpr1)))
-      module.add(SCmpGtU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr1)))
-      module.add(SCSelectB32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr2), src1=CU_Count))
-      module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr1), rReg=None, dReg=sgpr(tmpSgpr1), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=0))
-      module.add(scalarStaticRemainder(qReg=tmpSgpr, rReg=tmpSgpr2, dReg="WorkGroup0", divisor=WGMXCC, tmpSgprRes=tmpSgprRes1))
-      module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgpr2)))
-      module.addComment0("WorkGroup0 = temp0 + temp1")
-      module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
+      if CU_Count == 0:
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=tmpSgpr1, dReg=sgpr("WorkGroup0"), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=1))
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr2), rReg=None, dReg=sgpr(tmpSgprNumWorkGroups), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=0))
+        module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgpr2)))
+        module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
+      else:
+        module.addComment0("temp0 = (wg//CU_Count)*CU_Count")
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=tmpSgpr1, dReg=sgpr("WorkGroup0"), divisor=CU_Count, tmpSgprRes=tmpSgprRes1, doRemainder=1))
+        module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=CU_Count))
+        module.addComment0("temp1 = (wg%CU_Count)//WGMXCC")
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr1), rReg=None, dReg=sgpr(tmpSgpr1), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=0))
+        module.addComment0("temp0 = temp0 + temp1")
+        module.add(SAddU32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
+        module.addComment0("temp1 = (wg%WGMXCC) * ((WGs - (WGs//CU_Count) * CU_Count) if (wg > (WGs//CU_Count) * CU_Count) else CU_Count)//WGMXCC")
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr1), rReg=None, dReg=sgpr(tmpSgprNumWorkGroups), divisor=CU_Count, tmpSgprRes=tmpSgprRes1, doRemainder=0))
+        module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=CU_Count))
+        module.add(SSubU32(dst=sgpr(tmpSgpr2), src0=sgpr(tmpSgprNumWorkGroups), src1=sgpr(tmpSgpr1)))
+        module.add(SCmpGtU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr1)))
+        module.add(SCSelectB32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr2), src1=CU_Count))
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr1), rReg=None, dReg=sgpr(tmpSgpr1), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=0))
+        module.add(scalarStaticRemainder(qReg=tmpSgpr, rReg=tmpSgpr2, dReg="WorkGroup0", divisor=WGMXCC, tmpSgprRes=tmpSgprRes1))
+        module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgpr2)))
+        module.addComment0("WorkGroup0 = temp0 + temp1")
+        module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
       module.add(label_skipWGMXCC)
     return module
 
@@ -1516,8 +1521,6 @@ class KernelWriterAssembly(KernelWriter):
       module.add(moduleArgs)
       module.add(moduleRegInit)
       if (self.states.kernel["WorkGroupMappingXCC"] > 1):
-        # FIXME: Need an API to automatically get num of XCCs
-        kernel["CUCount"] = 304
         module.add(self.wgmXCC(kernel, tmpSgprNumWorkGroups))
         self.sgprPool.checkIn(tmpSgprNumWorkGroups)
         tmpSgprNumWorkGroups = None
