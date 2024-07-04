@@ -1174,8 +1174,8 @@ class KernelWriterAssembly(KernelWriter):
           moduleArgs.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=2, comment="ArgType == 2 ?"))
           moduleArgs.add(SCBranchSCC0(labelName=extReadEpilogueLabeltmp.getLabelName()))
         moduleArgs.addComment1("Grouped Gemm: Load address of external kernel arguments")
-        moduleArgs.add(self.argLoader.loadKernArg("AddressTD", "KernArgAddress", hex(self.loadedCommonArgs+20), dword=2))
-        moduleArgs.add(self.argLoader.loadKernArg("Synchronizer", "KernArgAddress", hex(self.loadedCommonArgs+12), dword=2))
+        moduleArgs.add(self.argLoader.loadKernArg("AddressTD", "KernArgAddress", hex(self.loadedCommonArgs+16), dword=2))
+        moduleArgs.add(self.argLoader.loadKernArg("Synchronizer", "KernArgAddress", hex(self.loadedCommonArgs+8), dword=2))
         moduleArgs.add(extReadEpilogueLabeltmp)
 
       moduleArgs.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=(0), comment="Is kernel args"))
