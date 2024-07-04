@@ -40,7 +40,7 @@
 #include <Tensile/Predicates.hpp>
 #include <Tensile/Utils.hpp>
 
-#define TENSILE_COMMON_KERNEL_ARGS_SIZE 12
+#define TENSILE_COMMON_KERNEL_ARGS_SIZE 16
 
 namespace Tensile
 {
@@ -322,6 +322,7 @@ namespace Tensile
         void kernelArgs(uint32_t                            gemmCount,
                         uint32_t                            argType,
                         KA&                                 args,
+                        uint32_t                            numWorkGroups,
                         const ContractionProblemParameters& param) const;
 
         template <typename KA>
