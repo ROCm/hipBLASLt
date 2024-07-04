@@ -653,7 +653,7 @@ namespace Tensile
         if constexpr(insertKernelArgs)
             if(!internalArgsSupport.useUniversalArgs)
                 kernelArgs<T_Debug, true>(
-                    0, (uint32_t)KERNELARGTYPE::NORMAL, args, problem.getParams());
+                    0, (uint32_t)KERNELARGTYPE::NORMAL, args, 0, problem.getParams());
 
         if(problemType.useScaleAB) //kernel input data
         {
@@ -760,10 +760,16 @@ namespace Tensile
         }
     }
 
+    inline uint32_t getNumWorkGroups(const KernelInvocation& rv)
+    {
+        return rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y / rv.workGroupSize.z;
+    }
+
     template <bool T_Debug, bool Legacy, typename KA>
     void ContractionSolution::kernelArgs(uint32_t                            gemmCount,
                                          uint32_t                            argType,
                                          KA&                                 args,
+                                         uint32_t                            numWorkGroups,
                                          const ContractionProblemParameters& param) const
     {
         if constexpr(!Legacy)
@@ -806,12 +812,20 @@ namespace Tensile
 
         args.template append<uint32_t>("internalArgs", internalArg0);
 
-        int32_t internalArg1 = 0;
-        if(internalArgsSupport.wgm && sizeMapping.customKernelName == "")
+        if constexpr(!Legacy)
         {
-            if(wgm == -1)
-                wgm = 1;
-            args.template append<int32_t>("internalArgs1", wgm);
+            if(sizeMapping.customKernelName == "")
+            {
+                int32_t internalArg1 = 0;
+                if(internalArgsSupport.wgm)
+                {
+                    if(wgm == -1)
+                        wgm = 1;
+                    args.template append<int32_t>("internalArgs1", wgm);
+                }
+
+                args.template append<uint32_t>("numWorkGroups", numWorkGroups);
+            }
         }
     }
 
@@ -866,6 +880,13 @@ namespace Tensile
             = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
         rv.numWorkGroups.y *= gsu;
 
+        if(sizeMapping.customKernelName == "")
+        {
+            rv.numWorkGroups.x *= (rv.numWorkGroups.y * rv.numWorkGroups.z);
+            rv.numWorkGroups.y  = 1;
+            rv.numWorkGroups.z  = 1;
+        }
+
         rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
         rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
         rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
@@ -873,7 +894,9 @@ namespace Tensile
         rv.sharedMemBytes = 0;
 
         if(internalArgsSupport.useUniversalArgs)
-            kernelArgs<T_Debug, false>(1, 0, rv.args, problem.getParams());
+        {
+            kernelArgs<T_Debug, false>(1, 0, rv.args, getNumWorkGroups(rv), problem.getParams());
+        }
         singleCallArgs<T_Debug, true>(problem, inputs, 0, rv.args);
 
         if(sizeMapping.globalAccumulation == 3)
@@ -1029,7 +1052,7 @@ namespace Tensile
                     argType = KERNELARGTYPE::USERARGS;
                 }
                 kernelArgs<T_Debug, false>(
-                    problems.size(), (uint32_t)argType, rv.args, problems[0].getParams());
+                    problems.size(), (uint32_t)argType, rv.args, getNumWorkGroups(rv), problems[0].getParams());
                 // For user input
                 if(argType == KERNELARGTYPE::USERARGS)
                 {
@@ -1039,9 +1062,6 @@ namespace Tensile
                 {
                     rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
                 }
-                rv.args.append<uint32_t>("numWorkGroups",
-                                         rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y
-                                             / rv.workGroupSize.z);
             }
             else
             {
@@ -1053,7 +1073,7 @@ namespace Tensile
                                          rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y
                                              / rv.workGroupSize.z);
                 kernelArgs<T_Debug, true>(
-                    0, (uint32_t)KERNELARGTYPE::NORMAL, rv.args, problems[0].getParams());
+                    0, (uint32_t)KERNELARGTYPE::NORMAL, rv.args, 0, problems[0].getParams());
             }
 
             rv.args.append<void const*>("Synchronizer", (void*)inputs.grouped[0].Synchronizer);
