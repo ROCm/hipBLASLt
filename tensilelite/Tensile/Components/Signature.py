@@ -137,8 +137,9 @@ class SignatureDefault(Signature):
         signature.addArg(   "Gemm info", SVK.SIG_VALUE, "u32")
         signature.addArg("kernel info0", SVK.SIG_VALUE, "u32")
         signature.addArg("kernel info1", SVK.SIG_VALUE, "u32")
+        signature.addArg("numWG",        SVK.SIG_VALUE, "u32")
         # When modify the size, please also update TENSILE_COMMON_KERNEL_ARGS_SIZE in ContractionSolution.hpp
-        userArgumentsInfo.commonArgsNum += 3
+        userArgumentsInfo.commonArgsNum += 4
         userArgumentsInfo.commonArgsSize = userArgumentsInfo.commonArgsNum * writer.states.bpr
 
 
