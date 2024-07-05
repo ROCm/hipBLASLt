@@ -2252,16 +2252,13 @@ class Solution(collections.abc.Mapping):
     if state["VectorWidthB"] == -1:
       if state["EnableMatrixInstruction"]:
         regPerElem = state["ProblemType"]["DataType"].numRegisters()
-        if not state["UnrollMajorLDSB"]:
-          optVW = int(4 // regPerElem)
-          while 1:
-            if state["MIWaveTile"][1] % optVW == 0:
-              state["VectorWidthB"] = optVW
-              break
-            else:
-              optVW //= 2
-        else:
-          state["VectorWidthB"] = 1
+        optVW = int(4 // regPerElem)
+        while 1:
+          if state["MIWaveTile"][1] % optVW == 0:
+            state["VectorWidthB"] = optVW
+            break
+          else:
+            optVW //= 2
         if state["ProblemType"]["Sparse"]:
           state["VectorWidthB"] = 1
       else:
