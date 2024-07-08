@@ -74,6 +74,7 @@ custom.config:
    AssertFree0ElementMultiple: 8
    AssertSummationElementMultiple: 1
    InternalSupportParams:
+      KernArgsVersion: 0
       SupportUserGSU: False
       SupportCustomWGM: False
       SupportCustomStaggerU: False
