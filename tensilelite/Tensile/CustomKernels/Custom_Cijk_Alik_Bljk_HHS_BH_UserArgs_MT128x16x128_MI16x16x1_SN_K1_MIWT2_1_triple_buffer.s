@@ -67,7 +67,7 @@ custom.config:
    1LDSBuffer: 1
    NonTemporalA: 4
    WorkGroupMapping: 1
-   InternalSupportParams: {SupportCustomWGM: True, SupportUserGSU: True, SupportCustomStaggerU: True}
+   InternalSupportParams: {KernArgsVersion: 0, SupportCustomWGM: True, SupportUserGSU: True, SupportCustomStaggerU: True}
    NoReject: 1
 amdhsa.version:
   - 1
@@ -1288,7 +1288,7 @@ s_subb_u32 s[sgprShadowLimitB+1], s[sgprShadowLimitB+1], s75 // limit -= inc)
 s_cmp_eq_u32 s[sgprShadowLimitB+1], 0              // are we within 2^32?
 s_cselect_b32 s[sgprSrdB+2], s[sgprShadowLimitB+0], BufferLimit // Move shadow to real if we are within 2^32
 
-label_skipPGR1_0:                     
+label_skipPGR1_0:
 
 /******************************************/
 /* End setupNewTile                       */
@@ -2082,7 +2082,7 @@ v_mfma_f32_16x16x16_f16 acc[4:7], v[vgprValuB_X6_I0+0+2+0:vgprValuB_X6_I0+0+2+0+
 /* 2nd NLL in even exit : LW VGPR */
 /* ====================================== */
 
-label_evenexit_2ndNLL: 
+label_evenexit_2ndNLL:
 /* iter 0 */
 /*  grEndMfmaIndex:9, lwStartMfmaIndex:9, lwEndMfmaIndex:9  */
 /*  numMfmaForLR:1, syncPlrMfmaIndex:12  */
@@ -2471,7 +2471,7 @@ v_mfma_f32_16x16x16_f16 acc[4:7], v[vgprValuB_X6_I0+0+2+0:vgprValuB_X6_I0+0+2+0+
 /* 2nd NLL */
 /* ================ */
 
-label_oddexit_2ndNLL: 
+label_oddexit_2ndNLL:
 
 
 /* iter 0 */
@@ -2658,7 +2658,7 @@ v_mfma_f32_16x16x16_f16 acc[4:7], v[vgprValuB_X6_I0+0+2+0:vgprValuB_X6_I0+0+2+0+
 /* dataAtIterB=1 numReadsIterB=2 skipReadsIterB=2 readsPerIterB=1 */
 
 
-label_last_NLL: 
+label_last_NLL:
 
 label_toPGR1_0:
 s_cmp_eq_u32 s[sgprGSU], 1                         // GSU == 1 ?
