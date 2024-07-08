@@ -340,9 +340,9 @@ namespace Tensile
                 ("bias-source",               po::value<int>()->default_value(3), "Bias source.")
                 ("use-scaleAB",               po::value<bool>()->default_value(false), "Use scaleAB.")
                 ("use-scaleCD",               po::value<bool>()->default_value(false), "Use scaleCD.")
-                ("use-scaleAlphaVec",         po::value<bool>()->default_value(false), "Use scaleAlphaVec.")
+                ("use-scaleAlphaVec",         po::value<int>()->default_value(0), "Use scaleAlphaVec.")
                 ("bias-type-args",            po::value<std::vector<DataType>>()->default_value(std::vector<DataType>(1, DataType::None), "[]"), "Bias data type args.")
-                ("bias-dim-args",             po::value<std::vector<int>>()->default_value(std::vector<int>(1, 0), "[]"), "Bias dimensions args.")
+                ("factor-dim-args",           po::value<std::vector<int>>()->default_value(std::vector<int>(1, 0), "[]"), "factor dimensions args.")
                 ("icache-flush-args",         po::value<std::vector<bool>>()->default_value(std::vector<bool>(1, false), "[]"), "ICache flush args.")
                 ("use-e",                     po::value<bool>()->default_value(false), "Use E.")
                 ("use-gradient",              po::value<bool>()->default_value(false), "Use gradient.")
@@ -715,8 +715,8 @@ int main(int argc, const char* argv[])
                 size_t enq                  = listeners.numEnqueuesPerSync();
                 size_t maxRotatingBufferNum = max(warmupInvocations, syncs * enq);
 
-                auto inputArr
-                    = dataInit->prepareRotatingGPUOutput(maxRotatingBufferNum, problem, inputs, stream);
+                auto inputArr = dataInit->prepareRotatingGPUOutput(
+                    maxRotatingBufferNum, problem, inputs, stream);
                 static_cast<void>(hipDeviceSynchronize());
                 bool resetInput = false;
                 while(solutionIterator->moreSolutionsInProblem())

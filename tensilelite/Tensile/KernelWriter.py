@@ -237,7 +237,7 @@ class StateValues:
   numSgprAddressGSUSync: int             = 0
   BiasType: int                          = 0
   BiasStride: int                        = 0
-  BiasDim: int                           = 0
+  FactorDim: int                         = 0
 
   numReadsPerIterA: int                  = 0
   numReadsPerIterB: int                  = 0
@@ -1786,7 +1786,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
     module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL))
 
-    if self.states.BiasDim == 3:
+    if self.states.FactorDim == 3:
       self.updateBranchPlaceHolder(module, ["skipOptNLL_placeholder", "skipOptNLL_scc1_placeholder"] , ["OptNLL_End", "OptNLL_End"], ["SCBranchSCC0", "SCBranchSCC1"])
     return module
 
@@ -3860,6 +3860,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.numStoreSgprNames = []
     self.states.numStoreSgprNameSizes = []
     storeSgprLoad = 0
+    enableFactorDim = False;
     if kernel["ProblemType"]["UseScaleAB"]:
       self.states.numSgprAddressScaleA = self.states.rpga if (not self.states.preloadScaleA) else 0
       self.states.numSgprAddressScaleB = self.states.rpga if (not self.states.preloadScaleB) else 0
@@ -3884,6 +3885,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         storeSgprLoad += self.states.rpga
         self.states.numStoreSgprNames.append("AddressScaleAlphaVec")
         self.states.numStoreSgprNameSizes.append(self.states.rpga)
+        self.states.FactorDim = max(self.states.FactorDim, kernel["ProblemType"]["UseScaleAlphaVec"])
+        if self.states.FactorDim == 3:
+          enableFactorDim = True
     if self.states.useBias != DataDirection.NONE:
       # Does not support atomic yet
       self.states.BiasType   = 0
@@ -3898,11 +3902,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.numStoreSgprNameSizes.append(self.states.BiasType)
         self.states.numStoreSgprNames.append("BiasStride")
         self.states.numStoreSgprNameSizes.append(self.states.BiasStride)
-        self.states.BiasDim = kernel["ProblemType"]["UseBias"]
-        if self.states.BiasDim == 3:
-          self.states.numStoreSgprNames.append("BiasDim")
-          self.states.numStoreSgprNameSizes.append(1)
-      storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride + (1 if self.states.BiasDim == 3 else 0)
+        self.states.FactorDim = max(self.states.FactorDim, kernel["ProblemType"]["UseBias"])
+        if self.states.FactorDim == 3:
+            enableFactorDim = True
+      storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride
+
+    if enableFactorDim:
+      self.states.numStoreSgprNames.append("FactorDim")
+      self.states.numStoreSgprNameSizes.append(1)
+      storeSgprLoad += 1
+
     if kernel["ProblemType"]["UseE"]:
       storeSgprLoad += self.states.rpga + self.states.e.numSgprStrides
       self.states.numStoreSgprNames.append("AddressE")

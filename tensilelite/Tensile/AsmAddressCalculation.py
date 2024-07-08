@@ -55,11 +55,13 @@ class AddrCalculation:
         self.newCoord1 = newCoord1 # vgpr that stores newCoord1
 
         self.biasOffset = [0, 0]
+        self.scaleAlphaVecOffset = [0, 0]
         if ss.optSingleColVgpr:
             # optimized stores use the load offset for coordOffset0 calculations.
             self.biasOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal
             self.biasOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal
-            self.scaleAlphaVecOffset   = coordOffset0 * kernelWriter.states.bpeCinternal
+            self.scaleAlphaVecOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal
+            self.scaleAlphaVecOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal
             self.globalOffset  = coordOffset0 * kernelWriter.states.bpeCexternal
             self.globalOffsetE = coordOffset0 * kernelWriter.states.bpeE
             self.globalOffsetInternal = coordOffset0 * kernelWriter.states.bpeCinternal
@@ -67,7 +69,8 @@ class AddrCalculation:
             # else non-opt stores include the coord0 offset into VGPR address calcs
             self.biasOffset[0]   = 0
             self.biasOffset[1]   = 0
-            self.scaleAlphaVecOffset   = 0
+            self.scaleAlphaVecOffset[0]   = 0
+            self.scaleAlphaVecOffset[1]   = 0
             self.globalOffset = 0
             self.globalOffsetE = 0
             self.globalOffsetInternal = 0
@@ -226,7 +229,7 @@ class AddrCalculation:
 
         return module
 
-    def emitScaleToBpe(self, kernel, ss, tmpVgpr, tmpSgpr, singleUpdate, tc, biasDim):
+    def emitScaleToBpe(self, kernel, ss, tmpVgpr, tmpSgpr, singleUpdate, tc, dim):
         """
         Needs 3 temporary VGPRs
         """
@@ -274,8 +277,8 @@ class AddrCalculation:
                     singleColAddrUpdated = ss.singleColDAddrUpdated
                 if not singleColAddrUpdated or not ss.optSrdIncForRow:
                     if tc == 'Bias' and kw.states.useBias == DataDirection.READ:
-                        coordVgpr = self.coord0Vgpr if biasDim == 0 else self.coord1Vgpr
-                        module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%biasDim], src1=sgpr("WorkGroup%u"%biasDim), comment="wgp%u * MT%u"%(biasDim, biasDim)))
+                        coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
+                        module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                         module.add(VSubU32(dst=vgpr(self.addrBiasVgpr), src0=vgpr(coordVgpr), src1=sgpr(tmpSgpr)))
                         module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr), \
                                                 shiftHex=hex(log2(kw.states.bpeCinternal)), \
@@ -288,9 +291,10 @@ class AddrCalculation:
                                              comment="add bias lds offset"))
                         return module
                     if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                        coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
                         module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
                                                  shiftHex=hex(log2(kw.states.bpeCinternal)), \
-                                                 src=vgpr(self.coord0Vgpr), \
+                                                 src=vgpr(coordVgpr), \
                                                 comment="ScaleAlphaVec address scaled by BPE"))
                         return module
                     if tc == 'C':
@@ -312,8 +316,8 @@ class AddrCalculation:
             # Need an address calculation for the first address in each row:
             if d1==0 and vc1==0:
                 if tc == 'Bias' and kw.states.useBias == DataDirection.READ:
-                    coordVgpr = self.coord0Vgpr if biasDim == 0 else self.coord1Vgpr
-                    module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%biasDim], src1=sgpr("WorkGroup%u"%biasDim), comment="wgp%u * MT%u"%(biasDim, biasDim)))
+                    coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
+                    module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                     module.add(VSubU32(dst=vgpr(self.addrBiasVgpr), src0=vgpr(coordVgpr), src1=sgpr(tmpSgpr)))
                     module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr), \
                                             shiftHex=hex(log2(kw.states.bpeCinternal)), \
@@ -326,9 +330,10 @@ class AddrCalculation:
                                            comment="add bias lds offset"))
                     return module
                 if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                    coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
                     module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
                                              shiftHex=hex(log2(kw.states.bpeCinternal)), \
-                                             src=vgpr(self.coord0Vgpr), \
+                                             src=vgpr(coordVgpr), \
                                             comment="ScaleAlphaVec address scaled by BPE"))
                     return module
                 packedIndices = kernel["PackedC0IndicesX"]
@@ -348,8 +353,8 @@ class AddrCalculation:
             # each col has same offset so could create a class to hold column-specific state including
             # the byte address offset for that col and the mask in/out.
             if tc == 'Bias' and kw.states.useBias == DataDirection.READ:
-                coordVgpr = self.coord0Vgpr if biasDim == 0 else self.coord1Vgpr
-                module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%biasDim], src1=sgpr("WorkGroup%u"%biasDim), comment="wgp%u * MT%u"%(biasDim, biasDim)))
+                coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
+                module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                 module.add(VSubU32(dst=vgpr(self.addrBiasVgpr), src0=vgpr(coordVgpr), src1=sgpr(tmpSgpr)))
                 module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr), \
                                         shiftHex=hex(log2(kw.states.bpeCinternal)), \
@@ -362,9 +367,10 @@ class AddrCalculation:
                                        comment="add bias lds offset"))
                 return module
             if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
                 module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
                                          shiftHex=hex(log2(kw.states.bpeCinternal)), \
-                                         src=vgpr(self.coord0Vgpr), \
+                                         src=vgpr(coordVgpr), \
                                         comment="ScaleAlphaVec address scaled by BPE"))
                 return module
             packedIndices = kernel["PackedC0IndicesX"]
@@ -567,7 +573,7 @@ class AddrCalculation:
 
         return module
 
-    def emitLdChange(self, kernel, ss, tc, edge, beta, mask, bufferOOB, singleUpdate, tmpVgpr, tmpSgpr, addrVgpr, BufAddr, biasDim):
+    def emitLdChange(self, kernel, ss, tc, edge, beta, mask, bufferOOB, singleUpdate, tmpVgpr, tmpSgpr, addrVgpr, BufAddr, dim):
         """
         Generate code for final C read/D write address
         """
@@ -575,15 +581,15 @@ class AddrCalculation:
         laneSGPRCount = self.kernelWriter.states.laneSGPRCount
         module = Module("emitLdChange")
         if kernel["BufferStore"]:
-            module.add(self.emitScaleToBpe(kernel, ss, tmpVgpr, tmpSgpr, singleUpdate, tc, biasDim))
+            module.add(self.emitScaleToBpe(kernel, ss, tmpVgpr, tmpSgpr, singleUpdate, tc, dim))
             if edge and (not kernel["StoreRemapVectorWidth"] or (kernel["StoreRemapVectorWidth"] and (beta or kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel"))) and \
                 (tc != 'ScaleAlphaVec'):
                 module.add(VCndMaskB32(dst=vgpr(addrVgpr), src0=vgpr(bufferOOB), src1=vgpr(addrVgpr), \
                                src2=sgpr(mask,laneSGPRCount), comment="LD%s clip if OOB. offset" % tc ))
         else:
             if tc == 'Bias' and kernel["ProblemType"]["UseBias"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-                module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%biasDim], src1=sgpr("WorkGroup%u"%biasDim), comment="wgp%u * MT%u"%(biasDim, biasDim)))
-                coordVgpr = self.coord0Vgpr if biasDim == 0 else self.coord1Vgpr
+                module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
+                coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
                 module.add(VSubU32(dst=vgpr(self.addrBiasVgpr), src0=vgpr(coordVgpr), src1=sgpr(tmpSgpr)))
                 module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr), \
                                         shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
@@ -595,9 +601,10 @@ class AddrCalculation:
                                        src1=vgpr(self.addrBiasVgpr), \
                                        comment="add bias lds offset"))
             if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
                 module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
                                         shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
-                                        src=vgpr(self.coord0Vgpr), \
+                                        src=vgpr(coordVgpr), \
                                         comment="ScaleAlphaVec address scaled by BPE"))
 
             else:

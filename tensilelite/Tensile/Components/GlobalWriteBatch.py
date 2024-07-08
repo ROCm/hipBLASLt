@@ -42,19 +42,19 @@ class GlobalWriteBatchComponent(GlobalWriteComponents):
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
     batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
     tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
-    packdata, parentWriter, biasDim) -> Module:
+    packdata, parentWriter, factorDim) -> Module:
     return GlobalWriteBatchWriter(kernel, tPA, tPB, activation, ss, batchIdx, applyAlpha, \
       beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit, \
       tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
-      packdata, parentWriter, biasDim).emit()
+      packdata, parentWriter, factorDim).emit()
 
 class GlobalWriteBatchWriter:
   def __init__(self, kernel: Solution, tPA, tPB, activation: ActivationModule, ss: StoreState, \
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
     batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
     tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
-      packdata, parentWriter, biasDim):
+      packdata, parentWriter, factorDim):
     self.kernel = kernel
     self.tPA    = tPA
     self.tPB    = tPB
@@ -85,7 +85,7 @@ class GlobalWriteBatchWriter:
     self.packdata     = packdata
     self.parentWriter = parentWriter
     self.storesIssued = 0
-    self.biasDim = biasDim
+    self.factorDim = factorDim
 
     # Internal state for GlobalWriteBatch
     # 0 for None, 1 for WorkGroupReduction = False, 2 for WorkGroupReduction = True
@@ -475,8 +475,8 @@ class GlobalWriteBatchWriter:
     return module
 
   def _prolog(self, module: Module):
-    module.addComment0("optSingleColVgpr=%u optSharedColVgpr=%u optSGPRUsage=%s optSrdIncForRow=%u biasDim=%u" % \
-              (self.ss.optSingleColVgpr, self.ss.optSharedColVgpr, self.ss.optSGPRUsage, self.ss.optSrdIncForRow, self.biasDim))
+    module.addComment0("optSingleColVgpr=%u optSharedColVgpr=%u optSGPRUsage=%s optSrdIncForRow=%u factorDim=%u" % \
+              (self.ss.optSingleColVgpr, self.ss.optSharedColVgpr, self.ss.optSGPRUsage, self.ss.optSrdIncForRow, self.factorDim))
 
     if self.kernel["StoreSyncOpt"]:
       self._storeSyncOpt(module)
@@ -495,9 +495,9 @@ class GlobalWriteBatchWriter:
     module.addComment2(commentStr)
 
     if self.kernel["_GlobalAccumulation"] != "MultipleBufferSingleKernel":
-      self.ss.setupStoreElementsForBatch(self.kernel, self.gwvw, self.batchElements, self.batchElementSgprs, isOptNLL=False, biasDim=self.biasDim)
+      self.ss.setupStoreElementsForBatch(self.kernel, self.gwvw, self.batchElements, self.batchElementSgprs, isOptNLL=False, factorDim=self.factorDim)
     else:
-      self.ss.setupStoreElementsForBatch(self.kernel, self.gwvw, self.batchElements, self.batchElementSgprs, isOptNLL=True, biasDim=self.biasDim)
+      self.ss.setupStoreElementsForBatch(self.kernel, self.gwvw, self.batchElements, self.batchElementSgprs, isOptNLL=True, factorDim=self.factorDim)
 
     self.localLoadsBiasIssued = 0
     self.storesIssued    = 0
@@ -552,8 +552,8 @@ class GlobalWriteBatchWriter:
       module.add(VMovB32(dst=vgpr(bufferOOB), src="BufferOOB"))
     else:
       bufferOOB = None
-    #when biasDim = 1 the bias's gwvw is alwasy be 1.
-    bias_gwvw = 1 if self.biasDim else self.ss.cfg.gwvw
+    #when factorDim = 1 the bias's gwvw is alwasy be 1.
+    factor_gwvw = 1 if self.factorDim else self.ss.cfg.gwvw
     for elementIdx, element in enumerate(self.batchElements):
       addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
       addrCVgpr    = addrCalc.addrCVgpr
@@ -604,7 +604,7 @@ class GlobalWriteBatchWriter:
       self.eLoadIssued.append(len(loadedDataE) * ceil(self.kernel["ProblemType"]["DataTypeE"].numBytes() * self.ss.cfg.gwvw / 16))
 
       if self.parentWriter.states.useBias == DataDirection.READ:
-        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias, self.biasDim))
+        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias, self.factorDim))
         if dataBias not in loadedDataBias:
           if self.kernel["GroupLoadStore"]:
             # Group bias load with C input to
@@ -612,27 +612,27 @@ class GlobalWriteBatchWriter:
               loadInputCode.add(SWaitCnt(lgkmcnt=0, comment="Wait for Bias LDS write"))
               loadInputCode.add(SBarrier("Bias LDS write barrier"))
               self.biasLocalBarrierInit = True
-            loadInputCode.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, bias_gwvw, addrCalc, dataBias, self.biasDim, True))
+            loadInputCode.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, factor_gwvw, addrCalc, dataBias, self.factorDim, True))
           else:
             if ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")) and (not self.biasLocalBarrierInit):
               module.add(SWaitCnt(lgkmcnt=0, comment="Wait for Bias LDS write"))
               module.add(SBarrier("Bias LDS write barrier"))
               self.biasLocalBarrierInit = True
-            module.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, bias_gwvw, addrCalc, dataBias, self.biasDim, True))
-          loadedDataBias[dataBias] = ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * bias_gwvw / 16)
-          self.localLoadsBiasIssued += ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * bias_gwvw / 16)
-          if self.ss.cfg.gwvw != bias_gwvw:
+            module.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, factor_gwvw, addrCalc, dataBias, self.factorDim, True))
+          loadedDataBias[dataBias] = ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16)
+          self.localLoadsBiasIssued += ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16)
+          if self.ss.cfg.gwvw != factor_gwvw:
             remain_bias_load = self.ss.cfg.gwvw - 1
-            bpl = self.kernel["ProblemType"]["ComputeDataType"].numBytes() * bias_gwvw
+            bpl = self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw
             bpr = ceil(bpl / self.parentWriter.states.bpr)
             #For below ds_read instruction do not add bias issued , because of all ds_load instructions need to be completed at the same time in this batch.
             for r in range(remain_bias_load):
-              module.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, bias_gwvw, addrCalc, dataBias + (r + 1) * bpr, self.biasDim, True))
+              module.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, factor_gwvw, addrCalc, dataBias + (r + 1) * bpr, self.factorDim, True))
 
-      self.biasLoadIssued.append(len(loadedDataBias) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * bias_gwvw / 16))
+      self.biasLoadIssued.append(len(loadedDataBias) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16))
 
       if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'ScaleAlphaVec', self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrScaleAlphaVecVgpr, self.addrScaleAlphaVec, 0))
+        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'ScaleAlphaVec', self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrScaleAlphaVecVgpr, self.addrScaleAlphaVec,  self.factorDim))
         if dataScaleAlphaVec not in loadedDataScaleAlphaVec:
           # Shift right several vgprs for cvt ops if needed
           numVgprs = int(ceil(self.kernel["ProblemType"]["ComputeDataType"].numRegisters() * self.ss.cfg.gwvw))
@@ -640,17 +640,26 @@ class GlobalWriteBatchWriter:
           gprShiftScaleAlphaVec = dataScaleAlphaVec + (self.ss.cfg.gwvw * reg - numVgprs)
           if self.kernel["GroupLoadStore"]:
             # Group scaleAlphaVec load with C input to
-            loadInputCode.add(self.parentWriter.addScaleAlphaVecLoad(self.kernel, self.ss, addrCalc, gprShiftScaleAlphaVec))
+            loadInputCode.add(self.parentWriter.addScaleAlphaVecLoad(self.kernel, self.ss, addrCalc, gprShiftScaleAlphaVec, factor_gwvw, self.factorDim))
           else:
-            module.add(self.parentWriter.addScaleAlphaVecLoad(self.kernel, self.ss, addrCalc, gprShiftScaleAlphaVec))
-          loadedDataScaleAlphaVec[dataScaleAlphaVec] = ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.ss.cfg.gwvw / 16)
-          self.loadsScaleAlphaVecIssued += ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.ss.cfg.gwvw / 16)
-      self.scaleAlphaVecLoadIssued.append(len(loadedDataScaleAlphaVec) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.ss.cfg.gwvw / 16))
+            module.add(self.parentWriter.addScaleAlphaVecLoad(self.kernel, self.ss, addrCalc, gprShiftScaleAlphaVec, factor_gwvw, self.factorDim))
+          loadedDataScaleAlphaVec[dataScaleAlphaVec] = ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16)
+          self.loadsScaleAlphaVecIssued += ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16)
+
+          if self.ss.cfg.gwvw != factor_gwvw:
+            remain_alphavec_load = self.ss.cfg.gwvw - 1
+            bpl = self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw
+            bpr = ceil(bpl / self.parentWriter.states.bpr)
+            #For below ds_read instruction do not add bias issued , because of all ds_load instructions need to be completed at the same time in this batch.
+            for r in range(remain_alphavec_load):
+              module.add(self.parentWriter.addScaleAlphaVecLoad(self.kernel, self.ss, addrCalc, gprShiftScaleAlphaVec  + (r + 1) * bpr, factor_gwvw, self.factorDim))
+
+      self.scaleAlphaVecLoadIssued.append(len(loadedDataScaleAlphaVec) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16))
 
       if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1):
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'E', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrEVgpr, self.addrE, 0))
       if self.storeBiasD == 1:
-        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias, self.biasDim))
+        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias, self.factorDim))
       module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'D', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrDVgpr, self.addrD, 0))
       if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'TD', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrCalc.addrGSUSyncVgprs, self.addrD, 0))
