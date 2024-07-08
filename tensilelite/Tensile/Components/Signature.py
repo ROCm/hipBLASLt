@@ -267,6 +267,7 @@ class SignatureDefault(Signature):
         writer.states.userArgsInfo = userArgumentsInfo
 
         self.addOptConfigComment(signature,
+                                version=kernel["InternalSupportParams"]["KernArgsVersion"],
                                 tt=[kernel["ThreadTile0"], kernel["ThreadTile1"]],
                                 sg=[kernel["SubGroup0"], kernel["SubGroup1"]],
                                 vwA=kernel["VectorWidthA"],
@@ -279,8 +280,9 @@ class SignatureDefault(Signature):
 
         return signature
 
-    def addOptConfigComment(self, signature: SignatureBase, tt, sg, vwA, vwB, glvwA, glvwB, d2lA, d2lB, useSgprForGRO):
+    def addOptConfigComment(self, signature: SignatureBase, version, tt, sg, vwA, vwB, glvwA, glvwB, d2lA, d2lB, useSgprForGRO):
         signature.addDescriptionTopic("Optimizations and Config:")
+        signature.addDescriptionBlock("Version: %s" % version )
         signature.addDescriptionBlock("ThreadTile= %u x %u" % (tt[0], tt[1]) )
         signature.addDescriptionBlock("SubGroup= %u x %u" % (sg[0], sg[1]) )
         signature.addDescriptionBlock("VectorWidthA=%u" % vwA )
