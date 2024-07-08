@@ -444,7 +444,7 @@ try
     {
         int* sync = ((int*)((rocblaslt_handle)handle)->Synchronizer);
         if(roc_matmul_desc->isScaleAmaxDivisorA)
-            hipblasltExtFastValueDevidedByAMax(tmp_matA->type, HIP_R_32F, roc_matmul_desc->scaleA, A, workspace, sync, tmp_matA->m, tmp_matA->n, roc_matmul_desc->amaxDividendA, stream);
+            hipblasltExtFastValueDividedByAMaxWithRcp(tmp_matA->type, HIP_R_32F, roc_matmul_desc->scaleA, nullptr, A, workspace, sync, tmp_matA->m, tmp_matA->n, roc_matmul_desc->amaxDividendA, stream);
         else
             hipblasltExtFastAMax(tmp_matA->type, HIP_R_32F, roc_matmul_desc->scaleA, A, workspace, ((rocblaslt_handle)handle)->Synchronizer, tmp_matA->m, tmp_matA->n, stream);
     }
@@ -465,7 +465,7 @@ try
     {
         int* sync = ((int*)((rocblaslt_handle)handle)->Synchronizer);
         if(roc_matmul_desc->isScaleAmaxDivisorB)
-            hipblasltExtFastValueDevidedByAMax(tmp_matB->type, HIP_R_32F, roc_matmul_desc->scaleB, B, workspace, sync, tmp_matB->m, tmp_matB->n, roc_matmul_desc->amaxDividendB, stream);
+            hipblasltExtFastValueDividedByAMaxWithRcp(tmp_matB->type, HIP_R_32F, roc_matmul_desc->scaleB, nullptr, B, workspace, sync, tmp_matB->m, tmp_matB->n, roc_matmul_desc->amaxDividendB, stream);
         else
             hipblasltExtFastAMax(tmp_matB->type, HIP_R_32F, roc_matmul_desc->scaleB, B, workspace, sync, tmp_matB->m, tmp_matB->n, stream);
     }
