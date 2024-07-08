@@ -224,7 +224,7 @@ class ProblemType:
         if 'UseScaleCD' in d:
             rv.useScaleCD = d['UseScaleCD']
 
-        rv.useScaleAlphaVec = False
+        rv.useScaleAlphaVec = 0
         if 'UseScaleAlphaVec' in d:
             rv.useScaleAlphaVec = d['UseScaleAlphaVec']
 

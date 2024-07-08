@@ -766,13 +766,15 @@ namespace Tensile
                                          && sizeof(typename Inputs::BType)
                                                 > sizeof(typename Inputs::ComputeInputType))
                             {
-                                if(std::is_same<Float8BFloat8, typename Inputs::ComputeInputType>::value)
+                                if(std::is_same<Float8BFloat8,
+                                                typename Inputs::ComputeInputType>::value)
                                 {
                                     auto aValCast = static_cast<Tensile::Float8>(aVal);
                                     auto bValCast = static_cast<Tensile::BFloat8>(bVal);
                                     value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                                 }
-                                else if(std::is_same<BFloat8Float8, typename Inputs::ComputeInputType>::value)
+                                else if(std::is_same<BFloat8Float8,
+                                                     typename Inputs::ComputeInputType>::value)
                                 {
                                     auto aValCast = static_cast<Tensile::BFloat8>(aVal);
                                     auto bValCast = static_cast<Tensile::Float8>(bVal);
@@ -786,16 +788,20 @@ namespace Tensile
                                         Accumulator scaleA = GetValue<Accumulator>(
                                             problem.alphaType(), inputs.scaleA, 0, aConjugate);
                                         auto tmp = multiply<Accumulator>(aVal, scaleA);
-                                        aValCast = static_cast<typename Inputs::ComputeInputType>(tmp);
+                                        aValCast
+                                            = static_cast<typename Inputs::ComputeInputType>(tmp);
                                         Accumulator scaleB = GetValue<Accumulator>(
                                             problem.alphaType(), inputs.scaleB, 0, aConjugate);
-                                        tmp      = multiply<Accumulator>(bVal, scaleB);
-                                        bValCast = static_cast<typename Inputs::ComputeInputType>(tmp);
+                                        tmp = multiply<Accumulator>(bVal, scaleB);
+                                        bValCast
+                                            = static_cast<typename Inputs::ComputeInputType>(tmp);
                                     }
                                     else
                                     {
-                                        aValCast = static_cast<typename Inputs::ComputeInputType>(aVal);
-                                        bValCast = static_cast<typename Inputs::ComputeInputType>(bVal);
+                                        aValCast
+                                            = static_cast<typename Inputs::ComputeInputType>(aVal);
+                                        bValCast
+                                            = static_cast<typename Inputs::ComputeInputType>(bVal);
                                     }
                                     value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                                 }
@@ -857,11 +863,11 @@ namespace Tensile
                     Accumulator scaleB
                         = GetValue<Accumulator>(problem.alphaType(), inputs.scaleB, 0, aConjugate);
                     if constexpr(sizeof(typename Inputs::AType)
-                                              <= sizeof(typename Inputs::ComputeInputType))
+                                 <= sizeof(typename Inputs::ComputeInputType))
                         alpha *= scaleA;
 
                     if constexpr(sizeof(typename Inputs::BType)
-                                              <= sizeof(typename Inputs::ComputeInputType))
+                                 <= sizeof(typename Inputs::ComputeInputType))
                         alpha *= scaleB;
                 }
 
@@ -869,7 +875,11 @@ namespace Tensile
 
                 if(problem.useScaleAlphaVec())
                 {
-                    int         pos           = int(dNum % problem.d().sizes()[0]);
+                    int pos = 0;
+                    if(problem.getParams().factorDim())
+                        pos = int(int(dNum / problem.d().sizes()[0]) % problem.d().sizes()[1]);
+                    else
+                        pos = int(dNum % problem.d().sizes()[0]);
                     Accumulator scaleAlphaVec = GetValue<Accumulator>(
                         problem.alphaType(), inputs.scaleAlphaVec, pos, aConjugate);
                     resultD *= scaleAlphaVec;
@@ -893,8 +903,9 @@ namespace Tensile
                 {
                     auto biasIndex = problem.bias().index(biasCoord);
                     int  pos       = 0;
-                    if(problem.getParams().biasDim())
-                        pos = int(dNum / problem.d().sizes()[0]) + biasIndex;
+                    if(problem.getParams().factorDim())
+                        pos = int(int(dNum / problem.d().sizes()[0]) % problem.d().sizes()[1])
+                              + biasIndex;
                     else
                         pos = int(dNum % problem.d().sizes()[0]) + biasIndex;
                     Accumulator bias = GetValue<Accumulator>(
