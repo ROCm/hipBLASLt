@@ -69,7 +69,7 @@ custom.config:
    AssertFree0ElementMultiple: 2
    GlobalSplitU: 2
    GlobalSplitUAlgorithm: MultipleBuffer
-   InternalSupportParams: {SupportCustomWGM: True, SupportUserGSU: True, SupportCustomStaggerU: True, UseUniversalArgs: False}
+   InternalSupportParams: {KernArgsVersion: 0, SupportCustomWGM: True, SupportUserGSU: True, SupportCustomStaggerU: True, UseUniversalArgs: False}
    PreloadKernArgs: 0
    NoReject: 1
 amdhsa.version:
