@@ -1166,7 +1166,7 @@ defaultProblemType = {
     "BiasSrc":                  "D",              # This parameter is used in gradient + bias. Support A, B, D.
     "UseScaleAB":               False,            # =True use scaleA, scaleB
     "UseScaleCD":               False,            # =True use scaleC, scaleD
-    "UseScaleAlphaVec":         False,            # =True use scaleAlpha vector
+    "UseScaleAlphaVec":         0,                # =1 support alpha vector on M direction, =2 support bias vector on N direction, =3 support alpha vector on both M,N direction
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16
     "SilentHighPrecisionAccumulate": False,       # Keep kernel names the same for HPA mode.  Useful for testing.
 
