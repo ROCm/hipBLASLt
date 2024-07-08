@@ -704,8 +704,9 @@ class _SignatureKernelDescriptor(Item):
         return ostream
 
 class SignatureCodeMeta(Item):
-    def __init__(self, name, groupSegSize, flatWgSize, codeObjectVersion, totalVgprs = 0, totalSgprs=0):
+    def __init__(self, name, kernArgsVersion, groupSegSize, flatWgSize, codeObjectVersion, totalVgprs = 0, totalSgprs=0):
         super().__init__(name)
+        self.kernArgsVersion = kernArgsVersion
         self.groupSegSize = groupSegSize
         self.flatWgSize = flatWgSize
         self.codeObjectVersion = codeObjectVersion
@@ -722,6 +723,9 @@ class SignatureCodeMeta(Item):
         kStr = ""
         kStr += ".amdgpu_metadata\n"
         kStr += "---\n"
+        kStr += "custom.config:\n"
+        kStr += "  InternalSupportParams:\n"
+        kStr += "    KernArgsVersion: %d\n"%self.kernArgsVersion
         kStr += "amdhsa.version:\n"
         kStr += "  - 1\n"
         if self.codeObjectVersion == 4:
@@ -765,7 +769,7 @@ class SignatureCodeMeta(Item):
         return ostream
 
 class SignatureBase(Item):
-    def __init__(self, kernelName, codeObjectVersion, groupSegmentSize, sgprWorkGroup, \
+    def __init__(self, kernelName, kernArgsVersion, codeObjectVersion, groupSegmentSize, sgprWorkGroup, \
         vgprWorkItem, flatWorkGroupSize, totalVgprs: int=0, totalAgprs: int=0, \
         totalSgprs: int=0, preloadKernArgs: bool=False) -> None:
         super().__init__(kernelName)
@@ -780,6 +784,7 @@ class SignatureBase(Item):
                                                                 vgprWorkItem=vgprWorkItem,
                                                                 preloadKernArgs=preloadKernArgs)
         self.codeMeta = SignatureCodeMeta(name=kernelName,
+                                                kernArgsVersion=kernArgsVersion,
                                                 groupSegSize=groupSegmentSize,
                                                 flatWgSize=flatWorkGroupSize,
                                                 codeObjectVersion=codeObjectVersion,
