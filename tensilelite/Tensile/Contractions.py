@@ -565,14 +565,16 @@ class SizeMapping:
             setattr(self, key, value)
 
 class InternalArgsSupport:
-    StateKeys = ['gsu',
+    StateKeys = ['version',
+                 'gsu',
                  'wgm',
                  'staggerU',
                  'useUniversalArgs']
 
     @classmethod
     def FromOriginalState(cls, d):
-        return cls(gsu = d['InternalSupportParams']['SupportUserGSU'],
+        return cls(version = d['InternalSupportParams']['KernArgsVersion'],
+                   gsu = d['InternalSupportParams']['SupportUserGSU'],
                    wgm = d['InternalSupportParams']['SupportCustomWGM'],
                    staggerU = d['InternalSupportParams']['SupportCustomStaggerU'],
                    useUniversalArgs = d['InternalSupportParams']['UseUniversalArgs'])
