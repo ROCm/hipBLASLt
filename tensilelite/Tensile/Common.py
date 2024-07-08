@@ -314,6 +314,7 @@ internalParameters = {
 
 # These parameters are used in ContractionSolutions for user arguments support.
 defaultInternalSupportParams = {
+  "KernArgsVersion": 1,
   # Information about user input internal kernel argument support
   # Change this to False if the CustomKernel does not support.
   "SupportUserGSU": True,

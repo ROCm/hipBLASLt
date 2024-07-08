@@ -786,8 +786,7 @@ namespace Tensile
         const uint32_t mask16       = 0xFFFF;
         const uint32_t mask8        = 0xFF;
         uint32_t       internalArg0 = 0;
-        // FIXME: Temporarily hack, too many custom kernels with different versions
-        if(internalArgsSupport.wgm && sizeMapping.customKernelName != "")
+        if(internalArgsSupport.wgm && internalArgsSupport.version == 0)
         {
             if(wgm > 255)
                 wgm = 255;
@@ -812,20 +811,17 @@ namespace Tensile
 
         args.template append<uint32_t>("internalArgs", internalArg0);
 
-        if constexpr(!Legacy)
+        if(internalArgsSupport.version == 1)
         {
-            if(sizeMapping.customKernelName == "")
+            int32_t internalArg1 = 0;
+            if(internalArgsSupport.wgm)
             {
-                int32_t internalArg1 = 0;
-                if(internalArgsSupport.wgm)
-                {
-                    if(wgm == -1)
-                        wgm = 1;
-                    args.template append<int32_t>("internalArgs1", wgm);
-                }
-
-                args.template append<uint32_t>("numWorkGroups", numWorkGroups);
+                if(wgm == -1)
+                    wgm = 1;
+                args.template append<int32_t>("internalArgs1", wgm);
             }
+
+            args.template append<uint32_t>("numWorkGroups", numWorkGroups);
         }
     }
 
@@ -880,7 +876,7 @@ namespace Tensile
             = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
         rv.numWorkGroups.y *= gsu;
 
-        if(sizeMapping.customKernelName == "")
+        if(internalArgsSupport.version == 1)
         {
             rv.numWorkGroups.x *= (rv.numWorkGroups.y * rv.numWorkGroups.z);
             rv.numWorkGroups.y  = 1;

@@ -67,8 +67,11 @@ def readCustomKernelConfig(name, directory=globalParameters["CustomKernelDirecto
 def getCustomKernelConfig(kernelName, internalSupportParams, directory=globalParameters["CustomKernelDirectory"]):
     kernelConfig = readCustomKernelConfig(kernelName, directory)
     if "InternalSupportParams" not in kernelConfig:
-        kernelConfig["InternalSupportParams"] = internalSupportParams
+        raise RuntimeError("Custom kernel %s config must have KernArgsVersion"%kernelName)
     else:
+        # CustomKernelConfig must have signature version
+        if "KernArgsVersion" not in kernelConfig["InternalSupportParams"]:
+            raise RuntimeError("Custom kernel %s config must have KernArgsVersion"%kernelName)
         for key in internalSupportParams:
             if key not in kernelConfig["InternalSupportParams"]:
                 kernelConfig["InternalSupportParams"][key] = internalSupportParams[key]
