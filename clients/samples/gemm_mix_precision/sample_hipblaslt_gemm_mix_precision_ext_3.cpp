@@ -207,12 +207,8 @@ void GemmExtWithAmaxScaleAB(int64_t    m,
     CHECK_HIP_ERROR(hipMemcpyAsync(d_b, b, n * k * batch_count * sizeof(InTypeB), hipMemcpyHostToDevice, stream));
     CHECK_HIP_ERROR(hipMemcpyAsync(d_c, c, m * n * batch_count * sizeof(OutType), hipMemcpyHostToDevice, stream));
 
-    // AMax/240
-    alpha = alpha / cvtMax;
-    CHECK_HIPBLASLT_ERROR(hipblasltExtFastAMax(HIP_R_16F, HIP_R_32F, d_scaleA, d_b, d_workspace, d_sync, m, n, stream));
-
-    // 240/AMax
-    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMax(HIP_R_16F, HIP_R_32F, d_scaleB, d_b, d_workspace, d_sync, m, n, cvtMax, stream));
+    // scale B is 240/AMax  and scaleA will be AMax/240
+    CHECK_HIPBLASLT_ERROR(hipblasltExtFastValueDevidedByAMaxWithRcp(HIP_R_16F, HIP_R_32F, d_scaleB, d_scaleA, d_b, d_workspace, d_sync, m, n, cvtMax, stream));
 
     // hipblaslt setProblem API
     hipblaslt_ext::Gemm gemm(handle,
