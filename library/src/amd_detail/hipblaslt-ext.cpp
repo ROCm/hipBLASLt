@@ -302,7 +302,7 @@ namespace hipblaslt_ext
             {
                 if(isScaleAmaxDivisor)
                 {
-                    hipblasltExtFastValueDevidedByAMax(type, HIP_R_32F, scale, buf, workspace, sync, m, n, amaxDividend, stream);
+                    hipblasltExtFastValueDividedByAMaxWithRcp(type, HIP_R_32F, scale, nullptr, buf, workspace, sync, m, n, amaxDividend, stream);
                 }
                 else
                 {
@@ -329,7 +329,7 @@ namespace hipblaslt_ext
             {
                 if(isScaleAmaxDivisor)
                 {
-                    hipblasltExtFastValueDevidedByAMax(type, HIP_R_32F, scale, buf, workspace, sync, m, n, amaxDividend, stream);
+                    hipblasltExtFastValueDividedByAMaxWithRcp(type, HIP_R_32F, scale, nullptr, buf, workspace, sync, m, n, amaxDividend, stream);
                 }
                 else
                 {

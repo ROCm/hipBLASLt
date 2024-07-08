@@ -234,6 +234,9 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastAMax(const hipDataType datatype
  *  @param[out]
  *  output Amax tensor buffer. can't be nullptr.
  *
+ *  @param[out]
+ *  outputRCP Amax Rcp tensor buffer. (nullptr means don't wanna get this value)
+ *
  *  @param[in]
  *  input 2-D tensor buffer. can't be nullptr.
  *
@@ -260,16 +263,17 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastAMax(const hipDataType datatype
  *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m or n is 0, or input or output is nullptr.
  *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p datatype is not (HIP_R_32F or HIP_R_16F).
  */
-HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastValueDevidedByAMax(const hipDataType datatype,
-                                                                    const hipDataType outDatatype,
-                                                                    void*             output,
-                                                                    const void*       input,
-                                                                    void*             workSpace,
-                                                                    void*             sync,
-                                                                    uint32_t          m,
-                                                                    uint32_t          n,
-                                                                    float             div,
-                                                                    hipStream_t       stream);
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastValueDividedByAMaxWithRcp(const hipDataType datatype,
+                                                                           const hipDataType outDatatype,
+                                                                           void*             output,
+                                                                           void*             outputRCP,
+                                                                           const void*       input,
+                                                                           void*             workSpace,
+                                                                           void*             sync,
+                                                                           uint32_t          m,
+                                                                           uint32_t          n,
+                                                                           float             div,
+                                                                           hipStream_t       stream);
 
 /*! \ingroup library_module
  *  \brief Perform absmax and scaling on given 2-D tensor. Generate one absmax value and scaled 2-D tensor output.

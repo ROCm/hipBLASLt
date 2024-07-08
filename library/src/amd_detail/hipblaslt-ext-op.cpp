@@ -100,6 +100,7 @@ hipblasStatus_t hipblasltExtLayerNorm(hipDataType datatype,
 hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
                                  const hipDataType outDatatype,
                                  void*             output,
+                                 void*             outputRCP,
                                  const void*       input,
                                  void*             workSpace,
                                  void*             sync,
@@ -133,7 +134,7 @@ hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
                                  hipStream_t       stream)
 {
     return hipblasltAMaxRun(
-        datatype, outDatatype, output, input, nullptr, nullptr, m, n, 0, 0, stream);
+        datatype, outDatatype, output, nullptr, input, nullptr, nullptr, m, n, 0, 0, stream);
 }
 
 hipblasStatus_t hipblasltExtFastAMax(const hipDataType datatype,
@@ -147,22 +148,23 @@ hipblasStatus_t hipblasltExtFastAMax(const hipDataType datatype,
                                      hipStream_t       stream)
 {
     return hipblasltAMaxRun(
-        datatype, outDatatype, output, input, workSpace, sync, m, n, 0, 0, stream);
+        datatype, outDatatype, output, nullptr, input, workSpace, sync, m, n, 0, 0, stream);
 }
 
-hipblasStatus_t hipblasltExtFastValueDevidedByAMax(const hipDataType datatype,
-                                                   const hipDataType outDatatype,
-                                                   void*             output,
-                                                   const void*       input,
-                                                   void*             workSpace,
-                                                   void*             sync,
-                                                   uint32_t          m,
-                                                   uint32_t          n,
-                                                   float             div,
-                                                   hipStream_t       stream)
+hipblasStatus_t hipblasltExtFastValueDividedByAMaxWithRcp(const hipDataType datatype,
+                                                          const hipDataType outDatatype,
+                                                          void*             output,
+                                                          void*             outputRCP,
+                                                          const void*       input,
+                                                          void*             workSpace,
+                                                          void*             sync,
+                                                          uint32_t          m,
+                                                          uint32_t          n,
+                                                          float             div,
+                                                          hipStream_t       stream)
 {
     return hipblasltAMaxRun(
-        datatype, outDatatype, output, input, workSpace, sync, m, n, 1, div, stream);
+        datatype, outDatatype, output, outputRCP, input, workSpace, sync, m, n, 1, div, stream);
 }
 
 hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType datatype,
@@ -490,6 +492,7 @@ hipblasStatus_t hipblasltLayerNormRun(hipDataType datatype,
 hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
                                  const hipDataType outDatatype,
                                  void*             output,
+                                 void*             outputRCP,
                                  const void*       input,
                                  void*             workSpace,
                                  void*             sync,
@@ -559,8 +562,9 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     invocation.numWorkItems.z  = 1;
     invocation.sharedMemBytes  = 32 * sizeof(float);
     invocation.args            = Tensile::KernelArguments(false);
-    invocation.args.reserve(64, 9);
+    invocation.args.reserve(64, 10);
     invocation.args.append("output", output);
+    invocation.args.append("outputRCP", outputRCP);
     invocation.args.append("input", input);
     invocation.args.append("workSpace", workSpace);
     invocation.args.append("sync", sync);

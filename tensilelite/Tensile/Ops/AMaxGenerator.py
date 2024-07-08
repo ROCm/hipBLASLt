@@ -276,11 +276,12 @@ class AMaxKernelGenerator:
                 KernelArgument(8,  8, 'global_buffer', 'global'),
                 KernelArgument(8, 16, 'global_buffer', 'global'),
                 KernelArgument(8, 24, 'global_buffer', 'global'),
-                KernelArgument(4, 32, 'by_value'),
-                KernelArgument(4, 36, 'by_value'),
+                KernelArgument(8, 32, 'global_buffer', 'global'),
                 KernelArgument(4, 40, 'by_value'),
                 KernelArgument(4, 44, 'by_value'),
-                KernelArgument(4, 48, 'by_value'))
+                KernelArgument(4, 48, 'by_value'),
+                KernelArgument(4, 52, 'by_value'),
+                KernelArgument(4, 56, 'by_value'))
 
 
     def defineVariables(self):
@@ -312,6 +313,8 @@ class AMaxKernelGenerator:
         self.defineSgpr("WorkGroup1", 1)
         self.defineSgpr("WorkGroup2", 1)
         self.defineSgpr("AddressOut", 2, 2)
+        if not self.is_scale:
+            self.defineSgpr("AddressOutRcp", 2, 2)
         if self.is_scale:
             self.defineSgpr("AddressOutD", 2, 2)
         self.defineSgpr("AddressIn",  2, 2)
@@ -371,14 +374,15 @@ class AMaxKernelGenerator:
             mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),         ti.sgpr("KernelArg", 2),  64))
         else:
             mod.add(ti.SLoadB64(ti.sgpr("AddressOut", 2),    ti.sgpr("KernelArg", 2),   0))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressIn", 2),     ti.sgpr("KernelArg", 2),   8))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressWk", 2),     ti.sgpr("KernelArg", 2),  16))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressSy", 2),     ti.sgpr("KernelArg", 2),  24))
-            mod.add(ti.SLoadB32(ti.sgpr("SizeLength"),       ti.sgpr("KernelArg", 2),  32))
-            mod.add(ti.SLoadB32(ti.sgpr("IsDivided"),        ti.sgpr("KernelArg", 2),  36))
-            mod.add(ti.SLoadB32(ti.sgpr("Divided"),          ti.sgpr("KernelArg", 2),  40))
-            mod.add(ti.SLoadB32(ti.sgpr("WorkSize"),         ti.sgpr("KernelArg", 2),  44))
-            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),         ti.sgpr("KernelArg", 2),  48))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressOutRcp", 2), ti.sgpr("KernelArg", 2),   8))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressIn", 2),     ti.sgpr("KernelArg", 2),  16))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressWk", 2),     ti.sgpr("KernelArg", 2),  24))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressSy", 2),     ti.sgpr("KernelArg", 2),  32))
+            mod.add(ti.SLoadB32(ti.sgpr("SizeLength"),       ti.sgpr("KernelArg", 2),  40))
+            mod.add(ti.SLoadB32(ti.sgpr("IsDivided"),        ti.sgpr("KernelArg", 2),  44))
+            mod.add(ti.SLoadB32(ti.sgpr("Divided"),          ti.sgpr("KernelArg", 2),  48))
+            mod.add(ti.SLoadB32(ti.sgpr("WorkSize"),         ti.sgpr("KernelArg", 2),  52))
+            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),         ti.sgpr("KernelArg", 2),  56))
 
         mod.add(ti.SWaitCnt(lgkmcnt=0))
         mod.addSpaceLine()
@@ -1100,9 +1104,9 @@ class AMaxKernelGenerator:
             mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
         mod.add(ti.SNop(1))
 
-        label_divided = ti.Label("divided", 'divided')
+        label_no_divided = ti.Label("no_divided", 'no_divided')
         mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
-        mod.add(ti.SCBranchSCC1(label_divided.getLabelName()))
+        mod.add(ti.SCBranchSCC1(label_no_divided.getLabelName()))
 
         if self.o_type.toChar() == "S":
             mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
@@ -1117,10 +1121,35 @@ class AMaxKernelGenerator:
             mod.add(ti.SNop(1))
             mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
             mod.add(ti.SNop(1))
-        mod.add(label_divided)
+        mod.add(label_no_divided)
 
         mod.add(BufferStorex1(ti.vgpr("Output"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))
         mod.addSpaceLine()
+
+        if not self.is_scale:
+            mod.add(ti.SCmpEQU64(ti.sgpr("AddressOutRcp",2), 0))
+            mod.add(ti.SCBranchSCC1(label_end.getLabelName()))
+            mod.addSpaceLine()
+
+            if self.o_type.toChar() == "S":
+                mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+                mod.add(ti.SNop(1))
+            elif self.o_type.toChar() == "H":
+                mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
+                mod.add(ti.SNop(1))
+                mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+                mod.add(ti.SNop(1))
+                mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
+                mod.add(ti.SNop(1))
+            mod.addSpaceLine()
+
+            mod.add(ti.SMovB32(ti.sgpr("Dst+0"), ti.sgpr("AddressOutRcp+0")))
+            mod.add(ti.SMovB32(ti.sgpr("Dst+1"), ti.sgpr("AddressOutRcp+1")))
+            mod.add(ti.SMovB32(ti.sgpr("Dst+2"), self.o_type.numBytes()))
+            mod.add(ti.SMovB32(ti.sgpr("Dst+3"), "Srd127_96"))
+
+            mod.add(BufferStorex1(ti.vgpr("Output"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))
+            mod.addSpaceLine()
 
         mod.addSpaceLine()
         mod.add(label_end)
