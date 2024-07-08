@@ -446,6 +446,7 @@ namespace Tensile
 
         struct InternalArgsSupport
         {
+            int  version          = 0;
             bool gsu              = true;
             bool wgm              = true;
             bool staggerU         = true;
