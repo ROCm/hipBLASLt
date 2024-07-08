@@ -100,7 +100,7 @@ class StoreState:
             #            since each buffer_load_short would overwrite undefined 16bit as zero.
             self.halfDataRegPerVI = gwvw*self.numVgprsPerDataPerVI == 0.5 and not (kernel["ProblemType"]["UseInitialStridesCD"] and kernelWriter.states.archCaps["HasEccHalf"]) and not (kernel["ProblemType"]["DestDataType"].numRegisters() == 0.25)
             # indicates the VGPRs index offset from LSU Reduction.
-            # Used for multi-batch/Edge cases.  
+            # Used for multi-batch/Edge cases.
             self.lsuStartVgprOffset = 0
 
     # StoreState constructor:
@@ -358,7 +358,7 @@ class StoreState:
 
         return self.elementCoord0, self.elementCoord1
 
-    def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL, biasDim):
+    def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL, factorDim):
 
         self.elementAddr              = []
         self.elementDataE             = []
@@ -500,7 +500,7 @@ class StoreState:
             self.elementData.append(data)
 
             if self.useBias == DataDirection.READ:
-                coordOffset = coordOffset0 if biasDim == 0 else coordOffset1
+                coordOffset = coordOffset0 if factorDim == 0 else coordOffset1
                 if coordOffset in biasVgprMap:
                     dataBias = biasVgprMap[coordOffset]
                 else:
@@ -522,13 +522,14 @@ class StoreState:
             self.elementDataE.append(dataE)
 
             if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
-                if coordOffset0 in scaleAlphaVecVgprMap:
-                    dataScaleAlphaVec = scaleAlphaVecVgprMap[coordOffset0]
+                coordOffset = coordOffset0 if factorDim == 0 else coordOffset1
+                if coordOffset in scaleAlphaVecVgprMap:
+                    dataScaleAlphaVec = scaleAlphaVecVgprMap[coordOffset]
                 else:
                     numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
                     dataScaleAlphaVec = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
                                   int(ceil(numVgprs*self.cfg.gwvw)), "scaleAlphaVec data for ei=%u"%elementIdx, preventOverflow=False)
-                    scaleAlphaVecVgprMap[coordOffset0] = dataScaleAlphaVec
+                    scaleAlphaVecVgprMap[coordOffset] = dataScaleAlphaVec
             else:
                 dataScaleAlphaVec = 0
             self.elementDataScaleAlphaVec.append(dataScaleAlphaVec)

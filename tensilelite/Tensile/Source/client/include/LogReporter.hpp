@@ -115,7 +115,7 @@ namespace Tensile
                                                                      OperationIdentifier,
                                                                      ProblemSizes,
                                                                      BiasType,
-                                                                     BiasDim,
+                                                                     FactorDim,
                                                                      ActivationType,
                                                                      SolutionName,
                                                                      Validation,

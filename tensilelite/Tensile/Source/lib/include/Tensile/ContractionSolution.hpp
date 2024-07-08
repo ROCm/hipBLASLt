@@ -119,10 +119,11 @@ namespace Tensile
         using Inputs        = ContractionInputs;
         using GroupedInputs = ContractionGroupedInputs;
 
- /**
+        /**
   * Indicate a solution is equally or estimatedly matched.
   */
-        enum class MatchingTag {
+        enum class MatchingTag
+        {
             Equal,
             Estimated
         };
@@ -412,10 +413,10 @@ namespace Tensile
             dim3 macroTile;
 
             std::array<int, 4> matrixInstruction;
-            size_t grvwA              = 1;
-            size_t grvwB              = 1;
-            size_t gwvwC              = 1;
-            size_t gwvwD              = 1;
+            size_t             grvwA = 1;
+            size_t             grvwB = 1;
+            size_t             gwvwC = 1;
+            size_t             gwvwD = 1;
 
             size_t staggerU           = 0;
             size_t staggerUMapping    = 0;
@@ -474,7 +475,7 @@ namespace Tensile
             bool                  useE                      = false;
             bool                  useScaleAB                = false;
             bool                  useScaleCD                = false;
-            bool                  useScaleAlphaVec          = false;
+            int                   useScaleAlphaVec          = 0;
             bool                  useInitialStridesAB       = false;
             bool                  useInitialStridesCD       = false;
             bool                  stridedBatched            = true;

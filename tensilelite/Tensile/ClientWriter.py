@@ -26,7 +26,7 @@ from . import ClientExecutable
 from . import LibraryIO
 from .TensileInstructions import getGfxName, DataType, getCOVFromParam
 from .Common import globalParameters, pushWorkingPath, popWorkingPath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
-from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, BiasDimArgs
+from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
 from .TensileCreateLibrary import copyStaticFiles
 
 import os
@@ -116,7 +116,7 @@ def main( config ):
       biasTypeArgs = ""
 
     activationEnums = [[{'Enum': 'relu'}]]
-    biasDimEnums = [0]
+    factorDimEnums = [0]
     # Reading the activation args from the LibraryClient section in the config YAML.
     # Example: enable relu and gelu activation and using none to run without activation
     #    LibraryClient:
@@ -130,18 +130,18 @@ def main( config ):
         if "ActivationArgs" in lc:
           activationEnums = lc["ActivationArgs"]
           break
-        if "BiasDimArgs" in lc:
-          biasDimEnums = lc["BiasDimArgs"]
+        if "FactorDimArgs" in lc:
+          factorDimEnums = lc["FactorDimArgs"]
         if "ICacheFlush" in lc:
           icacheFlushArgs = lc["ICacheFlush"]
     activationArgs = ActivationArgs(problemType, activationEnums) if problemType["ActivationType"] == 'all' else ""
-    biasDimArgs = BiasDimArgs(problemType, biasDimEnums)
+    factorDimArgs = FactorDimArgs(problemType, factorDimEnums)
     clientParametersPaths.append(writeClientConfig(
                                   forBenchmark=False,
                                   solutions=None,
                                   problemSizes=problemSizes,
                                   biasTypeArgs=biasTypeArgs,
-                                  biasDimArgs=biasDimArgs,
+                                  factorDimArgs=factorDimArgs,
                                   activationArgs=activationArgs,
                                   icacheFlushArgs=icacheFlushArgs,
                                   stepName=str(ProblemType(problemType)),
@@ -363,7 +363,7 @@ def checkConstStride(constStrideMap, keyIdx):
   return finalVal
 
 
-def problemSizeParams(problemType, problem, biasDim):
+def problemSizeParams(problemType, problem, factorDim):
 
     numIndices = len(problemType.indices)
     rv = []
@@ -445,10 +445,10 @@ def problemSizeParams(problemType, problem, biasDim):
       length = problem.sizes[0]
       err_str = "M"
       if problemType.sparse:
-        if len(biasDim) > 1:
+        if len(factorDim) > 1:
           length = max(problem.sizes[0], problem.sizes[1])
           err_str = "max(M,N)"
-        elif 1 in biasDim:
+        elif 1 in factorDim:
           length = problem.sizes[1]
           err_str = "N"
       biasstrides = [1, length, 0]
@@ -516,7 +516,7 @@ def pruneModeName(mode):
     if mode == 5: return 'Prune0X0X'
     if mode == 6: return 'Prune00XX'
 
-def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs, icacheFlushArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
+def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
 
     with open(parametersFilePath, "w") as f:
         def param(key, value):
@@ -556,9 +556,10 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
             param('bias-type-args',  btype.toEnum())
-        if biasDimArgs:
-          for bdim in biasDimArgs.biasDims:
-            param('bias-dim-args', bdim)
+        if factorDimArgs:
+          for fdim in factorDimArgs.factorDims:
+            param('factor-dim-args', fdim)
+
 
         if icacheFlushArgs:
           for opt in icacheFlushArgs:
@@ -570,7 +571,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs
         param('grouped-gemm', problemType.groupedGemm)
 
         for problem in problemSizes.problems:
-            for key,value in problemSizeParams(problemType, problem, biasDimArgs.biasDims):
+            for key,value in problemSizeParams(problemType, problem, factorDimArgs.factorDims):
                 param(key,value)
 
         if activationArgs:
@@ -640,7 +641,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs
         param("rotating-buffer-size",     globalParameters["RotatingBufferSize"])
 
 
-def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, biasDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
+def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
 
     if tileAwareSelection:
       filename = os.path.join(globalParameters["WorkingPath"], "%s_Granularity.ini"%configBase)
@@ -658,7 +659,7 @@ def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, biasD
 
     newSolution = next(iter(newLibrary.solutions.values()))
     sourceDir = os.path.join(stepBaseDir, "source")
-    writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs, icacheFlushArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
+    writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
 
     return filename
 
@@ -679,7 +680,7 @@ def CreateBenchmarkClientParametersForSizes(libraryRootPath, problemSizes, dataF
       problemTypeDict = metaData["ProblemType"]
       problemType = ContractionsProblemType.FromOriginalState(problemTypeDict)
 
-    writeClientConfigIni(problemSizes, "", "", problemType, libraryRootPath, codeObjectFiles, dataFilePath, configFile)
+    writeClientConfigIni(problemSizes, "", "", "", "", problemType, libraryRootPath, codeObjectFiles, dataFilePath, configFile)
 
 
 ################################################################################

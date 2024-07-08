@@ -32,10 +32,10 @@
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/Utils.hpp>
 
-#include <random>
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
+#include <random>
 
 #ifdef ENABLE_ROCTX
 #include <roctracer/roctx.h>
@@ -552,7 +552,7 @@ namespace Tensile
             singleWSD = true;
         if(gsu > 1
            && ((singleWSD || sizeMapping.globalAccumulation == 2)
-               || (sizeMapping.globalAccumulation == 3 )))
+               || (sizeMapping.globalAccumulation == 3)))
         {
             args.template append<void const*>("ws_d", (uint8_t*)inputs.ws + workspaceOffsetInByte);
             if(sizeMapping.globalAccumulation == 3)
@@ -703,13 +703,16 @@ namespace Tensile
                 if(problemType.useBias)
                     args.template append<uint32_t>(
                         "strideBias",
-                        static_cast<uint32_t>(problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0)); // reserved
-                if(problemType.useBias == 3)
-                {
-                    args.template append<uint32_t>(
-                        "biasDim", static_cast<uint32_t>(problem.getParams().biasDim()));
-                }
+                        static_cast<uint32_t>(problem.useBias() && bias.dimensions()
+                                                  ? bias.strides()[bias.dimensions() - 1]
+                                                  : 0)); // reserved
             }
+        }
+
+        if(problemType.useScaleAlphaVec == 3 || problemType.useBias == 3)
+        {
+            args.template append<uint32_t>("factorDim",
+                                           static_cast<uint32_t>(problem.getParams().factorDim()));
         }
 
         if(problemType.useE)
@@ -781,7 +784,7 @@ namespace Tensile
         }
 
         uint32_t gsu = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
-        int32_t wgm  = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
+        int32_t  wgm = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
 
         const uint32_t mask16       = 0xFFFF;
         const uint32_t mask8        = 0xFF;
@@ -879,8 +882,8 @@ namespace Tensile
         if(internalArgsSupport.version == 1)
         {
             rv.numWorkGroups.x *= (rv.numWorkGroups.y * rv.numWorkGroups.z);
-            rv.numWorkGroups.y  = 1;
-            rv.numWorkGroups.z  = 1;
+            rv.numWorkGroups.y = 1;
+            rv.numWorkGroups.z = 1;
         }
 
         rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
@@ -1029,7 +1032,8 @@ namespace Tensile
                 if(sizeMapping.globalAccumulation == 3)
                 {
                     h_args.template append<void const*>("dstD", inputs.grouped[idx].d);
-                    h_args.template append<void const*>("Synchronizer", inputs.grouped[idx].Synchronizer);
+                    h_args.template append<void const*>("Synchronizer",
+                                                        inputs.grouped[idx].Synchronizer);
                     h_args.template append<uint32_t>("GSUSync", 0);
                 }
 
@@ -1047,8 +1051,11 @@ namespace Tensile
                 {
                     argType = KERNELARGTYPE::USERARGS;
                 }
-                kernelArgs<T_Debug, false>(
-                    problems.size(), (uint32_t)argType, rv.args, getNumWorkGroups(rv), problems[0].getParams());
+                kernelArgs<T_Debug, false>(problems.size(),
+                                           (uint32_t)argType,
+                                           rv.args,
+                                           getNumWorkGroups(rv),
+                                           problems[0].getParams());
                 // For user input
                 if(argType == KERNELARGTYPE::USERARGS)
                 {
@@ -1087,8 +1094,9 @@ namespace Tensile
         ContractionSolution::generateBetaOnlyCall(Problem const&           problem,
                                                   ContractionInputs const& inputs) const
     {
-        TensorDescriptor const& c = problem.c();
-        TensorDescriptor const& d = problem.d();
+        TensorDescriptor const& c               = problem.c();
+        TensorDescriptor const& d               = problem.d();
+        bool                    enableFactorDim = false;
 
         KernelInvocation rv;
 
@@ -1135,13 +1143,14 @@ namespace Tensile
         else
             rv.args.append<void const* const*>("batchC", inputs.batchC);
 
-        if(problemType.useBias
-           && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
+        if(problemType.useBias && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
         {
             if(problemType.stridedBatched)
                 rv.args.append<void const*>("bias", inputs.bias);
             else
                 rv.args.append<void const* const*>("batchBias", inputs.batchBias);
+            if(problemType.useBias == 3)
+                enableFactorDim = true;
         }
         if(problemType.useScaleAB && sizeMapping.globalAccumulation == 0)
         {
@@ -1153,10 +1162,11 @@ namespace Tensile
             rv.args.append<void const*>("scaleC", inputs.scaleC);
             rv.args.append<void const*>("scaleD", inputs.scaleD);
         }
-        if(problemType.useScaleAlphaVec
-           && sizeMapping.globalAccumulation == 0)
+        if(problemType.useScaleAlphaVec && sizeMapping.globalAccumulation == 0)
         {
             rv.args.append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
+            if(problemType.useScaleAlphaVec == 3)
+                enableFactorDim = true;
         }
 
         if(sizeMapping.globalAccumulation)
@@ -1180,15 +1190,17 @@ namespace Tensile
             rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideC", i),
                                      c.sizes()[i] == 1 ? 0 : c.strides()[i]);
 
-        if(problemType.useBias
-           && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
+        if(problemType.useBias && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
-            rv.args.append<uint32_t>("strideBias", problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0);
-            if(problemType.useBias == 3)
-                rv.args.template append<uint32_t>("biasDim",
-                                                  (uint32_t)problem.getParams().biasDim());
+            rv.args.append<uint32_t>(
+                "strideBias",
+                problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0);
         }
+
+        if(enableFactorDim)
+            rv.args.template append<uint32_t>("factorDim",
+                                              (uint32_t)problem.getParams().factorDim());
 
         int idx = 0;
         for(auto size : problem.d().sizes())
@@ -1243,16 +1255,23 @@ namespace Tensile
             name += "_GB";
         }
 
-        if(problemType.useBias
-           && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
+        int factorDim = 0;
+        if(sizeMapping.globalAccumulation == 0)
+        {
+            if(!problemType.useGradient)
+                factorDim = problemType.useScaleAlphaVec | problemType.useBias;
+            else
+                factorDim = problemType.useScaleAlphaVec;
+        }
+        if(problemType.useBias && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
         {
             auto s = TypeAbbrev(problem.bias().dataType());
             name += ("_Bias" + s);
-            if(problemType.useBias == 2)
-                name += "_BDN";
-            else if(problemType.useBias == 3)
-                name += "_BDMN";
         }
+        if(factorDim == 2)
+            name += "_FDN";
+        else if(factorDim == 3)
+            name += "_FDMN";
 
         if(sizeMapping.globalAccumulation)
         {
@@ -1407,7 +1426,9 @@ namespace Tensile
         if(useBias)
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
-            args.template append<uint32_t>("strideBias", problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0);
+            args.template append<uint32_t>(
+                "strideBias",
+                problem.useBias() && bias.dimensions() ? bias.strides()[bias.dimensions() - 1] : 0);
         }
 
         int i = 0;
@@ -1421,10 +1442,9 @@ namespace Tensile
                            : (problem.getParams().gsu() > 0 ? problem.getParams().gsu()
                                                             : sizeMapping.globalSplitU);
         args.template append<uint32_t>(concatenate_if<T_Debug>("gsu"), gsu);
-        if(useBias)
+        if((useBias && problemType.useBias == 3) || problemType.useScaleAlphaVec)
         {
-            if(problemType.useBias == 3)
-                args.template append<uint32_t>("biasDim", (uint32_t)problem.getParams().biasDim());
+            args.template append<uint32_t>("factorDim", (uint32_t)problem.getParams().factorDim());
         }
     }
 
@@ -1466,9 +1486,9 @@ namespace Tensile
         }
 
         uint32_t gsu = sizeMapping.globalAccumulation == 1
-                   ? 1
-                   : (problem.getParams().gsu() > 0 ? problem.getParams().gsu()
-                                                    : sizeMapping.globalSplitU);
+                           ? 1
+                           : (problem.getParams().gsu() > 0 ? problem.getParams().gsu()
+                                                            : sizeMapping.globalSplitU);
 
         rv.kernelName = outputConversionKernelName(problem, inputs, vw, gsu);
 
@@ -1622,14 +1642,13 @@ namespace Tensile
             problems, vw, rv.workGroupSize, rv.numWorkGroups, rv.numWorkItems, h_args);
 
         uint32_t gsu = sizeMapping.globalAccumulation == 1
-                   ? 1
-                   : (problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
-                                                    : sizeMapping.globalSplitU);
+                           ? 1
+                           : (problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
+                                                                : sizeMapping.globalSplitU);
 
         if constexpr(std::is_same<KA, KernelArguments>::value)
         {
-            rv.kernelName = outputConversionKernelName(
-                problems[0], inputs.grouped[0], vw, gsu);
+            rv.kernelName = outputConversionKernelName(problems[0], inputs.grouped[0], vw, gsu);
         }
 
         uint32_t workspaceOffsetInByte
@@ -1749,11 +1768,17 @@ namespace Tensile
             else
             {
                 name += ("_Bias" + s);
-                if(problemType.useBias == 2)
-                    name += ("_BDN");
-                else if(problemType.useBias == 3)
-                    name += ("_BDMN");
             }
+        }
+
+        int factorDim
+            = max(problemType.useGradient ? 0 : problemType.useBias, problemType.useScaleAlphaVec);
+        if(factorDim)
+        {
+            if(factorDim == 2)
+                name += ("_FDN");
+            else if(factorDim == 3)
+                name += ("_FDMN");
         }
 
         if(problemType.useE)
@@ -1810,7 +1835,8 @@ namespace Tensile
         gsuTemp |= gsuTemp >> 16;
         gsuTemp++;
 
-        name += "_PostGSU" + std::to_string(std::min((unsigned long)gsuTemp, sizeMapping.globalSplitUPGR));
+        name += "_PostGSU"
+                + std::to_string(std::min((unsigned long)gsuTemp, sizeMapping.globalSplitUPGR));
 
         name += "_VW" + std::to_string(vw);
 
@@ -2186,8 +2212,7 @@ namespace Tensile
         else
             rv.push_back(generateSingleCall<false>(problem, inputs));
 
-        if((sizeMapping.globalAccumulation != 3) && gsu > 1
-           && sizeMapping.globalAccumulation)
+        if((sizeMapping.globalAccumulation != 3) && gsu > 1 && sizeMapping.globalAccumulation)
         {
             if(debug)
                 rv.push_back(generateOutputConversionCall<true>(problem, inputs));

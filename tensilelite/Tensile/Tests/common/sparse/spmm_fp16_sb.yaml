@@ -28,11 +28,11 @@ BenchmarkProblems:
       TransposeA: False
       TransposeB: False
       UseBeta: True
-      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -90,7 +90,7 @@ BenchmarkProblems:
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
         - BiasTypeArgs: ['s', 'h']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -107,11 +107,11 @@ BenchmarkProblems:
       TransposeA: True
       TransposeB: False
       UseBeta: True
-      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -169,7 +169,7 @@ BenchmarkProblems:
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
         - BiasTypeArgs: ['s', 'h']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -186,11 +186,11 @@ BenchmarkProblems:
       TransposeA: False
       TransposeB: True
       UseBeta: True
-      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -248,7 +248,7 @@ BenchmarkProblems:
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
         - BiasTypeArgs: ['s', 'h']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -265,11 +265,11 @@ BenchmarkProblems:
       TransposeA: True
       TransposeB: True
       UseBeta: True
-      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -327,6 +327,6 @@ BenchmarkProblems:
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
         - BiasTypeArgs: ['s', 'h']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
