@@ -1511,26 +1511,6 @@ class KernelWriterAssembly(KernelWriter):
       elif waitForScaleAB:
         moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for scaleA/B to load"))
 
-      # Calculate RCP and update Alpha
-      if kernel["ProblemType"]["UseScaleAB"]:
-        tmpVgpr = self.vgprPool.checkOut(1)
-        newAlphaVgpr = None
-        NeedUpdateAlpha = self.states.preloadScaleA or self.states.preloadScaleB
-        if NeedUpdateAlpha:
-          newAlphaVgpr = self.vgprPool.checkOut(1)
-          moduleWg.add(VMovB32(dst=vgpr(newAlphaVgpr), src=sgpr("Alpha")))
-        for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
-          if preloadScale:
-            moduleWg.add(VMovB32(dst=vgpr(tmpVgpr), src=sgpr("Scale%s"%name)))
-            moduleWg.add(VRcpF32(dst=vgpr(tmpVgpr), src=vgpr(tmpVgpr)))
-            moduleWg.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=sgpr("Scale%s"%name)))
-            moduleWg.add(VReadfirstlaneB32(dst=sgpr("Scale%s"%name), src=vgpr(tmpVgpr), comment="Get Rcp"))
-        if NeedUpdateAlpha:
-          moduleWg.add(VReadfirstlaneB32(dst=sgpr("Alpha"), src=vgpr(newAlphaVgpr), comment="Update Alpha"))
-        self.vgprPool.checkIn(tmpVgpr)
-        if newAlphaVgpr != None:
-          self.vgprPool.checkIn(newAlphaVgpr)
-
       labelMultiGemm = Label(label="MultiGemm", comment="")
       labelMultiGemmEnd = Label(label="MultiGemmEnd", comment="")
       module.add(moduleArgs)
