@@ -785,11 +785,11 @@ namespace Tensile
                                     {
                                         Accumulator scaleA = GetValue<Accumulator>(
                                             problem.alphaType(), inputs.scaleA, 0, aConjugate);
-                                        auto tmp = div<Accumulator>(aVal, scaleA);
+                                        auto tmp = multiply<Accumulator>(aVal, scaleA);
                                         aValCast = static_cast<typename Inputs::ComputeInputType>(tmp);
                                         Accumulator scaleB = GetValue<Accumulator>(
                                             problem.alphaType(), inputs.scaleB, 0, aConjugate);
-                                        tmp      = div<Accumulator>(bVal, scaleB);
+                                        tmp      = multiply<Accumulator>(bVal, scaleB);
                                         bValCast = static_cast<typename Inputs::ComputeInputType>(tmp);
                                     }
                                     else
@@ -808,7 +808,7 @@ namespace Tensile
                                 {
                                     Accumulator scaleA = GetValue<Accumulator>(
                                         problem.alphaType(), inputs.scaleA, 0, aConjugate);
-                                    auto tmp = div<Accumulator>(aVal, scaleA);
+                                    auto tmp = multiply<Accumulator>(aVal, scaleA);
                                     aValCast = static_cast<typename Inputs::ComputeInputType>(tmp);
                                 }
                                 else
@@ -825,7 +825,7 @@ namespace Tensile
                                 {
                                     Accumulator scaleB = GetValue<Accumulator>(
                                         problem.alphaType(), inputs.scaleB, 0, aConjugate);
-                                    auto tmp = div<Accumulator>(bVal, scaleB);
+                                    auto tmp = multiply<Accumulator>(bVal, scaleB);
                                     bValCast = static_cast<typename Inputs::ComputeInputType>(tmp);
                                 }
                                 else
@@ -856,7 +856,13 @@ namespace Tensile
                         = GetValue<Accumulator>(problem.alphaType(), inputs.scaleA, 0, aConjugate);
                     Accumulator scaleB
                         = GetValue<Accumulator>(problem.alphaType(), inputs.scaleB, 0, aConjugate);
-                    alpha *= scaleA * scaleB;
+                    if constexpr(sizeof(typename Inputs::AType)
+                                              <= sizeof(typename Inputs::ComputeInputType))
+                        alpha *= scaleA;
+
+                    if constexpr(sizeof(typename Inputs::BType)
+                                              <= sizeof(typename Inputs::ComputeInputType))
+                        alpha *= scaleB;
                 }
 
                 auto resultD = multiply<Accumulator>(alpha, value);
