@@ -108,6 +108,43 @@ namespace Tensile
             return forest->matchesInOrder(problem, transform);
         }
 
+        virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
+                                                            Hardware const&  hardware,
+                                                            int numSolutions) const override
+        {
+
+            if(searchType != SolutionLibrarySearchType::DEFAULT)
+            {
+                throw std::runtime_error("Dicision tree only supports default search mode.");
+            }
+            typename Forest::Transform transform
+                = [&](Element library) -> std::shared_ptr<MySolution> {
+                return library->findBestSolution(problem, hardware);
+            };
+            return forest->topMatches(problem, transform);
+            //SolutionVector<MySolution> rv, solutions;
+
+
+            // for(auto const& row : rows)
+            // {
+            //     if(row.first(problem, hardware))
+            //     {
+            //         solutions
+            //             = row.second->findTopSolutions(problem, hardware, numSolutions - rv.size());
+                    
+            //         //if (dynamic_cast<Predicates::Contraction::EqualityMatching *>(row.first.value.get()))
+            //         //    for (auto &sol : solutions)
+            //         //        sol->tag = MySolution::MatchingTag::Equal;
+
+            //         rv.insert(std::end(rv), std::begin(solutions), std::end(solutions));
+            //         if(rv.size() == numSolutions)
+            //             return rv;
+            //     }
+            // }
+
+            //return rv;
+        }
+
         virtual SolutionSet<MySolution>
             findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
                                         Hardware const&               hardware,

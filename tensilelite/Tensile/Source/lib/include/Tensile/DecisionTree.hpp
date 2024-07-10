@@ -254,28 +254,81 @@ namespace Tensile
             using Transform = typename Base::Transform;
             using Features  = typename Base::Features;
 
-            BasicForest(ReturnValue nullValue = ReturnValue())
-                : nullValue(nullValue)
-            {
-            }
+            BasicForest() {}
 
-            BasicForest(Features const& features, ReturnValue nullValue = ReturnValue())
+            BasicForest(Features const& features)
                 : Base(features)
-                , nullValue(nullValue)
             {
             }
 
             virtual ReturnValue findBestMatch(Object const& problem,
                                               Transform     transform) const override
             {
+                bool debug = Debug::Instance().getSolutionSelectionTrace();
+
                 Key key = ProblemKey::keyForProblem<Key, Object, float>(problem, this->features);
+
+                if(debug)
+                {
+                    std::cout << "Forest " << this->description() << std::endl;
+                    std::cout << "Entering solution selection evaluation loop. Searching forest."
+                              << std::endl;
+                }
+
                 for(Tree const& tree : trees)
                 {
-                    bool result = tree.predict(key);
-                    if(result)
-                        return tree.getSolution(transform);
+                    ReturnValue rv = tree.getSolution(transform);
+                    if(rv != nullptr)
+                    {
+                        if(debug)
+                        {
+                            std::cout << "Running predict for kernel: ";
+                            std::cout << rv->KernelName();
+                            std::cout << " (Library Index: " << rv->libraryLogicIndex;
+                            std::cout << ")" << std::endl;
+                        }
+
+                        bool result = tree.predict(key);
+
+                        if(debug)
+                        {
+                            std::cout << "Prediction evaluation result is: ";
+                            std::cout << result << std::endl;
+                        }
+
+                        if(result)
+                        {
+                            if(debug)
+                                std::cout << "found valid kernel exiting forest evaluation loop"
+                                          << std::endl;
+                            return rv;
+                        }
+                    }
                 }
-                return nullValue;
+
+                if(debug)
+                {
+                    std::cout << "Failed to find a valid kernel after searching the full ensamble. "
+                                 "will return the fallback kernel."
+                              << std::endl;
+
+                    if(transform(nullValue) == nullptr)
+                    {
+                        std::cout << "No fallback kerenel is defined. Will return a null pointer";
+                        std::cout << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "Returning the fallback kernel: "
+                                  << transform(nullValue)->KernelName();
+                        std::cout << " (Library Index: " << transform(nullValue)->libraryLogicIndex;
+                        std::cout << ")" << std::endl;
+                    }
+                }
+
+                // The nullVallue (fallback) is now a soltuion library that can containe a nullporter
+                // as a solution (indecating that no fallback solution is defined in the logic).
+                return transform(nullValue);
             }
 
             virtual std::set<ReturnValue> matchesInOrder(Object const& problem,
@@ -290,6 +343,57 @@ namespace Tensile
                 return rv;
             }
 
+            virtual SolutionVector<MySolution> topMatches(Object const& problem,
+                                                    Transform     transform) const override
+            {
+                SolutionVector<MySolution> rv;
+                for(Tree const& tree : trees)
+                {
+                    rv.insert(tree.getSolution(transform));
+                }
+
+                return rv;
+            }
+
+        //     virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
+        //                                                     Hardware const&  hardware,
+        //                                                     int numSolutions) const override
+        // {
+
+        //     if(searchType != SolutionLibrarySearchType::DEFAULT)
+        //     {
+        //         throw std::runtime_error("Dicision tree only supports default search mode.");
+        //     }
+        //     typename Forest::Transform transform
+        //         = [&](Element library) -> std::shared_ptr<MySolution> {
+        //         return library->findBestSolution(problem, hardware);
+        //     };
+
+        //     //topMatches
+        //     //return forest->matchesInOrder(problem, transform);
+        //     //SolutionVector<MySolution> rv, solutions;
+
+
+        //     // for(auto const& row : rows)
+        //     // {
+        //     //     if(row.first(problem, hardware))
+        //     //     {
+        //     //         solutions
+        //     //             = row.second->findTopSolutions(problem, hardware, numSolutions - rv.size());
+                    
+        //     //         //if (dynamic_cast<Predicates::Contraction::EqualityMatching *>(row.first.value.get()))
+        //     //         //    for (auto &sol : solutions)
+        //     //         //        sol->tag = MySolution::MatchingTag::Equal;
+
+        //     //         rv.insert(std::end(rv), std::begin(solutions), std::end(solutions));
+        //     //         if(rv.size() == numSolutions)
+        //     //             return rv;
+        //     //     }
+        //     // }
+
+        //     //return rv;
+        // }
+
             virtual std::string description() const override
             {
                 return concatenate(
@@ -297,7 +401,7 @@ namespace Tensile
             }
 
             std::vector<Tree> trees;
-            ReturnValue       nullValue;
+            Value             nullValue;
         };
     } // namespace DecisionTree
 } // namespace Tensile
