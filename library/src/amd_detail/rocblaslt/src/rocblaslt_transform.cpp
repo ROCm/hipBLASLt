@@ -591,23 +591,23 @@ namespace
                                                    hipblasLtOrder_t,
                                                    hipblasLtOrder_t,
                                                    size_t>;
-    using MatrixTransformFunction     = std::function<void(void*,
-                                                       const void*,
-                                                       const void*,
-                                                       const void*,
-                                                       const void*,
-                                                       bool,
-                                                       uint32_t,
-                                                       uint32_t,
-                                                       uint32_t,
-                                                       uint32_t,
-                                                       uint32_t,
-                                                       uint32_t,
-                                                       uint32_t,
-                                                       bool,
-                                                       bool,
-                                                       hipStream_t,
-                                                       const std::string&)>;
+    using MatrixTransformFunction     = std::function<hipError_t(void*,
+                                                             const void*,
+                                                             const void*,
+                                                             const void*,
+                                                             const void*,
+                                                             bool,
+                                                             uint32_t,
+                                                             uint32_t,
+                                                             uint32_t,
+                                                             uint32_t,
+                                                             uint32_t,
+                                                             uint32_t,
+                                                             uint32_t,
+                                                             bool,
+                                                             bool,
+                                                             hipStream_t,
+                                                             const std::string&)>;
     using MatrixTransformFunctionName = std::string;
     // disable clang-format of compact view.
     // clang-format off
@@ -775,23 +775,23 @@ rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 han
     bool       scalarInDevice = desc->pointerMode == HIPBLASLT_POINTER_MODE_DEVICE;
     const auto kernelName     = transformKernelNames.at(key);
 
-    transformKernels.at(key)(C,
-                             A,
-                             B,
-                             alpha,
-                             beta,
-                             scalarInDevice,
-                             layoutC->m,
-                             layoutC->n,
-                             layoutA->ld,
-                             layoutB->ld,
-                             layoutC->ld,
-                             layoutA->batch_count,
-                             layoutA->batch_stride,
-                             transA,
-                             transB,
-                             stream,
-                             kernelName);
+    const auto err = transformKernels.at(key)(C,
+                                              A,
+                                              B,
+                                              alpha,
+                                              beta,
+                                              scalarInDevice,
+                                              layoutC->m,
+                                              layoutC->n,
+                                              layoutA->ld,
+                                              layoutB->ld,
+                                              layoutC->ld,
+                                              layoutA->batch_count,
+                                              layoutA->batch_stride,
+                                              transA,
+                                              transB,
+                                              stream,
+                                              kernelName);
 
-    return rocblaslt_status_success;
+    return (err == hipSuccess) ? rocblaslt_status_success : rocblaslt_status_internal_error;
 }
