@@ -1063,14 +1063,14 @@ namespace Tensile
 
                 auto compM = [&count, Debug](Entry const& e, long const M) {
                     if(Debug)
-                        printf("[%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2]);
+                        printf("[%ld,%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2], e.key[3]);
                     count++;
                     return e.key[0] < M;
                 };
 
                 auto compN = [&count, Debug](Entry const& e, long const N) {
                     if(Debug)
-                        printf("[%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2]);
+                        printf("[%ld,%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2], e.key[3]);
                     count++;
                     return e.key[1] < N;
                 };
