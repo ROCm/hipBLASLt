@@ -24,25 +24,75 @@
  *
  * ************************************************************************ */
 #include "handle.h"
-#include "kernels/matrix_transform.hpp"
+#include "kernels/matrix_transform.h"
+#include "rocblaslt-auxiliary.h"
 #include "rocblaslt-types.h"
 #include "rocblaslt.h"
+#include <Tensile/hip/HipSolutionAdapter.hpp>
 #include <functional>
 #include <hipblaslt/hipblaslt-types.h>
+#include <libgen.h>
 #include <map>
 #include <memory>
+#include <string>
 #include <tuple>
 
 namespace
 {
+    std::string transformCodeObjectPath()
+    {
+        constexpr char DEFAULT_CO_PATH[]
+            = "/opt/rocm/lib/hipblaslt/library/hipblasltTransform.hsaco";
+        auto        soPath = rocblaslt_internal_get_so_path("hipblaslt");
+        std::string libPath(dirname(&soPath[0]));
+
+        if(rocblaslt_internal_test_path(libPath + "/../Tensile/library"))
+            libPath += "/../Tensile/library";
+        else if(rocblaslt_internal_test_path(libPath + "library"))
+            libPath += "/library";
+        else
+            libPath += "/hipblaslt/library";
+
+        libPath += "/hipblasltTransform.hsaco";
+
+        if(rocblaslt_internal_test_path(libPath))
+        {
+            return libPath;
+        }
+
+        return DEFAULT_CO_PATH;
+    }
+
+    Tensile::hip::SolutionAdapter& transformAdapter()
+    {
+        static auto& adapter = []() -> Tensile::hip::SolutionAdapter& {
+            static Tensile::hip::SolutionAdapter adp;
+            auto                                 coPath   = transformCodeObjectPath();
+            const std::string                    coFolder = dirname(&coPath[0]);
+            try
+            {
+                (void)adp.initializeLazyLoading("", coFolder);
+            }
+            catch(const std::runtime_error& e)
+            {
+                rocblaslt_log_error(
+                    "transformCodeObject", "TransformCodeObjectPath", coFolder.c_str());
+            }
+            return adp;
+        }();
+
+        return adapter;
+    }
+
     rocblaslt_matrix_layout dummyMatrixLayout()
     {
         static _rocblaslt_matrix_layout layout;
         return &layout;
     }
 
-    template<typename T>
-    const T *dummyScalarPtr() {
+    template <typename T>
+    const T* dummyScalarPtr()
+    {
         static T scalar{};
         return &scalar;
     }
@@ -55,77 +105,87 @@ namespace
               uint32_t NumThreadsM,
               uint32_t NumThreadsN,
               uint32_t VectorWidth>
-    hipError_t launchTransformKernel(DType*           c,
-                                     const DType*     a,
-                                     const DType*     b,
-                                     const ScaleType* alphaPtr,
-                                     const ScaleType* betaPtr,
-                                     bool             scalarInDevice,
-                                     uint32_t         m,
-                                     uint32_t         n,
-                                     uint32_t         ldA,
-                                     uint32_t         ldB,
-                                     uint32_t         ldC,
-                                     uint32_t         batchSize,
-                                     uint32_t         batchStride,
-                                     bool             transA,
-                                     bool             transB,
-                                     hipStream_t      stream)
+    hipError_t launchTransformKernel(DType*             c,
+                                     const DType*       a,
+                                     const DType*       b,
+                                     const ScaleType*   alphaPtr,
+                                     const ScaleType*   betaPtr,
+                                     bool               scalarInDevice,
+                                     uint32_t           m,
+                                     uint32_t           n,
+                                     uint32_t           ldA,
+                                     uint32_t           ldB,
+                                     uint32_t           ldC,
+                                     uint32_t           batchSize,
+                                     uint32_t           batchStride,
+                                     bool               transA,
+                                     bool               transB,
+                                     hipStream_t        stream,
+                                     const std::string& kernelName)
     {
-        constexpr auto TileM        = RowMajC ? NumThreadsM : NumThreadsM * VectorWidth;
-        constexpr auto TileN        = RowMajC ? NumThreadsN * VectorWidth : NumThreadsN;
-        const auto     numWg        = (m / TileM + !!(m % TileM)) * (n / TileN + !!(n % TileN));
-        constexpr auto numWorkitems = NumThreadsM * NumThreadsN;
+        constexpr auto           TileM = RowMajC ? NumThreadsM : NumThreadsM * VectorWidth;
+        constexpr auto           TileN = RowMajC ? NumThreadsN * VectorWidth : NumThreadsN;
+        const auto               numWg = (m / TileM + !!(m % TileM)) * (n / TileN + !!(n % TileN));
+        constexpr auto           numWorkitems = NumThreadsM * NumThreadsN;
+        Tensile::KernelArguments kArgs(false);
 
         if(scalarInDevice)
         {
-            amd_detail::transform<
-                DType,
-                ScaleType,
-                RowMajA,
-                RowMajB,
-                RowMajC,
-                NumThreadsM,
-                NumThreadsN,
-                VectorWidth><<<dim3{numWg, 1, batchSize}, numWorkitems, 0, stream>>>(
-                c, a, b, 1, alphaPtr, 1, betaPtr, m, n, ldA, ldB, ldC, batchStride, transA, transB);
+            kArgs.appendAligned("c", c);
+            kArgs.appendAligned("a", a);
+            kArgs.appendAligned("b", b);
+            kArgs.appendAligned("alpha", ScaleType(1));
+            kArgs.appendAligned("alphaPtr", alphaPtr);
+            kArgs.appendAligned("beta", ScaleType(1));
+            kArgs.appendAligned("betaPtr", betaPtr);
+            kArgs.appendAligned("m", m);
+            kArgs.appendAligned("n", n);
+            kArgs.appendAligned("ldA", ldA);
+            kArgs.appendAligned("ldB", ldB);
+            kArgs.appendAligned("ldC", ldC);
+            kArgs.appendAligned("batchStride", batchStride);
+            kArgs.appendAligned("transA", transA);
+            kArgs.appendAligned("transB", transB);
         }
         else
         {
-            if (!alphaPtr) {
+            if(!alphaPtr)
+            {
                 alphaPtr = dummyScalarPtr<ScaleType>();
             }
 
-            if (!betaPtr) {
+            if(!betaPtr)
+            {
                 betaPtr = dummyScalarPtr<ScaleType>();
             }
 
-            amd_detail::transform<DType,
-                                  ScaleType,
-                                  RowMajA,
-                                  RowMajB,
-                                  RowMajC,
-                                  NumThreadsM,
-                                  NumThreadsN,
-                                  VectorWidth>
-                <<<dim3{numWg, 1, batchSize}, numWorkitems, 0, stream>>>(c,
-                                                                         a,
-                                                                         b,
-                                                                         *alphaPtr,
-                                                                         nullptr,
-                                                                         *betaPtr,
-                                                                         nullptr,
-                                                                         m,
-                                                                         n,
-                                                                         ldA,
-                                                                         ldB,
-                                                                         ldC,
-                                                                         batchStride,
-                                                                         transA,
-                                                                         transB);
+            kArgs.appendAligned("c", c);
+            kArgs.appendAligned("a", a);
+            kArgs.appendAligned("b", b);
+            kArgs.appendAligned("alpha", *alphaPtr);
+            kArgs.appendAligned("alphaPtr", nullptr);
+            kArgs.appendAligned("beta", *betaPtr);
+            kArgs.appendAligned("betaPtr", nullptr);
+            kArgs.appendAligned("m", m);
+            kArgs.appendAligned("n", n);
+            kArgs.appendAligned("ldA", ldA);
+            kArgs.appendAligned("ldB", ldB);
+            kArgs.appendAligned("ldC", ldC);
+            kArgs.appendAligned("batchStride", batchStride);
+            kArgs.appendAligned("transA", transA);
+            kArgs.appendAligned("transB", transB);
         }
 
-        return hipSuccess;
+        constexpr auto            NUM_WORKITEMS{NumThreadsM * NumThreadsN};
+        Tensile::KernelInvocation invocation{kernelName,
+                                             "hipblasltTransform.hsaco",
+                                             {NUM_WORKITEMS, 1, 1},
+                                             {numWg, 1, batchSize},
+                                             {numWg * NUM_WORKITEMS, 1, batchSize},
+                                             0,
+                                             kArgs};
+        auto&                     adapter = transformAdapter();
+        return adapter.launchKernel(invocation, stream, nullptr, nullptr);
     }
 
 // Generate combination of MEMORY ORDER and RowMaj{A/B/C} = true/false
@@ -137,22 +197,23 @@ namespace
                      HIPBLASLT_ORDER_COL,                                                       \
                      HIPBLASLT_ORDER_COL,                                                       \
                      _VectorWidth),                                                             \
-     [](void*       c,                                                                          \
-        const void* a,                                                                          \
-        const void* b,                                                                          \
-        const void* alpha,                                                                      \
-        const void* beta,                                                                       \
-        bool        scalarInDevice,                                                             \
-        uint32_t    m,                                                                          \
-        uint32_t    n,                                                                          \
-        uint32_t    ldA,                                                                        \
-        uint32_t    ldB,                                                                        \
-        uint32_t    ldC,                                                                        \
-        uint32_t    batchSize,                                                                  \
-        uint32_t    batchStride,                                                                \
-        bool        opA,                                                                        \
-        bool        opB,                                                                        \
-        hipStream_t stream) {                                                                   \
+     [](void*              c,                                                                   \
+        const void*        a,                                                                   \
+        const void*        b,                                                                   \
+        const void*        alpha,                                                               \
+        const void*        beta,                                                                \
+        bool               scalarInDevice,                                                      \
+        uint32_t           m,                                                                   \
+        uint32_t           n,                                                                   \
+        uint32_t           ldA,                                                                 \
+        uint32_t           ldB,                                                                 \
+        uint32_t           ldC,                                                                 \
+        uint32_t           batchSize,                                                           \
+        uint32_t           batchStride,                                                         \
+        bool               opA,                                                                 \
+        bool               opB,                                                                 \
+        hipStream_t        stream,                                                              \
+        const std::string& kernelName) {                                                        \
          return launchTransformKernel<_DType,                                                   \
                                       _ScaleType,                                               \
                                       false,                                                    \
@@ -175,7 +236,8 @@ namespace
                                                     batchStride,                                \
                                                     opA,                                        \
                                                     opB,                                        \
-                                                    stream);                                    \
+                                                    stream,                                     \
+                                                    kernelName);                                \
      }},                                                                                        \
         {std::make_tuple(_DTYPE,                                                                \
                          _SCALETYPE,                                                            \
@@ -183,22 +245,23 @@ namespace
                          HIPBLASLT_ORDER_COL,                                                   \
                          HIPBLASLT_ORDER_ROW,                                                   \
                          _VectorWidth),                                                         \
-         [](void*       c,                                                                      \
-            const void* a,                                                                      \
-            const void* b,                                                                      \
-            const void* alpha,                                                                  \
-            const void* beta,                                                                   \
-            bool        scalarInDevice,                                                         \
-            uint32_t    m,                                                                      \
-            uint32_t    n,                                                                      \
-            uint32_t    ldA,                                                                    \
-            uint32_t    ldB,                                                                    \
-            uint32_t    ldC,                                                                    \
-            uint32_t    batchSize,                                                              \
-            uint32_t    batchStride,                                                            \
-            bool        opA,                                                                    \
-            bool        opB,                                                                    \
-            hipStream_t stream) {                                                               \
+         [](void*              c,                                                               \
+            const void*        a,                                                               \
+            const void*        b,                                                               \
+            const void*        alpha,                                                           \
+            const void*        beta,                                                            \
+            bool               scalarInDevice,                                                  \
+            uint32_t           m,                                                               \
+            uint32_t           n,                                                               \
+            uint32_t           ldA,                                                             \
+            uint32_t           ldB,                                                             \
+            uint32_t           ldC,                                                             \
+            uint32_t           batchSize,                                                       \
+            uint32_t           batchStride,                                                     \
+            bool               opA,                                                             \
+            bool               opB,                                                             \
+            hipStream_t        stream,                                                          \
+            const std::string& kernelName) {                                                    \
              return launchTransformKernel<_DType,                                               \
                                           _ScaleType,                                           \
                                           false,                                                \
@@ -222,7 +285,8 @@ namespace
                  batchStride,                                                                   \
                  opA,                                                                           \
                  opB,                                                                           \
-                 stream);                                                                       \
+                 stream,                                                                        \
+                 kernelName);                                                                   \
          }},                                                                                    \
         {std::make_tuple(_DTYPE,                                                                \
                          _SCALETYPE,                                                            \
@@ -230,22 +294,23 @@ namespace
                          HIPBLASLT_ORDER_ROW,                                                   \
                          HIPBLASLT_ORDER_COL,                                                   \
                          _VectorWidth),                                                         \
-         [](void*       c,                                                                      \
-            const void* a,                                                                      \
-            const void* b,                                                                      \
-            const void* alpha,                                                                  \
-            const void* beta,                                                                   \
-            bool        scalarInDevice,                                                         \
-            uint32_t    m,                                                                      \
-            uint32_t    n,                                                                      \
-            uint32_t    ldA,                                                                    \
-            uint32_t    ldB,                                                                    \
-            uint32_t    ldC,                                                                    \
-            uint32_t    batchSize,                                                              \
-            uint32_t    batchStride,                                                            \
-            bool        opA,                                                                    \
-            bool        opB,                                                                    \
-            hipStream_t stream) {                                                               \
+         [](void*              c,                                                               \
+            const void*        a,                                                               \
+            const void*        b,                                                               \
+            const void*        alpha,                                                           \
+            const void*        beta,                                                            \
+            bool               scalarInDevice,                                                  \
+            uint32_t           m,                                                               \
+            uint32_t           n,                                                               \
+            uint32_t           ldA,                                                             \
+            uint32_t           ldB,                                                             \
+            uint32_t           ldC,                                                             \
+            uint32_t           batchSize,                                                       \
+            uint32_t           batchStride,                                                     \
+            bool               opA,                                                             \
+            bool               opB,                                                             \
+            hipStream_t        stream,                                                          \
+            const std::string& kernelName) {                                                    \
              return launchTransformKernel<_DType,                                               \
                                           _ScaleType,                                           \
                                           false,                                                \
@@ -269,7 +334,8 @@ namespace
                  batchStride,                                                                   \
                  opA,                                                                           \
                  opB,                                                                           \
-                 stream);                                                                       \
+                 stream,                                                                        \
+                 kernelName);                                                                   \
          }},                                                                                    \
         {std::make_tuple(_DTYPE,                                                                \
                          _SCALETYPE,                                                            \
@@ -277,22 +343,23 @@ namespace
                          HIPBLASLT_ORDER_ROW,                                                   \
                          HIPBLASLT_ORDER_ROW,                                                   \
                          _VectorWidth),                                                         \
-         [](void*       c,                                                                      \
-            const void* a,                                                                      \
-            const void* b,                                                                      \
-            const void* alpha,                                                                  \
-            const void* beta,                                                                   \
-            bool        scalarInDevice,                                                         \
-            uint32_t    m,                                                                      \
-            uint32_t    n,                                                                      \
-            uint32_t    ldA,                                                                    \
-            uint32_t    ldB,                                                                    \
-            uint32_t    ldC,                                                                    \
-            uint32_t    batchSize,                                                              \
-            uint32_t    batchStride,                                                            \
-            bool        opA,                                                                    \
-            bool        opB,                                                                    \
-            hipStream_t stream) {                                                               \
+         [](void*              c,                                                               \
+            const void*        a,                                                               \
+            const void*        b,                                                               \
+            const void*        alpha,                                                           \
+            const void*        beta,                                                            \
+            bool               scalarInDevice,                                                  \
+            uint32_t           m,                                                               \
+            uint32_t           n,                                                               \
+            uint32_t           ldA,                                                             \
+            uint32_t           ldB,                                                             \
+            uint32_t           ldC,                                                             \
+            uint32_t           batchSize,                                                       \
+            uint32_t           batchStride,                                                     \
+            bool               opA,                                                             \
+            bool               opB,                                                             \
+            hipStream_t        stream,                                                          \
+            const std::string& kernelName) {                                                    \
              return launchTransformKernel<_DType,                                               \
                                           _ScaleType,                                           \
                                           false,                                                \
@@ -316,7 +383,8 @@ namespace
                  batchStride,                                                                   \
                  opA,                                                                           \
                  opB,                                                                           \
-                 stream);                                                                       \
+                 stream,                                                                        \
+                 kernelName);                                                                   \
          }},                                                                                    \
         {std::make_tuple(_DTYPE,                                                                \
                          _SCALETYPE,                                                            \
@@ -324,22 +392,23 @@ namespace
                          HIPBLASLT_ORDER_COL,                                                   \
                          HIPBLASLT_ORDER_COL,                                                   \
                          _VectorWidth),                                                         \
-         [](void*       c,                                                                      \
-            const void* a,                                                                      \
-            const void* b,                                                                      \
-            const void* alpha,                                                                  \
-            const void* beta,                                                                   \
-            bool        scalarInDevice,                                                         \
-            uint32_t    m,                                                                      \
-            uint32_t    n,                                                                      \
-            uint32_t    ldA,                                                                    \
-            uint32_t    ldB,                                                                    \
-            uint32_t    ldC,                                                                    \
-            uint32_t    batchSize,                                                              \
-            uint32_t    batchStride,                                                            \
-            bool        opA,                                                                    \
-            bool        opB,                                                                    \
-            hipStream_t stream) {                                                               \
+         [](void*              c,                                                               \
+            const void*        a,                                                               \
+            const void*        b,                                                               \
+            const void*        alpha,                                                           \
+            const void*        beta,                                                            \
+            bool               scalarInDevice,                                                  \
+            uint32_t           m,                                                               \
+            uint32_t           n,                                                               \
+            uint32_t           ldA,                                                             \
+            uint32_t           ldB,                                                             \
+            uint32_t           ldC,                                                             \
+            uint32_t           batchSize,                                                       \
+            uint32_t           batchStride,                                                     \
+            bool               opA,                                                             \
+            bool               opB,                                                             \
+            hipStream_t        stream,                                                          \
+            const std::string& kernelName) {                                                    \
              return launchTransformKernel<_DType,                                               \
                                           _ScaleType,                                           \
                                           true,                                                 \
@@ -363,7 +432,8 @@ namespace
                  batchStride,                                                                   \
                  opA,                                                                           \
                  opB,                                                                           \
-                 stream);                                                                       \
+                 stream,                                                                        \
+                 kernelName);                                                                   \
          }},                                                                                    \
         {std::make_tuple(_DTYPE,                                                                \
                          _SCALETYPE,                                                            \
@@ -371,22 +441,23 @@ namespace
                          HIPBLASLT_ORDER_COL,                                                   \
                          HIPBLASLT_ORDER_ROW,                                                   \
                          _VectorWidth),                                                         \
-         [](void*       c,                                                                      \
-            const void* a,                                                                      \
-            const void* b,                                                                      \
-            const void* alpha,                                                                  \
-            const void* beta,                                                                   \
-            bool        scalarInDevice,                                                         \
-            uint32_t    m,                                                                      \
-            uint32_t    n,                                                                      \
-            uint32_t    ldA,                                                                    \
-            uint32_t    ldB,                                                                    \
-            uint32_t    ldC,                                                                    \
-            uint32_t    batchSize,                                                              \
-            uint32_t    batchStride,                                                            \
-            bool        opA,                                                                    \
-            bool        opB,                                                                    \
-            hipStream_t stream) {                                                               \
+         [](void*              c,                                                               \
+            const void*        a,                                                               \
+            const void*        b,                                                               \
+            const void*        alpha,                                                           \
+            const void*        beta,                                                            \
+            bool               scalarInDevice,                                                  \
+            uint32_t           m,                                                               \
+            uint32_t           n,                                                               \
+            uint32_t           ldA,                                                             \
+            uint32_t           ldB,                                                             \
+            uint32_t           ldC,                                                             \
+            uint32_t           batchSize,                                                       \
+            uint32_t           batchStride,                                                     \
+            bool               opA,                                                             \
+            bool               opB,                                                             \
+            hipStream_t        stream,                                                          \
+            const std::string& kernelName) {                                                    \
              return launchTransformKernel<_DType,                                               \
                                           _ScaleType,                                           \
                                           true,                                                 \
@@ -410,7 +481,8 @@ namespace
                  batchStride,                                                                   \
                  opA,                                                                           \
                  opB,                                                                           \
-                 stream);                                                                       \
+                 stream,                                                                        \
+                 kernelName);                                                                   \
          }},                                                                                    \
         {std::make_tuple(_DTYPE,                                                                \
                          _SCALETYPE,                                                            \
@@ -418,22 +490,23 @@ namespace
                          HIPBLASLT_ORDER_ROW,                                                   \
                          HIPBLASLT_ORDER_COL,                                                   \
                          _VectorWidth),                                                         \
-         [](void*       c,                                                                      \
-            const void* a,                                                                      \
-            const void* b,                                                                      \
-            const void* alpha,                                                                  \
-            const void* beta,                                                                   \
-            bool        scalarInDevice,                                                         \
-            uint32_t    m,                                                                      \
-            uint32_t    n,                                                                      \
-            uint32_t    ldA,                                                                    \
-            uint32_t    ldB,                                                                    \
-            uint32_t    ldC,                                                                    \
-            uint32_t    batchSize,                                                              \
-            uint32_t    batchStride,                                                            \
-            bool        opA,                                                                    \
-            bool        opB,                                                                    \
-            hipStream_t stream) {                                                               \
+         [](void*              c,                                                               \
+            const void*        a,                                                               \
+            const void*        b,                                                               \
+            const void*        alpha,                                                           \
+            const void*        beta,                                                            \
+            bool               scalarInDevice,                                                  \
+            uint32_t           m,                                                               \
+            uint32_t           n,                                                               \
+            uint32_t           ldA,                                                             \
+            uint32_t           ldB,                                                             \
+            uint32_t           ldC,                                                             \
+            uint32_t           batchSize,                                                       \
+            uint32_t           batchStride,                                                     \
+            bool               opA,                                                             \
+            bool               opB,                                                             \
+            hipStream_t        stream,                                                          \
+            const std::string& kernelName) {                                                    \
              return launchTransformKernel<_DType,                                               \
                                           _ScaleType,                                           \
                                           true,                                                 \
@@ -457,63 +530,68 @@ namespace
                  batchStride,                                                                   \
                  opA,                                                                           \
                  opB,                                                                           \
-                 stream);                                                                       \
+                 stream,                                                                        \
+                 kernelName);                                                                   \
          }},                                                                                    \
-        {std::make_tuple(_DTYPE,                                                                \
-                         _SCALETYPE,                                                            \
-                         HIPBLASLT_ORDER_ROW,                                                   \
-                         HIPBLASLT_ORDER_ROW,                                                   \
-                         HIPBLASLT_ORDER_ROW,                                                   \
-                         _VectorWidth),                                                         \
-         [](void*       c,                                                                      \
-            const void* a,                                                                      \
-            const void* b,                                                                      \
-            const void* alpha,                                                                  \
-            const void* beta,                                                                   \
-            bool        scalarInDevice,                                                         \
-            uint32_t    m,                                                                      \
-            uint32_t    n,                                                                      \
-            uint32_t    ldA,                                                                    \
-            uint32_t    ldB,                                                                    \
-            uint32_t    ldC,                                                                    \
-            uint32_t    batchSize,                                                              \
-            uint32_t    batchStride,                                                            \
-            bool        opA,                                                                    \
-            bool        opB,                                                                    \
-            hipStream_t stream) {                                                               \
-             return launchTransformKernel<_DType,                                               \
-                                          _ScaleType,                                           \
-                                          true,                                                 \
-                                          true,                                                 \
-                                          true,                                                 \
-                                          _NumThreadsM,                                         \
-                                          _NumThreadsN,                                         \
-                                          _VectorWidth>(                                        \
-                 static_cast<_DType*>(c),                                                       \
-                 static_cast<const _DType*>(a),                                                 \
-                 static_cast<const _DType*>(b),                                                 \
-                 reinterpret_cast<const _ScaleType*>(alpha),                                    \
-                 reinterpret_cast<const _ScaleType*>(beta),                                     \
-                 scalarInDevice,                                                                \
-                 m,                                                                             \
-                 n,                                                                             \
-                 ldA,                                                                           \
-                 ldB,                                                                           \
-                 ldC,                                                                           \
-                 batchSize,                                                                     \
-                 batchStride,                                                                   \
-                 opA,                                                                           \
-                 opB,                                                                           \
-                 stream);                                                                       \
-         }},
+    {                                                                                           \
+        std::make_tuple(_DTYPE,                                                                 \
+                        _SCALETYPE,                                                             \
+                        HIPBLASLT_ORDER_ROW,                                                    \
+                        HIPBLASLT_ORDER_ROW,                                                    \
+                        HIPBLASLT_ORDER_ROW,                                                    \
+                        _VectorWidth),                                                          \
+            [](void*              c,                                                            \
+               const void*        a,                                                            \
+               const void*        b,                                                            \
+               const void*        alpha,                                                        \
+               const void*        beta,                                                         \
+               bool               scalarInDevice,                                               \
+               uint32_t           m,                                                            \
+               uint32_t           n,                                                            \
+               uint32_t           ldA,                                                          \
+               uint32_t           ldB,                                                          \
+               uint32_t           ldC,                                                          \
+               uint32_t           batchSize,                                                    \
+               uint32_t           batchStride,                                                  \
+               bool               opA,                                                          \
+               bool               opB,                                                          \
+               hipStream_t        stream,                                                       \
+               const std::string& kernelName) {                                                 \
+                return launchTransformKernel<_DType,                                            \
+                                             _ScaleType,                                        \
+                                             true,                                              \
+                                             true,                                              \
+                                             true,                                              \
+                                             _NumThreadsM,                                      \
+                                             _NumThreadsN,                                      \
+                                             _VectorWidth>(                                     \
+                    static_cast<_DType*>(c),                                                    \
+                    static_cast<const _DType*>(a),                                              \
+                    static_cast<const _DType*>(b),                                              \
+                    reinterpret_cast<const _ScaleType*>(alpha),                                 \
+                    reinterpret_cast<const _ScaleType*>(beta),                                  \
+                    scalarInDevice,                                                             \
+                    m,                                                                          \
+                    n,                                                                          \
+                    ldA,                                                                        \
+                    ldB,                                                                        \
+                    ldC,                                                                        \
+                    batchSize,                                                                  \
+                    batchStride,                                                                \
+                    opA,                                                                        \
+                    opB,                                                                        \
+                    stream,                                                                     \
+                    kernelName);                                                                \
+            }                                                                                   \
+    }
 
-    using MatrixTransformKernelKey = std::tuple<hipDataType,
-                                                hipDataType,
-                                                hipblasLtOrder_t,
-                                                hipblasLtOrder_t,
-                                                hipblasLtOrder_t,
-                                                size_t>;
-    using MatrixTransformFunction  = std::function<void(void*,
+    using MatrixTransformKernelKey    = std::tuple<hipDataType,
+                                                   hipDataType,
+                                                   hipblasLtOrder_t,
+                                                   hipblasLtOrder_t,
+                                                   hipblasLtOrder_t,
+                                                   size_t>;
+    using MatrixTransformFunction     = std::function<void(void*,
                                                        const void*,
                                                        const void*,
                                                        const void*,
@@ -528,29 +606,127 @@ namespace
                                                        uint32_t,
                                                        bool,
                                                        bool,
-                                                       hipStream_t)>;
+                                                       hipStream_t,
+                                                       const std::string&)>;
+    using MatrixTransformFunctionName = std::string;
+    // disable clang-format of compact view.
+    // clang-format off
+    std::map<MatrixTransformKernelKey, MatrixTransformFunctionName> transformKernelNames{
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 1, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 1, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 1, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 1, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 1, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 1, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 1, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 1, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 0, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 0, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 0, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 0, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 0, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 0, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 0, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(S, S, 0, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 1, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 1, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 1, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 1, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 1, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 1, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 1, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 1, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 0, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 0, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 0, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 0, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 0, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 0, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 0, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, H, 0, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 1, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 1, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 1, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 1, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 1, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 1, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 1, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 1, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 0, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 0, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 0, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 0, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 0, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 0, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 0, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(H, S, 0, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 1, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 1, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 1, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 1, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 1, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 1, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 1, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 1, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 0, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 0, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 0, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 0, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 0, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 0, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 0, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(BF16, S, 0, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 1, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 1, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 1, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 1, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 1, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 1, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 1, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 1, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 0, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 0, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 0, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 0, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 0, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 0, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 0, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(I8, S, 0, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 1, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 1, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 1, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 1, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 1, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 1, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 1, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 1, 0, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 0, 1, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 0, 1, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 0, 1, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 0, 1, 0, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 1), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 0, 0, 1, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, 4), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 0, 0, 1, 16, 16, 4))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 1), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 0, 0, 0, 16, 16, 1))},
+        {std::make_tuple(HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, 4), TO_STRING(TRANSFORM_FUNC_NAME(I32, S, 0, 0, 0, 16, 16, 4))}
+    };
+    // clang-format on
+
     std::map<MatrixTransformKernelKey, MatrixTransformFunction> transformKernels{
         {// vector width = 4
-         GEN_COMBINATION(HIP_R_32F, HIP_R_32F, hipblasLtFloat, hipblasLtFloat, 16, 16, 4)
-             GEN_COMBINATION(HIP_R_16F, HIP_R_16F, hipblasLtHalf, hipblasLtHalf, 16, 16, 4)
-                 GEN_COMBINATION(HIP_R_16F, HIP_R_32F, hipblasLtHalf, hipblasLtFloat, 16, 16, 4)
-                     GEN_COMBINATION(
-                         HIP_R_16BF, HIP_R_32F, hipblasLtBfloat16, hipblasLtFloat, 16, 16, 4)
-                         GEN_COMBINATION(
-                             HIP_R_8I, HIP_R_32F, hipblasLtInt8, hipblasLtFloat, 16, 16, 4)
-                             GEN_COMBINATION(
-                                 HIP_R_32I, HIP_R_32F, hipblasLtInt32, hipblasLtFloat, 16, 16, 4)
+         GEN_COMBINATION(HIP_R_32F, HIP_R_32F, hipblasLtFloat, hipblasLtFloat, 16, 16, 4),
+         GEN_COMBINATION(HIP_R_16F, HIP_R_16F, hipblasLtHalf, hipblasLtHalf, 16, 16, 4),
+         GEN_COMBINATION(HIP_R_16F, HIP_R_32F, hipblasLtHalf, hipblasLtFloat, 16, 16, 4),
+         GEN_COMBINATION(HIP_R_16BF, HIP_R_32F, hipblasLtBfloat16, hipblasLtFloat, 16, 16, 4),
+         GEN_COMBINATION(HIP_R_8I, HIP_R_32F, hipblasLtInt8, hipblasLtFloat, 16, 16, 4),
+         GEN_COMBINATION(HIP_R_32I, HIP_R_32F, hipblasLtInt32, hipblasLtFloat, 16, 16, 4),
 
          // vector width = 1
-         GEN_COMBINATION(HIP_R_32F, HIP_R_32F, hipblasLtFloat, hipblasLtFloat, 16, 16, 1)
-             GEN_COMBINATION(HIP_R_16F, HIP_R_16F, hipblasLtHalf, hipblasLtHalf, 16, 16, 1)
-                 GEN_COMBINATION(HIP_R_16F, HIP_R_32F, hipblasLtHalf, hipblasLtFloat, 16, 16, 1)
-                     GEN_COMBINATION(
-                         HIP_R_16BF, HIP_R_32F, hipblasLtBfloat16, hipblasLtFloat, 16, 16, 1)
-                         GEN_COMBINATION(
-                             HIP_R_8I, HIP_R_32F, hipblasLtInt8, hipblasLtFloat, 16, 16, 1)
-                             GEN_COMBINATION(
-                                 HIP_R_32I, HIP_R_32F, hipblasLtInt32, hipblasLtFloat, 16, 16, 1)}};
+         GEN_COMBINATION(HIP_R_32F, HIP_R_32F, hipblasLtFloat, hipblasLtFloat, 16, 16, 1),
+         GEN_COMBINATION(HIP_R_16F, HIP_R_16F, hipblasLtHalf, hipblasLtHalf, 16, 16, 1),
+         GEN_COMBINATION(HIP_R_16F, HIP_R_32F, hipblasLtHalf, hipblasLtFloat, 16, 16, 1),
+         GEN_COMBINATION(HIP_R_16BF, HIP_R_32F, hipblasLtBfloat16, hipblasLtFloat, 16, 16, 1),
+         GEN_COMBINATION(HIP_R_8I, HIP_R_32F, hipblasLtInt8, hipblasLtFloat, 16, 16, 1),
+         GEN_COMBINATION(HIP_R_32I, HIP_R_32F, hipblasLtInt32, hipblasLtFloat, 16, 16, 1)}};
 }
 
 rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 handle,
@@ -594,9 +770,10 @@ rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 han
         return rocblaslt_status_internal_error;
     }
 
-    bool transA         = desc->opA == HIPBLAS_OP_T;
-    bool transB         = desc->opB == HIPBLAS_OP_T;
-    bool scalarInDevice = desc->pointerMode == HIPBLASLT_POINTER_MODE_DEVICE;
+    bool       transA         = desc->opA == HIPBLAS_OP_T;
+    bool       transB         = desc->opB == HIPBLAS_OP_T;
+    bool       scalarInDevice = desc->pointerMode == HIPBLASLT_POINTER_MODE_DEVICE;
+    const auto kernelName     = transformKernelNames.at(key);
 
     transformKernels.at(key)(C,
                              A,
@@ -613,7 +790,8 @@ rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 han
                              layoutA->batch_stride,
                              transA,
                              transB,
-                             stream);
+                             stream,
+                             kernelName);
 
     return rocblaslt_status_success;
 }
