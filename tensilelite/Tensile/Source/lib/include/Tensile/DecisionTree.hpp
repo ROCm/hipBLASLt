@@ -228,10 +228,22 @@ namespace Tensile
 
             virtual ~Forest() = default;
 
+            virtual ReturnValue pridictBestMatch(Object const& problem, Transform transform) const = 0;
+
             virtual ReturnValue findBestMatch(Object const& problem, Transform transform) const = 0;
 
             virtual std::set<ReturnValue> matchesInOrder(Object const& problem,
                                                          Transform     transform) const = 0;
+
+            //virtual SolutionVector<ReturnValue> 
+
+            virtual std::vector<ReturnValue> getNSolutions(Transform transform,
+                                                    int numSolutions,
+                                                    bool exludeFallback = false) const = 0;
+            
+            virtual std::vector<ReturnValue> topMatches(Object const& problem,
+                                                    Transform     transform,
+                                                    int numSolutions) const = 0;
 
             virtual std::string description() const = 0;
 
@@ -261,7 +273,7 @@ namespace Tensile
             {
             }
 
-            virtual ReturnValue findBestMatch(Object const& problem,
+            virtual ReturnValue pridictBestMatch(Object const& problem,
                                               Transform     transform) const override
             {
                 bool debug = Debug::Instance().getSolutionSelectionTrace();
@@ -306,29 +318,108 @@ namespace Tensile
                     }
                 }
 
+                // The nullVallue (fallback) 
+                return nullptr;
+            }
+
+            //virtual SolutionVector<ReturnValue>
+            virtual std::vector<ReturnValue> getNSolutions(Transform transform,
+                                                    int numSolutions,
+                                                    bool exludeFallback = false) const override
+            {
+                std::vector<ReturnValue> rv;
+                std::set<ReturnValue> solutionSet;
+                
+                ReturnValue fallback_sln = transform(nullValue);
+                for(Tree const& tree : trees)
+                {
+                    ReturnValue tree_solution = tree.getSolution(transform);
+                    if(tree_solution != nullptr)
+                    {
+                        if(exludeFallback && fallback_sln != nullptr)
+                        {
+                            if(tree_solution.get() != fallback_sln.get())
+                            {
+                                solutionSet.insert(tree_solution);
+                            }
+                        }
+                        else
+                        {
+                            solutionSet.insert(tree_solution);
+                        }
+                    }
+
+                    if(rv.size() == numSolutions)
+                    {
+                        for (auto& it : solutionSet) 
+                        {
+                            rv.push_back(it);
+                        }
+                        return rv;
+                    }
+                }
+
+                for (auto& it : solutionSet) 
+                {
+                    rv.push_back(it);
+                }
+                return rv;
+            }
+
+            virtual ReturnValue findBestMatch(Object const& problem,
+                                              Transform     transform) const override
+            {
+                bool debug = Debug::Instance().getSolutionSelectionTrace();
+
+                ReturnValue pridicted_solution = pridictBestMatch(problem, transform);
+
+                if(pridicted_solution != nullptr)
+                {
+                    return pridicted_solution;
+                }
+
+                // The nullVallue is the fallback kernel 
+                ReturnValue fallbackSolution = transform(nullValue);
                 if(debug)
                 {
                     std::cout << "Failed to find a valid kernel after searching the full ensamble. "
                                  "will return the fallback kernel."
                               << std::endl;
 
-                    if(transform(nullValue) == nullptr)
+                    
+                    if(fallbackSolution == nullptr)
                     {
-                        std::cout << "No fallback kerenel is defined. Will return a null pointer";
+                        std::cout << "Failed to get a fallback soluion, will get the first valid solution in the library";
                         std::cout << std::endl;
                     }
                     else
                     {
                         std::cout << "Returning the fallback kernel: "
-                                  << transform(nullValue)->KernelName();
-                        std::cout << " (Library Index: " << transform(nullValue)->libraryLogicIndex;
+                                  << fallbackSolution->KernelName();
+                        std::cout << " (Library Index: " << fallbackSolution->libraryLogicIndex;
                         std::cout << ")" << std::endl;
                     }
                 }
 
-                // The nullVallue (fallback) is now a soltuion library that can containe a nullporter
-                // as a solution (indecating that no fallback solution is defined in the logic).
-                return transform(nullValue);
+                if(fallbackSolution == nullptr)
+                {
+                    return fallbackSolution;
+                }
+
+                // get the first soluion that is valid
+                std::vector<ReturnValue> first_nsolutions = getNSolutions(transform, 1);
+
+                if(first_nsolutions.empty())
+                {
+                    if(debug)
+                    {
+                        std::cout << "Failed to find a valid solution in the dtree library" << std::endl;
+                    }
+
+                    return nullptr;
+                }
+
+                return first_nsolutions.front();
             }
 
             virtual std::set<ReturnValue> matchesInOrder(Object const& problem,
@@ -342,57 +433,42 @@ namespace Tensile
 
                 return rv;
             }
-
-            virtual SolutionVector<MySolution> topMatches(Object const& problem,
-                                                    Transform     transform) const override
+            
+            virtual std::vector<ReturnValue> topMatches(Object const& problem,
+                                                    Transform     transform,
+                                                    int numSolutions) const override
             {
-                SolutionVector<MySolution> rv;
-                for(Tree const& tree : trees)
+
+                std::vector<ReturnValue> rv;
+
+                ReturnValue pridicted_solution = pridictBestMatch(problem, transform);
+
+                if(pridicted_solution != nullptr)
                 {
-                    rv.insert(tree.getSolution(transform));
+                    rv.insert(std::end(rv), pridicted_solution);
                 }
 
+                if(rv.size() == numSolutions)
+                    return rv;
+
+                //if we failed to get all requested solutions try to add the fallback
+                ReturnValue fallback_sln = transform(nullValue);
+
+                if(fallback_sln != nullptr)
+                {
+                    rv.insert(std::end(rv), fallback_sln);
+                }
+
+                if(rv.size() == numSolutions)
+                    return rv;
+
+                int nextNSolutionCount = numSolutions - rv.size();
+                std::vector<ReturnValue> first_nsolutions = getNSolutions(transform, nextNSolutionCount, true);
+
+                rv.insert(std::end(rv), std::begin(first_nsolutions), std::end(first_nsolutions));
+               
                 return rv;
             }
-
-        //     virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
-        //                                                     Hardware const&  hardware,
-        //                                                     int numSolutions) const override
-        // {
-
-        //     if(searchType != SolutionLibrarySearchType::DEFAULT)
-        //     {
-        //         throw std::runtime_error("Dicision tree only supports default search mode.");
-        //     }
-        //     typename Forest::Transform transform
-        //         = [&](Element library) -> std::shared_ptr<MySolution> {
-        //         return library->findBestSolution(problem, hardware);
-        //     };
-
-        //     //topMatches
-        //     //return forest->matchesInOrder(problem, transform);
-        //     //SolutionVector<MySolution> rv, solutions;
-
-
-        //     // for(auto const& row : rows)
-        //     // {
-        //     //     if(row.first(problem, hardware))
-        //     //     {
-        //     //         solutions
-        //     //             = row.second->findTopSolutions(problem, hardware, numSolutions - rv.size());
-                    
-        //     //         //if (dynamic_cast<Predicates::Contraction::EqualityMatching *>(row.first.value.get()))
-        //     //         //    for (auto &sol : solutions)
-        //     //         //        sol->tag = MySolution::MatchingTag::Equal;
-
-        //     //         rv.insert(std::end(rv), std::begin(solutions), std::end(solutions));
-        //     //         if(rv.size() == numSolutions)
-        //     //             return rv;
-        //     //     }
-        //     // }
-
-        //     //return rv;
-        // }
 
             virtual std::string description() const override
             {

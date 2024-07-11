@@ -50,6 +50,9 @@ namespace Tensile
     {
         using Element = std::shared_ptr<SolutionLibrary<MyProblem, MySolution>>;
         using Forest  = DecisionTree::Forest<MyProblem, Element, std::shared_ptr<MySolution>>;
+        using MySolutionVector = SolutionVector<MySolution>;
+
+
         std::shared_ptr<Forest> forest;
 
         static std::string Type()
@@ -108,20 +111,23 @@ namespace Tensile
             return forest->matchesInOrder(problem, transform);
         }
 
-        virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
+        //virtual SolutionVector<MySolution>
+        
+        virtual MySolutionVector findTopSolutions(MyProblem const& problem,
                                                             Hardware const&  hardware,
                                                             int numSolutions) const override
         {
 
-            if(searchType != SolutionLibrarySearchType::DEFAULT)
-            {
-                throw std::runtime_error("Dicision tree only supports default search mode.");
-            }
+            // if(searchType != SolutionLibrarySearchType::DEFAULT)
+            // {
+            //     throw std::runtime_error("Dicision tree only supports default search mode.");
+            // }
             typename Forest::Transform transform
                 = [&](Element library) -> std::shared_ptr<MySolution> {
                 return library->findBestSolution(problem, hardware);
             };
-            return forest->topMatches(problem, transform);
+
+            return forest->topMatches(problem, transform, numSolutions);
             //SolutionVector<MySolution> rv, solutions;
 
 
