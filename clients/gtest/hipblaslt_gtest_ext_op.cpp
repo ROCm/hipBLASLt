@@ -130,6 +130,24 @@ namespace
         }
         out[0] = To(m);
     }
+
+    template<typename Ti, typename To>
+    void cpuAMax2D(To* out, const Ti* in, const std::uint32_t M, const std::uint32_t N, const std::uint32_t B, const std::uint32_t LD, const std::uint32_t Stride)
+    {
+        Ti tmp = Ti(-999);
+        for (int b=0; b<B; b++)
+        {
+            for(int n=0; n<N; n++)
+            {
+                for(int m=0; m<M; m++)
+                {
+                    tmp = max(tmp, abs(in[m + n * LD + b * Stride]));
+                }
+            }
+        }
+
+        out[0] = To(tmp);
+    }
 }
 
 enum class amaxInitMethod
@@ -169,6 +187,15 @@ struct ValueDividedbyAMaxWithRcpTestData
     float value;
 };
 
+struct AMax2DTestData
+{
+    hipDataType type;
+    hipDataType dtype;
+    uint32_t    m;
+    uint32_t    n;
+    uint32_t    ld;
+};
+
 class ExtOpSoftmaxTest : public testing::TestWithParam<uint32_t>
 {
 };
@@ -201,6 +228,13 @@ class ExtOpValueDividedbyAMaxWithRcpTest : public testing::TestWithParam<ValueDi
 {
 };
 class ExtOpValueDividedbyAMaxWithRcpUnsupportedDatatypeTest : public testing::TestWithParam<hipDataType>
+{
+};
+
+class ExtOpAMax2DTest : public testing::TestWithParam<AMax2DTestData>
+{
+};
+class ExtOpAMax2DUnsupportedDatatypeTest : public testing::TestWithParam<hipDataType>
 {
 };
 
@@ -514,7 +548,7 @@ void ValueDividedbyAMaxWithRcpTest(hipDataType type, hipDataType dtype, std::siz
     hipblaslt_init_hpl(cpuInput, m * n, 1, m * n);
 
     hipErr = hipMemcpyHtoD(gpuInput, cpuInput.data(), m * n * sizeof(Ti));
-    hipErr = hipMemset(gpuWorkSpace, 0, m * n * sizeof(Ti));
+    hipErr = hipMemset(gpuWorkSpace, 0, 4096 * sizeof(Ti));
     hipErr = hipMemset(gpuSync, 0, sizeof(std::int32_t));
 
     hipStream_t stream{};
@@ -533,6 +567,52 @@ void ValueDividedbyAMaxWithRcpTest(hipDataType type, hipDataType dtype, std::siz
     hipErr = hipStreamDestroy(stream);
     hipErr = hipFree(gpuOutput);
     hipErr = hipFree(gpuOutputRcp);
+    hipErr = hipFree(gpuInput);
+    hipErr = hipFree(gpuWorkSpace);
+    hipErr = hipFree(gpuSync);
+}
+
+template <typename Ti, typename To>
+void AMax2DTest(hipDataType type, hipDataType dtype, std::size_t m, std::size_t n, std::size_t ld)
+{
+    std::size_t numAllocIn  = m + (n-1) * ld;
+    std::size_t numElements = m * n;
+
+    To* gpuOutput{nullptr};
+    Ti* gpuInput{nullptr};
+    Ti* gpuWorkSpace{nullptr};
+    std::int32_t* gpuSync{nullptr};
+
+    auto hipErr = hipMalloc(&gpuOutput, sizeof(To));
+    hipErr      = hipMalloc(&gpuInput, numAllocIn * sizeof(Ti));
+    hipErr      = hipMalloc(&gpuWorkSpace, 4096 * sizeof(Ti));
+    hipErr      = hipMalloc(&gpuSync, sizeof(std::int32_t));
+
+    std::vector<To> refOutput(1, -999.f);
+    std::vector<To> refOutputRcp(1, -999.f);
+    std::vector<To> cpuOutput(1, -999.f);
+    std::vector<To> cpuOutputRcp(1, -999.f);
+    std::vector<Ti> cpuInput(numAllocIn, 999.f);
+
+    hipblaslt_init_hpl(cpuInput, m, n, ld);
+
+    hipErr = hipMemcpyHtoD(gpuInput, cpuInput.data(), numAllocIn * sizeof(Ti));
+    hipErr = hipMemset(gpuWorkSpace, 0, 4096 * sizeof(Ti));
+    hipErr = hipMemset(gpuSync, 0, sizeof(std::int32_t));
+
+    hipStream_t stream{};
+    hipErr = hipStreamCreate(&stream);
+    auto hipblasltErr = hipblasltExtFastAMax2D(type, dtype, gpuOutput, gpuInput, gpuWorkSpace, gpuSync, m, n, ld, stream);
+    hipErr = hipDeviceSynchronize();
+
+    hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, sizeof(To));
+
+    cpuAMax2D(refOutput.data(), cpuInput.data(), m, n, 1, ld, numAllocIn);
+
+    EXPECT_NEAR(float(refOutput[0]), float(cpuOutput[0]), 1e-5);
+
+    hipErr = hipStreamDestroy(stream);
+    hipErr = hipFree(gpuOutput);
     hipErr = hipFree(gpuInput);
     hipErr = hipFree(gpuWorkSpace);
     hipErr = hipFree(gpuSync);
@@ -643,6 +723,34 @@ TEST_P(ExtOpValueDividedbyAMaxWithRcpTest, amaxSuccess)
     }
 }
 
+TEST_P(ExtOpAMax2DTest, amaxSuccess)
+{
+    AMax2DTestData testdata = GetParam();
+    int deviceId;
+    hipDeviceProp_t deviceProperties;
+    static_cast<void>(hipGetDevice(&deviceId));
+    static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+    if(gpu_arch_match(deviceProperties.gcnArchName, "11?"))
+        return;
+
+    if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_32F)
+    {
+        AMax2DTest<float, float>(testdata.type, testdata.dtype, testdata.m, testdata.n, testdata.ld);
+    }
+    else if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_16F)
+    {
+        AMax2DTest<float, hipblasLtHalf>(testdata.type, testdata.dtype, testdata.m, testdata.n, testdata.ld);
+    }
+    else if(testdata.type == HIP_R_16F && testdata.dtype == HIP_R_32F)
+    {
+        AMax2DTest<hipblasLtHalf, float>(testdata.type, testdata.dtype, testdata.m, testdata.n, testdata.ld);
+    }
+    else if(testdata.type == HIP_R_16F && testdata.dtype == HIP_R_16F)
+    {
+        AMax2DTest<hipblasLtHalf, hipblasLtHalf>(testdata.type, testdata.dtype, testdata.m, testdata.n, testdata.ld);
+    }
+}
+
 TEST_P(ExtOpSoftmaxUnsupportedDatatypeTest, softmaxFailureUnsupportedDatatype)
 {
     auto hipblasltErr = hipblasltExtSoftmax(GetParam(), 16, 16, 1, nullptr, nullptr, nullptr);
@@ -700,6 +808,12 @@ TEST(ExtOpTest, amaxWithScaleFailureInvalidValue)
 TEST_P(ExtOpValueDividedbyAMaxWithRcpUnsupportedDatatypeTest, valueDividedbyAMaxWithRcpFailureUnsupportedDatatype)
 {
     auto hipblasltErr = hipblasltExtFastValueDividedByAMaxWithRcp(GetParam(), GetParam(), nullptr, nullptr, nullptr, nullptr, nullptr, 0, 0, 0, nullptr);
+    EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_NOT_SUPPORTED);
+}
+
+TEST_P(ExtOpAMax2DUnsupportedDatatypeTest, amax2DFailureUnsupportedDatatype)
+{
+    auto hipblasltErr = hipblasltExtFastAMax2D(GetParam(), GetParam(), nullptr, nullptr, nullptr, nullptr, 0, 0, 0, nullptr);
     EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_NOT_SUPPORTED);
 }
 
@@ -811,4 +925,38 @@ INSTANTIATE_TEST_SUITE_P(
                                   ValueDividedbyAMaxWithRcpTestData{HIP_R_16F, HIP_R_16F, 1, 1, 10},
                                   ValueDividedbyAMaxWithRcpTestData{HIP_R_16F, HIP_R_16F, 100, 213, 10},
                                   ValueDividedbyAMaxWithRcpTestData{HIP_R_16F, HIP_R_16F, 1335, 6666, 10}
+    ));
+
+INSTANTIATE_TEST_SUITE_P(ExtOpTest,
+                         ExtOpAMax2DUnsupportedDatatypeTest,
+                         testing::Values<hipDataType>(HIP_R_16BF));
+
+INSTANTIATE_TEST_SUITE_P(
+    ExtOpTest,
+    ExtOpAMax2DTest,
+    testing::Values<AMax2DTestData>(
+                                  AMax2DTestData{HIP_R_32F, HIP_R_32F, 8, 8, 8},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_32F, 100, 213, 100},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_32F, 1335, 6666, 1335},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_16F, 8, 8, 8},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_16F, 100, 213, 100},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_16F, 1335, 6666, 1335},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_32F, 8, 8, 8},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_32F, 100, 213, 100},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_32F, 1335, 6666, 1335},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_16F, 8, 8, 8},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_16F, 100, 213, 100},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_16F, 1335, 6666, 1335},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_32F, 8, 8, 128},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_32F, 100, 213, 256},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_32F, 1335, 6666, 2048},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_16F, 8, 8, 128},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_16F, 100, 213, 256},
+                                  AMax2DTestData{HIP_R_32F, HIP_R_16F, 1335, 6666, 2048},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_32F, 8, 8, 128},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_32F, 100, 213, 256},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_32F, 1335, 6666, 2048},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_16F, 8, 8, 128},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_16F, 100, 213, 256},
+                                  AMax2DTestData{HIP_R_16F, HIP_R_16F, 1335, 6666, 2048}
     ));

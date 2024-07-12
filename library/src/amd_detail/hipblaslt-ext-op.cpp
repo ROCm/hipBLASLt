@@ -223,6 +223,44 @@ hipblasStatus_t hipblasltExtFastAMaxWithScale(const hipDataType datatype,
                                      stream);
 }
 
+hipblasStatus_t hipblasltAMax2DRun(const hipDataType datatype,
+                                 const hipDataType outDatatype,
+                                 void*             output,
+                                 const void*       input,
+                                 void*             workSpace,
+                                 void*             sync,
+                                 uint32_t          m,
+                                 uint32_t          n,
+                                 uint32_t          ld,
+                                 uint32_t          is_div,
+                                 float             div,
+                                 hipStream_t       stream);
+
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastAMax2D(const hipDataType datatype,
+                                                        const hipDataType outDatatype,
+                                                        void*             output,
+                                                        const void*       input,
+                                                        void*             workSpace,
+                                                        void*             sync,
+                                                        uint32_t          m,
+                                                        uint32_t          n,
+                                                        uint32_t          ld,
+                                                        hipStream_t       stream)
+{
+    return hipblasltAMax2DRun(datatype,
+                              outDatatype,
+                              output,
+                              input,
+                              workSpace,
+                              sync,
+                              m,
+                              n,
+                              ld,
+                              0,
+                              0,
+                              stream);
+}
+
 namespace
 {
     constexpr char DEFAULT_EXT_OP_LIBRARY_PATH[]
@@ -352,6 +390,10 @@ namespace
         return adapters;
     }
 }
+
+
+
+
 
 hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
                                     uint32_t    m,
@@ -665,6 +707,110 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     invocation.args.append("is_div", is_div);
     invocation.args.append("idv", div);
     invocation.args.append("workSize", workSize);
+    invocation.args.append("numGroups", numGroups);
+
+    err = adapter->launchKernel(invocation, stream, nullptr, nullptr);
+
+    if(err)
+    {
+        return HIPBLAS_STATUS_INTERNAL_ERROR;
+    }
+
+    return HIPBLAS_STATUS_SUCCESS;
+}
+
+hipblasStatus_t hipblasltAMax2DRun(const hipDataType datatype,
+                                 const hipDataType outDatatype,
+                                 void*             output,
+                                 const void*       input,
+                                 void*             workSpace,
+                                 void*             sync,
+                                 uint32_t          m,
+                                 uint32_t          n,
+                                 uint32_t          ld,
+                                 uint32_t          is_div,
+                                 float             div,
+                                 hipStream_t       stream)
+{
+    if(datatype != HIP_R_32F && datatype != HIP_R_16F)
+    {
+        return HIPBLAS_STATUS_NOT_SUPPORTED;
+    }
+
+    if(outDatatype != HIP_R_32F && outDatatype != HIP_R_16F)
+    {
+        return HIPBLAS_STATUS_NOT_SUPPORTED;
+    }
+
+    if(output == nullptr || input == nullptr || m == 0 || n == 0)
+        return HIPBLAS_STATUS_INVALID_VALUE;
+
+    if (m < 8)
+        return HIPBLAS_STATUS_INVALID_VALUE;
+
+    uint32_t    len = m * n;
+    int         currentDeviceId{};
+    auto        err       = hipGetDevice(&currentDeviceId);
+    auto&       adapter   = extOpLibraries().at(currentDeviceId);
+    auto        gpu       = Tensile::hip::GetCurrentDevice();
+    const auto  archName  = trimArchName(gpu->archName());
+    auto&       masterLib = getExtOpMasterLibrary();
+    const auto& lib
+        = masterLib.getLibrary(archName, AMax2DSolutionLibrary::opName, hipDataTypeo_char(datatype))
+              ->as<AMax2DSolutionLibrary>();
+    auto sol = lib.findBestSolution(AMax2DProblem(len,
+                                                hipDataType_to_tensile_type(datatype),
+                                                hipDataType_to_tensile_type(outDatatype)),
+                                    *gpu);
+
+    // based on benchmarks
+    int workSize = 16384;
+    int amax_gsu = 128;
+
+    if(len <= 32768)
+        amax_gsu = 1;
+    else if(len <= 1048576)
+        workSize = 16384;
+    else if(len <= 134217728)
+        workSize = 32768;
+    else
+        workSize = 65536;
+
+    const auto kernelName = sol->name();
+    err                   = adapter->initKernel(kernelName);
+    const std::uint32_t vector      = 16 / elementNumBytes(datatype);
+    const std::uint32_t vectorM     = (m + vector - 1) / vector;
+    const std::uint32_t workVectors = workSize / vector;
+    int numGroups         = (workSpace && sync) ? amax_gsu : 1;
+    numGroups             = (archName.find("gfx94") != -1) ? numGroups : 1;
+    numGroups             = min(int(((vectorM * n) + workVectors - 1) / workVectors), int(numGroups));
+
+    Tensile::KernelInvocation invocation;
+    invocation.kernelName      = kernelName;
+    invocation.codeObjectFile  = sol->getCodeObjectPath();
+    invocation.workGroupSize.x = sol->getNumWorkitems();
+    invocation.workGroupSize.y = 1;
+    invocation.workGroupSize.z = 1;
+    invocation.numWorkGroups.x = numGroups;
+    invocation.numWorkGroups.y = 1;
+    invocation.numWorkGroups.z = 1;
+    invocation.numWorkItems.x  = sol->getNumWorkitems() * numGroups;
+    invocation.numWorkItems.y  = 1;
+    invocation.numWorkItems.z  = 1;
+    invocation.sharedMemBytes  = 32 * sizeof(float);
+
+    invocation.args            = Tensile::KernelArguments(false);
+    invocation.args.reserve(128, 12);
+    invocation.args.append("output", output);
+    invocation.args.append("input", input);
+    invocation.args.append("workSpace", workSpace);
+    invocation.args.append("sync", sync);
+    invocation.args.append("m", m);
+    invocation.args.append("n", n);
+    invocation.args.append("ld", ld);
+    invocation.args.append("is_div", is_div);
+    invocation.args.append("div", div);
+    invocation.args.append("workVectors", workVectors);
     invocation.args.append("numGroups", numGroups);
 
     err = adapter->launchKernel(invocation, stream, nullptr, nullptr);
