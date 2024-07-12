@@ -931,6 +931,8 @@ namespace
 #else
         std::shared_ptr<hipDeviceProp_t> m_deviceProp;
 #endif
+        std::string m_tensileLibPath;
+
         // The adapter object. mutable is used to allow adapters to be modified
         // even when they are stored in a const vector which is immutable in size
         struct adapter_s
@@ -1158,7 +1160,7 @@ namespace
                 // Load library
                 auto lib = Tensile::LoadLibraryFilePreload<Tensile::ContractionProblemGemm>(
                     tensileLibPath,
-                    std::vector<Tensile::LazyLoadingInit>{m_deviceSet.begin(), m_deviceSet.end()});
+                    std::vector<Tensile::LazyLoadingInit>{});
 #else
                 // Get device prop
                 hipDeviceProp_t prop;
@@ -1177,6 +1179,7 @@ namespace
                 {
                     using MSL = Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>;
                     m_library = std::dynamic_pointer_cast<MSL>(lib);
+                    m_tensileLibPath = tensileLibPath;
                 }
                 return 0;
             }();
@@ -1187,6 +1190,19 @@ namespace
                 // rocblaslt_abort();
             }
         }
+
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+        // A workaround for getSolutionsFromIndex and isSolutionSupported with lazy_lib_load.
+        // preload() shouldn't be called more than once.
+        void preload()
+        {
+            auto lib = Tensile::LoadLibraryFilePreload<Tensile::ContractionProblemGemm>(
+                m_tensileLibPath,
+                std::vector<Tensile::LazyLoadingInit>{m_deviceSet.begin(), m_deviceSet.end()});
+            using MSL = Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>;
+            m_library = std::dynamic_pointer_cast<MSL>(lib);
+        }
+#endif
     };
 
     // Return the library and adapter for the current HIP device
@@ -1194,7 +1210,11 @@ namespace
         std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>>* library
         = nullptr,
         std::shared_ptr<hipDeviceProp_t>* deviceProp = nullptr,
-        int                               device     = -1)
+        int                               device     = -1
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+        , bool isPreload = false
+#endif
+    )
     try
     {
         // TensileHost is initialized on the first call
@@ -1227,6 +1247,16 @@ namespace
             }
         }
 
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+        // A workaround for getSolutionsFromIndex and isSolutionSupported when lazy_lib_load is on.
+        // preload() shouldn't be called more than once.
+        if (isPreload)
+            static int once = [&] {
+                host.preload();
+                *library = host.get_library();
+                return 0;
+            }();
+#endif
         // If an adapter is found, it is assumed that the library is initialized
         if(library)
             *library = host.get_library();
@@ -2318,8 +2348,14 @@ rocblaslt_status
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
     std::shared_ptr<Tensile::Hardware>                                               hardware;
 
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+    // isPreload = true is a workaround for lazy_lib_load
+    auto adapter           = get_library_and_adapter(&library, &deviceProp, handle->device, true);
+#else
     auto adapter           = get_library_and_adapter(&library, &deviceProp, handle->device);
+#endif
     hardware               = Tensile::hip::GetDevice(*deviceProp);
+
     int  lastSolutionIndex = library->solutions.rbegin()->first;
     bool isOutOfBound      = true;
     int  i                 = 0;
@@ -2358,7 +2394,12 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
     std::shared_ptr<Tensile::Hardware>                                               hardware;
 
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+    // isPreload = true is a workaround for lazy_lib_load
+    auto adapter          = get_library_and_adapter(&library, &deviceProp, handle->device, true);
+#else
     auto adapter          = get_library_and_adapter(&library, &deviceProp, handle->device);
+#endif
     hardware              = Tensile::hip::GetDevice(*deviceProp);
     *workspaceSizeInBytes = 0;
 

@@ -29,6 +29,7 @@
 #include <Tensile/MasterSolutionLibrary.hpp>
 #include <Tensile/SolutionLibrary.hpp>
 #include <Tensile/Tensile.hpp>
+#include <Tensile/Debug.hpp>
 
 #include <algorithm>
 
@@ -131,13 +132,15 @@ namespace Tensile
             // If condition in case two threads got into this function
             if(!library)
             {
-                auto newLibrary = LoadLibraryFile<MyProblem, MySolution>(
-                    (libraryDirectory + "/" + filePrefix + suffix).c_str());
+                std::string path = (libraryDirectory + "/" + filePrefix + suffix).c_str();
+                auto newLibrary = LoadLibraryFile<MyProblem, MySolution>(path);
                 auto mLibrary
                     = static_cast<MasterSolutionLibrary<MyProblem, MySolution>*>(newLibrary.get());
                 library = mLibrary->library;
                 std::lock_guard<std::mutex> lock(*solutionsGuard);
                 masterSolutions->insert(mLibrary->solutions.begin(), mLibrary->solutions.end());
+                if(Debug::Instance().printCodeObjectInfo())
+                    std::cout << "load placeholder library " << path << std::endl;
 
                 return mLibrary;
             }
