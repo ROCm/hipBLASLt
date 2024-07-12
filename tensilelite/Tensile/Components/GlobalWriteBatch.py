@@ -1044,6 +1044,14 @@ class GlobalWriteBatchWriter:
 
       scaleAlphaVecModule = Module("scaleAlphaVecModule")
       if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+        if not self.beta and not self.applyAlpha: # case for beta-0 and alpha == 1,(OptNLL)
+          if (self.kernel["ProblemType"]["DestDataType"].isInt8() or self.kernel["ProblemType"]["DestDataType"].isInt32() or \
+              (self.kernel["ProblemType"]["DataType"].isInt8() and self.kernel["ProblemType"]["DestDataType"].isHalf()) or \
+              (self.kernel["ProblemType"]["DataType"].isInt8() and self.kernel["ProblemType"]["DestDataType"].isBFloat16())) and \
+            self.kernel["ProblemType"]["ComputeDataType"].isSingle():
+            module.add(convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_I32_to_F32, \
+                                        inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu))
+
         for vi in range(0, self.gwvw):
           inputScaleAlphaVecVgpr = dataScaleAlphaVec + vi
           sumIdxV   = self.ss.elementSumIdx[elementIdx] + vi
@@ -1144,7 +1152,8 @@ class GlobalWriteBatchWriter:
 
       if self.beta:
         module.add(self._addSumAlphaWithCBeta(self.kernel, self.ss, self.gwvw, elementIdx, vc0, self.tmpVgpr, self.cvtVgprStruct))
-      elif ((self.parentWriter.states.useBias == DataDirection.READ) or self.kernel["ActivationFuncCall"]) and not self.applyAlpha: # case of alpha=1 and beta=0
+      elif ((self.parentWriter.states.useBias == DataDirection.READ) or self.kernel["ActivationFuncCall"]) and not self.applyAlpha \
+        and not ( self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel"))): # case of alpha=1 and beta=0
         if (self.kernel["ProblemType"]["DestDataType"].isInt8() or self.kernel["ProblemType"]["DestDataType"].isInt32() or \
             (self.kernel["ProblemType"]["DataType"].isInt8() and self.kernel["ProblemType"]["DestDataType"].isHalf()) or \
             (self.kernel["ProblemType"]["DataType"].isInt8() and self.kernel["ProblemType"]["DestDataType"].isBFloat16())) and \
