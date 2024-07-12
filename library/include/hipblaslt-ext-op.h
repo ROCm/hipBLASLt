@@ -385,6 +385,55 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastAMaxWithScale(const hipDataType
                                                                uint32_t          m,
                                                                uint32_t          n,
                                                                hipStream_t       stream);
+/*! \ingroup library_module
+ *  \brief Perform absmax  with fast algorithm on given 2-D tensor and output one value absmax(tensor) value.
+ *
+ *  \details
+ *  This function computes amax on given 2D-tensor.
+ *
+ *  @param[in]
+ *  datatype Datatype of input tensor, currently support HIP_R_32F and HIP_R_16F only.
+ *
+ *  @param[in]
+ *  outDatatype Datatype of output tensor, currently support HIP_R_32F and HIP_R_16F only.
+ *
+ *  @param[out]
+ *  output Amax tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  input 2-D tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  workSpace Amax tensor buffer (4k). can't be nullptr.
+ *
+ *  @param[in]
+ *  sync for Amax tensor buffer (1 int32_t). can't be nullptr. Must reset device memory to 0
+ *
+ *  @param[in]
+ *  m The first dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  n The second dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  stream The HIP stream where all the GPU work will be submitted.
+ *
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
+ *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m or n is 0, or input or output is nullptr.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p datatype is not (HIP_R_32F or HIP_R_16F).
+ */
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastAMax2D(const hipDataType datatype,
+                                                        const hipDataType outDatatype,
+                                                        void*             output,
+                                                        const void*       input,
+                                                        void*             workSpace,
+                                                        void*             sync,
+                                                        uint32_t          m,
+                                                        uint32_t          n,
+                                                        uint32_t          ld,
+                                                        hipStream_t       stream);
+
 #ifdef __cplusplus
 }
 #endif

@@ -100,8 +100,9 @@ add_executable( hipblaslt-bench-extop-matrixtransform client_extop_matrixtransfo
 add_executable( hipblaslt-bench-extop-softmax client_extop_softmax.cpp ../common/hipblaslt_random.cpp)
 add_executable( hipblaslt-bench-extop-amax client_extop_amax.cpp  ../common/hipblaslt_random.cpp)
 add_executable( hipblaslt-bench-extop-divided-by-amax client_extop_value_divided_by_amax_with_rcp.cpp  ../common/hipblaslt_random.cpp)
+add_executable( hipblaslt-bench-extop-amax-2d client_extop_amax_2d.cpp  ../common/hipblaslt_random.cpp)
 
-set(ext_bench_list_all hipblaslt-bench-groupedgemm-fixed-mk hipblaslt-bench-extop-layernorm hipblaslt-bench-extop-matrixtransform hipblaslt-bench-extop-softmax hipblaslt-bench-extop-amax hipblaslt-bench-extop-divided-by-amax)
+set(ext_bench_list_all hipblaslt-bench-groupedgemm-fixed-mk hipblaslt-bench-extop-layernorm hipblaslt-bench-extop-matrixtransform hipblaslt-bench-extop-softmax hipblaslt-bench-extop-amax hipblaslt-bench-extop-divided-by-amax hipblaslt-bench-extop-amax-2d)
 # Currently only build this for Ubuntu because other distro's llvm-dev version is not matching the rocm's version.
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   file(READ "/etc/os-release" OS_RELEASE)

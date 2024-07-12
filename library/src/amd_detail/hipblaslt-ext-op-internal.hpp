@@ -625,6 +625,251 @@ private:
     Tensile::SolutionVector<AMaxSolution> solutions;
 };
 
+
+class AMax2DProblem;
+class AMax2DSolution;
+
+class AMax2DSolution : public Tensile::Solution
+{
+public:
+    friend struct Tensile::Serialization::MappingTraits<AMax2DSolution,
+                                                        Tensile::Serialization::MessagePackInput>;
+
+    using Problem = AMax2DProblem;
+    std::string name() const override
+    {
+        return kernelName;
+    }
+
+    std::string description() const override
+    {
+        std::stringstream ss;
+        ss << "AMax2D, (Datatype, outDatatype) = "
+           << "(" << Tensile::ToString(datatype) << ", " << Tensile::ToString(outDatatype) << ")";
+        return ss.str();
+    }
+
+    std::uint32_t getNumWorkitems() const
+    {
+        return numWorkitems;
+    }
+
+    std::string getCodeObjectPath() const
+    {
+        return coPath;
+    }
+
+    Tensile::DataType getDatatype() const
+    {
+        return datatype;
+    }
+
+    Tensile::DataType getOutDatatype() const
+    {
+        return outDatatype;
+    }
+
+    Tensile::DataType getScaleDatatype() const
+    {
+        return scaleDatatype;
+    }
+
+    bool getIsScale() const
+    {
+        return isScale;
+    }
+
+private:
+    std::size_t       numWorkitems{};
+    std::string       coPath;
+    std::string       kernelName;
+    Tensile::DataType datatype;
+    Tensile::DataType outDatatype;
+    Tensile::DataType scaleDatatype;
+    bool              isScale;
+};
+
+template <typename IO>
+struct Tensile::Serialization::MappingTraits<AMax2DSolution, IO>
+{
+    using iot = IOTraits<IO>;
+    static void mapping(IO& io, AMax2DSolution& s)
+    {
+        std::string datatypeStr;
+        std::string outDatatypeStr;
+        std::string scaleDatatypeStr;
+
+        // add co_path, remove arch and op
+        iot::mapRequired(io, "co_path", s.coPath);
+        iot::mapRequired(io, "func_name", s.kernelName);
+        iot::mapRequired(io, "io_type", datatypeStr);
+        iot::mapRequired(io, "o_type", outDatatypeStr);
+        iot::mapRequired(io, "scale_type", scaleDatatypeStr);
+        iot::mapRequired(io, "num_workitems", s.numWorkitems);
+        iot::mapRequired(io, "is_scale", s.isScale);
+
+        if(datatypeStr == "S")
+        {
+            s.datatype = Tensile::DataType::Float;
+        }
+        else if(datatypeStr == "H")
+        {
+            s.datatype = Tensile::DataType::Half;
+        }
+        else
+        {
+            throw std::runtime_error("Invalid datatype in ext op library");
+        }
+
+        if(outDatatypeStr == "S")
+        {
+            s.outDatatype = Tensile::DataType::Float;
+        }
+        else if(outDatatypeStr == "H")
+        {
+            s.outDatatype = Tensile::DataType::Half;
+        }
+        else
+        {
+            throw std::runtime_error("Invalid datatype in ext op library");
+        }
+
+        if(scaleDatatypeStr == "F8")
+        {
+            s.scaleDatatype = Tensile::DataType::Float8;
+        }
+        else if(scaleDatatypeStr == "B8")
+        {
+            s.scaleDatatype = Tensile::DataType::BFloat8;
+        }
+        else
+        {
+            throw std::runtime_error("Invalid datatype in ext op library");
+        }
+    }
+
+    const static bool flow = false;
+};
+
+class AMax2DProblem : public Tensile::Problem
+{
+public:
+    using Solution = AMax2DSolution;
+    AMax2DProblem(uint32_t length, Tensile::DataType datatype, Tensile::DataType outDatatype)
+        : length(length)
+        , datatype(datatype)
+        , outDatatype(outDatatype)
+    {
+    }
+    AMax2DProblem(uint32_t          length,
+                  Tensile::DataType datatype,
+                  Tensile::DataType outDatatype,
+                  Tensile::DataType scaleDatatype,
+                  bool              isScale)
+        : length(length)
+        , datatype(datatype)
+        , outDatatype(outDatatype)
+        , scaleDatatype(scaleDatatype)
+        , isScale(isScale)
+    {
+    }
+
+    ~AMax2DProblem() override {}
+
+    std::string description() const override
+    {
+        std::stringstream ss;
+        ss << "AMax2D Problem(" << ToString(datatype) << ", " << ToString(outDatatype) << ", "
+           << length << ")";
+        return ss.str();
+    }
+
+    std::uint32_t getLength() const
+    {
+        return length;
+    }
+
+    Tensile::DataType getDatatype() const
+    {
+        return datatype;
+    }
+
+    Tensile::DataType getOutDatatype() const
+    {
+        return outDatatype;
+    }
+
+    Tensile::DataType getScaleDatatype() const
+    {
+        return scaleDatatype;
+    }
+
+    bool getIsScale() const
+    {
+        return isScale;
+    }
+
+private:
+    std::uint32_t     length{};
+    Tensile::DataType datatype{Tensile::DataType::Float};
+    Tensile::DataType outDatatype{Tensile::DataType::Float};
+    Tensile::DataType scaleDatatype{Tensile::DataType::Float8};
+    bool              isScale = false;
+};
+
+class AMax2DSolutionLibrary : public ExtOpLibrary
+{
+public:
+    static constexpr char opName[] = "AMax2D";
+
+    ~AMax2DSolutionLibrary() override {}
+    void addSolution(AMax2DSolution& sol)
+    {
+        solutions.push_back(std::make_shared<AMax2DSolution>(sol));
+    }
+
+    std::string type() const override
+    {
+        return "AMax2DSolutionLibrary";
+    }
+
+    std::string description() const override
+    {
+        return "AMax2DSolutionLibrary";
+    }
+
+    std::shared_ptr<AMax2DSolution> findBestSolution(const AMax2DProblem&       prob,
+                                                     const Tensile::Hardware& hardware,
+                                                     double*                  fitness = nullptr) const
+    {
+        if(prob.getIsScale())
+        {
+            for(auto sol : solutions)
+                if(sol->getOutDatatype() == prob.getOutDatatype()
+                   && sol->getScaleDatatype() == prob.getScaleDatatype() && sol->getIsScale())
+                    return sol;
+        }
+        else
+        {
+            for(auto sol : solutions)
+                if(sol->getOutDatatype() == prob.getOutDatatype() && !sol->getIsScale())
+                    return sol;
+        }
+        return nullptr;
+    }
+
+    void sortSolutions()
+    {
+        std::sort(begin(solutions), end(solutions), [](const auto& lhs, const auto& rhs) {
+            return lhs->getOutDatatype() < rhs->getOutDatatype();
+        });
+    }
+
+private:
+    Tensile::SolutionVector<AMax2DSolution> solutions;
+};
+
+
 class ExtOpMasterLibrary
 {
 public:
@@ -780,6 +1025,31 @@ private:
                             Tensile::Serialization::MessagePackInput msgInput(rawKernel);
                             Tensile::Serialization::MappingTraits<
                                 AMaxSolution,
+                                Tensile::Serialization::MessagePackInput>::mapping(msgInput,
+                                                                                   solution);
+
+                            lib.addSolution(solution);
+                        }
+
+                        lib.sortSolutions();
+                    }
+                    else if(opObj.first == "AMax2D")
+                    {
+                        libraries.at(archObj.first)
+                            .at(opObj.first)
+                            .emplace(typeLib.first, std::make_unique<AMax2DSolutionLibrary>());
+                        auto& lib = libraries.at(archObj.first)
+                                        .at(opObj.first)
+                                        .at(typeLib.first)
+                                        ->as<AMax2DSolutionLibrary>();
+
+                        for(uint32_t i = 0; i < numKernels; ++i)
+                        {
+                            auto&        rawKernel = rawKernels.via.array.ptr[i];
+                            AMax2DSolution solution;
+                            Tensile::Serialization::MessagePackInput msgInput(rawKernel);
+                            Tensile::Serialization::MappingTraits<
+                                AMax2DSolution,
                                 Tensile::Serialization::MessagePackInput>::mapping(msgInput,
                                                                                    solution);
 
