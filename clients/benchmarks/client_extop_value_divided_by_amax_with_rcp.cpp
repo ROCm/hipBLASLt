@@ -54,13 +54,13 @@ void printUsage(char* programName)
 template <typename T>
 T abs(T a)
 {
-    return (a > 0) ? a : -a;
+    return (double(a) > 0) ? a : -a;
 }
 
 template <typename T>
 T max(T a, T b)
 {
-    return (a > b) ? a : b;
+    return (double(a) > double(b)) ? a : b;
 }
 
 template <typename Ti, typename To>
@@ -243,11 +243,13 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, float v, int ite
     hipblasStatus_t hipblasltErr;
     hipblasltErr = hipblasltExtFastValueDividedByAMaxWithRcp(type, dtype, gpuOutput, gpuOutputRcp, gpuInput, gpuWorkSpace, gpuSync, m, n, v, stream);
 
+    hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, sizeof(To));
+    hipErr = hipMemcpyDtoH(cpuOutputRcp.data(), gpuOutputRcp, sizeof(To));
+
     hipErr = hipStreamSynchronize(stream);
 
-    hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, sizeof(To));
-
     compare("Output", cpuOutput, refOutput);
+    compare("OutputRcp", cpuOutputRcp, refOutputRcp);
 
     // dumpBuffer("Input", cpuInput.data(), m * n);
     // dumpBuffer("GPU", cpuOutput.data(), 1);
@@ -283,6 +285,7 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, float v, int ite
 
     hipErr = hipStreamDestroy(stream);
     hipErr = hipFree(gpuOutput);
+    hipErr = hipFree(gpuOutputRcp);
     hipErr = hipFree(gpuInput);
     hipErr = hipFree(gpuWorkSpace);
     hipErr = hipFree(gpuSync);
