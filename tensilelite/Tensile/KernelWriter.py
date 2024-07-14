@@ -2680,12 +2680,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
       vwm = kernel["GlobalReadVectorWidthMetadata"]
 
-    if not kernel["UnrollMajorLDSA"]:
+    # use lrwvTile = 1 for XFP32
+    isXFP32 = kernel["EnableF32XdlMathOp"] and kernel["ProblemType"]["F32XdlMathOp"].isXFloat32()
+    if not kernel["UnrollMajorLDSA"] and not isXFP32:
       self.states.lrvwTileA = kernel["VectorWidthA"]
     else:
       self.states.lrvwTileA = 1
 
-    if not kernel["UnrollMajorLDSB"]:
+    if not kernel["UnrollMajorLDSB"] and not isXFP32:
       self.states.lrvwTileB = kernel["VectorWidthB"]
     else:
       self.states.lrvwTileB = 1
