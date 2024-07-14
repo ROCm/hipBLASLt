@@ -1037,7 +1037,7 @@ Tests:
   bias_type: bf16_r
   unit_check: 0
   norm_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_dgelu_bf16_NN
   category: pre_checkin
@@ -1055,7 +1055,7 @@ Tests:
   activation_type: gelu
   unit_check: 0
   norm_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_bgradb_bf16_NT
   category: pre_checkin
@@ -1073,7 +1073,7 @@ Tests:
   bias_type: bf16_r
   bias_source: b
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_bgradb_f16
   category: pre_checkin
@@ -1181,7 +1181,7 @@ Tests:
   scaleAlpha_vector: [0, 1]
   activation_type: relu
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_gemm_i8_dst_i8
   category: pre_checkin
@@ -1213,7 +1213,7 @@ Tests:
   scaleAlpha_vector: [0, 1]
   activation_type: relu
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_gemm_mix_precisions
   category: pre_checkin
@@ -1268,7 +1268,7 @@ Tests:
   bias_vector: 1
   bias_type: [f32_r]
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_gemm_mix_precisions_fp8
   category: pre_checkin
