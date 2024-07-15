@@ -6672,7 +6672,10 @@ class KernelWriterAssembly(KernelWriter):
                     if kernel["ProblemType"]["StochasticRounding"]:
                       # ScaleA/B, sgpr upper is dummy.
                       if kernel["ProblemType"]["UseScaleAB"] and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
-                        localWriteCVTCode.add(VMulPKF32(dst=vgpr(vgprTmp, 2), src0=vgpr(vgprTmp, 2), src1=sgpr("Scale%s"%tc, 2), vop3=VOP3PModifiers(op_sel_hi=[1,0,1]), comment="Input *= scale %s"%tc))
+                        # modify to non-pack VMulF32
+                        localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp), src0=vgpr(vgprTmp), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
+                        localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp2), src0=vgpr(vgprTmp2), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
+
                       vRand = vgprTmp+2
                       vTemp0 = vgprTmp+3
                       vTemp1 = vgprTmp+4
@@ -6688,8 +6691,10 @@ class KernelWriterAssembly(KernelWriter):
                     else:
                       # ScaleA/B, sgpr upper is dummy.
                       if kernel["ProblemType"]["UseScaleAB"] and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
-                        localWriteCVTCode.add(VMulPKF32(dst=vgpr(vgprTmp, 2), src0=vgpr(vgprTmp, 2), src1=sgpr("Scale%s"%tc, 2), vop3=VOP3PModifiers(op_sel_hi=[1,0,1]), comment="Input *= scale %s"%tc))
-
+                        # modify to non-pack VMulF32
+                        localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp), src0=vgpr(vgprTmp), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
+                        localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp2), src0=vgpr(vgprTmp2), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
+                        
                       if (toF8):
                         localWriteCVTCode.add(VCvtPkF32toFP8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp), src1=vgpr(vgprTmp2), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to FP8"))
                       else:
