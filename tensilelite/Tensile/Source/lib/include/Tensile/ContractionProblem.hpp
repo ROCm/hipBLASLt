@@ -1027,6 +1027,11 @@ namespace Tensile
             return m_eligibleForPK;
         }
 
+        double  arithmeticIntensity() const
+        {
+            return m_arithmeticIntensity;
+        }
+
         virtual std::vector<ConstantDescriptor> const constants() const
         {
             std::vector<ConstantDescriptor> c = {{"alpha", m_alphaType}, {"beta", m_betaType}};
@@ -1103,7 +1108,7 @@ namespace Tensile
 
         KernelLanguage    m_kernelLanguage    = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric = PerformanceMetric::DeviceEfficiency;
-
+        double m_arithmeticIntensity;
         DataType m_alphaType         = DataType::None; // if not assigned, will follow d-type
         DataType m_betaType          = DataType::None; // for bwd-compatible
         DataType m_scaleAType        = DataType::None; // if not assigned, will follow alpha-type
@@ -1145,6 +1150,7 @@ namespace Tensile
 
         void normalize();
         void normalizeSparse();
+        void calcArithmeticIntensity();
 
         void consistencyCheck() const;
 

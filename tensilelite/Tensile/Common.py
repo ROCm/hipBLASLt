@@ -700,6 +700,12 @@ validParameters = {
     # 1 indicates no assertion (since all sizes are multiples of 1)
     "AssertFree1ElementMultiple" : [1,2,4,8,16],
 
+    # Assertions that require arithmetic intensity to be specified value.
+    # Arithmetic intensity measures the ratio of computation to memory bandwidth required for a problem.
+    # These predicates can be used to adjust solution selection compute-bound or memory-bound problems.
+    "AssertAIGreaterThanEqual": -1,
+    "AssertAILessThanEqual":    -1,
+    
     # Stagger the start summation position of the tiles.
     # Elements from the summation dimension are loaded at offsets rather than all starting at 0.
     # StaggerU is the max 'clicks' of StaggerUStride bytes where each wg starts ; see StaggerUMapping
@@ -1130,6 +1136,9 @@ defaultBenchmarkCommonParameters = [
     {"AssertSummationElementMultiple": [ 1 ] },
     {"AssertFree0ElementMultiple": [ 1 ] },
     {"AssertFree1ElementMultiple": [ 1 ] },
+  
+    {"AssertAIGreaterThanEqual":   [-1]},
+    {"AssertAILessThanEqual":      [-1]},
 
     {"StaggerU":                  [ 32 ] },   # recommend [0,32]
     {"StaggerUStride":            [ 256 ] },  # recommend 256 for V10,V20

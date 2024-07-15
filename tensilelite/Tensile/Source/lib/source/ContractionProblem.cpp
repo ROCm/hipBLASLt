@@ -608,6 +608,7 @@ namespace Tensile
             m_beta); // Set enum using beta to potentially allow for faster solutions
         consistencyCheck();
         normalize();
+        calcArithmeticIntensity();
     }
 
     size_t ContractionProblemGemm::toAPos(size_t idx) const
@@ -1063,6 +1064,42 @@ namespace Tensile
             TENSILE_ASSERT_EXC(cUse == 1);
         for(int dUse : dUseCount)
             TENSILE_ASSERT_EXC(dUse == 1);
+    }
+
+    void ContractionProblemGemm::calcArithmeticIntensity()
+    {
+        size_t problemSize = 1;
+        for(size_t i = 0; i < m_problemSizes.size(); ++i)
+        {
+            problemSize *= m_problemSizes[i];
+        }
+        double gflop = 2 * problemSize * 1e-9;
+
+        size_t aSize = 1;
+        for(size_t i = 0; i < m_a.dimensions(); ++i)
+        {
+            aSize *= m_a.sizes()[i];
+        }
+        size_t bSize = 1;
+        for(size_t i = 0; i < m_b.dimensions(); ++i)
+        {
+            bSize *= m_b.sizes()[i];
+        }
+        size_t cSize = 1;
+        for(size_t i = 0; i < m_c.dimensions(); ++i)
+        {
+            cSize *= m_c.sizes()[i];
+        }
+        if(m_beta != 0) // If problem includes beta, update gflops and gbytes
+        {
+            gflop += 2 * cSize * 1e-9; // Include (+ beta * C) in gflops
+            cSize *= 2; // Include read C and write D in gbytes
+        }
+        double gbyte
+            = (aSize * m_a.elementBytes() + bSize * m_b.elementBytes() + cSize * m_c.elementBytes())
+              * 1e-9;
+
+        m_arithmeticIntensity = gflop / gbyte;
     }
 
     size_t ContractionProblemGemm::freeSizeA(size_t idx) const

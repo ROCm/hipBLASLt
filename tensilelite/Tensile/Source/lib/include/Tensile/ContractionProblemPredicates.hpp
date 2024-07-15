@@ -1015,6 +1015,83 @@ namespace Tensile
                 }
             };
 
+            struct AIGreaterThanEqual
+                : public Predicate_CRTP<AIGreaterThanEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+
+                double value;
+
+                AIGreaterThanEqual() = default;
+                AIGreaterThanEqual(double value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "AIGreaterThanEqual";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.arithmeticIntensity() >= value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&             stream) const override
+                {
+                    bool rv = (*this)(problem);
+
+                    stream << *this << ": (" << problem.arithmeticIntensity() << " >= " << value
+                           << ") == " << rv;
+
+                    return rv;
+                }
+            };
+
+            struct AILessThanEqual : public Predicate_CRTP<AILessThanEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+
+                double value;
+
+                AILessThanEqual() = default;
+                AILessThanEqual(double value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "AILessThanEqual";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.arithmeticIntensity() <= value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&             stream) const override
+                {
+                    bool rv = (*this)(problem);
+
+                    stream << *this << ": (" << problem.arithmeticIntensity() << " <= " << value
+                           << ") == " << rv;
+
+                    return rv;
+                }
+            };
+
             struct AlphaValue : public Predicate_CRTP<AlphaValue, ContractionProblemGemm>
             {
                 enum
