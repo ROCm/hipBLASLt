@@ -168,7 +168,7 @@ public:
         hipblaslt_internal_ostream name_list;
         hipblaslt_internal_ostream value_list;
 
-        name_list << "[" << index << "]";
+        name_list << "[" << index << "]:";
         value_list << "    ";
 
         if(ArgumentModel_get_log_function_name())
