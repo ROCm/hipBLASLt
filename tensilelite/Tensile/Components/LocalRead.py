@@ -182,7 +182,7 @@ class LocalReadMFMA(LocalRead):
         numElementPerRead = 1 if kernel["ConvertAfterDS"] else (int(blockWidth * 4) // tP['bpe'] // lrvwTile)
 
         # pack register
-        if writer.states.archCaps["HasEccHalf"]:
+        if writer.states.archCaps["HasEccHalf"] or not writer.states.asmCaps["HasWMMA_V1"]:
             needPack = tP["bpeDS"] < 4 and not kernel["UnrollMajorLDS%s"%tc] and not tP["isM"]
             # specify I8 for the case that input number is equal to the localread blockwidth but need to split low and high bytes to different vgprs.
             needPackMetadata = tP["isM"] and ((kernel["MIInputPerThread%s"%tc] * tP["bpeDS"] / (blockWidth * 4) > 1) or (kernel["ProblemType"]["DataType"].numBytes() == 1 and writer.states.lrvwTileMetadata > 1))
@@ -383,10 +383,13 @@ class LocalReadMFMA(LocalRead):
                                     lowVgpr  = vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, valufIdx/2 - 1), numVgpr)
                                     highVgpr = vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, valufIdx/2), numVgpr)
                                     packCode.add(VLShiftLeftOrB32(dst=lowVgpr, src0=highVgpr, shiftHex=hex(0x10), src1=lowVgpr, comment="pack two int8x2 Vgpr to one Vgpr"))
-                            elif writer.states.archCaps["HasEccHalf"]: # ECC pack
+                            elif writer.states.archCaps["HasEccHalf"] or not writer.states.asmCaps["HasWMMA_V1"]: # ECC pack
                                 if highBitsForHalf:
                                     highVgpr = vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, rIdx%2, valuiIdx), numVgpr)
-                                    packCode.add(VOrB32(dst=baseLRVgpr, src0=baseLRVgpr, src1=highVgpr, comment="pack two half Vgpr to one Vgpr"))
+                                    if writer.states.archCaps["HWWorkaround"]:
+                                      packCode.add(VLShiftLeftOrB32(dst=baseLRVgpr, src0=highVgpr, shiftHex=hex(0x10), src1=baseLRVgpr, comment="pack two half Vgpr to one Vgpr"))
+                                    else:
+                                      packCode.add(VOrB32(dst=baseLRVgpr, src0=baseLRVgpr, src1=highVgpr, comment="pack two half Vgpr to one Vgpr"))
                                     destVgpr = highVgpr
                                 # pack for blockWidth 0.25 type
                                 if rIdx != 0:
@@ -397,7 +400,10 @@ class LocalReadMFMA(LocalRead):
                                         lowVgpr = vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, (rIdx%4)-1, valuiIdx), numVgpr) if isHigh16Bits else baseLRVgpr
                                         packCode.add(VLShiftLeftOrB32(dst=lowVgpr, src0=highVgpr, shiftHex=8, src1=lowVgpr, comment="pack two int8 Vgpr to one half Vgpr"))
                                         if isHigh16Bits:
-                                            packCode.add(VOrB32(dst=baseLRVgpr, src0=baseLRVgpr, src1=lowVgpr, comment="pack two half Vgpr to one Vgpr"))
+                                            if writer.states.archCaps["HWWorkaround"]:
+                                              packCode.add(VLShiftLeftOrB32(dst=baseLRVgpr, src0=lowVgpr, shiftHex=hex(0x10), src1=baseLRVgpr, comment="pack two half Vgpr to one Vgpr"))
+                                            else:
+                                              packCode.add(VOrB32(dst=baseLRVgpr, src0=baseLRVgpr, src1=lowVgpr, comment="pack two half Vgpr to one Vgpr"))
                             else: # no ECC pack
                             # pack for No ECC blockwidth 0.25 type
                                 if rIdx != 0:
@@ -460,7 +466,7 @@ class LocalReadMFMA(LocalRead):
                     comment = "L -> Reg lro=%d swapByteOffset=%u ti=%u vIdx=%u eIdx=%u rIdx=%u oIdx=%u buffer=%u iui=%u" \
                             % (tP["localReadOffset"], tP["localReadSwapByteOffset"], MIWaveGroupShape[tile01], vIdx, eIdx, rIdx, oIdx, bufferIdx, iui)
 
-                    highBits = highBitsForHalf or isHigh16Bits
+                    highBits = 0 if writer.states.archCaps["HWWorkaround"] else highBitsForHalf or isHigh16Bits
 
                     if numOffsets == 1:
                         ds = DSModifiers(na=1, offset=paramList[0])
