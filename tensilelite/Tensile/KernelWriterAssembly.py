@@ -1126,7 +1126,7 @@ class KernelWriterAssembly(KernelWriter):
       kernelArgs.add(self.argLoader.loadKernArg("AddressDbg", "KernArgAddress", dword=2))
     self.argLoader.resetOffset()
     kernelArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStartIdx, "KernArgAddress", numsOfLoad, preloadNum))
-    if kernel["ProblemType"]["UseScaleAB"]:
+    if kernel["ProblemType"]["UseScaleAB"] == "Scalar":
       sgprOffset = self.argLoader.getOffset()
       for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
         if preloadScale:
@@ -1392,7 +1392,7 @@ class KernelWriterAssembly(KernelWriter):
 
       waitForScaleAB = False
       moduleScaleAB = Module("Load ScaleAB")
-      if kernel["ProblemType"]["UseScaleAB"]:
+      if kernel["ProblemType"]["UseScaleAB"] == "Scalar":
         for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
           if preloadScale:
             waitForScaleAB = True
@@ -1539,7 +1539,7 @@ class KernelWriterAssembly(KernelWriter):
       self.states.preloadGuard = []
 
       numStoreSgprToLoad = self.states.numStoreSgprToLoad
-      if kernel["ProblemType"]["UseScaleAB"]:
+      if kernel["ProblemType"]["UseScaleAB"] == "Scalar":
         if self.states.preloadScaleA:
           numStoreSgprToLoad += 2
         if self.states.preloadScaleB:
@@ -1698,7 +1698,7 @@ class KernelWriterAssembly(KernelWriter):
           moduleExternalArgs.addComment("Read Beta")
           moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["Beta"], "KernArgAddress", self.states.numSgprBeta))
           offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.betaMaxRegisterSize - self.states.numSgprBeta)
-          if kernel["ProblemType"]["UseScaleAB"]:
+          if kernel["ProblemType"]["UseScaleAB"] == "Scalar":
             sgprOffset = self.externalArgLoader.getOffset()
             for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
               if preloadScale:
@@ -4471,7 +4471,7 @@ class KernelWriterAssembly(KernelWriter):
     def fixPreloadOffset(offset, sgpxIdxVec, numStoreSgprToLoad):
       item = None
       startVgprName = sgpxIdxVec[0]
-      if kernel["ProblemType"]["UseScaleAB"]:
+      if kernel["ProblemType"]["UseScaleAB"] == "Scalar":
         if (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()) and (kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
           self.argLoader.setOffset(offset + ((self.states.rpga * self.states.bpr) * 2))
         elif kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
@@ -4514,14 +4514,14 @@ class KernelWriterAssembly(KernelWriter):
         backupExtArgOffset = extArgOffset
         loadList = [[-1, 0, extArgOffset]]
         extArgOffset += self.states.userArgsInfo.scaleASize
-        if kernel["ProblemType"]["UseScaleAB"] and (not self.states.preloadScaleA):
+        if (kernel["ProblemType"]["UseScaleAB"] == "Scalar" and (not self.states.preloadScaleA)) or kernel["ProblemType"]["UseScaleAB"] == "Vector":
           if loadList[-1][0] == -1:
             loadList[-1][0] = self.sgprs["AddressScaleA"]
           loadList[-1][1] += self.states.userArgsInfo.scaleASize
         else:
           loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
         extArgOffset += self.states.userArgsInfo.scaleBSize
-        if kernel["ProblemType"]["UseScaleAB"] and (not self.states.preloadScaleB):
+        if (kernel["ProblemType"]["UseScaleAB"] == "Scalar" and (not self.states.preloadScaleB)) or kernel["ProblemType"]["UseScaleAB"] == "Vector":
           if loadList[-1][0] == -1:
             loadList[-1][0] = self.sgprs["AddressScaleB"]
           loadList[-1][1] += self.states.userArgsInfo.scaleBSize
@@ -4614,13 +4614,13 @@ class KernelWriterAssembly(KernelWriter):
           module.add(RegSet("s", "sgpr"+name, self.sgprs[name]))
 
       argOffset = self.argLoader.getOffset() # Backup offset
-      if kernel["ProblemType"]["UseScaleAB"] and (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters() or kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
+      if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters() or kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
         self.argLoader.setOffset(argOffset + (self.states.numStoreSgprToLoad)*4 + (self.states.rpga * self.states.bpr)) # Restore offset
       else:
         self.argLoader.setOffset(argOffset + (self.states.numStoreSgprToLoad)*4) # Restore offset
       numStoreSgprToLoad = self.states.numStoreSgprToLoad2
 
-      if kernel["ProblemType"]["UseScaleAB"] and (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters() or kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
+      if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters() or kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
         argOffsettmp = (argOffset + (self.states.numStoreSgprToLoad)*4 + (self.states.rpga * self.states.bpr)) # Restore offset
       else:
         argOffsettmp = (argOffset + (self.states.numStoreSgprToLoad)*4) # Restore offset
@@ -4644,6 +4644,11 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("SrdC", 4, 4)
       module.add(RegSet("s", "sgprSrdC", self.sgprs["SrdC"]))
       module.add(RegSet("s", "sgprSrdD", self.sgprs["SrdD"]))
+    if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+      self.defineSgpr("SrdScaleA", 4, 4)
+      self.defineSgpr("SrdScaleB", 4, 4)
+      module.add(RegSet("s", "sgprSrdScaleA", self.sgprs["SrdScaleA"]))
+      module.add(RegSet("s", "sgprSrdScaleB", self.sgprs["SrdScaleB"]))
     if kernel["ProblemType"]["UseScaleAlphaVec"]:
       self.defineSgpr("SrdScaleAlphaVec", 4, 4)
       module.add(RegSet("s", "sgprSrdScaleAlphaVec", self.sgprs["SrdScaleAlphaVec"]))
@@ -6837,7 +6842,7 @@ class KernelWriterAssembly(KernelWriter):
                   localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp), src=paramList[0], sdwa=SDWAModifiers(src0_sel=src_sel), comment="convert to F32"))
 
                   # ScaleA/B
-                  if kernel["ProblemType"]["UseScaleAB"] and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+                  if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
                     localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp), src0=vgpr(vgprTmp), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
 
                   if kernel["ProblemType"]["StochasticRounding"]:
@@ -6869,7 +6874,7 @@ class KernelWriterAssembly(KernelWriter):
 
                     if kernel["ProblemType"]["StochasticRounding"]:
                       # ScaleA/B, sgpr upper is dummy.
-                      if kernel["ProblemType"]["UseScaleAB"] and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+                      if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
                         localWriteCVTCode.add(VMulPKF32(dst=vgpr(vgprTmp, 2), src0=vgpr(vgprTmp, 2), src1=sgpr("Scale%s"%tc, 2), vop3=VOP3PModifiers(op_sel_hi=[1,0,1]), comment="Input *= scale %s"%tc))
                       vRand = vgprTmp+2
                       vTemp0 = vgprTmp+3
@@ -6885,7 +6890,7 @@ class KernelWriterAssembly(KernelWriter):
                         localWriteCVTCode.add(VCvtSRF32toBF8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp2), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,1,sel]), comment="Convert to BF8"))
                     else:
                       # ScaleA/B, sgpr upper is dummy.
-                      if kernel["ProblemType"]["UseScaleAB"] and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+                      if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
                         localWriteCVTCode.add(VMulPKF32(dst=vgpr(vgprTmp, 2), src0=vgpr(vgprTmp, 2), src1=sgpr("Scale%s"%tc, 2), vop3=VOP3PModifiers(op_sel_hi=[1,0,1]), comment="Input *= scale %s"%tc))
 
                       if (toF8):
@@ -7843,6 +7848,8 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprs.addrD    = -1
       self.vgprs.addrC    = -1
       self.vgprs.addrBias = -1
+      self.vgprs.addrScaleAVec = -1
+      self.vgprs.addrScaleBVec = -1
       self.vgprs.addrScaleAlphaVec = -1
     else:
       self.vgprs.addrD = self.vgprPool.checkOut(2)
@@ -7886,6 +7893,25 @@ class KernelWriterAssembly(KernelWriter):
         module.add(VMovB32( \
             dst=vgpr(self.vgprs.addrBias+1), \
             src=sgpr("AddressBias+1"), \
+            comment="sgpr -> vgpr"))
+      if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+        self.vgprs.addrScaleAVec = self.vgprPool.checkOut(2, 'addrScaleAVec')
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleAVec+0), \
+            src=sgpr("AddressScaleA+0"), \
+            comment="sgpr -> vgpr"))
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleAVec+1), \
+            src=sgpr("AddressScaleA+1"), \
+            comment="sgpr -> vgpr"))
+        self.vgprs.addrScaleBVec = self.vgprPool.checkOut(2, 'addrScaleVVec')
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleBVec+0), \
+            src=sgpr("AddressScaleB+0"), \
+            comment="sgpr -> vgpr"))
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleBVec+1), \
+            src=sgpr("AddressScaleB+1"), \
             comment="sgpr -> vgpr"))
       if kernel["ProblemType"]["UseScaleAlphaVec"]:
         self.vgprs.addrScaleAlphaVec = self.vgprPool.checkOut(2, 'addrScaleAlphaVec')
@@ -7935,6 +7961,8 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprs.addrD    = -1
       self.vgprs.addrC    = -1
       self.vgprs.addrBias = -1
+      self.vgprs.addrScaleAVec = -1
+      self.vgprs.addrScaleBVec = -1
       self.vgprs.addrScaleAlphaVec = -1
     else:
       self.vgprs.addrD = self.vgprPool.checkOut(2, 'addrD')
@@ -7979,6 +8007,25 @@ class KernelWriterAssembly(KernelWriter):
             dst=vgpr(self.vgprs.addrBias+1), \
             src=sgpr("AddressBias+1"), \
             comment="sgpr -> vgpr"))
+      if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+        self.vgprs.addrScaleAVec = self.vgprPool.checkOut(2, 'addrScaleAVec')
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleAVec+0), \
+            src=sgpr("AddressScaleA+0"), \
+            comment="sgpr -> vgpr"))
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleAVec+1), \
+            src=sgpr("AddressScaleA+1"), \
+            comment="sgpr -> vgpr"))
+        self.vgprs.addrScaleBVec = self.vgprPool.checkOut(2, 'addrScaleBVec')
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleBVec+0), \
+            src=sgpr("AddressScaleB+0"), \
+            comment="sgpr -> vgpr"))
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleBVec+1), \
+            src=sgpr("AddressScaleB+1"), \
+            comment="sgpr -> vgpr"))
       if kernel["ProblemType"]["UseScaleAlphaVec"]:
         self.vgprs.addrScaleAlphaVec = self.vgprPool.checkOut(2, 'addrScaleAlphaVec')
         module.add(VMovB32( \
@@ -8022,6 +8069,12 @@ class KernelWriterAssembly(KernelWriter):
       if self.states.useBias == DataDirection.READ:
         self.vgprPool.checkIn(self.vgprs.addrBias)
         self.vgprs.addrBias = -1
+      if self.vgprs.addrScaleAVec != -1:
+        self.vgprPool.checkIn(self.vgprs.addrScaleAVec)
+        self.vgprs.addrScaleAVec = -1
+      if self.vgprs.addrScaleBVec != -1:
+        self.vgprPool.checkIn(self.vgprs.addrScaleBVec)
+        self.vgprs.addrScaleBVec = -1
       if self.vgprs.addrScaleAlphaVec != -1:
         self.vgprPool.checkIn(self.vgprs.addrScaleAlphaVec)
         self.vgprs.addrScaleAlphaVec = -1
@@ -8683,7 +8736,7 @@ class KernelWriterAssembly(KernelWriter):
       useSize = []
 
       # Issue read scale A/B value for later use
-      if kernel["ProblemType"]["UseScaleAB"] and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') and \
+      if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') and \
         ((kernel["ProblemType"]["DataTypeA"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters()) or \
         (kernel["ProblemType"]["DataTypeB"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters())):
         assert(kernel["ProblemType"]["ComputeDataType"].isSingle())
@@ -8698,6 +8751,15 @@ class KernelWriterAssembly(KernelWriter):
             # load scale data
             module.add(SLoadB32(dst=sgpr(sgprScale), base=sgpr("AddressScale%s"%name,2), soffset=0, comment="load scale%s"%name))
             module.add(label)
+
+      # Issue read scale A/B vector value for later use
+      if ((kernel["ProblemType"]["UseScaleAB"] == "Vector")) and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
+        labelStrA = self.labels.getNameInc("ScaleAVec")
+        labelStrB = self.labels.getNameInc("ScaleBVec")
+        module.add(allocPostLoopSrdSuppress("ScaleA", labelStrA, sgprLength=sgpr("SizeI")))
+        module.add(allocPostLoopSrdSuppress("ScaleB", labelStrB, sgprLength=sgpr("SizeJ")))
+        module.add(SMulI32(dst=sgpr("SrdScaleA+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleA+2"), comment="ScaleAVec scaled by BPE"))# scaled by BPE
+        module.add(SMulI32(dst=sgpr("SrdScaleB+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleB+2"), comment="ScaleBVec scaled by BPE"))# scaled by BPE
 
       # Issue read scale C/D value for later use
       if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
@@ -8861,7 +8923,7 @@ class KernelWriterAssembly(KernelWriter):
           ssslist.append("Bias")
           useSize.append(True)
 
-      if kernel["ProblemType"]["UseScaleAB"] and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') and \
+      if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') and \
         ((kernel["ProblemType"]["DataTypeA"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters()) or \
         (kernel["ProblemType"]["DataTypeB"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters())):
         assert(kernel["ProblemType"]["ComputeDataType"].isSingle())
@@ -9433,7 +9495,8 @@ class KernelWriterAssembly(KernelWriter):
 
           actLoopModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
               applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-              elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleAlphaVec, \
+              elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, \
+              self.vgprs.addrScaleAVec, self.vgprs.addrScaleBVec, self.vgprs.addrScaleAlphaVec, \
               biasLocalBarrierInit, tmpVgpr, cvtVgprStruct, activationSetPCStruct, \
               activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, factorDim))
           biasLocalBarrierInit = True
@@ -9689,34 +9752,35 @@ class KernelWriterAssembly(KernelWriter):
         printExit("Unsupported bias type %s."%(str(dataType)))
     return module
 
-  def addScaleAlphaVecLoad(self, kernel, ss, addrCalc, scaleAlphaVecVgpr, gwvw, dim):
+  ##############################################################################
+  def addScaleVecLoad(self, kernel, ss, name: str, srdName: str, addrScaleVecVgpr, scaleVecVgpr, gwvw, scaleVecOffset, addVecPostfix = True):
     """
-    Add scaleAlphaVec for the element with addrCalc, elementIdx, and scaleAlphaVecVgpr.
-    scaleAlphaVecVgpr is one or more vgpr :temp vGPR ( = gwvw * numbytes // 4 + 1 if cvt is needed)
+    Add scaleAlphaVec for the element with addrCalc, elementIdx, and scaleVecVgpr.
+    scaleVecVgpr is one or more vgpr :temp vGPR ( = gwvw * numbytes // 4 + 1 if cvt is needed)
     """
-    module = Module("addScaleAlphaVec")
-    if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
+    module = Module("addScale%sVec"%srdName)
+    if kernel["ProblemType"]["UseScale%s"%name] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
       bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvw
       if kernel["BufferLoad"]:
-        addr0 = vgpr(addrCalc.addrScaleAlphaVecVgpr)
-        addr1 = sgpr("SrdScaleAlphaVec", 4)
+        addr0 = vgpr(addrScaleVecVgpr)
+        addr1 = sgpr("SrdScale%sVec"%srdName, 4) if addVecPostfix else sgpr("SrdScale%s"%srdName, 4)
       else:
-        addr0 = vgpr(addrCalc.addrScaleAlphaVecVgpr,2)
+        addr0 = vgpr(addrScaleVecVgpr,2)
         addr1 = ""
 
       useBuffer = kernel["BufferLoad"]
 
       if kernel["ProblemType"]["ComputeDataType"].isHalf() or kernel["ProblemType"]["ComputeDataType"].isBFloat16():
-        module.add(self.chooseGlobalRead(useBuffer, bps, scaleAlphaVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleAlphaVecOffset[dim], hi16=0, comment="load scaleAlphaVecH"))
+        module.add(self.chooseGlobalRead(useBuffer, bps, scaleVecVgpr, \
+                          addr0, addr1, soffset=0, offset=scaleVecOffset, hi16=0, comment="load scale%sVecH"%srdName))
       elif kernel["ProblemType"]["ComputeDataType"].isInt32() or kernel["ProblemType"]["ComputeDataType"].isSingle():
-        module.add(self.chooseGlobalRead(useBuffer, bps, scaleAlphaVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleAlphaVecOffset[dim], comment="load scaleAlphaVecI"))
+        module.add(self.chooseGlobalRead(useBuffer, bps, scaleVecVgpr, \
+                          addr0, addr1, soffset=0, offset=scaleVecOffset, comment="load scale%sVecI"%srdName))
       elif kernel["ProblemType"]["ComputeDataType"].isDouble() or kernel["ProblemType"]["ComputeDataType"].isSingleComplex() :
-        module.add(self.chooseGlobalRead(useBuffer, bps, scaleAlphaVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleAlphaVecOffset[dim], comment="load scaleAlphaVec"))
+        module.add(self.chooseGlobalRead(useBuffer, bps, scaleVecVgpr, \
+                          addr0, addr1, soffset=0, offset=scaleVecOffset, comment="load scale%sVec"%srdName))
       else:
-        printExit("Unsupported scaleAlphaVec type %s."%(str(kernel["ProblemType"]["ComputeDataType"])))
+        printExit("Unsupported scale%sVec type %s."%(srdName, str(kernel["ProblemType"]["ComputeDataType"])))
 
     return module
 
@@ -9938,14 +10002,16 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def globalWriteBatch(self, kernel, tPA, tPB, activation, ss: StoreState, batchIdx, \
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-      batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
+      batchElements, addrE, addrD, addrC, addrBias, \
+      addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
       tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
       batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, factorDim) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
       return gwriter(kernel, tPA, tPB, activation, ss, \
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-        batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit, \
+        batchElements, addrE, addrD, addrC, addrBias, \
+        addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, biasLocalBarrierInit, \
         tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
         batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, factorDim)
 

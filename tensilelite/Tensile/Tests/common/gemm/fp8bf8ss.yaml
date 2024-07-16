@@ -34,7 +34,7 @@ BenchmarkProblems:
       Batched: True
       UseBias: 1
       BiasDataTypeList: [s,b]
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -106,7 +106,7 @@ BenchmarkProblems:
       Batched: True
       UseBias: 1
       BiasDataTypeList: [s,b]
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:

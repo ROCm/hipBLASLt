@@ -1164,7 +1164,7 @@ defaultProblemType = {
     "Gradient":                 False,            # =True set globalWriteElements to gradient mode
     "UseBias":                  0,                # =1 support bias vector on M direction, =2 support bias vector on N direction, =3 support bias vector on both M,N direction
     "BiasSrc":                  "D",              # This parameter is used in gradient + bias. Support A, B, D.
-    "UseScaleAB":               False,            # =True use scaleA, scaleB
+    "UseScaleAB":               "",               # Support "", "Scalar", and "Vector"
     "UseScaleCD":               False,            # =True use scaleC, scaleD
     "UseScaleAlphaVec":         0,                # =1 support alpha vector on M direction, =2 support bias vector on N direction, =3 support alpha vector on both M,N direction
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16

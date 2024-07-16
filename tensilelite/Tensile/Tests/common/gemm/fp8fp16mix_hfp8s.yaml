@@ -39,7 +39,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -101,7 +101,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -163,7 +163,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -228,7 +228,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -289,7 +289,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -350,7 +350,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -412,7 +412,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -477,7 +477,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -538,7 +538,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -599,7 +599,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -661,7 +661,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
