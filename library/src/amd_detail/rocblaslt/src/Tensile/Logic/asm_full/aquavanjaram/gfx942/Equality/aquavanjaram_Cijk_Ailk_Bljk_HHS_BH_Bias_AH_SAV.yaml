@@ -3717,7 +3717,7 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
+      UseScaleAB: ""
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -3971,7 +3971,7 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
+      UseScaleAB: ""
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
