@@ -38995,7 +38995,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
+      UseScaleAB: ""
       UseScaleAlphaVec: 0
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
