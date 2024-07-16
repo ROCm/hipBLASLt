@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -250,7 +250,10 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
 
     rv["HasMFMA_xf32"]      = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x4_xf32 a[0:15], v[32:33], v[36:37], a[0:15]", isDebug)
     rv["HasSMFMA"]          = _tryAssembler(isaVersion, assemblerPath, "v_smfmac_f32_32x32x16_f16 a[0:15], v[32:33], v[36:39], v[40]", isDebug)
-    rv["HasWMMA"]           = _tryAssembler(isaVersion, assemblerPath,  "v_wmma_f32_16x16x16_f16 v[0:7], v[8:15], v[16:23], v[0:7]", isDebug)
+    rv["HasWMMA"]           = _tryAssembler(isaVersion, assemblerPath, "v_wmma_f32_16x16x16_f16 v[0:7], v[8:15], v[16:23], v[0:7]", isDebug) \
+                                or _tryAssembler(isaVersion, assemblerPath, "v_wmma_f32_16x16x16_f16 v[0:7], v[8:11], v[16:19], v[0:7]", isDebug)
+    rv["HasWMMA_V1"]        = _tryAssembler(isaVersion, assemblerPath, "v_wmma_f32_16x16x16_f16 v[0:7], v[8:15], v[16:23], v[0:7]", isDebug)
+    rv["HasWMMA_V2"]        = _tryAssembler(isaVersion, assemblerPath, "v_wmma_f32_16x16x16_f16 v[0:7], v[8:11], v[16:19], v[0:7]", isDebug)
 
     rv["v_mac_f16"]         = _tryAssembler(isaVersion, assemblerPath, "v_mac_f16 v47, v36, v34", isDebug)
 
@@ -279,11 +282,19 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
 
     rv["v_fma_f64"]         = _tryAssembler(isaVersion, assemblerPath, "v_fma_f64 v[20:21], v[22:23], v[24:25], v[20:21]", isDebug)
 
-    rv["HasAtomicAdd"]      = _tryAssembler(isaVersion, assemblerPath, "buffer_atomic_add_f32 v0, v1, s[0:3], 0 offen offset:0", isDebug)
+    rv["HasAtomicAdd"]      = _tryAssembler(isaVersion, assemblerPath, "buffer_atomic_add_f32 v0, v1, s[0:3], 0 offen offset:0", isDebug) \
+                                or _tryAssembler(isaVersion, assemblerPath, "buffer_atomic_add_f32 v0, v1, s[0:3], null offen offset:0", isDebug)
+    rv["HasGLCModifier"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dwordx4 v[10:13], v[0], s[0:3], 0, offen offset:0, glc", isDebug) \
+                                or _tryAssembler(isaVersion, assemblerPath, "buffer_load_dwordx4 v[10:13], v[0], s[0:3], null, offen offset:0, glc", isDebug)
+    rv["HasMUBUFConst"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dword v40, v36, s[24:27], 1 offen offset:0", isDebug) \
+                                or _tryAssembler(isaVersion, assemblerPath, "buffer_load_b32 v40, v36, s[24:27], 1 offen offset:0", isDebug)
+    rv["HasSCMPK"]          = _tryAssembler(isaVersion, assemblerPath, "s_cmpk_gt_u32 s56, 0x0", isDebug)
 
     rv["HasGLCModifier"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dwordx4 v[10:13], v[0], s[0:3], 0, offen offset:0, glc", isDebug)
 
     rv["HasNTModifier"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dwordx4 v[10:13], v[0], s[0:3], 0, offen offset:0, nt", isDebug)
+
+    rv["HasBarrier"]    = _tryAssembler(isaVersion, assemblerPath, "s_barrier", isDebug)
 
     if _tryAssembler(isaVersion, assemblerPath, "s_waitcnt vmcnt(63)", isDebug):
         rv["MaxVmcnt"] = 63
@@ -305,14 +316,17 @@ def _initArchCaps(isaVersion) -> dict:
     rv["HasEccHalf"]         = (isaVersion in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)])
     rv["Waitcnt0Disabled"]   = (isaVersion in [(9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)])
     rv["SeparateVscnt"]      = isaVersion[0] in (10, 11)
-    rv["CMPXWritesSGPR"]     = isaVersion[0] not in (10, 11)
-    rv["HasWave32"]          = isaVersion[0] in (10, 11)
+    rv["SeparateLGKMcnt"]    = isaVersion[0] == (12)
+    rv["SeparateVMcnt"]      = isaVersion[0] == (12)
+    rv["CMPXWritesSGPR"]     = isaVersion[0] not in (10, 11, 12)
+    rv["HasWave32"]          = isaVersion[0] in (10, 11, 12)
     rv["HasAccCD"]           = (isaVersion in [(9,0,10), (9,4,0), (9,4,1), (9,4,2)])
     rv["ArchAccUnifiedRegs"] = (isaVersion in [(9,0,10), (9,4,0), (9,4,1), (9,4,2)])
     rv["ForceStoreSC1"] = (isaVersion in [(9,4,0), (9,4,1)])
     rv["TransOpWait"] = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     rv["SDWAWait"] = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
-    rv["VgprBank"]           = (isaVersion[0] in (10, 11))
+    rv["VgprBank"]           = (isaVersion[0] in (10, 11, 12))
+    rv["HWWorkaround"]       = isaVersion[0] == (12)
     return rv
 
 def _initAsmBugs(asmCaps) -> dict:
