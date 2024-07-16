@@ -61,7 +61,7 @@ custom.config:
       Batched: True
       UseBias: 1
       Activation: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       SupportUserArgs: False
    MatrixInstruction: [16, 16, 16, 1, 1, 2,1, 4,1]
    1LDSBuffer: 1
