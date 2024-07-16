@@ -34,7 +34,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       UseScaleAB: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: ['b']
     - # BenchmarkProblemSizeGroup - Standard
@@ -96,7 +96,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       UseScaleAB: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: ['b']
     - # BenchmarkProblemSizeGroup - Standard

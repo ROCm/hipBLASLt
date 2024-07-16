@@ -39,7 +39,7 @@ BenchmarkProblems:
       Activation:    True
       UseScaleAB: True
       UseScaleCD: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [s]
     - # BenchmarkProblemSizeGroup - Standard
@@ -111,7 +111,7 @@ BenchmarkProblems:
       Activation:    True
       UseScaleAB: True
       UseScaleCD: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [s]
     - # BenchmarkProblemSizeGroup - Standard
@@ -173,7 +173,7 @@ BenchmarkProblems:
       Activation:    True
       UseScaleAB: True
       UseScaleCD: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [s]
     - # BenchmarkProblemSizeGroup - Standard

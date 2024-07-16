@@ -42,7 +42,7 @@ BenchmarkProblems:
       ActivationHPA: True
       GroupedGemm:   False
       UseScaleAB: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
