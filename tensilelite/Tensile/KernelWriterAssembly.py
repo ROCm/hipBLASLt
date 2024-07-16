@@ -389,16 +389,6 @@ class KernelWriterAssembly(KernelWriter):
     # Mostly impacts flat kernels and GSU edge since these need SGPR
     # for conditionals
 
-    if kernel["StreamK"]:
-      # StreamK vars
-      module.add(self.defineSgpr("StreamKIdx", 1))
-      module.add(self.defineSgpr("StreamKIter", 1))
-      module.add(self.defineSgpr("StreamKIterEnd", 1))
-      module.add(self.defineSgpr("StreamKLocalStart", 1))
-      module.add(self.defineSgpr("StreamKLocalEnd", 1))
-      if kernel["StreamKAtomic"] == 0:
-        module.add(self.defineSgpr("SrdWS", 4, 4))
-
     if kernel["BufferLoad"]:
        # resource descriptor (SRD) A and B, must be aligned on 4-SGPR boundary
       module.add(self.defineSgpr("SrdA", 4, 4))
@@ -8885,7 +8875,7 @@ class KernelWriterAssembly(KernelWriter):
         self.sgprPool.checkIn(activationSetPCStruct.sgprOffsetActivation)
         self.sgprPool.checkIn(activationSetPCStruct.sgprOffsetBack)
 
-      module.add(skComponent.writePartials(self, kernel, skPartialsLabel, vectorWidths_1, elements_1))
+      module.add(skComponent.writePartials(self, kernel, skPartialsLabel, vectorWidths_1, elements_1, tmpVgpr, cvtVgprStruct, endLabel))
 
       # End label
       module.add(endLabel)
@@ -8934,23 +8924,12 @@ class KernelWriterAssembly(KernelWriter):
 
     ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI])
 
-    # how many vgprs are needed for zero elements
-    # 2 for addressC in vgpr for addition - already checked out
-    # 2 for coord0,1 of thread - already checked out
-    # 2 for tmp - already checked out
-
-    # 5 = how many vgprs are needed per element (flat)
-    #  - 2 for addr
-    #  - 3 for GLOBAL_OFFSET_C calculation (can overlap below, therefore max)
-    #  - if beta gwvw*rpe for new value
-    #  - if atomic 2*rpe for old and cmp values
-
     #print self.vgprPool.state()
     # Use VGPR up to next occupancy threshold:
     maxVgprs = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), \
                                           self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
     if self.states.serializedStore: # get aggressive when serializedStore is on; not necessarily exclusive to this parameter
-      _growPool(self.vgprPool, self.vgprPool.size()-self.vgprPool.available(), maxVgprs, 1, \
+      self.vgprPool.growPool(self.vgprPool.size()-self.vgprPool.available(), maxVgprs, 1, \
         "grow-pool up to next occupancy for GlobalWrite")
     # Get numVgprAvailable
     numVgprAvailable = self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
@@ -8997,7 +8976,7 @@ class KernelWriterAssembly(KernelWriter):
         print2("info: growing pool += %d * %d for GlobalWrite\n" \
             % (minElements,ss.numVgprsPerElement))
         print2(self.vgprPool.state())
-        _growPool(self.vgprPool, 0, minElements, ss.numVgprsPerElement, \
+        self.vgprPool.growPool(0, minElements, ss.numVgprsPerElement, \
           "grow-pool for GlobalWrite")
         numVgprAvailable = self.vgprPool.available()
         print2(self.vgprPool.state())
@@ -9281,7 +9260,8 @@ class KernelWriterAssembly(KernelWriter):
 
   ##############################################################################
   def chooseGlobalWrite(self, useBuffer, bps, srcVgpr, rpv, \
-                        addr0, addr1, offset, glc=False, slc=False, nt=False, hi16=0, comment="store"):
+                        addr0, addr1, offset, soffset=0, \
+                        glc=False, slc=False, nt=False, hi16=0, comment="store"):
     """
     create the store instruction for requested vector width and other parms
     rpv = regs per vector
@@ -9334,6 +9314,8 @@ class KernelWriterAssembly(KernelWriter):
 
     if useBuffer:
       mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, nt=nt, isStore=True)
+      if soffset != 0:
+        assert offset < 4096, "sgpr offset provided with large const offset"
       # buffer_load offset field is 12-bit.
       # if offset >= 4096, use soffset instead
       maxShift = max(bps - 16, 0) #if bps = 32 or bps = 64
@@ -9346,7 +9328,7 @@ class KernelWriterAssembly(KernelWriter):
             mubuf.offset12 = 0
           bufferStoreImpl(tmpSgpr, mubuf)
       else:
-        bufferStoreImpl(0, mubuf)
+        bufferStoreImpl(soffset, mubuf)
 
     else:
       flat = FLATModifiers(glc=glc, slc=slc, isStore=True)
@@ -9456,7 +9438,7 @@ class KernelWriterAssembly(KernelWriter):
     return self.addBiasGlobalLoad(dataType, kernel, biasVgpr, addr0, addr1, addrCalc.biasOffset[biasDim], gwvw)
 
   ##############################################################################
-  def addStore(self, kernel, ss, tc: str, addrCalc, sumIdx, tmpS01, edge, comment):
+  def addStore(self, kernel, ss, tc: str, addrCalc, sumIdx, tmpS01, edge, wsOffset=0, comment="addStore"):
     """
     Add stores for the element with addrCalc and sumIdx.
     tmpS01 is a single :temp sGPR
@@ -9508,6 +9490,21 @@ class KernelWriterAssembly(KernelWriter):
         dataType     = kernel["ProblemType"]["DestDataType"]
         globalOffset = addrCalc.globalOffset
         globalOffset = int((globalOffset/self.states.bpeCexternal) * self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
+      elif tc == 'WS':
+        isGlc = True
+        isSlc = True
+        isNT  = kernel["NonTemporalD"] & 0x4
+
+        bps = self.states.bpeCinternal * ss.cfg.gwvw
+        rpv = self.states.bpeCinternal * ss.cfg.gwvw / self.states.bpr
+        if kernel["BufferStore"]:
+          addr0 = vgpr(addrCalc.addrDVgpr)
+          addr1 = sgpr("SrdWS", 4)
+        else:
+          addr0 = vgpr(addrCalc.addrDVgpr,2)
+          addr1 = ""
+        dataType     = kernel["ProblemType"]["ComputeDataType"]
+        globalOffset = 0
       elif tc == 'Bias':
         bps = self.states.bpeCinternal * ss.cfg.gwvw
         rpv = self.states.bpeCinternal * ss.cfg.gwvw / self.states.bpr
@@ -9545,30 +9542,37 @@ class KernelWriterAssembly(KernelWriter):
           # (H,H,H,H,H,H), internal H
           if self.states.asmCaps["HasWMMA"] and kernel["EnableMatrixInstruction"]:
             module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                           addr0, addr1, globalOffset, isGlc, isSlc, isNT, hi16=0, comment=comment))
+                addr0, addr1, globalOffset, soffset=wsOffset, \
+                glc=isGlc, slc=isSlc, nt=isNT, hi16=0, comment=comment))
           else:
             module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx//2, rpv, \
-                           addr0, addr1, globalOffset, isGlc, isSlc, isNT, hi16=sumIdx%2, comment=comment))
+                addr0, addr1, globalOffset, soffset=wsOffset, \
+                glc=isGlc, slc=isSlc, nt=isNT, hi16=sumIdx%2, comment=comment))
         else:
           # (B,B,B,B,S,S), internal S
           # (H,H,H,H,H,H), internal S
           # (H,H,H,H,S,S), internal S
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                         addr0, addr1, globalOffset, isGlc, isSlc, isNT, hi16=0, comment=comment))
+              addr0, addr1, globalOffset, soffset=wsOffset, \
+              glc=isGlc, slc=isSlc, nt=isNT, hi16=0, comment=comment))
       elif dataType.isInt32() or dataType.isSingle():
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, isNT, comment=comment))
+            addr0, addr1, globalOffset, soffset=wsOffset, \
+            glc=isGlc, slc=isSlc, nt=isNT, comment=comment))
       elif dataType.isDouble() or dataType.isSingleComplex():
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx*2, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, isNT, comment=comment))
+            addr0, addr1, globalOffset, soffset=wsOffset, \
+            glc=isGlc, slc=isSlc, nt=isNT, comment=comment))
       elif dataType.isDoubleComplex():
         rps = dataType.numRegisters()
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx*rps, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, isNT, comment=comment))
+            addr0, addr1, globalOffset, soffset=wsOffset, \
+            glc=isGlc, slc=isSlc, nt=isNT, comment=comment))
       elif dataType.isInt8() or dataType.isFloat8() or dataType.isBFloat8() or dataType.isFloat8BFloat8() or dataType.isBFloat8Float8():
         if kernel["ProblemType"]["HighPrecisionAccumulate"]:
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                         addr0, addr1, globalOffset, isGlc, isSlc, isNT, comment=comment))
+              addr0, addr1, globalOffset, soffset=wsOffset, \
+              glc=isGlc, slc=isSlc, nt=isNT, comment=comment))
     return module
 
   ##############################################################################
@@ -10341,10 +10345,3 @@ def _getEccOffset(totalWidth, bpr, bpe, glvw, idx, numVgprG2L):
     return numVgprG2L * left
   else:
     return 0
-
-def _growPool(pool: RegisterPool, rangeStart: int, rangeEnd: int, checkOutSize: int, comment: str=""):
-  tl = []
-  for _ in range(rangeStart, rangeEnd):
-    tl.append(pool.checkOut(checkOutSize, comment))
-  for t in tl:
-    pool.checkIn(t)

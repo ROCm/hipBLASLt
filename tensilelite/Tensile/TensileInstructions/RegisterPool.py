@@ -341,6 +341,13 @@ class RegisterPool:
   def stateDetailed(self):
     for index, register in enumerate(self.pool):
         print("%u: %s"%(index, register.tag))
+  
+  def growPool(self, rangeStart: int, rangeEnd: int, checkOutSize: int, comment: str=""):
+    tl = []
+    for _ in range(rangeStart, rangeEnd):
+      tl.append(self.checkOut(checkOutSize, comment))
+    for t in tl:
+      self.checkIn(t)
 
 @dataclass
 class RegisterPoolResource:

@@ -3640,6 +3640,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     if kernel["GlobalSplitU"] > 0:
       self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
+
+    if kernel["StreamK"]:
+      # StreamK vars
+      self.defineSgpr("StreamKIdx", 1)
+      self.defineSgpr("StreamKIter", 1)
+      self.defineSgpr("StreamKIterEnd", 1)
+      self.defineSgpr("StreamKLocalStart", 1)
+      self.defineSgpr("StreamKLocalEnd", 1)
+      if kernel["StreamKAtomic"] == 0:
+        self.defineSgpr("SrdWS", 4, 4)
     
     #------------------------
     # Registers defined below this point are not available in the post-loop
