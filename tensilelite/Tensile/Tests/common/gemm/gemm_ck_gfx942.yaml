@@ -43,7 +43,7 @@ BenchmarkProblems:
       # GroupedGemm: True
       # SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
-      CustomKernels: 
+      CustomKernels:
         [
           "Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_DTVA"
         ]
@@ -52,7 +52,7 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - MatrixInstruction:
-          - [16, 16,16, 1,  1,   4,16,  4,1 ] # 256x256 (Occupancy 1) 
+          - [16, 16,16, 1,  1,   4,16,  4,1 ] # 256x256 (Occupancy 1)
 
         - AssertFree0ElementMultiple: [1]
         - AssertFree1ElementMultiple: [1]

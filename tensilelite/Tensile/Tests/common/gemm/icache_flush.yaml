@@ -20,7 +20,7 @@ GlobalParameters:
   DataInitTypeA: 12
   DataInitTypeB: 13
   SleepPercent: 0
- 
+
 BenchmarkProblems:
   ########################################
   # NN - standard

@@ -484,7 +484,7 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [16, 16, 16, 1, 1, 4, 4, 1, 2]
-        - WorkGroup: 
+        - WorkGroup:
           - [16, 8, 2]
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
