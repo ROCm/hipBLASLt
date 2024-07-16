@@ -592,7 +592,7 @@ namespace Tensile
             m_useBias = useBias;
         }
 
-        void setUseScaleAB(bool useScaleAB)
+        void setUseScaleAB(std::string useScaleAB)
         {
             m_useScaleAB = useScaleAB;
         }
@@ -617,7 +617,7 @@ namespace Tensile
             return m_useBias;
         }
 
-        bool useScaleAB() const
+        std::string useScaleAB() const
         {
             return m_useScaleAB;
         }
@@ -693,23 +693,23 @@ namespace Tensile
             return m_biasSrc;
         }
 
-        void setScaleA(DataType type)
+        void setScaleA(DataType type, size_t length)
         {
             m_scaleAType = type;
-            if(type != DataType::None && m_useScaleAB)
+            if(type != DataType::None && !m_useScaleAB.empty())
             {
                 m_tensors[ContractionProblemGemm::TENSOR::SCALEA]
-                    = {"scaleA", m_scaleAType, {1}, {1, 1}};
+                    = {"scaleA", m_scaleAType, {length}, {1, length}};
             }
         }
 
-        void setScaleB(DataType type)
+        void setScaleB(DataType type, size_t length)
         {
             m_scaleBType = type;
-            if(type != DataType::None && m_useScaleAB)
+            if(type != DataType::None && !m_useScaleAB.empty())
             {
                 m_tensors[ContractionProblemGemm::TENSOR::SCALEB]
-                    = {"scaleB", m_scaleBType, {1}, {1, 1}};
+                    = {"scaleB", m_scaleBType, {length}, {1, length}};
             }
         }
 
@@ -1093,7 +1093,7 @@ namespace Tensile
         bool           m_useGradient             = false;
         bool           m_useE                    = false;
         int            m_useBias                 = 0;
-        bool           m_useScaleAB              = false;
+        std::string    m_useScaleAB              = "";
         bool           m_useScaleCD              = false;
         int            m_useScaleAlphaVec        = 0;
         ActivationType m_activationType          = ActivationType::None;

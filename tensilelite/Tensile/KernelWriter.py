@@ -3709,7 +3709,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     self.states.preloadScaleA = False
     self.states.preloadScaleB = False
-    if kernel["ProblemType"]["UseScaleAB"]:
+    if kernel["ProblemType"]["UseScaleAB"] == "Scalar":
       if kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
         self.states.preloadScaleA = True
       if kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():

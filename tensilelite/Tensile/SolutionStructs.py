@@ -530,7 +530,8 @@ class ProblemType(Mapping):
       name += self["ActivationComputeDataType"].toChar()
     if self["ActivationNoGuard"]: name += "NG"
 
-    if self["UseScaleAB"]: name += "_SAB"
+    if self["UseScaleAB"] == "Scalar": name += "_SAB"
+    elif self["UseScaleAB"] == "Vector": name += "_SABV"
     if self["UseScaleCD"]: name += "_SCD"
     if self["UseScaleAlphaVec"]: name += "_SAV"
 
@@ -3665,7 +3666,12 @@ class Solution(collections.abc.Mapping):
     if state["ProblemType"]["UseBias"] != 0 and state["ProblemType"]["UseScaleAlphaVec"] != 0 and state["ProblemType"]["UseBias"] != state["ProblemType"]["UseScaleAlphaVec"]:
       reject(state, "When both UseBias and UseScaleAlphaVec are enabled then UseBias and UseScaleAlphaVec must have same settings.")
 
-    # ScaleAB
+    # ScaleAB or ScaleABVec
+    if state["ProblemType"]["DataTypeA"] != state["ProblemType"]["DataTypeB"] and \
+      state["ProblemType"]["DataTypeA"] != state["ProblemType"]["DataType"] and \
+      state["ProblemType"]["UseScaleAB"] == "Vector":
+      reject("Currently does not support using scaleABVec if DataTypeA != DataTypeB != DataType.")
+
     if state["ProblemType"]["UseScaleAB"] and state["OptNoLoadLoop"]:
       # Hard to check alpha == 1.0 directly
       # Turn off ONLL for now
