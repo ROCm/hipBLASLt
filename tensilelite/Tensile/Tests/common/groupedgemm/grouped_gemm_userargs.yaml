@@ -141,7 +141,7 @@ BenchmarkProblems:
       UseE:          False
       Activation:    False
       GroupedGemm:   True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:

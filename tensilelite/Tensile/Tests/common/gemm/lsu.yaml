@@ -339,7 +339,7 @@ BenchmarkProblems:
       Batched: True
       UseBias: 1
       Activation: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseScaleAB: True
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
@@ -412,7 +412,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       ActivationHPA: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
