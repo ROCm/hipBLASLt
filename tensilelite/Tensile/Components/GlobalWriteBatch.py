@@ -35,6 +35,8 @@ from ..Components.PackData import formatting, PackData_F16, PackData_BF16
 
 from math import ceil
 from ..TensileInstructions import log2
+from typing import Tuple
+from copy import deepcopy
 
 class GlobalWriteBatchComponent(GlobalWriteComponents):
   kernel = {"ProblemType": {"OperationType": "GEMM" }}
@@ -182,97 +184,16 @@ class GlobalWriteBatchWriter:
 
     return module
 
-  def GSUSynccodegen(self, labelend, vgprstart, globalOffset, vgproffset):
-    module = Module("GSUSYNC")
-
-    WaveNum = str(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1])
-
-    module.addComment("check done start")
-
-    #####################################synchronizer offset cal and set synchronizer#####################################
-    #####################################WaveId+WgId*WaveNum+WgNum*WaveNum*Batch
-    #####################################WgId+WaveId*WgNum+WgNum*WaveNum*Batch
-    module.addComment("synchronizer offset cal")
-
-    tmpS02 = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) #
-    tmpS01 = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) #
-    tmpS03 = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) #
-
-    module.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr("NumWorkGroups1"), src1=sgpr("NumWorkGroups0"), comment=""))
-    module.add(SMulI32(dst=sgpr(tmpS02), src0=sgpr(tmpS03), src1=sgpr("WorkGroup2"), comment=""))
-    module.add(SMulI32(dst=sgpr(tmpS01), src0=sgpr("WorkGroup1"), src1=sgpr("NumWorkGroups0"), comment=""))
-    module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr("WorkGroup0")))
-    module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr(tmpS02)))
-
-    module.add(VReadfirstlaneB32(dst=sgpr(tmpS02), src=vgpr("Serial")))
-
-    module.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr(tmpS03), src1=sgpr("SizeK"), comment="cal a wave offset"))
-    module.add(SLShiftRightB32(dst=sgpr(tmpS02), shiftHex=hex(log2(self.kernel["WavefrontSize"])), src=sgpr(tmpS02)))
-    module.add(SMulI32(dst=sgpr(tmpS02), src0=sgpr(tmpS03), src1=sgpr(tmpS02), comment="wave offset at batch")) # WaveId*WgNum
-    module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS02), src1=sgpr(tmpS01))) # WaveId*WgNum+WgId
-    if self.batchIdx > 0:
-      module.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr(tmpS03), src1=int(WaveNum), comment="cal a batch offset")) # WgNum*WaveNum
-      module.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr(tmpS03), src1=self.batchIdx, comment="this batch offset")) # WgNum*WaveNum*Batch
-      module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr(tmpS03))) # WaveId*WgNum+WgId + WgNum*WaveNum*Batch
-    module.add(SLShiftLeftB32(dst=sgpr(tmpS01), src=sgpr(tmpS01), shiftHex=hex(2), comment="")) # atomic 32bits
-    #####################################set synchronizer
-    module.add(SAddU32(dst=sgpr("SrdSync+0"), \
-                                    src0=sgpr("Synchronizer+0"), \
-                                    src1=sgpr(tmpS01), \
-                                    comment="" ))
-    module.add(SAddCU32(dst=sgpr("SrdSync+1"), \
-                        src0=sgpr("Synchronizer+1"), \
-                        src1=hex(0), \
-                        comment="" ))
-
-    module.add(SWaitCnt(waitAll=True, comment="wait store done before synchronizer start load and add"))
-    module.add(SSubU32(dst=sgpr(tmpS02), src0=sgpr("GSU"), src1=hex(1), comment=""))
-    module.add(SAtomicDec(dst=sgpr(tmpS02), base=sgpr("SrdSync", 2), smem=SMEMModifiers(glc=1)))
-    module.addSpaceLine()
-    #####################################cal synchronizer sum offset#####################################
-    module.addComment("synchronizer sum offset cal")
-
-    tmpS04 = self.parentWriter.sgprPool.checkOutAligned(2,2, preventOverflow=False) #
-    tmpS05 = self.parentWriter.sgprPool.checkOutAligned(2,2, preventOverflow=False) #
-
-    indices = list(range(0, self.kernel["ProblemType"]["NumIndicesC"]))
-    numDim = len(indices)
-    with self.parentWriter.allocTmpSgpr(5) as tmpSgprInfo:
-      tmpSgpr = tmpSgprInfo.idx
-      module.addModuleAsFlatItems(self.parentWriter.s_mul_u64_u32(sgpr(tmpSgpr+0), sgpr(tmpSgpr+1), sgpr("SizesFree+0"), 1, "Free0"))
-      for i in range(1, numDim):
-        module.add(SSubU32(dst=sgpr(tmpSgpr+4), src0=sgpr("SizesFree+%u"%i), src1=1, comment="Free%u" % i))
-        module.add(SMulI32(dst=sgpr(tmpSgpr+4), src0=sgpr(tmpSgpr+4), src1=1, comment="Free%u" % i))
-        module.addModuleAsFlatItems(self.parentWriter.s_mul_u64_u32(sgpr(tmpSgpr+2), sgpr(tmpSgpr+3), sgpr(tmpSgpr+4), sgpr("StrideC%s"%self.parentWriter.states.indexChars[i]), "Free%u" % i))
-        module.add(SAddU32(dst=sgpr(tmpSgpr+0), src0=sgpr(tmpSgpr+0), src1=sgpr(tmpSgpr+2), comment="Free%u" % i))
-        module.add(SAddCU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr+1), src1=sgpr(tmpSgpr+3), comment="Free%u" % i))
-
-      bpetmp = int(self.parentWriter.states.bpr * self.kernel["ProblemType"]["DestDataType"].numRegisters()) # self.states.bpeCinternal
-      module.add(SLShiftLeftB64(dst=sgpr(tmpS04,2), src=sgpr(tmpSgpr+0,2), shiftHex=log2(self.parentWriter.states.bpeCexternal), comment="scale by bpe"))
-
-    module.addSpaceLine()
-    #####################################cal synchronizer sum start#####################################
-    # no need to do because we have workspace start sgpr
-    #####################################check synchronizer done#####################################
-    checkSyncCode = Module("check synchronizer done")
-    checkSyncCode.addComment("check synchronizer done")
-
-    checkSyncCode.add(SWaitCnt(lgkmcnt=0, comment="Wait for synchronizer"))
-    checkSyncCode.add(SCmpEQU32(
-        src0=sgpr(tmpS02), \
-        src1=hex(1), \
-        comment=""))
-
-    # checkSyncCode.add(SCBranchSCC0(labelName=labelendname, comment=""))
-    checkSyncCode.add(self.parentWriter.longBranchScc0(label=labelend, posNeg=1, comment="long branch sync"))
-
-    checkSyncCode.addComment("check done end")
-    checkSyncCode.addSpaceLine()
-    #####################################load buffer#####################################
-    checkSyncCode.addComment("buffer load start")
-    SyncloadedData = 0
-
-    tmpS06 = self.parentWriter.sgprPool.checkOutAligned(4,4, preventOverflow=False) #overflow?
+  def GSUReductioncodegen(self, GSUStageSize, tmpS04, tmpS05, tmpS06, vgproffset, checkSyncCode, labelPostFix=""):
+    CurrentStage = 0
+    if labelPostFix == "_stage2" or GSUStageSize == 0:
+      CurrentStage = 2
+    elif labelPostFix == "":
+      CurrentStage = 1
+    else:
+      assert 0, "GSUReductioncodegen doesn't support this postfix(%s)."%(labelPostFix)
+    module = Module("GSU Reduction")
+    module.addComment("buffer load start")
     addr1 = sgpr(tmpS06, 4)
     addr0 = vgpr(vgproffset)
     bps = self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.gwvw
@@ -281,7 +202,7 @@ class GlobalWriteBatchWriter:
       addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
       SyncloadedData = 0
 
-      SynchronizerAddSkiplabelString = "Synchronizer_read_add_skip"
+      SynchronizerAddSkiplabelString = "Synchronizer_read_add_skip"+labelPostFix
       SynchronizerAddSkipComment = "Synchronizer read add skip"
       SynchronizerAddSkiplabel = Label(self.parentWriter.labels.getNameInc(SynchronizerAddSkiplabelString), SynchronizerAddSkipComment)
 
@@ -291,10 +212,12 @@ class GlobalWriteBatchWriter:
       if (self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1]) > 8:
         GSUtotal = int(GSUtotal/int((self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1])/8))
       GSUtotal = max(2,GSUtotal)
+      if CurrentStage == 1:
+        GSUtotal = GSUStageSize
       SynchronizerAddEndlabel = [""] * GSUtotal
 
       for idx in range(0, GSUtotal):
-        SynchronizerAddEndlabelString = "Synchronizer_read_add_end_"+str(idx+1)
+        SynchronizerAddEndlabelString = "Synchronizer_read_add_end_"+str(idx+1)+labelPostFix
         SynchronizerAddEndComment = "Synchronizer read add end_"+str(idx+1)
         SynchronizerAddEndlabel[idx] = Label(self.parentWriter.labels.getNameInc(SynchronizerAddEndlabelString), SynchronizerAddEndComment)
 
@@ -310,18 +233,17 @@ class GlobalWriteBatchWriter:
         # Insert check synchronizer done code here for better scheduling
         module.add(checkSyncCode)
 
-      for times in range(elementIdx, elementIdx+1):
-        addrCalctmp: AddrCalculation = self.ss.elementAddr[times]
-        if self.ss.optSrdIncForRow and addrCalctmp.rowInc:
-          module.add(addrCalctmp.incrementToNextRow(self.kernel, "D", self.ss, tmpS05, dst=tmpS06))
-          module.add(SAddU32(dst=sgpr("WSDstart+0"), \
-                                            src0=sgpr("WSDstart+0"), \
-                                            src1=sgpr(tmpS05), \
-                                            comment="" ))
-          module.add(SAddCU32(dst=sgpr("WSDstart+1"), \
-                              src0=sgpr("WSDstart+1"), \
-                              src1=hex(0), \
-                              comment="" ))
+      addrCalctmp: AddrCalculation = self.ss.elementAddr[elementIdx]
+      if self.ss.optSrdIncForRow and addrCalctmp.rowInc:
+        module.add(addrCalctmp.incrementToNextRow(self.kernel, "D", self.ss, tmpS05, dst=tmpS06))
+        module.add(SAddU32(dst=sgpr("WSDstart+0"), \
+                                          src0=sgpr("WSDstart+0"), \
+                                          src1=sgpr(tmpS05), \
+                                          comment="" ))
+        module.add(SAddCU32(dst=sgpr("WSDstart+1"), \
+                            src0=sgpr("WSDstart+1"), \
+                            src1=hex(0), \
+                            comment="" ))
 
       vgprstart = self.ss.elementSumIdx[elementIdx] #here
       dataType     = self.kernel["ProblemType"]["DestDataType"]
@@ -335,7 +257,7 @@ class GlobalWriteBatchWriter:
       GSUMvgpr = self.parentWriter.vgprPool.checkOut(1, "GSUMvgpr")
       module.add(SMovB32(dst=sgpr("GSUSync"), src=sgpr("GSU"), comment=""))
 
-      SynchronizerlabelString = "Synchronizer_read_add"
+      SynchronizerlabelString = "Synchronizer_read_add"+labelPostFix
       SynchronizerComment = "Synchronizer read add"
       Synchronizerlabel = Label(self.parentWriter.labels.getNameInc(SynchronizerlabelString), SynchronizerComment)
 
@@ -345,7 +267,6 @@ class GlobalWriteBatchWriter:
         tmpVAdd = self.parentWriter.vgprPool.checkOutAligned((GSUtotal-1)*self.gwvw, 4)
 
       GSUP1 = GSUtotal-1
-
       for i in range(0,GSUP1):
         module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1, comment="%u" % i))
 
@@ -374,69 +295,75 @@ class GlobalWriteBatchWriter:
       module.addComment("buffer load end\n")
 
       #####################################> GSUtotal reduction start#####################################
-      module.addComment("buffer add start")
       vscnt = 0
       lgkmcnt = -1
-      vmcnt = SyncloadedData = SyncloadedData -1
+      if CurrentStage == 2:
+        module.addComment("buffer add start")
 
-      module.add(Synchronizerlabel)
-
-      for i in range(0, GSUP1):
-        module.addSpaceLine()
         vmcnt = SyncloadedData = SyncloadedData -1
-        module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
 
-        if ((self.gwvw % 2) == 1):
-          for j in range(0, int(self.gwvw)):
-            module.add(VAddF32(dst=vgpr(vgprstart+j), src0=vgpr(vgprstart+j), src1=vgpr(tmpVAdd+0+self.gwvw*i+j), \
-                          comment="buffer add"))
-        else:
-          for j in range(0, int(self.gwvw/2)):
-            module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
-                              src1=vgpr(tmpVAdd+0+self.gwvw*i+j*2, 2), comment="buffer pk"))
+        module.add(Synchronizerlabel)
+        for i in range(0, GSUP1):
+          module.addSpaceLine()
+          vmcnt = SyncloadedData = SyncloadedData -1
+          module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
 
-        module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1, comment="%u" % i))
-        module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0-(GSUP1-1), comment=""))#GSUSync+GSUP1==GSU
-        module.add(SCBranchSCC1(labelName=SynchronizerAddSkiplabel.getLabelName(), comment="SyncAddbranch"))
+          if ((self.gwvw % 2) == 1):
+            for j in range(0, int(self.gwvw)):
+              module.add(VAddF32(dst=vgpr(vgprstart+j), src0=vgpr(vgprstart+j), src1=vgpr(tmpVAdd+0+self.gwvw*i+j), \
+                            comment="buffer add"))
+          else:
+            for j in range(0, int(self.gwvw/2)):
+              module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
+                                src1=vgpr(tmpVAdd+0+self.gwvw*i+j*2, 2), comment="buffer pk"))
 
-        module.add(SAddU32(dst=sgpr(tmpS06+0), \
-                                        src0=sgpr(tmpS06+0), \
-                                        src1=sgpr(tmpS04+0), \
-                                        comment="" ))
-        module.add(SAddCU32(dst=sgpr(tmpS06+1), \
-                            src0=sgpr(tmpS06+1), \
-                            src1=sgpr(tmpS04+1), \
-                            comment="" ))
+          module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1, comment="%u" % i))
 
-        module.add(VCmpGEI32(dst=sgpr(tmpS05,2), src0=0, src1=sgpr("GSUSync"), comment=""))
-        module.add(VCndMaskB32(
-              dst=vgpr(GSUMvgpr), \
-              src1=vgpr(bufferOOB), \
-              src0=addr0, \
-              src2=sgpr(tmpS05,2), \
-              comment="protect if OOB"))
+          module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0-(GSUP1-1), comment=""))#GSUSync+GSUP1==GSU
+          module.add(SCBranchSCC1(labelName=SynchronizerAddSkiplabel.getLabelName(), comment="SyncAddbranch"))
 
-        if(self.kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
+          module.add(SAddU32(dst=sgpr(tmpS06+0), \
+                                          src0=sgpr(tmpS06+0), \
+                                          src1=sgpr(tmpS04+0), \
+                                          comment="" ))
+          module.add(SAddCU32(dst=sgpr(tmpS06+1), \
+                              src0=sgpr(tmpS06+1), \
+                              src1=sgpr(tmpS04+1), \
+                              comment="" ))
+
+          module.add(VCmpGEI32(dst=sgpr(tmpS05,2), src0=0, src1=sgpr("GSUSync"), comment=""))
+          module.add(VCndMaskB32(
+                dst=vgpr(GSUMvgpr), \
+                src1=vgpr(bufferOOB), \
+                src0=addr0, \
+                src2=sgpr(tmpS05,2), \
+                comment="protect if OOB"))
+          
+          if(self.kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
             module.add(self.parentWriter.chooseGlobalRead(True, bps, tmpVAdd+self.gwvw*self.kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
-                        vgpr(GSUMvgpr), addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1, \
-                        comment="load GSU DD %u" % bps))
-        else:
-          module.add(self.parentWriter.chooseGlobalRead(True, bps, tmpVAdd+self.gwvw*i, \
-                        vgpr(GSUMvgpr), addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1, \
-                        comment="load GSU DD %u" % bps))
+                          vgpr(GSUMvgpr), addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1, \
+                          comment="load GSU DD %u" % bps))
+          else:
+            module.add(self.parentWriter.chooseGlobalRead(True, bps, tmpVAdd+self.gwvw*i, \
+                          vgpr(GSUMvgpr), addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1, \
+                          comment="load GSU DD %u" % bps))
 
-        SyncloadedData += 1
+          SyncloadedData += 1
 
-      module.addComment("buffer add end\n")
-
-      module.add(SCmpGtI32(
-        src0=sgpr("GSUSync"), \
-        src1=hex(1-(GSUP1)), \
-        comment=""))
-      module.add(SCBranchSCC1(labelName=Synchronizerlabel.getLabelName(), comment="Syncbranchhere"))
+        module.addComment("buffer add end\n")
+              
+        module.add(SCmpGtI32(
+          src0=sgpr("GSUSync"), \
+          src1=hex(1-(GSUP1)), \
+          comment=""))
+        module.add(SCBranchSCC1(labelName=Synchronizerlabel.getLabelName(), comment="Syncbranchhere"))
 
       #####################################< GSUtotal reduction start#####################################
-      for k in range(GSUtotal-2, -1, -1):
+      if CurrentStage == 1:
+        startGSU = GSUtotal - 1
+      else:
+        startGSU = GSUtotal - 2
+      for k in range(startGSU, -1, -1):
         module.addSpaceLine()
         module.add(SynchronizerAddEndlabel[k])
 
@@ -465,13 +392,235 @@ class GlobalWriteBatchWriter:
       module.addComment("buffer add end2\n")
 
       self.parentWriter.vgprPool.checkIn(tmpVAdd)
+    return module
+
+  def GSUCheckSynccodegen(self, GSUStageSize, tmpS02, labelend, SyncCodeEndLabel):
+    checkSyncCode = Module("check synchronizer done")
+    checkSyncCode.addComment("check synchronizer done")
+    checkSyncCode.add(SWaitCnt(lgkmcnt=0, comment="Wait for synchronizer and release atomic sgpr"))
+    if GSUStageSize > 1:
+      checkSyncCode.add(SCmpEQU32(
+          src0=sgpr("GSU"), \
+          src1=hex(1), \
+          comment=""))
+      checkSyncCode.add(SCBranchSCC1(labelName=SyncCodeEndLabel.getLabelName(), comment=""))
+    checkSyncCode.add(SCmpEQU32(
+        src0=sgpr(tmpS02), \
+        src1=hex(1), \
+        comment=""))
+    # checkSyncCode.add(SCBranchSCC0(labelName=labelendname, comment=""))
+    checkSyncCode.add(self.parentWriter.longBranchScc0(label=labelend, posNeg=1, comment="long branch sync"))
+
+    checkSyncCode.addComment("check done end")
+    checkSyncCode.addSpaceLine()
+    #####################################load buffer#####################################
+    checkSyncCode.addComment("buffer load start")
+    return checkSyncCode
+  
+  def GSUSynccodegen(self, labelend, vgprstart, globalOffset, vgproffset):
+    module = Module("GSUSYNC")
+    moduleGSUStage2 = Module("GSUSYNC Stage 2")
+    moduleGSUStage2Part2 = Module("GSUSYNC Stage 2")
+    WaveNum = str(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1])
+
+    SyncCodeGSUOneEndLabelStg1 = Label(self.parentWriter.labels.getNameInc("SyncCodeEnd_stage1"), comment="")
+    SyncCodeGSUOneEndLabelStg2 = Label(self.parentWriter.labels.getNameInc("SyncCodeEnd_stage2"), comment="")
+
+    SkipStageOneLabel = Label(self.parentWriter.labels.getNameInc("SkipStageOne"), comment="")
+    SkipStageOneLabel2 = Label(self.parentWriter.labels.getNameInc("SkipStageOne2"), comment="")
+
+    tmpS06 = self.parentWriter.sgprPool.checkOutAligned(4,4, preventOverflow=False) #overflow?
+    tmpS01 = tmpS06 + 1
+    tmpS02 = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) # Cannot use S06 because used at the same time
+    tmpS03 = tmpS06 + 3
+
+    tmpSMaxGrp = tmpS06 + 2
+
+    # Add multiple stages code here for large GSU and large MT
+    if self.kernel["MacroTile0"] * self.kernel["MacroTile1"] <= 512:
+      GSUStageSize = 0
+    else:
+      GSUStageSize = 4 # default 4
+    self.GSUStageSize = GSUStageSize
+    GSUStage2EndLabel = Label(self.parentWriter.labels.getNameInc("GSU_stage2_End"), comment="")
+    if GSUStageSize > 1:
+      tmpSGSUGroupID = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) #overflow?
+      # Stage 2 need to recall the workspace buffer address to srd
+      moduleGSUStage2.add(SCmpLeU32(
+          src0=sgpr("GSUBackUp"), \
+          src1=hex(GSUStageSize), \
+          comment="if GSU<=%u?"%GSUStageSize))
+      moduleGSUStage2.add(SCBranchSCC1(labelName=GSUStage2EndLabel.getLabelName(), comment=""))
+      moduleGSUStage2.add(SMovB32(dst=sgpr("SrdD+0"), src=sgpr("WSDstartBackUp0"), comment="recall workspace start"))
+      moduleGSUStage2.add(SMovB32(dst=sgpr("SrdD+1"), src=sgpr("WSDstartBackUp1"), comment="recall workspace start"))
+      moduleGSUStage2.add(SLShiftRightB32(dst=sgpr(tmpSGSUGroupID), src=sgpr("GSUSumIdx"), shiftHex=hex(log2(GSUStageSize)), comment="GSU group 0,1,2 use gsu %u" % GSUStageSize))
+      moduleGSUStage2.add(SLShiftLeftB32(dst=sgpr("GSUSumIdx"), src=sgpr(tmpSGSUGroupID), shiftHex=hex(log2(GSUStageSize)), comment="Use the 1st GSU buffer of 1st stage in the 2nd stage"))
+
+      moduleGSUStage2.addModuleAsFlatItems(self.parentWriter.calStoreBufferOffset(self.kernel))
+
+      module.add(SMovB32(dst=sgpr("GSUBackUp"), src=sgpr("GSU"), comment="Backup GSU value here"))
+      module.add(SMovB32(dst=sgpr("WSDstartBackUp0"), src=sgpr("WSDstart+0"), comment="Backup WSDstart"))
+      module.add(SMovB32(dst=sgpr("WSDstartBackUp1"), src=sgpr("WSDstart+1"), comment="Backup WSDstart"))
+      module.add(SCmpLeU32(
+          src0=sgpr("GSUBackUp"), \
+          src1="GSU_2STAGE_LIMIT", \
+          comment="if GSU too small"))
+      module.add(SCBranchSCC1(labelName=SkipStageOneLabel.getLabelName(), comment=""))
+      module.add(SAndB32(dst=sgpr(tmpS01), src0=sgpr("GSU"), src1=hex(GSUStageSize-1), comment=""))
+      module.add(SLShiftRightB32(dst=sgpr(tmpSGSUGroupID), src=sgpr("GSUSumIdx"), shiftHex=hex(log2(GSUStageSize)), comment="GSU group 0,1,2 use gsu %u" % GSUStageSize))
+      module.add(SLShiftRightB32(dst=sgpr(tmpSMaxGrp), src=sgpr("GSU"), shiftHex=hex(log2(GSUStageSize)), comment="largest GSU group id"))
+      module.add(SCmpEQU32(
+          src0=sgpr(tmpSGSUGroupID), \
+          src1=sgpr(tmpSMaxGrp), \
+          comment="if GSU last group?"))
+      module.add(SCSelectB32(dst=sgpr("GSU"), src0=sgpr(tmpS01), src1=hex(GSUStageSize), comment="no: GSU=%u, yes: GSU=GSU&%u"%(GSUStageSize,GSUStageSize)))
+
+    module.addComment("check done start")
+
+    #####################################synchronizer offset cal and set synchronizer#####################################
+    #####################################WaveId+WgId*WaveNum+WgNum*WaveNum*Batch
+    #####################################WgId+WaveId*WgNum+WgNum*WaveNum*Batch
+    moduleSyncCal = Module("SyncOffsetCal")
+    moduleSyncCal.addComment("synchronizer offset cal")
+
+    if GSUStageSize > 1:
+      moduleGSUStage2Part2.add(SyncCodeGSUOneEndLabelStg1)
+      moduleGSUStage2Part2.add(SAddU32(dst=sgpr(tmpS03), src0=sgpr("GSUBackUp"), src1=hex(GSUStageSize-1), comment="recall original GSU value"))
+      moduleGSUStage2Part2.add(SLShiftRightB32(dst=sgpr("GSU"), shiftHex=hex(log2(GSUStageSize)), src=sgpr(tmpS03), comment="set new GSU for stage 2"))
+      moduleGSUStage2Part2.add(SkipStageOneLabel)
+    moduleSyncCal.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr("NumWorkGroups1"), src1=sgpr("NumWorkGroups0"), comment=""))
+    moduleSyncCal.add(SMulI32(dst=sgpr(tmpS02), src0=sgpr(tmpS03), src1=sgpr("WorkGroup2"), comment=""))
+    moduleSyncCal.add(SMulI32(dst=sgpr(tmpS01), src0=sgpr("WorkGroup1"), src1=sgpr("NumWorkGroups0"), comment=""))
+    moduleSyncCal.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr("WorkGroup0")))
+    moduleSyncCal.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr(tmpS02)))
+
+    moduleSyncCal.add(VReadfirstlaneB32(dst=sgpr(tmpS02), src=vgpr("Serial")))
+
+    moduleSyncCal.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr(tmpS03), src1=sgpr("SizeK"), comment="cal a wave offset"))
+    moduleSyncCal.add(SLShiftRightB32(dst=sgpr(tmpS02), shiftHex=hex(log2(self.kernel["WavefrontSize"])), src=sgpr(tmpS02)))
+    moduleSyncCal.add(SMulI32(dst=sgpr(tmpS02), src0=sgpr(tmpS03), src1=sgpr(tmpS02), comment="wave offset at batch")) # WaveId*WgNum
+    moduleSyncCal.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS02), src1=sgpr(tmpS01))) # WaveId*WgNum+WgId
+    if self.batchIdx > 0:
+      moduleSyncCal.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr(tmpS03), src1=int(WaveNum), comment="cal a batch offset")) # WgNum*WaveNum
+      moduleSyncCal.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr(tmpS03), src1=self.batchIdx, comment="this batch offset")) # WgNum*WaveNum*Batch
+      moduleSyncCal.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr(tmpS03))) # WaveId*WgNum+WgId + WgNum*WaveNum*Batch
+
+    module.add(moduleSyncCal)
+    if GSUStageSize > 1:
+      moduleGSUStage2Part2.add(moduleSyncCal)
+
+    if GSUStageSize > 1: # Add multiple stages code here for large sync buffer
+      module.add(SAddU32(dst=sgpr(tmpSMaxGrp), src0=sgpr(tmpSMaxGrp), src1=int(2), comment=""))
+      module.add(SMulI32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr(tmpSMaxGrp), comment="extend sync buffer"))
+      moduleGSUStage2Part2.add(SLShiftRightB32(dst=sgpr(tmpSMaxGrp), src=sgpr("GSUBackUp"), shiftHex=hex(log2(GSUStageSize)), comment="largest GSU group id"))
+      moduleGSUStage2Part2.add(SAddU32(dst=sgpr(tmpSMaxGrp), src0=sgpr(tmpSMaxGrp), src1=int(2), comment=""))
+      moduleGSUStage2Part2.add(SMulI32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr(tmpSMaxGrp), comment="extend sync buffer"))
+      module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr(tmpSGSUGroupID), comment="GSU group offset"))
+      module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=int(1), comment="offset 1 for 2nd stage"))
+    module.add(SLShiftLeftB32(dst=sgpr(tmpS01), src=sgpr(tmpS01), shiftHex=hex(2), comment=""))
+    if GSUStageSize > 1:
+      moduleGSUStage2Part2.add(SLShiftLeftB32(dst=sgpr(tmpS01), src=sgpr(tmpS01), shiftHex=hex(2), comment=""))
+    #####################################set synchronizer
+    moduleSetSync = Module()
+    moduleSetSync.add(SAddU32(dst=sgpr("SrdSync+0"), \
+                                    src0=sgpr("Synchronizer+0"), \
+                                    src1=sgpr(tmpS01), \
+                                    comment="" ))
+    moduleSetSync.add(SAddCU32(dst=sgpr("SrdSync+1"), \
+                        src0=sgpr("Synchronizer+1"), \
+                        src1=hex(0), \
+                        comment="" ))
+    # module.addselfAsm("//s_endpgm\n") #GSUSYNC
+    moduleSetSync.add(SWaitCnt(waitAll=True, comment="wait store done before synchronizer start load and add"))
+    moduleSetSync.add(SSubU32(dst=sgpr(tmpS02), src0=sgpr("GSU"), src1=hex(1), comment=""))
+    moduleSetSync.add(SAtomicDec(dst=sgpr(tmpS02), base=sgpr("SrdSync", 2), smem=SMEMModifiers(glc=1)))
+    moduleSetSync.addSpaceLine()
+    module.add(moduleSetSync)
+    if GSUStageSize > 1:
+      moduleGSUStage2Part2.add(moduleSetSync)
+    #####################################cal synchronizer sum offset#####################################
+    moduleCalSyncSumOffset = Module()
+    moduleCalSyncSumOffset.addComment("synchronizer sum offset cal")
+
+    tmpS04 = self.parentWriter.sgprPool.checkOutAligned(2,2, preventOverflow=False) #overflow?
+    tmpS05 = self.parentWriter.sgprPool.checkOutAligned(2,2, preventOverflow=False) #overflow?
+    
+    indices = list(range(0, self.kernel["ProblemType"]["NumIndicesC"]))
+    numDim = len(indices)
+    # Reuse SGPR to save resource
+    tmpSgpr3 = tmpS05
+    tmpSgpr4 = tmpS05 + 1
+    tmpSgpr = tmpS06
+    moduleCalSyncSumOffset.addModuleAsFlatItems(self.parentWriter.s_mul_u64_u32(sgpr(tmpSgpr+0), sgpr(tmpSgpr+1), sgpr("SizesFree+0"), 1, "Free0"))
+    for i in range(1, numDim):
+      moduleCalSyncSumOffset.add(SSubU32(dst=sgpr(tmpSgpr4), src0=sgpr("SizesFree+%u"%i), src1=1, comment="Free%u" % i))
+      moduleCalSyncSumOffset.add(SMulI32(dst=sgpr(tmpSgpr4), src0=sgpr(tmpSgpr4), src1=1, comment="Free%u" % i))
+      moduleCalSyncSumOffset.addModuleAsFlatItems(self.parentWriter.s_mul_u64_u32(sgpr(tmpSgpr+2), sgpr(tmpSgpr3), sgpr(tmpSgpr4), sgpr("StrideC%s"%self.parentWriter.states.indexChars[i]), "Free%u" % i))
+      moduleCalSyncSumOffset.add(SAddU32(dst=sgpr(tmpSgpr+0), src0=sgpr(tmpSgpr+0), src1=sgpr(tmpSgpr+2), comment="Free%u" % i))
+      moduleCalSyncSumOffset.add(SAddCU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr+1), src1=sgpr(tmpSgpr3), comment="Free%u" % i))
+
+    bpetmp = int(self.parentWriter.states.bpr * self.kernel["ProblemType"]["DestDataType"].numRegisters()) # self.states.bpeCinternal
+    module.add(moduleCalSyncSumOffset)
+    if GSUStageSize > 1:
+      moduleGSUStage2Part2.add(moduleCalSyncSumOffset)
+
+    if GSUStageSize > 1:
+      moduleGSUStage2Part2.add(SLShiftLeftB64(dst=sgpr(tmpS04,2), src=sgpr(tmpSgpr+0,2), shiftHex=log2(self.parentWriter.states.bpeCexternal), \
+        comment="scale by bpe(%u)"%(self.parentWriter.states.bpeCexternal)))
+      moduleGSUStage2Part2.add(SCmpLeU32(
+          src0=sgpr("GSUBackUp"), \
+          src1="GSU_2STAGE_LIMIT", \
+          comment="if GSU too small"))
+      moduleGSUStage2Part2.add(SCBranchSCC1(labelName=SkipStageOneLabel2.getLabelName(), comment=""))
+      moduleGSUStage2Part2.add(SLShiftLeftB64(dst=sgpr(tmpS04,2), src=sgpr(tmpS04,2), shiftHex=log2(GSUStageSize), \
+        comment="scale by stage(%u)"%(GSUStageSize)))
+      moduleGSUStage2Part2.add(SkipStageOneLabel2)
+      moduleGSUStage2Part2.addSpaceLine()
+    module.add(SLShiftLeftB64(dst=sgpr(tmpS04,2), src=sgpr(tmpSgpr+0,2), shiftHex=log2(self.parentWriter.states.bpeCexternal), comment="scale by bpe"))
+    module.addSpaceLine()
+
+    #####################################cal synchronizer sum start#####################################
+    # no need to do because we have workspace start sgpr
+    #####################################check synchronizer done#####################################
+
+    ####################################reset synchronizer buffer####################################
+    module.addComment("reset synchronizer buffer")
+    if GSUStageSize > 1:
+      # Reuse SGPR to save resource
+      tmpSgpr = tmpS06
+      tmpSgpr3 = tmpS05
+      tmpSgpr4 = tmpS05 + 1
+      module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr), src=sgpr(tmpSGSUGroupID), shiftHex=hex(log2(GSUStageSize)), comment=""))
+      module.addModuleAsFlatItems(self.parentWriter.s_mul_u64_u32(sgpr(tmpSgpr+2), sgpr(tmpSgpr3), sgpr(tmpS04), sgpr(tmpSgpr), "GSU Gourp offset Low part"))
+      module.add(SMulI32(dst=sgpr(tmpSgpr4), src0=sgpr(tmpS04+1), src1=sgpr(tmpSgpr), comment="high part"))
+      module.add(SAddU32(dst=sgpr(tmpSgpr3), src0=sgpr(tmpSgpr3), src1=sgpr(tmpSgpr4), comment=""))
+      module.add(SAddU32(dst=sgpr("WSDstart+0"), src0=sgpr("WSDstart+0"), src1=sgpr(tmpSgpr+2), comment=""))
+      module.add(SAddCU32(dst=sgpr("WSDstart+1"), src0=sgpr("WSDstart+1"), src1=sgpr(tmpSgpr3), comment=""))
+      #stage 2 part
+      moduleGSUStage2Part2.add(SMovB32(dst=sgpr("WSDstart+0"), src=sgpr("WSDstartBackUp0"), comment="Move workspace start"))
+      moduleGSUStage2Part2.add(SMovB32(dst=sgpr("WSDstart+1"), src=sgpr("WSDstartBackUp1"), comment="Move workspace start"))
+
+    #####################################sync code#####################################
+    checkSyncCode = self.GSUCheckSynccodegen(GSUStageSize, tmpS02, labelend, SyncCodeGSUOneEndLabelStg1)
+    checkSyncCode2 = self.GSUCheckSynccodegen(GSUStageSize, tmpS02, labelend, SyncCodeGSUOneEndLabelStg2)
+
+    ###########################load buffer and reduction###############################
+    module.add(self.GSUReductioncodegen(GSUStageSize, tmpS04, tmpS05, tmpS06, vgproffset, checkSyncCode))
+    if GSUStageSize > 1:
+      moduleGSUStage2Part2.add(self.GSUReductioncodegen(GSUStageSize, tmpS04, tmpS05, tmpS06, vgproffset, checkSyncCode2, "_stage2"))
+      moduleGSUStage2Part2.add(SyncCodeGSUOneEndLabelStg2)
+    elif GSUStageSize == 0:
+      module.add(SyncCodeGSUOneEndLabelStg1)
+
+    self.parentWriter.sgprPool.checkIn(tmpS02)
     self.parentWriter.sgprPool.checkIn(tmpS06)
     self.parentWriter.sgprPool.checkIn(tmpS05)
     self.parentWriter.sgprPool.checkIn(tmpS04)
-    self.parentWriter.sgprPool.checkIn(tmpS03)
-    self.parentWriter.sgprPool.checkIn(tmpS02)
-    self.parentWriter.sgprPool.checkIn(tmpS01)
-
+    if GSUStageSize > 1:
+      moduleGSUStage2Part2.add(GSUStage2EndLabel)
+      self.parentWriter.sgprPool.checkIn(tmpSGSUGroupID)
+      self.GSUStage2CodePart1 = moduleGSUStage2
+      self.GSUStage2CodePart2 = moduleGSUStage2Part2
     return module
 
   def _prolog(self, module: Module):
@@ -739,6 +888,7 @@ class GlobalWriteBatchWriter:
     if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
       module.addComment1("store after Acc, "+"GSU: "+str(self.kernel["GlobalSplitU"]))
 
+    moduleStoreGSU = Module("")
     storeCodeGSUSK = Module("GroupLoadStore")
     if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":#GSUGSU
       module.addComment1("store after Acc, "+"GSU: "+str(self.kernel["GlobalSplitU"]))
@@ -747,34 +897,36 @@ class GlobalWriteBatchWriter:
         if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1):
           vgprIdx = self.ss.elementSumIdx[elementIdx] - self.parentWriter.states.c.startVgprValu
           vgprDst = self.activationSetPCStruct.vgprActCopy if mergeActFuncCall else "ValuC+%d"%vgprIdx
-          module.add(self.parentWriter.addStore(self.kernel, self.ss, 'E', addrCalc, vgprDst, self.tmpS01, self.edge, comment="store E"))
+          moduleStoreGSU.add(self.parentWriter.addStore(self.kernel, self.ss, 'E', addrCalc, vgprDst, self.tmpS01, self.edge, comment="store E"))
 
         sumIdx = self.ss.elementSumIdx[elementIdx]
         if not self.kernel["StoreRemapVectorWidth"]:
           tmpStoreCode = self.parentWriter.addStore(self.kernel, self.ss, 'D', addrCalc, sumIdx, self.tmpS01, self.edge, comment="store D %u" %sumIdx) #here
           if self.kernel["GroupLoadStore"]:
-            storeCodeGSUSK.add(tmpStoreCode)
+            storeCodeGSUSK.addModuleAsFlatItems(tmpStoreCode)
           else:
-            module.addSpaceLine()
-            module.add(tmpStoreCode)
+            moduleStoreGSU.addSpaceLine()
+            moduleStoreGSU.add(tmpStoreCode)
         else:
           rpe = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr
-          module.add(self.parentWriter.storeRemapAddLocalWrite(self.kernel, self.ss, addrCalc, sumIdx*rpe))
+          moduleStoreGSU.add(self.parentWriter.storeRemapAddLocalWrite(self.kernel, self.ss, addrCalc, sumIdx*rpe))
           # Column Block Shape has been written to LDS
           # Now read back and write out to global memory
-      module.add(storeCodeGSUSK)
+      moduleStoreGSU.add(storeCodeGSUSK)
 
     if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel" and self.kernel["StoreRemapVectorWidth"]:
       if self.parentWriter.StoreRemapLastBatch == 1:
-        module.addComment1("Handle local read and global write")
+        moduleStoreGSU.addComment1("Handle local read and global write")
         storeModule, numNewStores = self.parentWriter.storeRemapAddStore(self.kernel, self.tmpVgpr, self.tmpS01, self.edge, self.parentWriter.StoreRemapLastBatch)
-        module.add(storeModule)
+        moduleStoreGSU.addModuleAsFlatItems(storeModule)
         self.storesIssued += numNewStores
 
     if (self.kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
       if self.parentWriter.states.serializedStore:
-        module.add(SNop(0, "1 wait state required when next inst writes vgprs held by previous dwordx4 store inst"))
+        moduleStoreGSU.add(SNop(0, "1 wait state required when next inst writes vgprs held by previous dwordx4 store inst"))
 
+      moduleStoreGSUTmp = deepcopy(moduleStoreGSU)
+      module.addModuleAsFlatItems(moduleStoreGSUTmp)
       ########################################################
 
       module.addSpaceLine()
@@ -785,8 +937,16 @@ class GlobalWriteBatchWriter:
 
       module.addselfAsm("//sourece store done, GSU:"+str(self.kernel["GlobalSplitU"])+"\n") #GSUSYNC
       module.addSpaceLine()
+      
+      self.GSUStage2CodePart1 = Module()
+      self.GSUStage2CodePart2 = Module()
+      self.GSUStageSize = 0
 
       module.add(self.GSUSynccodegen(SynchronizerEndlabel, sumIdxGSUSYNC, addrCalc.globalOffset, addrCalc.addrDVgpr))
+      if self.GSUStageSize > 1:
+        module.addModuleAsFlatItems(self.GSUStage2CodePart1)
+        module.addModuleAsFlatItems(moduleStoreGSU)
+        module.addModuleAsFlatItems(self.GSUStage2CodePart2)
 
     # rC *= alpha
     if not self.kernel["InterleaveAlpha"] and self.applyAlpha and not self.parentWriter.alphaBeforeLoadC:

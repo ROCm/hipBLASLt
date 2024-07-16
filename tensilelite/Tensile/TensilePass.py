@@ -20,7 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .TensileInstructions import Module, SAddI32, SEndpgm, fastdeepcopy
+from .TensileInstructions import Module, SAddI32, SEndpgm, fastdeepcopy, BranchInstruction, CommonInstruction
 
 from dataclasses import dataclass, field
 
@@ -85,20 +85,56 @@ def _replaceActBranchLabel(module, labels):
             else:
                 _replaceActBranchLabel(item, labels)
 
+def _replaceActBranchLabelToLabel(module, labelToLabels):
+    for item in module.items():
+        if isinstance(item, Module):
+            if "InsertActFunctionCallAddrCalc" in item.name:
+                for inst in item.items():
+                    if isinstance(inst, SAddI32) and inst.comment == "target branch offset":
+                        if str(inst.srcs[0]) in labelToLabels:
+                            inst.srcs[0] = labelToLabels[str(inst.srcs[0])]
+            else:
+                _replaceActBranchLabelToLabel(item, labelToLabels)
+
+def _getModuleInstArgStr(module):
+    argStr = ""
+    for item in module.items():
+        if isinstance(item, CommonInstruction):
+            argStr += item.getArgStr()
+        elif isinstance(item, Module):
+            argStr += _getModuleInstArgStr(item)
+    return argStr
+
 def _removeDuplicatedActivationFunctions(module):
     modFunc = _findActFunc(module)
     moduleLast = Module("AddToLast")
     for _, mlist in modFunc.items():
         if len(mlist) > 1:
             labels = []
+            sgprMapToLabel = dict()
+            labelToLabel = dict()
             for ml in mlist:
-                labelName = ml.items()[0].items()[0].getLabelName()
-                labels.append(labelName)
+                for i in range(len(ml.items())):
+                    labelName = ml.items()[i].items()[0].getLabelName()
+                    resourceName = ""
+                    for inst in (ml.items()[i].items()):
+                        if isinstance(inst, BranchInstruction):
+                            resourceName += str(inst)
+                        elif isinstance(inst, Module):
+                            resourceName += _getModuleInstArgStr(inst)
+                    prefix, _, n = labelName.rpartition("_")
+                    if n.isnumeric():
+                        resourceName = str(prefix) + resourceName
+                    else:
+                        resourceName = str(labelName) + resourceName
+                    if resourceName in sgprMapToLabel:
+                        labelToLabel[labelName] = sgprMapToLabel[resourceName]
+                    else:
+                        sgprMapToLabel[resourceName] = labelName
+                        moduleLast.add(ml.items()[i])
                 ml.parent.removeItem(ml)
             # Avoid using deepcopy
-            moduleLast.add(mlist[0])
-
-            _replaceActBranchLabel(module, labels)
+            _replaceActBranchLabelToLabel(module, labelToLabel)
     if moduleLast.items():
         module.add(moduleLast)
         module.add(SEndpgm())

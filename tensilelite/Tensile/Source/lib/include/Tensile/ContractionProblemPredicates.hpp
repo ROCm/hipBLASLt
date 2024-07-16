@@ -210,10 +210,10 @@ namespace Tensile
                     HasValue = true
                 };
                 size_t             index;
-                std::array<int, 5> value;
+                std::array<int, 6> value;
 
                 SynchronizerSizeCheck() = default;
-                SynchronizerSizeCheck(size_t index, std::array<int, 5> value)
+                SynchronizerSizeCheck(size_t index, std::array<int, 6> value)
                     : index(index)
                     , value(value)
                 {
@@ -228,10 +228,18 @@ namespace Tensile
                 {
                     // WorkGroup numbers x number of global write instruction x Wave numbers
                     // M/MT0 x N/MT1 x NumElementsPerThread/StoreVectorWidth x x Wavenumbers
+                    // (GSU / GSUStageSize) + 2
+                    auto extraGSU = 1;
+                    if (value[5] >= 12)
+                    {
+                        extraGSU   = (value[5] / 4 + 2);
+                    }
+
                     bool ret = (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
                                 * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
-                                * (value[2]) * (value[4] / 64) * value[3]
+                                * (value[2]) * (value[4] / 64) * value[3]* extraGSU
                                <= 40960;
+
                     if(problem.groupedGemm())
                         ret = ret && (problem.groupedGemmCount() <= 16);
 
@@ -241,13 +249,19 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
+                    auto extraGSU = 1;
+                    if (value[5] >= 12)
+                    {
+                        extraGSU   = (value[5] / 4 + 2);
+                    }
+
                     return debugEvalCmp(
                         problem,
                         stream,
                         "prob",
                         (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
                                 * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
-                                * (value[2]) * (value[4] / 64) * value[3],
+                                * (value[2]) * (value[4] / 64) * value[3] * extraGSU,
                         "==",
                         "sol",
                         40960);
