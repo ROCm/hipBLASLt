@@ -83,13 +83,13 @@ namespace
     template <typename T>
     T abs(T a)
     {
-        return (a > 0) ? a : -a;
+        return (double(a) > 0) ? a : -a;
     }
 
     template <typename T>
     T max(T a, T b)
     {
-        return (a > b) ? a : b;
+        return (double(a) > double(b)) ? a : b;
     }
 
     template <typename Ti, typename To>
@@ -102,6 +102,20 @@ namespace
             m = max(m, abs(in[j]));
         }
         out[0] = To(m);
+    }
+
+    template <typename Ti, typename To>
+    void cpuValueDividedbyAMaxWithRcp(To* out, To* outRcp, Ti* in, std::uint32_t length, float value)
+    {
+        // calculate amax
+        Ti m = 0;
+        for(int j = 0; j < length; j++)
+        {
+            m = max(m, abs(in[j]));
+        }
+        float tmp = value / float(m);
+        out[0] = To(tmp);
+        outRcp[0] = To(1.0f/tmp);
     }
 
     template <typename Ti, typename To, typename Ts>
@@ -146,6 +160,15 @@ struct AMaxWithScaleTestData
     bool hasWorkspace;
 };
 
+struct ValueDividedbyAMaxWithRcpTestData
+{
+    hipDataType type;
+    hipDataType dtype;
+    uint32_t m;
+    uint32_t n;
+    float value;
+};
+
 class ExtOpSoftmaxTest : public testing::TestWithParam<uint32_t>
 {
 };
@@ -171,6 +194,13 @@ class ExtOpAMaxWithScaleTest : public testing::TestWithParam<AMaxWithScaleTestDa
 {
 };
 class ExtOpAMaxWithScaleUnsupportedDatatypeTest : public testing::TestWithParam<hipDataType>
+{
+};
+
+class ExtOpValueDividedbyAMaxWithRcpTest : public testing::TestWithParam<ValueDividedbyAMaxWithRcpTestData>
+{
+};
+class ExtOpValueDividedbyAMaxWithRcpUnsupportedDatatypeTest : public testing::TestWithParam<hipDataType>
 {
 };
 
@@ -342,6 +372,8 @@ void AMaxTest(hipDataType type, hipDataType dtype, std::size_t m, std::size_t n,
     else
         hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
 
+    hipErr = hipDeviceSynchronize();
+
     hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, sizeof(To));
 
     cpuAMax(refOutput.data(), cpuInput.data(), m * n);
@@ -456,6 +488,56 @@ void AMaxTestWithScale(hipDataType    type,
     hipErr = hipFree(gpuInputScale);
 }
 
+template <typename Ti, typename To>
+void ValueDividedbyAMaxWithRcpTest(hipDataType type, hipDataType dtype, std::size_t m, std::size_t n, size_t value)
+{
+    std::size_t numElements = m * n;
+
+    To* gpuOutput{nullptr};
+    To* gpuOutputRcp{nullptr};
+    Ti* gpuInput{nullptr};
+    Ti* gpuWorkSpace{nullptr};
+    std::int32_t* gpuSync{nullptr};
+
+    auto hipErr = hipMalloc(&gpuOutput, sizeof(To));
+    hipErr      = hipMalloc(&gpuOutputRcp, sizeof(To));
+    hipErr      = hipMalloc(&gpuInput, m * n * sizeof(Ti));
+    hipErr      = hipMalloc(&gpuWorkSpace, 4096 * sizeof(Ti));
+    hipErr      = hipMalloc(&gpuSync, sizeof(std::int32_t));
+
+    std::vector<To> refOutput(1, -999.f);
+    std::vector<To> refOutputRcp(1, -999.f);
+    std::vector<To> cpuOutput(1, -999.f);
+    std::vector<To> cpuOutputRcp(1, -999.f);
+    std::vector<Ti> cpuInput(m * n, 0.f);
+
+    hipblaslt_init_hpl(cpuInput, m * n, 1, m * n);
+
+    hipErr = hipMemcpyHtoD(gpuInput, cpuInput.data(), m * n * sizeof(Ti));
+    hipErr = hipMemset(gpuWorkSpace, 0, m * n * sizeof(Ti));
+    hipErr = hipMemset(gpuSync, 0, sizeof(std::int32_t));
+
+    hipStream_t stream{};
+    hipErr = hipStreamCreate(&stream);
+    auto hipblasltErr = hipblasltExtFastValueDividedByAMaxWithRcp(type, dtype, gpuOutput, gpuOutputRcp, gpuInput, gpuWorkSpace, gpuSync, m, n, value, stream);
+    hipErr = hipDeviceSynchronize();
+
+    hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, sizeof(To));
+    hipErr = hipMemcpyDtoH(cpuOutputRcp.data(), gpuOutputRcp, sizeof(To));
+
+    cpuValueDividedbyAMaxWithRcp(refOutput.data(), refOutputRcp.data(), cpuInput.data(), m * n, value);
+
+    EXPECT_NEAR(float(refOutput[0]), float(cpuOutput[0]), 1e-5);
+    EXPECT_NEAR(float(refOutputRcp[0]), float(cpuOutputRcp[0]), 1e-5);
+
+    hipErr = hipStreamDestroy(stream);
+    hipErr = hipFree(gpuOutput);
+    hipErr = hipFree(gpuOutputRcp);
+    hipErr = hipFree(gpuInput);
+    hipErr = hipFree(gpuWorkSpace);
+    hipErr = hipFree(gpuSync);
+}
+
 TEST_P(ExtOpAMaxTest, amaxSuccess)
 {
     AMaxTestData    testdata = GetParam();
@@ -533,6 +615,34 @@ TEST_P(ExtOpAMaxWithScaleTest, amaxSuccess)
     }
 }
 
+TEST_P(ExtOpValueDividedbyAMaxWithRcpTest, amaxSuccess)
+{
+    ValueDividedbyAMaxWithRcpTestData testdata = GetParam();
+    int deviceId;
+    hipDeviceProp_t deviceProperties;
+    static_cast<void>(hipGetDevice(&deviceId));
+    static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+    if(gpu_arch_match(deviceProperties.gcnArchName, "11?"))
+        return;
+
+    if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_32F)
+    {
+        ValueDividedbyAMaxWithRcpTest<float, float>(testdata.type, testdata.dtype, testdata.m, testdata.n, testdata.value);
+    }
+    else if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_16F)
+    {
+        ValueDividedbyAMaxWithRcpTest<float, hipblasLtHalf>(testdata.type, testdata.dtype, testdata.m, testdata.n, testdata.value);
+    }
+    else if(testdata.type == HIP_R_16F && testdata.dtype == HIP_R_32F)
+    {
+        ValueDividedbyAMaxWithRcpTest<hipblasLtHalf, float>(testdata.type, testdata.dtype, testdata.m, testdata.n, testdata.value);
+    }
+    else if(testdata.type == HIP_R_16F && testdata.dtype == HIP_R_16F)
+    {
+        ValueDividedbyAMaxWithRcpTest<hipblasLtHalf, hipblasLtHalf>(testdata.type, testdata.dtype, testdata.m, testdata.n, testdata.value);
+    }
+}
+
 TEST_P(ExtOpSoftmaxUnsupportedDatatypeTest, softmaxFailureUnsupportedDatatype)
 {
     auto hipblasltErr = hipblasltExtSoftmax(GetParam(), 16, 16, 1, nullptr, nullptr, nullptr);
@@ -585,6 +695,12 @@ TEST(ExtOpTest, amaxWithScaleFailureInvalidValue)
     auto hipblasltErr = hipblasltExtAMaxWithScale(
         HIP_R_32F, HIP_R_32F, HIP_R_8F_E4M3_FNUZ, nullptr, nullptr, nullptr, nullptr, 0, 0, nullptr);
     EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_INVALID_VALUE);
+}
+
+TEST_P(ExtOpValueDividedbyAMaxWithRcpUnsupportedDatatypeTest, valueDividedbyAMaxWithRcpFailureUnsupportedDatatype)
+{
+    auto hipblasltErr = hipblasltExtFastValueDividedByAMaxWithRcp(GetParam(), GetParam(), nullptr, nullptr, nullptr, nullptr, nullptr, 0, 0, 0, nullptr);
+    EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_NOT_SUPPORTED);
 }
 
 INSTANTIATE_TEST_SUITE_P(ExtOpTest, ExtOpSoftmaxTest, testing::Values<uint32_t>(1, 16, 1335));
@@ -674,3 +790,25 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(ExtOpTest,
                          ExtOpAMaxWithScaleUnsupportedDatatypeTest,
                          testing::Values<hipDataType>(HIP_R_16BF));
+
+INSTANTIATE_TEST_SUITE_P(ExtOpTest,
+                         ExtOpValueDividedbyAMaxWithRcpUnsupportedDatatypeTest,
+                         testing::Values<hipDataType>(HIP_R_16BF));
+
+INSTANTIATE_TEST_SUITE_P(
+    ExtOpTest,
+    ExtOpValueDividedbyAMaxWithRcpTest,
+    testing::Values<ValueDividedbyAMaxWithRcpTestData>(
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_32F, HIP_R_32F, 1, 1, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_32F, HIP_R_32F, 100, 213, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_32F, HIP_R_32F, 1335, 6666, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_32F, HIP_R_16F, 1, 1, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_32F, HIP_R_16F, 100, 213, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_32F, HIP_R_16F, 1335, 6666, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_16F, HIP_R_32F, 1, 1, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_16F, HIP_R_32F, 100, 213, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_16F, HIP_R_32F, 1335, 6666, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_16F, HIP_R_16F, 1, 1, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_16F, HIP_R_16F, 100, 213, 10},
+                                  ValueDividedbyAMaxWithRcpTestData{HIP_R_16F, HIP_R_16F, 1335, 6666, 10}
+    ));
