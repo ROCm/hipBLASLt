@@ -595,7 +595,11 @@ class GlobalWriteBatchWriter:
           if self.kernel["GroupLoadStore"]:
             loadInputCode.add(self.parentWriter.readInput(self.kernel, self.ss, 'C', self.kernel["ProblemType"]["DestDataType"], addrCalc, vc0, data, self.gwvw, addrCVgpr, self.tmpS01))
           else:
+            if self.edge and self.parentWriter.states.archCaps["HWWorkaround"]:
+              module.add(VCmpXLeI32(dst=EXEC(), src0=0, src1=vgpr(addrCVgpr), comment="workaround for gfx12"))
             module.add(self.parentWriter.readInput(self.kernel, self.ss, 'C', self.kernel["ProblemType"]["DestDataType"], addrCalc, vc0, data, self.gwvw, addrCVgpr, self.tmpS01))
+            if self.edge and self.parentWriter.states.archCaps["HWWorkaround"]:
+              module.add(SSetMask(dst=EXEC(), src=-1, comment="reset mask for gfx12" ))
           loadedDataBeta[dataBeta] = ceil(self.kernel["ProblemType"]["DestDataType"].numBytes() * self.ss.cfg.gwvw / 16)
           self.loadsBetaIssued += ceil(self.kernel["ProblemType"]["DestDataType"].numBytes() * self.gwvw / 16)
       self.betaLoadIssued.append(len(loadedDataBeta) * ceil(self.kernel["ProblemType"]["DestDataType"].numBytes() * self.ss.cfg.gwvw / 16))
@@ -1492,7 +1496,7 @@ class GlobalWriteBatchWriter:
           packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpS01,
                                      SaturateTypeInt8=SaturateTypeInt8, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
 
-      if self.parentWriter.states.asmCaps["HasWMMA"] and self.kernel["EnableMatrixInstruction"] and self.kernel["ProblemType"]["DestDataType"].isHalf() and (not self.kernel["ProblemType"]["HighPrecisionAccumulate"]):
+      if self.parentWriter.states.asmCaps["HasWMMA_V1"] and self.kernel["EnableMatrixInstruction"] and self.kernel["ProblemType"]["DestDataType"].isHalf() and (not self.kernel["ProblemType"]["HighPrecisionAccumulate"]):
         for vi in range(0, self.gwvw):
           sumIdxV = self.ss.elementSumIdx[elementIdx] + vi
           if vi%2 == 1:
@@ -1985,7 +1989,7 @@ class GlobalWriteBatchWriter:
       sumIdxV = ss.elementSumIdx[elementIdx] + vi
       if kernel["ProblemType"]["DestDataType"].isHalf():
         if not kernel["ProblemType"]["HighPrecisionAccumulate"]:
-          if self.parentWriter.states.asmCaps["HasWMMA"] and kernel["EnableMatrixInstruction"]:
+          if self.parentWriter.states.asmCaps["HasWMMA_V1"] and kernel["EnableMatrixInstruction"]:
             dataV = ss.elementData[elementIdx] + int(vi / 2 * ss.cfg.numVgprsPerDataPerVI)
             if (vi % 2) == 0:
               module.add(VMulPKF16(dst=vgpr(dataV), src0=sgpr("Beta"), src1=vgpr(dataV+0), \
