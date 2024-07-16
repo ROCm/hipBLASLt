@@ -13435,7 +13435,7 @@
     SubGroup1: 16
     SubGroupA: 4
     SubGroupB: 16
-    SuppressNoLoadLoop: false  
+    SuppressNoLoadLoop: false
     ThreadTile: [1, 1]
     ThreadTile0: 4
     ThreadTile1: 1
