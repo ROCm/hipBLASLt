@@ -1097,49 +1097,68 @@ class AMaxKernelGenerator:
 
         mod.add(ti.VMovB32(ti.vgpr("Offset"), 0))
 
-        BufferStorex1 = self.global_write_inst_type(1, self.o_type)
-        if self.i_type.toChar() == 'H' and self.o_type.toChar() == "S":
-            mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
-        elif self.i_type.toChar() == 'S' and self.o_type.toChar() == "H":
-            mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
-        mod.add(ti.SNop(1))
-
         label_no_divided = ti.Label("no_divided", 'no_divided')
-        mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
-        mod.add(ti.SCBranchSCC1(label_no_divided.getLabelName()))
-
-        if self.o_type.toChar() == "S":
-            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
-            mod.add(ti.SNop(1))
-            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
-        elif self.o_type.toChar() == "H":
-            mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
-            mod.add(ti.SNop(1))
-            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
-            mod.add(ti.SNop(1))
-            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
-            mod.add(ti.SNop(1))
+        BufferStorex1 = self.global_write_inst_type(1, self.o_type)
+        if self.i_type.toChar() == 'H' and self.o_type.toChar() == "H":
+            mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+            mod.add(ti.SCBranchSCC1(label_no_divided.getLabelName()))
             mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
             mod.add(ti.SNop(1))
-        mod.add(label_no_divided)
+            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VRcpF32(ti.vgpr("OutputB"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(label_no_divided)
+        elif self.i_type.toChar() == 'H' and self.o_type.toChar() == "S":
+            mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+            mod.add(ti.SCBranchSCC1(label_no_divided.getLabelName()))
+            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VRcpF32(ti.vgpr("OutputB"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(label_no_divided)
+        elif self.i_type.toChar() == 'S' and self.o_type.toChar() == "H":
+            mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+            mod.add(ti.SCBranchSCC1(label_no_divided.getLabelName()))
+            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VRcpF32(ti.vgpr("OutputB"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(label_no_divided)
+            mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+        elif self.i_type.toChar() == 'S' and self.o_type.toChar() == "S":
+            mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+            mod.add(ti.SCBranchSCC1(label_no_divided.getLabelName()))
+            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VRcpF32(ti.vgpr("OutputB"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(label_no_divided)
 
         mod.add(BufferStorex1(ti.vgpr("Output"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))
         mod.addSpaceLine()
 
         if not self.is_scale:
+            mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+            mod.add(ti.SCBranchSCC1(label_end.getLabelName()))
             mod.add(ti.SCmpEQU64(ti.sgpr("AddressOutRcp",2), 0))
             mod.add(ti.SCBranchSCC1(label_end.getLabelName()))
             mod.addSpaceLine()
 
-            if self.o_type.toChar() == "S":
-                mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
-                mod.add(ti.SNop(1))
-            elif self.o_type.toChar() == "H":
-                mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
-                mod.add(ti.SNop(1))
-                mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
-                mod.add(ti.SNop(1))
-                mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            if self.o_type.toChar() == "H":
+                mod.add(ti.VCvtF32toF16(ti.vgpr("OutputB"), ti.vgpr("OutputB")))
                 mod.add(ti.SNop(1))
             mod.addSpaceLine()
 
@@ -1148,7 +1167,7 @@ class AMaxKernelGenerator:
             mod.add(ti.SMovB32(ti.sgpr("Dst+2"), self.o_type.numBytes()))
             mod.add(ti.SMovB32(ti.sgpr("Dst+3"), "Srd127_96"))
 
-            mod.add(BufferStorex1(ti.vgpr("Output"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))
+            mod.add(BufferStorex1(ti.vgpr("OutputB"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))
             mod.addSpaceLine()
 
         mod.addSpaceLine()
