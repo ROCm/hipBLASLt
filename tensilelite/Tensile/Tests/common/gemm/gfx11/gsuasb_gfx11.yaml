@@ -40,7 +40,7 @@ BenchmarkProblems:
       UseE:          False
       Activation:    False
       ActivationHPA: False
-      UseScaleAB: False
+      UseScaleAB: ""
       # SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:

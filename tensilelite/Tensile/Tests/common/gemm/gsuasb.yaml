@@ -39,7 +39,7 @@ BenchmarkProblems:
       UseBias:       0
       UseE:          False
       Activation:    False
-      UseScaleAB: False
+      UseScaleAB: ""
       # SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -90,7 +90,7 @@ BenchmarkProblems:
       UseE:          False
       Activation:    True
       ActivationHPA: True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       # SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:

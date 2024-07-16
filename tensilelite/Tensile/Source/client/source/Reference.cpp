@@ -783,7 +783,7 @@ namespace Tensile
                                 else
                                 {
                                     typename Inputs::ComputeInputType aValCast, bValCast;
-                                    if(problem.useScaleAB())
+                                    if(problem.useScaleAB() == "Scalar")
                                     {
                                         Accumulator scaleA = GetValue<Accumulator>(
                                             problem.alphaType(), inputs.scaleA, 0, aConjugate);
@@ -810,7 +810,7 @@ namespace Tensile
                                               > sizeof(typename Inputs::ComputeInputType))
                             {
                                 typename Inputs::ComputeInputType aValCast;
-                                if(problem.useScaleAB())
+                                if(problem.useScaleAB() == "Scalar")
                                 {
                                     Accumulator scaleA = GetValue<Accumulator>(
                                         problem.alphaType(), inputs.scaleA, 0, aConjugate);
@@ -827,7 +827,7 @@ namespace Tensile
                                               > sizeof(typename Inputs::ComputeInputType))
                             {
                                 typename Inputs::ComputeInputType bValCast;
-                                if(problem.useScaleAB())
+                                if(problem.useScaleAB() == "Scalar")
                                 {
                                     Accumulator scaleB = GetValue<Accumulator>(
                                         problem.alphaType(), inputs.scaleB, 0, aConjugate);
@@ -856,12 +856,28 @@ namespace Tensile
                 Accumulator beta  = constVariantCast<Accumulator>(inputs.beta);
                 auto        zero  = static_cast<Accumulator>(0);
 
-                if(problem.useScaleAB())
+                if(problem.useScaleAB() == "Scalar")
                 {
                     Accumulator scaleA
                         = GetValue<Accumulator>(problem.alphaType(), inputs.scaleA, 0, aConjugate);
                     Accumulator scaleB
                         = GetValue<Accumulator>(problem.alphaType(), inputs.scaleB, 0, aConjugate);
+                    if constexpr(sizeof(typename Inputs::AType)
+                                 <= sizeof(typename Inputs::ComputeInputType))
+                        alpha *= scaleA;
+
+                    if constexpr(sizeof(typename Inputs::BType)
+                                 <= sizeof(typename Inputs::ComputeInputType))
+                        alpha *= scaleB;
+                }
+                else if(problem.useScaleAB() == "Vector")
+                {
+                    auto posB = int(int(dNum / problem.d().sizes()[0]) % problem.d().sizes()[1]);
+                    auto posA = int(dNum % problem.d().sizes()[0]);
+                    Accumulator scaleA
+                        = GetValue<Accumulator>(problem.alphaType(), inputs.scaleA, posA, aConjugate);
+                    Accumulator scaleB
+                        = GetValue<Accumulator>(problem.alphaType(), inputs.scaleB, posB, aConjugate);
                     if constexpr(sizeof(typename Inputs::AType)
                                  <= sizeof(typename Inputs::ComputeInputType))
                         alpha *= scaleA;

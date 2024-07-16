@@ -45,7 +45,7 @@ BenchmarkProblems:
       BiasDataTypeList: ['s', 'h']
       Batched: True
       ActivationType:  all
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleAlphaVec: 1
       ActivationFused: true
 

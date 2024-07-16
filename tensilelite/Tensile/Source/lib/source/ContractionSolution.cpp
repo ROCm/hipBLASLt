@@ -655,7 +655,7 @@ namespace Tensile
                 kernelArgs<T_Debug, true>(
                     0, (uint32_t)KERNELARGTYPE::NORMAL, args, 0, problem.getParams());
 
-        if(problemType.useScaleAB) //kernel input data
+        if(!problemType.useScaleAB.empty()) //kernel input data
         {
             args.template append<void const*>("scaleA", inputs.scaleA);
             args.template append<void const*>("scaleB", inputs.scaleB);
@@ -1152,7 +1152,7 @@ namespace Tensile
             if(problemType.useBias == 3)
                 enableFactorDim = true;
         }
-        if(problemType.useScaleAB && sizeMapping.globalAccumulation == 0)
+        if((!problemType.useScaleAB.empty()) && sizeMapping.globalAccumulation == 0)
         {
             rv.args.append<void const*>("scaleA", inputs.scaleA);
             rv.args.append<void const*>("scaleB", inputs.scaleB);
@@ -1341,7 +1341,7 @@ namespace Tensile
             }
         }
 
-        if(problemType.useScaleAB) // GSU dep
+        if(!problemType.useScaleAB.empty()) // GSU dep
         {
             args.template append<void const*>("scaleA", inputs.scaleA);
             args.template append<void const*>("scaleB", inputs.scaleB);
@@ -1813,9 +1813,13 @@ namespace Tensile
             }
         }
 
-        if(problemType.useScaleAB)
+        if(problemType.useScaleAB == "Scalar")
         {
             name += ("_ScaleAB");
+        }
+        else if(problemType.useScaleAB == "Vector")
+        {
+            name += ("_ScaleABVec");
         }
         if(problemType.useScaleCD)
         {

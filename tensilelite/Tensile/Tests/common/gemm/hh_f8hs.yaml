@@ -36,7 +36,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -98,7 +98,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -160,7 +160,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -222,7 +222,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -285,7 +285,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -347,7 +347,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -409,7 +409,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -471,7 +471,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -534,7 +534,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -596,7 +596,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -658,7 +658,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -720,7 +720,7 @@ BenchmarkProblems:
       UseBias: 1
       UseScaleAlphaVec: 1
       BiasDataTypeList: [s,h]
-      #UseScaleAB: True
+      #UseScaleAB: "Scalar"
       Activation:    True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:

@@ -34,7 +34,7 @@ class AddrCalculation:
     #    packed index for the 0 coordinate of the C/D matrix.
     # coord1Vgpr : VGPR which tracks the last coord1 calculation.
     #          If this is new coord1, just overwrite it with latest calc.
-    def __init__(self, kernelWriter, ss, addrCVgpr, addrDVgpr, addrGSUSyncVgprs, addrEVgpr, addrBiasVgpr, addrScaleAlphaVecVgpr, element, \
+    def __init__(self, kernelWriter, ss, addrCVgpr, addrDVgpr, addrGSUSyncVgprs, addrEVgpr, addrBiasVgpr, addrScaleAVecVgpr, addrScaleBVecVgpr, addrScaleAlphaVecVgpr, element, \
         coordOffset0, coord1Vgpr, coordOffset1, rowInc, newCoord1):
         self.kernelWriter = kernelWriter
 
@@ -44,6 +44,8 @@ class AddrCalculation:
         self.addrGSUSyncVgprs    = addrGSUSyncVgprs
         self.addrCVgpr    = addrCVgpr
         self.addrBiasVgpr = addrBiasVgpr
+        self.addrScaleAVecVgpr = addrScaleAVecVgpr
+        self.addrScaleBVecVgpr = addrScaleBVecVgpr
         self.addrScaleAlphaVecVgpr = addrScaleAlphaVecVgpr
         self.coord1Vgpr = coord1Vgpr # vgpr that stores coord1Vgpr
 
@@ -55,11 +57,15 @@ class AddrCalculation:
         self.newCoord1 = newCoord1 # vgpr that stores newCoord1
 
         self.biasOffset = [0, 0]
+        self.scaleAVecOffset = 0
+        self.scaleBVecOffset = 0
         self.scaleAlphaVecOffset = [0, 0]
         if ss.optSingleColVgpr:
             # optimized stores use the load offset for coordOffset0 calculations.
             self.biasOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal
             self.biasOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal
+            self.scaleAVecOffset = coordOffset0 * kernelWriter.states.bpeCinternal
+            self.scaleBVecOffset = coordOffset1 * kernelWriter.states.bpeCinternal
             self.scaleAlphaVecOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal
             self.scaleAlphaVecOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal
             self.globalOffset  = coordOffset0 * kernelWriter.states.bpeCexternal
@@ -69,6 +75,8 @@ class AddrCalculation:
             # else non-opt stores include the coord0 offset into VGPR address calcs
             self.biasOffset[0]   = 0
             self.biasOffset[1]   = 0
+            self.scaleAVecOffset = 0
+            self.scaleBVecOffset = 0
             self.scaleAlphaVecOffset[0]   = 0
             self.scaleAlphaVecOffset[1]   = 0
             self.globalOffset = 0
@@ -247,7 +255,7 @@ class AddrCalculation:
         updatedAddr = False
 
         # scale and set final address:
-        stride0 = kw.strideRef('D', 0) if ((tc == 'Bias') or (tc == 'ScaleAlphaVec')) else kw.strideRef(tc, 0)
+        stride0 = kw.strideRef('D', 0) if ((tc == 'Bias') or (tc == 'ScaleAlphaVec') or (tc == 'ScaleAVec') or (tc == 'ScaleBVec')) else kw.strideRef(tc, 0)
         if kw.isConstUnitStride(stride0):
             elementVgpr = self.coord0Vgpr
         else:
@@ -290,6 +298,20 @@ class AddrCalculation:
                                              src1=vgpr(self.addrBiasVgpr), \
                                              comment="add bias lds offset"))
                         return module
+                    if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                        coordVgpr = self.coord0Vgpr
+                        module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAVecVgpr), \
+                                                 shiftHex=hex(log2(kw.states.bpeCinternal)), \
+                                                 src=vgpr(coordVgpr), \
+                                                comment="ScaleAVec address scaled by BPE"))
+                        return module
+                    if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                        coordVgpr = self.coord1Vgpr
+                        module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleBVecVgpr), \
+                                                 shiftHex=hex(log2(kw.states.bpeCinternal)), \
+                                                 src=vgpr(coordVgpr), \
+                                                comment="ScaleBVec address scaled by BPE"))
+                        return module
                     if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                         coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
                         module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
@@ -329,6 +351,20 @@ class AddrCalculation:
                                            src1=vgpr(self.addrBiasVgpr), \
                                            comment="add bias lds offset"))
                     return module
+                if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                    coordVgpr = self.coord0Vgpr
+                    module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAVecVgpr), \
+                                             shiftHex=hex(log2(kw.states.bpeCinternal)), \
+                                             src=vgpr(coordVgpr), \
+                                            comment="ScaleAVec address scaled by BPE"))
+                    return module
+                if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                    coordVgpr = self.coord1Vgpr
+                    module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleBVecVgpr), \
+                                             shiftHex=hex(log2(kw.states.bpeCinternal)), \
+                                             src=vgpr(coordVgpr), \
+                                            comment="ScaleBVec address scaled by BPE"))
+                    return module
                 if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                     coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
                     module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
@@ -365,6 +401,20 @@ class AddrCalculation:
                                        src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
                                        src1=vgpr(self.addrBiasVgpr), \
                                        comment="add bias lds offset"))
+                return module
+            if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                coordVgpr = self.coord0Vgpr
+                module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAVecVgpr), \
+                                         shiftHex=hex(log2(kw.states.bpeCinternal)), \
+                                         src=vgpr(coordVgpr), \
+                                        comment="ScaleAVec address scaled by BPE"))
+                return module
+            if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                coordVgpr = self.coord1Vgpr
+                module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleBVecVgpr), \
+                                         shiftHex=hex(log2(kw.states.bpeCinternal)), \
+                                         src=vgpr(coordVgpr), \
+                                        comment="ScaleBVec address scaled by BPE"))
                 return module
             if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                 coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
@@ -600,6 +650,18 @@ class AddrCalculation:
                                        src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
                                        src1=vgpr(self.addrBiasVgpr), \
                                        comment="add bias lds offset"))
+            if tc == 'ScaleA' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                coordVgpr = self.coord0Vgpr
+                module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAVecVgpr), \
+                                        shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
+                                        src=vgpr(coordVgpr), \
+                                        comment="ScaleAVec address scaled by BPE"))
+            if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                coordVgpr = self.coord1Vgpr
+                module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleBVecVgpr), \
+                                        shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
+                                        src=vgpr(coordVgpr), \
+                                        comment="ScaleBVec address scaled by BPE"))
             if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                 coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
                 module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleAlphaVecVgpr), \

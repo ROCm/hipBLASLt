@@ -2059,10 +2059,10 @@ namespace Tensile
                     HasIndex = false,
                     HasValue = true
                 };
-                bool value;
+                std::string value;
 
                 UseScaleABEqual() = default;
-                UseScaleABEqual(bool value)
+                UseScaleABEqual(std::string value)
                     : value(value)
                 {
                 }
