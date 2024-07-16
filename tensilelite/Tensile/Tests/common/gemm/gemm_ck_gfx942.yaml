@@ -38,7 +38,7 @@ BenchmarkProblems:
       BiasTypeList: [S,B]
       Activation: True
       ActivationType: all
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
 
       # GroupedGemm: True
       # SupportUserArgs: True
