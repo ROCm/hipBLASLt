@@ -36,7 +36,7 @@ BenchmarkProblems:
       UseBias: 1
       BiasSrc: "B"
       BiasDataTypeList: [s,b]
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -106,7 +106,7 @@ BenchmarkProblems:
       UseBias: 1
       BiasSrc: "B"
       BiasDataTypeList: [s,b]
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:

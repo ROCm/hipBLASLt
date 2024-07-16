@@ -514,13 +514,13 @@ namespace
         if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
            || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
         {
-            tensileProblem.setUseScaleAB(true);
+            tensileProblem.setUseScaleAB("Scalar");
             if(d_type == Tensile::DataType::Float8 || d_type == Tensile::DataType::BFloat8)
                 tensileProblem.setUseScaleCD(true);
             else
                 tensileProblem.setUseScaleCD(false);
-            tensileProblem.setScaleA(compute_type);
-            tensileProblem.setScaleB(compute_type);
+            tensileProblem.setScaleA(compute_type, 1);
+            tensileProblem.setScaleB(compute_type, 1);
             tensileProblem.setScaleC(compute_type);
             tensileProblem.setScaleD(compute_type);
             tensileProblem.setUseScaleAlphaVec(1);
@@ -528,7 +528,7 @@ namespace
         }
         else
         {
-            tensileProblem.setUseScaleAB(false);
+            tensileProblem.setUseScaleAB("");
             tensileProblem.setUseScaleCD(false);
             // set ScaleAlphaVec mode
             tensileProblem.setUseScaleAlphaVec(1);
@@ -688,7 +688,7 @@ namespace
             if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
                || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
             {
-                tensileProblem.setUseScaleAB(false);
+                tensileProblem.setUseScaleAB("");
             }
         }
         else
@@ -715,13 +715,13 @@ namespace
             if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
                || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
             {
-                tensileProblem.setUseScaleAB(true);
+                tensileProblem.setUseScaleAB("Scalar");
                 if(d_type == Tensile::DataType::Float8 || d_type == Tensile::DataType::BFloat8)
                     tensileProblem.setUseScaleCD(true);
                 else
                     tensileProblem.setUseScaleCD(false);
-                tensileProblem.setScaleA(compute_type);
-                tensileProblem.setScaleB(compute_type);
+                tensileProblem.setScaleA(compute_type, 1);
+                tensileProblem.setScaleB(compute_type, 1);
                 tensileProblem.setScaleC(compute_type);
                 tensileProblem.setScaleD(compute_type);
                 tensileProblem.setUseScaleAlphaVec(1);
@@ -729,7 +729,7 @@ namespace
             }
             else
             {
-                tensileProblem.setUseScaleAB(false);
+                tensileProblem.setUseScaleAB("");
                 tensileProblem.setUseScaleCD(false);
                 // set ScaleAlphaVec mode
                 tensileProblem.setUseScaleAlphaVec(1);
@@ -2099,7 +2099,7 @@ inline auto getSolutions(
         tensile_prob.setActivationType(Tensile::ActivationType::None);
         tensile_prob.setUseScaleAlphaVec(0);
         tensile_prob.setUseE(false);
-        tensile_prob.setUseScaleAB(false);
+        tensile_prob.setUseScaleAB("");
         tensile_prob.setUseScaleCD(false);
         solutions_fallback = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
         // restore
@@ -2483,7 +2483,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
                 tensile_prob.setActivationType(Tensile::ActivationType::None);
                 tensile_prob.setUseScaleAlphaVec(0);
                 tensile_prob.setUseE(false);
-                tensile_prob.setUseScaleAB(false);
+                tensile_prob.setUseScaleAB("");
                 tensile_prob.setUseScaleCD(false);
                 bool isSup = (*solution->hardwarePredicate)(*hardware)
                              && (*solution->problemPredicate)(tensile_prob);

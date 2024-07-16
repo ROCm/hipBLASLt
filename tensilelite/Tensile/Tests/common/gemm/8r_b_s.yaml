@@ -33,7 +33,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: ['b']
@@ -95,7 +95,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: ['b']

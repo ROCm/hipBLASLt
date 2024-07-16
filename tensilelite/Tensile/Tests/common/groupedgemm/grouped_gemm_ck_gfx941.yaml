@@ -28,7 +28,7 @@ BenchmarkProblems:
       OperationType: GEMM
       DataTypeA: f8
       DataTypeB: h
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
 
       DataType: h
       DestDataType: h
@@ -117,7 +117,7 @@ BenchmarkProblems:
       OperationType: GEMM
       DataTypeA: f8
       DataTypeB: h
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
 
       DataType: h
       DestDataType: s

@@ -473,7 +473,7 @@ namespace Tensile
             bool                  useGradient               = false;
             int                   useBias                   = 0;
             bool                  useE                      = false;
-            bool                  useScaleAB                = false;
+            std::string           useScaleAB                = "";
             bool                  useScaleCD                = false;
             int                   useScaleAlphaVec          = 0;
             bool                  useInitialStridesAB       = false;

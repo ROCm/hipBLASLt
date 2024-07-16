@@ -77,7 +77,7 @@ namespace Tensile
             bool m_cEqualsD;
             int  m_useBias;
             int  m_biasSrc;
-            bool m_useScaleAB;
+            std::string m_useScaleAB;
             bool m_useScaleCD;
             int  m_useScaleAlphaVec;
             bool m_useSynchronizer;

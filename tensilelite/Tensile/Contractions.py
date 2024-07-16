@@ -217,7 +217,7 @@ class ProblemType:
         if 'Gradient' in d:
             rv.useGradient = d["Gradient"]
 
-        rv.useScaleAB = False
+        rv.useScaleAB = ""
         if 'UseScaleAB' in d:
             rv.useScaleAB = d['UseScaleAB']
         rv.useScaleCD = False

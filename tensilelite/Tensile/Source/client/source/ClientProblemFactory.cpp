@@ -164,7 +164,7 @@ namespace Tensile
             if(args.count("bias-source"))
                 m_biasSrc = args["bias-source"].as<int>();
             if(args.count("use-scaleAB"))
-                m_useScaleAB = args["use-scaleAB"].as<bool>();
+                m_useScaleAB = args["use-scaleAB"].as<std::string>();
             if(args.count("use-scaleCD"))
                 m_useScaleCD = args["use-scaleCD"].as<bool>();
             if(args.count("use-scaleAlphaVec"))
@@ -352,12 +352,21 @@ namespace Tensile
                             }
                             rv.back().setActivationNoGuard(m_activationNoGuard);
                             rv.back().setUseScaleAB(m_useScaleAB);
-                            if(m_useScaleAB)
+                            if(m_useScaleAB == "Scalar")
                             {
                                 rv.back().setScaleA(
-                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
+                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA], 1);
                                 rv.back().setScaleB(
-                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
+                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA], 1);
+                            }
+                            else if(m_useScaleAB == "Vector")
+                            {
+                                rv.back().setScaleA(
+                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
+                                    rv.back().d().sizes()[0]);
+                                rv.back().setScaleB(
+                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
+                                    rv.back().d().sizes()[1]);
                             }
                             rv.back().setUseScaleCD(m_useScaleCD);
                             if(m_useScaleCD)
