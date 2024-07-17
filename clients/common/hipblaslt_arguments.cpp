@@ -61,6 +61,7 @@ bool gpu_arch_match(const std::string& gpu_arch, const char pattern[4])
     //hipblaslt_cout << " : match gpu_arch " << gpu_arch << std:: endl;
     return true;
 };
+
 void Arguments::init()
 {
     // match python in hipblaslt_common.py
@@ -135,8 +136,8 @@ void Arguments::init()
     bias_type         = HIPBLASLT_DATATYPE_INVALID;
     bias_source       = hipblaslt_bias_source::d;
     bias_vector       = false;
-    scaleA            = false;
-    scaleB            = false;
+    scaleA            = ScalingFormat::None;
+    scaleB            = ScalingFormat::None;
     scaleC            = false;
     scaleD            = false;
     scaleE            = false;

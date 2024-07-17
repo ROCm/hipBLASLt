@@ -164,6 +164,9 @@ struct _rocblaslt_matmul_desc
     hipDataType compute_input_typeB;
     hipDataType            scale_type = HIPBLASLT_DATATYPE_INVALID;
 
+    bool isScaleAVec = false;
+    bool isScaleBVec = false;
+
     std::shared_ptr<void> m_data; // Tensile data
 
     void copy(const _rocblaslt_matmul_desc& src)
@@ -177,6 +180,8 @@ struct _rocblaslt_matmul_desc
         this->scaleC       = src.scaleC;
         this->scaleD       = src.scaleD;
         this->scaleE       = src.scaleE;
+        this->isScaleAVec  = src.isScaleAVec;
+        this->isScaleBVec  = src.isScaleBVec;
         this->pointermode  = src.pointermode;
         this->amax_ptr     = src.amax_ptr;
         this->bias_type    = src.bias_type;
