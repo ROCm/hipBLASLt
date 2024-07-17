@@ -6663,37 +6663,41 @@ class KernelWriterAssembly(KernelWriter):
                     vgprTmp = self.vgprPool.checkOutAligned(5, 2)
                   else:
                     vgprTmp = self.vgprPool.checkOutAligned(2, 2)
-                  vgprTmp2 = vgprTmp + 1
                   for vi in range(0, int(newBlockWidth)):
                     sel = 1 if vi %2 == 1 else 0
-                    localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp), src=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi)), sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_0), comment="convert to F32"))
-                    localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp2), src=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi)), sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_1), comment="convert to F32"))
+                    localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp + 0), src=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi)), sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_0), comment="convert to F32"))
+                    localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp + 1), src=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi)), sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_1), comment="convert to F32"))
 
                     if kernel["ProblemType"]["StochasticRounding"]:
                       # ScaleA/B, sgpr upper is dummy.
                       if kernel["ProblemType"]["UseScaleAB"] and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
-                        localWriteCVTCode.add(VMulPKF32(dst=vgpr(vgprTmp, 2), src0=vgpr(vgprTmp, 2), src1=sgpr("Scale%s"%tc, 2), vop3=VOP3PModifiers(op_sel_hi=[1,0,1]), comment="Input *= scale %s"%tc))
+                        # modify to non-pack VMulF32
+                        localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp + 0), src0=vgpr(vgprTmp + 0), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
+                        localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp + 1), src0=vgpr(vgprTmp + 1), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
+
                       vRand = vgprTmp+2
                       vTemp0 = vgprTmp+3
                       vTemp1 = vgprTmp+4
-                      localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgpr(vgprTmp), vTemp0, vTemp1]))
+                      localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgpr(vgprTmp + 0), vTemp0, vTemp1]))
                       if (toF8):
-                        localWriteCVTCode.add(VCvtSRF32toFP8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,0,sel]), comment="Convert to FP8"))
-                        localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgpr(vgprTmp2), vTemp0, vTemp1]))
-                        localWriteCVTCode.add(VCvtSRF32toFP8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp2), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,1,sel]), comment="Convert to FP8"))
+                        localWriteCVTCode.add(VCvtSRF32toFP8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp + 0), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,0,sel]), comment="Convert to FP8"))
+                        localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgpr(vgprTmp + 1), vTemp0, vTemp1]))
+                        localWriteCVTCode.add(VCvtSRF32toFP8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp + 1), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,1,sel]), comment="Convert to FP8"))
                       else:
-                        localWriteCVTCode.add(VCvtSRF32toBF8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,0,sel]), comment="Convert to BF8"))
-                        localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgpr(vgprTmp2), vTemp0, vTemp1]))
-                        localWriteCVTCode.add(VCvtSRF32toBF8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp2), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,1,sel]), comment="Convert to BF8"))
+                        localWriteCVTCode.add(VCvtSRF32toBF8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp + 0), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,0,sel]), comment="Convert to BF8"))
+                        localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgpr(vgprTmp + 1), vTemp0, vTemp1]))
+                        localWriteCVTCode.add(VCvtSRF32toBF8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp + 1), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,1,sel]), comment="Convert to BF8"))
                     else:
                       # ScaleA/B, sgpr upper is dummy.
                       if kernel["ProblemType"]["UseScaleAB"] and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
-                        localWriteCVTCode.add(VMulPKF32(dst=vgpr(vgprTmp, 2), src0=vgpr(vgprTmp, 2), src1=sgpr("Scale%s"%tc, 2), vop3=VOP3PModifiers(op_sel_hi=[1,0,1]), comment="Input *= scale %s"%tc))
-
+                        # modify to non-pack VMulF32
+                        localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp + 0), src0=vgpr(vgprTmp + 0), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
+                        localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp + 1), src0=vgpr(vgprTmp + 1), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
+                        
                       if (toF8):
-                        localWriteCVTCode.add(VCvtPkF32toFP8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp), src1=vgpr(vgprTmp2), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to FP8"))
+                        localWriteCVTCode.add(VCvtPkF32toFP8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp + 0), src1=vgpr(vgprTmp + 1), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to FP8"))
                       else:
-                        localWriteCVTCode.add(VCvtPkF32toBF8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp), src1=vgpr(vgprTmp2), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to BF8"))
+                        localWriteCVTCode.add(VCvtPkF32toBF8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp + 0), src1=vgpr(vgprTmp + 1), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to BF8"))
                   self.vgprPool.checkIn(vgprTmp)
 
               elif (kernel["ProblemType"]["DataType%s"%tc].isFloat8() and kernel["ProblemType"]["DataType"].isHalf()):
