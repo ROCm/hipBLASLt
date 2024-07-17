@@ -189,6 +189,8 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
                                         scaleD,
                                         scaleE,
                                         scaleAlphaVec,
+                                        matmul_descr->isScaleAVec,
+                                        matmul_descr->isScaleBVec,
                                         bias_type,
                                         epilogue,
                                         nullptr,
@@ -726,7 +728,11 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
+            case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT:
+                matmulDesc->isScaleAVec = true;
             case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER:
+                if(matmulAttr == ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER)
+                    matmulDesc->isScaleAVec = false;
                 if(sizeof(void*) <= sizeInBytes)
                     memcpy(&matmulDesc->scaleA, buf, sizeof(void*));
                 else
@@ -735,7 +741,11 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
+            case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT:
+                matmulDesc->isScaleBVec = true;
             case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER:
+                if(matmulAttr == ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER)
+                    matmulDesc->isScaleBVec = false;
                 if(sizeof(void*) <= sizeInBytes)
                     memcpy(&matmulDesc->scaleB, buf, sizeof(void*));
                 else
@@ -947,6 +957,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->bias, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER:
+            case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT:
                 if(sizeWritten)
                     *sizeWritten = sizeof(void*);
                 if(sizeInBytes < sizeof(void*))
@@ -957,6 +968,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->scaleA, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER:
+            case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT:
                 if(sizeWritten)
                     *sizeWritten = sizeof(void*);
                 if(sizeInBytes < sizeof(void*))

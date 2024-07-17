@@ -52,6 +52,12 @@ bool gpu_arch_match(const std::string& gpu_arch, const char pattern[4]);
 constexpr std::size_t MAX_SUPPORTED_NUM_PROBLEMS{32};
 struct Arguments
 {
+    enum ScalingFormat
+    {
+        None = 0,
+        Scalar,
+        Vector
+    };
     /*************************************************************************
      *                    Beginning Of Arguments                             *
      *************************************************************************/
@@ -133,8 +139,8 @@ struct Arguments
     hipDataType           bias_type;
     hipblaslt_bias_source bias_source;
     bool                  bias_vector;
-    bool                  scaleA;
-    bool                  scaleB;
+    ScalingFormat           scaleA;
+    ScalingFormat           scaleB;
     bool                  scaleC;
     bool                  scaleD;
     bool                  scaleE;

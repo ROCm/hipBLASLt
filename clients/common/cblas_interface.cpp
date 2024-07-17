@@ -92,9 +92,11 @@ void cblas_gemm(hipblasOperation_t     transA,
                 std::add_pointer_t<To> C,
                 int64_t                ldc,
                 const Tc*              AlphaVec,
-                Tc                     scaleA,
-                Tc                     scaleB,
+                const Tc*              scaleAVec,
+                const Tc*              scaleBVec,
                 Tc                     scaleD,
+                bool                   isScaleAVec,
+                bool                   isScaleBVec,
                 bool                   alt)
 {
     using TcCast  = std::conditional_t<std::is_same<Tc, int32_t>::value, double, Tc>;
@@ -116,78 +118,134 @@ void cblas_gemm(hipblasOperation_t     transA,
         {
             if(transA == HIPBLAS_OP_N)
             {
+                #pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
+                {
+                    auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
                     A_Tc[i] = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA))
                               * AlphaVec[i % m];
+                }
             }
             else
             {
+                #pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
+                {
+                    auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
                     A_Tc[i] = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA))
                               * AlphaVec[i / k];
+                }
             }
         }
         else
         {
-            alpha *= scaleA;
             if(transA == HIPBLAS_OP_N)
             {
+                #pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
-                    A_Tc[i] = static_cast<TcCast>(A[i]) * AlphaVec[i % m];
+                {
+                    auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
+                    A_Tc[i] = static_cast<TcCast>(A[i]) * scaleA * AlphaVec[i % m];
+                }
             }
             else
             {
+                #pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
-                    A_Tc[i] = static_cast<TcCast>(A[i]) * AlphaVec[i / k];
+                {
+                    auto scaleA = isScaleAVec ? scaleAVec[i  / k] : scaleAVec[0];
+                    A_Tc[i] = static_cast<TcCast>(A[i]) * scaleA * AlphaVec[i / k];
+                }
             }
         }
-    }
-    else if constexpr(std::is_same<TiA, TcCast>::value && std::is_same<TciACast, TcCast>::value)
-    {
-        alpha *= scaleA;
-        A_Tc.initialize(A);
     }
     else
     {
         A_Tc.initialize(sizeA);
         if constexpr(sizeof(TiA) > sizeof(TciACast))
         {
-            for(size_t i = 0; i < sizeA; i++)
+            if(transA == HIPBLAS_OP_N)
             {
-                A_Tc[i] = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA));
+                #pragma omp for
+                for(size_t i = 0; i < sizeA; i++)
+                {
+                    auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
+                    A_Tc[i] = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA));
+                }
+            }
+            else
+            {
+                #pragma omp for
+                for(size_t i = 0; i < sizeA; i++)
+                {
+                    auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
+                    A_Tc[i] = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA));
+                }
             }
         }
         else
         {
-            alpha *= scaleA;
-            for(size_t i = 0; i < sizeA; i++)
+            if(transA == HIPBLAS_OP_N)
             {
-                A_Tc[i] = static_cast<TcCast>(A[i]);
+                #pragma omp for
+                for(size_t i = 0; i < sizeA; i++)
+                {
+                    auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
+                    A_Tc[i] = static_cast<TcCast>(A[i] * scaleA);
+                }
+            }
+            else
+            {
+                #pragma omp for
+                for(size_t i = 0; i < sizeA; i++)
+                {
+                    auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
+                    A_Tc[i] = static_cast<TcCast>(A[i] * scaleA);
+                }
             }
         }
     }
 
-    if constexpr(std::is_same<TiB, TcCast>::value && std::is_same<TciBCast, TcCast>::value)
+    B_Tc.initialize(sizeB);
+    if constexpr(sizeof(TiB) > sizeof(TciBCast))
     {
-        alpha *= scaleB;
-        B_Tc.initialize(B);
-    }
-    else
-    {
-        B_Tc.initialize(sizeB);
-        if constexpr(sizeof(TiB) > sizeof(TciBCast))
+        if(transB == HIPBLAS_OP_N)
         {
+            #pragma omp for
             for(size_t i = 0; i < sizeB; i++)
             {
+                auto scaleB = isScaleBVec ? scaleBVec[i / k] : scaleBVec[0];
                 B_Tc[i] = static_cast<TcCast>(static_cast<TciBCast>(B[i] * scaleB));
             }
         }
         else
         {
-            alpha *= scaleB;
+            #pragma omp for
             for(size_t i = 0; i < sizeB; i++)
             {
-                B_Tc[i] = static_cast<TcCast>(B[i]);
+                auto scaleB = isScaleBVec ? scaleBVec[i % n] : scaleBVec[0];
+                B_Tc[i] = static_cast<TcCast>(static_cast<TciBCast>(B[i] * scaleB));
+            }
+        }
+    }
+    else
+    {
+        if(transB == HIPBLAS_OP_N)
+        {
+            #pragma omp for
+            for(size_t i = 0; i < sizeB; i++)
+            {
+                auto scaleB = isScaleBVec ? scaleBVec[i / k] : scaleBVec[0];
+                B_Tc[i] = static_cast<TcCast>(B[i] * scaleB);
+            }
+        }
+        else
+        {
+            #pragma omp for
+            for(size_t i = 0; i < sizeB; i++)
+            {
+                auto scaleB = isScaleBVec ? scaleBVec[i % n] : scaleBVec[0];
+                B_Tc[i] = static_cast<TcCast>(B[i] * scaleB);
             }
         }
     }
@@ -262,22 +320,24 @@ void cblas_gemm(hipblasOperation_t     transA,
 
 #define CREATEFUNCTION(TiA, TiB, To, Tc, TciA, TciB)                                        \
     template void cblas_gemm<TiA, TiB, To, Tc, TciA, TciB>(hipblasOperation_t     transA,   \
-                                                    hipblasOperation_t     transB,   \
-                                                    int64_t                m,        \
-                                                    int64_t                n,        \
-                                                    int64_t                k,        \
-                                                    Tc                     alpha,    \
-                                                    const TiA*             A,        \
-                                                    int64_t                lda,      \
-                                                    const TiB*             B,        \
-                                                    int64_t                ldb,      \
-                                                    Tc                     beta,     \
-                                                    std::add_pointer_t<To> C,        \
-                                                    int64_t                ldc,      \
-                                                    const Tc*              AlphaVec, \
-                                                    Tc                     scaleA,   \
-                                                    Tc                     scaleB,   \
-                                                    Tc                     scaleD,   \
+                                                    hipblasOperation_t     transB,     \
+                                                    int64_t                m,          \
+                                                    int64_t                n,          \
+                                                    int64_t                k,          \
+                                                    Tc                     alpha,      \
+                                                    const TiA*             A,          \
+                                                    int64_t                lda,        \
+                                                    const TiB*             B,          \
+                                                    int64_t                ldb,        \
+                                                    Tc                     beta,       \
+                                                    std::add_pointer_t<To> C,          \
+                                                    int64_t                ldc,        \
+                                                    const Tc*              AlphaVec,   \
+                                                    const Tc*              scaleAVec,  \
+                                                    const Tc*              scaleBVec,  \
+                                                    Tc                     scaleD,     \
+                                                    bool                   isScaleAVec,\
+                                                    bool                   isScaleBVec,\
                                                     bool                   alt);
 
 CREATEFUNCTION(hip_bfloat16, hip_bfloat16, hip_bfloat16, float, hip_bfloat16, hip_bfloat16)

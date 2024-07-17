@@ -223,13 +223,13 @@ BenchmarkProblems:
           - [Enum: none]
 
   ########################################
-  # F8SS-TN
+  # F8BS-TN
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
       DataType: f8
-      DestDataType: s
+      DestDataType: b
       ComputeDataType: s
       HighPrecisionAccumulate: True
       TransposeA: 1

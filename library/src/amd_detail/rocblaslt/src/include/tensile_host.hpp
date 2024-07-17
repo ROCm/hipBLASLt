@@ -125,6 +125,8 @@ struct RocblasltContractionProblem
     const void*        scaleD;
     const void*        scaleE;
     const void*        scaleAlphaVec;
+    bool               isScaleAVec;
+    bool               isScaleBVec;
     hipDataType        bias_type;
     rocblaslt_epilogue epilogue;
     void*              workspace;
@@ -178,6 +180,8 @@ struct RocblasltContractionProblem
                                 const void*            scaleD,
                                 const void*            scaleE,
                                 const void*            scaleAlphaVec,
+                                bool                   isScaleAVec,
+                                bool                   isScaleBVec,
                                 hipDataType            bias_type,
                                 rocblaslt_epilogue     epilogue,
                                 void*                  workspace,
@@ -232,6 +236,8 @@ struct RocblasltContractionProblem
         , scaleD(scaleD)
         , scaleE(scaleE)
         , scaleAlphaVec(scaleAlphaVec)
+        , isScaleAVec(isScaleAVec)
+        , isScaleBVec(isScaleBVec)
         , bias_type(bias_type)
         , epilogue(epilogue)
         , workspace(workspace)

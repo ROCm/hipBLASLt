@@ -206,6 +206,10 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_POINTER_MODE";
     case ROCBLASLT_MATMUL_DESC_AMAX_D_POINTER:
         return "MATMUL_DESC_AMAX_D_POINTER";
+    case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT:
+        return "MATMUL_DESC_A_SCALE_POINTER_VEC";
+    case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT:
+        return "MATMUL_DESC_B_SCALE_POINTER_VEC";
     default:
         return "Invalid";
     }
