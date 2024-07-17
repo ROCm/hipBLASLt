@@ -182,19 +182,19 @@ class PackData_INT8(PackData):
                 module.add(VOrB32(dst=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), \
                            src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD) if not ti.getArchCaps()["NoSDWA"] else None))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
                 module.add(VOrB32(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
                            src1=vgpr(formatVgpr), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD) if not ti.getArchCaps()["NoSDWA"] else None))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
                 module.add(VOrB32(dst=vgpr(d), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.WORD_0, src1_sel=SelectBit.DWORD)))
+                                              src0_sel=SelectBit.WORD_0, src1_sel=SelectBit.DWORD) if not ti.getArchCaps()["NoSDWA"] else None))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
         # Left
@@ -210,7 +210,7 @@ class PackData_INT8(PackData):
                 module.add(VOrB32(dst=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
                            src1=vgpr(formatVgpr), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD) if not ti.getArchCaps()["NoSDWA"] else None))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
             elif vi + 1 >= gwvw:

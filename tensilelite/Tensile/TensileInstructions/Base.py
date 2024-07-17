@@ -264,6 +264,7 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
     rv["v_pk_fmac_f16"]     = _tryAssembler(isaVersion, assemblerPath, "v_pk_fma_f16 v47, v36, v34", isDebug)
 
     rv["v_pk_add_f32"]      = _tryAssembler(isaVersion, assemblerPath, "v_pk_add_f32 v[48:49], v[36:37], v[0:1]", isDebug)
+    rv["v_pk_mul_f32"]      = _tryAssembler(isaVersion, assemblerPath, "v_pk_mul_f32 v[48:49], v[36:37], v[0:1]", isDebug)
 
     rv["v_mad_mix_f32"]     = _tryAssembler(isaVersion, assemblerPath, "v_mad_mix_f32 v47, v36, v34, v47, op_sel:[0,0,0] op_sel_hi:[1,1,0]", isDebug)
     rv["v_fma_mix_f32"]     = _tryAssembler(isaVersion, assemblerPath, "v_fma_mix_f32 v47, v36, v34, v47, op_sel:[0,0,0] op_sel_hi:[1,1,0]", isDebug)
@@ -327,6 +328,7 @@ def _initArchCaps(isaVersion) -> dict:
     rv["SDWAWait"] = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     rv["VgprBank"]           = (isaVersion[0] in (10, 11, 12))
     rv["HWWorkaround"]       = isaVersion[0] == (12)
+    rv["NoSDWA"]             = isaVersion[0] == (12)
     return rv
 
 def _initAsmBugs(asmCaps) -> dict:
