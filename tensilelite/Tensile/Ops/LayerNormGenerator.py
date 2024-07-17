@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -51,7 +51,7 @@ def kernel_header(name: str, gfx_arch: str, vgpr: int, sgpr: int, lds: int):
     header += f'.p2align 6\n'
     header += f'.amdhsa_kernel {name}\n'
     header += f'  .amdhsa_user_sgpr_kernarg_segment_ptr 1\n'
-    if (gfx_arch not in ("gfx900", "gfx908", "gfx1030", "gfx1100", "gfx1101", "gfx1102")):
+    if (gfx_arch not in ("gfx900", "gfx908", "gfx1030", "gfx1100", "gfx1101", "gfx1102", "gfx1200", "gfx1201")):
         header += f'  .amdhsa_accum_offset {vgpr} // accvgpr offset\n'
     header += f'  .amdhsa_next_free_vgpr {vgpr} // vgprs\n'
     header += f'  .amdhsa_next_free_sgpr {sgpr} // sgprs\n'

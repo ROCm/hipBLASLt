@@ -541,10 +541,11 @@ class MUBUFReadInstruction(GlobalReadInstruction):
     def getArgStr(self) -> str:
         if self.asmCaps["HasMUBUFConst"]:
           return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
-        elif str(self.soffset)=="0":
-          return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + "null"
         else:
-          return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
+          if str(self.soffset)=="0":
+            return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + "null"
+          else:
+            return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
 
     def toList(self) -> list:
         self.preStr()
@@ -698,13 +699,13 @@ class MUBUFStoreInstruction(GlobalWriteInstruction):
         return [self.srcData, self.vaddr, self.saddr, self.soffset]
 
     def getArgStr(self) -> str:
-        #return str(self.srcData) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
         if self.asmCaps["HasMUBUFConst"]:
-            return str(self.srcData) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
-        elif str(self.soffset) == "0":
-            return str(self.srcData) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + "null"
+          return str(self.srcData) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
         else:
-            assert 0, "MUBUF instruction cannot use inline constant."
+          if str(self.soffset) == "0":
+            return str(self.srcData) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + "null"
+          else:
+            return str(self.srcData) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
 
     def toList(self) -> list:
         self.preStr()
@@ -1994,10 +1995,46 @@ class VMulPKF16(CommonInstruction):
         super().__init__(InstType.INST_F16, dst, [src0, src1], sdwa, vop3, comment)
         self.setInst("v_pk_mul_f16")
 
-class VMulPKF32(CommonInstruction):
+class VMulPKF32S(CommonInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, vop3, comment)
         self.setInst("v_pk_mul_f32")
+
+class _VMulPKF32(CommonInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, vop3, comment)
+        self.setInst("v_pk_mul_f32")
+
+class VMulPKF32(CompositeInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], comment)
+        self.setInst("v_pk_mul_f32")
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def setupInstructions(self):
+        super().setupInstructions()
+        assert isinstance(self.srcs, List)
+        if self.asmCaps["v_pk_mul_f32"]:
+            self.instructions = [_VMulPKF32(self.dst, self.srcs[0], self.srcs[1], None, None, self.comment)]
+        else:
+            dst1, dst2 = self.dst.splitRegContainer()
+            srcs1 = []
+            srcs2 = []
+            for s in self.srcs:
+                if isinstance(s, RegisterContainer) or isinstance(s, HolderContainer):
+                    r1, r2 = s.splitRegContainer()
+                    srcs1.append(r1)
+                    srcs2.append(r2)
+                else:
+                    srcs1.append(s)
+                    srcs2.append(s)
+            self.instructions = [VMulF32(dst1, srcs1[0], srcs1[1], None, self.comment),
+                                VMulF32(dst2, srcs2[0], srcs2[1], None, self.comment)]
+
+        assert all(inst.vop3 is None for inst in self.instructions), "Currently does not support with vop3 enabled"
 
 class VMulLOU32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:
