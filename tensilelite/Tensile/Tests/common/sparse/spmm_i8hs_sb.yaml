@@ -32,6 +32,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
       BiasDataTypeList: ['s']
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -84,7 +85,7 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
         - BiasTypeArgs: ['s']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -105,6 +106,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
       BiasDataTypeList: ['s']
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -157,7 +159,7 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
         - BiasTypeArgs: ['s']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -178,6 +180,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
       BiasDataTypeList: ['s']
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -230,7 +233,7 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
         - BiasTypeArgs: ['s']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -251,6 +254,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
       BiasDataTypeList: ['s']
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -303,6 +307,6 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
         - BiasTypeArgs: ['s']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]

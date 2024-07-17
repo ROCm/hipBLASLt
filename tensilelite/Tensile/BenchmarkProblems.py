@@ -106,7 +106,7 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
     return solutions
 
 def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
-        biasTypeArgs, biasDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes):
+        biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes):
     """Write all the files needed for a given benchmarking step"""
     if not globalParameters["MergeFiles"]:
         ensurePath(os.path.join(globalParameters["WorkingPath"], "Solutions"))
@@ -178,10 +178,10 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
                 idealSize = {"Exact": [idealM, idealN, idealK]}
                 idealSizes.append(idealSize)
         idealProblemSizes = ProblemSizes(problemType, idealSizes)
-        writeClientConfig(True, solutions, idealProblemSizes, biasTypeArgs, biasDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
+        writeClientConfig(True, solutions, idealProblemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
             newLibrary, codeObjectFiles, True)
     else:
-        writeClientConfig(True, solutions, problemSizes, biasTypeArgs, biasDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
+        writeClientConfig(True, solutions, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
             newLibrary, codeObjectFiles, False)
 
     if len(solutions) == 0:
@@ -226,7 +226,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         elapsedTime = currentTime - startTime
         print1("# Benchmark Step: {} - {} {:.3f}s".format(groupName, stepName, elapsedTime))
         print1("# Num Sizes: {}".format(benchmarkStep.problemSizes.totalProblemSizes))
-        print1("# Bias Dim steps: {}".format(benchmarkStep.biasDimArgs.totalProblemSizes))
+        print1("# Factor Dim steps: {}".format(benchmarkStep.factorDimArgs.totalProblemSizes))
         print1("# Bias Type steps: {}".format(benchmarkStep.biasTypeArgs.totalProblemSizes))
         print1("# Activation steps: {}".format(benchmarkStep.activationArgs.totalProblemSizes))
         print1("# ICacheFlush steps: {}".format(len(benchmarkStep.icacheFlushArgs)))
@@ -301,9 +301,10 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
             # write benchmarkFiles
             prevCount = len(solutions)
-            codeObjectFiles = writeBenchmarkFiles(stepBaseDir, solutions, \
-                    benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs, \
-                    benchmarkStep.biasDimArgs, benchmarkStep.activationArgs, benchmarkStep.icacheFlushArgs, shortName, [])
+            codeObjectFiles = writeBenchmarkFiles(stepBaseDir, solutions,      \
+                    benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,    \
+                    benchmarkStep.factorDimArgs, benchmarkStep.activationArgs, \
+                    benchmarkStep.icacheFlushArgs, shortName, [])
             # ^ this mutates solutions
 
             # write cache data
@@ -336,7 +337,8 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             outFile = os.path.join(globalParameters["WorkingPath"], "ClientParameters.ini")
 
             writeClientConfigIni(benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
-                                 benchmarkStep.activationArgs, conProblemType,
+                                 benchmarkStep.factorDimArgs, benchmarkStep.activationArgs,
+                                 benchmakrStep.icacheFlushArgs, conProblemType,
                                  globalParameters["WorkingPath"], codeObjectFiles, resultsFileName,
                                  outFile)
 
