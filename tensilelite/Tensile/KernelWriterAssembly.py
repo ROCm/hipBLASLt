@@ -4543,7 +4543,7 @@ class KernelWriterAssembly(KernelWriter):
           loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
         extArgOffset += self.states.userArgsInfo.biasSize
         if self.states.numSgprAddressBias:
-          biasLoadSize = (self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride + (1 if self.states.BiasDim == 3 else 0)) * 4
+          biasLoadSize = (self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride) * 4
           if loadList[-1][0] == -1:
             loadList[-1][0] = self.sgprs["AddressBias"]
           loadList[-1][1] += biasLoadSize
@@ -4551,6 +4551,15 @@ class KernelWriterAssembly(KernelWriter):
             loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
         else:
             loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+
+        extArgOffset += self.states.userArgsInfo.factorDimSize
+        if self.states.FactorDim == 3:
+          if loadList[-1][0] == -1:
+            loadList[-1][0] = self.sgprs["FactorDim"]
+          loadList[-1][1] += self.states.userArgsInfo.factorDimSize
+        else:
+          loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+
         extArgOffset += self.states.userArgsInfo.eSize
         if kernel["ProblemType"]["UseE"]:
           if loadList[-1][0] == -1:
@@ -5158,7 +5167,7 @@ class KernelWriterAssembly(KernelWriter):
       skipOptNLL = Label("OptNLL_End", "")
       with self.allocTmpSgpr(4) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
-        placeHolder="skipOptNLL_placeholder" if self.states.BiasDim == 3 else None
+        placeHolder="skipOptNLL_placeholder" if self.states.FactorDim == 3 else None
         module.add(self.checkIsBetaZero(kernel, tmpSgprInfo, skipOptNLL, isLongBranch=isLongBranch, placeHolder=placeHolder, posNeg=1))
 
         # check alpha
@@ -5217,7 +5226,7 @@ class KernelWriterAssembly(KernelWriter):
             module.add(skipOptNLLModule)
           module.addSpaceLine()
 
-        placeHolder = "skipOptNLL_scc1_placeholder" if self.states.BiasDim == 3 else None
+        placeHolder = "skipOptNLL_scc1_placeholder" if self.states.FactorDim == 3 else None
         module.add(self.checkIsEdge(kernel, tmpSgprInfo, skipOptNLL, skipOptNLL, isLongBranch=isLongBranch, placeHolder=placeHolder))
         module.addSpaceLine()
 
@@ -8550,26 +8559,26 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   ##############################################################################
-  # checkIsBiasDimZero
+  # checkIsFactorDimZero
   # tmpSgpr is one temp sgpr
-  # biasDimLabel is label to branch to if biasDim != 0
+  # factorDimLabel is label to branch to if factorDim != 0
   ##############################################################################
-  def checkIsBiasDimZero(self, kernel, tmpSgprInfo, biasDimLabel, isLongBranch=False, posNeg: int=0):
-    module = Module("checkIsBiasDimZero label %s"%biasDimLabel)
-    assert(isinstance(biasDimLabel, Label))
-    biasDimLabelName = biasDimLabel.getLabelName()
-    if kernel["ProblemType"]["UseBias"]:
+  def checkIsFactorDimZero(self, kernel, tmpSgprInfo, factorDimLabel, isLongBranch=False, posNeg: int=0):
+    module = Module("checkIsFactorDimZero label %s"%factorDimLabel)
+    assert(isinstance(factorDimLabel, Label))
+    factorDimLabelName = factorDimLabel.getLabelName()
+    if kernel["ProblemType"]["UseBias"] or kernel["ProblemType"]["UseScaleAlphaVec"]:
       if self.states.bpeCinternal <= self.states.bpr: # 1 register to check for Beta==0
-        module.add(SCmpKEQU32(src=sgpr("BiasDim"), simm16=hex(0), comment="BiasDim == 0"))
+        module.add(SCmpKEQU32(src=sgpr("FactorDim"), simm16=hex(0), comment="FactorDim == 0"))
       else: # multiple registers to check for Beta==0
-        module.add(SMovB32(dst=sgpr(tmpSgprInfo.idx), src=sgpr("BiasDim+0"), comment="tmp = BiasDim[0]"))
+        module.add(SMovB32(dst=sgpr(tmpSgprInfo.idx), src=sgpr("FactorDim+0"), comment="tmp = FactorDim[0]"))
         for i in range(1, self.states.bpeCinternal//self.states.bpr):
-          module.add(SOrB32(dst=sgpr(tmpSgprInfo.idx), src0=sgpr("BiasDim+%u"%i), src1=sgpr(tmpSgprInfo.idx), comment="tmp |= BiasDim[%u] " % i))
-        module.add(SCmpKEQU32(src=sgpr(tmpSgprInfo.idx), simm16=hex(0), comment="BiasDim == 0"))
+          module.add(SOrB32(dst=sgpr(tmpSgprInfo.idx), src0=sgpr("FactorDim+%u"%i), src1=sgpr(tmpSgprInfo.idx), comment="tmp |= FactorDim[%u] " % i))
+        module.add(SCmpKEQU32(src=sgpr(tmpSgprInfo.idx), simm16=hex(0), comment="FactorDim == 0"))
       if isLongBranch:
-        module.add(self.longBranchScc0(biasDimLabel, posNeg, tmpSgprInfo))
+        module.add(self.longBranchScc0(factorDimLabel, posNeg, tmpSgprInfo))
       else:
-        module.add(SCBranchSCC0(labelName=biasDimLabelName, comment="Branch if BiasDim is not zero"))
+        module.add(SCBranchSCC0(labelName=factorDimLabelName, comment="Branch if FactorDim is not zero"))
     module.addSpaceLine()
     return module
 
@@ -8605,7 +8614,7 @@ class KernelWriterAssembly(KernelWriter):
                           applyAlpha=True, # defaults to generating *=alpha codes
                           betas=None, # if left unspecified, then let global parameter decide
                           edges=None,
-                          biasDims=None):
+                          factorDims=None):
     if not self.do["PostLoop"]: return Module("GlobalWriteElements (Empty)")
     module = Module("GlobalWriteElements")
     module.addComment2("Global Write Elements")
@@ -8619,7 +8628,7 @@ class KernelWriterAssembly(KernelWriter):
     useBiasBackup      = self.states.useBias
     betasBackup    = betas
     edgesBackup    = edges
-    biasDimsBackup = biasDims
+    factorDimsBackup = factorDims
     gsuLimit = 1 if noGSUBranch or globalParameters["SplitGSU"] else 2
     if gsuLimit > 1:
       gsuLabel = Label(label=self.labels.getNameInc("GSU"), comment="")
@@ -8632,7 +8641,7 @@ class KernelWriterAssembly(KernelWriter):
       if gsuLimit > 1:
         betas = betasBackup
         edges = edgesBackup
-        biasDims = biasDimsBackup
+        factorDims = factorDimsBackup
         if gsuLimitIdx == 0:
           self.states.bpeCexternal = self.states.bpeCinternal
           if (kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel'):
@@ -8709,7 +8718,16 @@ class KernelWriterAssembly(KernelWriter):
 
       if (kernel["ProblemType"]["UseScaleAlphaVec"]) and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
         labelStr = self.labels.getNameInc("ScaleAlphaVec")
-        module.add(allocPostLoopSrdSuppress("ScaleAlphaVec", labelStr, sgprLength=sgpr("SizeI")))
+        if self.states.FactorDim == 3:
+          with self.allocTmpSgpr(1,1) as tmpSgprRes:
+            tmpSgpr = tmpSgprRes.idx
+            module.add(SCmpKEQU32(src=sgpr("FactorDim"), simm16=hex(0), comment="FactorDim == 0"))
+            module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeI"), src1=sgpr("SizeJ")))
+            module.add(allocPostLoopSrdSuppress("ScaleAlphaVec", labelStr, sgprLength=sgpr(tmpSgpr)))
+        elif self.states.FactorDim == 2:
+          module.add(allocPostLoopSrdSuppress("ScaleAlphaVec", labelStr, sgprLength=sgpr("SizeJ")))
+        else:
+          module.add(allocPostLoopSrdSuppress("ScaleAlphaVec", labelStr, sgprLength=sgpr("SizeI")))
         module.add(SMulI32(dst=sgpr("SrdScaleAlphaVec+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleAlphaVec+2"), comment="ScaleAlphaVec scaled by BPE"))# scaled by BPE
 
       if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
@@ -8728,43 +8746,43 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SAddU32(dst=sgpr(tmpSgpr), src0=sgpr("WorkGroup2"), src1=hex(1)))
           module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr("BiasStride"), src1=sgpr(tmpSgpr), comment="stride * (wg+1)"))
           module.add(SCmpEQU32(sgpr(tmpSgpr), hex(0), comment="bias stride = 0?"))
-          if self.states.BiasDim == 3:
+          if self.states.FactorDim == 3:
             module.add(SCBranchSCC0(set_bs_label.getLabelName()))
-            module.add(SCmpKEQU32(src=sgpr("BiasDim"), simm16=hex(0), comment="BiasDim == 0"))
+            module.add(SCmpKEQU32(src=sgpr("FactorDim"), simm16=hex(0), comment="FactorDim == 0"))
             module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeI"), src1=sgpr("SizeJ")))
             module.add(set_bs_label)
-          elif self.states.BiasDim == 2:
+          elif self.states.FactorDim == 2:
             module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeJ"), src1=sgpr(tmpSgpr)))
           else:
             module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeI"), src1=sgpr(tmpSgpr)))
           module.add(allocPostLoopSrdSuppress("Bias", labelStr, sgprLength=sgpr(tmpSgpr)))
 
-        name = self.labels.getNameInc("Load_BiasDim_%u"%(0))
-        biasDim0Label = Label(self.labels.getNameInc("Load_BiasDim_0"), "")
-        biasDim1Label = Label(self.labels.getNameInc("Load_BiasDim_1"), "")
+        name = self.labels.getNameInc("Load_FactorDim_%u"%(0))
+        factorDim0Label = Label(self.labels.getNameInc("Load_FactorDim_0"), "")
+        factorDim1Label = Label(self.labels.getNameInc("Load_FactorDim_1"), "")
         loadBiasEndLabel = Label(self.labels.getNameInc("Load_Bias_End"), "")
-        biasDims = [0]
-        if self.states.BiasDim == 3:
-          module.add(biasDim0Label)
-          module.add(SCmpKLGU32(sgpr("BiasDim"), 0, "BiasDim != 0"))
-          module.add(SCBranchSCC1(biasDim1Label.getLabelName(), "Branch if true"))
-          biasDims.append(1)
-        elif self.states.BiasDim == 2:
-          biasDims = [1]
+        factorDims = [0]
+        if self.states.FactorDim == 3:
+          module.add(factorDim0Label)
+          module.add(SCmpKLGU32(sgpr("FactorDim"), 0, "FactorDim != 0"))
+          module.add(SCBranchSCC1(factorDim1Label.getLabelName(), "Branch if true"))
+          factorDims.append(1)
+        elif self.states.FactorDim == 2:
+          factorDims = [1]
 
-        for d in range(len(biasDims)):
+        for d in range(len(factorDims)):
           if d == 1:
-            module.add(biasDim1Label)
+            module.add(factorDim1Label)
           multiBiasTypeLabel = []
           for i in kernel["ProblemType"]["BiasDataTypeList"]:
-            name = self.labels.getNameInc("Load_Bias%s_%u"%(i.toNameAbbrev(), biasDims[d]))
+            name = self.labels.getNameInc("Load_Bias%s_%u"%(i.toNameAbbrev(), factorDims[d]))
             multiBiasTypeLabel.append(Label(name, ""))
           multiBiasTypeLabel.append(loadBiasEndLabel)
           offsetVgpr  = self.vgprPool.checkOut(1, 1)
           with self.allocTmpSgpr(1, 1) as tmpSgprRes:
             if len(kernel["ProblemType"]["BiasDataTypeList"]) == 1:
-              module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][0], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes, biasDims[d]))
-              if len(biasDims) == 2:
+              module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][0], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes, factorDims[d]))
+              if len(factorDims) == 2:
                 if d == 0:
                   module.add(SBranch(labelName=loadBiasEndLabel.getLabelName(), comment="Branch to load bias end"))
                 else:
@@ -8775,9 +8793,9 @@ class KernelWriterAssembly(KernelWriter):
                 module.add(multiBiasTypeLabel[i])
                 module.add(SCmpKLGU32(sgpr("BiasType"), typeValue, "BiasType != %u"%typeValue))
                 module.add(SCBranchSCC1(label.getLabelName(), "Branch if true"))
-                module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][i], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes,  biasDims[d]))
+                module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][i], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes,  factorDims[d]))
                 module.add(SBranch(labelName=loadBiasEndLabel.getLabelName(), comment="Branch to load bias end"))
-              if d == len(biasDims) -1:
+              if d == len(factorDims) -1:
                 module.add(loadBiasEndLabel)
           self.vgprPool.checkIn(offsetVgpr)
         self.vgprPool.checkIn(tmpVgpr)
@@ -8901,8 +8919,8 @@ class KernelWriterAssembly(KernelWriter):
         betas = [False, True] if hasBeta else [False]
       if edges is None:
         edges = [False, True] if self.do["EdgeWrite"] else [False]
-      if biasDims is None:
-        biasDims = [0, 1] if self.states.BiasDim == 3 else [1] if self.states.BiasDim == 2 else [0]
+      if factorDims is None:
+        factorDims = [0, 1] if self.states.FactorDim == 3 else [1] if self.states.FactorDim == 2 else [0]
       writeLabels = {}
       splitMN = False
       if True in edges:
@@ -8914,61 +8932,61 @@ class KernelWriterAssembly(KernelWriter):
           writeLabels[beta]["EdgeCheck0"] = Label(self.labels.getNameInc("GW_B%u_E%u_EdgeCheck0" % ( 1 if beta else 0, 1 if edge else 0) ), "")
           writeLabels[beta]["EdgeCheck1"] = Label(self.labels.getNameInc("GW_B%u_E%u_EdgeCheck1" % ( 1 if beta else 0, 1 if edge else 0) ), "")
           writeLabels[beta][edge] = {}
-          if len(biasDims) == 1:
+          if len(factorDims) == 1:
             if edge:
               if splitMN:
-                writeLabels[beta][edge][biasDims[0]] = []
-                writeLabels[beta][edge][biasDims[0]].append(Label(self.labels.getNameInc("GW_B%u_E%u_M" % ( 1 if beta else 0, 1 if edge else 0) ), ""))
-                writeLabels[beta][edge][biasDims[0]].append(Label(self.labels.getNameInc("GW_B%u_E%u_N" % ( 1 if beta else 0, 1 if edge else 0) ), ""))
+                writeLabels[beta][edge][factorDims[0]] = []
+                writeLabels[beta][edge][factorDims[0]].append(Label(self.labels.getNameInc("GW_B%u_E%u_M" % ( 1 if beta else 0, 1 if edge else 0) ), ""))
+                writeLabels[beta][edge][factorDims[0]].append(Label(self.labels.getNameInc("GW_B%u_E%u_N" % ( 1 if beta else 0, 1 if edge else 0) ), ""))
               else:
-                writeLabels[beta][edge][biasDims[0]] = [Label(self.labels.getNameInc("GW_B%u_E%u" % ( 1 if beta else 0, 1 if edge else 0) ), "")]
+                writeLabels[beta][edge][factorDims[0]] = [Label(self.labels.getNameInc("GW_B%u_E%u" % ( 1 if beta else 0, 1 if edge else 0) ), "")]
             else:
-              writeLabels[beta][edge][biasDims[0]] = [Label(self.labels.getNameInc("GW_B%u_E%u" % ( 1 if beta else 0, 1 if edge else 0) ), "")]
+              writeLabels[beta][edge][factorDims[0]] = [Label(self.labels.getNameInc("GW_B%u_E%u" % ( 1 if beta else 0, 1 if edge else 0) ), "")]
           else:
-            for biasDim in biasDims:
+            for factorDim in factorDims:
               if edge:
                 if splitMN:
-                  writeLabels[beta][edge][biasDim] = []
-                  writeLabels[beta][edge][biasDim].append(Label(self.labels.getNameInc("GW_B%u_E%u_BD%u_M" % ( 1 if beta else 0, 1 if edge else 0, biasDim) ), ""))
-                  writeLabels[beta][edge][biasDim].append(Label(self.labels.getNameInc("GW_B%u_E%u_BD%u_N" % ( 1 if beta else 0, 1 if edge else 0, biasDim) ), ""))
+                  writeLabels[beta][edge][factorDim] = []
+                  writeLabels[beta][edge][factorDim].append(Label(self.labels.getNameInc("GW_B%u_E%u_FD%u_M" % ( 1 if beta else 0, 1 if edge else 0, factorDim) ), ""))
+                  writeLabels[beta][edge][factorDim].append(Label(self.labels.getNameInc("GW_B%u_E%u_FD%u_N" % ( 1 if beta else 0, 1 if edge else 0, factorDim) ), ""))
                 else:
-                  writeLabels[beta][edge][biasDim]= [Label(self.labels.getNameInc("GW_B%u_E%u_BD%u" % ( 1 if beta else 0, 1 if edge else 0, biasDim) ), "")]
+                  writeLabels[beta][edge][factorDim]= [Label(self.labels.getNameInc("GW_B%u_E%u_FD%u" % ( 1 if beta else 0, 1 if edge else 0, factorDim) ), "")]
               else:
-                writeLabels[beta][edge][biasDim] = [Label(self.labels.getNameInc("GW_B%u_E%u_BD%u" % ( 1 if beta else 0, 1 if edge else 0, biasDim) ), "")]
+                writeLabels[beta][edge][factorDim] = [Label(self.labels.getNameInc("GW_B%u_E%u_FD%u" % ( 1 if beta else 0, 1 if edge else 0, factorDim) ), "")]
       endLabel = Label(self.labels.getNameInc("GW_End"), "")
 
       # Layout
       """
       if B1 goto label_B1
-      if E1 goto label_B0_E1_BD0
-      if BD1 goto label_B0_E0_BD1
-      label_B0_E0_BD0:
+      if E1 goto label_B0_E1_FD0
+      if BD1 goto label_B0_E0_FD1
+      label_B0_E0_FD0:
       writes
       goto label_End
-      label_B0_E0_BD1:
+      label_B0_E0_FD1:
       writes
       goto label_End
-      label_B0_E1_BD0:
-      if BD1 goto label_B0_E1_BD1
+      label_B0_E1_FD0:
+      if BD1 goto label_B0_E1_FD1
       writes
       goto label_End
-      label_B0_E1_BD1:
+      label_B0_E1_FD1:
       writes
       goto label_End
       label_B1:
-      if E1 goto label_B1_E1_BD0
-      if BD1 goto label_B1_E0_BD1
-      label_B1_E0_BD0:
+      if E1 goto label_B1_E1_FD0
+      if BD1 goto label_B1_E0_FD1
+      label_B1_E0_FD0:
       writes
       goto label_End
-      label_B1_E0_BD1:
+      label_B1_E0_FD1:
       writes
       goto label_End
-      label_B1_E1_BD0:
-      if BD1 goto label_B1_E1_BD1
+      label_B1_E1_FD0:
+      if BD1 goto label_B1_E1_FD1
       writes
       goto label_End
-      label_B1_E1_BD1:
+      label_B1_E1_FD1:
       writes
       goto label_End
       label_End
@@ -9088,7 +9106,7 @@ class KernelWriterAssembly(KernelWriter):
               elementsNew     = [elements[0], elements[0]]
 
             edge_mode_pos = 0
-            for idx2 in range(len(biasDims)):
+            for idx2 in range(len(factorDims)):
               edge_mode_pos, currentInstLength, activationTypeStr = \
                   self.globalWriteElementBatch(kernel, tPA, tPB, activation,
                                               applyAlpha, beta, edge, atomic,
@@ -9097,13 +9115,13 @@ class KernelWriterAssembly(KernelWriter):
                                               actPCMaxTempSgpr, isInsertActFunctionCallAddrCalc, toActModuleList,
                                               edgeModule, writeLabels, endLabel,
                                               edge_mode_pos, currentInstLength,
-                                              idx0, idx1, idx2, idxMN, biasDims)
-            if len(biasDims) == 2:
+                                              idx0, idx1, idx2, idxMN, factorDims)
+            if len(factorDims) == 2:
               isLongBranch = True if currentInstLength >= 16384 else False
               with self.allocTmpSgpr(3) as tmpSgprInfo:
-                checkIsBiasDimZero = edgeModule.add(self.checkIsBiasDimZero(kernel, tmpSgprInfo, \
-                  writeLabels[beta][edge][biasDims[1]][idxMN], isLongBranch=isLongBranch), pos=edge_mode_pos)
-                currentInstLength += checkIsBiasDimZero.countType(Instruction)
+                checkIsFactorDimZero = edgeModule.add(self.checkIsFactorDimZero(kernel, tmpSgprInfo, \
+                  writeLabels[beta][edge][factorDims[1]][idxMN], isLongBranch=isLongBranch), pos=edge_mode_pos)
+                currentInstLength += checkIsFactorDimZero.countType(Instruction)
 
             betaModule.add(edgeModule, pos=mod_pos)
 
@@ -9112,9 +9130,9 @@ class KernelWriterAssembly(KernelWriter):
         if False in edges and True in edges:
           isLongBranch = True if currentInstLength >= 16384 else False
           with self.allocTmpSgpr(4) as tmpSgprInfo:
-            labelMT1 = writeLabels[beta][True][biasDims[0]][0] if len(writeLabels[beta][True][biasDims[0]]) == 1 else writeLabels[beta][True][biasDims[0]][1]
+            labelMT1 = writeLabels[beta][True][factorDims[0]][0] if len(writeLabels[beta][True][factorDims[0]]) == 1 else writeLabels[beta][True][factorDims[0]][1]
             checkIsEdge = betaModule.add(self.checkIsEdge(kernel, tmpSgprInfo, \
-              writeLabels[beta][True][biasDims[0]][0], labelMT1, isLongBranch=isLongBranch), pos=mod_pos)
+              writeLabels[beta][True][factorDims[0]][0], labelMT1, isLongBranch=isLongBranch), pos=mod_pos)
             currentInstLength += checkIsEdge.countType(Instruction)
         betaModules.add(betaModule, pos=0)
 
@@ -9168,7 +9186,7 @@ class KernelWriterAssembly(KernelWriter):
 
       # End label
       module.add(endLabel)
-      if self.states.BiasDim == 3:
+      if self.states.FactorDim == 3:
         self.updateBranchPlaceHolder(module, ["end_placeholder"], [endLabel.label], ["SBranch"])
       self.vgprPool.checkIn(tmpVgpr)
       if cvtVgpr is not None:
@@ -9191,9 +9209,9 @@ class KernelWriterAssembly(KernelWriter):
                               actPCMaxTempSgpr, isInsertActFunctionCallAddrCalc, toActModuleList, \
                               edgeModule, writeLabels, endLabel, \
                               edge_mode_pos, currentInstLength, \
-                              idx0, idx1, idx2, idxMN, biasDims):
-    biasDim = biasDims[idx2]
-    edgeModule.add(writeLabels[beta][edge][biasDim][idxMN])
+                              idx0, idx1, idx2, idxMN, factorDims):
+    factorDim = factorDims[idx2]
+    edgeModule.add(writeLabels[beta][edge][factorDim][idxMN])
     if idx2 == 0:
       edge_mode_pos = len(edgeModule.items())
 
@@ -9417,7 +9435,7 @@ class KernelWriterAssembly(KernelWriter):
               applyAlpha, beta, edge, atomic, gwvw, atomicW, \
               elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleAlphaVec, \
               biasLocalBarrierInit, tmpVgpr, cvtVgprStruct, activationSetPCStruct, \
-              activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, biasDim))
+              activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, factorDim))
           biasLocalBarrierInit = True
 
         ss.resetState()
@@ -9453,7 +9471,7 @@ class KernelWriterAssembly(KernelWriter):
     if len(actLoopLabelModules) > 1:
       edgeModule.add(actLoopEndLabel)
 
-    if len(biasDims) == 1:
+    if len(factorDims) == 1:
       if currentInstLength >= 16384:
         with self.allocTmpSgpr(3) as tmpSgprInfo:
           edgeModule.add(SLongBranchPositive(endLabel, tmpSgprInfo, comment="jump to end"))
@@ -9671,14 +9689,14 @@ class KernelWriterAssembly(KernelWriter):
         printExit("Unsupported bias type %s."%(str(dataType)))
     return module
 
-  def addScaleAlphaVecLoad(self, kernel, ss, addrCalc, scaleAlphaVecVgpr):
+  def addScaleAlphaVecLoad(self, kernel, ss, addrCalc, scaleAlphaVecVgpr, gwvw, dim):
     """
     Add scaleAlphaVec for the element with addrCalc, elementIdx, and scaleAlphaVecVgpr.
     scaleAlphaVecVgpr is one or more vgpr :temp vGPR ( = gwvw * numbytes // 4 + 1 if cvt is needed)
     """
     module = Module("addScaleAlphaVec")
     if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
-      bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * ss.cfg.gwvw
+      bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvw
       if kernel["BufferLoad"]:
         addr0 = vgpr(addrCalc.addrScaleAlphaVecVgpr)
         addr1 = sgpr("SrdScaleAlphaVec", 4)
@@ -9690,24 +9708,24 @@ class KernelWriterAssembly(KernelWriter):
 
       if kernel["ProblemType"]["ComputeDataType"].isHalf() or kernel["ProblemType"]["ComputeDataType"].isBFloat16():
         module.add(self.chooseGlobalRead(useBuffer, bps, scaleAlphaVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleAlphaVecOffset, hi16=0, comment="load scaleAlphaVecH"))
+                          addr0, addr1, soffset=0, offset=addrCalc.scaleAlphaVecOffset[dim], hi16=0, comment="load scaleAlphaVecH"))
       elif kernel["ProblemType"]["ComputeDataType"].isInt32() or kernel["ProblemType"]["ComputeDataType"].isSingle():
         module.add(self.chooseGlobalRead(useBuffer, bps, scaleAlphaVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleAlphaVecOffset, comment="load scaleAlphaVecI"))
+                          addr0, addr1, soffset=0, offset=addrCalc.scaleAlphaVecOffset[dim], comment="load scaleAlphaVecI"))
       elif kernel["ProblemType"]["ComputeDataType"].isDouble() or kernel["ProblemType"]["ComputeDataType"].isSingleComplex() :
         module.add(self.chooseGlobalRead(useBuffer, bps, scaleAlphaVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleAlphaVecOffset, comment="load scaleAlphaVec"))
+                          addr0, addr1, soffset=0, offset=addrCalc.scaleAlphaVecOffset[dim], comment="load scaleAlphaVec"))
       else:
         printExit("Unsupported scaleAlphaVec type %s."%(str(kernel["ProblemType"]["ComputeDataType"])))
 
     return module
 
-  def addBiasLoad(self, dataType, kernel, gwvw, addrCalc, biasVgpr, biasDim, isLocal=False):
+  def addBiasLoad(self, dataType, kernel, gwvw, addrCalc, biasVgpr, factorDim, isLocal=False):
     if isLocal and (self.states.useBias == DataDirection.READ):
       module = Module("addBias")
       dst = vgpr(biasVgpr)
       src = vgpr(addrCalc.addrBiasVgpr)
-      ds = DSModifiers(offset=addrCalc.biasOffset[biasDim])
+      ds = DSModifiers(offset=addrCalc.biasOffset[factorDim])
       bpl = dataType.numBytes() * gwvw
       if bpl==2:
         module.add(DSLoadU16(dst=dst, src=src, ds=ds, comment="load bias"))
@@ -9719,7 +9737,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(DSLoadB128(dst=vgpr(biasVgpr, 4), src=src, ds=ds, comment="load bias"))
       elif bpl==32:
         module.add(DSLoadB128(dst=vgpr(biasVgpr, 4), src=src, ds=ds, comment="load bias"))
-        ds = DSModifiers(offset=addrCalc.biasOffset[biasDim]+bpl/2)
+        ds = DSModifiers(offset=addrCalc.biasOffset[factorDim]+bpl/2)
         module.add(DSLoadB128(dst=vgpr(biasVgpr+4, 4), src=src, ds=ds, comment="load bias"))
       else:
         assert 0, "bad bpl"
@@ -9735,7 +9753,7 @@ class KernelWriterAssembly(KernelWriter):
     else:
       addr0 = ""
       addr1 = ""
-    return self.addBiasGlobalLoad(dataType, kernel, biasVgpr, addr0, addr1, addrCalc.biasOffset[biasDim], gwvw)
+    return self.addBiasGlobalLoad(dataType, kernel, biasVgpr, addr0, addr1, addrCalc.biasOffset[factorDim], gwvw)
 
   ##############################################################################
   def addStore(self, kernel, ss, tc: str, addrCalc, sumIdx, tmpS01, edge, comment):
@@ -9922,14 +9940,14 @@ class KernelWriterAssembly(KernelWriter):
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
       tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
-      batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, biasDim) -> Module:
+      batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, factorDim) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
       return gwriter(kernel, tPA, tPB, activation, ss, \
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
         batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit, \
         tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
-        batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, biasDim)
+        batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, factorDim)
 
   ##############################################################################
   def openPrefetchGlobalRead2(self, kernel):

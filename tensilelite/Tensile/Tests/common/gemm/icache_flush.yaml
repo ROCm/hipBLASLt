@@ -46,7 +46,7 @@ BenchmarkProblems:
       Batched: True
       ActivationType:  all
       UseScaleAB: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       ActivationFused: true
 
     - # BenchmarkProblemSizeGroup - Standard - All problem

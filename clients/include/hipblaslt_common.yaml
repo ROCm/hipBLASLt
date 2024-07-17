@@ -273,6 +273,7 @@ Arguments:
   - use_ext: c_bool
   - use_ext_setproblem: c_bool
   - algo_method: c_int32
+  - api_method: c_int32
   - use_user_args: c_bool
   - rotating: c_int32
   - use_gpu_timer: c_bool
@@ -371,6 +372,7 @@ Defaults:
   use_ext: false
   use_ext_setproblem: false
   algo_method: 0
+  api_method: 0
   use_user_args: false
   rotating: 0
   use_gpu_timer: false
@@ -381,3 +383,4 @@ Defaults:
   flush: false
   compute_input_typeA: hipblaslt_datatype_invalid
   compute_input_typeB: hipblaslt_datatype_invalid
+  scale_type: hipblaslt_datatype_invalid

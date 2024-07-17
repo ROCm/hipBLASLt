@@ -523,7 +523,7 @@ namespace
             tensileProblem.setScaleB(compute_type);
             tensileProblem.setScaleC(compute_type);
             tensileProblem.setScaleD(compute_type);
-            tensileProblem.setUseScaleAlphaVec(true);
+            tensileProblem.setUseScaleAlphaVec(1);
             tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
         }
         else
@@ -531,7 +531,7 @@ namespace
             tensileProblem.setUseScaleAB(false);
             tensileProblem.setUseScaleCD(false);
             // set ScaleAlphaVec mode
-            tensileProblem.setUseScaleAlphaVec(true);
+            tensileProblem.setUseScaleAlphaVec(1);
             tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
         }
 
@@ -682,7 +682,7 @@ namespace
         {
             tensileProblem.setUseBias(0);
             tensileProblem.setActivationType(Tensile::ActivationType::None);
-            tensileProblem.setUseScaleAlphaVec(false);
+            tensileProblem.setUseScaleAlphaVec(0);
             tensileProblem.setUseE(false);
             tensileProblem.setUseGradient(false);
             if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
@@ -724,7 +724,7 @@ namespace
                 tensileProblem.setScaleB(compute_type);
                 tensileProblem.setScaleC(compute_type);
                 tensileProblem.setScaleD(compute_type);
-                tensileProblem.setUseScaleAlphaVec(true);
+                tensileProblem.setUseScaleAlphaVec(1);
                 tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
             }
             else
@@ -732,7 +732,7 @@ namespace
                 tensileProblem.setUseScaleAB(false);
                 tensileProblem.setUseScaleCD(false);
                 // set ScaleAlphaVec mode
-                tensileProblem.setUseScaleAlphaVec(true);
+                tensileProblem.setUseScaleAlphaVec(1);
                 tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
             }
 
@@ -931,6 +931,8 @@ namespace
 #else
         std::shared_ptr<hipDeviceProp_t> m_deviceProp;
 #endif
+        std::string m_tensileLibPath;
+
         // The adapter object. mutable is used to allow adapters to be modified
         // even when they are stored in a const vector which is immutable in size
         struct adapter_s
@@ -985,7 +987,7 @@ namespace
             return m_devicePropMap.at(deviceName);
         }
 #else
-        auto& get_device_property() const
+        auto&                            get_device_property() const
         {
             return m_deviceProp;
         }
@@ -1158,7 +1160,7 @@ namespace
                 // Load library
                 auto lib = Tensile::LoadLibraryFilePreload<Tensile::ContractionProblemGemm>(
                     tensileLibPath,
-                    std::vector<Tensile::LazyLoadingInit>{m_deviceSet.begin(), m_deviceSet.end()});
+                    std::vector<Tensile::LazyLoadingInit>{});
 #else
                 // Get device prop
                 hipDeviceProp_t prop;
@@ -1177,6 +1179,7 @@ namespace
                 {
                     using MSL = Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>;
                     m_library = std::dynamic_pointer_cast<MSL>(lib);
+                    m_tensileLibPath = tensileLibPath;
                 }
                 return 0;
             }();
@@ -1187,6 +1190,19 @@ namespace
                 // rocblaslt_abort();
             }
         }
+
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+        // A workaround for getSolutionsFromIndex and isSolutionSupported with lazy_lib_load.
+        // preload() shouldn't be called more than once.
+        void preload()
+        {
+            auto lib = Tensile::LoadLibraryFilePreload<Tensile::ContractionProblemGemm>(
+                m_tensileLibPath,
+                std::vector<Tensile::LazyLoadingInit>{m_deviceSet.begin(), m_deviceSet.end()});
+            using MSL = Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>;
+            m_library = std::dynamic_pointer_cast<MSL>(lib);
+        }
+#endif
     };
 
     // Return the library and adapter for the current HIP device
@@ -1194,7 +1210,11 @@ namespace
         std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>>* library
         = nullptr,
         std::shared_ptr<hipDeviceProp_t>* deviceProp = nullptr,
-        int                               device     = -1)
+        int                               device     = -1
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+        , bool isPreload = false
+#endif
+    )
     try
     {
         // TensileHost is initialized on the first call
@@ -1227,6 +1247,16 @@ namespace
             }
         }
 
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+        // A workaround for getSolutionsFromIndex and isSolutionSupported when lazy_lib_load is on.
+        // preload() shouldn't be called more than once.
+        if (isPreload)
+            static int once = [&] {
+                host.preload();
+                *library = host.get_library();
+                return 0;
+            }();
+#endif
         // If an adapter is found, it is assumed that the library is initialized
         if(library)
             *library = host.get_library();
@@ -1635,7 +1665,7 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             // Backup and restore settings
             int                     useBias          = data->problem.useBias();
             Tensile::ActivationType actType          = data->problem.activationType();
-            bool                    useScaleAlphaVec = data->problem.useScaleAlphaVec();
+            int                     useScaleAlphaVec = data->problem.useScaleAlphaVec();
             bool                    useE             = data->problem.useE();
             bool                    useGrad          = data->problem.useGradient();
             data->problem.setUseBias(solution->problemType.useBias);
@@ -1699,7 +1729,8 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             else
             {
                 // fallback to normal gemm if is normal kernel
-                std::vector<bool>                    useBias, actHPA, useScaleAlphaVec;
+                std::vector<bool>                    actHPA;
+                std::vector<int>                     useBias, useScaleAlphaVec;
                 std::vector<Tensile::ActivationType> actType;
                 for(int i = 0; i < data->problem.gemms.size(); i++)
                 {
@@ -2066,7 +2097,7 @@ inline auto getSolutions(
         auto useScaleCD       = tensile_prob.useScaleCD();
         tensile_prob.setUseBias(0);
         tensile_prob.setActivationType(Tensile::ActivationType::None);
-        tensile_prob.setUseScaleAlphaVec(false);
+        tensile_prob.setUseScaleAlphaVec(0);
         tensile_prob.setUseE(false);
         tensile_prob.setUseScaleAB(false);
         tensile_prob.setUseScaleCD(false);
@@ -2089,11 +2120,12 @@ inline auto getSolutions(
     return solutions;
 }
 
-std::vector<std::shared_ptr<Tensile::ContractionSolution>> getBestRawSolutions(RocblasltContractionProblem const& prob,
-                         rocblaslt_handle                   handle,
-                         std::shared_ptr<void>              gemmData,
-                         int                                requestedAlgoCount,
-                         size_t                             maxWorkSpaceBytes)
+std::vector<std::shared_ptr<Tensile::ContractionSolution>>
+    getBestRawSolutions(RocblasltContractionProblem const& prob,
+                        rocblaslt_handle                   handle,
+                        std::shared_ptr<void>              gemmData,
+                        int                                requestedAlgoCount,
+                        size_t                             maxWorkSpaceBytes)
 {
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
@@ -2237,9 +2269,9 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
         bool duplicated_sol = false;
         for(int j = 0; j < i; j++)
             if(*(int*)(heuristicResults[j].algo.data) == solution->index)
-               duplicated_sol = true;
+                duplicated_sol = true;
         if(duplicated_sol)
-          continue;
+            continue;
         memset(&heuristicResults[i], 0, sizeof(rocblaslt_matmul_heuristic_result));
         memset(heuristicResults[i].algo.data, 0, sizeof(heuristicResults[i].algo.data));
         int* solutionIndex                           = (int*)(heuristicResults[i].algo.data);
@@ -2289,23 +2321,24 @@ rocblaslt_status getAllSolutions(std::shared_ptr<void>                          
                                  size_t                                          maxWorkSpaceBytes)
 {
 
-        rocblaslt_status status = rocblaslt_status_success;
-        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
-        {
-            std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
-            status = getAllSolutions(data->problem, handle, heuristicResults, maxWorkSpaceBytes);
-        }
-        else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
-        {
-            std::shared_ptr<TensileDataGroupedGemm> data = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
-            status = getAllSolutions(data->problem, handle, heuristicResults, maxWorkSpaceBytes);
-        }
-        else
-        {
-            log_api(__func__, "Invalid gemm type", static_cast<int>(gemmType));
-            status = rocblaslt_status_not_implemented;
-        }
-        return status;
+    rocblaslt_status status = rocblaslt_status_success;
+    if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+    {
+        std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+        status = getAllSolutions(data->problem, handle, heuristicResults, maxWorkSpaceBytes);
+    }
+    else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+    {
+        std::shared_ptr<TensileDataGroupedGemm> data
+            = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+        status = getAllSolutions(data->problem, handle, heuristicResults, maxWorkSpaceBytes);
+    }
+    else
+    {
+        log_api(__func__, "Invalid gemm type", static_cast<int>(gemmType));
+        status = rocblaslt_status_not_implemented;
+    }
+    return status;
 }
 
 rocblaslt_status
@@ -2318,8 +2351,14 @@ rocblaslt_status
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
     std::shared_ptr<Tensile::Hardware>                                               hardware;
 
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+    // isPreload = true is a workaround for lazy_lib_load
+    auto adapter           = get_library_and_adapter(&library, &deviceProp, handle->device, true);
+#else
     auto adapter           = get_library_and_adapter(&library, &deviceProp, handle->device);
+#endif
     hardware               = Tensile::hip::GetDevice(*deviceProp);
+
     int  lastSolutionIndex = library->solutions.rbegin()->first;
     bool isOutOfBound      = true;
     int  i                 = 0;
@@ -2358,7 +2397,12 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
     std::shared_ptr<Tensile::Hardware>                                               hardware;
 
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+    // isPreload = true is a workaround for lazy_lib_load
+    auto adapter          = get_library_and_adapter(&library, &deviceProp, handle->device, true);
+#else
     auto adapter          = get_library_and_adapter(&library, &deviceProp, handle->device);
+#endif
     hardware              = Tensile::hip::GetDevice(*deviceProp);
     *workspaceSizeInBytes = 0;
 
@@ -2437,7 +2481,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
                 auto useScaleCD       = tensile_prob.useScaleCD();
                 tensile_prob.setUseBias(0);
                 tensile_prob.setActivationType(Tensile::ActivationType::None);
-                tensile_prob.setUseScaleAlphaVec(false);
+                tensile_prob.setUseScaleAlphaVec(0);
                 tensile_prob.setUseE(false);
                 tensile_prob.setUseScaleAB(false);
                 tensile_prob.setUseScaleCD(false);
@@ -2509,7 +2553,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
 
         bool isSupported  = true;
         bool isNormalGemm = true;
-        auto problemWs = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms);
+        auto problemWs    = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms);
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
             tensile_prob.gemms[i].setWorkspaceSize(algo->max_workspace_bytes);
@@ -2566,7 +2610,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
                 auto useE             = tensile_prob.gemms[i].useE();
                 tensile_prob.gemms[i].setUseBias(0);
                 tensile_prob.gemms[i].setActivationType(Tensile::ActivationType::None);
-                tensile_prob.gemms[i].setUseScaleAlphaVec(false);
+                tensile_prob.gemms[i].setUseScaleAlphaVec(0);
                 tensile_prob.gemms[i].setUseE(false);
                 if(!((*solution->hardwarePredicate)(*hardware)
                      && (*solution->problemPredicate)(tensile_prob.gemms[i])))
@@ -2733,8 +2777,9 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
 
         // Fallback to original kernels
         std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
-        std::vector<bool>                    useBias, actHPA, useScaleAlphaVec;
-        std::vector<Tensile::ActivationType> actType;
+        std::vector<bool>                                          actHPA;
+        std::vector<int>                                           useBias, useScaleAlphaVec;
+        std::vector<Tensile::ActivationType>                       actType;
         if(!data->enableEpilogue)
         {
             bool enableEpilogue = true;
@@ -2758,7 +2803,7 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
                     useScaleAlphaVec.push_back(data->problem.gemms[i].useScaleAlphaVec());
                     data->problem.gemms[i].setUseBias(0);
                     data->problem.gemms[i].setActivationType(Tensile::ActivationType::None);
-                    data->problem.gemms[i].setUseScaleAlphaVec(false);
+                    data->problem.gemms[i].setUseScaleAlphaVec(0);
                 }
                 solutions_fallback = library->findTopSolutionsGroupedGemm(
                     data->problem.gemms, *hardware, requestedAlgoCount);

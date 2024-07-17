@@ -55,6 +55,7 @@ class UserArgumentsInfo:
     biasSize: int = 0
     eSize: int = 0
     activationSize: int = 0
+    factorDimSize: int = 0
     # Total argument size
     totalSize: int = 0
 
@@ -216,6 +217,9 @@ class SignatureDefault(Signature):
 
         if kernel["ProblemType"]["UseScaleAlphaVec"]:
             signature.addArg("AddressScaleAlphaVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+            if kernel["ProblemType"]["UseScaleAlphaVec"] == 3:
+                userArgumentsInfo.factorDimSize =4
+
         userArgumentsInfo.scaleAlphaVecSize += 8
 
         if writer.states.useBias != DataDirection.NONE:
@@ -224,9 +228,11 @@ class SignatureDefault(Signature):
                 signature.addArg("biasType",        SVK.SIG_VALUE,        "u32")
                 signature.addArg("StrideBias",      SVK.SIG_VALUE,        "u32")
                 if kernel["ProblemType"]["UseBias"] == 3:
-                    signature.addArg("biasDim",     SVK.SIG_VALUE,        "u32")
-                    userArgumentsInfo.biasSize += 4
+                    userArgumentsInfo.factorDimSize = 4
         userArgumentsInfo.biasSize += (8 + 4 + 4)
+
+        if userArgumentsInfo.factorDimSize == 4:
+            signature.addArg("factorDim", SVK.SIG_VALUE, "u32")
 
         if kernel["ProblemType"]["UseE"]:
             signature.addArg(      "E", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
@@ -262,6 +268,7 @@ class SignatureDefault(Signature):
                                       userArgumentsInfo.scaleDSize + \
                                       userArgumentsInfo.scaleAlphaVecSize + \
                                       userArgumentsInfo.biasSize + \
+                                      userArgumentsInfo.factorDimSize + \
                                       userArgumentsInfo.eSize + \
                                       userArgumentsInfo.activationSize
 

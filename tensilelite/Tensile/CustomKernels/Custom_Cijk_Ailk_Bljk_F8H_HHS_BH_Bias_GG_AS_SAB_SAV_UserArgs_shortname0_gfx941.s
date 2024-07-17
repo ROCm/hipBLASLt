@@ -59,7 +59,7 @@ custom.config:
       TransposeB: False
       UseBias: 1
       Activation: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBeta: True
       Batched: True
       GroupedGemm:   True
