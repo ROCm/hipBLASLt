@@ -156,11 +156,15 @@ namespace
 
                 name << '_' << arg.batch_count;
 
-                if(arg.scaleA)
+                if(arg.scaleA == Arguments::ScalingFormat::Scalar)
                     name << "_SA";
+                else if(arg.scaleA == Arguments::ScalingFormat::Vector)
+                    name << "_SAV";
 
-                if(arg.scaleB)
+                if(arg.scaleB == Arguments::ScalingFormat::Scalar)
                     name << "_SB";
+                else if(arg.scaleB == Arguments::ScalingFormat::Vector)
+                    name << "_SBV";
 
                 if(arg.scaleC)
                     name << "_SC";
