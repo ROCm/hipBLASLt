@@ -201,6 +201,8 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
                                                       const void*               original_bias,
                                                       const void*  original_scaleAlphaVec,
                                                       const void*  alpha,
+                                                      const bool   isScaleAVec,
+                                                      const bool   isScaleBVec,
                                                       void*&       E,
                                                       int64_t&     lde,
                                                       int64_t&     batch_stride_e,
@@ -240,6 +242,11 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
     batch_stride_e = original_stride_e > 0 ? original_stride_e : original_lde * num_cols_e;
     if(E != nullptr && ((lde < num_rows_e) || (batch_stride_e < (num_cols_e * num_rows_e))))
         status = rocblaslt_status_invalid_value;
+    if(isScaleAVec != isScaleBVec)
+    {
+        log_error(__func__, "Scale A and Scale B must be both scalar or vector.");
+        status = rocblaslt_status_invalid_value;
+    }
     return status;
 }
 
@@ -359,6 +366,8 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                matmul_descr->bias,
                                                alphaVecPtr,
                                                alpha,
+                                               matmul_descr->isScaleAVec,
+                                               matmul_descr->isScaleBVec,
                                                E,
                                                lde,
                                                batch_stride_e,

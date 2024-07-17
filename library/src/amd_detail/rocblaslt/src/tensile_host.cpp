@@ -514,7 +514,7 @@ namespace
         if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
            || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
         {
-            tensileProblem.setUseScaleAB("Scalar");
+            tensileProblem.setUseScaleAB(prob.isScaleAVec ? "Vector" : "Scalar");
             if(d_type == Tensile::DataType::Float8 || d_type == Tensile::DataType::BFloat8)
                 tensileProblem.setUseScaleCD(true);
             else
@@ -715,7 +715,7 @@ namespace
             if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
                || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
             {
-                tensileProblem.setUseScaleAB("Scalar");
+                tensileProblem.setUseScaleAB(prob.isScaleAVec ? "Vector" : "Scalar");
                 if(d_type == Tensile::DataType::Float8 || d_type == Tensile::DataType::BFloat8)
                     tensileProblem.setUseScaleCD(true);
                 else
