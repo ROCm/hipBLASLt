@@ -2682,7 +2682,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # force lrvwTile = 1 for numBytes >= 4 + MIInputPerThread > 1
     # TODO: implement extra logic to swap vgprs after local read to suport lrvwTile > 1 for umBytes >= 4 + MIInputPerThread > 1
-    forceLrvwTile1 = kernel["ProblemType"]["DataType"].numBytes() >= 4 and kernel["MIInputPerThread"] > 1
+    forceLrvwTile1 = kernel["ProblemType"]["DataType"].numBytes() >= 4 and (kernel["EnableMatrixInstruction"] and kernel["MIInputPerThread"] > 1)
     if not kernel["UnrollMajorLDSA"] and not forceLrvwTile1:
       self.states.lrvwTileA = kernel["VectorWidthA"]
     else:
