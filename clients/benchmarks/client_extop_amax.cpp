@@ -180,6 +180,10 @@ int parseArgs(int                       argc,
             {
                 iter = std::stoul(argv[++i]);
             }
+            else if(arg == "-j" || arg == "--cold")
+            {
+                cold_iter = std::stoul(argv[++i]);
+            }
             else if(arg == "--initialization" || arg == "--init")
             {
                 const std::string initStr{argv[++i]};
@@ -196,10 +200,6 @@ int parseArgs(int                       argc,
             else if(arg == "--rotating")
             {
                 rotateBuf = std::stoul(argv[++i]);
-            }
-            else if(arg == "--cold")
-            {
-                cold_iter = std::stoul(argv[++i]);
             }
             else if(arg == "--no_workspace" || arg == "--no_wk")
             {
@@ -234,19 +234,22 @@ void dumpBuffer(const char* title, Dtype* data, int N)
 }
 
 template <typename T>
-void compare(const char* title, const std::vector<T>& cpuOutput, const std::vector<T>& refOutput)
+std::string compare(const char* title, const std::vector<T>& cpuOutput, const std::vector<T>& refOutput)
 {
     T maxErr = 0.0;
     for(int i = 0; i < cpuOutput.size(); i++)
     {
         T err  = abs(refOutput[i] - cpuOutput[i]);
         maxErr = max(maxErr, err);
-
-        std::cout << " refOut : " << float(refOutput[i]) << std::endl;
-        std::cout << " kernelOut : " << float(cpuOutput[i]) << std::endl;
     }
+    std::stringstream result;
+    result << title << " MaxError " << std::to_string(float(maxErr));
+    if (maxErr < 1e-5)
+        result << " PASS";
+    else
+        result << " FAIL";
 
-    std::cout << title << " max error : " << float(maxErr) << std::endl;
+    return result.str();
 }
 
 template <typename DType>
@@ -300,6 +303,7 @@ int AmaxTest(hipDataType               type,
     totalRotatingSizeNeeded += (numElemsIn * type2Size(type)) + (numElemsOut * type2Size(dtype));
     if(workspace)
         totalRotatingSizeNeeded += (4096 * sizeof(Ti)) + sizeof(std::uint32_t);
+
     // Calculating block count
     int32_t block_count = max(1, min(iter, ceil((float)rotating / totalRotatingSizeNeeded)));
     if(rotating > 0)
@@ -394,14 +398,13 @@ int AmaxTest(hipDataType               type,
 
     CHECK_HIP_ERROR(hipMemcpyDtoH(cpuOutput.data(), gpuOutput[0], sizeof(To)));
 
-    compare("Output", cpuOutput, refOutput);
+    std::string result = compare("Output", cpuOutput, refOutput);
 
     // dumpBuffer("Input", cpuInput.data(), m * n);
     // dumpBuffer("GPU", cpuOutput.data(), 1);
     // dumpBuffer("CPU", refOutput.data(), 1);
 
     // warm up
-    std::cout << "Starting Cold Iterations: " << std::to_string(cold_iter) << std::endl;
     for(int i = 0; i < cold_iter; ++i)
     {
         // rotating buffer
@@ -422,7 +425,6 @@ int AmaxTest(hipDataType               type,
     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
 
     // hot call
-    std::cout << "Starting Hot Iterations: " << std::to_string(iter) << std::endl;
     CHECK_HIP_ERROR(hipEventRecord(beg, stream));
     for(int i = 0; i < iter; ++i)
     {
@@ -456,7 +458,7 @@ int AmaxTest(hipDataType               type,
     if(flush_us > 0)
         gpu_us -= flush_us; // get the time excluding flush
 
-    std::cout << "Time elapsed: " << std::to_string(gpu_us) << " us\n";
+    std::cout << " Time " << std::to_string(gpu_us) << " us " << result << std::endl;
 
     CHECK_HIP_ERROR(hipEventDestroy(beg));
     CHECK_HIP_ERROR(hipEventDestroy(end));
@@ -500,6 +502,9 @@ int main(int argc, char** argv)
         printUsage(argv[0]);
         return err;
     }
+
+    std::cout << "amax -t " << type << " -d " << dtype << " -m " << m << " -n " << n << " -ws " << int(workspace) << " -i " << i << " -j " << cold_iter;
+
     cold_iter = (cold_iter == 0) ? i : cold_iter;
 
     if((type == "S" || type == "s") && (type == dtype))
