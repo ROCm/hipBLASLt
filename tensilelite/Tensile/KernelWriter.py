@@ -2680,14 +2680,15 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
       vwm = kernel["GlobalReadVectorWidthMetadata"]
 
-    # use lrwvTile = 1 for XFP32
-    isXFP32 = kernel["EnableF32XdlMathOp"] and kernel["ProblemType"]["F32XdlMathOp"].isXFloat32()
-    if not kernel["UnrollMajorLDSA"] and not isXFP32:
+    # force lrvwTile = 1 for numBytes >= 4 + MIInputPerThread > 1
+    # TODO: implement extra logic to swap vgprs after local read to suport lrvwTile > 1 for umBytes >= 4 + MIInputPerThread > 1
+    forceLrvwTile1 = kernel["ProblemType"]["DataType"].numBytes() >= 4 and kernel["MIInputPerThread"] > 1
+    if not kernel["UnrollMajorLDSA"] and not forceLrvwTile1:
       self.states.lrvwTileA = kernel["VectorWidthA"]
     else:
       self.states.lrvwTileA = 1
 
-    if not kernel["UnrollMajorLDSB"] and not isXFP32:
+    if not kernel["UnrollMajorLDSB"] and not forceLrvwTile1:
       self.states.lrvwTileB = kernel["VectorWidthB"]
     else:
       self.states.lrvwTileB = 1
