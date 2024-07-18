@@ -477,6 +477,10 @@ validParameters = {
     "WaveSeparateGlobalReadA":    [ 0, 1, 2 ],
     "WaveSeparateGlobalReadB":    [ 0, 1, 2 ],
 
+    # Add an unrolled loop and NGLL loop with swapped GRA and GRB order.
+    # which may change the tlb thrashing behavior.
+    "UnrollLoopSwapGlobalReadOrder": [0, 1],
+
     # PrefetchGlobalRead = 1:
     # Requires 2X LDS space, and VGPRs for buffering data on way into LDS
     #   prefetch / double-buffer reads from global memory -> vgprs -> lds.
@@ -1064,6 +1068,7 @@ defaultBenchmarkCommonParameters = [
     {"WaveSeparateGlobalReadA":   [ 0 ] },
     {"WaveSeparateGlobalReadB":   [ 0 ] },
     {"WaveSeparateGlobalReadMetadata":   [ 0 ] },
+    {"UnrollLoopSwapGlobalReadOrder":    [ 0 ] },
     {"PrefetchGlobalRead":        [ 1 ] },
     {"PrefetchLocalRead":         [ 1 ] },
     {"ClusterLocalRead":          [ 1 ] },
