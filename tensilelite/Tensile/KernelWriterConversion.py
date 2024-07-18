@@ -447,7 +447,7 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += "  " + destTypeStr + " result[NUM_ELEMENT_LOAD];" + self.endLine
 
     #Load scaleAB
-    if self.state["ProblemType"]["UseScaleAB"]:
+    if self.state["ProblemType"]["UseScaleAB"] == "Scalar":
       kStr += "  " + intermediateDataType + " scaleA_data, scaleB_data;" + self.endLine
       kStr += "  " + "scaleA_data = arg.ScaleA == nullptr ? 1 : *(arg.ScaleA);" + self.endLine
       kStr += "  " + "scaleB_data = arg.ScaleB == nullptr ? 1 : *(arg.ScaleB);" + self.endLine
@@ -615,9 +615,19 @@ class KernelWriterConversion(KernelWriterBase):
     resultStr = "result"
 
     #scaleAB
-    if self.state["ProblemType"]["UseScaleAB"]:
+    if self.state["ProblemType"]["UseScaleAB"] == "Scalar":
       kStr += "  arg.alpha = arg.alpha*scaleA_data*scaleB_data;%s" % (self.endLine)
-    kStr += self.endLine
+      kStr += self.endLine
+    elif self.state["ProblemType"]["UseScaleAB"] == "Vector":
+      kStr += "  if(arg.ScaleA != nullptr) {" + self.endLine
+      for vIdx in range(self.num_dword_load):
+        kStr += "    %s[%d] *= (%s)arg.ScaleA[id0+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
+      kStr += "  }" + self.endLine
+      kStr += "  if(arg.ScaleB != nullptr) {" + self.endLine
+      for vIdx in range(self.num_dword_load):
+        kStr += "      %s[%d] *= (%s)arg.ScaleB[id1];%s" % (accumStr, vIdx, intermediateDataType, self.endLine)
+      kStr += "  }" + self.endLine
+      kStr += self.endLine
 
     #alpha
     for vIdx in range(self.num_dword_load):
@@ -811,7 +821,10 @@ class KernelWriterConversion(KernelWriterBase):
         name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
       name += self.state["ProblemType"]["ActivationComputeDataType"].toChar()
       name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
-    name += "_ScaleAB" if self.state["ProblemType"]["UseScaleAB"] else ""
+    if self.state["ProblemType"]["UseScaleAB"] == "Scalar":
+      name += "_ScaleAB"
+    elif self.state["ProblemType"]["UseScaleAB"] == "Vector":
+      name += "_ScaleABVec"
     name += "_ScaleCD" if self.state["ProblemType"]["UseScaleCD"] else ""
     name += "_ScaleAlphaVec" if self.state["ProblemType"]["UseScaleAlphaVec"] else ""
     name += "_PostGSU" + str(self.state["GlobalSplitU"])

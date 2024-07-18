@@ -20,7 +20,7 @@ GlobalParameters:
   DataInitTypeA: 12
   DataInitTypeB: 13
   SleepPercent: 0
- 
+
 BenchmarkProblems:
   ########################################
   # NN - standard
@@ -45,7 +45,7 @@ BenchmarkProblems:
       BiasDataTypeList: ['s', 'h']
       Batched: True
       ActivationType:  all
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleAlphaVec: 1
       ActivationFused: true
 

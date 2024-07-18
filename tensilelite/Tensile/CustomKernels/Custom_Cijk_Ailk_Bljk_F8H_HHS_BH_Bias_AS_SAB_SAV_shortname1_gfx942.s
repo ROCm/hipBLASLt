@@ -47,7 +47,7 @@ custom.config:
       OperationType: GEMM
       DataTypeA: f8
       DataTypeB: h
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       DataType: h
       DestDataType: h
       ComputeDataType: s

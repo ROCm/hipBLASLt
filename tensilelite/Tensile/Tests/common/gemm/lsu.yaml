@@ -340,7 +340,7 @@ BenchmarkProblems:
       UseBias: 1
       Activation: True
       UseScaleAlphaVec: 1
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -484,7 +484,7 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [16, 16, 16, 1, 1, 4, 4, 1, 2]
-        - WorkGroup: 
+        - WorkGroup:
           - [16, 8, 2]
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]

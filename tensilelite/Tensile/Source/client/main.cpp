@@ -338,7 +338,7 @@ namespace Tensile
                 ("activation-enum-args",      po::value<std::vector<ActivationType>>()->default_value(std::vector<ActivationType>(1, ActivationType::None), "[]"), "Activation enum argument.")
                 ("use-bias",                  po::value<int>()->default_value(0), "Use bias.")
                 ("bias-source",               po::value<int>()->default_value(3), "Bias source.")
-                ("use-scaleAB",               po::value<bool>()->default_value(false), "Use scaleAB.")
+                ("use-scaleAB",               po::value<std::string>()->default_value(""), "Use scaleAB.")
                 ("use-scaleCD",               po::value<bool>()->default_value(false), "Use scaleCD.")
                 ("use-scaleAlphaVec",         po::value<int>()->default_value(0), "Use scaleAlphaVec.")
                 ("bias-type-args",            po::value<std::vector<DataType>>()->default_value(std::vector<DataType>(1, DataType::None), "[]"), "Bias data type args.")

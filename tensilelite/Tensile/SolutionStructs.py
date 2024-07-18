@@ -530,7 +530,8 @@ class ProblemType(Mapping):
       name += self["ActivationComputeDataType"].toChar()
     if self["ActivationNoGuard"]: name += "NG"
 
-    if self["UseScaleAB"]: name += "_SAB"
+    if self["UseScaleAB"] == "Scalar": name += "_SAB"
+    elif self["UseScaleAB"] == "Vector": name += "_SABV"
     if self["UseScaleCD"]: name += "_SCD"
     if self["UseScaleAlphaVec"]: name += "_SAV"
 
@@ -2113,6 +2114,7 @@ class Solution(collections.abc.Mapping):
       state["WorkGroupMapping" ] = 1
 
     state["WorkGroupMappingXCC"] = abs(state["WorkGroupMappingXCC"])
+
     if state["WorkGroupMappingXCCGroup"] % state["WorkGroupMappingXCC"] != 0:
       reject(state, "WGMXCCG %d must be multiple of WGMXCC %d",state["WorkGroupMappingXCCGroup"],state["WorkGroupMappingXCC"])
 
@@ -2499,9 +2501,12 @@ class Solution(collections.abc.Mapping):
         optGRVW = 16 // datatype.numBytes()
       return optGRVW
 
+    genGRVWA = False
+    genGRVWB = False
     # Default GlobalReadVectorWidthA
     if state["EnableMatrixInstruction"]:
       if state["GlobalReadVectorWidthA"] < 0:
+        genGRVWA = True
         if state["GlobalReadVectorWidthA"] == -2:
           if state["MatrixInstBM"] == 1 and state["MIWaveTile"][0] == 1 and state["MIWaveGroup"][0] == 1 and state["ProblemType"]["TLUA"]:
             state["GlobalReadVectorWidthA"] = 1
@@ -2521,6 +2526,7 @@ class Solution(collections.abc.Mapping):
     # Default GlobalReadVectorWidthB
     if state["EnableMatrixInstruction"]:
       if state["GlobalReadVectorWidthB"] < 0:
+        genGRVWB = True
         if state["GlobalReadVectorWidthB"] == -2:
           if state["MatrixInstBN"] == 1 and state["MIWaveTile"][1] == 1 and state["MIWaveGroup"][1] == 1 and state["ProblemType"]["TLUB"]:
             state["GlobalReadVectorWidthB"] = 1
@@ -2536,6 +2542,12 @@ class Solution(collections.abc.Mapping):
             curGRVW *= 2
     else:
       state["GlobalReadVectorWidthB"] = 1
+  
+    # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
+    if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
+      state["GlobalReadVectorWidthA"] = min(state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"])
+    if genGRVWB and state["UnrollLoopSwapGlobalReadOrder"] == 1:
+      state["GlobalReadVectorWidthB"] = min(state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"])
 
     # Default GlobalStoreVectorWidth
     if state["StoreVectorWidth"] == -1:
@@ -3524,6 +3536,17 @@ class Solution(collections.abc.Mapping):
     if state["UseInstOffsetForGRO"] == -1:
       state["UseInstOffsetForGRO"] = 1 if state["DirectToLds"] else 0
 
+    if state["UnrollLoopSwapGlobalReadOrder"] == 1:
+      if state["ExpandPointerSwap"] == 1:
+        reject(state, "ExpandPointerSwap need to be 0 if UnrollLoopSwapGlobalReadOrder")
+      if state["PrefetchGlobalRead"] != 2:
+        reject(state, "PrefetchGlobalRead need to be 2 if UnrollLoopSwapGlobalReadOrder")
+      if state["GlobalReadVectorWidthA"] != state["GlobalReadVectorWidthB"]:
+        reject(state, "TODO: UnrollLoopSwapGlobalReadOrder only support GRVWA=GRVWB. (%u!=%u)"
+        % (state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"]))
+      if state["ProblemType"]["DataTypeA"].numBytes() != state["ProblemType"]["DataTypeB"].numBytes():
+        reject(state, "UnrollLoopSwapGlobalReadOrder doesn't support mixed precision.")
+
     # guard against out of bounds reads
     # None: don't guard against ou
     # ShiftPtr: shift read pointers to be in bounds, then unshift registers (source & assembly),
@@ -3665,7 +3688,12 @@ class Solution(collections.abc.Mapping):
     if state["ProblemType"]["UseBias"] != 0 and state["ProblemType"]["UseScaleAlphaVec"] != 0 and state["ProblemType"]["UseBias"] != state["ProblemType"]["UseScaleAlphaVec"]:
       reject(state, "When both UseBias and UseScaleAlphaVec are enabled then UseBias and UseScaleAlphaVec must have same settings.")
 
-    # ScaleAB
+    # ScaleAB or ScaleABVec
+    if state["ProblemType"]["DataTypeA"] != state["ProblemType"]["DataTypeB"] and \
+      state["ProblemType"]["DataTypeA"] != state["ProblemType"]["DataType"] and \
+      state["ProblemType"]["UseScaleAB"] == "Vector":
+      reject("Currently does not support using scaleABVec if DataTypeA != DataTypeB != DataType.")
+
     if state["ProblemType"]["UseScaleAB"] and state["OptNoLoadLoop"]:
       # Hard to check alpha == 1.0 directly
       # Turn off ONLL for now
