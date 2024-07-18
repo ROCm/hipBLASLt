@@ -1930,6 +1930,16 @@ namespace Tensile
                 rotatingSize
                     += problem.tensors()[ContractionProblemGemm::TENSOR::E].totalAllocatedBytes();
             }
+            if(inputs.scaleA != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::SCALEA]
+                                    .totalAllocatedBytes();
+            }
+            if(inputs.scaleB != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::SCALEB]
+                                    .totalAllocatedBytes();
+            }
             if(inputs.bias != nullptr)
             {
                 rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::BIAS]
@@ -1995,6 +2005,18 @@ namespace Tensile
                 newInputs.e,
                 rotatingPtr,
                 problem.tensors()[ContractionProblemGemm::TENSOR::E].totalAllocatedBytes(),
+                offset,
+                stream);
+            newInputs.scaleA = copyRotatingInput(
+                newInputs.scaleA,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::SCALEA].totalAllocatedBytes(),
+                offset,
+                stream);
+            newInputs.scaleB = copyRotatingInput(
+                newInputs.scaleB,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::SCALEB].totalAllocatedBytes(),
                 offset,
                 stream);
             newInputs.bias = copyRotatingInput(
