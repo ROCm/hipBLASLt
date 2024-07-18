@@ -150,10 +150,10 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtLayerNorm(hipDataType datatype,
  *  input 2-D tensor buffer. can't be nullptr.
  *
  *  @param[in]
- *  m The first dimension of input/output tensor.
+ *  m The first dimension of input tensor.
  *
  *  @param[in]
- *  n The second dimension of input/output tensor.
+ *  n The second dimension of input tensor.
  *
  *  @param[in]
  *  stream The HIP stream where all the GPU work will be submitted.
@@ -196,10 +196,10 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
  *  sync for Amax tensor buffer (1 int32_t). can't be nullptr. Must reset device memory to 0
  *
  *  @param[in]
- *  m The first dimension of input/output tensor.
+ *  m The first dimension of input tensor.
  *
  *  @param[in]
- *  n The second dimension of input/output tensor.
+ *  n The second dimension of input tensor.
  *
  *  @param[in]
  *  stream The HIP stream where all the GPU work will be submitted.
@@ -247,10 +247,10 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastAMax(const hipDataType datatype
  *  sync for Amax tensor buffer (1 int32_t). can't be nullptr. Must reset device memory to 0
  *
  *  @param[in]
- *  m The first dimension of input/output tensor.
+ *  m The first dimension of input tensor.
  *
  *  @param[in]
- *  n The second dimension of input/output tensor.
+ *  n The second dimension of input tensor.
  *
  *  @param[in]
  *  div output value = div/amax(input)
@@ -303,10 +303,10 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastValueDividedByAMaxWithRcp(const
  *  inputScale 1-D tensor buffer. can't be nullptr. only support float.
  *
  *  @param[in]
- *  m The first dimension of input/output tensor.
+ *  m The first dimension of input tensor.
  *
  *  @param[in]
- *  n The second dimension of input/output tensor.
+ *  n The second dimension of input tensor.
  *
  *  @param[in]
  *  stream The HIP stream where all the GPU work will be submitted.
@@ -360,10 +360,10 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType dat
  *  sync for Amax tensor buffer (1 int32_t). can't be nullptr. Must reset device memory to 0
  *
  *  @param[in]
- *  m The first dimension of input/output tensor.
+ *  m The first dimension of input tensor.
  *
  *  @param[in]
- *  n The second dimension of input/output tensor.
+ *  n The second dimension of input tensor.
  *
  *  @param[in]
  *  stream The HIP stream where all the GPU work will be submitted.
@@ -410,10 +410,13 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtFastAMaxWithScale(const hipDataType
  *  sync for Amax tensor buffer (1 int32_t). can't be nullptr. Must reset device memory to 0
  *
  *  @param[in]
- *  m The first dimension of input/output tensor.
+ *  m The first dimension of input tensor.
  *
  *  @param[in]
- *  n The second dimension of input/output tensor.
+ *  n The second dimension of input tensor.
+ *
+ *  @param[in]
+ *  ld leading dimension of input tensor.
  *
  *  @param[in]
  *  stream The HIP stream where all the GPU work will be submitted.
