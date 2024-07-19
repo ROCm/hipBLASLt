@@ -275,7 +275,7 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Exact: [ 2048, 16, 1, 1024 ]
-          - Exact: [ 2048, 16, 1, 8192 ]
+          - Exact: [ 2050, 16, 1, 1024 ]
         - BiasTypeArgs: ['s']
         - ActivationArgs:
           - [Enum: none]
