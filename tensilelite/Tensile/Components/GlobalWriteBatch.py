@@ -1071,18 +1071,21 @@ class GlobalWriteBatchWriter:
           waitLocalLoadCnt += self.biasLoadIssued[elementIdx]
           waitLocalLoadCntStrList.append("%d (bias)"%self.biasLoadIssued[elementIdx])
         # Get vmcnt and lgkmcnt
-        if waitCnter[0] > 0: # Check if global load issued > 0
-          vmcnt = self.loadsBetaIssued + self.loadsEIssued + self.loadsScaleAVecIssued + self.loadsScaleBVecIssued + self.loadsScaleAlphaVecIssued - waitLoadCnt
+        vmcnt = self.loadsBetaIssued + self.loadsEIssued + self.loadsScaleAVecIssued + self.loadsScaleBVecIssued + self.loadsScaleAlphaVecIssued - waitLoadCnt
+        if waitCnter[0] > 0  or vmcnt != waitCnter[0] : # Check if global load issued > 0
           if waitCnter[0] == vmcnt: # No need to wait if the global load cnt doesn't change
             vmcnt = -1
-          waitCnter[0] = vmcnt
+          else:
+            waitCnter[0] = vmcnt
         else:
           vmcnt = -1
-        if waitCnter[1] > 0: # Check if local load issued > 0
-          lgkmcnt = self.localLoadsBiasIssued - waitLocalLoadCnt
+
+        lgkmcnt = self.localLoadsBiasIssued - waitLocalLoadCnt
+        if waitCnter[1] > 0 or lgkmcnt != waitCnter[1]: # Check if local load issued > 0
           if waitCnter[1] == lgkmcnt: # No need to wait if the local load cnt doesn't change
             lgkmcnt = -1
-          waitCnter[1] = lgkmcnt
+          else:
+            waitCnter[1] = lgkmcnt
         else:
           lgkmcnt = -1
         # Get vscnt
