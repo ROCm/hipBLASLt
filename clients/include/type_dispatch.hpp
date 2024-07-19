@@ -38,7 +38,7 @@ constexpr auto hipblaslt_type2datatype()
         return HIP_R_16BF;
     if(std::is_same<T, float>{})
         return HIP_R_32F;
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
     if(std::is_same<T, hipblaslt_f8_fnuz>{})
         return HIP_R_8F_E4M3_FNUZ;
     if(std::is_same<T, hipblaslt_bf8_fnuz>{})
@@ -75,7 +75,7 @@ auto hipblaslt_simple_dispatch(const Arguments& arg)
         return TEST<hip_bfloat16>{}(arg);
     case HIP_R_32F:
         return TEST<float>{}(arg);
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
     case HIP_R_8F_E4M3_FNUZ:
         return TEST<hipblaslt_f8_fnuz>{}(arg);
     case HIP_R_8F_E5M2_FNUZ:
@@ -109,7 +109,7 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
                 return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf, hipblasLtHalf>{}(arg);
             else if(TciA == TciB && TciA == HIP_R_16BF)
                 return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hip_bfloat16, hip_bfloat16>{}(arg);
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
             else if(TciA == TciB && TciA == HIP_R_8F_E4M3_FNUZ)
                 return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz>{}(arg);
             else if(TciA == HIP_R_8F_E4M3_FNUZ && TciB == HIP_R_8F_E5M2_FNUZ)
@@ -120,7 +120,7 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
             else
                 return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>{}(arg);
         }
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
         else if(TiA == To && TiB == To && To == HIP_R_16F && Tc == HIPBLAS_COMPUTE_32F_FAST_16BF)
         {
             return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hip_bfloat16, hip_bfloat16>{}(arg);
@@ -149,7 +149,7 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         {
             return TEST<hip_bfloat16, hip_bfloat16, float, float>{}(arg);
         }
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
         else if(TiA == HIP_R_8F_E4M3_FNUZ && TiB == HIP_R_8F_E4M3_FNUZ && To == HIP_R_32F
                 && Tc == HIPBLAS_COMPUTE_32F)
         {

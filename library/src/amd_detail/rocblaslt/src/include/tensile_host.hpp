@@ -249,7 +249,7 @@ struct RocblasltContractionProblem
             {
                 this->bias_type = HIP_R_32F;
             }
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
             else if((this->a_type == HIP_R_8F_E4M3_FNUZ || this->a_type == HIP_R_8F_E5M2_FNUZ)
                     && (this->b_type == HIP_R_8F_E4M3_FNUZ || this->b_type == HIP_R_8F_E5M2_FNUZ))
             {
@@ -425,7 +425,7 @@ inline Tensile::DataType hipDataType_to_tensile_type(hipDataType type)
         return Tensile::DataType::Double;
     case HIP_R_16BF:
         return Tensile::DataType::BFloat16;
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
     case HIP_R_8F_E4M3_FNUZ:
         return Tensile::DataType::Float8;
     case HIP_R_8F_E5M2_FNUZ:

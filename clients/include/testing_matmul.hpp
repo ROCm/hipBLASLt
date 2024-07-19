@@ -499,7 +499,7 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
         {
             real_bias_type = HIP_R_32I;
         }
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
         else if(arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
         {
             real_bias_type = HIP_R_32F;
@@ -2053,7 +2053,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             cpu_time_used = get_time_us_no_sync();
         }
 
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
         // For the xf32 xdl math op, cast type of A/B from float to xfloat32 .
         if constexpr(std::is_same<TiA, float>{} && std::is_same<TiB, float>{}
                      && std::is_same<To, float>{} && std::is_same<Tc, float>{})

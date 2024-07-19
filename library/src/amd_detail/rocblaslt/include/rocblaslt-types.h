@@ -246,7 +246,7 @@ typedef enum rocblaslt_status_
  *
  *  \details
  */
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
 typedef enum rocblaslt_compute_type_
 {
     rocblaslt_compute_f16          = 0, /**< 16-bit floating-point precision. */

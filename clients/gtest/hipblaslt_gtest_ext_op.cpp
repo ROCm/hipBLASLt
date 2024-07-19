@@ -392,7 +392,7 @@ TEST_P(ExtOpAMaxTest, amaxSuccess)
     }
 }
 
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
 TEST_P(ExtOpAMaxWithScaleTest, amaxSuccess)
 {
     AMaxWithScaleTestData testdata = GetParam();
@@ -494,7 +494,7 @@ INSTANTIATE_TEST_SUITE_P(ExtOpTest,
                          ExtOpAMaxUnsupportedDatatypeTest,
                          testing::Values<hipDataType>(HIP_R_16BF));
 
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
 INSTANTIATE_TEST_SUITE_P(
     ExtOpTest,
     ExtOpAMaxWithScaleTest,

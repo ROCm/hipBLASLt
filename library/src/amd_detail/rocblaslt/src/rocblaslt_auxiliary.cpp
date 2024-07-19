@@ -555,7 +555,7 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             case rocblaslt_compute_f32_fast_xf32:
             case rocblaslt_compute_f64:
             case rocblaslt_compute_i32:
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
             case rocblaslt_compute_f32_fast_f16:
             case rocblaslt_compute_f32_fast_bf16:
             case rocblaslt_compute_f32_fast_f8_fnuz:
@@ -644,7 +644,7 @@ rocblaslt_status rocblaslt_matmul_desc_destroy(const rocblaslt_matmul_desc matmu
 
 rocblaslt_compute_type _matmul_desc_determine_compute_type(rocblaslt_matmul_desc matmulDesc)
 {
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
     if(matmulDesc->compute_type_original == rocblaslt_compute_f32)
     {
         auto tciA = matmulDesc->compute_input_typeA;
@@ -1316,7 +1316,7 @@ rocblaslt_status
         hipDataType            d_type       = matD->type;
         rocblaslt_compute_type compute_type = matmul_desc->compute_type;
         auto&                  tensile_data = matmul_desc->m_data;
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
         if(matmul_desc->amax_ptr != nullptr
            && (matD->type == HIP_R_8F_E4M3_FNUZ || matD->type == HIP_R_8F_E5M2_FNUZ))
         {
@@ -1381,7 +1381,7 @@ rocblaslt_status
             }
         }
 
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
         if(matmul_desc->amax_ptr != nullptr
            && (d_type == HIP_R_8F_E4M3_FNUZ || d_type == HIP_R_8F_E5M2_FNUZ)
            && *returnAlgoCount >= 1)

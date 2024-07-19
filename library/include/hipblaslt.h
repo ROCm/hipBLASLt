@@ -51,6 +51,7 @@
 #include <memory>
 #include <vector>
 
+#include <hip/hip_version.h>
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_complex.h>
 #include <hip/hip_runtime.h>
@@ -60,7 +61,7 @@
 #include "hipblaslt-types.h"
 #endif
 
-#if (HIP_LIBRARY_MAJOR_VERSION < 6)
+#if (HIP_VERSION_MAJOR < 6)
 typedef hipblasDatatype_t hipblasComputeType_t;
 #define HIPBLAS_COMPUTE_64F HIPBLAS_R_64F
 #define HIPBLAS_COMPUTE_32F HIPBLAS_R_32F

@@ -194,7 +194,7 @@ namespace
             return Tensile::DataType::Double;
         case HIP_R_16BF:
             return Tensile::DataType::BFloat16;
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
         case HIP_R_8F_E4M3_FNUZ:
             return Tensile::DataType::Float8;
         case HIP_R_8F_E5M2_FNUZ:
@@ -222,7 +222,7 @@ namespace
             return HIP_R_64F;
         case Tensile::DataType::BFloat16:
             return HIP_R_16BF;
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
         case Tensile::DataType::Float8:
             return HIP_R_8F_E4M3_FNUZ;
         case Tensile::DataType::BFloat8:
@@ -244,7 +244,7 @@ namespace
         {
         case rocblaslt_compute_f32:
         case rocblaslt_compute_f32_fast_xf32:
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
         case rocblaslt_compute_f32_fast_f16:
         case rocblaslt_compute_f32_fast_bf16:
         case rocblaslt_compute_f32_fast_f8_fnuz:
@@ -270,7 +270,7 @@ namespace
     {
         switch(typeCompute)
         {
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
         case rocblaslt_compute_f32_fast_f16:
             return Tensile::DataType::Half;
         case rocblaslt_compute_f32_fast_bf16:

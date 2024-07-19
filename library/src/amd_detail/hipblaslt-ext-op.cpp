@@ -474,7 +474,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
                                           uint32_t          n,
                                           hipStream_t       stream)
 {
-#if (HIP_LIBRARY_MAJOR_VERSION >= 6)
+#if (HIP_VERSION_MAJOR >= 6)
     if(datatype != HIP_R_32F
        || scaleDatatype != HIP_R_8F_E4M3_FNUZ && scaleDatatype != HIP_R_8F_E5M2_FNUZ)
     {

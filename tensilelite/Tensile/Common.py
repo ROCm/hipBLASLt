@@ -1595,6 +1595,7 @@ def assignGlobalParameters( config ):
   # See https://docs.python.org/3.7/library/platform.html#platform.linux_distribution
   try:
     if os.name == "nt":
+      os.environ['HIP_USE_PERL_SCRIPTS'] = '1'
       compileArgs = ['perl'] + [which('hipcc')] + ['--version']
       output = subprocess.run(compileArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
     else:
