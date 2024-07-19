@@ -93,12 +93,22 @@ def vectorUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, doRemainder=True, c
     module.add(VMulF32(dst=vgpr(qReg), src0=vgpr(qReg), src1=vgpr(rReg), comment=dComment))
     module.add(VCvtF32toU32(dst=vgpr(qReg), src=vgpr(qReg), comment=dComment))
     module.add(VMulU32U24(dst=vgpr(rReg), src0=vgpr(qReg), src1=vgpr(divReg), comment=dComment))
-    module.add(VSubU32(dst=vgpr(rReg), src0=vgpr(dReg), src1=vgpr(rReg), comment=dComment))
-    module.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(rReg), src1=vgpr(divReg), comment=dComment))
-    module.add(VAddU32(dst=vgpr(qReg), src0=1, src1=vgpr(qReg), comment=dComment))
+    module.add(VSubI32(dst=vgpr(rReg), src0=vgpr(dReg), src1=vgpr(rReg), comment=dComment))
+
+    module.add(VCmpXLtI32(dst=EXEC(), src0=vgpr(rReg), src1=0, comment=dComment))
+    module.add(VSubI32(dst=vgpr(qReg), src0=vgpr(qReg), src1=1, comment=dComment))
     if doRemainder:
-        module.add(VMovB32(dst=vgpr(rReg), src=0, comment=rComment))
+        module.add(VAddI32(dst=vgpr(rReg), src0=vgpr(rReg), src1=vgpr(divReg), comment=rComment))
     module.add(SMovB64(dst=EXEC(), src=-1, comment=dComment))
+    module.add(SNop(1))
+
+    module.add(VCmpXGeI32(dst=EXEC(), src0=vgpr(rReg), src1=vgpr(divReg), comment=dComment))
+    module.add(VAddU32(dst=vgpr(qReg), src0=vgpr(qReg), src1=1, comment=dComment))
+    if doRemainder:
+        module.add(VSubI32(dst=vgpr(rReg), src0=vgpr(rReg), src1=vgpr(divReg), comment=rComment))
+    module.add(SMovB64(dst=EXEC(), src=-1, comment=dComment))
+    module.add(SNop(1))
+
     return module
 
 def vectorUInt32CeilDivideAndRemainder(qReg, dReg, divReg, rReg, doRemainder=True, comment=""):
@@ -348,7 +358,7 @@ def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: Registe
     tmpVgpr0 = tmpVgprRes.idx
     tmpVgpr1 = tmpVgprRes.idx + 1
 
-    module = Module("vectorUInt32DivideAndRemainder")
+    module = Module("scalarUInt32DivideAndRemainder")
     module.add(VCvtU32toF32(dst=vgpr(tmpVgpr0), src=sgpr(divReg), comment=dComment))
     module.add(VRcpIFlagF32(dst=vgpr(tmpVgpr0), src=vgpr(tmpVgpr0), comment=dComment))
     module.add(VCvtU32toF32(dst=vgpr(tmpVgpr1), src=sgpr(dReg), comment=dComment))

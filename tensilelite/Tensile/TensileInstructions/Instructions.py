@@ -2295,6 +2295,11 @@ class VCmpXGeU32(VCmpXInstruction):
         super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmpx_ge_u32")
 
+class VCmpXGeI32(VCmpXInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmpx_ge_i32")
+
 class VCmpXGtU32(VCmpXInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
