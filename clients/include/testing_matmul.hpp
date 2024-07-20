@@ -2176,7 +2176,7 @@ void testing_matmul_with_bias(const Arguments& arg)
         static_cast<void>(hipGetDevice(&deviceId));
         static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
         //workaround before known_bug work
-        if(gpu_arch_match(deviceProperties.gcnArchName, "11?")
+        if((gpu_arch_match(deviceProperties.gcnArchName, "11?") || gpu_arch_match(deviceProperties.gcnArchName, "12?"))
            && (arg.gradient || arg.grouped_gemm
                || arg.a_type == HIP_R_64F || arg.b_type == HIP_R_64F))
 		//arg.activation_type == gelu || arg.bias_source == a || arg.bias_source == b)
@@ -2485,7 +2485,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             double              hipblaslt_atol  = 1;
             double              hipblaslt_rtol  = 1;
             std::vector<double> tol(gemm_count);
-            if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
+            if(arg.unit_check && (hipblaslt_get_arch_major() == 11 || hipblaslt_get_arch_major() == 12) && sizeof(TiA) == 2
                && sizeof(TiB) == 2)
             {
                 for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
@@ -2820,7 +2820,7 @@ void testing_matmul_with_bias(const Arguments& arg)
             double              hipblaslt_atol  = 1;
             double              hipblaslt_rtol  = 1;
             std::vector<double> tol(gemm_count);
-            if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
+            if(arg.unit_check && (hipblaslt_get_arch_major() == 11 ||hipblaslt_get_arch_major() == 12) && sizeof(TiA) == 2
                && sizeof(TiB) == 2)
             {
                 for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
