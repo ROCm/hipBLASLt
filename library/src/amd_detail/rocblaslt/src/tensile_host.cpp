@@ -1694,7 +1694,7 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             if(useUserArgs)
             {
                 data->kernels = solution->solveGroupedGemmGPU(
-                    data->problem.gemms, data->inputs, nullptr, workspace, stream);
+                    data->problem.gemms, data->inputs, *hardware, nullptr, workspace, stream);
             }
             else
             {
@@ -1835,7 +1835,7 @@ rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_ha
         {
             std::shared_ptr<TensileDataGroupedGemm> data
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
-            auto  solution = library->getSolutionByIndex(data->algoIndex);
+            auto  solution = library->getSolutionByIndex(*hardware, data->algoIndex);
             auto& problem  = data->problem.gemms[0];
             if(problem.activationComputeType() == Tensile::DataType::Float)
             {
@@ -1896,7 +1896,7 @@ rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       hand
             for(auto& it : data->kernels)
             {
                 uint8_t* arg      = it.args.rawdata();
-                auto     solution = library->getSolutionByIndex(data->algoIndex);
+                auto     solution = library->getSolutionByIndex(*hardware, data->algoIndex);
                 if(solution->internalArgsSupport.useUniversalArgs)
                 {
                     if(deviceUserArgs != nullptr)
@@ -1963,11 +1963,11 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
         // don't overwrite data->algoIndex = *solutionIndex; here
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
-            auto solution = library->getSolutionByIndex(*solutionIndex);
+            auto solution = library->getSolutionByIndex(*hardware, *solutionIndex);
             std::shared_ptr<TensileDataGroupedGemm> data
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
             auto kernel = solution->solveGroupedGemmGPU(
-                data->problem.gemms, data->inputs, deviceUserArgs, workspace, stream);
+                data->problem.gemms, data->inputs,*hardware, deviceUserArgs, workspace, stream);
             status = hip2RocStatus(adapter->launchKernels(kernel, stream, nullptr, nullptr));
         }
         else
@@ -2007,6 +2007,7 @@ void _convertToHeuristicResultArray(
     int*                                                        returnAlgoCount,
     size_t                                                      maxWorkSpaceBytes,
     const Tensile::ContractionProblemGemm&                      problem,
+    const Tensile::Hardware&                                   hardware,
     size_t                                                      fallbackCount)
 {
     *returnAlgoCount = std::min((int)solutions.size(), requestedAlgoCount);
@@ -2019,7 +2020,7 @@ void _convertToHeuristicResultArray(
         heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
         heuristicResultsArray[i].algo.fallback            = fallbackCount-- > 0 ? true : false;
         heuristicResultsArray[i].state                    = rocblaslt_status_success;
-        heuristicResultsArray[i].workspaceSize = solution->requiredWorkspaceSize(problem);
+        heuristicResultsArray[i].workspaceSize = solution->requiredWorkspaceSize(problem, hardware);
     }
     for(size_t i = *returnAlgoCount; i < requestedAlgoCount; i++)
     {
@@ -2177,6 +2178,7 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
                                    returnAlgoCount,
                                    maxWorkSpaceBytes,
                                    data->problem,
+                                   *hardware,
                                    fallbackSize);
 
     return rocblaslt_status_success;
@@ -2248,7 +2250,7 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
         heuristicResults[i].algo.fallback            = false;
         heuristicResults[i].state                    = rocblaslt_status_success;
         if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
-            heuristicResults[i].workspaceSize = solution->requiredWorkspaceSize(prob);
+            heuristicResults[i].workspaceSize = solution->requiredWorkspaceSize(prob, *hardware);
         else
             heuristicResults[i].workspaceSize = 0;
         i++;
@@ -2326,7 +2328,7 @@ rocblaslt_status
     for(auto index : solutionIndex)
     {
         isOutOfBound  = isOutOfBound && (index > lastSolutionIndex);
-        auto solution = library->getSolutionByIndex(index);
+        auto solution = library->getSolutionByIndex(*hardware, index);
         if(!solution)
             continue;
         rocblaslt_matmul_heuristic_result result;
@@ -2444,7 +2446,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
                 bool isSup = (*solution->hardwarePredicate)(*hardware)
                              && (*solution->problemPredicate)(tensile_prob);
                 if(isSup)
-                    *workspaceSizeInBytes = solution->requiredWorkspaceSize(tensile_prob);
+                    *workspaceSizeInBytes = solution->requiredWorkspaceSize(tensile_prob, *hardware);
                 tensile_prob.setUseBias(useBias);
                 tensile_prob.setActivationType(actType);
                 tensile_prob.setUseScaleAlphaVec(useScaleAlphaVec);
@@ -2474,7 +2476,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
         }
         else
         {
-            *workspaceSizeInBytes = solution->requiredWorkspaceSize(tensile_prob);
+            *workspaceSizeInBytes = solution->requiredWorkspaceSize(tensile_prob, *hardware);
         }
     }
     else if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGroupedGemm>::value)
@@ -2509,7 +2511,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
 
         bool isSupported  = true;
         bool isNormalGemm = true;
-        auto problemWs = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms);
+        auto problemWs = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms, *hardware);
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
             tensile_prob.gemms[i].setWorkspaceSize(algo->max_workspace_bytes);
@@ -2719,6 +2721,7 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
                                        &returnAlgoCount,
                                        workspaceBytes,
                                        data->problem,
+                                       *hardware,
                                        fallbackSize);
     }
     else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
@@ -2786,6 +2789,7 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
                                        &returnAlgoCount,
                                        workspaceBytes,
                                        data->problem.gemms[0],
+                                       *hardware,
                                        solutions_fallback.size());
     }
 
@@ -2842,6 +2846,10 @@ std::string getSolutionNameFromData(rocblaslt_handle             handle,
     int  wgm           = 0;
     int  solutionIndex = -1;
 
+    std::shared_ptr<Tensile::Hardware> hardware;
+
+    hardware     = Tensile::hip::GetDevice(*deviceProp);
+
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
         std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
@@ -2859,7 +2867,7 @@ std::string getSolutionNameFromData(rocblaslt_handle             handle,
     }
     if(solutionIndex == -1)
         return "";
-    auto        solution       = library->getSolutionByIndex(solutionIndex);
+    auto        solution       = library->getSolutionByIndex( *hardware, solutionIndex);
     std::string modifiedString = "";
     if(gsu != solution->sizeMapping.globalSplitU && gsu != 0)
     {
@@ -2884,9 +2892,10 @@ std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
-
+    std::shared_ptr<Tensile::Hardware>                                               hardware;
+    hardware = Tensile::hip::GetDevice(*deviceProp);
     int* solutionIndex = (int*)algo.data;
-    auto solution      = library->getSolutionByIndex(*solutionIndex);
+    auto solution      = library->getSolutionByIndex(*hardware, *solutionIndex);
     return solution->kernelName;
 }
 
@@ -2896,9 +2905,10 @@ std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblasl
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
-
+    std::shared_ptr<Tensile::Hardware>                                               hardware;
+    hardware = Tensile::hip::GetDevice(*deviceProp);
     int* solutionIndex = (int*)algo.data;
-    auto solution      = library->getSolutionByIndex(*solutionIndex);
+    auto solution      = library->getSolutionByIndex(*hardware , *solutionIndex);
     return solution->solutionName;
 }
 
