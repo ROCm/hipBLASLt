@@ -282,7 +282,7 @@ class StoreState:
         if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr * 2  # ScaleAVec + ScaleBVec address
             numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-            self.numVgprsPerElement += numVgprs * gwvw * 2  # Loaded data
+            self.numVgprsPerElement += numVgprs * gwvw + (numVgprs * (2 if gwvw >= 2 else 1)) # Loaded data
 
         if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # ScaleAlphaVec address
@@ -573,9 +573,10 @@ class StoreState:
                 if coordOffset1 in scaleBVecVgprMap:
                     dataScaleBVec = scaleBVecVgprMap[coordOffset1]
                 else:
+                    gwvw = 2 if self.cfg.gwvw >= 2 else 1
                     numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-                    dataScaleBVec = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
-                                  int(ceil(numVgprs*self.cfg.gwvw)), "scaleBVec data for ei=%u"%elementIdx, preventOverflow=False)
+                    dataScaleBVec = kw.vgprPool.checkOutAligned(int(numVgprs*gwvw), \
+                                  int(ceil(numVgprs*gwvw)), "scaleBVec data for ei=%u"%elementIdx, preventOverflow=False)
                     scaleBVecVgprMap[coordOffset1] = dataScaleBVec
             else:
                 dataScaleAVec = 0
