@@ -105,8 +105,9 @@ void hipblaslt_init_sin(
         for(size_t j = 0; j < N; ++j)
         {
             size_t offset = j * lda + i_batch * stride;
+            size_t offsetValue = j * M + i_batch * M * N;
             for(size_t i = 0; i < M; ++i)
-                A[i + offset] = static_cast<T>(sin(double(i + offset))); //force cast to double
+                A[i + offset] = static_cast<T>(sin(double(i + offsetValue))); //force cast to double
         }
 }
 
@@ -182,8 +183,9 @@ void hipblaslt_init_cos(
         for(size_t j = 0; j < N; ++j)
         {
             size_t offset = j * lda + i_batch * stride;
+            size_t offsetValue = j * M + i_batch * M * N;
             for(size_t i = 0; i < M; ++i)
-                A[i + offset] = T(cos(double(i + offset))); //force cast to double
+                A[i + offset] = T(cos(double(i + offsetValue))); //force cast to double
         }
 }
 
