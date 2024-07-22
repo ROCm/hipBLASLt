@@ -4754,6 +4754,7 @@ class KernelWriterAssembly(KernelWriter):
     # calculate constant
     is_mfma          = self.states.asmCaps["HasMFMA"]
     is_wmma_v1          = self.states.asmCaps["HasWMMA_V1"]
+    is_wmma_v2          = self.states.asmCaps["HasWMMA_V2"]
     numRegistersIn   = miInputType.numRegisters()
     numRegistersOut  = kernel["MIRegPerOut"]
     loopCounterName  = self.loopCounterName(kernel, self.states.unrollIdx)
@@ -4777,7 +4778,6 @@ class KernelWriterAssembly(KernelWriter):
     accumRegType     = "acc" if not kernel["MIArchVgpr"] else "v"
     mfma_1k          = True if kernel["MFMA_BF16_1K"] else False
     accStoreCIdx     = 0
-
     # alloc vgpr
     kReg    = None
     abReg   = None
@@ -4836,11 +4836,13 @@ class KernelWriterAssembly(KernelWriter):
               shiftK.add(SMinI32(dst=sgpr(loopCntSgpr), src0=sgpr(loopCounterName), src1=sgpr("LSUTailLoopOffset"), comment="check lsu bound"))
             shiftK.add(VCmpGEI32(dst=sgpr(tmpSgprX2, self.states.laneSGPRCount), src0=vgpr(kReg), src1=sgpr(loopCntSgpr), comment="check K index >= Size L"))
             vgprPerSet0Group = vgprPerInputA
+          elif is_wmma_v2 and vgprPerInputA > 2:
+            vgprPerSet0Group = 4
           else:
             vgprPerSet0Group = 2
           numSet0GroupA = vgprPerInputA//vgprPerSet0Group
           for group in range(0, numSet0GroupA):
-            if numSet0GroupA > 1:
+            if numSet0GroupA > 1 or (is_wmma_v2 and vgprPerInputA > 2):
               if group == 0:
                 shiftK.add(staticMultiply(vgpr(kReg), vgpr(kReg), numMIInput, tmpSgprInfo))
               else:
@@ -4860,6 +4862,10 @@ class KernelWriterAssembly(KernelWriter):
             vgprPerSet0Group = 1
           elif vgprPerInputB <= 2:
             vgprPerSet0Group = vgprPerInputB
+          elif is_wmma_v2 and vgprPerInputB > 2:
+            shiftK.add(vectorStaticRemainder(dummy, kReg, "Serial", kernel["WavefrontSize"], tmpVgpr, tmpSgprInfo))
+            shiftK.add(vectorStaticDivide(kReg, kReg, dividerFortidInK, tmpVgpr))
+            vgprPerSet0Group = 4
           else:
             shiftK.add(vectorStaticRemainder(dummy, kReg, "Serial", kernel["WavefrontSize"], tmpVgpr, tmpSgprInfo))
             shiftK.add(vectorStaticDivide(kReg, kReg, dividerFortidInK, tmpVgpr))
@@ -4867,7 +4873,7 @@ class KernelWriterAssembly(KernelWriter):
 
           numSet0GroupB = vgprPerInputB//vgprPerSet0Group
           for group in range(0, numSet0GroupB):
-            if numSet0GroupB > 1:
+            if numSet0GroupB > 1 or (is_wmma_v2 and vgprPerInputB > 2):
               if group == 0:
                 shiftK.add(staticMultiply(vgpr(kReg), vgpr(kReg), numMIInput, tmpSgprInfo))
               else:
@@ -4884,7 +4890,7 @@ class KernelWriterAssembly(KernelWriter):
 
           # replace 0 for same thread
           if numMIInput > 1 and kernel["AssertSummationElementMultiple"] < 8:
-            abReg   = self.vgprPool.checkOutAligned(vgprPerInput, 2 if vgprPerInput>1 else 1, "abReg")
+            abReg   = self.vgprPool.checkOutAligned(vgprPerInput, vgprPerInput, "abReg")
             shiftK.add(VSubU32(dst=vgpr(kReg), src0=sgpr(loopCntSgpr), src1=vgpr(kReg), comment="get distance between size and k index"))
             shiftK.add(VCmpLtI32(dst=sgpr(tmpSgprX2, self.states.laneSGPRCount), src0=vgpr(kReg), src1=numMIInput, comment="set partial 0 if distance less than input per thread"))
             shiftK.add(SAndB32(dst=sgpr(tmpSgprX1), src0=sgpr(loopCntSgpr), src1=numMIInput-1, comment="get inputs for edge thread"))
@@ -4904,11 +4910,14 @@ class KernelWriterAssembly(KernelWriter):
                 a_new = a*vgprPerInput*self.states.numReadsIterCoalescedA
                 aStr = vgpr("ValuA_X%u_I%u+%u+%u+%u" % (vgprBufferA_new, iuiA_new, a_new, vgprBufferA_new_offset, iuiA_new_offset), vgprPerInput)
                 if vgprPerInput == 4:
-                  a_shift = Label(label=self.labels.getNameInc("a_128_Shift"), comment="")
+                  a_64_shift = Label(label=self.labels.getNameInc("a_64_Shift"), comment="")
+                  a_32_shift = Label(label=self.labels.getNameInc("a_32_Shift"), comment="")
                   a_common = Label(label=self.labels.getNameInc("a_shift_end"), comment="")
                   aStr = vgpr("ValuA_X%u_I%u+%u+%u+%u" % (vgprBufferA_new, iuiA_new, a_new, vgprBufferA_new_offset, iuiA_new_offset), 2)
-                  shiftK.add(SCmpGeI32(src0=sgpr(tmpSgprX1), src1=64, comment="check offset >63"))
-                  shiftK.add(SCBranchSCC1(labelName=a_shift.getLabelName(), comment="jump when positive"))
+                  shiftK.add(SCmpGeI32(src0=sgpr(tmpSgprX1), src1=64, comment="check offset > 63"))
+                  shiftK.add(SCBranchSCC1(labelName=a_64_shift.getLabelName(), comment="jump when positive"))
+                  shiftK.add(SCmpGeI32(src0=sgpr(tmpSgprX1), src1=32, comment="check offset > 32"))
+                  shiftK.add(SCBranchSCC1(labelName=a_32_shift.getLabelName(), comment="jump when positive"))
                   shiftK.add(VShiftLeft(dst=vgpr(tmpVgpr2, 2), shiftHex=sgpr(tmpSgprX1), src=vgpr("ValuA_X%u_I%u+%u+%u+%u" % (vgprBufferA_new, iuiA_new, a_new, vgprBufferA_new_offset, iuiA_new_offset),2), comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg), src=vgpr(tmpVgpr2),comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg+1), src=vgpr(tmpVgpr2+1),comment=""))
@@ -4917,7 +4926,17 @@ class KernelWriterAssembly(KernelWriter):
                   shiftK.add(VShiftLeft(dst=vgpr(tmpVgpr2, 2), shiftHex=sgpr(tmpSgprX1), src=vgpr("ValuA_X%u_I%u+%u+%u+%u+2" % (vgprBufferA_new, iuiA_new, a_new, vgprBufferA_new_offset, iuiA_new_offset),2), comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg+3), src=vgpr(tmpVgpr2+1),comment=""))
                   shiftK.add(SBranch(a_common.getLabelName()))
-                  shiftK.add(a_shift)
+                  shiftK.add(a_32_shift)
+                  shiftK.add(SSubU32(dst=sgpr(tmpSgprX1), src0=sgpr(tmpSgprX1), src1=32, comment=""))
+                  shiftK.add(VMovB32(dst=vgpr(abReg), src=0, comment=""))
+                  shiftK.add(VShiftLeft(dst=vgpr(tmpVgpr2, 2), shiftHex=sgpr(tmpSgprX1), src=vgpr("ValuA_X%u_I%u+%u+%u+%u" % (vgprBufferA_new, iuiA_new, a_new, vgprBufferA_new_offset, iuiA_new_offset),2), comment=""))
+                  shiftK.add(VMovB32(dst=vgpr(abReg+1), src=vgpr(tmpVgpr2),comment=""))
+                  shiftK.add(VMovB32(dst=vgpr(abReg+2), src=vgpr(tmpVgpr2+1),comment=""))
+                  shiftK.add(VShiftLeft(dst=vgpr(tmpVgpr2, 2), shiftHex=sgpr(tmpSgprX1), src=vgpr("ValuA_X%u_I%u+%u+%u+%u+1" % (vgprBufferA_new, iuiA_new, a_new, vgprBufferA_new_offset, iuiA_new_offset),2), comment=""))
+                  shiftK.add(VMovB32(dst=vgpr(abReg+3), src=vgpr(tmpVgpr2+1),comment=""))
+                  shiftK.add(SAddU32(dst=sgpr(tmpSgprX1), src0=sgpr(tmpSgprX1), src1=32, comment=""))
+                  shiftK.add(SBranch(a_common.getLabelName()))
+                  shiftK.add(a_64_shift)
                   shiftK.add(SSubU32(dst=sgpr(tmpSgprX1), src0=sgpr(tmpSgprX1), src1=64, comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg), src=0, comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg+1), src=0, comment=""))
@@ -4936,11 +4955,14 @@ class KernelWriterAssembly(KernelWriter):
                 b_new = b*vgprPerInput*self.states.numReadsIterCoalescedB
                 bStr = vgpr("ValuB_X%u_I%u+%u+%u+%u" % (vgprBufferB_new, iuiB_new, b_new, vgprBufferB_new_offset, iuiB_new_offset), vgprPerInput)
                 if vgprPerInput == 4:
-                  b_shift = Label(label=self.labels.getNameInc("b_128_Shift"), comment="")
+                  b_64_shift = Label(label=self.labels.getNameInc("b_64_Shift"), comment="")
+                  b_32_shift = Label(label=self.labels.getNameInc("b_32_Shift"), comment="")
                   b_common = Label(label=self.labels.getNameInc("b_shift_end"), comment="")
                   bStr = vgpr("ValuB_X%u_I%u+%u+%u+%u" % (vgprBufferB_new, iuiB_new, b_new, vgprBufferB_new_offset, iuiB_new_offset), 2)
                   shiftK.add(SCmpGeI32(src0=sgpr(tmpSgprX1), src1=64, comment="check offset >63"))
-                  shiftK.add(SCBranchSCC1(labelName=b_shift.getLabelName(), comment="jump when positive"))
+                  shiftK.add(SCBranchSCC1(labelName=b_64_shift.getLabelName(), comment="jump when positive"))
+                  shiftK.add(SCmpGeI32(src0=sgpr(tmpSgprX1), src1=32, comment="check offset >32"))
+                  shiftK.add(SCBranchSCC1(labelName=b_32_shift.getLabelName(), comment="jump when positive"))
                   shiftK.add(VShiftLeft(dst=vgpr(tmpVgpr2, 2), shiftHex=sgpr(tmpSgprX1), src=vgpr("ValuB_X%u_I%u+%u+%u+%u" % (vgprBufferB_new, iuiB_new, b_new, vgprBufferB_new_offset, iuiB_new_offset),2), comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg), src=vgpr(tmpVgpr2),comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg+1), src=vgpr(tmpVgpr2+1),comment=""))
@@ -4949,9 +4971,17 @@ class KernelWriterAssembly(KernelWriter):
                   shiftK.add(VShiftLeft(dst=vgpr(tmpVgpr2, 2), shiftHex=sgpr(tmpSgprX1), src=vgpr("ValuB_X%u_I%u+%u+%u+%u+2" % (vgprBufferB_new, iuiB_new, b_new, vgprBufferB_new_offset, iuiB_new_offset),2), comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg+3), src=vgpr(tmpVgpr2+1),comment=""))
                   shiftK.add(SBranch(b_common.getLabelName()))
-                  shiftK.add(b_shift)
-                  shiftK.add(SSubU32(dst=sgpr(tmpSgprX1), src0=sgpr(tmpSgprX1), src1=64, comment=""))
+                  shiftK.add(b_32_shift)
+                  shiftK.add(SSubU32(dst=sgpr(tmpSgprX1), src0=sgpr(tmpSgprX1), src1=32, comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg), src=0, comment=""))
+                  shiftK.add(VShiftLeft(dst=vgpr(tmpVgpr2, 2), shiftHex=sgpr(tmpSgprX1), src=vgpr("ValuB_X%u_I%u+%u+%u+%u" % (vgprBufferB_new, iuiB_new, b_new, vgprBufferB_new_offset, iuiB_new_offset),2), comment=""))
+                  shiftK.add(VMovB32(dst=vgpr(abReg+1), src=vgpr(tmpVgpr2),comment=""))
+                  shiftK.add(VMovB32(dst=vgpr(abReg+2), src=vgpr(tmpVgpr2+1),comment=""))
+                  shiftK.add(VShiftLeft(dst=vgpr(tmpVgpr2, 2), shiftHex=sgpr(tmpSgprX1), src=vgpr("ValuB_X%u_I%u+%u+%u+%u+1" % (vgprBufferB_new, iuiB_new, b_new, vgprBufferB_new_offset, iuiB_new_offset),2), comment=""))
+                  shiftK.add(VMovB32(dst=vgpr(abReg+3), src=vgpr(tmpVgpr2+1),comment=""))
+                  shiftK.add(SBranch(b_common.getLabelName()))
+                  shiftK.add(b_64_shift)
+                  shiftK.add(SSubU32(dst=sgpr(tmpSgprX1), src0=sgpr(tmpSgprX1), src1=64, comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg), src=0, comment=""))
                   shiftK.add(VMovB32(dst=vgpr(abReg+1), src=0, comment=""))
                   shiftK.add(VShiftLeft(dst=vgpr(abReg+2,2), shiftHex=sgpr(tmpSgprX1), src=bStr, comment=""))
