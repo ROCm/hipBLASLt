@@ -116,7 +116,8 @@ class AMax2DKernelGenerator:
         self.bpr = i_type.numRegisters()
         self.max_workgoups = num_workitems
         self.num_workitems = num_workitems
-        self.wave_size = wave_size
+        self.wave_size = wave_size # 64, 32
+        self.num_waves = num_workitems // wave_size
         self.num_load_count = num_load_count
         self.num_load_size = num_load_size
         if is_scale:
@@ -481,15 +482,13 @@ class AMax2DKernelGenerator:
         mod.addComment0(f"calculate_offset_per_load {i}")
 
         if init and (i == 0):
-            mod.add(ti.SMulI32(ti.sgpr("Tmp"), ti.sgpr("WGIdx"), ti.sgpr("WorkVectors")))
-            mod.add(ti.VAddU32(ti.vgpr("UIdx"), ti.sgpr("Tmp"), ti.vgpr("Serial")))
+            pass
         else:
-            mod.add(ti.VMovB32(ti.vgpr("Tmp"), self.num_workitems))
+            mod.add(ti.VMovB32(ti.vgpr("Tmp"), self.wave_size))
             mod.add(ti.VAddU32(ti.vgpr("UIdx"), ti.vgpr("UIdx"), ti.vgpr("Tmp")))
-        mod.addSpaceLine()
+            mod.addSpaceLine()
 
         mod.add(ti.vectorUInt32DivideAndRemainder("UIdxN", "UIdx", "UVecM", "UIdxM", doRemainder=True, comment=""))
-        mod.add(ti.SNop(1))
         mod.addSpaceLine()
 
         mod.add(ti.VLShiftLeftB32(ti.vgpr("Tmp"), int(log2(self.num_load_size)), ti.vgpr("UIdxM")))
@@ -576,6 +575,7 @@ class AMax2DKernelGenerator:
         label_last_loop = ti.Label("last_loop", 'last_loop')
         label_sum_per_blocksize_end = ti.Label("sum_per_blocksize_end", 'sum_per_blocksize_end')
 
+
         mod.add(ti.SMulI32(ti.sgpr("VecLength"), ti.sgpr("UVecM"), ti.sgpr("SizeN")))
         mod.add(ti.SLShiftRightB32(ti.sgpr("MainLoop"), ti.sgpr("LogWorkVectors"), ti.sgpr("VecLength")))
         mod.addSpaceLine()
@@ -585,7 +585,11 @@ class AMax2DKernelGenerator:
         mod.add(ti.SCBranchSCC1(label_sum_per_blocksize_end.getLabelName()))
         mod.addSpaceLine()
 
-        mod.add(self.calculate_global_address(True))
+        mod.add(ti.SMovB32(ti.sgpr("LoopIdx"), 0))
+
+        mod.add(ti.SMulI32(ti.sgpr("Tmp"), ti.sgpr("WGIdx"), ti.sgpr("WorkVectors")))
+        mod.add(ti.VMovB32(ti.vgpr("UIdx"), ti.sgpr("Tmp")))
+        mod.addSpaceLine()
 
         mod.add(ti.SCmpEQI32(ti.sgpr("WGIdx"), ti.sgpr("MainLoop")))
         mod.add(ti.SCBranchSCC0(label_tail_adj_WS_end.getLabelName()))
@@ -610,10 +614,23 @@ class AMax2DKernelGenerator:
         mod.addSpaceLine()
 
         mod.add(label_tail_adj_WS_end)
+        mod.addSpaceLine()
+
+        mod.add(ti.VLShiftRightB32(ti.vgpr("Widx"), int(log2(self.wave_size)), ti.vgpr("Serial")))
+        mod.add(ti.SLShiftRightB32(ti.sgpr("Tmp"), int(log2(self.num_waves)), ti.sgpr("WorkVectors")))
+        mod.add(ti.VMulU32U24(ti.vgpr("Tmp"), ti.sgpr("Tmp"), ti.vgpr("Widx")))
+        mod.add(ti.VAddI32(ti.vgpr("UIdx"), ti.vgpr("UIdx"), ti.vgpr("Tmp")))
+        mod.addSpaceLine()
+
+        mod.add(ti.VAndB32(ti.vgpr("Tmp"), ti.vgpr("Serial"), (self.wave_size-1)))
+        mod.add(ti.VAddI32(ti.vgpr("UIdx"), ti.vgpr("UIdx"), ti.vgpr("Tmp")))
+        mod.addSpaceLine()
+
+        mod.add(self.calculate_global_address(True))
+
         if self.is_scale:
             mod.add(ti.SMovB32(ti.sgpr("OffsetD"), 0))
-        mod.add(ti.SMovB32(ti.sgpr("LoopIdx"), 0))
-        mod.addSpaceLine()
+            mod.addSpaceLine()
 
         buffer_load = self.global_read_inst_type(self.num_load_size, self.i_type)
         vgpr_per_load = int(self.num_load_size * self.bpr)
