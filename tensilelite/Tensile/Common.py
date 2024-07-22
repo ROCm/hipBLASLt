@@ -1017,6 +1017,7 @@ validParameters = {
     "NonTemporalC":               list(range(0,8)),
     "NonTemporalA":               list(range(0,8)),
     "NonTemporalB":               list(range(0,8)),
+    "NonTemporalWS":              list(range(0,8)),
     "NonTemporalMetadata":        list(range(0,8)),
     "NonTemporal":                list(range(-1,8)),
 
@@ -1153,6 +1154,7 @@ defaultBenchmarkCommonParameters = [
     {"NonTemporalC":              [ 0 ] },
     {"NonTemporalA":              [ 0 ] },
     {"NonTemporalB":              [ 0 ] },
+    {"NonTemporalWS":             [ 0 ] },
     {"NonTemporalMetadata":       [ 0 ] },
     {"NonTemporal":               [ -1 ] },
     {"PreloadKernArgs":           [ True ] },

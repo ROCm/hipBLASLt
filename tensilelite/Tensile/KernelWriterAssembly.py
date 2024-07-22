@@ -4436,7 +4436,9 @@ class KernelWriterAssembly(KernelWriter):
       #instCycles = kernel["MatrixInstM"] // 2 # 32x32 is 64 cycles, 16x16 is 32 cycles, 4x4 is 8 cycles
       #module.add(SNop(waitState=instCycles))
       module.addComment1("Mapping of Acc register -> C Vgpr register")
-      self.codes.accVgprRead = mapAcctoArchRegs(kernel)
+      self.codes.accVgprRead = mapAcctoArchRegs(kernel, write=False)
+      if kernel["StreamK"] > 0 and kernel["StreamKAtomic"] == 0:
+        self.codes.accVgprWrite = mapAcctoArchRegs(kernel, write=True)
       if kernel["MIArchVgpr"]:
         module.addComment1("Multiply MI out register with Alpha -> C Vgpr register")
         self.codes.mulAlphaMultipleBuffer = moveMIoutToArch(kernel, self.states.startVgprAlphaTmp)
@@ -8310,10 +8312,6 @@ class KernelWriterAssembly(KernelWriter):
     if not self.do["PostLoop"]: return Module("GlobalWriteElements (Empty)")
     module = Module("GlobalWriteElements")
     
-    skPartialsLabel = Label(label=self.labels.getNameInc("SK_Partials"), comment="")
-    skComponent = Component.StreamK.find(self)
-    module.add(skComponent.storeBranches(self, kernel, skPartialsLabel, vectorWidths_1, elements_1))
-
     module.addComment2("Global Write Elements")
     if self.states.numStoreSgprToLoad or self.states.numStoreSgprToLoad2: # Wait for kernel args
       module.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args."%((self.states.numStoreSgprToLoad+self.states.numStoreSgprToLoad2) * 4)))
@@ -8768,6 +8766,9 @@ class KernelWriterAssembly(KernelWriter):
       # branch B1 or B0
       # betaLabel = Label("GW_Beta", "") if (gsuLimit > 1) and (kernel["GlobalSplitU"] > 1) else Label(self.labels.getNameInc("GW_Beta"), "")
       betaLabel = Label(self.labels.getNameInc("GW_Beta"), "")
+      skPartialsLabel = Label(label=self.labels.getNameInc("SK_Partials"), comment="")
+      skComponent = Component.StreamK.find(self)
+      module.add(skComponent.storeBranches(self, kernel, skPartialsLabel, vectorWidths_1, elements_1, tmpVgpr, cvtVgprStruct))
 
       betaModules = Module("Betas")
       currentInstLength = 0
@@ -9594,9 +9595,14 @@ class KernelWriterAssembly(KernelWriter):
     isSlc = kernel["NonTemporal%s"%tc] & 0x2
     isNT  = kernel["NonTemporal%s"%tc] & 0x4
 
+    soffset = 0
     if tc == 'E':
-        globalOffset = addrCalc.globalOffsetE
-        bpeType = self.states.bpeE
+      globalOffset = addrCalc.globalOffsetE
+      bpeType = self.states.bpeE
+    elif tc == 'WS':
+      soffset = tmpS01
+      globalOffset = 0
+      bpeType = self.states.bpeCinternal
     else:
       if dataType == kernel["ProblemType"]["ComputeDataType"]:
         globalOffset = addrCalc.globalOffsetInternal
@@ -9608,22 +9614,22 @@ class KernelWriterAssembly(KernelWriter):
           if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
             globalOffset = int((globalOffset/self.states.bpeCexternal) * self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
 
-    if ss.optSrdIncForRow and addrCalc.rowInc:
+    isWorkspace = tc == 'WS'
+    if ss.optSrdIncForRow and addrCalc.rowInc and not isWorkspace:
       module.add(addrCalc.incrementToNextRow(kernel, tc, ss, tmpS01, bpeType=bpeType))
 
     if dataType.isHalf():
       hi16 = 0 if self.states.HHH_WMMA else (vc0 % 2)
       module.add(self.chooseGlobalRead(useBuffer, bps, data, \
-                addr0, addr1, soffset=0, offset=globalOffset, \
-                glc=isGlc, slc=isSlc, nt=isNT, lds=False,
-                hi16=hi16,
-                comment="load %s"%tc))
+          addr0, addr1, soffset=soffset, offset=globalOffset, \
+          glc=isGlc, slc=isSlc, nt=isNT, lds=False, hi16=hi16, \
+          comment="load %s"%tc))
     elif dataType.isInt8() or dataType.is8bitFloat():
      module.add(self.chooseGlobalRead(useBuffer, bps, data, \
-                addr0, addr1, soffset=0, offset=globalOffset, \
-                glc=isGlc, slc=isSlc, nt=isNT, lds=False, \
-                #hi16=vc0 % 4,
-                comment="load %s"%tc))
+          addr0, addr1, soffset=soffset, offset=globalOffset, \
+          glc=isGlc, slc=isSlc, nt=isNT, lds=False, \
+          #hi16=vc0 % 4,
+          comment="load %s"%tc))
     elif dataType.isBFloat16() or \
          dataType.isInt32() or \
          dataType.isSingle() or \
@@ -9631,7 +9637,7 @@ class KernelWriterAssembly(KernelWriter):
          dataType.isSingleComplex() or \
          dataType.isDoubleComplex():
       module.add(self.chooseGlobalRead(useBuffer, bps, data, \
-                addr0, addr1, soffset=0, offset=globalOffset, \
+                addr0, addr1, soffset=soffset, offset=globalOffset, \
                 glc=isGlc, slc=isSlc, nt=isNT, lds=False, \
                 comment="load %s"%tc))
 
