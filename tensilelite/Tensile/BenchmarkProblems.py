@@ -377,6 +377,10 @@ def main(config, useCache):
     """Entry point for the "BenchmarkProblems" section of a Tensile config yaml"""
     ClientExecutable.getClientExecutable()
 
+    if config is None:
+        print(f'No config specified in {globalParameters["ConfigPath"]}, built client only')
+        return
+
     dataPath = os.path.join(globalParameters["WorkingPath"], globalParameters["BenchmarkDataPath"])
     pushWorkingPath(globalParameters["BenchmarkProblemsPath"])
     ensurePath(dataPath)
