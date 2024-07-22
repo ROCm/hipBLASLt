@@ -887,10 +887,9 @@ namespace Tensile
             if(sizeMapping.streamK != 0)
             {
                 skGrid             = getSKGrid(hardware, tiles);
-                // TODO enable grid size change once code gen changes are implemented
-                // rv.numWorkGroups.x = skGrid;
-                // rv.numWorkGroups.y = 1;
-                // rv.numWorkGroups.z = 1;
+                rv.numWorkGroups.x = skGrid;
+                rv.numWorkGroups.y = 1;
+                rv.numWorkGroups.z = 1;
             }
         }
 
