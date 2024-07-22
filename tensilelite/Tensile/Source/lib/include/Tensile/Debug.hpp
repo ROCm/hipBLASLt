@@ -79,6 +79,8 @@ namespace Tensile
         int getSolutionIndex() const;
 
         int getGridbasedTopSols() const;
+        
+        bool printStreamKGridInfo() const;
 
     private:
         friend LazySingleton<Debug>;

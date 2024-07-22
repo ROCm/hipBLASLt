@@ -113,7 +113,7 @@ namespace Tensile
             if(solution.requiredHostWorkspaceSizePerProblem == static_cast<size_t>(-1))
             {
                 solution.requiredHostWorkspaceSizePerProblem
-                    = solution.requiredHostSizeGroupedGemmSingle(problem);
+                    = solution.requiredHostSizeGroupedGemmSingle(problem,m_hardware);
             }
             return true;
         }
