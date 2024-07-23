@@ -46,5 +46,7 @@ __all__ = [
     "SIA",
     "GlobalWriteBatch",
     "SumUnroll",
-    "GSU"
+    "GSU",
+    "StreamK",
+    "PersistentLoop"
     ]

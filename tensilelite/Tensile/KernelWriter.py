@@ -327,6 +327,7 @@ class StateVgprs:
 @dataclass
 class CodeModules:
   accVgprRead: Optional[Module]               = None
+  accVgprWrite: Optional[Module]              = None
   mulAlphaMultipleBuffer: Optional[Module]    = None
   mulAlphaOther: Optional[Module]             = None
   localWriteA: Optional[Module]               = None
@@ -1347,7 +1348,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # work-group assignments
     module.addComment1("global read addresses: work-group")
     if not forceNoTileCode:
-      module.add(self.graWorkGroup(kernel))
+      module.add(self.graWorkGroup(kernel, tensorParametersA, tensorParametersB))
 
     self.dontAppendCode = forceNoTileCode
 
@@ -1517,7 +1518,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
 
     if self.do["executeToInitEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     ####################################
     # prefetch: unrolled loop prefix
@@ -1749,7 +1750,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.noLoadLoopBody(kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast))
 
     if self.do["executeToLoopEnd"] and isOptNLL:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
     module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL))
@@ -2073,10 +2074,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(Label("ASM_Start", "Main body of the asm kernel"))
     module.add(self.defineAndResources(kernel, tensorParametersA, tensorParametersB, tPM))
 
+    # Initialize stream-k loop
+    skComponent = Component.StreamK.find(self)
+    module.add(skComponent.preLoop(self, kernel))
+    # Open persistent loop
+    loopComponent = Component.PersistentLoop.find(self)
+    module.add(loopComponent.openPersistentLoop(self, kernel))
+        
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
     if self.do["executeToPrefetchEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     pack = [ Module() for i in range (self.states.numVgprBuffer) ]
     self.preLoopLocalWriteCode = None
@@ -2095,8 +2103,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # These cases loop back and run the prefetch loop again
       # we need an extra barrier to ensure that the ds_reads (either for SR or MFMA) from previous iteration
       # have finished before we generate the prefetch for the next summation index.
-      if self.states.actualSummationLoops>1:
-        module.add(SBarrier())
+      if kernel["StreamK"] > 0 or self.states.actualSummationLoops>1:
+        module.add(SBarrier(comment="For stream-k / persistent loop"))
 
       # local write
       self.preLoopLocalWriteCode = self.preLoopLocalWriteDo(kernel, tensorParametersA, tensorParametersB)
@@ -2378,7 +2386,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
                         (self.states.lastValuAB, self.states.lastVgprForReads))
 
     if self.do["executeToLoopEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     # extra summation loops: global increment and close
     for i in reversed(range(self.states.otherSummationLoops)):
@@ -2436,7 +2444,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.addComment1("LocalSplitU: global write")
       module.add(self.localSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
 
-
     else:
       ####################################
       # NOT LocalSplitU
@@ -2451,7 +2458,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.notLocalSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
 
     # function suffix
-    module.add(self.functionEnd(True))
+    module.add(self.functionEnd(kernel, addLabel=True))
     module.add(self.functionSuffix(kernel))
 
     # Tensile pass
@@ -2848,8 +2855,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.bpeCinternal = int(self.states.bpr * kernel["ProblemType"]["ComputeDataType"].numRegisters())
 
     self.states.bpeCexternalGSU1 = int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
-    self.states.bpeCexternal = self.states.bpeCinternal if kernel["_GlobalAccumulation"] else \
-      self.states.bpeCexternalGSU1
+    self.states.bpeCexternal = self.states.bpeCexternalGSU1
+    if kernel["_GlobalAccumulation"] and kernel["_GlobalAccumulation"] != 'PartialsBuffer':
+      self.states.bpeCexternal = self.states.bpeCinternal
+      
 
     # special case for wmma h and b
     if (kernel["EnableMatrixInstruction"]
@@ -3632,6 +3641,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     if kernel["GlobalSplitU"] > 0:
       self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
+
+    if kernel["StreamK"]:
+      # StreamK vars
+      self.defineSgpr("StreamKIdx", 1)
+      self.defineSgpr("StreamKIter", 1)
+      self.defineSgpr("StreamKIterEnd", 1)
+      self.defineSgpr("StreamKLocalStart", 1)
+      self.defineSgpr("StreamKLocalEnd", 1)
+      if kernel["StreamKAtomic"] == 0:
+        self.defineSgpr("SrdWS", 4, 4)
     
     #------------------------
     # Registers defined below this point are not available in the post-loop
@@ -3642,14 +3661,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     for key, _ in self.sgprs.items():
       self.states.nonPostLoopSgpr.append(key)
     # Manually remove some additional unused sgpr
-    self.states.nonPostLoopSgpr.remove("WGM")
     for i in range(kernel["ProblemType"]["NumIndicesSummation"]):
       self.states.nonPostLoopSgpr.remove(self.loopCounterName(kernel,i))
     self.states.nonPostLoopSgpr.remove("OrigLoopCounter")
-    self.states.nonPostLoopSgpr.remove("AddressA")
-    self.states.nonPostLoopSgpr.remove("AddressB")
-    self.states.nonPostLoopSgpr.remove("StridesA")
-    self.states.nonPostLoopSgpr.remove("StridesB")
+
+    if not kernel["StreamK"]:
+      # Persistent loop requires arguments to remain for next tile
+      self.states.nonPostLoopSgpr.remove("WGM")
+      self.states.nonPostLoopSgpr.remove("AddressA")
+      self.states.nonPostLoopSgpr.remove("AddressB")
+      self.states.nonPostLoopSgpr.remove("StridesA")
+      self.states.nonPostLoopSgpr.remove("StridesB")
 
     self.states.preloadScaleA = False
     self.states.preloadScaleB = False
@@ -4360,7 +4382,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # Function End
   ##############################################################################
   @abc.abstractmethod
-  def functionEnd(self, addLabel=True):
+  def functionEnd(self, kernel, addLabel=True):
     return ""
 
   ##############################################################################
