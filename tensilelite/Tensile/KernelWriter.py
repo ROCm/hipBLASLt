@@ -2169,6 +2169,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["PrefetchGlobalRead"] == 2:
         module.add(self.openPrefetchGlobalRead2(kernel))
         if kernel["UnrollLoopSwapGlobalReadOrder"] == 1:
+          # For UnrollLoopSwapGlobalReadOrder, we also need to swap ds write A/B order.
+          # In scheduling, we always schedule lwa first then lwb second,
+          # Putting lwb in lwa's code object can easily change the order.
           module.add(self.globalReadDo(kernel, 0, tensorParametersB, swapAB=1))
           module.add(self.globalReadDo(kernel, 0, tensorParametersA, swapAB=1))
         else:
