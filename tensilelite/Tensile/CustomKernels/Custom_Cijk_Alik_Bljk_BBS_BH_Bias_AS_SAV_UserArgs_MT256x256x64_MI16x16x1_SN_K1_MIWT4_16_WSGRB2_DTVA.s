@@ -4,13 +4,13 @@
 /******************************************/
 .amdgcn_target "amdgcn-amd-amdhsa--gfx942"
 .text
-.protected Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA.s
-.globl Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA.s
+.protected Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA
+.globl Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA
 .p2align 8
-.type Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA.s,@function
+.type Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA,@function
 .section .rodata,#alloc
 .p2align 6
-.amdhsa_kernel Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA.s
+.amdhsa_kernel Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA
   .amdhsa_user_sgpr_kernarg_segment_ptr 1
   .amdhsa_accum_offset 256 // accvgpr offset
   .amdhsa_next_free_vgpr 512 // vgprs
@@ -82,8 +82,8 @@ amdhsa.version:
   - 1
   - 1
 amdhsa.kernels:
-  - .name: Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA.s
-    .symbol: 'Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA.s.kd'
+  - .name: Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA
+    .symbol: 'Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA.kd'
     .language:                   OpenCL C
     .language_version:
       - 2
@@ -242,7 +242,7 @@ amdhsa.kernels:
     .wavefront_size:             64
 ...
 .end_amdgpu_metadata
-Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA.s:
+Custom_Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA:
 label_ASM_Start:  /// Main body of the asm kernel
 
 /* Magic div and mod functions */
