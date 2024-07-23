@@ -725,12 +725,7 @@ namespace Tensile
             
             auto   tiles   = problem.getNumTiles(sizeMapping);
             size_t skGrid  = getSKGrid(problem, *hardware, tiles);
-            // StreamK workspace + flags
-            args.template append<void const*>("ws", inputs.ws);
-            void*  ws          = inputs.ws;
-            size_t flagsOffset = partialTileSize(skGrid);
-            void*  flags       = (void*)(static_cast<char*>(ws) + flagsOffset);
-            args.template append<void*>("Flags", flags);
+            args.template append<void*>("Flags", inputs.Synchronizer);
         }
 
         size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
