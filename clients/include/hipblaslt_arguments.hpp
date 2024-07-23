@@ -52,6 +52,12 @@ bool gpu_arch_match(const std::string& gpu_arch, const char pattern[4]);
 constexpr std::size_t MAX_SUPPORTED_NUM_PROBLEMS{32};
 struct Arguments
 {
+    enum ScalingFormat
+    {
+        None = 0,
+        Scalar,
+        Vector
+    };
     /*************************************************************************
      *                    Beginning Of Arguments                             *
      *************************************************************************/
@@ -119,6 +125,7 @@ struct Arguments
     uint8_t devices;
 
     int8_t norm_check;
+    int8_t allclose_check;
     int8_t unit_check;
     int8_t timing;
 
@@ -132,8 +139,8 @@ struct Arguments
     hipDataType           bias_type;
     hipblaslt_bias_source bias_source;
     bool                  bias_vector;
-    bool                  scaleA;
-    bool                  scaleB;
+    ScalingFormat           scaleA;
+    ScalingFormat           scaleB;
     bool                  scaleC;
     bool                  scaleD;
     bool                  scaleE;
@@ -151,6 +158,7 @@ struct Arguments
     bool    use_ext;
     bool    use_ext_setproblem;
     int     algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
+    int     api_method; // 0 for c, 1 for mix, 2 for cpp
     bool    use_user_args;
     int32_t rotating;
     bool    use_gpu_timer;
@@ -219,6 +227,7 @@ struct Arguments
     OPER(streams) SEP                \
     OPER(devices) SEP                \
     OPER(norm_check) SEP             \
+    OPER(allclose_check) SEP         \
     OPER(unit_check) SEP             \
     OPER(timing) SEP                 \
     OPER(transA) SEP                 \
@@ -246,6 +255,7 @@ struct Arguments
     OPER(use_ext) SEP                \
     OPER(use_ext_setproblem) SEP     \
     OPER(algo_method) SEP            \
+    OPER(api_method) SEP             \
     OPER(use_user_args) SEP          \
     OPER(rotating) SEP               \
     OPER(use_gpu_timer) SEP          \

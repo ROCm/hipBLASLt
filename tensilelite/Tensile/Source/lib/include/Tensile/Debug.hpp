@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -82,6 +82,8 @@ namespace Tensile
 
         int getGridbasedTopSols() const;
 
+        bool gridBasedKDTree() const;
+
     private:
         friend LazySingleton<Debug>;
 
@@ -95,6 +97,7 @@ namespace Tensile
         std::string m_metric              = "";
         int         m_gridbasedTopSols    = 1;
         bool        m_benchmark           = false;
+        bool        m_gridbasedKdTree     = false;
 
         Debug();
     };

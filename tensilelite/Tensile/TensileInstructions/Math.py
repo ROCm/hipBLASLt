@@ -362,9 +362,9 @@ def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: Registe
         module.add(VMovB32(dst=vgpr(tmpVgpr1), src=0, comment=rComment))
     SMovBX = SMovB64 if wavewidth == 64 else SMovB32
     module.add(SMovBX(dst=EXEC(), src=-1, comment=dComment))
-    module.add(VReadfirstlaneB32(dst=sgpr(qReg), src=vgpr(tmpVgpr0)))
+    module.add(VReadfirstlaneB32(dst=sgpr(qReg), src=vgpr(tmpVgpr0), comment="quotient"))
     if doRemainder:
-        module.add(VReadfirstlaneB32(dst=sgpr(rReg), src=vgpr(tmpVgpr1)))
+        module.add(VReadfirstlaneB32(dst=sgpr(rReg), src=vgpr(tmpVgpr1), comment="remainder"))
     return module
 
 ########################################

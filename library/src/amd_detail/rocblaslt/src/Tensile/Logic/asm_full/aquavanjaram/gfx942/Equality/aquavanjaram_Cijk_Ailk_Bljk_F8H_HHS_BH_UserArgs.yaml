@@ -8768,8 +8768,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -9025,8 +9025,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -9282,8 +9282,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -9539,8 +9539,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -9796,8 +9796,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -10053,8 +10053,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -10310,8 +10310,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -10568,8 +10568,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -10825,8 +10825,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -11083,8 +11083,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -11342,8 +11342,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -11601,8 +11601,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -11860,8 +11860,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -12119,8 +12119,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -12378,8 +12378,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -12637,8 +12637,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -12896,8 +12896,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -13155,8 +13155,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -13415,8 +13415,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -13435,7 +13435,7 @@
     SubGroup1: 16
     SubGroupA: 4
     SubGroupB: 16
-    SuppressNoLoadLoop: false  
+    SuppressNoLoadLoop: false
     ThreadTile: [1, 1]
     ThreadTile0: 4
     ThreadTile1: 1
@@ -13675,8 +13675,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3

@@ -132,7 +132,7 @@ else()
 
     #Set the AMDGPU_TARGETS with backward compatiblity
     rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-        TARGETS "gfx90a:xnack+;gfx90a:xnack-;gfx940;gfx941;gfx942;gfx1100;gfx1101"
+        TARGETS "gfx90a:xnack+;gfx90a:xnack-;gfx940;gfx941;gfx942;gfx1100;gfx1101;;gfx1200;gfx1201"
     )
 
     if (AMDGPU_TARGETS)
@@ -268,6 +268,8 @@ if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
     endif()
   elseif(CLIENTS_OS STREQUAL "ubuntu" AND CLIENTS_OS_VERSION VERSION_GREATER_EQUAL "20.04")
     set(GFORTRAN_DEB "libgfortran5")
+  elseif(CLIENTS_OS STREQUAL "mariner")
+    set(GFORTRAN_RPM "gfortran")
   endif()
 
   set( BUILD_CLIENTS ON )

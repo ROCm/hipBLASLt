@@ -217,14 +217,14 @@ class ProblemType:
         if 'Gradient' in d:
             rv.useGradient = d["Gradient"]
 
-        rv.useScaleAB = False
+        rv.useScaleAB = ""
         if 'UseScaleAB' in d:
             rv.useScaleAB = d['UseScaleAB']
         rv.useScaleCD = False
         if 'UseScaleCD' in d:
             rv.useScaleCD = d['UseScaleCD']
 
-        rv.useScaleAlphaVec = False
+        rv.useScaleAlphaVec = 0
         if 'UseScaleAlphaVec' in d:
             rv.useScaleAlphaVec = d['UseScaleAlphaVec']
 
@@ -565,14 +565,16 @@ class SizeMapping:
             setattr(self, key, value)
 
 class InternalArgsSupport:
-    StateKeys = ['gsu',
+    StateKeys = ['version',
+                 'gsu',
                  'wgm',
                  'staggerU',
                  'useUniversalArgs']
 
     @classmethod
     def FromOriginalState(cls, d):
-        return cls(gsu = d['InternalSupportParams']['SupportUserGSU'],
+        return cls(version = d['InternalSupportParams']['KernArgsVersion'],
+                   gsu = d['InternalSupportParams']['SupportUserGSU'],
                    wgm = d['InternalSupportParams']['SupportCustomWGM'],
                    staggerU = d['InternalSupportParams']['SupportCustomStaggerU'],
                    useUniversalArgs = d['InternalSupportParams']['UseUniversalArgs'])

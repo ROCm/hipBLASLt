@@ -1,5 +1,5 @@
 TestParameters:
-  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102] # not supported by arch
+  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102, skip-gfx1200, skip-gfx1201] # not supported by arch
 
 GlobalParameters:
   NumElementsToValidate: -1
@@ -17,6 +17,8 @@ GlobalParameters:
   DataInitTypeAlpha: 1
   DataInitTypeBeta: 1
   DataInitTypeBias: 21
+  DataInitTypeScaleA: 3
+  DataInitTypeScaleB: 3
   DataInitTypeScaleAlphaVec: 21
   NumElementsToValidate: -1
   BoundsCheck: 2
@@ -37,9 +39,9 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [s]
     - # BenchmarkProblemSizeGroup - Standard
@@ -109,9 +111,9 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [s]
     - # BenchmarkProblemSizeGroup - Standard
@@ -171,9 +173,9 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [s]
     - # BenchmarkProblemSizeGroup - Standard
@@ -216,6 +218,64 @@ BenchmarkProblems:
           - Exact: [127,   128, 1, 640]
           - Exact: [128,   128, 1, 640]
           - Exact: [129,   128, 1, 640]
+        - BiasTypeArgs: ['s']
+        - ActivationArgs:
+          - [Enum: none]
+
+  ########################################
+  # F8BS-TN
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: f8
+      DestDataType: b
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 1
+      TransposeB: 0
+      UseBeta: True
+      Batched: True
+      BiasDataTypeList: [s]
+      UseBias: 1
+      UseE: False
+      Activation: True
+      UseScaleAB: "Vector"
+      UseScaleAlphaVec: 1
+      # SupportUserArgs: True
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16,16,32,1,1,4,4,1,1 ]
+        - AssertFree0ElementMultiple: [1]
+        - DepthU: [32]
+        - ScheduleIterAlg: [3]
+        - InnerUnroll: [1]
+        - ExpandPointerSwap: [1]
+        - TransposeLDS: [1]
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - StaggerU: [4]
+        - WaveSeparateGlobalReadB: [1]
+        - 1LDSBuffer: [-1]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [-1]
+        - VectorWidthA: [4]
+        - VectorWidthB: [4]
+        - StoreVectorWidth: [4]
+        - SourceSwap: [1]
+        - NumElementsPerBatchStore: [2]
+        - GlobalSplitU: [1, 2]
+        - PreloadKernArgs: [1]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [ 2048, 16, 1, 1024 ]
+          - Exact: [ 2050, 16, 1, 1024 ]
         - BiasTypeArgs: ['s']
         - ActivationArgs:
           - [Enum: none]

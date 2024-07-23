@@ -176,25 +176,25 @@ class PackData_INT8(PackData):
             if vi%4 == 3:
                 d = destIdx + vi//4
                 for i in reversed(range(0, 4)):
-                    module.add(VSaturateCastInt(sumIdxV-i, tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=(i%4 == 3)))
+                    module.add(VSaturateCastInt(vgpr(formatting(sumIdxV-i, inputPrefix, prefixOffset)), tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=(i%4 == 3)))
                 module.add(VLShiftLeftB16(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), shiftHex=8, src=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset))))
                 module.add(VLShiftLeftB16(dst=vgpr(formatting(sumIdxV-0, inputPrefix, prefixOffset)), shiftHex=8, src=vgpr(formatting(sumIdxV-0, inputPrefix, prefixOffset))))
                 module.add(VOrB32(dst=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), \
                            src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD) if not ti.getArchCaps()["NoSDWA"] else None))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
                 module.add(VOrB32(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
                            src1=vgpr(formatVgpr), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD) if not ti.getArchCaps()["NoSDWA"] else None))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
                 module.add(VOrB32(dst=vgpr(d), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.WORD_0, src1_sel=SelectBit.DWORD)))
+                                              src0_sel=SelectBit.WORD_0, src1_sel=SelectBit.DWORD) if not ti.getArchCaps()["NoSDWA"] else None))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
         # Left
@@ -205,16 +205,16 @@ class PackData_INT8(PackData):
 
             if vi%2 == 1:
                 for i in reversed(range(0, 2)):
-                    module.add(VSaturateCastInt(sumIdxV-i, tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=(i%2 == 1)))
-                module.add(VLShiftLeftB16(dst=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset)), shiftHex=8, src=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset))))
+                    module.add(VSaturateCastInt(vgpr(formatting(sumIdxV-i, inputPrefix, prefixOffset)), tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=(i%2 == 1)))
+                module.add(VLShiftLeftB16(dst=vgpr(formatVgpr), shiftHex=8, src=vgpr(formatVgpr)))
                 module.add(VOrB32(dst=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
-                           src1=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset)), \
+                           src1=vgpr(formatVgpr), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD) if not ti.getArchCaps()["NoSDWA"] else None))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
             elif vi + 1 >= gwvw:
-                module.add(VSaturateCastInt(sumIdxV, tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=True))
+                module.add(VSaturateCastInt(vgpr(formatVgpr), tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=True))
         return module
 
 # Cvt is outside of this component, this is just a wrapper for ComputeDataType == float

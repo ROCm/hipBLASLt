@@ -62,10 +62,9 @@ public:
                   double                      gflops,
                   double                      gbytes,
                   double                      cpu_us,
-                  double                      norm1,
-                  double                      norm2,
-                  double                      norm3,
-                  double                      norm4)
+                  double                      norm,
+                  double                      atol,
+                  double                      rtol)
     {
         // requires enablement for frequency logging
         ArgumentModel_log_frequencies(name_line, val_line);
@@ -91,20 +90,20 @@ public:
         if(gflops != ArgumentLogging::NA_value)
         {
             name_line << ",hipblaslt-Gflops";
-            val_line << ", " << hipblaslt_gflops;
+            val_line << "," << hipblaslt_gflops;
         }
 
         if(gbytes != ArgumentLogging::NA_value)
         {
             // GB/s not usually reported for non-memory bound functions
             name_line << ",hipblaslt-GB/s";
-            val_line << ", " << hipblaslt_GBps;
+            val_line << "," << hipblaslt_GBps;
         }
 
         name_line << ",us";
-        val_line << ", " << gpu_us;
+        val_line << "," << gpu_us;
 
-        if(arg.unit_check || arg.norm_check)
+        if(arg.unit_check || arg.norm_check || arg.allclose_check)
         {
             if(cpu_us != ArgumentLogging::NA_value)
             {
@@ -120,25 +119,29 @@ public:
             }
             if(arg.norm_check)
             {
-                if(norm1 != ArgumentLogging::NA_value)
+                if(norm != ArgumentLogging::NA_value)
                 {
-                    name_line << ",norm_error_1";
-                    val_line << "," << norm1;
+                    name_line << ",norm_error";
+                    val_line << "," << norm;
                 }
-                if(norm2 != ArgumentLogging::NA_value)
+            }
+            if(arg.allclose_check)
+            {
+                if(atol != ArgumentLogging::NA_value)
                 {
-                    name_line << ",norm_error_2";
-                    val_line << "," << norm2;
+                    name_line << ",atol";
+                    if(atol == 1) // atol == init value
+                        val_line << "," << "failed";
+                    else
+                        val_line << "," << atol;
                 }
-                if(norm3 != ArgumentLogging::NA_value)
+                if(rtol != ArgumentLogging::NA_value)
                 {
-                    name_line << ",norm_error_3";
-                    val_line << "," << norm3;
-                }
-                if(norm4 != ArgumentLogging::NA_value)
-                {
-                    name_line << ",norm_error_4";
-                    val_line << "," << norm4;
+                    name_line << ",rtol";
+                    if(rtol == 1) // rtol == init value
+                        val_line << "," << "failed";
+                    else
+                        val_line << "," << rtol;
                 }
             }
         }
@@ -158,15 +161,14 @@ public:
                   double                      gflops,
                   double                      gpu_bytes = ArgumentLogging::NA_value,
                   double                      cpu_us    = ArgumentLogging::NA_value,
-                  double                      norm1     = ArgumentLogging::NA_value,
-                  double                      norm2     = ArgumentLogging::NA_value,
-                  double                      norm3     = ArgumentLogging::NA_value,
-                  double                      norm4     = ArgumentLogging::NA_value)
+                  double                      norm      = ArgumentLogging::NA_value,
+                  double                      atol      = ArgumentLogging::NA_value,
+                  double                      rtol      = ArgumentLogging::NA_value)
     {
         hipblaslt_internal_ostream name_list;
         hipblaslt_internal_ostream value_list;
 
-        name_list << "[" << index << "]";
+        name_list << "[" << index << "]:";
         value_list << "    ";
 
         if(ArgumentModel_get_log_function_name())
@@ -206,10 +208,9 @@ public:
                      gflops,
                      gpu_bytes,
                      cpu_us,
-                     norm1,
-                     norm2,
-                     norm3,
-                     norm4);
+                     norm,
+                     atol,
+                     rtol);
 
         if(solution_index > -1)
         {

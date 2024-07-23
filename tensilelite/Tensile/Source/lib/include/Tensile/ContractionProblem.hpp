@@ -78,15 +78,16 @@ namespace Tensile
             return m_biasType;
         }
 
-        void setBiasDim(int biasDim)
+        void setFactorDim(int factorDim)
         {
-            m_biasDim = biasDim;
+            m_factorDim = factorDim;
         }
 
-        int biasDim() const
+        int factorDim() const
         {
-            return m_biasDim;
+            return m_factorDim;
         }
+
         void setActivationEnum(ActivationType activationEnum)
         {
             m_activationType = activationEnum;
@@ -106,7 +107,7 @@ namespace Tensile
         uint8_t        m_gsu            = 0; // default value
         uint8_t        m_wgm            = 0; // default value
         DataType       m_biasType       = DataType::None;
-        int            m_biasDim        = 0;
+        int            m_factorDim      = 0;
         ActivationType m_activationType = ActivationType::None;
     };
 
@@ -591,7 +592,7 @@ namespace Tensile
             m_useBias = useBias;
         }
 
-        void setUseScaleAB(bool useScaleAB)
+        void setUseScaleAB(std::string useScaleAB)
         {
             m_useScaleAB = useScaleAB;
         }
@@ -601,7 +602,7 @@ namespace Tensile
             m_useScaleCD = useScaleCD;
         }
 
-        void setUseScaleAlphaVec(bool useScaleAlphaVec)
+        void setUseScaleAlphaVec(int useScaleAlphaVec)
         {
             m_useScaleAlphaVec = useScaleAlphaVec;
         }
@@ -616,7 +617,7 @@ namespace Tensile
             return m_useBias;
         }
 
-        bool useScaleAB() const
+        std::string useScaleAB() const
         {
             return m_useScaleAB;
         }
@@ -626,7 +627,7 @@ namespace Tensile
             return m_useScaleCD;
         }
 
-        bool useScaleAlphaVec() const
+        int useScaleAlphaVec() const
         {
             return m_useScaleAlphaVec;
         }
@@ -648,12 +649,12 @@ namespace Tensile
         void setBias(DataType                       type,
                      size_t                         length,
                      size_t                         stride,
-                     bool                           isOutput = false,
-                     ContractionProblemGemm::TENSOR src      = ContractionProblemGemm::TENSOR::D,
-                     int                            biasDim  = 0)
+                     bool                           isOutput  = false,
+                     ContractionProblemGemm::TENSOR src       = ContractionProblemGemm::TENSOR::D,
+                     int                            factorDim = 0)
         {
             setParams().setBiasEnum(type);
-            setParams().setBiasDim(biasDim);
+            setParams().setFactorDim(factorDim);
             m_biasSrc = src;
             if(type != DataType::None && m_useBias)
             {
@@ -692,23 +693,23 @@ namespace Tensile
             return m_biasSrc;
         }
 
-        void setScaleA(DataType type)
+        void setScaleA(DataType type, size_t length)
         {
             m_scaleAType = type;
-            if(type != DataType::None && m_useScaleAB)
+            if(type != DataType::None && !m_useScaleAB.empty())
             {
                 m_tensors[ContractionProblemGemm::TENSOR::SCALEA]
-                    = {"scaleA", m_scaleAType, {1}, {1, 1}};
+                    = {"scaleA", m_scaleAType, {length}, {1, length}};
             }
         }
 
-        void setScaleB(DataType type)
+        void setScaleB(DataType type, size_t length)
         {
             m_scaleBType = type;
-            if(type != DataType::None && m_useScaleAB)
+            if(type != DataType::None && !m_useScaleAB.empty())
             {
                 m_tensors[ContractionProblemGemm::TENSOR::SCALEB]
-                    = {"scaleB", m_scaleBType, {1}, {1, 1}};
+                    = {"scaleB", m_scaleBType, {length}, {1, length}};
             }
         }
 
@@ -732,11 +733,12 @@ namespace Tensile
             }
         }
 
-        void setScaleAlphaVec(DataType type, size_t length)
+        void setScaleAlphaVec(DataType type, size_t length, int factorDim = 0)
         {
             m_scaleAlphaVecType = type;
             if(type != DataType::None && m_useScaleAlphaVec)
             {
+                setParams().setFactorDim(factorDim);
                 m_tensors[ContractionProblemGemm::TENSOR::SCALEALPHAVEC]
                     = {"scaleAlphaVec", m_scaleAlphaVecType, {length}, {1, length}};
             }
@@ -1091,9 +1093,9 @@ namespace Tensile
         bool           m_useGradient             = false;
         bool           m_useE                    = false;
         int            m_useBias                 = 0;
-        bool           m_useScaleAB              = false;
+        std::string    m_useScaleAB              = "";
         bool           m_useScaleCD              = false;
-        bool           m_useScaleAlphaVec        = false;
+        int            m_useScaleAlphaVec        = 0;
         ActivationType m_activationType          = ActivationType::None;
         bool           m_activationNoGuard       = false;
         int            m_sparse                  = 0;

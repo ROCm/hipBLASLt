@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,94 @@
 ################################################################################
 
 from ..TensileInstructions import Module, SMulI32, VAddLShiftLeftU32, VAddU32, VMulLOU32, \
-                            VMovB32, staticMultiply, vectorStaticDivide, \
-                            vectorStaticRemainder, RegisterPoolResource, vgpr, sgpr, log2
+                            VMovB32, VAddCOU32, staticMultiply, vectorStaticDivide, \
+                            vectorStaticRemainder, RegisterPoolResource, vgpr, sgpr, log2, \
+                            vectorStaticDivideAndRemainder
 from ..Component import ComputeStoreVgprs
 from ..Utils import DataDirection
+
+class ComputeStoreVgprsVALU(ComputeStoreVgprs):
+    kernel = {"EnableMatrixInstruction": False,
+              "SourceSwap": False}
+
+    """
+    computeStoreVgprs
+    Compute workitem/TT offsets in VGPRS
+    and coord0/coord1
+    tid0Scale specifies the number of output elements in 0/coalesced dim
+    that should be written by each work-item in each batch element.
+    """
+    def __call__(self, writer, kernel, divisor, tid0Scale, tid1Scale):
+
+        module = Module("ComputeStoreVgprsVALU")
+
+        # tmpS0 = writer.getTmpSgpr(3).idx()
+        # tmpS1 = tmpS0+1
+        # wgMT1 = tmpS0+2
+
+        # if writer.prefetchAcrossPersistent:
+        #     wg0="PrevWorkGroup0"
+        #     wg1="PrevWorkGroup1"
+        # else:
+        wg0="WorkGroup0"
+        wg1="WorkGroup1"
+
+        # tid0, tid1: element offsets from the start of macroTile in 0 and 1 direction
+        # These will live for entire GlobalWrite loop - allocate before tmps
+        # to avoid fragmentation
+        tid0 = writer.vgprPool.checkOut(1, "tid0")
+        tid1 = writer.vgprPool.checkOut(1, "tid1")
+
+        packedC1 = kernel["PackedC1IndicesX"]
+
+        if kernel["BufferStore"]:
+            writer.vgprs.cinRowPtr  = writer.vgprPool.checkOut(1, "cinRowPtr")
+            writer.vgprs.coutRowPtrD = writer.vgprPool.checkOut(1, "coutRowPtrD")
+
+        with writer.allocTmpSgpr(3) as tmpSgprInfo:
+            tmpS0 = tmpSgprInfo.idx
+            tmpS1 = tmpS0+1
+            wgMT1 = tmpS0+2
+            module.add(vectorStaticDivideAndRemainder(tid1, tid0, "Serial", divisor, tmpS0))
+            module.add(staticMultiply(vgpr(tid0), vgpr(tid0), tid0Scale, sgpr(tmpS1)))
+            if tid1Scale != 1:
+                module.add(staticMultiply(vgpr(tid1), vgpr(tid1), tid1Scale, sgpr(tmpS1)))
+
+            if kernel["BufferStore"]:
+                # compute rowStart- this is just tid1 scaled by appropriate stride.
+                # rowPtr is offset from the beginning of the tile/SRD not the tensor base
+                # when incremented, it moves in units of (col) Stride to get to a new row
+                # it is used for address computation, not element range detection.
+                # rowPtr is in the element space and must be scaled by bpe if bytes are required.
+                # Do this before code below which overwries the tid1:
+                # TODO-packed
+                # Eventually need to modify if supporting packed coord1, to start just assert if that case is detected
+                #--
+                strideC1 = "StrideC%s" % (writer.states.indexChars[packedC1[0]])
+                module.add(VMulLOU32(dst=vgpr(writer.vgprs.cinRowPtr), src0=vgpr(tid1), src1=sgpr(strideC1), comment="rowStart vgpr"))
+                strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
+                module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrD), src0=vgpr(tid1), src1=sgpr(strideD1), comment="rowStart vgpr"))
+                module.addSpaceLine()
+
+            # Compute coord0 and coord1
+            # These are element offsets from the beginning of the tensor.
+            # These are 'flattened' meaning they span packed tensor dims.
+            # They need to be preserved so can use in comparisons against
+            # product-of-packed sizes to determine OOB cases. (for Edge tiles only)
+            module.add(SMulI32(dst=sgpr(tmpS0), src0=hex(kernel["MacroTile0"]), src1=sgpr(wg0), comment="%s = wg0*MT0"%sgpr(tmpS0)))
+
+            # coord = tid*VW + workgroup offset
+            module.add(VAddCOU32(dst=vgpr(tid0), dst1="vcc", src0=sgpr(tmpS0), src1=vgpr(tid0), comment="coord0 = tid0*VW + wg0*MT0"))
+            module.add(SMulI32(dst=sgpr(wgMT1), src0=hex(kernel["MacroTile1"]), src1=sgpr(wg1), comment="<- wg1*MT1"))
+            module.add(VAddCOU32(dst=vgpr(tid1), dst1="vcc", src0=sgpr(wgMT1), src1=vgpr(tid1), comment="coord1 = tid1*VW + wg1*MT1"))
+
+            if len(packedC1) > 1:
+                module.add(writer.extractPackedCoord1ToRowStart(kernel, packedC1, tid1, 'D'))
+
+            writer.vgprs.coord0 = tid0
+            writer.vgprs.coord1 = tid1
+
+        return module
 
 class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
     kernel = {"EnableMatrixInstruction": True,

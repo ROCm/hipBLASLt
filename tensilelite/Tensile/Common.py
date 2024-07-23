@@ -210,7 +210,7 @@ globalParameters["MergeFiles"] = True             # F=store every solution and k
 globalParameters["NumMergedFiles"] = 1            # The number of files that kernels should be split between when merging
 
 globalParameters["MaxFileName"] = 64              # If a file name would be longer than this, shorten it with a hash.
-globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2)] # assembly kernels writer supports these architectures
+globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2), (12,0,0), (12,0,1)] # assembly kernels writer supports these architectures
 
 globalParameters["GenerateManifestAndExit"] = False               # Output manifest file with list of expected library objects and exit
 globalParameters["NewClient"] = 2                                 # Old client deprecated: NewClient must be set to 2.
@@ -290,7 +290,8 @@ architectureMap = {
   'gfx941':'aquavanjaram', 'gfx941:xnack+':'aquavanjaram', 'gfx941:xnack-':'aquavanjaram',
   'gfx942':'aquavanjaram', 'gfx942:xnack+':'aquavanjaram', 'gfx942:xnack-':'aquavanjaram',
   'gfx1010':'navi10', 'gfx1011':'navi12', 'gfx1012':'navi14', 'gfx1030':'navi21',
-  'gfx1100':'navi31', 'gfx1101':'navi32', 'gfx1102':'navi33'
+  'gfx1100':'navi31', 'gfx1101':'navi32', 'gfx1102':'navi33',
+  'gfx1200':'gfx1200', 'gfx1201':'gfx1201',
 }
 
 def getArchitectureName(gfxName):
@@ -314,6 +315,7 @@ internalParameters = {
 
 # These parameters are used in ContractionSolutions for user arguments support.
 defaultInternalSupportParams = {
+  "KernArgsVersion": 1,
   # Information about user input internal kernel argument support
   # Change this to False if the CustomKernel does not support.
   "SupportUserGSU": True,
@@ -418,7 +420,7 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
                    ('H','H','S'), ('H','S','S'), \
                    ('B','B','S'), ('B','S','S'), ('B','H','S'), \
                    ('I8','I','I'), ('4xi8','I','I'), ('I8','I8','I'), \
-                   ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), \
+                   ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), ('I8', 'B', 'S'), \
                    ('F8','S','S'), ('B8','S','S'), \
                    ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
                    ('F8','H','S'), ('B8','H','S'), \
@@ -434,7 +436,7 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
 # *_TiToTc_BH*.yaml where Ti, To, and Tc are the data types of A/B, C/D, and computation, respectively.
 # The name of the library logic files for non-HPA (HPA=F) types is: *_TiB*.yaml.
 HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('B','H','S'), ('I8','I','I'), \
-             ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), \
+             ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), ('I8', 'B', 'S'),\
              ('F8','S','S'), ('B8','S','S'), ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
              ('F8','H','S'), ('B8','H','S'), ('F8B8','H','S'), ('B8F8','H','S'), \
              ('H','F8','S'), ('F8','B','S'), ('F8B8','B','S'), \
@@ -475,6 +477,10 @@ validParameters = {
     #
     "WaveSeparateGlobalReadA":    [ 0, 1, 2 ],
     "WaveSeparateGlobalReadB":    [ 0, 1, 2 ],
+
+    # Add an unrolled loop and NGLL loop with swapped GRA and GRB order.
+    # which may change the tlb thrashing behavior.
+    "UnrollLoopSwapGlobalReadOrder": [0, 1],
 
     # PrefetchGlobalRead = 1:
     # Requires 2X LDS space, and VGPRs for buffering data on way into LDS
@@ -731,7 +737,7 @@ validParameters = {
     # StaggerUStride will be internally increased so it is an integer multiple of DepthU*BpeAB.
     # (the implementation requires this - the unroll iteration accesses data in steps of
     # DepthU*BPE
-    "StaggerUStride":               [16,32,64,128,256,512,1024,2048],
+    "StaggerUStride":               [-1,16,32,64,128,256,512,1024,2048],
 
     # How the tile assignment (wg0, wg1, wg2) controls the initial StaggerU offset:
     # 0: Use wg0
@@ -742,6 +748,10 @@ validParameters = {
     #    to a different bank since all workgroups still start at same point.
     "StaggerUMapping":       [0,1,2,3,4],
 
+    # GSU Workgroup Coalesced Ordering
+    # False: {(wg0,wg1,wg2,wgn)|(wg0,wg1,wg2,wgn)|...|(wg0,wg1,wg2,wgn)}
+    # True:  {(wg0,wg0,wg0)|(wg1,wg1,wg1)|(wg2,wg2,wg2)|...|(wgn,wgn,wgn)}
+    "GlobalSplitUCoalesced":        [False, True],
 
     # 0=don't use magic div (source only)
     # 1=magic div alg #1.  Slightly faster but limited range (if magic number is 2^32)
@@ -772,10 +782,12 @@ validParameters = {
     #
     # Formula for wgSerial:
     # wgSerial = wg0 + (wg1 % WorkGroupMapping) * nwg0
-    "WorkGroupMapping":           list(range(0,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
+    "WorkGroupMapping":           list(range(-1024,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
+    "WorkGroupMappingXCC":        list(range(1,1024+1)),  # change a workgroup's id so that contiguous workgroup can map on same XCC
+    "WorkGroupMappingXCCGroup":   list(range(0,1024+1)),  # change a workgroup's id so that contiguous workgroup can map on same XCC, remap workgroup in a group of WGMXCCG.
+
     "MaxOccupancy":               list(range(1, 40+1)),       # wg / CU; if cache thrashing is hurting performance, this allocates extra lds to artificially limit occupancy
     "WorkGroup":                  validWorkGroups,      # ( wg0 x wg1 x LocalSplitU ) dimensions of the workgroup which will operate on a tile and share lds
-    "WorkGroupMappingXCC":        list(range(1,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
 
     #ThreadTile: ( tt0 x tt1 ) dimensions of the C tile that each thread works on,
     # TT=4 and VW=4 means a thread will work on a tight 4x4 tile of C, where VW=1 means the tile will work on 16 spread out values
@@ -1057,6 +1069,7 @@ defaultBenchmarkCommonParameters = [
     {"WaveSeparateGlobalReadA":   [ 0 ] },
     {"WaveSeparateGlobalReadB":   [ 0 ] },
     {"WaveSeparateGlobalReadMetadata":   [ 0 ] },
+    {"UnrollLoopSwapGlobalReadOrder":    [ 0 ] },
     {"PrefetchGlobalRead":        [ 1 ] },
     {"PrefetchLocalRead":         [ 1 ] },
     {"ClusterLocalRead":          [ 1 ] },
@@ -1089,12 +1102,14 @@ defaultBenchmarkCommonParameters = [
     {"MagicDivAlg":               [ 2 ] },
     {"GlobalSplitU":              [ 1 ] },
     {"GlobalSplitUAlgorithm":     [ "MultipleBuffer" ] },
+    {"GlobalSplitUCoalesced":     [ False ] },
     {"Use64bShadowLimit":         [ 1 ] },
     {"NumLoadsCoalescedA":        [ 1 ] },
     {"NumLoadsCoalescedB":        [ 1 ] },
     {"WorkGroup":                 [ [16,16,1]] },
     {"WorkGroupMapping":          [ 8 ] },
     {"WorkGroupMappingXCC":       [ 1 ] },
+    {"WorkGroupMappingXCCGroup":  [ 0 ] },
     {"ThreadTile":                [ [4,4] ] },
     {"WavefrontSize":             [ 64 ]},
     {"MatrixInstruction":         [ [] ] },
@@ -1155,9 +1170,9 @@ defaultProblemType = {
     "Gradient":                 False,            # =True set globalWriteElements to gradient mode
     "UseBias":                  0,                # =1 support bias vector on M direction, =2 support bias vector on N direction, =3 support bias vector on both M,N direction
     "BiasSrc":                  "D",              # This parameter is used in gradient + bias. Support A, B, D.
-    "UseScaleAB":               False,            # =True use scaleA, scaleB
+    "UseScaleAB":               "",               # Support "", "Scalar", and "Vector"
     "UseScaleCD":               False,            # =True use scaleC, scaleD
-    "UseScaleAlphaVec":         False,            # =True use scaleAlpha vector
+    "UseScaleAlphaVec":         0,                # =1 support alpha vector on M direction, =2 support bias vector on N direction, =3 support alpha vector on both M,N direction
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16
     "SilentHighPrecisionAccumulate": False,       # Keep kernel names the same for HPA mode.  Useful for testing.
 

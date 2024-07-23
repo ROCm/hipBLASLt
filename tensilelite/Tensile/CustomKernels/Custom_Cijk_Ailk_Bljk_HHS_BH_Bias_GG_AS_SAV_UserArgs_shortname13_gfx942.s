@@ -56,7 +56,7 @@ custom.config:
       TransposeB: False
       UseBias: 1
       Activation: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBeta: True
       Batched: True
       GroupedGemm:   True
@@ -74,6 +74,7 @@ custom.config:
    AssertFree0ElementMultiple: 4
    AssertSummationElementMultiple: 1
    InternalSupportParams:
+      KernArgsVersion: 0
       SupportUserGSU: False
       SupportCustomWGM: False
       SupportCustomStaggerU: False

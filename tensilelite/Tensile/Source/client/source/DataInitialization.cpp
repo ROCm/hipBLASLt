@@ -658,7 +658,8 @@ namespace Tensile
 
             for(auto const& p : problemFactory.problems())
             {
-                int64_t rotatingSize = 0;
+                int64_t rotatingSize    = 0;
+                int64_t nonRotatingSize = 0;
                 if(auto ptr = dynamic_cast<ContractionProblemGemm const*>(p.get()))
                 {
                     const ContractionProblemGemm& problem = (*ptr);
@@ -676,7 +677,12 @@ namespace Tensile
                             pristine.maxElements, problem.tensors()[i].totalAllocatedElements());
                         if(m_rotatingBuffer)
                         {
-                            rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                            if((i <= ContractionProblemGemm::TENSOR::METADATA)
+                               && (!(i == ContractionProblemGemm::TENSOR::C
+                                     && problem.beta() == 0.0)))
+                            {
+                                rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                            }
                         }
                         if(m_vdata[i].name.empty())
                         {
@@ -697,7 +703,8 @@ namespace Tensile
                         {
                             neededSize += rotatingSize;
                         }
-                        m_rotatingAllocatedSize = std::max(m_rotatingAllocatedSize, neededSize);
+                        m_rotatingAllocatedSize
+                            = std::max(m_rotatingAllocatedSize, neededSize - rotatingSize);
                     }
                     auto constants = problem.constants();
                     for(size_t i = 0; i < constants.size(); i++)
@@ -753,7 +760,12 @@ namespace Tensile
                                 problem.tensors()[i].totalAllocatedElements());
                             if(m_rotatingBuffer)
                             {
-                                rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                                if((i <= ContractionProblemGemm::TENSOR::METADATA)
+                                   && (!(i == ContractionProblemGemm::TENSOR::C
+                                         && problem.beta() == 0.0)))
+                                {
+                                    rotatingSize += problem.tensors()[i].totalAllocatedBytes();
+                                }
                             }
                             if(m_vdata[i].name.empty())
                             {
@@ -796,7 +808,8 @@ namespace Tensile
                         {
                             neededSize += rotatingSize;
                         }
-                        m_rotatingAllocatedSize = std::max(m_rotatingAllocatedSize, neededSize);
+                        m_rotatingAllocatedSize
+                            = std::max(m_rotatingAllocatedSize, neededSize - rotatingSize);
                     }
 
                     // Update maxElements
@@ -1031,6 +1044,25 @@ namespace Tensile
             bool enableGuardPage = (m_curBoundsCheck == BoundsCheckMode::GuardPageFront
                                     || m_curBoundsCheck == BoundsCheckMode::GuardPageBack);
 
+            m_rotatingLargestUnitSize = 0;
+            std::shared_ptr<void> tmpPtr;
+            if(m_rotatingAllocatedSize > 0)
+            {
+                for(auto& it : m_vdata)
+                {
+                    for(auto& p : it.pristine)
+                    {
+                        auto&  pUnit = p.second;
+                        size_t size  = DataTypeInfo::Get(p.first).elementSize * pUnit.maxElements;
+                        m_rotatingLargestUnitSize += size;
+                    }
+                }
+                tmpPtr = allocNewGPUBuffer<void>(
+                    "rotating", m_rotatingAllocatedSize + m_rotatingLargestUnitSize);
+            }
+
+            size_t   offset    = 0;
+            uint32_t tensorIdx = 0;
             for(auto& it : m_vdata)
             {
                 for(auto& p : it.pristine)
@@ -1051,7 +1083,26 @@ namespace Tensile
                             HIP_CHECK_EXC(hipMalloc(&guardPagePtr, pageSize));
                             guardPage.push_back(std::shared_ptr<void>(guardPagePtr, hipFree));
                         }
-                        auto ptr = allocNewGPUBuffer<void>(it.name.c_str(), size);
+                        std::shared_ptr<void> ptr;
+                        if(m_rotatingAllocatedSize)
+                        {
+                            ptr = std::shared_ptr<void>(tmpPtr,
+                                                        (void*)((uint8_t*)tmpPtr.get() + offset));
+                            offset += size;
+                            std::cout << "Tensor index: " << tensorIdx << " offset: " << offset
+                                      << " size: " << size
+                                      << " rotatingAllocatedSize: " << m_rotatingAllocatedSize
+                                      << " rotatingLargestUnitSize: " << m_rotatingLargestUnitSize
+                                      << std::endl;
+                            if(m_rotatingLargestUnitSize < offset)
+                            {
+                                throw std::runtime_error("Out of first allocated size.");
+                            }
+                        }
+                        else
+                        {
+                            ptr = allocNewGPUBuffer<void>(it.name.c_str(), size);
+                        }
                         if(ptr == nullptr)
                         {
                             std::stringstream s;
@@ -1099,6 +1150,7 @@ namespace Tensile
                         pUnit.gpuInput.bad = ptr;
                     }
                 }
+                tensorIdx++;
             }
 
             if(!m_workspacePristine)
@@ -1113,10 +1165,10 @@ namespace Tensile
                 }
                 m_workspacePristine = ptr;
             }
-
             if(m_rotatingAllocatedSize > 0)
             {
-                m_rotatingPointer = allocNewGPUBuffer<void>("rotating", m_rotatingAllocatedSize);
+                m_rotatingPointer = std::shared_ptr<void>(
+                    tmpPtr, (void*)((uint8_t*)tmpPtr.get() + m_rotatingLargestUnitSize));
             }
         }
 
@@ -1665,7 +1717,7 @@ namespace Tensile
             inputs->scaleD        = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALED];
             inputs->scaleAlphaVec = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEALPHAVEC];
             inputs->metadata      = (unsigned char*)ptrs[ContractionProblemGemm::TENSOR::METADATA];
-            inputs->Synchronizer = (void*)ptrs[ContractionProblemGemm::TENSOR::Synchronizer];
+            inputs->Synchronizer  = (void*)ptrs[ContractionProblemGemm::TENSOR::Synchronizer];
 
             inputs->batchA    = (void**)batchPtrs[ContractionProblemGemm::TENSOR::A];
             inputs->batchB    = (void**)batchPtrs[ContractionProblemGemm::TENSOR::B];
@@ -1850,7 +1902,7 @@ namespace Tensile
         }
 
         size_t getRotatingSize(ContractionProblemGemm const& problem,
-                                ContractionInputs const&      inputs)
+                               ContractionInputs const&      inputs)
         {
             size_t rotatingSize = 0;
             if(inputs.a != nullptr)
@@ -1878,6 +1930,16 @@ namespace Tensile
                 rotatingSize
                     += problem.tensors()[ContractionProblemGemm::TENSOR::E].totalAllocatedBytes();
             }
+            if(inputs.scaleA != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::SCALEA]
+                                    .totalAllocatedBytes();
+            }
+            if(inputs.scaleB != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::SCALEB]
+                                    .totalAllocatedBytes();
+            }
             if(inputs.bias != nullptr)
             {
                 rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::BIAS]
@@ -1896,12 +1958,13 @@ namespace Tensile
             return rotatingSize;
         }
 
-        void* copyRotatingInput(const void* src, void* dst, int64_t length, int64_t& dstOffset)
+        void* copyRotatingInput(
+            const void* src, void* dst, int64_t length, int64_t& dstOffset, hipStream_t stream)
         {
             if(src == nullptr)
                 return nullptr;
             void* dstPos = (void*)((uint8_t*)dst + dstOffset);
-            memcpy(dstPos, src, length);
+            HIP_CHECK_EXC(hipMemcpyAsync(dstPos, src, length, hipMemcpyDeviceToDevice, stream));
             dstOffset += length;
             return dstPos;
         }
@@ -1909,58 +1972,80 @@ namespace Tensile
         ContractionInputs createRotatingInput(ContractionProblemGemm const& problem,
                                               ContractionInputs const&      inputs,
                                               void*                         rotatingPtr,
-                                              int64_t&                      offset)
+                                              int64_t&                      offset,
+                                              hipStream_t                   stream)
         {
             ContractionInputs newInputs = inputs;
             newInputs.a                 = copyRotatingInput(
                 newInputs.a,
                 rotatingPtr,
-                problem.tensors()[ContractionProblemGemm::TENSOR::A].totalAllocatedElements(),
-                offset);
+                problem.tensors()[ContractionProblemGemm::TENSOR::A].totalAllocatedBytes(),
+                offset,
+                stream);
             newInputs.b = copyRotatingInput(
                 newInputs.b,
                 rotatingPtr,
-                problem.tensors()[ContractionProblemGemm::TENSOR::B].totalAllocatedElements(),
-                offset);
-            newInputs.c = copyRotatingInput(
-                newInputs.c,
-                rotatingPtr,
-                problem.tensors()[ContractionProblemGemm::TENSOR::C].totalAllocatedElements(),
-                offset);
+                problem.tensors()[ContractionProblemGemm::TENSOR::B].totalAllocatedBytes(),
+                offset,
+                stream);
+            if(problem.beta())
+                newInputs.c = copyRotatingInput(
+                    newInputs.c,
+                    rotatingPtr,
+                    problem.tensors()[ContractionProblemGemm::TENSOR::C].totalAllocatedBytes(),
+                    offset,
+                    stream);
             newInputs.d = copyRotatingInput(
                 newInputs.d,
                 rotatingPtr,
-                problem.tensors()[ContractionProblemGemm::TENSOR::D].totalAllocatedElements(),
-                offset);
+                problem.tensors()[ContractionProblemGemm::TENSOR::D].totalAllocatedBytes(),
+                offset,
+                stream);
             newInputs.e = copyRotatingInput(
                 newInputs.e,
                 rotatingPtr,
-                problem.tensors()[ContractionProblemGemm::TENSOR::E].totalAllocatedElements(),
-                offset);
+                problem.tensors()[ContractionProblemGemm::TENSOR::E].totalAllocatedBytes(),
+                offset,
+                stream);
+            newInputs.scaleA = copyRotatingInput(
+                newInputs.scaleA,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::SCALEA].totalAllocatedBytes(),
+                offset,
+                stream);
+            newInputs.scaleB = copyRotatingInput(
+                newInputs.scaleB,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::SCALEB].totalAllocatedBytes(),
+                offset,
+                stream);
             newInputs.bias = copyRotatingInput(
                 newInputs.bias,
                 rotatingPtr,
-                problem.tensors()[ContractionProblemGemm::TENSOR::BIAS].totalAllocatedElements(),
-                offset);
+                problem.tensors()[ContractionProblemGemm::TENSOR::BIAS].totalAllocatedBytes(),
+                offset,
+                stream);
             newInputs.scaleAlphaVec
                 = copyRotatingInput(newInputs.scaleAlphaVec,
                                     rotatingPtr,
                                     problem.tensors()[ContractionProblemGemm::TENSOR::SCALEALPHAVEC]
                                         .totalAllocatedElements(),
-                                    offset);
+                                    offset,
+                                    stream);
             newInputs.metadata = (unsigned char*)copyRotatingInput(
                 newInputs.metadata,
                 rotatingPtr,
-                problem.tensors()[ContractionProblemGemm::TENSOR::METADATA]
-                    .totalAllocatedElements(),
-                offset);
+                problem.tensors()[ContractionProblemGemm::TENSOR::METADATA].totalAllocatedBytes(),
+                offset,
+                stream);
             return newInputs;
         }
 
         std::vector<std::shared_ptr<ProblemInputs>>
             DataInitialization::prepareRotatingGPUOutput(int32_t maxRotatingBufferNum,
                                                          ContractionProblem const*      problem,
-                                                         std::shared_ptr<ProblemInputs> inputs)
+                                                         std::shared_ptr<ProblemInputs> inputs,
+                                                         hipStream_t                    stream)
         {
             std::vector<std::shared_ptr<ProblemInputs>> inputArr;
             inputArr.push_back(inputs);
@@ -1969,14 +2054,17 @@ namespace Tensile
 
             if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(problem))
             {
-                auto    castInputs  = static_pointer_cast<ContractionInputs>(inputs);
-                size_t rotatingSize = getRotatingSize(*gemmProblem, *castInputs);
+                auto    castInputs   = static_pointer_cast<ContractionInputs>(inputs);
+                size_t  rotatingSize = getRotatingSize(*gemmProblem, *castInputs);
                 int32_t rotatingNum
                     = min(maxRotatingBufferNum, ceil((float)m_rotatingBuffer / rotatingSize))
                       - 1; // Minus the original buffer.
                 int32_t totalRotatingSizeNeeded = rotatingNum * rotatingSize;
                 if(totalRotatingSizeNeeded > m_rotatingAllocatedSize)
                 {
+                    std::cout << "Rotating buffer size: " << m_rotatingAllocatedSize
+                              << " is not enough for rotating buffer size: " << rotatingSize
+                              << " * " << rotatingNum << " = " << totalRotatingSizeNeeded << ".\n";
                     throw std::runtime_error("Insufficient rotating buffer size.");
                 }
                 std::cout << "Rotating buffer set to: " << m_rotatingBuffer
@@ -1985,7 +2073,7 @@ namespace Tensile
                 for(size_t i = 0; i < rotatingNum; i++)
                 {
                     auto newInputs = createRotatingInput(
-                        *gemmProblem, *castInputs, m_rotatingPointer.get(), offset);
+                        *gemmProblem, *castInputs, m_rotatingPointer.get(), offset, stream);
                     inputArr.push_back(static_pointer_cast<ProblemInputs>(
                         std::make_shared<ContractionInputs>(newInputs)));
                 }
@@ -1993,7 +2081,7 @@ namespace Tensile
             else if(auto groupedProblem
                     = dynamic_cast<ContractionProblemGroupedGemm const*>(problem))
             {
-                auto    castInputs  = static_pointer_cast<ContractionGroupedInputs>(inputs);
+                auto   castInputs   = static_pointer_cast<ContractionGroupedInputs>(inputs);
                 size_t rotatingSize = 0;
                 for(size_t i = 0; i < castInputs->grouped.size(); i++)
                 {
@@ -2020,7 +2108,8 @@ namespace Tensile
                         auto newSingleInput = createRotatingInput(groupedProblem->gemms[i],
                                                                   castInputs->grouped[i],
                                                                   m_rotatingPointer.get(),
-                                                                  offset);
+                                                                  offset,
+                                                                  stream);
                         newInputs.grouped.push_back(newSingleInput);
                     }
                     inputArr.push_back(static_pointer_cast<ProblemInputs>(

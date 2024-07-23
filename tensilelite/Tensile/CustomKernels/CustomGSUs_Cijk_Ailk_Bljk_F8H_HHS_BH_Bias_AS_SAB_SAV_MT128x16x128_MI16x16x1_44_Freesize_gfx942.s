@@ -50,7 +50,7 @@ custom.config:
       OperationType: GEMM
       DataTypeA: f8
       DataTypeB: h
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       DataType: h
       DestDataType: h
       ComputeDataType: s
@@ -61,7 +61,7 @@ custom.config:
       Batched: True
       UseBias: 1
       Activation: True
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       SupportUserArgs: False
    MatrixInstruction: [16, 16, 16, 1, 1, 2,1, 4,1]
    1LDSBuffer: 1
@@ -74,7 +74,7 @@ custom.config:
    GlobalReadVectorWidthB: 8
    AssertFree0ElementMultiple: 2
    AssertSummationElementMultiple: 1
-   InternalSupportParams: {SupportCustomWGM: True, SupportUserGSU: True, SupportCustomStaggerU: True, UseUniversalArgs: False}
+   InternalSupportParams: {KernArgsVersion: 0, SupportCustomWGM: True, SupportUserGSU: True, SupportCustomStaggerU: True, UseUniversalArgs: False}
    PreloadKernArgs: 1
    NoReject: 1
 amdhsa.version:

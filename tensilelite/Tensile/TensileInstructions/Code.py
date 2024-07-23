@@ -472,13 +472,13 @@ class BitfieldUnion(ctypes.Union):
     def desc(self):
         return "hex: {}\n".format(self) + self.fields.desc()
 
-class SrdUpperFields9XX(BitfieldStructure):
+class SrdUpperFields9XX(BitfieldStructure): #0x00020000
     _fields_ = [("dst_sel_x",      ctypes.c_uint, 3),
                 ("dst_sel_y",      ctypes.c_uint, 3),
                 ("dst_sel_z",      ctypes.c_uint, 3),
                 ("dst_sel_w",      ctypes.c_uint, 3),
                 ("num_format",     ctypes.c_uint, 3),
-                ("data_format",    ctypes.c_uint, 4),
+                ("data_format",    ctypes.c_uint, 4),#111-113
                 ("user_vm_enable", ctypes.c_uint, 1),
                 ("user_vm_mode",   ctypes.c_uint, 1),
                 ("index_stride",   ctypes.c_uint, 2),
@@ -530,20 +530,20 @@ class SrdUpperValue10XX(BitfieldUnion):
         return cls(fields=SrdUpperFields10XX.default())
 
 
-class SrdUpperFields11XX(BitfieldStructure):
+class SrdUpperFields11XX(BitfieldStructure): #0x31004000
     _fields_ = [("dst_sel_x",      ctypes.c_uint, 3),
                 ("dst_sel_y",      ctypes.c_uint, 3),
                 ("dst_sel_z",      ctypes.c_uint, 3),
                 ("dst_sel_w",      ctypes.c_uint, 3),
-                ("format",         ctypes.c_uint, 7),
+                ("format",         ctypes.c_uint, 7), #108-114
                 ("_unusedA",       ctypes.c_uint, 2),
-                ("index_stride",   ctypes.c_uint, 2),
-                ("add_tid_enable", ctypes.c_uint, 1),
-                ("resource_level", ctypes.c_uint, 1),
-                ("_unusedB",       ctypes.c_uint, 1),
-                ("LLC_noalloc",    ctypes.c_uint, 2),
-                ("oob_select",     ctypes.c_uint, 2),
-                ("type",           ctypes.c_uint, 2)]
+                ("index_stride",   ctypes.c_uint, 2), #117-118
+                ("add_tid_enable", ctypes.c_uint, 1), #119
+                ("resource_level", ctypes.c_uint, 1), #120
+                ("_unusedB",       ctypes.c_uint, 1), #121
+                ("LLC_noalloc",    ctypes.c_uint, 2), #122-123
+                ("oob_select",     ctypes.c_uint, 2), #124-125
+                ("type",           ctypes.c_uint, 2)] #126-127
 
     @classmethod
     def default(cls):
@@ -558,8 +558,38 @@ class SrdUpperValue11XX(BitfieldUnion):
     def default(cls):
         return cls(fields=SrdUpperFields11XX.default())
 
+class SrdUpperFields12XX(BitfieldStructure): #0x10020000
+    _fields_ = [("dst_sel_x",      ctypes.c_uint, 3), #96-
+                ("dst_sel_y",      ctypes.c_uint, 3),
+                ("dst_sel_z",      ctypes.c_uint, 3),
+                ("dst_sel_w",      ctypes.c_uint, 3),
+                ("format",         ctypes.c_uint, 7), #108-114
+                ("_unusedA",       ctypes.c_uint, 2),
+                ("index_stride",   ctypes.c_uint, 2), #117-118
+                ("add_tid_enable", ctypes.c_uint, 1), #119
+                ("resource_level", ctypes.c_uint, 1), #120
+                ("_unusedB",       ctypes.c_uint, 3), #121-123
+                #("LLC_noalloc",    ctypes.c_uint, 2), #122-123
+                ("oob_select",     ctypes.c_uint, 2), #124-125
+                ("type",           ctypes.c_uint, 2)] #126-127
+
+    @classmethod
+    def default(cls):
+        return cls(format         = 32,
+                   #resource_level = 1,
+                   oob_select     = 1)
+
+class SrdUpperValue12XX(BitfieldUnion):
+    _fields_ = [("fields", SrdUpperFields12XX), ("value", ctypes.c_uint32)]
+
+    @classmethod
+    def default(cls):
+        return cls(fields=SrdUpperFields12XX.default())
+
 def SrdUpperValue(isa):
-    if isa[0] == 11:
+    if isa[0] == 12:
+        return SrdUpperValue12XX.default()
+    elif isa[0] == 11:
         return SrdUpperValue11XX.default()
     elif isa[0] == 10:
         return SrdUpperValue10XX.default()
@@ -704,8 +734,9 @@ class _SignatureKernelDescriptor(Item):
         return ostream
 
 class SignatureCodeMeta(Item):
-    def __init__(self, name, groupSegSize, flatWgSize, codeObjectVersion, totalVgprs = 0, totalSgprs=0):
+    def __init__(self, name, kernArgsVersion, groupSegSize, flatWgSize, codeObjectVersion, totalVgprs = 0, totalSgprs=0):
         super().__init__(name)
+        self.kernArgsVersion = kernArgsVersion
         self.groupSegSize = groupSegSize
         self.flatWgSize = flatWgSize
         self.codeObjectVersion = codeObjectVersion
@@ -722,6 +753,9 @@ class SignatureCodeMeta(Item):
         kStr = ""
         kStr += ".amdgpu_metadata\n"
         kStr += "---\n"
+        kStr += "custom.config:\n"
+        kStr += "  InternalSupportParams:\n"
+        kStr += "    KernArgsVersion: %d\n"%self.kernArgsVersion
         kStr += "amdhsa.version:\n"
         kStr += "  - 1\n"
         if self.codeObjectVersion == 4:
@@ -765,7 +799,7 @@ class SignatureCodeMeta(Item):
         return ostream
 
 class SignatureBase(Item):
-    def __init__(self, kernelName, codeObjectVersion, groupSegmentSize, sgprWorkGroup, \
+    def __init__(self, kernelName, kernArgsVersion, codeObjectVersion, groupSegmentSize, sgprWorkGroup, \
         vgprWorkItem, flatWorkGroupSize, totalVgprs: int=0, totalAgprs: int=0, \
         totalSgprs: int=0, preloadKernArgs: bool=False) -> None:
         super().__init__(kernelName)
@@ -780,6 +814,7 @@ class SignatureBase(Item):
                                                                 vgprWorkItem=vgprWorkItem,
                                                                 preloadKernArgs=preloadKernArgs)
         self.codeMeta = SignatureCodeMeta(name=kernelName,
+                                                kernArgsVersion=kernArgsVersion,
                                                 groupSegSize=groupSegmentSize,
                                                 flatWgSize=flatWorkGroupSize,
                                                 codeObjectVersion=codeObjectVersion,

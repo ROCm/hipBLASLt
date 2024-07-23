@@ -351,7 +351,8 @@ namespace Tensile
             std::vector<std::shared_ptr<ProblemInputs>>
                 prepareRotatingGPUOutput(int32_t                        maxRotatingBufferNum,
                                          ContractionProblem const*      problem,
-                                         std::shared_ptr<ProblemInputs> inputs);
+                                         std::shared_ptr<ProblemInputs> inputs,
+                                         hipStream_t                    stream);
 
             template <typename S>
             void initArray(DataType dataType, InitMode initMode, void* array, S descriptor)
@@ -983,9 +984,10 @@ namespace Tensile
             /// cannot be used with problem dependent data.
             bool m_problemDependentData = false;
 
-            int64_t               m_rotatingBuffer        = 0;
-            int64_t               m_rotatingAllocatedSize = 0;
-            std::shared_ptr<void> m_rotatingPointer       = nullptr;
+            int64_t               m_rotatingBuffer          = 0;
+            int64_t               m_rotatingLargestUnitSize = 0;
+            int64_t               m_rotatingAllocatedSize   = 0;
+            std::shared_ptr<void> m_rotatingPointer         = nullptr;
         };
 
         template <>

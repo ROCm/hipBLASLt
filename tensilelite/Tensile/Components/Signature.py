@@ -34,6 +34,9 @@ from dataclasses import dataclass, field
 
 @dataclass
 class UserArgumentsInfo:
+    # Common args
+    commonArgsNum: int  = 0
+    commonArgsSize: int = 0
     # variable related fixed parameters
     alphaMaxSize: int = 16
     alphaMaxRegisterSize: int = field(init=False)
@@ -52,6 +55,7 @@ class UserArgumentsInfo:
     biasSize: int = 0
     eSize: int = 0
     activationSize: int = 0
+    factorDimSize: int = 0
     # Total argument size
     totalSize: int = 0
 
@@ -123,12 +127,23 @@ class SignatureDefault(Signature):
 
         sgprWgZ = 1 if kernel["ProblemType"]["NumIndicesC"] > 2 else 0
         signature = SignatureBase(kernelName=writer.states.kernelName,
+                                    kernArgsVersion=kernel["InternalSupportParams"]["KernArgsVersion"],
                                     codeObjectVersion=getCOVFromParam(kernel["CodeObjectVersion"]),
                                     groupSegmentSize=group_segment_size,
                                     sgprWorkGroup=[1, 1, sgprWgZ],
                                     vgprWorkItem=0,
                                     flatWorkGroupSize=(kernel["NumThreads"]),
                                     preloadKernArgs=kernel["PreloadKernArgs"])
+
+       # General Argument info
+        signature.addArg(   "Gemm info", SVK.SIG_VALUE, "u32")
+        signature.addArg("kernel info0", SVK.SIG_VALUE, "u32")
+        signature.addArg("kernel info1", SVK.SIG_VALUE, "u32")
+        signature.addArg("numWG",        SVK.SIG_VALUE, "u32")
+        # When modify the size, please also update TENSILE_COMMON_KERNEL_ARGS_SIZE in ContractionSolution.hpp
+        userArgumentsInfo.commonArgsNum += 4
+        userArgumentsInfo.commonArgsSize = userArgumentsInfo.commonArgsNum * writer.states.bpr
+
 
         srcValueTypeA = getSrcValueType(kernel, True)
         srcValueTypeB = getSrcValueType(kernel, False)
@@ -144,10 +159,6 @@ class SignatureDefault(Signature):
         for i in range(0, writer.states.numSgprSizesSum):
             signature.addArg(             "SizesSum%u"%i, SVK.SIG_VALUE,               "u32")
             userArgumentsInfo.gemmArgumentSize += 4
-
-        # General Argument info
-        signature.addArg(  "Gemm info", SVK.SIG_VALUE, "u32")
-        signature.addArg("kernel info", SVK.SIG_VALUE, "u32")
 
         if globalParameters["DebugKernel"]:
             signature.addArg("AddressDbg", SVK.SIG_GLOBALBUFFER, "struct", "generic")
@@ -206,6 +217,9 @@ class SignatureDefault(Signature):
 
         if kernel["ProblemType"]["UseScaleAlphaVec"]:
             signature.addArg("AddressScaleAlphaVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+            if kernel["ProblemType"]["UseScaleAlphaVec"] == 3:
+                userArgumentsInfo.factorDimSize =4
+
         userArgumentsInfo.scaleAlphaVecSize += 8
 
         if writer.states.useBias != DataDirection.NONE:
@@ -214,9 +228,11 @@ class SignatureDefault(Signature):
                 signature.addArg("biasType",        SVK.SIG_VALUE,        "u32")
                 signature.addArg("StrideBias",      SVK.SIG_VALUE,        "u32")
                 if kernel["ProblemType"]["UseBias"] == 3:
-                    signature.addArg("biasDim",     SVK.SIG_VALUE,        "u32")
-                    userArgumentsInfo.biasSize += 4
+                    userArgumentsInfo.factorDimSize = 4
         userArgumentsInfo.biasSize += (8 + 4 + 4)
+
+        if userArgumentsInfo.factorDimSize == 4:
+            signature.addArg("factorDim", SVK.SIG_VALUE, "u32")
 
         if kernel["ProblemType"]["UseE"]:
             signature.addArg(      "E", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
@@ -252,6 +268,7 @@ class SignatureDefault(Signature):
                                       userArgumentsInfo.scaleDSize + \
                                       userArgumentsInfo.scaleAlphaVecSize + \
                                       userArgumentsInfo.biasSize + \
+                                      userArgumentsInfo.factorDimSize + \
                                       userArgumentsInfo.eSize + \
                                       userArgumentsInfo.activationSize
 
