@@ -28,6 +28,7 @@ from .Formatting import formatStr, printExit
 import abc
 from enum import Enum
 from typing import List, Optional, Union
+#from .Utils import sgpr
 
 ################################################################################
 ################################################################################
@@ -316,7 +317,7 @@ class MFMAInstruction(Instruction):
         return kStr
 
     def getParams(self) -> list:
-        negStr = " neg_lo:[1,1,1]" if self.neg else ""
+        negStr = "" if not self.neg else " neg_lo:[1,1,1]" if self.asmCaps["HasWMMA_V1"] else " neg_lo:[1,1]"
         return [self.acc, self.a, self.b, self.acc2, negStr]
 
     def preStr(self) -> None:
@@ -334,12 +335,12 @@ class MFMAInstruction(Instruction):
                          instructionStep, self.typeConvert(self.instType), mfma_1k))
 
     def getArgStr(self) -> str:
-        negStr = " neg_lo:[1,1,1]" if self.neg else ""
+        negStr = "" if not self.neg else " neg_lo:[1,1,1]" if self.asmCaps["HasWMMA_V1"] else " neg_lo:[1,1]"
         return str(self.acc) + ", " + str(self.a) + ", " + str(self.b) + ", " + str(self.acc2) + negStr
 
     def toList(self) -> list:
         self.preStr()
-        negStr = " neg_lo:[1,1,1]" if self.neg else ""
+        negStr = "" if not self.neg else " neg_lo:[1,1,1]" if self.asmCaps["HasWMMA_V1"] else " neg_lo:[1,1]"
         return [self.instStr, self.acc, self.a, self.b, self.acc2, negStr, self.comment]
 
     def __str__(self) -> str:
@@ -538,7 +539,13 @@ class MUBUFReadInstruction(GlobalReadInstruction):
         return [self.dst, self.vaddr, self.saddr, self.soffset]
 
     def getArgStr(self) -> str:
-        return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
+        if self.asmCaps["HasMUBUFConst"]:
+          return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
+        else:
+          if str(self.soffset)=="0":
+            return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + "null"
+          else:
+            return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
 
     def toList(self) -> list:
         self.preStr()
@@ -692,7 +699,13 @@ class MUBUFStoreInstruction(GlobalWriteInstruction):
         return [self.srcData, self.vaddr, self.saddr, self.soffset]
 
     def getArgStr(self) -> str:
-        return str(self.srcData) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
+        if self.asmCaps["HasMUBUFConst"]:
+          return str(self.srcData) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
+        else:
+          if str(self.soffset) == "0":
+            return str(self.srcData) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + "null"
+          else:
+            return str(self.srcData) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
 
     def toList(self) -> list:
         self.preStr()
@@ -979,6 +992,7 @@ class DSLoadD16HIU8(DSLoadInstruction):
         super().__init__(InstType.INST_D16_HI_U8, dst, src, ds, comment)
         if ds: ds.na = 1
         self.setInst("ds_load_u8_d16_hi")
+        #self.setInst("ds_load_u8")
 
 class DSLoadU16(DSLoadInstruction):
     def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
@@ -1306,8 +1320,23 @@ class SCmpLtU32(CommonInstruction):
         super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
         self.setInst("s_cmp_lt_u32")
 
+class SCmpGtI32(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_I32, None, [src0, src1], None, None, comment)
+        self.setInst("s_cmp_gt_i32")
+
+class SCmpGtU32(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
+        self.setInst("s_cmp_gt_u32")
+
 # S Cmp K
 # SCC = (S0.u == SIMM16)
+class _SCmpKEQU32(CommonInstruction):
+    def __init__(self, src, simm16: Union[int, str], comment="") -> None:
+        super().__init__(InstType.INST_U32, None, [src, simm16], None, None, comment)
+        self.setInst("s_cmpk_eq_u32")
+
 class SCmpKEQU32(CommonInstruction):
     def __init__(self, src, simm16: Union[int, str], comment="") -> None:
         super().__init__(InstType.INST_U32, None, [src, simm16], None, None, comment)
@@ -1553,7 +1582,10 @@ class SSetPrior(Instruction):
 class SBarrier(Instruction):
     def __init__(self, comment="") -> None:
         super().__init__(InstType.INST_NOTYPE, comment)
-        self.setInst("s_barrier")
+        if self.asmCaps["HasBarrier"]:
+            self.setInst("s_barrier")
+        else:
+            self.setInst("s_barrier_signal -1 \ns_barrier_wait -1")
 
     def getParams(self) -> list:
         return []
@@ -1682,6 +1714,51 @@ class _SWaitCntVscnt(Instruction):
     def __str__(self) -> str:
         return self.formatWithComment("s_waitcnt_vscnt null %u"%(self.vscnt))
 
+class _SWaitLoadcnt(Instruction):
+    def __init__(self, loadcnt: int=-1, comment="") -> None:
+        super().__init__(InstType.INST_NOTYPE, comment)
+        self.loadcnt = loadcnt
+
+    def getParams(self) -> list:
+        return [self.loadcnt]
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def __str__(self) -> str:
+        return self.formatWithComment("s_wait_loadcnt %u"%(self.loadcnt))
+
+class _SWaitKMcnt(Instruction):
+    def __init__(self, kmcnt: int=-1, comment="") -> None:
+        super().__init__(InstType.INST_NOTYPE, comment)
+        self.kmcnt = kmcnt
+
+    def getParams(self) -> list:
+        return [self.kmcnt]
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def __str__(self) -> str:
+        return self.formatWithComment("s_wait_kmcnt %u"%(self.kmcnt))
+
+class _SWaitDscnt(Instruction):
+    def __init__(self, dscnt: int=-1, comment="") -> None:
+        super().__init__(InstType.INST_NOTYPE, comment)
+        self.dscnt = dscnt
+
+    def getParams(self) -> list:
+        return [self.dscnt]
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def __str__(self) -> str:
+        return self.formatWithComment("s_wait_dscnt %u"%(self.dscnt))
+
 class SWaitCnt(CompositeInstruction):
     """
     Construct a waitcnt from specified lgkmcnt and vmcnt:
@@ -1719,7 +1796,11 @@ class SWaitCnt(CompositeInstruction):
             vmcnt = min(vmcnt, maxVmcnt)
             self.instructions = [_SWaitCnt(lgkmcnt, vmcnt, comment)]
             if (lgkmcnt != -1 and vmcnt != -1) or vscnt != -1 :
-                self.instructions.append(_SWaitCntVscnt(vmcnt, comment))
+              self.instructions.append(_SWaitCntVscnt(vmcnt, comment))
+        elif self.archCaps["SeparateVMcnt"] or self.archCaps["SeparateLGKMcnt"]: #short-term, will separate them
+            self.instructions = [_SWaitDscnt(0, comment)]
+            self.instructions.append(_SWaitLoadcnt(0, comment))
+            self.instructions.append(_SWaitKMcnt(0, comment))
         else:
             vmvscnt = -1
             if vscnt != -1:
@@ -1914,10 +1995,46 @@ class VMulPKF16(CommonInstruction):
         super().__init__(InstType.INST_F16, dst, [src0, src1], sdwa, vop3, comment)
         self.setInst("v_pk_mul_f16")
 
-class VMulPKF32(CommonInstruction):
+class VMulPKF32S(CommonInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, vop3, comment)
         self.setInst("v_pk_mul_f32")
+
+class _VMulPKF32(CommonInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, vop3, comment)
+        self.setInst("v_pk_mul_f32")
+
+class VMulPKF32(CompositeInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], comment)
+        self.setInst("v_pk_mul_f32")
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def setupInstructions(self):
+        super().setupInstructions()
+        assert isinstance(self.srcs, List)
+        if self.asmCaps["v_pk_mul_f32"]:
+            self.instructions = [_VMulPKF32(self.dst, self.srcs[0], self.srcs[1], None, None, self.comment)]
+        else:
+            dst1, dst2 = self.dst.splitRegContainer()
+            srcs1 = []
+            srcs2 = []
+            for s in self.srcs:
+                if isinstance(s, RegisterContainer) or isinstance(s, HolderContainer):
+                    r1, r2 = s.splitRegContainer()
+                    srcs1.append(r1)
+                    srcs2.append(r2)
+                else:
+                    srcs1.append(s)
+                    srcs2.append(s)
+            self.instructions = [VMulF32(dst1, srcs1[0], srcs1[1], None, self.comment),
+                                VMulF32(dst2, srcs2[0], srcs2[1], None, self.comment)]
+
+        assert all(inst.vop3 is None for inst in self.instructions), "Currently does not support with vop3 enabled"
 
 class VMulLOU32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:
@@ -2255,6 +2372,11 @@ class VCmpXLeU32(VCmpXInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmpx_le_u32")
+
+class VCmpXLeI32(VCmpXInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmpx_le_i32")
 
 class VCmpXLtF32(VCmpXInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:

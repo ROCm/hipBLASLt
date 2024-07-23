@@ -879,11 +879,30 @@ namespace Tensile
             = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
         rv.numWorkGroups.y *= gsu;
 
-        if(internalArgsSupport.version == 1)
+        //short-term workaround
+        int             deviceId;
+        hipDeviceProp_t deviceProperties;
+
+        auto removePrefix = [](const std::string& s) {
+            size_t pos = s.find("gfx");
+            if(pos != std::string::npos)
+            {
+                return s.substr(pos + 3);
+            }
+            return s;
+        };
+
+        static_cast<void>(hipGetDevice(&deviceId));
+        static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+        auto        gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
+        if (stoi(gpu_arch_no_prefix) /100 != 12)
         {
-            rv.numWorkGroups.x *= (rv.numWorkGroups.y * rv.numWorkGroups.z);
-            rv.numWorkGroups.y = 1;
-            rv.numWorkGroups.z = 1;
+            if(internalArgsSupport.version == 1)
+            {
+                rv.numWorkGroups.x *= (rv.numWorkGroups.y * rv.numWorkGroups.z);
+                rv.numWorkGroups.y = 1;
+                rv.numWorkGroups.z = 1;
+            }
         }
 
         rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;

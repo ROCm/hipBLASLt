@@ -192,6 +192,8 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         scaleD,
                                         scaleE,
                                         scaleAlphaVec,
+                                        matmul_descr->isScaleAVec,
+                                        matmul_descr->isScaleBVec,
                                         bias_type,
                                         epilogue,
                                         workspace,
@@ -395,6 +397,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                         scaleD,
                                         scaleE,
                                         scaleAlphaVec,
+                                        matmul_descr->isScaleAVec,
+                                        matmul_descr->isScaleBVec,
                                         bias_type,
                                         epilogue,
                                         nullptr,
@@ -458,6 +462,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle        
                                                inputs.bias,
                                                inputs.scaleAlphaVec,
                                                inputs.alpha,
+                                               false,
+                                               false,
                                                E,
                                                lde,
                                                batch_stride_e,
@@ -551,6 +557,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle        
                                         scaleD,
                                         scaleE,
                                         scaleAlphaVec,
+                                        false,
+                                        false,
                                         bias_type,
                                         epilogue,
                                         nullptr,
@@ -681,6 +689,8 @@ rocblaslt_status
                                                       matmul_descr[i]->bias,
                                                       alphaVecPtr,
                                                       alpha[i],
+                                                      matmul_descr[i]->isScaleAVec,
+                                                      matmul_descr[i]->isScaleBVec,
                                                       E,
                                                       lde,
                                                       batch_stride_e,
@@ -708,7 +718,7 @@ rocblaslt_status
                                   matB[i]->type,
                                   matC[i]->type,
                                   matD[i]->type,
-                                  matmul_descr[i]->compute_type});
+                                  compute_type});
 
         bias_type_vec.push_back(bias_type);
         epilogue_vec.push_back(epilogue);
@@ -814,6 +824,8 @@ rocblaslt_status
                                                        scaleD_vec[i],
                                                        scaleE_vec[i],
                                                        scaleAlpha_vec[i],
+                                                       matmul_descr[i]->isScaleAVec,
+                                                       matmul_descr[i]->isScaleBVec,
                                                        bias_type_vec[i],
                                                        epilogue_vec[i],
                                                        nullptr,
@@ -913,6 +925,8 @@ rocblaslt_status
                                                       inputs[i].bias,
                                                       inputs[i].scaleAlphaVec,
                                                       inputs[i].alpha,
+                                                      false,
+                                                      false,
                                                       E,
                                                       lde,
                                                       batch_stride_e,
@@ -963,6 +977,7 @@ rocblaslt_status
     std::vector<RocblasltContractionProblem> problems;
     for(int i = 0; i < m.size(); i++)
     {
+        int iIdx = (rocEpilogue.size() <= i) ? rocEpilogue.size() - 1 : i;
         problems.push_back(RocblasltContractionProblem{opA,
                                                        opB,
                                                        m[i],
@@ -1006,6 +1021,8 @@ rocblaslt_status
                                                        scaleD_vec[i],
                                                        scaleE_vec[i],
                                                        scaleAlpha_vec[i],
+                                                       false,
+                                                       false,
                                                        bias_type_vec[i],
                                                        epilogue_vec[i],
                                                        nullptr,

@@ -236,6 +236,8 @@ namespace
             return Tensile::DataType::Double;
         case rocblaslt_compute_i32:
             return Tensile::DataType::Int32;
+        case rocblaslt_compute_f16:
+            return Tensile::DataType::Half;
         default:
             throw std::runtime_error("Unsupported type.");
         }
@@ -249,6 +251,7 @@ namespace
     {
         switch(typeCompute)
         {
+        case rocblaslt_compute_f16:
         case rocblaslt_compute_f32_fast_f16:
             return Tensile::DataType::Half;
         case rocblaslt_compute_f32_fast_bf16:
@@ -514,7 +517,7 @@ namespace
         if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
            || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
         {
-            tensileProblem.setUseScaleAB("Scalar");
+            tensileProblem.setUseScaleAB(prob.isScaleAVec ? "Vector" : "Scalar");
             if(d_type == Tensile::DataType::Float8 || d_type == Tensile::DataType::BFloat8)
                 tensileProblem.setUseScaleCD(true);
             else
@@ -715,7 +718,7 @@ namespace
             if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
                || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
             {
-                tensileProblem.setUseScaleAB("Scalar");
+                tensileProblem.setUseScaleAB(prob.isScaleAVec ? "Vector" : "Scalar");
                 if(d_type == Tensile::DataType::Float8 || d_type == Tensile::DataType::BFloat8)
                     tensileProblem.setUseScaleCD(true);
                 else
@@ -914,6 +917,14 @@ namespace
         else if(deviceString.find("gfx1102") != std::string::npos)
         {
             return Tensile::LazyLoadingInit::gfx1102;
+        }
+        else if(deviceString.find("gfx1200") != std::string::npos)
+        {
+            return Tensile::LazyLoadingInit::gfx1200;
+        }
+        else if(deviceString.find("gfx1201") != std::string::npos)
+        {
+            return Tensile::LazyLoadingInit::gfx1201;
         }
         return Tensile::LazyLoadingInit::None;
     }
