@@ -233,9 +233,7 @@ namespace Tensile
             virtual ReturnValue findBestMatch(Object const& problem, Transform transform) const = 0;
 
             virtual std::set<ReturnValue> matchesInOrder(Object const& problem,
-                                                         Transform     transform) const = 0;
-
-            //virtual SolutionVector<ReturnValue> 
+                                                    Transform     transform) const = 0;
 
             virtual std::vector<ReturnValue> getNSolutions(Transform transform,
                                                     int numSolutions,
@@ -318,11 +316,9 @@ namespace Tensile
                     }
                 }
 
-                // The nullVallue (fallback) 
                 return nullptr;
             }
 
-            //virtual SolutionVector<ReturnValue>
             virtual std::vector<ReturnValue> getNSolutions(Transform transform,
                                                     int numSolutions,
                                                     bool exludeFallback = false) const override

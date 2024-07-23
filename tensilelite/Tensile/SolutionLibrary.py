@@ -188,7 +188,7 @@ class DecisionTreeLibrary:
             fallbackIndex = d["fallback"]
             nullValue = SingleSolutionLibrary(solutions[fallbackIndex])
         else:
-             raise RuntimeError(
+            raise RuntimeError(
                 "DecisionTree has no fallback; likely a legacy model which is not supported."
             )
 
