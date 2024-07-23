@@ -297,6 +297,8 @@ class StreamK(Component):
                 module.add(SCmpEQU32(src0=sgpr(tmpSgpr+2), src1=1, comment="check if ready"))
                 module.add(SCBranchSCC0(labelName=skFixupLabel.getLabelName(), comment="if flag not set, wait and check again"))
 
+            # TODO Barrier here to sync all threads in workgroup, but maybe better to have separate flag for each wavefront (to be tested)
+            module.add(SBarrier(comment="wait for all workgroups before resetting flag"))
             module.add(SMovB32(dst=sgpr(tmpSgpr+2), src=0, comment="flag data"))
             module.add(SStoreB32(src=sgpr(tmpSgpr+2), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="reset flag"))
             writer.sgprPool.checkIn(tmpSgpr)
