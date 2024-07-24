@@ -62,7 +62,7 @@ def clientExecutableEnvironment(builddir=None):
 
     options = {'CMAKE_BUILD_TYPE': globalParameters["CMakeBuildType"],
                'TENSILE_USE_MSGPACK': 'ON',
-               'TENSILE_USE_LLVM': 'ON',
+               'TENSILE_USE_LLVM': 'OFF',
                'Tensile_LIBRARY_FORMAT': globalParameters["LibraryFormat"],
                'CMAKE_CXX_COMPILER': os.path.join(globalParameters["ROCmBinPath"], globalParameters['CxxCompiler'])}
 
@@ -83,4 +83,3 @@ def getClientExecutable(builddir=None):
         buildEnv.build()
 
     return buildEnv.builtPath("client/tensile_client")
-
