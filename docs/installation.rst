@@ -149,7 +149,7 @@ Build library manually
    cd [HIPBLASLT_BUILD_DIR]/release
    # Default install location is in /opt/rocm, define -DCMAKE_INSTALL_PREFIX=<path> to specify other
    # Default build config is 'Release', define -DCMAKE_BUILD_TYPE=<config> to specify other
-   CXX=/opt/rocm/bin/hipcc ccmake [HIPBLASLT_SOURCE]
+   CXX=/opt/rocm/bin/amdclang++ ccmake [HIPBLASLT_SOURCE]
    make -j$(nproc)
    sudo make install # sudo required if installing into system directory such as /opt/rocm
 
@@ -185,6 +185,6 @@ Once dependencies are available on the system, it is possible to configure the c
 
    -DCMAKE_PREFIX_PATH="<semicolon separated paths>"
    # Default install location is in /opt/rocm, use -DCMAKE_INSTALL_PREFIX=<path> to specify other
-   CXX=/opt/rocm/bin/hipcc ccmake -DBUILD_CLIENTS_TESTS=ON -DBUILD_CLIENTS_BENCHMARKS=ON [HIPBLASLT_SOURCE]
+   CXX=/opt/rocm/bin/amdclang++ ccmake -DBUILD_CLIENTS_TESTS=ON -DBUILD_CLIENTS_BENCHMARKS=ON [HIPBLASLT_SOURCE]
    make -j$(nproc)
    sudo make install   # sudo required if installing into system directory such as /opt/rocm
