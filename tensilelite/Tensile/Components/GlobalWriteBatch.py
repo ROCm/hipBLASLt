@@ -595,11 +595,7 @@ class GlobalWriteBatchWriter:
           if self.kernel["GroupLoadStore"]:
             loadInputCode.add(self.parentWriter.readInput(self.kernel, self.ss, 'C', self.kernel["ProblemType"]["DestDataType"], addrCalc, vc0, data, self.gwvw, addrCVgpr, self.tmpS01))
           else:
-            if self.edge and self.parentWriter.states.archCaps["HWWorkaround"]:
-              module.add(VCmpXLeI32(dst=EXEC(), src0=0, src1=vgpr(addrCVgpr), comment="workaround for gfx12"))
             module.add(self.parentWriter.readInput(self.kernel, self.ss, 'C', self.kernel["ProblemType"]["DestDataType"], addrCalc, vc0, data, self.gwvw, addrCVgpr, self.tmpS01))
-            if self.edge and self.parentWriter.states.archCaps["HWWorkaround"]:
-              module.add(SSetMask(dst=EXEC(), src=-1, comment="reset mask for gfx12" ))
           loadedDataBeta[dataBeta] = ceil(self.kernel["ProblemType"]["DestDataType"].numBytes() * self.ss.cfg.gwvw / 16)
           self.loadsBetaIssued += ceil(self.kernel["ProblemType"]["DestDataType"].numBytes() * self.gwvw / 16)
       self.betaLoadIssued.append(len(loadedDataBeta) * ceil(self.kernel["ProblemType"]["DestDataType"].numBytes() * self.ss.cfg.gwvw / 16))
