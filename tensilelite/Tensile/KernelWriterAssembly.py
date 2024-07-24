@@ -8763,6 +8763,12 @@ class KernelWriterAssembly(KernelWriter):
     vgprBF8Min: int    = -1
     vgprBF8Max: int    = -1
 
+  class I8CVTVgprStruct(NamedTuple):
+    vgprI8Temp0: int   = -1
+    vgprI8Temp1: int   = -1
+    vgprI8Mask0: int   = -1
+    vgprI8Mask1: int   = -1
+
   class ActivationSetPCStruct(NamedTuple):
     sgprOffsetActivation: int = -1
     sgprOffsetBack: int = -1
@@ -9211,6 +9217,10 @@ class KernelWriterAssembly(KernelWriter):
         cvtVgpr = self.vgprPool.checkOut(4)
         cvtVgprStruct = self.BF8CVTVgprStruct(vgprBF8Temp=cvtVgpr, vgprBF8NanInf=(cvtVgpr+1), \
                                               vgprBF8Min=(cvtVgpr+2), vgprBF8Max=(cvtVgpr+3))
+      elif kernel["ProblemType"]["DestDataType"].isInt8():
+        cvtVgpr = self.vgprPool.checkOut(4)
+        cvtVgprStruct = self.I8CVTVgprStruct(vgprI8Temp0=cvtVgpr, vgprI8Temp1=(cvtVgpr+1), \
+                                             vgprI8Mask0=(cvtVgpr+2), vgprI8Mask1=(cvtVgpr+3))
 
       activationSetPCStruct = None
       activationLabelList = None
