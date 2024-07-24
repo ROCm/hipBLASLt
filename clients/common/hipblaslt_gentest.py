@@ -421,10 +421,15 @@ def instantiate(test):
                             break
                     # For array value type, treat as known bug if empty array was given
                     elif key in array_value_args:
+                        stripped_val = [i for i in test[key] if i >= 0]
+
+                        # default case in test
+                        if stripped_val == [0,]:
+                            break
+
                         if len(value) == 0:
                             continue
                         else:
-                            stripped_val = [i for i in test[key] if i >= 0]
                             if stripped_val != value:
                                 break
                     elif test[key] != value:
