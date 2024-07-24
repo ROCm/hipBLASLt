@@ -2752,12 +2752,6 @@ namespace Tensile
             size_t skGrid = getSKGrid(problem, hardware, tiles);
             // Get space required for partial tiles
             size += partialTileSize(skGrid);
-            // Add space for flags
-            // Flags for partial tiles - dword per flag for fast addressing and comparisons
-            // If tiles is evenly divided by grid size flags are not needed (DP mode)
-            if(tiles % skGrid != 0)
-                size += skGrid * 4;
-            // size *= batches; // TODO need tile and flag per batch
         }
         else
         {
