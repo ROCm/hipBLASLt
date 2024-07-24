@@ -724,3 +724,69 @@ BenchmarkProblems:
           - Exact: [257, 257, 1, 257]
         - ActivationArgs:
           - [Enum: none]
+
+  #######################################
+  # TN - standard
+  #######################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: i8
+      DestDataType: i8
+      ComputeDataType: i
+      HighPrecisionAccumulate: True
+      TransposeA: 1
+      TransposeB: 0
+      UseBeta: True
+      #UseBias: True
+      Batched: True
+      Activation: True
+      SetConstStrideBias: [[2, 0]]
+      #BiasDataTypeList: ['s']
+ 
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+        #- EdgeType: ["ShiftPtr"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16, 16, 16, 1, 1, 1, 1, 4, 1 ]
+ 
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - DepthU: [32]
+        - WavefrontSize: [32]
+        - LocalReadVectorWidth: [16] #
+        - ScheduleIterAlg: [3]
+        - ExpandPointerSwap: [0]       #
+        - TransposeLDS: [1]
+        - LdsBlockSizePerPadA: [-1]  #
+        - LdsBlockSizePerPadB: [-1]  #
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - 1LDSBuffer: [-1]
+        - GlobalSplitU: [1,2]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - SourceSwap: [0]
+        #- StoreRemapVectorWidth: [-1,0,4]
+        #- DirectToVgprSparseMetadata: [0]
+        #- WorkGroupMapping: [18]
+        #- StoreVectorWidth: [-1]
+      BenchmarkForkParameters:
+      JoinParameters:
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [15, 15, 2, 16] # classic format
+          - Exact: [15, 15, 2, 256] # classic format
+          - Exact: [32, 32, 1, 256] # classic format
+          - Exact: [32, 32, 2, 255] # classic format
+          - Exact: [255, 255, 1, 255] # classic format
+          - Exact: [255, 255, 2, 255] # classic format
+          - Exact: [256, 256, 1, 256] # classic format
+          - Exact: [256, 256, 1, 255] # classic format
+        - BiasTypeArgs: ['s']
+        - ActivationArgs:
+          - [Enum: none]
