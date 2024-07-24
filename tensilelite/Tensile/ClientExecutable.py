@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import os
 import subprocess
 
 from . import Common
-from .Common import globalParameters
+from .Common import globalParameters, supportedCompiler
 
 class CMakeEnvironment:
     def __init__(self, sourceDir, buildDir, **options):
@@ -60,11 +60,15 @@ def clientExecutableEnvironment(builddir=None):
         builddir = os.path.join(globalParameters["OutputPath"], globalParameters["ClientBuildPath"])
     builddir = Common.ensurePath(builddir)
 
+    CxxCompiler = "clang++.exe" if ((os.name == "nt") and supportedCompiler(globalParameters['CxxCompiler'])) else globalParameters['CxxCompiler']
+    CCompiler   = "clang.exe"   if ((os.name == "nt") and supportedCompiler(globalParameters['CxxCompiler'])) else globalParameters['CCompiler']
+
     options = {'CMAKE_BUILD_TYPE': globalParameters["CMakeBuildType"],
                'TENSILE_USE_MSGPACK': 'ON',
-               'TENSILE_USE_LLVM': 'ON',
+               'TENSILE_USE_LLVM': 'OFF' if (os.name == "nt") else 'ON',
                'Tensile_LIBRARY_FORMAT': globalParameters["LibraryFormat"],
-               'CMAKE_CXX_COMPILER': os.path.join(globalParameters["ROCmBinPath"], globalParameters['CxxCompiler'])}
+               'CMAKE_CXX_COMPILER': os.path.join(globalParameters["ROCmBinPath"], CxxCompiler),
+               'CMAKE_C_COMPILER': os.path.join(globalParameters["ROCmBinPath"], CCompiler)}
 
     return CMakeEnvironment(sourcedir, builddir, **options)
 
