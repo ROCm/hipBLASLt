@@ -9985,8 +9985,6 @@ class KernelWriterAssembly(KernelWriter):
         printExit("Unsupported store tc %s"%tc)
 
       useBuffer = kernel["BufferStore"]
-      if edge and self.states.archCaps["HWWorkaround"]:
-        module.add(VCmpXLeI32(dst=EXEC(), src0=0, src1=addr0, comment="for gfx12"))
       if dataType.isHalf() or dataType.isBFloat16():
         if not kernel["ProblemType"]["HighPrecisionAccumulate"]:
           # (H,H,H,H,H,H), internal H
@@ -10017,8 +10015,6 @@ class KernelWriterAssembly(KernelWriter):
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
                          addr0, addr1, globalOffset, isGlc, isSlc, isNT, comment=comment))
 
-      if edge and self.states.archCaps["HWWorkaround"]:
-        module.add(SSetMask(dst=EXEC(), src=-1, comment="reset mask for gfx12" ))
     return module
 
   ##############################################################################
