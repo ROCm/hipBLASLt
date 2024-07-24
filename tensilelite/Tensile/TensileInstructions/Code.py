@@ -577,7 +577,7 @@ class SrdUpperFields12XX(BitfieldStructure): #0x10020000
     def default(cls):
         return cls(format         = 32,
                    #resource_level = 1,
-                   oob_select     = 1)
+                   oob_select     = 3)
 
 class SrdUpperValue12XX(BitfieldUnion):
     _fields_ = [("fields", SrdUpperFields12XX), ("value", ctypes.c_uint32)]
