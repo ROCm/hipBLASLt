@@ -303,7 +303,7 @@
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
+    WavefrontSize: 32
     WorkGroup: [8, 8, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 1
@@ -548,7 +548,7 @@
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
+    WavefrontSize: 32
     WorkGroup: [8, 8, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 1
@@ -793,7 +793,7 @@
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
+    WavefrontSize: 32
     WorkGroup: [8, 8, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 1
@@ -1038,7 +1038,7 @@
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
+    WavefrontSize: 32
     WorkGroup: [8, 8, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 1
