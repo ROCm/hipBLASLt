@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,6 @@
 # SOFTWARE.
 #
 ################################################################################
-
-set(CMAKE_CXX_COMPILER ${HIP_HIPCC_EXECUTABLE})
 
 add_library(TensileHip STATIC
             HipSolutionAdapter.cpp
