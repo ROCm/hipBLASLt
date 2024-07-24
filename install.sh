@@ -42,7 +42,7 @@ function display_help()
   echo "    [-r]--relocatable] create a package to support relocatable ROCm"
   echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
   echo "    [-k|--relwithdebinfo] -DCMAKE_BUILD_TYPE=RelWithDebInfo"
-  echo "    [--hip-clang] build library for amdgpu backend using hip-clang"
+  echo "    [--hip-clang] build library for amdgpu backend using amdclang"
   echo "    [--static] build static library"
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
@@ -743,9 +743,9 @@ pushd .
   echo $cmake_common_options
   cmake_common_options="${cmake_common_options} ${tensile_opt}"
 
-  compiler="hcc"
+  compiler="amdclang++"
   if [[ "${build_hip_clang}" == true ]]; then
-    compiler="${rocm_path}/bin/hipcc"
+    compiler="${rocm_path}/bin/amdclang++"
   fi
 
   if [[ "${build_clients}" == false ]]; then
