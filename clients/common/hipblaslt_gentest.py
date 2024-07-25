@@ -392,6 +392,8 @@ def instantiate(test):
     # Any Arguments fields declared as enums (a_type, b_type, etc.)
     enum_args = [decl[0] for decl in param['Arguments']._fields_
                  if decl[1].__module__ == '__main__']
+    array_value_args = ["gsu_vector", "wgm_vector"]
+
     try:
         setdefaults(test)
 
@@ -414,8 +416,23 @@ def instantiate(test):
                         if not fnmatchcase(test[key], value):
                             break
                     # For keys declared as enums, compare resulting values
-                    elif test[key] != (datatypes.get(value, value)
-                                       if key in enum_args else value):
+                    if key in enum_args:
+                        if test[key] != datatypes.get(value, value):
+                            break
+                    # For array value type, treat as known bug if empty array was given
+                    elif key in array_value_args:
+                        stripped_val = [i for i in test[key] if i >= 0]
+
+                        # default case in test
+                        if stripped_val == [0,]:
+                            break
+
+                        if len(value) == 0:
+                            continue
+                        else:
+                            if stripped_val != value:
+                                break
+                    elif test[key] != value:
                         break
                 else:
                     # All values specified in known bug match the test case
