@@ -29,6 +29,7 @@
 #include <Tensile/MasterSolutionLibrary.hpp>
 #include <Tensile/SolutionLibrary.hpp>
 #include <Tensile/Tensile.hpp>
+#include <Tensile/Debug.hpp>
 
 #include <algorithm>
 
@@ -58,6 +59,8 @@ namespace Tensile
         gfx1100,
         gfx1101,
         gfx1102,
+        gfx1200,
+        gfx1201,
         All
     };
 
@@ -106,6 +109,10 @@ namespace Tensile
             return "TensileLibrary_*_gfx1101";
         case LazyLoadingInit::gfx1102:
             return "TensileLibrary_*_gfx1102";
+        case LazyLoadingInit::gfx1200:
+            return "TensileLibrary_*_gfx1200";
+        case LazyLoadingInit::gfx1201:
+            return "TensileLibrary_*_gfx1201";
         case LazyLoadingInit::None:
             return "";
         }
@@ -131,13 +138,15 @@ namespace Tensile
             // If condition in case two threads got into this function
             if(!library)
             {
-                auto newLibrary = LoadLibraryFile<MyProblem, MySolution>(
-                    (libraryDirectory + "/" + filePrefix + suffix).c_str());
+                std::string path = (libraryDirectory + "/" + filePrefix + suffix).c_str();
+                auto newLibrary = LoadLibraryFile<MyProblem, MySolution>(path);
                 auto mLibrary
                     = static_cast<MasterSolutionLibrary<MyProblem, MySolution>*>(newLibrary.get());
                 library = mLibrary->library;
                 std::lock_guard<std::mutex> lock(*solutionsGuard);
                 masterSolutions->insert(mLibrary->solutions.begin(), mLibrary->solutions.end());
+                if(Debug::Instance().printCodeObjectInfo())
+                    std::cout << "load placeholder library " << path << std::endl;
 
                 return mLibrary;
             }

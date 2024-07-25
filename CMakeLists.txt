@@ -106,15 +106,21 @@ if(BUILD_ADDRESS_SANITIZER)
 endif()
 
 if(NOT BUILD_CUDA)
-    # Determine if CXX Compiler is hip-clang
+    # Determine if CXX Compiler is amdclang
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        message(STATUS "Using hip-clang to build for amdgpu backend")
+        message(STATUS "Using amdclang to build for amdgpu backend")
+        if( CMAKE_CXX_COMPILER MATCHES ".*hipcc.*" )
+          message( STATUS "WARNING: hipcc compiler use is deprecated. Use amdclang++ directly." )
+        endif()
         set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__HIP_HCC_COMPAT_MODE__=1" )
         if (CMAKE_BUILD_TYPE MATCHES "Debug" AND NOT WIN32)
             set (CMAKE_CXX_FLAGS_DEBUG "-O0 ${CMAKE_CXX_FLAGS_DEBUG} -gsplit-dwarf -ggdb" )
         endif()
+        if (CMAKE_BUILD_TYPE MATCHES "Release" AND NOT WIN32)
+            set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
+        endif()
     else()
-        message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm software.")
+        message(FATAL_ERROR "'amdclang' compiler required to compile for ROCm software.")
     endif()
 endif()
 
@@ -132,7 +138,7 @@ else()
 
     #Set the AMDGPU_TARGETS with backward compatiblity
     rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-        TARGETS "gfx90a:xnack+;gfx90a:xnack-;gfx940;gfx941;gfx942;gfx1100;gfx1101"
+        TARGETS "gfx90a:xnack+;gfx90a:xnack-;gfx940;gfx941;gfx942;gfx1100;gfx1101;;gfx1200;gfx1201"
     )
 
     if (AMDGPU_TARGETS)
@@ -160,7 +166,7 @@ else()
 
     set( Tensile_LOGIC "asm_full" CACHE STRING "Tensile to use which logic?")
     set( Tensile_CODE_OBJECT_VERSION "default" CACHE STRING "Tensile code_object_version")
-    set( Tensile_COMPILER "hipcc" CACHE STRING "Tensile compiler")
+    set( Tensile_COMPILER "amdclang++" CACHE STRING "Tensile compiler")
     set( Tensile_LIBRARY_FORMAT "msgpack" CACHE STRING "Tensile library format")
     set( Tensile_CPU_THREADS "" CACHE STRING "Number of threads for Tensile parallel build")
 

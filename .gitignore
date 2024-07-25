@@ -49,6 +49,7 @@ _toc.yml
 
 # Python
 **/__pycache__
+*.egg-info/
 
 #clangd
 .cache

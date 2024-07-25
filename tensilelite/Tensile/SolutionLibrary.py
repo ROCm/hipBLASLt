@@ -399,8 +399,10 @@ class MasterSolutionLibrary:
                     placeholderName += "_GG"
                 else:
                     placeholderName += "" if problemType.stridedBatched else "_GB" # legacy
-                if problemType.useScaleAB:
+                if problemType.useScaleAB == "Scalar":
                     placeholderName += '_SAB'
+                elif problemType.useScaleAB == "Vector":
+                    placeholderName += '_SABV'
                 if problemType.useScaleCD:
                     placeholderName += '_SCD'
                 if problemType.useScaleAlphaVec:

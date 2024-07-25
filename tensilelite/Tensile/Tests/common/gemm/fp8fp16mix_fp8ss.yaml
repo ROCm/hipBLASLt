@@ -1,5 +1,5 @@
 TestParameters:
-  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102] # not supported by arch
+  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102, skip-gfx1200, skip-gfx1201] # not supported by arch
 
 GlobalParameters:
   NumElementsToValidate: -1
@@ -30,9 +30,9 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: False
-      UseScaleAlphaVec: False
+      UseScaleAlphaVec: 0
       UseBias: 0
       BiasDataTypeList: [s,b,h]
     - # BenchmarkProblemSizeGroup - Standard
@@ -98,9 +98,9 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: False
-      UseScaleAlphaVec: False
+      UseScaleAlphaVec: 0
       UseBias: 0
       BiasDataTypeList: [s,b,h]
     - # BenchmarkProblemSizeGroup - Standard
@@ -165,9 +165,9 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: False
-      UseScaleAlphaVec: False
+      UseScaleAlphaVec: 0
       UseBias: 0
       BiasDataTypeList: [s,b,h]
     - # BenchmarkProblemSizeGroup - Standard
@@ -233,9 +233,9 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: False
-      UseScaleAlphaVec: False
+      UseScaleAlphaVec: 0
       UseBias: 0
       BiasDataTypeList: [s,b,h]
     - # BenchmarkProblemSizeGroup - Standard
@@ -304,9 +304,9 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: False
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [s,b]
     - # BenchmarkProblemSizeGroup - Standard
@@ -540,9 +540,9 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: True
+      UseScaleAB: "Scalar"
       UseScaleCD: False
-      UseScaleAlphaVec: True
+      UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [s,b]
     - # BenchmarkProblemSizeGroup - Standard

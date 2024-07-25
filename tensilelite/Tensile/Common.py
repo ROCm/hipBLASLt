@@ -210,7 +210,7 @@ globalParameters["MergeFiles"] = True             # F=store every solution and k
 globalParameters["NumMergedFiles"] = 1            # The number of files that kernels should be split between when merging
 
 globalParameters["MaxFileName"] = 64              # If a file name would be longer than this, shorten it with a hash.
-globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2)] # assembly kernels writer supports these architectures
+globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2), (12,0,0), (12,0,1)] # assembly kernels writer supports these architectures
 
 globalParameters["GenerateManifestAndExit"] = False               # Output manifest file with list of expected library objects and exit
 globalParameters["NewClient"] = 2                                 # Old client deprecated: NewClient must be set to 2.
@@ -227,7 +227,7 @@ globalParameters["LibraryUpdateComment"] = False                  # Include solu
 globalParameters["CurrentISA"] = (0,0,0)
 globalParameters["ROCmAgentEnumeratorPath"] = None      # /opt/rocm/bin/rocm_agent_enumerator
 globalParameters["ROCmSMIPath"] = None                  # /opt/rocm/bin/rocm-smi
-globalParameters["AssemblerPath"] = None                # /opt/rocm/hip/bin/hipcc
+globalParameters["AssemblerPath"] = None                # /opt/rocm/llvm/bin/clang++
 globalParameters["WorkingPath"] = os.getcwd()           # path where tensile called from
 globalParameters["IndexChars"] =  "IJKLMNOPQRSTUVWXYZ"  # which characters to use for C[ij]=Sum[k] A[ik]*B[jk]
 globalParameters["ScriptPath"] = os.path.dirname(os.path.realpath(__file__))            # path to Tensile/Tensile.py
@@ -241,7 +241,8 @@ else:
   globalParameters["RuntimeLanguage"] = "HIP"
 
 globalParameters["CodeObjectVersion"] = "default"
-globalParameters["CxxCompiler"] = "hipcc"
+globalParameters["CxxCompiler"] = "amdclang++" if os.name != "nt" else "clang++"
+globalParameters["CCompiler"] = "amdclang" if os.name != "nt" else "clang"
 globalParameters["Architecture"] = "all"
 
 # might be deprecated
@@ -290,7 +291,8 @@ architectureMap = {
   'gfx941':'aquavanjaram', 'gfx941:xnack+':'aquavanjaram', 'gfx941:xnack-':'aquavanjaram',
   'gfx942':'aquavanjaram', 'gfx942:xnack+':'aquavanjaram', 'gfx942:xnack-':'aquavanjaram',
   'gfx1010':'navi10', 'gfx1011':'navi12', 'gfx1012':'navi14', 'gfx1030':'navi21',
-  'gfx1100':'navi31', 'gfx1101':'navi32', 'gfx1102':'navi33'
+  'gfx1100':'navi31', 'gfx1101':'navi32', 'gfx1102':'navi33',
+  'gfx1200':'gfx1200', 'gfx1201':'gfx1201',
 }
 
 def getArchitectureName(gfxName):
@@ -314,6 +316,7 @@ internalParameters = {
 
 # These parameters are used in ContractionSolutions for user arguments support.
 defaultInternalSupportParams = {
+  "KernArgsVersion": 1,
   # Information about user input internal kernel argument support
   # Change this to False if the CustomKernel does not support.
   "SupportUserGSU": True,
@@ -324,6 +327,27 @@ defaultInternalSupportParams = {
   # Use GG as G's backend
   "UseUniversalArgs": True
 }
+
+def supportedCompiler(compiler: str) -> bool:
+  """ Determines if compiler is supported by Tensile.
+
+      Args:
+          The name of a compiler to test for support.
+
+      Return:
+          If supported True; otherwise, False.
+  """
+  isSupported = (compiler == "hipcc")
+  if os.name == "nt":
+    isSupported = (isSupported or compiler == "clang++")
+  else:
+    isSupported = (isSupported or compiler == "amdclang++")
+
+  if not isSupported: printWarning(f"{compiler} is unsupported for os {os.name}")
+
+  return isSupported
+
+
 
 ################################################################################
 # Enumerate Valid Solution Parameters
@@ -418,7 +442,7 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
                    ('H','H','S'), ('H','S','S'), \
                    ('B','B','S'), ('B','S','S'), ('B','H','S'), \
                    ('I8','I','I'), ('4xi8','I','I'), ('I8','I8','I'), \
-                   ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), \
+                   ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), ('I8', 'B', 'S'), \
                    ('F8','S','S'), ('B8','S','S'), \
                    ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
                    ('F8','H','S'), ('B8','H','S'), \
@@ -434,7 +458,7 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
 # *_TiToTc_BH*.yaml where Ti, To, and Tc are the data types of A/B, C/D, and computation, respectively.
 # The name of the library logic files for non-HPA (HPA=F) types is: *_TiB*.yaml.
 HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('B','H','S'), ('I8','I','I'), \
-             ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), \
+             ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), ('I8', 'B', 'S'),\
              ('F8','S','S'), ('B8','S','S'), ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
              ('F8','H','S'), ('B8','H','S'), ('F8B8','H','S'), ('B8F8','H','S'), \
              ('H','F8','S'), ('F8','B','S'), ('F8B8','B','S'), \
@@ -475,6 +499,10 @@ validParameters = {
     #
     "WaveSeparateGlobalReadA":    [ 0, 1, 2 ],
     "WaveSeparateGlobalReadB":    [ 0, 1, 2 ],
+
+    # Add an unrolled loop and NGLL loop with swapped GRA and GRB order.
+    # which may change the tlb thrashing behavior.
+    "UnrollLoopSwapGlobalReadOrder": [0, 1],
 
     # PrefetchGlobalRead = 1:
     # Requires 2X LDS space, and VGPRs for buffering data on way into LDS
@@ -731,7 +759,7 @@ validParameters = {
     # StaggerUStride will be internally increased so it is an integer multiple of DepthU*BpeAB.
     # (the implementation requires this - the unroll iteration accesses data in steps of
     # DepthU*BPE
-    "StaggerUStride":               [16,32,64,128,256,512,1024,2048],
+    "StaggerUStride":               [-1,16,32,64,128,256,512,1024,2048],
 
     # How the tile assignment (wg0, wg1, wg2) controls the initial StaggerU offset:
     # 0: Use wg0
@@ -742,6 +770,10 @@ validParameters = {
     #    to a different bank since all workgroups still start at same point.
     "StaggerUMapping":       [0,1,2,3,4],
 
+    # GSU Workgroup Coalesced Ordering
+    # False: {(wg0,wg1,wg2,wgn)|(wg0,wg1,wg2,wgn)|...|(wg0,wg1,wg2,wgn)}
+    # True:  {(wg0,wg0,wg0)|(wg1,wg1,wg1)|(wg2,wg2,wg2)|...|(wgn,wgn,wgn)}
+    "GlobalSplitUCoalesced":        [False, True],
 
     # 0=don't use magic div (source only)
     # 1=magic div alg #1.  Slightly faster but limited range (if magic number is 2^32)
@@ -772,10 +804,12 @@ validParameters = {
     #
     # Formula for wgSerial:
     # wgSerial = wg0 + (wg1 % WorkGroupMapping) * nwg0
-    "WorkGroupMapping":           list(range(0,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
+    "WorkGroupMapping":           list(range(-1024,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
+    "WorkGroupMappingXCC":        list(range(1,1024+1)),  # change a workgroup's id so that contiguous workgroup can map on same XCC
+    "WorkGroupMappingXCCGroup":   list(range(0,1024+1)),  # change a workgroup's id so that contiguous workgroup can map on same XCC, remap workgroup in a group of WGMXCCG.
+
     "MaxOccupancy":               list(range(1, 40+1)),       # wg / CU; if cache thrashing is hurting performance, this allocates extra lds to artificially limit occupancy
     "WorkGroup":                  validWorkGroups,      # ( wg0 x wg1 x LocalSplitU ) dimensions of the workgroup which will operate on a tile and share lds
-    "WorkGroupMappingXCC":        list(range(1,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
 
     #ThreadTile: ( tt0 x tt1 ) dimensions of the C tile that each thread works on,
     # TT=4 and VW=4 means a thread will work on a tight 4x4 tile of C, where VW=1 means the tile will work on 16 spread out values
@@ -1057,6 +1091,7 @@ defaultBenchmarkCommonParameters = [
     {"WaveSeparateGlobalReadA":   [ 0 ] },
     {"WaveSeparateGlobalReadB":   [ 0 ] },
     {"WaveSeparateGlobalReadMetadata":   [ 0 ] },
+    {"UnrollLoopSwapGlobalReadOrder":    [ 0 ] },
     {"PrefetchGlobalRead":        [ 1 ] },
     {"PrefetchLocalRead":         [ 1 ] },
     {"ClusterLocalRead":          [ 1 ] },
@@ -1089,12 +1124,14 @@ defaultBenchmarkCommonParameters = [
     {"MagicDivAlg":               [ 2 ] },
     {"GlobalSplitU":              [ 1 ] },
     {"GlobalSplitUAlgorithm":     [ "MultipleBuffer" ] },
+    {"GlobalSplitUCoalesced":     [ False ] },
     {"Use64bShadowLimit":         [ 1 ] },
     {"NumLoadsCoalescedA":        [ 1 ] },
     {"NumLoadsCoalescedB":        [ 1 ] },
     {"WorkGroup":                 [ [16,16,1]] },
     {"WorkGroupMapping":          [ 8 ] },
     {"WorkGroupMappingXCC":       [ 1 ] },
+    {"WorkGroupMappingXCCGroup":  [ 0 ] },
     {"ThreadTile":                [ [4,4] ] },
     {"WavefrontSize":             [ 64 ]},
     {"MatrixInstruction":         [ [] ] },
@@ -1155,9 +1192,9 @@ defaultProblemType = {
     "Gradient":                 False,            # =True set globalWriteElements to gradient mode
     "UseBias":                  0,                # =1 support bias vector on M direction, =2 support bias vector on N direction, =3 support bias vector on both M,N direction
     "BiasSrc":                  "D",              # This parameter is used in gradient + bias. Support A, B, D.
-    "UseScaleAB":               False,            # =True use scaleA, scaleB
+    "UseScaleAB":               "",               # Support "", "Scalar", and "Vector"
     "UseScaleCD":               False,            # =True use scaleC, scaleD
-    "UseScaleAlphaVec":         False,            # =True use scaleAlpha vector
+    "UseScaleAlphaVec":         0,                # =1 support alpha vector on M direction, =2 support bias vector on N direction, =3 support alpha vector on both M,N direction
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16
     "SilentHighPrecisionAccumulate": False,       # Keep kernel names the same for HPA mode.  Useful for testing.
 
@@ -1460,10 +1497,13 @@ def printCapTable(parameters):
   printTable([headerRow] + asmCapRows + archCapRows)
 
 def which(p):
-    exes = [p+x for x in ['', '.exe', '.bat']]
-    system_path = os.environ['PATH'].split(os.pathsep)
-    if p == 'hipcc' and 'CMAKE_CXX_COMPILER' in os.environ and os.path.isfile(os.environ['CMAKE_CXX_COMPILER']):
+    if supportedCompiler(p) and 'CMAKE_CXX_COMPILER' in os.environ and os.path.isfile(os.environ['CMAKE_CXX_COMPILER']):
         return os.environ['CMAKE_CXX_COMPILER']
+    if os.name == "nt":
+        exes = [p+x for x in ['.exe', '', '.bat']]  # bat may be front end for file with no extension
+    else:
+        exes = [p+x for x in ['', '.exe', '.bat']]
+    system_path = os.environ['PATH'].split(os.pathsep)
     for dirname in system_path+[globalParameters["ROCmBinPath"]]:
         for exe in exes:
             candidate = os.path.join(os.path.expanduser(dirname), exe)
@@ -1511,6 +1551,8 @@ def assignGlobalParameters( config ):
   globalParameters["CmakeCxxCompiler"] = None
   if "CMAKE_CXX_COMPILER" in os.environ:
     globalParameters["CmakeCxxCompiler"] = os.environ.get("CMAKE_CXX_COMPILER")
+  if "CMAKE_C_COMPILER" in os.environ:
+    globalParameters["CmakeCCompiler"] = os.environ.get("CMAKE_C_COMPILER")
 
   globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
 
@@ -1522,14 +1564,27 @@ def assignGlobalParameters( config ):
 
   if "CxxCompiler" in config:
     globalParameters["CxxCompiler"] = config["CxxCompiler"]
+    # Pair the CCompiler with CxxCompiler
+    if globalParameters["CxxCompiler"] == "hipcc":
+       globalParameters["CCompiler"] = "hipcc"
+    else:
+        if supportedCompiler(globalParameters["CxxCompiler"]):
+          globalParameters["CCompiler"] = "clang" if os.name == "nt" else "amdclang"
+        else: # unkown c++ compiler so set c compile rto be the same
+          globalParameters["CCompiler"] = globalParameters["CxxCompiler"]
+
+  if "CCompiler" in config:
+    globalParameters["CCompiler"] = config["CCompiler"]
 
   if "TENSILE_ROCM_ASSEMBLER_PATH" in os.environ:
     globalParameters["AssemblerPath"] = os.environ.get("TENSILE_ROCM_ASSEMBLER_PATH")
-  elif globalParameters["AssemblerPath"] is None and globalParameters["CxxCompiler"] == "hipcc":
+  elif globalParameters["AssemblerPath"] is None and supportedCompiler(globalParameters["CxxCompiler"]):
     if os.name == "nt":
       globalParameters["AssemblerPath"] = locateExe(globalParameters["ROCmBinPath"], "clang++.exe")
     else:
-      globalParameters["AssemblerPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "clang++")
+      bin_path = "llvm/bin" if globalParameters["CxxCompiler"] == "hipcc" else "bin"
+      compiler = "clang++" if globalParameters["CxxCompiler"] == "hipcc" else "amdclang++"
+      globalParameters["AssemblerPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], bin_path), compiler)
 
   globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
   globalParameters["ROCmLdPath"]  = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld")
@@ -1591,6 +1646,8 @@ def assignGlobalParameters( config ):
   # Due to platform.linux_distribution() being deprecated, just try to run dpkg regardless.
   # The alternative would be to install the `distro` package.
   # See https://docs.python.org/3.7/library/platform.html#platform.linux_distribution
+
+  # The following try except block computes the hipcc version
   try:
     if os.name == "nt":
       compileArgs = ['perl'] + [which('hipcc')] + ['--version']

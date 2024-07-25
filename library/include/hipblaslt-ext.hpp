@@ -131,21 +131,21 @@ namespace hipblaslt_ext
      */
     struct GemmInputs
     {
-        void* a     = nullptr; //!< The a matrix input pointer.
-        void* b     = nullptr; //!< The b matrix input pointer.
-        void* c     = nullptr; //!< The c matrix input pointer.
-        void* d     = nullptr; //!< The d matrix input pointer.
-        void* alpha = nullptr; //!< The alpha value.
-        void* beta  = nullptr; //!< The beta value.
+        const void* a     = nullptr; //!< The a matrix input pointer.
+        const void* b     = nullptr; //!< The b matrix input pointer.
+        const void* c     = nullptr; //!< The c matrix input pointer.
+        const void* d     = nullptr; //!< The d matrix input pointer.
+        const void* alpha = nullptr; //!< The alpha value.
+        const void* beta  = nullptr; //!< The beta value.
         // Epilogue inputs
-        void* bias          = nullptr; //!< The bias input pointer.
-        void* scaleA        = nullptr; //!< The Scale A input pointer.
-        void* scaleB        = nullptr; //!< The Scale B input pointer.
-        void* scaleC        = nullptr; //!< The Scale C input pointer.
-        void* scaleD        = nullptr; //!< The Scale D input pointer.
-        void* scaleAux      = nullptr; //!< The Scale AUX input pointer.
-        void* scaleAlphaVec = nullptr; //!< The scaleAlpha vector input pointer.
-        void* aux           = nullptr; //!< The aux input pointer.
+        const void* bias          = nullptr; //!< The bias input pointer.
+        const void* scaleA        = nullptr; //!< The Scale A input pointer.
+        const void* scaleB        = nullptr; //!< The Scale B input pointer.
+        const void* scaleC        = nullptr; //!< The Scale C input pointer.
+        const void* scaleD        = nullptr; //!< The Scale D input pointer.
+        const void* scaleAux      = nullptr; //!< The Scale AUX input pointer.
+        const void* scaleAlphaVec = nullptr; //!< The scaleAlpha vector input pointer.
+        const void* aux           = nullptr; //!< The aux input pointer.
     };
 
     /*! \ingroup types_module
@@ -200,7 +200,7 @@ namespace hipblaslt_ext
     class GemmInstance
     {
     public:
-        HIPBLASLT_EXPORT virtual ~GemmInstance();
+        HIPBLASLT_EXPORT virtual ~GemmInstance() {};
         HIPBLASLT_EXPORT               GemmInstance(const GemmInstance& rhs) = delete;
         HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs)    = delete;
         HIPBLASLT_EXPORT               GemmInstance(GemmInstance&& rhs) noexcept;
@@ -848,7 +848,8 @@ namespace hipblaslt_ext
      *  This function retrieves the possible algorithms for the matrix multiply
      * operation hipblasLtMatmul() function with the given data and compute tpye.
      * The output is placed in heuristicResults in the order of increasing
-     * estimated compute time.
+     * estimated compute time. It should use matmulIsAlgoSupported() to check if
+     * the algorithm support the problem before execute hipblasLtMatmul().
      *
      *  @param[in]
      *  handle                  Pointer to the allocated hipBLASLt handle for the
@@ -936,7 +937,9 @@ namespace hipblaslt_ext
      *  This function retrieves the possible algorithms for the matrix multiply
      * operation hipblasLtMatmul() function with the given index.
      * The output is placed in heuristicResult in the order of increasing
-     * estimated compute time.
+     * estimated compute time. A recorded solution index cannot be used across
+     * different verison of library. It should use matmulIsAlgoSupported() to
+     * check if the algorithm support the problem before execute hipblasLtMatmul().
      *
      *  @param[in]
      *  handle                  Pointer to the allocated hipBLASLt handle for the

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +22,21 @@
 #
 ################################################################################
 
-from ..TensileInstructions import DataType, Module
+from ..TensileInstructions import DataType, Module, vgpr, VFmaF64, SSetPrior
 from ..Component import Component, MAC
 
 class FMA_F64_Plain(MAC):
+    """
+    Plain MAC instruction implementation
+    """
     asmCaps = {"v_fma_f64": True}
     kernel = {"ProblemType": {"DataType": DataType(DataType.double)}}
 
-    def __call__(self, writer, m, innerUnroll):
+    def __call__(self, writer, tPA, tPB, m, innerUnroll):
         kernel = writer.states.kernel
-        module = Module("FMA_F64_Plain")
+
+        module = Module("MAC_F64_Plain")
         module.addComment(self.commentHeader())
-        priority = Component.Priority.find(writer)
 
         vars = {}
         vars["m"] = m
@@ -45,11 +48,16 @@ class FMA_F64_Plain(MAC):
                 vars["a"] = a
                 for iui in range(0, innerUnroll):
                     vars["iui"] = iui
-                    cStr        = "v[vgprValuC+({a}+{b}*{ThreadTile0})*2:(vgprValuC+{a}+{b}*{ThreadTile0})*2+1]".format_map(vars)
-                    aStr        = "v[vgprValuA_X{m}_I{iui}+{a}*2:vgprValuA_X{m}_I{iui}+{a}*2+1]".format_map(vars)
-                    bStr        = "v[vgprValuB_X{m}_I{iui}+{b}*2:vgprValuB_X{m}_I{iui}+{b}*2+1]".format_map(vars)
-                    module.addInst("v_fma_f64", cStr, aStr, bStr, cStr, "")
-                    module.add(priority(writer, 1, "Raise priority while processing macs"))
 
-        module.add(priority(writer, 0, "Reset priority after macs"))
+                    cStr = "ValuC+%d" % ((vars["a"]+vars["b"]*vars["ThreadTile0"])*2)
+                    aStr = "ValuA_X%d_I%d+%d" % (vars["m"], vars["iui"], vars["a"]*2)
+                    bStr = "ValuB_X%d_I%d+%d" % (vars["m"], vars["iui"], vars["b"]*2)
+
+                    module.add(VFmaF64(dst=vgpr(cStr, 2), src0=vgpr(aStr, 2),
+                                       src1=vgpr(bStr, 2), src2=vgpr(cStr, 2)))
+                    if (b is 0) and (a is 0) and (iui is 0):
+                        module.add(SSetPrior(prior=1, comment="Raise priority while processing macs"))
+
+        module.add(SSetPrior(prior=0, comment="Reset priority after macs"))
+
         return module
