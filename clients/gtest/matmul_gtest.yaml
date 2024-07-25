@@ -660,6 +660,24 @@ Tests:
   unit_check: 1
   gpu_arch: '94?'
 
+- name: matmul_f8_dst_bf16_scale_ab_vec
+  category: pre_checkin
+  function:
+    matmul: *f8_precision_dst_bf16
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA: T
+  transB: N
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [2]
+  scaleB: [2]
+  bias_vector: [0, 1]
+  bias_type: bf16_r
+  unit_check: 1
+  gpu_arch: '94?'
+
 - name: matmul_real_1b_dst_f8_SCDInt1
   category: pre_checkin
   function:
@@ -1171,6 +1189,8 @@ Tests:
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
     - { M:  131,  N:  131,  K:  131  }
+    - { M:  1024, N:  1024, K:  1024 }
+    - { M:  1031, N:  1031, K:  1031 }
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0, 2 ]
@@ -1184,9 +1204,12 @@ Tests:
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
     - { M:  131,  N:  131,  K:  131  }
+    - { M:  1024, N:  1024, K:  1024 }
+    - { M:  1031, N:  1031, K:  1031 }
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0, 2 ]
+  scaleAlpha_vector: [0, 1]
   activation_type: relu
   unit_check: 1
   gpu_arch: '94?'
@@ -1320,18 +1343,33 @@ Tests:
   beta: 2.0
   unit_check: 1
 
-- name: matmul_request_solution_num
+- name: matmul_heuristic_all_solutions
   category: nightly
   function:
-    matmul: *hpa_bf16_precision
-  M: [128, 129]
-  N: [128, 129]
-  K: [128, 129]
+    matmul: *real_precisions
+  M: [128]
+  N: [128]
+  K: [2048]
+  algo_method: [0,1]
   transA_transB: *transA_transB_range
   alpha: 1
   beta: 0
   requested_solution_num: -1
-  norm_check: 1
+  unit_check: 1
 
+- name: matmul_heuristic_all_solutions_real_1byte
+  category: nightly
+  function:
+    matmul: *real_precisions_1b
+  M: [128]
+  N: [128]
+  K: [2048]
+  algo_method: [0,1]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: 0
+  requested_solution_num: -1
+  unit_check: 1
+  gpu_arch: '94?'
 ...
 

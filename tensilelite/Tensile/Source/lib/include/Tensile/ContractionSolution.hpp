@@ -40,6 +40,8 @@
 #include <Tensile/Predicates.hpp>
 #include <Tensile/Utils.hpp>
 
+#define TENSILE_COMMON_KERNEL_ARGS_SIZE 16
+
 namespace Tensile
 {
     template <typename TAct>
@@ -117,10 +119,11 @@ namespace Tensile
         using Inputs        = ContractionInputs;
         using GroupedInputs = ContractionGroupedInputs;
 
- /**
+        /**
   * Indicate a solution is equally or estimatedly matched.
   */
-        enum class MatchingTag {
+        enum class MatchingTag
+        {
             Equal,
             Estimated
         };
@@ -320,6 +323,7 @@ namespace Tensile
         void kernelArgs(uint32_t                            gemmCount,
                         uint32_t                            argType,
                         KA&                                 args,
+                        uint32_t                            numWorkGroups,
                         const ContractionProblemParameters& param) const;
 
         template <typename KA>
@@ -409,10 +413,10 @@ namespace Tensile
             dim3 macroTile;
 
             std::array<int, 4> matrixInstruction;
-            size_t grvwA              = 1;
-            size_t grvwB              = 1;
-            size_t gwvwC              = 1;
-            size_t gwvwD              = 1;
+            size_t             grvwA = 1;
+            size_t             grvwB = 1;
+            size_t             gwvwC = 1;
+            size_t             gwvwD = 1;
 
             size_t staggerU           = 0;
             size_t staggerUMapping    = 0;
@@ -443,6 +447,7 @@ namespace Tensile
 
         struct InternalArgsSupport
         {
+            int  version          = 0;
             bool gsu              = true;
             bool wgm              = true;
             bool staggerU         = true;
@@ -468,9 +473,9 @@ namespace Tensile
             bool                  useGradient               = false;
             int                   useBias                   = 0;
             bool                  useE                      = false;
-            bool                  useScaleAB                = false;
+            std::string           useScaleAB                = "";
             bool                  useScaleCD                = false;
-            bool                  useScaleAlphaVec          = false;
+            int                   useScaleAlphaVec          = 0;
             bool                  useInitialStridesAB       = false;
             bool                  useInitialStridesCD       = false;
             bool                  stridedBatched            = true;

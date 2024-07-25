@@ -245,6 +245,7 @@ Arguments:
   - streams: c_uint16
   - devices: c_uint8
   - norm_check: c_int8
+  - allclose_check: c_int8
   - unit_check: c_int8
   - timing: c_int8
   - transA: c_char
@@ -255,8 +256,8 @@ Arguments:
   - bias_type: hipDataType
   - bias_source: hipblaslt_bias_source
   - bias_vector: c_bool
-  - scaleA: c_bool
-  - scaleB: c_bool
+  - scaleA: c_int
+  - scaleB: c_int
   - scaleC: c_bool
   - scaleD: c_bool
   - scaleE: c_bool
@@ -272,6 +273,7 @@ Arguments:
   - use_ext: c_bool
   - use_ext_setproblem: c_bool
   - algo_method: c_int32
+  - api_method: c_int32
   - use_user_args: c_bool
   - rotating: c_int32
   - use_gpu_timer: c_bool
@@ -333,6 +335,7 @@ Defaults:
   devices: 0
   gpu_arch: ''
   norm_check: 0
+  allclose_check: 0
   unit_check: 1
   timing: 0
   iters: 10
@@ -355,8 +358,8 @@ Defaults:
   use_e: false
   gradient: false
   bias_vector: false
-  scaleA: false
-  scaleB: false
+  scaleA: 0
+  scaleB: 0
   scaleC: false
   scaleD: false
   scaleE: false
@@ -369,6 +372,7 @@ Defaults:
   use_ext: false
   use_ext_setproblem: false
   algo_method: 0
+  api_method: 0
   use_user_args: false
   rotating: 0
   use_gpu_timer: false
@@ -379,3 +383,4 @@ Defaults:
   flush: false
   compute_input_typeA: hipblaslt_datatype_invalid
   compute_input_typeB: hipblaslt_datatype_invalid
+  scale_type: hipblaslt_datatype_invalid

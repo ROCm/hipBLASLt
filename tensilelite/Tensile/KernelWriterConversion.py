@@ -126,10 +126,13 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "  " + scalePtrStr + " * " + "ScaleC;" + self.endLine
       kStr += "  " + scalePtrStr + " * " + "ScaleD;" + self.endLine
 
+    enableFactorDim = False
     # interface: ScaleAlphaVec GSU>1 GSUA "MUL"
     if self.state["ProblemType"]["UseScaleAlphaVec"]:
       scaleAlphaVecPtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
       kStr += "  " + scaleAlphaVecPtrStr + " * " + "ScaleAlphaVec;" + self.endLine
+      if self.state["ProblemType"]["UseScaleAlphaVec"] == 3:
+        enableFactorDim = True
 
     # alpha & beta
     kStr += "  %s alpha;%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
@@ -163,6 +166,8 @@ class KernelWriterConversion(KernelWriterBase):
         (not self.state["ProblemType"]["Gradient"] or \
           (self.state["ProblemType"]["Gradient"] and (self.state["ProblemType"]["BiasSrc"] == "A" or self.state["ProblemType"]["BiasSrc"] == "B"))):
       kStr += "  unsigned int strideBias;%s" % (self.endLine)
+      if self.state["ProblemType"]["UseBias"] == 3:
+        enableFactorDim = True
 
     # sizes
     for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
@@ -173,11 +178,8 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += "  unsigned char gsu;%s" % (self.endLine)
     kStr += "  unsigned char reserved[3];%s" % (self.endLine)
 
-    if self.state["ProblemType"]["UseBias"] and \
-        (not self.state["ProblemType"]["Gradient"] or \
-          (self.state["ProblemType"]["Gradient"] and (self.state["ProblemType"]["BiasSrc"] == "A" or self.state["ProblemType"]["BiasSrc"] == "B"))):
-      if self.state["ProblemType"]["UseBias"] == 3:
-        kStr += "  unsigned int biasDim;%s" % (self.endLine)
+    if enableFactorDim:
+      kStr += "  unsigned int factorDim;%s" % (self.endLine)
 
     # argument structure end
     kStr += "};" + self.endLine
@@ -416,7 +418,7 @@ class KernelWriterConversion(KernelWriterBase):
       id_str = "id0"
       if self.state["ProblemType"]["UseBias"] == 3:
         id_str = "idb"
-        kStr += "  %s idb = ( arg.biasDim == 0 ? (%s)id0 : id1);%s" % (self.uint64Str, self.uint64Str, self.endLine)
+        kStr += "  %s idb = ( arg.factorDim == 0 ? (%s)id0 : id1);%s" % (self.uint64Str, self.uint64Str, self.endLine)
       elif self.state["ProblemType"]["UseBias"] == 2:
         id_str = "id1"
       if problemType["NumIndicesC"] > 2:
@@ -445,7 +447,7 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += "  " + destTypeStr + " result[NUM_ELEMENT_LOAD];" + self.endLine
 
     #Load scaleAB
-    if self.state["ProblemType"]["UseScaleAB"]:
+    if self.state["ProblemType"]["UseScaleAB"] == "Scalar":
       kStr += "  " + intermediateDataType + " scaleA_data, scaleB_data;" + self.endLine
       kStr += "  " + "scaleA_data = arg.ScaleA == nullptr ? 1 : *(arg.ScaleA);" + self.endLine
       kStr += "  " + "scaleB_data = arg.ScaleB == nullptr ? 1 : *(arg.ScaleB);" + self.endLine
@@ -613,9 +615,19 @@ class KernelWriterConversion(KernelWriterBase):
     resultStr = "result"
 
     #scaleAB
-    if self.state["ProblemType"]["UseScaleAB"]:
+    if self.state["ProblemType"]["UseScaleAB"] == "Scalar":
       kStr += "  arg.alpha = arg.alpha*scaleA_data*scaleB_data;%s" % (self.endLine)
-    kStr += self.endLine
+      kStr += self.endLine
+    elif self.state["ProblemType"]["UseScaleAB"] == "Vector":
+      kStr += "  if(arg.ScaleA != nullptr) {" + self.endLine
+      for vIdx in range(self.num_dword_load):
+        kStr += "    %s[%d] *= (%s)arg.ScaleA[id0+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
+      kStr += "  }" + self.endLine
+      kStr += "  if(arg.ScaleB != nullptr) {" + self.endLine
+      for vIdx in range(self.num_dword_load):
+        kStr += "      %s[%d] *= (%s)arg.ScaleB[id1];%s" % (accumStr, vIdx, intermediateDataType, self.endLine)
+      kStr += "  }" + self.endLine
+      kStr += self.endLine
 
     #alpha
     for vIdx in range(self.num_dword_load):
@@ -624,9 +636,25 @@ class KernelWriterConversion(KernelWriterBase):
 
     if self.state["ProblemType"]["UseScaleAlphaVec"]:
       kStr += "  if(arg.ScaleAlphaVec != nullptr){" + self.endLine
-      for vIdx in range(self.num_dword_load):
-        kStr += "  %s[%d] *= (%s)arg.ScaleAlphaVec[id0+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
-      kStr += "  }" + self.endLine
+
+      if self.state["ProblemType"]["UseScaleAlphaVec"] == 3:
+        kStr += "    if(arg.factorDim == 0){" + self.endLine
+        for vIdx in range(self.num_dword_load):
+          kStr += "      %s[%d] *= (%s)arg.ScaleAlphaVec[id0+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
+        kStr += "    }else{" + self.endLine
+        for vIdx in range(self.num_dword_load):
+          kStr += "      %s[%d] *= (%s)arg.ScaleAlphaVec[id1];%s" % (accumStr, vIdx, intermediateDataType, self.endLine)
+        kStr += "    }" + self.endLine
+        kStr += "  }" + self.endLine
+      elif self.state["ProblemType"]["UseBias"] == 2:
+        for vIdx in range(self.num_dword_load):
+          kStr += "    %s[%d] *= (%s)arg.ScaleAlphaVec[id1];%s" % (accumStr, vIdx, intermediateDataType, self.endLine)
+        kStr += "  }" + self.endLine
+      else:
+        for vIdx in range(self.num_dword_load):
+          kStr += "    %s[%d] *= (%s)arg.ScaleAlphaVec[id0+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
+        kStr += "  }" + self.endLine
+
       kStr += self.endLine
 
     #scaleC
@@ -645,7 +673,7 @@ class KernelWriterConversion(KernelWriterBase):
     if self.state["ProblemType"]["UseBias"] and (not self.state["ProblemType"]["Gradient"]):
       kStr += "  if(arg.Bias != 0){" + self.endLine
       if self.state["ProblemType"]["UseBias"] == 3:
-        kStr += "    if(arg.biasDim == 0){" + self.endLine
+        kStr += "    if(arg.factorDim == 0){" + self.endLine
         for vIdx in range(self.num_dword_load):
           kStr += "      %s[%d] += (%s)arg.Bias[idxBias+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
         kStr += "    }else{" + self.endLine
@@ -774,8 +802,12 @@ class KernelWriterConversion(KernelWriterBase):
         name += "_BiasSrc%s"%(self.state["ProblemType"]["BiasSrc"])
       else:
         name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar()
-        if self.state["ProblemType"]["UseBias"] > 1:
-          name += "_BD%s"%("N" if self.state["ProblemType"]["UseBias"] == 2 else "MN")
+
+    factorDim =  0 if self.state["ProblemType"]["Gradient"] else self.state["ProblemType"]["UseBias"]
+    factorDim =  max(factorDim, self.state["ProblemType"]["UseScaleAlphaVec"])
+    if factorDim > 1:
+        name += "_FD%s"%("N" if factorDim == 2 else "MN")
+
     if self.state["ProblemType"]["UseE"]:
       if self.state["ProblemType"]["Gradient"]:
         name += "_Grad%s"%self.state["ProblemType"]["DataTypeE"].toChar()
@@ -789,7 +821,10 @@ class KernelWriterConversion(KernelWriterBase):
         name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
       name += self.state["ProblemType"]["ActivationComputeDataType"].toChar()
       name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
-    name += "_ScaleAB" if self.state["ProblemType"]["UseScaleAB"] else ""
+    if self.state["ProblemType"]["UseScaleAB"] == "Scalar":
+      name += "_ScaleAB"
+    elif self.state["ProblemType"]["UseScaleAB"] == "Vector":
+      name += "_ScaleABVec"
     name += "_ScaleCD" if self.state["ProblemType"]["UseScaleCD"] else ""
     name += "_ScaleAlphaVec" if self.state["ProblemType"]["UseScaleAlphaVec"] else ""
     name += "_PostGSU" + str(self.state["GlobalSplitU"])

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -63,7 +63,7 @@ def createLibraryForBenchmark(logicPath, libraryPath, currentPath):
     pythonExePath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin", "TensileCreateLibrary")
     args = [pythonExePath, \
         "--merge-files", "--new-client-only", "--no-short-file-names", "--no-library-print-debug", \
-        "--architecture=all", "--code-object-version=default", "--cxx-compiler=hipcc", "--library-format=yaml", \
+        "--architecture=all", "--code-object-version=default", "--cxx-compiler="+globalParameters["CxxCompiler"], "--library-format=yaml", \
         logicPath, libraryPath, "HIP"]
 
     try:

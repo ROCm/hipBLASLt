@@ -230,8 +230,8 @@ namespace Tensile
                     // M/MT0 x N/MT1 x NumElementsPerThread/StoreVectorWidth x x Wavenumbers
                     bool ret = (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
                                 * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
-                                * (value[2]) * (value[4] / 64) * value[3]
-                               <= 1024;
+                                   * (value[2]) * (value[4] / 64) * value[3]
+                               <= 40960;
                     if(problem.groupedGemm())
                         ret = ret && (problem.groupedGemmCount() <= 16);
 
@@ -246,11 +246,11 @@ namespace Tensile
                         stream,
                         "prob",
                         (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
-                                * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
-                                * (value[2]) * (value[4] / 64) * value[3],
+                         * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
+                            * (value[2]) * (value[4] / 64) * value[3],
                         "==",
                         "sol",
-                        1024);
+                        40960);
                 }
             };
 
@@ -2059,10 +2059,10 @@ namespace Tensile
                     HasIndex = false,
                     HasValue = true
                 };
-                bool value;
+                std::string value;
 
                 UseScaleABEqual() = default;
-                UseScaleABEqual(bool value)
+                UseScaleABEqual(std::string value)
                     : value(value)
                 {
                 }
@@ -2126,10 +2126,10 @@ namespace Tensile
                     HasIndex = false,
                     HasValue = true
                 };
-                bool value;
+                int value;
 
                 UseScaleAlphaVecEqual() = default;
-                UseScaleAlphaVecEqual(bool value)
+                UseScaleAlphaVecEqual(int value)
                     : value(value)
                 {
                 }
@@ -2222,12 +2222,20 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
+                    if(problem.useBias() && problem.useScaleAlphaVec()
+                       && problem.useBias() != problem.useScaleAlphaVec())
+                        return false;
+
+                    int factorDim = (problem.useBias() == 1) ? 0
+                                    : problem.useBias() == 2 ? 1
+                                    : problem.useBias() == 3 ? problem.getParams().factorDim()
+                                                             : 0;
+
                     if(problem.useBias())
                     {
                         auto& tensor = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
                         if(tensor.sizes().size() == 0)
                             return false;
-
                         for(size_t i = 0; i < value.size(); i++)
                         {
                             if(value[i] == static_cast<int>(problem.biasSrc()))
@@ -2237,15 +2245,13 @@ namespace Tensile
                                 if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A
                                    || problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
                                 {
-                                    auto eLength = (problem.useBias() == 1 || problem.biasSrc() != ContractionProblemGemm::TENSOR::D)
-                                                     ? problem.d().sizes()[0]
-                                                     : (problem.useBias() == 2)
-                                                     ? problem.d().sizes()[1]
-                                                     : (problem.useBias() == 3)
-                                                     ? (problem.getParams().biasDim() == 1)
-                                                     ? problem.d().sizes()[1]
-                                                     : problem.d().sizes()[0]
-                                                     : -1;
+                                    auto eLength = (problem.useBias() == 1
+                                                    || problem.biasSrc()
+                                                           != ContractionProblemGemm::TENSOR::D)
+                                                       ? problem.d().sizes()[0]
+                                                   : (problem.useBias() <= 3)
+                                                       ? problem.d().sizes()[factorDim]
+                                                       : -1;
                                     if(length < eLength)
                                         return false;
                                 }

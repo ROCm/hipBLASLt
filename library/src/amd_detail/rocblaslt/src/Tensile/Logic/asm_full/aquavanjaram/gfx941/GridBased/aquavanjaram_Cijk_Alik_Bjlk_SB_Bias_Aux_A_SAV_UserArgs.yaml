@@ -67,8 +67,8 @@
   UseE: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: false
-  UseScaleAlphaVec: true
+  UseScaleAB: ""
+  UseScaleAlphaVec: 1
 - - 1LDSBuffer: 1
     ActivationAlt: false
     ActivationFuncCall: true
@@ -261,8 +261,8 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: true
+      UseScaleAB: ""
+      UseScaleAlphaVec: 1
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1

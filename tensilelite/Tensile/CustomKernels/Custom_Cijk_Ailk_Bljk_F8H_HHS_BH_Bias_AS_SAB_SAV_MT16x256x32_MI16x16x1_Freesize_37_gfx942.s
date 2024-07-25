@@ -44,6 +44,7 @@
 ---
 custom.config:
    InternalSupportParams:
+      KernArgsVersion: 0
       SupportUserGSU: True
       SupportCustomWGM: True
       SupportCustomStaggerU: False

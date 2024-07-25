@@ -55,7 +55,7 @@
   UseBias: 1
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAlphaVec: true
+  UseScaleAlphaVec: 1
   ZeroPadA: []
   ZeroPadB: []
 - - 1LDSBuffer: 0
@@ -262,7 +262,7 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAlphaVec: true
+      UseScaleAlphaVec: 1
       ZeroPadA: []
       ZeroPadB: []
     ReplacementKernel: false
@@ -528,7 +528,7 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAlphaVec: true
+      UseScaleAlphaVec: 1
       ZeroPadA: []
       ZeroPadB: []
     ReplacementKernel: false
@@ -794,7 +794,7 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAlphaVec: true
+      UseScaleAlphaVec: 1
       ZeroPadA: []
       ZeroPadB: []
     ReplacementKernel: false
@@ -1060,7 +1060,7 @@
       UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAlphaVec: true
+      UseScaleAlphaVec: 1
       ZeroPadA: []
       ZeroPadB: []
     ReplacementKernel: false

@@ -29,7 +29,7 @@ from .Common import print1, print2, hasParam, printExit, \
         defaultBatchedBenchmarkFinalProblemSizes, defaultBenchmarkFinalProblemSizes
 from .CustomKernels import getAllCustomKernelNames
 from .SolutionStructs import ProblemType, ProblemSizes, ActivationArgs, BiasTypeArgs, \
-        BiasDimArgs
+        FactorDimArgs
 
 
 def getDefaultsForMissingParameters(paramList, defaultParams):
@@ -156,7 +156,8 @@ class BenchmarkProcess:
 
         activationConf = ""
         biasTypesConf  = ""
-        biasDimConf  = ""
+        factorDimConf  = ""
+        icacheFlush = None
         if "BenchmarkFinalParameters" in config:
             sizes          = config["BenchmarkFinalParameters"][0]["ProblemSizes"]
             for bfp in config["BenchmarkFinalParameters"][1:]:
@@ -168,20 +169,28 @@ class BenchmarkProcess:
                   if biasTypesConf:
                     printExit("Duplicated BiasTypeArgs.")
                   biasTypesConf = bfp["BiasTypeArgs"]
-                if "BiasDimArgs" in bfp:
-                  if biasDimConf:
-                    printExit("Duplicated BiasDimArgs.")
-                  biasDimConf = bfp["BiasDimArgs"]
+                if "FactorDimArgs" in bfp:
+                  if factorDimConf:
+                    printExit("Duplicated FactorDimArgs.")
+                  factorDimConf = bfp["FactorDimArgs"]
+                if "ICacheFlush" in bfp:
+                  if icacheFlush is not None:
+                    printExit("Duplicated ICacheFlush.")
+                  icacheFlush = bfp["ICacheFlush"]
         else:
             sizes = defaultBatchedBenchmarkFinalProblemSizes if isbatched \
                 else defaultBenchmarkFinalProblemSizes
+
+        if icacheFlush is None:
+          icacheFlush = [False,]
 
         self.problemSizes = ProblemSizes(self.problemType, sizes)
         checkCDBufferAndStrides(self.problemType, self.problemSizes, globalParameters["CEqualD"])
 
         self.biasTypesArgs  = BiasTypeArgs(self.problemType, biasTypesConf)
         self.activationArgs = ActivationArgs(self.problemType, activationConf)
-        self.biasDimArgs  = BiasDimArgs(self.problemType, biasDimConf)
+        self.factorDimArgs  = FactorDimArgs(self.problemType, factorDimConf)
+        self.icacheFlushArgs = icacheFlush
 
         # validate parameter values
         configParams = {**benchmarkCommonParams, **forkParams}
@@ -232,8 +241,9 @@ class BenchmarkProcess:
                 self.internalSupportParams, \
                 self.problemSizes, \
                 self.biasTypesArgs, \
-                self.biasDimArgs, \
+                self.factorDimArgs, \
                 self.activationArgs, \
+                self.icacheFlushArgs, \
                 self.benchmarkStepIdx)
         self.benchmarkSteps.append(benchmarkStep)
         self.benchmarkStepIdx += 1
@@ -294,7 +304,7 @@ def constructForkPermutations(forkParams, paramGroups):
 class BenchmarkStep:
     """A single benchmark step which consists of constant and fork parameters and a set of sizes"""
 
-    def __init__(self, forkParams, constantParams, paramGroups, customKernels, internalSupportParams, problemSizes, biasTypeArgs, biasDimArgs, activationArgs, idx):
+    def __init__(self, forkParams, constantParams, paramGroups, customKernels, internalSupportParams, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, idx):
         """Basic constructor storing each argument"""
         self.forkParams = forkParams
         self.constantParams = constantParams
@@ -303,8 +313,9 @@ class BenchmarkStep:
         self.internalSupportParams = internalSupportParams
         self.problemSizes = problemSizes
         self.biasTypeArgs = biasTypeArgs
-        self.biasDimArgs = biasDimArgs
+        self.factorDimArgs = factorDimArgs
         self.activationArgs = activationArgs
+        self.icacheFlushArgs = icacheFlushArgs
         self.stepIdx = idx
 
         self.customKernelWildcard = False

@@ -80,11 +80,14 @@ namespace Tensile
             if(problem.useBias())
             {
                 m_reporter->report(ResultKey::BiasType, ToString(problem.getParams().biasEnum()));
-                m_reporter->report(ResultKey::BiasDim, problem.getParams().biasDim());
             }
             else
             {
                 m_reporter->report(ResultKey::BiasType, "None");
+            }
+            if(problem.useScaleAlphaVec() || problem.useBias())
+            {
+                m_reporter->report(ResultKey::FactorDim, problem.getParams().factorDim());
             }
             m_reporter->report(ResultKey::ActivationType,
                                ToString(problem.getParams().activationEnum()));
