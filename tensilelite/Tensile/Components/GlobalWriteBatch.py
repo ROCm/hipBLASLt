@@ -228,7 +228,8 @@ class GlobalWriteBatchWriter:
                         comment="" ))
 
     module.add(SWaitCnt(waitAll=True, comment="wait store done before synchronizer start load and add"))
-    module.add(SSubU32(dst=sgpr(tmpS02), src0=sgpr("GSU"), src1=hex(1), comment=""))
+    module.add(SAndB32(dst=sgpr(tmpS02), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+    module.add(SSubU32(dst=sgpr(tmpS02), src0=sgpr(tmpS02), src1=hex(1), comment=""))
     module.add(SAtomicDec(dst=sgpr(tmpS02), base=sgpr("SrdSync", 2), smem=SMEMModifiers(glc=1)))
     module.addSpaceLine()
     #####################################cal synchronizer sum offset#####################################
@@ -335,7 +336,7 @@ class GlobalWriteBatchWriter:
       SyncloadedData += 1
 
       GSUMvgpr = self.parentWriter.vgprPool.checkOut(1, "GSUMvgpr")
-      module.add(SMovB32(dst=sgpr("GSUSync"), src=sgpr("GSU"), comment=""))
+      module.add(SAndB32(dst=sgpr("GSUSync"), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
 
       SynchronizerlabelString = "Synchronizer_read_add"
       SynchronizerComment = "Synchronizer read add"
