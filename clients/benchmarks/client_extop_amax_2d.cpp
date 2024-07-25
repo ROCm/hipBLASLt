@@ -301,10 +301,10 @@ int AmaxTest2D(hipDataType               type,
     int32_t block_count = max(1, min(iter, ceil((float)rotating / totalRotatingSizeNeeded)));
     if(rotating > 0)
     {
-        std::cout << "Rotating buffer " << (float)rotating / (1024 * 1024) << " MiB. "
-                  << "Needed Size: " << (float)totalRotatingSizeNeeded / (1024 * 1024) << " MiB. "
-                  << "Needed block count: " << block_count << " (Capped to max iters: " << iter
-                  << ")" << std::endl;
+        std::cout << " Rotating_buffer " << (float)rotating / (1024 * 1024) << " MiB. "
+                  << "Needed_Size: " << (float)totalRotatingSizeNeeded / (1024 * 1024) << " MiB. "
+                  << "Needed_block_count: " << block_count << " (Capped_to_max_iters: " << iter
+                  << ")";
     }
 
     // init as nullptr for each block
