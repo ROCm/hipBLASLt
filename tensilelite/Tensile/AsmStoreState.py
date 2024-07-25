@@ -586,12 +586,13 @@ class StoreState:
 
             if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
                 coordOffset = coordOffset0 if factorDim == 0 else coordOffset1
+                gwvw = self.cfg.gwvw if factorDim == 0 else (2 if self.cfg.gwvw >= 2 else 1)
                 if coordOffset in scaleAlphaVecVgprMap:
                     dataScaleAlphaVec = scaleAlphaVecVgprMap[coordOffset]
                 else:
                     numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-                    dataScaleAlphaVec = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
-                                  int(ceil(numVgprs*self.cfg.gwvw)), "scaleAlphaVec data for ei=%u"%elementIdx, preventOverflow=False)
+                    dataScaleAlphaVec = kw.vgprPool.checkOutAligned(int(numVgprs*gwvw), \
+                                  int(ceil(numVgprs*gwvw)), "scaleAlphaVec data for ei=%u"%elementIdx, preventOverflow=False)
                     scaleAlphaVecVgprMap[coordOffset] = dataScaleAlphaVec
             else:
                 dataScaleAlphaVec = 0
