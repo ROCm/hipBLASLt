@@ -1118,91 +1118,7 @@ class GlobalWriteBatchWriter:
           if not self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
             module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="%s (interleaved)"%comment))
 
-      scaleAVecModule = Module("ScaleAVecModule")
-      scaleBVecModule = Module("ScaleBVecModule")
-      if (self.kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-        isAChecked = False
-        for vi in range(0, self.gwvw):
-          inputScaleAVecVgpr = dataScaleAVec + vi
-          sumIdxV   = self.ss.elementSumIdx[elementIdx] + vi
-          if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
-            vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
-
-            # Generate single f32 code if edge is detected.
-            if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-              if not isAChecked:
-                scaleAVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleA", self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleA+2"), src1=0, comment=" == 0 ?"))
-                for vi2 in range(0, self.gwvw):
-                  scaleAVecModule.add(VCndMaskB32(
-                    dst=vgpr(dataScaleAVec + vi2), \
-                    src1=vgpr(dataScaleAVec + vi2), \
-                    src0=1.0, \
-                    src2=sgpr("AddressScaleA", self.parentWriter.states.laneSGPRCount), \
-                    comment="1. mul 1 if 0"))
-                isAChecked = True
-              scaleAVecModule.add(VMulF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleAVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= scaleAVecVMul" ))
-            # Original packed route
-            elif vi%2 == 1:
-              assert (self.gwvw % 2 == 0)
-            else:
-              if not isAChecked:
-                scaleAVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleA", self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleA+2"), src1=0, comment=" == 0 ?"))
-                for vi2 in range(0, self.gwvw):
-                  scaleAVecModule.add(VCndMaskB32(
-                    dst=vgpr(dataScaleAVec + vi2), \
-                    src1=vgpr(dataScaleAVec + vi2), \
-                    src0=1.0, \
-                    src2=sgpr("AddressScaleA", self.parentWriter.states.laneSGPRCount), \
-                    comment="1. mul 1 if 0"))
-              isAChecked = True
-              scaleAVecModule.add(VMulPKF32(dst=vgpr("ValuC+%d"%vgprIdx, 2), src0=vgpr(inputScaleAVecVgpr, 2), src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="*= scaleAVecVMulPK(%d)(%d)"%(dataScaleAVec,vi)))
-          else:
-            raise RuntimeError("Unsupported scaleAVec compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
-
-        isBChecked = False
-        for vi in range(0, self.gwvw):
-          inputScaleBVecVgpr = dataScaleBVec  # Reuse vgpr because it's the same value for all elements
-          sumIdxV   = self.ss.elementSumIdx[elementIdx] + vi
-          if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
-            vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
-
-            # Generate single f32 code if edge is detected.
-            if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-              if not isBChecked:
-                scaleBVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleB", self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleB+2"), src1=0, comment=" == 0 ?"))
-                scaleBVecModule.add(VCndMaskB32(
-                  dst=vgpr(inputScaleBVecVgpr), \
-                  src1=vgpr(inputScaleBVecVgpr), \
-                  src0=1.0, \
-                  src2=sgpr("AddressScaleB", self.parentWriter.states.laneSGPRCount), \
-                  comment="1. mul 1 if 0"))
-                if self.gwvw > 1:
-                  scaleBVecModule.add(VMovB32(dst=vgpr(inputScaleBVecVgpr+1), src=vgpr(inputScaleBVecVgpr), comment="copy scaleBVecVgpr to scaleBVecVgpr+1"))
-                isBChecked = True
-              scaleBVecModule.add(VMulF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleBVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= scaleBVecVMul" ))
-            # Original packed route
-            elif vi%2 == 1:
-              assert (self.gwvw % 2 == 0)
-            else:
-              if not isBChecked:
-                scaleBVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleB", self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleB+2"), src1=0, comment=" == 0 ?"))
-                scaleBVecModule.add(VCndMaskB32(
-                  dst=vgpr(inputScaleBVecVgpr), \
-                  src1=vgpr(inputScaleBVecVgpr), \
-                  src0=1.0, \
-                  src2=sgpr("AddressScaleB", self.parentWriter.states.laneSGPRCount), \
-                  comment="1. mul 1 if 0"))
-                scaleBVecModule.add(VMovB32(dst=vgpr(inputScaleBVecVgpr+1), src=vgpr(inputScaleBVecVgpr), comment="copy scaleBVecVgpr to scaleBVecVgpr+1"))
-                isBChecked = True
-              scaleBVecModule.add(VMulPKF32(dst=vgpr("ValuC+%d"%vgprIdx, 2), src0=vgpr(inputScaleBVecVgpr, 2), src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="*= scaleBVecVMulPK(%d)(%d)"%(dataScaleBVec,vi)))
-          else:
-            raise RuntimeError("Unsupported scaleBVec compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
-
-      module.add(scaleAVecModule)
-      module.add(scaleBVecModule)
-
-      scaleAlphaVecModule = Module("scaleAlphaVecModule")
-      if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+      def applyScaleVec(vecModule, addressStr, dataScaleVec, factorDim):
         if not self.beta and not self.applyAlpha: # case for beta-0 and alpha == 1,(OptNLL)
           if (self.kernel["ProblemType"]["DestDataType"].isInt8() or self.kernel["ProblemType"]["DestDataType"].isInt32() or \
               (self.kernel["ProblemType"]["DataType"].isInt8() and self.kernel["ProblemType"]["DestDataType"].isHalf()) or \
@@ -1210,123 +1126,61 @@ class GlobalWriteBatchWriter:
             self.kernel["ProblemType"]["ComputeDataType"].isSingle():
             module.add(convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_I32_to_F32, \
                                         inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu))
-        isAlphaChecked = False
+
+        if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
+          maskConst = 1.0
+        elif self.kernel["ProblemType"]["ComputeDataType"].isInt32():
+          maskConst = 1
+
+        gwvw = 1 if factorDim else self.gwvw
+        vecModule.add(VCmpGtU32(dst=sgpr("Address%s"%addressStr, self.parentWriter.states.laneSGPRCount), src0=sgpr("Srd%s+2"%addressStr), src1=0, comment=" == 0 ?"))
+        for vi2 in range(0, gwvw):
+          vecModule.add(VCndMaskB32(
+            dst=vgpr(dataScaleVec + vi2), \
+            src1=vgpr(dataScaleVec + vi2), \
+            src0=maskConst, \
+            src2=sgpr("Address%s"%addressStr, self.parentWriter.states.laneSGPRCount), \
+            comment="1. mul 1 if 0"))
+        if factorDim and self.gwvw > 1:
+          vecModule.add(VMovB32(dst=vgpr(dataScaleVec+1), src=vgpr(dataScaleVec), comment="copy data%s to data%s+1"%(addressStr, addressStr)))
+
         for vi in range(0, self.gwvw):
-          inputScaleAlphaVecVgpr = dataScaleAlphaVec + (0 if self.factorDim else vi)
+          inputScaleVecVgpr = dataScaleVec + (0 if factorDim else vi)
           sumIdxV   = self.ss.elementSumIdx[elementIdx] + vi
           if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
             vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
-
             # Generate single f32 code if edge is detected.
             if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-              if not isAlphaChecked:
-                scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
-                gwvw = 1 if self.factorDim else self.gwvw
-                for vi2 in range(0, gwvw):
-                  scaleAlphaVecModule.add(VCndMaskB32(
-                    dst=vgpr(dataScaleAlphaVec + vi2), \
-                    src1=vgpr(dataScaleAlphaVec + vi2), \
-                    src0=1.0, \
-                    src2=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), \
-                    comment="1. mul 1 if 0"))
-                if self.factorDim and self.gwvw > 1:
-                  scaleAlphaVecModule.add(VMovB32(dst=vgpr(dataScaleAlphaVec+1), src=vgpr(dataScaleAlphaVec), comment="copy dataScaleAlphaVec to dataScaleAlphaVec+1"))
-                isAlphaChecked = True
-
-              if 0: #isActivationInsertAfter:
-                if (self.kernel["ProblemType"]["DestDataType"].isHalf()):
-                  scaleAlphaVecModule.add(VCvtF16toF32(dst=vgpr("ValuC+%d"%vgprIdx), src=vgpr("ValuC+%d"%vgprIdx)))
-                if self.kernel["ProblemType"]["DestDataType"].isBFloat16():
-                  scaleAlphaVecModule.add(VCvtBF16toFP32(dst=("ValuC+%d"%vgprIdx), src=("ValuC+%d"%vgprIdx), vgprMask=None, vi=0))
-                if self.kernel["ProblemType"]["DestDataType"].isInt32() or self.kernel["ProblemType"]["DestDataType"].isInt8():
-                  scaleAlphaVecModule.add(VCvtI32toF32(dst=vgpr("ValuC+%d"%vgprIdx), src=vgpr("ValuC+%d"%vgprIdx)))
-                scaleAlphaVecModule.add(VMulF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleAlphaVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= scaleAlphaVecVMul" ))
-              else:
-                scaleAlphaVecModule.add(VMulF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleAlphaVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= scaleAlphaVecVMul" ))
-
+              vecModule.add(VMulF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= %sVMul"%addressStr ))
             # Original packed route
             elif vi%2 == 1:
               assert (self.gwvw % 2 == 0)
             else:
-              if not isAlphaChecked:
-                scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
-                if not self.factorDim:
-                  for vi2 in range(0, self.gwvw):
-                    scaleAlphaVecModule.add(VCndMaskB32(
-                      dst=vgpr(dataScaleAlphaVec + vi2), \
-                      src1=vgpr(dataScaleAlphaVec + vi2), \
-                      src0=1.0, \
-                      src2=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), \
-                      comment="1. mul 1 if 0"))
-                else:
-                  scaleAlphaVecModule.add(VCndMaskB32(
-                    dst=vgpr(dataScaleAlphaVec), \
-                    src1=vgpr(dataScaleAlphaVec), \
-                    src0=1.0, \
-                    src2=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), \
-                    comment="1. mul 1 if 0"))
-                  scaleAlphaVecModule.add(VMovB32(dst=vgpr(dataScaleAlphaVec+1), src=vgpr(dataScaleAlphaVec), comment="copy dataScaleAlphaVec to dataScaleAlphaVec+1"))
-                isAlphaChecked = True
-
-              if 0: #isActivationInsertAfter:
-                if self.kernel["ProblemType"]["DestDataType"].isHalf():
-                  scaleAlphaVecModule.add(VCvtF16toF32(dst=vgpr("ValuC+%d"%vgprIdx), src=vgpr("ValuC+%d"%vgprIdx)))
-                  scaleAlphaVecModule.add(VCvtF16toF32(dst=vgpr("ValuC+%d"%(vgprIdx+1)), src=vgpr("ValuC+%d"%(vgprIdx+1))))
-                if self.kernel["ProblemType"]["DestDataType"].isBFloat16():
-                  scaleAlphaVecModule.add(VCvtBF16toFP32(dst=("ValuC+%d"%vgprIdx), src=("ValuC+%d"%vgprIdx), vgprMask=None, vi=0))
-                  scaleAlphaVecModule.add(VCvtBF16toFP32(dst=("ValuC+%d"%(vgprIdx+1)), src=("ValuC+%d"%(vgprIdx+1)), vgprMask=None, vi=0))
-                if self.kernel["ProblemType"]["DestDataType"].isInt32() or self.kernel["ProblemType"]["DestDataType"].isInt8():
-                  scaleAlphaVecModule.add(VCvtI32toF32(dst=vgpr("ValuC+%d"%vgprIdx), src=vgpr("ValuC+%d"%vgprIdx)))
-                  scaleAlphaVecModule.add(VCvtI32toF32(dst=vgpr("ValuC+%d"%(vgprIdx+1)), src=vgpr("ValuC+%d"%(vgprIdx+1))))
-                scaleAlphaVecModule.add(VMulPKF32(dst=vgpr("ValuC+%d"%vgprIdx, 2), src0=vgpr(inputScaleAlphaVecVgpr, 2), src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="*= scaleAlphaVecVMulPK(%d)(%d)"%(dataScaleAlphaVec,vi)))
-              else:
-                scaleAlphaVecModule.add(VMulPKF32(dst=vgpr("ValuC+%d"%vgprIdx, 2), src0=vgpr(inputScaleAlphaVecVgpr, 2), src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="*= scaleAlphaVecVMulPK(%d)(%d)"%(dataScaleAlphaVec,vi)))
+              vecModule.add(VMulPKF32(dst=vgpr("ValuC+%d"%vgprIdx, 2), src0=vgpr(inputScaleVecVgpr, 2), src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="*= %sVMulPK(%d)(%d)"%(addressStr, dataScaleVec,vi)))
           elif self.kernel["ProblemType"]["ComputeDataType"].isInt32():
             vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
-
             # Generate single i32 code if edge is detected.
             if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-              if not isAlphaChecked:
-                scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec",self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
-                gwvw = 1 if self.factorDim else self.gwvw
-                for vi2 in range(0, gwvw):
-                  scaleAlphaVecModule.add(VCndMaskB32(
-                    dst=vgpr(dataScaleAlphaVec + vi2), \
-                    src1=vgpr(dataScaleAlphaVec + vi2), \
-                    src0=1, \
-                    src2=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), \
-                    comment="1. mul 1 if 0"))
-                if self.factorDim and self.gwvw > 1:
-                  scaleAlphaVecModule.add(VMovB32(dst=vgpr(dataScaleAlphaVec+1), src=vgpr(dataScaleAlphaVec), comment="copy dataScaleAlphaVec to dataScaleAlphaVec+1"))
-                isAlphaChecked = True
-              scaleAlphaVecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleAlphaVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= scaleAlphaVecVMul" ))
+              vecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= %sVMul"%addressStr ))
             elif vi%2 == 1:
               assert (self.gwvw % 2 == 0)
             else:
-              if not isAlphaChecked:
-                scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec",self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
-                if not self.factorDim:
-                  for vi2 in range(0, self.gwvw):
-                    scaleAlphaVecModule.add(VCndMaskB32(
-                      dst=vgpr(dataScaleAlphaVec + vi2), \
-                      src1=vgpr(dataScaleAlphaVec + vi2), \
-                      src0=1, \
-                      src2=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), \
-                      comment="1. mul 1 if 0"))
-                else:
-                  scaleAlphaVecModule.add(VCndMaskB32(
-                    dst=vgpr(dataScaleAlphaVec), \
-                    src1=vgpr(dataScaleAlphaVec), \
-                    src0=1, \
-                    src2=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), \
-                    comment="1. mul 1 if 0"))
-                  scaleAlphaVecModule.add(VMovB32(dst=vgpr(dataScaleAlphaVec+1), src=vgpr(dataScaleAlphaVec), comment="copy dataScaleAlphaVec to dataScaleAlphaVec+1"))
-                isAlphaChecked = True
-              scaleAlphaVecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleAlphaVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= scaleAlphaVecVMulPK(%d)(%d)"%(dataScaleAlphaVec,vi)))
-              scaleAlphaVecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%(vgprIdx+1)), src0=vgpr(inputScaleAlphaVecVgpr+1), src1=vgpr("ValuC+%d"%(vgprIdx+1)), comment="*= scaleAlphaVecVMulPK(%d)(%d)"%(dataScaleAlphaVec,vi)))
+              vecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= %sVMulPK(%d)(%d)"%(addressStr, dataScaleAlphaVec,vi)))
+              vecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%(vgprIdx+1)), src0=vgpr(inputScaleVecVgpr+1), src1=vgpr("ValuC+%d"%(vgprIdx+1)), comment="*= %sVMulPK(%d)(%d)"%(addressStr, dataScaleAlphaVec,vi)))
           else:
-            raise RuntimeError("Unsupported scaleAlphaVec compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
+            raise RuntimeError("Unsupported %s compute data type %s."%(addressStr, str(self.kernel["ProblemType"]["ComputeDataType"])))
 
+      scaleAVecModule = Module("ScaleAVecModule")
+      scaleBVecModule = Module("ScaleBVecModule")
+      if (self.kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+        applyScaleVec(scaleAVecModule, "ScaleA", dataScaleAVec, 0)
+        applyScaleVec(scaleBVecModule, "ScaleB", dataScaleBVec, 1)
+      module.add(scaleAVecModule)
+      module.add(scaleBVecModule)
+
+      scaleAlphaVecModule = Module("scaleAlphaVecModule")
+      if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+        applyScaleVec(scaleAlphaVecModule, "ScaleAlphaVec", dataScaleAlphaVec, self.factorDim)
       module.add(scaleAlphaVecModule)
 
       if self.beta:
