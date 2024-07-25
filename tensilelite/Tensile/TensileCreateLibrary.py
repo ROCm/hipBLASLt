@@ -36,7 +36,7 @@ from . import Utils
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, CMakeHeader, assignGlobalParameters, \
-                    architectureMap
+                    architectureMap, supportedCompiler
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
@@ -178,13 +178,13 @@ def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
     return coFiles
 
 def which(p):
+    if supportedCompiler(p) and 'CMAKE_CXX_COMPILER' in os.environ and os.path.isfile(os.environ['CMAKE_CXX_COMPILER']):
+        return os.environ['CMAKE_CXX_COMPILER']
     if os.name == "nt":
-      exes = [p+x for x in ['.bat', '', '.exe']]  # bat may be front end for file with no extension
+      exes = [p+x for x in ['.exe', '', '.bat']]  # bat may be front end for file with no extension
     else:
       exes = [p+x for x in ['', '.exe', '.bat']]
     system_path = os.environ['PATH'].split(os.pathsep)
-    if p == 'hipcc' and 'CMAKE_CXX_COMPILER' in os.environ and os.path.isfile(os.environ['CMAKE_CXX_COMPILER']):
-        return os.environ['CMAKE_CXX_COMPILER']
     for dirname in system_path+[globalParameters["ROCmBinPath"]]:
         for exe in exes:
             candidate = os.path.join(os.path.expanduser(dirname), exe)
@@ -236,12 +236,18 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
 
     coFilenames = []
 
-    if (CxxCompiler == "hipcc"):
+    if supportedCompiler(CxxCompiler):
       archs, cmdlineArchs = splitArchs()
 
       archFlags = ['--offload-arch=' + arch for arch in cmdlineArchs]
 
-      hipFlags = ["--genco", "-D__HIP_HCC_COMPAT_MODE__=1"] #needs to be fixed when Maneesh's change is made available
+      # needs to be fixed when Maneesh's change is made available
+      hipFlags = ["-D__HIP_HCC_COMPAT_MODE__=1"]
+      hipFlags += (
+          ["--genco"] if CxxCompiler == "hipcc" else ["--cuda-device-only", "-x", "hip", "-O3"]
+      )
+      # if CxxCompiler == "amdclang++":
+      # hipFlags += ["-mllvm", "-amdgpu-early-inline-all=true", "-mllvm", "-amdgpu-function-calls=false"]
 
       hipFlags += ['-I', outputPath]
       hipFlags += ["-Xoffload-linker", "--build-id=%s"%globalParameters["BuildIdKind"]]
@@ -253,14 +259,15 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
 
       if os.name == "nt":
         hipFlags += ['-fms-extensions', '-fms-compatibility', '-fPIC', '-Wno-deprecated-declarations']
-        compileArgs = launcher + [which('hipcc')] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
+        compileArgs = launcher + [which(CxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
       else:
-        compileArgs = launcher + [which('hipcc')] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
+        compileArgs = launcher + [which(CxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
 
       if globalParameters["PrintCodeCommands"]:
-        print('hipcc:', ' '.join(compileArgs))
+        print(CxxCompiler + ':' + ' '.join(compileArgs))
       subprocess.check_call(compileArgs)
 
+      # If we aren't using hipcc what happens?
       # get hipcc version due to compatiblity reasons
       hipccver = globalParameters['HipClangVersion'].split(".")
       hipccMaj = int(hipccver[0])
@@ -830,10 +837,10 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
 
   kernelHelperObjNames = [ko.getKernelName() for ko in kernelHelperObjs]
 
-  cxxCompiler = globalParameters["CxxCompiler"]
+  CxxCompiler = globalParameters["CxxCompiler"]
 
   # Source based kernels are built for all supported architectures
-  if (cxxCompiler == 'hipcc'):
+  if supportedCompiler(CxxCompiler):
     sourceArchs, _ = splitArchs()
   else:
     raise RuntimeError("Unknown compiler %s" % cxxCompiler)
@@ -874,26 +881,26 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
     allSources = sourceKernelNames + kernelHelperObjNames
 
     for kernelName in (allSources):
-      if (cxxCompiler == 'hipcc'):
+      if supportedCompiler(CxxCompiler):
         sourceLibFiles += ["%s.so-000-%s.hsaco" % (kernelName, arch) for arch in sourceArchs]
       else:
-        raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
+        raise RuntimeError("Unknown compiler {}".format(CxxCompiler))
   elif globalParameters["NumMergedFiles"] > 1:
-    if (cxxCompiler == 'hipcc'):
+    if supportedCompiler(CxxCompiler):
       for kernelIndex in range(0, globalParameters["NumMergedFiles"]):
         sourceLibFiles += ["Kernels%d.so-000-%s.hsaco" % (kernelIndex, arch) for arch in sourceArchs]
     else:
-      raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
+      raise RuntimeError("Unknown compiler {}".format(CxxCompiler))
   elif globalParameters["LazyLibraryLoading"]:
     fallbackLibs = list(set([kernel._state["codeObjectFile"] for kernel in kernels if "fallback" in kernel._state.get('codeObjectFile', "")]))
     sourceLibFiles += ["{0}_{1}.hsaco".format(name, arch) for name, arch in itertools.product(fallbackLibs, sourceArchs)]
-    if (cxxCompiler == 'hipcc'):
+    if supportedCompiler(CxxCompiler):
       sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
   else: # Merge
-    if (cxxCompiler == 'hipcc'):
+    if supportedCompiler(CxxCompiler):
       sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
     else:
-      raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
+      raise RuntimeError("Unknown compiler {}".format(CxxCompiler))
 
   # Returns names for all xnack versions
   def addxnack(name, ext):
@@ -1225,7 +1232,7 @@ def TensileCreateLibrary():
   argParser.add_argument("LogicPath",       help="Path to LibraryLogic.yaml files.")
   argParser.add_argument("OutputPath",      help="Where to write library files?")
   argParser.add_argument("RuntimeLanguage", help="Which runtime language?", choices=["OCL", "HIP", "HSA"])
-  argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       choices=["hipcc"],       action="store", default="hipcc")
+  argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       choices=["hipcc", "amdclang++"], action="store", default="amdclang++")
   argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
   argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["default", "V4", "V5"], action="store")
   argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
@@ -1271,7 +1278,7 @@ def TensileCreateLibrary():
                          help="Generate solution-yaml matching table")
   argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
                          help="Keep debug information for built code objects")
-  argParser.add_argument("--build-id", dest="BuildIdKind", action="store", default="sha1")                         
+  argParser.add_argument("--build-id", dest="BuildIdKind", action="store", default="sha1")
 
   args = argParser.parse_args()
 
