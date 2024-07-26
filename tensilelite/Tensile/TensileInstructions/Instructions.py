@@ -1582,10 +1582,10 @@ class SSetPrior(Instruction):
 class SBarrier(Instruction):
     def __init__(self, comment="") -> None:
         super().__init__(InstType.INST_NOTYPE, comment)
-        if self.asmCaps["HasBarrier"]:
-            self.setInst("s_barrier")
-        else:
+        if self.asmCaps["HasNewBarrier"]:
             self.setInst("s_barrier_signal -1 \ns_barrier_wait -1")
+        else:
+            self.setInst("s_barrier")
 
     def getParams(self) -> list:
         return []
