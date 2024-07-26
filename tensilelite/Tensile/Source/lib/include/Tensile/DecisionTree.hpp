@@ -228,7 +228,7 @@ namespace Tensile
 
             virtual ~Forest() = default;
 
-            virtual ReturnValue pridictBestMatch(Object const& problem, Transform transform) const = 0;
+            virtual ReturnValue predictBestMatch(Object const& problem, Transform transform) const = 0;
 
             virtual ReturnValue findBestMatch(Object const& problem, Transform transform) const = 0;
 
@@ -271,7 +271,7 @@ namespace Tensile
             {
             }
 
-            virtual ReturnValue pridictBestMatch(Object const& problem,
+            virtual ReturnValue predictBestMatch(Object const& problem,
                                               Transform     transform) const override
             {
                 bool debug = Debug::Instance().getSolutionSelectionTrace();
@@ -367,11 +367,11 @@ namespace Tensile
             {
                 bool debug = Debug::Instance().getSolutionSelectionTrace();
 
-                ReturnValue pridicted_solution = pridictBestMatch(problem, transform);
+                ReturnValue predicted_solution = predictBestMatch(problem, transform);
 
-                if(pridicted_solution != nullptr)
+                if(predicted_solution != nullptr)
                 {
-                    return pridicted_solution;
+                    return predicted_solution;
                 }
 
                 // The nullVallue is the fallback kernel 
@@ -437,11 +437,11 @@ namespace Tensile
 
                 std::vector<ReturnValue> rv;
 
-                ReturnValue pridicted_solution = pridictBestMatch(problem, transform);
+                ReturnValue predicted_solution = predictBestMatch(problem, transform);
 
-                if(pridicted_solution != nullptr)
+                if(predicted_solution != nullptr)
                 {
-                    rv.insert(std::end(rv), pridicted_solution);
+                    rv.insert(std::end(rv), predicted_solution);
                 }
 
                 if(rv.size() == numSolutions)
