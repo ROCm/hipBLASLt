@@ -100,9 +100,9 @@ class ComputeStoreVgprsVALU(ComputeStoreVgprs):
             module.add(SMulI32(dst=sgpr(tmpS0), src0=hex(kernel["MacroTile0"]), src1=sgpr(wg0), comment="%s = wg0*MT0"%sgpr(tmpS0)))
 
             # coord = tid*VW + workgroup offset
-            module.add(VAddCOU32(dst=vgpr(tid0), dst1="vcc", src0=sgpr(tmpS0), src1=vgpr(tid0), comment="coord0 = tid0*VW + wg0*MT0"))
+            module.add(VAddU32(dst=vgpr(tid0), src0=sgpr(tmpS0), src1=vgpr(tid0), comment="coord0 = tid0*VW + wg0*MT0"))
             module.add(SMulI32(dst=sgpr(wgMT1), src0=hex(kernel["MacroTile1"]), src1=sgpr(wg1), comment="<- wg1*MT1"))
-            module.add(VAddCOU32(dst=vgpr(tid1), dst1="vcc", src0=sgpr(wgMT1), src1=vgpr(tid1), comment="coord1 = tid1*VW + wg1*MT1"))
+            module.add(VAddU32(dst=vgpr(tid1), src0=sgpr(wgMT1), src1=vgpr(tid1), comment="coord1 = tid1*VW + wg1*MT1"))
 
             if len(packedC1) > 1:
                 module.add(writer.extractPackedCoord1ToRowStart(kernel, packedC1, tid1, 'D'))
