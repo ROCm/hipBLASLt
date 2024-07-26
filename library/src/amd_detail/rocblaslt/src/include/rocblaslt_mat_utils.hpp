@@ -184,7 +184,8 @@ inline rocblaslt_status validateMatmulArgs(int64_t     m,
         return rocblaslt_status_invalid_pointer;
 
     // pointers must be valid
-    if(n && ((k && (!a || !b || !alpha)) || !c || !d))
+    // Update for the valid case: (alpha=0 && (A=NULL || B=NULL))
+    if(n && ((k && (!alpha || ((*((float*)alpha)) && (!a || !b)))) || !c || !d))
         return rocblaslt_status_invalid_pointer;
 
     return rocblaslt_status_continue;
