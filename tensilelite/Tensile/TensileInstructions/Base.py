@@ -295,7 +295,7 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
 
     rv["HasNTModifier"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dwordx4 v[10:13], v[0], s[0:3], 0, offen offset:0, nt", isDebug)
 
-    rv["HasBarrier"]    = _tryAssembler(isaVersion, assemblerPath, "s_barrier", isDebug)
+    rv["HasNewBarrier"]    = _tryAssembler(isaVersion, assemblerPath, "s_barrier_wait -1", isDebug)
 
     if _tryAssembler(isaVersion, assemblerPath, "s_waitcnt vmcnt(63)", isDebug):
         rv["MaxVmcnt"] = 63
