@@ -745,9 +745,6 @@ hipblasStatus_t hipblasltAMax2DRun(const hipDataType datatype,
     if(output == nullptr || input == nullptr || m == 0 || n == 0)
         return HIPBLAS_STATUS_INVALID_VALUE;
 
-    if (m < 8)
-        return HIPBLAS_STATUS_INVALID_VALUE;
-
     uint32_t    len = m * n;
     int         currentDeviceId{};
     auto        err       = hipGetDevice(&currentDeviceId);
@@ -776,14 +773,15 @@ hipblasStatus_t hipblasltAMax2DRun(const hipDataType datatype,
     else
         workSize = 65536;
 
-    const auto kernelName = sol->name();
-    err                   = adapter->initKernel(kernelName);
-    const std::uint32_t vector      = 16 / elementNumBytes(datatype);
+    const auto kernelName           = sol->name();
+    err                             = adapter->initKernel(kernelName);
+    const std::uint32_t maxVector   = 16 / elementNumBytes(datatype);
+    const std::uint32_t vector      = (m < maxVector) ? 1 : maxVector;
     const std::uint32_t vectorM     = (m + vector - 1) / vector;
     const std::uint32_t workVectors = workSize / vector;
-    int numGroups         = (workSpace && sync) ? amax_gsu : 1;
-    numGroups             = (archName.find("gfx94") != -1) ? numGroups : 1;
-    numGroups             = min(int(((vectorM * n) + workVectors - 1) / workVectors), int(numGroups));
+    int numGroups                   = (workSpace && sync) ? amax_gsu : 1;
+    numGroups                       = (archName.find("gfx94") != -1) ? numGroups : 1;
+    numGroups                       = min(int(((vectorM * n) + workVectors - 1) / workVectors), int(numGroups));
 
     Tensile::KernelInvocation invocation;
     invocation.kernelName      = kernelName;
