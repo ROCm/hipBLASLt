@@ -1123,7 +1123,7 @@ int main(int argc, char* argv[])
     hipDeviceProp_t deviceProperties;
     static_cast<void>(hipGetDevice(&deviceId));
     static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-    if(gpu_arch_match(deviceProperties.gcnArchName, "11?") || gpu_arch_match(deviceProperties.gcnArchName, "12?"))
+    if(gpu_arch_match(deviceProperties.gcnArchName, "11\\d{2}"))
         return EXIT_SUCCESS;
 
     // when arguments not specified, set to default values
