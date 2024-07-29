@@ -34,6 +34,7 @@
 #include <istream>
 #include <map>
 #include <ostream>
+#include <string_view>
 #include <tuple>
 
 #define HIPBLASLT_MAX_REQUESTED_SOLUTION_NUM 65536
@@ -42,7 +43,7 @@
 enum hipblaslt_argument : int;
 
 /*! \brief device matches pattern */
-bool gpu_arch_match(const std::string& gpu_arch, const char pattern[4]);
+bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern);
 
 /***************************************************************************
  *! \brief Class used to parse command arguments in both client & gtest    *
@@ -109,9 +110,9 @@ struct Arguments
 
     hipblaslt_initialization initialization;
 
-    // the gpu arch string after "gfx" for which the test is valid
-    // '?' is wildcard char, empty string is default as valid on all
-    char gpu_arch[4];
+    // the gpu arch string after "gfx" for which the test is valid,
+    // it represents a regular expression.
+    char gpu_arch[16];
 
     // memory padding for testing write out of bounds
     uint32_t pad;

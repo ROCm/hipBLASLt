@@ -31,36 +31,22 @@
 #include <istream>
 #include <ostream>
 #include <utility>
+#include <regex>
 
 /*! \brief device matches pattern */
-bool gpu_arch_match(const std::string& gpu_arch, const char pattern[4])
+bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
 {
-    auto removePrefix = [](const std::string& s) {
-        size_t pos = s.find("gfx");
-        if(pos != std::string::npos)
-        {
-            return s.substr(pos + 3);
-        }
-        return s;
-    };
-
-    auto        gpu_arch_no_prefix = removePrefix(gpu_arch);
-    int         gpu_len            = gpu_arch_no_prefix.length();
-    const char* gpu                = gpu_arch_no_prefix.c_str();
-
-    for(int i = 0; i < 4; i++)
+    if (!pattern.length())
     {
-        //hipblaslt_cout << pattern[i];
-        if(!pattern[i])
-            break;
-        else if(pattern[i] == '?')
-            continue;
-        else if(i >= gpu_len || pattern[i] != gpu[i])
-            return false;
+        return true;
     }
-    //hipblaslt_cout << " : match gpu_arch " << gpu_arch << std:: endl;
-    return true;
-};
+
+    constexpr char prefix[] = "gfx";
+    const std::size_t prefix_len = std::string_view(prefix).length();
+    gpu_arch.remove_prefix(prefix_len);
+    std::regex arch_regex(pattern.data());
+    return std::regex_search(gpu_arch.data(), arch_regex);
+}
 
 void Arguments::init()
 {
