@@ -266,6 +266,8 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
     rv["v_pk_add_f32"]      = _tryAssembler(isaVersion, assemblerPath, "v_pk_add_f32 v[48:49], v[36:37], v[0:1]", isDebug)
     rv["v_pk_mul_f32"]      = _tryAssembler(isaVersion, assemblerPath, "v_pk_mul_f32 v[48:49], v[36:37], v[0:1]", isDebug)
 
+    rv["v_pk_mul_f32"]      = _tryAssembler(isaVersion, assemblerPath, "v_pk_mul_f32 v[20:21], v[18:19], v[20:21]", isDebug)
+
     rv["v_mad_mix_f32"]     = _tryAssembler(isaVersion, assemblerPath, "v_mad_mix_f32 v47, v36, v34, v47, op_sel:[0,0,0] op_sel_hi:[1,1,0]", isDebug)
     rv["v_fma_mix_f32"]     = _tryAssembler(isaVersion, assemblerPath, "v_fma_mix_f32 v47, v36, v34, v47, op_sel:[0,0,0] op_sel_hi:[1,1,0]", isDebug)
 
@@ -295,7 +297,7 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
 
     rv["HasNTModifier"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dwordx4 v[10:13], v[0], s[0:3], 0, offen offset:0, nt", isDebug)
 
-    rv["HasBarrier"]    = _tryAssembler(isaVersion, assemblerPath, "s_barrier", isDebug)
+    rv["HasNewBarrier"]    = _tryAssembler(isaVersion, assemblerPath, "s_barrier_wait -1", isDebug)
 
     if _tryAssembler(isaVersion, assemblerPath, "s_waitcnt vmcnt(63)", isDebug):
         rv["MaxVmcnt"] = 63
