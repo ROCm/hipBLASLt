@@ -439,7 +439,7 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, arg.a_type, m, n, m));
 
     hipblasLtMatmulDesc_t matmul;
-    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_BIAS;
+    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
     CHECK_HIPBLASLT_ERROR(
         hipblasLtMatmulDescCreate(&matmul, arg.compute_type, arg.scale_type));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
@@ -448,6 +448,24 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue,sizeof(epilogue)));
+
+    // Validation for solution running.
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
+                                          matmul,
+                                          &alpha,
+                                          d_a,
+                                          matA,
+                                          d_b,
+                                          matB,
+                                          &beta,
+                                          d_c,
+                                          matC,
+                                          d_d,
+                                          matD,
+                                          nullptr,
+                                          nullptr,
+                                          0,
+                                          0));
 
     hipblasLtMatmulPreference_t pref;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
