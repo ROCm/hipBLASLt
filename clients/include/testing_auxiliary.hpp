@@ -36,6 +36,7 @@
 #include "unit.hpp"
 #include "utility.hpp"
 #include <hipblaslt/hipblaslt.h>
+#include <hipblaslt/hipblaslt-ext.hpp> // Add check for hipblaslt-ext
 
 void testing_aux_handle_init_bad_arg(const Arguments& arg)
 {
@@ -392,7 +393,7 @@ void testing_aux_get_sol_with_null_biasaddr(const Arguments& arg)
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
 }
 
-// For testing case of (alpha=0 && (A=NULL || B=NULL))
+// hipBLASLt API: For testing case of (alpha=0 && (A=NULL || B=NULL))
 void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
 {
     using InTypeA   = hipblasLtHalf;
@@ -421,6 +422,9 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
     void*              b = NULL;
     void*              c;
     void*              d;
+    // Setting max_workspace_size_in_bytes.
+    int64_t max_workspace_size = 32 * 1024 * 1024;
+    void* d_workspace;
 
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
@@ -428,7 +432,9 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
     CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(OutType)));
     CHECK_HIP_ERROR(hipHostMalloc(&c, m * n * batch_count * sizeof(OutType)));
     CHECK_HIP_ERROR(hipHostMalloc(&d, m * n * batch_count * sizeof(OutType)));
-
+    // Allocate space for max_workspace_size.
+    CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
+    
     CHECK_HIP_ERROR(hipMemcpyAsync(
         d_c, c, m * n * batch_count * sizeof(OutType), hipMemcpyHostToDevice, stream));
 
@@ -439,34 +445,18 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, arg.a_type, m, n, m));
 
     hipblasLtMatmulDesc_t matmul;
-    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
     CHECK_HIPBLASLT_ERROR(
         hipblasLtMatmulDescCreate(&matmul, arg.compute_type, arg.scale_type));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
+
+    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue,sizeof(epilogue)));
 
-    // Validation for solution running.
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
-                                          matmul,
-                                          &alpha,
-                                          d_a,
-                                          matA,
-                                          d_b,
-                                          matB,
-                                          &beta,
-                                          d_c,
-                                          matC,
-                                          d_d,
-                                          matD,
-                                          nullptr,
-                                          nullptr,
-                                          0,
-                                          0));
-
+    // Set User Preference attributes
     hipblasLtMatmulPreference_t pref;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
     const int                        request_solutions = 1;
@@ -484,6 +474,107 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
                                                           &returnedAlgoCount));
 
     CHECK_SOLUTION_FOUND(returnedAlgoCount);
+
+    // Validation for solution running.
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
+                                          matmul,
+                                          &alpha,
+                                          d_a,
+                                          matA,
+                                          d_b,
+                                          matB,
+                                          &beta,
+                                          d_c,
+                                          matC,
+                                          d_d,
+                                          matD,
+                                          &heuristicResult[0].algo,
+                                          d_workspace,
+                                          max_workspace_size,
+                                          stream));
+
+    CHECK_HIP_ERROR(hipFree(a));
+    CHECK_HIP_ERROR(hipFree(b));
+    CHECK_HIP_ERROR(hipFree(c));
+    CHECK_HIP_ERROR(hipFree(d));
+    CHECK_HIP_ERROR(hipFree(d_a));
+    CHECK_HIP_ERROR(hipFree(d_b));
+    CHECK_HIP_ERROR(hipFree(d_c));
+    CHECK_HIP_ERROR(hipFree(d_d));
+    CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
+    CHECK_HIP_ERROR(hipStreamDestroy(stream));
+}
+
+// hipBLASLtExt API: For testing case of (alpha=0 && (A=NULL || B=NULL))
+void testing_aux_get_sol_with_zero_alpha_null_a_b_ext(const Arguments& arg)
+{
+    using InTypeA   = hipblasLtHalf;
+    using InTypeB   = hipblasLtHalf;
+    using OutType   = hipblasLtHalf;
+    using AlphaType = hipblasLtFloat;
+    using BetaType  = hipblasLtFloat;
+
+    hipStream_t        stream;
+    hipblasLtHandle_t  handle;
+    hipblasOperation_t trans_a = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    hipblasOperation_t trans_b = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    int64_t            m = arg.M[0];
+    int64_t            n = arg.N[0];
+    int64_t            k = arg.K[0];
+    int64_t            batch_count = 1;
+    // Setting alpha = 0.
+    float              alpha = 0;
+    float              beta = arg.beta;
+    // Setting d_a, d_b, a, b as nullptr.
+    void*              d_a = NULL;
+    void*              d_b = NULL;
+    void*              d_c;
+    void*              d_d;
+    void*              a = NULL;
+    void*              b = NULL;
+    void*              c;
+    void*              d;
+    // Setting max_workspace_size_in_bytes.
+    int64_t max_workspace_size = 32 * 1024 * 1024;
+    void* d_workspace;
+
+    CHECK_HIP_ERROR(hipStreamCreate(&stream));
+    CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
+    CHECK_HIP_ERROR(hipMalloc(&d_c, m * n * batch_count * sizeof(OutType)));
+    CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(OutType)));
+    CHECK_HIP_ERROR(hipHostMalloc(&c, m * n * batch_count * sizeof(OutType)));
+    CHECK_HIP_ERROR(hipHostMalloc(&d, m * n * batch_count * sizeof(OutType)));
+    // Allocate space for max_workspace_size.
+    CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
+
+    CHECK_HIP_ERROR(hipMemcpyAsync(
+        d_c, c, m * n * batch_count * sizeof(OutType), hipMemcpyHostToDevice, stream));
+
+    hipblaslt_ext::GemmPreference gemmPref;
+    gemmPref.setMaxWorkspaceBytes(max_workspace_size);
+    hipblaslt_ext::Gemm gemm(
+        handle, trans_a, trans_b, arg.a_type, arg.a_type, arg.a_type, arg.a_type, arg.compute_type);
+
+    hipblaslt_ext::GemmEpilogue
+        epilogue; // No action needed, default is HIPBLASLT_EPILOGUE_DEFAULT. (Gemm only)
+    hipblaslt_ext::GemmInputs inputs;
+    inputs.a     = d_a;
+    inputs.b     = d_b;
+    inputs.c     = d_c;
+    inputs.d     = d_d;
+    inputs.alpha = &alpha;
+    inputs.beta  = &beta;
+    gemm.setProblem(m, n, k, batch_count, epilogue, inputs);
+
+    const int                                     request_solutions = 1;
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
+    CHECK_HIPBLASLT_ERROR(gemm.algoGetHeuristic(request_solutions, gemmPref, heuristicResult));
+    CHECK_SOLUTION_FOUND(heuristicResult.size());
+
+    // Make sure to initialize every time when algo changes
+    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, d_workspace));
+    // Validation for solution running.
+    CHECK_HIPBLASLT_ERROR(gemm.run(stream));
 
     CHECK_HIP_ERROR(hipFree(a));
     CHECK_HIP_ERROR(hipFree(b));
