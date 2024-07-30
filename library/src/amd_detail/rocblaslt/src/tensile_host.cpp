@@ -1747,6 +1747,7 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
                 {
                     useBias.push_back(data->problem.gemms[i].useBias());
                     actType.push_back(data->problem.gemms[i].activationType());
+                    useScaleAlphaVec.push_back(data->problem.gemms[i].useScaleAlphaVec());
                     data->problem.gemms[i].setUseBias(solution->problemType.useBias);
                     data->problem.gemms[i].setActivationType(solution->problemType.activationType);
                     data->problem.gemms[i].setUseScaleAlphaVec(
