@@ -1483,8 +1483,8 @@ rocblaslt_status gemmCreate(RocblasltContractionProblem const& problem,
     {
         // Check if pointer is valid
         // Update for the valid case: (alpha=0 && (A=NULL || B=NULL))
-        if(problem.alpha == nullptr || problem.beta == nullptr || ((*((float*)problem.alpha)) && (problem.A == nullptr
-           || problem.B == nullptr)) || problem.C == nullptr || problem.D == nullptr)
+        if(problem.alpha == nullptr || problem.beta == nullptr || problem.C == nullptr || problem.D == nullptr
+            || ((*((float*)problem.alpha)) && (problem.A == nullptr || problem.B == nullptr)))
         {
             log_error(__func__, "invalid data pointer");
             return rocblaslt_status_invalid_pointer;

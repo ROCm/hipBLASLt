@@ -89,12 +89,14 @@ Tests:
   function:
     - aux_get_sol_with_zero_alpha_null_a_b: *hpa_half_precision
   alpha: 0
+  beta: 1
 
 - name: aux_get_sol_with_zero_alpha_null_a_b_ext
   category: pre_checkin
   function:
     - aux_get_sol_with_zero_alpha_null_a_b_ext: *hpa_half_precision
   alpha: 0
+  beta: 1
 
 - name: aux_matmul_alg_get_attr_bad_arg
   category: pre_checkin

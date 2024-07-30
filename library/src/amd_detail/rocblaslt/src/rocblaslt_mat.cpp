@@ -1064,8 +1064,8 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
 
     // Check if pointer is valid
     // Update for the valid case: (alpha=0 && (A=NULL || B=NULL))
-    if(alpha == nullptr || beta == nullptr || ((*((float*)alpha)) && (A == nullptr
-        || B == nullptr)) || C == nullptr || D == nullptr)
+    if(alpha == nullptr || beta == nullptr || C == nullptr || D == nullptr
+        || ((*((float*)alpha)) && (A == nullptr || B == nullptr)))
     {
         log_error(__func__, "invalid data pointer");
         return rocblaslt_status_invalid_pointer;

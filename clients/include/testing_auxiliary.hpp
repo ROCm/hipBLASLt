@@ -413,15 +413,11 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
     // Setting alpha = 0.
     float              alpha = 0;
     float              beta = arg.beta;
-    // Setting d_a, d_b, a, b as nullptr.
+    // Setting d_a, d_b as nullptr.
     void*              d_a = NULL;
     void*              d_b = NULL;
     void*              d_c;
     void*              d_d;
-    void*              a = NULL;
-    void*              b = NULL;
-    void*              c;
-    void*              d;
     // Setting max_workspace_size_in_bytes.
     int64_t max_workspace_size = 32 * 1024 * 1024;
     void* d_workspace;
@@ -430,13 +426,8 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
     CHECK_HIP_ERROR(hipMalloc(&d_c, m * n * batch_count * sizeof(OutType)));
     CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(OutType)));
-    CHECK_HIP_ERROR(hipHostMalloc(&c, m * n * batch_count * sizeof(OutType)));
-    CHECK_HIP_ERROR(hipHostMalloc(&d, m * n * batch_count * sizeof(OutType)));
     // Allocate space for max_workspace_size.
     CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
-    
-    CHECK_HIP_ERROR(hipMemcpyAsync(
-        d_c, c, m * n * batch_count * sizeof(OutType), hipMemcpyHostToDevice, stream));
 
     hipblasLtMatrixLayout_t matA, matB, matC, matD;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, arg.a_type, m, k, m));
@@ -459,6 +450,12 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
     // Set User Preference attributes
     hipblasLtMatmulPreference_t pref;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
+    CHECK_HIPBLASLT_ERROR(
+        hipblasLtMatmulPreferenceSetAttribute(pref,
+                                              HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
+                                              &max_workspace_size,
+                                              sizeof(max_workspace_size)));
+                                              
     const int                        request_solutions = 1;
     hipblasLtMatmulHeuristicResult_t heuristicResult[request_solutions];
     int                              returnedAlgoCount = 0;
@@ -493,14 +490,9 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
                                           max_workspace_size,
                                           stream));
 
-    CHECK_HIP_ERROR(hipFree(a));
-    CHECK_HIP_ERROR(hipFree(b));
-    CHECK_HIP_ERROR(hipFree(c));
-    CHECK_HIP_ERROR(hipFree(d));
-    CHECK_HIP_ERROR(hipFree(d_a));
-    CHECK_HIP_ERROR(hipFree(d_b));
     CHECK_HIP_ERROR(hipFree(d_c));
     CHECK_HIP_ERROR(hipFree(d_d));
+    CHECK_HIP_ERROR(hipFree(d_workspace));
     CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
 }
@@ -525,15 +517,11 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b_ext(const Arguments& arg)
     // Setting alpha = 0.
     float              alpha = 0;
     float              beta = arg.beta;
-    // Setting d_a, d_b, a, b as nullptr.
+    // Setting d_a, d_b as nullptr.
     void*              d_a = NULL;
     void*              d_b = NULL;
     void*              d_c;
     void*              d_d;
-    void*              a = NULL;
-    void*              b = NULL;
-    void*              c;
-    void*              d;
     // Setting max_workspace_size_in_bytes.
     int64_t max_workspace_size = 32 * 1024 * 1024;
     void* d_workspace;
@@ -542,13 +530,8 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b_ext(const Arguments& arg)
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
     CHECK_HIP_ERROR(hipMalloc(&d_c, m * n * batch_count * sizeof(OutType)));
     CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(OutType)));
-    CHECK_HIP_ERROR(hipHostMalloc(&c, m * n * batch_count * sizeof(OutType)));
-    CHECK_HIP_ERROR(hipHostMalloc(&d, m * n * batch_count * sizeof(OutType)));
     // Allocate space for max_workspace_size.
     CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
-
-    CHECK_HIP_ERROR(hipMemcpyAsync(
-        d_c, c, m * n * batch_count * sizeof(OutType), hipMemcpyHostToDevice, stream));
 
     hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
@@ -576,14 +559,9 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b_ext(const Arguments& arg)
     // Validation for solution running.
     CHECK_HIPBLASLT_ERROR(gemm.run(stream));
 
-    CHECK_HIP_ERROR(hipFree(a));
-    CHECK_HIP_ERROR(hipFree(b));
-    CHECK_HIP_ERROR(hipFree(c));
-    CHECK_HIP_ERROR(hipFree(d));
-    CHECK_HIP_ERROR(hipFree(d_a));
-    CHECK_HIP_ERROR(hipFree(d_b));
     CHECK_HIP_ERROR(hipFree(d_c));
     CHECK_HIP_ERROR(hipFree(d_d));
+    CHECK_HIP_ERROR(hipFree(d_workspace));
     CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
 }
