@@ -869,6 +869,8 @@ namespace
 #else
         std::shared_ptr<hipDeviceProp_t> m_deviceProp;
 #endif
+        std::string m_path;
+        std::string m_dir;
         std::string m_tensileLibPath;
 
         // The adapter object. mutable is used to allow adapters to be modified
@@ -987,10 +989,12 @@ namespace
                 if(TestPath(path + "/" + processor))
                     path += "/" + processor;
             }
+            m_path = path;
 
             // only load modules for the current architecture
             auto dir = path + "/*" + processor + "*co";
-
+            m_dir = dir;
+#if ROCBLASLT_TENSILE_LAZY_LOAD == 0
             bool no_match = false;
 #ifdef WIN32
             std::replace(dir.begin(), dir.end(), '/', '\\');
@@ -1044,7 +1048,7 @@ namespace
                           << ". Make sure that HIPBLASLT_TENSILE_LIBPATH is set correctly."
                           << std::endl;
             }
-
+#endif
             // We initialize a local static variable with a lambda function call to
             // avoid race conditions when multiple threads with different device IDs try
             // to initialize library. This ensures that only one thread initializes
@@ -1131,8 +1135,49 @@ namespace
 #if ROCBLASLT_TENSILE_LAZY_LOAD
         // A workaround for getSolutionsFromIndex and isSolutionSupported with lazy_lib_load.
         // preload() shouldn't be called more than once.
-        void preload()
+        void preload(Tensile::hip::SolutionAdapter& adapter)
         {
+            bool no_match = false;
+#ifdef WIN32
+            std::replace(m_dir.begin(), m_dir.end(), '/', '\\');
+            WIN32_FIND_DATAA finddata;
+            HANDLE           hfine = FindFirstFileA(m_dir.c_str(), &finddata);
+            if(hfine != INVALID_HANDLE_VALUE)
+            {
+                do
+                {
+                    std::string codeObjectFile = m_path + "\\" + finddata.cFileName;
+                    static_cast<void>(adapter.loadCodeObjectFile(codeObjectFile.c_str()));
+                } while(FindNextFileA(hfine, &finddata));
+            }
+            else
+            {
+                no_match = true;
+            }
+            FindClose(hfine);
+#else
+            glob_t glob_result{};
+            int    g = glob(m_dir.c_str(), GLOB_NOSORT, nullptr, &glob_result);
+            if(!g)
+            {
+                for(size_t i = 0; i < glob_result.gl_pathc; ++i)
+                    static_cast<void>(adapter.loadCodeObjectFile(glob_result.gl_pathv[i]));
+            }
+            else if(g == GLOB_NOMATCH)
+            {
+                no_match = true;
+            }
+            globfree(&glob_result);
+#endif
+            if(no_match)
+            {
+                // static rocblaslt_internal_ostream& once
+                //    = rocblaslt_cerr
+                std::cerr << "\nrocblaslt warning: No paths matched " << m_dir
+                          << ". Make sure that HIPBLASLT_TENSILE_LIBPATH is set correctly."
+                          << std::endl;
+            }
+
             auto lib = Tensile::LoadLibraryFilePreload<Tensile::ContractionProblemGemm>(
                 m_tensileLibPath,
                 std::vector<Tensile::LazyLoadingInit>{m_deviceSet.begin(), m_deviceSet.end()});
@@ -1190,7 +1235,7 @@ namespace
         // preload() shouldn't be called more than once.
         if(isPreload)
             static int once = [&] {
-                host.preload();
+                host.preload(*adapter);
                 *library = host.get_library();
                 return 0;
             }();
