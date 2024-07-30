@@ -55,7 +55,7 @@ class FMA_F64_Plain(MAC):
 
                     module.add(VFmaF64(dst=vgpr(cStr, 2), src0=vgpr(aStr, 2),
                                        src1=vgpr(bStr, 2), src2=vgpr(cStr, 2)))
-                    if (b is 0) and (a is 0) and (iui is 0):
+                    if (b == 0) and (a == 0) and (iui == 0):
                         module.add(SSetPrior(prior=1, comment="Raise priority while processing macs"))
 
         module.add(SSetPrior(prior=0, comment="Reset priority after macs"))
