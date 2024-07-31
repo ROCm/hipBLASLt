@@ -67,7 +67,7 @@ for arch in "${archs[@]}"; do
         set -- $i
         s=$dst/A2D_$1_$2_$3_$4_$arch.s
         o=$dst/A2D_$1_$2_$3_$4_$arch.o
-        python3 ./AMax2DGenerator.py -o $s -t $1 -d $2 --arch $arch --toolchain $toolchain &
+        python3 ./AMaxMDGenerator.py -o $s -t $1 -d $2 --dim 2 --arch $arch --toolchain $toolchain &
         objs+=($o)
     done
     if [[ $arch =~ gfx94[0-9] ]]; then
