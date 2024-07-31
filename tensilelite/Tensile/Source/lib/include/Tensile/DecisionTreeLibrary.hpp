@@ -101,8 +101,20 @@ namespace Tensile
         {
             if(searchType != SolutionLibrarySearchType::DEFAULT)
             {
-                throw std::runtime_error("Dicision tree only supports default search mode.");
+                // if the solution library search is not default then return an empty
+                // set of solutions.
+                SolutionSet<MySolution> rv;
+                return rv.empty();            }
+
+            const bool experimental = Debug::Instance().useExperimentalSelection();
+            if(! experimental)
+            {
+                // Skip the search for solutions if the environment variable
+                // that enables the experimental method is not set
+                SolutionSet<MySolution> rv;
+                return rv.empty();
             }
+
             typename Forest::Transform transform
                 = [&](Element library) -> std::shared_ptr<MySolution> {
                 return library->findBestSolution(problem, hardware);
@@ -130,8 +142,21 @@ namespace Tensile
         {
             if(searchType != SolutionLibrarySearchType::DEFAULT)
             {
-                throw std::runtime_error("Dicision tree only supports default search mode.");
+                // if the solution library search is notSolutionSet default then return an empty
+                // set of solutions
+                SolutionSet<MySolution> rv;
+                return rv.empty();
             }
+
+            const bool experimental = Debug::Instance().useExperimentalSelection();
+            if(! experimental)
+            {
+                // Skip the search for solutions if the environment variable
+                // that enables the experimental method is not set
+                SolutionSet<MySolution> rv;
+                return rv.empty();
+            }
+
             typename Forest::Transform transform
                 = [&](Element library) -> std::shared_ptr<MySolution> {
                 return library->findBestSolution(problems, hardware);
