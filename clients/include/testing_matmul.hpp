@@ -552,6 +552,18 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
             else //more default cases once support C != D
                 real_bias_type = HIP_R_16F;
         }
+#ifdef ROCM_USE_FLOAT8
+        else if((arg.a_type == HIP_R_8F_E4M3 || arg.a_type == HIP_R_8F_E5M2)
+                && (arg.b_type == HIP_R_8F_E4M3 || arg.b_type == HIP_R_8F_E5M2))
+        {
+            if(arg.d_type == HIP_R_32F || arg.d_type == HIP_R_16BF)
+                real_bias_type = HIP_R_16BF;
+            else if(arg.d_type == HIP_R_16F)
+                real_bias_type = HIP_R_16F;
+            else //more default cases once support C != D
+                real_bias_type = HIP_R_16F;
+        }
+#endif
         else
         {
             real_bias_type = arg.d_type;
@@ -1161,6 +1173,13 @@ void testing_matmul_with_bias(const Arguments& arg)
             {
                 hipblaslt_init_small<Talpha>(*hScaleC[i], 1, 1, 1);
             }
+#ifdef ROCM_USE_FLOAT8
+            else if constexpr(std::is_same<To, hipblaslt_f8_ocp>::value
+                         || std::is_same<To, hipblaslt_bf8_ocp>::value)
+            {
+                hipblaslt_init_small<Talpha>(*hScaleC[i], 1, 1, 1);
+            }
+#endif
             else
             {
                 hipblaslt_init<Talpha>(*hScaleC[i], 1, 1, 1);
@@ -1174,6 +1193,13 @@ void testing_matmul_with_bias(const Arguments& arg)
             {
                 hipblaslt_init_small<Talpha>(*hScaleD[i], 1, 1, 1);
             }
+#ifdef ROCM_USE_FLOAT8
+            else if constexpr(std::is_same<To, hipblaslt_f8_ocp>::value
+                         || std::is_same<To, hipblaslt_bf8_ocp>::value)
+            {
+                hipblaslt_init_small<Talpha>(*hScaleD[i], 1, 1, 1);
+            }
+#endif
             else
             {
                 hipblaslt_init<Talpha>(*hScaleD[i], 1, 1, 1);

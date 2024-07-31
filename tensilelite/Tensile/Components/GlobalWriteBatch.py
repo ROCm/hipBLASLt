@@ -1004,8 +1004,12 @@ class GlobalWriteBatchWriter:
       module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
     elif self.kernel["ProblemType"]["DestDataType"].isFloat8() and self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
       module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
-      module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Max), "0x43700000", "Fp8 Max value 240 as float32" ))
-      module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Min), "0xc3700000", "Fp8 Min value -240 as float32" ))
+      if self.parentWriter.states.archCaps["HasFP8_OCP"]:
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Max), "0x43E00000", "Fp8 Max value 448 as float32" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Min), "0xc3E00000", "Fp8 Min value -448 as float32" ))
+      else:
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Max), "0x43700000", "Fp8 Max value 240 as float32" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Min), "0xc3700000", "Fp8 Min value -240 as float32" ))
     elif self.kernel["ProblemType"]["DestDataType"].isBFloat8() and self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
       module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBF8NanInf), "0x207", "Nan and +/- inf" ))
       module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBF8Max), "0x47600000", "BF8 Max value 57344 as float32" ))
@@ -1982,21 +1986,28 @@ class GlobalWriteBatchWriter:
           # Generate single f32 code if edge is detected.
           isPK = False
           if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-            sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
-            module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
+            if self.parentWriter.states.archCaps["NoSDWA"]: #cm review
+              sb = 0 if self.gwvw == 1 else 1
+              module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
+            else:
+              sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
+              module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
           # Original packed route
           elif vi%2 == 1:
             continue
           else:
             isPK = True
-            sb = SelectBit.WORD_0 if vi == 0 else SelectBit.WORD_1
-            module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
+            if self.parentWriter.states.archCaps["NoSDWA"]: #cm review
+              sb = 0 if vi ==0 else 1
+              module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[sb])))
+            else:
+              sb = SelectBit.WORD_0 if vi == 0 else SelectBit.WORD_1
+              module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
           module.add(SNop(waitState=0))
           if kernel["ProblemType"]["ComputeDataType"].isSingle():
             module.add(VMacF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(tmpVgpr), src1=sgpr("Beta"), comment="finalSum = sum*alpha + C*beta"))
             if isPK:
               module.add(VMacF32(dst=vgpr("ValuC+%u"%(newSumIdxV+1)), src0=vgpr(tmpVgpr+1), src1=sgpr("Beta"), comment="finalSum = sum*alpha + C*beta (PK)"))
-
       # bfloat8 precision
       elif kernel["ProblemType"]["DestDataType"].isBFloat8():
         if kernel["ProblemType"]["HighPrecisionAccumulate"]:
@@ -2004,21 +2015,28 @@ class GlobalWriteBatchWriter:
           # Generate single f32 code if edge is detected.
           isPK = False
           if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-            sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
-            module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
+            if self.parentWriter.states.archCaps["NoSDWA"]: #cm review
+              sb = 0 if self.gwvw == 1 else 1
+              module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
+            else:
+              sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
+              module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
           # Original packed route
           elif vi%2 == 1:
             continue
           else:
             isPK = True
-            sb = SelectBit.WORD_0 if vi == 0 else SelectBit.WORD_1
-            module.add(VCvtPkBF8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
+            if self.parentWriter.states.archCaps["NoSDWA"]: #cm review
+              sb = 0 if vi ==0 else 1
+              module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[sb])))
+            else:
+              sb = SelectBit.WORD_0 if vi == 0 else SelectBit.WORD_1
+              module.add(VCvtPkBF8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
           module.add(SNop(waitState=0))
           if kernel["ProblemType"]["ComputeDataType"].isSingle():
             module.add(VMacF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(tmpVgpr), src1=sgpr("Beta"), comment="finalSum = sum*alpha + C*beta"))
             if isPK:
               module.add(VMacF32(dst=vgpr("ValuC+%u"%(newSumIdxV+1)), src0=vgpr(tmpVgpr+1), src1=sgpr("Beta"), comment="finalSum = sum*alpha + C*beta (PK)"))
-
     return module
 
 def copyData(computeDataType, elementSumIdx, gwvw, vgprStart, direction=0):

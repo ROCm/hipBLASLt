@@ -261,12 +261,16 @@ typedef enum rocblaslt_compute_type_
     rocblaslt_compute_f64_pedantic  = 8, /**< compute will be exactly 64-bit precision */
     rocblaslt_compute_i32           = 9, /**< 32-bit integer precision. */
     rocblaslt_compute_i32_pedantic  = 10, /**< compute will be exactly 32-bit integer precision */
-    rocblaslt_compute_f32_fast_f8_fnuz  = 100, /**< 32-bit input can use fp8 compute */
-    rocblaslt_compute_f32_fast_bf8_fnuz = 101, /**< 32-bit input can use bf8 compute */
+    rocblaslt_compute_f32_fast_f8_fnuz    = 100, /**< 32-bit input can use fp8 compute */
+    rocblaslt_compute_f32_fast_bf8_fnuz   = 101, /**< 32-bit input can use bf8 compute */
     rocblaslt_compute_f32_fast_f8bf8_fnuz
     = 102, /**< 32-bit input can use fp8 for A and bf8 for B compute */
     rocblaslt_compute_f32_fast_bf8f8_fnuz
     = 103, /**< 32-bit input can use bf8 for A and fp8 for B compute */
+    rocblaslt_compute_f32_fast_f8_ocp    = 104, /**< 32-bit input can use fp8 compute */
+    rocblaslt_compute_f32_fast_bf8_ocp   = 105, /**< 32-bit input can use bf8 compute */
+    rocblaslt_compute_f32_fast_f8bf8_ocp = 106, /**< 32-bit input can use fp8 for A and bf8 for B compute */
+    rocblaslt_compute_f32_fast_bf8f8_ocp = 107, /**< 32-bit input can use bf8 for A and fp8 for B compute */
 } rocblaslt_compute_type;
 
 /*! \ingroup types_module

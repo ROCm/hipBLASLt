@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2019-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2019-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,13 @@
 
 #ifndef _HIP_FLOAT8_IMPL_H_
 #define _HIP_FLOAT8_IMPL_H_
+
+#include <hip/hip_version.h>
+#if HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR > 2 \
+    && HIP_VERSION_PATCH > 42130 //tmp before gfx94 use hip f8 header
+#define HIP_FP8_TYPE_OCP 1
+#endif
+#include <hip/hip_fp8.h>
 
 namespace tensile_hip_f8_impl
 {
