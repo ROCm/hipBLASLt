@@ -95,7 +95,7 @@ def asm_loop(mod: ti.Module, name: str, it: str):
         mod.addSpaceLine()
 
 
-class AMax2DKernelGenerator:
+class AMaxMDKernelGenerator:
     srd_num_reg = 4
     srd_alignment = 4
 
@@ -103,6 +103,7 @@ class AMax2DKernelGenerator:
                  i_type: ti.DataType,
                  o_type: ti.DataType,
                  scale_type: ti.DataType,
+                 dim: int,
                  num_workitems: int,
                  wave_size: int,
                  num_load_count: int,
@@ -112,6 +113,7 @@ class AMax2DKernelGenerator:
         self.i_type = i_type
         self.o_type = o_type
         self.scale_type = scale_type
+        self.dim = dim
         self.bpe = i_type.numBytes()
         self.bpr = i_type.numRegisters()
         self.max_workgoups = num_workitems
@@ -133,7 +135,7 @@ class AMax2DKernelGenerator:
         self.debug_label = True
         self.arch = arch
         self.is_scale = is_scale
-        self.op = 'AMax2D'
+        self.op = f'AMax{self.dim}D'
         self.sgprs  = collections.OrderedDict()
         self.vgprs  = collections.OrderedDict()
         self.label_reduction = ti.Label("reduction", 'reduction')
@@ -149,8 +151,8 @@ class AMax2DKernelGenerator:
     @property
     def func_name(self):
         if self.is_scale:
-            return f'AMax2D_Ti_{self.i_type}_To_{self.o_type}_Ts_{self.scale_type}'
-        return f'AMax2D_Ti_{self.i_type}_To_{self.o_type}'
+            return f'AMax{self.dim}D_Ti_{self.i_type}_To_{self.o_type}_Ts_{self.scale_type}'
+        return f'AMax{self.dim}D_Ti_{self.i_type}_To_{self.o_type}'
 
 
     def dumps(self, format: str) -> str:
@@ -264,32 +266,24 @@ class AMax2DKernelGenerator:
 
 
     def kernel_args(self):
-        if self.is_scale:
-            return (KernelArgument(8,  0, 'global_buffer', 'global'),
-                    KernelArgument(8,  8, 'global_buffer', 'global'),
-                    KernelArgument(8, 16, 'global_buffer', 'global'),
-                    KernelArgument(8, 24, 'global_buffer', 'global'),
-                    KernelArgument(8, 32, 'global_buffer', 'global'),
-                    KernelArgument(8, 40, 'global_buffer', 'global'),
-                    KernelArgument(4, 48, 'by_value'),
-                    KernelArgument(4, 52, 'by_value'),
-                    KernelArgument(4, 56, 'by_value'),
-                    KernelArgument(4, 60, 'by_value'),
-                    KernelArgument(4, 64, 'by_value'))
-        return (KernelArgument(8,  0, 'global_buffer', 'global'),
-                KernelArgument(8,  8, 'global_buffer', 'global'),
-                KernelArgument(8, 16, 'global_buffer', 'global'),
-                KernelArgument(8, 24, 'global_buffer', 'global'),
-                KernelArgument(4, 32, 'by_value'),
-                KernelArgument(4, 36, 'by_value'),
-                KernelArgument(4, 40, 'by_value'),
-                KernelArgument(4, 44, 'by_value'),
-                KernelArgument(4, 48, 'by_value'),
-                KernelArgument(4, 52, 'by_value'),
-                KernelArgument(4, 56, 'by_value'))
+        num_address = 6 if self.is_scale else 5
+        num_value   = 5 if self.is_scale else (5 + (self.dim - 1) * 2)
+
+        offset = 0
+        kernelArgus = []
+        for i in range(num_address):
+            kernelArgus.append(KernelArgument(8,  offset, 'global_buffer', 'global'))
+            offset = offset + 8
+
+        for i in range(num_value):
+            kernelArgus.append(KernelArgument(4, offset, 'by_value'))
+            offset += 4
+
+        return kernelArgus
 
 
     def defineVariables(self):
+        # define VGPR
         self.defineVgpr("Serial",  1, 1)
         self.defineVgpr("Output",  1, 1)
         self.defineVgpr("OutputB", 1, 1)
@@ -297,9 +291,9 @@ class AMax2DKernelGenerator:
         self.defineVgpr("Offset",  self.num_load_count, 1)
         self.defineVgpr("Value",   int(self.num_load_count * ceil(self.num_load_size * self.bpr)), ceil(self.num_load_size * self.bpr))
         self.defineVgpr("UIdx",    1, 1)
-        self.defineVgpr("UIdxM",   1, 1)
-        self.defineVgpr("UIdxN",   1, 1)
-        self.defineVgpr("UVecM",   1, 1)
+        for i in range(self.dim):
+            self.defineVgpr(f"UIdx{i}",   1, 1)
+        self.defineVgpr("UVec0",   1, 1)
         if self.is_scale:
             self.defineVgpr("OffsetD", int(self.num_load_count * self.num_load_size * self.bpr), 1)
             self.defineVgpr("OutputD", int(self.num_load_count * self.num_load_size * self.bpr), int(self.num_load_size * self.bpr))
@@ -317,11 +311,14 @@ class AMax2DKernelGenerator:
                 self.defineVgpr("BF8Tmp", 1)
         self.defineVgpr("Tmp",     4, 1)
 
+        # define SGPR
         self.defineSgpr("KernelArg", 2)
         self.defineSgpr("WorkGroup0", 1)
         self.defineSgpr("WorkGroup1", 1)
         self.defineSgpr("WorkGroup2", 1)
         self.defineSgpr("AddressOut", 2, 2)
+        if not self.is_scale:
+            self.defineSgpr("AddressOutRcp", 2, 2)
         if self.is_scale:
             self.defineSgpr("AddressOutD", 2, 2)
         self.defineSgpr("AddressIn",  2, 2)
@@ -329,9 +326,10 @@ class AMax2DKernelGenerator:
             self.defineSgpr("AddressScale", 2, 2)
         self.defineSgpr("AddressWk",  2, 2)
         self.defineSgpr("AddressSy",  2, 2)
-        self.defineSgpr("SizeM", 1)
-        self.defineSgpr("SizeN", 1)
-        self.defineSgpr("LD", 1)
+        for i in range(self.dim):
+            self.defineSgpr(f"Size{i}", 1)
+        for i in range(1, self.dim):
+            self.defineSgpr(f"Stride{i}", 1)
         self.defineSgpr("IsDivided", 1)
         self.defineSgpr("Divided", 1)
         self.defineSgpr("WorkVectors", 1)
@@ -343,8 +341,8 @@ class AMax2DKernelGenerator:
         self.defineSgpr("LogWorkVectors", 1)
         self.defineSgpr("WGIdx", 1)
         self.defineSgpr("LoopIdx", 1)
-        self.defineSgpr("UVecM", 1)
-        self.defineSgpr("ShiftM", 1)
+        self.defineSgpr("UVec0", 1)
+        self.defineSgpr("Shift0", 1)
 
         self.defineSgpr("Src", 4, 4)
         self.defineSgpr("Dst", 4, 4)
@@ -375,29 +373,32 @@ class AMax2DKernelGenerator:
         mod.addComment0('Load kernel args')
         offset = 0
         if self.is_scale:
-            mod.add(ti.SLoadB64(ti.sgpr("AddressOut", 2),   ti.sgpr("KernelArg", 2),  0))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressOutD", 2),  ti.sgpr("KernelArg", 2),  8))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressIn", 2),    ti.sgpr("KernelArg", 2),  16))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressScale", 2), ti.sgpr("KernelArg", 2),  24))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressWk", 2),    ti.sgpr("KernelArg", 2),  32))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressSy", 2),    ti.sgpr("KernelArg", 2),  40))
-            mod.add(ti.SLoadB32(ti.sgpr("SizeLength"),      ti.sgpr("KernelArg", 2),  48))
-            mod.add(ti.SLoadB32(ti.sgpr("IsDivided"),       ti.sgpr("KernelArg", 2),  52))
-            mod.add(ti.SLoadB32(ti.sgpr("Divided"),         ti.sgpr("KernelArg", 2),  56))
-            mod.add(ti.SLoadB32(ti.sgpr("WorkVectors"),        ti.sgpr("KernelArg", 2),  60))
-            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),        ti.sgpr("KernelArg", 2),  64))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressOut", 2),   ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+            mod.add(ti.SLoadB64(ti.sgpr("AddressOutD", 2),  ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+            mod.add(ti.SLoadB64(ti.sgpr("AddressIn", 2),    ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+            mod.add(ti.SLoadB64(ti.sgpr("AddressScale", 2), ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+            mod.add(ti.SLoadB64(ti.sgpr("AddressWk", 2),    ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+            mod.add(ti.SLoadB64(ti.sgpr("AddressSy", 2),    ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+
+            mod.add(ti.SLoadB32(ti.sgpr("SizeLength"),      ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
+            mod.add(ti.SLoadB32(ti.sgpr("IsDivided"),       ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
+            mod.add(ti.SLoadB32(ti.sgpr("Divided"),         ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
+            mod.add(ti.SLoadB32(ti.sgpr("WorkVectors"),     ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
+            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),        ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
         else:
-            mod.add(ti.SLoadB64(ti.sgpr("AddressOut", 2),   ti.sgpr("KernelArg", 2),   0))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressIn", 2),    ti.sgpr("KernelArg", 2),   8))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressWk", 2),    ti.sgpr("KernelArg", 2),  16))
-            mod.add(ti.SLoadB64(ti.sgpr("AddressSy", 2),    ti.sgpr("KernelArg", 2),  24))
-            mod.add(ti.SLoadB32(ti.sgpr("SizeM"),           ti.sgpr("KernelArg", 2),  32))
-            mod.add(ti.SLoadB32(ti.sgpr("SizeN"),           ti.sgpr("KernelArg", 2),  36))
-            mod.add(ti.SLoadB32(ti.sgpr("LD"),              ti.sgpr("KernelArg", 2),  40))
-            mod.add(ti.SLoadB32(ti.sgpr("IsDivided"),       ti.sgpr("KernelArg", 2),  44))
-            mod.add(ti.SLoadB32(ti.sgpr("Divided"),         ti.sgpr("KernelArg", 2),  48))
-            mod.add(ti.SLoadB32(ti.sgpr("WorkVectors"),     ti.sgpr("KernelArg", 2),  52))
-            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),        ti.sgpr("KernelArg", 2),  56))
+            mod.add(ti.SLoadB64(ti.sgpr("AddressOut", 2),    ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+            mod.add(ti.SLoadB64(ti.sgpr("AddressOutRcp", 2), ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+            mod.add(ti.SLoadB64(ti.sgpr("AddressIn", 2),     ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+            mod.add(ti.SLoadB64(ti.sgpr("AddressWk", 2),     ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+            mod.add(ti.SLoadB64(ti.sgpr("AddressSy", 2),     ti.sgpr("KernelArg", 2),  offset)); offset = offset + 8
+            for i in range(self.dim):
+                mod.add(ti.SLoadB32(ti.sgpr(f"Size{i}"),     ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
+            for i in range(1, self.dim):
+                mod.add(ti.SLoadB32(ti.sgpr(f"Stride{i}"),   ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
+            mod.add(ti.SLoadB32(ti.sgpr("IsDivided"),        ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
+            mod.add(ti.SLoadB32(ti.sgpr("Divided"),          ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
+            mod.add(ti.SLoadB32(ti.sgpr("WorkVectors"),      ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
+            mod.add(ti.SLoadB32(ti.sgpr("NumGroup"),         ti.sgpr("KernelArg", 2),  offset)); offset = offset + 4
 
         mod.add(ti.SWaitCnt(lgkmcnt=0))
         mod.addSpaceLine()
@@ -424,9 +425,11 @@ class AMax2DKernelGenerator:
         mod.add(ti.VMovB32(ti.vgpr("Output"), 0))
         mod.addSpaceLine()
 
-        mod.add(ti.SSubU32(ti.sgpr("Tmp"), ti.sgpr("SizeN"), 1))
-        mod.add(ti.SMulI32(ti.sgpr("Tmp"), ti.sgpr("Tmp"), ti.sgpr("LD")))
-        mod.add(ti.SAddU32(ti.sgpr("Tmp"), ti.sgpr("Tmp"), ti.sgpr("SizeM")))
+        mod.add(ti.SMovB32(ti.sgpr("Tmp"), ti.sgpr("Size0")))
+        for i in range(1, self.dim):
+            mod.add(ti.SSubU32(ti.sgpr("Tmp+1"), ti.sgpr(f"Size{i}"), 1))
+            mod.add(ti.SMulI32(ti.sgpr("Tmp+1"), ti.sgpr("Tmp+1"), ti.sgpr(f"Stride{i}")))
+            mod.add(ti.SAddU32(ti.sgpr("Tmp"), ti.sgpr("Tmp"), ti.sgpr("Tmp+1")))
         mod.addSpaceLine()
 
         mod.add(ti.SMovB32(ti.sgpr("Src+0"), ti.sgpr("AddressIn+0")))
@@ -466,33 +469,47 @@ class AMax2DKernelGenerator:
         return mod
 
 
-    def calculate_offset_per_load(self, i, num_load_size, init=False) -> ti.Module:
+    def calculate_offset_per_load(self, idx, num_load_size, init=False) -> ti.Module:
         mod = ti.Module("calculate_offset_per_load")
-        mod.addComment0(f"calculate_offset_per_load {i}")
+        mod.addComment0(f"calculate_offset_per_load {idx}")
 
-        if init and (i == 0):
-            pass
-        else:
+        if ((not init) or (idx != 0)):
             mod.add(ti.VMovB32(ti.vgpr("Tmp"), self.wave_size))
             mod.add(ti.VAddU32(ti.vgpr("UIdx"), ti.vgpr("UIdx"), ti.vgpr("Tmp")))
             mod.addSpaceLine()
 
-        mod.add(ti.vectorUInt32DivideAndRemainder("UIdxN", "UIdx", "UVecM", "UIdxM", doRemainder=True, comment=""))
+        # Tmp + 0 = UIdx
+        # Tmp + 1 = qReg
+        # Tmp + 2 = divReg
+        if self.dim == 1:
+            mod.add(ti.VMovB32(ti.vgpr("UIdx0"), ti.vgpr("UIdx")))
+        else:
+            mod.add(ti.VMovB32(ti.vgpr("Tmp+0"), ti.vgpr("UIdx")))
+            for i in range(1, self.dim):
+                if i == 1:
+                    mod.add(ti.VMovB32(ti.vgpr("Tmp+2"), ti.sgpr("UVec0")))
+                else:
+                    mod.add(ti.VMovB32(ti.vgpr("Tmp+2"), ti.sgpr(f"Size{i-1}")))
+                mod.add(ti.vectorUInt32DivideAndRemainder("Tmp+1", "Tmp+0", "Tmp+2", f"UIdx{i-1}", doRemainder=True, comment=""))
+                if i != (self.dim - 1):
+                    mod.add(ti.VMovB32(ti.vgpr("Tmp+0"), ti.sgpr("Tmp+1")))
+            mod.add(ti.VMovB32(ti.vgpr(f"UIdx{self.dim-1}"), ti.vgpr("Tmp+1")))
         mod.addSpaceLine()
 
-        mod.add(ti.VLShiftLeftB32(ti.vgpr("Tmp"), int(log2(num_load_size)), ti.vgpr("UIdxM")))
-        mod.add(ti.VMulU32U24(ti.vgpr(f"Offset+{i}"), ti.vgpr("UIdxN"), ti.sgpr("LD")))
-        mod.add(ti.VAddU32(ti.vgpr(f"Offset+{i}"), ti.vgpr(f"Offset+{i}"), ti.vgpr("Tmp")))
-        mod.add(ti.VLShiftLeftB32(ti.vgpr(f"Offset+{i}"), int(log2(self.bpe)), ti.vgpr(f"Offset+{i}")))
+        mod.add(ti.VLShiftLeftB32(ti.vgpr(f"Offset+{idx}"), int(log2(num_load_size)), ti.vgpr("UIdx0")))
+        for i in range(1, self.dim):
+            mod.add(ti.VMulU32U24(ti.vgpr("Tmp"), ti.vgpr(f"UIdx{i}"), ti.sgpr(f"Stride{i}")))
+            mod.add(ti.VAddU32(ti.vgpr(f"Offset+{idx}"), ti.vgpr(f"Offset+{idx}"), ti.vgpr("Tmp")))
+        mod.add(ti.VLShiftLeftB32(ti.vgpr(f"Offset+{idx}"), int(log2(self.bpe)), ti.vgpr(f"Offset+{idx}")))
         mod.addSpaceLine()
 
         if num_load_size != 1:
-            mod.add(ti.VSubU32(ti.vgpr("Tmp"), ti.vgpr(f"Offset+{i}"), ti.sgpr("ShiftM"), ""))
-            mod.add(ti.SSubU32(ti.sgpr("Tmp+5"), ti.sgpr("UVecM"), 1, ""))
-            mod.add(ti.VCmpEQU32(ti.sgpr("Tmp+0",2), ti.vgpr("UIdxM"), ti.sgpr("Tmp+5")))
-            mod.add(ti.VCmpNeU32(ti.sgpr("Tmp+2",2), ti.sgpr("ShiftM"), 0))
+            mod.add(ti.VSubU32(ti.vgpr("Tmp"), ti.vgpr(f"Offset+{idx}"), ti.sgpr("Shift0"), ""))
+            mod.add(ti.SSubU32(ti.sgpr("Tmp+5"), ti.sgpr("UVec0"), 1, ""))
+            mod.add(ti.VCmpEQU32(ti.sgpr("Tmp+0",2), ti.vgpr("UIdx0"), ti.sgpr("Tmp+5")))
+            mod.add(ti.VCmpNeU32(ti.sgpr("Tmp+2",2), ti.sgpr("Shift0"), 0))
             mod.add(ti.SAndB64(ti.sgpr("Tmp+0",2), ti.sgpr("Tmp+0",2), ti.sgpr("Tmp+2",2)))
-            mod.add(ti.VCndMaskB32(ti.vgpr(f"Offset+{i}"), ti.vgpr(f"Offset+{i}"), ti.vgpr("Tmp"), ti.sgpr("Tmp+0",2)))
+            mod.add(ti.VCndMaskB32(ti.vgpr(f"Offset+{idx}"), ti.vgpr(f"Offset+{idx}"), ti.vgpr("Tmp"), ti.sgpr("Tmp+0",2)))
             mod.addSpaceLine()
 
         return mod
@@ -561,15 +578,15 @@ class AMax2DKernelGenerator:
         mod.addComment0(f"amax_per_vector_{num_load_size}")
 
         if num_load_size != 1:
-            mod.add(ti.SAndB32(ti.sgpr("ShiftM"), ti.sgpr("SizeM"), (num_load_size - 1)))
-            mod.add(ti.SSubU32(ti.sgpr("ShiftM"), num_load_size, ti.sgpr("ShiftM")))
-            mod.add(ti.SAndB32(ti.sgpr("ShiftM"), ti.sgpr("ShiftM"), (num_load_size - 1)))
-            mod.add(ti.SLShiftLeftB32(ti.sgpr("ShiftM"), int(log2(self.bpe)), ti.sgpr("ShiftM")))
+            mod.add(ti.SAndB32(ti.sgpr("Shift0"), ti.sgpr("Size0"), (num_load_size - 1)))
+            mod.add(ti.SSubU32(ti.sgpr("Shift0"), num_load_size, ti.sgpr("Shift0")))
+            mod.add(ti.SAndB32(ti.sgpr("Shift0"), ti.sgpr("Shift0"), (num_load_size - 1)))
+            mod.add(ti.SLShiftLeftB32(ti.sgpr("Shift0"), int(log2(self.bpe)), ti.sgpr("Shift0")))
             mod.addSpaceLine()
 
-        mod.add(ti.SAddU32(ti.sgpr("UVecM"), ti.sgpr("SizeM"), (num_load_size - 1)))
-        mod.add(ti.SLShiftRightB32(ti.sgpr("UVecM"), int(log2(num_load_size)), ti.sgpr("UVecM")))
-        mod.add(ti.VMovB32(ti.vgpr("UVecM"), ti.sgpr("UVecM")))
+        mod.add(ti.SAddU32(ti.sgpr("UVec0"), ti.sgpr("Size0"), (num_load_size - 1)))
+        mod.add(ti.SLShiftRightB32(ti.sgpr("UVec0"), int(log2(num_load_size)), ti.sgpr("UVec0")))
+        mod.add(ti.VMovB32(ti.vgpr("UVec0"), ti.sgpr("UVec0")))
         mod.addSpaceLine()
 
         label_amax_per_vector_start = ti.Label(f'amax_per_vector_{num_load_size}_start',  f'amax_per_vector_{num_load_size}_start')
@@ -578,7 +595,9 @@ class AMax2DKernelGenerator:
         label_last_loop             = ti.Label(f'last_vector_{num_load_size}_loop',       f'last_vector_{num_load_size}_loop')
         label_amax_per_vector_end   = ti.Label(f'amax_per_vector_{num_load_size}_end',    f'amax_per_vector_{num_load_size}_end')
 
-        mod.add(ti.SMulI32(ti.sgpr("VecLength"), ti.sgpr("UVecM"), ti.sgpr("SizeN")))
+        mod.add(ti.SMovB32(ti.sgpr("VecLength"), ti.sgpr("UVec0")))
+        for i in range(1, self.dim):
+            mod.add(ti.SMulI32(ti.sgpr("VecLength"), ti.sgpr("VecLength"), ti.sgpr(f"Size{i}")))
         mod.add(ti.SLShiftRightB32(ti.sgpr("MainLoop"), ti.sgpr("LogWorkVectors"), ti.sgpr("VecLength")))
         mod.addSpaceLine()
 
@@ -640,7 +659,6 @@ class AMax2DKernelGenerator:
             mod.add(buffer_load(ti.vgpr(f"Value+{i*vgpr_per_load}", int(vgpr_per_load)), ti.vgpr(f"Offset+{i}"), ti.sgpr("Src",4), 0, ti.MUBUFModifiers(offen=True)))
         mod.addSpaceLine()
 
-        offset = self.num_load_count * self.num_workitems * num_load_size * self.bpe
         mod.add(self.calculate_global_address(num_load_size))
 
         mod.add(ti.SAddI32(ti.sgpr("LoopIdx"), ti.sgpr("LoopIdx"), 1))
@@ -658,6 +676,7 @@ class AMax2DKernelGenerator:
         if self.is_scale:
             offsetD = self.num_load_count * self.num_workitems * num_load_size * self.scale_type.numBytes()
             mod.add(ti.SAddI32(ti.sgpr("OffsetD"), ti.sgpr("OffsetD"), offsetD))
+
         mod.add(ti.SAddI32(ti.sgpr("LoopIdx"), ti.sgpr("LoopIdx"), 1))
         mod.add(ti.SBranch(label_loop.getLabelName()))
         mod.addSpaceLine()
@@ -692,7 +711,7 @@ class AMax2DKernelGenerator:
         mod.addComment0("amax_per_thread")
 
         label_amax_per_vector_1 = ti.Label("amax_per_vector_1", 'amax_per_vector_1')
-        mod.add(ti.SCmpLtI32(ti.sgpr("SizeM"), self.num_load_size))
+        mod.add(ti.SCmpLtI32(ti.sgpr("Size0"), self.num_load_size))
         mod.add(ti.SCBranchSCC1(label_amax_per_vector_1.getLabelName()))
         mod.addSpaceLine()
         mod.add(self.amax_per_vector(self.num_load_size))
@@ -962,34 +981,78 @@ class AMax2DKernelGenerator:
 
         mod.add(ti.VMovB32(ti.vgpr("Offset"), 0))
 
+        label_no_divided = ti.Label("no_divided", 'no_divided')
         BufferStorex1 = self.global_write_inst_type(1, self.o_type)
-        if self.i_type.toChar() == 'H' and self.o_type.toChar() == "S":
+        if self.i_type.toChar() == 'H' and self.o_type.toChar() == "H":
+            mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+            mod.add(ti.SCBranchSCC1(label_no_divided.getLabelName()))
             mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VRcpF32(ti.vgpr("OutputB"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(label_no_divided)
+        elif self.i_type.toChar() == 'H' and self.o_type.toChar() == "S":
+            mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+            mod.add(ti.SCBranchSCC1(label_no_divided.getLabelName()))
+            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VRcpF32(ti.vgpr("OutputB"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(label_no_divided)
         elif self.i_type.toChar() == 'S' and self.o_type.toChar() == "H":
-            mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
-        mod.add(ti.SNop(1))
-
-        label_divided = ti.Label("divided", 'divided')
-        mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
-        mod.add(ti.SCBranchSCC1(label_divided.getLabelName()))
-
-        if self.o_type.toChar() == "S":
-            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
-            mod.add(ti.SNop(1))
-            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
-        elif self.o_type.toChar() == "H":
-            mod.add(ti.VCvtF16toF32(ti.vgpr("Output"), ti.vgpr("Output")))
-            mod.add(ti.SNop(1))
+            mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+            mod.add(ti.SCBranchSCC1(label_no_divided.getLabelName()))
             mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
             mod.add(ti.SNop(1))
             mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
             mod.add(ti.SNop(1))
+            mod.add(ti.VRcpF32(ti.vgpr("OutputB"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(label_no_divided)
             mod.add(ti.VCvtF32toF16(ti.vgpr("Output"), ti.vgpr("Output")))
             mod.add(ti.SNop(1))
-        mod.add(label_divided)
+        elif self.i_type.toChar() == 'S' and self.o_type.toChar() == "S":
+            mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+            mod.add(ti.SCBranchSCC1(label_no_divided.getLabelName()))
+            mod.add(ti.VRcpF32(ti.vgpr("Output"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VMulF32(ti.vgpr("Output"), ti.vgpr("Output"), ti.sgpr("Divided")))
+            mod.add(ti.SNop(1))
+            mod.add(ti.VRcpF32(ti.vgpr("OutputB"), ti.vgpr("Output")))
+            mod.add(ti.SNop(1))
+            mod.add(label_no_divided)
 
         mod.add(BufferStorex1(ti.vgpr("Output"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))
         mod.addSpaceLine()
+
+        if not self.is_scale:
+            mod.add(ti.SCmpEQI32(ti.sgpr("IsDivided"), 0))
+            mod.add(ti.SCBranchSCC1(label_end.getLabelName()))
+            mod.add(ti.SCmpEQU64(ti.sgpr("AddressOutRcp",2), 0))
+            mod.add(ti.SCBranchSCC1(label_end.getLabelName()))
+            mod.addSpaceLine()
+
+            if self.o_type.toChar() == "H":
+                mod.add(ti.VCvtF32toF16(ti.vgpr("OutputB"), ti.vgpr("OutputB")))
+                mod.add(ti.SNop(1))
+            mod.addSpaceLine()
+
+            mod.add(ti.SMovB32(ti.sgpr("Dst+0"), ti.sgpr("AddressOutRcp+0")))
+            mod.add(ti.SMovB32(ti.sgpr("Dst+1"), ti.sgpr("AddressOutRcp+1")))
+            mod.add(ti.SMovB32(ti.sgpr("Dst+2"), self.o_type.numBytes()))
+            mod.add(ti.SMovB32(ti.sgpr("Dst+3"), "Srd127_96"))
+
+            mod.add(BufferStorex1(ti.vgpr("OutputB"), ti.vgpr("Offset"), ti.sgpr("Dst",4), 0, ti.MUBUFModifiers(offen=True)))
+            mod.addSpaceLine()
 
         mod.addSpaceLine()
         mod.add(label_end)
@@ -997,7 +1060,6 @@ class AMax2DKernelGenerator:
         mod.addSpaceLine()
 
         return mod
-
 
     def amax_kernel_body(self) -> ti.Module:
         mod = ti.Module(self.func_name)
@@ -1080,8 +1142,9 @@ if __name__ == '__main__':
     ap = ArgumentParser()
     ap.add_argument('-o', '--output', type=str, required=True, help='Output path of compiled binary')
     ap.add_argument('-t', type=str, default="H", help='data type')
-    ap.add_argument('-d', type=str, default="S", help='dest data type')
+    ap.add_argument('-d', type=str, help='dest data type')
     ap.add_argument('-s', type=str, default="F8", help='scale data type')
+    ap.add_argument('--dim', type=int, default=2, help='scale data type')
     ap.add_argument('--toolchain', type=str, default='/opt/rocm/llvm/bin/clang++', help='Path to ROCm compiler')
     ap.add_argument('--debug-build', action='store_true', dest='debug_build', help='Build with debug information')
     ap.add_argument('--is-scale', action='store_true', dest='is_scale', help='Enable scaled output or not')
@@ -1091,8 +1154,9 @@ if __name__ == '__main__':
     args = ap.parse_args()
     output_path: str = args.output
     t: str = args.t
-    d: str = t if (args.d =="None") else args.d
+    d: str = t if (args.d == None) else args.d
     s: str = args.s
+    dim: int = args.dim
     num_workitem: int = 256
     wave_size: int = 64
     c: int = 8
@@ -1111,7 +1175,7 @@ if __name__ == '__main__':
         toolchain_path = globalParameters['AssemblerPath']
 
     ti.Base._global_ti.init(isa, toolchain_path, False)
-    amax = AMax2DKernelGenerator(ti.DataType(t), ti.DataType(d), ti.DataType(s), num_workitem, wave_size, c, int(4 / ti.DataType(t).numRegisters()), arch, is_scale)
+    amax = AMaxMDKernelGenerator(ti.DataType(t), ti.DataType(d), ti.DataType(s), dim, num_workitem, wave_size, c, int(4 / ti.DataType(t).numRegisters()), arch, is_scale)
     kernel_body = amax.amax_kernel_body()
     args = amax.kernel_args()
     func_name = amax.func_name

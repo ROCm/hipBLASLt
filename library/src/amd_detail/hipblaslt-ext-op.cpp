@@ -800,6 +800,7 @@ hipblasStatus_t hipblasltAMax2DRun(const hipDataType datatype,
     invocation.args            = Tensile::KernelArguments(false);
     invocation.args.reserve(128, 12);
     invocation.args.append("output", output);
+    invocation.args.append("outputRcp", nullptr);
     invocation.args.append("input", input);
     invocation.args.append("workSpace", workSpace);
     invocation.args.append("sync", sync);
