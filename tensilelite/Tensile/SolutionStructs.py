@@ -3539,14 +3539,15 @@ class Solution(collections.abc.Mapping):
     if state["UseInstOffsetForGRO"] == -1:
       state["UseInstOffsetForGRO"] = 1 if state["DirectToLds"] else 0
 
+    state["ULSGRODoubleG2L"] = 0
     if state["UnrollLoopSwapGlobalReadOrder"] == 1:
+      if state["GlobalReadVectorWidthA"] != state["GlobalReadVectorWidthB"]:
+        # TODO: Add a configuration to schedule better.
+        state["ULSGRODoubleG2L"] = 1
       if state["ExpandPointerSwap"] == 1:
         reject(state, "ExpandPointerSwap need to be 0 if UnrollLoopSwapGlobalReadOrder")
       if state["PrefetchGlobalRead"] != 2:
         reject(state, "PrefetchGlobalRead need to be 2 if UnrollLoopSwapGlobalReadOrder")
-      if state["GlobalReadVectorWidthA"] != state["GlobalReadVectorWidthB"]:
-        reject(state, "TODO: UnrollLoopSwapGlobalReadOrder only support GRVWA=GRVWB. (%u!=%u)"
-        % (state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"]))
       if state["ProblemType"]["DataTypeA"].numBytes() != state["ProblemType"]["DataTypeB"].numBytes():
         reject(state, "UnrollLoopSwapGlobalReadOrder doesn't support mixed precision.")
 
