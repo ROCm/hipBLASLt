@@ -333,6 +333,67 @@ namespace
             maxWorkspaceBytes);
     }
 
+#define GEN_BENCH_ARG(_fun, _type_str, _type) \
+    strlen(_fun(_type)) && strcmp(_fun(_type), "invalid") ? _type_str : "", _fun(_type)
+
+    inline void logBenchFromTensileDataGemm(Tensile::ContractionProblemGemm problem,
+                                            Tensile::ContractionInputs      inputs,
+                                            rocblaslt::RocGemmType          gemmType)
+    {
+        log_bench(
+            __func__,
+            "--api_method",
+            "cpp",
+            "-m",
+            problem.c().sizes()[0],
+            "-n",
+            problem.c().sizes()[1],
+            "-k",
+            problem.a().sizes()[problem.boundIndices()[0].a],
+            "--lda",
+            problem.a().strides()[1],
+            "--ldb",
+            problem.b().strides()[1],
+            "--ldc",
+            problem.c().strides()[1],
+            "--ldd",
+            problem.d().strides()[1],
+            "--stride_a",
+            problem.a().strides()[2],
+            "--stride_b",
+            problem.b().strides()[2],
+            "--stride_c",
+            problem.c().strides()[2],
+            "--stride_d",
+            problem.d().strides()[2],
+            "--alpha",
+            ToString(inputs.alpha),
+            "--beta",
+            ToString(inputs.beta),
+            "--transA",
+            problem.transA() ? "T" : "N",
+            "--transB",
+            problem.transB() ? "T" : "N",
+            "--batch_count",
+            problem.batchSize(0),
+            (gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM) ? "--grouped_gemm" : "",
+            problem.useScaleAB(),
+            problem.useScaleAB(),
+            problem.useScaleCD() ? "--scaleC" : "",
+            problem.useScaleCD() ? "--scaleD" : "",
+            problem.useScaleAlphaVec() ? "--scaleAlpha_vector" : "",
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--a_type", tensile2HipType(problem.a().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--b_type", tensile2HipType(problem.b().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--c_type", tensile2HipType(problem.c().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--d_type", tensile2HipType(problem.d().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--compute_type", tensile2HipType(problem.computeType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--scale_type", tensile2HipType(problem.alphaType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--bias_type", tensile2HipType(problem.bias().dataType())));
+            // TODO: Tensile::ActivationType (to rocblaslt_epilogue) to bench string?
+            // ToString(problem.activationType())
+    }
+
+#undef GEN_BENCH_ARG
     /****************************************************************
  * Construct a Tensile Problem from a RocblasltContractionProblem *
  ****************************************************************/
@@ -1821,58 +1882,9 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         {
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
-            // log bench
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             {
-#define GEN_BENCH_ARG(_fun, _type_str, _type) \
-    strlen(_fun(_type)) && strcmp(_fun(_type), "invalid") ? _type_str : "", _fun(_type)
-            log_bench(
-                __func__,
-                "--api_method",
-                "cpp",
-                "-m",
-                data->problem.c().sizes()[0],
-                "-n",
-                data->problem.c().sizes()[1],
-                "-k",
-                data->problem.a().sizes()[data->problem.boundIndices()[0].a],
-                "--lda",
-                data->problem.a().strides()[1],
-                "--ldb",
-                data->problem.b().strides()[1],
-                "--ldc",
-                data->problem.c().strides()[1],
-                "--ldd",
-                data->problem.d().strides()[1],
-                "--stride_a",
-                data->problem.a().strides()[2],
-                "--stride_b",
-                data->problem.b().strides()[2],
-                "--stride_c",
-                data->problem.c().strides()[2],
-                "--stride_d",
-                data->problem.d().strides()[2],
-                "--alpha",
-                data->problem.alphaRestriction(),
-                "--beta",
-                data->problem.betaRestriction(),
-                "--transA",
-                data->problem.transA() ? "T" : "N",
-                "--transB",
-                data->problem.transB() ? "T" : "N",
-                "--batch_count",
-                data->problem.batchSize(0),
-                (gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM) ? "--grouped_gemm" : "",
-                GEN_BENCH_ARG(hipDataType_to_bench_string, "--a_type", tensile2HipType(data->problem.a().dataType())),
-                GEN_BENCH_ARG(hipDataType_to_bench_string, "--b_type", tensile2HipType(data->problem.b().dataType())),
-                GEN_BENCH_ARG(hipDataType_to_bench_string, "--c_type", tensile2HipType(data->problem.c().dataType())),
-                GEN_BENCH_ARG(hipDataType_to_bench_string, "--d_type", tensile2HipType(data->problem.d().dataType())),
-                GEN_BENCH_ARG(hipDataType_to_bench_string, "--compute_type", tensile2HipType(data->problem.computeType())),
-                GEN_BENCH_ARG(hipDataType_to_bench_string, "--scale_type", tensile2HipType(data->problem.alphaType())),
-                GEN_BENCH_ARG(hipDataType_to_bench_string, "--bias_type", tensile2HipType(data->problem.bias().dataType()))
-                );
- 
-#undef GEN_BENCH_ARG
+                logBenchFromTensileDataGemm(data->problem, data->inputs, gemmType);
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
         }
@@ -1885,6 +1897,10 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                 log_error(__func__,
                           "GG is initialized with useUserArgs = true, workspace has no arguments.");
                 return rocblaslt_status_not_initialized;
+            }
+            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+            {
+                logBenchFromTensileDataGemm(data->problem.gemms[0], data->inputs.grouped[0], gemmType);
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
         }
