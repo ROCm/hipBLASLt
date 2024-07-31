@@ -593,8 +593,10 @@ class StreamK(Component):
             module.add(SWaitCnt(vmcnt=0, comment="wait for data store"))
             module.add(SBarrier(comment="store all data before setting flag"))
             module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr), src=sgpr("StreamKIdx"), shiftHex=log2(4), comment="flag offset based on CTA index"))
-            module.add(SMovB32(dst=sgpr(tmpSgpr+2), src=1, comment="flag data"))
-            module.add(SStoreB32(src=sgpr(tmpSgpr+2), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="set flag"))
+            with writer.allocTmpSgpr(1) as flagSgprRes:
+                flagSgpr = flagSgprRes.idx
+                module.add(SMovB32(dst=sgpr(flagSgpr), src=1, comment="flag data"))
+                module.add(SStoreB32(src=sgpr(flagSgpr), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="set flag"))
             module.add(SWaitCnt(lgkmcnt=0, comment="wait for flag")) # TODO just for testing
         
         # TODO - if this is the last tile, don't need to jump to next instruction

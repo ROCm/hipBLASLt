@@ -1359,6 +1359,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
       tPM = tensorParametersB["tpsMetadata"]
       tPMRef = tensorParametersB
 
+    if kernel["StreamK"] != 0:
+      module.add(self.localReadAddresses(kernel, tensorParametersA, tensorParametersB, tPM))
+      module.add(self.localWriteAddresses(kernel, tensorParametersA, tensorParametersB, tPM))
+
     # tile assignments
     module.addComment1("global read addresses: tile offset assignment a")
     module.add(self.graTileAssignment(kernel, tensorParametersA))
@@ -3672,6 +3676,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.nonPostLoopSgpr.remove("AddressB")
       self.states.nonPostLoopSgpr.remove("StridesA")
       self.states.nonPostLoopSgpr.remove("StridesB")
+      self.states.nonPostLoopSgpr.remove("NumWorkGroups0")
+      self.states.nonPostLoopSgpr.remove("NumWorkGroups1")
 
     self.states.preloadScaleA = False
     self.states.preloadScaleB = False
@@ -3909,6 +3915,20 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   @abc.abstractmethod
   def functionSignature(self):
+    return ""
+
+  ##############################################################################
+  # Local Read Addresses
+  ##############################################################################
+  @abc.abstractmethod
+  def localReadAddresses(self, kernel, tPA, tPB, tPM):
+    return ""
+
+  ##############################################################################
+  # Local Write Addresses
+  ##############################################################################
+  @abc.abstractmethod
+  def localWriteAddresses(self, kernel, tPA, tPB, tPM):
     return ""
 
   ##############################################################################

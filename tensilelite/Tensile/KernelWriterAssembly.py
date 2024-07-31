@@ -1116,6 +1116,69 @@ class KernelWriterAssembly(KernelWriter):
         sgprOffset += (self.states.rpga * self.states.bpr)
     return kernelArgs
 
+  def localReadAddresses(self, kernel, tPA, tPB, tPM):
+    module = Module("Local Read Addresses")
+
+    ####################################
+    # Local Read Addresses
+    ####################################
+    module.addComment2("Local Read Addresses")
+
+    # tile assignments
+    module.addComment1("local read addresses: tile assignments a/b")
+    module.add(self.lraTileAssignment(kernel, tPA, tPB))
+
+    # final offsets
+    module.addComment1("local read addresses: final offsets a")
+    module.add(self.lraFinalOffset(kernel, tPA))
+    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+      module.addComment1("local read addresses: final offsets metadata")
+      module.add(self.lraFinalOffset(kernel, tPM))
+    module.addComment1("local read addresses: final offsets b")
+    module.add(self.lraFinalOffset(kernel, tPB))
+
+    # declare addresses
+    module.addComment1("local read addresses: declare addresses a")
+    module.add(self.lraDeclareAddresses(kernel, tPA))
+    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+      module.addComment1("local read addresses: declare addresses metadata")
+      module.add(self.lraDeclareAddresses(kernel, tPM))
+    module.addComment1("local read addresses: declare addresses b")
+    module.add(self.lraDeclareAddresses(kernel, tPB))
+
+    return module
+
+  def localWriteAddresses(self, kernel, tPA, tPB, tPM):
+    module = Module("Local Write Addresses")
+
+    ####################################
+    # Local Write Addresses
+    ####################################
+    module.addComment2("Local Write Addresses")
+
+    # tile assignments
+    module.add(self.lwaTileAssignment(kernel, tPA))
+    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+      module.add(self.lwaTileAssignment(kernel, tPM))
+    module.add(self.lwaTileAssignment(kernel, tPB))
+
+    # unroll assignments
+    module.add(self.lwaUnrollAssignment(kernel, tPA))
+    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+      module.add(self.lwaUnrollAssignment(kernel, tPM))
+    module.add(self.lwaUnrollAssignment(kernel, tPB))
+
+    # first offsets
+    module.addComment1("local write addresses: first offset a")
+    module.add(self.lwaFirstOffset(kernel, tPA))
+    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+      module.addComment1("local write addresses: first offset metadata")
+      module.add(self.lwaFirstOffset(kernel, tPM))
+    module.addComment1("local write addresses: first offset b")
+    module.add(self.lwaFirstOffset(kernel, tPB))
+
+    return module
+
   def defineAndResources(self, kernel, tPA, tPB, tPM):
     module = Module("allocateResources")
     module.add(self.macroAndSet(kernel, tPA, tPB))
@@ -1303,9 +1366,7 @@ class KernelWriterAssembly(KernelWriter):
             moduleScaleAB.add(label)
 
       moduleWg = Module("Calculate Workgroup")
-      ####################################
-      # Local Read Addresses
-      ####################################
+      
       # C regs are not used during initialization so mark them as available -
       # we will claim then just before the start of the unroll loop:
       self.vgprPool.add(self.states.a.startVgprValu , \
@@ -1323,57 +1384,10 @@ class KernelWriterAssembly(KernelWriter):
       moduleWg.addComment0("init: add agpr [%u...%u) to pool" % \
                           (0, numAccvgprs))
 
-      moduleWg.addComment2("Local Read Addresses")
-
-      # tile assignments
-      moduleWg.addComment1("local read addresses: tile assignments a/b")
-      moduleWg.add(self.lraTileAssignment(kernel, tPA, tPB))
-
-      # final offsets
-      moduleWg.addComment1("local read addresses: final offsets a")
-      moduleWg.add(self.lraFinalOffset(kernel, tPA))
-      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-        moduleWg.addComment1("local read addresses: final offsets metadata")
-        moduleWg.add(self.lraFinalOffset(kernel, tPM))
-      moduleWg.addComment1("local read addresses: final offsets b")
-      moduleWg.add(self.lraFinalOffset(kernel, tPB))
-
-      # declare addresses
-      moduleWg.addComment1("local read addresses: declare addresses a")
-      moduleWg.add(self.lraDeclareAddresses(kernel, tPA))
-      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-        moduleWg.addComment1("local read addresses: declare addresses metadata")
-        moduleWg.add(self.lraDeclareAddresses(kernel, tPM))
-      moduleWg.addComment1("local read addresses: declare addresses b")
-      moduleWg.add(self.lraDeclareAddresses(kernel, tPB))
-
-
-      ####################################
-      # Local Write Addresses
-      ####################################
-      moduleWg.addComment2("Local Write Addresses")
-
-      # tile assignments
-      moduleWg.add(self.lwaTileAssignment(kernel, tPA))
-      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-        moduleWg.add(self.lwaTileAssignment(kernel, tPM))
-      moduleWg.add(self.lwaTileAssignment(kernel, tPB))
-
-      # unroll assignments
-      moduleWg.add(self.lwaUnrollAssignment(kernel, tPA))
-      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-        moduleWg.add(self.lwaUnrollAssignment(kernel, tPM))
-      moduleWg.add(self.lwaUnrollAssignment(kernel, tPB))
-
-      # first offsets
-      moduleWg.addComment1("local write addresses: first offset a")
-      moduleWg.add(self.lwaFirstOffset(kernel, tPA))
-      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-        moduleWg.addComment1("local write addresses: first offset metadata")
-        moduleWg.add(self.lwaFirstOffset(kernel, tPM))
-      moduleWg.addComment1("local write addresses: first offset b")
-      moduleWg.add(self.lwaFirstOffset(kernel, tPB))
-
+      if kernel["StreamK"] == 0:
+        moduleWg.add(self.localReadAddresses(kernel, tPA, tPB, tPM))
+        moduleWg.add(self.localWriteAddresses(kernel, tPA, tPB, tPM))
+      
       def waitForArgsToLoad():
         if kernel["ProblemType"]["SupportUserArgs"]:
           moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u/%u bytes of kern args" % \
