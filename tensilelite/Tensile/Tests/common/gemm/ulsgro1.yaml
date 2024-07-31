@@ -47,8 +47,8 @@ BenchmarkProblems:
         - DepthU: [64]
         - VectorWidthA: [-1]
         - VectorWidthB: [-1]
-        - GlobalReadVectorWidthA: [-1]
-        - GlobalReadVectorWidthB: [-1]
+        - GlobalReadVectorWidthA: [-1,1,2,4]
+        - GlobalReadVectorWidthB: [-1,1,2,4]
         - LocalReadVectorWidth: [-1]
         - TransposeLDS: [1]
         - LdsBlockSizePerPadA: [-1]
@@ -122,6 +122,8 @@ BenchmarkProblems:
         - DepthU: [128]
         - VectorWidthA: [-1]
         - VectorWidthB: [-1]
+        - GlobalReadVectorWidthA: [-1,1,2,4]
+        - GlobalReadVectorWidthB: [-1,1,2,4]
         - LocalReadVectorWidth: [-1]
         - TransposeLDS: [1]
         - LdsBlockSizePerPadA: [0]
@@ -144,15 +146,6 @@ BenchmarkProblems:
         - NumElementsPerBatchStore: [0]
         - ClusterLocalRead: [1]
         - UnrollLoopSwapGlobalReadOrder: [1]
-        - Groups:
-          - - GlobalReadVectorWidthA: 8
-              GlobalReadVectorWidthB: 8
-            - GlobalReadVectorWidthA: 4
-              GlobalReadVectorWidthB: 4
-            - GlobalReadVectorWidthA: 2
-              GlobalReadVectorWidthB: 2
-            - GlobalReadVectorWidthA: 1
-              GlobalReadVectorWidthB: 1
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
