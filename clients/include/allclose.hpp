@@ -66,9 +66,14 @@ bool allclose(size_t* N, T* a, T* b, double atol, double rtol, bool equal_nan = 
 }
 
 template <typename T,
-          std::enable_if_t<!(std::is_same<T, hipblaslt_f8_fnuz>{}
-                             || std::is_same<T, hipblaslt_bf8_fnuz>{}),
-                           int> = 0>
+          std::enable_if_t<
+              !(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_bf8_fnuz>{}
+#ifdef ROCM_USE_FLOAT8
+                || std::is_same<T, hipblaslt_f8_ocp>{} || std::is_same<T, hipblaslt_bf8_ocp>{}
+#endif
+                ),
+              int>
+          = 0>
 bool allclose_check_general(char    allclose_type,
                             int64_t M,
                             int64_t N,
@@ -124,7 +129,8 @@ bool allclose_check_general(char    allclose_type,
 template <typename T,
           std::enable_if_t<(std::is_same<T, hipblaslt_f8_fnuz>{}
                             || std::is_same<T, hipblaslt_bf8_fnuz>{}),
-                           int> = 0>
+                           int>
+          = 0>
 bool allclose_check_general(char    allclose_type,
                             int64_t M,
                             int64_t N,
@@ -177,11 +183,69 @@ bool allclose_check_general(char    allclose_type,
     return true;
 }
 
-// For BF16 and half, we convert the results to double first
+#ifdef ROCM_USE_FLOAT8
 template <
     typename T,
-    typename VEC,
-    std::enable_if_t<std::is_same<T, hipblasLtHalf>{} || std::is_same<T, hip_bfloat16>{}, int> = 0>
+    std::enable_if_t<(std::is_same<T, hipblaslt_f8_ocp>{} || std::is_same<T, hipblaslt_bf8_ocp>{}),
+                     int>
+    = 0>
+bool allclose_check_general(char    allclose_type,
+                            int64_t M,
+                            int64_t N,
+                            int64_t lda,
+                            T*      hCPU,
+                            T*      hGPU,
+                            double& hipblaslt_atol,
+                            double& hipblaslt_rtol)
+{
+    if(M * N == 0)
+        return 0;
+    size_t              size = N * (size_t)lda;
+    host_vector<double> hCPU_double(size);
+    host_vector<double> hGPU_double(size);
+
+    for(int64_t i = 0; i < N; i++)
+    {
+        for(int64_t j = 0; j < M; j++)
+        {
+            size_t idx       = j + i * (size_t)lda;
+            hCPU_double[idx] = double(float(hCPU[idx]));
+            hGPU_double[idx] = double(float(hGPU[idx]));
+        }
+    }
+
+    std::vector<double> atols{1e-5, 1e-4, 1e-3, 1e-2, 1e-1};
+    std::vector<double> rtols{1e-5, 1e-4, 1e-3, 1e-2, 1e-1};
+    for(auto& atol : atols)
+    {
+        for(auto& rtol : rtols)
+        {
+            if(allclose(&size, hCPU_double.data(), hGPU_double.data(), atol, rtol, false))
+            {
+                hipblaslt_atol = atol;
+                hipblaslt_rtol = rtol;
+                //early termination for accending rtols
+                break;
+            }
+        }
+        //early termination for accending atols
+        if(hipblaslt_atol != 1)
+            break;
+    }
+
+    if(hipblaslt_atol == 1)
+    {
+        return false;
+    }
+
+    return true;
+}
+#endif
+// For BF16 and half, we convert the results to double first
+template <typename T,
+          typename VEC,
+          std::enable_if_t<std::is_same<T, hipblasLtHalf>{} || std::is_same<T, hip_bfloat16>{}, int>
+          = 0>
 bool allclose_check_general(char    allclose_type,
                             int64_t M,
                             int64_t N,
@@ -261,8 +325,14 @@ bool allclose_check_general(char        allclose_type,
     for(size_t i = 0; i < batch_count; i++)
     {
         auto index = i * stride_a;
-        bool close = allclose_check_general(
-            allclose_type, M, N, lda, (T_hpa*)hCPU + index, hGPU + index, hipblaslt_atol, hipblaslt_rtol);
+        bool close = allclose_check_general(allclose_type,
+                                            M,
+                                            N,
+                                            lda,
+                                            (T_hpa*)hCPU + index,
+                                            hGPU + index,
+                                            hipblaslt_atol,
+                                            hipblaslt_rtol);
         if(!close)
             return false;
     }

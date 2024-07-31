@@ -30,23 +30,8 @@
 #include <iomanip>
 #include <istream>
 #include <ostream>
-#include <utility>
 #include <regex>
-
-/*! \brief device matches pattern */
-bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
-{
-    if (!pattern.length())
-    {
-        return true;
-    }
-
-    constexpr char prefix[] = "gfx";
-    const std::size_t prefix_len = std::string_view(prefix).length();
-    gpu_arch.remove_prefix(prefix_len);
-    std::regex arch_regex(pattern.data());
-    return std::regex_search(gpu_arch.data(), arch_regex);
-}
+#include <utility>
 
 void Arguments::init()
 {

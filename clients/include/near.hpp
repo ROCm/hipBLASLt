@@ -165,6 +165,30 @@ inline void near_check_general(int64_t             M,
     NEAR_CHECK(M, N, lda, 0, hCPU, hGPU, 1, abs_error, NEAR_ASSERT_FP8);
 }
 
+#ifdef ROCM_USE_FLOAT8
+template <>
+inline void near_check_general(int64_t             M,
+                               int64_t             N,
+                               int64_t             lda,
+                               const hipblaslt_f8_ocp* hCPU,
+                               const hipblaslt_f8_ocp* hGPU,
+                               double              abs_error)
+{
+    NEAR_CHECK(M, N, lda, 0, hCPU, hGPU, 1, abs_error, NEAR_ASSERT_FP8);
+}
+
+template <>
+inline void near_check_general(int64_t             M,
+                               int64_t             N,
+                               int64_t             lda,
+                               const hipblaslt_bf8_ocp* hCPU,
+                               const hipblaslt_bf8_ocp* hGPU,
+                               double              abs_error)
+{
+    NEAR_CHECK(M, N, lda, 0, hCPU, hGPU, 1, abs_error, NEAR_ASSERT_FP8);
+}
+#endif
+
 template <typename T, typename T_hpa = T>
 inline void near_check_general(int64_t                        M,
                                int64_t                        N,
@@ -230,6 +254,34 @@ inline void near_check_general(int64_t             M,
     NEAR_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_FP8);
 }
 
+#ifdef ROCM_USE_FLOAT8
+template <>
+inline void near_check_general(int64_t             M,
+                               int64_t             N,
+                               int64_t             lda,
+                               int64_t             strideA,
+                               const hipblaslt_f8_ocp* hCPU,
+                               const hipblaslt_f8_ocp* hGPU,
+                               int64_t             batch_count,
+                               double              abs_error)
+{
+    NEAR_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_FP8);
+}
+
+template <>
+inline void near_check_general(int64_t             M,
+                               int64_t             N,
+                               int64_t             lda,
+                               int64_t             strideA,
+                               const hipblaslt_bf8_ocp* hCPU,
+                               const hipblaslt_bf8_ocp* hGPU,
+                               int64_t             batch_count,
+                               double              abs_error)
+{
+    NEAR_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_FP8);
+}
+#endif
+
 template <typename T, typename T_hpa = T>
 void near_check_general(int64_t                                    M,
                         int64_t                                    N,
@@ -288,6 +340,32 @@ inline void near_check_general(int64_t                         M,
 {
     NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_FP8);
 }
+
+#ifdef ROCM_USE_FLOAT8
+template <>
+inline void near_check_general(int64_t                         M,
+                               int64_t                         N,
+                               int64_t                         lda,
+                               const host_vector<hipblaslt_f8_ocp> hCPU[],
+                               const host_vector<hipblaslt_f8_ocp> hGPU[],
+                               int64_t                         batch_count,
+                               double                          abs_error)
+{
+    NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_FP8);
+}
+
+template <>
+inline void near_check_general(int64_t                         M,
+                               int64_t                         N,
+                               int64_t                         lda,
+                               const host_vector<hipblaslt_bf8_ocp> hCPU[],
+                               const host_vector<hipblaslt_bf8_ocp> hGPU[],
+                               int64_t                         batch_count,
+                               double                          abs_error)
+{
+    NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_FP8);
+}
+#endif
 
 template <typename T, typename T_hpa = T>
 inline void near_check_general(int64_t                              M,
@@ -348,3 +426,29 @@ inline void near_check_general(int64_t                   M,
 {
     NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_FP8);
 }
+
+#ifdef ROCM_USE_FLOAT8
+template <>
+inline void near_check_general(int64_t                   M,
+                               int64_t                   N,
+                               int64_t                   lda,
+                               const hipblaslt_f8_ocp* const hCPU[],
+                               const hipblaslt_f8_ocp* const hGPU[],
+                               int64_t                   batch_count,
+                               double                    abs_error)
+{
+    NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_FP8);
+}
+
+template <>
+inline void near_check_general(int64_t                   M,
+                               int64_t                   N,
+                               int64_t                   lda,
+                               const hipblaslt_bf8_ocp* const hCPU[],
+                               const hipblaslt_bf8_ocp* const hGPU[],
+                               int64_t                   batch_count,
+                               double                    abs_error)
+{
+    NEAR_CHECK_B(M, N, lda, hCPU, hGPU, batch_count, abs_error, NEAR_ASSERT_FP8);
+}
+#endif
