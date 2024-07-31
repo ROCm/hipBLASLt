@@ -53,12 +53,23 @@
 #endif
 
 #include <memory>
+#include <regex>
 #include <vector>
 
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_complex.h>
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
+#include <hip/hip_version.h>
+
+#if HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR > 2 \
+    && HIP_VERSION_PATCH > 42130 //tmp before gfx94 use hip f8 header
+#define ROCM_USE_FLOAT8 1
+#else
+#undef ROCM_USE_FLOAT8
+#endif
+
+#include <hip/hip_fp8.h>
 
 #if defined(__HIP_PLATFORM_AMD__)
 #include "hipblaslt-types.h"
@@ -929,6 +940,22 @@ hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t              lightHan
                                          void*                   C,
                                          hipblasLtMatrixLayout_t Cdesc,
                                          hipStream_t             stream);
+
+/*! \brief device matches pattern */
+inline bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
+{
+    if(!pattern.length())
+    {
+        return true;
+    }
+
+    constexpr char    prefix[]   = "gfx";
+    const std::size_t prefix_len = std::string_view(prefix).length();
+    gpu_arch.remove_prefix(prefix_len);
+    std::regex arch_regex(pattern.data());
+    return std::regex_search(gpu_arch.data(), arch_regex);
+}
+
 #ifdef __cplusplus
 }
 #endif

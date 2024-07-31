@@ -81,6 +81,23 @@ inline hipblaslt_bf8_fnuz negate(hipblaslt_bf8_fnuz x)
     x.data ^= 0x80;
     return x;
 }
+
+#ifdef ROCM_USE_FLOAT8
+template <>
+inline hipblaslt_f8_ocp negate(hipblaslt_f8_ocp x)
+{
+    x.data ^= 0x80;
+    return x;
+}
+
+template <>
+inline hipblaslt_bf8_ocp negate(hipblaslt_bf8_ocp x)
+{
+    x.data ^= 0x80;
+    return x;
+}
+#endif
+
 // Helper function to reduce intermediate precision and the output type are the same as the input type.
 template <typename TxDLi, typename TxDLo, typename Ti>
 inline void type_to_xdl_math_op_type(Ti* in, size_t s)

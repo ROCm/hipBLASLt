@@ -331,6 +331,7 @@ def _initArchCaps(isaVersion) -> dict:
     rv["VgprBank"]           = (isaVersion[0] in (10, 11, 12))
     rv["WrokGroupIdFromTTM"] = isaVersion[0] == (12)
     rv["NoSDWA"]             = isaVersion[0] == (12)
+    rv["HasFP8_OCP"]         = isaVersion[0] == (12)
     return rv
 
 def _initAsmBugs(asmCaps) -> dict:
