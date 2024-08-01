@@ -114,15 +114,15 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
     CHECK_HIP_ERROR(hipMalloc(&d_scaleA, sizeof(float)));
     CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(HIP_R_16F, HIP_R_32F, d_scaleA, d_a, m, k, stream));
 
-    hipblaslt_ext::GemmEpilogue epilogue;
-    hipblaslt_ext::GemmInputs   inputs;
-    inputs.a      = d_a;
-    inputs.b      = d_b;
-    inputs.c      = d_c;
-    inputs.d      = d_d;
-    inputs.alpha  = &alpha;
-    inputs.beta   = &beta;
-    inputs.scaleA = d_scaleA; // Add scaleA, this is a device pointer.
+    hipblaslt_ext::GemmEpilogueV2 epilogue;
+    hipblaslt_ext::GemmInputsV2   inputs;
+    inputs.setA(d_a);
+    inputs.setB(d_b);
+    inputs.setC(d_c);
+    inputs.setD(d_d);
+    inputs.setAlpha(&alpha);
+    inputs.setBeta(&beta);
+    inputs.setScaleA(d_scaleA); // Add scaleA, this is a device pointer.
     gemm.setProblem(m, n, k, batch_count, epilogue, inputs);
 
     const int                                     request_solutions = 1;
