@@ -74,6 +74,13 @@ namespace Tensile
                                                                Hardware const&  hardware,
                                                                const int index) const override
         {
+            const bool experimental = Debug::Instance().useExperimentalSelection();
+            if(! experimental)
+            {
+                // If the experimental library mode is not on treat it like it asserted out
+                return nullptr;
+            }
+
             typename Forest::Transform transform
                 = [&](Element library) -> std::shared_ptr<MySolution> {
                 return library->getSolutionByIndex(problem, hardware, index);
@@ -105,7 +112,7 @@ namespace Tensile
                 // set of solutions.
                 SolutionSet<MySolution> rv;
                 return rv;
-	    }
+	        }
 
             const bool experimental = Debug::Instance().useExperimentalSelection();
             if(! experimental)
