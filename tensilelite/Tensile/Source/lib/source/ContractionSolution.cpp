@@ -723,6 +723,14 @@ namespace Tensile
                                                e.strides()[i]);
         }
 
+        if(problemType.outputAmaxD)
+        {
+            args.template append<const void*>("AddrAmaxOut", inputs.amaxD);
+            args.template append<const void*>("AmaxWS",
+                                              (uint8_t*)inputs.ws + workspaceOffsetInByte);
+            args.template append<const void*>("AmaxSync", inputs.Synchronizer);
+        }
+
         if(runActivation)
         {
             for(int i = 0; i < problemType.activationArgLength; i++)
@@ -894,8 +902,8 @@ namespace Tensile
 
         static_cast<void>(hipGetDevice(&deviceId));
         static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-        auto        gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
-        if (stoi(gpu_arch_no_prefix) /100 != 12)
+        auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
+        if(stoi(gpu_arch_no_prefix) / 100 != 12)
         {
             if(internalArgsSupport.version == 1)
             {

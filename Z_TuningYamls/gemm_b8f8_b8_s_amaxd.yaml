@@ -1,0 +1,316 @@
+GlobalParameters:
+  NumElementsToValidate: -1
+  MinimumRequiredVersion: 4.14.0
+  PrintLevel: 1
+  PrintSolutionRejectionReason: True
+  Device: 0
+  CMakeBuildType: Release
+  MergeFiles: False
+  KernelTime: True
+  CSVExportWinner: 1
+  MaxWorkspaceSize: 13421772800
+  DataInitTypeBias: 3
+  DataInitTypeA: 3
+  DataInitTypeB: 3
+  DataInitTypeC: 3
+  DataInitTypeD: 0
+  DataInitTypeBeta: 2
+  DataInitTypeAlpha: 2
+  DataInitTypeScaleA: 2
+  DataInitTypeScaleB: 2
+  DataInitTypeScaleC: 1
+  DataInitTypeScaleD: 2
+  DataInitTypeScaleAlphaVec: 3
+  Architecture: gfx942
+  BoundsCheck: 2
+
+BenchmarkProblems:
+  ########################################
+  # TN - standard
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: B8F8
+      DestDataType: B8
+      ComputeDataType: S
+      HighPrecisionAccumulate: True
+      TransposeA: 1
+      TransposeB: 0
+      UseBeta: True
+      Batched: True
+      UseBias: 1
+      OutputAmaxD: True
+      UseScaleAB: "Scalar" # scale is available only for fp8 type
+      UseScaleCD: True # scale is available only for fp8 type
+      UseScaleAlphaVec: 1
+      Activation: False # must be true if there is any of bias scale
+      BiasDataTypeList: ['s','h','b'] #
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16,16,32, 1, 1, 1,1, 1,1]  # 16x16
+        - DepthU: [ 32, 64 ]
+        - AssertFree0ElementMultiple: [1] # for gridbased, general solution, should test 1 only
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - VectorWidthA: [1]
+        - VectorWidthB: [1]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
+        - LocalReadVectorWidth: [8]
+        - ScheduleIterAlg: [3]
+        - InnerUnroll: [1]
+        - ExpandPointerSwap: [1]
+        - TransposeLDS: [1]
+        - LdsBlockSizePerPadA: [0]
+        - LdsBlockSizePerPadB: [0]
+        - LdsPadA: [0]
+        - LdsPadB: [0]
+        - WaveSeparateGlobalReadB: [1]
+        - 1LDSBuffer: [-1]
+        - GlobalSplitU: [1] # GSU > 1 doesn't support for output f8, b8
+        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [-1]
+        - StoreVectorWidth: [-1]
+        - SourceSwap: [1]
+        - NumElementsPerBatchStore: [0,2]
+        - StorePriorityOpt: [0,1]
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [128, 1, 1, 128, 128, 128, 128, 1]
+          - Exact: [1, 128, 1, 128, 1, 1, 1, 128]
+          - Exact: [1, 1, 1, 128, 1, 1, 1, 1]
+          - Exact: [128, 128, 1, 128, 128, 128, 128, 128]
+          - Exact: [127, 127, 1, 128, 127, 127, 127, 127]
+          - Exact: [129, 129, 1, 128, 129, 129, 129, 129]
+        - BiasTypeArgs: ['s','h','b']
+        # - ActivationArgs:
+        #   - [Enum: none]
+        #   - [Enum: gelu]
+
+  ########################################
+  # NN - standard
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: B8F8
+      DestDataType: B8
+      ComputeDataType: S
+      HighPrecisionAccumulate: True
+      TransposeA: 0
+      TransposeB: 0
+      UseBeta: True
+      Batched: True
+      UseBias: 1
+      OutputAmaxD: True
+      UseScaleAB: "Scalar" # scale is available only for fp8 type
+      UseScaleCD: True # scale is available only for fp8 type
+      UseScaleAlphaVec: 1
+      Activation: False # must be true if there is any of bias scale
+      BiasDataTypeList: ['s','h','b'] #
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16,16,32, 1, 1, 1,1, 1,1]  # 16x16
+        - DepthU: [ 32, 64 ]
+        - AssertFree0ElementMultiple: [1] # for gridbased, general solution, should test 1 only
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - VectorWidthA: [1]
+        - VectorWidthB: [1]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
+        - LocalReadVectorWidth: [8]
+        - ScheduleIterAlg: [3]
+        - InnerUnroll: [1]
+        - ExpandPointerSwap: [1]
+        # - TransposeLDS: [1]
+        - LdsBlockSizePerPadA: [0]
+        - LdsBlockSizePerPadB: [0]
+        - LdsPadA: [0]
+        - LdsPadB: [0]
+        - WaveSeparateGlobalReadB: [1]
+        - 1LDSBuffer: [-1]
+        - GlobalSplitU: [1] # GSU > 1 doesn't support for output f8, b8
+        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [-1]
+        - StoreVectorWidth: [-1]
+        - SourceSwap: [1]
+        - NumElementsPerBatchStore: [0,2]
+        - StorePriorityOpt: [0,1]
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [128, 1, 1, 128, 128, 128, 128, 1]
+          - Exact: [1, 128, 1, 128, 1, 1, 1, 128]
+          - Exact: [1, 1, 1, 128, 1, 1, 1, 1]
+          - Exact: [128, 128, 1, 128, 128, 128, 128, 128]
+          - Exact: [127, 127, 1, 128, 127, 127, 127, 127]
+          - Exact: [129, 129, 1, 128, 129, 129, 129, 129]
+        - BiasTypeArgs: ['s','h','b']
+        # - ActivationArgs:
+        #   - [Enum: none]
+        #   - [Enum: gelu]
+
+  ########################################
+  # NT - standard
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: B8F8
+      DestDataType: B8
+      ComputeDataType: S
+      HighPrecisionAccumulate: True
+      TransposeA: 0
+      TransposeB: 1
+      UseBeta: True
+      Batched: True
+      UseBias: 1
+      OutputAmaxD: True
+      UseScaleAB: "Scalar" # scale is available only for fp8 type
+      UseScaleCD: True # scale is available only for fp8 type
+      UseScaleAlphaVec: 1
+      Activation: False # must be true if there is any of bias scale
+      BiasDataTypeList: ['s','h','b'] #
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16,16,32, 1, 1, 1,1, 1,1]  # 16x16
+        - DepthU: [ 32, 64 ]
+        - AssertFree0ElementMultiple: [1] # for gridbased, general solution, should test 1 only
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - VectorWidthA: [1]
+        - VectorWidthB: [1]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
+        - LocalReadVectorWidth: [8]
+        - ScheduleIterAlg: [3]
+        - InnerUnroll: [1]
+        - ExpandPointerSwap: [1]
+        # - TransposeLDS: [1]
+        - LdsBlockSizePerPadA: [0]
+        - LdsBlockSizePerPadB: [0]
+        - LdsPadA: [0]
+        - LdsPadB: [0]
+        - WaveSeparateGlobalReadB: [1]
+        - 1LDSBuffer: [-1]
+        - GlobalSplitU: [1] # GSU > 1 doesn't support for output f8, b8
+        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [-1]
+        - StoreVectorWidth: [-1]
+        - SourceSwap: [1]
+        - NumElementsPerBatchStore: [0,2]
+        - StorePriorityOpt: [0,1]
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [128, 1, 1, 128, 128, 128, 128, 1]
+          - Exact: [1, 128, 1, 128, 1, 1, 1, 128]
+          - Exact: [1, 1, 1, 128, 1, 1, 1, 1]
+          - Exact: [128, 128, 1, 128, 128, 128, 128, 128]
+          - Exact: [127, 127, 1, 128, 127, 127, 127, 127]
+          - Exact: [129, 129, 1, 128, 129, 129, 129, 129]
+        - BiasTypeArgs: ['s','h','b']
+        # - ActivationArgs:
+        #   - [Enum: none]
+        #   - [Enum: gelu]
+
+  ########################################
+  # TT - standard
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: B8F8
+      DestDataType: B8
+      ComputeDataType: S
+      HighPrecisionAccumulate: True
+      TransposeA: 1
+      TransposeB: 1
+      UseBeta: True
+      Batched: True
+      UseBias: 1
+      OutputAmaxD: True
+      UseScaleAB: "Scalar" # scale is available only for fp8 type
+      UseScaleCD: True # scale is available only for fp8 type
+      UseScaleAlphaVec: 1
+      Activation: False # must be true if there is any of bias scale
+      BiasDataTypeList: ['s','h','b'] #
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16,16,32, 1, 1, 1,1, 1,1]  # 16x16
+        - DepthU: [ 32, 64 ]
+        - AssertFree0ElementMultiple: [1] # for gridbased, general solution, should test 1 only
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - VectorWidthA: [1]
+        - VectorWidthB: [1]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
+        - LocalReadVectorWidth: [8]
+        - ScheduleIterAlg: [3]
+        - InnerUnroll: [1]
+        - ExpandPointerSwap: [1]
+        - TransposeLDS: [1]
+        - LdsBlockSizePerPadA: [0]
+        - LdsBlockSizePerPadB: [0]
+        - LdsPadA: [0]
+        - LdsPadB: [0]
+        - WaveSeparateGlobalReadB: [1]
+        - 1LDSBuffer: [-1]
+        - GlobalSplitU: [1] # GSU > 1 doesn't support for output f8, b8
+        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [-1]
+        - StoreVectorWidth: [-1]
+        - SourceSwap: [1]
+        - NumElementsPerBatchStore: [0,2]
+        - StorePriorityOpt: [0,1]
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [128, 1, 1, 128, 128, 128, 128, 1]
+          - Exact: [1, 128, 1, 128, 1, 1, 1, 128]
+          - Exact: [1, 1, 1, 128, 1, 1, 1, 1]
+          - Exact: [128, 128, 1, 128, 128, 128, 128, 128]
+          - Exact: [127, 127, 1, 128, 127, 127, 127, 127]
+          - Exact: [129, 129, 1, 128, 129, 129, 129, 129]
+        - BiasTypeArgs: ['s','h','b']
+        # - ActivationArgs:
+        #   - [Enum: none]
+        #   - [Enum: gelu]
+
+LibraryLogic:
+    ScheduleName: "aquavanjaram"
+    DeviceNames: ["Device 0049", "Device 0050"]
+    ArchitectureName: "gfx942"
+    LibraryType: "GridBased"
+
+# LibraryClient:
+#   - ActivationArgs:
+#     - [Enum: none]

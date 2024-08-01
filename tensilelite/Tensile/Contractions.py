@@ -68,7 +68,7 @@ class ProblemType:
                  'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleAB', 'useScaleCD', 'useScaleAlphaVec', 'biasDataTypeWhiteList',
                  'highPrecisionAccumulate', 'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'useGradient', 'activationType', 'activationArgLength', 'activationComputeDataType', 'activationNoGuard',
-                 'sparse', 'f32XdlMathOp', 'supportDeviceUserArguments']
+                 'sparse', 'f32XdlMathOp', 'supportDeviceUserArguments', 'outputAmaxD']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -150,6 +150,11 @@ class ProblemType:
         else:
             rv.eType = dstType
 
+        if 'DataTypeAmaxD' in d:
+            rv.amaxDType = DataType(d['DataTypeAmaxD'])
+        else:
+            rv.amaxDType = computeType
+
         rv.computeInputType = srcType
         rv.cType = dstType
         rv.dType = dstType
@@ -216,6 +221,10 @@ class ProblemType:
         rv.useGradient = False
         if 'Gradient' in d:
             rv.useGradient = d["Gradient"]
+
+        rv.outputAmaxD = False
+        if 'OutputAmaxD' in d:
+            rv.outputAmaxD = d['OutputAmaxD']
 
         rv.useScaleAB = ""
         if 'UseScaleAB' in d:

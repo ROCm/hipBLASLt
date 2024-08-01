@@ -110,6 +110,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     void*              scaleC        = matmul_descr->scaleC;
     void*              scaleD        = matmul_descr->scaleD;
     void*              scaleE        = matmul_descr->scaleE;
+    void*              amax_ptr      = matmul_descr->amax_ptr;
     hipDataType        scale_type    = matmul_descr->scale_type;
 
     // Others
@@ -196,6 +197,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         matmul_descr->isScaleBVec,
                                         bias_type,
                                         epilogue,
+                                        amax_ptr,
                                         workspace,
                                         workspaceSizeInBytes,
                                         stream,
@@ -335,6 +337,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
     void*              scaleC        = matmul_descr->scaleC;
     void*              scaleD        = matmul_descr->scaleD;
     void*              scaleE        = matmul_descr->scaleE;
+    void*              amax_ptr      = matmul_descr->amax_ptr;
 
     // Others
     bool strided_batch = true;
@@ -401,6 +404,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                         matmul_descr->isScaleBVec,
                                         bias_type,
                                         epilogue,
+                                        amax_ptr,
                                         nullptr,
                                         0,
                                         0,
@@ -442,6 +446,7 @@ rocblaslt_status
     std::vector<const void*>        scaleD_vec;
     std::vector<const void*>        scaleE_vec;
     std::vector<const void*>        scaleAlpha_vec;
+    std::vector<void*>              amax_ptr_vec;
     std::vector<hipDataType>        bias_type_vec;
     std::vector<rocblaslt_epilogue> epilogue_vec;
     std::vector<int64_t>            m_vec, n_vec, k_vec;
@@ -569,6 +574,7 @@ rocblaslt_status
         scaleD_vec.push_back(matmul_descr[i]->scaleD);
         scaleE_vec.push_back(matmul_descr[i]->scaleE);
         scaleAlpha_vec.push_back(scaleAlphaVec);
+        amax_ptr_vec.push_back(matmul_descr[i]->amax_ptr);
 
         // matrix A
         // int64_t           num_rows_a     = matA[i]->m;
@@ -668,6 +674,7 @@ rocblaslt_status
                                                        matmul_descr[i]->isScaleBVec,
                                                        bias_type_vec[i],
                                                        epilogue_vec[i],
+                                                       amax_ptr_vec[i],
                                                        nullptr,
                                                        0,
                                                        0,
@@ -916,6 +923,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle        
     void*                   scaleC        = inputs.scaleC;
     void*                   scaleD        = inputs.scaleD;
     void*                   scaleE        = inputs.scaleE;
+    void*                   amax_ptr      = inputs.amaxD;
     hipblasOperation_t&     opA           = problemtype.op_a;
     hipblasOperation_t&     opB           = problemtype.op_b;
     hipDataType&            type_a        = problemtype.type_a;
@@ -993,6 +1001,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle        
                                             false,
                                             bias_type,
                                             epilogue,
+                                            amax_ptr,
                                             nullptr,
                                             0,
                                             0,
@@ -1048,6 +1057,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle        
                                             static_cast<bool>(rocEpilogue.scaling_b_type),
                                             bias_type,
                                             epilogue,
+                                            amax_ptr,
                                             nullptr,
                                             0,
                                             0,
@@ -1219,6 +1229,7 @@ rocblaslt_status
     std::vector<const void*>        scaleD_vec;
     std::vector<const void*>        scaleE_vec;
     std::vector<const void*>        scaleAlpha_vec;
+    std::vector<void*>              amax_ptr_vec;
     std::vector<hipDataType>        bias_type_vec;
     std::vector<rocblaslt_epilogue> epilogue_vec;
 
@@ -1331,6 +1342,7 @@ rocblaslt_status
         scaleD_vec.push_back(inputs[i].scaleD);
         scaleE_vec.push_back(inputs[i].scaleE);
         scaleAlpha_vec.push_back(scaleAlphaVec);
+        amax_ptr_vec.push_back(inputs[i].amaxD);
 
         A_vec.push_back(inputs[i].a);
         B_vec.push_back(inputs[i].b);
@@ -1401,6 +1413,7 @@ rocblaslt_status
                                                         false,
                                                         bias_type_vec[i],
                                                         epilogue_vec[i],
+                                                        amax_ptr_vec[i],
                                                         nullptr,
                                                         0,
                                                         0,
@@ -1455,6 +1468,7 @@ rocblaslt_status
                                                         static_cast<bool>(rocEpilogue[iIdx].scaling_b_type),
                                                         bias_type_vec[i],
                                                         epilogue_vec[i],
+                                                        amax_ptr_vec[i],
                                                         nullptr,
                                                         0,
                                                         0,

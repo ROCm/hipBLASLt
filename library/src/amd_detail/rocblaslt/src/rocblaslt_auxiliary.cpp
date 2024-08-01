@@ -135,6 +135,7 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
     void*              scaleC        = matmul_descr->scaleC;
     void*              scaleD        = matmul_descr->scaleD;
     void*              scaleE        = matmul_descr->scaleE;
+    void*              amax_ptr      = matmul_descr->amax_ptr;
 
     // Others
     constexpr bool strided_batch = true;
@@ -193,6 +194,7 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
                                         matmul_descr->isScaleBVec,
                                         bias_type,
                                         epilogue,
+                                        amax_ptr,
                                         nullptr,
                                         maxWorkSpaceBytes,
                                         nullptr,
@@ -831,7 +833,7 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     memcpy(&matmulDesc->amax_ptr, buf, sizeof(void*));
                 else
                 {
-                    log_error(__func__, "invalid e buf size", sizeInBytes);
+                    log_error(__func__, "invalid amax buf size", sizeInBytes);
                     return rocblaslt_status_invalid_value;
                 }
                 break;
@@ -1320,16 +1322,8 @@ rocblaslt_status
         hipDataType            d_type       = matD->type;
         rocblaslt_compute_type compute_type = matmul_desc->compute_type;
         auto&                  tensile_data = matmul_desc->m_data;
-        void*                  scaleD       = matmul_desc->scaleD;
-        if(matmul_desc->amax_ptr != nullptr
-           && (matD->type == HIP_R_8F_E4M3_FNUZ || matD->type == HIP_R_8F_E5M2_FNUZ))
-        {
-            matC->type          = HIP_R_32F;
-            matD->type          = HIP_R_32F;
-            matmul_desc->scaleD = nullptr;
-        }
-        int8_t alpha[16] = {0};
-        int8_t beta[16]  = {0};
+        int8_t                 alpha[16]    = {0};
+        int8_t                 beta[16]     = {0};
         assignAlphaBeta1(compute_type, (void*)alpha, (void*)beta);
         //bias ptr can be set later after getting solution.
         bool dummy_bias_address = false;
@@ -1391,38 +1385,6 @@ rocblaslt_status
                 }
 
                 log_api(__func__, "final returnAlogCount", *returnAlgoCount);
-            }
-        }
-
-        if(matmul_desc->amax_ptr != nullptr
-           && (d_type == HIP_R_8F_E4M3_FNUZ || d_type == HIP_R_8F_E5M2_FNUZ))
-        {
-
-            size_t amax_workspace_size = matD->m * matD->n * 4; //only support fp32 D temp
-            int    new_returnAlgoCount = *returnAlgoCount;
-
-            //restore setting
-            matC->type          = c_type;
-            matD->type          = d_type;
-            matmul_desc->scaleD = scaleD;
-            //log_api(__func__, "matD->type ", matD->type);
-
-            for(int i = 0; i < *returnAlgoCount; i++)
-            {
-                heuristicResultsArray[i].workspaceSize
-                    = heuristicResultsArray[i].workspaceSize + amax_workspace_size;
-                if(pref->max_workspace_bytes < heuristicResultsArray[i].workspaceSize)
-                {
-                    *returnAlgoCount = 0;
-                    log_api(__func__, "max workspace size is not enough for amax");
-                    break;
-                }
-            }
-
-            if(matD->ld != matD->m || matD->batch_count > 1)
-            {
-                log_api(__func__, "Amax doesn't support ld != m and multiple batch so far.");
-                *returnAlgoCount = 0;
             }
         }
 
