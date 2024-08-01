@@ -114,18 +114,18 @@ void simpleGemmEpilogueBiasVecExt(hipblasLtHandle_t   handle,
                              HIP_R_16BF,
                              HIPBLAS_COMPUTE_32F);
 
-    hipblaslt_ext::GemmEpilogue gemmEpilogue;
-    gemmEpilogue.mode           = epilogue;
-    gemmEpilogue.bias_data_type = HIP_R_16BF;
+    hipblaslt_ext::GemmEpilogueV2 gemmEpilogue;
+    gemmEpilogue.setMode(epilogue);
+    gemmEpilogue.setBiasDataType(HIP_R_16BF);
 
-    hipblaslt_ext::GemmInputs inputs;
-    inputs.a     = d_a;
-    inputs.b     = d_b;
-    inputs.c     = d_c;
-    inputs.d     = d_d;
-    inputs.bias  = d_biasVec;
-    inputs.alpha = &alpha;
-    inputs.beta  = &beta;
+    hipblaslt_ext::GemmInputsV2 inputs;
+    inputs.setA(d_a);
+    inputs.setB(d_b);
+    inputs.setC(d_c);
+    inputs.setD(d_d);
+    inputs.setBias(d_biasVec);
+    inputs.setAlpha(&alpha);
+    inputs.setBeta(&beta);
     gemm.setProblem(m, n, k, batch_count, gemmEpilogue, inputs);
 
     const int                                     request_solutions = 1;

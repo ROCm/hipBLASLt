@@ -24,6 +24,7 @@
 # Samples
 add_executable( sample_hipblaslt_gemm gemm/sample_hipblaslt_gemm.cpp)
 add_executable( sample_hipblaslt_gemm_ext gemm/sample_hipblaslt_gemm_ext.cpp)
+add_executable( sample_hipblaslt_gemm_ext_deprecated gemm/sample_hipblaslt_gemm_ext_deprecated.cpp)
 add_executable( sample_hipblaslt_gemm_ext_bgradb gemm/sample_hipblaslt_gemm_ext_bgradb.cpp)
 add_executable( sample_hipblaslt_gemm_amax_with_scale gemm/sample_hipblaslt_gemm_amax_with_scale.cpp)
 add_executable( sample_hipblaslt_gemm_alphavec_ext gemm_alphavec/sample_hipblaslt_gemm_alphavec_ext.cpp)
@@ -47,6 +48,7 @@ add_executable( sample_hipblaslt_scale_b gemm/sample_hipblaslt_scale_b.cpp)
 
 set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext
+            sample_hipblaslt_gemm_ext_deprecated
             sample_hipblaslt_gemm_ext_bgradb
             sample_hipblaslt_gemm_amax_with_scale
             sample_hipblaslt_gemm_alphavec_ext

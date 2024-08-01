@@ -105,16 +105,16 @@ void simpleGemmAlphaVecExt(hipblasLtHandle_t  handle,
     hipblaslt_ext::Gemm gemm(
         handle, trans_a, trans_b, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIPBLAS_COMPUTE_32F);
 
-    hipblaslt_ext::GemmEpilogue
+    hipblaslt_ext::GemmEpilogueV2
         epilogue; // No action needed, default is HIPBLASLT_EPILOGUE_DEFAULT. (Gemm only)
-    hipblaslt_ext::GemmInputs inputs;
-    inputs.a             = d_a;
-    inputs.b             = d_b;
-    inputs.c             = d_c;
-    inputs.d             = d_d;
-    inputs.alpha         = &alpha;
-    inputs.beta          = &beta;
-    inputs.scaleAlphaVec = d_alphaVec; // use AlphaVec mode
+    hipblaslt_ext::GemmInputsV2 inputs;
+    inputs.setA(d_a);
+    inputs.setB(d_b);
+    inputs.setC(d_c);
+    inputs.setD(d_d);
+    inputs.setAlpha(&alpha);
+    inputs.setBeta(&beta);
+    inputs.setScaleAlphaVec(d_alphaVec); // use AlphaVec mode
     gemm.setProblem(m, n, k, batch_count, epilogue, inputs);
 
     const int                                     request_solutions = 1;
