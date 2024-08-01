@@ -1437,7 +1437,7 @@ void testing_matmul_with_bias(const Arguments& arg)
     std::vector<size_t>                           heuristicTuningIndex;
 
     // Cpp API
-    hipblaslt_ext::GemmPreference gemmPref;
+    hipblaslt_ext::GemmPreferenceV2 gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
     std::vector<hipblaslt_ext::Gemm>                      gemmVec;
     std::vector<hipblaslt_ext::GroupedGemm>               groupedGemmVec;

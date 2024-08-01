@@ -450,6 +450,13 @@ namespace rocblaslt
         uint8_t wgm = 0;
     };
 
+    class RocTuningV2
+    {
+    public:
+        uint16_t gsu = 0;
+        int16_t wgm  = 0;
+    };
+
     struct RocGemmInputs
     {
         void* a     = nullptr;

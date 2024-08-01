@@ -75,6 +75,13 @@ GemmPreference
     :protected-members:
     :private-members:
 
+GemmPreferenceV2
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::GemmPreferenceV2
+    :members:
+    :protected-members:
+    :private-members:
+
 GemmInstance
 -------------------------------------
 .. doxygenclass:: hipblaslt_ext::GemmInstance
@@ -248,7 +255,7 @@ You can get heuristics and make kernel arguments with the instance. If the prope
 .. code-block:: c++
 
     // Pseudo code
-    hipblaslt_ext::GemmPreference pref;
+    hipblaslt_ext::GemmPreferenceV2 pref;
     pref.setMaxWorkspaceBytes(1000000);
     // Default epilogue mode is HIPBLASLT_EPILOGUE_DEFAULT
     hipblaslt_ext::GemmEpilogueV2 epilogue;
@@ -436,7 +443,7 @@ The following is a simple example of how this API works.
                                                      HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
-    hipblaslt_ext::GemmPreference pref;
+    hipblaslt_ext::GemmPreferenceV2 pref;
     pref.setMaxWorkspaceBytes(1000000);
     // Step 2: Setup problem
     std::vector<int64_t> m(gemm_count);
@@ -514,7 +521,7 @@ This is the base class for ``Gemm`` and ``GroupedGemm``.
 
     // Gets huesristic from the instance.
     HIPBLASLT_EXPORT hipblasStatus_t algoGetHeuristic(const int                                      requestedAlgoCount,
-                                                      const GemmPreference&                          pref,
+                                                      const GemmPreferenceV2&                        pref,
                                                       std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 
     // Returns SUCCESS if the algo is supported, also returns the required workspace size in bytes.
@@ -639,7 +646,7 @@ Gemm
                                                      HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
-    hipblaslt_ext::GemmPreference pref;
+    hipblaslt_ext::GemmPreferenceV2 pref;
     pref.setMaxWorkspaceBytes(1000000);
     hipblaslt_ext::GemmEpilogueV2 epilogue;
     epilogue.setMode(HIPBLASLT_EPILOGUE_GELU);
@@ -706,7 +713,7 @@ Grouped gemm
                                                      HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
-    hipblaslt_ext::GemmPreference pref;
+    hipblaslt_ext::GemmPreferenceV2 pref;
     pref.setMaxWorkspaceBytes(1000000);
 
     std::vector<int64_t> m(gemm_count);
@@ -818,7 +825,7 @@ For example, we have a grouped gemm with gemm_count = 4. The sum of N must not e
                                                      HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
-    hipblaslt_ext::GemmPreference pref;
+    hipblaslt_ext::GemmPreferenceV2 pref;
     pref.setMaxWorkspaceBytes(1000000);
     // Step 2: Setup problem
     std::vector<int64_t> m(gemm_count);
