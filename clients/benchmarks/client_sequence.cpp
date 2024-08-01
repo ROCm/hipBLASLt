@@ -77,8 +77,8 @@ public:
     float alpha;
     float beta;
 
-    hipblaslt_ext::GemmProblemType problem;
-    hipblaslt_ext::GemmEpilogue    epilogue;
+    hipblaslt_ext::GemmProblemTypeV2 problem;
+    hipblaslt_ext::GemmEpilogueV2    epilogue;
 
     // Internal switch
     bool is_using_bias = false;
@@ -100,20 +100,20 @@ public:
     int algo_index = -1;
     int block_count;
 
-    void setData(int                         m,
-                 int                         n,
-                 int                         k,
-                 int                         batch,
-                 float                       alpha,
-                 float                       beta,
-                 hipblasOperation_t          op_a,
-                 hipblasOperation_t          op_b,
-                 hipDataType                 type_a,
-                 hipDataType                 type_b,
-                 hipDataType                 type_c,
-                 hipDataType                 type_d,
-                 hipblasComputeType_t        type_compute,
-                 hipblaslt_ext::GemmEpilogue epilogue)
+    void setData(int                           m,
+                 int                           n,
+                 int                           k,
+                 int                           batch,
+                 float                         alpha,
+                 float                         beta,
+                 hipblasOperation_t            op_a,
+                 hipblasOperation_t            op_b,
+                 hipDataType                   type_a,
+                 hipDataType                   type_b,
+                 hipDataType                   type_c,
+                 hipDataType                   type_d,
+                 hipblasComputeType_t          type_compute,
+                 hipblaslt_ext::GemmEpilogueV2 epilogue)
     {
         this->m                    = m;
         this->n                    = n;
@@ -121,14 +121,15 @@ public:
         this->batch                = batch;
         this->alpha                = alpha;
         this->beta                 = beta;
-        this->problem.op_a         = op_a;
-        this->problem.op_b         = op_b;
-        this->problem.type_a       = type_a;
-        this->problem.type_b       = type_b;
-        this->problem.type_c       = type_c;
-        this->problem.type_d       = type_d;
-        this->problem.type_compute = type_compute;
         this->epilogue             = epilogue;
+
+        this->problem.setOpA(op_a);
+        this->problem.setOpB(op_b);
+        this->problem.setTypeA(type_a);
+        this->problem.setTypeB(type_b);
+        this->problem.setTypeC(type_c);
+        this->problem.setTypeD(type_d);
+        this->problem.setTypeCompute(type_compute);
     }
 
     void initBlock(int block)
@@ -315,35 +316,35 @@ namespace llvm
                 // Problem type
                 bool isTranspose = false;
                 io.mapRequired("TransposeA", isTranspose);
-                l.problem.op_a = isTranspose ? HIPBLAS_OP_T : HIPBLAS_OP_N;
+                l.problem.setOpA(isTranspose ? HIPBLAS_OP_T : HIPBLAS_OP_N);
                 io.mapRequired("TransposeB", isTranspose);
-                l.problem.op_b = isTranspose ? HIPBLAS_OP_T : HIPBLAS_OP_N;
+                l.problem.setOpB(isTranspose ? HIPBLAS_OP_T : HIPBLAS_OP_N);
 
                 std::string datatype;
                 io.mapRequired("DataTypeA", datatype);
-                l.problem.type_a = string_to_hip_datatype_assert(datatype);
+                l.problem.setTypeA(string_to_hip_datatype_assert(datatype));
                 io.mapRequired("DataTypeB", datatype);
-                l.problem.type_b = string_to_hip_datatype_assert(datatype);
+                l.problem.setTypeB(string_to_hip_datatype_assert(datatype));
                 io.mapRequired("DataTypeC", datatype);
-                l.problem.type_c = string_to_hip_datatype_assert(datatype);
+                l.problem.setTypeC(string_to_hip_datatype_assert(datatype));
                 io.mapRequired("DataTypeD", datatype);
-                l.problem.type_d = string_to_hip_datatype_assert(datatype);
+                l.problem.setTypeD(string_to_hip_datatype_assert(datatype));
 
                 std::string computetype;
                 io.mapRequired("ComputeType", computetype);
-                l.problem.type_compute = computetype == ""
+                l.problem.setTypeCompute(computetype == ""
                                              ? (HIPBLAS_COMPUTE_32F)
-                                             : string_to_hipblas_computetype_assert(computetype);
+                                             : string_to_hipblas_computetype_assert(computetype));
 
                 // Epilogue
                 std::string epilogue;
                 io.mapOptional("Epilogue", epilogue);
-                l.epilogue.mode = string_to_epilogue_type_assert(epilogue);
-                l.is_using_bias = is_bias_enabled(l.epilogue.mode);
+                l.epilogue.setMode(string_to_epilogue_type_assert(epilogue));
+                l.is_using_bias = is_bias_enabled(l.epilogue.getMode());
                 if(l.is_using_bias)
                 {
                     io.mapRequired("BiasType", datatype);
-                    l.epilogue.bias_data_type = string_to_hip_datatype_assert(datatype);
+                    l.epilogue.setBiasDataType(string_to_hip_datatype_assert(datatype));
                 }
 
                 // Algo index
@@ -392,16 +393,16 @@ int main(int argc, char** argv)
         uint32_t size_c = 0, size_bias = 0;
         if(layer[i].beta != 0)
         {
-            size_c = layer[i].m * layer[i].n * type2Size(layer[i].problem.type_c);
+            size_c = layer[i].m * layer[i].n * type2Size(layer[i].problem.getTypeC());
         }
         if(layer[i].is_using_bias)
         {
-            size_bias = layer[i].m * type2Size(layer[i].problem.type_d);
+            size_bias = layer[i].m * type2Size(layer[i].problem.getTypeD());
         }
         totalRotatingSizeNeeded
-            += layer[i].m * layer[i].n * type2Size(layer[i].problem.type_a)
-               + layer[i].n * layer[i].k * type2Size(layer[i].problem.type_b) + size_c
-               + layer[i].m * layer[i].n * type2Size(layer[i].problem.type_d) + size_bias;
+            += layer[i].m * layer[i].n * type2Size(layer[i].problem.getTypeA())
+               + layer[i].n * layer[i].k * type2Size(layer[i].problem.getTypeB()) + size_c
+               + layer[i].m * layer[i].n * type2Size(layer[i].problem.getTypeD()) + size_bias;
     }
     // Calculating block count
     int32_t max_iters   = max(cold_iters, iters);
@@ -432,37 +433,37 @@ int main(int argc, char** argv)
             continue;
         }
         l.initBlock(block_count);
-        if(l.problem.op_a == HIPBLAS_OP_N)
-            initAndCopy(&l.a, l.d_a, l.m, l.k, l.batch, l.problem.type_a, block_count);
+        if(l.problem.getOpA() == HIPBLAS_OP_N)
+            initAndCopy(&l.a, l.d_a, l.m, l.k, l.batch, l.problem.getTypeA(), block_count);
         else
-            initAndCopy(&l.a, l.d_a, l.k, l.m, l.batch, l.problem.type_a, block_count);
-        if(l.problem.op_b == HIPBLAS_OP_N)
-            initAndCopy(&l.b, l.d_b, l.k, l.n, l.batch, l.problem.type_b, block_count);
+            initAndCopy(&l.a, l.d_a, l.k, l.m, l.batch, l.problem.getTypeA(), block_count);
+        if(l.problem.getOpB() == HIPBLAS_OP_N)
+            initAndCopy(&l.b, l.d_b, l.k, l.n, l.batch, l.problem.getTypeB(), block_count);
         else
-            initAndCopy(&l.b, l.d_b, l.n, l.k, l.batch, l.problem.type_b, block_count);
-        initNoCopy(&l.c, l.d_c, l.m, l.n, l.batch, l.problem.type_c, block_count);
-        initNoCopy(&l.d, l.d_d, l.m, l.n, l.batch, l.problem.type_d, block_count);
+            initAndCopy(&l.b, l.d_b, l.n, l.k, l.batch, l.problem.getTypeB(), block_count);
+        initNoCopy(&l.c, l.d_c, l.m, l.n, l.batch, l.problem.getTypeC(), block_count);
+        initNoCopy(&l.d, l.d_d, l.m, l.n, l.batch, l.problem.getTypeD(), block_count);
         if(l.is_using_bias)
-            initAndCopy(&l.bias, l.d_bias, 1, 1, l.batch, l.epilogue.bias_data_type, block_count);
+            initAndCopy(&l.bias, l.d_bias, 1, 1, l.batch, l.epilogue.getBiasDataType(), block_count);
         for(int b = 0; b < block_count; b++)
         {
             l.gemms->push_back(hipblaslt_ext::Gemm(handle,
-                                                   l.problem.op_a,
-                                                   l.problem.op_b,
-                                                   l.problem.type_a,
-                                                   l.problem.type_b,
-                                                   l.problem.type_c,
-                                                   l.problem.type_d,
-                                                   l.problem.type_compute));
+                                                   l.problem.getOpA(),
+                                                   l.problem.getOpB(),
+                                                   l.problem.getTypeA(),
+                                                   l.problem.getTypeB(),
+                                                   l.problem.getTypeC(),
+                                                   l.problem.getTypeD(),
+                                                   l.problem.getTypeCompute()));
 
-            hipblaslt_ext::GemmInputs inputs;
-            inputs.a     = l.d_a[b];
-            inputs.b     = l.d_b[b];
-            inputs.c     = l.d_c[b];
-            inputs.d     = l.d_d[b];
-            inputs.alpha = &l.alpha;
-            inputs.beta  = &l.beta;
-            inputs.bias  = l.d_bias[b];
+            hipblaslt_ext::GemmInputsV2 inputs;
+            inputs.setA(l.d_a[b]);
+            inputs.setB(l.d_b[b]);
+            inputs.setC(l.d_c[b]);
+            inputs.setD(l.d_d[b]);
+            inputs.setAlpha(&l.alpha);
+            inputs.setBeta(&l.beta);
+            inputs.setBias(l.d_bias[b]);
             (*l.gemms)[b].setProblem(l.m, l.n, l.k, l.batch, l.epilogue, inputs);
         }
 

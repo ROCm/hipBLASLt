@@ -413,12 +413,35 @@ namespace rocblaslt
         rocblaslt_compute_type type_compute;
     };
 
+    class RocGemmProblemTypeV2
+    {
+    public:
+        hipblasOperation_t     op_a;
+        hipblasOperation_t     op_b;
+        hipDataType            type_a;
+        hipDataType            type_b;
+        hipDataType            type_c;
+        hipDataType            type_d;
+        rocblaslt_compute_type type_compute;
+    };
+
     struct RocGemmEpilogue
     {
         rocblaslt_epilogue mode           = ROCBLASLT_EPILOGUE_DEFAULT;
         hipDataType        bias_data_type = HIPBLASLT_DATATYPE_INVALID;
         int                aux_ld         = 0;
         int                aux_stride     = 0;
+    };
+
+    class RocGemmEpilogueV2
+    {
+    public:
+        rocblaslt_epilogue mode           = ROCBLASLT_EPILOGUE_DEFAULT;
+        hipDataType        bias_data_type = HIPBLASLT_DATATYPE_INVALID;
+        int                aux_ld         = 0;
+        int                aux_stride     = 0;
+        int                scaling_a_type = 0;
+        int                scaling_b_type = 0;
     };
 
     struct RocTuning
@@ -428,6 +451,25 @@ namespace rocblaslt
     };
 
     struct RocGemmInputs
+    {
+        void* a     = nullptr;
+        void* b     = nullptr;
+        void* c     = nullptr;
+        void* d     = nullptr;
+        void* alpha = nullptr;
+        void* beta  = nullptr;
+        // Epilogue inputs
+        void* bias          = nullptr;
+        void* scaleA        = nullptr;
+        void* scaleB        = nullptr;
+        void* scaleC        = nullptr;
+        void* scaleD        = nullptr;
+        void* scaleE        = nullptr;
+        void* scaleAlphaVec = nullptr;
+        void* aux           = nullptr;
+    };
+
+    struct RocGemmInputsV2
     {
         void* a     = nullptr;
         void* b     = nullptr;

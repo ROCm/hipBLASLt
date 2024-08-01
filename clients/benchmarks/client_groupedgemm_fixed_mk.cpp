@@ -819,8 +819,8 @@ int test_hipblaslt(hipDataType                 in_datatype,
                   << ", " << ToString(actType[i]) << std::endl;
     }
 
-    std::vector<hipblaslt_ext::GemmEpilogue> gemmEpilogue(gemm_count);
-    std::vector<hipblaslt_ext::GemmInputs>   gemmInputs(gemm_count);
+    std::vector<hipblaslt_ext::GemmEpilogueV2> gemmEpilogue(gemm_count);
+    std::vector<hipblaslt_ext::GemmInputsV2>   gemmInputs(gemm_count);
     for(size_t i = 0; i < gemm_count; i++)
     {
         if(enable_bias[i] && actType[i] == ActivationType::NONE)
@@ -835,24 +835,24 @@ int test_hipblaslt(hipDataType                 in_datatype,
             epilogue[i] = HIPBLASLT_EPILOGUE_RELU;
         else if(!enable_bias[i] && actType[i] == ActivationType::GELU)
             epilogue[i] = HIPBLASLT_EPILOGUE_GELU;
-        gemmEpilogue[i].mode           = epilogue[i];
-        gemmEpilogue[i].bias_data_type = static_cast<hipDataType>(HIP_R_32F);
-        gemmInputs[i].a                = da[i];
-        gemmInputs[i].b                = db[i];
-        gemmInputs[i].c                = dc[i];
-        gemmInputs[i].d                = dd[i];
-        gemmInputs[i].alpha            = static_cast<void*>(&alpha[i]);
-        gemmInputs[i].beta             = static_cast<void*>(&beta[i]);
-        gemmInputs[i].bias             = d_bias[i];
+        gemmEpilogue[i].setMode(epilogue[i]);
+        gemmEpilogue[i].setBiasDataType(static_cast<hipDataType>(HIP_R_32F));
+        gemmInputs[i].setA(da[i]);
+        gemmInputs[i].setB(db[i]);
+        gemmInputs[i].setC(dc[i]);
+        gemmInputs[i].setD(dd[i]);
+        gemmInputs[i].setAlpha(static_cast<void*>(&alpha[i]));
+        gemmInputs[i].setBeta(static_cast<void*>(&beta[i]));
+        gemmInputs[i].setBias(d_bias[i]);
     }
 
-    auto gemmProblemType = hipblaslt_ext::GemmProblemType{trans_a,
-                                                          trans_b,
-                                                          in_datatype,
-                                                          in_datatype,
-                                                          out_datatype,
-                                                          out_datatype,
-                                                          HIPBLAS_COMPUTE_32F};
+    auto gemmProblemType = hipblaslt_ext::GemmProblemTypeV2(trans_a,
+                                                            trans_b,
+                                                            in_datatype,
+                                                            in_datatype,
+                                                            out_datatype,
+                                                            out_datatype,
+                                                            HIPBLAS_COMPUTE_32F);
 
     // step 1: set problem to {Ms, {sum of N, 1, 1, 1, ...}, Ks}
     CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(m,
