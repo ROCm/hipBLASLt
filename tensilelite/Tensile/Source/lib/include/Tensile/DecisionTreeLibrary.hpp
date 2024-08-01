@@ -104,7 +104,8 @@ namespace Tensile
                 // if the solution library search is not default then return an empty
                 // set of solutions.
                 SolutionSet<MySolution> rv;
-                return rv.empty();            }
+                return rv;
+	    }
 
             const bool experimental = Debug::Instance().useExperimentalSelection();
             if(! experimental)
@@ -112,7 +113,7 @@ namespace Tensile
                 // Skip the search for solutions if the environment variable
                 // that enables the experimental method is not set
                 SolutionSet<MySolution> rv;
-                return rv.empty();
+                return rv;
             }
 
             typename Forest::Transform transform
@@ -145,7 +146,7 @@ namespace Tensile
                 // if the solution library search is notSolutionSet default then return an empty
                 // set of solutions
                 SolutionSet<MySolution> rv;
-                return rv.empty();
+                return rv;
             }
 
             const bool experimental = Debug::Instance().useExperimentalSelection();
@@ -154,7 +155,7 @@ namespace Tensile
                 // Skip the search for solutions if the environment variable
                 // that enables the experimental method is not set
                 SolutionSet<MySolution> rv;
-                return rv.empty();
+                return rv;
             }
 
             typename Forest::Transform transform
