@@ -53,6 +53,8 @@ namespace Tensile
             , m_activationComputeType(DataType::Float)
             , m_useUserArgs(false)
         {
+            using std::static_pointer_cast;
+
             std::vector<bool> isComplex;
             if(args.count("problem-identifier"))
             {
