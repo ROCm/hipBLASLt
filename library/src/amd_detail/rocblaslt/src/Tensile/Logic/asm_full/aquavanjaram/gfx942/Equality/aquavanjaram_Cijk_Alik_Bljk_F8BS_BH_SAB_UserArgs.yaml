@@ -71,535 +71,10 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: "Scalar"
+  UseScaleAB: Scalar
   UseScaleAlphaVec: 0
   UseScaleCD: false
 - - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertFree0ElementMultiple: 8
-    AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 32
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    ClusterLocalRead: 1
-    CodeObjectVersion: default
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DepthU: 512
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
-    GlobalReadVectorWidthB: 16
-    GlobalSplitU: 6
-    GlobalSplitUAlgorithm: MultipleBufferSingleKernel
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
-      UseUniversalArgs: true}
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_MIWT1_1_NEPBS16
-    LSCA: 512
-    LSCB: 512
-    LSPA: 4
-    LSPB: 4
-    LVCA: 32
-    LVCB: 32
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 512
-    LdsBlockSizePerPadB: 512
-    LdsBlockSizePerPadMetadata: 0
-    LdsInitCVgprs: false
-    LdsNumBytes: 58880
-    LdsNumElementsAlignedA: 17408
-    LdsNumElementsAlignedB: 8704
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 17408
-    LdsOffsetB_Blk: 50176
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 17408
-    LdsOffsetMetadata_Blk: 50176
-    LdsPadA: 32
-    LdsPadB: 32
-    LdsPadMetadata: -1
-    LocalReadVectorWidth: 16
-    LocalSplitU: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 16
-    LoopUnroll: 512
-    MFMA_BF16_1K: false
-    MIArchVgpr: false
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 1]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 16
-    MacroTileA: 32
-    MacroTileB: 16
-    MagicDivAlg: 2
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 8
-    NumLoadsB: 4
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 8
-    NumLoadsPerpendicularB: 4
-    NumThreads: 128
-    OptNoLoadLoop: 0
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: 1
-    ProblemType:
-      Activation: false
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: none
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 11
-      DataTypeA: 11
-      DataTypeB: 11
-      DataTypeE: 7
-      DestDataType: 7
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: 1
-      TransposeB: 0
-      UseBeta: true
-      UseBias: 0
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 0
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_GSU6_MIWT1_1_NEPBS16_SU4_SUM1_SUS1024_WGM1
-    SourceSwap: 1
-    StaggerU: 4
-    StaggerUMapping: 1
-    StaggerUStride: 1024
-    StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 8
-    SubGroup1: 16
-    SubGroupA: 8
-    SubGroupB: 16
-    SuppressNoLoadLoop: false
-    SynchronizerSizeCheck: 1
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
-    WorkGroup: [32, 4, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 6]
-    _DepthU: 512
-    _DepthUA: 512
-    _DepthUB: 512
-    _DepthUMetadata: 512
-    _GlobalAccumulation: MultipleBufferSingleKernel
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 1
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertFree0ElementMultiple: 8
-    AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 32
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    ClusterLocalRead: 1
-    CodeObjectVersion: default
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DepthU: 512
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
-    GlobalReadVectorWidthB: 16
-    GlobalSplitU: 1
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
-      UseUniversalArgs: true}
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_MIWT1_1_NEPBS16
-    LSCA: 512
-    LSCB: 512
-    LSPA: 4
-    LSPB: 4
-    LVCA: 32
-    LVCB: 32
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 512
-    LdsBlockSizePerPadB: 512
-    LdsBlockSizePerPadMetadata: 0
-    LdsInitCVgprs: false
-    LdsNumBytes: 58880
-    LdsNumElementsAlignedA: 17408
-    LdsNumElementsAlignedB: 8704
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 17408
-    LdsOffsetB_Blk: 50176
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 17408
-    LdsOffsetMetadata_Blk: 50176
-    LdsPadA: 32
-    LdsPadB: 32
-    LdsPadMetadata: -1
-    LocalReadVectorWidth: 16
-    LocalSplitU: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 16
-    LoopUnroll: 512
-    MFMA_BF16_1K: false
-    MIArchVgpr: false
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 1]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 16
-    MacroTileA: 32
-    MacroTileB: 16
-    MagicDivAlg: 2
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 8
-    NumLoadsB: 4
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 8
-    NumLoadsPerpendicularB: 4
-    NumThreads: 128
-    OptNoLoadLoop: 0
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: 1
-    ProblemType:
-      Activation: false
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: none
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 11
-      DataTypeA: 11
-      DataTypeB: 11
-      DataTypeE: 7
-      DestDataType: 7
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: 1
-      TransposeB: 0
-      UseBeta: true
-      UseBias: 0
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 0
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 1
-    SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM0
-    SourceSwap: 1
-    StaggerU: 0
-    StaggerUMapping: 0
-    StaggerUStride: 0
-    StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 8
-    SubGroup1: 16
-    SubGroupA: 8
-    SubGroupB: 16
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
-    WorkGroup: [32, 4, 1]
-    WorkGroupMapping: 0
-    WorkGroupMappingXCC: 1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 1]
-    _DepthU: 512
-    _DepthUA: 512
-    _DepthUB: 512
-    _DepthUMetadata: 512
-    _GlobalAccumulation: MultipleBuffer
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 0
-  - 1LDSBuffer: 0
     ActivationAlt: false
     ActivationFuncCall: true
     ActivationFused: true
@@ -804,13 +279,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 2
+    SolutionIndex: 0
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -1066,13 +541,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 3
+    SolutionIndex: 1
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x512_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS0_SU16_SUM1_SUS1024_WGM0
     SourceSwap: 1
     StaggerU: 16
@@ -1328,13 +803,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 4
+    SolutionIndex: 2
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_GSU5_MIWT1_1_NEPBS16_SU8_SUM1_SUS512_WGM0
     SourceSwap: 1
     StaggerU: 8
@@ -1386,269 +861,6 @@
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 4
     _staggerStrideShift: 1
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertFree0ElementMultiple: 8
-    AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 32
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    ClusterLocalRead: 1
-    CodeObjectVersion: default
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DepthU: 512
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
-    GlobalReadVectorWidthB: 16
-    GlobalSplitU: 6
-    GlobalSplitUAlgorithm: MultipleBufferSingleKernel
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
-      UseUniversalArgs: true}
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_MIWT1_1_NEPBS16
-    LSCA: 512
-    LSCB: 512
-    LSPA: 4
-    LSPB: 4
-    LVCA: 32
-    LVCB: 32
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 512
-    LdsBlockSizePerPadB: 512
-    LdsBlockSizePerPadMetadata: 0
-    LdsInitCVgprs: false
-    LdsNumBytes: 58880
-    LdsNumElementsAlignedA: 17408
-    LdsNumElementsAlignedB: 8704
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 17408
-    LdsOffsetB_Blk: 50176
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 17408
-    LdsOffsetMetadata_Blk: 50176
-    LdsPadA: 32
-    LdsPadB: 32
-    LdsPadMetadata: -1
-    LocalReadVectorWidth: 16
-    LocalSplitU: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 16
-    LoopUnroll: 512
-    MFMA_BF16_1K: false
-    MIArchVgpr: false
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 1]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 16
-    MacroTileA: 32
-    MacroTileB: 16
-    MagicDivAlg: 2
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 8
-    NumLoadsB: 4
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 8
-    NumLoadsPerpendicularB: 4
-    NumThreads: 128
-    OptNoLoadLoop: 0
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: 1
-    ProblemType:
-      Activation: false
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: none
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 11
-      DataTypeA: 11
-      DataTypeB: 11
-      DataTypeE: 7
-      DestDataType: 7
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: 1
-      TransposeB: 0
-      UseBeta: true
-      UseBias: 0
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 0
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 5
-    SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_GSU6_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM1
-    SourceSwap: 1
-    StaggerU: 0
-    StaggerUMapping: 0
-    StaggerUStride: 0
-    StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 8
-    SubGroup1: 16
-    SubGroupA: 8
-    SubGroupB: 16
-    SuppressNoLoadLoop: false
-    SynchronizerSizeCheck: 1
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
-    WorkGroup: [32, 4, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 6]
-    _DepthU: 512
-    _DepthUA: 512
-    _DepthUB: 512
-    _DepthUMetadata: 512
-    _GlobalAccumulation: MultipleBufferSingleKernel
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 0
   - 1LDSBuffer: 0
     ActivationAlt: false
     ActivationFuncCall: true
@@ -1854,13 +1066,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 6
+    SolutionIndex: 3
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_GSU16_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM0
     SourceSwap: 1
     StaggerU: 0
@@ -2116,13 +1328,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 7
+    SolutionIndex: 4
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT192x256x128_MI16x16x1_SN_GSU1_MIWT6_8_NEPBS16_SU8_SUM1_SUS256_SVW2_WGM32
     SourceSwap: 1
     StaggerU: 8
@@ -2378,13 +1590,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 8
+    SolutionIndex: 5
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x128x128_MI16x16x1_SN_GSU1_MIWT8_4_NEPBS16_SU4_SUM0_SUS256_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -2640,13 +1852,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 9
+    SolutionIndex: 6
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT160x256x128_MI16x16x1_SN_GSU1_MIWT5_8_NEPBS0_SU4_SUM0_SUS256_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -2902,13 +2114,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 10
+    SolutionIndex: 7
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT160x224x128_MI16x16x1_SN_GSU1_MIWT5_7_NEPBS0_SU8_SUM1_SUS256_WGM32
     SourceSwap: 1
     StaggerU: 8
@@ -3164,13 +2376,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 11
+    SolutionIndex: 8
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU8_SUM1_SUS256_SVW8_WGM1
     SourceSwap: 1
     StaggerU: 8
@@ -3426,13 +2638,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 12
+    SolutionIndex: 9
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT192x256x128_MI16x16x1_SN_GSU1_MIWT6_8_NEPBS0_SU4_SUM1_SUS256_SVW2_WGM32
     SourceSwap: 1
     StaggerU: 4
@@ -3688,13 +2900,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 13
+    SolutionIndex: 10
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT160x224x128_MI16x16x1_SN_GSU1_MIWT5_7_NEPBS16_SU8_SUM1_SUS256_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -3950,13 +3162,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 14
+    SolutionIndex: 11
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x256x128_MI16x16x1_SN_GSU1_MIWT4_8_NEPBS16_SU8_SUM0_SUS256_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -4212,13 +3424,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 15
+    SolutionIndex: 12
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS16_SU8_SUM1_SUS256_SVW8_WGM1
     SourceSwap: 1
     StaggerU: 8
@@ -4474,13 +3686,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 16
+    SolutionIndex: 13
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU8_SUM1_SUS256_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 8
@@ -4736,13 +3948,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 17
+    SolutionIndex: 14
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x192x128_MI16x16x1_SN_GRVWA16_GRVWB16_GSU1_LPA32_LPB32_LRVW16_MIWT8_6_NEPBS0_SU8_SUM0_SUS256_SVW8_WGM32
     SourceSwap: 1
     StaggerU: 8
@@ -4998,13 +4210,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 18
+    SolutionIndex: 15
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x224x128_MI16x16x1_SN_GSU1_MIWT2_14_NEPBS0_SU8_SUM1_SUS256_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -5049,268 +4261,6 @@
     _DepthUA: 128
     _DepthUB: 128
     _DepthUMetadata: 128
-    _GlobalAccumulation: MultipleBuffer
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 1
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertFree0ElementMultiple: 8
-    AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 32
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    ClusterLocalRead: 1
-    CodeObjectVersion: default
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DepthU: 256
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
-    GlobalReadVectorWidthB: 16
-    GlobalSplitU: 1
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
-      UseUniversalArgs: true}
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x256_MI16x16x1_SN_MIWT1_1_NEPBS16
-    LSCA: 256
-    LSCB: 256
-    LSPA: 16
-    LSPB: 16
-    LVCA: 16
-    LVCB: 16
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 256
-    LdsBlockSizePerPadB: 256
-    LdsBlockSizePerPadMetadata: 0
-    LdsInitCVgprs: false
-    LdsNumBytes: 51200
-    LdsNumElementsAlignedA: 9216
-    LdsNumElementsAlignedB: 9216
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 9216
-    LdsOffsetB_Blk: 41984
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 9216
-    LdsOffsetMetadata_Blk: 41984
-    LdsPadA: 32
-    LdsPadB: 32
-    LdsPadMetadata: -1
-    LocalReadVectorWidth: 16
-    LocalSplitU: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 8
-    LoopUnroll: 256
-    MFMA_BF16_1K: false
-    MIArchVgpr: false
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 2]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 32
-    MacroTileA: 32
-    MacroTileB: 32
-    MagicDivAlg: 2
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 2
-    NumLoadsB: 2
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 2
-    NumLoadsPerpendicularB: 2
-    NumThreads: 256
-    OptNoLoadLoop: 0
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: 1
-    ProblemType:
-      Activation: false
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: none
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 11
-      DataTypeA: 11
-      DataTypeB: 11
-      DataTypeE: 7
-      DestDataType: 7
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: 1
-      TransposeB: 0
-      UseBeta: true
-      UseBias: 0
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 0
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 19
-    SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU4_SUM1_SUS512_WGM1
-    SourceSwap: 1
-    StaggerU: 4
-    StaggerUMapping: 1
-    StaggerUStride: 512
-    StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 8
-    SubGroup1: 32
-    SubGroupA: 8
-    SubGroupB: 32
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
-    WorkGroup: [32, 8, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 1]
-    _DepthU: 256
-    _DepthUA: 256
-    _DepthUB: 256
-    _DepthUMetadata: 256
     _GlobalAccumulation: MultipleBuffer
     _UseSgprForGRO: 1
     _VectorStore: 1
@@ -5522,13 +4472,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 20
+    SolutionIndex: 16
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU32_SUM1_SUS512_WGM1
     SourceSwap: 1
     StaggerU: 32
@@ -5784,13 +4734,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 21
+    SolutionIndex: 17
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_GSU5_MIWT1_1_NEPBS16_SU8_SUM1_SUS512_WGM1
     SourceSwap: 1
     StaggerU: 8
@@ -6047,13 +4997,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 22
+    SolutionIndex: 18
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x512_MI16x16x1_SN_GSU4_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM0
     SourceSwap: 1
     StaggerU: 0
@@ -6310,13 +5260,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 23
+    SolutionIndex: 19
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT4_14_NEPBS0_SU8_SUM0_SUS256_SVW4_WGM32
     SourceSwap: 1
     StaggerU: 8
@@ -6572,13 +5522,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 24
+    SolutionIndex: 20
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x192x128_MI16x16x1_SN_GRVWA16_GRVWB16_GSU1_LPA32_LPB32_LRVW16_MIWT4_12_NEPBS0_SU8_SUM0_SUS256_SVW4_WGM4
     SourceSwap: 1
     StaggerU: 8
@@ -6834,13 +5784,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 25
+    SolutionIndex: 21
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x192x128_MI16x16x1_SN_GRVWA16_GRVWB16_GSU1_LPA32_LPB32_LRVW16_MIWT8_6_NEPBS16_SU8_SUM0_SUS256_SVW8_WGM32
     SourceSwap: 1
     StaggerU: 8
@@ -7096,13 +6046,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 26
+    SolutionIndex: 22
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x176x128_MI16x16x1_SN_GSU1_MIWT4_11_NEPBS16_SU4_SUM1_SUS256_SVW4_WGM32
     SourceSwap: 1
     StaggerU: 4
@@ -7153,268 +6103,6 @@
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 4
     _staggerStrideShift: 1
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertFree0ElementMultiple: 8
-    AssertFree1ElementMultiple: 8
-    AssertSummationElementMultiple: 32
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    ClusterLocalRead: 1
-    CodeObjectVersion: default
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DepthU: 256
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
-    GlobalReadVectorWidthB: 16
-    GlobalSplitU: 1
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
-      UseUniversalArgs: true}
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x256_MI16x16x1_SN_MIWT1_1_NEPBS0
-    LSCA: 256
-    LSCB: 256
-    LSPA: 16
-    LSPB: 16
-    LVCA: 16
-    LVCB: 16
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 256
-    LdsBlockSizePerPadB: 256
-    LdsBlockSizePerPadMetadata: 0
-    LdsInitCVgprs: false
-    LdsNumBytes: 51200
-    LdsNumElementsAlignedA: 9216
-    LdsNumElementsAlignedB: 9216
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 9216
-    LdsOffsetB_Blk: 41984
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 9216
-    LdsOffsetMetadata_Blk: 41984
-    LdsPadA: 32
-    LdsPadB: 32
-    LdsPadMetadata: -1
-    LocalReadVectorWidth: 16
-    LocalSplitU: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 8
-    LoopUnroll: 256
-    MFMA_BF16_1K: false
-    MIArchVgpr: false
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 2]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 32
-    MacroTileA: 32
-    MacroTileB: 32
-    MagicDivAlg: 2
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 0
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 2
-    NumLoadsB: 2
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 2
-    NumLoadsPerpendicularB: 2
-    NumThreads: 256
-    OptNoLoadLoop: 0
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: 1
-    ProblemType:
-      Activation: false
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: none
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 11
-      DataTypeA: 11
-      DataTypeB: 11
-      DataTypeE: 7
-      DestDataType: 7
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: 1
-      TransposeB: 0
-      UseBeta: true
-      UseBias: 0
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 0
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 27
-    SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU0_SUM0_SUS0_WGM1
-    SourceSwap: 1
-    StaggerU: 0
-    StaggerUMapping: 0
-    StaggerUStride: 0
-    StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 8
-    SubGroup1: 32
-    SubGroupA: 8
-    SubGroupB: 32
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
-    WorkGroup: [32, 8, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 1]
-    _DepthU: 256
-    _DepthUA: 256
-    _DepthUB: 256
-    _DepthUMetadata: 256
-    _GlobalAccumulation: MultipleBuffer
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 0
   - 1LDSBuffer: 0
     ActivationAlt: false
     ActivationFuncCall: true
@@ -7620,13 +6308,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 28
+    SolutionIndex: 23
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM0
     SourceSwap: 1
     StaggerU: 0
@@ -7882,13 +6570,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 29
+    SolutionIndex: 24
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU16_SUM1_SUS512_WGM1
     SourceSwap: 1
     StaggerU: 16
@@ -8144,13 +6832,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 30
+    SolutionIndex: 25
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_GSU5_MIWT1_1_NEPBS16_SU4_SUM1_SUS512_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -8196,269 +6884,6 @@
     _DepthUA: 256
     _DepthUB: 256
     _DepthUMetadata: 256
-    _GlobalAccumulation: MultipleBufferSingleKernel
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 1
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertFree0ElementMultiple: 8
-    AssertFree1ElementMultiple: 8
-    AssertSummationElementMultiple: 32
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    ClusterLocalRead: 1
-    CodeObjectVersion: default
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DepthU: 512
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
-    GlobalReadVectorWidthB: 16
-    GlobalSplitU: 4
-    GlobalSplitUAlgorithm: MultipleBufferSingleKernel
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
-      UseUniversalArgs: true}
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_MIWT1_1_NEPBS0
-    LSCA: 512
-    LSCB: 512
-    LSPA: 4
-    LSPB: 4
-    LVCA: 32
-    LVCB: 32
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 512
-    LdsBlockSizePerPadB: 512
-    LdsBlockSizePerPadMetadata: 0
-    LdsInitCVgprs: false
-    LdsNumBytes: 58880
-    LdsNumElementsAlignedA: 17408
-    LdsNumElementsAlignedB: 8704
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 17408
-    LdsOffsetB_Blk: 50176
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 17408
-    LdsOffsetMetadata_Blk: 50176
-    LdsPadA: 32
-    LdsPadB: 32
-    LdsPadMetadata: -1
-    LocalReadVectorWidth: 16
-    LocalSplitU: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 16
-    LoopUnroll: 512
-    MFMA_BF16_1K: false
-    MIArchVgpr: false
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 1]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 16
-    MacroTileA: 32
-    MacroTileB: 16
-    MagicDivAlg: 2
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 0
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 8
-    NumLoadsB: 4
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 8
-    NumLoadsPerpendicularB: 4
-    NumThreads: 128
-    OptNoLoadLoop: 0
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: 1
-    ProblemType:
-      Activation: false
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: none
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 11
-      DataTypeA: 11
-      DataTypeB: 11
-      DataTypeE: 7
-      DestDataType: 7
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: 1
-      TransposeB: 0
-      UseBeta: true
-      UseBias: 0
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 0
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 31
-    SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_GSU4_MIWT1_1_NEPBS0_SU4_SUM1_SUS1024_WGM0
-    SourceSwap: 1
-    StaggerU: 4
-    StaggerUMapping: 1
-    StaggerUStride: 1024
-    StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 8
-    SubGroup1: 16
-    SubGroupA: 8
-    SubGroupB: 16
-    SuppressNoLoadLoop: false
-    SynchronizerSizeCheck: 1
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
-    WorkGroup: [32, 4, 1]
-    WorkGroupMapping: 0
-    WorkGroupMappingXCC: 1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 4]
-    _DepthU: 512
-    _DepthUA: 512
-    _DepthUB: 512
-    _DepthUMetadata: 512
     _GlobalAccumulation: MultipleBufferSingleKernel
     _UseSgprForGRO: 1
     _VectorStore: 1
@@ -8670,13 +7095,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 32
+    SolutionIndex: 26
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x512_MI16x16x1_SN_GSU4_MIWT1_1_NEPBS0_SU4_SUM1_SUS1024_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -8933,13 +7358,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 33
+    SolutionIndex: 27
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU8_SUM0_SUS256_SVW8_WGM32
     SourceSwap: 1
     StaggerU: 8
@@ -9195,13 +7620,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 34
+    SolutionIndex: 28
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU0_SUM0_SUS0_SVW8_WGM32
     SourceSwap: 1
     StaggerU: 0
@@ -9457,13 +7882,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 35
+    SolutionIndex: 29
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS16_SU8_SUM0_SUS256_SVW8_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -9508,268 +7933,6 @@
     _DepthUA: 128
     _DepthUB: 128
     _DepthUMetadata: 128
-    _GlobalAccumulation: MultipleBuffer
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 1
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertFree0ElementMultiple: 8
-    AssertFree1ElementMultiple: 8
-    AssertSummationElementMultiple: 32
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    ClusterLocalRead: 1
-    CodeObjectVersion: default
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DepthU: 256
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
-    GlobalReadVectorWidthB: 16
-    GlobalSplitU: 1
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
-      UseUniversalArgs: true}
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x256_MI16x16x1_SN_MIWT1_1_NEPBS16
-    LSCA: 256
-    LSCB: 256
-    LSPA: 16
-    LSPB: 16
-    LVCA: 16
-    LVCB: 16
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 256
-    LdsBlockSizePerPadB: 256
-    LdsBlockSizePerPadMetadata: 0
-    LdsInitCVgprs: false
-    LdsNumBytes: 51200
-    LdsNumElementsAlignedA: 9216
-    LdsNumElementsAlignedB: 9216
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 9216
-    LdsOffsetB_Blk: 41984
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 9216
-    LdsOffsetMetadata_Blk: 41984
-    LdsPadA: 32
-    LdsPadB: 32
-    LdsPadMetadata: -1
-    LocalReadVectorWidth: 16
-    LocalSplitU: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 8
-    LoopUnroll: 256
-    MFMA_BF16_1K: false
-    MIArchVgpr: false
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 2]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 32
-    MacroTileA: 32
-    MacroTileB: 32
-    MagicDivAlg: 2
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 2
-    NumLoadsB: 2
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 2
-    NumLoadsPerpendicularB: 2
-    NumThreads: 256
-    OptNoLoadLoop: 0
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: 1
-    ProblemType:
-      Activation: false
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: none
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 11
-      DataTypeA: 11
-      DataTypeB: 11
-      DataTypeE: 7
-      DestDataType: 7
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: 1
-      TransposeB: 0
-      UseBeta: true
-      UseBias: 0
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 0
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 36
-    SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU4_SUM0_SUS512_WGM1
-    SourceSwap: 1
-    StaggerU: 4
-    StaggerUMapping: 0
-    StaggerUStride: 512
-    StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 8
-    SubGroup1: 32
-    SubGroupA: 8
-    SubGroupB: 32
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
-    WorkGroup: [32, 8, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 1]
-    _DepthU: 256
-    _DepthUA: 256
-    _DepthUB: 256
-    _DepthUMetadata: 256
     _GlobalAccumulation: MultipleBuffer
     _UseSgprForGRO: 1
     _VectorStore: 1
@@ -9981,13 +8144,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 37
+    SolutionIndex: 30
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU16_SUM1_SUS512_WGM1
     SourceSwap: 1
     StaggerU: 16
@@ -10243,13 +8406,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 38
+    SolutionIndex: 31
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_GSU5_MIWT1_1_NEPBS16_SU4_SUM1_SUS512_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -10295,269 +8458,6 @@
     _DepthUA: 256
     _DepthUB: 256
     _DepthUMetadata: 256
-    _GlobalAccumulation: MultipleBufferSingleKernel
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 1
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertFree0ElementMultiple: 8
-    AssertFree1ElementMultiple: 8
-    AssertSummationElementMultiple: 32
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    ClusterLocalRead: 1
-    CodeObjectVersion: default
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DepthU: 512
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
-    GlobalReadVectorWidthB: 16
-    GlobalSplitU: 4
-    GlobalSplitUAlgorithm: MultipleBufferSingleKernel
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
-      UseUniversalArgs: true}
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_MIWT1_1_NEPBS16
-    LSCA: 512
-    LSCB: 512
-    LSPA: 4
-    LSPB: 4
-    LVCA: 32
-    LVCB: 32
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 512
-    LdsBlockSizePerPadB: 512
-    LdsBlockSizePerPadMetadata: 0
-    LdsInitCVgprs: false
-    LdsNumBytes: 58880
-    LdsNumElementsAlignedA: 17408
-    LdsNumElementsAlignedB: 8704
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 17408
-    LdsOffsetB_Blk: 50176
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 17408
-    LdsOffsetMetadata_Blk: 50176
-    LdsPadA: 32
-    LdsPadB: 32
-    LdsPadMetadata: -1
-    LocalReadVectorWidth: 16
-    LocalSplitU: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 16
-    LoopUnroll: 512
-    MFMA_BF16_1K: false
-    MIArchVgpr: false
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 1]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 16
-    MacroTileA: 32
-    MacroTileB: 16
-    MagicDivAlg: 2
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 8
-    NumLoadsB: 4
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 8
-    NumLoadsPerpendicularB: 4
-    NumThreads: 128
-    OptNoLoadLoop: 0
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: 1
-    ProblemType:
-      Activation: false
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: none
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 11
-      DataTypeA: 11
-      DataTypeB: 11
-      DataTypeE: 7
-      DestDataType: 7
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: 1
-      TransposeB: 0
-      UseBeta: true
-      UseBias: 0
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 0
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 39
-    SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_GSU4_MIWT1_1_NEPBS16_SU4_SUM1_SUS1024_WGM0
-    SourceSwap: 1
-    StaggerU: 4
-    StaggerUMapping: 1
-    StaggerUStride: 1024
-    StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 8
-    SubGroup1: 16
-    SubGroupA: 8
-    SubGroupB: 16
-    SuppressNoLoadLoop: false
-    SynchronizerSizeCheck: 1
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
-    WorkGroup: [32, 4, 1]
-    WorkGroupMapping: 0
-    WorkGroupMappingXCC: 1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 4]
-    _DepthU: 512
-    _DepthUA: 512
-    _DepthUB: 512
-    _DepthUMetadata: 512
     _GlobalAccumulation: MultipleBufferSingleKernel
     _UseSgprForGRO: 1
     _VectorStore: 1
@@ -10769,13 +8669,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 40
+    SolutionIndex: 32
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x512_MI16x16x1_SN_GSU4_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -11032,13 +8932,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 41
+    SolutionIndex: 33
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT224x256x128_MI16x16x1_SN_GSU1_MIWT14_4_NEPBS0_SU4_SUM0_SUS256_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -11294,13 +9194,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 42
+    SolutionIndex: 34
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU8_SUM0_SUS256_SVW8_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -11556,13 +9456,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 43
+    SolutionIndex: 35
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS16_SU8_SUM0_SUS256_SVW8_WGM32
     SourceSwap: 1
     StaggerU: 8
@@ -11607,530 +9507,6 @@
     _DepthUA: 128
     _DepthUB: 128
     _DepthUMetadata: 128
-    _GlobalAccumulation: MultipleBuffer
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 1
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertFree0ElementMultiple: 8
-    AssertFree1ElementMultiple: 8
-    AssertSummationElementMultiple: 32
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    ClusterLocalRead: 1
-    CodeObjectVersion: default
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DepthU: 256
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
-    GlobalReadVectorWidthB: 16
-    GlobalSplitU: 1
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
-      UseUniversalArgs: true}
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x256_MI16x16x1_SN_MIWT1_1_NEPBS16
-    LSCA: 256
-    LSCB: 256
-    LSPA: 16
-    LSPB: 16
-    LVCA: 16
-    LVCB: 16
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 256
-    LdsBlockSizePerPadB: 256
-    LdsBlockSizePerPadMetadata: 0
-    LdsInitCVgprs: false
-    LdsNumBytes: 51200
-    LdsNumElementsAlignedA: 9216
-    LdsNumElementsAlignedB: 9216
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 9216
-    LdsOffsetB_Blk: 41984
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 9216
-    LdsOffsetMetadata_Blk: 41984
-    LdsPadA: 32
-    LdsPadB: 32
-    LdsPadMetadata: -1
-    LocalReadVectorWidth: 16
-    LocalSplitU: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 8
-    LoopUnroll: 256
-    MFMA_BF16_1K: false
-    MIArchVgpr: false
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 2]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 32
-    MacroTileA: 32
-    MacroTileB: 32
-    MagicDivAlg: 2
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 2
-    NumLoadsB: 2
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 2
-    NumLoadsPerpendicularB: 2
-    NumThreads: 256
-    OptNoLoadLoop: 0
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: 1
-    ProblemType:
-      Activation: false
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: none
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 11
-      DataTypeA: 11
-      DataTypeB: 11
-      DataTypeE: 7
-      DestDataType: 7
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: 1
-      TransposeB: 0
-      UseBeta: true
-      UseBias: 0
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 0
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 44
-    SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU4_SUM1_SUS512_WGM1
-    SourceSwap: 1
-    StaggerU: 4
-    StaggerUMapping: 1
-    StaggerUStride: 512
-    StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 8
-    SubGroup1: 32
-    SubGroupA: 8
-    SubGroupB: 32
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
-    WorkGroup: [32, 8, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 1]
-    _DepthU: 256
-    _DepthUA: 256
-    _DepthUB: 256
-    _DepthUMetadata: 256
-    _GlobalAccumulation: MultipleBuffer
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 1
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertFree0ElementMultiple: 8
-    AssertFree1ElementMultiple: 8
-    AssertSummationElementMultiple: 32
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    ClusterLocalRead: 1
-    CodeObjectVersion: default
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DepthU: 256
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
-    GlobalReadVectorWidthB: 16
-    GlobalSplitU: 1
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
-      UseUniversalArgs: true}
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x256_MI16x16x1_SN_MIWT1_1_NEPBS16
-    LSCA: 256
-    LSCB: 256
-    LSPA: 8
-    LSPB: 8
-    LVCA: 16
-    LVCB: 16
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 256
-    LdsBlockSizePerPadB: 256
-    LdsBlockSizePerPadMetadata: 0
-    LdsInitCVgprs: false
-    LdsNumBytes: 30208
-    LdsNumElementsAlignedA: 4608
-    LdsNumElementsAlignedB: 9216
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 16384
-    LdsOffsetB: 4608
-    LdsOffsetB_Blk: 20992
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 4608
-    LdsOffsetMetadata_Blk: 20992
-    LdsPadA: 32
-    LdsPadB: 32
-    LdsPadMetadata: -1
-    LocalReadVectorWidth: 16
-    LocalSplitU: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 8
-    LoopUnroll: 256
-    MFMA_BF16_1K: false
-    MIArchVgpr: false
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [1, 2]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 16
-    MacroTile1: 32
-    MacroTileA: 16
-    MacroTileB: 32
-    MagicDivAlg: 2
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 2
-    NumLoadsB: 4
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 2
-    NumLoadsPerpendicularB: 4
-    NumThreads: 128
-    OptNoLoadLoop: 0
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: 1
-    ProblemType:
-      Activation: false
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: none
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 11
-      DataTypeA: 11
-      DataTypeB: 11
-      DataTypeE: 7
-      DestDataType: 7
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: 1
-      TransposeB: 0
-      UseBeta: true
-      UseBias: 0
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 0
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 45
-    SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU32_SUM1_SUS512_WGM1
-    SourceSwap: 1
-    StaggerU: 32
-    StaggerUMapping: 1
-    StaggerUStride: 512
-    StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 4
-    SubGroup1: 32
-    SubGroupA: 4
-    SubGroupB: 32
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WavefrontSize: 64
-    WorkGroup: [16, 8, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 1]
-    _DepthU: 256
-    _DepthUA: 256
-    _DepthUB: 256
-    _DepthUMetadata: 256
     _GlobalAccumulation: MultipleBuffer
     _UseSgprForGRO: 1
     _VectorStore: 1
@@ -12342,13 +9718,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 46
+    SolutionIndex: 36
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x128_MI16x16x1_SN_GSU2_MIWT2_1_NEPBS16_SU32_SUM1_SUS256_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 32
@@ -12605,13 +9981,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 47
+    SolutionIndex: 37
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x256_MI16x16x1_SN_GSU5_MIWT2_1_NEPBS16_SU4_SUM1_SUS512_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -12868,13 +10244,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 48
+    SolutionIndex: 38
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x512_MI16x16x1_SN_GSU3_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -13131,13 +10507,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 49
+    SolutionIndex: 39
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU0_SUM0_SUS0_SVW8_WGM16
     SourceSwap: 1
     StaggerU: 0
@@ -13393,13 +10769,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 50
+    SolutionIndex: 40
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU4_SUM0_SUS256_SVW8_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -13655,13 +11031,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 51
+    SolutionIndex: 41
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x192x128_MI16x16x1_SN_GRVWA16_GRVWB16_GSU1_LPA32_LPB32_LRVW16_MIWT8_6_NEPBS0_SU8_SUM0_SUS256_SVW8_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -13917,13 +11293,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 52
+    SolutionIndex: 42
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU8_SUM0_SUS256_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 8
@@ -14179,13 +11555,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 53
+    SolutionIndex: 43
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x512_MI16x16x1_SN_GSU6_MIWT2_1_NEPBS16_SU4_SUM0_SUS1024_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -14442,13 +11818,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 54
+    SolutionIndex: 44
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x512_MI16x16x1_SN_GSU4_MIWT2_1_NEPBS16_SU4_SUM1_SUS1024_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -14705,13 +12081,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 55
+    SolutionIndex: 45
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT320x160x128_MI16x16x1_SN_GSU1_MIWT10_5_NEPBS16_SU8_SUM0_SUS256_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 8
@@ -14967,13 +12343,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 56
+    SolutionIndex: 46
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x192x128_MI16x16x1_SN_GRVWA16_GRVWB16_GSU1_LPA32_LPB32_LRVW16_MIWT8_6_NEPBS0_SU8_SUM0_SUS256_SVW8_WGM16
     SourceSwap: 1
     StaggerU: 8
@@ -15229,13 +12605,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 57
+    SolutionIndex: 47
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x128x128_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS16_SU4_SUM0_SUS256_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -15491,13 +12867,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 58
+    SolutionIndex: 48
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x128x256_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS16_SU8_SUM0_SUS512_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -15753,13 +13129,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 59
+    SolutionIndex: 49
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x128x256_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS16_SU32_SUM1_SUS512_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 32
@@ -16015,13 +13391,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 60
+    SolutionIndex: 50
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x256_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS0_SU32_SUM1_SUS512_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 32
@@ -16277,13 +13653,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 61
+    SolutionIndex: 51
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x256_MI16x16x1_SN_GSU5_MIWT4_1_NEPBS16_SU8_SUM0_SUS512_SVW4_WGM0
     SourceSwap: 1
     StaggerU: 8
@@ -16540,13 +13916,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 62
+    SolutionIndex: 52
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x512_MI16x16x1_SN_GSU4_MIWT2_1_NEPBS0_SU32_SUM1_SUS1024_WGM0
     SourceSwap: 1
     StaggerU: 32
@@ -16803,13 +14179,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 63
+    SolutionIndex: 53
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU32_SUM1_SUS256_SVW8_WGM16
     SourceSwap: 1
     StaggerU: 32
@@ -17065,13 +14441,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 64
+    SolutionIndex: 54
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU32_SUM1_SUS256_SVW8_WGM32
     SourceSwap: 1
     StaggerU: 32
@@ -17327,13 +14703,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 65
+    SolutionIndex: 55
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT320x160x128_MI16x16x1_SN_GSU1_MIWT10_5_NEPBS0_SU8_SUM0_SUS256_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 8
@@ -17589,13 +14965,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 66
+    SolutionIndex: 56
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x192x128_MI16x16x1_SN_GRVWA16_GRVWB16_GSU1_LPA32_LPB32_LRVW16_MIWT8_6_NEPBS0_SU4_SUM0_SUS256_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -17851,13 +15227,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 67
+    SolutionIndex: 57
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -18113,13 +15489,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 68
+    SolutionIndex: 58
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x128_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -18375,13 +15751,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 69
+    SolutionIndex: 59
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -18637,13 +16013,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 70
+    SolutionIndex: 60
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x128_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM0
     SourceSwap: 1
     StaggerU: 0
@@ -18899,13 +16275,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 71
+    SolutionIndex: 61
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x256_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU4_SUM1_SUS512_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -19161,13 +16537,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 72
+    SolutionIndex: 62
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU4_SUM1_SUS256_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -19423,13 +16799,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 73
+    SolutionIndex: 63
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x256_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS0_SU8_SUM1_SUS512_SVW2_WGM16
     SourceSwap: 1
     StaggerU: 8
@@ -19685,13 +17061,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 74
+    SolutionIndex: 64
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x96x128_MI16x16x1_SN_GSU1_MIWT2_3_NEPBS16_SU4_SUM0_SUS256_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -19947,13 +17323,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 75
+    SolutionIndex: 65
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x128x256_MI16x16x1_SN_GSU1_MIWT4_2_NEPBS0_SU0_SUM0_SUS0_SVW4_WGM16
     SourceSwap: 1
     StaggerU: 0
@@ -20209,13 +17585,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 76
+    SolutionIndex: 66
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x128x128_MI16x16x1_SN_GSU1_MIWT4_2_NEPBS0_SU32_SUM1_SUS256_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 32
@@ -20471,13 +17847,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 77
+    SolutionIndex: 67
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x64x128_MI16x16x1_SN_GSU1_MIWT4_2_NEPBS16_SU0_SUM0_SUS0_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 0
@@ -20733,13 +18109,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 78
+    SolutionIndex: 68
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x128x128_MI16x16x1_SN_GSU1_MIWT8_2_NEPBS16_SU0_SUM0_SUS0_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 0
@@ -20995,13 +18371,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 79
+    SolutionIndex: 69
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x64x128_MI16x16x1_SN_GSU1_MIWT4_4_NEPBS0_SU0_SUM0_SUS0_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 0
@@ -21257,13 +18633,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 80
+    SolutionIndex: 70
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x96x128_MI16x16x1_SN_GSU1_MIWT4_3_NEPBS16_SU8_SUM0_SUS256_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -21519,13 +18895,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 81
+    SolutionIndex: 71
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x128x128_MI16x16x1_SN_GSU1_MIWT8_2_NEPBS0_SU4_SUM1_SUS256_SVW8_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -21781,13 +19157,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 82
+    SolutionIndex: 72
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x128x128_MI16x16x1_SN_GSU1_MIWT4_4_NEPBS0_SU4_SUM0_SUS256_SVW4_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -22043,13 +19419,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 83
+    SolutionIndex: 73
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT96x192x128_MI16x16x1_SN_GSU1_MIWT6_3_NEPBS0_SU4_SUM0_SUS256_SVW2_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -22305,13 +19681,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 84
+    SolutionIndex: 74
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x160x128_MI16x16x1_SN_GSU1_MIWT4_5_NEPBS16_SU8_SUM0_SUS256_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -22567,13 +19943,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 85
+    SolutionIndex: 75
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x128x128_MI16x16x1_SN_GSU1_MIWT16_2_NEPBS16_SU4_SUM0_SUS256_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -22829,13 +20205,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 86
+    SolutionIndex: 76
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x192x128_MI16x16x1_SN_GSU1_MIWT4_6_NEPBS16_SU4_SUM0_SUS256_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 4
@@ -23091,13 +20467,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 87
+    SolutionIndex: 77
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT192x160x128_MI16x16x1_SN_GSU1_MIWT3_10_NEPBS16_SU8_SUM1_SUS256_WGM0
     SourceSwap: 1
     StaggerU: 8
@@ -23353,13 +20729,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 88
+    SolutionIndex: 78
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x256x128_MI16x16x1_SN_GSU1_MIWT8_4_NEPBS16_SU0_SUM0_SUS0_SVW8_WGM0
     SourceSwap: 1
     StaggerU: 0
@@ -23615,13 +20991,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 89
+    SolutionIndex: 79
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x320x64_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB8_GSU1_LPA8_LPB8_LRVW8_MIWT4_10_NEPBS16_SU4_SUM1_SUS128_SVW4_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -23877,13 +21253,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 90
+    SolutionIndex: 80
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x208x128_MI16x16x1_SN_GSU1_MIWT4_13_NEPBS0_SU4_SUM0_SUS256_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 4
@@ -24139,13 +21515,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 91
+    SolutionIndex: 81
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT192x288x128_MI16x16x1_SN_GSU1_MIWT6_9_NEPBS0_SU8_SUM0_SUS256_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -24401,13 +21777,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 92
+    SolutionIndex: 82
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS16_SU4_SUM0_SUS256_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -24663,13 +22039,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 93
+    SolutionIndex: 83
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x192x128_MI16x16x1_SN_GSU1_MIWT8_3_NEPBS0_SU4_SUM1_SUS256_SVW8_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -24925,13 +22301,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 94
+    SolutionIndex: 84
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x192x128_MI16x16x1_SN_GSU1_MIWT4_6_NEPBS16_SU32_SUM1_SUS256_SVW4_WGM16
     SourceSwap: 1
     StaggerU: 32
@@ -25187,13 +22563,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 95
+    SolutionIndex: 85
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT192x288x64_MI16x16x1_SN_GSU1_MIWT6_9_NEPBS0_SU4_SUM0_SUS128_SVW2_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -25449,13 +22825,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 96
+    SolutionIndex: 86
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x256x128_MI16x16x1_SN_GSU1_MIWT8_4_NEPBS0_SU32_SUM0_SUS256_SVW8_WGM1
     SourceSwap: 1
     StaggerU: 32
@@ -25711,13 +23087,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 97
+    SolutionIndex: 87
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x512_MI16x16x1_SN_GSU2_MIWT1_1_NEPBS16_SU8_SUM0_SUS1024_WGM0
     SourceSwap: 1
     StaggerU: 8
@@ -25974,13 +23350,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 98
+    SolutionIndex: 88
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT224x256x128_MI16x16x1_SN_GSU1_MIWT14_4_NEPBS0_SU4_SUM0_SUS256_SVW2_WGM32
     SourceSwap: 1
     StaggerU: 4
@@ -26236,13 +23612,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 99
+    SolutionIndex: 89
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x128x128_MI16x16x1_SN_GSU1_MIWT4_2_NEPBS0_SU16_SUM0_SUS256_SVW4_WGM1
     SourceSwap: 1
     StaggerU: 16
@@ -26498,13 +23874,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 100
+    SolutionIndex: 90
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x512_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -26760,13 +24136,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 101
+    SolutionIndex: 91
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM0
     SourceSwap: 1
     StaggerU: 0
@@ -27022,13 +24398,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 102
+    SolutionIndex: 92
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x16x256_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS0_SU4_SUM1_SUS512_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -27284,13 +24660,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 103
+    SolutionIndex: 93
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x128x128_MI16x16x1_SN_GSU1_MIWT4_2_NEPBS0_SU0_SUM0_SUS0_SVW4_WGM32
     SourceSwap: 1
     StaggerU: 0
@@ -27546,13 +24922,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 104
+    SolutionIndex: 94
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU8_SUM0_SUS256_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 8
@@ -27808,13 +25184,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 105
+    SolutionIndex: 95
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x128_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM16
     SourceSwap: 1
     StaggerU: 0
@@ -28070,13 +25446,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 106
+    SolutionIndex: 96
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS16_SU4_SUM1_SUS256_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -28332,13 +25708,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 107
+    SolutionIndex: 97
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU4_SUM0_SUS256_SVW8_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -28594,13 +25970,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 108
+    SolutionIndex: 98
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU0_SUM0_SUS0_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -28856,13 +26232,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 109
+    SolutionIndex: 99
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x128x256_MI16x16x1_SN_GSU1_MIWT2_4_NEPBS0_SU8_SUM1_SUS512_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 8
@@ -29118,13 +26494,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 110
+    SolutionIndex: 100
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x128x128_MI16x16x1_SN_GSU1_MIWT16_2_NEPBS0_SU16_SUM0_SUS256_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 16
@@ -29380,13 +26756,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 111
+    SolutionIndex: 101
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT80x128x256_MI16x16x1_SN_GRVWA16_GRVWB16_GSU1_LPA32_LPB32_LRVW16_MIWT5_2_NEPBS0_SU8_SUM1_SUS512_WGM1
     SourceSwap: 1
     StaggerU: 8
@@ -29642,13 +27018,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 112
+    SolutionIndex: 102
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x512_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -29904,13 +27280,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 113
+    SolutionIndex: 103
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU0_SUM0_SUS0_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -30166,13 +27542,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 114
+    SolutionIndex: 104
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_GSU1_MIWT1_4_NEPBS16_SU0_SUM0_SUS0_WGM32
     SourceSwap: 1
     StaggerU: 0
@@ -30428,13 +27804,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 115
+    SolutionIndex: 105
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT160x192x128_MI16x16x1_SN_GSU1_MIWT10_3_NEPBS0_SU0_SUM0_SUS0_SVW2_WGM16
     SourceSwap: 1
     StaggerU: 0
@@ -30690,13 +28066,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 116
+    SolutionIndex: 106
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU0_SUM0_SUS0_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -30952,13 +28328,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 117
+    SolutionIndex: 107
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x96x256_MI16x16x1_SN_GSU1_MIWT2_3_NEPBS16_SU16_SUM1_SUS512_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 16
@@ -31214,13 +28590,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 118
+    SolutionIndex: 108
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x128x128_MI16x16x1_SN_GSU1_MIWT4_4_NEPBS16_SU0_SUM0_SUS0_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 0
@@ -31476,13 +28852,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 119
+    SolutionIndex: 109
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU8_SUM1_SUS512_WGM4
     SourceSwap: 1
     StaggerU: 8
@@ -31738,13 +29114,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 120
+    SolutionIndex: 110
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x512_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM0
     SourceSwap: 1
     StaggerU: 0
@@ -32000,13 +29376,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 121
+    SolutionIndex: 111
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x256_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU16_SUM1_SUS512_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 16
@@ -32262,13 +29638,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 122
+    SolutionIndex: 112
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT224x256x128_MI16x16x1_SN_GSU1_MIWT14_4_NEPBS0_SU8_SUM1_SUS256_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 8
@@ -32524,13 +29900,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 123
+    SolutionIndex: 113
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x256_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU4_SUM1_SUS512_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -32786,13 +30162,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 124
+    SolutionIndex: 114
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT96x96x256_MI16x16x1_SN_GSU1_MIWT3_3_NEPBS0_SU0_SUM0_SUS0_WGM8
     SourceSwap: 1
     StaggerU: 0
@@ -33048,13 +30424,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 125
+    SolutionIndex: 115
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x48x256_MI16x16x1_SN_GSU1_MIWT1_3_NEPBS16_SU16_SUM1_SUS512_WGM0
     SourceSwap: 1
     StaggerU: 16
@@ -33310,13 +30686,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 126
+    SolutionIndex: 116
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT96x64x256_MI16x16x1_SN_GSU2_MIWT3_2_NEPBS16_SU8_SUM0_SUS512_WGM32
     SourceSwap: 1
     StaggerU: 8
@@ -33572,13 +30948,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 127
+    SolutionIndex: 117
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x96x128_MI16x16x1_SN_GSU1_MIWT4_3_NEPBS16_SU32_SUM1_SUS256_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 32
@@ -33834,13 +31210,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 128
+    SolutionIndex: 118
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU4_SUM1_SUS512_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -34096,13 +31472,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 129
+    SolutionIndex: 119
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT96x32x256_MI16x16x1_SN_GSU6_MIWT3_1_NEPBS16_SU4_SUM1_SUS512_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -34358,13 +31734,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 130
+    SolutionIndex: 120
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS0_SU16_SUM1_SUS256_SVW2_WGM32
     SourceSwap: 1
     StaggerU: 16
@@ -34620,13 +31996,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 131
+    SolutionIndex: 121
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x176x32_MI16x16x1_SN_GSU1_MIWT4_11_NEPBS16_SU8_SUM1_SUS64_SVW4_WGM16
     SourceSwap: 1
     StaggerU: 8
@@ -34882,13 +32258,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 132
+    SolutionIndex: 122
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x192x64_MI16x16x1_SN_GRVWA8_GRVWB8_GSU1_LPA8_LPB8_LRVW8_MIWT8_6_NEPBS16_SU4_SUM0_SUS128_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -35144,13 +32520,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 133
+    SolutionIndex: 123
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x240x64_MI16x16x1_SN_GSU1_MIWT2_15_NEPBS16_SU16_SUM1_SUS128_SVW2_WGM16
     SourceSwap: 1
     StaggerU: 16
@@ -35406,13 +32782,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 134
+    SolutionIndex: 124
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM0
     SourceSwap: 1
     StaggerU: 0
@@ -35668,13 +33044,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 135
+    SolutionIndex: 125
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x224x64_MI16x16x1_SN_GSU1_MIWT4_7_NEPBS16_SU4_SUM1_SUS128_SVW4_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -35930,13 +33306,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 136
+    SolutionIndex: 126
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT8_7_NEPBS0_SU0_SUM0_SUS0_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 0
@@ -36192,13 +33568,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 137
+    SolutionIndex: 127
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT48x64x128_MI16x16x1_SN_GSU1_MIWT3_1_NEPBS16_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -36454,13 +33830,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 138
+    SolutionIndex: 128
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x240x64_MI16x16x1_SN_GSU1_MIWT2_15_NEPBS0_SU0_SUM0_SUS0_SVW2_WGM4
     SourceSwap: 1
     StaggerU: 0
@@ -36716,13 +34092,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 139
+    SolutionIndex: 129
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x16x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU4_SUM0_SUS256_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -36978,13 +34354,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 140
+    SolutionIndex: 130
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x512_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU4_SUM1_SUS1024_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -37240,13 +34616,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 141
+    SolutionIndex: 131
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x16x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU8_SUM1_SUS256_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 8
@@ -37502,13 +34878,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 142
+    SolutionIndex: 132
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x256x128_MI16x16x1_SN_GSU1_MIWT4_8_NEPBS16_SU8_SUM0_SUS256_SVW4_WGM0
     SourceSwap: 1
     StaggerU: 8
@@ -37764,13 +35140,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 143
+    SolutionIndex: 133
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -38026,13 +35402,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 144
+    SolutionIndex: 134
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x128x128_MI16x16x1_SN_GSU1_MIWT4_4_NEPBS0_SU4_SUM0_SUS256_SVW4_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -38288,13 +35664,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 145
+    SolutionIndex: 135
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS0_SU4_SUM1_SUS256_SVW2_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -38550,13 +35926,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 146
+    SolutionIndex: 136
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU8_MIWT2_1_NEPBS0_SU8_SUM0_SUS256_SVW2_WGM4
     SourceSwap: 1
     StaggerU: 8
@@ -38813,13 +36189,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 147
+    SolutionIndex: 137
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS0_SU8_SUM1_SUS256_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -39075,13 +36451,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 148
+    SolutionIndex: 138
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_GSU1_MIWT4_1_NEPBS0_SU0_SUM0_SUS0_SVW4_WGM4
     SourceSwap: 1
     StaggerU: 0
@@ -39337,13 +36713,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 149
+    SolutionIndex: 139
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS16_SU4_SUM1_SUS256_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 4
@@ -39599,13 +36975,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 150
+    SolutionIndex: 140
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT160x64x128_MI16x16x1_SN_GSU1_MIWT5_2_NEPBS16_SU8_SUM1_SUS256_WGM1
     SourceSwap: 1
     StaggerU: 8
@@ -39861,13 +37237,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 151
+    SolutionIndex: 141
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x128_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -40123,13 +37499,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 152
+    SolutionIndex: 142
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x128_MI16x16x1_SN_GSU4_MIWT2_1_NEPBS16_SU4_SUM1_SUS256_SVW2_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -40385,13 +37761,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 153
+    SolutionIndex: 143
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x64x64_MI16x16x1_SN_GSU4_MIWT1_1_NEPBS16_SU16_SUM1_SUS128_WGM32
     SourceSwap: 1
     StaggerU: 16
@@ -40648,13 +38024,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 154
+    SolutionIndex: 144
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU4_MIWT2_1_NEPBS16_SU4_SUM0_SUS256_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -40911,13 +38287,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 155
+    SolutionIndex: 145
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU8_SUM0_SUS256_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 8
@@ -41173,13 +38549,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 156
+    SolutionIndex: 146
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU4_SUM1_SUS512_WGM32
     SourceSwap: 1
     StaggerU: 4
@@ -41435,13 +38811,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 157
+    SolutionIndex: 147
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x512_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU32_SUM0_SUS1024_WGM16
     SourceSwap: 1
     StaggerU: 32
@@ -41697,13 +39073,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 158
+    SolutionIndex: 148
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT80x256x128_MI16x16x1_SN_GSU1_MIWT5_4_NEPBS16_SU4_SUM1_SUS256_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -41959,13 +39335,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 159
+    SolutionIndex: 149
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT80x256x128_MI16x16x1_SN_GSU1_MIWT5_4_NEPBS0_SU8_SUM0_SUS256_WGM32
     SourceSwap: 1
     StaggerU: 8
@@ -42221,13 +39597,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 160
+    SolutionIndex: 150
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU0_SUM0_SUS0_WGM0
     SourceSwap: 1
     StaggerU: 0
@@ -42483,13 +39859,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 161
+    SolutionIndex: 151
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x160x128_MI16x16x1_SN_GRVWA16_GRVWB16_GSU1_LPA32_LPB32_LRVW16_MIWT8_5_NEPBS0_SU4_SUM0_SUS256_SVW8_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -42745,13 +40121,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 162
+    SolutionIndex: 152
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS16_SU4_SUM1_SUS256_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -43007,13 +40383,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 163
+    SolutionIndex: 153
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_GSU1_MIWT4_14_NEPBS0_SU16_SUM0_SUS128_SVW4_WGM0
     SourceSwap: 1
     StaggerU: 16
@@ -43269,13 +40645,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 164
+    SolutionIndex: 154
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x64x128_MI16x16x1_SN_GSU1_MIWT4_4_NEPBS16_SU4_SUM0_SUS256_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 4
@@ -43531,13 +40907,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 165
+    SolutionIndex: 155
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x16x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS0_SU8_SUM1_SUS256_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 8
@@ -43793,13 +41169,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 166
+    SolutionIndex: 156
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x512_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU4_SUM1_SUS1024_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -44055,13 +41431,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 167
+    SolutionIndex: 157
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT448x32x64_MI16x16x1_SN_GSU1_MIWT14_1_NEPBS0_SU4_SUM0_SUS128_SVW2_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -44317,13 +41693,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 168
+    SolutionIndex: 158
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x32x512_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU4_SUM1_SUS1024_WGM0
     SourceSwap: 1
     StaggerU: 4
@@ -44579,13 +41955,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 169
+    SolutionIndex: 159
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -44841,13 +42217,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 170
+    SolutionIndex: 160
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT160x128x128_MI16x16x1_SN_GSU1_MIWT5_4_NEPBS16_SU4_SUM0_SUS256_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -45103,13 +42479,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 171
+    SolutionIndex: 161
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -45365,13 +42741,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 172
+    SolutionIndex: 162
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS0_SU16_SUM0_SUS256_SVW2_WGM16
     SourceSwap: 1
     StaggerU: 16
@@ -45627,13 +43003,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 173
+    SolutionIndex: 163
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x96x128_MI16x16x1_SN_GSU5_MIWT2_3_NEPBS0_SU16_SUM0_SUS256_SVW2_WGM16
     SourceSwap: 1
     StaggerU: 16
@@ -45889,13 +43265,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 174
+    SolutionIndex: 164
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS16_SU16_SUM0_SUS256_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 16
@@ -46151,13 +43527,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 175
+    SolutionIndex: 165
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x64x256_MI16x16x1_SN_GSU1_MIWT8_1_NEPBS16_SU32_SUM0_SUS512_SVW8_WGM4
     SourceSwap: 1
     StaggerU: 32
@@ -46413,13 +43789,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 176
+    SolutionIndex: 166
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x128x128_MI16x16x1_SN_GSU1_MIWT4_2_NEPBS16_SU4_SUM1_SUS256_SVW4_WGM4
     SourceSwap: 1
     StaggerU: 4
@@ -46675,13 +44051,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 177
+    SolutionIndex: 167
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT224x96x128_MI16x16x1_SN_GSU1_MIWT7_3_NEPBS0_SU4_SUM0_SUS256_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -46937,13 +44313,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 178
+    SolutionIndex: 168
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x16x128_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -47199,13 +44575,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 179
+    SolutionIndex: 169
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x96x128_MI16x16x1_SN_GSU3_MIWT1_3_NEPBS16_SU4_SUM0_SUS256_WGM8
     SourceSwap: 1
     StaggerU: 4
@@ -47461,13 +44837,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 180
+    SolutionIndex: 170
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS16_SU8_SUM1_SUS512_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -47723,13 +45099,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 181
+    SolutionIndex: 171
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x96x128_MI16x16x1_SN_GSU3_MIWT1_3_NEPBS16_SU8_SUM0_SUS256_WGM16
     SourceSwap: 1
     StaggerU: 8
@@ -47985,13 +45361,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 182
+    SolutionIndex: 172
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS0_SU8_SUM0_SUS256_SVW2_WGM16
     SourceSwap: 1
     StaggerU: 8
@@ -48247,13 +45623,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 183
+    SolutionIndex: 173
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x32x256_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU32_SUM0_SUS512_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 32
@@ -48509,13 +45885,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 184
+    SolutionIndex: 174
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x256_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS0_SU4_SUM0_SUS512_SVW2_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -48771,13 +46147,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 185
+    SolutionIndex: 175
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_GRVWA8_GRVWB8_GSU1_LPA8_LPB8_LRVW8_MIWT4_8_NEPBS16_SU8_SUM0_SUS128_SVW4_WGM4
     SourceSwap: 1
     StaggerU: 8
@@ -49033,13 +46409,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 186
+    SolutionIndex: 176
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT16x16x256_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -49295,13 +46671,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 187
+    SolutionIndex: 177
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x128x128_MI16x16x1_SN_GSU1_MIWT4_4_NEPBS0_SU0_SUM0_SUS0_SVW4_WGM32
     SourceSwap: 1
     StaggerU: 0
@@ -49557,13 +46933,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 188
+    SolutionIndex: 178
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x128x128_MI16x16x1_SN_GSU4_MIWT4_4_NEPBS16_SU16_SUM1_SUS256_SVW4_WGM0
     SourceSwap: 1
     StaggerU: 16
@@ -49819,13 +47195,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 189
+    SolutionIndex: 179
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x80x128_MI16x16x1_SN_GSU1_MIWT2_5_NEPBS16_SU0_SUM0_SUS0_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 0
@@ -50081,13 +47457,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 190
+    SolutionIndex: 180
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x128x128_MI16x16x1_SN_GSU1_MIWT4_4_NEPBS16_SU4_SUM0_SUS256_SVW4_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -50343,13 +47719,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 191
+    SolutionIndex: 181
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x128x128_MI16x16x1_SN_GSU1_MIWT4_4_NEPBS16_SU32_SUM0_SUS256_SVW4_WGM32
     SourceSwap: 1
     StaggerU: 32
@@ -50605,13 +47981,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 192
+    SolutionIndex: 182
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x160x64_MI16x16x1_SN_GSU1_MIWT2_10_NEPBS16_SU8_SUM0_SUS128_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -50867,13 +48243,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 193
+    SolutionIndex: 183
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x32x128_MI16x16x1_SN_GSU1_MIWT1_1_NEPBS0_SU0_SUM0_SUS0_WGM1
     SourceSwap: 1
     StaggerU: 0
@@ -51129,13 +48505,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 194
+    SolutionIndex: 184
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS16_SU16_SUM0_SUS256_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 16
@@ -51391,13 +48767,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 195
+    SolutionIndex: 185
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU1_MIWT2_1_NEPBS0_SU4_SUM1_SUS256_SVW2_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -51653,13 +49029,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 196
+    SolutionIndex: 186
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x128_MI16x16x1_SN_GSU1_MIWT1_2_NEPBS16_SU4_SUM0_SUS256_WGM16
     SourceSwap: 1
     StaggerU: 4
@@ -51915,13 +49291,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 197
+    SolutionIndex: 187
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x128x128_MI16x16x1_SN_GSU1_MIWT4_4_NEPBS0_SU4_SUM0_SUS256_SVW4_WGM32
     SourceSwap: 1
     StaggerU: 4
@@ -52177,13 +49553,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 198
+    SolutionIndex: 188
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x256_MI16x16x1_SN_GSU1_MIWT2_2_NEPBS0_SU0_SUM0_SUS0_SVW2_WGM4
     SourceSwap: 1
     StaggerU: 0
@@ -52439,13 +49815,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 199
+    SolutionIndex: 189
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT128x64x128_MI16x16x1_SN_GSU1_MIWT4_2_NEPBS0_SU16_SUM1_SUS256_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 16
@@ -52701,13 +50077,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 200
+    SolutionIndex: 190
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x144x128_MI16x16x1_SN_GSU1_MIWT4_9_NEPBS16_SU8_SUM0_SUS256_SVW4_WGM8
     SourceSwap: 1
     StaggerU: 8
@@ -52963,13 +50339,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 201
+    SolutionIndex: 191
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x160x32_MI16x16x1_SN_GSU1_MIWT4_10_NEPBS0_SU16_SUM0_SUS64_SVW4_WGM32
     SourceSwap: 1
     StaggerU: 16
@@ -53225,13 +50601,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 202
+    SolutionIndex: 192
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT64x64x256_MI16x16x1_SN_GSU5_MIWT4_1_NEPBS16_SU4_SUM0_SUS512_SVW4_WGM1
     SourceSwap: 1
     StaggerU: 4
@@ -53488,13 +50864,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 203
+    SolutionIndex: 193
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT32x64x256_MI16x16x1_SN_GSU1_MIWT1_2_NEPBS0_SU32_SUM1_SUS512_WGM1
     SourceSwap: 1
     StaggerU: 32
@@ -53750,13 +51126,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 204
+    SolutionIndex: 194
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT48x64x256_MI16x16x1_SN_GSU1_MIWT3_1_NEPBS0_SU16_SUM0_SUS512_WGM32
     SourceSwap: 1
     StaggerU: 16
@@ -54012,13 +51388,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 205
+    SolutionIndex: 195
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT192x256x32_MI16x16x1_SN_GSU1_MIWT12_4_NEPBS0_SU32_SUM0_SUS64_SVW4_WGM16
     SourceSwap: 1
     StaggerU: 32
@@ -54274,13 +51650,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 206
+    SolutionIndex: 196
     SolutionNameMin: Cijk_Alik_Bljk_F8BS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_GSU1_MIWT4_14_NEPBS16_SU8_SUM0_SUS256_SVW4_WGM4
     SourceSwap: 1
     StaggerU: 8
@@ -54333,423 +51709,423 @@
     _staggerStrideShift: 1
 - [2, 3, 0, 1]
 - - - [7168, 2, 1, 8192]
-    - [3, 0.0]
+    - [1, 0.0]
   - - [3584, 2, 1, 8192]
-    - [4, 0.0]
+    - [2, 0.0]
   - - [1024, 2, 1, 8192]
-    - [6, 0.0]
+    - [3, 0.0]
   - - [7168, 8192, 1, 8192]
-    - [7, 0.0]
+    - [4, 0.0]
   - - [3584, 8192, 1, 8192]
-    - [8, 0.0]
+    - [5, 0.0]
   - - [1280, 8192, 1, 8192]
-    - [9, 0.0]
+    - [6, 0.0]
   - - [1024, 8192, 1, 8192]
-    - [10, 0.0]
+    - [7, 0.0]
   - - [7168, 16384, 1, 8192]
-    - [11, 0.0]
+    - [8, 0.0]
   - - [3584, 16384, 1, 8192]
-    - [12, 0.0]
+    - [9, 0.0]
   - - [1280, 16384, 1, 8192]
-    - [13, 0.0]
+    - [10, 0.0]
   - - [1024, 16384, 1, 8192]
-    - [14, 0.0]
+    - [11, 0.0]
   - - [7168, 32768, 1, 8192]
-    - [15, 0.0]
+    - [12, 0.0]
   - - [3584, 32768, 1, 8192]
-    - [16, 0.0]
+    - [13, 0.0]
   - - [1280, 32768, 1, 8192]
-    - [17, 0.0]
+    - [14, 0.0]
   - - [1024, 32768, 1, 8192]
-    - [18, 0.0]
+    - [15, 0.0]
   - - [7168, 4, 1, 8192]
-    - [20, 0.0]
+    - [16, 0.0]
   - - [3584, 4, 1, 8192]
-    - [21, 0.0]
+    - [17, 0.0]
   - - [1024, 4, 1, 8192]
-    - [22, 0.0]
+    - [18, 0.0]
   - - [7168, 65536, 1, 8192]
-    - [23, 0.0]
+    - [19, 0.0]
   - - [3584, 65536, 1, 8192]
-    - [24, 0.0]
+    - [20, 0.0]
   - - [1280, 65536, 1, 8192]
-    - [25, 0.0]
+    - [21, 0.0]
   - - [1024, 65536, 1, 8192]
-    - [26, 0.0]
+    - [22, 0.0]
   - - [7168, 8, 1, 8192]
-    - [29, 0.0]
+    - [24, 0.0]
   - - [3584, 8, 1, 8192]
-    - [30, 0.0]
+    - [25, 0.0]
   - - [1024, 8, 1, 8192]
-    - [32, 0.0]
+    - [26, 0.0]
   - - [7168, 131072, 1, 8192]
-    - [33, 0.0]
+    - [27, 0.0]
   - - [3584, 131072, 1, 8192]
-    - [34, 0.0]
-  - - [1280, 131072, 1, 8192]
-    - [35, 0.0]
-  - - [1024, 131072, 1, 8192]
-    - [33, 0.0]
-  - - [7168, 16, 1, 8192]
-    - [37, 0.0]
-  - - [3584, 16, 1, 8192]
-    - [38, 0.0]
-  - - [1024, 16, 1, 8192]
-    - [40, 0.0]
-  - - [7168, 262144, 1, 8192]
-    - [41, 0.0]
-  - - [3584, 262144, 1, 8192]
-    - [33, 0.0]
-  - - [1280, 262144, 1, 8192]
-    - [42, 0.0]
-  - - [1024, 262144, 1, 8192]
-    - [43, 0.0]
-  - - [7168, 32, 1, 8192]
-    - [46, 0.0]
-  - - [3584, 32, 1, 8192]
-    - [47, 0.0]
-  - - [1024, 32, 1, 8192]
-    - [48, 0.0]
-  - - [7168, 524288, 1, 8192]
-    - [49, 0.0]
-  - - [3584, 524288, 1, 8192]
-    - [50, 0.0]
-  - - [1280, 524288, 1, 8192]
-    - [51, 0.0]
-  - - [1024, 524288, 1, 8192]
-    - [43, 0.0]
-  - - [8192, 64, 1, 1024]
-    - [52, 0.0]
-  - - [8192, 64, 1, 3584]
-    - [204, 0.0]
-  - - [7168, 64, 1, 8192]
-    - [203, 0.0]
-  - - [3584, 64, 1, 8192]
-    - [202, 0.0]
-  - - [1280, 64, 1, 8192]
-    - [53, 0.0]
-  - - [1024, 64, 1, 8192]
-    - [54, 0.0]
-  - - [7168, 1048576, 1, 8192]
-    - [33, 0.0]
-  - - [3584, 1048576, 1, 8192]
-    - [50, 0.0]
-  - - [1280, 1048576, 1, 8192]
-    - [55, 0.0]
-  - - [1024, 1048576, 1, 8192]
-    - [56, 0.0]
-  - - [8192, 128, 1, 1024]
-    - [57, 0.0]
-  - - [8192, 128, 1, 3584]
-    - [58, 0.0]
-  - - [7168, 128, 1, 8192]
-    - [59, 0.0]
-  - - [3584, 128, 1, 8192]
-    - [60, 0.0]
-  - - [1280, 128, 1, 8192]
-    - [61, 0.0]
-  - - [1024, 128, 1, 8192]
-    - [62, 0.0]
-  - - [7168, 2097152, 1, 8192]
-    - [63, 0.0]
-  - - [3584, 2097152, 1, 8192]
-    - [64, 0.0]
-  - - [1280, 2097152, 1, 8192]
-    - [65, 0.0]
-  - - [1024, 2097152, 1, 8192]
-    - [66, 0.0]
-  - - [256, 256, 1, 256]
-    - [67, 0.0]
-  - - [384, 384, 1, 384]
-    - [68, 0.0]
-  - - [512, 512, 1, 512]
-    - [69, 0.0]
-  - - [640, 640, 1, 640]
-    - [70, 0.0]
-  - - [768, 768, 1, 768]
-    - [71, 0.0]
-  - - [896, 896, 1, 896]
-    - [72, 0.0]
-  - - [1024, 1024, 1, 1024]
-    - [73, 0.0]
-  - - [1152, 1152, 1, 1152]
-    - [74, 0.0]
-  - - [1280, 1280, 1, 1280]
-    - [75, 0.0]
-  - - [1408, 1408, 1, 1408]
-    - [76, 0.0]
-  - - [1536, 1536, 1, 1536]
-    - [77, 0.0]
-  - - [1664, 1664, 1, 1664]
-    - [78, 0.0]
-  - - [1792, 1792, 1, 1792]
-    - [79, 0.0]
-  - - [1920, 1920, 1, 1920]
-    - [80, 0.0]
-  - - [2048, 2048, 1, 2048]
-    - [81, 0.0]
-  - - [2176, 2176, 1, 2176]
-    - [82, 0.0]
-  - - [2304, 2304, 1, 2304]
-    - [83, 0.0]
-  - - [2432, 2432, 1, 2432]
-    - [84, 0.0]
-  - - [2560, 2560, 1, 2560]
-    - [85, 0.0]
-  - - [2688, 2688, 1, 2688]
-    - [86, 0.0]
-  - - [2816, 2816, 1, 2816]
-    - [200, 0.0]
-  - - [2944, 2944, 1, 2944]
-    - [87, 0.0]
-  - - [3072, 3072, 1, 3072]
-    - [88, 0.0]
-  - - [3200, 3200, 1, 3200]
-    - [89, 0.0]
-  - - [3328, 3328, 1, 3328]
-    - [90, 0.0]
-  - - [3456, 3456, 1, 3456]
-    - [91, 0.0]
-  - - [3584, 3584, 1, 3584]
-    - [92, 0.0]
-  - - [3712, 3712, 1, 3712]
-    - [93, 0.0]
-  - - [3840, 3840, 1, 3840]
-    - [94, 0.0]
-  - - [3968, 3968, 1, 3968]
-    - [95, 0.0]
-  - - [4096, 4096, 1, 4096]
-    - [96, 0.0]
-  - - [4000, 2, 1, 8192]
-    - [97, 0.0]
-  - - [4000, 8192, 1, 8192]
-    - [98, 0.0]
-  - - [16384, 128, 1, 2304]
-    - [99, 0.0]
-  - - [6, 384, 1, 1536]
-    - [100, 0.0]
-  - - [6, 3072, 1, 768]
-    - [101, 0.0]
-  - - [16384, 2, 1, 2304]
-    - [102, 0.0]
-  - - [6144, 384, 1, 384]
-    - [103, 0.0]
-  - - [2048, 131072, 1, 16384]
-    - [104, 0.0]
-  - - [462, 768, 1, 384]
-    - [105, 0.0]
-  - - [462, 4096, 1, 384]
-    - [106, 0.0]
-  - - [16384, 32768, 1, 2304]
-    - [107, 0.0]
-  - - [462, 1472, 1, 384]
-    - [108, 0.0]
-  - - [6144, 384, 1, 3072]
-    - [109, 0.0]
-  - - [6144, 1536, 1, 384]
-    - [110, 0.0]
-  - - [16384, 128, 1, 13312]
-    - [111, 0.0]
-  - - [6, 3072, 1, 1536]
-    - [112, 0.0]
-  - - [2048, 65536, 1, 16384]
-    - [104, 0.0]
-  - - [1536, 768, 1, 768]
-    - [113, 0.0]
-  - - [462, 768, 1, 768]
-    - [105, 0.0]
-  - - [462, 4096, 1, 768]
-    - [114, 0.0]
-  - - [2048, 8192, 1, 16384]
-    - [115, 0.0]
-  - - [462, 1472, 1, 768]
-    - [116, 0.0]
-  - - [1536, 768, 1, 6144]
-    - [117, 0.0]
-  - - [1536, 3072, 1, 768]
-    - [118, 0.0]
-  - - [16384, 8, 1, 13312]
-    - [119, 0.0]
-  - - [6, 3072, 1, 3072]
-    - [120, 0.0]
-  - - [384, 1536, 1, 1536]
-    - [121, 0.0]
-  - - [16384, 4096, 1, 13312]
-    - [122, 0.0]
-  - - [462, 768, 1, 1536]
-    - [123, 0.0]
-  - - [462, 4096, 1, 1536]
-    - [124, 0.0]
-  - - [462, 1472, 1, 1536]
-    - [125, 0.0]
-  - - [384, 1536, 1, 12288]
-    - [126, 0.0]
-  - - [384, 6144, 1, 1536]
-    - [127, 0.0]
-  - - [96, 1536, 1, 1536]
-    - [128, 0.0]
-  - - [96, 1536, 1, 12288]
-    - [129, 0.0]
-  - - [96, 6144, 1, 1536]
-    - [130, 0.0]
-  - - [2048, 152710, 1, 512]
-    - [131, 0.0]
-  - - [2048, 64896, 1, 512]
-    - [132, 0.0]
-  - - [2048, 17556, 1, 512]
-    - [133, 0.0]
-  - - [512, 14, 1, 256]
-    - [134, 0.0]
-  - - [2048, 16302, 1, 512]
-    - [135, 0.0]
-  - - [512, 13, 1, 256]
-    - [2, 0.0]
-  - - [8192, 3500, 1, 2048]
-    - [136, 0.0]
-  - - [512, 3500, 1, 512]
-    - [137, 0.0]
-  - - [2048, 17052, 1, 512]
-    - [138, 0.0]
-  - - [262144, 13, 1, 256]
-    - [139, 0.0]
-  - - [256, 14, 1, 2560]
-    - [140, 0.0]
-  - - [262144, 14, 1, 256]
-    - [141, 0.0]
-  - - [8192, 3250, 1, 2048]
-    - [142, 0.0]
-  - - [256, 13, 1, 2560]
-    - [140, 0.0]
-  - - [512, 3250, 1, 512]
-    - [137, 0.0]
-  - - [256, 14, 1, 256]
-    - [143, 0.0]
-  - - [2048, 1024, 1, 5560]
-    - [144, 0.0]
-  - - [1, 1024, 1, 256]
-    - [101, 0.0]
-  - - [512, 1024, 1, 5744]
-    - [145, 0.0]
-  - - [128, 1024, 1, 10624]
-    - [146, 0.0]
-  - - [512, 1024, 1, 5560]
-    - [147, 0.0]
-  - - [1024, 1024, 1, 3840]
-    - [148, 0.0]
-  - - [1024, 1024, 1, 2872]
-    - [149, 0.0]
-  - - [2872, 1024, 1, 512]
-    - [150, 0.0]
-  - - [1, 1024, 1, 128]
-    - [151, 0.0]
-  - - [128, 1024, 1, 7040]
-    - [152, 0.0]
-  - - [128, 1024, 1, 4416]
-    - [153, 0.0]
-  - - [128, 1024, 1, 6784]
-    - [154, 0.0]
-  - - [512, 1024, 1, 2872]
-    - [155, 0.0]
-  - - [256, 1024, 1, 4608]
-    - [156, 0.0]
-  - - [512, 1024, 1, 3072]
-    - [157, 0.0]
-  - - [5560, 1024, 1, 2780]
-    - [158, 0.0]
-  - - [2780, 1024, 1, 5560]
-    - [159, 0.0]
-  - - [512, 16, 1, 256]
-    - [160, 0.0]
-  - - [512, 32, 1, 256]
-    - [67, 0.0]
-  - - [8192, 4000, 1, 2048]
-    - [161, 0.0]
-  - - [512, 4000, 1, 512]
-    - [162, 0.0]
-  - - [8192, 8000, 1, 2048]
-    - [163, 0.0]
-  - - [512, 8000, 1, 512]
-    - [164, 0.0]
-  - - [262144, 16, 1, 256]
-    - [165, 0.0]
-  - - [256, 16, 1, 2560]
-    - [166, 0.0]
-  - - [262144, 32, 1, 256]
-    - [167, 0.0]
-  - - [256, 32, 1, 2560]
-    - [168, 0.0]
-  - - [256, 13, 1, 256]
-    - [2, 0.0]
-  - - [256, 16, 1, 256]
     - [28, 0.0]
-  - - [256, 32, 1, 256]
-    - [169, 0.0]
-  - - [2048, 2048, 1, 5560]
-    - [170, 0.0]
-  - - [1, 2048, 1, 256]
-    - [171, 0.0]
-  - - [512, 2048, 1, 5744]
-    - [172, 0.0]
-  - - [128, 2048, 1, 10624]
-    - [173, 0.0]
-  - - [512, 2048, 1, 5560]
-    - [174, 0.0]
-  - - [1024, 2048, 1, 3840]
-    - [175, 0.0]
-  - - [1024, 2048, 1, 2872]
-    - [176, 0.0]
-  - - [2872, 2048, 1, 512]
-    - [177, 0.0]
-  - - [1, 2048, 1, 128]
-    - [178, 0.0]
-  - - [128, 2048, 1, 7040]
-    - [179, 0.0]
-  - - [128, 2048, 1, 4416]
-    - [180, 0.0]
-  - - [128, 2048, 1, 6784]
-    - [181, 0.0]
-  - - [512, 2048, 1, 2872]
-    - [182, 0.0]
-  - - [256, 2048, 1, 4608]
-    - [183, 0.0]
-  - - [512, 2048, 1, 3072]
-    - [184, 0.0]
-  - - [2048, 4096, 1, 5560]
-    - [185, 0.0]
-  - - [1, 4096, 1, 256]
-    - [186, 0.0]
-  - - [512, 4096, 1, 5744]
-    - [187, 0.0]
-  - - [128, 4096, 1, 10624]
-    - [188, 0.0]
-  - - [512, 4096, 1, 5560]
-    - [189, 0.0]
-  - - [1024, 4096, 1, 3840]
-    - [190, 0.0]
-  - - [1024, 4096, 1, 2872]
-    - [191, 0.0]
-  - - [2872, 4096, 1, 512]
-    - [192, 0.0]
-  - - [1, 4096, 1, 128]
-    - [193, 0.0]
-  - - [128, 4096, 1, 7040]
+  - - [1280, 131072, 1, 8192]
+    - [29, 0.0]
+  - - [1024, 131072, 1, 8192]
+    - [27, 0.0]
+  - - [7168, 16, 1, 8192]
+    - [30, 0.0]
+  - - [3584, 16, 1, 8192]
+    - [31, 0.0]
+  - - [1024, 16, 1, 8192]
+    - [32, 0.0]
+  - - [7168, 262144, 1, 8192]
+    - [33, 0.0]
+  - - [3584, 262144, 1, 8192]
+    - [27, 0.0]
+  - - [1280, 262144, 1, 8192]
+    - [34, 0.0]
+  - - [1024, 262144, 1, 8192]
+    - [35, 0.0]
+  - - [7168, 32, 1, 8192]
+    - [36, 0.0]
+  - - [3584, 32, 1, 8192]
+    - [37, 0.0]
+  - - [1024, 32, 1, 8192]
+    - [38, 0.0]
+  - - [7168, 524288, 1, 8192]
+    - [39, 0.0]
+  - - [3584, 524288, 1, 8192]
+    - [40, 0.0]
+  - - [1280, 524288, 1, 8192]
+    - [41, 0.0]
+  - - [1024, 524288, 1, 8192]
+    - [35, 0.0]
+  - - [8192, 64, 1, 1024]
+    - [42, 0.0]
+  - - [8192, 64, 1, 3584]
     - [194, 0.0]
+  - - [7168, 64, 1, 8192]
+    - [193, 0.0]
+  - - [3584, 64, 1, 8192]
+    - [192, 0.0]
+  - - [1280, 64, 1, 8192]
+    - [43, 0.0]
+  - - [1024, 64, 1, 8192]
+    - [44, 0.0]
+  - - [7168, 1048576, 1, 8192]
+    - [27, 0.0]
+  - - [3584, 1048576, 1, 8192]
+    - [40, 0.0]
+  - - [1280, 1048576, 1, 8192]
+    - [45, 0.0]
+  - - [1024, 1048576, 1, 8192]
+    - [46, 0.0]
+  - - [8192, 128, 1, 1024]
+    - [47, 0.0]
+  - - [8192, 128, 1, 3584]
+    - [48, 0.0]
+  - - [7168, 128, 1, 8192]
+    - [49, 0.0]
+  - - [3584, 128, 1, 8192]
+    - [50, 0.0]
+  - - [1280, 128, 1, 8192]
+    - [51, 0.0]
+  - - [1024, 128, 1, 8192]
+    - [52, 0.0]
+  - - [7168, 2097152, 1, 8192]
+    - [53, 0.0]
+  - - [3584, 2097152, 1, 8192]
+    - [54, 0.0]
+  - - [1280, 2097152, 1, 8192]
+    - [55, 0.0]
+  - - [1024, 2097152, 1, 8192]
+    - [56, 0.0]
+  - - [256, 256, 1, 256]
+    - [57, 0.0]
+  - - [384, 384, 1, 384]
+    - [58, 0.0]
+  - - [512, 512, 1, 512]
+    - [59, 0.0]
+  - - [640, 640, 1, 640]
+    - [60, 0.0]
+  - - [768, 768, 1, 768]
+    - [61, 0.0]
+  - - [896, 896, 1, 896]
+    - [62, 0.0]
+  - - [1024, 1024, 1, 1024]
+    - [63, 0.0]
+  - - [1152, 1152, 1, 1152]
+    - [64, 0.0]
+  - - [1280, 1280, 1, 1280]
+    - [65, 0.0]
+  - - [1408, 1408, 1, 1408]
+    - [66, 0.0]
+  - - [1536, 1536, 1, 1536]
+    - [67, 0.0]
+  - - [1664, 1664, 1, 1664]
+    - [68, 0.0]
+  - - [1792, 1792, 1, 1792]
+    - [69, 0.0]
+  - - [1920, 1920, 1, 1920]
+    - [70, 0.0]
+  - - [2048, 2048, 1, 2048]
+    - [71, 0.0]
+  - - [2176, 2176, 1, 2176]
+    - [72, 0.0]
+  - - [2304, 2304, 1, 2304]
+    - [73, 0.0]
+  - - [2432, 2432, 1, 2432]
+    - [74, 0.0]
+  - - [2560, 2560, 1, 2560]
+    - [75, 0.0]
+  - - [2688, 2688, 1, 2688]
+    - [76, 0.0]
+  - - [2816, 2816, 1, 2816]
+    - [190, 0.0]
+  - - [2944, 2944, 1, 2944]
+    - [77, 0.0]
+  - - [3072, 3072, 1, 3072]
+    - [78, 0.0]
+  - - [3200, 3200, 1, 3200]
+    - [79, 0.0]
+  - - [3328, 3328, 1, 3328]
+    - [80, 0.0]
+  - - [3456, 3456, 1, 3456]
+    - [81, 0.0]
+  - - [3584, 3584, 1, 3584]
+    - [82, 0.0]
+  - - [3712, 3712, 1, 3712]
+    - [83, 0.0]
+  - - [3840, 3840, 1, 3840]
+    - [84, 0.0]
+  - - [3968, 3968, 1, 3968]
+    - [85, 0.0]
+  - - [4096, 4096, 1, 4096]
+    - [86, 0.0]
+  - - [4000, 2, 1, 8192]
+    - [87, 0.0]
+  - - [4000, 8192, 1, 8192]
+    - [88, 0.0]
+  - - [16384, 128, 1, 2304]
+    - [89, 0.0]
+  - - [6, 384, 1, 1536]
+    - [90, 0.0]
+  - - [6, 3072, 1, 768]
+    - [91, 0.0]
+  - - [16384, 2, 1, 2304]
+    - [92, 0.0]
+  - - [6144, 384, 1, 384]
+    - [93, 0.0]
+  - - [2048, 131072, 1, 16384]
+    - [94, 0.0]
+  - - [462, 768, 1, 384]
+    - [95, 0.0]
+  - - [462, 4096, 1, 384]
+    - [96, 0.0]
+  - - [16384, 32768, 1, 2304]
+    - [97, 0.0]
+  - - [462, 1472, 1, 384]
+    - [98, 0.0]
+  - - [6144, 384, 1, 3072]
+    - [99, 0.0]
+  - - [6144, 1536, 1, 384]
+    - [100, 0.0]
+  - - [16384, 128, 1, 13312]
+    - [101, 0.0]
+  - - [6, 3072, 1, 1536]
+    - [102, 0.0]
+  - - [2048, 65536, 1, 16384]
+    - [94, 0.0]
+  - - [1536, 768, 1, 768]
+    - [103, 0.0]
+  - - [462, 768, 1, 768]
+    - [95, 0.0]
+  - - [462, 4096, 1, 768]
+    - [104, 0.0]
+  - - [2048, 8192, 1, 16384]
+    - [105, 0.0]
+  - - [462, 1472, 1, 768]
+    - [106, 0.0]
+  - - [1536, 768, 1, 6144]
+    - [107, 0.0]
+  - - [1536, 3072, 1, 768]
+    - [108, 0.0]
+  - - [16384, 8, 1, 13312]
+    - [109, 0.0]
+  - - [6, 3072, 1, 3072]
+    - [110, 0.0]
+  - - [384, 1536, 1, 1536]
+    - [111, 0.0]
+  - - [16384, 4096, 1, 13312]
+    - [112, 0.0]
+  - - [462, 768, 1, 1536]
+    - [113, 0.0]
+  - - [462, 4096, 1, 1536]
+    - [114, 0.0]
+  - - [462, 1472, 1, 1536]
+    - [115, 0.0]
+  - - [384, 1536, 1, 12288]
+    - [116, 0.0]
+  - - [384, 6144, 1, 1536]
+    - [117, 0.0]
+  - - [96, 1536, 1, 1536]
+    - [118, 0.0]
+  - - [96, 1536, 1, 12288]
+    - [119, 0.0]
+  - - [96, 6144, 1, 1536]
+    - [120, 0.0]
+  - - [2048, 152710, 1, 512]
+    - [121, 0.0]
+  - - [2048, 64896, 1, 512]
+    - [122, 0.0]
+  - - [2048, 17556, 1, 512]
+    - [123, 0.0]
+  - - [512, 14, 1, 256]
+    - [124, 0.0]
+  - - [2048, 16302, 1, 512]
+    - [125, 0.0]
+  - - [512, 13, 1, 256]
+    - [0, 0.0]
+  - - [8192, 3500, 1, 2048]
+    - [126, 0.0]
+  - - [512, 3500, 1, 512]
+    - [127, 0.0]
+  - - [2048, 17052, 1, 512]
+    - [128, 0.0]
+  - - [262144, 13, 1, 256]
+    - [129, 0.0]
+  - - [256, 14, 1, 2560]
+    - [130, 0.0]
+  - - [262144, 14, 1, 256]
+    - [131, 0.0]
+  - - [8192, 3250, 1, 2048]
+    - [132, 0.0]
+  - - [256, 13, 1, 2560]
+    - [130, 0.0]
+  - - [512, 3250, 1, 512]
+    - [127, 0.0]
+  - - [256, 14, 1, 256]
+    - [133, 0.0]
+  - - [2048, 1024, 1, 5560]
+    - [134, 0.0]
+  - - [1, 1024, 1, 256]
+    - [91, 0.0]
+  - - [512, 1024, 1, 5744]
+    - [135, 0.0]
+  - - [128, 1024, 1, 10624]
+    - [136, 0.0]
+  - - [512, 1024, 1, 5560]
+    - [137, 0.0]
+  - - [1024, 1024, 1, 3840]
+    - [138, 0.0]
+  - - [1024, 1024, 1, 2872]
+    - [139, 0.0]
+  - - [2872, 1024, 1, 512]
+    - [140, 0.0]
+  - - [1, 1024, 1, 128]
+    - [141, 0.0]
+  - - [128, 1024, 1, 7040]
+    - [142, 0.0]
+  - - [128, 1024, 1, 4416]
+    - [143, 0.0]
+  - - [128, 1024, 1, 6784]
+    - [144, 0.0]
+  - - [512, 1024, 1, 2872]
+    - [145, 0.0]
+  - - [256, 1024, 1, 4608]
+    - [146, 0.0]
+  - - [512, 1024, 1, 3072]
+    - [147, 0.0]
+  - - [5560, 1024, 1, 2780]
+    - [148, 0.0]
+  - - [2780, 1024, 1, 5560]
+    - [149, 0.0]
+  - - [512, 16, 1, 256]
+    - [150, 0.0]
+  - - [512, 32, 1, 256]
+    - [57, 0.0]
+  - - [8192, 4000, 1, 2048]
+    - [151, 0.0]
+  - - [512, 4000, 1, 512]
+    - [152, 0.0]
+  - - [8192, 8000, 1, 2048]
+    - [153, 0.0]
+  - - [512, 8000, 1, 512]
+    - [154, 0.0]
+  - - [262144, 16, 1, 256]
+    - [155, 0.0]
+  - - [256, 16, 1, 2560]
+    - [156, 0.0]
+  - - [262144, 32, 1, 256]
+    - [157, 0.0]
+  - - [256, 32, 1, 2560]
+    - [158, 0.0]
+  - - [256, 13, 1, 256]
+    - [0, 0.0]
+  - - [256, 16, 1, 256]
+    - [23, 0.0]
+  - - [256, 32, 1, 256]
+    - [159, 0.0]
+  - - [2048, 2048, 1, 5560]
+    - [160, 0.0]
+  - - [1, 2048, 1, 256]
+    - [161, 0.0]
+  - - [512, 2048, 1, 5744]
+    - [162, 0.0]
+  - - [128, 2048, 1, 10624]
+    - [163, 0.0]
+  - - [512, 2048, 1, 5560]
+    - [164, 0.0]
+  - - [1024, 2048, 1, 3840]
+    - [165, 0.0]
+  - - [1024, 2048, 1, 2872]
+    - [166, 0.0]
+  - - [2872, 2048, 1, 512]
+    - [167, 0.0]
+  - - [1, 2048, 1, 128]
+    - [168, 0.0]
+  - - [128, 2048, 1, 7040]
+    - [169, 0.0]
+  - - [128, 2048, 1, 4416]
+    - [170, 0.0]
+  - - [128, 2048, 1, 6784]
+    - [171, 0.0]
+  - - [512, 2048, 1, 2872]
+    - [172, 0.0]
+  - - [256, 2048, 1, 4608]
+    - [173, 0.0]
+  - - [512, 2048, 1, 3072]
+    - [174, 0.0]
+  - - [2048, 4096, 1, 5560]
+    - [175, 0.0]
+  - - [1, 4096, 1, 256]
+    - [176, 0.0]
+  - - [512, 4096, 1, 5744]
+    - [177, 0.0]
+  - - [128, 4096, 1, 10624]
+    - [178, 0.0]
+  - - [512, 4096, 1, 5560]
+    - [179, 0.0]
+  - - [1024, 4096, 1, 3840]
+    - [180, 0.0]
+  - - [1024, 4096, 1, 2872]
+    - [181, 0.0]
+  - - [2872, 4096, 1, 512]
+    - [182, 0.0]
+  - - [1, 4096, 1, 128]
+    - [183, 0.0]
+  - - [128, 4096, 1, 7040]
+    - [184, 0.0]
   - - [128, 4096, 1, 4416]
-    - [195, 0.0]
+    - [185, 0.0]
   - - [128, 4096, 1, 6784]
-    - [196, 0.0]
+    - [186, 0.0]
   - - [512, 4096, 1, 2872]
-    - [197, 0.0]
+    - [187, 0.0]
   - - [256, 4096, 1, 4608]
-    - [198, 0.0]
+    - [188, 0.0]
   - - [512, 4096, 1, 3072]
-    - [199, 0.0]
+    - [189, 0.0]
   - - [152710, 2048, 1, 512]
-    - [201, 0.0]
+    - [191, 0.0]
   - - [64896, 2048, 1, 512]
-    - [205, 0.0]
+    - [195, 0.0]
   - - [2048, 32768, 1, 16384]
-    - [206, 0.0]
+    - [196, 0.0]
 - null
 - null
 - DeviceEfficiency
