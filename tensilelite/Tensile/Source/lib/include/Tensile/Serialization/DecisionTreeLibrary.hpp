@@ -58,9 +58,7 @@ namespace Tensile
 
             static void mapping(IO& io, Forest& lib)
             {
-                int32_t index = -1;
                 iot::mapRequired(io, "trees", lib.trees);
-                iot::mapRequired(io, "nullValue", lib.nullValue);
             }
 
             const static bool flow = false;
