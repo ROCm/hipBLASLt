@@ -175,7 +175,7 @@ class FreeSizeLibrary:
 
 class DecisionTreeLibrary:
     Tag = "DecisionTree"
-    StateKeys = [("type", "tag"), "features", "trees", "nullValue"]
+    StateKeys = [("type", "tag"), "features", "trees"]
 
     @classmethod
     def FromOriginalState(cls, d, solutions):
@@ -183,14 +183,6 @@ class DecisionTreeLibrary:
         origTrees = d["trees"]
 
         trees = []
-        
-        if "fallback" in d:
-            fallbackIndex = d["fallback"]
-            nullValue = SingleSolutionLibrary(solutions[fallbackIndex])
-        else:
-            raise RuntimeError(
-                "DecisionTree has no fallback; likely a legacy model which is not supported."
-            )
 
         for tree in origTrees:
             index = tree["solution"]
@@ -199,7 +191,7 @@ class DecisionTreeLibrary:
             entry = {"tree": tree["tree"], "value": value}
             trees.append(entry)
 
-        return cls(features, trees, nullValue)
+        return cls(features, trees)
 
     @property
     def tag(self):
@@ -213,10 +205,9 @@ class DecisionTreeLibrary:
     def remapSolutionIndices(self, indexMap):
         pass
 
-    def __init__(self, features, trees, nullValue):
+    def __init__(self, features, trees):
         self.features = features
         self.trees = trees
-        self.nullValue = nullValue
 
 
 class ProblemMapLibrary:
