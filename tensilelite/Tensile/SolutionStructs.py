@@ -144,6 +144,8 @@ class ProblemType(Mapping):
           printExit("NO compute data type, or dest data type, or data type specified")
           self["DataType"] = DataType(0)
 
+    # Just like DataTypeE is DestDataType by default; DataTypeAmaxD if ComputeDataType by default.
+    # So far we don't have to set it in config yamls
     self["DataTypeAmaxD"] = self["ComputeDataType"]
     if "DataTypeAmaxD" in config:
       self["DataTypeAmaxD"] = DataType(config["DataTypeAmaxD"])

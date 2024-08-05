@@ -354,15 +354,6 @@ class KernelWriterAssembly(KernelWriter):
     tmpSgpr = allocTmpGprList(self.sgprPool, nums, self.consts.maxSgprs, alignments, tag, overflowListener)
     return tmpSgpr
 
-  def defineVgprIdx(self, name, numVgprs, align=1):
-    if numVgprs == 0: return
-    vgprIdx = self.vgprPool.checkOutAligned(numVgprs, align, tag=name, preventOverflow=0)
-    # self.vgprs[name] = vgprIdx
-    return vgprIdx
-
-  def defineVgpr(self, name, numVgprs, align=1):
-    return RegSet("v", "vgpr"+name, self.defineVgprIdx(name, numVgprs, align))
-
   def defineMultiVgprIndex(self, names: List[str], numVgprs: List[int], align=1):
     assert(len(names) == len(numVgprs))
     vgprIdxVec = self.vgprPool.checkOutMulti(numVgprs, align, tags=names)
@@ -10981,7 +10972,7 @@ class KernelWriterAssembly(KernelWriter):
     if addLabel:
       imod.add(Label("KernelEnd", ""))
 
-      # TODO- refine this part
+      # TODO- refine this part, put outside of this function
       if kernel["ProblemType"]["OutputAmaxD"]:
         imod.add(self.insertAmaxD(kernel))
 
