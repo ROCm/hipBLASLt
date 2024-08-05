@@ -325,11 +325,11 @@ def _initArchCaps(isaVersion) -> dict:
     rv["HasWave32"]          = isaVersion[0] in (10, 11, 12)
     rv["HasAccCD"]           = (isaVersion in [(9,0,10), (9,4,0), (9,4,1), (9,4,2)])
     rv["ArchAccUnifiedRegs"] = (isaVersion in [(9,0,10), (9,4,0), (9,4,1), (9,4,2)])
-    rv["ForceStoreSC1"] = (isaVersion in [(9,4,0), (9,4,1)])
-    rv["TransOpWait"] = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
-    rv["SDWAWait"] = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
+    rv["ForceStoreSC1"]      = (isaVersion in [(9,4,0), (9,4,1)])
+    rv["TransOpWait"]        = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
+    rv["SDWAWait"]           = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     rv["VgprBank"]           = (isaVersion[0] in (10, 11, 12))
-    rv["HWWorkaround"]       = isaVersion[0] == (12)
+    rv["WrokGroupIdFromTTM"] = isaVersion[0] == (12)
     rv["NoSDWA"]             = isaVersion[0] == (12)
     return rv
 

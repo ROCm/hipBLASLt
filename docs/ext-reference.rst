@@ -30,9 +30,23 @@ GemmProblemType
     :protected-members:
     :private-members:
 
+GemmProblemTypeV2
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::GemmProblemTypeV2
+    :members:
+    :protected-members:
+    :private-members:
+
 GemmEpilogue
 -------------------------------------
 .. doxygenstruct:: hipblaslt_ext::GemmEpilogue
+    :members:
+    :protected-members:
+    :private-members:
+
+GemmEpilogueV2
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::GemmEpilogueV2
     :members:
     :protected-members:
     :private-members:
@@ -44,7 +58,14 @@ GemmInputs
     :protected-members:
     :private-members:
 
-hipBLASLtExt Class Reference
+GemmInputsV2
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::GemmInputsV2
+    :members:
+    :protected-members:
+    :private-members:
+
+hipBLASLtExt Gemm Class Reference
 ================================
 
 GemmPreference
@@ -135,7 +156,7 @@ You must assign the problem type when constructing or importing the problem from
 After the instance is created, you can set the problem using the API.
 The API may require the following structures:
 
-``GemmProblemType`` allows you to change the problem type after the instance is initialized.
+``GemmProblemType`` allows you to change the problem type after the instance is initialized. (Deprecated, use GemmProblemTypeV2 instead)
 
 .. code-block:: c++
 
@@ -150,7 +171,7 @@ The API may require the following structures:
         hipblasComputeType_t type_compute;
     };
 
-``GemmEpilogue`` allows the user to control the epilogue of the problem.
+``GemmEpilogue`` allows the user to control the epilogue of the problem. (Deprecated, use GemmEpilogueV2 instead)
 
 .. code-block:: c++
 
@@ -162,7 +183,7 @@ The API may require the following structures:
         int                 aux_stride;
     };
 
-``GemmInputs`` specifies the problem inputs.
+``GemmInputs`` specifies the problem inputs. (Deprecated, use GemmInputsV2 instead)
 
 .. code-block:: c++
 
@@ -184,27 +205,27 @@ The API may require the following structures:
 .. code-block:: c++
 
     HIPBLASLT_EXPORT hipblasStatus_t setProblem(
-        int64_t m, int64_t n, int64_t k, int64_t batch_count, GemmEpilogue& epilogue, GemmInputs& inputs);
+        int64_t m, int64_t n, int64_t k, int64_t batch_count, GemmEpilogueV2& epilogue, GemmInputsV2& inputs);
 
 You can also set the leading dimensions and strides, and reassign the data type with the following API:
 
 .. code-block:: c++
 
-    HIPBLASLT_EXPORT hipblasStatus_t setProblem(int64_t          m,
-                                                int64_t          n,
-                                                int64_t          k,
-                                                int64_t          batch_count,
-                                                int64_t          lda,
-                                                int64_t          ldb,
-                                                int64_t          ldc,
-                                                int64_t          ldd,
-                                                int64_t          strideA,
-                                                int64_t          strideB,
-                                                int64_t          strideC,
-                                                int64_t          strideD,
-                                                GemmEpilogue&    epilogue,
-                                                GemmInputs&      inputs,
-                                                GemmProblemType& problemtype);
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(int64_t            m,
+                                                int64_t            n,
+                                                int64_t            k,
+                                                int64_t            batch_count,
+                                                int64_t            lda,
+                                                int64_t            ldb,
+                                                int64_t            ldc,
+                                                int64_t            ldd,
+                                                int64_t            strideA,
+                                                int64_t            strideB,
+                                                int64_t            strideC,
+                                                int64_t            strideD,
+                                                GemmEpilogueV2&    epilogue,
+                                                GemmInputsV2&      inputs,
+                                                GemmProblemTypeV2& problemtype);
 
 You can also import problems from hipblasLt APIs after the instance is created. Note that this may overwrite the problem type of the instance.
 
@@ -230,14 +251,14 @@ You can get heuristics and make kernel arguments with the instance. If the prope
     hipblaslt_ext::GemmPreference pref;
     pref.setMaxWorkspaceBytes(1000000);
     // Default epilogue mode is HIPBLASLT_EPILOGUE_DEFAULT
-    hipblaslt_ext::GemmEpilogue epilogue;
-    hipblaslt_ext::GemmInputs inputs;
-    inputs.a = a;
-    inputs.b = b;
-    inputs.c = c;
-    inputs.d = d;
-    inputs.alpha = alpha;
-    inputs.beta = beta;
+    hipblaslt_ext::GemmEpilogueV2 epilogue;
+    hipblaslt_ext::GemmInputsV2 inputs;
+    inputs.setA(d_a);
+    inputs.setB(d_b);
+    inputs.setC(d_c);
+    inputs.setD(d_d);
+    inputs.setAlpha(&alpha);
+    inputs.setBeta(&beta);
 
     hipblaslt_ext::Gemm gemm(handle,
                              HIPBLAS_OP_N,
@@ -278,30 +299,30 @@ The grouped gemm class also has the ``setProblem`` APIs.
 .. code-block:: c++
 
     HIPBLASLT_EXPORT hipblasStatus_t setProblem(
-        int64_t m, int64_t n, int64_t k, int64_t batch_count, GemmEpilogue& epilogue, GemmInputs& inputs);
+        int64_t m, int64_t n, int64_t k, int64_t batch_count, GemmEpilogueV2& epilogue, GemmInputsV2& inputs);
 
-    HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&      m,
-                                                std::vector<int64_t>&      n,
-                                                std::vector<int64_t>&      k,
-                                                std::vector<int64_t>&      batch_count,
-                                                std::vector<GemmEpilogue>& epilogue,
-                                                std::vector<GemmInputs>&   inputs);
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&        m,
+                                                std::vector<int64_t>&        n,
+                                                std::vector<int64_t>&        k,
+                                                std::vector<int64_t>&        batch_count,
+                                                std::vector<GemmEpilogueV2>& epilogue,
+                                                std::vector<GemmInputsV2>&   inputs);
 
-    HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&      m,
-                                                std::vector<int64_t>&      n,
-                                                std::vector<int64_t>&      k,
-                                                std::vector<int64_t>&      batch_count,
-                                                std::vector<int64_t>&      lda,
-                                                std::vector<int64_t>&      ldb,
-                                                std::vector<int64_t>&      ldc,
-                                                std::vector<int64_t>&      ldd,
-                                                std::vector<int64_t>&      strideA,
-                                                std::vector<int64_t>&      strideB,
-                                                std::vector<int64_t>&      strideC,
-                                                std::vector<int64_t>&      strideD,
-                                                std::vector<GemmEpilogue>& epilogue,
-                                                std::vector<GemmInputs>&   inputs,
-                                                GemmProblemType&           problemtype);
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&        m,
+                                                std::vector<int64_t>&        n,
+                                                std::vector<int64_t>&        k,
+                                                std::vector<int64_t>&        batch_count,
+                                                std::vector<int64_t>&        lda,
+                                                std::vector<int64_t>&        ldb,
+                                                std::vector<int64_t>&        ldc,
+                                                std::vector<int64_t>&        ldd,
+                                                std::vector<int64_t>&        strideA,
+                                                std::vector<int64_t>&        strideB,
+                                                std::vector<int64_t>&        strideC,
+                                                std::vector<int64_t>&        strideD,
+                                                std::vector<GemmEpilogueV2>& epilogue,
+                                                std::vector<GemmInputsV2>&   inputs,
+                                                GemmProblemTypeV2&           problemtype);
 
     HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
                                                 std::vector<void*>&                   alpha,
@@ -319,23 +340,23 @@ For the following API, the argument "epilogue" supports broadcasting. They are b
 
 .. code-block:: c++
 
-    HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&      m,
-                                                std::vector<int64_t>&      n,
-                                                std::vector<int64_t>&      k,
-                                                std::vector<int64_t>&      batch_count,
-                                                std::vector<int64_t>&      lda,
-                                                std::vector<int64_t>&      ldb,
-                                                std::vector<int64_t>&      ldc,
-                                                std::vector<int64_t>&      ldd,
-                                                std::vector<int64_t>&      strideA,
-                                                std::vector<int64_t>&      strideB,
-                                                std::vector<int64_t>&      strideC,
-                                                std::vector<int64_t>&      strideD,
-                                                std::vector<GemmEpilogue>& epilogue,
-                                                std::vector<GemmInputs>&   inputs,
-                                                GemmProblemType&           problemtype);
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&        m,
+                                                std::vector<int64_t>&        n,
+                                                std::vector<int64_t>&        k,
+                                                std::vector<int64_t>&        batch_count,
+                                                std::vector<int64_t>&        lda,
+                                                std::vector<int64_t>&        ldb,
+                                                std::vector<int64_t>&        ldc,
+                                                std::vector<int64_t>&        ldd,
+                                                std::vector<int64_t>&        strideA,
+                                                std::vector<int64_t>&        strideB,
+                                                std::vector<int64_t>&        strideC,
+                                                std::vector<int64_t>&        strideD,
+                                                std::vector<GemmEpilogueV2>& epilogue,
+                                                std::vector<GemmInputsV2>&   inputs,
+                                                GemmProblemTypeV2&           problemtype);
 
-Note that currently only ``problemtype`` size equal to 1 (Only one ``GemmProblemType`` for all problems) is supported.
+Note that currently only ``problemtype`` size equal to 1 (Only one ``GemmProblemTypeV2`` for all problems) is supported.
 
 .. code-block:: c++
 
@@ -346,7 +367,7 @@ Note that currently only ``problemtype`` size equal to 1 (Only one ``GemmProblem
     {
         // ...
     }
-    std::vector<GemmProblemType> problemtypes;
+    std::vector<GemmProblemTypeV2> problemtypes;
     problemtypes.push_back(problemtype);
     groupedgemm.setProblem(m, n, k, batch_count, lda, ldb, ldc, ldd, strideA, strideB, strideC, strideD, epilogue, inputs, problemtypes);
 
@@ -422,21 +443,21 @@ The following is a simple example of how this API works.
     std::vector<int64_t> n(gemm_count);
     std::vector<int64_t> k(gemm_count);
     std::vector<int64_t> batch_count(gemm_count);
-    std::vector<hipblaslt_ext::GemmEpilogue> epilogue(gemm_count);
-    std::vector<hipblaslt_ext::GemmInputs> inputs(gemm_count);
+    std::vector<hipblaslt_ext::GemmEpilogueV2> epilogue(gemm_count);
+    std::vector<hipblaslt_ext::GemmInputsV2> inputs(gemm_count);
     for(int i = 0; i < gemm_count; i++)
     {
         m[i] = 1;
         n[i] = 1;
         k[i] = 1;
         batch_count[i] = 1;
-        epilogue[i].mode = HIPBLASLT_EPILOGUE_GELU;
-        inputs[i].a = a[i];
-        inputs[i].b = b[i];
-        inputs[i].c = c[i];
-        inputs[i].d = d[i];
-        inputs[i].alpha = alpha[i];
-        inputs[i].beta = beta[i];
+        epilogue[i].setMode(HIPBLASLT_EPILOGUE_GELU);
+        inputs[i].setA(d_a[i]);
+        inputs[i].setB(d_b[i]);
+        inputs[i].setC(d_c[i]);
+        inputs[i].setD(d_d[i]);
+        inputs[i].setAlpha(&alpha[i]);
+        inputs[i].setBeta(&beta[i]);
     }
 
     // Step 3: Create grouped gemm instance
@@ -620,15 +641,15 @@ Gemm
 
     hipblaslt_ext::GemmPreference pref;
     pref.setMaxWorkspaceBytes(1000000);
-    hipblaslt_ext::GemmEpilogue epilogue;
-    epilogue.mode = HIPBLASLT_EPILOGUE_GELU;
-    hipblaslt_ext::GemmInputs inputs;
-    inputs.a = a;
-    inputs.b = b;
-    inputs.c = c;
-    inputs.d = d;
-    inputs.alpha = alpha;
-    inputs.beta = beta;
+    hipblaslt_ext::GemmEpilogueV2 epilogue;
+    epilogue.setMode(HIPBLASLT_EPILOGUE_GELU);
+    hipblaslt_ext::GemmInputsV2 inputs;
+    inputs.setA(d_a);
+    inputs.setB(d_b);
+    inputs.setC(d_c);
+    inputs.setD(d_d);
+    inputs.setAlpha(&alpha);
+    inputs.setBeta(&beta);
 
     hipblaslt_ext::Gemm gemm(handle,
                              HIPBLAS_OP_N,
@@ -692,21 +713,21 @@ Grouped gemm
     std::vector<int64_t> n(gemm_count);
     std::vector<int64_t> k(gemm_count);
     std::vector<int64_t> batch_count(gemm_count);
-    std::vector<hipblaslt_ext::GemmEpilogue> epilogue(gemm_count);
-    std::vector<hipblaslt_ext::GemmInputs> inputs(gemm_count);
+    std::vector<hipblaslt_ext::GemmEpilogueV2> epilogue(gemm_count);
+    std::vector<hipblaslt_ext::GemmInputsV2> inputs(gemm_count);
     for(int i = 0; i < gemm_count; i++)
     {
         m[i] = 1;
         n[i] = 1;
         k[i] = 1;
         batch_count[i] = 1;
-        epilogue[i].mode = HIPBLASLT_EPILOGUE_GELU;
-        inputs[i].a = a[i];
-        inputs[i].b = b[i];
-        inputs[i].c = c[i];
-        inputs[i].d = d[i];
-        inputs[i].alpha = alpha[i];
-        inputs[i].beta = beta[i];
+        epilogue[i].setMode(HIPBLASLT_EPILOGUE_GELU);
+        inputs[i].setA(d_a[i]);
+        inputs[i].setB(d_b[i]);
+        inputs[i].setC(d_c[i]);
+        inputs[i].setD(d_d[i]);
+        inputs[i].setAlpha(&alpha[i]);
+        inputs[i].setBeta(&beta[i]);
     }
 
 
@@ -804,8 +825,8 @@ For example, we have a grouped gemm with gemm_count = 4. The sum of N must not e
     std::vector<int64_t> n(gemm_count);
     std::vector<int64_t> k(gemm_count);
     std::vector<int64_t> batch_count(gemm_count);
-    std::vector<hipblaslt_ext::GemmEpilogue> epilogue(gemm_count);
-    std::vector<hipblaslt_ext::GemmInputs> inputs(gemm_count);
+    std::vector<hipblaslt_ext::GemmEpilogueV2> epilogue(gemm_count);
+    std::vector<hipblaslt_ext::GemmInputsV2> inputs(gemm_count);
 
     // Step 2.1: Calculate sum of n
     int64_t sum_of_n = 0;
@@ -824,12 +845,12 @@ For example, we have a grouped gemm with gemm_count = 4. The sum of N must not e
             n[i] = 1;
         k[i] = k_arr[i];
         batch_count[i] = 1;
-        inputs[i].a = a[i];
-        inputs[i].b = b[i];
-        inputs[i].c = c[i];
-        inputs[i].d = d[i];
-        inputs[i].alpha = alpha[i];
-        inputs[i].beta = beta[i];
+        inputs[i].setA(d_a[i]);
+        inputs[i].setB(d_b[i]);
+        inputs[i].setC(d_c[i]);
+        inputs[i].setD(d_d[i]);
+        inputs[i].setAlpha(&alpha[i]);
+        inputs[i].setBeta(&beta[i]);
     }
 
     // Step 3: Create grouped gemm instance

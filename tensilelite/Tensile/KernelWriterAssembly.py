@@ -646,15 +646,19 @@ class KernelWriterAssembly(KernelWriter):
           self.startVgprGlobalReadAddressesB))
 
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
-        module.add(RegSet("v", "vgprG2LA", self.states.a.startVgprG2L))
+      module.add(RegSet("v", "vgprG2LA", self.states.a.startVgprG2L))
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
-        module.add(RegSet("v", "vgprG2LB", self.states.b.startVgprG2L))
+      module.add(RegSet("v", "vgprG2LB", self.states.b.startVgprG2L))
     if kernel["UnrollLoopSwapGlobalReadOrder"] and not kernel["DirectToLdsA"] and not kernel["DirectToLdsB"]:
+      if kernel["ULSGRODoubleG2L"] == 0:
         module.add(RegSet("v", "vgprG2LB2", self.states.a.startVgprG2L))
         module.add(RegSet("v", "vgprG2LA2", self.states.a.startVgprG2L + self.states.b.numVgprG2LAllocated))
+      else:
+        module.add(RegSet("v", "vgprG2LA2", self.states.a.startVgprG2L + self.states.a.numVgprG2LAllocated))
+        module.add(RegSet("v", "vgprG2LB2", self.states.b.startVgprG2L + self.states.b.numVgprG2LAllocated))
 
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-        module.add(RegSet("v", "vgprG2LMetadata", self.states.m.startVgprG2L))
+      module.add(RegSet("v", "vgprG2LMetadata", self.states.m.startVgprG2L))
 
     if ((tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]) or (tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"])) \
         and (kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()):
@@ -1901,10 +1905,9 @@ class KernelWriterAssembly(KernelWriter):
     module = Module("graWorkGroup")
     module.addComment0("graWorkGroup mapping")
 
-    if self.states.archCaps["HWWorkaround"]:
+    if self.states.archCaps["WrokGroupIdFromTTM"]:
       module.add(SMovB32(dst=sgpr("WorkGroup0"), src="ttmp9", comment="workaround"))
-      module.add(SMovB32(dst=sgpr("WorkGroup1"), src="ttmp7", comment="workaround"))
-      module.add(SAndB32(dst=sgpr("WorkGroup1"), src0=hex(0xFFFF), src1=sgpr("WorkGroup1"), comment="workaround"))
+      module.add(SAndB32(dst=sgpr("WorkGroup1"), src0=hex(0xFFFF), src1="ttmp7", comment="workaround"))
       module.add(SLShiftRightB32(dst=sgpr("WorkGroup2"), shiftHex=hex(0x10), src="ttmp7"))
     gsuLabel    = Label(label=self.labels.getNameInc("GSU"), comment="")
     gsuLabelEnd = Label(label=self.labels.getNameInc("GSU_End"), comment="")
@@ -8763,6 +8766,12 @@ class KernelWriterAssembly(KernelWriter):
     vgprBF8Min: int    = -1
     vgprBF8Max: int    = -1
 
+  class I8CVTVgprStruct(NamedTuple):
+    vgprI8Temp0: int   = -1
+    vgprI8Temp1: int   = -1
+    vgprI8Mask0: int   = -1
+    vgprI8Mask1: int   = -1
+
   class ActivationSetPCStruct(NamedTuple):
     sgprOffsetActivation: int = -1
     sgprOffsetBack: int = -1
@@ -9211,6 +9220,10 @@ class KernelWriterAssembly(KernelWriter):
         cvtVgpr = self.vgprPool.checkOut(4)
         cvtVgprStruct = self.BF8CVTVgprStruct(vgprBF8Temp=cvtVgpr, vgprBF8NanInf=(cvtVgpr+1), \
                                               vgprBF8Min=(cvtVgpr+2), vgprBF8Max=(cvtVgpr+3))
+      elif kernel["ProblemType"]["DestDataType"].isInt8():
+        cvtVgpr = self.vgprPool.checkOut(4)
+        cvtVgprStruct = self.I8CVTVgprStruct(vgprI8Temp0=cvtVgpr, vgprI8Temp1=(cvtVgpr+1), \
+                                             vgprI8Mask0=(cvtVgpr+2), vgprI8Mask1=(cvtVgpr+3))
 
       activationSetPCStruct = None
       activationLabelList = None

@@ -89,7 +89,7 @@ class MatchingLibrary:
             3: Properties.Property("FreeSizeB", index=0),
             1: Properties.Property("BoundSize", index=0)
         }
-        if distance == "Equality":
+        if distance == "Equality" or distance == "GridBased":
             propertyKeys[0] = Properties.Property("BatchSize", index=0)
 
         properties = list([propertyKeys[i] for i in indices if i in propertyKeys])
@@ -256,8 +256,12 @@ class PredicateLibrary:
             else:
                 self.rows.append(row)
 
-        # Sort to ensure consistent fallback logic.
-        self.rows.sort(key=lambda x: x["predicate"])
+        if self.rows[0]["library"].tag == "Placeholder":
+            # Sort to ensure pure gemm can be search first
+            self.rows.sort(key=lambda x: len(x["library"].filenamePrefix))
+        else:
+            # Sort to ensure consistent fallback logic.
+            self.rows.sort(key=lambda x: x["predicate"])
 
     def remapSolutionIndices(self, indexMap):
         for row in self.rows:
