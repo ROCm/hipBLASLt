@@ -761,6 +761,14 @@ namespace Tensile
                     "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
             }
         }
+
+        if(problemType.outputAmaxD)
+        {
+            args.template append<const void*>("AddrAmaxOut", inputs.amaxD);
+            args.template append<const void*>("AmaxWS",
+                                              (uint8_t*)inputs.ws + workspaceOffsetInByte);
+            args.template append<const void*>("AmaxSync", inputs.Synchronizer);
+        }
     }
 
     inline uint32_t getNumWorkGroups(const KernelInvocation& rv)
@@ -894,8 +902,8 @@ namespace Tensile
 
         static_cast<void>(hipGetDevice(&deviceId));
         static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-        auto        gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
-        if (stoi(gpu_arch_no_prefix) /100 != 12)
+        auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
+        if(stoi(gpu_arch_no_prefix) / 100 != 12)
         {
             if(internalArgsSupport.version == 1)
             {
