@@ -845,6 +845,32 @@ namespace Tensile
                 }
             };
 
+            struct GsuLessEqualOne : public Predicate_CRTP<GsuLessEqualOne, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = false
+                };
+                GsuLessEqualOne() = default;
+
+                static std::string Type()
+                {
+                    return "GsuLessEqualOne";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.getParams().gsu() <= 1;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(problem, stream, "prob", problem.getParams().gsu(), "<=", "sol", 1);
+                }
+            };
+
             struct BetaZero : public Predicate_CRTP<BetaZero, ContractionProblemGemm>
             {
                 enum
