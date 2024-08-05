@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include "allclose.hpp"
 #include "cblas_interface.hpp"
 #include "flops.hpp"
 #include "frequency_monitor.hpp"
@@ -37,7 +38,6 @@
 #include "hipblaslt_vector.hpp"
 #include "near.hpp"
 #include "norm.hpp"
-#include "allclose.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
 #include <cstddef>
@@ -799,11 +799,10 @@ void testing_matmul_with_bias(const Arguments& arg)
         }
         auto    biasSize = size_bias[i] * sizeof(Tbias);
         int64_t sizeC    = h_beta[i] == 0 ? 0 : size_C[i] * sizeof(To);
-        totalRotatingSizeNeeded += size_A[i] * sizeof(TiA) + size_B[i] * sizeof(TiB) + sizeC
-                                   + size_D[i] * sizeof(To) + size_E[i] * sizeof(To) + biasSize
-                                   + size_scaleAlphaVec[i] * sizeof(Talpha)
-                                   + size_scaleAVec[i] * sizeof(Talpha)
-                                   + size_scaleBVec[i] * sizeof(Talpha);
+        totalRotatingSizeNeeded
+            += size_A[i] * sizeof(TiA) + size_B[i] * sizeof(TiB) + sizeC + size_D[i] * sizeof(To)
+               + size_E[i] * sizeof(To) + biasSize + size_scaleAlphaVec[i] * sizeof(Talpha)
+               + size_scaleAVec[i] * sizeof(Talpha) + size_scaleBVec[i] * sizeof(Talpha);
     }
 
     // Calculating block count
@@ -1301,20 +1300,24 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         if(arg.scaleA)
         {
-            hipblasLtMatmulDescAttributes_t attr = arg.scaleA == Arguments::ScalingFormat::Vector ? HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT
-                                                                    : HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER;
+            hipblasLtMatmulDescAttributes_t attr
+                = arg.scaleA == Arguments::ScalingFormat::Vector
+                      ? HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT
+                      : HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER;
             void* scaleA_addr = (void*)(*dScaleA[i]);
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-                matmul[0][i], attr, &scaleA_addr, sizeof(void*)));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatmulDescSetAttribute(matmul[0][i], attr, &scaleA_addr, sizeof(void*)));
         }
 
         if(arg.scaleB)
         {
-            hipblasLtMatmulDescAttributes_t attr = arg.scaleB == Arguments::ScalingFormat::Vector ? HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT
-                                                                    : HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER;
+            hipblasLtMatmulDescAttributes_t attr
+                = arg.scaleB == Arguments::ScalingFormat::Vector
+                      ? HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT
+                      : HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER;
             void* scaleB_addr = (void*)(*dScaleB[i]);
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-                matmul[0][i], attr, &scaleB_addr, sizeof(void*)));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatmulDescSetAttribute(matmul[0][i], attr, &scaleB_addr, sizeof(void*)));
         }
 
         if(arg.scaleC)
@@ -1402,8 +1405,10 @@ void testing_matmul_with_bias(const Arguments& arg)
             }
             if(arg.scaleA)
             {
-                hipblasLtMatmulDescAttributes_t attr = arg.scaleA == Arguments::ScalingFormat::Vector ? HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT
-                                                                        : HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER;
+                hipblasLtMatmulDescAttributes_t attr
+                    = arg.scaleA == Arguments::ScalingFormat::Vector
+                          ? HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT
+                          : HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER;
                 void* scaleA_addr = (void*)(*dScaleA[i] + b * size_scaleAVec[i]);
                 CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
                     matmul[b][i], attr, &scaleA_addr, sizeof(void*)));
@@ -1411,8 +1416,10 @@ void testing_matmul_with_bias(const Arguments& arg)
 
             if(arg.scaleB)
             {
-                hipblasLtMatmulDescAttributes_t attr = arg.scaleB == Arguments::ScalingFormat::Vector ? HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT
-                                                                        : HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER;
+                hipblasLtMatmulDescAttributes_t attr
+                    = arg.scaleB == Arguments::ScalingFormat::Vector
+                          ? HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT
+                          : HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER;
                 void* scaleB_addr = (void*)(*dScaleB[i] + b * size_scaleBVec[i]);
                 CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
                     matmul[b][i], attr, &scaleB_addr, sizeof(void*)));
@@ -1502,10 +1509,10 @@ void testing_matmul_with_bias(const Arguments& arg)
                     extepilogue[gemmIdx].setBiasDataType(bias_type);
                     extepilogue[gemmIdx].setAuxLeadingDimension(lde[gemmIdx]);
                     extepilogue[gemmIdx].setAuxBatchStride(stride_e[gemmIdx]);
-                    extepilogue[gemmIdx].setScalingAType(arg.scaleA == Arguments::ScalingFormat::Vector
-                                                             ? 1 : 0);
-                    extepilogue[gemmIdx].setScalingBType(arg.scaleB == Arguments::ScalingFormat::Vector
-                                                             ? 1 : 0);
+                    extepilogue[gemmIdx].setScalingAType(
+                        arg.scaleA == Arguments::ScalingFormat::Vector ? 1 : 0);
+                    extepilogue[gemmIdx].setScalingBType(
+                        arg.scaleB == Arguments::ScalingFormat::Vector ? 1 : 0);
                 }
 
                 extinputs[b][gemmIdx].setA((void*)((*dA[gemmIdx]) + b * size_A[gemmIdx]));
@@ -1515,15 +1522,21 @@ void testing_matmul_with_bias(const Arguments& arg)
                 extinputs[b][gemmIdx].setAlpha(&h_alpha[gemmIdx]);
                 extinputs[b][gemmIdx].setBeta(&h_beta[gemmIdx]);
                 extinputs[b][gemmIdx].setBias(bias_addr);
-                extinputs[b][gemmIdx].setScaleA(arg.scaleA ? (void*)((*dScaleA[gemmIdx]) + b * size_scaleAVec[gemmIdx]) : nullptr);
-                extinputs[b][gemmIdx].setScaleB(arg.scaleB ? (void*)((*dScaleB[gemmIdx]) + b * size_scaleBVec[gemmIdx]) : nullptr);
+                extinputs[b][gemmIdx].setScaleA(
+                    arg.scaleA ? (void*)((*dScaleA[gemmIdx]) + b * size_scaleAVec[gemmIdx])
+                               : nullptr);
+                extinputs[b][gemmIdx].setScaleB(
+                    arg.scaleB ? (void*)((*dScaleB[gemmIdx]) + b * size_scaleBVec[gemmIdx])
+                               : nullptr);
                 extinputs[b][gemmIdx].setScaleC(arg.scaleC ? *dScaleC[gemmIdx] : nullptr);
                 extinputs[b][gemmIdx].setScaleD(arg.scaleD ? *dScaleD[gemmIdx] : nullptr);
                 extinputs[b][gemmIdx].setScaleAux(arg.scaleE ? *dScaleE[gemmIdx] : nullptr);
+                extinputs[b][gemmIdx].setAmaxD(arg.amaxD ? *dAmaxD[gemmIdx] : nullptr);
                 if(arg.use_e)
                     extinputs[b][gemmIdx].setAux((void*)((*dE[gemmIdx]) + b * size_E[gemmIdx]));
                 if(arg.scaleAlpha_vector)
-                    extinputs[b][gemmIdx].setScaleAlphaVec((void*)((*dScaleAlphaVec[gemmIdx]) + b * size_scaleAlphaVec[gemmIdx]));
+                    extinputs[b][gemmIdx].setScaleAlphaVec(
+                        (void*)((*dScaleAlphaVec[gemmIdx]) + b * size_scaleAlphaVec[gemmIdx]));
             }
         }
         extproblemtype.setOpA(transA);
@@ -2188,7 +2201,8 @@ void testing_matmul_with_bias(const Arguments& arg)
         static_cast<void>(hipGetDevice(&deviceId));
         static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
         //workaround before known_bug work
-        if((gpu_arch_match(deviceProperties.gcnArchName, "11?") || gpu_arch_match(deviceProperties.gcnArchName, "12?"))
+        if((gpu_arch_match(deviceProperties.gcnArchName, "11?")
+            || gpu_arch_match(deviceProperties.gcnArchName, "12?"))
            && (arg.gradient || arg.grouped_gemm))
         {
             hipblaslt_cerr << "No Solution Found!!" << std::endl;
@@ -2255,11 +2269,11 @@ void testing_matmul_with_bias(const Arguments& arg)
             auto betaTemp = h_beta[gemmIdx];
             if(arg.scaleC)
                 betaTemp *= (*hScaleC[gemmIdx])[0];
-            Talpha scale = 1;
-            auto scaleAVec = arg.scaleA ? (*hScaleA[gemmIdx]) : &scale;
-            auto scaleBVec = arg.scaleB ? (*hScaleB[gemmIdx]) : &scale;
-            auto scaleDValue = arg.scaleD ? (*hScaleD[gemmIdx])[0] : 1;
-            auto scaleEValue = arg.scaleE ? (*hScaleE[gemmIdx])[0] : 1;
+            Talpha scale       = 1;
+            auto   scaleAVec   = arg.scaleA ? (*hScaleA[gemmIdx]) : &scale;
+            auto   scaleBVec   = arg.scaleB ? (*hScaleB[gemmIdx]) : &scale;
+            auto   scaleDValue = arg.scaleD ? (*hScaleD[gemmIdx])[0] : 1;
+            auto   scaleEValue = arg.scaleE ? (*hScaleE[gemmIdx])[0] : 1;
 
             for(int batchIdx = 0; batchIdx < num_batches[gemmIdx]; batchIdx++)
             {
@@ -2436,30 +2450,30 @@ void testing_matmul_with_bias(const Arguments& arg)
                 {
                     CHECK_HIPBLASLT_ERROR(
                         gemmVec[0].initialize(heuristicResult[sol].algo,
-                                                  tuningVec[heuristicTuningIndex[sol]],
-                                                  *dWorkspace));
+                                              tuningVec[heuristicTuningIndex[sol]],
+                                              *dWorkspace));
                     CHECK_HIPBLASLT_ERROR(gemmVec[0].run(stream));
                 }
                 else
                 {
-                  CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                  EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                      matmul[0][0],
-                                                      alpha_in[0],
-                                                      *(dA[0]),
-                                                      matA[0],
-                                                      *(dB[0]),
-                                                      matB[0],
-                                                      &(h_beta[0]),
-                                                      *(dC[0]),
-                                                      matC[0],
-                                                      *(dD[0]),
-                                                      matD[0],
-                                                      &heuristicResult[sol].algo,
-                                                      *dWorkspace,
-                                                      workspace_size,
-                                                      stream),
-                                      HIPBLAS_STATUS_SUCCESS);
+                    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                    EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
+                                                          matmul[0][0],
+                                                          alpha_in[0],
+                                                          *(dA[0]),
+                                                          matA[0],
+                                                          *(dB[0]),
+                                                          matB[0],
+                                                          &(h_beta[0]),
+                                                          *(dC[0]),
+                                                          matC[0],
+                                                          *(dD[0]),
+                                                          matD[0],
+                                                          &heuristicResult[sol].algo,
+                                                          *dWorkspace,
+                                                          workspace_size,
+                                                          stream),
+                                          HIPBLAS_STATUS_SUCCESS);
                 }
             }
             else
@@ -2467,8 +2481,10 @@ void testing_matmul_with_bias(const Arguments& arg)
                 //grouped gemm
                 if(arg.use_user_args)
                 {
-                    CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].initialize(
-                        heuristicResult[sol].algo, tuningVec[heuristicTuningIndex[0]], *dWorkspace));
+                    CHECK_HIPBLASLT_ERROR(
+                        groupedGemmVec[0].initialize(heuristicResult[sol].algo,
+                                                     tuningVec[heuristicTuningIndex[0]],
+                                                     *dWorkspace));
                     groupedGemmVec[0].getDefaultValueForDeviceUserArguments(userArgs);
                     // Copy them to device memory
                     CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
@@ -2495,8 +2511,9 @@ void testing_matmul_with_bias(const Arguments& arg)
             double              hipblaslt_atol  = 1;
             double              hipblaslt_rtol  = 1;
             std::vector<double> tol(gemm_count);
-            if(arg.unit_check && (hipblaslt_get_arch_major() == 11 || hipblaslt_get_arch_major() == 12) && sizeof(TiA) == 2
-               && sizeof(TiB) == 2)
+            if(arg.unit_check
+               && (hipblaslt_get_arch_major() == 11 || hipblaslt_get_arch_major() == 12)
+               && sizeof(TiA) == 2 && sizeof(TiB) == 2)
             {
                 for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
                 {
@@ -2552,7 +2569,9 @@ void testing_matmul_with_bias(const Arguments& arg)
         double      best_atol     = 0.0;
         double      best_rtol     = 0.0;
         int         number_cold_calls
-            = ((arg.unit_check || arg.norm_check || arg.allclose_check) && arg.cold_iters == 0) ? 1 : arg.cold_iters;
+            = ((arg.unit_check || arg.norm_check || arg.allclose_check) && arg.cold_iters == 0)
+                  ? 1
+                  : arg.cold_iters;
         int number_hot_calls = arg.iters;
 
         int    flush_iter      = 100000;
@@ -2830,8 +2849,9 @@ void testing_matmul_with_bias(const Arguments& arg)
             double              hipblaslt_atol  = 1;
             double              hipblaslt_rtol  = 1;
             std::vector<double> tol(gemm_count);
-            if(arg.unit_check && (hipblaslt_get_arch_major() == 11 ||hipblaslt_get_arch_major() == 12) && sizeof(TiA) == 2
-               && sizeof(TiB) == 2)
+            if(arg.unit_check
+               && (hipblaslt_get_arch_major() == 11 || hipblaslt_get_arch_major() == 12)
+               && sizeof(TiA) == 2 && sizeof(TiB) == 2)
             {
                 for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
                 {
@@ -2867,10 +2887,10 @@ void testing_matmul_with_bias(const Arguments& arg)
                       hipblaslt_atol,
                       hipblaslt_rtol);
 
-#define argument_param                                                                             \
-    e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a,  \
-        e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, e_a_type, e_b_type,       \
-        e_c_type, e_d_type, e_compute_type, e_scaleA, e_scaleB, e_scaleC, e_scaleD,                \
+#define argument_param                                                                            \
+    e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a, \
+        e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, e_a_type, e_b_type,      \
+        e_c_type, e_d_type, e_compute_type, e_scaleA, e_scaleB, e_scaleC, e_scaleD, e_amaxD,      \
         e_activation_type, e_bias_vector, e_bias_type, e_rotating
 
             int32_t     solutionIndex = -1;
@@ -2895,10 +2915,10 @@ void testing_matmul_with_bias(const Arguments& arg)
                     }
                     else
                     {
-                        solutionName
-                            = hipblaslt_ext::getSolutionNameFromAlgo(handle, heuristicResult[sol].algo);
-                        kernelName
-                            = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
+                        solutionName = hipblaslt_ext::getSolutionNameFromAlgo(
+                            handle, heuristicResult[sol].algo);
+                        kernelName = hipblaslt_ext::getKernelNameFromAlgo(
+                            handle, heuristicResult[sol].algo);
                     }
                     solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo);
                 }

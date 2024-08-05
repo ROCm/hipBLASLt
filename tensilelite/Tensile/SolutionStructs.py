@@ -515,7 +515,7 @@ class ProblemType(Mapping):
       else:
         name += "_Aux%s"%self["DataTypeE"].toChar() # Not showing aux types
     if self["OutputAmaxD"]:
-      name += "_AmaxD%s"%self["DataTypeAmaxD"].toChar()
+      name += "_AmaxD"
     if self["Sparse"]:
       if self["Sparse"] == 2:
         name += "_SPB"
@@ -3461,9 +3461,6 @@ class Solution(collections.abc.Mapping):
 
     state["LdsBytesNoAmax"] = ldsNumBytes
     if state["ProblemType"]["OutputAmaxD"]:
-      if state["GlobalSplitU"] > 1:
-        reject(state, "OutputAmaxD doesn't support GlobalSplitU > 1 yet")
-        return
       # used in reduce inter wave
       # 4 data * half_wave_num * amax bytePerE
       num_workItems = state["NumThreads"]

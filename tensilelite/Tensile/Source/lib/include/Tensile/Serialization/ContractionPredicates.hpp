@@ -75,7 +75,7 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::StrideDEqual>(),
                     Base::template Pair<Predicates::Contraction::LDCEqualsLDD>(),
                     Base::template Pair<Predicates::Contraction::CEqualsD>(),
-                    Base::template Pair<Predicates::Contraction::GsuLessEqualOne>(),
+                    Base::template Pair<Predicates::Contraction::AmaxDCheck>(),
                     Base::template Pair<Predicates::Contraction::AlphaValue>(),
                     Base::template Pair<Predicates::Contraction::BetaValue>(),
                     Base::template Pair<Predicates::Contraction::BetaZero>(),
@@ -247,8 +247,8 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::GsuLessEqualOne, IO>
-            : public AutoMappingTraits<Predicates::Contraction::GsuLessEqualOne, IO>
+        struct MappingTraits<Predicates::Contraction::AmaxDCheck, IO>
+            : public AutoMappingTraits<Predicates::Contraction::AmaxDCheck, IO>
         {
         };
 

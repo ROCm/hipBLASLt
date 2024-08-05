@@ -845,29 +845,60 @@ namespace Tensile
                 }
             };
 
-            struct GsuLessEqualOne : public Predicate_CRTP<GsuLessEqualOne, ContractionProblemGemm>
+            struct AmaxDCheck : public Predicate_CRTP<AmaxDCheck, ContractionProblemGemm>
             {
                 enum
                 {
                     HasIndex = false,
-                    HasValue = false
+                    HasValue = true
                 };
-                GsuLessEqualOne() = default;
+                bool value;
+
+                AmaxDCheck() = default;
+                AmaxDCheck(bool value)
+                    : value(value)
+                {
+                }
 
                 static std::string Type()
                 {
-                    return "GsuLessEqualOne";
+                    return "AmaxDCheck";
                 }
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.getParams().gsu() <= 1;
+                    bool amaxDStatusEqual = (problem.outputAmaxD() == value);
+
+                    // if value is true, then we also need to check gsu
+                    // otherwise we just check outputAmaxD
+                    if(value)
+                        return amaxDStatusEqual && problem.getParams().gsu() <= 1;
+                    else
+                        return amaxDStatusEqual;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    return debugEvalCmp(problem, stream, "prob", problem.getParams().gsu(), "<=", "sol", 1);
+                    return (value) ? debugEvalCmp(problem,
+                                                  stream,
+                                                  "prob_amaxD",
+                                                  problem.outputAmaxD(),
+                                                  "==",
+                                                  "sol_amaxD",
+                                                  value,
+                                                  "prob_gsu",
+                                                  (int)(problem.getParams().gsu()),
+                                                  "<=",
+                                                  "sol_gsu",
+                                                  1)
+                                   : debugEvalCmp(problem,
+                                                  stream,
+                                                  "prob_amaxD",
+                                                  problem.outputAmaxD(),
+                                                  "==",
+                                                  "sol_amaxD",
+                                                  value);
                 }
             };
 

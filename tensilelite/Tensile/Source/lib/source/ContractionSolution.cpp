@@ -2633,6 +2633,12 @@ namespace Tensile
             }
         }
 
+        // workspace for amaxD
+        if(problemType.outputAmaxD)
+        {
+            size += problem.amaxd().elementBytes() * 4096;
+        }
+
         // Custom kernel synchronizer
         if(gsu > 1 && sizeMapping.globalAccumulation == 3)
         {

@@ -757,11 +757,9 @@ namespace Tensile
 
         void setAmaxD(DataType type, bool isOutput = false)
         {
-            m_amaxDType = type;
             if(type != DataType::None && m_outputAmaxD)
             {
-                m_tensors[ContractionProblemGemm::TENSOR::AMAXD]
-                    = {"amaxD", m_amaxDType, {1}, {1, 1}};
+                m_tensors[ContractionProblemGemm::TENSOR::AMAXD] = {"amaxD", type, {1}, {1, 1}};
                 m_tensors[ContractionProblemGemm::TENSOR::AMAXD].setAsOutput(isOutput);
             }
         }
@@ -1137,7 +1135,6 @@ namespace Tensile
         DataType m_scaleCType        = DataType::None; // if not assigned, will follow beta-type
         DataType m_scaleDType        = DataType::None; // if not assigned, will follow beta-type
         DataType m_scaleAlphaVecType = DataType::None; // if not assigned, will follow alpha-type
-        DataType m_amaxDType         = DataType::None; // if not assigned, will follow beta-type
         DataType m_activationComputeType = DataType::None;
 
         ContractionProblemGemm::TENSOR m_biasSrc = ContractionProblemGemm::TENSOR::D;
