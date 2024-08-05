@@ -45,7 +45,7 @@ BenchmarkProblems:
       UseScaleAB: "Scalar" # scale is available only for fp8 type
       UseScaleCD: True
       UseScaleAlphaVec: 1
-      Activation: False # must be true if there is any of bias scale
+      Activation: True # must be true if there is any of bias scale
       BiasDataTypeList: ['h']
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -98,7 +98,7 @@ BenchmarkProblems:
         - BiasTypeArgs: ['h']
         - ActivationArgs:
           - [Enum: none]
-        #   - [Enum: gelu]
+          - [Enum: gelu]
 
 LibraryLogic:
     ScheduleName: "aquavanjaram"

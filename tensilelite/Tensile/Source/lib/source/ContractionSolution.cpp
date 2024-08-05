@@ -723,14 +723,6 @@ namespace Tensile
                                                e.strides()[i]);
         }
 
-        if(problemType.outputAmaxD)
-        {
-            args.template append<const void*>("AddrAmaxOut", inputs.amaxD);
-            args.template append<const void*>("AmaxWS",
-                                              (uint8_t*)inputs.ws + workspaceOffsetInByte);
-            args.template append<const void*>("AmaxSync", inputs.Synchronizer);
-        }
-
         if(runActivation)
         {
             for(int i = 0; i < problemType.activationArgLength; i++)
@@ -768,6 +760,14 @@ namespace Tensile
                 args.template append<uint32_t>(
                     "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
             }
+        }
+
+        if(problemType.outputAmaxD)
+        {
+            args.template append<const void*>("AddrAmaxOut", inputs.amaxD);
+            args.template append<const void*>("AmaxWS",
+                                              (uint8_t*)inputs.ws + workspaceOffsetInByte);
+            args.template append<const void*>("AmaxSync", inputs.Synchronizer);
         }
     }
 

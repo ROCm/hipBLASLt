@@ -9,10 +9,10 @@ GlobalParameters:
   KernelTime: True
   CSVExportWinner: 1
   MaxWorkspaceSize: 13421772800
-  DataInitTypeBias: 3
-  DataInitTypeA: 3
-  DataInitTypeB: 3
-  DataInitTypeC: 3
+  DataInitTypeBias: 12
+  DataInitTypeA: 12
+  DataInitTypeB: 12
+  DataInitTypeC: 12
   DataInitTypeD: 0
   DataInitTypeBeta: 2
   DataInitTypeAlpha: 2
@@ -44,7 +44,7 @@ BenchmarkProblems:
       UseScaleAB: "Scalar" # scale is available only for fp8 type
       UseScaleCD: True # scale is available only for fp8 type
       UseScaleAlphaVec: 1
-      Activation: False # must be true if there is any of bias scale
+      Activation: True # must be true if there is any of bias scale
       BiasDataTypeList: ['s','h','b'] #
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -91,9 +91,9 @@ BenchmarkProblems:
           - Exact: [127, 127, 1, 128, 127, 127, 127, 127]
           - Exact: [129, 129, 1, 128, 129, 129, 129, 129]
         - BiasTypeArgs: ['s','h','b']
-        # - ActivationArgs:
-        #   - [Enum: none]
-        #   - [Enum: gelu]
+        - ActivationArgs:
+          - [Enum: none]
+          - [Enum: gelu]
 
   ########################################
   # NN - standard
@@ -114,7 +114,7 @@ BenchmarkProblems:
       UseScaleAB: "Scalar" # scale is available only for fp8 type
       UseScaleCD: True # scale is available only for fp8 type
       UseScaleAlphaVec: 1
-      Activation: False # must be true if there is any of bias scale
+      Activation: True # must be true if there is any of bias scale
       BiasDataTypeList: ['s','h','b'] #
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -161,9 +161,9 @@ BenchmarkProblems:
           - Exact: [127, 127, 1, 128, 127, 127, 127, 127]
           - Exact: [129, 129, 1, 128, 129, 129, 129, 129]
         - BiasTypeArgs: ['s','h','b']
-        # - ActivationArgs:
-        #   - [Enum: none]
-        #   - [Enum: gelu]
+        - ActivationArgs:
+          - [Enum: none]
+          - [Enum: gelu]
 
   ########################################
   # NT - standard
@@ -184,7 +184,7 @@ BenchmarkProblems:
       UseScaleAB: "Scalar" # scale is available only for fp8 type
       UseScaleCD: True # scale is available only for fp8 type
       UseScaleAlphaVec: 1
-      Activation: False # must be true if there is any of bias scale
+      Activation: True # must be true if there is any of bias scale
       BiasDataTypeList: ['s','h','b'] #
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -231,9 +231,9 @@ BenchmarkProblems:
           - Exact: [127, 127, 1, 128, 127, 127, 127, 127]
           - Exact: [129, 129, 1, 128, 129, 129, 129, 129]
         - BiasTypeArgs: ['s','h','b']
-        # - ActivationArgs:
-        #   - [Enum: none]
-        #   - [Enum: gelu]
+        - ActivationArgs:
+          - [Enum: none]
+          - [Enum: gelu]
 
   ########################################
   # TT - standard
@@ -254,7 +254,7 @@ BenchmarkProblems:
       UseScaleAB: "Scalar" # scale is available only for fp8 type
       UseScaleCD: True # scale is available only for fp8 type
       UseScaleAlphaVec: 1
-      Activation: False # must be true if there is any of bias scale
+      Activation: True # must be true if there is any of bias scale
       BiasDataTypeList: ['s','h','b'] #
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -301,9 +301,9 @@ BenchmarkProblems:
           - Exact: [127, 127, 1, 128, 127, 127, 127, 127]
           - Exact: [129, 129, 1, 128, 129, 129, 129, 129]
         - BiasTypeArgs: ['s','h','b']
-        # - ActivationArgs:
-        #   - [Enum: none]
-        #   - [Enum: gelu]
+        - ActivationArgs:
+          - [Enum: none]
+          - [Enum: gelu]
 
 LibraryLogic:
     ScheduleName: "aquavanjaram"

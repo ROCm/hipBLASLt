@@ -3459,6 +3459,9 @@ class Solution(collections.abc.Mapping):
 
     state["LdsBytesNoAmax"] = ldsNumBytes
     if state["ProblemType"]["OutputAmaxD"]:
+      if state["GlobalSplitU"] > 1:
+        reject(state, "OutputAmaxD doesn't support GlobalSplitU > 1 yet")
+        return
       # used in reduce inter wave
       # 4 data * half_wave_num * amax bytePerE
       num_workItems = state["NumThreads"]
