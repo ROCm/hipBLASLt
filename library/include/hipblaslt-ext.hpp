@@ -245,6 +245,7 @@ namespace hipblaslt_ext
         const void* scaleAux      = nullptr; //!< The Scale AUX input pointer.
         const void* scaleAlphaVec = nullptr; //!< The scaleAlpha vector input pointer.
         const void* aux           = nullptr; //!< The aux input pointer.
+        const void* amaxD         = nullptr; //!< The amaxD input pointer.
     };
 
     /*! \ingroup types_module
@@ -280,6 +281,7 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT void setScaleAlphaVec(
             const void* scaleAlphaVec); //!< Set the scaleAlpha vector input pointer.
         HIPBLASLT_EXPORT void setAux(const void* aux); //!< Set the aux input pointer.
+        HIPBLASLT_EXPORT void setAmaxD(const void* amaxD); //!< Set the AmaxD input pointer.
 
         HIPBLASLT_EXPORT const void* getA() const; //!< The a matrix input pointer.
         HIPBLASLT_EXPORT const void* getB() const; //!< The b matrix input pointer.
@@ -295,7 +297,8 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT const void* getScaleAux() const; //!< The Scale AUX input pointer.
         HIPBLASLT_EXPORT const void*
             getScaleAlphaVec() const; //!< The scaleAlpha vector input pointer.
-        HIPBLASLT_EXPORT const void* getAux() const; //!< The aux input pointer.s
+        HIPBLASLT_EXPORT const void* getAux() const; //!< The aux input pointer
+        HIPBLASLT_EXPORT const void* getAmaxD() const; //!< The AmaxD input pointer
 
     private:
         friend Gemm;
@@ -356,7 +359,7 @@ namespace hipblaslt_ext
     class GemmInstance
     {
     public:
-        HIPBLASLT_EXPORT virtual ~GemmInstance() {};
+        HIPBLASLT_EXPORT virtual ~GemmInstance(){};
         HIPBLASLT_EXPORT               GemmInstance(const GemmInstance& rhs) = delete;
         HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs)    = delete;
         HIPBLASLT_EXPORT               GemmInstance(GemmInstance&& rhs) noexcept;

@@ -1373,4 +1373,3 @@ Tests:
   unit_check: 1
   gpu_arch: '94[0-2]'
 ...
-

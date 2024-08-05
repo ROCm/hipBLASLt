@@ -526,6 +526,13 @@ namespace
         // set use gradient
         tensileProblem.setUseGradient(is_grad_enabled(prob.epilogue));
 
+        // set AmaxD
+        if(prob.amax_ptr != nullptr)
+        {
+            tensileProblem.setOutputAmaxD(true);
+            tensileProblem.setAmaxD(compute_type, true);
+        }
+
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
             tensileProblem.setF32XdlMathOp(Tensile::DataType::XFloat32);
 
@@ -695,6 +702,13 @@ namespace
         // set gradient
         tensileProblem.setUseGradient(is_grad_enabled(prob.epilogue));
 
+        // set AmaxD
+        if(prob.amax_ptr != nullptr)
+        {
+            tensileProblem.setOutputAmaxD(true);
+            tensileProblem.setAmaxD(compute_type, true);
+        }
+
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
             tensileProblem.setF32XdlMathOp(Tensile::DataType::XFloat32);
     }
@@ -736,6 +750,7 @@ namespace
         inputs.scaleC        = reinterpret_cast<const void*>(prob.scaleC);
         inputs.scaleD        = reinterpret_cast<const void*>(prob.scaleD);
         inputs.scaleAlphaVec = reinterpret_cast<const void*>(prob.scaleAlphaVec);
+        inputs.amaxD         = reinterpret_cast<void*>(prob.amax_ptr);
 
         // push 2 activation arguments
         if(compute_type == Tensile::DataType::Float || compute_type == Tensile::DataType::XFloat32)

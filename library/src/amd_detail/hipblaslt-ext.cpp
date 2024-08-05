@@ -266,6 +266,7 @@ namespace hipblaslt_ext
         const void* scaleAux      = nullptr;
         const void* scaleAlphaVec = nullptr;
         const void* aux           = nullptr;
+        const void* amaxD         = nullptr;
     };
 
     GemmInputsV2::GemmInputsV2()
@@ -359,6 +360,11 @@ namespace hipblaslt_ext
         pimpl->aux = aux;
     }
 
+    void GemmInputsV2::setAmaxD(const void* amaxD)
+    {
+        pimpl->amaxD = amaxD;
+    }
+
     const void* GemmInputsV2::getA() const
     {
         return pimpl->a;
@@ -427,6 +433,11 @@ namespace hipblaslt_ext
     const void* GemmInputsV2::getAux() const
     {
         return pimpl->aux;
+    }
+
+    const void* GemmInputsV2::getAmaxD() const
+    {
+        return pimpl->amaxD;
     }
 
     // End of pimpl classes

@@ -1511,6 +1511,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                 extinputs[b][gemmIdx].setScaleC(arg.scaleC ? *dScaleC[gemmIdx] : nullptr);
                 extinputs[b][gemmIdx].setScaleD(arg.scaleD ? *dScaleD[gemmIdx] : nullptr);
                 extinputs[b][gemmIdx].setScaleAux(arg.scaleE ? *dScaleE[gemmIdx] : nullptr);
+                extinputs[b][gemmIdx].setAmaxD(arg.amaxD ? *dAmaxD[gemmIdx] : nullptr);
                 if(arg.use_e)
                     extinputs[b][gemmIdx].setAux((void*)((*dE[gemmIdx]) + b * size_E[gemmIdx]));
                 if(arg.scaleAlpha_vector)
