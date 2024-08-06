@@ -1142,31 +1142,12 @@ namespace
             std::replace(m_dir.begin(), m_dir.end(), '/', '\\');
             WIN32_FIND_DATAA finddata;
             HANDLE           hfine = FindFirstFileA(m_dir.c_str(), &finddata);
-            if(hfine != INVALID_HANDLE_VALUE)
-            {
-                do
-                {
-                    std::string codeObjectFile = m_path + "\\" + finddata.cFileName;
-                    static_cast<void>(adapter.loadCodeObjectFile(codeObjectFile.c_str()));
-                } while(FindNextFileA(hfine, &finddata));
-            }
-            else
-            {
-                no_match = true;
-            }
+            no_match = (hfine == INVALID_HANDLE_VALUE);
             FindClose(hfine);
 #else
             glob_t glob_result{};
             int    g = glob(m_dir.c_str(), GLOB_NOSORT, nullptr, &glob_result);
-            if(!g)
-            {
-                for(size_t i = 0; i < glob_result.gl_pathc; ++i)
-                    static_cast<void>(adapter.loadCodeObjectFile(glob_result.gl_pathv[i]));
-            }
-            else if(g == GLOB_NOMATCH)
-            {
-                no_match = true;
-            }
+            no_match = (g == GLOB_NOMATCH);
             globfree(&glob_result);
 #endif
             if(no_match)
@@ -2239,8 +2220,8 @@ rocblaslt_status
     std::shared_ptr<Tensile::Hardware>                                               hardware;
 
 #if ROCBLASLT_TENSILE_LAZY_LOAD
-    // isPreload = true is a workaround for lazy_lib_load
-    auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device, true);
+    // isPreload = true is to load placeholder libraries except code objects
+    auto adapter           = get_library_and_adapter(&library, &deviceProp, handle->device, true);
 #else
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 #endif
