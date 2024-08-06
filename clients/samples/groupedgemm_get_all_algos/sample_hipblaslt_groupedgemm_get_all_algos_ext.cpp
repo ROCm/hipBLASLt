@@ -80,7 +80,7 @@ void multipleGroupsGroupedGemmExt(hipblasLtHandle_t     handle,
                                    HIPBLAS_COMPUTE_32F,
                                    heuristicResult));
 
-    hipblaslt_ext::GemmPreference gemmPref;
+    hipblaslt_ext::GemmPreferenceV2 gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
     std::vector<hipblaslt_ext::GroupedGemm>                      groupedGemms;
     std::vector<HipArrayBufferPtr<hipblaslt_ext::UserArguments>> groupedGemmUserArgs;
@@ -266,7 +266,7 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
                                    HIPBLAS_COMPUTE_32F,
                                    heuristicResult));
 
-    hipblaslt_ext::GemmPreference gemmPref;
+    hipblaslt_ext::GemmPreferenceV2 gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
     hipblaslt_ext::GroupedGemm groupedgemm(
         handle, trans_a, trans_b, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIPBLAS_COMPUTE_32F);
