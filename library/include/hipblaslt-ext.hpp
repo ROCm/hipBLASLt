@@ -45,6 +45,7 @@
 
 namespace hipblaslt_ext
 {
+    class GemmInstance;
     class Gemm;
     class GroupedGemm;
 
@@ -61,7 +62,7 @@ namespace hipblaslt_ext
     };
 
     /*! \ingroup types_module
-     *  \brief hipblasLt extension preference for gemm problems.
+     *  \brief hipblasLt extension preference for gemm problems. (deprecated)
      *
      * \details Currently only supports setting max workspace size.
      */
@@ -85,6 +86,44 @@ namespace hipblaslt_ext
 
     private:
         size_t m_workspace_bytes;
+    };
+
+    /*! \ingroup types_module
+     *  \brief hipblasLt extension preference for gemm problems.
+     *
+     * \details Currently only supports setting max workspace size.
+     */
+    class GemmPreferenceV2
+    {
+    public:
+        HIPBLASLT_EXPORT GemmPreferenceV2();
+        HIPBLASLT_EXPORT ~GemmPreferenceV2();
+
+        HIPBLASLT_EXPORT                   GemmPreferenceV2(const GemmPreferenceV2& pref);
+        HIPBLASLT_EXPORT GemmPreferenceV2& operator=(const GemmPreferenceV2& pref);
+
+        HIPBLASLT_EXPORT                   GemmPreferenceV2(GemmPreferenceV2&& pref);
+        HIPBLASLT_EXPORT GemmPreferenceV2& operator=(GemmPreferenceV2&& pref);
+
+        /*! \ingroup library_module
+         *  \brief This function sets the max workspace size.
+         *
+         *  @param[in]
+         *  workspaceBytes  Set the max workspace size in bytes.
+         */
+        HIPBLASLT_EXPORT void setMaxWorkspaceBytes(size_t workspaceBytes);
+
+        /*! \ingroup library_module
+         *  \brief This function returns the set max workspace size.
+         *
+         *  \retval size_t Returns the set max workspace size.
+         */
+        HIPBLASLT_EXPORT const size_t getMaxWorkspaceBytes() const;
+
+    private:
+        friend GemmInstance;
+        class GemmPreferenceImpl;
+        std::unique_ptr<GemmPreferenceImpl> pimpl;
     };
 
     /*! \ingroup types_module
@@ -221,6 +260,29 @@ namespace hipblaslt_ext
         uint8_t splitK = 0; //!< Value of splitK, 0 is off (use the splitK inside the solution).
         uint8_t wgm
             = 0; //!< Value of workgroup mapping, 0 is off (use the workgroup mapping inside the solution).
+    };
+
+    struct GemmTuningV2
+    {
+    public:
+        HIPBLASLT_EXPORT GemmTuningV2();
+        HIPBLASLT_EXPORT ~GemmTuningV2();
+
+        HIPBLASLT_EXPORT               GemmTuningV2(const GemmTuningV2& tuning);
+        HIPBLASLT_EXPORT GemmTuningV2& operator=(const GemmTuningV2& tuning);
+
+        HIPBLASLT_EXPORT               GemmTuningV2(GemmTuningV2&& tuning);
+        HIPBLASLT_EXPORT GemmTuningV2& operator=(GemmTuningV2&& tuning);
+
+        HIPBLASLT_EXPORT void setSplitK(uint16_t splitK); //!< Set the value of splitK, 0 is off (use the splitK inside the solution).
+        HIPBLASLT_EXPORT void setWgm(int16_t wgm); //!< Set the value of workgroup mapping, 0 is off (use the workgroup mapping inside the solution).
+
+        HIPBLASLT_EXPORT uint16_t getSplitK() const; //!< Value of splitK.
+        HIPBLASLT_EXPORT int16_t getWgm() const; //!< Value of workgroup mapping.
+    private:
+        friend GemmInstance;
+        class GemmTuningImpl;
+        std::unique_ptr<GemmTuningImpl> pimpl;
     };
 
     /*! \ingroup types_module
@@ -363,7 +425,7 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmInstance& operator=(GemmInstance&& rhs) noexcept;
 
         /*! \ingroup library_module
-        *  \brief Retrieve the possible algorithms
+        *  \brief Retrieve the possible algorithms (deprecated)
         *
         *  \details
         *  This function retrieves the possible algorithms for the matrix multiply
@@ -391,6 +453,34 @@ namespace hipblaslt_ext
                              std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 
         /*! \ingroup library_module
+        *  \brief Retrieve the possible algorithms
+        *
+        *  \details
+        *  This function retrieves the possible algorithms for the matrix multiply
+        * operation hipblasLtMatmul() function with the given data and compute tpye.
+        * The output is placed in heuristicResult in the order of increasing
+        * estimated compute time.
+        *
+        *  @param[in]
+        *  requestedAlgoCount  number of requested algorithms.
+        *  @param[in]
+        *  pref hipblasLt extension preference for gemm problems.
+        *  @param[out]
+        *  heuristicResults    The algorithm heuristic vector.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. Inspect
+        * heuristicResults.size > 0, but may heuristicResults.size < requestedAlgoCount
+        * state for the status of the results. \retval HIPBLAS_STATUS_NOT_SUPPORTED
+        * If no heuristic function available for current configuration.
+        * \retval HIPBLAS_STATUS_INVALID_VALUE If no solution is found.
+        */
+        HIPBLASLT_EXPORT
+        hipblasStatus_t
+            algoGetHeuristic(const int                                      requestedAlgoCount,
+                             const GemmPreferenceV2&                        pref,
+                             std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
+
+        /*! \ingroup library_module
         *  \brief Check if the algorithm supports the problem. (For hipblaslt extension API)
         *
         *  \details
@@ -408,6 +498,29 @@ namespace hipblaslt_ext
         */
         HIPBLASLT_EXPORT
         hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo, size_t& workspaceSizeInBytes);
+
+        /*! \ingroup library_module
+        *  \brief Check if the algorithm supports the problem. (deprecated)
+        *
+        *  \details
+        *  This function updates the problem saved inside the algorithm if the problem is
+        * supported. The required workspaceSizeInBytes is also returned.
+        *
+        *  @param[in]
+        *  algo The algorithm heuristic.
+        *  @param[in]
+        *  tuning The tuning parameters.
+        *  @param[out]
+        *  workspaceSizeInBytes Return the required workspace size.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. The problem is
+        * supported by the algorithm.
+        * results. \retval HIPBLAS_STATUS_INVALID_VALUE     The problem is not supported.
+        */
+        HIPBLASLT_EXPORT
+        hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo,
+                                        GemmTuning&            tuning,
+                                        size_t&                workspaceSizeInBytes);
 
         /*! \ingroup library_module
         *  \brief Check if the algorithm supports the problem. (For hipblaslt extension API)
@@ -429,7 +542,7 @@ namespace hipblaslt_ext
         */
         HIPBLASLT_EXPORT
         hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo,
-                                        GemmTuning&            tuning,
+                                        GemmTuningV2&          tuning,
                                         size_t&                workspaceSizeInBytes);
 
         /*! \ingroup library_module
@@ -460,6 +573,43 @@ namespace hipblaslt_ext
         */
         HIPBLASLT_EXPORT
         hipblasStatus_t initialize(const hipblasLtMatmulAlgo_t& algo,
+                                   void*                        workspace,
+                                   bool                         useUserArgs = true,
+                                   hipStream_t                  stream      = 0);
+
+        /*! \ingroup library_module
+        *  \brief Create kernel arguments from a given hipblaslt_ext::GemmInstance. (deprecated)
+        *
+        *  \details
+        *  This function creates kernel arguments from a given hipblaslt_ext::GemmInstance
+        *  then saves the arguments inside the instance.
+        *
+        *  @param[in]
+        *  algo                    Handle for matrix multiplication algorithm to be
+        * used. See hipblaslt.h::hipblasLtMatmulAlgo_t . When NULL, an implicit heuristics query
+        * with default search preferences will be performed to determine actual
+        * algorithm to use.
+        *  @param[in]
+        *  tuning                  Structure with user tuning parameters. Note that not every algo
+        * supports user tuning parameters. Will return HIPBLAS_STATUS_INVALID_VALUE if not supported.
+        * be 0).
+        *  @param[in]
+        *  workspace               Pointer to the workspace buffer allocated in the GPU
+        * memory. Pointer must be 16B aligned (that is, lowest 4 bits of address must
+        * be 0).
+        *  @param[in]
+        *  useUserArgs                Use user args, this does not affect vanilla gemm.
+        * (May be deprecated in the future)
+        *  @param[in]
+        *  stream                  The HIP stream where all the GPU work will be
+        * submitted. (May be deprecated in the future)
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_INVALID_VALUE If the gemm_count = 0.
+        */
+        HIPBLASLT_EXPORT
+        hipblasStatus_t initialize(const hipblasLtMatmulAlgo_t& algo,
+                                   GemmTuning&                  tuning,
                                    void*                        workspace,
                                    bool                         useUserArgs = true,
                                    hipStream_t                  stream      = 0);
@@ -496,7 +646,7 @@ namespace hipblaslt_ext
         */
         HIPBLASLT_EXPORT
         hipblasStatus_t initialize(const hipblasLtMatmulAlgo_t& algo,
-                                   GemmTuning&                  tuning,
+                                   GemmTuningV2&                tuning,
                                    void*                        workspace,
                                    bool                         useUserArgs = true,
                                    hipStream_t                  stream      = 0);

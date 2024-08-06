@@ -380,6 +380,13 @@ rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt_handle            han
                                                  const rocblaslt::RocTuning* tuning,
                                                  size_t&                     workspaceSizeInBytes);
 
+rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt_handle              handle,
+                                                 rocblaslt::RocGemmType        gemmType,
+                                                 std::shared_ptr<void>         gemmData,
+                                                 rocblaslt_matmul_algo&        algo,
+                                                 const rocblaslt::RocTuningV2* tuning,
+                                                 size_t&                       workspaceSizeInBytes);
+
 rocblaslt_status
     rocblaslt_algo_get_heuristic_cpp(rocblaslt_handle       handle,
                                      rocblaslt::RocGemmType gemmType,

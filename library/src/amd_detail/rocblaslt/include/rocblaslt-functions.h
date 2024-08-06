@@ -256,6 +256,15 @@ rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
                                             hipStream_t                  stream,
                                             std::shared_ptr<void>        gemmData);
 
+rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle              handle,
+                                            const rocblaslt::RocGemmType  gemmType,
+                                            const rocblaslt_matmul_algo&  algo,
+                                            const rocblaslt::RocTuningV2* tuning,
+                                            void*                         workspace,
+                                            bool                          useUserArgs,
+                                            hipStream_t                   stream,
+                                            std::shared_ptr<void>         gemmData);
+
 rocblaslt_status rocblaslt_get_default_user_args(rocblaslt_handle       handle,
                                                  rocblaslt::RocGemmType gemmType,
                                                  std::shared_ptr<void>  gemmData,

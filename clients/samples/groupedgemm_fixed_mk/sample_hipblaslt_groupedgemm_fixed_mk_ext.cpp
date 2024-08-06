@@ -113,7 +113,7 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
                                  int64_t               max_workspace_size,
                                  hipStream_t           stream)
 {
-    hipblaslt_ext::GemmPreference gemmPref;
+    hipblaslt_ext::GemmPreferenceV2 gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
     hipblaslt_ext::GroupedGemm groupedgemm(handle,
                                            trans_a,

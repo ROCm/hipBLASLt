@@ -420,7 +420,7 @@ int main(int argc, char** argv)
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
 
-    hipblaslt_ext::GemmPreference gemmPref;
+    hipblaslt_ext::GemmPreferenceV2 gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResults;
     for(size_t i = 0; i < layer.size(); i++)

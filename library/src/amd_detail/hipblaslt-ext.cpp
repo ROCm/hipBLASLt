@@ -35,6 +35,43 @@
 
 namespace hipblaslt_ext
 {
+    class GemmPreferenceV2::GemmPreferenceImpl
+    {
+    public:
+        size_t workspace_bytes;
+    };
+
+    GemmPreferenceV2::GemmPreferenceV2()
+        : pimpl(std::make_unique<GemmPreferenceImpl>())
+    {
+    }
+
+    GemmPreferenceV2::~GemmPreferenceV2() = default;
+
+    GemmPreferenceV2::GemmPreferenceV2(const GemmPreferenceV2& pref)
+        : pimpl(std::make_unique<GemmPreferenceImpl>(*pref.pimpl))
+    {
+    }
+
+    GemmPreferenceV2& GemmPreferenceV2::operator=(const GemmPreferenceV2& pref)
+    {
+        *pimpl = *pref.pimpl;
+        return *this;
+    }
+
+    GemmPreferenceV2::GemmPreferenceV2(GemmPreferenceV2&& pref)            = default;
+    GemmPreferenceV2& GemmPreferenceV2::operator=(GemmPreferenceV2&& pref) = default;
+
+    void GemmPreferenceV2::setMaxWorkspaceBytes(size_t workspaceBytes)
+    {
+        pimpl->workspace_bytes = workspaceBytes;
+    }
+
+    const size_t GemmPreferenceV2::getMaxWorkspaceBytes() const
+    {
+        return pimpl->workspace_bytes;
+    }
+
     class GemmProblemTypeV2::GemmProblemTypeImpl
     {
     public:
@@ -246,6 +283,54 @@ namespace hipblaslt_ext
     int GemmEpilogueV2::getScalingBType() const
     {
         return pimpl->scaling_b_type;
+    }
+
+    class GemmTuningV2::GemmTuningImpl
+    {
+    public:
+        u_int16_t splitK = 0;
+        int16_t wgm = 0;
+    };
+
+    GemmTuningV2::GemmTuningV2()
+        : pimpl(std::make_unique<GemmTuningImpl>())
+    {
+    }
+
+    GemmTuningV2::~GemmTuningV2() = default;
+
+    GemmTuningV2::GemmTuningV2(const GemmTuningV2& tuning)
+        : pimpl(std::make_unique<GemmTuningImpl>(*tuning.pimpl))
+    {
+    }
+
+    GemmTuningV2& GemmTuningV2::operator=(const GemmTuningV2& tuning)
+    {
+        *pimpl = *tuning.pimpl;
+        return *this;
+    }
+
+    GemmTuningV2::GemmTuningV2(GemmTuningV2&& tuning)            = default;
+    GemmTuningV2& GemmTuningV2::operator=(GemmTuningV2&& tuning) = default;
+
+    void GemmTuningV2::setSplitK(u_int16_t splitK)
+    {
+        pimpl->splitK = splitK;
+    }
+
+    void GemmTuningV2::setWgm(int16_t wgm)
+    {
+        pimpl->wgm = wgm;
+    }
+
+    u_int16_t GemmTuningV2::getSplitK() const
+    {
+        return pimpl->splitK;
+    }
+
+    int16_t GemmTuningV2::getWgm() const
+    {
+        return pimpl->wgm;
     }
 
     class GemmInputsV2::GemmInputsImpl
@@ -538,14 +623,35 @@ namespace hipblaslt_ext
                                              *results));
     }
 
+    hipblasStatus_t GemmInstance::algoGetHeuristic(
+        const int                                      requestedAlgoCount,
+        const GemmPreferenceV2&                        pref,
+        std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults)
+    {
+        if(m_gemm_count == 0)
+            return HIPBLAS_STATUS_INVALID_VALUE;
+        auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        auto results
+            = reinterpret_cast<std::vector<rocblaslt_matmul_heuristic_result>*>(&heuristicResults);
+        results->clear();
+        return RocBlasLtStatusToHIPStatus(
+            rocblaslt_algo_get_heuristic_cpp((rocblaslt_handle)m_handle,
+                                             gemmType,
+                                             m_data,
+                                             pref.pimpl->workspace_bytes,
+                                             requestedAlgoCount,
+                                             *results));
+    }
+
     hipblasStatus_t GemmInstance::isAlgoSupported(hipblasLtMatmulAlgo_t& algo,
                                                   size_t&                workspaceSizeInBytes)
     try
     {
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocalgo  = reinterpret_cast<rocblaslt_matmul_algo*>(&algo);
+        rocblaslt::RocTuningV2 *tuning = nullptr;
         return RocBlasLtStatusToHIPStatus(rocblaslt_is_algo_supported_cpp(
-            (rocblaslt_handle)m_handle, gemmType, m_data, *rocalgo, nullptr, workspaceSizeInBytes));
+            (rocblaslt_handle)m_handle, gemmType, m_data, *rocalgo, tuning, workspaceSizeInBytes));
     }
     catch(...)
     {
@@ -573,6 +679,27 @@ namespace hipblaslt_ext
         return exception_to_hipblas_status();
     }
 
+    hipblasStatus_t GemmInstance::isAlgoSupported(hipblasLtMatmulAlgo_t& algo,
+                                                  GemmTuningV2&          tuning,
+                                                  size_t&                workspaceSizeInBytes)
+    try
+    {
+        auto gemmType  = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        auto rocalgo   = reinterpret_cast<rocblaslt_matmul_algo*>(&algo);
+        auto roctuning = reinterpret_cast<rocblaslt::RocTuningV2*>(&tuning);
+        return RocBlasLtStatusToHIPStatus(
+            rocblaslt_is_algo_supported_cpp((rocblaslt_handle)m_handle,
+                                            gemmType,
+                                            m_data,
+                                            *rocalgo,
+                                            roctuning,
+                                            workspaceSizeInBytes));
+    }
+    catch(...)
+    {
+        return exception_to_hipblas_status();
+    }
+
     hipblasStatus_t GemmInstance::initialize(const hipblasLtMatmulAlgo_t& algo,
                                              void*                        workspace,
                                              bool                         useUserArgs,
@@ -583,10 +710,11 @@ namespace hipblaslt_ext
             return HIPBLAS_STATUS_INVALID_VALUE;
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocalgo  = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
+        rocblaslt::RocTuningV2 *tuning = nullptr;
         return RocBlasLtStatusToHIPStatus(rocblaslt_makeArgument_cpp((rocblaslt_handle)m_handle,
                                                                      gemmType,
                                                                      *rocalgo,
-                                                                     nullptr,
+                                                                     tuning,
                                                                      workspace,
                                                                      useUserArgs,
                                                                      stream,
@@ -609,6 +737,32 @@ namespace hipblaslt_ext
         auto gemmType  = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocalgo   = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
         auto roctuning = reinterpret_cast<const rocblaslt::RocTuning*>(&tuning);
+        return RocBlasLtStatusToHIPStatus(rocblaslt_makeArgument_cpp((rocblaslt_handle)m_handle,
+                                                                     gemmType,
+                                                                     *rocalgo,
+                                                                     roctuning,
+                                                                     workspace,
+                                                                     useUserArgs,
+                                                                     stream,
+                                                                     m_data));
+    }
+    catch(...)
+    {
+        return exception_to_hipblas_status();
+    }
+
+    hipblasStatus_t GemmInstance::initialize(const hipblasLtMatmulAlgo_t& algo,
+                                             GemmTuningV2&                tuning,
+                                             void*                        workspace,
+                                             bool                         useUserArgs,
+                                             hipStream_t                  stream)
+    try
+    {
+        if(m_gemm_count == 0)
+            return HIPBLAS_STATUS_INVALID_VALUE;
+        auto gemmType  = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        auto rocalgo   = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
+        auto roctuning = reinterpret_cast<const rocblaslt::RocTuningV2*>(&tuning);
         return RocBlasLtStatusToHIPStatus(rocblaslt_makeArgument_cpp((rocblaslt_handle)m_handle,
                                                                      gemmType,
                                                                      *rocalgo,
