@@ -109,7 +109,7 @@ void simpleGemmTuningWGMExt(hipblasLtHandle_t  handle,
                                                      HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
-    hipblaslt_ext::GemmPreference gemmPref;
+    hipblaslt_ext::GemmPreferenceV2 gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
     hipblaslt_ext::Gemm gemm(
         handle, trans_a, trans_b, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIPBLAS_COMPUTE_32F);
