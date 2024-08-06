@@ -1555,10 +1555,11 @@ rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem>& pro
     return status;
 }
 
+template <typename Tuning>
 rocblaslt_status makeArgument(rocblaslt_handle             handle,
                               const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
-                              const rocblaslt::RocTuning*  tuning,
+                              const Tuning*                tuning,
                               void*                        workspace,
                               bool                         useUserArgs,
                               hipStream_t                  stream,
@@ -2226,12 +2227,12 @@ rocblaslt_status
     return rocblaslt_status_success;
 }
 
-template <typename MyProblem, typename Inputs>
+template <typename MyProblem, typename Inputs, typename Tuning>
 rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
                                      MyProblem&                  tensile_prob,
                                      Inputs&                     inputs,
                                      rocblaslt_matmul_algo*      algo,
-                                     const rocblaslt::RocTuning* tuning,
+                                     const Tuning*               tuning,
                                      size_t*                     workspaceSizeInBytes)
 {
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
@@ -2377,7 +2378,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle             handle,
 {
     std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
     updateTensileProblem(prob, data->problem);
-    return isSolutionSupported(handle, data->problem, prob, algo, nullptr, workspaceSizeInBytes);
+    rocblaslt::RocTuningV2* tuning = nullptr;
+    return isSolutionSupported(handle, data->problem, prob, algo, tuning, workspaceSizeInBytes);
 }
 
 template <typename T>
@@ -2387,11 +2389,12 @@ void setRestrictions(Tensile::ContractionProblemGemm& tensile_prob, const T* alp
     tensile_prob.setBetaRestriction(Tensile::toScalarValueEnum(*beta));
 }
 
+template <typename Tuning>
 rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
                                      const rocblaslt::RocGemmType& gemmType,
                                      std::shared_ptr<void>         gemmData,
                                      rocblaslt_matmul_algo&        algo,
-                                     const rocblaslt::RocTuning*   tuning,
+                                     const Tuning*                 tuning,
                                      size_t&                       workspaceSizeInBytes)
 {
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
@@ -2641,3 +2644,26 @@ std::atomic_bool& rocblaslt_internal_tensile_is_initialized()
     static std::atomic_bool init;
     return init;
 }
+
+/***********************************************************************************
+ * Templates for backward compatibility with old rocBLASLt API
+ ***********************************************************************************/
+// clang-format off
+#define CREATECOMPATIBILITYFUNCTION(Tuning)                                                    \
+    template rocblaslt_status makeArgument<Tuning>(rocblaslt_handle             handle,                        \
+                                                   const rocblaslt::RocGemmType gemmType,                      \
+                                                   const rocblaslt_matmul_algo& algo,                          \
+                                                   const Tuning*                tuning,                        \
+                                                   void*                        workspace,                     \
+                                                   bool                         useUserArgs,                   \
+                                                   hipStream_t                  stream,                        \
+                                                   std::shared_ptr<void>        gemmData);                     \
+    template rocblaslt_status isSolutionSupported<Tuning>(rocblaslt_handle       handle,                       \
+                                                          const rocblaslt::RocGemmType& gemmType,              \
+                                                          std::shared_ptr<void>         gemmData,              \
+                                                          rocblaslt_matmul_algo&        algo,                  \
+                                                          const Tuning*                 tuning,                \
+                                                          size_t&                       workspaceSizeInBytes);
+// clang-format on
+CREATECOMPATIBILITYFUNCTION(rocblaslt::RocTuning)
+CREATECOMPATIBILITYFUNCTION(rocblaslt::RocTuningV2)

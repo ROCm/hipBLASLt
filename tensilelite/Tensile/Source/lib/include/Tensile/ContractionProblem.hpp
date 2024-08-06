@@ -48,7 +48,7 @@ namespace Tensile
     class TENSILE_API ContractionProblemParameters
     {
     public:
-        void setGSU(uint8_t gsu)
+        void setGSU(uint16_t gsu)
         {
             m_gsu = gsu;
         }
@@ -58,7 +58,7 @@ namespace Tensile
             return m_gsu;
         }
 
-        void setWgm(uint8_t wgm)
+        void setWgm(int16_t wgm)
         {
             m_wgm = wgm;
         }
@@ -104,8 +104,8 @@ namespace Tensile
         }
 
     private:
-        uint8_t        m_gsu            = 0; // default value
-        uint8_t        m_wgm            = 0; // default value
+        uint16_t       m_gsu            = 0; // default value
+        int16_t        m_wgm            = 0; // default value
         DataType       m_biasType       = DataType::None;
         int            m_factorDim      = 0;
         ActivationType m_activationType = ActivationType::None;

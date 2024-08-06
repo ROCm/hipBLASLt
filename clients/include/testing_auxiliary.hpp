@@ -445,7 +445,7 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
     // Set User Preference attributes
     hipblasLtMatmulPreference_t pref;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
-                                              
+
     const int                        request_solutions = 1;
     hipblasLtMatmulHeuristicResult_t heuristicResult[request_solutions];
     int                              returnedAlgoCount = 0;
@@ -517,7 +517,7 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b_ext(const Arguments& arg)
     CHECK_HIP_ERROR(hipMalloc(&d_c, m * n * batch_count * sizeof(OutType)));
     CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(OutType)));
 
-    hipblaslt_ext::GemmPreference gemmPref;
+    hipblaslt_ext::GemmPreferenceV2 gemmPref;
     hipblaslt_ext::Gemm gemm(
         handle, trans_a, trans_b, arg.a_type, arg.a_type, arg.a_type, arg.a_type, arg.compute_type);
 

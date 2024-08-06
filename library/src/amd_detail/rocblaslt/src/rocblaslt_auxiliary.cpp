@@ -1572,6 +1572,16 @@ rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt_handle            han
     return isSolutionSupported(handle, gemmType, gemmData, algo, tuning, workspaceSizeInBytes);
 }
 
+rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt_handle              handle,
+                                                 rocblaslt::RocGemmType        gemmType,
+                                                 std::shared_ptr<void>         gemmData,
+                                                 rocblaslt_matmul_algo&        algo,
+                                                 const rocblaslt::RocTuningV2* tuning,
+                                                 size_t&                       workspaceSizeInBytes)
+{
+    return isSolutionSupported(handle, gemmType, gemmData, algo, tuning, workspaceSizeInBytes);
+}
+
 rocblaslt_status
     rocblaslt_algo_get_heuristic_cpp(rocblaslt_handle       handle,
                                      rocblaslt::RocGemmType gemmType,
@@ -1621,7 +1631,7 @@ rocblaslt_status
                         if(*(int*)(results[j].algo.data)
                            == *(int*)(allSolutionsResults[i].algo.data)) //solution index
                             duplicated_sol = true;
-
+                    rocblaslt::RocTuningV2 *tuning = nullptr;
                     if(duplicated_sol == true
                        || rocblaslt_status_success
                               != isSolutionSupported(
@@ -1629,7 +1639,7 @@ rocblaslt_status
                                   static_cast<const rocblaslt::RocGemmType>(gemmType),
                                   gemmData,
                                   allSolutionsResults[i].algo,
-                                  nullptr,
+                                  tuning,
                                   workspaceSizeInBytes))
                         continue;
                     allSolutionsResults[i].workspaceSize = workspaceSizeInBytes;
