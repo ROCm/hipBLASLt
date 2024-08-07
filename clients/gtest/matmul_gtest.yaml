@@ -1257,6 +1257,40 @@ Tests:
   unit_check: 1
   gpu_arch: '94[0-2]'
 
+- name: matmul_gemm_i8_dst_i8_1xxx
+  category: pre_checkin
+  function:
+    matmul: *i8_precision_dst_i8
+  matrix_size:
+    - { M:  128,  N:  128,  K:  128  }
+    - { M:  131,  N:  131,  K:  131  }
+    - { M:  1024, N:  1024, K:  1024 }
+    - { M:  1031, N:  1031, K:  1031 }
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0, 2 ]
+  scaleAlpha_vector: [0, 1]
+  activation_type: relu
+  unit_check: 1
+  gpu_arch: '1[1-2]\d{2}'
+
+- name: matmul_gemm_i8_dst_i32_1xxx
+  category: pre_checkin
+  function:
+    matmul: *i8_precision_dst_i32
+  matrix_size:
+    - { M:  128,  N:  128,  K:  128  }
+    - { M:  131,  N:  131,  K:  131  }
+    - { M:  1024, N:  1024, K:  1024 }
+    - { M:  1031, N:  1031, K:  1031 }
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0, 2 ]
+  scaleAlpha_vector: [0, 1]
+  activation_type: relu
+  unit_check: 1
+  gpu_arch: '1[1-2]\d{2}'
+
 - name: matmul_gemm_mix_precisions
   category: pre_checkin
   function:
