@@ -569,6 +569,15 @@ template <typename TiA,
           typename TiB,
           typename To,
           typename Tc,
+          typename TciA,
+          typename TciB,
+          typename Tbias>
+void testing_matmul_with_bias(const Arguments&);
+
+template <typename TiA,
+          typename TiB,
+          typename To,
+          typename Tc,
           typename TciA = TiA,
           typename TciB = TiB>
 void testing_matmul(const Arguments& arg)
@@ -2340,7 +2349,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                                           &K,
                                           &num_batches,
                                           &gemmIdx,
-                                          &arg]<typename Ti>(Ti* ptr) {
+                                          &arg](auto* ptr) {
                                 if(sumLd)
                                 {
                                     reduction_func<true, float>(ptr,

@@ -32,6 +32,7 @@
 #include <Tensile/SingleSolutionLibrary.hpp>
 
 #include <cstddef>
+#include <tuple>
 #include <unordered_set>
 
 namespace Tensile
@@ -60,6 +61,7 @@ namespace Tensile
                 {
                     using Entry  = typename Table::Entry;
                     using KBEntry = typename Table::KBEntry;
+                    using std::get;
                     auto comp    = [](Entry const& e1, Entry const& e2) {
                         return e1.key < e2.key || (e1.key == e2.key && e1.speed > e2.speed);
                     };
@@ -75,15 +77,7 @@ namespace Tensile
                                 auto k   = it->key.size() > 3 ? it->key[3] : it->key[2];
                                 auto b   = it->key.size() > 3 ? it->key[2] : 1;
                                 auto key = std::tuple(it->key[0], it->key[1]);
-                                if(table.kSolutionMap.find(key) == table.kSolutionMap.end())
-                                {
-                                    std::vector<KBEntry> v  = {KBEntry(k, b, it->value)};
-                                    table.kSolutionMap[key] = v;
-                                }
-                                else
-                                {
-                                    table.kSolutionMap[key].push_back(KBEntry(k, b, it->value));
-                                }
+                                table.kSolutionMap[key].emplace_back(KBEntry{static_cast<int32_t>(k), static_cast<int32_t>(b), it->value});
                             }
 
                             // Creating kd-tree

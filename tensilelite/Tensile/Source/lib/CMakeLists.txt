@@ -91,7 +91,7 @@ add_library (TensileHost STATIC ${tensile_sources})
 
 set_target_properties(TensileHost
                       PROPERTIES
-                      CXX_STANDARD 20
+                      CXX_STANDARD 17
                       CXX_STANDARD_REQUIRED ON
                       CXX_EXTENSIONS OFF)
 

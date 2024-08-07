@@ -1844,6 +1844,7 @@ namespace Tensile
             DataInitialization::ConvertToProblemInputs(ContractionProblemGemm const& problem,
                                                        bool                          isGPU)
         {
+            using std::static_pointer_cast;
             std::shared_ptr<ProblemInputs> result;
             if(m_groupedOffsets[0].empty())
             {
@@ -2047,6 +2048,7 @@ namespace Tensile
                                                          std::shared_ptr<ProblemInputs> inputs,
                                                          hipStream_t                    stream)
         {
+            using std::static_pointer_cast;
             std::vector<std::shared_ptr<ProblemInputs>> inputArr;
             inputArr.push_back(inputs);
             if(m_rotatingBuffer == 0)
