@@ -6240,11 +6240,10 @@ class KernelWriterAssembly(KernelWriter):
               loadModule = Module("load%u"%loopCnt)
               imod.middle.add(loadModule)
 
-              if self.states.archCaps["HasEccHalf"] and not tP["isM"]:
+              if (self.states.archCaps["HasEccHalf"] and not tP["isM"]) or (bpl == 1):
                 numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L if tc =='B' else self.states.m.numVgprG2L
                 eccBpe = tP["bpeDS"] if kernel["ConvertAfterDS"] else max(tP["bpeGR"], tP["bpe"])
-                eccOffset = _getEccOffset(loadWidth, bpr=self.states.bpr, bpe=eccBpe, \
-                  glvw=tP["glvw"], idx=i, numVgprG2L=numVgprG2L)
+                eccOffset = _getEccOffset(loadWidth, bpr=self.states.bpr, bpe=eccBpe, glvw=tP["glvw"], idx=i, numVgprG2L=numVgprG2L)
               else:
                 eccOffset = 0
 
@@ -6815,15 +6814,14 @@ class KernelWriterAssembly(KernelWriter):
               g2lIdxDict[g2lIdx] = 0
             instHi = g2lIdxDict[g2lIdx]
 
-            if self.states.archCaps["HasEccHalf"]:
+            if self.states.archCaps["HasEccHalf"] or (blockWidth == 0.25):
               numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L if tc == 'B' else self.states.m.numVgprG2L
               eccinstHi = instHi
               # FIXME: Workaround, unique pattern in 8bit + glvw == 2...
               if tP["bpeDS"] == tP["bpeGR"] and (tP["globalReadInstruction"].totalWidth) == 0.5 and (blockWidth == 0.25) and not tP["isM"]:
                 eccinstHi = i // 2
               eccBpe = tP["bpeDS"] if kernel["ConvertAfterDS"] else max(tP["bpeGR"], tP["bpe"])
-              eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=eccBpe, \
-                glvw=tP["glvw"], idx=eccinstHi, numVgprG2L=numVgprG2L)
+              eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=eccBpe, glvw=tP["glvw"], idx=eccinstHi, numVgprG2L=numVgprG2L)
             else:
               eccOffset = 0
 

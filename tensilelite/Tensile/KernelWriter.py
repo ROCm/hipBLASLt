@@ -3170,15 +3170,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     ####################################
     # num vgprs: global -> local elements
     self.states.a.numVgprG2L = 0
-    numVgprG2Local = 0
     numVgprG2LAllocatedLocal = 0
 
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
       bpeMax = tensorParametersA["bpeDS"] if kernel["ConvertAfterDS"] else max(tensorParametersA["bpeGR"], tensorParametersA["bpe"])
       self.states.a.numVgprG2L = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
         kernel["GlobalReadVectorWidthA"] * bpeMax) / (float)(self.states.bpr))
-      numVgprG2Local = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
-        kernel["GlobalReadVectorWidthA"] * tensorParametersA["bpe"]) / (float)(self.states.bpr))
       if self.states.archCaps["HasEccHalf"]:
         tpA      = self.states.bpr if bpeMax * vwa < self.states.bpr else bpeMax * vwa
         tpALocal = self.states.bpr if tensorParametersA["bpe"] * vwa < self.states.bpr else tensorParametersA["bpe"] * vwa
@@ -3190,18 +3187,18 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.a.numVgprG2LAllocated = self.states.a.numVgprG2L
     # using _ds_store_b8: need one more vgpr space to do lshr
     if tensorParametersA["localWriteInstruction"].blockWidth == 0.25:
-      self.states.a.numVgprG2L = self.states.a.numVgprG2L * 2
-      self.states.a.numVgprG2LAllocated = self.states.a.numVgprG2LAllocated + numVgprG2LAllocatedLocal
+      if self.states.archCaps["HasEccHalf"]:
+        self.states.a.numVgprG2L = self.states.a.numVgprG2L * 2
+        self.states.a.numVgprG2LAllocated = self.states.a.numVgprG2LAllocated + numVgprG2LAllocatedLocal
+      else:
+        self.states.a.numVgprG2LAllocated = self.states.a.numVgprG2L * 4
 
     self.states.b.numVgprG2L = 0
-    numVgprG2Local = 0
     numVgprG2LAllocatedLocal = 0
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
       bpeMax = tensorParametersB["bpeDS"] if kernel["ConvertAfterDS"] else max(tensorParametersB["bpeGR"], tensorParametersB["bpe"])
       self.states.b.numVgprG2L = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
         kernel["GlobalReadVectorWidthB"] * bpeMax) / (float)(self.states.bpr))
-      numVgprG2Local = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
-        kernel["GlobalReadVectorWidthB"] * tensorParametersB["bpe"]) / (float)(self.states.bpr))
       if self.states.archCaps["HasEccHalf"]:
         tpB      = self.states.bpr if bpeMax * vwb < self.states.bpr else bpeMax * vwb
         tpBLocal = self.states.bpr if tensorParametersB["bpe"] * vwb < self.states.bpr else tensorParametersB["bpe"] * vwb
@@ -3213,8 +3210,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.b.numVgprG2LAllocated = self.states.b.numVgprG2L
     # using _ds_store_b8: need one more vgpr space to do lshr
     if tensorParametersB["localWriteInstruction"].blockWidth == 0.25:
-      self.states.b.numVgprG2L = self.states.b.numVgprG2L * 2
-      self.states.b.numVgprG2LAllocated = self.states.b.numVgprG2LAllocated + numVgprG2LAllocatedLocal
+      if self.states.archCaps["HasEccHalf"]:
+        self.states.b.numVgprG2L = self.states.b.numVgprG2L * 2
+        self.states.b.numVgprG2LAllocated = self.states.b.numVgprG2LAllocated + numVgprG2LAllocatedLocal
+      else:
+        self.states.b.numVgprG2LAllocated = self.states.b.numVgprG2L * 4
 
     self.states.m.numVgprG2L = 0
     if kernel["ProblemType"]["Sparse"]:
@@ -3226,7 +3226,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           self.states.m.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedMetadata"] * kernel["NumLoadsPerpendicularMetadata"] * \
             tpM) / (float)(self.states.bpr))
         # using _ds_store_b8: need one more vgpr space to do lshr
-        if tensorParametersM["localWriteInstruction"].blockWidth == 0.25:
+        if self.states.archCaps["HasEccHalf"] and tensorParametersM["localWriteInstruction"].blockWidth == 0.25:
           self.states.m.numVgprG2L = self.states.m.numVgprG2L * 2
           self.states.m.numVgprG2LAllocated = self.states.m.numVgprG2LAllocated * 2
     ####################################
