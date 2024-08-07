@@ -60,10 +60,10 @@ supported_distro( )
   fi
 
   case "${ID}" in
-    ubuntu|centos|rhel|fedora|sles|opensuse-leap|mariner)
+    ubuntu|centos|rhel|fedora|sles|opensuse-leap|mariner|azurelinux)
         true
         ;;
-    *)  printf "This script is currently supported on Ubuntu, CentOS, RHEL, Fedora and SLES\n"
+    *)  printf "This script is currently supported on Ubuntu, CentOS, RHEL, Fedora, SLES, mariner and azurelinux\n"
         exit 2
         ;;
   esac
@@ -249,6 +249,14 @@ install_packages( )
       install_yum_packages "${library_dependencies_mariner[@]}"
       if [[ "${build_clients}" == true ]]; then
         install_yum_packages "${client_dependencies_mariner[@]}"
+        pip3 install pyyaml
+      fi
+      ;;
+
+    azurelinux)
+      install_dnf_packages "${library_dependencies_mariner[@]}"
+      if [[ "${build_clients}" == true ]]; then
+        install_dnf_packages "${client_dependencies_mariner[@]}"
         pip3 install pyyaml
       fi
       ;;
