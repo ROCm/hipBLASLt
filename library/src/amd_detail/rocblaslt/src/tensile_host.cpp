@@ -333,6 +333,166 @@ namespace
             maxWorkspaceBytes);
     }
 
+    std::string tensileActivationtType_to_bench_string(Tensile::ActivationType activation)
+    {
+        switch(activation)
+        {
+        case Tensile::ActivationType::DGelu:
+        case Tensile::ActivationType::Gelu:
+            return "--activation_type gelu";
+        case Tensile::ActivationType::Relu:
+            return "--activation_type relu";
+        case Tensile::ActivationType::None:
+        default:
+            return "";
+        }
+    }
+
+#define GEN_BENCH_ARG(_fun, _type_str, _type) \
+    strlen(_fun(_type)) && strcmp(_fun(_type), "invalid") ? _type_str : "", _fun(_type)
+
+    inline void logBenchFromTensileDataGemm(const Tensile::ContractionProblemGemm&        problem,
+                                            const Tensile::ContractionInputs&             inputs,
+                                            bool                                          isCpp)
+    {
+        log_bench(
+            __func__,
+            "--api_method",
+            isCpp ? "cpp" : "c",
+            "-m",
+            problem.c().sizes()[0],
+            "-n",
+            problem.c().sizes()[1],
+            "-k",
+            problem.a().sizes()[problem.boundIndices()[0].a],
+            "--lda",
+            problem.a().strides()[1],
+            "--ldb",
+            problem.b().strides()[1],
+            "--ldc",
+            problem.c().strides()[1],
+            "--ldd",
+            problem.d().strides()[1],
+            problem.tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size() ? "--lde" : "",
+            problem.tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size()
+                ? std::to_string(problem.tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides()[1]) 
+                : "",
+            "--stride_a",
+            problem.a().strides()[2],
+            "--stride_b",
+            problem.b().strides()[2],
+            "--stride_c",
+            problem.c().strides()[2],
+            "--stride_d",
+            problem.d().strides()[2],
+            problem.tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size() ? "--stride_e" : "",
+            problem.tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size()
+                ? std::to_string(problem.tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides()[2])
+                : "",
+            "--alpha",
+            ToString(inputs.alpha),
+            "--beta",
+            ToString(inputs.beta),
+            "--transA",
+            problem.transA() ? "T" : "N",
+            "--transB",
+            problem.transB() ? "T" : "N",
+            "--batch_count",
+            problem.batchSize(0),
+            problem.useScaleAB().empty() ? "" : "--scaleA",
+            problem.useScaleAB().empty() ? "" : (problem.useScaleAB() == "Vector" ? "v" : "s"),
+            problem.useScaleAB().empty() ? "" : "--scaleB",
+            problem.useScaleAB().empty() ? "" : (problem.useScaleAB() == "Vector" ? "v" : "s"),
+            problem.useScaleCD() ? "--scaleC" : "",
+            problem.useScaleCD() ? "--scaleD" : "",
+            problem.useScaleAlphaVec() ? "--scaleAlpha_vector" : "",
+            problem.useGradient() ? "--gradient" : "",
+            problem.useE() ? "--use_e" : "",
+            problem.useBias() ? "--bias_vector" : "",
+            problem.useBias() ? "--bias_source" : "",
+            problem.useBias() ? problem.tensor(problem.biasSrc()).getName() : "",
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--a_type", tensile2HipType(problem.a().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--b_type", tensile2HipType(problem.b().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--c_type", tensile2HipType(problem.c().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--d_type", tensile2HipType(problem.d().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--compute_type", tensile2HipType(problem.computeType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--scale_type", tensile2HipType(problem.alphaType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--bias_type", tensile2HipType(problem.bias().dataType())),
+            problem.getParams().gsu() ? "--splitk" : "",
+            problem.getParams().gsu() ? std::to_string(problem.getParams().gsu()) : "",
+            problem.getParams().wgm() ? "--wgm" : "",
+            problem.getParams().wgm() ? std::to_string(problem.getParams().wgm()) : "",
+            tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
+    }
+
+    inline void logBenchFromTensileDataGemm(const Tensile::ContractionProblemGroupedGemm&        problem,
+                                            const Tensile::ContractionGroupedInputs&             inputs,
+                                            bool                                                 isCpp)
+    {
+        size_t gemmCount = problem.gemms.size();
+        std::stringstream grouped_gemm_bench_string;
+        for (int i = 0; i < gemmCount; ++i)
+        {
+            grouped_gemm_bench_string << " -m " << problem.gemms[i].c().sizes()[0];
+            grouped_gemm_bench_string << " -n " << problem.gemms[i].c().sizes()[1];
+            grouped_gemm_bench_string << " -k " << problem.gemms[i].a().sizes()[problem.gemms[i].boundIndices()[0].a];
+            grouped_gemm_bench_string << " --lda " << problem.gemms[i].a().strides()[1];
+            grouped_gemm_bench_string << " --ldb " << problem.gemms[i].b().strides()[1];
+            grouped_gemm_bench_string << " --ldc " << problem.gemms[i].c().strides()[1];
+            grouped_gemm_bench_string << " --ldd " << problem.gemms[i].d().strides()[1];
+            if (problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size())
+                grouped_gemm_bench_string << " --lde " << problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides()[1];
+            grouped_gemm_bench_string << " --stride_a " << problem.gemms[i].a().strides()[2];
+            grouped_gemm_bench_string << " --stride_b " << problem.gemms[i].b().strides()[2];
+            grouped_gemm_bench_string << " --stride_c " << problem.gemms[i].c().strides()[2];
+            grouped_gemm_bench_string << " --stride_d " << problem.gemms[i].d().strides()[2];
+            if (problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size())
+                grouped_gemm_bench_string << " --stride_e " << problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides()[2];
+        }
+        log_bench(
+            __func__,
+            "--api_method",
+            isCpp ? "cpp" : "c",
+            "--grouped_gemm",
+            grouped_gemm_bench_string.str(),
+            "--alpha",
+            ToString(inputs.grouped[0].alpha),
+            "--beta",
+            ToString(inputs.grouped[0].beta),
+            "--transA",
+            problem.gemms[0].transA() ? "T" : "N",
+            "--transB",
+            problem.gemms[0].transB() ? "T" : "N",
+            "--batch_count",
+            problem.gemms[0].batchSize(0),
+            problem.gemms[0].useScaleAB().empty() ? "" : "--scaleA",
+            problem.gemms[0].useScaleAB().empty() ? "" : (problem.gemms[0].useScaleAB() == "Vector" ? "v" : "s"),
+            problem.gemms[0].useScaleAB().empty() ? "" : "--scaleB",
+            problem.gemms[0].useScaleAB().empty() ? "" : (problem.gemms[0].useScaleAB() == "Vector" ? "v" : "s"),
+            problem.gemms[0].useScaleCD() ? "--scaleC" : "",
+            problem.gemms[0].useScaleCD() ? "--scaleD" : "",
+            problem.gemms[0].useScaleAlphaVec() ? "--scaleAlpha_vector" : "",
+            problem.gemms[0].useGradient() ? "--gradient" : "",
+            problem.gemms[0].useE() ? "--use_e" : "",
+            problem.gemms[0].useBias() ? "--bias_vector" : "",
+            problem.gemms[0].useBias() ? "--bias_source" : "",
+            problem.gemms[0].useBias() ? problem.gemms[0].tensor(problem.gemms[0].biasSrc()).getName() : "",
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--a_type", tensile2HipType(problem.gemms[0].a().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--b_type", tensile2HipType(problem.gemms[0].b().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--c_type", tensile2HipType(problem.gemms[0].c().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--d_type", tensile2HipType(problem.gemms[0].d().dataType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--compute_type", tensile2HipType(problem.gemms[0].computeType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--scale_type", tensile2HipType(problem.gemms[0].alphaType())),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--bias_type", tensile2HipType(problem.gemms[0].bias().dataType())),
+            problem.gemms[0].getParams().gsu() ? "--splitk" : "",
+            problem.gemms[0].getParams().gsu() ? std::to_string(problem.gemms[0].getParams().gsu()) : "",
+            problem.gemms[0].getParams().wgm() ? "--wgm" : "",
+            problem.gemms[0].getParams().wgm() ? std::to_string(problem.gemms[0].getParams().wgm()) : "",
+            tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()));
+    }
+
+#undef GEN_BENCH_ARG
+
     /****************************************************************
  * Construct a Tensile Problem from a RocblasltContractionProblem *
  ****************************************************************/
@@ -1362,6 +1522,11 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
 
         int* solutionIndex = (int*)algo->data;
         data->algoIndex    = *solutionIndex;
+        data->inputs       = GetTensileInputs(prob);
+        if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+        {
+            logBenchFromTensileDataGemm(data->problem, data->inputs, false);
+        }
 
         auto solution = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
         if(!solution)
@@ -1714,6 +1879,10 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         {
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
+            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+            {
+                logBenchFromTensileDataGemm(data->problem, data->inputs, true);
+            }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
         }
         else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
@@ -1725,6 +1894,10 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                 log_error(__func__,
                           "GG is initialized with useUserArgs = true, workspace has no arguments.");
                 return rocblaslt_status_not_initialized;
+            }
+            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+            {
+                logBenchFromTensileDataGemm(data->problem, data->inputs, true);
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
         }
