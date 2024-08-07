@@ -340,11 +340,14 @@ namespace
         case Tensile::ActivationType::DGelu:
         case Tensile::ActivationType::Gelu:
             return "--activation_type gelu";
+            break;
         case Tensile::ActivationType::Relu:
             return "--activation_type relu";
+            break;
         case Tensile::ActivationType::None:
         default:
             return "";
+            break;
         }
     }
 
