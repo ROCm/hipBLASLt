@@ -869,8 +869,6 @@ namespace
 #else
         std::shared_ptr<hipDeviceProp_t> m_deviceProp;
 #endif
-        std::string m_path;
-        std::string m_dir;
         std::string m_tensileLibPath;
 
         // The adapter object. mutable is used to allow adapters to be modified
@@ -989,11 +987,9 @@ namespace
                 if(TestPath(path + "/" + processor))
                     path += "/" + processor;
             }
-            m_path = path;
 
             // only load modules for the current architecture
             auto dir = path + "/*" + processor + "*co";
-            m_dir = dir;
 #if ROCBLASLT_TENSILE_LAZY_LOAD == 0
             bool no_match = false;
 #ifdef WIN32
@@ -1135,30 +1131,8 @@ namespace
 #if ROCBLASLT_TENSILE_LAZY_LOAD
         // A workaround for getSolutionsFromIndex and isSolutionSupported with lazy_lib_load.
         // preload() shouldn't be called more than once.
-        void preload(Tensile::hip::SolutionAdapter& adapter)
+        void preload()
         {
-            bool no_match = false;
-#ifdef WIN32
-            std::replace(m_dir.begin(), m_dir.end(), '/', '\\');
-            WIN32_FIND_DATAA finddata;
-            HANDLE           hfine = FindFirstFileA(m_dir.c_str(), &finddata);
-            no_match = (hfine == INVALID_HANDLE_VALUE);
-            FindClose(hfine);
-#else
-            glob_t glob_result{};
-            int    g = glob(m_dir.c_str(), GLOB_NOSORT, nullptr, &glob_result);
-            no_match = (g == GLOB_NOMATCH);
-            globfree(&glob_result);
-#endif
-            if(no_match)
-            {
-                // static rocblaslt_internal_ostream& once
-                //    = rocblaslt_cerr
-                std::cerr << "\nrocblaslt warning: No paths matched " << m_dir
-                          << ". Make sure that HIPBLASLT_TENSILE_LIBPATH is set correctly."
-                          << std::endl;
-            }
-
             auto lib = Tensile::LoadLibraryFilePreload<Tensile::ContractionProblemGemm>(
                 m_tensileLibPath,
                 std::vector<Tensile::LazyLoadingInit>{m_deviceSet.begin(), m_deviceSet.end()});
@@ -1216,7 +1190,7 @@ namespace
         // preload() shouldn't be called more than once.
         if(isPreload)
             static int once = [&] {
-                host.preload(*adapter);
+                host.preload();
                 *library = host.get_library();
                 return 0;
             }();
@@ -2221,7 +2195,7 @@ rocblaslt_status
 
 #if ROCBLASLT_TENSILE_LAZY_LOAD
     // isPreload = true is to load placeholder libraries except code objects
-    auto adapter           = get_library_and_adapter(&library, &deviceProp, handle->device, true);
+    auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device, true);
 #else
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 #endif
