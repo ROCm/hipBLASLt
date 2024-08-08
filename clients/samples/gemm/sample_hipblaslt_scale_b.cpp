@@ -55,7 +55,7 @@ int main()
     Runner<hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblasLtHalf, float, float> runner(
         128, 128, 128, 1, 1.f, 0.f, 32 * 1024 * 1024);
 
-    float scale = 1.0f;
+    float scale = 0.5f;
     runner.run([&runner, scale] {
         simpleGemmScaleB(runner.handle,
                          HIPBLAS_OP_N,
