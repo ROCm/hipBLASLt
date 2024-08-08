@@ -333,7 +333,35 @@ namespace
             maxWorkspaceBytes);
     }
 
-    std::string tensileActivationtType_to_bench_string(Tensile::ActivationType activation)
+    const char* tensileComputeInputType_to_bench_string(Tensile::DataType typeCompute)
+    {
+        switch(typeCompute)
+        {
+        case  Tensile::DataType::Float:
+            return "f32_r";
+            break;
+        case  Tensile::DataType::Half:
+            return "f32_f16_r";
+            break;
+        case Tensile::DataType::BFloat16:
+            return "f32_bf16_r";
+            break;
+        case Tensile::DataType::Double:
+            return "f64_r";
+            break;
+        case Tensile::DataType::Int32:
+            return "i32_r";
+            break;
+        case Tensile::DataType::XFloat32:
+            return "xf32_r";
+            break;
+        default:
+            return "";
+            break;
+        }
+    }
+
+    const char* tensileActivationtType_to_bench_string(Tensile::ActivationType activation)
     {
         switch(activation)
         {
@@ -418,7 +446,7 @@ namespace
             GEN_BENCH_ARG(hipDataType_to_bench_string, "--b_type", tensile2HipType(problem.b().dataType())),
             GEN_BENCH_ARG(hipDataType_to_bench_string, "--c_type", tensile2HipType(problem.c().dataType())),
             GEN_BENCH_ARG(hipDataType_to_bench_string, "--d_type", tensile2HipType(problem.d().dataType())),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--compute_type", tensile2HipType(problem.computeType())),
+            GEN_BENCH_ARG(tensileComputeInputType_to_bench_string, "--compute_type", problem.computeType()),
             GEN_BENCH_ARG(hipDataType_to_bench_string, "--scale_type", tensile2HipType(problem.alphaType())),
             GEN_BENCH_ARG(hipDataType_to_bench_string, "--bias_type", tensile2HipType(problem.bias().dataType())),
             problem.getParams().gsu() ? "--splitk" : "",
@@ -484,7 +512,7 @@ namespace
             GEN_BENCH_ARG(hipDataType_to_bench_string, "--b_type", tensile2HipType(problem.gemms[0].b().dataType())),
             GEN_BENCH_ARG(hipDataType_to_bench_string, "--c_type", tensile2HipType(problem.gemms[0].c().dataType())),
             GEN_BENCH_ARG(hipDataType_to_bench_string, "--d_type", tensile2HipType(problem.gemms[0].d().dataType())),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--compute_type", tensile2HipType(problem.gemms[0].computeType())),
+            GEN_BENCH_ARG(tensileComputeInputType_to_bench_string, "--compute_type", problem.gemms[0].computeType()),
             GEN_BENCH_ARG(hipDataType_to_bench_string, "--scale_type", tensile2HipType(problem.gemms[0].alphaType())),
             GEN_BENCH_ARG(hipDataType_to_bench_string, "--bias_type", tensile2HipType(problem.gemms[0].bias().dataType())),
             problem.gemms[0].getParams().gsu() ? "--splitk" : "",
