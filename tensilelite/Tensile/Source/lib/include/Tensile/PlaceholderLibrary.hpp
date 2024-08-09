@@ -32,7 +32,6 @@
 #include <Tensile/Tensile.hpp>
 
 #include <algorithm>
-#include <chrono>
 
 namespace Tensile
 {
@@ -140,9 +139,7 @@ namespace Tensile
             if(!library)
             {
                 std::string path       = (libraryDirectory + "/" + filePrefix + suffix).c_str();
-                const auto  startTime  = std::chrono::high_resolution_clock::now();
                 auto        newLibrary = LoadLibraryFile<MyProblem, MySolution>(path);
-                const auto  endTime    = std::chrono::high_resolution_clock::now();
                 auto        mLibrary
                     = static_cast<MasterSolutionLibrary<MyProblem, MySolution>*>(newLibrary.get());
                 library = mLibrary->library;
@@ -161,12 +158,7 @@ namespace Tensile
 
                 if(Debug::Instance().printCodeObjectInfo())
                     std::cout << "load placeholder library " << path << std::endl
-                              << mLibrary->solutions.size() << " solutions loaded" << std::endl
-                              << "duration: "
-                              << std::chrono::duration_cast<std::chrono::milliseconds>(endTime
-                                                                                       - startTime)
-                                     .count()
-                              << " ms" << std::endl;
+                              << mLibrary->solutions.size() << " solutions loaded" << std::endl;
 
                 return mLibrary;
             }
