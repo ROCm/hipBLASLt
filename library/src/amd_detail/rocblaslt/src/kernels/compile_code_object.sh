@@ -22,7 +22,16 @@
 # ########################################################################
 sources=$1
 archs=$2
-dest=$3
+build_type=$3
+dest=$4
+additional_options="-O3"
+
+if [ "$build_type" = "RelWithDebInfo" ]; then
+    additional_options="-O3 -g"
+elif [ "$build_type" = "Debug" ]; then
+    additional_options="-O0 -g"
+fi
+
 rocm_path="${ROCM_PATH:-/opt/rocm}"
 hipcc_path="${rocm_path}/bin/hipcc"
-$hipcc_path "$sources" --offload-arch="${archs}" --genco -O0 -g -o "$dest"
+$hipcc_path "$sources" --offload-arch="${archs}" --genco $additional_options -o "$dest"
