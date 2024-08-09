@@ -44,6 +44,8 @@ add_executable( sample_hipblaslt_ext_op_amax ext_op/sample_hipblaslt_ext_op_amax
 add_executable( sample_hipblaslt_ext_op_amax_with_scale ext_op/sample_hipblaslt_ext_op_amax_with_scale.cpp)
 add_executable( sample_hipblaslt_gemm_attr_tciA_tciB gemm/sample_hipblaslt_gemm_attr_tciA_tciB.cpp)
 add_executable( sample_hipblaslt_gemm_bias gemm/sample_hipblaslt_gemm_bias.cpp)
+add_executable( sample_hipblaslt_gemm_dgelu_bgrad gemm/sample_hipblaslt_gemm_dgelu_bgrad.cpp)
+add_executable( sample_hipblaslt_gemm_gelu_aux_bias gemm/sample_hipblaslt_gemm_gelu_aux_bias.cpp)
 
 set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext
@@ -67,6 +69,8 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_ext_op_amax_with_scale
             sample_hipblaslt_gemm_attr_tciA_tciB
             sample_hipblaslt_gemm_bias)
+            sample_hipblaslt_gemm_gelu_aux_bias
+            sample_hipblaslt_gemm_dgelu_bgrad)
 
 set( sample_list_all ${samples})
 
