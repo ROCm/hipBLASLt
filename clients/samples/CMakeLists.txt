@@ -42,8 +42,7 @@ add_executable( sample_hipblaslt_groupedgemm_get_all_algos_ext groupedgemm_get_a
 add_executable( sample_hipblaslt_ext_op_layernorm ext_op/sample_hipblaslt_ext_op_layernorm.cpp)
 add_executable( sample_hipblaslt_ext_op_amax ext_op/sample_hipblaslt_ext_op_amax.cpp)
 add_executable( sample_hipblaslt_ext_op_amax_with_scale ext_op/sample_hipblaslt_ext_op_amax_with_scale.cpp)
-add_executable( sample_hipblaslt_scale_a gemm/sample_hipblaslt_scale_a.cpp)
-add_executable( sample_hipblaslt_scale_b gemm/sample_hipblaslt_scale_b.cpp)
+add_executable( sample_hipblaslt_gemm_with_scale_a_b gemm/sample_hipblaslt_gemm_with_scale_a_b.cpp)
 
 set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext
@@ -65,8 +64,7 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_ext_op_layernorm
             sample_hipblaslt_ext_op_amax
             sample_hipblaslt_ext_op_amax_with_scale
-            sample_hipblaslt_scale_a
-            sample_hipblaslt_scale_b)
+            sample_hipblaslt_gemm_with_scale_a_b)
 
 set( sample_list_all ${samples})
 

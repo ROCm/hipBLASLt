@@ -32,7 +32,7 @@
 #include <vector>
 #include "helper.h"
 
-void simpleGemmScaleB(hipblasLtHandle_t handle,
+void simpleGemmScaleAB(hipblasLtHandle_t handle,
                       hipblasOperation_t trans_a,
                       hipblasOperation_t trans_b,
                       int64_t m,
@@ -48,6 +48,7 @@ void simpleGemmScaleB(hipblasLtHandle_t handle,
                       void* d_workspace,
                       int64_t max_workspace_size,
                       hipStream_t stream,
+                      float h_scale_a,
                       float h_scale_b);
 
 int main()
@@ -55,32 +56,34 @@ int main()
     Runner<hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblasLtHalf, float, float> runner(
         128, 128, 128, 1, 1.f, 0.f, 32 * 1024 * 1024);
 
-    float scale_b = 2.0f; // 使用非1的scale B
-    std::cout << "Running with Scale B = " << scale_b << std::endl;
-    runner.run([&runner, scale_b] {
-        simpleGemmScaleB(runner.handle,
-                         HIPBLAS_OP_N,
-                         HIPBLAS_OP_N,
-                         runner.m,
-                         runner.n,
-                         runner.k,
-                         runner.batch_count,
-                         runner.alpha,
-                         runner.beta,
-                         runner.d_a,
-                         runner.d_b,
-                         runner.d_c,
-                         runner.d_d,
-                         runner.d_workspace,
-                         runner.max_workspace_size,
-                         runner.stream,
-                         scale_b);
+    float scale_a = 0.5f; // scale A setting
+    float scale_b = 2.0f; // scale B setting
+    std::cout << "Running with Scale A = " << scale_a << " and Scale B = " << scale_b << std::endl;
+    runner.run([&runner, scale_a, scale_b] {
+        simpleGemmScaleAB(runner.handle,
+                          HIPBLAS_OP_N,
+                          HIPBLAS_OP_N,
+                          runner.m,
+                          runner.n,
+                          runner.k,
+                          runner.batch_count,
+                          runner.alpha,
+                          runner.beta,
+                          runner.d_a,
+                          runner.d_b,
+                          runner.d_c,
+                          runner.d_d,
+                          runner.d_workspace,
+                          runner.max_workspace_size,
+                          runner.stream,
+                          scale_a,
+                          scale_b);
     });
 
     return 0;
 }
 
-void simpleGemmScaleB(hipblasLtHandle_t handle,
+void simpleGemmScaleAB(hipblasLtHandle_t handle,
                       hipblasOperation_t trans_a,
                       hipblasOperation_t trans_b,
                       int64_t m,
@@ -96,10 +99,14 @@ void simpleGemmScaleB(hipblasLtHandle_t handle,
                       void* d_workspace,
                       int64_t max_workspace_size,
                       hipStream_t stream,
+                      float h_scale_a,
                       float h_scale_b)
 {
+    float* d_scale_a;
     float* d_scale_b;
+    CHECK_HIP_ERROR(hipMalloc(&d_scale_a, sizeof(float)));
     CHECK_HIP_ERROR(hipMalloc(&d_scale_b, sizeof(float)));
+    CHECK_HIP_ERROR(hipMemcpyAsync(d_scale_a, &h_scale_a, sizeof(float), hipMemcpyHostToDevice, stream));
     CHECK_HIP_ERROR(hipMemcpyAsync(d_scale_b, &h_scale_b, sizeof(float), hipMemcpyHostToDevice, stream));
 
     hipblasLtMatrixLayout_t matA, matB, matC, matD;
@@ -113,7 +120,9 @@ void simpleGemmScaleB(hipblasLtHandle_t handle,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
-    // Set B matrix scale factor
+    // Set A and B matrix scale factors
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER, &d_scale_a, sizeof(float*)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER, &d_scale_b, sizeof(float*)));
 
@@ -143,6 +152,7 @@ void simpleGemmScaleB(hipblasLtHandle_t handle,
                                           &heuristicResult[0].algo, d_workspace, workspace_size, stream));
 
     // Clean up resources
+    CHECK_HIP_ERROR(hipFree(d_scale_a));
     CHECK_HIP_ERROR(hipFree(d_scale_b));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
