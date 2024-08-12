@@ -135,12 +135,12 @@ void simpleGemm(hipblasLtHandle_t  handle,
 
     hipDataType tciA = HIP_R_16BF;
     hipDataType tciB = HIP_R_16BF;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(&matmul,
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(matmul,
                                         HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT,
                                         &tciA,
                                         sizeof(void*)));
 
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(&matmul,
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(matmul,
                                         HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT,
                                         &tciB,
                                         sizeof(void*)));
@@ -201,5 +201,10 @@ void simpleGemm(hipblasLtHandle_t  handle,
                                           d_workspace,
                                           workspace_size,
                                           stream));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
     return;
 }

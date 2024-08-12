@@ -69,6 +69,16 @@ Tests:
   function:
     - aux_matmul_set_get_attr: *hpa_half_precision
 
+- name: aux_matmul_pref_get_attr_bad_arg
+  category: pre_checkin
+  function:
+    - aux_matmul_pref_get_attr_bad_arg: *hpa_half_precision
+
+- name: aux_matmul_pref_get_attr
+  category: pre_checkin
+  function:
+    - aux_matmul_pref_get_attr: *hpa_half_precision
+
 - name: aux_matmul_alg_init_bad_arg
   category: pre_checkin
   function:

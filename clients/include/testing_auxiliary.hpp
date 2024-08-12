@@ -297,6 +297,74 @@ void testing_aux_matmul_set_get_attr(const Arguments& arg)
     ASSERT_TRUE(data == data_r);
 }
 
+void testing_aux_matmul_pref_get_attr_bad_arg(const Arguments& arg)
+{
+    hipblaslt_local_preference pref;
+    EXPECT_HIPBLAS_STATUS(pref.status(), HIPBLAS_STATUS_SUCCESS);
+
+    uint64_t data;
+    size_t   sizeWritten;
+
+    // Test with null preference (should be INVALID_VALUE)
+    EXPECT_HIPBLAS_STATUS(
+        hipblasLtMatmulPreferenceGetAttribute(
+            nullptr, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &data, sizeof(data), &sizeWritten),
+        HIPBLAS_STATUS_INVALID_VALUE);
+
+    // Test with sizeInBytes = 0 and sizeWritten = NULL (should be INVALID_VALUE)  
+    EXPECT_HIPBLAS_STATUS(
+        hipblasLtMatmulPreferenceGetAttribute(
+            pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &data, 0, nullptr),
+        HIPBLAS_STATUS_INVALID_VALUE);
+
+    // Test with non-zero sizeInBytes and buf = NULL (should be INVALID_VALUE)
+    EXPECT_HIPBLAS_STATUS(
+        hipblasLtMatmulPreferenceGetAttribute(
+            pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, nullptr, sizeof(uint64_t), &sizeWritten),
+        HIPBLAS_STATUS_INVALID_VALUE);
+
+    // Test with correct size (should be SUCCESS)
+    EXPECT_HIPBLAS_STATUS(
+        hipblasLtMatmulPreferenceGetAttribute(
+            pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &data, sizeof(uint64_t), &sizeWritten),
+        HIPBLAS_STATUS_SUCCESS);   
+}
+
+void testing_aux_matmul_pref_get_attr(const Arguments& arg)
+{
+    hipblaslt_local_preference pref;
+    EXPECT_HIPBLAS_STATUS(pref.status(), HIPBLAS_STATUS_SUCCESS);
+
+    uint64_t data_set = 1024;
+    uint64_t data_get = 0;
+    size_t   sizeWritten;
+
+    // Set the attribute
+    EXPECT_HIPBLAS_STATUS(
+        hipblasLtMatmulPreferenceSetAttribute(
+            pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &data_set, sizeof(data_set)),
+        HIPBLAS_STATUS_SUCCESS);
+
+    // Get the attribute
+    EXPECT_HIPBLAS_STATUS(
+        hipblasLtMatmulPreferenceGetAttribute(
+            pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &data_get, sizeof(data_get), &sizeWritten),
+        HIPBLAS_STATUS_SUCCESS);
+
+    // Verify that the get value matches the set value
+    ASSERT_TRUE(data_get == data_set);
+    ASSERT_TRUE(sizeWritten == sizeof(data_get));
+
+    // Test getting other attributes (assuming they have default values)
+    int32_t search_mode;
+    EXPECT_HIPBLAS_STATUS(
+        hipblasLtMatmulPreferenceGetAttribute(
+            pref, HIPBLASLT_MATMUL_PREF_SEARCH_MODE, &search_mode, sizeof(search_mode), &sizeWritten),
+        HIPBLAS_STATUS_SUCCESS);
+
+    // You might want to add more attribute tests here
+}
+
 void testing_aux_matmul_alg_init_bad_arg(const Arguments& arg) {}
 
 void testing_aux_matmul_alg_init(const Arguments& arg) {}
