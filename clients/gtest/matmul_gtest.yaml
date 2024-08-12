@@ -1233,6 +1233,7 @@ Tests:
   transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0, 2 ]
+  scaleAlpha_vector: [0, 1]
   unit_check: 1
   gpu_arch: '90a'
 
