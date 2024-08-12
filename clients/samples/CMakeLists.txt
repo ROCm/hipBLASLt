@@ -42,6 +42,8 @@ add_executable( sample_hipblaslt_groupedgemm_get_all_algos_ext groupedgemm_get_a
 add_executable( sample_hipblaslt_ext_op_layernorm ext_op/sample_hipblaslt_ext_op_layernorm.cpp)
 add_executable( sample_hipblaslt_ext_op_amax ext_op/sample_hipblaslt_ext_op_amax.cpp)
 add_executable( sample_hipblaslt_ext_op_amax_with_scale ext_op/sample_hipblaslt_ext_op_amax_with_scale.cpp)
+add_executable( sample_hipblaslt_gemm_attr_tciA_tciB gemm/sample_hipblaslt_gemm_attr_tciA_tciB.cpp)
+add_executable( sample_hipblaslt_gemm_bias gemm/sample_hipblaslt_gemm_bias.cpp)
 
 set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext
@@ -62,7 +64,9 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_groupedgemm_get_all_algos_ext
             sample_hipblaslt_ext_op_layernorm
             sample_hipblaslt_ext_op_amax
-            sample_hipblaslt_ext_op_amax_with_scale)
+            sample_hipblaslt_ext_op_amax_with_scale
+            sample_hipblaslt_gemm_attr_tciA_tciB
+            sample_hipblaslt_gemm_bias)
 
 set( sample_list_all ${samples})
 
