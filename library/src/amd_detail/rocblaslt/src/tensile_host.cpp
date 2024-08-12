@@ -333,18 +333,15 @@ namespace
             maxWorkspaceBytes);
     }
 
-    const char* tensileComputeInputType_to_bench_string(Tensile::DataType typeCompute)
+    const char* tensileComputeInputType_to_bench_string(Tensile::DataType typeCompute,
+                                                        Tensile::DataType F32XdlMathOp,
+                                                        Tensile::DataType typeComputeInput,
+                                                        Tensile::DataType typeA,
+                                                        Tensile::DataType typeB)
     {
         switch(typeCompute)
         {
         case  Tensile::DataType::Float:
-            return "f32_r";
-            break;
-        case  Tensile::DataType::Half:
-            return "f32_f16_r";
-            break;
-        case Tensile::DataType::BFloat16:
-            return "f32_bf16_r";
             break;
         case Tensile::DataType::Double:
             return "f64_r";
@@ -352,12 +349,33 @@ namespace
         case Tensile::DataType::Int32:
             return "i32_r";
             break;
-        case Tensile::DataType::XFloat32:
-            return "xf32_r";
-            break;
         default:
-            return "";
-            break;
+            throw std::runtime_error("Unsupported type.");
+        }
+
+        if(F32XdlMathOp == Tensile::DataType::XFloat32)
+        {
+            return "xf32_r";
+        }
+        else if(typeComputeInput == Tensile::DataType::BFloat16)
+        {
+            return "f32_bf16_r";
+        }
+        else if(typeComputeInput == Tensile::DataType::Half)
+        {
+            if(typeA == Tensile::DataType::Float8 && typeB == Tensile::DataType::Half
+               || typeA == Tensile::DataType::Half && typeB == Tensile::DataType::Float8)
+            {
+                return "f32_f16_r";
+            }
+            else
+            {
+                return "f32_r";
+            }
+        }
+        else
+        {
+            return "f32_r";
         }
     }
 
@@ -378,9 +396,6 @@ namespace
             break;
         }
     }
-
-#define GEN_BENCH_ARG(_fun, _type_str, _type) \
-    strlen(_fun(_type)) && strcmp(_fun(_type), "invalid") ? _type_str : "", _fun(_type)
 
     inline void logBenchFromTensileDataGemm(const Tensile::ContractionProblemGemm&        problem,
                                             const Tensile::ContractionInputs&             inputs,
@@ -442,17 +457,28 @@ namespace
             problem.useBias() ? "--bias_vector" : "",
             problem.useBias() ? "--bias_source" : "",
             problem.useBias() ? problem.tensor(problem.biasSrc()).getName() : "",
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--a_type", tensile2HipType(problem.a().dataType())),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--b_type", tensile2HipType(problem.b().dataType())),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--c_type", tensile2HipType(problem.c().dataType())),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--d_type", tensile2HipType(problem.d().dataType())),
-            GEN_BENCH_ARG(tensileComputeInputType_to_bench_string, "--compute_type", problem.computeType()),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--scale_type", tensile2HipType(problem.alphaType())),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--bias_type", tensile2HipType(problem.bias().dataType())),
+            "--a_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.a().dataType())),
+            "--b_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.b().dataType())),
+            "--c_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.c().dataType())),
+            "--d_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.d().dataType())),
+            "--scale_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.alphaType())),
+            "--bias_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.bias().dataType())),
             problem.getParams().gsu() ? "--splitk" : "",
             problem.getParams().gsu() ? std::to_string(problem.getParams().gsu()) : "",
             problem.getParams().wgm() ? "--wgm" : "",
             problem.getParams().wgm() ? std::to_string(problem.getParams().wgm()) : "",
+            "--compute_type",
+            tensileComputeInputType_to_bench_string(problem.computeType(),
+                                                    problem.f32XdlMathOp(),
+                                                    problem.computeInputType(),
+                                                    problem.a().dataType(),
+                                                    problem.b().dataType()),
             tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
     }
 
@@ -471,13 +497,13 @@ namespace
             grouped_gemm_bench_string << " --ldb " << problem.gemms[i].b().strides()[1];
             grouped_gemm_bench_string << " --ldc " << problem.gemms[i].c().strides()[1];
             grouped_gemm_bench_string << " --ldd " << problem.gemms[i].d().strides()[1];
-            if (problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size())
+            if(problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size())
                 grouped_gemm_bench_string << " --lde " << problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides()[1];
             grouped_gemm_bench_string << " --stride_a " << problem.gemms[i].a().strides()[2];
             grouped_gemm_bench_string << " --stride_b " << problem.gemms[i].b().strides()[2];
             grouped_gemm_bench_string << " --stride_c " << problem.gemms[i].c().strides()[2];
             grouped_gemm_bench_string << " --stride_d " << problem.gemms[i].d().strides()[2];
-            if (problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size())
+            if(problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size())
                 grouped_gemm_bench_string << " --stride_e " << problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides()[2];
         }
         log_bench(
@@ -508,17 +534,28 @@ namespace
             problem.gemms[0].useBias() ? "--bias_vector" : "",
             problem.gemms[0].useBias() ? "--bias_source" : "",
             problem.gemms[0].useBias() ? problem.gemms[0].tensor(problem.gemms[0].biasSrc()).getName() : "",
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--a_type", tensile2HipType(problem.gemms[0].a().dataType())),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--b_type", tensile2HipType(problem.gemms[0].b().dataType())),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--c_type", tensile2HipType(problem.gemms[0].c().dataType())),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--d_type", tensile2HipType(problem.gemms[0].d().dataType())),
-            GEN_BENCH_ARG(tensileComputeInputType_to_bench_string, "--compute_type", problem.gemms[0].computeType()),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--scale_type", tensile2HipType(problem.gemms[0].alphaType())),
-            GEN_BENCH_ARG(hipDataType_to_bench_string, "--bias_type", tensile2HipType(problem.gemms[0].bias().dataType())),
+            "--a_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].a().dataType())),
+            "--b_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].b().dataType())),
+            "--c_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].c().dataType())),
+            "--d_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].d().dataType())),
+            "--scale_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].alphaType())),
+            "--bias_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].bias().dataType())),
             problem.gemms[0].getParams().gsu() ? "--splitk" : "",
             problem.gemms[0].getParams().gsu() ? std::to_string(problem.gemms[0].getParams().gsu()) : "",
             problem.gemms[0].getParams().wgm() ? "--wgm" : "",
             problem.gemms[0].getParams().wgm() ? std::to_string(problem.gemms[0].getParams().wgm()) : "",
+            "--compute_type",
+            tensileComputeInputType_to_bench_string(problem.gemms[0].computeType(),
+                                                    problem.gemms[0].f32XdlMathOp(),
+                                                    problem.gemms[0].computeInputType(),
+                                                    problem.gemms[0].a().dataType(),
+                                                    problem.gemms[0].b().dataType()),
             tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()));
     }
 
