@@ -27,7 +27,7 @@ cmake_minimum_required(VERSION 3.25.2 FATAL_ERROR)
 option(BUILD_DOCS "Build documentation" OFF)
 
 # This will add compile option: -std=c++17
-set(CMAKE_CXX_STANDARD 20 )
+set(CMAKE_CXX_STANDARD 17 )
 # Without this line, it will add -std=gnu++17 instead, which may have issues.
 set(CMAKE_CXX_EXTENSIONS OFF )
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -113,7 +113,7 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
                                  int64_t               max_workspace_size,
                                  hipStream_t           stream)
 {
-    hipblaslt_ext::GemmPreference gemmPref;
+    hipblaslt_ext::GemmPreferenceV2 gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
     hipblaslt_ext::GroupedGemm groupedgemm(handle,
                                            trans_a,
@@ -124,18 +124,18 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
                                            HIP_R_16F,
                                            HIPBLAS_COMPUTE_32F_FAST_16F);
 
-    std::vector<hipblaslt_ext::GemmEpilogue> epilogue{
+    std::vector<hipblaslt_ext::GemmEpilogueV2> epilogue{
         hipblaslt_ext::
-            GemmEpilogue()}; // No action needed, default is HIPBLASLT_EPILOGUE_DEFAULT. (Gemm only)
-    std::vector<hipblaslt_ext::GemmInputs> inputs(m.size());
+            GemmEpilogueV2()}; // No action needed, default is HIPBLASLT_EPILOGUE_DEFAULT. (Gemm only)
+    std::vector<hipblaslt_ext::GemmInputsV2> inputs(m.size());
     for(int i = 0; i < m.size(); i++)
     {
-        inputs[i].a     = d_a[i];
-        inputs[i].b     = d_b[i];
-        inputs[i].c     = d_c[i];
-        inputs[i].d     = d_d[i];
-        inputs[i].alpha = &alpha[i];
-        inputs[i].beta  = &beta[i];
+        inputs[i].setA(d_a[i]);
+        inputs[i].setB(d_b[i]);
+        inputs[i].setC(d_c[i]);
+        inputs[i].setD(d_d[i]);
+        inputs[i].setAlpha(&alpha[i]);
+        inputs[i].setBeta(&beta[i]);
     }
 
     // When n is free and m, k is fixed, we'll need sum of n to work
@@ -155,7 +155,7 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
     CHECK_HIP_ERROR(hipMalloc(&d_n, m.size() * sizeof(int64_t)));
     CHECK_HIP_ERROR(hipMemcpy(d_n, n.data(), m.size() * sizeof(int64_t), hipMemcpyHostToDevice));
 
-    // hipblaslt_ext::GemmEpilogue supports broadcasting
+    // hipblaslt_ext::GemmEpilogueV2 supports broadcasting
     groupedgemm.setProblem(m, sum_of_n_vec, k, batch_count, epilogue, inputs);
 
     // Get the default hipblaslt_ext::UserArguments aafter setProblem

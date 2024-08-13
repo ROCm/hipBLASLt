@@ -72,9 +72,10 @@ namespace Tensile
         };
 
         template <typename Value>
-        struct KEntry
+        struct KBEntry
         {
             int   k;
+            int   b;
             Value value;
         };
 
@@ -290,7 +291,7 @@ namespace Tensile
                 float d{};
                 for(size_t i = 0; i < N; ++i)
                 {
-                    d += (p.coord[i] - q.coord[i]) * (p.coord[i] - q.coord[i]);
+                    d += static_cast<float>(p.coord[i] - q.coord[i]) * (p.coord[i] - q.coord[i]);
                 }
                 return d;
             }
@@ -319,7 +320,7 @@ namespace Tensile
         {
             using Base       = MatchingTable<Object, Value, ReturnValue>;
             using Entry      = MatchingTableEntry<Key, Value>;
-            using KEntry     = KEntry<Value>;
+            using KBEntry    = KBEntry<Value>;
             using Transform  = typename Base::Transform;
             using Properties = typename Base::Properties;
 
@@ -503,7 +504,7 @@ namespace Tensile
             ReturnValue nullValue;
 
             mutable KDTree<int32_t, 2>                                  kdTree;
-            std::map<std::tuple<int32_t, int32_t>, std::vector<KEntry>> kSolutionMap;
+            std::map<std::tuple<int32_t, int32_t>, std::vector<KBEntry>> kSolutionMap;
         };
 
         /**
@@ -977,8 +978,11 @@ namespace Tensile
                 if(Debug::Instance().gridBasedKDTree())
                 {
                     // roctxRangePush("KDTree");
-                    auto compK = [](KEntry<Value> const& e, int const N) { return e.k < N; };
+                    auto compK = [](KBEntry<Value> const& e, int const N) { return e.k < N; };
+                    auto lowerB = [](KBEntry<Value> const& e, int const N) { return e.b < N; };
+                    auto upperB = [](int const N, KBEntry<Value> const& e) { return N < e.b; };
                     auto k     = key.size() > 3 ? key[3] : key[2];
+                    auto                b     = key.size() > 3 ? key[2] : 1;
                     PointND<int32_t, 2> target;
                     target.coord[0] = key[0];
                     target.coord[1] = key[1];
@@ -1018,40 +1022,63 @@ namespace Tensile
                             std::make_tuple(result.node->pt.coord[0], result.node->pt.coord[1]));
                         if(iter != this->kSolutionMap.end())
                         {
-                            auto lower = std::lower_bound(
-                                iter->second.begin(), iter->second.end(), k, compK);
-                            if(lower != iter->second.end())
+                            auto bEnd = std::lower_bound(
+                                iter->second.begin(), iter->second.end(), b, lowerB);
+                            auto bStart = iter->second.begin();
+                            if(bEnd == iter->second.end()) // b is too large
                             {
-                                auto prev = lower == iter->second.begin() ? lower : lower--;
-                                if(prev != lower)
-                                {
-                                    if(std::abs(prev->k - k) < std::abs(lower->k - k))
-                                    {
-                                        lower = prev;
-                                    }
-                                }
-                                auto thisMatch = transform(lower->value);
-                                if(thisMatch)
-                                {
-                                    if(bestmatches.size())
-                                    {
-                                        if(std::find(
-                                               bestmatches.begin(), bestmatches.end(), thisMatch)
-                                           != bestmatches.end())
-                                        {
-                                            if(Debug)
-                                                std::cout << "Duplicated solution" << std::endl;
-                                            continue;
-                                        }
-                                    }
-                                    if(Debug)
-                                        std::cout
-                                            << "Final selected points: " << result.node->pt.coord[0]
-                                            << ", " << result.node->pt.coord[1]
-                                            << " K: " << lower->k << std::endl;
+                                auto bval = std::prev(bEnd)->b;
+                                bStart    = std::lower_bound(
+                                    iter->second.begin(), iter->second.end(), bval, lowerB);
+                            }
+                            else if(bEnd == iter->second.begin()) // b is 1
+                            {
+                                bEnd = std::upper_bound(
+                                    iter->second.begin(), iter->second.end(), b, upperB);
+                            }
+                            else
+                            {
+                                auto bval = bEnd->b - 1;
+                                bStart    = std::lower_bound(
+                                    iter->second.begin(), iter->second.end(), bval, lowerB);
+                                bEnd++;
+                            }
+                            if(Debug)
+                                std::cout << "bStart " << bStart->b << ", bEnd " << bEnd->b
+                                          << " k at bStart " << bStart->k << ", k at bEnd "
+                                          << bEnd->k << std::endl;
 
-                                    bestmatches.push_back(thisMatch);
+                            auto lower = std::lower_bound(bStart, bEnd, k, compK);
+                            if(lower == bEnd)
+                                lower--;
+                            auto prev = lower == bStart ? lower : lower--;
+                            if(prev != lower)
+                            {
+                                if(std::abs(prev->k - k) < std::abs(lower->k - k))
+                                {
+                                    lower = prev;
                                 }
+                            }
+                            auto thisMatch = transform(lower->value);
+                            if(thisMatch)
+                            {
+                                if(bestmatches.size())
+                                {
+                                    if(std::find(bestmatches.begin(), bestmatches.end(), thisMatch)
+                                       != bestmatches.end())
+                                    {
+                                        if(Debug)
+                                            std::cout << "Duplicated solution" << std::endl;
+                                        continue;
+                                    }
+                                }
+                                if(Debug)
+                                    std::cout
+                                        << "Final selected points: M: " << result.node->pt.coord[0]
+                                        << ", N: " << result.node->pt.coord[1]
+                                        << ", B: " << lower->b << ", K: " << lower->k << std::endl;
+
+                                bestmatches.push_back(thisMatch);
                             }
                         }
                     }
@@ -1063,14 +1090,14 @@ namespace Tensile
 
                 auto compM = [&count, Debug](Entry const& e, long const M) {
                     if(Debug)
-                        printf("[%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2]);
+                        printf("[%ld,%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2], e.key[3]);
                     count++;
                     return e.key[0] < M;
                 };
 
                 auto compN = [&count, Debug](Entry const& e, long const N) {
                     if(Debug)
-                        printf("[%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2]);
+                        printf("[%ld,%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2], e.key[3]);
                     count++;
                     return e.key[1] < N;
                 };

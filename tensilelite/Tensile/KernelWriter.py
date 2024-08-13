@@ -503,7 +503,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # that all necessary dependency are met.  The driver code in kernelBody
   # blindly follows the plan set in unrollLoopHeaderCode and perIterCode
   ##############################################################################
-  def makeSchedule(self, kernel, tensorParametersA, tensorParametersB, localWriteEndIter, skipGlobalReadInc=False, firstIter=False, lastLoop=False, lastLc=False):
+  def makeSchedule(self, kernel, tensorParametersA, tensorParametersB, localWriteEndIter, skipGlobalReadInc=False, firstIter=False, lastLoop=False, lastLc=False, isNGLL=False):
 
     maxVmcnt = self.states.asmCaps["MaxVmcnt"]
 
@@ -526,7 +526,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     siaComponent = Component.SIA.find(self)
     siaComponent.schedIntoIteration(self, kernel, tensorParametersA, tensorParametersB, \
       localWriteEndIter, firstIter, lastLoop, lastLc, maxVmcnt, globalReadIncACode, \
-      globalReadIncBCode)
+      globalReadIncBCode, isNGLL)
 
   ##############################################################################
   # Schedule work into the each unroll loop iteration
@@ -624,7 +624,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # interleave pack code
       # BF16 or FP16: each packCode is for one 32-bit reg,  1 packing inst: half-to-single x1
       # INT8        : each packCode is for one 32-bit regs, 3 packing inst: byte-to-half x2 + half-to-single x1
-      if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
+      if self.states.archCaps["HasEccHalf"]:
         instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
       else:
         instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
@@ -680,7 +680,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           packAIdx += instPerPack if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
           packBIdx += instPerPack if i % kernel["MIWaveTileA"] == 0 else 0
           # blockWidth < 1, means 0.5 or 0.25 (BF,H,Int8)
-          if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
+          if self.states.archCaps["HasEccHalf"]:
             packAIdx = packAIdx if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"] else 0
             packBIdx = packBIdx if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"] else 0
           else:
@@ -795,7 +795,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # BF16 or FP16: each packCode is for one 32-bit reg,  1 packing inst: half-to-single x1
       # INT8        : each packCode is for one 32-bit regs, 3 packing inst: byte-to-half x2 + half-to-single x1
       ####
-      if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
+      if self.states.archCaps["HasEccHalf"]:
         instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
       else:
         instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
@@ -1166,7 +1166,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             else:
               packMIdx += instPerPackM if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
           # blockWidth < 1, means 0.5 or 0.25 (BF,H,Int8)
-          if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
+          if self.states.archCaps["HasEccHalf"]:
             packAIdx = packAIdx if tPA["bpe"] < 4 and (not kernel["UnrollMajorLDSA"] or kernel["ConvertAfterDS"]) else 0
             packBIdx = packBIdx if tPB["bpe"] < 4 and (not kernel["UnrollMajorLDSB"] or kernel["ConvertAfterDS"]) else 0
           else:
@@ -1588,7 +1588,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
       isLastLoop = not isNGLL
       if u == 0:
         if not isLastLoop:
-          if dsWriteBA==True:
+          # For UnrollLoopSwapGlobalReadOrder == 1, we will have 2 NGLLs,
+          # One with local write A then B and another with B then A.
+          if dsWriteBA == True:
+            # In the current scheduling, we always schedule lwa first then lwb second.
+            # Put B in lwa code can easily change the order.
             self.codes.localWriteA = self.localWriteDo(kernel, tensorParametersB, swapAB=1)
             self.codes.localWriteB = self.localWriteDo(kernel, tensorParametersA, swapAB=1)
           else:
@@ -1601,7 +1605,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if not isNGLL or (isNGLL and kernel["ExpandPointerSwap"]) or (isNGLL and kernel["UnrollLoopSwapGlobalReadOrder"]):
           # PAP would have GlobalRead and GlobalInc, but no localWrite
           # Get the perIterGlobalReadCode code for PAP (if PAP=On), else would be empty
-          self.makeSchedule(kernel, tensorParametersA, tensorParametersB, localWriteEndIter, skipGlobalReadInc=False, lastLoop=NLLlast)
+          self.makeSchedule(kernel, tensorParametersA, tensorParametersB, localWriteEndIter, skipGlobalReadInc=False, lastLoop=NLLlast, isNGLL=isNGLL)
           module.add(self.codes.unrollLoopHeader)
 
       # which loop iteration to reset the LRO,
@@ -1927,8 +1931,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if u==0: # if at start of subloop...
         # ...update local write code
         if not kernel["NoLdsWriteCode"]:
-          #self.codes.localWriteA = self.localWriteDo(kernel, tensorParametersA)  # local write in loopcnt N targets data for loopcnt N+1
-          #self.codes.localWriteB = self.localWriteDo(kernel, tensorParametersB)
           if dsWriteBA:
             self.codes.localWriteA = self.localWriteDo(kernel, tensorParametersB, swapAB=1)
             self.codes.localWriteB = self.localWriteDo(kernel, tensorParametersA, swapAB=1)
@@ -3177,7 +3179,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         kernel["GlobalReadVectorWidthA"] * bpeMax) / (float)(self.states.bpr))
       numVgprG2Local = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
         kernel["GlobalReadVectorWidthA"] * tensorParametersA["bpe"]) / (float)(self.states.bpr))
-      if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
+      if self.states.archCaps["HasEccHalf"]:
         tpA      = self.states.bpr if bpeMax * vwa < self.states.bpr else bpeMax * vwa
         tpALocal = self.states.bpr if tensorParametersA["bpe"] * vwa < self.states.bpr else tensorParametersA["bpe"] * vwa
         self.states.a.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
@@ -3200,7 +3202,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         kernel["GlobalReadVectorWidthB"] * bpeMax) / (float)(self.states.bpr))
       numVgprG2Local = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
         kernel["GlobalReadVectorWidthB"] * tensorParametersB["bpe"]) / (float)(self.states.bpr))
-      if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
+      if self.states.archCaps["HasEccHalf"]:
         tpB      = self.states.bpr if bpeMax * vwb < self.states.bpr else bpeMax * vwb
         tpBLocal = self.states.bpr if tensorParametersB["bpe"] * vwb < self.states.bpr else tensorParametersB["bpe"] * vwb
         self.states.b.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
@@ -3492,12 +3494,20 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.states.a.startVgprG2L is None:
       # TODO: alignment hack, figure out a better solution
       vgprIdx = ((vgprIdx+1)//2)*2
-      self.states.a.startVgprG2L = vgprIdx; vgprIdx += self.states.a.numVgprG2LAllocated
+      self.states.a.startVgprG2L = vgprIdx;
+      if kernel["ULSGRODoubleG2L"] == 1:
+        vgprIdx += self.states.a.numVgprG2LAllocated*2
+      else:
+        vgprIdx += self.states.a.numVgprG2LAllocated
 
     if self.states.b.startVgprG2L is None:
       # TODO: alignment hack, figure out a better solution
       vgprIdx = ((vgprIdx+1)//2)*2
-      self.states.b.startVgprG2L = vgprIdx; vgprIdx += self.states.b.numVgprG2LAllocated
+      self.states.b.startVgprG2L = vgprIdx;
+      if kernel["ULSGRODoubleG2L"] == 1:
+        vgprIdx += self.states.b.numVgprG2LAllocated*2
+      else:
+        vgprIdx += self.states.b.numVgprG2LAllocated
 
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
       if self.states.m.startVgprG2L is None:

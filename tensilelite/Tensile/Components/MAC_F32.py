@@ -61,7 +61,7 @@ class MAC_F32_Plain(MAC):
                     bStr = "ValuB_X{m}_I{iui}+{b}".format_map(vars)
 
                     module.add(VMacF32(dst=vgpr(cStr), src0=vgpr(aStr), src1=vgpr(bStr)))
-                    if (idx1 is 0) and (idx0 is 0) and (iui is 0):
+                    if (idx1 == 0) and (idx0 == 0) and (iui == 0):
                         module.add(SSetPrior(prior=1, comment="Raise priority while processing macs"))
 
         module.add(SSetPrior(prior=0, comment="Reset priority after macs"))
