@@ -26,10 +26,10 @@
 
 #pragma once
 
+#include <Tensile/Debug.hpp>
 #include <Tensile/MasterSolutionLibrary.hpp>
 #include <Tensile/SolutionLibrary.hpp>
 #include <Tensile/Tensile.hpp>
-#include <Tensile/Debug.hpp>
 
 #include <algorithm>
 
@@ -138,15 +138,27 @@ namespace Tensile
             // If condition in case two threads got into this function
             if(!library)
             {
-                std::string path = (libraryDirectory + "/" + filePrefix + suffix).c_str();
-                auto newLibrary = LoadLibraryFile<MyProblem, MySolution>(path);
-                auto mLibrary
+                std::string path       = (libraryDirectory + "/" + filePrefix + suffix).c_str();
+                auto        newLibrary = LoadLibraryFile<MyProblem, MySolution>(path);
+                auto        mLibrary
                     = static_cast<MasterSolutionLibrary<MyProblem, MySolution>*>(newLibrary.get());
                 library = mLibrary->library;
+
                 std::lock_guard<std::mutex> lock(*solutionsGuard);
-                masterSolutions->insert(mLibrary->solutions.begin(), mLibrary->solutions.end());
+                using std::begin;
+                using std::end;
+
+                std::transform(begin(mLibrary->solutions),
+                               end(mLibrary->solutions),
+                               std::inserter(*masterSolutions, end(*masterSolutions)),
+                               [this](auto& i) {
+                                   i.second->codeObjectFilename = getCodeObjectFileName();
+                                   return i;
+                               });
+
                 if(Debug::Instance().printCodeObjectInfo())
-                    std::cout << "load placeholder library " << path << std::endl;
+                    std::cout << "load placeholder library " << path << std::endl
+                              << mLibrary->solutions.size() << " solutions loaded" << std::endl;
 
                 return mLibrary;
             }
@@ -154,13 +166,9 @@ namespace Tensile
             return false;
         }
 
-        std::string getCodeObjectFileName(Hardware const&   hardware,
-                                          MySolution const& solution) const
+        std::string getCodeObjectFileName() const
         {
-            std::string coFileDependency = filePrefix;
-            coFileDependency += std::string(".co");
-
-            return coFileDependency;
+            return filePrefix + ".co";
         }
 
         virtual std::shared_ptr<MySolution> getSolutionByIndex(MyProblem const& problem,
@@ -173,7 +181,7 @@ namespace Tensile
             auto solution = library->getSolutionByIndex(problem, hardware, index);
 
             if(solution)
-                solution->codeObjectFilename = getCodeObjectFileName(hardware, *solution);
+                solution->codeObjectFilename = getCodeObjectFileName();
 
             return solution;
         }
@@ -189,7 +197,7 @@ namespace Tensile
             auto solution = library->findBestSolution(problem, hardware, fitness);
 
             if(solution)
-                solution->codeObjectFilename = getCodeObjectFileName(hardware, *solution);
+                solution->codeObjectFilename = getCodeObjectFileName();
 
             return solution;
         }
@@ -215,7 +223,7 @@ namespace Tensile
 
             for(auto& solution : solutions)
             {
-                solution->codeObjectFilename = getCodeObjectFileName(hardware, *solution);
+                solution->codeObjectFilename = getCodeObjectFileName();
             }
 
             return solutions;
@@ -236,7 +244,7 @@ namespace Tensile
 
             for(auto& solution : solutions)
             {
-                solution->codeObjectFilename = getCodeObjectFileName(hardware, *solution);
+                solution->codeObjectFilename = getCodeObjectFileName();
             }
 
             return solutions;
@@ -255,7 +263,7 @@ namespace Tensile
 
             for(auto& solution : solutions)
             {
-                solution->codeObjectFilename = getCodeObjectFileName(hardware, *solution);
+                solution->codeObjectFilename = getCodeObjectFileName();
             }
             return solutions;
         }
@@ -274,7 +282,7 @@ namespace Tensile
 
             for(auto& solution : solutions)
             {
-                solution->codeObjectFilename = getCodeObjectFileName(hardware, *solution);
+                solution->codeObjectFilename = getCodeObjectFileName();
             }
             return solutions;
         }

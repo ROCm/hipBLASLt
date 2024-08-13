@@ -990,7 +990,7 @@ namespace
 
             // only load modules for the current architecture
             auto dir = path + "/*" + processor + "*co";
-
+#if ROCBLASLT_TENSILE_LAZY_LOAD == 0
             bool no_match = false;
 #ifdef WIN32
             std::replace(dir.begin(), dir.end(), '/', '\\');
@@ -1044,7 +1044,7 @@ namespace
                           << ". Make sure that HIPBLASLT_TENSILE_LIBPATH is set correctly."
                           << std::endl;
             }
-
+#endif
             // We initialize a local static variable with a lambda function call to
             // avoid race conditions when multiple threads with different device IDs try
             // to initialize library. This ensures that only one thread initializes
@@ -2194,7 +2194,7 @@ rocblaslt_status
     std::shared_ptr<Tensile::Hardware>                                               hardware;
 
 #if ROCBLASLT_TENSILE_LAZY_LOAD
-    // isPreload = true is a workaround for lazy_lib_load
+    // isPreload = true is to load placeholder libraries except code objects
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device, true);
 #else
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
