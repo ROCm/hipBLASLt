@@ -33,5 +33,5 @@ elif [ "$build_type" = "Debug" ]; then
 fi
 
 rocm_path="${ROCM_PATH:-/opt/rocm}"
-hipcc_path="${rocm_path}/bin/hipcc"
-$hipcc_path "$sources" --offload-arch="${archs}" --genco $additional_options -o "$dest"
+clang_path="${rocm_path}/bin/amdclang++"
+$clang_path -x hip "$sources" --offload-arch="${archs}" -c --offload-device-only $additional_options -o "$dest"
