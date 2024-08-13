@@ -357,21 +357,16 @@ namespace
         {
             return "xf32_r";
         }
-        else if(typeComputeInput == Tensile::DataType::BFloat16)
+        else if(typeComputeInput == Tensile::DataType::BFloat16
+                && typeA == Tensile::DataType::Half && typeB == Tensile::DataType::Half)
         {
             return "f32_bf16_r";
         }
-        else if(typeComputeInput == Tensile::DataType::Half)
+        else if(typeComputeInput == Tensile::DataType::Half
+                && (typeA == Tensile::DataType::Float8 && typeB == Tensile::DataType::Half
+                || typeA == Tensile::DataType::Half && typeB == Tensile::DataType::Float8))
         {
-            if(typeA == Tensile::DataType::Float8 && typeB == Tensile::DataType::Half
-               || typeA == Tensile::DataType::Half && typeB == Tensile::DataType::Float8)
-            {
-                return "f32_f16_r";
-            }
-            else
-            {
-                return "f32_r";
-            }
+            return "f32_f16_r";
         }
         else
         {
