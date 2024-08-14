@@ -961,7 +961,7 @@ namespace Tensile
             }
 
             template <bool T_Debug>
-            std::vector<ReturnValue> findBestKeyMatch_GridBased(Key const& key,
+            std::vector<ReturnValue> findBestKeyMatch_GridBased(Key const& key_orig,
                                                                 Transform  transform,
                                                                 int        numSolutions) const
             {
@@ -974,6 +974,19 @@ namespace Tensile
                 ptrdiff_t count = 0;
                 bool      Debug = T_Debug;
                 std::cout << std::setprecision(2) << std::fixed;
+
+                Key key = key_orig;
+                if(!Debug::Instance().gridBasedBatchExp())
+                {
+                    if(key.size() > 3)
+                    {
+                        if(key[0] > key[1])
+                            key[0] = key[0] * key[2];
+                        else
+                            key[1] = key[1] * key[2];
+                        key[2] = 1;
+                    }
+                }
 
                 if(Debug::Instance().gridBasedKDTree())
                 {
