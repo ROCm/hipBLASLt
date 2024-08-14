@@ -33,6 +33,7 @@ set(client_sources
     source/MetaRunListener.cpp
     source/PerformanceReporter.cpp
     source/ProgressListener.cpp
+    source/Rotating.cpp
     source/Reference.cpp
     source/ReferenceValidator.cpp
     source/ResultFileReporter.cpp

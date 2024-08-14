@@ -275,6 +275,8 @@ globalParameters["LazyLibraryLoading"] = False # Load library and code object fi
 globalParameters["UseUserArgs"] = False
 
 globalParameters["RotatingBufferSize"] = 0 # Size in MB
+globalParameters["RotatingMode"] = 0 # Default is 0, allocated in order A0B0C0D0..ANBNCNDN. 1 is in order A0 pad B0 pad .... AN pad BN pad.
+                                     # Mode 0 requires memcpy everytime when the problem changes to reset the data, but mode 1 doesn't.
 
 globalParameters["BuildIdKind"] = "sha1"
 

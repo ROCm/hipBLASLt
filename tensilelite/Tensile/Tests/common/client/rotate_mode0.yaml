@@ -22,6 +22,7 @@ GlobalParameters:
   MaxFileName: 256
   KernelTime: True
   RotatingBufferSize: 512
+  RotatingMode: 0
 
 BenchmarkProblems:
   ########################################

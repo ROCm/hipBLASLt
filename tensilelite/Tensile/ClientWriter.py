@@ -639,6 +639,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationAr
 
         param("use-user-args",            globalParameters["UseUserArgs"])
         param("rotating-buffer-size",     globalParameters["RotatingBufferSize"])
+        param("rotating-buffer-mode",     globalParameters["RotatingMode"])
 
 
 def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
