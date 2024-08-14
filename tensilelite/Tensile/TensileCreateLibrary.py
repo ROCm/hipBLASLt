@@ -44,6 +44,7 @@ from .CustomYamlLoader import load_logic_gfx_arch
 
 import argparse
 import collections
+import glob
 import itertools
 import math
 import os
@@ -1304,6 +1305,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--keep-build-tmp", dest="KeepBuildTmp", action="store_true",
                           default=False, help="Do not remove the temporary build directory (may required hundreds of GBs of space)"),
   argParser.add_argument("--validate-library", dest="ValidateLibrary", action="store_true", default=False)
+  argParser.add_argument("--logic-filter", dest="LogicFilter", action="store", default="*", type=str)
 
   args = argParser.parse_args()
 
@@ -1395,11 +1397,15 @@ def TensileCreateLibrary():
 
   logicFiles = []
 
-  for root, _, files in os.walk(logicPath):
-    logics = (os.path.join(root, f) for f in files)
-    logicFiles += [file for file in logics if validLogicFile(Path(file))]
+  for file in glob.glob(f"**/{args.LogicFilter}{logicExtFormat}", root_dir=logicPath, recursive=True):
+    logic = os.path.join(logicPath, file)
 
-  print1("# LibraryLogicFiles:" % logicFiles)
+    if validLogicFile(Path(logic)):
+      logicFiles.append(logic)
+
+  print1(f"# LogicFilter: {args.LogicFilter}")
+
+  print1("# LibraryLogicFiles:")
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
 
