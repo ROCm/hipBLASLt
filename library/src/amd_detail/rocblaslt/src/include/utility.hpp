@@ -145,21 +145,15 @@ const char* hipDataType_to_bench_string(hipDataType type);
 
 const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type);
 
-const char* rocblaslt_compute_type_to_bench_string(rocblaslt_compute_type type);
-
 const char* rocblaslt_matrix_layout_attributes_to_string(rocblaslt_matrix_layout_attribute_ type);
 
 const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_attributes type);
 
 const char* hipblasOperation_to_string(hipblasOperation_t op);
 
-const char* hipblasOperation_to_bench_string(hipblasOperation_t op);
-
 const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode);
 
 const char* rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue);
-
-const char* rocblaslt_epilogue_to_bench_string(rocblaslt_epilogue epilogue);
 
 std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat);
 
