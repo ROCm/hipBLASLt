@@ -197,6 +197,10 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--asm-debug")
   endif()
 
+  if(Tensile_LOGIC_FILTER)
+    set(Options ${Options} "--logic-filter=${Tensile_LOGIC_FILTER}")
+  endif()
+
   if(Tensile_LIBRARY_FORMAT)
     set(Options ${Options} "--library-format=${Tensile_LIBRARY_FORMAT}")
     if(Tensile_LIBRARY_FORMAT MATCHES "yaml")
