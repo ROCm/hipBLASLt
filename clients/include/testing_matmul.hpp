@@ -1145,7 +1145,7 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         if(arg.bias_vector)
         {
-            hipblaslt_init<Tbias>(*hBias[i], M[i], 1, M[i]);
+            hipblaslt_init<Tbias>(*hBias[i], size_bias[i], 1, size_bias[i]);
         }
 
         if(arg.scaleA)

@@ -355,6 +355,11 @@ namespace Tensile
                                     m_tensorTypes[ContractionProblemGemm::TENSOR::AMAXD], isOutput);
                                 rv.back().setSynchronizer(DataType::Int32, 1);
                             }
+                            else
+                            {
+                                rv.back().setSynchronizer(
+                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA], 40960);
+                            }
                             if(j < m_activationEnumArg.size())
                             {
                                 rv.back().setParams().setActivationEnum(m_activationEnumArg[j]);
@@ -394,8 +399,6 @@ namespace Tensile
                                 m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
                                 rv.back().d().sizes()[factorDim],
                                 factorDim);
-                            rv.back().setSynchronizer(
-                                m_constantTypes[ContractionProblemGemm::CONST::ALPHA], 40960);
                             rv.back().setGroupedGemm(m_groupedGemm);
                             rv.back().setF32XdlMathOp(m_f32XdlMathOp);
                             rv.back().setActivationComputeType(m_activationComputeType);

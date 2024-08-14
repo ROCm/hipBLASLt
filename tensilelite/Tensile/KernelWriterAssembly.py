@@ -10846,6 +10846,7 @@ class KernelWriterAssembly(KernelWriter):
     self.amaxSgprArgSizes = [2, 2, 2]
 
     module.addSpaceLine()
+    module.add(SBarrier())
     module.add(self.amax_define_load_res())
     module.add(self.amax_intra_wave_reduction(kernel, "middle"))
     module.add(self.amax_inter_wave_reduction(kernel))
