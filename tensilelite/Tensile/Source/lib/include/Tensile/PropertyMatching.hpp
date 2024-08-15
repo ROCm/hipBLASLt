@@ -291,7 +291,7 @@ namespace Tensile
                 float d{};
                 for(size_t i = 0; i < N; ++i)
                 {
-                    d += (p.coord[i] - q.coord[i]) * (p.coord[i] - q.coord[i]);
+                    d += static_cast<float>(p.coord[i] - q.coord[i]) * (p.coord[i] - q.coord[i]);
                 }
                 return d;
             }

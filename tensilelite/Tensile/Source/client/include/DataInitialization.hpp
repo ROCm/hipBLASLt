@@ -32,6 +32,7 @@
 #include <Tensile/hip/HipUtils.hpp>
 
 #include "ClientProblemFactory.hpp"
+#include "Rotating.hpp"
 
 #include <cstddef>
 #include <random>
@@ -338,6 +339,23 @@ namespace Tensile
                                m_groupedOffsets,
                                problem,
                                hipMemcpyDeviceToDevice);
+                    if(m_rotatingMode == 1 && m_rotatingBuffer > 0)
+                    {
+                        auto mem = m_rm->getRotatingMemory();
+                        // init mode 1 rotating data
+                        for(size_t j = 1; j < mem.size(); j++)
+                            for(size_t i = 0; i < m_vdata.size(); i++)
+                            {
+                                auto& desc = problem.tensors()[i];
+                                auto  it   = m_vdata[i].pristine.find(desc.dataType());
+                                if(it != m_vdata[i].pristine.end())
+                                {
+                                    auto& p = it->second;
+                                    if(i <= ContractionProblemGemm::TENSOR::METADATA)
+                                        HIP_CHECK_EXC(hipMemcpy(mem[j][i].data.get(), p.gpuInput.current.get(), mem[j][i].size, hipMemcpyDeviceToDevice));
+                                }
+                            }
+                    }
                     m_gpuInit = true;
                 }
                 initializeGPUBatchedInputs(problem);
@@ -985,9 +1003,8 @@ namespace Tensile
             bool m_problemDependentData = false;
 
             int64_t               m_rotatingBuffer          = 0;
-            int64_t               m_rotatingLargestUnitSize = 0;
-            int64_t               m_rotatingAllocatedSize   = 0;
-            std::shared_ptr<void> m_rotatingPointer         = nullptr;
+            std::shared_ptr<RotatingMemory> m_rm;
+            int32_t                         m_rotatingMode = 0;
         };
 
         template <>
