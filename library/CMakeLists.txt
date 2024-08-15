@@ -142,6 +142,7 @@ target_include_directories(hipblaslt
                                    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
                                    $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
                                    $<BUILD_INTERFACE:${HIPBLAS_INCLUDE_DIRS}>
+                                   $<BUILD_INTERFACE:${HIPBLAS-COMMON_INCLUDE_DIRS}>
                                    $<INSTALL_INTERFACE:include>
 )
 
@@ -211,6 +212,7 @@ endif()
 if(NOT BUILD_CUDA)
   rocm_export_targets(TARGETS roc::hipblaslt
                       DEPENDS PACKAGE hip
+                      DEPENDS PACKAGE HIP roc::hipblas-common
                       NAMESPACE roc::)
 else()
   rocm_export_targets(TARGETS roc::hipblaslt
