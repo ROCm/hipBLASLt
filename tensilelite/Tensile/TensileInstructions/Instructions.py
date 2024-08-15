@@ -2342,7 +2342,7 @@ class VCmpNeU64(VCmpInstruction):
         super().__init__(InstType.INST_U64, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmp_ne_u64")
 
-class VCmpClassF32(VCmpXInstruction):
+class VCmpClassF32(VCmpInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmp_class_f32")
