@@ -304,7 +304,7 @@ if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
 endif( )
 
 if( NOT BUILD_CUDA )
-  set(hipblas_common_minimum 2.2.0)
+  set(hipblas_common_minimum 1.0.0)
   rocm_package_add_dependencies(DEPENDS "hipblas-common >= ${hipblas_common_minimum}")
 endif( )
 
