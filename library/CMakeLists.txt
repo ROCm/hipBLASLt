@@ -212,7 +212,7 @@ endif()
 if(NOT BUILD_CUDA)
   rocm_export_targets(TARGETS roc::hipblaslt
                       DEPENDS PACKAGE hip
-                      DEPENDS PACKAGE HIP roc::hipblas-common
+                      DEPENDS PACKAGE hipblas-common
                       NAMESPACE roc::)
 else()
   rocm_export_targets(TARGETS roc::hipblaslt
