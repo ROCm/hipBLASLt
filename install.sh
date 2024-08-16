@@ -47,7 +47,7 @@ function display_help()
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
   echo "    [--gprof] enable profiling functionality with GNU gprof"
-  echo "    [--keep-build-tmp] Do not remove the temporary build artifacts or build_tmp"
+  echo "    [--keep-build-tmp] do not remove the temporary build artifacts or build_tmp"
 }
 
 # This function is helpful for dockerfiles that do not have sudo installed, but the default user is root
