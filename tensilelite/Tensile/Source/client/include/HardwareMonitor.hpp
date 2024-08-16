@@ -35,6 +35,7 @@
 
 #include <hip/hip_runtime.h>
 #include <rocm_smi/rocm_smi.h>
+#include <rocm_smi/rocm_smi64Config.h>
 
 namespace Tensile
 {
@@ -135,6 +136,8 @@ namespace Tensile
 
             size_t m_dataPoints;
 
+            uint16_t m_XCDCount;
+
             std::vector<std::tuple<rsmi_temperature_type_t, rsmi_temperature_metric_t>>
                                  m_tempMetrics;
             std::vector<int64_t> m_tempValues;
@@ -144,6 +147,10 @@ namespace Tensile
 
             std::vector<uint32_t> m_fanMetrics;
             std::vector<int64_t>  m_fanValues;
+
+            // Reserved for further performance check.
+            std::vector<uint64_t>              m_SYSCLK_sum;
+            std::vector<std::vector<uint64_t>> m_SYSCLK_array;
         };
     } // namespace Client
 } // namespace Tensile

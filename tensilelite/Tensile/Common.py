@@ -1613,11 +1613,6 @@ def assignGlobalParameters( config ):
       globalParameters["CurrentISA"] = (9,0,6)
       printWarning("Failed to detect ISA so forcing (gfx906) on windows")
 
-  # TODO Remove this when rocm-smi supports gfx940
-  if globalParameters["CurrentISA"] in [(9,4,0), (9,4,1), (9,4,2)]:
-    printWarning("HardwareMonitor currently disabled for gfx940")
-    globalParameters["HardwareMonitor"] = False
-
   globalParameters["AsmCaps"] = {}
   globalParameters["ArchCaps"] = {}
   globalParameters["AsmBugs"] = {}
