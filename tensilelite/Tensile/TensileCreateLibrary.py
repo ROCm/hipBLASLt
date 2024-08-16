@@ -1139,16 +1139,19 @@ def generateLogicDataAndSolutions(logicFiles, args):
 
   # Match yaml file solutions to solution index
   if args.GenSolTable:
+    def libraryIter(lib: MasterSolutionLibrary):
+      if len(lib.solutions):
+        for i, s in enumerate(lib.solutions.items()):
+          yield i, *s
+      else:
+        for _, lazyLib in lib.lazyLibraries.items():
+          yield from libraryIter(lazyLib)
+
     matchTable = {}
-    counter = 0
     for logic in filter(lambda i: i[1] != "", Utils.tqdm(libraries, "Match yaml file solutions to solution index")):
       (_, architectureName, _, _, _, newLibrary, srcFile) = logic
-      fileCounter = 0
-      for _, s in newLibrary.solutions.items():
-        assert counter == s.index
-        matchTable[s.index] = [srcFile, fileCounter]
-        fileCounter += 1
-        counter += 1
+      for localIdx, _, s in libraryIter(newLibrary):
+        matchTable[s.index] = [srcFile, localIdx]
     LibraryIO.write("MatchTable", matchTable)
 
   return solutions, masterLibraries, fullMasterLibrary
