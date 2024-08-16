@@ -24,7 +24,7 @@ from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, 
     SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SCBranchSCC1, SCmpLeU32, VMovB32, vgpr, \
     SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
     log2, SBarrier, SStoreB32, SLongBranchPositive, SBranch, ceilDivide, replaceHolder, SNop, staticMultiply, SSleep, \
-    VAddF32
+    VAddF32, VAddF64
 from ..Common import print2
 # from ..TensileInstructions.Containers import SMEMModifiers
 from ..Component import Component
@@ -268,7 +268,8 @@ class StreamK(Component):
         # if we did not start the tile, store partials
         # branch to beta == 0 store path
         module.add(SCmpEQU32(src0=sgpr("StreamKLocalStart"), src1=0, comment="does wg start tile?"))
-        module.add(SCBranchSCC0(labelName=skPartialsLabel.getLabelName(), comment="Branch if not start tile, store partials"))
+        module.add(writer.longBranchScc0(skPartialsLabel, posNeg=1))
+        # module.add(SCBranchSCC0(labelName=skPartialsLabel.getLabelName(), comment="Branch if not start tile, store partials"))
 
         if kernel["DebugStreamK"] & 1 == 0:
             # if we started and finished the tile, regular store code
@@ -1060,7 +1061,7 @@ class StreamK(Component):
 
     def fixupBatch(self, writer, kernel, ss, batchIdx, edge, gwvw, \
             batchElements, addrD, addrC, \
-            tmpVgpr, tmpCVTVgpr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeAccVgprWrite):
+            tmpVgpr, cvtVgprStruct, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeAccVgprWrite):
         module = Module("StreamK Common fixupBatch")
 
         module.addComment0("optSingleColVgpr=%u optSharedColVgpr=%u optSGPRUsage=%s optSrdIncForRow=%u" % \
