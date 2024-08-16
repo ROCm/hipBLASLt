@@ -36,7 +36,7 @@ from . import Utils
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, CMakeHeader, assignGlobalParameters, \
-                    architectureMap, supportedCompiler
+                    architectureMap, supportedCompiler, printWarning
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
@@ -53,6 +53,7 @@ import subprocess
 import sys
 from timeit import default_timer as timer
 from copy import deepcopy
+from pathlib import Path
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -639,9 +640,6 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
-
-  if not globalParameters["KeepBuildTmp"]:
-    shutil.rmtree(globalParameters["WorkingPath"])
 
   return codeObjectFiles
 
@@ -1523,6 +1521,13 @@ def TensileCreateLibrary():
         printExit("File %s is missing.", filePath)
 
   checkFileExistence(itertools.chain(libMetadataPaths, sourceLibPaths, asmLibPaths))
+
+  if not globalParameters["KeepBuildTmp"]:
+    buildTmp = Path(outputPath).parent / "library" / "build_tmp"
+    if buildTmp.exists() and buildTmp.is_dir():
+      shutil.rmtree(buildTmp)
+    else:
+      printWarning(f"Cannot remove {str(buildTmp)}")
 
   print1("# Tensile Library Writer DONE")
   print1(HR)
