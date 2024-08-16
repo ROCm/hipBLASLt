@@ -114,7 +114,7 @@ endif( ) # BUILD_WITH_TENSILE
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/CompileSourceKernel.cmake)
 
-CompileSourceKernel(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/matrix_transform.cpp "${Tensile_ARCHITECTURE}" ${PROJECT_BINARY_DIR}/Tensile/library)
+CompileSourceKernel(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/matrix_transform.cpp "${Tensile_ARCHITECTURE}" "${Tensile_BUILD_ID}" ${PROJECT_BINARY_DIR}/Tensile/library)
 
 set(DL_LIB dl)
 
