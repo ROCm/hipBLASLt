@@ -738,6 +738,45 @@ Tests:
   unit_check: 1
   gpu_arch: '942'
 
+#TODO: extend to all f8 transpose and datatype if necessary
+- name: matmul_real_f8_dst_fp32
+  category: pre_checkin
+  function:
+    matmul: *f8_precision_dst_fp32
+  matrix_size:
+    - { M:  1,   N:  1,    K:  1    }
+    - { M:  1,   N:  1,    K:  127  }
+    - { M:  1,   N:  127,  K:  127  }
+    - { M:  2,   N:  127,  K:  127  }
+    - { M:  3,   N:  127,  K:  127  }
+    - { M:  127, N:  1,    K:  127  }
+    - { M:  127, N:  2,    K:  127  }
+    - { M:  127, N:  3,    K:  127  }
+    - { M:  1,   N:  1,    K:  128  }
+    - { M:  1,   N:  128,  K:  128  }
+    - { M:  2,   N:  128,  K:  128  }
+    - { M:  3,   N:  128,  K:  128  }
+    - { M:  128, N:  1,    K:  128  }
+    - { M:  128, N:  2,    K:  128  }
+    - { M:  128, N:  3,    K:  128  }
+    - { M:  1,   N:  1,    K:  129  }
+    - { M:  1,   N:  129,  K:  129  }
+    - { M:  2,   N:  129,  K:  129  }
+    - { M:  3,   N:  129,  K:  129  }
+    - { M:  129, N:  1,    K:  129  }
+    - { M:  129, N:  2,    K:  129  }
+    - { M:  129, N:  3,    K:  129  }
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [0, 1]
+  scaleB: [0, 1]
+  scaleC: [0]
+  scaleD: [0]
+  bias_vector: [0, 1]
+  bias_type: f32_r
+  unit_check: 1
+  gpu_arch: '942'
 
 - name: matmul_real_1b_dst_f8_SCDNotInt
   category: pre_checkin
