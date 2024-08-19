@@ -24,100 +24,98 @@
  *
  *******************************************************************************/
 
+#include "helper.h"
+#include <hip/hip_fp16.h>
 #include <hip/hip_runtime.h>
-#include <hipblaslt-ext-op.h>
+#include <hip/library_types.h>
 #include <hipblaslt/hipblaslt.h>
 #include <iostream>
+#include <vector>
 
-#include "helper.h"
-
-void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
-                             hipblasOperation_t trans_a,
-                             hipblasOperation_t trans_b,
-                             int64_t            m,
-                             int64_t            n,
-                             int64_t            k,
-                             int64_t            batch_count,
-                             float&             alpha,
-                             float&             beta,
-                             void*              d_a,
-                             void*              d_b,
-                             void*              d_c,
-                             void*              d_d,
-                             void*              d_workspace,
-                             int64_t            max_workspace_size,
-                             hipStream_t        stream);
+void simpleGemmScaleAB(hipblasLtHandle_t  handle,
+                       hipblasOperation_t trans_a,
+                       hipblasOperation_t trans_b,
+                       int64_t            m,
+                       int64_t            n,
+                       int64_t            k,
+                       int64_t            batch_count,
+                       float&             alpha,
+                       float&             beta,
+                       void*              d_a,
+                       void*              d_b,
+                       void*              d_c,
+                       void*              d_d,
+                       void*              d_workspace,
+                       int64_t            max_workspace_size,
+                       hipStream_t        stream,
+                       float              h_scale_a,
+                       float              h_scale_b);
 
 int main()
 {
-    /** This is a NN example with
-     *  a = (m, k). lda = m
-     *  b = (k, n). ldb = k
-     *  c = d = (m, n). ldc = ldd = m
-     */
-    Runner<hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, float> runner(
-        1024, 512, 1024, 1, 1.f, 0.f, 32 * 1024 * 1024);
+    Runner<hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblasLtHalf, float, float> runner(
+        128, 128, 128, 1, 1.f, 0.f, 32 * 1024 * 1024);
 
-    runner.run([&runner] {
-        simpleGemmAmaxWithScale(runner.handle,
-                                HIPBLAS_OP_N,
-                                HIPBLAS_OP_N,
-                                runner.m,
-                                runner.n,
-                                runner.k,
-                                runner.batch_count,
-                                runner.alpha,
-                                runner.beta,
-                                runner.d_a,
-                                runner.d_b,
-                                runner.d_c,
-                                runner.d_d,
-                                runner.d_workspace,
-                                runner.max_workspace_size,
-                                runner.stream);
+    float scale_a = 0.5f; // scale A setting
+    float scale_b = 2.0f; // scale B setting
+    std::cout << "Running with Scale A = " << scale_a << " and Scale B = " << scale_b << std::endl;
+    runner.run([&runner, scale_a, scale_b] {
+        simpleGemmScaleAB(runner.handle,
+                          HIPBLAS_OP_N,
+                          HIPBLAS_OP_N,
+                          runner.m,
+                          runner.n,
+                          runner.k,
+                          runner.batch_count,
+                          runner.alpha,
+                          runner.beta,
+                          runner.d_a,
+                          runner.d_b,
+                          runner.d_c,
+                          runner.d_d,
+                          runner.d_workspace,
+                          runner.max_workspace_size,
+                          runner.stream,
+                          scale_a,
+                          scale_b);
     });
 
     return 0;
 }
 
-void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
-                             hipblasOperation_t trans_a,
-                             hipblasOperation_t trans_b,
-                             int64_t            m,
-                             int64_t            n,
-                             int64_t            k,
-                             int64_t            batch_count,
-                             float&             alpha,
-                             float&             beta,
-                             void*              d_a,
-                             void*              d_b,
-                             void*              d_c,
-                             void*              d_d,
-                             void*              d_workspace,
-                             int64_t            max_workspace_size,
-                             hipStream_t        stream)
+void simpleGemmScaleAB(hipblasLtHandle_t  handle,
+                       hipblasOperation_t trans_a,
+                       hipblasOperation_t trans_b,
+                       int64_t            m,
+                       int64_t            n,
+                       int64_t            k,
+                       int64_t            batch_count,
+                       float&             alpha,
+                       float&             beta,
+                       void*              d_a,
+                       void*              d_b,
+                       void*              d_c,
+                       void*              d_d,
+                       void*              d_workspace,
+                       int64_t            max_workspace_size,
+                       hipStream_t        stream,
+                       float              h_scale_a,
+                       float              h_scale_b)
 {
-    // allocate data for amax
-    void *out_tmp, *in_scale, *out_amax; // host
-    void *d_out_tmp, *d_in_scale, *d_out_amax; // device
-
-    CHECK_HIP_ERROR(hipMalloc(&d_in_scale, 1 * sizeof(float)));
-    CHECK_HIP_ERROR(hipMalloc(&d_out_amax, 1 * sizeof(float)));
-
-    CHECK_HIP_ERROR(hipHostMalloc(&in_scale, 1 * sizeof(float)));
-    CHECK_HIP_ERROR(hipHostMalloc(&out_amax, 1 * sizeof(float)));
-
-    // copy amax data to device
-    *(float*)in_scale = (float)0.5;
+    float* d_scale_a;
+    float* d_scale_b;
+    CHECK_HIP_ERROR(hipMalloc(&d_scale_a, sizeof(float)));
+    CHECK_HIP_ERROR(hipMalloc(&d_scale_b, sizeof(float)));
     CHECK_HIP_ERROR(
-        hipMemcpyAsync(d_in_scale, in_scale, 1 * sizeof(float), hipMemcpyHostToDevice, stream));
+        hipMemcpyAsync(d_scale_a, &h_scale_a, sizeof(float), hipMemcpyHostToDevice, stream));
+    CHECK_HIP_ERROR(
+        hipMemcpyAsync(d_scale_b, &h_scale_b, sizeof(float), hipMemcpyHostToDevice, stream));
 
-    // set matrix layout for gemm
     hipblasLtMatrixLayout_t matA, matB, matC, matD;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIP_R_8F_E4M3_FNUZ, m, k, m));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, HIP_R_8F_E4M3_FNUZ, k, n, k));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_8F_E4M3_FNUZ, m, n, m));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_8F_E4M3_FNUZ, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_16F, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_16F, m, n, m));
 
     hipblasLtMatmulDesc_t matmul;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, HIPBLAS_COMPUTE_32F, HIP_R_32F));
@@ -126,15 +124,12 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
-    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
+    // Set A and B matrix scale factors
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-        matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
+        matmul, HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER, &d_scale_a, sizeof(float*)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-        matmul, HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER, &d_out_amax, sizeof(void*)));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-        matmul, HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, &d_in_scale, sizeof(void*)));
+        matmul, HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER, &d_scale_b, sizeof(float*)));
 
-    // Set User Preference attributes
     hipblasLtMatmulPreference_t pref;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
     CHECK_HIPBLASLT_ERROR(
@@ -143,7 +138,7 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
                                               &max_workspace_size,
                                               sizeof(max_workspace_size)));
 
-    const int                        request_solutions = 1;
+    const int                        request_solutions = 5;
     hipblasLtMatmulHeuristicResult_t heuristicResult[request_solutions];
     int                              returnedAlgoCount = 0;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(handle,
@@ -165,11 +160,9 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
 
     uint64_t workspace_size = max_workspace_size;
     for(int i = 0; i < returnedAlgoCount; i++)
-        workspace_size = max(workspace_size, heuristicResult[i].workspaceSize);
-    // In this sample, the workspace is already allocated with max_workspace_size
-    // If not, allocate d_workspace here
-    // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
+        workspace_size = std::max(workspace_size, heuristicResult[i].workspaceSize);
 
+    // Perform matrix multiplication
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                           matmul,
                                           &alpha,
@@ -187,17 +180,15 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
                                           workspace_size,
                                           stream));
 
-    // deallocate memory space of amax
-    CHECK_HIP_ERROR(hipFree(d_in_scale));
-    CHECK_HIP_ERROR(hipFree(d_out_amax));
-
-    CHECK_HIP_ERROR(hipFree(in_scale));
-    CHECK_HIP_ERROR(hipFree(out_amax));
-
+    // Clean up resources
+    CHECK_HIP_ERROR(hipFree(d_scale_a));
+    CHECK_HIP_ERROR(hipFree(d_scale_b));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
-    return;
+
+    std::cout << "Matrix multiplication completed successfully." << std::endl;
 }

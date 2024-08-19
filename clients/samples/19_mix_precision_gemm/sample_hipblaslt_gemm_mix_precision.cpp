@@ -30,7 +30,7 @@
 
 #include "helper.h"
 
-void simpleGemm(hipblasLtHandle_t  handle,
+void simpleGemmMixPrecision(hipblasLtHandle_t  handle,
                 hipblasOperation_t trans_a,
                 hipblasOperation_t trans_b,
                 int64_t            m,
@@ -49,16 +49,17 @@ void simpleGemm(hipblasLtHandle_t  handle,
 
 int main()
 {
-    /** This is a NN example with
-     *  a = (m, k). lda = m
-     *  b = (k, n). ldb = k
-     *  c = d = (m, n). ldc = ldd = m
+    /** This is a mixed-precision NN example with
+     *  a = (m, k) in FP16, lda = m
+     *  b = (k, n) in FP16, ldb = k
+     *  c = d = (m, n) in FP16, ldc = ldd = m
+     *  Compute type is FP32.
      */
-    Runner<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, float> runner(
+    Runner<hipblaslt_f8_fnuz, hipblasLtHalf, float, float, float> runner(
         1024, 512, 1024, 1, 1.f, 1.f, 32 * 1024 * 1024);
 
     runner.run([&runner] {
-        simpleGemm(runner.handle,
+        simpleGemmMixPrecision(runner.handle,
                    HIPBLAS_OP_N,
                    HIPBLAS_OP_N,
                    runner.m,
@@ -79,7 +80,7 @@ int main()
     return 0;
 }
 
-void simpleGemm(hipblasLtHandle_t  handle,
+void simpleGemmMixPrecision(hipblasLtHandle_t  handle,
                 hipblasOperation_t trans_a,
                 hipblasOperation_t trans_b,
                 int64_t            m,
@@ -96,11 +97,12 @@ void simpleGemm(hipblasLtHandle_t  handle,
                 int64_t            max_workspace_size,
                 hipStream_t        stream)
 {
+    // Use half precision for input matrices
     hipblasLtMatrixLayout_t matA, matB, matC, matD;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIP_R_16F, m, k, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIP_R_8F_E4M3_FNUZ, m, k, m));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, HIP_R_16F, k, n, k));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_16F, m, n, m));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_16F, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_32F, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_32F, m, n, m));
 
     if(batch_count > 1)
     {
@@ -127,23 +129,18 @@ void simpleGemm(hipblasLtHandle_t  handle,
     }
 
     hipblasLtMatmulDesc_t matmul;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, HIPBLAS_COMPUTE_32F, HIP_R_32F));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, HIPBLAS_COMPUTE_32F_FAST_16F, HIP_R_32F));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
-    hipDataType tciA = HIP_R_16BF;
-    hipDataType tciB = HIP_R_16BF;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(matmul,
-                                        HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT,
-                                        &tciA,
-                                        sizeof(void*)));
-
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(matmul,
-                                        HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT,
-                                        &tciB,
-                                        sizeof(void*)));
+    float h_scale_a = 2.f;
+    float* d_scale_a;
+    CHECK_HIP_ERROR(hipMalloc(&d_scale_a, sizeof(float)));
+    CHECK_HIP_ERROR(hipMemcpyAsync(d_scale_a, &h_scale_a, sizeof(float), hipMemcpyHostToDevice, stream));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER, &d_scale_a, sizeof(float*)));
 
     hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
@@ -185,6 +182,7 @@ void simpleGemm(hipblasLtHandle_t  handle,
     // If not, allocate d_workspace here
     // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
 
+    // Perform the mixed-precision GEMM operation
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                           matmul,
                                           &alpha,
@@ -201,10 +199,12 @@ void simpleGemm(hipblasLtHandle_t  handle,
                                           d_workspace,
                                           workspace_size,
                                           stream));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     return;
 }

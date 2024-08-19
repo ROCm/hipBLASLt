@@ -55,7 +55,7 @@ int main()
      *  c = d = (m, n). ldc = ldd = m
      */
     Runner<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, float> runner(
-        1024, 512, 1024, 1, 1.f, 1.f, 32 * 1024 * 1024);
+        128, 128, 128, 1, 1.f, 1.f, 32 * 128 * 128);
 
     runner.run([&runner] {
         simpleGemm(runner.handle,
@@ -133,6 +133,15 @@ void simpleGemm(hipblasLtHandle_t  handle,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
+    hipDataType tciA = HIP_R_8F_E4M3_FNUZ;
+    hipDataType tciB = HIP_R_8F_E4M3_FNUZ;
+   
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT, &tciA, sizeof(void*)));
+
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT, &tciB, sizeof(void*)));
+
     hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
@@ -189,11 +198,10 @@ void simpleGemm(hipblasLtHandle_t  handle,
                                           d_workspace,
                                           workspace_size,
                                           stream));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     return;
 }

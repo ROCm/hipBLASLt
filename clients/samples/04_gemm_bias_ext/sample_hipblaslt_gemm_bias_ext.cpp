@@ -148,6 +148,5 @@ void simpleGemmEpilogueBiasVecExt(hipblasLtHandle_t   handle,
     // Make sure to initialize every time when algo changes
     CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, d_workspace));
     CHECK_HIPBLASLT_ERROR(gemm.run(stream));
-    printBias("Bias after", d_bias, m);
     return;
 }
