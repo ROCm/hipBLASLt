@@ -143,6 +143,14 @@ This section provides information on how to configure cmake and build manually u
 Build library manually
 ----------------------------------------
 
+Dependencies for hipBLASLt
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `hipBLAS-common <https://github.com/ROCm/hipBLAS-common>`_ header files are required to be installed on your system.
+
+Building hipBLASLt
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. code-block:: bash
 
    mkdir -p [HIPBLASLT_BUILD_DIR]/release
