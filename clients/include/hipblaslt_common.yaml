@@ -140,6 +140,16 @@ Real precisions 1 bytes dst bf8: &real_precisions_1b_dst_bf8
   - *f8bf8_precision_dst_bf8
   - *bf8f8_precision_dst_bf8
 
+Real precisions 1 byte dst 1 byte: &real_precisions_1b_dst_1b
+  - *f8_precision_dst_f8
+  - *bf8_precision_dst_f8
+  - *f8bf8_precision_dst_f8
+  - *bf8f8_precision_dst_f8
+  - *f8_precision_dst_bf8
+  - *bf8_precision_dst_bf8
+  - *f8bf8_precision_dst_bf8
+  - *bf8f8_precision_dst_bf8
+
 Real precisions 2 bytes: &real_precisions_2b
   - *hpa_half_precision
   - *hpa_bf16_precision

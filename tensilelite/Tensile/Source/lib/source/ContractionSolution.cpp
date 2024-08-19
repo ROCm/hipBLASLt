@@ -776,6 +776,41 @@ namespace Tensile
         return rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y / rv.workGroupSize.z;
     }
 
+    inline uint32_t getNumWorkGroups(ContractionSolution::Problem const&     problem,
+                                     const ContractionSolution::SizeMapping& sizeMapping)
+    {
+        size_t numWorkGroupsX = 1;
+        size_t numWorkGroupsY = 1;
+        size_t numWorkGroupsZ = 1;
+
+        for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
+        {
+            numWorkGroupsX *= problem.freeSizeA(i);
+        }
+        for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
+        {
+            numWorkGroupsY *= problem.freeSizeB(i);
+        }
+
+        for(size_t i = 0; i < problem.batchIndices().size(); i++)
+        {
+            if(sizeMapping.packBatchDims & 0x1)
+                numWorkGroupsX *= problem.batchSize(i);
+            if(sizeMapping.packBatchDims & 0x2)
+                numWorkGroupsY *= problem.batchSize(i);
+            if(!sizeMapping.packBatchDims)
+                numWorkGroupsZ *= problem.batchSize(i);
+        }
+
+        if(problem.transposeC01())
+            std::swap(numWorkGroupsX, numWorkGroupsY);
+
+        numWorkGroupsX = CeilDivide(numWorkGroupsX, sizeMapping.macroTile.x);
+        numWorkGroupsY = CeilDivide(numWorkGroupsY, sizeMapping.macroTile.y);
+
+        return numWorkGroupsX * numWorkGroupsY * numWorkGroupsZ;
+    }
+
     template <bool T_Debug, bool Legacy, typename KA>
     void ContractionSolution::kernelArgs(uint32_t                            gemmCount,
                                          uint32_t                            argType,
@@ -2636,7 +2671,8 @@ namespace Tensile
         // workspace for amaxD
         if(problemType.outputAmaxD)
         {
-            size += problem.amaxd().elementBytes() * 4096;
+            auto numWGS = getNumWorkGroups(problem, sizeMapping);
+            size += problem.amaxd().elementBytes() * numWGS;
         }
 
         // Custom kernel synchronizer

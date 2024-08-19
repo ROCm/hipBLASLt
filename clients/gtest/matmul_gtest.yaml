@@ -759,10 +759,10 @@ Tests:
   norm_check: 1
   gpu_arch: '94[0-2]'
 
-- name: matmul_real_1b_dst_f8_amaxD
+- name: matmul_real_1b_dst_1b_amaxD
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_f8
+    matmul: *real_precisions_1b_dst_1b
   M: [127, 129]
   N: [127, 129]
   K: [127, 129]
