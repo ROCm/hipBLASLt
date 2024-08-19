@@ -160,6 +160,8 @@ typedef enum {
   HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER = 14,           /**<Device pointer to the memory location that on completion will be set to the maximum of absolute values in the output matrix. Data Type:void* /const void* */
   HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT = 100,     /**<Compute input A types. Defines the data type used for the input A of matrix multiply. */
   HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT,           /**<Compute input B types. Defines the data type used for the input B of matrix multiply. */
+  HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT,        /**<Equivalent to HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER but in vector. Default value: NULL Type: void* /const void* */
+  HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT,        /**<Equivalent to HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER but in vector. Default value: NULL Type: void* /const void* */
   HIPBLASLT_MATMUL_DESC_MAX,
 } hipblasLtMatmulDescAttributes_t;
 
@@ -346,7 +348,7 @@ hipblasStatus_t hipblasLtGetArchName(char** archName);
  * opaque structure holding the hipBLASLt library context. It allocates light
  * hardware resources on the host and device, and must be called prior to making
  * any other hipBLASLt library calls. The hipBLASLt library context is tied to
- * the current CUDA device. To use the library on multiple devices, one
+ * the current ROCm device. To use the library on multiple devices, one
  * hipBLASLt handle should be created for each device.
  *
  *  @param[out]

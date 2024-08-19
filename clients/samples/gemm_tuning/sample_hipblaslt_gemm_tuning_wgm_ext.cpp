@@ -109,20 +109,20 @@ void simpleGemmTuningWGMExt(hipblasLtHandle_t  handle,
                                                      HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
-    hipblaslt_ext::GemmPreference gemmPref;
+    hipblaslt_ext::GemmPreferenceV2 gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
     hipblaslt_ext::Gemm gemm(
         handle, trans_a, trans_b, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIPBLAS_COMPUTE_32F);
 
-    hipblaslt_ext::GemmEpilogue
+    hipblaslt_ext::GemmEpilogueV2
         epilogue; // No action needed, default is HIPBLASLT_EPILOGUE_DEFAULT. (Gemm only)
-    hipblaslt_ext::GemmInputs inputs;
-    inputs.a     = d_a;
-    inputs.b     = d_b;
-    inputs.c     = d_c;
-    inputs.d     = d_d;
-    inputs.alpha = &alpha;
-    inputs.beta  = &beta;
+    hipblaslt_ext::GemmInputsV2 inputs;
+    inputs.setA(d_a);
+    inputs.setB(d_b);
+    inputs.setC(d_c);
+    inputs.setD(d_d);
+    inputs.setAlpha(&alpha);
+    inputs.setBeta(&beta);
     gemm.setProblem(m, n, k, batch_count, epilogue, inputs);
 
     std::vector<hipblaslt_ext::GemmTuning> tunings;

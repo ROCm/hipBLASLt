@@ -42,7 +42,7 @@ function display_help()
   echo "    [-r]--relocatable] create a package to support relocatable ROCm"
   echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
   echo "    [-k|--relwithdebinfo] -DCMAKE_BUILD_TYPE=RelWithDebInfo"
-  echo "    [--hip-clang] build library for amdgpu backend using hip-clang"
+  echo "    [--hip-clang] build library for amdgpu backend using amdclang"
   echo "    [--static] build static library"
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
@@ -60,10 +60,10 @@ supported_distro( )
   fi
 
   case "${ID}" in
-    ubuntu|centos|rhel|fedora|sles|opensuse-leap)
+    ubuntu|centos|rhel|fedora|sles|opensuse-leap|mariner|azurelinux)
         true
         ;;
-    *)  printf "This script is currently supported on Ubuntu, CentOS, RHEL, Fedora and SLES\n"
+    *)  printf "This script is currently supported on Ubuntu, CentOS, RHEL, Fedora, SLES, mariner and azurelinux\n"
         exit 2
         ;;
   esac
@@ -160,12 +160,14 @@ install_packages( )
   local library_dependencies_centos8=( "epel-release" "make" "gcc-c++" "rpm-build" "numactl-libs" )
   local library_dependencies_fedora=( "gcc-gfortran" "make" "gcc-c++" "libcxx-devel" "rpm-build" "numactl-libs" )
   local library_dependencies_sles=( "gcc-fortran" "make" "gcc-c++" "libcxxtools9" "rpm-build" )
+  local library_dependencies_mariner=( "gfortran" "make" "rpm-build" )
 
   local client_dependencies_ubuntu=( "python3" "python3-yaml")
   local client_dependencies_centos=( "python36" "python3-pip" )
   local client_dependencies_centos8=( "python39" "python3-virtualenv" )
   local client_dependencies_fedora=( "python36" "PyYAML" "python3-pip" )
   local client_dependencies_sles=( "pkg-config" "dpkg" "python3-pip" )
+  local client_dependencies_mariner=( "python3" "python3-yaml" )
 
   if [[ "${tensile_msgpack_backend}" == true ]]; then
     library_dependencies_ubuntu+=("libmsgpack-dev")
@@ -241,6 +243,24 @@ install_packages( )
       fi
       ;;
 
+    mariner)
+#     yum -y update brings *all* installed packages up to date
+#     without seeking user approval
+      install_yum_packages "${library_dependencies_mariner[@]}"
+      if [[ "${build_clients}" == true ]]; then
+        install_yum_packages "${client_dependencies_mariner[@]}"
+        pip3 install pyyaml
+      fi
+      ;;
+
+    azurelinux)
+      install_dnf_packages "${library_dependencies_mariner[@]}"
+      if [[ "${build_clients}" == true ]]; then
+        install_dnf_packages "${client_dependencies_mariner[@]}"
+        pip3 install pyyaml
+      fi
+      ;;
+
     fedora)
 #     elevate_if_not_root dnf -y update
       install_dnf_packages "${library_dependencies_fedora[@]}"
@@ -261,7 +281,7 @@ install_packages( )
       fi
       ;;
     *)
-      echo "This script is currently supported on Ubuntu, CentOS, RHEL and Fedora"
+      echo "This script is currently supported on Ubuntu, CentOS, RHEL, Fedora and Mariner"
       exit 2
       ;;
   esac
@@ -731,9 +751,9 @@ pushd .
   echo $cmake_common_options
   cmake_common_options="${cmake_common_options} ${tensile_opt}"
 
-  compiler="hcc"
+  compiler="amdclang++"
   if [[ "${build_hip_clang}" == true ]]; then
-    compiler="${rocm_path}/bin/hipcc"
+    compiler="${rocm_path}/bin/amdclang++"
   fi
 
   if [[ "${build_clients}" == false ]]; then

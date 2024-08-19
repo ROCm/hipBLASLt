@@ -1,5 +1,5 @@
 TestParameters:
-  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102] # not supported by arch
+  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102, skip-gfx1200, skip-gfx1201] # not supported by arch
 
 GlobalParameters:
   NumElementsToValidate: -1
@@ -32,6 +32,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
       BiasDataTypeList: ['s']
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -84,7 +85,7 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
         - BiasTypeArgs: ['s']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -105,6 +106,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
       BiasDataTypeList: ['s']
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -157,7 +159,7 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
         - BiasTypeArgs: ['s']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -178,6 +180,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
       BiasDataTypeList: ['s']
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -230,7 +233,7 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
         - BiasTypeArgs: ['s']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -251,6 +254,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
       BiasDataTypeList: ['s']
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -303,6 +307,6 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
         - BiasTypeArgs: ['s']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]

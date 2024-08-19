@@ -125,6 +125,8 @@ struct RocblasltContractionProblem
     const void*        scaleD;
     const void*        scaleE;
     const void*        scaleAlphaVec;
+    bool               isScaleAVec;
+    bool               isScaleBVec;
     hipDataType        bias_type;
     rocblaslt_epilogue epilogue;
     void*              workspace;
@@ -178,6 +180,8 @@ struct RocblasltContractionProblem
                                 const void*            scaleD,
                                 const void*            scaleE,
                                 const void*            scaleAlphaVec,
+                                bool                   isScaleAVec,
+                                bool                   isScaleBVec,
                                 hipDataType            bias_type,
                                 rocblaslt_epilogue     epilogue,
                                 void*                  workspace,
@@ -232,6 +236,8 @@ struct RocblasltContractionProblem
         , scaleD(scaleD)
         , scaleE(scaleE)
         , scaleAlphaVec(scaleAlphaVec)
+        , isScaleAVec(isScaleAVec)
+        , isScaleBVec(isScaleBVec)
         , bias_type(bias_type)
         , epilogue(epilogue)
         , workspace(workspace)
@@ -296,10 +302,11 @@ rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem>& pro
                                    std::shared_ptr<void>&                    gemmData,
                                    size_t&                                   gemmCount);
 
+template <typename Tuning>
 rocblaslt_status makeArgument(rocblaslt_handle             handle,
                               const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
-                              const rocblaslt::RocTuning*  tuning,
+                              const Tuning*                tuning,
                               void*                        workspace,
                               bool                         useUserArgs,
                               hipStream_t                  stream,
@@ -389,11 +396,12 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle             handle,
                                      rocblaslt_matmul_algo*       algo,
                                      size_t*                      workspaceSizeInBytes);
 
+template <typename Tuning>
 rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
                                      const rocblaslt::RocGemmType& gemmType,
                                      std::shared_ptr<void>         gemmData,
                                      rocblaslt_matmul_algo&        algo,
-                                     const rocblaslt::RocTuning*   tuning,
+                                     const Tuning*                 tuning,
                                      size_t&                       workspaceSizeInBytes);
 
 std::vector<std::shared_ptr<Tensile::ContractionSolution>> getBestRawSolutions(RocblasltContractionProblem const& prob,

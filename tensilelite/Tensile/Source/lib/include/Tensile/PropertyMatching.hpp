@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,11 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <functional>
 #include <iomanip>
+#include <queue>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -38,6 +40,10 @@
 #include <Tensile/ProblemKey.hpp>
 #include <Tensile/Properties.hpp>
 #include <Tensile/Utils.hpp>
+
+// #ifdef ENABLE_ROCTX
+// #include <roctracer/roctx.h>
+// #endif
 
 namespace Tensile
 {
@@ -63,6 +69,14 @@ namespace Tensile
             Key    key;
             Value  value;
             double speed;
+        };
+
+        template <typename Value>
+        struct KBEntry
+        {
+            int   k;
+            int   b;
+            Value value;
         };
 
         template <typename Object, typename Value, typename ReturnValue>
@@ -102,6 +116,197 @@ namespace Tensile
             Properties properties;
         };
 
+        template <typename T, std::size_t N>
+        struct PointND
+        {
+            std::array<T, N> coord;
+        };
+
+        template <typename T, std::size_t N>
+        struct KDTree
+        {
+            struct Node
+            {
+                explicit Node(const PointND<T, N>& p, std::size_t ax)
+                    : pt(p)
+                    , left(nullptr)
+                    , right(nullptr)
+                    , axis(ax)
+                {
+                }
+                PointND<T, N>         pt;
+                std::unique_ptr<Node> left;
+                std::unique_ptr<Node> right;
+                std::size_t           axis{};
+            };
+
+            struct SearchResult
+            {
+                const Node* node{};
+                float       distance{};
+                bool        operator<(const SearchResult& rhs) const
+                {
+                    if(distance != rhs.distance)
+                    {
+                        return distance < rhs.distance;
+                    }
+
+                    for(size_t i = 0; i < N; ++i)
+                    {
+                        if(node->pt.coord[i] != rhs.node->pt.coord[i])
+                        {
+                            return node->pt.coord[i] < rhs.node->pt.coord[i];
+                        }
+                    }
+
+                    return false;
+                }
+
+                bool operator>(const SearchResult& rhs) const
+                {
+                    return rhs < *this;
+                }
+            };
+
+            //Hacked pq to make it iterable
+            struct IterableSearchResult : std::priority_queue<SearchResult,
+                                                              std::deque<SearchResult>,
+                                                              std::less<SearchResult>>
+            {
+                auto begin() const
+                {
+                    return this->c.begin();
+                }
+
+                auto end() const
+                {
+                    return this->c.end();
+                }
+            };
+
+            using SortedSearchResults = IterableSearchResult;
+            using InsertCriteria = std::function<bool(const PointND<T, N>&, const PointND<T, N>&)>;
+
+            template <typename Iter>
+            void build(std::unique_ptr<Node>& root, Iter first, Iter last, std::size_t depth)
+            {
+                const auto dim         = depth % N;
+                const auto numElements = std::distance(first, last);
+
+                if(!numElements)
+                {
+                    return;
+                }
+
+                if(!depth)
+                {
+                    numPoints = numElements;
+                }
+
+                std::sort(first, last, [dim](const auto& lhs, const auto& rhs) {
+                    return lhs.coord[dim] < rhs.coord[dim];
+                });
+
+                maximums[dim]      = std::max(maximums[dim], std::next(last, -1)->coord[dim]);
+                const auto midIdx  = numElements / 2;
+                const auto midIter = std::next(first, midIdx);
+                root               = std::make_unique<Node>(*midIter, dim);
+                build(root->left, first, std::next(first, midIdx), depth + 1);
+                build(root->right, std::next(first, midIdx + 1), last, depth + 1);
+            }
+
+            std::vector<SearchResult>
+                query(const PointND<T, N>& pt, std::size_t n, InsertCriteria criteria)
+            {
+                SortedSearchResults res;
+                queryImpl(pt, root.get(), n, criteria, res);
+                std::vector<SearchResult> ret;
+
+                while(res.size())
+                {
+                    ret.push_back(res.top());
+                    res.pop();
+                }
+                return {rbegin(ret), rend(ret)};
+            }
+
+            std::size_t size() const
+            {
+                return numPoints;
+            }
+
+            std::unique_ptr<Node> root;
+            std::array<T, N>      maximums{};
+
+        private:
+            void queryImpl(const PointND<T, N>& pt,
+                           Node*                root,
+                           std::size_t          n,
+                           InsertCriteria       criteria,
+                           SortedSearchResults& result)
+            {
+                if(!root)
+                {
+                    return;
+                }
+
+                if(criteria(pt, root->pt))
+                {
+                    result.push(SearchResult{root, distance(pt, root->pt)});
+                    popResultUntil(n, result);
+                }
+
+                const auto dim = root->axis;
+
+                if(pt.coord[dim] < root->pt.coord[dim])
+                {
+                    queryImpl(pt, root->left.get(), n, criteria, result);
+
+                    if(result.size() < n || shouldCheckOtherHyperplane(result, pt, root))
+                    {
+                        queryImpl(pt, root->right.get(), n, criteria, result);
+                    }
+                }
+                else
+                {
+                    queryImpl(pt, root->right.get(), n, criteria, result);
+                    if(result.size() < n || shouldCheckOtherHyperplane(result, pt, root))
+                    {
+                        queryImpl(pt, root->left.get(), n, criteria, result);
+                    }
+                }
+            }
+
+            bool shouldCheckOtherHyperplane(SortedSearchResults& result,
+                                            const PointND<T, N>& pt,
+                                            const Node*          hyperplane) const
+            {
+                const auto dim = hyperplane->axis;
+                const auto d   = std::abs(pt.coord[dim] - hyperplane->pt.coord[dim]);
+                return (d * d) < result.top().distance;
+            }
+
+            float distance(const PointND<T, N>& p, const PointND<T, N>& q)
+            {
+                float d{};
+                for(size_t i = 0; i < N; ++i)
+                {
+                    d += static_cast<float>(p.coord[i] - q.coord[i]) * (p.coord[i] - q.coord[i]);
+                }
+                return d;
+            }
+
+            void popResultUntil(std::size_t n, SortedSearchResults& result)
+            {
+                while(result.size() > n)
+                {
+                    result.pop();
+                }
+            }
+
+            std::size_t numPoints{};
+        };
+
         /**
          * Shared code between the generic DistanceMatchingTable and the specialization
          * for the special Equality distance
@@ -115,6 +320,7 @@ namespace Tensile
         {
             using Base       = MatchingTable<Object, Value, ReturnValue>;
             using Entry      = MatchingTableEntry<Key, Value>;
+            using KBEntry    = KBEntry<Value>;
             using Transform  = typename Base::Transform;
             using Properties = typename Base::Properties;
 
@@ -296,6 +502,9 @@ namespace Tensile
             Distance           distance;
 
             ReturnValue nullValue;
+
+            mutable KDTree<int32_t, 2>                                  kdTree;
+            std::map<std::tuple<int32_t, int32_t>, std::vector<KBEntry>> kSolutionMap;
         };
 
         /**
@@ -706,10 +915,10 @@ namespace Tensile
             using Properties        = typename Base::Properties;
             using GridBasedDistance = Matching::GridBasedDistance<Key>;
             using Common            = DistanceMatchingCommon<Key,
-                                                  Object,
-                                                  Value,
-                                                  ReturnValue,
-                                                  Matching::GridBasedDistance<Key>>;
+                                                             Object,
+                                                             Value,
+                                                             ReturnValue,
+                                                             Matching::GridBasedDistance<Key>>;
             using Common::distance;
             using Common::nullValue;
             using Common::table;
@@ -752,7 +961,7 @@ namespace Tensile
             }
 
             template <bool T_Debug>
-            std::vector<ReturnValue> findBestKeyMatch_GridBased(Key const& key,
+            std::vector<ReturnValue> findBestKeyMatch_GridBased(Key const& key_orig,
                                                                 Transform  transform,
                                                                 int        numSolutions) const
             {
@@ -766,16 +975,142 @@ namespace Tensile
                 bool      Debug = T_Debug;
                 std::cout << std::setprecision(2) << std::fixed;
 
+                Key key = key_orig;
+                if(!Debug::Instance().gridBasedBatchExp())
+                {
+                    if(key.size() > 3)
+                    {
+                        if(key[0] > key[1])
+                            key[0] = key[0] * key[2];
+                        else
+                            key[1] = key[1] * key[2];
+                        key[2] = 1;
+                    }
+                }
+
+                if(Debug::Instance().gridBasedKDTree())
+                {
+                    // roctxRangePush("KDTree");
+                    auto compK = [](KBEntry<Value> const& e, int const N) { return e.k < N; };
+                    auto lowerB = [](KBEntry<Value> const& e, int const N) { return e.b < N; };
+                    auto upperB = [](int const N, KBEntry<Value> const& e) { return N < e.b; };
+                    auto k     = key.size() > 3 ? key[3] : key[2];
+                    auto                b     = key.size() > 3 ? key[2] : 1;
+                    PointND<int32_t, 2> target;
+                    target.coord[0] = key[0];
+                    target.coord[1] = key[1];
+
+                    if(Debug)
+                    {
+                        std::cout << "Searching space: " << this->kdTree.size() << '\n';
+                    }
+
+                    auto results = this->kdTree.query(
+                        target, numSolutions, [this](auto pt, auto best) {
+                            if(pt.coord[0] <= this->kdTree.maximums[0]
+                               && pt.coord[1] <= this->kdTree.maximums[1])
+                            {
+                                return best.coord[0] >= pt.coord[0] && best.coord[1] >= pt.coord[1];
+                            }
+                            else if(pt.coord[0] > this->kdTree.maximums[0]
+                                    && pt.coord[1] <= this->kdTree.maximums[1])
+                            {
+                                return best.coord[1] >= pt.coord[1];
+                            }
+                            else if(pt.coord[0] <= this->kdTree.maximums[0]
+                                    && pt.coord[1] > this->kdTree.maximums[1])
+                            {
+                                return best.coord[0] >= pt.coord[0];
+                            }
+                            return true;
+                        });
+
+                    for(auto result : results)
+                    {
+                        if(Debug)
+                            std::cout << "2D point: " << result.node->pt.coord[0] << ", "
+                                      << result.node->pt.coord[1] << std::endl;
+
+                        auto iter = this->kSolutionMap.find(
+                            std::make_tuple(result.node->pt.coord[0], result.node->pt.coord[1]));
+                        if(iter != this->kSolutionMap.end())
+                        {
+                            auto bEnd = std::lower_bound(
+                                iter->second.begin(), iter->second.end(), b, lowerB);
+                            auto bStart = iter->second.begin();
+                            if(bEnd == iter->second.end()) // b is too large
+                            {
+                                auto bval = std::prev(bEnd)->b;
+                                bStart    = std::lower_bound(
+                                    iter->second.begin(), iter->second.end(), bval, lowerB);
+                            }
+                            else if(bEnd == iter->second.begin()) // b is 1
+                            {
+                                bEnd = std::upper_bound(
+                                    iter->second.begin(), iter->second.end(), b, upperB);
+                            }
+                            else
+                            {
+                                auto bval = bEnd->b - 1;
+                                bStart    = std::lower_bound(
+                                    iter->second.begin(), iter->second.end(), bval, lowerB);
+                                bEnd++;
+                            }
+                            if(Debug)
+                                std::cout << "bStart " << bStart->b << ", bEnd " << bEnd->b
+                                          << " k at bStart " << bStart->k << ", k at bEnd "
+                                          << bEnd->k << std::endl;
+
+                            auto lower = std::lower_bound(bStart, bEnd, k, compK);
+                            if(lower == bEnd)
+                                lower--;
+                            auto prev = lower == bStart ? lower : lower--;
+                            if(prev != lower)
+                            {
+                                if(std::abs(prev->k - k) < std::abs(lower->k - k))
+                                {
+                                    lower = prev;
+                                }
+                            }
+                            auto thisMatch = transform(lower->value);
+                            if(thisMatch)
+                            {
+                                if(bestmatches.size())
+                                {
+                                    if(std::find(bestmatches.begin(), bestmatches.end(), thisMatch)
+                                       != bestmatches.end())
+                                    {
+                                        if(Debug)
+                                            std::cout << "Duplicated solution" << std::endl;
+                                        continue;
+                                    }
+                                }
+                                if(Debug)
+                                    std::cout
+                                        << "Final selected points: M: " << result.node->pt.coord[0]
+                                        << ", N: " << result.node->pt.coord[1]
+                                        << ", B: " << lower->b << ", K: " << lower->k << std::endl;
+
+                                bestmatches.push_back(thisMatch);
+                            }
+                        }
+                    }
+                    // roctxRangePop();
+                    return bestmatches;
+                }
+
+                // roctxRangePush("Binary");
+
                 auto compM = [&count, Debug](Entry const& e, long const M) {
                     if(Debug)
-                        printf("[%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2]);
+                        printf("[%ld,%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2], e.key[3]);
                     count++;
                     return e.key[0] < M;
                 };
 
                 auto compN = [&count, Debug](Entry const& e, long const N) {
                     if(Debug)
-                        printf("[%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2]);
+                        printf("[%ld,%ld,%ld,%ld]\n", e.key[0], e.key[1], e.key[2], e.key[3]);
                     count++;
                     return e.key[1] < N;
                 };
@@ -1006,6 +1341,7 @@ namespace Tensile
                 if(T_Debug && bestmatches.size())
                     std::cout << "Solution index selected: " << bestmatches[0]->index << std::endl;
 
+                // roctxRangePop();
                 return bestmatches;
             }
         };

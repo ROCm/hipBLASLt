@@ -277,6 +277,8 @@ try
     std::string scale_type;
     std::string bias_type;
     std::string bias_source;
+    std::string scaleAFormat;
+    std::string scaleBFormat;
     std::string initialization;
     std::string filter;
     std::string activation_type;
@@ -374,19 +376,19 @@ try
 
         ("a_type",
          value<std::string>(&a_type), "Precision of matrix A. "
-        "Options: f32_r,f16_r,bf16_r")
+        "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("b_type",
          value<std::string>(&b_type), "Precision of matrix B. "
-        "Options: f32_r,f16_r,bf16_r")
+        "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("c_type",
          value<std::string>(&c_type), "Precision of matrix C. "
-         "Options: f32_r,f16_r,bf16_r")
+         "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("d_type",
          value<std::string>(&d_type), "Precision of matrix D. "
-        "Options: f32_r,f16_r,bf16_r")
+        "Options: f32_r,f16_r,bf16_r,i8_r")
 
         ("compute_type",
          value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
@@ -474,12 +476,12 @@ try
          "Apply bias vector")
 
         ("scaleA",
-         bool_switch(&arg.scaleA)->default_value(false),
-         "Apply scale for A buffer")
+         value<std::string>(&scaleAFormat)->default_value(""),
+         "Apply scale for A buffer. s = scalar, v = vector.")
 
         ("scaleB",
-         bool_switch(&arg.scaleB)->default_value(false),
-         "Apply scale for B buffer")
+         value<std::string>(&scaleBFormat)->default_value(""),
+         "Apply scale for B buffer. s = scalar, v = vector.")
 
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
@@ -815,6 +817,16 @@ try
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
 
+    auto scaleString2Enum = [](std::string &s) {
+        if(s == "s")
+            return Arguments::ScalingFormat::Scalar;
+        if(s == "v")
+            return Arguments::ScalingFormat::Vector;
+        return Arguments::ScalingFormat::None;
+    };
+    arg.scaleA = scaleString2Enum(scaleAFormat);
+    arg.scaleB = scaleString2Enum(scaleBFormat);
+
     if(arg.M[0] < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M[0]));
     if(arg.N[0] < 0)
@@ -827,7 +839,10 @@ try
         throw std::invalid_argument("Invalid value for --function");
 
     if(verify)
-        arg.norm_check = 1;
+    {
+        arg.norm_check     = 1;
+        arg.allclose_check = 1;
+    }
 
     switch(api_method)
     {

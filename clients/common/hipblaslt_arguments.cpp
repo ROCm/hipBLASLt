@@ -31,36 +31,23 @@
 #include <istream>
 #include <ostream>
 #include <utility>
+#include <regex>
 
 /*! \brief device matches pattern */
-bool gpu_arch_match(const std::string& gpu_arch, const char pattern[4])
+bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
 {
-    auto removePrefix = [](const std::string& s) {
-        size_t pos = s.find("gfx");
-        if(pos != std::string::npos)
-        {
-            return s.substr(pos + 3);
-        }
-        return s;
-    };
-
-    auto        gpu_arch_no_prefix = removePrefix(gpu_arch);
-    int         gpu_len            = gpu_arch_no_prefix.length();
-    const char* gpu                = gpu_arch_no_prefix.c_str();
-
-    for(int i = 0; i < 4; i++)
+    if (!pattern.length())
     {
-        //hipblaslt_cout << pattern[i];
-        if(!pattern[i])
-            break;
-        else if(pattern[i] == '?')
-            continue;
-        else if(i >= gpu_len || pattern[i] != gpu[i])
-            return false;
+        return true;
     }
-    //hipblaslt_cout << " : match gpu_arch " << gpu_arch << std:: endl;
-    return true;
-};
+
+    constexpr char prefix[] = "gfx";
+    const std::size_t prefix_len = std::string_view(prefix).length();
+    gpu_arch.remove_prefix(prefix_len);
+    std::regex arch_regex(pattern.data());
+    return std::regex_search(gpu_arch.data(), arch_regex);
+}
+
 void Arguments::init()
 {
     // match python in hipblaslt_common.py
@@ -100,14 +87,14 @@ void Arguments::init()
     solution_index         = -1;
     requested_solution_num = 1;
 
-    a_type       = HIP_R_16F;
-    b_type       = HIP_R_16F;
-    c_type       = HIP_R_16F;
-    d_type       = HIP_R_16F;
-    compute_type = HIPBLAS_COMPUTE_32F;
+    a_type              = HIP_R_16F;
+    b_type              = HIP_R_16F;
+    c_type              = HIP_R_16F;
+    d_type              = HIP_R_16F;
+    compute_type        = HIPBLAS_COMPUTE_32F;
     compute_input_typeA = HIPBLASLT_DATATYPE_INVALID;
     compute_input_typeB = HIPBLASLT_DATATYPE_INVALID;
-    scale_type   = HIP_R_32F;
+    scale_type          = HIP_R_32F;
 
     initialization = hipblaslt_initialization::hpl;
 
@@ -121,9 +108,10 @@ void Arguments::init()
     // bytes
     devices = 0;
 
-    norm_check = 0;
-    unit_check = 1;
-    timing     = 0;
+    norm_check     = 0;
+    allclose_check = 0;
+    unit_check     = 1;
+    timing         = 0;
 
     transA = '*';
     transB = '*';
@@ -134,8 +122,8 @@ void Arguments::init()
     bias_type         = HIPBLASLT_DATATYPE_INVALID;
     bias_source       = hipblaslt_bias_source::d;
     bias_vector       = false;
-    scaleA            = false;
-    scaleB            = false;
+    scaleA            = ScalingFormat::None;
+    scaleB            = ScalingFormat::None;
     scaleC            = false;
     scaleD            = false;
     scaleE            = false;

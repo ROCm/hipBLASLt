@@ -106,12 +106,20 @@ namespace
                 testing_aux_matmul_get_attr_bad_arg(arg);
             else if(!strcmp(arg.function, "aux_matmul_set_get_attr"))
                 testing_aux_matmul_set_get_attr(arg);
+            else if(!strcmp(arg.function, "aux_matmul_pref_get_attr_bad_arg"))
+                testing_aux_matmul_pref_get_attr_bad_arg(arg);
+            else if(!strcmp(arg.function, "aux_matmul_pref_get_attr"))
+                testing_aux_matmul_pref_get_attr(arg);
             else if(!strcmp(arg.function, "aux_matmul_alg_init_bad_arg"))
                 testing_aux_matmul_alg_init_bad_arg(arg);
             else if(!strcmp(arg.function, "aux_matmul_alg_init"))
                 testing_aux_matmul_alg_init(arg);
             else if(!strcmp(arg.function, "aux_get_sol_with_null_biasaddr"))
                 testing_aux_get_sol_with_null_biasaddr(arg);
+            else if(!strcmp(arg.function, "aux_get_sol_with_zero_alpha_null_a_b"))
+                testing_aux_get_sol_with_zero_alpha_null_a_b(arg);
+            else if(!strcmp(arg.function, "aux_get_sol_with_zero_alpha_null_a_b_ext"))
+                testing_aux_get_sol_with_zero_alpha_null_a_b_ext(arg);
             else if(!strcmp(arg.function, "aux_matmul_alg_get_attr_bad_arg"))
                 testing_aux_matmul_alg_get_attr_bad_arg(arg);
             else if(!strcmp(arg.function, "aux_matmul_plan_init_bad_arg"))
@@ -153,10 +161,14 @@ namespace
                    || !strcmp(arg.function, "aux_matmul_alg_init_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_alg_init")
                    || !strcmp(arg.function, "aux_get_sol_with_null_biasaddr")
+                   || !strcmp(arg.function, "aux_get_sol_with_zero_alpha_null_a_b")
+                   || !strcmp(arg.function, "aux_get_sol_with_zero_alpha_null_a_b_ext")
                    || !strcmp(arg.function, "aux_matmul_alg_get_attr_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_plan_init_bad_arg")
                    || !strcmp(arg.function, "aux_matmul_plan_init")
-                   || !strcmp(arg.function, "aux_matmul_alg_null_matmul");
+                   || !strcmp(arg.function, "aux_matmul_alg_null_matmul")
+                   || !strcmp(arg.function, "aux_matmul_pref_get_attr_bad_arg")
+                   || !strcmp(arg.function, "aux_matmul_pref_get_attr");
         }
 
         // Google Test name suffix based on parameters

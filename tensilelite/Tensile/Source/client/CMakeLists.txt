@@ -33,6 +33,7 @@ set(client_sources
     source/MetaRunListener.cpp
     source/PerformanceReporter.cpp
     source/ProgressListener.cpp
+    source/Rotating.cpp
     source/Reference.cpp
     source/ReferenceValidator.cpp
     source/ResultFileReporter.cpp
@@ -48,7 +49,7 @@ add_library(TensileClient STATIC ${client_sources})
 
 set_target_properties(TensileClient
                       PROPERTIES
-                      CXX_STANDARD 20
+                      CXX_STANDARD 17
                       CXX_STANDARD_REQUIRED ON
                       CXX_EXTENSIONS OFF)
 
@@ -68,7 +69,7 @@ endif()
 add_executable(tensile_client main.cpp)
 set_target_properties(tensile_client
                       PROPERTIES
-                      CXX_STANDARD 20
+                      CXX_STANDARD 17
                       CXX_STANDARD_REQUIRED ON
                       CXX_EXTENSIONS OFF)
 

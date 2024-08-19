@@ -76,9 +76,13 @@ namespace Tensile
 #endif
 
             uint64_t hipPCIID = 0;
-            hipPCIID |= props.pciDeviceID & 0xFF;
-            hipPCIID |= ((props.pciBusID & 0xFF) << 8);
-            hipPCIID |= (props.pciDomainID) << 16;
+            // hipPCIID |= props.pciDeviceID & 0xFF;
+            // hipPCIID |= ((props.pciBusID & 0xFF) << 8);
+            // hipPCIID |= (props.pciDomainID) << 16;
+
+            hipPCIID |= (((uint64_t)props.pciDomainID & 0xffffffff) << 32);
+            hipPCIID |= ((props.pciBusID & 0xff) << 8);
+            hipPCIID |= ((props.pciDeviceID & 0x1f) << 3);
 
             uint32_t smiCount = 0;
 
@@ -125,23 +129,41 @@ namespace Tensile
         HardwareMonitor::HardwareMonitor(int hipDeviceIndex, clock::duration minPeriod)
             : m_minPeriod(minPeriod)
             , m_hipDeviceIndex(hipDeviceIndex)
-            , m_smiDeviceIndex(GetROCmSMIIndex(hipDeviceIndex))
             , m_dataPoints(0)
+            , m_XCDCount(1)
         {
             InitROCmSMI();
-
+            m_smiDeviceIndex = GetROCmSMIIndex(hipDeviceIndex);
             initThread();
+
+#if rocm_smi_VERSION_MAJOR >= 7
+            auto status2 = rsmi_dev_metrics_xcd_counter_get(m_smiDeviceIndex, &m_XCDCount);
+
+            if(status2 != RSMI_STATUS_SUCCESS)
+            {
+                m_XCDCount = 1;
+            }
+#endif
         }
 
         HardwareMonitor::HardwareMonitor(int hipDeviceIndex)
             : m_minPeriod(clock::duration::zero())
             , m_hipDeviceIndex(hipDeviceIndex)
-            , m_smiDeviceIndex(GetROCmSMIIndex(hipDeviceIndex))
             , m_dataPoints(0)
+            , m_XCDCount(1)
         {
             InitROCmSMI();
-
+            m_smiDeviceIndex = GetROCmSMIIndex(hipDeviceIndex);
             initThread();
+
+#if rocm_smi_VERSION_MAJOR >= 7
+            auto status2 = rsmi_dev_metrics_xcd_counter_get(m_smiDeviceIndex, &m_XCDCount);
+
+            if(status2 != RSMI_STATUS_SUCCESS)
+            {
+                m_XCDCount = 1;
+            }
+#endif
         }
 
         HardwareMonitor::~HardwareMonitor()
@@ -157,7 +179,7 @@ namespace Tensile
         {
             m_stop   = false;
             m_exit   = false;
-            m_thread = std::thread([=, this]() { this->runLoop(); });
+            m_thread = std::thread([this]() { this->runLoop(); });
         }
 
         void HardwareMonitor::addTempMonitor(rsmi_temperature_type_t   sensorType,
@@ -224,7 +246,14 @@ namespace Tensile
                     if(rawValue == std::numeric_limits<uint64_t>::max())
                         return std::numeric_limits<double>::quiet_NaN();
 
-                    return static_cast<double>(rawValue) / (1e6 * m_dataPoints);
+                    if(m_clockMetrics[i] == RSMI_CLK_TYPE_SYS)
+                    {
+                        return static_cast<double>(rawValue) / (1e6 * m_dataPoints * m_XCDCount);
+                    }
+                    else
+                    {
+                        return static_cast<double>(rawValue) / (1e6 * m_dataPoints);
+                    }
                 }
             }
 
@@ -281,7 +310,7 @@ namespace Tensile
 
                 m_hasStopEvent = stopEvent != nullptr;
 
-                m_task   = std::move(Task([=, this]() { this->collect(startEvent, stopEvent); }));
+                m_task   = std::move(Task([this, startEvent, stopEvent]() { this->collect(startEvent, stopEvent); }));
                 m_future = m_task.get_future();
 
                 m_stop = false;
@@ -303,10 +332,15 @@ namespace Tensile
 
             m_lastCollection = clock::time_point();
             m_nextCollection = clock::time_point();
+
+            m_SYSCLK_sum   = std::vector<uint64_t>(m_XCDCount, 0);
+            m_SYSCLK_array = std::vector<std::vector<uint64_t>>(m_XCDCount, std::vector<uint64_t>{});
         }
 
         void HardwareMonitor::collectOnce()
         {
+            const double cMhzToHz = 1000000;
+
             for(int i = 0; i < m_tempMetrics.size(); i++)
             {
                 // if an error occurred previously, don't overwrite it.
@@ -334,15 +368,49 @@ namespace Tensile
 
                 rsmi_frequencies_t freq;
 
-                auto status = rsmi_dev_gpu_clk_freq_get(m_smiDeviceIndex, m_clockMetrics[i], &freq);
-                if(status != RSMI_STATUS_SUCCESS)
+                if(m_clockMetrics[i] == RSMI_CLK_TYPE_SYS)
                 {
-                    m_clockValues[i] = std::numeric_limits<uint64_t>::max();
+#if rocm_smi_VERSION_MAJOR >= 7
+                    rsmi_gpu_metrics_t gpuMetrics;
+                    // multi_XCD
+                    auto status1 = rsmi_dev_gpu_metrics_info_get(m_smiDeviceIndex, &gpuMetrics);
+                    if(status1 == RSMI_STATUS_SUCCESS)
+                    {
+                        uint64_t sysclkSum = 0;
+                        for(uint32_t xcd = 0; xcd < m_XCDCount; xcd++)
+                        {
+                            m_SYSCLK_sum[xcd] += gpuMetrics.current_gfxclks[xcd] * cMhzToHz;
+                            m_SYSCLK_array[xcd].push_back(gpuMetrics.current_gfxclks[xcd] * cMhzToHz);
+                            sysclkSum += gpuMetrics.current_gfxclks[xcd] * cMhzToHz;
+                        }
+                        m_clockValues[i] += sysclkSum;
+                    }
+#else
+                    // XCD0
+                    auto status = rsmi_dev_gpu_clk_freq_get(m_smiDeviceIndex, m_clockMetrics[i], &freq);
+                    if(status != RSMI_STATUS_SUCCESS)
+                    {
+                        m_clockValues[i] = std::numeric_limits<uint64_t>::max();
+                    }
+                    else
+                    {
+                        m_clockValues[i] += freq.frequency[freq.current];
+                    }
+#endif
                 }
                 else
                 {
-                    m_clockValues[i] += freq.frequency[freq.current];
+                    auto status = rsmi_dev_gpu_clk_freq_get(m_smiDeviceIndex, m_clockMetrics[i], &freq);
+                    if(status != RSMI_STATUS_SUCCESS)
+                    {
+                        m_clockValues[i] = std::numeric_limits<uint64_t>::max();
+                    }
+                    else
+                    {
+                        m_clockValues[i] += freq.frequency[freq.current];
+                    }
                 }
+
             }
 
             for(int i = 0; i < m_fanMetrics.size(); i++)

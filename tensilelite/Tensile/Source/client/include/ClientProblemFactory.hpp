@@ -77,9 +77,9 @@ namespace Tensile
             bool m_cEqualsD;
             int  m_useBias;
             int  m_biasSrc;
-            bool m_useScaleAB;
+            std::string m_useScaleAB;
             bool m_useScaleCD;
-            bool m_useScaleAlphaVec;
+            int  m_useScaleAlphaVec;
             bool m_useSynchronizer;
             bool m_useE;
             bool m_useGradient = false;
@@ -89,7 +89,8 @@ namespace Tensile
             PerformanceMetric                m_performanceMetric;
             ActivationType                   m_activationType;
             std::vector<DataType>            m_biasTypeArgs;
-            std::vector<int>                 m_biasDimArgs;
+            std::vector<int>                 m_factorDimArgs;
+            std::vector<bool>                m_icacheFlushArgs;
             bool                             m_activationNoGuard;
             std::vector<ActivationType>      m_activationEnumArg;
             size_t                           m_maxWorkspaceSize = 0;

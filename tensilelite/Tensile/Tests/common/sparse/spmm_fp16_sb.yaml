@@ -1,5 +1,5 @@
 TestParameters:
-  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102] # not supported by arch
+  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102, skip-gfx1200, skip-gfx1201] # not supported by arch
 
 GlobalParameters:
   NumElementsToValidate: -1
@@ -28,11 +28,11 @@ BenchmarkProblems:
       TransposeA: False
       TransposeB: False
       UseBeta: True
-      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -90,7 +90,7 @@ BenchmarkProblems:
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
         - BiasTypeArgs: ['s', 'h']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -107,11 +107,11 @@ BenchmarkProblems:
       TransposeA: True
       TransposeB: False
       UseBeta: True
-      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -169,7 +169,7 @@ BenchmarkProblems:
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
         - BiasTypeArgs: ['s', 'h']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -186,11 +186,11 @@ BenchmarkProblems:
       TransposeA: False
       TransposeB: True
       UseBeta: True
-      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -248,7 +248,7 @@ BenchmarkProblems:
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
         - BiasTypeArgs: ['s', 'h']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -265,11 +265,11 @@ BenchmarkProblems:
       TransposeA: True
       TransposeB: True
       UseBeta: True
-      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       UseBias: 3
+      UseScaleAlphaVec: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -327,6 +327,6 @@ BenchmarkProblems:
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
         - BiasTypeArgs: ['s', 'h']
-        - BiasDimArgs: [0, 1]
+        - FactorDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]

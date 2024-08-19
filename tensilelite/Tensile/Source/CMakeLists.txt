@@ -40,7 +40,7 @@ set(TENSILE_USE_OPENMP   ON CACHE BOOL "Use OpenMP to improve performance.")
 set(TENSILE_STATIC_ONLY  ON CACHE BOOL "Disable exposing Tensile symbols in a shared library.")
 
 if(NOT DEFINED CXX_VERSION_STRING)
-    if(CMAKE_CXX_COMPILER MATCHES ".*/hipcc$")
+    if(CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" OR CMAKE_CXX_COMPILER MATCHES ".*clang\\+\\+")
       # Determine if CXX Compiler is hip-clang or nvcc
       execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--version" OUTPUT_VARIABLE CXX_OUTPUT
               OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -51,9 +51,9 @@ if(NOT DEFINED CXX_VERSION_STRING)
 endif()
 
 if(CMAKE_CXX_COMPILER STREQUAL "hipcc")
-  set(TENSILE_GPU_ARCHS gfx803 gfx900 gfx906:xnack- gfx908:xnack- gfx90a:xnack- gfx1010 gfx1011 gfx1012 gfx1030 gfx1100 gfx1101 gfx1102 CACHE STRING "GPU architectures")
+  set(TENSILE_GPU_ARCHS gfx803 gfx900 gfx906:xnack- gfx908:xnack- gfx90a:xnack- gfx1010 gfx1011 gfx1012 gfx1030 gfx1100 gfx1101 gfx1102 gfx1200 gfx1201 CACHE STRING "GPU architectures")
 else()
-  set(TENSILE_GPU_ARCHS gfx803 gfx900 gfx906 gfx908 gfx90a gfx1010 gfx1011 gfx1012 gfx1030 gfx1100 gfx1101 gfx1102 CACHE STRING "GPU architectures")
+  set(TENSILE_GPU_ARCHS gfx803 gfx900 gfx906 gfx908 gfx90a gfx1010 gfx1011 gfx1012 gfx1030 gfx1100 gfx1101 gfx1102 gfx1200 gfx1201 CACHE STRING "GPU architectures")
 endif()
 
 include(CMakeDependentOption)

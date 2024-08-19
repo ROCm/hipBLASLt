@@ -188,6 +188,7 @@ class StateValues:
   unifiedVgprRegs: bool                  = False
   useAtomicAdd: bool                     = False
   serializedStore: bool                  = False
+  gsu_wg_coalesced: bool                 = False
 
   a: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)
   b: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)
@@ -237,7 +238,7 @@ class StateValues:
   numSgprStreamK: int                    = 0
   BiasType: int                          = 0
   BiasStride: int                        = 0
-  BiasDim: int                           = 0
+  FactorDim: int                         = 0
 
   numReadsPerIterA: int                  = 0
   numReadsPerIterB: int                  = 0
@@ -504,7 +505,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # that all necessary dependency are met.  The driver code in kernelBody
   # blindly follows the plan set in unrollLoopHeaderCode and perIterCode
   ##############################################################################
-  def makeSchedule(self, kernel, tensorParametersA, tensorParametersB, localWriteEndIter, skipGlobalReadInc=False, firstIter=False, lastLoop=False, lastLc=False):
+  def makeSchedule(self, kernel, tensorParametersA, tensorParametersB, localWriteEndIter, skipGlobalReadInc=False, firstIter=False, lastLoop=False, lastLc=False, isNGLL=False):
 
     maxVmcnt = self.states.asmCaps["MaxVmcnt"]
 
@@ -527,7 +528,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     siaComponent = Component.SIA.find(self)
     siaComponent.schedIntoIteration(self, kernel, tensorParametersA, tensorParametersB, \
       localWriteEndIter, firstIter, lastLoop, lastLc, maxVmcnt, globalReadIncACode, \
-      globalReadIncBCode)
+      globalReadIncBCode, isNGLL)
 
   ##############################################################################
   # Schedule work into the each unroll loop iteration
@@ -564,6 +565,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     localWriteCode = self.codes.perIterLocalWrite[iteration]
     isBarrier = kernel["LoopIters"] - self.states.numItersPLR
     hasLocalRead = localReadCode.countType(LocalReadInstruction)
+
     # Default schedule is other, local reads, then local writes:
     if self.states.scheduleIterAlg==0:
       # simple schedule, just add the modules in-order
@@ -1546,7 +1548,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # No Load Loop Body
   ##############################################################################
-  def noLoadLoopBody( self, kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast):
+  def noLoadLoopBody( self, kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast, dsWriteBA=False):
     module = Module("noLoadLoopBody")
     expand = kernel["ExpandPointerSwap"]
     lastuIdx = False
@@ -1560,16 +1562,24 @@ class KernelWriter(metaclass=abc.ABCMeta):
       isLastLoop = not isNGLL
       if u == 0:
         if not isLastLoop:
-          self.codes.localWriteA = self.localWriteDo(kernel, tensorParametersA)  # local write in loopcnt N targets data for loopcnt N+1
-          self.codes.localWriteB = self.localWriteDo(kernel, tensorParametersB)
+          # For UnrollLoopSwapGlobalReadOrder == 1, we will have 2 NGLLs,
+          # One with local write A then B and another with B then A.
+          if dsWriteBA == True:
+            # In the current scheduling, we always schedule lwa first then lwb second.
+            # Put B in lwa code can easily change the order.
+            self.codes.localWriteA = self.localWriteDo(kernel, tensorParametersB, swapAB=1)
+            self.codes.localWriteB = self.localWriteDo(kernel, tensorParametersA, swapAB=1)
+          else:
+            self.codes.localWriteA = self.localWriteDo(kernel, tensorParametersA)  # local write in loopcnt N targets data for loopcnt N+1
+            self.codes.localWriteB = self.localWriteDo(kernel, tensorParametersB)
         else:
           self.codes.localWriteA = Module()
           self.codes.localWriteB = Module()
 
-        if not isNGLL or (isNGLL and kernel["ExpandPointerSwap"]):
+        if not isNGLL or (isNGLL and kernel["ExpandPointerSwap"]) or (isNGLL and kernel["UnrollLoopSwapGlobalReadOrder"]):
           # PAP would have GlobalRead and GlobalInc, but no localWrite
           # Get the perIterGlobalReadCode code for PAP (if PAP=On), else would be empty
-          self.makeSchedule(kernel, tensorParametersA, tensorParametersB, localWriteEndIter, skipGlobalReadInc=False, lastLoop=NLLlast)
+          self.makeSchedule(kernel, tensorParametersA, tensorParametersB, localWriteEndIter, skipGlobalReadInc=False, lastLoop=NLLlast, isNGLL=isNGLL)
           module.add(self.codes.unrollLoopHeader)
 
       # which loop iteration to reset the LRO,
@@ -1688,7 +1698,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["EnableMatrixInstruction"]:
         macIterCode.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, u, kernel["InnerUnroll"], unrollIdx = u))
       else:
-        printExit("TensileLite does not support MAC instructions.")
+        macIterCode.add(self.macIter(kernel, tensorParametersA, tensorParametersB, luIdx, kernel["InnerUnroll"], True))
       if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
         tP = tensorParametersA if kernel["ProblemType"]["BiasSrc"] == "A" else tensorParametersB
         macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, u, kernel["InnerUnroll"]))
@@ -1705,11 +1715,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
   #
   # isOptNLL : the NLL is to be optimized for the alpha=1 and non-edge case
   ##############################################################################
-  def noLoadLoop( self, kernel, tensorParametersA, tensorParametersB, isOptNLL, isNGLL, pack ):
+  def noLoadLoop( self, kernel, tensorParametersA, tensorParametersB, isOptNLL, isNGLL, pack, dsWriteBA=False):
     module = Module("noLoadLoop")
     LoopNameComment = "NoGlobalLoadLoop" if isNGLL else "NoLoadLoop"
     isOptNLLComment = "Opt" if isOptNLL else "Ord"
     startComment = "%s. %s - Begin " % (isOptNLLComment, LoopNameComment)
+    if dsWriteBA==True:
+      startComment = startComment + "1/2"
     module.addComment2(startComment)
     NLLfirst = True
     NLLlast = True
@@ -1751,27 +1763,34 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self._syncThreads(kernel))
 
     # generate no Load Loop Body code
-    module.add(self.noLoadLoopBody(kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast))
+    module.add(self.noLoadLoopBody(kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast, dsWriteBA=dsWriteBA))
 
     if self.do["executeToLoopEnd"] and isOptNLL:
       module.add(self.functionEnd(kernel, addLabel=False))
 
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
-    module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL))
+    module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL, isNotLast=dsWriteBA))
 
-    if self.states.BiasDim == 3:
+    if self.states.FactorDim == 3:
       self.updateBranchPlaceHolder(module, ["skipOptNLL_placeholder", "skipOptNLL_scc1_placeholder"] , ["OptNLL_End", "OptNLL_End"], ["SCBranchSCC0", "SCBranchSCC1"])
     return module
 
   ##############################################################################
   # Loop Body
+  # When UnrollLoopSwapGlobalReadOrder is enabled,
+  # dsWriteBA is to do ds_write B first.
+  # grBA is to do buffer_load B first.
   ##############################################################################
-  def loopBody( self, kernel, tensorParametersA, tensorParametersB, pack, lc, loopCopies, finalLoop, firstIter=False ):
+  def loopBody( self, kernel, tensorParametersA, tensorParametersB, pack, lc, loopCopies, finalLoop, firstIter=False, dsWriteBA=False, grBA=False ):
     module = Module("loopBody")
     expand = kernel["ExpandPointerSwap"]
 
     # not generate openLoop for firstIter
-    if not firstIter:
+    if dsWriteBA:
+      module.addComment2("Unrolled Loop 1/2 - Begin")
+    elif grBA:
+      module.addComment2("Unrolled Loop 2/2 - Begin")
+    elif not firstIter:
       module.addComment2("Unrolled Loop %u/%u - Begin" % (lc+1, loopCopies))
     if kernel["PrefetchGlobalRead"] and not self.states.numItersPLR and not kernel["ScheduleIterAlg"] == 2:
       if kernel["DirectToLdsA"] or kernel["DirectToLdsB"]:
@@ -1784,9 +1803,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # unrolled loop: global read A, B
     # M0 update for directToLds
     self.codes.dtlsM0UpdateA = self.directToLdsM0Update(kernel, 1, tensorParametersA, usePlaceHolder=True)
-    self.codes.globalReadA = self.globalReadDo(kernel, 1, tensorParametersA, unrollLoopIdx=lc)
     self.codes.dtlsM0UpdateB = self.directToLdsM0Update(kernel, 1, tensorParametersB, usePlaceHolder=True)
-    self.codes.globalReadB = self.globalReadDo(kernel, 1, tensorParametersB, unrollLoopIdx=lc)
+    if grBA==True:
+      # swap the code of gr A/B
+      self.codes.globalReadA = self.globalReadDo(kernel, 1, tensorParametersB, unrollLoopIdx=lc, swapAB=1)
+      self.codes.globalReadB = self.globalReadDo(kernel, 1, tensorParametersA, unrollLoopIdx=lc, swapAB=1)
+    else:
+      self.codes.globalReadA = self.globalReadDo(kernel, 1, tensorParametersA, unrollLoopIdx=lc)
+      self.codes.globalReadB = self.globalReadDo(kernel, 1, tensorParametersB, unrollLoopIdx=lc)
 
     # unrolled loop: increment global read addresses
     self.codes.globalReadIncrements = self.globalReadIncrementAB(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx, 0)
@@ -1881,8 +1905,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if u==0: # if at start of subloop...
         # ...update local write code
         if not kernel["NoLdsWriteCode"]:
-          self.codes.localWriteA = self.localWriteDo(kernel, tensorParametersA)  # local write in loopcnt N targets data for loopcnt N+1
-          self.codes.localWriteB = self.localWriteDo(kernel, tensorParametersB)
+          if dsWriteBA:
+            self.codes.localWriteA = self.localWriteDo(kernel, tensorParametersB, swapAB=1)
+            self.codes.localWriteB = self.localWriteDo(kernel, tensorParametersA, swapAB=1)
+          else:
+            self.codes.localWriteA = self.localWriteDo(kernel, tensorParametersA)
+            self.codes.localWriteB = self.localWriteDo(kernel, tensorParametersB)
         else:
           self.codes.localWriteA = Module()
           self.codes.localWriteB = Module()
@@ -2014,7 +2042,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["EnableMatrixInstruction"]:
         macIterCode.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, u, kernel["InnerUnroll"], unrollLoopIdx=lc, unrollIdx = u))
       else:
-        printExit("TensileLite does not support MAC instructions.")
+        macIterCode.add(self.macIter(kernel, tensorParametersA, tensorParametersB, luIdx, kernel["InnerUnroll"], True))
       if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
         tP = tensorParametersA if kernel["ProblemType"]["BiasSrc"] == "A" else tensorParametersB
         macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, u, kernel["InnerUnroll"]))
@@ -2042,17 +2070,19 @@ class KernelWriter(metaclass=abc.ABCMeta):
         printExit("TensileLite does not support MAC instructions.")
 
     # close unrolled loop
-    if expand:
+    if dsWriteBA:
+      module.addComment2("Unrolled Loop - End 1/2")
+    elif expand:
       if not finalLoop:
         module.addComment2("Unrolled Loop - End %u/%u"%(lc+1, loopCopies))
       else:
         module.addComment2("Unrolled Loop - End %u/%u (final)"%(lc+1, loopCopies))
-
     else:
       module.addComment2("Unrolled Loop - End")
 
     oddLabel = lc == 0
-    module.add(self.closeLoop(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx, finalLoop, oddLabel=oddLabel))
+    if dsWriteBA == 0:
+      module.add(self.closeLoop(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx, finalLoop, oddLabel=oddLabel))
     return module
 
   ##############################################################################
@@ -2121,10 +2151,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
       if kernel["PrefetchGlobalRead"] == 2:
         module.add(self.openPrefetchGlobalRead2(kernel))
-        module.add(self.directToLdsM0Update(kernel, 1, tensorParametersA))
-        module.add(self.globalReadDo(kernel, 0, tensorParametersA))
-        module.add(self.directToLdsM0Update(kernel, 1, tensorParametersB))
-        module.add(self.globalReadDo(kernel, 0, tensorParametersB))
+        if kernel["UnrollLoopSwapGlobalReadOrder"] == 1:
+          # For UnrollLoopSwapGlobalReadOrder, we also need to swap ds write A/B order.
+          # In scheduling, we always schedule lwa first then lwb second,
+          # Putting lwb in lwa's code object can easily change the order.
+          module.add(self.globalReadDo(kernel, 0, tensorParametersB, swapAB=1))
+          module.add(self.globalReadDo(kernel, 0, tensorParametersA, swapAB=1))
+        else:
+          module.add(self.directToLdsM0Update(kernel, 1, tensorParametersA))
+          module.add(self.globalReadDo(kernel, 0, tensorParametersA))
+          module.add(self.directToLdsM0Update(kernel, 1, tensorParametersB))
+          module.add(self.globalReadDo(kernel, 0, tensorParametersB))
 
         # swap local ptrs again if DirectToLds is enabled
         if kernel["DirectToLdsA"]:
@@ -2182,13 +2219,26 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.addComment2("Unrolled Loop(s) - Begin")
     module.add(self.openLoop(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx, beginLabelOnly=False))
 
-    for lc in range(0, loopCopies):
-      loopIndex = lc
-      if loopIndex >= loopCopies:
-        loopIndex -= loopCopies
-      # loop body code generation
-      finalLoop = lc == loopCopies - 1
-      module.add(self.loopBody( kernel, tensorParametersA, tensorParametersB, pack, loopIndex, loopCopies, finalLoop ))
+    if kernel["UnrollLoopSwapGlobalReadOrder"] == 1:
+      module.add(self.loopBody( kernel, tensorParametersA, tensorParametersB, pack, 0, loopCopies, True , dsWriteBA=True))
+      loopLabelToNoGRloopAfterABLoop = Label("NoGRloopAfterABLoop", "" )
+      loopCounter = self.loopCounter(kernel, self.states.unrollIdx)
+      module.add(SSubU32(dst=loopCounter, src0=loopCounter, \
+                         src1=1, \
+                         comment="dec counterL"))
+      module.add(SCmpLeU32(src0=loopCounter, \
+                           src1=hex(2), \
+                          comment="counteL<=2"))
+      module.add(SCBranchSCC1(labelName=loopLabelToNoGRloopAfterABLoop.getLabelName(), comment="exit LoopL" ))
+      module.add(self.loopBody( kernel, tensorParametersA, tensorParametersB, pack, 0, loopCopies, True , grBA=True))
+    else:
+      for lc in range(0, loopCopies):
+        loopIndex = lc
+        if loopIndex >= loopCopies:
+          loopIndex -= loopCopies
+        # loop body code generation
+        finalLoop = lc == loopCopies - 1
+        module.add(self.loopBody( kernel, tensorParametersA, tensorParametersB, pack, loopIndex, loopCopies, finalLoop ))
 
     module.addComment1("Before NLL: Check VGPR.checkin for INT8 LW")
 
@@ -2205,7 +2255,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(self.localWriteSwapOffsets(kernel, expand, tensorParametersB))
 
     if kernel["PrefetchGlobalRead"] == 2:
-      module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=True, pack=pack))
+      if kernel["UnrollLoopSwapGlobalReadOrder"] == 1:
+        module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=True, pack=pack, dsWriteBA=True))
+        module.add(loopLabelToNoGRloopAfterABLoop)
+        module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=True, pack=pack))
+      else:
+        module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=True, pack=pack))
 
     # This "NoLoad" loop is a copy of the unroll loop but with global loads + LDS writes removed
     # doShadowInit is required since this pushes up the store SRD initialization before the NLL
@@ -2371,7 +2426,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(pack[0])
         pack[0] = Module()
 
-        module.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, 0, tailLoopInnerUnroll, tail = True, unrollIdx = mValue))
+        if kernel["EnableMatrixInstruction"]:
+          module.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, 0, tailLoopInnerUnroll, tail = True, unrollIdx = mValue))
+        else: # mac instruction
+          module.add(self.macIter(kernel, tensorParametersA, tensorParametersB, mValue, tailLoopInnerUnroll, True, True))
         if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
           tP = tensorParametersA if kernel["ProblemType"]["BiasSrc"] == "A" else tensorParametersB
           module.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, 0, tailLoopInnerUnroll))
@@ -2619,12 +2677,15 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
       vwm = kernel["GlobalReadVectorWidthMetadata"]
 
-    if not kernel["UnrollMajorLDSA"]:
+    # force lrvwTile = 1 for numBytes >= 4 + MIInputPerThread > 1
+    # TODO: implement extra logic to swap vgprs after local read to suport lrvwTile > 1 for umBytes >= 4 + MIInputPerThread > 1
+    forceLrvwTile1 = kernel["ProblemType"]["DataType"].numBytes() >= 4 and (kernel["EnableMatrixInstruction"] and kernel["MIInputPerThread"] > 1)
+    if not kernel["UnrollMajorLDSA"] and not forceLrvwTile1:
       self.states.lrvwTileA = kernel["VectorWidthA"]
     else:
       self.states.lrvwTileA = 1
 
-    if not kernel["UnrollMajorLDSB"]:
+    if not kernel["UnrollMajorLDSB"] and not forceLrvwTile1:
       self.states.lrvwTileB = kernel["VectorWidthB"]
     else:
       self.states.lrvwTileB = 1
@@ -2866,7 +2927,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # special case for wmma h and b
     if (kernel["EnableMatrixInstruction"]
-            and self.states.asmCaps["HasWMMA"]
+            and self.states.asmCaps["HasWMMA_V1"]
             and (kernel["ProblemType"]["ComputeDataType"].numRegisters() == 0.5)):
         self.states.bpeCinternal = 4
         if kernel["_GlobalAccumulation"]:
@@ -3004,26 +3065,36 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     ####################################
     # num vgprs: valu
-    #jgolds bpeCinternal because we are allocating accumulation registers here
-    self.states.c.numVgprValu = (kernel["ThreadTile0"]*kernel["ThreadTile1"]*self.states.bpeCinternal)//self.states.bpr
-
-    valuBlocks = (self.states.numVgprBuffer) * kernel["InnerUnroll"]
-    # double the number of VgprValu if self.states.vgprValuDouble is true
-    if self.states.vgprValuDouble:
-      valuBlocks *= 2
     if kernel["EnableMatrixInstruction"]:
+      #jgolds bpeCinternal because we are allocating accumulation registers here
+      self.states.c.numVgprValu = (kernel["ThreadTile0"]*kernel["ThreadTile1"]*self.states.bpeCinternal)//self.states.bpr
+
+      valuBlocks = (self.states.numVgprBuffer) * kernel["InnerUnroll"]
+      # double the number of VgprValu if self.states.vgprValuDouble is true
+      if self.states.vgprValuDouble:
+        valuBlocks *= 2
+
       self.states.a.numVgprValuPerBlock = kernel["MIWaveTileA"] * kernel["MIInputPerThreadA"] * tensorParametersA["bpe"] // self.states.bpr
       self.states.b.numVgprValuPerBlock = kernel["MIWaveTileB"] * kernel["MIInputPerThreadB"] * tensorParametersB["bpe"] // self.states.bpr
-    else:
-      printExit("TensileLite does not support non MFMA.")
 
-    self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * valuBlocks
-    if self.states.lrvwTileA > 1 and tensorParametersA["bpe"] < 4:
-      self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"]
+      self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * valuBlocks
+      if self.states.lrvwTileA > 1 and tensorParametersA["bpe"] < 4:
+        self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"]
 
-    self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocks
-    if self.states.lrvwTileB > 1 and tensorParametersB["bpe"] < 4:
-      self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"]
+      self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocks
+      if self.states.lrvwTileB > 1 and tensorParametersB["bpe"] < 4:
+        self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"]
+
+    else: # mac instruction
+      valuBlocksA = (1 + kernel["PrefetchLocalRead"]) * kernel["InnerUnroll"]
+      valuBlocksB = (1 + kernel["PrefetchLocalRead"]) * kernel["InnerUnroll"]
+
+      self.states.a.numVgprValuPerBlock = kernel["ThreadTileA"] * tensorParametersA["bpe"] // self.states.bpr
+      self.states.b.numVgprValuPerBlock = kernel["ThreadTileB"] * tensorParametersB["bpe"] // self.states.bpr
+
+      self.states.c.numVgprValu = kernel["ThreadTile0"] * kernel["ThreadTile1"] * kernel["ProblemType"]["ComputeDataType"].numRegisters()
+      self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * valuBlocksA
+      self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocksB
 
     if kernel["ProblemType"]["Sparse"]:
       if kernel["DirectToVgprSparseMetadata"]:
@@ -3046,6 +3117,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.a.numVgprG2L = 0
     numVgprG2Local = 0
     numVgprG2LAllocatedLocal = 0
+
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
       bpeMax = tensorParametersA["bpeDS"] if kernel["ConvertAfterDS"] else max(tensorParametersA["bpeGR"], tensorParametersA["bpe"])
       self.states.a.numVgprG2L = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
@@ -3202,6 +3274,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.totalAgprs = self.states.c.numVgprValu
         vgprIdx = 0
         self.states.c.numVgprValu = 0
+
+    self.states.gsu_wg_coalesced = kernel["GlobalSplitUCoalesced"]
 
     # TODO: alignment hack, figure out a better solution
     vgprIdx = ((vgprIdx+1)//2)*2
@@ -3365,12 +3439,20 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.states.a.startVgprG2L is None:
       # TODO: alignment hack, figure out a better solution
       vgprIdx = ((vgprIdx+1)//2)*2
-      self.states.a.startVgprG2L = vgprIdx; vgprIdx += self.states.a.numVgprG2LAllocated
+      self.states.a.startVgprG2L = vgprIdx;
+      if kernel["ULSGRODoubleG2L"] == 1:
+        vgprIdx += self.states.a.numVgprG2LAllocated*2
+      else:
+        vgprIdx += self.states.a.numVgprG2LAllocated
 
     if self.states.b.startVgprG2L is None:
       # TODO: alignment hack, figure out a better solution
       vgprIdx = ((vgprIdx+1)//2)*2
-      self.states.b.startVgprG2L = vgprIdx; vgprIdx += self.states.b.numVgprG2LAllocated
+      self.states.b.startVgprG2L = vgprIdx;
+      if kernel["ULSGRODoubleG2L"] == 1:
+        vgprIdx += self.states.b.numVgprG2LAllocated*2
+      else:
+        vgprIdx += self.states.b.numVgprG2LAllocated
 
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
       if self.states.m.startVgprG2L is None:
@@ -3681,7 +3763,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     self.states.preloadScaleA = False
     self.states.preloadScaleB = False
-    if kernel["ProblemType"]["UseScaleAB"]:
+    if kernel["ProblemType"]["UseScaleAB"] == "Scalar":
       if kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
         self.states.preloadScaleA = True
       if kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
@@ -3762,8 +3844,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["InnerUnroll"] >= self.states.numReadsIterCoalescedB:
         numB //= self.states.numReadsIterCoalescedB
 
-    else:
-      printExit("TensileLite does not support non MFMA.")
+    else: # mac instruction
+      numA = kernel["InnerUnroll"]*(kernel["ThreadTile0"] // kernel["VectorWidthA"]) // tensorParametersA["localReadInstruction"].numOffsets
+      numB = kernel["InnerUnroll"]*(kernel["ThreadTile1"] // kernel["VectorWidthB"]) // tensorParametersB["localReadInstruction"].numOffsets
+
     self.states.numReadsPerIterA = numA
     self.states.numReadsPerIterB = numB
     self.states.localReadDoCntA   = 0
@@ -3831,6 +3915,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.numStoreSgprNames = []
     self.states.numStoreSgprNameSizes = []
     storeSgprLoad = 0
+    enableFactorDim = False;
     if kernel["ProblemType"]["UseScaleAB"]:
       self.states.numSgprAddressScaleA = self.states.rpga if (not self.states.preloadScaleA) else 0
       self.states.numSgprAddressScaleB = self.states.rpga if (not self.states.preloadScaleB) else 0
@@ -3855,6 +3940,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         storeSgprLoad += self.states.rpga
         self.states.numStoreSgprNames.append("AddressScaleAlphaVec")
         self.states.numStoreSgprNameSizes.append(self.states.rpga)
+        self.states.FactorDim = max(self.states.FactorDim, kernel["ProblemType"]["UseScaleAlphaVec"])
+        if self.states.FactorDim == 3:
+          enableFactorDim = True
     if self.states.useBias != DataDirection.NONE:
       # Does not support atomic yet
       self.states.BiasType   = 0
@@ -3869,11 +3957,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.numStoreSgprNameSizes.append(self.states.BiasType)
         self.states.numStoreSgprNames.append("BiasStride")
         self.states.numStoreSgprNameSizes.append(self.states.BiasStride)
-        self.states.BiasDim = kernel["ProblemType"]["UseBias"]
-        if self.states.BiasDim == 3:
-          self.states.numStoreSgprNames.append("BiasDim")
-          self.states.numStoreSgprNameSizes.append(1)
-      storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride + (1 if self.states.BiasDim == 3 else 0)
+        self.states.FactorDim = max(self.states.FactorDim, kernel["ProblemType"]["UseBias"])
+        if self.states.FactorDim == 3:
+            enableFactorDim = True
+      storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride
+
+    if enableFactorDim:
+      self.states.numStoreSgprNames.append("FactorDim")
+      self.states.numStoreSgprNameSizes.append(1)
+      storeSgprLoad += 1
+
     if kernel["ProblemType"]["UseE"]:
       storeSgprLoad += self.states.rpga + self.states.e.numSgprStrides
       self.states.numStoreSgprNames.append("AddressE")
@@ -4761,7 +4854,8 @@ for codeObjectFileName in codeObjectFileNames:
     if len(found_phs) == 0:
       return
 
-    for count in reversed(found_phs.keys()):
+    counts = reversed(sorted(found_phs.keys())) if sys.version_info < (3,8) else reversed(found_phs.keys())
+    for count in counts:
       _placeholder = found_phs[count]
       ph_idx = placeholders.index(_placeholder.name)
 

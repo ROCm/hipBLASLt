@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -150,6 +150,12 @@ namespace Tensile
         return m_value & 0x80000;
     }
 
+    bool Debug::gridBasedKDTree() const
+    {
+        return m_gridbasedKdTree;
+    }
+
+
     Debug::Debug()
         : m_value(DEBUG_SM)
         , m_value2(DEBUG_SM2)
@@ -189,6 +195,10 @@ namespace Tensile
         const char* tensile_benchmark = std::getenv("TENSILE_BENCHMARK");
         if(tensile_benchmark)
             m_benchmark = strtol(tensile_benchmark, nullptr, 0) != 0;
+
+        const char* tensile_gridbased_kdtree = std::getenv("TENSILE_GRIDBASED_KDTREE");
+        if(tensile_gridbased_kdtree)
+            m_gridbasedKdTree = strtol(tensile_gridbased_kdtree, nullptr, 0) != 0;
     }
 
 } // namespace Tensile

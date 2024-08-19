@@ -70,8 +70,8 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: false
-  UseScaleAlphaVec: false
+  UseScaleAB: ""
+  UseScaleAlphaVec: 0
   UseScaleCD: false
 - - 1LDSBuffer: 1
     ActivationAlt: false
@@ -87,7 +87,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT128x16x128_MI16x16x1_0_Equality_gfx942'
+    CustomKernelName: ''
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -277,8 +277,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -349,7 +349,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT64x16x128_MI16x16x1_1_Equality_gfx942'
+    CustomKernelName: ''
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -536,8 +536,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -607,7 +607,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT32x16x128_MI16x16x1_2_Equality_gfx942'
+    CustomKernelName: ''
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -796,8 +796,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -868,7 +868,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x192x128_MI16x16x1_3_Equality_gfx942'
+    CustomKernelName: ''
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -1057,8 +1057,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1129,7 +1129,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x96x128_MI16x16x1_4_Equality_gfx942'
+    CustomKernelName: ''
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -1316,8 +1316,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1387,7 +1387,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x64x128_MI16x16x1_5_Equality_gfx942'
+    CustomKernelName: ''
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -1574,8 +1574,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1646,7 +1646,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x16x128_MI16x16x1_6_Equality_gfx942'
+    CustomKernelName: ''
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -1833,8 +1833,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1904,7 +1904,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x16x256_MI16x16x1_7_Equality_gfx942'
+    CustomKernelName: ''
     DepthU: 256
     DirectToLds: false
     DirectToLdsA: false
@@ -2091,8 +2091,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -2162,7 +2162,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_MT16x16x256_MI16x16x1_8_Equality_gfx942'
+    CustomKernelName: ''
     DepthU: 256
     DirectToLds: false
     DirectToLdsA: false
@@ -2349,8 +2349,8 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
-      UseScaleAlphaVec: false
+      UseScaleAB: ""
+      UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3

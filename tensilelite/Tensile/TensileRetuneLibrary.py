@@ -88,7 +88,7 @@ def runBenchmarking(solutions, problemSizes, outPath, update):
 
     pushWorkingPath(shortName)
     pushWorkingPath("source")
-    BenchmarkProblems.writeBenchmarkFiles(benchmarkDir, solutions, problemSizes , "", "", shortName, [])
+    BenchmarkProblems.writeBenchmarkFiles(benchmarkDir, solutions, problemSizes , "", "", "", "", shortName, [])
     popWorkingPath() # source
 
     libraryLogicPath = None

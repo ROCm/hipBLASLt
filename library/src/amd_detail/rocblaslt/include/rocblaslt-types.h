@@ -331,6 +331,8 @@ typedef enum rocblaslt_matmul_desc_attributes_
     ROCBLASLT_MATMUL_DESC_AMAX_D_POINTER             = 14,
     ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT   = 100,
     ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT,
+    ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT,
+    ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT,
     ROCBLASLT_MATMUL_DESC_MAX,
 } rocblaslt_matmul_desc_attributes;
 
@@ -411,6 +413,18 @@ namespace rocblaslt
         rocblaslt_compute_type type_compute;
     };
 
+    class RocGemmProblemTypeV2
+    {
+    public:
+        hipblasOperation_t     op_a;
+        hipblasOperation_t     op_b;
+        hipDataType            type_a;
+        hipDataType            type_b;
+        hipDataType            type_c;
+        hipDataType            type_d;
+        rocblaslt_compute_type type_compute;
+    };
+
     struct RocGemmEpilogue
     {
         rocblaslt_epilogue mode           = ROCBLASLT_EPILOGUE_DEFAULT;
@@ -419,13 +433,50 @@ namespace rocblaslt
         int                aux_stride     = 0;
     };
 
+    class RocGemmEpilogueV2
+    {
+    public:
+        rocblaslt_epilogue mode           = ROCBLASLT_EPILOGUE_DEFAULT;
+        hipDataType        bias_data_type = HIPBLASLT_DATATYPE_INVALID;
+        int                aux_ld         = 0;
+        int                aux_stride     = 0;
+        int                scaling_a_type = 0;
+        int                scaling_b_type = 0;
+    };
+
     struct RocTuning
     {
         uint8_t gsu = 0;
         uint8_t wgm = 0;
     };
 
+    class RocTuningV2
+    {
+    public:
+        uint16_t gsu = 0;
+        int16_t wgm  = 0;
+    };
+
     struct RocGemmInputs
+    {
+        void* a     = nullptr;
+        void* b     = nullptr;
+        void* c     = nullptr;
+        void* d     = nullptr;
+        void* alpha = nullptr;
+        void* beta  = nullptr;
+        // Epilogue inputs
+        void* bias          = nullptr;
+        void* scaleA        = nullptr;
+        void* scaleB        = nullptr;
+        void* scaleC        = nullptr;
+        void* scaleD        = nullptr;
+        void* scaleE        = nullptr;
+        void* scaleAlphaVec = nullptr;
+        void* aux           = nullptr;
+    };
+
+    struct RocGemmInputsV2
     {
         void* a     = nullptr;
         void* b     = nullptr;

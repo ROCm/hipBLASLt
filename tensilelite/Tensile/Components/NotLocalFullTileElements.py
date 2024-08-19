@@ -25,6 +25,36 @@
 from ..Component import NotLocalFullTileElements
 from math import ceil
 
+class NotLocalFullTileElementsVALU(NotLocalFullTileElements):
+    kernel = {"EnableMatrixInstruction": False}
+
+    """
+    Partition thread-tile into writeElements for store code
+    This function creates the writeElement mapping for full tiles
+    (ie non-edge cases)
+    """
+    def __call__(self, writer, kernel, edge):
+        elements        = []
+        vectorwidth = 0
+
+        if edge:
+            vectorwidth = kernel["VectorWidthA"] if kernel["_VectorStore"] else 1
+            vectorwidth = min(vectorwidth, writer.maxGwvw(kernel), kernel["AssertFree0ElementMultiple"])
+            assert(kernel["VectorWidthA"] % vectorwidth == 0)
+        else:
+            vectorwidth = kernel["VectorWidthA"] if kernel["_VectorStore"] else 1
+            vectorwidth = min(vectorwidth, writer.maxGwvw(kernel))
+
+        # Full tile loop:
+        for tt1 in range(0, kernel["ThreadTile1"]//kernel["VectorWidthA"]):
+            for vc1 in range(0, kernel["VectorWidthA"]):
+                for tt0 in range(0, kernel["ThreadTile0"]//kernel["VectorWidthA"]):
+                    for vc0 in range(0, kernel["VectorWidthA"], vectorwidth): # note step by fullVw
+                        element = (tt1, tt0, vc1, vc0)
+                        elements.append(element)
+
+        return (vectorwidth, elements, vectorwidth, elements)
+
 class NotLocalFullTileElementsMFMA(NotLocalFullTileElements):
     kernel = {"EnableMatrixInstruction": True}
 

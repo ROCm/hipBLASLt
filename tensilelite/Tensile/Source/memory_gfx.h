@@ -50,6 +50,9 @@
 #elif defined(__gfx1100__) || defined(__gfx1101__) || defined(__gfx1102__)
 #define USE_GFX_BUFFER_INTRINSIC
 #define BUFFER_RESOURCE_3RD_DWORD 0x31004000
+#elif defined(__gfx1200__) || defined(__gfx1201__)
+#define USE_GFX_BUFFER_INTRINSIC
+#define BUFFER_RESOURCE_3RD_DWORD 0x30020000
 #else // not support
 #define BUFFER_RESOURCE_3RD_DWORD -1
 #endif

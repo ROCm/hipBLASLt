@@ -194,5 +194,10 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
     CHECK_HIP_ERROR(hipFree(in_scale));
     CHECK_HIP_ERROR(hipFree(out_amax));
 
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
     return;
 }

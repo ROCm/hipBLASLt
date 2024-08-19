@@ -26,7 +26,8 @@ from ..TensileInstructions import Module, SDWAModifiers, SelectBit, UnusedBit, \
                             VCmpUF32, VCndMaskB32, VCvtPkF32toFP8, VCvtPkF32toBF8, \
                             VOP3PModifiers, VCmpClassF32, VOrB32, VPackF16toB32, \
                             VAndOrB32, VBfeU32, VLShiftLeftB16, SNop, VMed3F32, \
-                            vgpr, sgpr, DataType, TensileInstructions
+                            vgpr, sgpr, DataType, TensileInstructions, VAndB32, \
+                            VMovB32, VLShiftLeftB32
 from ..Component import PackData
 from ..Common import globalParameters
 
@@ -165,7 +166,12 @@ class PackData_BF8(PackData):
 
 class PackData_INT8(PackData):
     kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.int32), "DestDataType": DataType(DataType.int8)}}
-    def __call__(self, gwvw, destIdx, elementSumIdx, tmpVgpr, tmpS01, SaturateTypeInt8 = SaturateCastType.NORMAL, inputPrefix="", prefixOffset=0):
+    def __call__(self, gwvw, destIdx, elementSumIdx, i8CVTVgprStruct, tmpS01, SaturateTypeInt8 = SaturateCastType.NORMAL, inputPrefix="", prefixOffset=0):
+        vgprI8Mask0 = i8CVTVgprStruct.vgprI8Mask0
+        vgprI8Mask1 = i8CVTVgprStruct.vgprI8Mask1
+        vgprI8Temp0 = i8CVTVgprStruct.vgprI8Temp0
+        vgprI8Temp1 = i8CVTVgprStruct.vgprI8Temp1
+
         ti = TensileInstructions()
         module = Module("PackData int8")
         gwvw4 = (gwvw // 4) * 4
@@ -176,25 +182,47 @@ class PackData_INT8(PackData):
             if vi%4 == 3:
                 d = destIdx + vi//4
                 for i in reversed(range(0, 4)):
-                    module.add(VSaturateCastInt(sumIdxV-i, tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=(i%4 == 3)))
+                    module.add(VSaturateCastInt(vgpr(formatting(sumIdxV-i, inputPrefix, prefixOffset)), vgprI8Temp0, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=(i%4 == 3)))
                 module.add(VLShiftLeftB16(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), shiftHex=8, src=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset))))
                 module.add(VLShiftLeftB16(dst=vgpr(formatting(sumIdxV-0, inputPrefix, prefixOffset)), shiftHex=8, src=vgpr(formatting(sumIdxV-0, inputPrefix, prefixOffset))))
-                module.add(VOrB32(dst=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), \
-                           src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
-                           sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                if ti.getArchCaps()["NoSDWA"]:
+                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFF", "bits 7:0")) # src0_sel=SelectBit.BYTE_0
+                    module.add(VAndB32(dst=vgpr(vgprI8Temp0), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), \
+                                       src1=vgpr(vgprI8Mask0)))
+                    module.add(VOrB32(dst=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), src0=vgpr(vgprI8Temp0), \
+                                      src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), sdwa=None))
+                else:
+                    module.add(VOrB32(dst=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), \
+                                      src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), \
+                                      src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
+                                      sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
+                                                         src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
-                module.add(VOrB32(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
-                           src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
-                           src1=vgpr(formatVgpr), \
-                           sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                if ti.getArchCaps()["NoSDWA"]:
+                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFF", "bits 7:0")) # src0_sel=SelectBit.BYTE_0
+                    module.add(VAndB32(dst=vgpr(vgprI8Temp0), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
+                                       src1=vgpr(vgprI8Mask0)))
+                    module.add(VOrB32(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), src0=vgpr(vgprI8Temp0), src1=vgpr(formatVgpr), sdwa=None))
+                    module.add(VLShiftLeftB32(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), src=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), shiftHex=16, comment=""))
+                else:
+                    module.add(VOrB32(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
+                                      src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), src1=vgpr(formatVgpr), \
+                                      sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, dst_unused=UnusedBit.UNUSED_PAD, \
+                                                         src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
-                module.add(VOrB32(dst=vgpr(d), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
-                           sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.WORD_0, src1_sel=SelectBit.DWORD)))
+                if ti.getArchCaps()["NoSDWA"]:
+                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFFFF", "bits 15:0")) # src0_sel=SelectBit.WORD_0
+                    module.add(VAndB32(dst=vgpr(vgprI8Temp0), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), \
+                                       src1=vgpr(vgprI8Mask0)))
+                    module.add(VOrB32(dst=vgpr(d), src0=vgpr(vgprI8Temp0), \
+                                      src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), sdwa=None))
+                else:
+                    module.add(VOrB32(dst=vgpr(d), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), \
+                                      src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
+                                      sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
+                                                         src0_sel=SelectBit.WORD_0, src1_sel=SelectBit.DWORD)))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
         # Left
@@ -205,21 +233,29 @@ class PackData_INT8(PackData):
 
             if vi%2 == 1:
                 for i in reversed(range(0, 2)):
-                    module.add(VSaturateCastInt(sumIdxV-i, tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=(i%2 == 1)))
-                module.add(VLShiftLeftB16(dst=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset)), shiftHex=8, src=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset))))
-                module.add(VOrB32(dst=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
-                           src1=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset)), \
-                           sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
-                                              src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                    module.add(VSaturateCastInt(vgpr(formatting(sumIdxV-i, inputPrefix, prefixOffset)), vgprI8Temp0, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=(i%2 == 1)))
+                module.add(VLShiftLeftB16(dst=vgpr(formatVgpr), shiftHex=8, src=vgpr(formatVgpr)))
+                if ti.getArchCaps()["NoSDWA"]:
+                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFF", "bits 7:0")) # src0_sel=SelectBit.BYTE_0
+                    module.add(VAndB32(dst=vgpr(vgprI8Temp0), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
+                                       src1=vgpr(vgprI8Mask0)))
+                    module.add(VOrB32(dst=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
+                                      src0=vgpr(vgprI8Temp0), src1=vgpr(formatVgpr), sdwa=None))
+                else:
+                    module.add(VOrB32(dst=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
+                                      src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
+                                      src1=vgpr(formatVgpr), \
+                                      sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
+                                                         src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
             elif vi + 1 >= gwvw:
-                module.add(VSaturateCastInt(sumIdxV, tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=True))
+                module.add(VSaturateCastInt(vgpr(formatVgpr), vgprI8Temp0, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=True))
         return module
 
 # Cvt is outside of this component, this is just a wrapper for ComputeDataType == float
 class PackData_INT8_F32(PackData):
     kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.int8)}}
     packdata = PackData_INT8()
-    def __call__(self, gwvw, destIdx, elementSumIdx, tmpVgpr, tmpS01, SaturateTypeInt8 = SaturateCastType.NORMAL, inputPrefix="", prefixOffset=0):
-        return self.packdata(gwvw, destIdx, elementSumIdx, tmpVgpr, tmpS01, SaturateTypeInt8, inputPrefix, prefixOffset)
+    def __call__(self, gwvw, destIdx, elementSumIdx, i8CVTVgprStruct, tmpS01, SaturateTypeInt8 = SaturateCastType.NORMAL, inputPrefix="", prefixOffset=0):
+        return self.packdata(gwvw, destIdx, elementSumIdx, i8CVTVgprStruct, tmpS01, SaturateTypeInt8, inputPrefix, prefixOffset)
