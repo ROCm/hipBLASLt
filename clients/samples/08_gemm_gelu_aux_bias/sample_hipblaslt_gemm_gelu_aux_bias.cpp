@@ -24,85 +24,77 @@
  *
  *******************************************************************************/
 
+#include "helper.h"
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt.h>
 #include <iostream>
 
-#include "helper.h"
-
-void simpleGemmMixPrecision(hipblasLtHandle_t  handle,
-                hipblasOperation_t trans_a,
-                hipblasOperation_t trans_b,
-                int64_t            m,
-                int64_t            n,
-                int64_t            k,
-                int64_t            batch_count,
-                float&             alpha,
-                float&             beta,
-                void*              d_a,
-                void*              d_b,
-                void*              d_c,
-                void*              d_d,
-                void*              d_workspace,
-                int64_t            max_workspace_size,
-                hipStream_t        stream);
+void simpleGemmGeluAuxBias(hipblasLtHandle_t  handle,
+                           hipblasOperation_t trans_a,
+                           hipblasOperation_t trans_b,
+                           int64_t            m,
+                           int64_t            n,
+                           int64_t            k,
+                           int64_t            batch_count,
+                           float&             alpha,
+                           float&             beta,
+                           void*              d_a,
+                           void*              d_b,
+                           void*              d_c,
+                           void*              d_d,
+                           void*              d_workspace,
+                           int64_t            max_workspace_size,
+                           hipStream_t        stream);
 
 int main()
 {
-    /** This is a mixed-precision NN example with
-     *  a = (m, k) in FP16, lda = m
-     *  b = (k, n) in FP16, ldb = k
-     *  c = d = (m, n) in FP16, ldc = ldd = m
-     *  Compute type is FP32.
-     */
-    Runner<hipblaslt_f8_fnuz, hipblasLtHalf, float, float, float> runner(
+    Runner<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, float> runner(
         1024, 512, 1024, 1, 1.f, 1.f, 32 * 1024 * 1024);
 
     runner.run([&runner] {
-        simpleGemmMixPrecision(runner.handle,
-                   HIPBLAS_OP_N,
-                   HIPBLAS_OP_N,
-                   runner.m,
-                   runner.n,
-                   runner.k,
-                   runner.batch_count,
-                   runner.alpha,
-                   runner.beta,
-                   runner.d_a,
-                   runner.d_b,
-                   runner.d_c,
-                   runner.d_d,
-                   runner.d_workspace,
-                   runner.max_workspace_size,
-                   runner.stream);
+        simpleGemmGeluAuxBias(runner.handle,
+                              HIPBLAS_OP_N,
+                              HIPBLAS_OP_N,
+                              runner.m,
+                              runner.n,
+                              runner.k,
+                              runner.batch_count,
+                              runner.alpha,
+                              runner.beta,
+                              runner.d_a,
+                              runner.d_b,
+                              runner.d_c,
+                              runner.d_d,
+                              runner.d_workspace,
+                              runner.max_workspace_size,
+                              runner.stream);
     });
 
     return 0;
 }
 
-void simpleGemmMixPrecision(hipblasLtHandle_t  handle,
-                hipblasOperation_t trans_a,
-                hipblasOperation_t trans_b,
-                int64_t            m,
-                int64_t            n,
-                int64_t            k,
-                int64_t            batch_count,
-                float&             alpha,
-                float&             beta,
-                void*              d_a,
-                void*              d_b,
-                void*              d_c,
-                void*              d_d,
-                void*              d_workspace,
-                int64_t            max_workspace_size,
-                hipStream_t        stream)
+void simpleGemmGeluAuxBias(hipblasLtHandle_t  handle,
+                           hipblasOperation_t trans_a,
+                           hipblasOperation_t trans_b,
+                           int64_t            m,
+                           int64_t            n,
+                           int64_t            k,
+                           int64_t            batch_count,
+                           float&             alpha,
+                           float&             beta,
+                           void*              d_a,
+                           void*              d_b,
+                           void*              d_c,
+                           void*              d_d,
+                           void*              d_workspace,
+                           int64_t            max_workspace_size,
+                           hipStream_t        stream)
 {
-    // Use half precision for input matrices
     hipblasLtMatrixLayout_t matA, matB, matC, matD;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIP_R_8F_E4M3_FNUZ, m, k, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIP_R_16F, m, k, m));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, HIP_R_16F, k, n, k));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_32F, m, n, m));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_32F, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_16F, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_16F, m, n, m));
 
     if(batch_count > 1)
     {
@@ -129,22 +121,49 @@ void simpleGemmMixPrecision(hipblasLtHandle_t  handle,
     }
 
     hipblasLtMatmulDesc_t matmul;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, HIPBLAS_COMPUTE_32F_FAST_16F, HIP_R_32F));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, HIPBLAS_COMPUTE_32F, HIP_R_32F));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
-    float h_scale_a = 2.f;
-    float* d_scale_a;
-    CHECK_HIP_ERROR(hipMalloc(&d_scale_a, sizeof(float)));
-    CHECK_HIP_ERROR(hipMemcpyAsync(d_scale_a, &h_scale_a, sizeof(float), hipMemcpyHostToDevice, stream));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-        matmul, HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER, &d_scale_a, sizeof(float*)));
-
-    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
+    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_GELU_AUX_BIAS;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
+
+    // Set auxiliary buffer
+    void* d_aux_buffer;
+    CHECK_HIP_ERROR(hipMalloc(&d_aux_buffer, m * n * sizeof(hipblasLtHalf)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER, &d_aux_buffer, sizeof(void*)));
+
+    // Set auxiliary leading dimension (ld)
+    const int64_t aux_ld = m;
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD, &aux_ld, sizeof(aux_ld)));
+
+    // Set Epilogue Aux Batch Stride
+    const int64_t aux_batch_stride = m * n;
+    CHECK_HIPBLASLT_ERROR(
+        hipblasLtMatmulDescSetAttribute(matmul,
+                                        HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE,
+                                        &aux_batch_stride,
+                                        sizeof(aux_batch_stride)));
+
+    // Set Desc Bias Data Type
+    int32_t bias_data_type = HIP_R_16F;
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, &bias_data_type, sizeof(bias_data_type)));
+
+    // Allocate and set the bias tensor
+    std::vector<hipblasLtHalf> h_bias(
+        m, static_cast<hipblasLtHalf>(1.0)); // Example bias values, adjust as needed
+    void* d_bias;
+    CHECK_HIP_ERROR(hipMalloc(&d_bias, m * sizeof(hipblasLtHalf)));
+    CHECK_HIP_ERROR(
+        hipMemcpy(d_bias, h_bias.data(), m * sizeof(hipblasLtHalf), hipMemcpyHostToDevice));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias, sizeof(void*)));
 
     // Set User Preference attributes
     hipblasLtMatmulPreference_t pref;
@@ -182,7 +201,6 @@ void simpleGemmMixPrecision(hipblasLtHandle_t  handle,
     // If not, allocate d_workspace here
     // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
 
-    // Perform the mixed-precision GEMM operation
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                           matmul,
                                           &alpha,
@@ -199,11 +217,13 @@ void simpleGemmMixPrecision(hipblasLtHandle_t  handle,
                                           d_workspace,
                                           workspace_size,
                                           stream));
-
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
+    CHECK_HIP_ERROR(hipFree(d_aux_buffer));
+    CHECK_HIP_ERROR(hipFree(d_bias));
     return;
 }
