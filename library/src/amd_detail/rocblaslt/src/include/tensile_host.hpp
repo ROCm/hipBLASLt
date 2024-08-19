@@ -404,6 +404,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
                                      const Tuning*                 tuning,
                                      size_t&                       workspaceSizeInBytes);
 
+rocblaslt_status isDeviceSupported();
+
 std::vector<std::shared_ptr<Tensile::ContractionSolution>> getBestRawSolutions(RocblasltContractionProblem const& prob,
                          rocblaslt_handle                   handle,
                          std::shared_ptr<void>              gemmData,

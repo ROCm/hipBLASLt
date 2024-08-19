@@ -72,13 +72,65 @@
 
 #define INTERNAL_HIPHOSTMEM_SIZE 32768
 
+#define TENSILE_LIB_PREFIX "/TensileLibrary"
+
+#ifdef TENSILE_YAML
+  #define TENSILE_LIB_POSTFIX ".yaml"
+#else
+  #define TENSILE_LIB_POSTFIX ".dat"
+#endif
+
 namespace
 {
+    /*******************************************************
+   * Testpath() tests that a path exists and is readable *
+   *******************************************************/
+        static bool TestPath(const std::string& path)
+        {
+            return rocblaslt_internal_test_path(path);
+        }
+
+
     std::string getHipblasltSoPath()
     {
         return rocblaslt_internal_get_so_path("libhipblaslt");
     }
+        void get_lib_dir_path(const std::string& processor, std::string& path)
+        {
+#ifndef WIN32
+            path.reserve(PATH_MAX);
+#endif
+            const char* env = getenv("HIPBLASLT_TENSILE_LIBPATH");
+            if(env)
+            {
+                path = env;
+            }
+            else
+            {
+                path = HIPBLASLT_LIB_PATH;
 
+                // Find the location of librocblaslt.so
+                // Fall back on hard-coded path if static library or not found
+
+#ifndef HIPBLASLT_STATIC_LIB
+                auto hipblaslt_so_path = getHipblasltSoPath();
+
+                if(hipblaslt_so_path.size())
+                    path = std::string{dirname(&hipblaslt_so_path[0])};
+#endif // ifndef HIPBLASLT_STATIC_LIB
+
+                // Find the location of the libraries
+                if(TestPath(path + "/../Tensile/library"))
+                    path += "/../Tensile/library";
+                else if(TestPath(path + "library"))
+                    path += "/library";
+                else
+                    path += "/hipblaslt/library";
+
+                if(TestPath(path + "/" + processor))
+                    path += "/" + processor;
+            }
+        }
     static void assignAlphaBeta(Tensile::DataType type,
                                 const void*       alphaPtr,
                                 const void*       betaPtr,
@@ -1158,13 +1210,6 @@ namespace
             return m_adapters;
         }
 
-        /*******************************************************
-   * Testpath() tests that a path exists and is readable *
-   *******************************************************/
-        static bool TestPath(const std::string& path)
-        {
-            return rocblaslt_internal_test_path(path);
-        }
 
         /*********************************************************************
    * Initialize adapter and library according to environment variables *
@@ -1173,43 +1218,9 @@ namespace
         void initialize(Tensile::hip::SolutionAdapter& adapter, int32_t deviceId)
         {
             std::string path;
-#ifndef WIN32
-            path.reserve(PATH_MAX);
-#endif
-
             // The name of the current GPU platform
             std::string processor = rocblaslt_internal_get_arch_name();
-
-            const char* env = getenv("HIPBLASLT_TENSILE_LIBPATH");
-            if(env)
-            {
-                path = env;
-            }
-            else
-            {
-                path = HIPBLASLT_LIB_PATH;
-
-                // Find the location of librocblaslt.so
-                // Fall back on hard-coded path if static library or not found
-
-#ifndef HIPBLASLT_STATIC_LIB
-                auto hipblaslt_so_path = getHipblasltSoPath();
-
-                if(hipblaslt_so_path.size())
-                    path = std::string{dirname(&hipblaslt_so_path[0])};
-#endif // ifndef HIPBLASLT_STATIC_LIB
-
-                // Find the location of the libraries
-                if(TestPath(path + "/../Tensile/library"))
-                    path += "/../Tensile/library";
-                else if(TestPath(path + "library"))
-                    path += "/library";
-                else
-                    path += "/hipblaslt/library";
-
-                if(TestPath(path + "/" + processor))
-                    path += "/" + processor;
-            }
+            get_lib_dir_path(processor,path);
 
             // only load modules for the current architecture
             auto dir = path + "/*" + processor + "*co";
@@ -1275,20 +1286,12 @@ namespace
             // complete.
             static int once = [&] {
                 // Determine library path
-                std::string tensileLibPath;
+                std::string tensileLibPath = path + TENSILE_LIB_PREFIX;
 #if ROCBLASLT_TENSILE_LAZY_LOAD
-#ifdef TENSILE_YAML
-                tensileLibPath = path + "/TensileLibrary_lazy_" + processor + ".yaml";
-#else
-                tensileLibPath = path + "/TensileLibrary_lazy_" + processor + ".dat";
+                tensileLibPath +=  "_lazy_" + processor;
 #endif
-#else
-#ifdef TENSILE_YAML
-                tensileLibPath = path + "/TensileLibrary.yaml";
-#else
-                tensileLibPath = path + "/TensileLibrary.dat";
-#endif
-#endif
+                tensileLibPath +=  TENSILE_LIB_POSTFIX;
+
                 if(!TestPath(tensileLibPath))
                 {
                     std::cerr << "\nrocblaslt error: Cannot read " << tensileLibPath << ": "
@@ -2862,6 +2865,23 @@ std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblasl
     return solution->solutionName;
 }
 
+rocblaslt_status isDeviceSupported()
+{
+    std::string path;
+    std::string processor = rocblaslt_internal_get_arch_name();
+    get_lib_dir_path(processor,path);
+    std::string tensileLibPath = path + TENSILE_LIB_PREFIX;
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+    tensileLibPath +=  "_lazy_" + processor;
+#endif
+    tensileLibPath +=  TENSILE_LIB_POSTFIX;
+
+    if(TestPath(tensileLibPath))
+      return rocblaslt_status_success;
+    else
+      return rocblaslt_status_arch_mismatch;
+
+}
 /***************************************************************
  * ! \brief  Initialize rocblaslt for the current HIP device, to *
  * avoid costly startup time at the first call on that device. *

@@ -337,6 +337,8 @@ HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtGetVersion(hipblasLtHandle_t handle, int* version);
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtGetGitRevision(hipblasLtHandle_t handle, char* rev);
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtIsDeviceSupported();
 
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtGetArchName(char** archName);

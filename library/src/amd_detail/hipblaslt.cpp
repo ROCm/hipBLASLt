@@ -680,6 +680,15 @@ catch(...)
     return exception_to_hipblas_status();
 }
 
+hipblasStatus_t hipblasLtIsDeviceSupported()
+try
+{
+    return RocBlasLtStatusToHIPStatus(rocblaslt_is_device_supported());
+}
+catch(...)
+{
+    return exception_to_hipblas_status();
+}
 hipblasStatus_t hipblasLtGetArchName(char** archName)
 try
 {

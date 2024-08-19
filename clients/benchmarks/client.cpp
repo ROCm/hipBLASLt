@@ -740,6 +740,9 @@ try
         throw std::invalid_argument("Invalid Device ID");
     set_device(device_id);
 
+    if(HIPBLAS_STATUS_SUCCESS != hipblasLtIsDeviceSupported())
+        hipblaslt_cout << "hipBLASLt doesn't support current device." << std::endl;
+
     FrequencyMonitor& freq_monitor = getFrequencyMonitor();
     freq_monitor.set_device_id(device_id);
 
