@@ -150,6 +150,9 @@ namespace Tensile
             if(args.count("use-gradient"))
                 m_useGradient = args["use-gradient"].as<bool>();
 
+            if(args.count("output-amaxD"))
+                m_outputAmaxD = args["output-amaxD"].as<bool>();
+
             if(args.count("bias-type-args"))
                 m_biasTypeArgs = args["bias-type-args"].as<std::vector<DataType>>();
             if(args.count("factor-dim-args"))
@@ -305,6 +308,7 @@ namespace Tensile
                             rv.back().setUseGradient(m_useGradient);
                             rv.back().setUseBias(m_useBias);
                             rv.back().setUseE(m_useE);
+                            rv.back().setOutputAmaxD(m_outputAmaxD);
                             rv.back().setKernelLanguage(m_kernelLanguage);
                             rv.back().setPerformanceMetric(m_performanceMetric);
                             rv.back().setDeterministicMode(m_deterministicMode);
@@ -343,6 +347,18 @@ namespace Tensile
                                                rv.back().d().sizes(),
                                                eStrides,
                                                isEOutput);
+                            }
+                            if(m_outputAmaxD)
+                            {
+                                bool isOutput = true;
+                                rv.back().setAmaxD(
+                                    m_tensorTypes[ContractionProblemGemm::TENSOR::AMAXD], isOutput);
+                                rv.back().setSynchronizer(DataType::Int32, 1);
+                            }
+                            else
+                            {
+                                rv.back().setSynchronizer(
+                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA], 40960);
                             }
                             if(j < m_activationEnumArg.size())
                             {
@@ -383,8 +399,6 @@ namespace Tensile
                                 m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
                                 rv.back().d().sizes()[factorDim],
                                 factorDim);
-                            rv.back().setSynchronizer(
-                                m_constantTypes[ContractionProblemGemm::CONST::ALPHA], 40960);
                             rv.back().setGroupedGemm(m_groupedGemm);
                             rv.back().setF32XdlMathOp(m_f32XdlMathOp);
                             rv.back().setActivationComputeType(m_activationComputeType);

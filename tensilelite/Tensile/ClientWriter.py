@@ -542,6 +542,8 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationAr
         param('d-type',     problemType.dType.toEnum())
         if problemType.useE:
             param('e-type',     problemType.eType.toEnum())
+        if problemType.outputAmaxD:
+            param('amaxD-type',     problemType.amaxDType.toEnum())
         param('alpha-type', problemType.alphaType.toEnum())
         param('beta-type',  problemType.betaType.toEnum())
         param('f32-xdl-math-op', problemType.f32XdlMathOp.toEnum())
@@ -550,6 +552,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationAr
         param('use-bias',   problemType.useBias)
         param('bias-source',   problemType.biasSrcWhiteList[0])
         param('use-e', problemType.useE)
+        param('output-amaxD', problemType.outputAmaxD)
         param('use-scaleAB',   problemType.useScaleAB)
         param('use-scaleCD',   problemType.useScaleCD)
         param('use-scaleAlphaVec',   problemType.useScaleAlphaVec)
@@ -603,6 +606,8 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationAr
           param("print-tensor-ref",       1)
         if globalParameters["PrintTensorBias"]:
           param("print-tensor-bias",      1)
+        if globalParameters["PrintTensorAmaxD"]:
+          param("print-tensor-amaxd",      1)
         if globalParameters["DumpTensors"]:
           param("dump-tensors",           1)
         if globalParameters["ExitOnFails"] > 1:

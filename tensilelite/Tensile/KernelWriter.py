@@ -1550,7 +1550,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
 
     if self.do["executeToInitEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, False))
 
     ####################################
     # prefetch: unrolled loop prefix
@@ -1792,7 +1792,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.noLoadLoopBody(kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast, dsWriteBA=dsWriteBA))
 
     if self.do["executeToLoopEnd"] and isOptNLL:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, False))
 
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
     module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL, isNotLast=dsWriteBA))
@@ -2137,7 +2137,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
     if self.do["executeToPrefetchEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, False))
 
     pack = [ Module() for i in range (self.states.numVgprBuffer) ]
     self.preLoopLocalWriteCode = None
@@ -2504,7 +2504,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
                         (self.states.lastValuAB, self.states.lastVgprForReads))
 
     if self.do["executeToLoopEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, False))
 
     # extra summation loops: global increment and close
     for i in reversed(range(self.states.otherSummationLoops)):
@@ -2577,7 +2577,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.notLocalSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
 
     # function suffix
-    module.add(self.functionEnd(True))
+    module.add(self.functionEnd(kernel, True))
     module.add(self.functionSuffix(kernel))
 
     # Tensile pass
@@ -3529,6 +3529,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["PrefetchGlobalRead"]:
       self.states.lastVgprForReads = vgprIdx
     #-----------
+
+    if kernel["ProblemType"]["OutputAmaxD"]:
+      self.startVgprAmaxOut = vgprIdx
+      self.startVgprAmaxOutB = vgprIdx + 1
+      vgprIdx += 2
 
     self.states.startVgprAddressDbg = vgprIdx
     vgprIdx += numVgprAddressDbg
@@ -4492,7 +4497,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # Function End
   ##############################################################################
   @abc.abstractmethod
-  def functionEnd(self, addLabel=True):
+  def functionEnd(self, kernel, addLabel=True):
     return ""
 
   ##############################################################################

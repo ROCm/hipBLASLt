@@ -70,19 +70,20 @@ namespace Tensile
             std::vector<DataType> m_constantTypes;
             std::vector<double>   m_constantValues;
 
-            bool m_stridedBatched;
-            bool m_groupedGemm;
-            bool m_highPrecisionAccumulate;
-            bool m_deterministicMode;
-            bool m_cEqualsD;
-            int  m_useBias;
-            int  m_biasSrc;
+            bool        m_stridedBatched;
+            bool        m_groupedGemm;
+            bool        m_highPrecisionAccumulate;
+            bool        m_deterministicMode;
+            bool        m_cEqualsD;
+            int         m_useBias;
+            int         m_biasSrc;
             std::string m_useScaleAB;
-            bool m_useScaleCD;
-            int  m_useScaleAlphaVec;
-            bool m_useSynchronizer;
-            bool m_useE;
-            bool m_useGradient = false;
+            bool        m_useScaleCD;
+            int         m_useScaleAlphaVec;
+            bool        m_useSynchronizer;
+            bool        m_useE;
+            bool        m_useGradient = false;
+            bool        m_outputAmaxD;
 
             int                              m_sparse;
             KernelLanguage                   m_kernelLanguage;

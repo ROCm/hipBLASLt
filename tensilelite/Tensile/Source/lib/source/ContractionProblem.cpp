@@ -565,6 +565,7 @@ namespace Tensile
         gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEALPHAVEC]
             = TensorDescriptor("scaleAlphaVec");
         gemm.m_tensors[ContractionProblemGemm::TENSOR::METADATA] = TensorDescriptor("metadata");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::AMAXD]    = TensorDescriptor("amaxD");
         gemm.m_tensor_compressed                                 = TensorDescriptor("compressed");
         return gemm;
     }

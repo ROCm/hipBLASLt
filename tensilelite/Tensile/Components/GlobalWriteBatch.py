@@ -1333,6 +1333,13 @@ class GlobalWriteBatchWriter:
             vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
             # Generate single f32 code if edge is detected.
             if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
+              if self.kernel["ProblemType"]["OutputAmaxD"]:
+                if self.edge:
+                  activationModule.add(VCmpEQU32(dst="vcc", src0="BufferOOB", src1=(vgpr(addrCalc.addrDVgpr)), comment =""))
+                  activationModule.add(VCndMaskB32(dst=vgpr("AmaxOutB"), src0=vgpr("ValuC+%d"%vgprIdx), src1=hex(0), src2="vcc", comment="Check If OOB, put zero if OOB"))
+                  activationModule.add(VMaxF32(dst=vgpr("AmaxOut"), src0=vgpr("AmaxOut"), src1=SrcAbs(vgpr("AmaxOutB")), comment="absmax"))
+                else:
+                  activationModule.add(VMaxF32(dst=vgpr("AmaxOut"), src0=vgpr("AmaxOut"), src1=SrcAbs(vgpr("ValuC+%d"%vgprIdx)), comment="absmax"))
               activationModule.add(VMulF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=sgpr("ScaleD"), comment="result *= ScaleD"))
             # Original packed route
             elif vi%2 == 1:

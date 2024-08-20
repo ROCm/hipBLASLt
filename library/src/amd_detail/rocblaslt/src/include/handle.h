@@ -151,7 +151,7 @@ struct _rocblaslt_matmul_desc
     void*       scaleD      = nullptr;
     void*       scaleE      = nullptr;
     void*       pointermode = nullptr;
-    void*       amax_ptr    = nullptr;
+    void*       amaxD       = nullptr;
     hipDataType bias_type   = HIPBLASLT_DATATYPE_INVALID;
     // E
     void*   e        = nullptr;
@@ -160,8 +160,8 @@ struct _rocblaslt_matmul_desc
     //
     rocblaslt_compute_type compute_type;
     rocblaslt_compute_type compute_type_original;
-    hipDataType compute_input_typeA;
-    hipDataType compute_input_typeB;
+    hipDataType            compute_input_typeA;
+    hipDataType            compute_input_typeB;
     hipDataType            scale_type = HIPBLASLT_DATATYPE_INVALID;
 
     bool isScaleAVec = false;
@@ -171,28 +171,28 @@ struct _rocblaslt_matmul_desc
 
     void copy(const _rocblaslt_matmul_desc& src)
     {
-        this->op_A         = src.op_A;
-        this->op_B         = src.op_B;
-        this->epilogue     = src.epilogue;
-        this->bias         = src.bias;
-        this->scaleA       = src.scaleA;
-        this->scaleB       = src.scaleB;
-        this->scaleC       = src.scaleC;
-        this->scaleD       = src.scaleD;
-        this->scaleE       = src.scaleE;
-        this->isScaleAVec  = src.isScaleAVec;
-        this->isScaleBVec  = src.isScaleBVec;
-        this->pointermode  = src.pointermode;
-        this->amax_ptr     = src.amax_ptr;
-        this->bias_type    = src.bias_type;
-        this->e            = src.e;
-        this->lde          = src.lde;
-        this->stride_e     = src.stride_e;
-        this->compute_type = src.compute_type;
+        this->op_A                  = src.op_A;
+        this->op_B                  = src.op_B;
+        this->epilogue              = src.epilogue;
+        this->bias                  = src.bias;
+        this->scaleA                = src.scaleA;
+        this->scaleB                = src.scaleB;
+        this->scaleC                = src.scaleC;
+        this->scaleD                = src.scaleD;
+        this->scaleE                = src.scaleE;
+        this->isScaleAVec           = src.isScaleAVec;
+        this->isScaleBVec           = src.isScaleBVec;
+        this->pointermode           = src.pointermode;
+        this->amaxD                 = src.amaxD;
+        this->bias_type             = src.bias_type;
+        this->e                     = src.e;
+        this->lde                   = src.lde;
+        this->stride_e              = src.stride_e;
+        this->compute_type          = src.compute_type;
         this->compute_type_original = src.compute_type_original;
-        this->compute_input_typeA = src.compute_input_typeA;
-        this->compute_input_typeB = src.compute_input_typeB;
-        this->scale_type   = src.scale_type;
+        this->compute_input_typeA   = src.compute_input_typeA;
+        this->compute_input_typeB   = src.compute_input_typeB;
+        this->scale_type            = src.scale_type;
     }
 };
 

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -144,6 +144,7 @@ namespace Tensile
             bool m_printTensorD;
             bool m_printTensorRef;
             bool m_printTensorBias;
+            bool m_printTensorAmaxD;
             bool m_printAny;
 
             int m_numBenchmarkRuns = 0;

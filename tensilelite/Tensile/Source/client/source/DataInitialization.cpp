@@ -1720,6 +1720,7 @@ namespace Tensile
             inputs->scaleAlphaVec = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEALPHAVEC];
             inputs->metadata      = (unsigned char*)ptrs[ContractionProblemGemm::TENSOR::METADATA];
             inputs->Synchronizer  = (void*)ptrs[ContractionProblemGemm::TENSOR::Synchronizer];
+            inputs->amaxD         = (void*)ptrs[ContractionProblemGemm::TENSOR::AMAXD];
 
             inputs->batchA    = (void**)batchPtrs[ContractionProblemGemm::TENSOR::A];
             inputs->batchB    = (void**)batchPtrs[ContractionProblemGemm::TENSOR::B];
