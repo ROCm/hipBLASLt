@@ -198,6 +198,7 @@ namespace Tensile
                 ("c-type",                   po::value<DataType>()->default_value(DataType::None), "C data type")
                 ("d-type",                   po::value<DataType>()->default_value(DataType::None), "D data type")
                 ("e-type",                   po::value<DataType>()->default_value(DataType::None), "E data type")
+                ("amaxD-type",               po::value<DataType>()->default_value(DataType::None), "amaxD data type")
                 ("alpha-type",               po::value<DataType>()->default_value(DataType::None), "alpha data type")
                 ("beta-type",                po::value<DataType>()->default_value(DataType::None), "beta data type")
                 ("compute-input-type",       po::value<DataType>()->default_value(DataType::None), "compute input data type")
@@ -247,7 +248,8 @@ namespace Tensile
                 ("print-tensor-c",           po::value<bool>()->default_value(false), "Print tensor C.")
                 ("print-tensor-d",           po::value<bool>()->default_value(false), "Print tensor D.")
                 ("print-tensor-ref",         po::value<bool>()->default_value(false), "Print reference tensor D.")
-                ("print-tensor-bias",         po::value<bool>()->default_value(false), "Print tensor Bias.")
+                ("print-tensor-bias",        po::value<bool>()->default_value(false), "Print tensor Bias.")
+                ("print-tensor-amaxd",       po::value<bool>()->default_value(false), "Print tensor AmaxD value from both CPU and GPU.")
 
                 ("dump-tensors",             po::value<bool>()->default_value(false), "Binary dump tensors instead of printing.")
 
@@ -349,6 +351,7 @@ namespace Tensile
                 ("use-user-args",             po::value<bool>()->default_value(false), "Use user argument structure as kernel input.")
                 ("rotating-buffer-size",      po::value<int32_t>()->default_value(0), "Size of rotating buffer in the unit of MB.")
                 ("rotating-buffer-mode",      po::value<int32_t>()->default_value(0), "Rotating mode.")
+                ("output-amaxD",              po::value<bool>()->default_value(false), "Output AmaxD.")
                 ;
             // clang-format on
 

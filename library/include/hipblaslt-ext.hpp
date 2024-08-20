@@ -151,19 +151,19 @@ namespace hipblaslt_ext
     {
     public:
         HIPBLASLT_EXPORT GemmProblemTypeV2();
-        HIPBLASLT_EXPORT GemmProblemTypeV2(hipblasOperation_t opA,
-                                           hipblasOperation_t opB,
-                                           hipDataType typeA,
-                                           hipDataType typeB,
-                                           hipDataType typeC,
-                                           hipDataType typeD,
+        HIPBLASLT_EXPORT GemmProblemTypeV2(hipblasOperation_t   opA,
+                                           hipblasOperation_t   opB,
+                                           hipDataType          typeA,
+                                           hipDataType          typeB,
+                                           hipDataType          typeC,
+                                           hipDataType          typeD,
                                            hipblasComputeType_t typeCompute);
         HIPBLASLT_EXPORT ~GemmProblemTypeV2();
 
-        HIPBLASLT_EXPORT                 GemmProblemTypeV2(const GemmProblemTypeV2& type);
+        HIPBLASLT_EXPORT                    GemmProblemTypeV2(const GemmProblemTypeV2& type);
         HIPBLASLT_EXPORT GemmProblemTypeV2& operator=(const GemmProblemTypeV2& type);
 
-        HIPBLASLT_EXPORT                 GemmProblemTypeV2(GemmProblemTypeV2&& type);
+        HIPBLASLT_EXPORT                    GemmProblemTypeV2(GemmProblemTypeV2&& type);
         HIPBLASLT_EXPORT GemmProblemTypeV2& operator=(GemmProblemTypeV2&& type);
 
         HIPBLASLT_EXPORT void setOpA(hipblasOperation_t op); //!< Set the A martix transpose.
@@ -172,14 +172,15 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT void setTypeB(hipDataType type); //!< Set the B matrix datatype.
         HIPBLASLT_EXPORT void setTypeC(hipDataType type); //!< Set the C matrix datatype.
         HIPBLASLT_EXPORT void setTypeD(hipDataType type); //!< Set the D matrix datatype.
-        HIPBLASLT_EXPORT void setTypeCompute(hipblasComputeType_t type); //!< Set the compute datatype.
+        HIPBLASLT_EXPORT void
+            setTypeCompute(hipblasComputeType_t type); //!< Set the compute datatype.
 
-        HIPBLASLT_EXPORT hipblasOperation_t getOpA() const; //!< The A matrix transpose.
-        HIPBLASLT_EXPORT hipblasOperation_t getOpB() const; //!< The B matrix transpose.
-        HIPBLASLT_EXPORT hipDataType getTypeA() const; //!< The A matrix datatype.
-        HIPBLASLT_EXPORT hipDataType getTypeB() const; //!< The B matrix datatype.
-        HIPBLASLT_EXPORT hipDataType getTypeC() const; //!< The C matrix datatype.
-        HIPBLASLT_EXPORT hipDataType getTypeD() const; //!< The D matrix datatype.
+        HIPBLASLT_EXPORT hipblasOperation_t   getOpA() const; //!< The A matrix transpose.
+        HIPBLASLT_EXPORT hipblasOperation_t   getOpB() const; //!< The B matrix transpose.
+        HIPBLASLT_EXPORT hipDataType          getTypeA() const; //!< The A matrix datatype.
+        HIPBLASLT_EXPORT hipDataType          getTypeB() const; //!< The B matrix datatype.
+        HIPBLASLT_EXPORT hipDataType          getTypeC() const; //!< The C matrix datatype.
+        HIPBLASLT_EXPORT hipDataType          getTypeD() const; //!< The D matrix datatype.
         HIPBLASLT_EXPORT hipblasComputeType_t getTypeCompute() const; //!< The compute datatype.
     private:
         friend Gemm;
@@ -274,11 +275,15 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT               GemmTuningV2(GemmTuningV2&& tuning);
         HIPBLASLT_EXPORT GemmTuningV2& operator=(GemmTuningV2&& tuning);
 
-        HIPBLASLT_EXPORT void setSplitK(uint16_t splitK); //!< Set the value of splitK, 0 is off (use the splitK inside the solution).
-        HIPBLASLT_EXPORT void setWgm(int16_t wgm); //!< Set the value of workgroup mapping, 0 is off (use the workgroup mapping inside the solution).
+        HIPBLASLT_EXPORT void setSplitK(
+            uint16_t
+                splitK); //!< Set the value of splitK, 0 is off (use the splitK inside the solution).
+        HIPBLASLT_EXPORT void setWgm(
+            int16_t
+                wgm); //!< Set the value of workgroup mapping, 0 is off (use the workgroup mapping inside the solution).
 
         HIPBLASLT_EXPORT uint16_t getSplitK() const; //!< Value of splitK.
-        HIPBLASLT_EXPORT int16_t getWgm() const; //!< Value of workgroup mapping.
+        HIPBLASLT_EXPORT int16_t  getWgm() const; //!< Value of workgroup mapping.
     private:
         friend GemmInstance;
         class GemmTuningImpl;
@@ -342,6 +347,7 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT void setScaleAlphaVec(
             const void* scaleAlphaVec); //!< Set the scaleAlpha vector input pointer.
         HIPBLASLT_EXPORT void setAux(const void* aux); //!< Set the aux input pointer.
+        HIPBLASLT_EXPORT void setAmaxD(const void* amaxD); //!< Set the AmaxD input pointer.
 
         HIPBLASLT_EXPORT const void* getA() const; //!< The a matrix input pointer.
         HIPBLASLT_EXPORT const void* getB() const; //!< The b matrix input pointer.
@@ -357,7 +363,8 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT const void* getScaleAux() const; //!< The Scale AUX input pointer.
         HIPBLASLT_EXPORT const void*
             getScaleAlphaVec() const; //!< The scaleAlpha vector input pointer.
-        HIPBLASLT_EXPORT const void* getAux() const; //!< The aux input pointer.s
+        HIPBLASLT_EXPORT const void* getAux() const; //!< The aux input pointer
+        HIPBLASLT_EXPORT const void* getAmaxD() const; //!< The AmaxD input pointer
 
     private:
         friend Gemm;
@@ -409,7 +416,7 @@ namespace hipblaslt_ext
             strideE2; //!< The aux batch stride. Only works if mode is set to aux related epilogues.
         float act0; //!< The activation value 1. Some activations might use it.
         float act1; //!< The activation value 2.
-        int activationType; //!< The activation type.  Only works if mode is set to activation related epilogues.
+        int   activationType; //!< The activation type.  Only works if mode is set to activation related epilogues.
     } __attribute__((packed));
 
     /*! \ingroup types_module
@@ -418,7 +425,7 @@ namespace hipblaslt_ext
     class GemmInstance
     {
     public:
-        HIPBLASLT_EXPORT virtual ~GemmInstance() {};
+        HIPBLASLT_EXPORT virtual ~GemmInstance(){};
         HIPBLASLT_EXPORT               GemmInstance(const GemmInstance& rhs) = delete;
         HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs)    = delete;
         HIPBLASLT_EXPORT               GemmInstance(GemmInstance&& rhs) noexcept;
@@ -1276,7 +1283,7 @@ namespace hipblaslt_ext
                        std::vector<void*>&                   D,
                        std::vector<hipblasLtMatrixLayout_t>& matD);
 
-        HIPBLASLT_EXPORT std::vector<GemmProblemType>   getProblemTypes();
+        HIPBLASLT_EXPORT std::vector<GemmProblemType> getProblemTypes();
         HIPBLASLT_EXPORT std::vector<GemmProblemTypeV2> getProblemTypesV2();
 
         /*! \ingroup library_module
