@@ -1280,7 +1280,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
                          help="Keep debug information for built code objects")
   argParser.add_argument("--build-id", dest="BuildIdKind", action="store", default="sha1")
-  argParser.add_argument("--keep-build-tmp",   dest="KeepBuildTmp", action="store_true",
+  argParser.add_argument("--keep-build-tmp", dest="KeepBuildTmp", action="store_true",
                           default=False, help="Do not remove the temporary build directory (may required hundreds of GBs of space)"),
   args = argParser.parse_args()
 

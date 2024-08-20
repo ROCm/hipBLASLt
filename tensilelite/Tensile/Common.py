@@ -1605,7 +1605,8 @@ def assignGlobalParameters( config ):
   if "ROCmAgentEnumeratorPath" in config:
     globalParameters["ROCmAgentEnumeratorPath"] = config["ROCmAgentEnumeratorPath"]
 
-  globalParameters["KeepBuildTmp"] = config["KeepBuildTmp"]
+  if "KeepBuildTmp" in config:
+      globalParameters["KeepBuildTmp"] = config["KeepBuildTmp"]
 
   # read current gfx version
   returncode = detectGlobalCurrentISA()
