@@ -144,6 +144,12 @@ class ProblemType(Mapping):
           printExit("NO compute data type, or dest data type, or data type specified")
           self["DataType"] = DataType(0)
 
+    # Just like DataTypeE is DestDataType by default; DataTypeAmaxD if ComputeDataType by default.
+    # So far we don't have to set it in config yamls
+    self["DataTypeAmaxD"] = self["ComputeDataType"]
+    if "DataTypeAmaxD" in config:
+      self["DataTypeAmaxD"] = DataType(config["DataTypeAmaxD"])
+
     if self["Sparse"]:
       self["DataTypeMetadata"] = DataType("I8")
 
@@ -508,6 +514,8 @@ class ProblemType(Mapping):
         name += "_Grad%s"%self["DataTypeE"].toChar()
       else:
         name += "_Aux%s"%self["DataTypeE"].toChar() # Not showing aux types
+    if self["OutputAmaxD"]:
+      name += "_AmaxD"
     if self["Sparse"]:
       if self["Sparse"] == 2:
         name += "_SPB"
@@ -2545,7 +2553,7 @@ class Solution(collections.abc.Mapping):
             curGRVW *= 2
     else:
       state["GlobalReadVectorWidthB"] = 1
-  
+
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
     if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
       state["GlobalReadVectorWidthA"] = min(state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"])
@@ -3450,6 +3458,16 @@ class Solution(collections.abc.Mapping):
         for dataType in state["ProblemType"]["BiasDataTypeList"]:
           ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile0"] * dataType.numBytes())
       ldsNumBytes = max(ldsNumBytes, state["LdsOffsetBias"] + ldsBiasMaxElements)
+
+    state["LdsBytesNoAmax"] = ldsNumBytes
+    if state["ProblemType"]["OutputAmaxD"]:
+      # used in reduce inter wave
+      # 4 data * half_wave_num * amax bytePerE
+      num_workItems = state["NumThreads"]
+      half_wave_size = state["WavefrontSize"] // 2
+      amaxBPE = state["ProblemType"]["DataTypeAmaxD"].numBytes()
+      ldsAmaxDBytes = 4 * (num_workItems // half_wave_size) * amaxBPE
+      ldsNumBytes += ldsAmaxDBytes
 
     state["LdsNumBytes"] = ldsNumBytes
     ldsSize = ldsNumBytes

@@ -52,8 +52,10 @@ namespace Tensile
     template struct TypedGemm<Half, Half, Half, Half, float, float, Float8BFloat8>;
     template struct TypedGemm<Half, Half, Half, Half, float, float, BFloat8Float8>;
     template struct TypedGemm<Float8, Float8, Float8, Float8, float, float>;
+    template struct TypedGemm<Float8, Float8, BFloat8, BFloat8, float, float>;
     template struct TypedGemm<Float8, Float8, float, float>;
     template struct TypedGemm<BFloat8, BFloat8, BFloat8, BFloat8, float, float>;
+    template struct TypedGemm<BFloat8, BFloat8, Float8, Float8, float, float>;
     template struct TypedGemm<BFloat8, BFloat8, float, float>;
     // hybrid
     template struct TypedGemm<Float8, BFloat8, Float8, Float8, float, float>;
