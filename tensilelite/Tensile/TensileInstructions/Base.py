@@ -329,6 +329,7 @@ def _initArchCaps(isaVersion) -> dict:
     rv["TransOpWait"]        = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     rv["SDWAWait"]           = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     rv["VgprBank"]           = (isaVersion[0] in (10, 11, 12))
+    rv["DSLow16NotPreserve"]       = isaVersion[0] == (12)
     rv["WrokGroupIdFromTTM"] = isaVersion[0] == (12)
     rv["NoSDWA"]             = isaVersion[0] == (12)
     rv["HasFP8_OCP"]         = isaVersion[0] == (12)
