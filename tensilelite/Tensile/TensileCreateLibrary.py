@@ -1396,14 +1396,14 @@ def TensileCreateLibrary():
     return p.suffix == logicExtFormat and ("all" in archs or archMatch(load_logic_gfx_arch(p), archs))
 
   logicFiles = []
+  globPattern = os.path.join(logicPath, f"**/{args.LogicFilter}{logicExtFormat}")
+  print1(f"# LogicFilter: {globPattern}")
 
-  for file in glob.glob(f"**/{args.LogicFilter}{logicExtFormat}", root_dir=logicPath, recursive=True):
+  for file in glob.iglob(f"**/{args.LogicFilter}{logicExtFormat}", recursive=True):
     logic = os.path.join(logicPath, file)
 
     if validLogicFile(Path(logic)):
       logicFiles.append(logic)
-
-  print1(f"# LogicFilter: {args.LogicFilter}")
 
   print1("# LibraryLogicFiles:")
   for logicFile in logicFiles:
