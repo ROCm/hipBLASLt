@@ -543,7 +543,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationAr
         if problemType.useE:
             param('e-type',     problemType.eType.toEnum())
         if problemType.outputAmaxD:
-            param('amaxD-type',     problemType.amaxDType.toEnum())
+            param('amaxD-type',     problemType.alphaType.toEnum())
         param('alpha-type', problemType.alphaType.toEnum())
         param('beta-type',  problemType.betaType.toEnum())
         param('f32-xdl-math-op', problemType.f32XdlMathOp.toEnum())

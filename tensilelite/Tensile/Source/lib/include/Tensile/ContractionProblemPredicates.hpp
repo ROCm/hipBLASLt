@@ -850,15 +850,10 @@ namespace Tensile
                 enum
                 {
                     HasIndex = false,
-                    HasValue = true
+                    HasValue = false
                 };
-                bool value;
 
                 AmaxDCheck() = default;
-                AmaxDCheck(bool value)
-                    : value(value)
-                {
-                }
 
                 static std::string Type()
                 {
@@ -867,38 +862,24 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    bool amaxDStatusEqual = (problem.outputAmaxD() == value);
-
                     // if value is true, then we also need to check gsu
-                    // otherwise we just check outputAmaxD
-                    if(value)
-                        return amaxDStatusEqual && problem.getParams().gsu() <= 1;
+                    if(problem.outputAmaxD())
+                        return problem.getParams().gsu() <= 1;
                     else
-                        return amaxDStatusEqual;
+                        return true;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    return (value) ? debugEvalCmp(problem,
-                                                  stream,
-                                                  "prob_amaxD",
-                                                  problem.outputAmaxD(),
-                                                  "==",
-                                                  "sol_amaxD",
-                                                  value,
-                                                  "prob_gsu",
-                                                  (int)(problem.getParams().gsu()),
-                                                  "<=",
-                                                  "sol_gsu",
-                                                  1)
-                                   : debugEvalCmp(problem,
-                                                  stream,
-                                                  "prob_amaxD",
-                                                  problem.outputAmaxD(),
-                                                  "==",
-                                                  "sol_amaxD",
-                                                  value);
+                    return (problem.outputAmaxD()) ? debugEvalCmp(problem,
+                                                                  stream,
+                                                                  "prob_gsu",
+                                                                  (int)(problem.getParams().gsu()),
+                                                                  "<=",
+                                                                  "sol_gsu",
+                                                                  1)
+                                                   : true;
                 }
             };
 

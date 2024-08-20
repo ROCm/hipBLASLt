@@ -150,11 +150,6 @@ class ProblemType:
         else:
             rv.eType = dstType
 
-        if 'DataTypeAmaxD' in d:
-            rv.amaxDType = DataType(d['DataTypeAmaxD'])
-        else:
-            rv.amaxDType = computeType
-
         rv.computeInputType = srcType
         rv.cType = dstType
         rv.dType = dstType
@@ -348,7 +343,7 @@ class ProblemType:
                 predicates.append(ProblemPredicate("BetaZero"))
             predicates.append(ProblemPredicate("BiasDataTypeWhiteList", value=self.biasDataTypeWhiteList))
             predicates.append(ProblemPredicate("BiasSrcWhiteList", value=self.biasSrcWhiteList))
-            predicates.append(ProblemPredicate("AmaxDCheck", value=self.outputAmaxD))
+            predicates.append(ProblemPredicate("AmaxDCheck"))
             if self.activationType == 'all':
                 exportType = ActivationType.Export.GRADONLY if self.useGradient else ActivationType.Export.NORMAL
                 enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, exportType=exportType)]
