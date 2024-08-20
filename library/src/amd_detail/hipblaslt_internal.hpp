@@ -26,7 +26,7 @@
 
 #pragma once
 #include "handle.h"
-#include <hipblas/hipblas.h>
+#include <hipblas-common/hipblas-common.h>
 #include <rocblaslt.h>
 hipblasStatus_t hipErrorToHIPBLASStatus(hipError_t status);
 
