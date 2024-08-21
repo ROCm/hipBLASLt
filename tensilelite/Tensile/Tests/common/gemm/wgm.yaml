@@ -61,7 +61,7 @@ BenchmarkProblems:
         - LdsBlockSizePerPadB: [-1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
-        - WorkGroupMapping: [8, -8]
+        - WorkGroupMapping: [-1, -8, -300]
         - StaggerUMapping: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]
