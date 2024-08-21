@@ -639,7 +639,7 @@ class StreamK(Component):
         # allow expanding vgpr pool for OptNLL
         # preventOverflow = (not isOptNLL)
         # ss.setupStoreElementsForBatch(kernel, gwvw, batchElements, batchElementSgprs, isOptNLL=isOptNLL, isWorkspace=True)
-        ss.setupStoreElementsForBatch(kernel, gwvw, batchElements, batchElementSgprs, isOptNLL=False, biasDim=0, isWorkspace=True)
+        ss.setupStoreElementsForBatch(kernel, gwvw, batchElements, batchElementSgprs, isOptNLL=False, factorDim=0, isWorkspace=True)
 
         storesIssued = 0
         tmpS01 = tmpSgpr # scratch sgprs
@@ -1087,7 +1087,7 @@ class StreamK(Component):
         # allow expanding vgpr pool for OptNLL
         # preventOverflow = True #(not isOptNLL)
         # ss.setupStoreElementsForBatch(kernel, gwvw, batchElements, batchElementSgprs, preventOverflow=preventOverflow, isWorkspace=True)
-        ss.setupStoreElementsForBatch(kernel, gwvw, batchElements, batchElementSgprs, isOptNLL=False, biasDim=0, isWorkspace=True)
+        ss.setupStoreElementsForBatch(kernel, gwvw, batchElements, batchElementSgprs, isOptNLL=False, factorDim=0, isWorkspace=True)
 
         loadsIssued = 0
         storesIssued = 0

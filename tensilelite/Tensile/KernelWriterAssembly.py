@@ -1204,6 +1204,8 @@ class KernelWriterAssembly(KernelWriter):
     module.addComment1("local write addresses: first offset b")
     module.add(self.lwaFirstOffset(kernel, tPB))
 
+    return module
+
   def wgmXCC(self, kernel, tmpSgprNumWorkGroups):
     module = Module("WGMXCC")
     module.addComment1("remap workgroup to XCCs")
@@ -1559,7 +1561,8 @@ class KernelWriterAssembly(KernelWriter):
       sgprArgType = None # Cannot be used after this point
       module.add(SCBranchSCC0(labelName=labelMultiGemm.getLabelName()))
       module.add(fastdeepcopy(moduleWg))
-      module.add(self.remapWgSerial(kernel, earlyStop=False))
+      if kernel["StreamK"] == 0:
+        module.add(self.remapWgSerial(kernel, earlyStop=False))
       module.add(SBranch(labelName=labelMultiGemmEnd.getLabelName()))
       module.add(labelMultiGemm)
 
@@ -1769,7 +1772,8 @@ class KernelWriterAssembly(KernelWriter):
       earlyReturnModule.add(SEndpgm())
       earlyReturnModule.add(noEarlyReturnLabel)
       module.add(earlyReturnModule)
-      module.add(self.remapWgSerial(kernel))
+      if kernel["StreamK"] == 0:
+        module.add(self.remapWgSerial(kernel))
       module.addSpaceLine()
       module.add(labelMultiGemmEnd)
 

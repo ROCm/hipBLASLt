@@ -155,6 +155,10 @@ namespace Tensile
         return m_gridbasedKdTree;
     }
 
+    bool Debug::gridBasedBatchExp() const
+    {
+        return m_gridbasedBatchExp;
+    }
 
     Debug::Debug()
         : m_value(DEBUG_SM)
@@ -199,6 +203,10 @@ namespace Tensile
         const char* tensile_gridbased_kdtree = std::getenv("TENSILE_GRIDBASED_KDTREE");
         if(tensile_gridbased_kdtree)
             m_gridbasedKdTree = strtol(tensile_gridbased_kdtree, nullptr, 0) != 0;
+
+        const char* tensile_gridbased_batch_exp = std::getenv("TENSILE_GRIDBASED_BATCH_EXP");
+        if(tensile_gridbased_batch_exp)
+            m_gridbasedBatchExp = strtol(tensile_gridbased_batch_exp, nullptr, 0) != 0;
     }
 
 } // namespace Tensile
