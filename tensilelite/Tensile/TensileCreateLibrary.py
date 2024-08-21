@@ -1192,6 +1192,8 @@ def WriteClientLibraryFromSolutions(solutionList, libraryWorkingPath, tensileSou
   problemType["DestDataType"] = problemType["DestDataType"].value
   problemType["ComputeDataType"] = problemType["ComputeDataType"].value
   problemType["F32XdlMathOp"] = problemType["F32XdlMathOp"].value
+  if "DataTypeMetadata" in problemType:
+    problemType["DataTypeMetadata"] = problemType["DataTypeMetadata"].value
   cxxCompiler = globalParameters["CxxCompiler"]
 
   effectiveWorkingPath = os.path.join(libraryWorkingPath, "library")
