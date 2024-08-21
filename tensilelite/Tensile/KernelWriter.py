@@ -4729,9 +4729,6 @@ for codeObjectFileName in codeObjectFileNames:
 
     subprocess.check_call(args, cwd=self.getAssemblyDirectory())
 
-    if not globalParameters["KeepBuildTmp"]:
-        os.remove(coFileName)
-
     return coFileName
 
   ##############################################################################
