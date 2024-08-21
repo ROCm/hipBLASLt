@@ -50,6 +50,7 @@ Tensile.egg-info
 
 # Python
 **/__pycache__
+*.egg-info/
 
 #clangd
 .cache

@@ -190,6 +190,7 @@ globalParameters["PrintTensorC"] = 0          # Print TensorC.  0x1=after init; 
 globalParameters["PrintTensorD"] = 0          # Print TensorD.  0x1=after init; 0x2=after copy-back; 0x3=both
 globalParameters["PrintTensorRef"] = 0          # Print reference tensor.  0x1=after init; 0x2=after copy-back; 0x3=both
 globalParameters["PrintTensorBias"] = 0          # Print TensorBias after initialization
+globalParameters["PrintTensorAmaxD"] = 0          # Print AmaxD after validation
 globalParameters["PrintIndexAssignments"] = 0      # Print the tensor index assignment info
 globalParameters["PrintWinnersOnly"] = False      # Only print the solutions which become the fastest
 globalParameters["PrintCodeCommands"] = False  # print the commands used to generate the code objects (asm,link,hip-clang, etc)
@@ -1248,6 +1249,7 @@ defaultProblemType = {
     "DataTypeA":                0,                # A data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DataTypeB":                0,                # B data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DataTypeE":                0,                # E data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
+    "DataTypeAmaxD":            0,                # AmaxD data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DestDataType":             0,                # destination data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "ComputeDataType":          0,                # compute data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "F32XdlMathOp":             0,                # reducing intermediate precision from f32 to a specific type, such as "x", as listed in SolutionStructs.py::DataType.
@@ -1333,6 +1335,8 @@ defaultProblemType = {
     # Activation
     "Activation":               False,
     "ActivationNoGuard":        False,
+    # AmaxD
+    "OutputAmaxD":              False,
     # For kernels putting arguments in workspaces instead of kernel arguments, they can choose to support user arguments input instead.
     "SupportUserArgs":          True
     }

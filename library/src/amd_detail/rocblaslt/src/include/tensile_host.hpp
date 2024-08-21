@@ -129,6 +129,7 @@ struct RocblasltContractionProblem
     bool               isScaleBVec;
     hipDataType        bias_type;
     rocblaslt_epilogue epilogue;
+    void*              amaxD;
     void*              workspace;
     size_t             workspaceSize;
 
@@ -184,6 +185,7 @@ struct RocblasltContractionProblem
                                 bool                   isScaleBVec,
                                 hipDataType            bias_type,
                                 rocblaslt_epilogue     epilogue,
+                                void*                  amaxD,
                                 void*                  workspace,
                                 size_t                 workspaceSize,
                                 hipStream_t            stream,
@@ -240,6 +242,7 @@ struct RocblasltContractionProblem
         , isScaleBVec(isScaleBVec)
         , bias_type(bias_type)
         , epilogue(epilogue)
+        , amaxD(amaxD)
         , workspace(workspace)
         , workspaceSize(workspaceSize)
         , stream(stream)
@@ -404,11 +407,12 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
                                      const Tuning*                 tuning,
                                      size_t&                       workspaceSizeInBytes);
 
-std::vector<std::shared_ptr<Tensile::ContractionSolution>> getBestRawSolutions(RocblasltContractionProblem const& prob,
-                         rocblaslt_handle                   handle,
-                         std::shared_ptr<void>              gemmData,
-                         int                                requestedAlgoCount,
-                         size_t                             maxWorkSpaceBytes);
+std::vector<std::shared_ptr<Tensile::ContractionSolution>>
+    getBestRawSolutions(RocblasltContractionProblem const& prob,
+                        rocblaslt_handle                   handle,
+                        std::shared_ptr<void>              gemmData,
+                        int                                requestedAlgoCount,
+                        size_t                             maxWorkSpaceBytes);
 
 /*******************************************************************************
  * getBestSolutions() calls finTopSolutions from Tensile and converts to       *

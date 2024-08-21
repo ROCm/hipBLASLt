@@ -247,6 +247,7 @@ namespace Tensile
             SCALEALPHAVEC = 10,
             METADATA      = 11,
             Synchronizer  = 12,
+            AMAXD         = 13,
             TENSOR_COUNT
         };
 
@@ -587,6 +588,11 @@ namespace Tensile
             m_useE = useE;
         }
 
+        void setOutputAmaxD(bool outputAmaxD)
+        {
+            m_outputAmaxD = outputAmaxD;
+        }
+
         void setUseBias(int useBias)
         {
             m_useBias = useBias;
@@ -610,6 +616,11 @@ namespace Tensile
         bool useE() const
         {
             return m_useE;
+        }
+
+        bool outputAmaxD() const
+        {
+            return m_outputAmaxD;
         }
 
         int useBias() const
@@ -741,6 +752,15 @@ namespace Tensile
                 setParams().setFactorDim(factorDim);
                 m_tensors[ContractionProblemGemm::TENSOR::SCALEALPHAVEC]
                     = {"scaleAlphaVec", m_scaleAlphaVecType, {length}, {1, length}};
+            }
+        }
+
+        void setAmaxD(DataType type, bool isOutput = false)
+        {
+            if(type != DataType::None && m_outputAmaxD)
+            {
+                m_tensors[ContractionProblemGemm::TENSOR::AMAXD] = {"amaxD", type, {1}, {1, 1}};
+                m_tensors[ContractionProblemGemm::TENSOR::AMAXD].setAsOutput(isOutput);
             }
         }
 
@@ -947,6 +967,10 @@ namespace Tensile
         {
             return m_tensors[ContractionProblemGemm::TENSOR::BIAS];
         }
+        TensorDescriptor const& amaxd() const
+        {
+            return m_tensors[ContractionProblemGemm::TENSOR::AMAXD];
+        }
         FreeIndices const& freeIndicesA() const
         {
             return m_freeIndicesA;
@@ -1100,6 +1124,7 @@ namespace Tensile
         bool           m_eligibleForPK           = true;
         bool           m_useGradient             = false;
         bool           m_useE                    = false;
+        bool           m_outputAmaxD             = false;
         int            m_useBias                 = 0;
         std::string    m_useScaleAB              = "";
         bool           m_useScaleCD              = false;
@@ -1207,11 +1232,12 @@ namespace Tensile
                           unsigned char const* _metadata);
 
         // TODO: Remove this
-        void const* a = nullptr;
-        void const* b = nullptr;
-        void const* c = nullptr;
-        void*       d = nullptr;
-        void*       e = nullptr;
+        void const* a     = nullptr;
+        void const* b     = nullptr;
+        void const* c     = nullptr;
+        void*       d     = nullptr;
+        void*       e     = nullptr;
+        void*       amaxD = nullptr;
 
         void const* const* batchA    = nullptr;
         void const* const* batchB    = nullptr;

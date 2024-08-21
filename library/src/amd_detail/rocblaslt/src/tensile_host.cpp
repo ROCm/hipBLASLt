@@ -749,6 +749,10 @@ namespace
         // set use gradient
         tensileProblem.setUseGradient(is_grad_enabled(prob.epilogue));
 
+        // set AmaxD
+        tensileProblem.setOutputAmaxD(prob.amaxD != nullptr);
+        tensileProblem.setAmaxD(compute_type, true);
+
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
             tensileProblem.setF32XdlMathOp(Tensile::DataType::XFloat32);
 
@@ -918,6 +922,10 @@ namespace
         // set gradient
         tensileProblem.setUseGradient(is_grad_enabled(prob.epilogue));
 
+        // set AmaxD
+        tensileProblem.setOutputAmaxD(prob.amaxD != nullptr);
+        tensileProblem.setAmaxD(compute_type, true);
+
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
             tensileProblem.setF32XdlMathOp(Tensile::DataType::XFloat32);
     }
@@ -959,6 +967,7 @@ namespace
         inputs.scaleC        = reinterpret_cast<const void*>(prob.scaleC);
         inputs.scaleD        = reinterpret_cast<const void*>(prob.scaleD);
         inputs.scaleAlphaVec = reinterpret_cast<const void*>(prob.scaleAlphaVec);
+        inputs.amaxD         = reinterpret_cast<void*>(prob.amaxD);
 
         // push 2 activation arguments
         if(compute_type == Tensile::DataType::Float || compute_type == Tensile::DataType::XFloat32)
@@ -2466,12 +2475,12 @@ rocblaslt_status
 }
 
 template <typename MyProblem, typename Inputs, typename Tuning>
-rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
-                                     MyProblem&                  tensile_prob,
-                                     Inputs&                     inputs,
-                                     rocblaslt_matmul_algo*      algo,
-                                     const Tuning*               tuning,
-                                     size_t*                     workspaceSizeInBytes)
+rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
+                                     MyProblem&             tensile_prob,
+                                     Inputs&                inputs,
+                                     rocblaslt_matmul_algo* algo,
+                                     const Tuning*          tuning,
+                                     size_t*                workspaceSizeInBytes)
 {
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;

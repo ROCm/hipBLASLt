@@ -902,11 +902,54 @@ namespace Tensile
                     "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
             }
         }
+
+        if(problemType.outputAmaxD)
+        {
+            args.template append<const void*>("AddrAmaxOut", inputs.amaxD);
+            args.template append<const void*>("AmaxWS",
+                                              (uint8_t*)inputs.ws + workspaceOffsetInByte);
+            args.template append<const void*>("AmaxSync", inputs.Synchronizer);
+        }
     }
 
     inline uint32_t getNumWorkGroups(const KernelInvocation& rv)
     {
         return rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y / rv.workGroupSize.z;
+    }
+
+    inline uint32_t getNumWorkGroups(ContractionSolution::Problem const&     problem,
+                                     const SizeMapping& sizeMapping)
+    {
+        size_t numWorkGroupsX = 1;
+        size_t numWorkGroupsY = 1;
+        size_t numWorkGroupsZ = 1;
+
+        for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
+        {
+            numWorkGroupsX *= problem.freeSizeA(i);
+        }
+        for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
+        {
+            numWorkGroupsY *= problem.freeSizeB(i);
+        }
+
+        for(size_t i = 0; i < problem.batchIndices().size(); i++)
+        {
+            if(sizeMapping.packBatchDims & 0x1)
+                numWorkGroupsX *= problem.batchSize(i);
+            if(sizeMapping.packBatchDims & 0x2)
+                numWorkGroupsY *= problem.batchSize(i);
+            if(!sizeMapping.packBatchDims)
+                numWorkGroupsZ *= problem.batchSize(i);
+        }
+
+        if(problem.transposeC01())
+            std::swap(numWorkGroupsX, numWorkGroupsY);
+
+        numWorkGroupsX = CeilDivide(numWorkGroupsX, sizeMapping.macroTile.x);
+        numWorkGroupsY = CeilDivide(numWorkGroupsY, sizeMapping.macroTile.y);
+
+        return numWorkGroupsX * numWorkGroupsY * numWorkGroupsZ;
     }
 
     template <bool T_Debug, bool Legacy, typename KA>
@@ -1059,8 +1102,8 @@ namespace Tensile
 
         static_cast<void>(hipGetDevice(&deviceId));
         static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-        auto        gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
-        if (stoi(gpu_arch_no_prefix) /100 != 12)
+        auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
+        if(stoi(gpu_arch_no_prefix) / 100 != 12)
         {
             if(internalArgsSupport.version == 1)
             {
@@ -2859,6 +2902,13 @@ namespace Tensile
                 }
             }
 
+            // workspace for amaxD
+            if(problemType.outputAmaxD)
+            {
+                auto numWGS = getNumWorkGroups(problem, sizeMapping);
+                size += problem.amaxd().elementBytes() * numWGS;
+            }
+
             // Custom kernel synchronizer
             if(gsu > 1 && sizeMapping.globalAccumulation == 3)
             {
@@ -2867,6 +2917,7 @@ namespace Tensile
                         * sizeMapping.waveNum * sizeof(int32_t);
             }
         }
+
         return size;
     }
 

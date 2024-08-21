@@ -3475,6 +3475,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.lastVgprForReads = vgprIdx
     #-----------
 
+    if kernel["ProblemType"]["OutputAmaxD"]:
+      self.startVgprAmaxOut = vgprIdx
+      self.startVgprAmaxOutB = vgprIdx + 1
+      vgprIdx += 2
+
     self.states.startVgprAddressDbg = vgprIdx
     vgprIdx += numVgprAddressDbg
 

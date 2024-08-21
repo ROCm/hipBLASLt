@@ -254,6 +254,12 @@ class SignatureDefault(Signature):
             if kernel["ProblemType"]["ActivationType"] == 'all':
                 signature.addArg(       "activationType", SVK.SIG_VALUE,               "u32")
 
+        # TODO- combine one workspace
+        if (kernel["ProblemType"]["OutputAmaxD"]):
+            signature.addArg(    "AddrAmaxOut", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+            signature.addArg(    "AmaxWS",      SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+            signature.addArg(    "AmaxSync",    SVK.SIG_GLOBALBUFFER, "u32",        "generic")
+
         if (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
             signature.addArg(    "dstD", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
             signature.addArg(               "Synchronizer", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
