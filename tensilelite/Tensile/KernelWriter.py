@@ -3763,8 +3763,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.nonPostLoopSgpr.remove("AddressB")
       self.states.nonPostLoopSgpr.remove("StridesA")
       self.states.nonPostLoopSgpr.remove("StridesB")
-      self.states.nonPostLoopSgpr.remove("NumWorkGroups0")
-      self.states.nonPostLoopSgpr.remove("NumWorkGroups1")
 
     self.states.preloadScaleA = False
     self.states.preloadScaleB = False

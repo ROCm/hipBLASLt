@@ -163,7 +163,7 @@ class GSUOn(GSU):
         module.add(SCBranchSCC1(labelName=gsuLabel.getLabelName(), comment="branch if GSU == 1"))
 
         if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
-            extReadEpilogueLabeltmp    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
+            extReadEpilogueLabeltmp    = Label(label=writer.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
             module.addComment0("Check if custom structure pointer is null")
             if kernel["ProblemType"]["SupportUserArgs"]:
                 module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
@@ -198,6 +198,7 @@ class GSUOn(GSU):
     def computeLoadSrd(self, writer, kernel, tP, stmp, tileStart):
         module = Module("GSU On computeLoadSrd")
 
+        tc = tP["tensorChar"]
         depthU = kernel["DepthU"]
         depthUDiv = kernel["DepthU"]
         gsuOffsetStr = "gsuOffset = DepthU*bpeGR*GSUSumIdx"
@@ -213,20 +214,20 @@ class GSUOn(GSU):
                 gsuOffsetStr = "gsuOffset = DepthU/%s*bpeGR*GSUSumIdx"%(divider)
         if writer.states.gsu_wg_coalesced:
             gsuOffsetStr = "gsuOffset = DepthU*accumulatedNumOfLoopCounterL"
-            loopCounterName = writer.loopCounterName(kernel, self.states.unrollIdx)
+            loopCounterName = writer.loopCounterName(kernel, writer.states.unrollIdx)
             module.add(SLShiftRightB32(dst=sgpr(loopCounterName), src=sgpr("SizesSum"), shiftHex=log2(depthU), \
                 comment="s[%s] = s[sgprSizesSum] / %s"%(loopCounterName, depthU)))
             module.add(writer.calculateLoopNumIterOffsetGsu(kernel, loopCounterName, tmpSgprInfo))
-            module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), sgpr(stmp+0), depthUDiv, gsuOffsetStr))
+            module.addModuleAsFlatItems(writer.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), sgpr(stmp+0), depthUDiv, gsuOffsetStr))
         else:
             gsuOffsetStr = "gsuOffset = DepthU*GSUSumIdx"
-            module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), depthUDiv, sgpr("GSUSumIdx"), gsuOffsetStr))
+            module.addModuleAsFlatItems(writer.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), depthUDiv, sgpr("GSUSumIdx"), gsuOffsetStr))
 
         unrollSummation = [ i for i in tP["ia"] if i in kernel["ProblemType"]["IndicesSummation"] ]
         stride = writer.strideRef(tc, unrollSummation[-1])
-        if tP["tlu"] and not self.isConstUnitStride(stride):
+        if tP["tlu"] and not writer.isConstUnitStride(stride):
             # non-transpose case, unroll is in perp dim and should be scaled by unroll Stride
-            module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp), sgpr(stmp+1), sgpr(stmp+0), \
+            module.addModuleAsFlatItems(writer.s_mul_u64_u32(sgpr(stmp), sgpr(stmp+1), sgpr(stmp+0), \
                 stride, "tlu=1, scaled unroll-offset by stride"))
 
         module.add(SAddU32(dst=sgpr(tileStart+0), src0=sgpr(tileStart+0), src1=sgpr(stmp+0), comment="accum GsuOffset term to tilestart"))
@@ -411,7 +412,7 @@ class GSUOn(GSU):
         if writer.states.gsu_wg_coalesced:
             depthU = kernel["DepthU"]
             # calculate the lastWg
-            with self.allocTmpSgpr(2) as tmpSgprInfo:
+            with writer.allocTmpSgpr(2) as tmpSgprInfo:
                 tmpSgpr = tmpSgprInfo.idx
                 tmpVgpr = writer.vgprPool.checkOut(2,"tmp")
                 tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
