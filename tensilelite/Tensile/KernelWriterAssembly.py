@@ -354,6 +354,11 @@ class KernelWriterAssembly(KernelWriter):
     tmpSgpr = allocTmpGprList(self.sgprPool, nums, self.consts.maxSgprs, alignments, tag, overflowListener)
     return tmpSgpr
 
+  def defineMultiVgprIndex(self, names: List[str], numVgprs: List[int], align=1):
+    assert(len(names) == len(numVgprs))
+    vgprIdxVec = self.vgprPool.checkOutMulti(numVgprs, align, tags=names)
+    return vgprIdxVec
+
   def defineSgprIdx(self, name, numSgprs, align=1):
     if numSgprs == 0: return
 
@@ -682,6 +687,10 @@ class KernelWriterAssembly(KernelWriter):
     if self.states.m.numVgprLocalReadAddr > 0:
       module.add(RegSet("v", "vgprLocalReadAddrMetadata", \
           self.states.m.startVgprLocalReadAddr))
+
+    if kernel["ProblemType"]["OutputAmaxD"]:
+      module.add(RegSet("v", "vgprAmaxOut", self.startVgprAmaxOut))
+      module.add(RegSet("v", "vgprAmaxOutB", self.startVgprAmaxOutB))
 
     if kernel["ProblemType"]["DataType"].isDoubleComplex() and kernel["MIArchVgpr"]:
       module.add(RegSet("v", "vgprAlphaTmp", \
@@ -1974,9 +1983,9 @@ class KernelWriterAssembly(KernelWriter):
         if not wgmType:
           module.add(wgmLabelPositive)
         else:
+          module.add(SCmpGeI32(src0=sgpr("WGM"), src1=0, comment="WGM >= 0 ?"))
+          module.add(SCBranchSCC1(labelName=wgmLabel.getLabelName(), comment="branch if WGM >= 0"))
           module.add(SAbsI32(dst=sgpr("WGM"), src=sgpr("WGM"), comment="abs(WGM)"))
-          module.add(SCmpLeI32(src0=sgpr("WGM"), src1=1, comment="WGM <= 1 ?"))
-          module.add(SCBranchSCC1(labelName=wgmLabel.getLabelName(), comment="branch if WGM <= 1"))
         # note this overwrites blockId2+1
         module.add(scalarUInt32DivideAndRemainder(qReg=blockId2, dReg=workgroupSecond, divReg="WGM", rReg=wgSerial2, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False, comment="WGM"))
         module.add(SMulI32(dst=sgpr(wgSerial2), src0=sgpr(blockId2), src1=sgpr("WGM"), comment="quotient * non-magic divisor"))
@@ -5428,7 +5437,7 @@ class KernelWriterAssembly(KernelWriter):
 
             self.cleanupGlobalWrite(kernel)
             module.addSpaceLine()
-            module.add(self.functionEnd(False))
+            module.add(self.functionEnd(kernel, False))
             module.add(Label("OptNLL_End", ""))
 
         else:
@@ -8801,6 +8810,8 @@ class KernelWriterAssembly(KernelWriter):
     if not self.do["PostLoop"]: return Module("GlobalWriteElements (Empty)")
     module = Module("GlobalWriteElements")
     module.addComment2("Global Write Elements")
+    if kernel["ProblemType"]["OutputAmaxD"]:
+        module.add(VMovB32(dst=vgpr("AmaxOut"), src="0"))
     if self.states.numStoreSgprToLoad or self.states.numStoreSgprToLoad2: # Wait for kernel args
       module.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args."%((self.states.numStoreSgprToLoad+self.states.numStoreSgprToLoad2) * 4)))
 
@@ -10576,6 +10587,280 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   ########################################
+  # Amax related
+  ########################################
+  def amax_define_load_res(self) -> Module:
+    module = Module("AmaxD Set and Load")
+    module.addComment0("AmaxD Set and Load")
+
+    self.amaxVgprIdxVec = self.defineMultiVgprIndex(self.amaxVgprNames, self.amaxVgprSizes, align=1)
+    for i in range(0, len(self.amaxVgprNames)):
+      name = self.amaxVgprNames[i]
+      idx = self.amaxVgprIdxVec[i]
+      module.add(RegSet("v", "vgpr"+name, idx))
+
+    module.addSpaceLine()
+    module.add(self.defineSgpr("Src", 4, 4))
+    module.add(self.defineSgpr("Dst", 4, 4))
+    module.add(self.defineSgpr("Offset", 1))
+    module.add(self.defineSgpr("Tmp", 6, 2))
+    module.add(self.defineSgpr("NumGroup", 1))
+    module.add(self.defineSgpr("WGIdx", 1))
+    module.addSpaceLine()
+
+    # defineMulti (ensure they are checkout together) for SGPRs that are used to load args
+    self.amaxSgprIdxVec = self.defineMultiSgprIndex(self.amaxSgprArgNames, self.amaxSgprArgSizes, align=4)
+    for name in self.amaxSgprArgNames:
+      module.add(RegSet("s", "sgpr"+name, self.sgprs[name]))
+    module.addSpaceLine()
+
+    # TODO- why we don't directly update the offset in the last argLoader ?
+    argOffset = self.argLoader.getOffset()
+    argOffset += (self.states.numStoreSgprToLoad + self.states.numStoreSgprToLoad2) * 4
+    module.add(self.argLoader.loadKernArg("AddrAmaxOut", "KernArgAddress", sgprOffset=hex(argOffset), dword=4))
+    argOffset += 16 # advance dwordx4
+    module.add(self.argLoader.loadKernArg("AddressSy", "KernArgAddress", sgprOffset=hex(argOffset), dword=2))
+    module.add(SMulI32(sgpr("NumGroup"), sgpr("NumWorkGroups0"), sgpr("NumWorkGroups1"), "get total num_wgs"))
+    module.add(SMulI32(sgpr("WGIdx"), sgpr("WorkGroup1"), sgpr("NumWorkGroups0"), "wgId = wg1 * numWG0"))
+    module.add(SAddI32(sgpr("WGIdx"), sgpr("WGIdx"), sgpr("WorkGroup0"), "wgId += wg0"))
+    module.addSpaceLine()
+    module.add(SWaitCnt(lgkmcnt=0))
+    module.addSpaceLine()
+
+    return module
+
+  def amax_intra_wave_reduction(self, kernel, postfix) -> Module:
+    wave_size = kernel["WavefrontSize"]
+    label = Label(f"permute_{postfix}", f"permute_{postfix}")
+
+    mod = Module("intra_wave_reduction")
+    mod.addComment0("intra_wave_reduction")
+
+    mod.add(SMovB32(sgpr("Tmp"), 1))
+    mod.add(label)
+    mod.addSpaceLine()
+    mod.add(VAddU32(vgpr("Tmp"), sgpr("Tmp"), vgpr("Serial")))
+    mod.add(VAndB32(vgpr("Tmp"), wave_size-1, vgpr("Tmp")))
+    mod.add(VLShiftLeftB32(vgpr("Tmp"), 0x2, vgpr("Tmp")))
+    mod.addSpaceLine()
+    mod.add(DSBPermuteB32(vgpr("AmaxOutB"), vgpr("Tmp"), vgpr("AmaxOut")))
+    mod.add(SWaitCnt(lgkmcnt=0))
+    mod.addSpaceLine()
+    # TODO- F16
+    mod.add(VMaxF32(vgpr("AmaxOut"), vgpr("AmaxOut"), vgpr("AmaxOutB")))
+    mod.add(SLShiftLeftB32(sgpr("Tmp"), 1, sgpr("Tmp")))
+    mod.add(SCmpLtU32(sgpr("Tmp"), wave_size))
+    mod.add(SCBranchSCC1(label.getLabelName()))
+    mod.addSpaceLine()
+    return mod
+
+  def amax_inter_wave_reduction(self, kernel) -> Module:
+    wave_size = kernel["WavefrontSize"]
+    numWorkItems = kernel["NumThreads"]
+    amaxOutType = kernel["ProblemType"]["DataTypeAmaxD"]
+    amax_lds_start = kernel["LdsBytesNoAmax"]
+
+    label_wave_inter = Label("wave_inter", 'wave_inter')
+    label_wave_upper = Label("wave_upper", 'wave_upper')
+    label_wave_lower = Label("wave_lower", 'wave_lower')
+    label_wave_empty = Label("wave_empty", 'wave_empty')
+    label_wave_end   = Label("wave_end",   'wave_end')
+
+    mod = Module("inter_wave_reduction")
+    mod.addComment0("inter_wave_reduction")
+
+    mod.add(VLShiftRightB32(vgpr("Widx"), int(log2(wave_size)), vgpr("Serial")))
+    mod.add(SMovB32(sgpr("Offset"), numWorkItems // wave_size))
+    mod.add(label_wave_inter)
+    mod.add(SLShiftRightB32(sgpr("Offset"), 1, sgpr("Offset")))
+    mod.add(SCmpEQU32(sgpr("Offset"), 0))
+    mod.add(SCBranchSCC1(label_wave_end.getLabelName()))
+    mod.add(SLShiftLeftB32(sgpr("Tmp"), 1, sgpr("Offset")))
+    mod.add(VCmpLtU32(sgpr("Tmp+2",2), vgpr("Widx"), sgpr("Tmp")))
+    mod.add(VCmpGEU32(sgpr("Tmp+4",2), vgpr("Widx"), sgpr("Offset")))
+    mod.add(SAndB64("vcc", sgpr("Tmp+2",2), sgpr("Tmp+4",2)))
+    mod.add(SCBranchVCCNZ(label_wave_upper.getLabelName()))
+    mod.add(VCmpLtU32("vcc", vgpr("Widx"), sgpr("Offset")))
+    mod.add(SCBranchVCCNZ(label_wave_lower.getLabelName()))
+    mod.add(SBranch(label_wave_empty.getLabelName()))
+
+    mod.add(label_wave_upper)
+    mod.add(VSubU32(vgpr("Tmp"), vgpr("Widx"), sgpr("Offset")))
+    mod.add(VLShiftLeftB32(vgpr("Tmp"), int(log2(amaxOutType.numBytes())), vgpr("Tmp")))
+
+    # TODO- select inst
+    ds = DSModifiers(offset=amax_lds_start)
+    mod.add(DSStoreB32(vgpr("Tmp"), vgpr("AmaxOut"), ds))
+    mod.add(SWaitCnt(lgkmcnt=0))
+    mod.add(SBarrier())
+    mod.add(SBranch(label_wave_inter.getLabelName()))
+    mod.add(label_wave_lower)
+    mod.add(SBarrier())
+    mod.add(VLShiftLeftB32(vgpr("Tmp"), int(log2(amaxOutType.numBytes())), vgpr("Widx")))
+
+    # TODO- select inst
+    mod.add(DSLoadB32(vgpr("AmaxOutB"), vgpr("Tmp"), ds))
+    mod.add(SWaitCnt(lgkmcnt=0))
+    # TODO- F16
+    mod.add(VMaxF32(vgpr("AmaxOut"), vgpr("AmaxOut"), vgpr("AmaxOutB")))
+    mod.add(SBranch(label_wave_inter.getLabelName()))
+    mod.add(label_wave_empty)
+    mod.add(SBarrier())
+    mod.add(SBranch(label_wave_inter.getLabelName()))
+    mod.add(label_wave_end)
+    mod.addSpaceLine()
+    return mod
+
+  def amax_broadcast(self, kernel) -> Module:
+    amax_lds_start = kernel["LdsBytesNoAmax"]
+
+    label_lower = Label("broadcast_lower", f'broadcast_lower')
+    label_end = Label("broadcast_end", f'broadcast_end')
+
+    mod = Module("broadcast")
+    mod.addComment0("broadcast")
+    mod.add(VCmpEQU32("vcc", vgpr("Widx"), 0))
+    mod.add(SCBranchVCCZ(label_lower.getLabelName()))
+
+    # TODO- select inst
+    ds = DSModifiers(offset=amax_lds_start)
+    mod.add(DSStoreB32(vgpr("Widx"), vgpr("AmaxOut"), ds))
+    mod.add(SWaitCnt(lgkmcnt=0))
+    mod.add(SBarrier())
+    mod.add(SBranch(label_end.getLabelName()))
+    mod.add(label_lower)
+    mod.add(SBarrier())
+    mod.add(VMovB32(vgpr("Tmp"), 0))
+
+    # TODO- select inst
+    mod.add(DSLoadB32(vgpr("AmaxOut"), vgpr("Tmp"), ds))
+    mod.add(SWaitCnt(lgkmcnt=0))
+    mod.add(label_end)
+    mod.addSpaceLine()
+    mod.addSpaceLine()
+    return mod
+
+  def amax_output_result(self, kernel) -> Module:
+    wave_size = kernel["WavefrontSize"]
+    amaxInType = kernel["ProblemType"]["ComputeDataType"]
+    amaxOutType = kernel["ProblemType"]["DataTypeAmaxD"]
+
+    mod = Module("output_result")
+    mod.addComment0("output_result")
+
+    label_end = Label("end", 'end')
+    label_final_loop = Label("final_loop", 'final_loop')
+    label_final_output = Label("final_output", 'final_output')
+    mod.addSpaceLine()
+
+    mod.add(VReadfirstlaneB32(sgpr("Tmp"), vgpr("Serial")))
+    mod.add(SCmpEQU32(sgpr("Tmp"), 0))
+    mod.add(SCBranchSCC0(label_end.getLabelName()))
+    mod.addSpaceLine()
+
+    # if self.arch.find("gfx94") != -1:
+    mod.addSpaceLine()
+    mod.add(SCmpEQU32(sgpr("NumGroup"), 1))
+    mod.add(SCBranchSCC1(label_final_output.getLabelName()))
+
+    mod.add(SLShiftLeftB32(sgpr("Tmp"), int(log2(amaxInType.numBytes())), sgpr("NumGroup")))
+    mod.add(SMovB32(sgpr("Dst+0"), sgpr("AddressWk+0")))
+    mod.add(SMovB32(sgpr("Dst+1"), sgpr("AddressWk+1")))
+    mod.add(SMovB32(sgpr("Dst+2"), sgpr("Tmp")))
+    mod.add(SMovB32(sgpr("Dst+3"), "Srd127_96"))
+
+    mod.add(SLShiftLeftB32(sgpr("Offset"), int(log2(amaxInType.numBytes())), sgpr("WGIdx")))
+    mod.add(VMovB32(vgpr("Offset"), 0))
+
+    # TODO- select inst
+    mod.add(BufferStoreB32(vgpr("AmaxOut"), vgpr("Offset"), sgpr("Dst",4), sgpr("Offset"), MUBUFModifiers(offen=True, glc=True, slc=True)))
+    mod.add(SWaitCnt(vmcnt=0))
+    mod.addSpaceLine()
+
+    mod.add(SSubI32(sgpr("Tmp"), sgpr("NumGroup"), 1))
+    mod.add(SAtomicDec(sgpr("Tmp"), sgpr("AddressSy",2), SMEMModifiers(glc=True)))
+    mod.add(SWaitCnt(vmcnt=0, lgkmcnt=0))
+    mod.add(SCmpEQU32(sgpr("Tmp"), 1))
+    mod.add(SCBranchSCC0(label_end.getLabelName()))
+    mod.addSpaceLine()
+
+    mod.add(SLShiftLeftB32(sgpr("Tmp"), int(log2(amaxInType.numBytes())), sgpr("NumGroup")))
+    mod.add(SMovB32(sgpr("Src+0"), sgpr("AddressWk+0")))
+    mod.add(SMovB32(sgpr("Src+1"), sgpr("AddressWk+1")))
+    mod.add(SMovB32(sgpr("Src+2"), sgpr("Tmp")))
+    mod.add(SMovB32(sgpr("Src+3"), "Srd127_96"))
+    mod.addSpaceLine()
+
+    mod.add(VLShiftLeftB32(vgpr("Offset"), int(log2(amaxOutType.numBytes())), vgpr("Serial")))
+    mod.addSpaceLine()
+
+    mod.add(VMovB32(vgpr("AmaxOut"), "0"))
+    mod.addSpaceLine()
+    mod.add(label_final_loop)
+
+    # TODO- select inst
+    mod.add(BufferLoadB32(vgpr(f"Value"), vgpr("Offset"), sgpr("Src",4), 0, MUBUFModifiers(offen=True, glc=True, slc=True)))
+    mod.add(SWaitCnt(vmcnt=0))
+    mod.addSpaceLine()
+
+    # TODO- F16?
+    mod.add(VMaxF32(vgpr("AmaxOut"), vgpr("AmaxOut"), SrcAbs(vgpr("Value"))))
+    mod.addSpaceLine()
+
+    mod.add(SMovB32(sgpr("Tmp"), wave_size * amaxInType.numBytes()))
+    mod.add(VAddU32(vgpr("Offset"), vgpr("Offset"), sgpr("Tmp")))
+    mod.addSpaceLine()
+
+    mod.add(SSubI32(sgpr("NumGroup"), sgpr("NumGroup"), wave_size))
+    mod.add(SCmpGtI32(sgpr("NumGroup"), 0))
+    mod.add(SCBranchSCC1(label_final_loop.getLabelName()))
+    mod.addSpaceLine()
+
+    mod.add(self.amax_intra_wave_reduction(kernel, "final"))
+    mod.addSpaceLine()
+    mod.add(label_final_output)
+
+    mod.add(SMovB32(sgpr("Dst+0"), sgpr("AddrAmaxOut+0")))
+    mod.add(SMovB32(sgpr("Dst+1"), sgpr("AddrAmaxOut+1")))
+    mod.add(SMovB32(sgpr("Dst+2"), amaxOutType.numBytes()))
+    mod.add(SMovB32(sgpr("Dst+3"), "Srd127_96"))
+    mod.addSpaceLine()
+
+    mod.add(VMovB32(vgpr("Offset"), 0))
+
+    # TODO- select inst
+    mod.add(BufferStoreB32(vgpr("AmaxOut"), vgpr("Offset"), sgpr("Dst",4), 0, MUBUFModifiers(offen=True)))
+    mod.addSpaceLine()
+    mod.add(label_end)
+    mod.addSpaceLine()
+
+    return mod
+
+  def insertAmaxD(self, kernel):
+    module = Module("AmaxD Output")
+    module.addComment0("AmaxD Output")
+
+    self.amaxVgprNames = ["Widx", "Offset", "Tmp", "Value"]
+    self.amaxVgprSizes = [1, 1, 1, 1]
+    self.amaxSgprArgNames = ["AddrAmaxOut", "AddressWk", "AddressSy"]
+    self.amaxSgprArgSizes = [2, 2, 2]
+
+    module.addSpaceLine()
+    module.add(SBarrier())
+    module.add(self.amax_define_load_res())
+    module.add(self.amax_intra_wave_reduction(kernel, "middle"))
+    module.add(self.amax_inter_wave_reduction(kernel))
+    module.add(self.amax_broadcast(kernel))
+    module.add(self.amax_output_result(kernel))
+
+    for i in self.amaxVgprIdxVec:
+        self.vgprPool.checkIn(i)
+    for i in self.amaxSgprIdxVec:
+        self.sgprPool.checkIn(i)
+
+    return module
+
+  ########################################
   # Activation related
   ########################################
   def initActivationLoop(self, kernel, beta, edge):
@@ -10707,10 +10992,15 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Function End
   ##############################################################################
-  def functionEnd(self, addLabel=True):
+  def functionEnd(self, kernel, addLabel=True):
     imod = Module()
     if addLabel:
       imod.add(Label("KernelEnd", ""))
+
+      # TODO- refine this part, put outside of this function
+      if kernel["ProblemType"]["OutputAmaxD"]:
+        imod.add(self.insertAmaxD(kernel))
+
     imod.add(SEndpgm(comment="Kernel End"))
     return imod
 

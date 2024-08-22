@@ -231,12 +231,12 @@ else()
     endif()
 endif()
 
-find_package( hipblas REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+find_package( hipblas-common REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 
 # Setup version
-set(VERSION_STRING "0.8.0")
+set(VERSION_STRING "0.10.0")
 rocm_setup_version(VERSION ${VERSION_STRING})
-set(hipblaslt_SOVERSION 0.8)
+set(hipblaslt_SOVERSION 0.10)
 
 
 if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
@@ -304,7 +304,8 @@ if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
 endif( )
 
 if( NOT BUILD_CUDA )
-  rocm_package_add_dependencies(DEPENDS "hipblas >= 0.50.0")
+  set(hipblas_common_minimum 1.0.0)
+  rocm_package_add_dependencies(DEPENDS "hipblas-common >= ${hipblas_common_minimum}")
 endif( )
 
 # Build docs

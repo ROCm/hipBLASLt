@@ -63,7 +63,7 @@
   UseScaleAlphaVec: 1
 - - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: 0
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
