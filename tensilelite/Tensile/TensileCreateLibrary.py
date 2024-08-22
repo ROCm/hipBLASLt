@@ -52,7 +52,6 @@ import shutil
 import subprocess
 import sys
 from timeit import default_timer as timer
-from copy import deepcopy
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -1094,17 +1093,17 @@ def generateLogicDataAndSolutions(logicFiles, args):
       if architectureName in masterLibraries:
         masterLibraries[architectureName].merge(newLibrary)
       else:
-        masterLibraries[architectureName] = deepcopy(newLibrary)
+        masterLibraries[architectureName] = newLibrary
         masterLibraries[architectureName].version = args.version
     elif globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
       if architectureName in masterLibraries:
         nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
       else:
-        masterLibraries[architectureName] = deepcopy(newLibrary)
+        masterLibraries[architectureName] = newLibrary
         masterLibraries[architectureName].version = args.version
     else:
       if fullMasterLibrary is None:
-        fullMasterLibrary = deepcopy(newLibrary)
+        fullMasterLibrary = newLibrary
         fullMasterLibrary.version = args.version
       else:
         fullMasterLibrary.merge(newLibrary)
@@ -1118,7 +1117,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
     if "fallback" in masterLibraries.keys():
       for key, value in masterLibraries.items():
         if key != "fallback":
-          value.merge(deepcopy(masterLibraries["fallback"]))
+          value.merge(masterLibraries["fallback"])
 
       masterLibraries.pop("fallback")
 
@@ -1182,7 +1181,7 @@ def WriteClientLibraryFromSolutions(solutionList, libraryWorkingPath, tensileSou
 
   if tensileSourcePath == None:
     tensileSourcePath = os.path.dirname(os.path.realpath(__file__))
-  firstSolution = deepcopy(solutionList[0])
+  firstSolution = solutionList[0]
   problemType = firstSolution["ProblemType"].state
   problemType["DataType"] = problemType["DataType"].value
   problemType["DataTypeA"] = problemType["DataTypeA"].value
