@@ -545,9 +545,10 @@ class StoreState:
                 if coordOffset in biasVgprMap:
                     dataBias = biasVgprMap[coordOffset]
                 else:
+                    gwvw = self.cfg.gwvw if factorDim == 0 else min(self.cfg.gwvw, 2)
                     numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-                    dataBias = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
-                                int(ceil(numVgprs*self.cfg.gwvw)), "bias data for ei=%u"%elementIdx, preventOverflow=False)
+                    dataBias = kw.vgprPool.checkOutAligned(int(numVgprs*gwvw), \
+                                int(ceil(numVgprs*gwvw)), "bias data for ei=%u"%elementIdx, preventOverflow=False)
                     biasVgprMap[coordOffset] = dataBias
             else:
                 dataBias = 0
@@ -573,7 +574,7 @@ class StoreState:
                 if coordOffset1 in scaleBVecVgprMap:
                     dataScaleBVec = scaleBVecVgprMap[coordOffset1]
                 else:
-                    gwvw = 2 if self.cfg.gwvw >= 2 else 1
+                    gwvw = min(self.cfg.gwvw, 2)
                     numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
                     dataScaleBVec = kw.vgprPool.checkOutAligned(int(numVgprs*gwvw), \
                                   int(ceil(numVgprs*gwvw)), "scaleBVec data for ei=%u"%elementIdx, preventOverflow=False)
