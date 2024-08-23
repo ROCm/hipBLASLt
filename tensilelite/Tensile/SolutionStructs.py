@@ -1044,7 +1044,7 @@ class Solution(collections.abc.Mapping):
   ########################################
   def __init__(self, config):
     self._name = None
-    config = deepcopy(config)
+    config = config
 
     self._state = {}
     # problem type
@@ -1107,7 +1107,7 @@ class Solution(collections.abc.Mapping):
   ########################################
   # get a list of kernel parameters for this solution
   def getKernels(self):
-    kernel = deepcopy(self)
+    kernel = self
     kernel._state.update({"Kernel": True})
     kernels = []
     kernels.append(kernel)
@@ -4026,7 +4026,7 @@ class Solution(collections.abc.Mapping):
     return self.__str__()
 
   def getAttributes(self):
-    return deepcopy(self._state)
+    return self._state
 
   def __hash__(self):
     return hash(str(self) + self._state.get("codeObjectFile", ""))
