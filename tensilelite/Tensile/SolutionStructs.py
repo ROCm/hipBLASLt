@@ -1940,7 +1940,6 @@ class Solution(collections.abc.Mapping):
     computeName  = state["ProblemType"]["ComputeDataType"].toName()
     if state["StreamK"] > 0 and state["StreamKAtomic"] == 0:
       # StreamK Workspace size
-      computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
       state["_GlobalAccumulation"] = 'PartialsBuffer'
     elif state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
       if computeName != state["ProblemType"]["DestDataType"].toName():
@@ -1963,7 +1962,9 @@ class Solution(collections.abc.Mapping):
     if state["StreamK"] != 0:
       if state["MIWaveGroup"][0] * state["MIWaveGroup"][1] != 4:
         reject(state, "Stream-K requries MIWaveGroup0*MIWaveGroup1=4")
-      if state["EnableMatrixInstruction"] and globalParameters["AsmCaps"][isa]["HasWMMA"]:
+      if not state["EnableMatrixInstruction"]:
+        reject(state, "Stream-K requires MatrixInstruction")
+      if globalParameters["AsmCaps"][isa]["HasWMMA"]:
         reject(state, "Stream-K untested with WMMA")
       if state["GlobalSplitU"] > 0:
         reject(state, "Cannot enable both Stream-K and GSU")
