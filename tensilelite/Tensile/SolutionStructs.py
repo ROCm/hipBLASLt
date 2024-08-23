@@ -1960,14 +1960,13 @@ class Solution(collections.abc.Mapping):
     isa = tuple(state["ISA"])
     
     if state["StreamK"] != 0:
+      state["GlobalSplitU"] = 0 # Cannot enable both Stream-K and GSU
       if state["MIWaveGroup"][0] * state["MIWaveGroup"][1] != 4:
         reject(state, "Stream-K requries MIWaveGroup0*MIWaveGroup1=4")
       if not state["EnableMatrixInstruction"]:
         reject(state, "Stream-K requires MatrixInstruction")
       if globalParameters["AsmCaps"][isa]["HasWMMA"]:
         reject(state, "Stream-K untested with WMMA")
-      if state["GlobalSplitU"] > 0:
-        reject(state, "Cannot enable both Stream-K and GSU")
       # if state["PersistentKernel"]:
       #   reject(state, "Cannot enable both Stream-K and PersistentKernel")
       if not state["ProblemType"]["StridedBatched"]:
