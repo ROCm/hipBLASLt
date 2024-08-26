@@ -57,6 +57,9 @@ if( BUILD_WITH_TENSILE )
   if(Tensile_LAZY_LIBRARY_LOADING)
     set(Tensile_Options ${Tensile_Options} LAZY_LIBRARY_LOADING)
   endif()
+  if(Tensile_KEEP_BUILD_TMP)
+    set(Tensile_Options ${Tensile_Options} KEEP_BUILD_TMP)
+  endif()
 
   # Add a build target for Tensile kernel library
   # Runtime language is HIP by default

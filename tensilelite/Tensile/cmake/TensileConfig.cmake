@@ -87,6 +87,7 @@ function(TensileCreateLibraryFiles
        GENERATE_PACKAGE
        SEPARATE_ARCHITECTURES
        LAZY_LIBRARY_LOADING
+       KEEP_BUILD_TMP
        )
 
   # Single value settings
@@ -142,6 +143,10 @@ function(TensileCreateLibraryFiles
 
   if(Tensile_LAZY_LIBRARY_LOADING)
     set(Options ${Options} "--lazy-library-loading")
+  endif()
+
+  if(Tensile_KEEP_BUILD_TMP)
+    set(Options ${Options} "--keep-build-tmp")
   endif()
 
   if(Tensile_GENERATE_PACKAGE)
