@@ -862,8 +862,6 @@ namespace Tensile
             int32_t internalArg1 = 0;
             if(internalArgsSupport.wgm)
             {
-                if(wgm == -1)
-                    wgm = 1;
                 args.template append<int32_t>("internalArgs1", wgm);
             }
 
