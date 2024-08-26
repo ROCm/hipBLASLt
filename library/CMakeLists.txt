@@ -131,6 +131,10 @@ else()
     target_compile_definitions(hipblaslt PRIVATE __HIP_PLATFORM_NVIDIA__)
 endif()
 
+if( LEGACY_HIPBLAS_DIRECT )
+  target_compile_definitions(hipblaslt PRIVATE LEGACY_HIPBLAS_DIRECT )
+endif()
+
 # Target compile features
 target_compile_features(hipblaslt PRIVATE cxx_nullptr)
 
