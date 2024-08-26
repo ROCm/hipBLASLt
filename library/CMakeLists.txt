@@ -145,6 +145,16 @@ target_include_directories(hipblaslt
                                    $<INSTALL_INTERFACE:include>
 )
 
+if( LEGACY_HIPBLAS_DIRECT )
+  target_include_directories(hipblaslt
+                             PUBLIC  $<BUILD_INTERFACE:${HIPBLAS_INCLUDE_DIRS}>
+  )
+else()
+  target_include_directories(hipblaslt
+                             PUBLIC  $<BUILD_INTERFACE:${HIPBLAS-COMMON_INCLUDE_DIRS}>
+  )
+endif()
+
 if(BUILD_CUDA)
 target_include_directories(hipblaslt
                            PUBLIC $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>
@@ -209,10 +219,16 @@ endif()
 
 # Export targets
 if(NOT BUILD_CUDA)
-  rocm_export_targets(TARGETS roc::hipblaslt
-                      DEPENDS PACKAGE hip
-                      DEPENDS PACKAGE hipblas-common
-                      NAMESPACE roc::)
+  if( LEGACY_HIPBLAS_DIRECT )
+    rocm_export_targets(TARGETS roc::hipblaslt
+                        DEPENDS PACKAGE hip
+                        NAMESPACE roc::)
+  else()
+    rocm_export_targets(TARGETS roc::hipblaslt
+                        DEPENDS PACKAGE hip
+                        DEPENDS PACKAGE hipblas-common
+                        NAMESPACE roc::)
+  endif()
 else()
   rocm_export_targets(TARGETS roc::hipblaslt
                       PREFIX hipblaslt

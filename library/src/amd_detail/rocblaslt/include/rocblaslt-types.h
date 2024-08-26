@@ -33,7 +33,11 @@
 #define _ROCBLASLT_TYPES_H_
 
 #include <hip/hip_bfloat16.h>
+#ifndef LEGACY_HIPBLAS_DIRECT
 #include <hipblas-common/hipblas-common.h>
+#else
+#include <hipblas/hipblas.h>
+#endif
 #include <hipblaslt/hipblaslt.h>
 #include <memory>
 #include <stddef.h>
