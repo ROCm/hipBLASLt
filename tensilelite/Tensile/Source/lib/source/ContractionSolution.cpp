@@ -826,12 +826,15 @@ namespace Tensile
             args.template append<uint32_t>("gemm_count", gemmCount);
         }
 
-        uint32_t gsu = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
-        int32_t  wgm = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
-
+        uint32_t gsu      = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
+        bool     gsuc     = false; // initialized false
+        bool     gsuwgmrr = false; // initialized false
+        int32_t  wgm      = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
         const uint32_t mask16       = 0xFFFF;
+        const uint32_t mask14       = 0x3FFF;
         const uint32_t mask8        = 0xFF;
         uint32_t       internalArg0 = 0;
+
         if(internalArgsSupport.wgm && internalArgsSupport.version == 0)
         {
             if(wgm > 255)
@@ -841,7 +844,16 @@ namespace Tensile
             uint32_t wgShift8 = (mask8 & (uint32_t)wgm) << 8;
             internalArg0      = internalArg0 | wgShift8;
         }
-        internalArg0 = internalArg0 | (mask16 & gsu);
+
+        // support gsuc and gsuwgmrr after version 2
+        if(internalArgsSupport.version >= 2)
+        {
+            gsuc     = param.gsuc() > 0 ? param.gsuc() : sizeMapping.globalSplitUCoalesced;
+            gsuwgmrr = param.gsuwgmrr() > 0 ? param.gsuwgmrr() : sizeMapping.globalSplitUWorkGroupMappingRoundRobin;
+        }
+        
+        internalArg0
+            = internalArg0 | ((uint32_t)gsuc << 15) | ((uint32_t)gsuwgmrr << 14) | (mask14 & gsu);
 
         // StaggerU
         if(internalArgsSupport.staggerU)
@@ -857,13 +869,11 @@ namespace Tensile
 
         args.template append<uint32_t>("internalArgs", internalArg0);
 
-        if(internalArgsSupport.version == 1)
+        if(internalArgsSupport.version >= 1)
         {
             int32_t internalArg1 = 0;
             if(internalArgsSupport.wgm)
             {
-                if(wgm == -1)
-                    wgm = 1;
                 args.template append<int32_t>("internalArgs1", wgm);
             }
 
@@ -940,7 +950,7 @@ namespace Tensile
         auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
         if(stoi(gpu_arch_no_prefix) / 100 != 12)
         {
-            if(internalArgsSupport.version == 1)
+            if(internalArgsSupport.version >= 1)
             {
                 rv.numWorkGroups.x *= (rv.numWorkGroups.y * rv.numWorkGroups.z);
                 rv.numWorkGroups.y = 1;

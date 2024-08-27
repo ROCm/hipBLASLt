@@ -53,6 +53,7 @@ BenchmarkProblems:
         - PreloadKernArgs: [1]
         - GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - GlobalSplitUCoalesced: [False,True]
+        - GlobalSplitUWorkGroupMappingRoundRobin: [False,True]
         - SourceSwap: [1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:

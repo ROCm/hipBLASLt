@@ -188,7 +188,6 @@ class StateValues:
   unifiedVgprRegs: bool                  = False
   useAtomicAdd: bool                     = False
   serializedStore: bool                  = False
-  gsu_wg_coalesced: bool                 = False
 
   a: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)
   b: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)
@@ -1488,7 +1487,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       gsuBackup   = kernel["GlobalSplitU"]
       gsuLabel    = Label(label=self.labels.getNameInc("GSU"), comment="")
       gsuLabelEnd = Label(label=self.labels.getNameInc("GSU_End"), comment="")
-      module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
+      with self.allocTmpSgpr(1) as tmpSgprGSU:
+        module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+        module.add(SCmpEQU32(src0=sgpr(tmpSgprGSU.idx), src1=1, comment="GSU == 1 ?"))
       module.add(SCBranchSCC1(labelName=gsuLabel.getLabelName(), comment="branch if GSU == 1"))
       module.addComment1("global read addresses: increments a")
       kernel["GlobalSplitU"] = 2
@@ -2288,7 +2289,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["PrefetchGlobalRead"]:
       if not kernel["SuppressNoLoadLoop"]:
         gsuLabel = Label(label=self.labels.getNameInc("GSU"), comment="")
-        module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
+        with self.allocTmpSgpr(1) as tmpSgprGSU:
+          module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+          module.add(SCmpEQU32(src0=sgpr(tmpSgprGSU.idx), src1=1, comment="GSU == 1 ?"))
         noLoadLoopModules = None
         acclen = 0
         gsuBackup          = kernel["GlobalSplitU"]
@@ -3330,8 +3333,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
         vgprIdx = 0
         self.states.c.numVgprValu = 0
 
-    self.states.gsu_wg_coalesced = kernel["GlobalSplitUCoalesced"]
-
     # TODO: alignment hack, figure out a better solution
     vgprIdx = ((vgprIdx+1)//2)*2
     # Avoid bank conflict between VgprA and VgprC
@@ -3775,6 +3776,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.nonPostLoopSgpr.remove("OrigLoopCounter")
     self.states.nonPostLoopSgpr.remove("AddressA")
     self.states.nonPostLoopSgpr.remove("AddressB")
+    if not kernel["ForceDisableShadowInit"] and kernel["ActivationFuncCall"]:
+      if kernel["PrefetchGlobalRead"]:
+        self.states.nonPostLoopSgpr.remove("AddressC")
+        self.states.nonPostLoopSgpr.remove("AddressD")
     self.states.nonPostLoopSgpr.remove("StridesA")
     self.states.nonPostLoopSgpr.remove("StridesB")
 
@@ -4716,6 +4721,9 @@ for codeObjectFileName in codeObjectFileNames:
       print (' '.join(args), " && ")
 
     subprocess.check_call(args, cwd=self.getAssemblyDirectory())
+
+    if not globalParameters["KeepBuildTmp"]:
+        os.remove(assemblyFileName)
 
     return objectFileName
 

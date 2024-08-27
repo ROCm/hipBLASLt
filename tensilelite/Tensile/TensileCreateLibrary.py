@@ -36,7 +36,7 @@ from . import Utils
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, CMakeHeader, assignGlobalParameters, \
-                    architectureMap, supportedCompiler
+                    architectureMap, supportedCompiler, printWarning
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
@@ -52,7 +52,7 @@ import shutil
 import subprocess
 import sys
 from timeit import default_timer as timer
-from copy import deepcopy
+from pathlib import Path
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -1094,17 +1094,17 @@ def generateLogicDataAndSolutions(logicFiles, args):
       if architectureName in masterLibraries:
         masterLibraries[architectureName].merge(newLibrary)
       else:
-        masterLibraries[architectureName] = deepcopy(newLibrary)
+        masterLibraries[architectureName] = newLibrary
         masterLibraries[architectureName].version = args.version
     elif globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
       if architectureName in masterLibraries:
         nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
       else:
-        masterLibraries[architectureName] = deepcopy(newLibrary)
+        masterLibraries[architectureName] = newLibrary
         masterLibraries[architectureName].version = args.version
     else:
       if fullMasterLibrary is None:
-        fullMasterLibrary = deepcopy(newLibrary)
+        fullMasterLibrary = newLibrary
         fullMasterLibrary.version = args.version
       else:
         fullMasterLibrary.merge(newLibrary)
@@ -1118,7 +1118,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
     if "fallback" in masterLibraries.keys():
       for key, value in masterLibraries.items():
         if key != "fallback":
-          value.merge(deepcopy(masterLibraries["fallback"]))
+          value.merge(masterLibraries["fallback"])
 
       masterLibraries.pop("fallback")
 
@@ -1182,7 +1182,7 @@ def WriteClientLibraryFromSolutions(solutionList, libraryWorkingPath, tensileSou
 
   if tensileSourcePath == None:
     tensileSourcePath = os.path.dirname(os.path.realpath(__file__))
-  firstSolution = deepcopy(solutionList[0])
+  firstSolution = solutionList[0]
   problemType = firstSolution["ProblemType"].state
   problemType["DataType"] = problemType["DataType"].value
   problemType["DataTypeA"] = problemType["DataTypeA"].value
@@ -1280,7 +1280,8 @@ def TensileCreateLibrary():
   argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
                          help="Keep debug information for built code objects")
   argParser.add_argument("--build-id", dest="BuildIdKind", action="store", default="sha1")
-
+  argParser.add_argument("--keep-build-tmp", dest="KeepBuildTmp", action="store_true",
+                          default=False, help="Do not remove the temporary build directory (may required hundreds of GBs of space)"),
   args = argParser.parse_args()
 
   logicPath = args.LogicPath
@@ -1323,6 +1324,7 @@ def TensileCreateLibrary():
   arguments["PrintTiming"] = args.PrintTiming
   arguments["AsmDebug"] = args.AsmDebug
   arguments["BuildIdKind"] = args.BuildIdKind
+  arguments["KeepBuildTmp"] = args.KeepBuildTmp
 
   for key, value in args.global_parameters:
     arguments[key] = value
@@ -1519,6 +1521,13 @@ def TensileCreateLibrary():
         printExit("File %s is missing.", filePath)
 
   checkFileExistence(itertools.chain(libMetadataPaths, sourceLibPaths, asmLibPaths))
+
+  if not globalParameters["KeepBuildTmp"]:
+    buildTmp = Path(outputPath).parent / "library" / "build_tmp"
+    if buildTmp.exists() and buildTmp.is_dir():
+      shutil.rmtree(buildTmp)
+    else:
+      printWarning(f"Cannot remove {str(buildTmp)}")
 
   print1("# Tensile Library Writer DONE")
   print1(HR)

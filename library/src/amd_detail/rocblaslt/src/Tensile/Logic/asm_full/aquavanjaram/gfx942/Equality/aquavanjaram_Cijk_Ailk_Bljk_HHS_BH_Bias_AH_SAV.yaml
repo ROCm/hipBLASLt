@@ -57,7 +57,7 @@
   UseInitialStridesCD: false
   UseScaleAlphaVec: 1
 - - 1LDSBuffer: 0
-    ActivationFuncCall: 0
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -272,7 +272,7 @@
     _staggerStrideShift: 0
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 1
-    ActivationFuncCall: 0
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -487,7 +487,7 @@
     _staggerStrideShift: 0
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 1
-    ActivationFuncCall: 0
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -702,7 +702,7 @@
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 1
-    ActivationFuncCall: 0
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -917,7 +917,7 @@
     _staggerStrideShift: 1
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -1132,7 +1132,7 @@
     _staggerStrideShift: 0
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -1348,7 +1348,7 @@
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -1572,7 +1572,7 @@
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -1794,7 +1794,7 @@
     _staggerStrideShift: 0
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -2010,7 +2010,7 @@
     _staggerStrideShift: 0
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -2226,7 +2226,7 @@
     _staggerStrideShift: 0
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -2442,7 +2442,7 @@
     _staggerStrideShift: 0
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -2658,7 +2658,7 @@
     _staggerStrideShift: 1
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -2874,7 +2874,7 @@
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -3090,7 +3090,7 @@
     _staggerStrideShift: 0
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 0
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -3306,7 +3306,7 @@
     _staggerStrideShift: 0
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 1
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -3522,7 +3522,7 @@
     _staggerStrideShift: 0
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 1
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 8
@@ -3776,7 +3776,7 @@
     _staggerStrideShift: 0
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 8
