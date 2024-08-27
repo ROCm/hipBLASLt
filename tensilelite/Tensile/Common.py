@@ -320,7 +320,7 @@ internalParameters = {
 
 # These parameters are used in ContractionSolutions for user arguments support.
 defaultInternalSupportParams = {
-  "KernArgsVersion": 1,
+  "KernArgsVersion": 2,
   # Information about user input internal kernel argument support
   # Change this to False if the CustomKernel does not support.
   "SupportUserGSU": True,
@@ -779,6 +779,13 @@ validParameters = {
     # True:  {(wg0,wg0,wg0)|(wg1,wg1,wg1)|(wg2,wg2,wg2)|...|(wgn,wgn,wgn)}
     "GlobalSplitUCoalesced":        [False, True],
 
+    # GSU Workgroup Mapping
+    # False: wg issued order = {(wg0,wg1,wg2,wgn),(wg0,wg1,wg2,wgn)|...|(wg0,wg1,wg2,wgn)}
+    #   -> workgroups do the summation by tile -> slower GR but faster GW
+    # True:  wg issused oder = {(wg0,wg0,wg0)|(wg1,wg1,wg1)|(wg2,wg2,wg2)|...|(wgn,wgn,wgn)}
+    #   -> workgroups split up the summation -> faster GR but slower GW
+    "GlobalSplitUWorkGroupMappingRoundRobin":        [False, True],
+    
     # 0=don't use magic div (source only)
     # 1=magic div alg #1.  Slightly faster but limited range (if magic number is 2^32)
     # 2=magic div alg#2.  Slightly slower but handles all unsigned ints up to 2^32
@@ -1129,6 +1136,7 @@ defaultBenchmarkCommonParameters = [
     {"GlobalSplitU":              [ 1 ] },
     {"GlobalSplitUAlgorithm":     [ "MultipleBuffer" ] },
     {"GlobalSplitUCoalesced":     [ False ] },
+    {"GlobalSplitUWorkGroupMappingRoundRobin":     [ False ] },
     {"Use64bShadowLimit":         [ 1 ] },
     {"NumLoadsCoalescedA":        [ 1 ] },
     {"NumLoadsCoalescedB":        [ 1 ] },
