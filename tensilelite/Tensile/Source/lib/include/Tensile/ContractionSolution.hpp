@@ -443,6 +443,8 @@ namespace Tensile
             std::string customKernelName;
 
             int workGroupMappingXCC = 1;
+            bool globalSplitUCoalesced = false;
+            bool globalSplitUWorkGroupMappingRoundRobin = false;
         };
 
         struct InternalArgsSupport

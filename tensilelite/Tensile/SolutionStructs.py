@@ -3820,6 +3820,9 @@ class Solution(collections.abc.Mapping):
     state_copy["StaggerU"] = "M"
     state_copy["StaggerUStride"] = "M"
     state_copy["StaggerUMapping"] = "M"
+    state_copy["GlobalSplitUCoalesced"] = "M"
+    state_copy["GlobalSplitUWorkGroupMappingRoundRobin"] = "M"
+
     return state_copy
 
   @ staticmethod
@@ -3873,6 +3876,8 @@ class Solution(collections.abc.Mapping):
       requiredParameters["StaggerU"] = False
       requiredParameters["StaggerUStride"] = False
       requiredParameters["StaggerUMapping"] = False
+      requiredParameters["GlobalSplitUCoalesced"] = False
+      requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = False
 
     components.append('SN')
     for key in sorted(state.keys()):
@@ -3886,6 +3891,8 @@ class Solution(collections.abc.Mapping):
     requiredParameters["StaggerU"] = True
     requiredParameters["StaggerUStride"] = True
     requiredParameters["StaggerUMapping"] = True
+    requiredParameters["GlobalSplitUCoalesced"] = True
+    requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = True
 
     return '_'.join(components)
 
