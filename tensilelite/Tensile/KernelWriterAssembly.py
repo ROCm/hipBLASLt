@@ -399,10 +399,20 @@ class KernelWriterAssembly(KernelWriter):
 
     return sgprIdxVec
 
+  def setSgprToInUseState(self, name):
+    self.sgprPool.removeFromCheckOut(self.sgprs[name])
+    return RegSet("s", "sgpr"+name, self.sgprs[name])
+
   def undefineSgpr(self, name):
     self.sgprPool.checkIn(self.sgprs[name])
     # undefine a sgpr string twice will cause compiler error.
     # User must not add the UNDEF code module except it is the last one.
+    return ValueSet(name="sgpr"+name, value="UNDEF", format = -1)
+
+  def setSgprToFreeState(self, name):
+    self.sgprPool.addFromCheckOut(self.sgprs[name])
+    # undefine a sgpr string twice will cause compiler error.
+    # Must call setSgprToInUseState again before calling setSgprToFreeState.
     return ValueSet(name="sgpr"+name, value="UNDEF", format = -1)
 
   def defineVariableSgprs(self, kernel):
@@ -7933,6 +7943,9 @@ class KernelWriterAssembly(KernelWriter):
       module.add(self.allocPostLoopSrd("D"))
       module.add(self.allocPostLoopSrd("C"))
       module.add(self.computeStoreSrdStart(kernel, ["C", "D"], sgprBpeList=["GSULog2BpeC", "GSULog2BpeD"]))
+      module.add(self.undefineSgpr("AddressC"))
+      if not (self.states.useBias == DataDirection.WRITE and kernel["GlobalSplitUAlgorithm"] == "MultipleBuffer"):
+        module.add(self.undefineSgpr("AddressD"))
       module.add(self.undefineSgpr("GSULog2BpeC"))
     return module
 
@@ -8896,6 +8909,14 @@ class KernelWriterAssembly(KernelWriter):
       ssslist = []
       useSize = []
 
+      if kernel["ProblemType"]["UseScaleAB"] and \
+        (gsuAccumBackup == 'MultipleBufferSingleKernel' and (gsuLimit > 1 and gsuLimitIdx > 0)):
+        module.add(self.setSgprToInUseState("AddressScaleA"))
+        module.add(self.setSgprToInUseState("AddressScaleB"))
+        if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+          module.add(self.setSgprToInUseState("SrdScaleA"))
+          module.add(self.setSgprToInUseState("SrdScaleB"))
+
       # Issue read scale A/B value for later use
       if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') and \
         ((kernel["ProblemType"]["DataTypeA"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters()) or \
@@ -9059,6 +9080,8 @@ class KernelWriterAssembly(KernelWriter):
           numRecordsStr = "SizeI" if kernel["ProblemType"]["BiasSrc"] == "A" else "SizeJ"
           # Init bias Srd
           module.add(allocPostLoopSrdSuppressRaw("Bias", sourceAddress, labelStr, sgprLength=sgpr(numRecordsStr)))
+          if sourceAddress == "D":
+            module.add(self.undefineSgpr("AddressD"))
           multiBiasTypeLabel = []
           for i in kernel["ProblemType"]["BiasDataTypeList"]:
             name = self.labels.getNameInc("Write_Bias%s"%i.toNameAbbrev())
@@ -9107,11 +9130,21 @@ class KernelWriterAssembly(KernelWriter):
           module.add(self.readVectorToLDS(vectorDataTypes, kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes, factorDim))
 
       # Undefine LDS load related sgprs
-      if kernel["GlobalSplitU"] == 1 and kernel["ProblemType"]["UseScaleAB"] == "Vector":
-        module.add(self.undefineSgpr("AddressScaleA"))
-        module.add(self.undefineSgpr("AddressScaleB"))
-        module.add(self.undefineSgpr("SrdScaleA"))
-        module.add(self.undefineSgpr("SrdScaleB"))
+      if kernel["ProblemType"]["UseScaleAB"]:
+        if gsuAccumBackup == 'MultipleBufferSingleKernel' and (gsuLimit > 1 and gsuLimitIdx == 0):
+          module.add(self.setSgprToFreeState("AddressScaleA"))
+          module.add(self.setSgprToFreeState("AddressScaleB"))
+          if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+            module.add(self.setSgprToFreeState("SrdScaleA"))
+            module.add(self.setSgprToFreeState("SrdScaleB"))
+        elif gsuLimitIdx == 0:
+          pass
+        else:
+          module.add(self.undefineSgpr("AddressScaleA"))
+          module.add(self.undefineSgpr("AddressScaleB"))
+          if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+            module.add(self.undefineSgpr("SrdScaleA"))
+            module.add(self.undefineSgpr("SrdScaleB"))
 
       if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') and \
         ((kernel["ProblemType"]["DataTypeA"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters()) or \
