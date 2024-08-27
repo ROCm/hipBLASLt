@@ -175,6 +175,10 @@ def argUpdatedGlobalParameters(args):
     for key, value in args.global_parameters:
         rv[key] = value
 
+    PyTestBuildArchNames = os.environ.get("PyTestBuildArchNames")
+    if PyTestBuildArchNames != None and len(PyTestBuildArchNames) > 0:
+        rv["Architecture"] = PyTestBuildArchNames
+
     return rv
 
 
