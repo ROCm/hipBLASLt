@@ -1,36 +1,10 @@
-/*******************************************************************************
- *
- * MIT License
- *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- *******************************************************************************/
-
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt.h>
 #include <iostream>
 
 #include "helper.h"
 
-void simpleGemm(hipblasLtHandle_t  handle,
+void simpleGemmBias(hipblasLtHandle_t  handle,
                 hipblasOperation_t trans_a,
                 hipblasOperation_t trans_b,
                 int64_t            m,
@@ -58,7 +32,7 @@ int main()
         1024, 512, 1024, 1, 1.f, 1.f, 32 * 1024 * 1024);
 
     runner.run([&runner] {
-        simpleGemm(runner.handle,
+        simpleGemmBias(runner.handle,
                    HIPBLAS_OP_N,
                    HIPBLAS_OP_N,
                    runner.m,
@@ -79,7 +53,7 @@ int main()
     return 0;
 }
 
-void simpleGemm(hipblasLtHandle_t  handle,
+void simpleGemmBias(hipblasLtHandle_t  handle,
                 hipblasOperation_t trans_a,
                 hipblasOperation_t trans_b,
                 int64_t            m,
@@ -133,21 +107,21 @@ void simpleGemm(hipblasLtHandle_t  handle,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
-    hipDataType tciA = HIP_R_16BF;
-    hipDataType tciB = HIP_R_16BF;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(matmul,
-                                        HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT,
-                                        &tciA,
-                                        sizeof(void*)));
-
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(matmul,
-                                        HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT,
-                                        &tciB,
-                                        sizeof(void*)));
-
-    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
+    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_BIAS;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
+
+    hipDataType bias_data_type = HIP_R_16F;
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(matmul, HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, &bias_data_type, sizeof(hipDataType)));
+
+    // Allocate and set the bias tensor
+    std::vector<hipblasLtHalf> h_bias(m, 1.0f); // Example bias values, adjust as needed
+    void* d_bias;
+    CHECK_HIP_ERROR(hipMalloc(&d_bias, m * sizeof(hipblasLtHalf))); // Allocate memory for bias
+    CHECK_HIP_ERROR(hipMemcpy(d_bias, h_bias.data(), m * sizeof(hipblasLtHalf), hipMemcpyHostToDevice)); // Copy bias to device
+
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias, sizeof(void*)));
 
     // Set User Preference attributes
     hipblasLtMatmulPreference_t pref;
@@ -184,7 +158,6 @@ void simpleGemm(hipblasLtHandle_t  handle,
     // In this sample, the workspace is already allocated with max_workspace_size
     // If not, allocate d_workspace here
     // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
-
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                           matmul,
                                           &alpha,
@@ -201,10 +174,11 @@ void simpleGemm(hipblasLtHandle_t  handle,
                                           d_workspace,
                                           workspace_size,
                                           stream));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     return;
 }

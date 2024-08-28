@@ -46,7 +46,11 @@
 
 #include "hipblaslt/hipblaslt-export.h"
 #include "hipblaslt/hipblaslt-version.h"
+#ifndef LEGACY_HIPBLAS_DIRECT
 #include <hipblas-common/hipblas-common.h>
+#else
+#include <hipblas/hipblas.h>
+#endif
 
 #include <memory>
 #include <vector>
