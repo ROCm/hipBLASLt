@@ -61,12 +61,11 @@ class XCCMappingOn(XCCMapping):
             sGridM = tmpSgprRes.idx + 3
             sTmp = None
             sTmpRes = None
-            sqTmp = None
+            sqTmp = writer.sgprPool.checkOut(1, "sqTmp", preventOverflow=False)
             divisor = kernel["StreamKXCCMapping"]
             if ((divisor & (divisor - 1)) != 0): # Need temp registers if not power of 2
                 sTmp = writer.sgprPool.checkOut(2, "sTmp", preventOverflow=False)
                 sTmpRes  = RegisterPoolResource(idx=sTmp, size=2)
-                sqTmp = writer.sgprPool.checkOut(1, "sqTmp", preventOverflow=False)
 
             # sGridC = ceil(grid / xccm)
             module.add(SAddU32(dst=sgpr(sXCC), src0=sgpr("skGrid"), src1=hex(kernel["StreamKXCCMapping"] - 1), comment="ceil(grid/xccm)"))
@@ -87,9 +86,10 @@ class XCCMappingOn(XCCMapping):
             module.add(SMulI32(dst=sgpr(sXCC), src0=sgpr(sXCC), src1=sgpr(sGridC), comment="XCC group id"))
             module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(sXCC), comment="Add XCC group offset"))
             module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(sGridM), comment="Add remainder offset"))
+
+            writer.sgprPool.checkIn(sqTmp)
             if sTmp is not None:
                 writer.sgprPool.checkIn(sTmp)
-                writer.sgprPool.checkIn(sqTmp)
 
         return module
 
@@ -1789,7 +1789,7 @@ class StreamKTwoTileOriginal(StreamK):
         
     def storeBranches(self, writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct):
         module = Module("StreamK TwoTileOriginal storeBranches")
-        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel, vectorWidths, element, tmpVgpr, cvtVgprStruct))
+        module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct))
         return module
 
     def writePartials(self, writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct, endLabel):
