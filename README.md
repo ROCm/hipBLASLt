@@ -100,6 +100,8 @@ cd hipBLASLt
 ./install.sh -idc
 ```
 
+> **_NOTE:_**  To build hipBLASLt for ROCm <= 6.2, pass the `--legacy_hipblas_direct` flag to `install.sh`
+
 ## Unit tests
 
 All unit tests are located in `build/release/clients/staging/`. To build these tests, you must build
