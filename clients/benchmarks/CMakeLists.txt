@@ -70,7 +70,7 @@ else()
 endif()
 
 if( LEGACY_HIPBLAS_DIRECT )
-  target_compile_definitions(hipblaslt-bench PRIVATE LEGACY_HIPBLAS_DIRECT )
+  target_compile_definitions(hipblaslt-bench PUBLIC LEGACY_HIPBLAS_DIRECT )
 endif()
 
 # target_compile_options does not go to linker like CMAKE_CXX_FLAGS does, so manually add

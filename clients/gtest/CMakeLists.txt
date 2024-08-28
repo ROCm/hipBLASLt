@@ -39,7 +39,7 @@ add_executable( hipblaslt-test ${hipblaslt_test_source} ${hipblaslt_test_bench_c
 target_compile_definitions( hipblaslt-test PRIVATE GOOGLE_TEST )
 
 if( LEGACY_HIPBLAS_DIRECT )
-  target_compile_definitions(hipblaslt-test PRIVATE LEGACY_HIPBLAS_DIRECT )
+  target_compile_definitions(hipblaslt-test PUBLIC LEGACY_HIPBLAS_DIRECT )
 endif()
 
 # Internal header includes

@@ -132,7 +132,7 @@ else()
 endif()
 
 if( LEGACY_HIPBLAS_DIRECT )
-  target_compile_definitions(hipblaslt PRIVATE LEGACY_HIPBLAS_DIRECT )
+  target_compile_definitions(hipblaslt PUBLIC LEGACY_HIPBLAS_DIRECT )
 endif()
 
 # Target compile features

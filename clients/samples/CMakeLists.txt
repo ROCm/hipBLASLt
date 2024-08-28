@@ -102,7 +102,7 @@ foreach( exe ${sample_list_all} )
     target_compile_definitions( ${exe} PRIVATE ROCBLASLT_INTERNAL_API )
   endif( )
   if( LEGACY_HIPBLAS_DIRECT )
-    target_compile_definitions( ${exe} PRIVATE LEGACY_HIPBLAS_DIRECT )
+    target_compile_definitions( ${exe} PUBLIC LEGACY_HIPBLAS_DIRECT )
   endif()
 endforeach( )
 
