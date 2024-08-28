@@ -26,6 +26,8 @@ cmake_minimum_required(VERSION 3.25.2 FATAL_ERROR)
 # Build documentation
 option(BUILD_DOCS "Build documentation" OFF)
 
+option(LEGACY_HIPBLAS_DIRECT "Use hipblas headers instead of hipblas-common." OFF )
+
 # This will add compile option: -std=c++17
 set(CMAKE_CXX_STANDARD 17 )
 # Without this line, it will add -std=gnu++17 instead, which may have issues.
@@ -231,7 +233,11 @@ else()
     endif()
 endif()
 
-find_package( hipblas-common REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+if( LEGACY_HIPBLAS_DIRECT )
+  find_package( hipblas REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+else()
+  find_package( hipblas-common REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+endif()
 
 # Setup version
 set(VERSION_STRING "0.10.0")
@@ -304,8 +310,12 @@ if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
 endif( )
 
 if( NOT BUILD_CUDA )
-  set(hipblas_common_minimum 1.0.0)
-  rocm_package_add_dependencies(DEPENDS "hipblas-common >= ${hipblas_common_minimum}")
+  if( LEGACY_HIPBLAS_DIRECT )
+    rocm_package_add_dependencies(DEPENDS "hipblas >= 0.50.0")
+  else()
+    set(hipblas_common_minimum 1.0.0)
+    rocm_package_add_dependencies(DEPENDS "hipblas-common >= ${hipblas_common_minimum}")
+  endif()
 endif( )
 
 # Build docs
