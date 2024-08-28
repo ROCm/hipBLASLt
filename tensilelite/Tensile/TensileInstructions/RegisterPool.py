@@ -68,6 +68,7 @@ class RegisterPool:
     self.defaultPreventOverflow = defaultPreventOverflow
     self.pool = [self.Register(RegisterPool.Status.Unavailable, "init") for i in range(0,size)]
     self.checkOutSize = {}
+    self.checkOutSizeTemp = {}
 
   ########################################
   # Adds registers to the pool so they can be used as temps
@@ -104,6 +105,22 @@ class RegisterPool:
         raise RuntimeError("RegisterPool::add(%u,%u) pool[%u](%s) = %s" % (start, start+size-1, i, self.pool[i].tag, self.pool[i].status))
     if self.printRP:
       print(self.state())
+
+  # Adds registers to the pool so they can be used as temps
+  def addFromCheckOut(self, start):
+    if start in self.checkOutSize:
+      size = self.checkOutSize[start]
+      for i in range(start, start+size):
+        if self.pool[i].status != RegisterPool.Status.InUse:
+          raise RuntimeError("RegisterPool::addFromCheckOut('%s',%s) is not in InUse state"%(self.pool[start].tag, start))
+        self.pool[i].status = RegisterPool.Status.Available
+      self.checkOutSizeTemp[start] = [size, self.pool[start].tag]
+      self.checkOutSize.pop(start)
+      if self.printRP:
+        print("RP::addFromCheckOut('%s') @ %u +%u"%(self.pool[start].tag, start,size))
+    else:
+      raise RuntimeError("RegisterPool::addFromCheckOut('%s',%s) but it was never checked out"%(self.pool[start].tag, start))
+
   ########################################
   # Remove
   # Removes registers from the pool so they cannot be subsequently allocated for tmps
@@ -125,6 +142,22 @@ class RegisterPool:
         printWarning("RegisterPool::remove(%u,%u) pool[%u](%s) still in use" % (start, start+size-1, i, self.pool[i].tag))
       else:
         printExit("RegisterPool::remove(%u,%u) pool[%u](%s) = %s" % (start, start+size-1, i, self.pool[i].tag, self.pool[i].status))
+
+  # Removes registers from the pool so they cannot be subsequently allocated for tmps
+  def removeFromCheckOut(self, start):
+    if start in self.checkOutSizeTemp:
+      size, tag = self.checkOutSizeTemp[start]
+      for i in range(start, start+size):
+        if self.pool[i].status != RegisterPool.Status.Available:
+          raise RuntimeError("RegisterPool::addFromCheckOut('%s',%s) is not in Available state"%(self.pool[start].tag, start))
+        self.pool[i].status = RegisterPool.Status.InUse
+        self.pool[i].tag = tag
+      self.checkOutSize[start] = size
+      self.checkOutSizeTemp.pop(start)
+      if self.printRP:
+        print("RegisterPool::removeFromCheckOut('%s') @ %u +%u"%(self.pool[start].tag, start,size))
+    else:
+      raise RuntimeError("RegisterPool::removeFromCheckOut('%s',%s) but it was never checked out"%(self.pool[start].tag, start))
 
   ########################################
   # Check Out

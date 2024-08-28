@@ -3776,10 +3776,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.nonPostLoopSgpr.remove("OrigLoopCounter")
     self.states.nonPostLoopSgpr.remove("AddressA")
     self.states.nonPostLoopSgpr.remove("AddressB")
-    if not kernel["ForceDisableShadowInit"] and kernel["ActivationFuncCall"]:
-      if kernel["PrefetchGlobalRead"]:
-        self.states.nonPostLoopSgpr.remove("AddressC")
-        self.states.nonPostLoopSgpr.remove("AddressD")
     self.states.nonPostLoopSgpr.remove("StridesA")
     self.states.nonPostLoopSgpr.remove("StridesB")
 
