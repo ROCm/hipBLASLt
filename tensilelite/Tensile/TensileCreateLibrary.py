@@ -53,6 +53,8 @@ import subprocess
 import sys
 from timeit import default_timer as timer
 from pathlib import Path
+from copy import deepcopy
+from typing import Sequence
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -1205,6 +1207,23 @@ def WriteClientLibraryFromSolutions(solutionList, libraryWorkingPath, tensileSou
 
   return (codeObjectFiles, newLibrary)
 
+def validateLibrary(masterLibraries: MasterSolutionLibrary,
+                    kernels: Sequence[Solution],
+                    kernelWriterAssembly: KernelWriterAssembly):
+  kernelsByCodeObjectFiles = {k: list(g) for k, g in itertools.groupby(kernels, lambda k: k["codeObjectFile"])}
+
+  ok: bool = True
+
+  for _, lib in masterLibraries.items():
+    for name, llib in lib.lazyLibraries.items():
+      uniqueKernelsInLib = {kernelWriterAssembly.getKernelName(s.originalSolution) for s in llib.solutions.values()}
+
+      if len(uniqueKernelsInLib) != len(kernelsByCodeObjectFiles[name]):
+        ok = False
+        print(f"{name} library and co has inconsistent kernel size {len(uniqueKernelsInLib)} vs {len(kernelsByCodeObjectFiles[name])}")
+
+  assert ok and "Inconsistent kernel sizes detected!"
+
 ################################################################################
 # Tensile Create Library
 ################################################################################
@@ -1282,6 +1301,8 @@ def TensileCreateLibrary():
   argParser.add_argument("--build-id", dest="BuildIdKind", action="store", default="sha1")
   argParser.add_argument("--keep-build-tmp", dest="KeepBuildTmp", action="store_true",
                           default=False, help="Do not remove the temporary build directory (may required hundreds of GBs of space)"),
+  argParser.add_argument("--validate-library", dest="ValidateLibrary", action="store_true", default=False)
+
   args = argParser.parse_args()
 
   logicPath = args.LogicPath
@@ -1325,6 +1346,7 @@ def TensileCreateLibrary():
   arguments["AsmDebug"] = args.AsmDebug
   arguments["BuildIdKind"] = args.BuildIdKind
   arguments["KeepBuildTmp"] = args.KeepBuildTmp
+  arguments["ValidateLibrary"] = args.ValidateLibrary
 
   for key, value in args.global_parameters:
     arguments[key] = value
@@ -1384,6 +1406,9 @@ def TensileCreateLibrary():
 
   # if any kernels are assembly, append every ISA supported
   kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels)
+
+  if globalParameters["ValidateLibrary"]:
+    validateLibrary(masterLibraries, kernels, kernelWriterAssembly)
 
   staticFiles = copyStaticFiles(outputPath)
 
