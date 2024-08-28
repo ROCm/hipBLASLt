@@ -131,6 +131,10 @@ else()
     target_compile_definitions(hipblaslt PRIVATE __HIP_PLATFORM_NVIDIA__)
 endif()
 
+if( LEGACY_HIPBLAS_DIRECT )
+  target_compile_definitions(hipblaslt PUBLIC LEGACY_HIPBLAS_DIRECT )
+endif()
+
 # Target compile features
 target_compile_features(hipblaslt PRIVATE cxx_nullptr)
 
@@ -141,9 +145,18 @@ target_include_directories(hipblaslt
                            PUBLIC  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/library/include>
                                    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
                                    $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
-                                   $<BUILD_INTERFACE:${HIPBLAS-COMMON_INCLUDE_DIRS}>
                                    $<INSTALL_INTERFACE:include>
 )
+
+if( LEGACY_HIPBLAS_DIRECT )
+  target_include_directories(hipblaslt
+                             PUBLIC  $<BUILD_INTERFACE:${HIPBLAS_INCLUDE_DIRS}>
+  )
+else()
+  target_include_directories(hipblaslt
+                             PUBLIC  $<BUILD_INTERFACE:${HIPBLAS-COMMON_INCLUDE_DIRS}>
+  )
+endif()
 
 if(BUILD_CUDA)
 target_include_directories(hipblaslt
@@ -209,10 +222,16 @@ endif()
 
 # Export targets
 if(NOT BUILD_CUDA)
-  rocm_export_targets(TARGETS roc::hipblaslt
-                      DEPENDS PACKAGE hip
-                      DEPENDS PACKAGE hipblas-common
-                      NAMESPACE roc::)
+  if( LEGACY_HIPBLAS_DIRECT )
+    rocm_export_targets(TARGETS roc::hipblaslt
+                        DEPENDS PACKAGE hip
+                        NAMESPACE roc::)
+  else()
+    rocm_export_targets(TARGETS roc::hipblaslt
+                        DEPENDS PACKAGE hip
+                        DEPENDS PACKAGE hipblas-common
+                        NAMESPACE roc::)
+  endif()
 else()
   rocm_export_targets(TARGETS roc::hipblaslt
                       PREFIX hipblaslt
