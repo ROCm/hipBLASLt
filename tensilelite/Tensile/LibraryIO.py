@@ -145,6 +145,9 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
                     solutionState["ProblemType"]["ActivationType"].value
             solutionState["ProblemType"]["F32XdlMathOp"] = \
                 solutionState["ProblemType"]["F32XdlMathOp"].value
+            if "DataTypeMetadata" in solutionState["ProblemType"]:
+                solutionState["ProblemType"]["DataTypeMetadata"] = \
+                    solutionState["ProblemType"]["DataTypeMetadata"].value
             solutionStates.append(solutionState)
     # write dictionaries
     with open(filename, "w") as f:
@@ -419,6 +422,9 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
             problemTypeState["ActivationType"].value
     problemTypeState["F32XdlMathOp"] = \
             problemTypeState["F32XdlMathOp"].value
+    if "DataTypeMetadata" in problemTypeState:
+        problemTypeState["DataTypeMetadata"] = \
+                problemTypeState["DataTypeMetadata"].value
     data.append(problemTypeState)
     # solutions
     solutionList = []
@@ -447,6 +453,9 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
                 solutionState["ProblemType"]["ActivationType"].value
         solutionState["ProblemType"]["F32XdlMathOp"] = \
                 solutionState["ProblemType"]["F32XdlMathOp"].value
+        if "DataTypeMetadata" in solutionState["ProblemType"]:
+            solutionState["ProblemType"]["DataTypeMetadata"] = \
+                    solutionState["ProblemType"]["DataTypeMetadata"].value
         solutionList.append(solutionState)
 
     if tileSelection:
@@ -476,6 +485,9 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
                     solutionState["ProblemType"]["ActivationType"].value
             solutionState["ProblemType"]["F32XdlMathOp"] = \
                 solutionState["ProblemType"]["F32XdlMathOp"].value
+            if "DataTypeMetadata" in solutionState["ProblemType"]:
+                solutionState["ProblemType"]["DataTypeMetadata"] = \
+                    solutionState["ProblemType"]["DataTypeMetadata"].value
             solutionList.append(solutionState)
 
     data.append(solutionList)

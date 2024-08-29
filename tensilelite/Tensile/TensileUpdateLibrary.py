@@ -54,6 +54,8 @@ def UpdateLogic(filename, logicPath, outputPath):
     problemTypeState["ActivationComputeDataType"] = problemTypeState["ActivationComputeDataType"].value
     problemTypeState["ActivationType"] = problemTypeState["ActivationType"].value
     problemTypeState["F32XdlMathOp"] = problemTypeState["F32XdlMathOp"].value
+    if "DataTypeMetadata" in problemTypeState:
+        problemTypeState["DataTypeMetadata"] = problemTypeState["DataTypeMetadata"].value
 
     # solution objects to state
     solutionList = []
@@ -82,6 +84,9 @@ def UpdateLogic(filename, logicPath, outputPath):
                 solutionState["ProblemType"]["ActivationType"].value
         solutionState["ProblemType"]["F32XdlMathOp"] = \
             solutionState["ProblemType"]["F32XdlMathOp"].value
+        if "DataTypeMetadata" in solutionState["ProblemType"]:
+            solutionState["ProblemType"]["DataTypeMetadata"] = \
+                solutionState["ProblemType"]["DataTypeMetadata"].value
 
         solutionState["ISA"] = list(solutionState["ISA"])
         solutionList.append(solutionState)
