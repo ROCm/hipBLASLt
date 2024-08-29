@@ -281,6 +281,7 @@ globalParameters["RotatingMode"] = 0 # Default is 0, allocated in order A0B0C0D0
                                      # Mode 0 requires memcpy everytime when the problem changes to reset the data, but mode 1 doesn't.
 
 globalParameters["BuildIdKind"] = "sha1"
+globalParameters["ValidateLibrary"] = False
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
