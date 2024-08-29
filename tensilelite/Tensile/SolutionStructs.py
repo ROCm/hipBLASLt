@@ -3879,6 +3879,15 @@ class Solution(collections.abc.Mapping):
       requiredParameters["GlobalSplitUCoalesced"] = False
       requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = False
 
+    useWaveTile, useThreadTile = requiredParameters.get("MIWaveTile", False), requiredParameters.get("ThreadTile", False)
+
+    if 'MatrixInstM' in state:
+      requiredParameters["MIWaveTile"] = True
+      requiredParameters["ThreadTile"] = False
+    else:
+      requiredParameters["MIWaveTile"] = False
+      requiredParameters["ThreadTile"] = True
+
     components.append('SN')
     for key in sorted(state.keys()):
       if key in requiredParameters and key[0] != '_':
@@ -3893,6 +3902,8 @@ class Solution(collections.abc.Mapping):
     requiredParameters["StaggerUMapping"] = True
     requiredParameters["GlobalSplitUCoalesced"] = True
     requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = True
+    requiredParameters["MIWaveTile"] = useWaveTile
+    requiredParameters["ThreadTile"] = useThreadTile
 
     return '_'.join(components)
 
