@@ -28,6 +28,7 @@ from .SolutionStructs import Solution, ProblemSizes, ProblemType
 from . import __version__
 from . import Common
 from . import SolutionLibrary
+from .CustomYamlLoader import load_yaml_stream
 
 from typing import NamedTuple, List
 import os
@@ -175,6 +176,7 @@ def read(filename):
     name, extension = os.path.splitext(filename)
     if extension == ".yaml":
         return readYAML(filename)
+        # return load_yaml_stream(filename, yamlLoader)
     if extension == ".json":
         return readJson(filename)
     else:
