@@ -655,6 +655,12 @@ class GlobalWriteBatchWriter:
         modGwvwScale.append(modGwvwBias)
       self.biasLoadIssued.append(len(loadedDataBias) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16))
 
+      if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+        modGwvwScaleAlpha = Module("GwvwScaleAlpha")
+        self.loadsScaleAlphaVecIssued += addEpilogueLoad(modGwvwScaleAlpha, "ScaleAlphaVec", addrScaleAlphaVecVgpr, self.addrScaleAlphaVec, dataScaleAlphaVec, loadedDataScaleAlphaVec, addrCalc.scaleAlphaVecOffset[self.factorDim], factor_gwvw, biasReferenceVgpr, self.factorDim, skipLoad=skipLoad, comment="load scaleAlpha")
+        modGwvwScale.append(modGwvwScaleAlpha)
+      self.scaleAlphaVecLoadIssued.append(len(loadedDataScaleAlphaVec) if self.factorDim else len(loadedDataScaleAlphaVec) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16))
+
       if (self.kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
         modGwvwScaleA = Module("GwvwScaleA")
         modGwvwScaleB = Module("GwvwScaleB")
@@ -674,6 +680,15 @@ class GlobalWriteBatchWriter:
         for mod in modGwvwScale:
           if len(mod.items()) > index:
             module.add(mod.items()[index])
+
+      # This is a helper function that generates vector global read
+      # The following is an example of how to use scaleVecPattern
+      # We are changing scaleAlphaVector to local read
+      # if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+      #   modGwvwScaleAlpha = Module("GwvwScaleAlpha")
+      #   self.loadsScaleAlphaVecIssued += scaleVecPattern(modGwvwScaleAlpha, "AlphaVec", "Alpha", dataScaleAlphaVec, self.addrScaleAlphaVec, loadedDataScaleAlphaVec, addrScaleAlphaVecVgpr, addrCalc.scaleAlphaVecOffset[self.factorDim], factor_gwvw, True, skipLoad=skipLoad)
+      #   modGwvwScale.append(modGwvwScaleAlpha)
+      # self.scaleAlphaVecLoadIssued.append(len(loadedDataScaleAlphaVec) if self.factorDim else len(loadedDataScaleAlphaVec) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16))
 
       def scaleVecPattern(modGwvw, name: str, srdName: str, dataScaleVec, addrScaleVec, loadedDataScaleVec, addrScaleVecVgpr, scaleVecOffset, factor_gwvw, addVecPostFix, skipLoad=False):
         loadsScaleVecIssued = 0
@@ -697,12 +712,6 @@ class GlobalWriteBatchWriter:
             for r in range(self.ss.cfg.gwvw - 1):
               modGwvw.add(self.parentWriter.addScaleVecLoad(self.kernel, self.ss, name, srdName, addrScaleVecVgpr, gprShiftScaleVec  + (r + 1) * bpr, factor_gwvw, scaleVecOffset, addVecPostFix))
         return loadsScaleVecIssued
-
-      if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-        modGwvwScaleAlpha = Module("GwvwScaleAlpha")
-        self.loadsScaleAlphaVecIssued += scaleVecPattern(modGwvwScaleAlpha, "AlphaVec", "Alpha", dataScaleAlphaVec, self.addrScaleAlphaVec, loadedDataScaleAlphaVec, addrScaleAlphaVecVgpr, addrCalc.scaleAlphaVecOffset[self.factorDim], factor_gwvw, True, skipLoad=skipLoad)
-        module.add(modGwvwScaleAlpha)
-      self.scaleAlphaVecLoadIssued.append(len(loadedDataScaleAlphaVec) if self.factorDim else len(loadedDataScaleAlphaVec) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16))
 
       if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1):
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'E', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrEVgpr, self.addrE, 0))
@@ -1022,7 +1031,9 @@ class GlobalWriteBatchWriter:
       module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBF8Min), "0xc7600000", "BF8 Min value -57344 as float32" ))
 
     storeCode = Module("GroupLoadStore")
-    waitCnter = [self.loadsBetaIssued + self.loadsEIssued + self.loadsScaleAlphaVecIssued, self.localLoadsBiasIssued + self.loadsScaleAVecIssued + self.loadsScaleBVecIssued]
+    vmcntTotalIssued = self.loadsBetaIssued + self.loadsEIssued
+    lgkmcntTotalIssued = self.localLoadsBiasIssued + self.loadsScaleAVecIssued + self.loadsScaleBVecIssued + self.loadsScaleAlphaVecIssued
+    waitCnter = [vmcntTotalIssued, lgkmcntTotalIssued]
     for elementIdx in range(0, len(self.batchElements)):
       element = self.batchElements[elementIdx]
       addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
@@ -1069,9 +1080,6 @@ class GlobalWriteBatchWriter:
         if self.loadE:
           waitLoadCnt += self.eLoadIssued[elementIdx]
           waitLoadCntStrList.append("%d (load E)"%self.eLoadIssued[elementIdx])
-        if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-          waitLoadCnt += self.scaleAlphaVecLoadIssued[elementIdx]
-          waitLoadCntStrList.append("%d (scaleAlphaVec)"%self.scaleAlphaVecLoadIssued[elementIdx])
         # Calculate local loads
         if self.parentWriter.states.useBias == DataDirection.READ:
           waitLocalLoadCnt += self.biasLoadIssued[elementIdx]
@@ -1081,8 +1089,11 @@ class GlobalWriteBatchWriter:
           waitLocalLoadCntStrList.append("%d (scaleAVec)"%self.scaleAVecLoadIssued[elementIdx])
           waitLocalLoadCnt += self.scaleBVecLoadIssued[elementIdx]
           waitLocalLoadCntStrList.append("%d (scaleBVec)"%self.scaleBVecLoadIssued[elementIdx])
+        if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+          waitLocalLoadCnt += self.scaleAlphaVecLoadIssued[elementIdx]
+          waitLocalLoadCntStrList.append("%d (scaleAlphaVec)"%self.scaleAlphaVecLoadIssued[elementIdx])
         # Get vmcnt and lgkmcnt
-        vmcnt = self.loadsBetaIssued + self.loadsEIssued + self.loadsScaleAlphaVecIssued - waitLoadCnt
+        vmcnt = vmcntTotalIssued - waitLoadCnt
         if waitCnter[0] > 0  or vmcnt != waitCnter[0] : # Check if global load issued > 0
           if waitCnter[0] == vmcnt: # No need to wait if the global load cnt doesn't change
             vmcnt = -1
@@ -1091,7 +1102,7 @@ class GlobalWriteBatchWriter:
         else:
           vmcnt = -1
 
-        lgkmcnt = self.loadsScaleAVecIssued + self.loadsScaleBVecIssued + self.localLoadsBiasIssued - waitLocalLoadCnt
+        lgkmcnt = lgkmcntTotalIssued - waitLocalLoadCnt
         if waitCnter[1] > 0 or lgkmcnt != waitCnter[1]: # Check if local load issued > 0
           if waitCnter[1] == lgkmcnt: # No need to wait if the local load cnt doesn't change
             lgkmcnt = -1
@@ -1114,12 +1125,12 @@ class GlobalWriteBatchWriter:
             tmp = ""
             for cntStr in waitLoadCntStrList:
               tmp += " - %s"%cntStr
-            comment = "vmcnt(%s) = %d%s"%(vmcnt, self.loadsBetaIssued + self.loadsEIssued + self.loadsScaleAlphaVecIssued, tmp)
+            comment = "vmcnt(%s) = %d%s"%(vmcnt, vmcntTotalIssued, tmp)
           if lgkmcnt != -1:
             tmp = ""
             for cntStr in waitLocalLoadCntStrList:
               tmp += " - %s"%cntStr
-            comment = comment + (" " if comment else "") + "lgkmcnt(%d) = %d%s"%(lgkmcnt, self.localLoadsBiasIssued + self.loadsScaleAVecIssued + self.loadsScaleBVecIssued, tmp)
+            comment = comment + (" " if comment else "") + "lgkmcnt(%d) = %d%s"%(lgkmcnt, lgkmcntTotalIssued, tmp)
           module.addSpaceLine()
           if not self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
             module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="%s (interleaved)"%comment))
@@ -1187,7 +1198,7 @@ class GlobalWriteBatchWriter:
 
       scaleAlphaVecModule = Module("scaleAlphaVecModule")
       if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-        applyScaleVec(scaleAlphaVecModule, "ScaleAlphaVec", dataScaleAlphaVec, self.factorDim, isGlobal=True)
+        applyScaleVec(scaleAlphaVecModule, "ScaleAlphaVec", dataScaleAlphaVec, self.factorDim, isGlobal=False)
       module.add(scaleAlphaVecModule)
 
       if self.beta:
