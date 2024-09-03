@@ -443,6 +443,8 @@ namespace Tensile
             std::string customKernelName;
 
             int workGroupMappingXCC = 1;
+            bool globalSplitUCoalesced = false;
+            bool globalSplitUWorkGroupMappingRoundRobin = false;
         };
 
         struct InternalArgsSupport
@@ -479,6 +481,7 @@ namespace Tensile
             bool                  useInitialStridesAB       = false;
             bool                  useInitialStridesCD       = false;
             bool                  stridedBatched            = true;
+            bool                  outputAmaxD               = false;
             bool                  groupedGemm               = false;
             ActivationType        activationType            = ActivationType::None;
             int                   activationArgLength       = 0;

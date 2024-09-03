@@ -77,7 +77,7 @@ Required software:
 * python3.7 or later
 * python3.7-venv or later
 * AMD [ROCm](https://github.com/RadeonOpenCompute/ROCm), version 5.5 or later
-* hipBLAS (for the header file)
+* [hipBLAS-common](https://github.com/ROCm/hipBLAS-common)
 
 ## Build and install
 
@@ -99,6 +99,8 @@ cd hipBLASLt
 #   -g|--debug        - build with debug flag
 ./install.sh -idc
 ```
+
+> **_NOTE:_**  To build hipBLASLt for ROCm <= 6.2, pass the `--legacy_hipblas_direct` flag to `install.sh`
 
 ## Unit tests
 

@@ -144,6 +144,12 @@ class ProblemType(Mapping):
           printExit("NO compute data type, or dest data type, or data type specified")
           self["DataType"] = DataType(0)
 
+    # Just like DataTypeE is DestDataType by default; DataTypeAmaxD if ComputeDataType by default.
+    # So far we don't have to set it in config yamls
+    self["DataTypeAmaxD"] = self["ComputeDataType"]
+    if "DataTypeAmaxD" in config:
+      self["DataTypeAmaxD"] = DataType(config["DataTypeAmaxD"])
+
     if self["Sparse"]:
       self["DataTypeMetadata"] = DataType("I8")
 
@@ -508,6 +514,8 @@ class ProblemType(Mapping):
         name += "_Grad%s"%self["DataTypeE"].toChar()
       else:
         name += "_Aux%s"%self["DataTypeE"].toChar() # Not showing aux types
+    if self["OutputAmaxD"]:
+      name += "_AmaxD"
     if self["Sparse"]:
       if self["Sparse"] == 2:
         name += "_SPB"
@@ -1036,7 +1044,7 @@ class Solution(collections.abc.Mapping):
   ########################################
   def __init__(self, config):
     self._name = None
-    config = deepcopy(config)
+    config = config
 
     self._state = {}
     # problem type
@@ -1099,7 +1107,7 @@ class Solution(collections.abc.Mapping):
   ########################################
   # get a list of kernel parameters for this solution
   def getKernels(self):
-    kernel = deepcopy(self)
+    kernel = self
     kernel._state.update({"Kernel": True})
     kernels = []
     kernels.append(kernel)
@@ -2112,10 +2120,6 @@ class Solution(collections.abc.Mapping):
     state["LocalWriteUseSgprA"] = False
     state["LocalWriteUseSgprB"] = False
 
-    if state["WorkGroupMapping" ] == -1:
-      # -1 code is same as 1. Convert to 1.
-      state["WorkGroupMapping" ] = 1
-
     state["WorkGroupMappingXCC"] = abs(state["WorkGroupMappingXCC"])
 
     if state["WorkGroupMappingXCCGroup"] % state["WorkGroupMappingXCC"] != 0:
@@ -2545,7 +2549,7 @@ class Solution(collections.abc.Mapping):
             curGRVW *= 2
     else:
       state["GlobalReadVectorWidthB"] = 1
-  
+
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
     if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
       state["GlobalReadVectorWidthA"] = min(state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"])
@@ -3451,6 +3455,16 @@ class Solution(collections.abc.Mapping):
           ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile0"] * dataType.numBytes())
       ldsNumBytes = max(ldsNumBytes, state["LdsOffsetBias"] + ldsBiasMaxElements)
 
+    state["LdsBytesNoAmax"] = ldsNumBytes
+    if state["ProblemType"]["OutputAmaxD"]:
+      # used in reduce inter wave
+      # 4 data * half_wave_num * amax bytePerE
+      num_workItems = state["NumThreads"]
+      half_wave_size = state["WavefrontSize"] // 2
+      amaxBPE = state["ProblemType"]["DataTypeAmaxD"].numBytes()
+      ldsAmaxDBytes = 4 * (num_workItems // half_wave_size) * amaxBPE
+      ldsNumBytes += ldsAmaxDBytes
+
     state["LdsNumBytes"] = ldsNumBytes
     ldsSize = ldsNumBytes
     if ldsSize > globalParameters["MaxLDS"]:
@@ -3806,6 +3820,9 @@ class Solution(collections.abc.Mapping):
     state_copy["StaggerU"] = "M"
     state_copy["StaggerUStride"] = "M"
     state_copy["StaggerUMapping"] = "M"
+    state_copy["GlobalSplitUCoalesced"] = "M"
+    state_copy["GlobalSplitUWorkGroupMappingRoundRobin"] = "M"
+
     return state_copy
 
   @ staticmethod
@@ -3859,6 +3876,17 @@ class Solution(collections.abc.Mapping):
       requiredParameters["StaggerU"] = False
       requiredParameters["StaggerUStride"] = False
       requiredParameters["StaggerUMapping"] = False
+      requiredParameters["GlobalSplitUCoalesced"] = False
+      requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = False
+
+    useWaveTile, useThreadTile = requiredParameters.get("MIWaveTile", False), requiredParameters.get("ThreadTile", False)
+
+    if 'MatrixInstM' in state:
+      requiredParameters["MIWaveTile"] = True
+      requiredParameters["ThreadTile"] = False
+    else:
+      requiredParameters["MIWaveTile"] = False
+      requiredParameters["ThreadTile"] = True
 
     components.append('SN')
     for key in sorted(state.keys()):
@@ -3872,6 +3900,10 @@ class Solution(collections.abc.Mapping):
     requiredParameters["StaggerU"] = True
     requiredParameters["StaggerUStride"] = True
     requiredParameters["StaggerUMapping"] = True
+    requiredParameters["GlobalSplitUCoalesced"] = True
+    requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = True
+    requiredParameters["MIWaveTile"] = useWaveTile
+    requiredParameters["ThreadTile"] = useThreadTile
 
     return '_'.join(components)
 
@@ -4012,7 +4044,7 @@ class Solution(collections.abc.Mapping):
     return self.__str__()
 
   def getAttributes(self):
-    return deepcopy(self._state)
+    return self._state
 
   def __hash__(self):
     return hash(str(self) + self._state.get("codeObjectFile", ""))

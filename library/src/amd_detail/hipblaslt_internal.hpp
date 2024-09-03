@@ -26,7 +26,11 @@
 
 #pragma once
 #include "handle.h"
+#ifndef LEGACY_HIPBLAS_DIRECT
+#include <hipblas-common/hipblas-common.h>
+#else
 #include <hipblas/hipblas.h>
+#endif
 #include <rocblaslt.h>
 hipblasStatus_t hipErrorToHIPBLASStatus(hipError_t status);
 

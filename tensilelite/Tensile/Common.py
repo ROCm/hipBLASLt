@@ -173,6 +173,7 @@ globalParameters["CMakeCFlags"] = ""              # pass flags to cmake
 globalParameters["DebugKernel"] = False           # assembly only, kernel gets buffer for debug "printing"; kernel writes data to memory, gets coppied to host and printed
 globalParameters["LibraryPrintDebug"] = False     # solutions will print enqueue info when enqueueing a kernel
 globalParameters["SaveTemps"] = False             # Generate intermediate results of hip kernels
+globalParameters["KeepBuildTmp"] = False          # If true, do not remove artifacts in build_tmp
 
 # debug for assembly
 globalParameters["EnableAsserts"] = False         # Enable assembly debug assert
@@ -190,6 +191,7 @@ globalParameters["PrintTensorC"] = 0          # Print TensorC.  0x1=after init; 
 globalParameters["PrintTensorD"] = 0          # Print TensorD.  0x1=after init; 0x2=after copy-back; 0x3=both
 globalParameters["PrintTensorRef"] = 0          # Print reference tensor.  0x1=after init; 0x2=after copy-back; 0x3=both
 globalParameters["PrintTensorBias"] = 0          # Print TensorBias after initialization
+globalParameters["PrintTensorAmaxD"] = 0          # Print AmaxD after validation
 globalParameters["PrintIndexAssignments"] = 0      # Print the tensor index assignment info
 globalParameters["PrintWinnersOnly"] = False      # Only print the solutions which become the fastest
 globalParameters["PrintCodeCommands"] = False  # print the commands used to generate the code objects (asm,link,hip-clang, etc)
@@ -275,8 +277,11 @@ globalParameters["LazyLibraryLoading"] = False # Load library and code object fi
 globalParameters["UseUserArgs"] = False
 
 globalParameters["RotatingBufferSize"] = 0 # Size in MB
+globalParameters["RotatingMode"] = 0 # Default is 0, allocated in order A0B0C0D0..ANBNCNDN. 1 is in order A0 pad B0 pad .... AN pad BN pad.
+                                     # Mode 0 requires memcpy everytime when the problem changes to reset the data, but mode 1 doesn't.
 
 globalParameters["BuildIdKind"] = "sha1"
+globalParameters["ValidateLibrary"] = False
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
@@ -316,7 +321,7 @@ internalParameters = {
 
 # These parameters are used in ContractionSolutions for user arguments support.
 defaultInternalSupportParams = {
-  "KernArgsVersion": 1,
+  "KernArgsVersion": 2,
   # Information about user input internal kernel argument support
   # Change this to False if the CustomKernel does not support.
   "SupportUserGSU": True,
@@ -775,6 +780,13 @@ validParameters = {
     # True:  {(wg0,wg0,wg0)|(wg1,wg1,wg1)|(wg2,wg2,wg2)|...|(wgn,wgn,wgn)}
     "GlobalSplitUCoalesced":        [False, True],
 
+    # GSU Workgroup Mapping
+    # False: wg issued order = {(wg0,wg1,wg2,wgn),(wg0,wg1,wg2,wgn)|...|(wg0,wg1,wg2,wgn)}
+    #   -> workgroups do the summation by tile -> slower GR but faster GW
+    # True:  wg issused oder = {(wg0,wg0,wg0)|(wg1,wg1,wg1)|(wg2,wg2,wg2)|...|(wgn,wgn,wgn)}
+    #   -> workgroups split up the summation -> faster GR but slower GW
+    "GlobalSplitUWorkGroupMappingRoundRobin":        [False, True],
+    
     # 0=don't use magic div (source only)
     # 1=magic div alg #1.  Slightly faster but limited range (if magic number is 2^32)
     # 2=magic div alg#2.  Slightly slower but handles all unsigned ints up to 2^32
@@ -1125,6 +1137,7 @@ defaultBenchmarkCommonParameters = [
     {"GlobalSplitU":              [ 1 ] },
     {"GlobalSplitUAlgorithm":     [ "MultipleBuffer" ] },
     {"GlobalSplitUCoalesced":     [ False ] },
+    {"GlobalSplitUWorkGroupMappingRoundRobin":     [ False ] },
     {"Use64bShadowLimit":         [ 1 ] },
     {"NumLoadsCoalescedA":        [ 1 ] },
     {"NumLoadsCoalescedB":        [ 1 ] },
@@ -1183,6 +1196,7 @@ defaultProblemType = {
     "DataTypeA":                0,                # A data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DataTypeB":                0,                # B data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DataTypeE":                0,                # E data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
+    "DataTypeAmaxD":            0,                # AmaxD data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DestDataType":             0,                # destination data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "ComputeDataType":          0,                # compute data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "F32XdlMathOp":             0,                # reducing intermediate precision from f32 to a specific type, such as "x", as listed in SolutionStructs.py::DataType.
@@ -1268,6 +1282,8 @@ defaultProblemType = {
     # Activation
     "Activation":               False,
     "ActivationNoGuard":        False,
+    # AmaxD
+    "OutputAmaxD":              False,
     # For kernels putting arguments in workspaces instead of kernel arguments, they can choose to support user arguments input instead.
     "SupportUserArgs":          True
     }
@@ -1602,6 +1618,9 @@ def assignGlobalParameters( config ):
   if "ROCmAgentEnumeratorPath" in config:
     globalParameters["ROCmAgentEnumeratorPath"] = config["ROCmAgentEnumeratorPath"]
 
+  if "KeepBuildTmp" in config:
+      globalParameters["KeepBuildTmp"] = config["KeepBuildTmp"]
+
   # read current gfx version
   returncode = detectGlobalCurrentISA()
   if globalParameters["CurrentISA"] == (0,0,0):
@@ -1610,11 +1629,6 @@ def assignGlobalParameters( config ):
     if os.name == "nt":
       globalParameters["CurrentISA"] = (9,0,6)
       printWarning("Failed to detect ISA so forcing (gfx906) on windows")
-
-  # TODO Remove this when rocm-smi supports gfx940
-  if globalParameters["CurrentISA"] in [(9,4,0), (9,4,1), (9,4,2)]:
-    printWarning("HardwareMonitor currently disabled for gfx940")
-    globalParameters["HardwareMonitor"] = False
 
   globalParameters["AsmCaps"] = {}
   globalParameters["ArchCaps"] = {}

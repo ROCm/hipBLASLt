@@ -188,7 +188,6 @@ class StateValues:
   unifiedVgprRegs: bool                  = False
   useAtomicAdd: bool                     = False
   serializedStore: bool                  = False
-  gsu_wg_coalesced: bool                 = False
 
   a: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)
   b: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)
@@ -1488,7 +1487,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       gsuBackup   = kernel["GlobalSplitU"]
       gsuLabel    = Label(label=self.labels.getNameInc("GSU"), comment="")
       gsuLabelEnd = Label(label=self.labels.getNameInc("GSU_End"), comment="")
-      module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
+      with self.allocTmpSgpr(1) as tmpSgprGSU:
+        module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+        module.add(SCmpEQU32(src0=sgpr(tmpSgprGSU.idx), src1=1, comment="GSU == 1 ?"))
       module.add(SCBranchSCC1(labelName=gsuLabel.getLabelName(), comment="branch if GSU == 1"))
       module.addComment1("global read addresses: increments a")
       kernel["GlobalSplitU"] = 2
@@ -1550,7 +1551,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
 
     if self.do["executeToInitEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, False))
 
     ####################################
     # prefetch: unrolled loop prefix
@@ -1792,7 +1793,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.noLoadLoopBody(kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast, dsWriteBA=dsWriteBA))
 
     if self.do["executeToLoopEnd"] and isOptNLL:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, False))
 
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
     module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL, isNotLast=dsWriteBA))
@@ -2137,7 +2138,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
     if self.do["executeToPrefetchEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, False))
 
     pack = [ Module() for i in range (self.states.numVgprBuffer) ]
     self.preLoopLocalWriteCode = None
@@ -2288,7 +2289,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["PrefetchGlobalRead"]:
       if not kernel["SuppressNoLoadLoop"]:
         gsuLabel = Label(label=self.labels.getNameInc("GSU"), comment="")
-        module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
+        with self.allocTmpSgpr(1) as tmpSgprGSU:
+          module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+          module.add(SCmpEQU32(src0=sgpr(tmpSgprGSU.idx), src1=1, comment="GSU == 1 ?"))
         noLoadLoopModules = None
         acclen = 0
         gsuBackup          = kernel["GlobalSplitU"]
@@ -2504,7 +2507,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
                         (self.states.lastValuAB, self.states.lastVgprForReads))
 
     if self.do["executeToLoopEnd"]:
-      module.add(self.functionEnd(False))
+      module.add(self.functionEnd(kernel, False))
 
     # extra summation loops: global increment and close
     for i in reversed(range(self.states.otherSummationLoops)):
@@ -2577,7 +2580,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.notLocalSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
 
     # function suffix
-    module.add(self.functionEnd(True))
+    module.add(self.functionEnd(kernel, True))
     module.add(self.functionSuffix(kernel))
 
     # Tensile pass
@@ -3330,8 +3333,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
         vgprIdx = 0
         self.states.c.numVgprValu = 0
 
-    self.states.gsu_wg_coalesced = kernel["GlobalSplitUCoalesced"]
-
     # TODO: alignment hack, figure out a better solution
     vgprIdx = ((vgprIdx+1)//2)*2
     # Avoid bank conflict between VgprA and VgprC
@@ -3529,6 +3530,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["PrefetchGlobalRead"]:
       self.states.lastVgprForReads = vgprIdx
     #-----------
+
+    if kernel["ProblemType"]["OutputAmaxD"]:
+      self.startVgprAmaxOut = vgprIdx
+      self.startVgprAmaxOutB = vgprIdx + 1
+      vgprIdx += 2
 
     self.states.startVgprAddressDbg = vgprIdx
     vgprIdx += numVgprAddressDbg
@@ -4492,7 +4498,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # Function End
   ##############################################################################
   @abc.abstractmethod
-  def functionEnd(self, addLabel=True):
+  def functionEnd(self, kernel, addLabel=True):
     return ""
 
   ##############################################################################
@@ -4711,6 +4717,9 @@ for codeObjectFileName in codeObjectFileNames:
       print (' '.join(args), " && ")
 
     subprocess.check_call(args, cwd=self.getAssemblyDirectory())
+
+    if not globalParameters["KeepBuildTmp"]:
+        os.remove(assemblyFileName)
 
     return objectFileName
 

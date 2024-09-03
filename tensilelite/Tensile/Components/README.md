@@ -4,6 +4,53 @@
 
 The signature for each KernArgsVersion is described here.
 
+### Version 2
+
+```
+[0..3] gemm_count: 01 00 00 00 (1)
+[4..7] internalArgs: 02 00 20 20 (538968066)
+[8..11] internalArgs1: f8 ff ff ff (-8)
+[12..15] numWorkGroups: 2c 01 00 00 (300)
+# Above are universal args
+# Below are problem type specific parameters
+[16..19] size_0: 00 05 00 00 (1280)
+[20..23] size_1: c0 03 00 00 (960)
+[24..27] size_2: 01 00 00 00 (1)
+[28..31] size_3: 00 20 00 00 (8192)
+[32..39] ws_d: 00 00 80 b9 68 7f 00 00 (0x7f68b9800000)
+[40..47] c: 00 be 98 c4 68 7f 00 00 (0x7f68c498be00)
+[48..55] a: 00 00 60 c2 68 7f 00 00 (0x7f68c2600000)
+[56..63] b: 00 ff a4 c3 68 7f 00 00 (0x7f68c3a4ff00)
+[64..67] strideW_D1: 00 05 00 00 (1280)
+[68..71] strideW_D2: 00 c0 12 00 (1228800)
+[72..75] strideW_C1: 00 05 00 00 (1280)
+[76..79] strideW_C2: 00 c0 12 00 (1228800)
+[80..83] strideA1: 80 20 00 00 (8320)
+[84..87] strideA2: 00 80 a2 00 (10649600)
+[88..91] strideB1: 80 20 00 00 (8320)
+[92..95] strideB2: 00 e0 79 00 (7987200)
+[96..99] alpha: 00 00 80 3f (1)
+[100..103] beta: 00 00 00 00 (0)
+[104..111] dstD: 00 3e be c4 68 7f 00 00 (0x7f68c4be3e00)
+[112..119] Synchronizer: 00 be e3 c4 68 7f 00 00 (0x7f68c4e3be00)
+[120..123] GSUSync: 00 00 00 00 (0)
+```
+#### internalArgs
+
+1. 2-bit input type
+   1. 0 normal
+   2. 1 hbm
+   3. 2 user allocated input
+2. 16-bit StaggerU
+   1. 3-bit staggerUMapping
+   2. 5-bit staggerUShift
+   3. 8-bit staggerU
+3. 16-bit GSU control info
+   1. 1-bit GSUC
+   2. 1-bit GSUWGMRR
+   3. 14-bit GSU
+4. 32-bit WGM (with negative support)
+
 ### Version 1
 
 ```

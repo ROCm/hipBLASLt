@@ -761,11 +761,54 @@ namespace Tensile
                     "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
             }
         }
+
+        if(problemType.outputAmaxD)
+        {
+            args.template append<const void*>("AddrAmaxOut", inputs.amaxD);
+            args.template append<const void*>("AmaxWS",
+                                              (uint8_t*)inputs.ws + workspaceOffsetInByte);
+            args.template append<const void*>("AmaxSync", inputs.Synchronizer);
+        }
     }
 
     inline uint32_t getNumWorkGroups(const KernelInvocation& rv)
     {
         return rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y / rv.workGroupSize.z;
+    }
+
+    inline uint32_t getNumWorkGroups(ContractionSolution::Problem const&     problem,
+                                     const ContractionSolution::SizeMapping& sizeMapping)
+    {
+        size_t numWorkGroupsX = 1;
+        size_t numWorkGroupsY = 1;
+        size_t numWorkGroupsZ = 1;
+
+        for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
+        {
+            numWorkGroupsX *= problem.freeSizeA(i);
+        }
+        for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
+        {
+            numWorkGroupsY *= problem.freeSizeB(i);
+        }
+
+        for(size_t i = 0; i < problem.batchIndices().size(); i++)
+        {
+            if(sizeMapping.packBatchDims & 0x1)
+                numWorkGroupsX *= problem.batchSize(i);
+            if(sizeMapping.packBatchDims & 0x2)
+                numWorkGroupsY *= problem.batchSize(i);
+            if(!sizeMapping.packBatchDims)
+                numWorkGroupsZ *= problem.batchSize(i);
+        }
+
+        if(problem.transposeC01())
+            std::swap(numWorkGroupsX, numWorkGroupsY);
+
+        numWorkGroupsX = CeilDivide(numWorkGroupsX, sizeMapping.macroTile.x);
+        numWorkGroupsY = CeilDivide(numWorkGroupsY, sizeMapping.macroTile.y);
+
+        return numWorkGroupsX * numWorkGroupsY * numWorkGroupsZ;
     }
 
     template <bool T_Debug, bool Legacy, typename KA>
@@ -783,12 +826,15 @@ namespace Tensile
             args.template append<uint32_t>("gemm_count", gemmCount);
         }
 
-        uint32_t gsu = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
-        int32_t  wgm = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
-
+        uint32_t gsu      = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
+        bool     gsuc     = false; // initialized false
+        bool     gsuwgmrr = false; // initialized false
+        int32_t  wgm      = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
         const uint32_t mask16       = 0xFFFF;
+        const uint32_t mask14       = 0x3FFF;
         const uint32_t mask8        = 0xFF;
         uint32_t       internalArg0 = 0;
+
         if(internalArgsSupport.wgm && internalArgsSupport.version == 0)
         {
             if(wgm > 255)
@@ -798,7 +844,16 @@ namespace Tensile
             uint32_t wgShift8 = (mask8 & (uint32_t)wgm) << 8;
             internalArg0      = internalArg0 | wgShift8;
         }
-        internalArg0 = internalArg0 | (mask16 & gsu);
+
+        // support gsuc and gsuwgmrr after version 2
+        if(internalArgsSupport.version >= 2)
+        {
+            gsuc     = param.gsuc() > 0 ? param.gsuc() : sizeMapping.globalSplitUCoalesced;
+            gsuwgmrr = param.gsuwgmrr() > 0 ? param.gsuwgmrr() : sizeMapping.globalSplitUWorkGroupMappingRoundRobin;
+        }
+        
+        internalArg0
+            = internalArg0 | ((uint32_t)gsuc << 15) | ((uint32_t)gsuwgmrr << 14) | (mask14 & gsu);
 
         // StaggerU
         if(internalArgsSupport.staggerU)
@@ -814,13 +869,11 @@ namespace Tensile
 
         args.template append<uint32_t>("internalArgs", internalArg0);
 
-        if(internalArgsSupport.version == 1)
+        if(internalArgsSupport.version >= 1)
         {
             int32_t internalArg1 = 0;
             if(internalArgsSupport.wgm)
             {
-                if(wgm == -1)
-                    wgm = 1;
                 args.template append<int32_t>("internalArgs1", wgm);
             }
 
@@ -894,10 +947,10 @@ namespace Tensile
 
         static_cast<void>(hipGetDevice(&deviceId));
         static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-        auto        gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
-        if (stoi(gpu_arch_no_prefix) /100 != 12)
+        auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
+        if(stoi(gpu_arch_no_prefix) / 100 != 12)
         {
-            if(internalArgsSupport.version == 1)
+            if(internalArgsSupport.version >= 1)
             {
                 rv.numWorkGroups.x *= (rv.numWorkGroups.y * rv.numWorkGroups.z);
                 rv.numWorkGroups.y = 1;
@@ -2623,6 +2676,13 @@ namespace Tensile
                 size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemBias
                         * gsu;
             }
+        }
+
+        // workspace for amaxD
+        if(problemType.outputAmaxD)
+        {
+            auto numWGS = getNumWorkGroups(problem, sizeMapping);
+            size += problem.amaxd().elementBytes() * numWGS;
         }
 
         // Custom kernel synchronizer

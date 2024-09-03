@@ -68,7 +68,7 @@ class ProblemType:
                  'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleAB', 'useScaleCD', 'useScaleAlphaVec', 'biasDataTypeWhiteList',
                  'highPrecisionAccumulate', 'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'useGradient', 'activationType', 'activationArgLength', 'activationComputeDataType', 'activationNoGuard',
-                 'sparse', 'f32XdlMathOp', 'supportDeviceUserArguments']
+                 'sparse', 'f32XdlMathOp', 'supportDeviceUserArguments', 'outputAmaxD']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -150,6 +150,11 @@ class ProblemType:
         else:
             rv.eType = dstType
 
+        if 'DataTypeAmaxD' in d:
+            rv.amaxDType = DataType(d['DataTypeAmaxD'])
+        else:
+            rv.amaxDType = computeType
+
         rv.computeInputType = srcType
         rv.cType = dstType
         rv.dType = dstType
@@ -216,6 +221,10 @@ class ProblemType:
         rv.useGradient = False
         if 'Gradient' in d:
             rv.useGradient = d["Gradient"]
+
+        rv.outputAmaxD = False
+        if 'OutputAmaxD' in d:
+            rv.outputAmaxD = d['OutputAmaxD']
 
         rv.useScaleAB = ""
         if 'UseScaleAB' in d:
@@ -339,6 +348,7 @@ class ProblemType:
                 predicates.append(ProblemPredicate("BetaZero"))
             predicates.append(ProblemPredicate("BiasDataTypeWhiteList", value=self.biasDataTypeWhiteList))
             predicates.append(ProblemPredicate("BiasSrcWhiteList", value=self.biasSrcWhiteList))
+            predicates.append(ProblemPredicate("AmaxDCheck", value=self.outputAmaxD))
             if self.activationType == 'all':
                 exportType = ActivationType.Export.GRADONLY if self.useGradient else ActivationType.Export.NORMAL
                 enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, exportType=exportType)]
@@ -514,7 +524,9 @@ class SizeMapping:
                  'workspaceSizePerElemBias',
                  'activationFused',
                  'CustomKernelName',
-                 'workGroupMappingXCC'
+                 'workGroupMappingXCC',
+                 'globalSplitUCoalesced',
+                 'globalSplitUWorkGroupMappingRoundRobin'
                  ]
 
     @classmethod
@@ -550,7 +562,9 @@ class SizeMapping:
                    workspaceSizePerElemBias = d['_WorkspaceSizePerElemBias'],
                    activationFused          = d['ActivationFused'],
                    CustomKernelName         = d['CustomKernelName'],
-                   workGroupMappingXCC      = d['WorkGroupMappingXCC']
+                   workGroupMappingXCC      = d['WorkGroupMappingXCC'],
+                   globalSplitUCoalesced    = d['GlobalSplitUCoalesced'],
+                   globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin']
                    )
 
     @classmethod

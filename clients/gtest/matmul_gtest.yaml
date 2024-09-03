@@ -697,11 +697,10 @@ Tests:
   unit_check: 1
   gpu_arch: '94[0-2]'
 
-#TODO: extend to all f8 transpose and datatype if necessary
-- name: matmul_real_f8_dst_f8_TT
+- name: matmul_real_1b_dst_1b_smallsize
   category: pre_checkin
   function:
-    matmul: *f8_precision_dst_f8
+    matmul: *real_precisions_1b_dst_1b
   matrix_size:
     - { M:  1,   N:  1,    K:  1    }
     - { M:  1,   N:  1,    K:  127  }
@@ -725,8 +724,7 @@ Tests:
     - { M:  129, N:  1,    K:  129  }
     - { M:  129, N:  2,    K:  129  }
     - { M:  129, N:  3,    K:  129  }
-  transA: T
-  transB: T
+  transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0.0, 2.0 ]
   scaleA: [0, 1]
@@ -738,6 +736,45 @@ Tests:
   unit_check: 1
   gpu_arch: '942'
 
+#TODO: extend to all f8 transpose and datatype if necessary
+- name: matmul_real_f8_dst_fp32
+  category: pre_checkin
+  function:
+    matmul: *f8_precision_dst_fp32
+  matrix_size:
+    - { M:  1,   N:  1,    K:  1    }
+    - { M:  1,   N:  1,    K:  127  }
+    - { M:  1,   N:  127,  K:  127  }
+    - { M:  2,   N:  127,  K:  127  }
+    - { M:  3,   N:  127,  K:  127  }
+    - { M:  127, N:  1,    K:  127  }
+    - { M:  127, N:  2,    K:  127  }
+    - { M:  127, N:  3,    K:  127  }
+    - { M:  1,   N:  1,    K:  128  }
+    - { M:  1,   N:  128,  K:  128  }
+    - { M:  2,   N:  128,  K:  128  }
+    - { M:  3,   N:  128,  K:  128  }
+    - { M:  128, N:  1,    K:  128  }
+    - { M:  128, N:  2,    K:  128  }
+    - { M:  128, N:  3,    K:  128  }
+    - { M:  1,   N:  1,    K:  129  }
+    - { M:  1,   N:  129,  K:  129  }
+    - { M:  2,   N:  129,  K:  129  }
+    - { M:  3,   N:  129,  K:  129  }
+    - { M:  129, N:  1,    K:  129  }
+    - { M:  129, N:  2,    K:  129  }
+    - { M:  129, N:  3,    K:  129  }
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [0, 1]
+  scaleB: [0, 1]
+  scaleC: [0]
+  scaleD: [0]
+  bias_vector: [0, 1]
+  bias_type: f32_r
+  unit_check: 1
+  gpu_arch: '942'
 
 - name: matmul_real_1b_dst_f8_SCDNotInt
   category: pre_checkin
@@ -759,10 +796,10 @@ Tests:
   norm_check: 1
   gpu_arch: '94[0-2]'
 
-- name: matmul_real_1b_dst_f8_amaxD
+- name: matmul_real_1b_dst_1b_amaxD
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_f8
+    matmul: *real_precisions_1b_dst_1b
   M: [127, 129]
   N: [127, 129]
   K: [127, 129]
@@ -880,6 +917,36 @@ Tests:
   beta: [ 0.0, 2.0 ]
   unit_check: 1
   algo_method: [0, 2]
+
+- name: matmul_groupedgemm_bf16
+  category: pre_checkin
+  function:
+    matmul: *hpa_bf16_precision
+  M: [127, 129]
+  N: [127, 129]
+  K: [127, 129]
+  transA_transB: *transA_transB_range
+  grouped_gemm: [2]
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  unit_check: 1
+  algo_method: [2]
+  gpu_arch: '942'
+
+- name: matmul_groupedgemm_xf32
+  category: pre_checkin
+  function:
+    matmul: *xf32_precision
+  M: [127, 129]
+  N: [127, 129]
+  K: [127, 129]
+  transA_transB: *transA_transB_range
+  grouped_gemm: [2]
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  unit_check: 1
+  algo_method: [2]
+  gpu_arch: '942'
 
 - name: matmul_groupedgemm_zero_n
   category: pre_checkin
@@ -1449,4 +1516,3 @@ Tests:
   unit_check: 1
   gpu_arch: '94[0-2]'
 ...
-

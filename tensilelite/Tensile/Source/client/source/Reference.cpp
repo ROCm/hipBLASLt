@@ -31,6 +31,9 @@
 #include "TypedId.hpp"
 
 #include <cstddef>
+#include <omp.h>
+
+#define MAX_OMP_THREADS 64
 
 namespace Tensile
 {
@@ -530,6 +533,7 @@ namespace Tensile
             // For 2D bias reduction, d batch = 1
             if((tensor.dimensions() == 3 && tensor.sizes()[2] == 1) || tensor.dimensions() == 2)
             {
+omp_set_num_threads(MAX_OMP_THREADS);
 #pragma omp parallel for
                 for(size_t bNum = 0; bNum < biasTensor.totalLogicalElements();
                     bNum += validationStride)
@@ -675,7 +679,13 @@ namespace Tensile
                 }
             }
 
+            Accumulator    amaxD(0);
+            Accumulator    negOne(-1);
+            constexpr bool notCmplxAmaxD = !std::is_same<Accumulator, std::complex<double>>()
+                                           && !std::is_same<Accumulator, std::complex<float>>();
+
             // gemm
+omp_set_num_threads(MAX_OMP_THREADS);
 #pragma omp parallel for
             for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStrideGemm)
             {
@@ -874,10 +884,10 @@ namespace Tensile
                 {
                     auto posB = int(int(dNum / problem.d().sizes()[0]) % problem.d().sizes()[1]);
                     auto posA = int(dNum % problem.d().sizes()[0]);
-                    Accumulator scaleA
-                        = GetValue<Accumulator>(problem.alphaType(), inputs.scaleA, posA, aConjugate);
-                    Accumulator scaleB
-                        = GetValue<Accumulator>(problem.alphaType(), inputs.scaleB, posB, aConjugate);
+                    Accumulator scaleA = GetValue<Accumulator>(
+                        problem.alphaType(), inputs.scaleA, posA, aConjugate);
+                    Accumulator scaleB = GetValue<Accumulator>(
+                        problem.alphaType(), inputs.scaleB, posB, aConjugate);
                     if constexpr(sizeof(typename Inputs::AType)
                                  <= sizeof(typename Inputs::ComputeInputType))
                         alpha *= scaleA;
@@ -971,6 +981,20 @@ namespace Tensile
                                          actArgs);
                 }
 
+omp_set_num_threads(MAX_OMP_THREADS);
+#pragma omp critical
+                {
+                    if constexpr(notCmplxAmaxD)
+                    {
+                        if(problem.outputAmaxD())
+                        {
+                            Accumulator absResultD = (resultD > zero) ? resultD : resultD * negOne;
+                            if(absResultD > amaxD)
+                                amaxD = absResultD;
+                        }
+                    }
+                }
+
                 if(problem.useScaleCD())
                 {
                     Accumulator scaleD
@@ -983,6 +1007,15 @@ namespace Tensile
                     ws[dIndex] = resultD;
                 }
                 dPtr[dIndex] = SaturateCast<typename Inputs::DType>(resultD);
+            }
+
+            if(problem.outputAmaxD())
+            {
+                SetValue<Accumulator>(
+                    problem.tensors()[ContractionProblemGemm::TENSOR::AMAXD].dataType(),
+                    amaxD,
+                    inputs.amaxD,
+                    0);
             }
 
             if(problem.useGradient() && problem.useBias())
@@ -1265,6 +1298,11 @@ namespace Tensile
             case TypedGemm_B8_B_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_B8_B_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8_F8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8_F8_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
             case TypedGemm_B8_B8_S::TypeId():

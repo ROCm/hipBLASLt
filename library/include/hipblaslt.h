@@ -46,7 +46,11 @@
 
 #include "hipblaslt/hipblaslt-export.h"
 #include "hipblaslt/hipblaslt-version.h"
+#ifndef LEGACY_HIPBLAS_DIRECT
+#include <hipblas-common/hipblas-common.h>
+#else
 #include <hipblas/hipblas.h>
+#endif
 
 #include <memory>
 #include <vector>
@@ -348,7 +352,7 @@ hipblasStatus_t hipblasLtGetArchName(char** archName);
  * opaque structure holding the hipBLASLt library context. It allocates light
  * hardware resources on the host and device, and must be called prior to making
  * any other hipBLASLt library calls. The hipBLASLt library context is tied to
- * the current CUDA device. To use the library on multiple devices, one
+ * the current ROCm device. To use the library on multiple devices, one
  * hipBLASLt handle should be created for each device.
  *
  *  @param[out]

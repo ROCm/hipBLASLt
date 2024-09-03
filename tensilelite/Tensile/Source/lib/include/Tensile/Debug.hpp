@@ -84,6 +84,8 @@ namespace Tensile
 
         bool gridBasedKDTree() const;
 
+        bool gridBasedBatchExp() const;
+
     private:
         friend LazySingleton<Debug>;
 
@@ -98,6 +100,7 @@ namespace Tensile
         int         m_gridbasedTopSols    = 1;
         bool        m_benchmark           = false;
         bool        m_gridbasedKdTree     = false;
+        bool        m_gridbasedBatchExp   = false;
 
         Debug();
     };

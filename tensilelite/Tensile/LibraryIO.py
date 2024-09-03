@@ -131,6 +131,8 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
                     solutionState["ProblemType"]["DataTypeB"].value
             solutionState["ProblemType"]["DataTypeE"] = \
                     solutionState["ProblemType"]["DataTypeE"].value
+            solutionState["ProblemType"]["DataTypeAmaxD"] = \
+                    solutionState["ProblemType"]["DataTypeAmaxD"].value
             solutionState["ProblemType"]["DestDataType"] = \
                     solutionState["ProblemType"]["DestDataType"].value
             solutionState["ProblemType"]["ComputeDataType"] = \
@@ -143,6 +145,9 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
                     solutionState["ProblemType"]["ActivationType"].value
             solutionState["ProblemType"]["F32XdlMathOp"] = \
                 solutionState["ProblemType"]["F32XdlMathOp"].value
+            if "DataTypeMetadata" in solutionState["ProblemType"]:
+                solutionState["ProblemType"]["DataTypeMetadata"] = \
+                    solutionState["ProblemType"]["DataTypeMetadata"].value
             solutionStates.append(solutionState)
     # write dictionaries
     with open(filename, "w") as f:
@@ -403,6 +408,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
             problemTypeState["DataTypeB"].value
     problemTypeState["DataTypeE"] = \
             problemTypeState["DataTypeE"].value
+    problemTypeState["DataTypeAmaxD"] = \
+            problemTypeState["DataTypeAmaxD"].value
     problemTypeState["DestDataType"] = \
             problemTypeState["DestDataType"].value
     problemTypeState["ComputeDataType"] = \
@@ -415,6 +422,9 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
             problemTypeState["ActivationType"].value
     problemTypeState["F32XdlMathOp"] = \
             problemTypeState["F32XdlMathOp"].value
+    if "DataTypeMetadata" in problemTypeState:
+        problemTypeState["DataTypeMetadata"] = \
+                problemTypeState["DataTypeMetadata"].value
     data.append(problemTypeState)
     # solutions
     solutionList = []
@@ -429,6 +439,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
                 solutionState["ProblemType"]["DataTypeB"].value
         solutionState["ProblemType"]["DataTypeE"] = \
                 solutionState["ProblemType"]["DataTypeE"].value
+        solutionState["ProblemType"]["DataTypeAmaxD"] = \
+                solutionState["ProblemType"]["DataTypeAmaxD"].value
         solutionState["ProblemType"]["DestDataType"] = \
                 solutionState["ProblemType"]["DestDataType"].value
         solutionState["ProblemType"]["ComputeDataType"] = \
@@ -441,6 +453,9 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
                 solutionState["ProblemType"]["ActivationType"].value
         solutionState["ProblemType"]["F32XdlMathOp"] = \
                 solutionState["ProblemType"]["F32XdlMathOp"].value
+        if "DataTypeMetadata" in solutionState["ProblemType"]:
+            solutionState["ProblemType"]["DataTypeMetadata"] = \
+                    solutionState["ProblemType"]["DataTypeMetadata"].value
         solutionList.append(solutionState)
 
     if tileSelection:
@@ -456,6 +471,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
                     solutionState["ProblemType"]["DataTypeB"].value
             solutionState["ProblemType"]["DataTypeE"] = \
                     solutionState["ProblemType"]["DataTypeE"].value
+            solutionState["ProblemType"]["DataTypeAmaxD"] = \
+                    solutionState["ProblemType"]["DataTypeAmaxD"].value
             solutionState["ProblemType"]["DestDataType"] = \
                     solutionState["ProblemType"]["DestDataType"].value
             solutionState["ProblemType"]["ComputeDataType"] = \
@@ -468,6 +485,9 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
                     solutionState["ProblemType"]["ActivationType"].value
             solutionState["ProblemType"]["F32XdlMathOp"] = \
                 solutionState["ProblemType"]["F32XdlMathOp"].value
+            if "DataTypeMetadata" in solutionState["ProblemType"]:
+                solutionState["ProblemType"]["DataTypeMetadata"] = \
+                    solutionState["ProblemType"]["DataTypeMetadata"].value
             solutionList.append(solutionState)
 
     data.append(solutionList)
