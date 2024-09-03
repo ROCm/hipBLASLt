@@ -50,6 +50,8 @@ namespace Tensile
     {
         using Element = std::shared_ptr<SolutionLibrary<MyProblem, MySolution>>;
         using Forest  = DecisionTree::Forest<MyProblem, Element, std::shared_ptr<MySolution>>;
+        using MySolutionVector = SolutionVector<MySolution>;
+
         std::shared_ptr<Forest> forest;
 
         static std::string Type()
@@ -72,6 +74,13 @@ namespace Tensile
                                                                Hardware const&  hardware,
                                                                const int index) const override
         {
+            const bool experimental = Debug::Instance().useExperimentalSelection();
+            if(! experimental)
+            {
+                // If the experimental library mode is not on treat it like it asserted out
+                return nullptr;
+            }
+
             typename Forest::Transform transform
                 = [&](Element library) -> std::shared_ptr<MySolution> {
                 return library->getSolutionByIndex(problem, hardware, index);
@@ -99,13 +108,38 @@ namespace Tensile
         {
             if(searchType != SolutionLibrarySearchType::DEFAULT)
             {
-                throw std::runtime_error("Dicision tree only supports default search mode.");
+                // if the solution library search is not default then return an empty
+                // set of solutions.
+                SolutionSet<MySolution> rv;
+                return rv;
+	        }
+
+            const bool experimental = Debug::Instance().useExperimentalSelection();
+            if(! experimental)
+            {
+                // Skip the search for solutions if the environment variable
+                // that enables the experimental method is not set
+                SolutionSet<MySolution> rv;
+                return rv;
             }
+
             typename Forest::Transform transform
                 = [&](Element library) -> std::shared_ptr<MySolution> {
                 return library->findBestSolution(problem, hardware);
             };
             return forest->matchesInOrder(problem, transform);
+        }
+        
+        virtual MySolutionVector findTopSolutions(MyProblem const& problem,
+                                                            Hardware const&  hardware,
+                                                            int numSolutions) const override
+        {
+            typename Forest::Transform transform
+                = [&](Element library) -> std::shared_ptr<MySolution> {
+                return library->findBestSolution(problem, hardware);
+            };
+
+            return forest->topMatches(problem, transform, numSolutions);
         }
 
         virtual SolutionSet<MySolution>
@@ -116,8 +150,21 @@ namespace Tensile
         {
             if(searchType != SolutionLibrarySearchType::DEFAULT)
             {
-                throw std::runtime_error("Dicision tree only supports default search mode.");
+                // if the solution library search is notSolutionSet default then return an empty
+                // set of solutions
+                SolutionSet<MySolution> rv;
+                return rv;
             }
+
+            const bool experimental = Debug::Instance().useExperimentalSelection();
+            if(! experimental)
+            {
+                // Skip the search for solutions if the environment variable
+                // that enables the experimental method is not set
+                SolutionSet<MySolution> rv;
+                return rv;
+            }
+
             typename Forest::Transform transform
                 = [&](Element library) -> std::shared_ptr<MySolution> {
                 return library->findBestSolution(problems, hardware);
