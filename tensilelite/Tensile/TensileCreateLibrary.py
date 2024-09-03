@@ -1299,8 +1299,8 @@ def TensileCreateLibrary():
   argParser.add_argument("--client-config", dest="ClientConfig", action="store_true",
                          help="Create client config for setting the library and code object files")
   argParser.add_argument("--global-parameters", nargs="+", type=splitExtraParameters, default=[])
-  argParser.add_argument("--generate-solution-table", dest="GenSolTable", action="store_true", default=True,
-                         help="Generate solution-yaml matching table")
+  argParser.add_argument("--no-generate-solution-table", dest="GenSolTable", action="store_false", default=True,
+                         help="Skip generating solution-yaml matching table")
   argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
                          help="Keep debug information for built code objects")
   argParser.add_argument("--build-id", dest="BuildIdKind", action="store", default="sha1")
