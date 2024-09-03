@@ -288,6 +288,8 @@ globalParameters["BuildIdKind"] = "sha1"
 globalParameters["ValidateLibrary"] = False
 globalParameters["AsmDebug"] = False # Set to True to keep debug information for compiled code objects
 
+globalParameters["UseEffLike"] = True # Set to False to use winnerGFlops as the performance metric
+
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
 
