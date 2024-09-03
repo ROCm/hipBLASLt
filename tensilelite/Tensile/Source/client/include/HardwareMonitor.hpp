@@ -75,13 +75,21 @@ namespace Tensile
                                   rsmi_temperature_metric_t metric      = RSMI_TEMP_CURRENT);
             double getAverageClock(rsmi_clk_type_t clockType);
             double getAverageFanSpeed(uint32_t sensorIndex = 0);
-            int    getDeviceIndex()
+            double getAverageGfxFreqPowerTemperature(std::vector<uint16_t>& dataValues);
+            double getMedianGfxFreqPowerTemperature(std::vector<uint16_t>& dataValues);
+
+            int getDeviceIndex()
             {
                 return m_hipDeviceIndex;
             }
             size_t getSamples()
             {
                 return m_dataPoints;
+            }
+
+            std::vector<uint16_t>& getAllGfxFreqValues()
+            {
+                return m_freqValues;
             }
 
             /// Begins monitoring until stop() is called.
@@ -147,6 +155,9 @@ namespace Tensile
 
             std::vector<uint32_t> m_fanMetrics;
             std::vector<int64_t>  m_fanValues;
+
+            std::vector<uint16_t> m_freqValues;
+            bool                  m_hasInvalidGpuMetricStatus = false;
 
             // Reserved for further performance check.
             std::vector<uint64_t>              m_SYSCLK_sum;
