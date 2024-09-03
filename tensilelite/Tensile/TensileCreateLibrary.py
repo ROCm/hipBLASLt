@@ -349,7 +349,7 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
 
 def buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath):
     args    = zip(itertools.repeat(CxxCompiler), itertools.repeat(outputPath), kernelFiles)
-    coFiles = Common.ParallelMap(buildSourceCodeObjectFile, args, "Compiling source kernels", method=lambda x: x.starmap)
+    coFiles = Common.ParallelMap2(buildSourceCodeObjectFile, args, "Compiling source kernels")
 
     return itertools.chain.from_iterable(coFiles)
 
