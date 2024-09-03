@@ -62,6 +62,8 @@ BenchmarkProblems:
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - WorkGroupMapping: [-1, -8, -300]
+        - WorkGroupMappingXCC: [1, 8]
+        - WorkGroupMappingXCCGroup: [0, 304]
         - StaggerUMapping: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1]

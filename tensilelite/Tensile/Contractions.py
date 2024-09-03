@@ -525,6 +525,7 @@ class SizeMapping:
                  'activationFused',
                  'CustomKernelName',
                  'workGroupMappingXCC',
+                 'workGroupMappingXCCGroup',
                  'globalSplitUCoalesced',
                  'globalSplitUWorkGroupMappingRoundRobin'
                  ]
@@ -563,6 +564,7 @@ class SizeMapping:
                    activationFused          = d['ActivationFused'],
                    CustomKernelName         = d['CustomKernelName'],
                    workGroupMappingXCC      = d['WorkGroupMappingXCC'],
+                   workGroupMappingXCCGroup = d['WorkGroupMappingXCCGroup'],
                    globalSplitUCoalesced    = d['GlobalSplitUCoalesced'],
                    globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin']
                    )

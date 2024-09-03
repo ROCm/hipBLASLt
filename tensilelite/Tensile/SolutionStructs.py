@@ -3817,6 +3817,8 @@ class Solution(collections.abc.Mapping):
     else:
       state_copy["GlobalSplitU"] = "M"
     state_copy["WorkGroupMapping"] = "M"
+    state_copy["WorkGroupMappingXCC"] = "M"
+    state_copy["WorkGroupMappingXCCGroup"] = "M"
     state_copy["StaggerU"] = "M"
     state_copy["StaggerUStride"] = "M"
     state_copy["StaggerUMapping"] = "M"
@@ -3873,6 +3875,8 @@ class Solution(collections.abc.Mapping):
       else:
         requiredParameters["GlobalSplitU"] = False
       requiredParameters["WorkGroupMapping"] = False
+      requiredParameters["WorkGroupMappingXCC"] = False
+      requiredParameters["WorkGroupMappingXCCGroup"] = False
       requiredParameters["StaggerU"] = False
       requiredParameters["StaggerUStride"] = False
       requiredParameters["StaggerUMapping"] = False
@@ -3897,6 +3901,8 @@ class Solution(collections.abc.Mapping):
     state["GlobalSplitU"] = backup
     requiredParameters["GlobalSplitU"] = True
     requiredParameters["WorkGroupMapping"] = True
+    requiredParameters["WorkGroupMappingXCC"] = True
+    requiredParameters["WorkGroupMappingXCCGroup"] = True
     requiredParameters["StaggerU"] = True
     requiredParameters["StaggerUStride"] = True
     requiredParameters["StaggerUMapping"] = True

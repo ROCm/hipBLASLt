@@ -830,10 +830,14 @@ namespace Tensile
         bool     gsuc     = false; // initialized false
         bool     gsuwgmrr = false; // initialized false
         int32_t  wgm      = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
+        uint32_t wgmxcc   = 0;
+        uint32_t wgmxccg  = 0;
         const uint32_t mask16       = 0xFFFF;
         const uint32_t mask14       = 0x3FFF;
+        const uint32_t mask12       = 0xFFF;
         const uint32_t mask8        = 0xFF;
         uint32_t       internalArg0 = 0;
+        uint32_t        internalArg1 = 0;
 
         if(internalArgsSupport.wgm && internalArgsSupport.version == 0)
         {
@@ -843,6 +847,21 @@ namespace Tensile
                 gsu = 255;
             uint32_t wgShift8 = (mask8 & (uint32_t)wgm) << 8;
             internalArg0      = internalArg0 | wgShift8;
+        }
+
+        if(internalArgsSupport.wgm && internalArgsSupport.version >= 1)
+        {
+            if(internalArgsSupport.version == 1)
+            {
+                internalArg1 = wgm;
+            }
+            else if(internalArgsSupport.version == 2)
+            {
+                wgmxcc  = param.wgmxcc() > 0 ? param.wgmxcc() : sizeMapping.workGroupMappingXCC;
+                wgmxccg = param.wgmxccg() > 0 ? param.wgmxccg() : sizeMapping.workGroupMappingXCCGroup;
+                internalArg1
+                    = internalArg1 | (wgmxccg << 22) | (wgmxcc << 12) | (mask12 & wgm);
+            }
         }
 
         // support gsuc and gsuwgmrr after version 2
@@ -871,12 +890,7 @@ namespace Tensile
 
         if(internalArgsSupport.version >= 1)
         {
-            int32_t internalArg1 = 0;
-            if(internalArgsSupport.wgm)
-            {
-                args.template append<int32_t>("internalArgs1", wgm);
-            }
-
+            args.template append<int32_t>("internalArgs1", internalArg1);
             args.template append<uint32_t>("numWorkGroups", numWorkGroups);
         }
     }
