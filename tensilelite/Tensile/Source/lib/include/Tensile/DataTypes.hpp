@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -116,8 +116,8 @@ namespace Tensile
 
         static void addInfoObject(DataTypeInfo const& info);
 
-        static std::map<DataType, DataTypeInfo> data;
-        static std::map<std::string, DataType>  typeNames;
+        static std::map<DataType, DataTypeInfo>* getData();
+        static std::map<std::string, DataType>*  getTypeNames();
     };
 
     /**

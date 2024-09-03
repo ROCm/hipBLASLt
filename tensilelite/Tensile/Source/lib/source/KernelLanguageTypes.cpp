@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,9 +31,6 @@
 
 namespace Tensile
 {
-    std::map<KernelLanguage, KernelLanguageTypeInfo> KernelLanguageTypeInfo::data;
-    std::map<std::string, KernelLanguage>            KernelLanguageTypeInfo::typeNames;
-
     std::string ToString(KernelLanguage d)
     {
         switch(d)
@@ -66,6 +63,18 @@ namespace Tensile
         default:;
         }
         return "Invalid";
+    }
+
+    std::map<KernelLanguage, KernelLanguageTypeInfo>* KernelLanguageTypeInfo::getData()
+    {
+        static std::map<KernelLanguage, KernelLanguageTypeInfo> data;
+        return &data;
+    }
+
+    std::map<std::string, KernelLanguage>* KernelLanguageTypeInfo::getTypeNames()
+    {
+        static std::map<std::string, KernelLanguage> typeNames;
+        return &typeNames;
     }
 
     template <KernelLanguage T>
@@ -105,14 +114,17 @@ namespace Tensile
             return tmp;
         };
 
-        data[info.m_kernelLanguage] = info;
+        auto* data      = getData();
+        auto* typeNames = getTypeNames();
+
+        data->emplace(info.m_kernelLanguage, info);
 
         // Add some flexibility to names registry. Accept abbreviations and
         // lower case versions of the strings
-        typeNames[info.name]            = info.m_kernelLanguage;
-        typeNames[toLower(info.name)]   = info.m_kernelLanguage;
-        typeNames[info.abbrev]          = info.m_kernelLanguage;
-        typeNames[toLower(info.abbrev)] = info.m_kernelLanguage;
+        typeNames->emplace(info.name, info.m_kernelLanguage);
+        typeNames->emplace(toLower(info.name), info.m_kernelLanguage);
+        typeNames->emplace(info.abbrev, info.m_kernelLanguage);
+        typeNames->emplace(toLower(info.abbrev), info.m_kernelLanguage);
     }
 
     KernelLanguageTypeInfo const& KernelLanguageTypeInfo::Get(int index)
@@ -123,9 +135,9 @@ namespace Tensile
     KernelLanguageTypeInfo const& KernelLanguageTypeInfo::Get(KernelLanguage t)
     {
         registerAllTypeInfoOnce();
-
-        auto iter = data.find(t);
-        if(iter == data.end())
+        auto* data = getData();
+        auto  iter = data->find(t);
+        if(iter == data->end())
             throw std::runtime_error(concatenate("Invalid kernel language: ", static_cast<int>(t)));
 
         return iter->second;
@@ -134,9 +146,9 @@ namespace Tensile
     KernelLanguageTypeInfo const& KernelLanguageTypeInfo::Get(std::string const& str)
     {
         registerAllTypeInfoOnce();
-
-        auto iter = typeNames.find(str);
-        if(iter == typeNames.end())
+        auto* typeNames = getTypeNames();
+        auto  iter      = typeNames->find(str);
+        if(iter == typeNames->end())
             throw std::runtime_error(concatenate("Invalid kernel language: ", str));
 
         return Get(iter->second);

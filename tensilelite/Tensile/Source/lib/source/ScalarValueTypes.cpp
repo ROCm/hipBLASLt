@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,9 +31,6 @@
 
 namespace Tensile
 {
-    std::map<ScalarValue, ScalarValueTypeInfo> ScalarValueTypeInfo::data;
-    std::map<std::string, ScalarValue>         ScalarValueTypeInfo::typeNames;
-
     std::string ToString(ScalarValue d)
     {
         switch(d)
@@ -49,6 +46,18 @@ namespace Tensile
         default:;
         }
         return "Invalid";
+    }
+
+    std::map<ScalarValue, ScalarValueTypeInfo>* ScalarValueTypeInfo::getData()
+    {
+        static std::map<ScalarValue, ScalarValueTypeInfo> data;
+        return &data;
+    }
+
+    std::map<std::string, ScalarValue>* ScalarValueTypeInfo::getTypeNames()
+    {
+        static std::map<std::string, ScalarValue> typeNames;
+        return &typeNames;
     }
 
     template <ScalarValue T>
@@ -87,12 +96,15 @@ namespace Tensile
             return tmp;
         };
 
-        data[info.m_value] = info;
+        auto* data      = getData();
+        auto* typeNames = getTypeNames();
+
+        data->emplace(info.m_value, info);
 
         // Add some flexibility to names registry. Accept
         // lower case versions of the strings
-        typeNames[info.name]          = info.m_value;
-        typeNames[toLower(info.name)] = info.m_value;
+        typeNames->emplace(info.name, info.m_value);
+        typeNames->emplace(toLower(info.name), info.m_value);
     }
 
     ScalarValueTypeInfo const& ScalarValueTypeInfo::Get(int index)
@@ -104,8 +116,9 @@ namespace Tensile
     {
         registerAllTypeInfoOnce();
 
-        auto iter = data.find(t);
-        if(iter == data.end())
+        auto* data = getData();
+        auto  iter = data->find(t);
+        if(iter == data->end())
             throw std::runtime_error(concatenate("Invalid scalar value: ", static_cast<int>(t)));
 
         return iter->second;
@@ -115,8 +128,9 @@ namespace Tensile
     {
         registerAllTypeInfoOnce();
 
-        auto iter = typeNames.find(str);
-        if(iter == typeNames.end())
+        auto* typeNames = getTypeNames();
+        auto  iter      = typeNames->find(str);
+        if(iter == typeNames->end())
             throw std::runtime_error(concatenate("Invalid scalar value: ", str));
 
         return Get(iter->second);

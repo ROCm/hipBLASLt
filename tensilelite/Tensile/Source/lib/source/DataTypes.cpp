@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,9 +31,6 @@
 
 namespace Tensile
 {
-    std::map<DataType, DataTypeInfo> DataTypeInfo::data;
-    std::map<std::string, DataType>  DataTypeInfo::typeNames;
-
     std::string ToString(DataType d)
     {
         switch(d)
@@ -145,6 +142,18 @@ namespace Tensile
         return 1;
     }
 
+    std::map<DataType, DataTypeInfo>* DataTypeInfo::getData()
+    {
+        static std::map<DataType, DataTypeInfo> data;
+        return &data;
+    }
+
+    std::map<std::string, DataType>* DataTypeInfo::getTypeNames()
+    {
+        static std::map<std::string, DataType> typeNames;
+        return &typeNames;
+    }
+
     template <typename T>
     void DataTypeInfo::registerTypeInfo()
     {
@@ -195,8 +204,11 @@ namespace Tensile
 
     void DataTypeInfo::addInfoObject(DataTypeInfo const& info)
     {
-        data[info.dataType]  = info;
-        typeNames[info.name] = info.dataType;
+        auto* data      = getData();
+        auto* typeNames = getTypeNames();
+
+        data->emplace(info.dataType, info);
+        typeNames->emplace(info.name, info.dataType);
     }
 
     DataTypeInfo const& DataTypeInfo::Get(int index)
@@ -208,8 +220,9 @@ namespace Tensile
     {
         registerAllTypeInfoOnce();
 
-        auto iter = data.find(t);
-        if(iter == data.end())
+        auto* data = getData();
+        auto  iter = data->find(t);
+        if(iter == data->end())
             throw std::runtime_error(concatenate("Invalid data type: ", static_cast<int>(t)));
 
         return iter->second;
@@ -219,8 +232,9 @@ namespace Tensile
     {
         registerAllTypeInfoOnce();
 
-        auto iter = typeNames.find(str);
-        if(iter == typeNames.end())
+        auto* typeNames = getTypeNames();
+        auto  iter      = typeNames->find(str);
+        if(iter == typeNames->end())
             throw std::runtime_error(concatenate("Invalid data type: ", str));
 
         return Get(iter->second);
@@ -281,8 +295,9 @@ namespace Tensile
         return std::visit(
             [](const auto& cv) {
                 using T = std::decay_t<decltype(cv)>;
-                if constexpr(std::is_same_v<T, std::complex<float>>
-                             || std::is_same_v<T, std::complex<double>>)
+                if constexpr(std::is_same_v<
+                                 T,
+                                 std::complex<float>> || std::is_same_v<T, std::complex<double>>)
                     return "(" + std::to_string(cv.real()) + ", " + std::to_string(cv.imag()) + ")";
                 else
                     return std::to_string(cv);
