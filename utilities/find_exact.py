@@ -21,13 +21,13 @@
 ################################################################################
 
 import argparse
+from collections import defaultdict
 import glob
 import itertools
 import multiprocessing as mp
 import os
 import re
 import subprocess
-import sys
 try:
     import yaml
 except ImportError:
@@ -154,7 +154,7 @@ def findExact(config):
                     config[keyOuter][key] = defaultBenchOptions[keyOuter][key]
     # Sort and remove duplicated
     config["ProblemSizes"].sort()
-    config["ProblemSizes"] = list(i for i,_ in itertools.groupby(config["ProblemSizes"]))
+    config["ProblemSizes"] = [i for i, _ in itertools.groupby(config["ProblemSizes"])]
     # Fix format
     if "DataTypeA" not in config["ProblemType"]:
         config["ProblemType"]["DataTypeA"] = config["ProblemType"]["ComputeInputDataType"]
@@ -244,8 +244,8 @@ def findExact(config):
                 command.append(str(splitk))
 
         filePath = os.path.abspath(globalParameters["WorkingDir"]["Bench"] + "/" + filename)
-        f = open(filePath, "w")
-        subprocess.run(command, stdout=f)
+        with open(filePath, "w") as f:
+            subprocess.run(command, stdout=f)
 
 @dataclass
 class yamlListInfo:
@@ -261,8 +261,8 @@ def fetchDataFromLogic(yamlFilePath, infoList):
     data = readYaml(yamlFilePath)
     # Skip exact yaml files
     libraryType = None
-    if len(data) > 12 and data[12]:
-        libraryType = data[12]
+    if len(data) > 11 and data[11]:
+        libraryType = data[11]
     else:
         str1 = "Library logic file {} is missing required field matching property." \
                 .format(yamlFilePath)
@@ -303,7 +303,7 @@ def fetchDataFromLogic(yamlFilePath, infoList):
             exactLogicList.append([info.problemSizes, [local2NewLocalTable[key], info.tflops]])
     data[7] = exactLogicList
     data[8] = None
-    data[12] = "Equality"
+    data[11] = "Equality"
 
     yamlFileName = os.path.abspath(globalParameters["WorkingDir"]["LogicYaml"] + "/" + os.path.basename(yamlFilePath))
     writeYAML(yamlFileName, data, explicit_start=False, explicit_end=False)
@@ -316,7 +316,7 @@ def CreateExact(config):
     tableData = readYaml(tableFile)
     print("--Reading bench files")
     benchList = glob.glob(globalParameters["WorkingDir"]["Bench"] + "/result_*_*_*x*x*.txt")
-    yamlList = {}
+    yamlList = defaultdict(list)
     for benchFile in benchList:
         print(" --Found file %s"%benchFile)
         solutionIndex = -1
@@ -356,10 +356,7 @@ def CreateExact(config):
         yli.localSolutionIndex = yamlLocalSolutionIndex
         yli.tflops = tflops
         yli.splitK = splitK
-        if yamlFilePath in yamlList:
-            yamlList[yamlFilePath].append(yli)
-        else:
-            yamlList[yamlFilePath] = [yli]
+        yamlList[yamlFilePath].append(yli)
 
     pool = mp.Pool(8)
     jobs = []
@@ -380,7 +377,6 @@ def CreateExact(config):
 
 # script run from commandline
 if __name__ == "__main__":
-    userArgs = sys.argv[1:]
     argParser = argparse.ArgumentParser()
     argParser.add_argument("config_file", type=os.path.realpath, nargs="+",
             help="Benchmark config.yaml file")
@@ -388,7 +384,7 @@ if __name__ == "__main__":
             help="Path to hipblaslt build_path (build/release)")
     argParser.add_argument("output_path", type=os.path.realpath, \
             help="Path to conduct benchmark and write output files")
-    args = argParser.parse_args(userArgs)
+    args = argParser.parse_args()
 
     # Update global parameters
     globalParameters["BuildDir"] = args.build_path
