@@ -68,18 +68,7 @@ def load_yaml_stream(yaml_path: Path, loader_type: yaml.Loader):
         loader.get_event()
         assert loader.check_event(yaml.DocumentStartEvent)
         loader.get_event()
-
-        # assume the root element is a sequence
-        assert loader.check_event(yaml.SequenceStartEvent)
-        loader.get_event()
-        logic = []
-
-        # now while the next event does not end the sequence, process each item
-        while not loader.check_event(yaml.SequenceEndEvent):
-            logic.append(parse_general(loader))
-
-        # assume document ends and no further documents are in stream
-        loader.get_event()
+        logic = parse_general(loader)
         assert loader.check_event(yaml.DocumentEndEvent)
         loader.get_event()
         assert loader.check_event(yaml.StreamEndEvent)
@@ -94,7 +83,9 @@ def load_yaml_sequence_item(yaml_path: Path, loader_type: yaml.Loader, idx: int)
         loader.get_event()
 
         # assume the root element is a sequence
-        assert loader.check_event(yaml.SequenceStartEvent)
+        if not loader.check_event(yaml.SequenceStartEvent):
+            raise RuntimeError('Root of YAML is not a sequence')
+
         loader.get_event()
         cur_idx = 0
         ret = None
@@ -110,11 +101,42 @@ def load_yaml_sequence_item(yaml_path: Path, loader_type: yaml.Loader, idx: int)
 
         return ret
 
-def load_logic_gfx_arch(yaml_path: Path, loader_type: yaml.Loader = yaml.CSafeLoader):
-    GFX_ARCH_IDX = 2
-    arch = load_yaml_sequence_item(yaml_path, loader_type, GFX_ARCH_IDX)
+def load_yaml_dict_item(yaml_path: Path, loader_type: yaml.Loader, key: str):
+    with open(yaml_path, 'r') as f:
+        loader = loader_type(f)
+        assert loader.check_event(yaml.StreamStartEvent)
+        loader.get_event()
+        assert loader.check_event(yaml.DocumentStartEvent)
+        loader.get_event()
 
-    if isinstance(arch, dict):
-        return arch['Architecture']
-    else:
-        return arch
+        # assume the root element is a map
+        if not loader.check_event(yaml.MappingStartEvent):
+            raise RuntimeError('Root of YAML is not a map')
+
+        loader.get_event()
+        k, v = None, None
+
+        while not loader.check_event(yaml.MappingEndEvent):
+            if k is None:
+                k = parse_scalar(loader)
+            else:
+                value = parse_general(loader)
+
+                if k == key:
+                    v = value
+                    break
+                k = None
+
+        return v
+
+def load_logic_gfx_arch(yaml_path: Path, loader_type: yaml.Loader = yaml.CSafeLoader):
+    try:
+        GFX_ARCH_IDX = 2
+        arch = load_yaml_sequence_item(yaml_path, loader_type, GFX_ARCH_IDX)
+
+        if isinstance(arch, dict):
+            return arch['Architecture']
+        else:
+            return arch
+    except RuntimeError as e:
+        return load_yaml_dict_item(yaml_path, loader_type, 'ArchitectureName')
