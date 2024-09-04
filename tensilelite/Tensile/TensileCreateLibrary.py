@@ -40,6 +40,7 @@ from .Common import globalParameters, HR, print1, print2, printExit, ensurePath,
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
+from .CustomYamlLoader import load_logic_gfx_arch
 
 import argparse
 import collections
@@ -53,7 +54,6 @@ import subprocess
 import sys
 from timeit import default_timer as timer
 from pathlib import Path
-from copy import deepcopy
 from typing import Sequence
 
 def timing(func):
@@ -1389,12 +1389,14 @@ def TensileCreateLibrary():
   else:
     printExit("Unrecognized LogicFormat", args.LogicFormat)
 
+  def validLogicFile(p: Path):
+    return p.suffix == logicExtFormat and load_logic_gfx_arch(p) in arch
+
   logicFiles = []
-  for root, dirs, files in os.walk(logicPath):
-    logicFiles += [os.path.join(root, f) for f in files
-                       if os.path.splitext(f)[1]==logicExtFormat \
-                       and (any(logicArch in os.path.splitext(f)[0] for logicArch in logicArchs) \
-                       or "hip" in os.path.splitext(f)[0]) ]
+
+  for root, _, files in os.walk(logicPath):
+    logics = (os.path.join(root, f) for f in files)
+    logicFiles += [file for file in logics if validLogicFile(Path(file))]
 
   print1("# LibraryLogicFiles:" % logicFiles)
   for logicFile in logicFiles:

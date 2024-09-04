@@ -61,7 +61,7 @@ def parse_scalar(loader: yaml.Loader):
 
     return value
 
-def load_yaml_stream(yaml_path: Path, loader_type):
+def load_yaml_stream(yaml_path: Path, loader_type: yaml.Loader):
     with open(yaml_path, 'r') as f:
         loader = loader_type(f)
         assert loader.check_event(yaml.StreamStartEvent)
@@ -84,3 +84,37 @@ def load_yaml_stream(yaml_path: Path, loader_type):
         loader.get_event()
         assert loader.check_event(yaml.StreamEndEvent)
         return logic
+
+def load_yaml_sequence_item(yaml_path: Path, loader_type: yaml.Loader, idx: int):
+    with open(yaml_path, 'r') as f:
+        loader = loader_type(f)
+        assert loader.check_event(yaml.StreamStartEvent)
+        loader.get_event()
+        assert loader.check_event(yaml.DocumentStartEvent)
+        loader.get_event()
+
+        # assume the root element is a sequence
+        assert loader.check_event(yaml.SequenceStartEvent)
+        loader.get_event()
+        cur_idx = 0
+        ret = None
+
+        while not loader.check_event(yaml.SequenceEndEvent):
+            obj = parse_general(loader)
+
+            if cur_idx == idx:
+                ret = obj
+                break
+
+            cur_idx += 1
+
+        return ret
+
+def load_logic_gfx_arch(yaml_path: Path, loader_type: yaml.Loader = yaml.CSafeLoader):
+    GFX_ARCH_IDX = 2
+    arch = load_yaml_sequence_item(yaml_path, loader_type, GFX_ARCH_IDX)
+
+    if isinstance(arch, dict):
+        return arch['Architecture']
+    else:
+        return arch
