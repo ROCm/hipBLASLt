@@ -826,18 +826,18 @@ namespace Tensile
             args.template append<uint32_t>("gemm_count", gemmCount);
         }
 
-        uint32_t gsu      = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
-        bool     gsuc     = false; // initialized false
-        bool     gsuwgmrr = false; // initialized false
-        int32_t  wgm      = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
-        uint32_t wgmxcc   = 0;
-        uint32_t wgmxccg  = 0;
+        uint32_t       gsu          = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
+        bool           gsuc         = false; // initialized false
+        bool           gsuwgmrr     = false; // initialized false
+        int32_t        wgm          = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
+        uint32_t       wgmxcc       = 0;
+        uint32_t       wgmxccg      = 0;
         const uint32_t mask16       = 0xFFFF;
         const uint32_t mask14       = 0x3FFF;
         const uint32_t mask12       = 0xFFF;
         const uint32_t mask8        = 0xFF;
         uint32_t       internalArg0 = 0;
-        uint32_t        internalArg1 = 0;
+        uint32_t       internalArg1 = 0;
 
         if(internalArgsSupport.wgm && internalArgsSupport.version == 0)
         {
@@ -857,10 +857,10 @@ namespace Tensile
             }
             else if(internalArgsSupport.version == 2)
             {
-                wgmxcc  = param.wgmxcc() > 0 ? param.wgmxcc() : sizeMapping.workGroupMappingXCC;
-                wgmxccg = param.wgmxccg() > 0 ? param.wgmxccg() : sizeMapping.workGroupMappingXCCGroup;
-                internalArg1
-                    = internalArg1 | (wgmxccg << 22) | (wgmxcc << 12) | (mask12 & wgm);
+                wgmxcc = param.wgmxcc() > 0 ? param.wgmxcc() : sizeMapping.workGroupMappingXCC;
+                wgmxccg
+                    = param.wgmxccg() > 0 ? param.wgmxccg() : sizeMapping.workGroupMappingXCCGroup;
+                internalArg1 = internalArg1 | (wgmxccg << 22) | (wgmxcc << 12) | (mask12 & wgm);
             }
         }
 
@@ -868,9 +868,10 @@ namespace Tensile
         if(internalArgsSupport.version >= 2)
         {
             gsuc     = param.gsuc() > 0 ? param.gsuc() : sizeMapping.globalSplitUCoalesced;
-            gsuwgmrr = param.gsuwgmrr() > 0 ? param.gsuwgmrr() : sizeMapping.globalSplitUWorkGroupMappingRoundRobin;
+            gsuwgmrr = param.gsuwgmrr() > 0 ? param.gsuwgmrr()
+                                            : sizeMapping.globalSplitUWorkGroupMappingRoundRobin;
         }
-        
+
         internalArg0
             = internalArg0 | ((uint32_t)gsuc << 15) | ((uint32_t)gsuwgmrr << 14) | (mask14 & gsu);
 

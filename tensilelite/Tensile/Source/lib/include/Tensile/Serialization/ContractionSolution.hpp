@@ -114,9 +114,11 @@ namespace Tensile
 
                 iot::mapRequired(io, "workGroupMappingXCC", s.workGroupMappingXCC);
                 iot::mapRequired(io, "workGroupMappingXCCGroup", s.workGroupMappingXCCGroup);
-                
+
                 iot::mapRequired(io, "globalSplitUCoalesced", s.globalSplitUCoalesced);
-                iot::mapRequired(io, "globalSplitUWorkGroupMappingRoundRobin", s.globalSplitUWorkGroupMappingRoundRobin);
+                iot::mapRequired(io,
+                                 "globalSplitUWorkGroupMappingRoundRobin",
+                                 s.globalSplitUWorkGroupMappingRoundRobin);
             }
 
             const static bool flow = false;
