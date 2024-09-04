@@ -55,6 +55,7 @@ import sys
 from timeit import default_timer as timer
 from pathlib import Path
 from typing import Sequence
+import concurrent.futures
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -571,13 +572,13 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
 
   kernelFiles += buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs)
 
-  kernelsToBuild = list(kernels)
+  kernelsToBuild = kernels
   if errorTolerant:
       def success(kernel):
           writer = kernelWriterAssembly
           kernelName = writer.getKernelName(kernel)
           return kernelName not in kernelsWithBuildErrs
-      kernelsToBuild = list(filter(success, kernelsToBuild))
+      kernelsToBuild = filter(success, kernelsToBuild)
   elif len(kernelsWithBuildErrs) > 0:
     print("\nKernel compilation failed in one or more subprocesses. May want to set CpuThreads=0 and re-run to make debug easier")
     printExit("** kernel compilation failure **")
@@ -831,7 +832,7 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
   sourceLibFiles = []
   asmLibFiles = []
 
-  asmKernels = list([k for k in kernels if k['KernelLanguage'] == 'Assembly'])
+  asmKernels = (k for k in kernels if k['KernelLanguage'] == 'Assembly')
 
   # Build a list of kernel object names.
   for kernel in asmKernels:
@@ -845,7 +846,7 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
   if supportedCompiler(CxxCompiler):
     sourceArchs, _ = splitArchs()
   else:
-    raise RuntimeError("Unknown compiler %s" % cxxCompiler)
+    raise RuntimeError("Unknown compiler %s" % CxxCompiler)
 
   # Asm based kernels target the configured ISA
   asmArchs = collections.defaultdict(list)
@@ -1041,6 +1042,26 @@ def writeCMake(outputPath, solutionFiles, kernelFiles, libraryStaticFiles, maste
 
   generatedFile.close()
 
+def toKernelObjects(solutions):
+  kernelNames = set()
+  for solution in solutions:
+    solutionKernels = solution.getKernels()
+    for kernel in solutionKernels:
+        kName = Solution.getKeyNoInternalArgs(kernel)
+        if kName not in kernelNames:
+            kernelNames.add(kName)
+            yield kernel
+
+def getKernelHelpObjects(solutions):
+  kernelNames = set()
+  for solution in solutions:
+    solutionHelperKernels = solution.getHelperKernelObjects()
+    for ko in solutionHelperKernels:
+      kName = ko.getKernelName()
+      if kName not in kernelNames:
+        kernelNames.add(kName)
+        yield ko
+
 ################################################################################
 # Generate Kernel Objects From Solutions
 ################################################################################
@@ -1080,36 +1101,55 @@ def generateLogicDataAndSolutions(logicFiles, args):
   else:
     archs = args.Architecture.split("_") # workaround for cmake list in list issue
 
-  fIter = zip(logicFiles, itertools.repeat(archs))
-  libraries = Common.ParallelMap(LibraryIO.parseLibraryLogicFile, fIter, "Reading logic files", method=lambda x: x.starmap)
-
   solutions = []
   masterLibraries = {}
   fullMasterLibrary = None
-
   nextSolIndex = 0
+  matchTable = {}
+  fIter = zip(logicFiles, itertools.repeat(archs))
 
-  for logic in filter(lambda i: i[1] != "", Utils.tqdm(libraries, "Processing logic data")):
-    (_, architectureName, _, _, _, newLibrary, _) = logic
-
-    if globalParameters["PackageLibrary"]:
-      if architectureName in masterLibraries:
-        masterLibraries[architectureName].merge(newLibrary)
-      else:
-        masterLibraries[architectureName] = newLibrary
-        masterLibraries[architectureName].version = args.version
-    elif globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
-      if architectureName in masterLibraries:
-        nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
-      else:
-        masterLibraries[architectureName] = newLibrary
-        masterLibraries[architectureName].version = args.version
+  def libraryIter(lib: MasterSolutionLibrary):
+    if len(lib.solutions):
+      for i, s in enumerate(lib.solutions.items()):
+        yield i, *s
     else:
-      if fullMasterLibrary is None:
-        fullMasterLibrary = newLibrary
-        fullMasterLibrary.version = args.version
+      for _, lazyLib in lib.lazyLibraries.items():
+        yield from libraryIter(lazyLib)
+
+  with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+    futureToPath = {executor.submit(LibraryIO.parseLibraryLogicFile, *p): p[0] for p in fIter}
+
+    for future in concurrent.futures.as_completed(futureToPath):
+      library = future.result()
+
+      if library[1] == "":
+        continue
+
+      _, architectureName, _, _, _, newLibrary, srcFile = library
+
+      if globalParameters["PackageLibrary"]:
+        if architectureName in masterLibraries:
+          masterLibraries[architectureName].merge(newLibrary)
+        else:
+          masterLibraries[architectureName] = newLibrary
+          masterLibraries[architectureName].version = args.version
+      elif globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
+        if architectureName in masterLibraries:
+          nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
+        else:
+          masterLibraries[architectureName] = newLibrary
+          masterLibraries[architectureName].version = args.version
       else:
-        fullMasterLibrary.merge(newLibrary)
+        if fullMasterLibrary is None:
+          fullMasterLibrary = newLibrary
+          fullMasterLibrary.version = args.version
+        else:
+          fullMasterLibrary.merge(newLibrary)
+
+      if args.GenSolTable:
+        # Match yaml file solutions to solution index
+        for localIdx, _, s in libraryIter(newLibrary):
+          matchTable[s.index] = [srcFile, localIdx]
 
     # if problemType not in logicData:
     #   logicData[problemType] = []
@@ -1137,21 +1177,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
   # remove duplicates while preserving order
   solutions = dict.fromkeys(solutions).keys()
 
-  # Match yaml file solutions to solution index
   if args.GenSolTable:
-    def libraryIter(lib: MasterSolutionLibrary):
-      if len(lib.solutions):
-        for i, s in enumerate(lib.solutions.items()):
-          yield (i, *s)
-      else:
-        for _, lazyLib in lib.lazyLibraries.items():
-          yield from libraryIter(lazyLib)
-
-    matchTable = {}
-    for logic in filter(lambda i: i[1] != "", Utils.tqdm(libraries, "Match yaml file solutions to solution index")):
-      (_, architectureName, _, _, _, newLibrary, srcFile) = logic
-      for localIdx, _, s in libraryIter(newLibrary):
-        matchTable[s.index] = [srcFile, localIdx]
     LibraryIO.write("MatchTable", matchTable)
 
   return solutions, masterLibraries, fullMasterLibrary
@@ -1409,7 +1435,9 @@ def TensileCreateLibrary():
   # Parse logicData, solutions, and masterLibraries from logic files
   solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args)
 
-  kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
+  # kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
+  kernels = list(toKernelObjects(solutions))
+  kernelHelperObjs = getKernelHelpObjects(solutions)
 
   # if any kernels are assembly, append every ISA supported
   kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels)
