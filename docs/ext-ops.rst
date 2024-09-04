@@ -17,17 +17,17 @@ These extensions support:
 2. ``hipblasltExtLayerNorm``
     Converts a 2D tensor using LayerNorm to generate a new 2D normalized tensor.
     it is an independent function used to just call and get result.
-    For sample code, refer to `sample_hipblaslt_ext_op_layernorm.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/samples/ext_op/sample_hipblaslt_ext_op_layernorm.cpp>`_.
+    For sample code, refer to `sample_hipblaslt_ext_op_layernorm.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/samples/22_layernorm_ext/sample_hipblaslt_ext_op_layernorm.cpp>`_.
 
 3. ``hipblasltExtAMax``
     Abs maximum value of a 2D tensor.
     it is an independent function used to just call and get result.
-    For sample code, refer to `sample_hipblaslt_ext_op_amax.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/samples/ext_op/sample_hipblaslt_ext_op_amax.cpp>`_.
+    For sample code, refer to `sample_hipblaslt_ext_op_amax.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/samples/23_amax_ext/sample_hipblaslt_ext_op_amax.cpp>`_.
 
 4. ``hipblasltExtAMaxWithScale``
     Abs maximum value and scaled output of a 2D tensor.
     it is an independent function used to just call and get result.
-    For sample code, refer to `sample_hipblaslt_ext_op_amax_with_scale.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/samples/ext_op/sample_hipblaslt_ext_op_amax_with_scale.cpp>`_.
+    For sample code, refer to `sample_hipblaslt_ext_op_amax_with_scale.cpp <https://github.com/ROCm/hipBLASLt/blob/develop/clients/samples/24_amax_with_scale_ext/sample_hipblaslt_ext_op_amax_with_scale.cpp>`_.
 
 These APIs are explained in detail below.
 
