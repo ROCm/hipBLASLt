@@ -94,6 +94,9 @@ if( BUILD_WITH_TENSILE )
   # Create a unique name for TensileHost compiled for rocBLAS
   set_target_properties( TensileHost PROPERTIES OUTPUT_NAME rocblaslt-tensile CXX_EXTENSIONS NO )
 
+  set_target_properties( TensileHost PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  set_target_properties( TensileHost PROPERTIES C_VISIBILITY_PRESET hidden)
+
   # Tensile host depends on libs build target
   add_dependencies( TensileHost TENSILE_LIBRARY_TARGET )
 
