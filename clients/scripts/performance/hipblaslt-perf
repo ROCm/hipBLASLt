@@ -154,7 +154,7 @@ def main():
                         '--workspace',
                         type=str,
                         help='workspace folder keeping the perf data',
-                        default=os.path.join(dir_of_this_repo, "hipBlasLt_benchmark/"))
+                        default=os.path.join(dir_of_this_repo, "hipBLASLt_benchmark/"))
 
     # this argument is mainly used in jenkins/pts. For local dev, just use the default
     parser.add_argument('-e',
