@@ -1437,7 +1437,7 @@ def TensileCreateLibrary():
 
   # kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
   kernels = list(toKernelObjects(solutions))
-  kernelHelperObjs = getKernelHelpObjects(solutions)
+  kernelHelperObjs = list(getKernelHelpObjects(solutions))
 
   # if any kernels are assembly, append every ISA supported
   kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels)
