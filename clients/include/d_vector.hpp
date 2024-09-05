@@ -36,6 +36,23 @@
 #define MEM_MAX_GUARD_PAD 8192
 
 /* ============================================================================================ */
+
+//!
+//! @brief enum to specify the type of allocated device memory.
+//!
+typedef enum
+{
+    // Normal
+    HIPBLASLT_DEVICE_MEMORY_NORMAL,
+
+    // Managed
+    HIPBLASLT_DEVICE_MEMORY_MANAGED,
+
+    // Un-cached
+    HIPBLASLT_DEVICE_MEMORY_UNCACHED
+
+} hipblaslt_device_memory_type;
+
 /*! \brief  base-class to allocate/deallocate device memory */
 template <typename T>
 class d_vector
@@ -54,18 +71,18 @@ protected:
     }
 
 public:
-    bool use_HMM = false;
+    hipblaslt_device_memory_type m_type = HIPBLASLT_DEVICE_MEMORY_NORMAL;
 
 public:
     static T m_guard[MEM_MAX_GUARD_PAD];
 
 #ifdef GOOGLE_TEST
-    d_vector(size_t s, bool HMM = false)
+    d_vector(size_t s, hipblaslt_device_memory_type memType = HIPBLASLT_DEVICE_MEMORY_NORMAL)
         : m_size(s)
         , m_pad(std::min(g_DVEC_PAD, size_t(MEM_MAX_GUARD_PAD)))
         , m_guard_len(m_pad * sizeof(T))
         , m_bytes((s + m_pad * 2) * sizeof(T))
-        , use_HMM(HMM)
+        , m_type(memType)
     {
         // Initialize m_guard with random data
         if(!m_init_guard)
@@ -75,12 +92,12 @@ public:
         }
     }
 #else
-    d_vector(size_t s, bool HMM = false)
+    d_vector(size_t s, hipblaslt_device_memory_type memType = HIPBLASLT_DEVICE_MEMORY_NORMAL)
         : m_size(s)
         , m_pad(0) // save current pad length
         , m_guard_len(0 * sizeof(T))
         , m_bytes(s ? s * sizeof(T) : sizeof(T))
-        , use_HMM(HMM)
+        , m_type(memType)
     {
     }
 #endif
@@ -88,12 +105,27 @@ public:
     T* device_vector_setup()
     {
         T* d = nullptr;
-        if(use_HMM ? hipMallocManaged(&d, m_bytes) : (hipMalloc)(&d, m_bytes) != hipSuccess)
-        {
-            hipblaslt_cerr << "Error allocating " << m_bytes << " m_bytes (" << (m_bytes >> 30)
-                           << " GB)" << std::endl;
-
-            d = nullptr;
+        switch(m_type){
+            case HIPBLASLT_DEVICE_MEMORY_NORMAL:
+                if((hipMalloc)(&d, m_bytes) != hipSuccess)
+                    d = nullptr;
+                break;
+            case HIPBLASLT_DEVICE_MEMORY_MANAGED:
+                if(hipMallocManaged(&d, m_bytes) != hipSuccess)
+                    d = nullptr;
+                break;
+            case HIPBLASLT_DEVICE_MEMORY_UNCACHED:
+                if(hipExtMallocWithFlags((void**)&d, m_bytes, hipDeviceMallocUncached) != hipSuccess)
+                    d = nullptr;
+                break;
+            default:
+                hipblaslt_cerr << "Wrong device memory type: " << m_type << std::endl;
+                return nullptr;
+                break;
+        }
+        if(d == nullptr){
+            hipblaslt_cerr << "Error allocating un-cached memory " << m_bytes << " m_bytes (" << (m_bytes >> 30)
+                            << " GB)" << std::endl;
         }
 #ifdef GOOGLE_TEST
         else

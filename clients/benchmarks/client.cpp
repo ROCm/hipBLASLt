@@ -552,6 +552,22 @@ try
          value<bool>(&arg.use_gpu_timer)->default_value(false),
          "Use hipEventElapsedTime to profile elapsed time.")
 
+        ("uncachedA",
+         value<bool>(&arg.uncachedA)->default_value(false),
+         "Allocate un-cached memory for tensor A.")
+        
+        ("uncachedB",
+         value<bool>(&arg.uncachedB)->default_value(false),
+         "Allocate un-cached memory for tensor B.")
+
+        ("uncachedC",
+         value<bool>(&arg.uncachedC)->default_value(false),
+         "Allocate un-cached memory for tensor C.")
+
+        ("uncachedD",
+         value<bool>(&arg.uncachedD)->default_value(false),
+         "Allocate un-cached memory for tensor D.")
+
         ("splitk",
          valueVec<uint32_t>(&gsu_vector),
          "[Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")

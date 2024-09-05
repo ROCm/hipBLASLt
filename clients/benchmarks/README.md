@@ -70,6 +70,10 @@ cd hipBLASLt; cd build/release
 --print_kernel_info        Print solution, kernel name and solution index.
 --rotating <value>         Use rotating memory blocks for each iteration, size in MB.                          (Default value is: 0)
 --use_gpu_timer            Use hipEventElapsedTime to profile elapsed time.                                    (Default value is: false)
+--uncachedA                Allocate un-cached memory for tensor A.                                             (Default value is: false)
+--uncachedB                Allocate un-cached memory for tensor B.                                             (Default value is: false)
+--uncachedC                Allocate un-cached memory for tensor C.                                             (Default value is: false)
+--uncachedD                Allocate un-cached memory for tensor D.                                             (Default value is: false)
 --splitk <value>           [Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)
 --wgm <value>              [Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)
 --flush                    Flush icache

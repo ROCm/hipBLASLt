@@ -141,6 +141,10 @@ void Arguments::init()
     use_user_args      = false;
     rotating           = 0;
     use_gpu_timer      = false;
+    uncachedA          = false;
+    uncachedB          = false;
+    uncachedC          = false;
+    uncachedD          = false;
 
     // tuning
     gsu_vector[0] = 0;
