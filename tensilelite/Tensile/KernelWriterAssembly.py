@@ -8971,6 +8971,9 @@ class KernelWriterAssembly(KernelWriter):
             module.add(self.setSgprToInUseState("AddressScaleB"))
             if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
               module.add(self.setSgprToInUseState("SrdScaleB"))
+        if kernel["ProblemType"]["UseScaleAlphaVec"]:
+          module.add(self.setSgprToInUseState("AddressScaleAlphaVec"))
+          module.add(self.setSgprToInUseState("SrdScaleAlphaVec"))
 
       # Issue read scale A/B value for later use
       if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') and \
@@ -9199,6 +9202,9 @@ class KernelWriterAssembly(KernelWriter):
             module.add(self.setSgprToFreeState("AddressScaleB"))
             if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
               module.add(self.setSgprToFreeState("SrdScaleB"))
+        if kernel["ProblemType"]["UseScaleAlphaVec"]:
+          module.add(self.setSgprToFreeState("AddressScaleAlphaVec"))
+          module.add(self.setSgprToFreeState("SrdScaleAlphaVec"))
       else:
         if kernel["ProblemType"]["UseScaleAB"]:
           if not self.states.preloadScaleA:
@@ -9209,6 +9215,9 @@ class KernelWriterAssembly(KernelWriter):
             module.add(self.undefineSgpr("AddressScaleB"))
             if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
               module.add(self.undefineSgpr("SrdScaleB"))
+        if kernel["ProblemType"]["UseScaleAlphaVec"]:
+          module.add(self.undefineSgpr("AddressScaleAlphaVec"))
+          module.add(self.undefineSgpr("SrdScaleAlphaVec"))
 
       if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') and \
         ((kernel["ProblemType"]["DataTypeA"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters()) or \
