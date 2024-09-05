@@ -8888,8 +8888,7 @@ class KernelWriterAssembly(KernelWriter):
                           noGSUBranch=False,
                           applyAlpha=True, # defaults to generating *=alpha codes
                           betas=None, # if left unspecified, then let global parameter decide
-                          edges=None,
-                          factorDims=None):
+                          edges=None):
     if not self.do["PostLoop"]: return Module("GlobalWriteElements (Empty)")
     module = Module("GlobalWriteElements")
     module.addComment2("Global Write Elements")
@@ -8905,7 +8904,6 @@ class KernelWriterAssembly(KernelWriter):
     useBiasBackup      = self.states.useBias
     betasBackup    = betas
     edgesBackup    = edges
-    factorDimsBackup = factorDims
     gsuLimit = 1 if noGSUBranch or globalParameters["SplitGSU"] else 2
     if gsuLimit > 1:
       gsuLabel = Label(label=self.labels.getNameInc("GSU"), comment="")
@@ -8920,7 +8918,6 @@ class KernelWriterAssembly(KernelWriter):
       if gsuLimit > 1:
         betas = betasBackup
         edges = edgesBackup
-        factorDims = factorDimsBackup
         if gsuLimitIdx == 0:
           self.states.bpeCexternal = self.states.bpeCinternal
           if (kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel'):
@@ -9040,6 +9037,14 @@ class KernelWriterAssembly(KernelWriter):
         vectorDataTypes.scaleA.dataType = kernel["ProblemType"]["ComputeDataType"]
         vectorDataTypes.scaleB.dataType = kernel["ProblemType"]["ComputeDataType"]
 
+      factorDims = [0]
+      if self.states.FactorDim == 3:
+        factorDims.append(1)
+      elif self.states.FactorDim == 2:
+        factorDims = [1]
+      factorDim0Label = Label(self.labels.getNameInc("Load_FactorDim_0"), "")
+      factorDim1Label = Label(self.labels.getNameInc("Load_FactorDim_1"), "")
+
       # Add bias lds
       isLdsLoaded = False
       if self.states.useBias == DataDirection.READ and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
@@ -9062,18 +9067,11 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeI"), src1=sgpr(tmpSgpr)))
           module.add(allocPostLoopSrdSuppress("Bias", labelStr, sgprLength=sgpr(tmpSgpr)))
 
-        name = self.labels.getNameInc("Load_FactorDim_%u"%(0))
-        factorDim0Label = Label(self.labels.getNameInc("Load_FactorDim_0"), "")
-        factorDim1Label = Label(self.labels.getNameInc("Load_FactorDim_1"), "")
         loadBiasEndLabel = Label(self.labels.getNameInc("Load_Bias_End"), "")
-        factorDims = [0]
         if self.states.FactorDim == 3:
           module.add(factorDim0Label)
           module.add(self.getSCMPKInstruction("LGU32", "FactorDim", 0, comment="FactorDim != 0"))
           module.add(SCBranchSCC1(factorDim1Label.getLabelName(), "Branch if true"))
-          factorDims.append(1)
-        elif self.states.FactorDim == 2:
-          factorDims = [1]
 
         for d in range(len(factorDims)):
           # Calculate max vgpr for bias read
@@ -9181,15 +9179,26 @@ class KernelWriterAssembly(KernelWriter):
           useSize.append(True)
 
       if vectorDataTypes.isValid() and (not isLdsLoaded):
-        factorDim = 0 # Currently no factorDim for scaleA, scaleB
-        totalTmpVgpr = self.getNumOfTempVgprs(vectorDataTypes, kernel, 1, factorDim)
-        tmpVgpr      = self.vgprPool.checkOutAligned(totalTmpVgpr, 2, "store tmps")
-        tmpVgprRes   = RegisterPoolResource(idx=tmpVgpr, size=4)
-        offsetVgpr  = self.vgprPool.checkOut(1, 1)
-        with self.allocTmpSgpr(3, 1) as tmpSgprRes:
-          module.add(self.readVectorToLDS(vectorDataTypes, kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes, factorDim))
-        self.vgprPool.checkIn(offsetVgpr)
-        self.vgprPool.checkIn(tmpVgpr)
+        if self.states.FactorDim == 3:
+          module.add(factorDim0Label)
+          module.add(self.getSCMPKInstruction("LGU32", "FactorDim", 0, comment="FactorDim != 0"))
+          module.add(SCBranchSCC1(factorDim1Label.getLabelName(), "Branch if true"))
+        labelDimEnd = Label(self.labels.getNameInc("MultiDimEnd"), "")
+        for d in range(len(factorDims)):
+          totalTmpVgpr = self.getNumOfTempVgprs(vectorDataTypes, kernel, 1, factorDims[d])
+          tmpVgpr      = self.vgprPool.checkOutAligned(totalTmpVgpr, 2, "store tmps")
+          tmpVgprRes   = RegisterPoolResource(idx=tmpVgpr, size=4)
+          offsetVgpr  = self.vgprPool.checkOut(1, 1)
+          with self.allocTmpSgpr(3, 1) as tmpSgprRes:
+            if d == 1:
+              module.add(factorDim1Label)
+            module.add(self.readVectorToLDS(vectorDataTypes, kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes, factorDims[d]))
+            if self.states.FactorDim == 3 and d == 0:
+              module.add(SBranch(labelName=labelDimEnd.getLabelName(), comment="Branch to load end"))
+          self.vgprPool.checkIn(offsetVgpr)
+          self.vgprPool.checkIn(tmpVgpr)
+        if len(factorDims) > 1:
+          module.add(labelDimEnd)
 
       # Undefine LDS load related sgprs
       if gsuLimit > 1 and gsuLimitIdx == 0:
