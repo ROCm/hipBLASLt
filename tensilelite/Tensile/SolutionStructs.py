@@ -3429,9 +3429,10 @@ class Solution(collections.abc.Mapping):
     state["LdsOffsetBias"] = 0  # TODO: ldsBiasOffset = ldsNumBytesAB
     state["LdsOffsetBiasNonGSU"] = 0
     state["LdsOffsetBiasGSU"] = 0
+    epilogueSize = 0
+    # Bias
     if state["ProblemType"]["UseBias"]:
       # Currently all offsets starts from 0
-      ldsBiasMaxElements = 0
       if state["ProblemType"]["Gradient"]:
         if state["ProblemType"]["BiasSrc"] == "A":
           tile01 = state["ProblemType"]["Index01A"]
@@ -3445,15 +3446,19 @@ class Solution(collections.abc.Mapping):
         if tile01 > -1:
           maxKId = state["WavefrontSize"] // ((state["MatrixInstM"] if (tile01 == 0) else state["MatrixInstN"]) * state["MatrixInstB"])
           for dataType in state["ProblemType"]["BiasDataTypeList"]:
-            ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
+            epilogueSize = max(epilogueSize, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
       else:
         if state["StoreRemapVectorWidth"]:
           state["LdsOffsetBiasNonGSU"] = ldsNumBytesRemapCNonGSU
           state["LdsOffsetBiasGSU"] = ldsNumBytesRemapCGSU
           state["LdsOffsetBias"] = ldsNumBytesRemapC
-        for dataType in state["ProblemType"]["BiasDataTypeList"]:
-          ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile0"] * dataType.numBytes())
-      ldsNumBytes = max(ldsNumBytes, state["LdsOffsetBias"] + ldsBiasMaxElements)
+        epilogueSize = state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes()
+    # Calculate max ldsNumBytes for other epilogues
+    if state["ProblemType"]["UseScaleAlphaVec"]:
+      epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes()
+    if state["ProblemType"]["UseScaleAB"] == "Vector":
+      epilogueSize += state["NumThreads"] * 2 * state["ProblemType"]["ComputeDataType"].numBytes()
+    ldsNumBytes = max(ldsNumBytes, state["LdsOffsetBias"] + epilogueSize)
 
     state["LdsBytesNoAmax"] = ldsNumBytes
     if state["ProblemType"]["OutputAmaxD"]:
@@ -3879,6 +3884,15 @@ class Solution(collections.abc.Mapping):
       requiredParameters["GlobalSplitUCoalesced"] = False
       requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = False
 
+    useWaveTile, useThreadTile = requiredParameters.get("MIWaveTile", False), requiredParameters.get("ThreadTile", False)
+
+    if 'MatrixInstM' in state:
+      requiredParameters["MIWaveTile"] = True
+      requiredParameters["ThreadTile"] = False
+    else:
+      requiredParameters["MIWaveTile"] = False
+      requiredParameters["ThreadTile"] = True
+
     components.append('SN')
     for key in sorted(state.keys()):
       if key in requiredParameters and key[0] != '_':
@@ -3893,6 +3907,8 @@ class Solution(collections.abc.Mapping):
     requiredParameters["StaggerUMapping"] = True
     requiredParameters["GlobalSplitUCoalesced"] = True
     requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = True
+    requiredParameters["MIWaveTile"] = useWaveTile
+    requiredParameters["ThreadTile"] = useThreadTile
 
     return '_'.join(components)
 

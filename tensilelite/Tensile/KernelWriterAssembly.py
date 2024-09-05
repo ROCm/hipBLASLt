@@ -68,12 +68,14 @@ class VectorUnit:
 
 @dataclass
 class VectorDataTypes:
-  scaleA: VectorUnit = field(default_factory=VectorUnit)
-  scaleB: VectorUnit = field(default_factory=VectorUnit)
-  bias: VectorUnit   = field(default_factory=VectorUnit)
+  scaleA: VectorUnit     = field(default_factory=VectorUnit)
+  scaleB: VectorUnit     = field(default_factory=VectorUnit)
+  bias: VectorUnit       = field(default_factory=VectorUnit)
+  scaleAlpha: VectorUnit = field(default_factory=VectorUnit)
 
   def isValid(self):
-    return self.scaleA.dataType or self.scaleB.dataType or self.bias.dataType
+    return self.scaleA.dataType or self.scaleB.dataType or self.bias.dataType \
+    or self.scaleAlpha.dataType
 
 class KernelWriterAssembly(KernelWriter):
 
@@ -1959,7 +1961,7 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
       module.add(SCmpEQU32(src0=sgpr(tmpSgprGSU.idx), src1=1, comment="GSU == 1 ?"))
       module.add(SCBranchSCC1(labelName=gsuLabel.getLabelName(), comment="branch if GSU == 1"))
-    
+
     if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
       extReadEpilogueLabeltmp    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
       module.addComment0("Check if custom structure pointer is null")
@@ -1991,7 +1993,7 @@ class KernelWriterAssembly(KernelWriter):
       # wg1       = wg1 % numWg1
       module.add(scalarUInt32DivideAndRemainder("GSUSumIdx", "WorkGroup1", "NumWorkGroups1", "WorkGroup1", tmpVgprRes, kernel["WavefrontSize"]))
       module.add(gsuwgmrrLabelEnd)
-    
+
     module.add(SMovB32(dst=sgpr("GSULog2BpeC"), src=log2(int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters()))))
     module.add(SMovB32(dst=sgpr("GSULog2BpeD"), src=log2(self.states.bpeCinternal)))
 
@@ -2824,7 +2826,7 @@ class KernelWriterAssembly(KernelWriter):
           if divider != 1:
             depthUDiv = depthU // divider
             gsuOffsetStr = "gsuOffset = DepthU/%s*bpeGR*GSUSumIdx"%(divider)
-        
+
         gsucLabel    = Label(label=self.labels.getNameInc("GSUC_A" if tP["isA"] else "GSUC_B"), comment="")
         gsucLabelEnd = Label(label=self.labels.getNameInc("GSUC_A_End" if tP["isA"] else "GSUC_B_End"), comment="")
         module.add(SAndB32(dst=sgpr(tmpSgprInfo.idx), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
@@ -3081,7 +3083,7 @@ class KernelWriterAssembly(KernelWriter):
 
           if isMirrorIdx:
             m.setMinus(True)
-          
+
           incr = sgpr("GlobalReadIncs%s+%u"%(tc, loopIdx))
           duBpe = "DepthU*Bpe%s"%(tcGR)
           # multiply by stride, optimizing if unit stride
@@ -3090,7 +3092,7 @@ class KernelWriterAssembly(KernelWriter):
           else:
             module.add(SCMovB32(dst=m, src=duBpe, comment="DepthU*Bpe if GSUC = 1"))
             module.add(SMulI32(dst=incr, src0=m, src1=stride, comment="incr%s unrollIdx)"%(tc) ))
-          
+
           if kernel["ProblemType"]["Sparse"]:
             if tP["is_sparse"]:
               module.add(SLShiftRightB32(dst=incr, shiftHex=hex(log2(2)), src=incr))
@@ -4023,7 +4025,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SMinU32(dst=loopCounter, src0=sgpr(dividend), src1=loopCounter, comment="" ))
           self.vgprPool.checkIn(wave_id)
           self.vgprPool.checkIn(tmpVgpr)
-      
+
       remainder    = "GSUSumIdx+1" # numIterPerWgRemainder
       gsucLabel    = Label(label=self.labels.getNameInc("GSUC_TL"), comment="")
       gsucLabelEnd = Label(label=self.labels.getNameInc("GSUC_TL_End"), comment="")
@@ -8959,13 +8961,19 @@ class KernelWriterAssembly(KernelWriter):
       ssslist = []
       useSize = []
 
-      if kernel["ProblemType"]["UseScaleAB"] and \
-        (gsuAccumBackup == 'MultipleBufferSingleKernel' and (gsuLimit > 1 and gsuLimitIdx > 0)):
-        module.add(self.setSgprToInUseState("AddressScaleA"))
-        module.add(self.setSgprToInUseState("AddressScaleB"))
-        if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
-          module.add(self.setSgprToInUseState("SrdScaleA"))
-          module.add(self.setSgprToInUseState("SrdScaleB"))
+      if gsuLimit > 1 and gsuLimitIdx > 0:
+        if kernel["ProblemType"]["UseScaleAB"]:
+          if not self.states.preloadScaleA:
+            module.add(self.setSgprToInUseState("AddressScaleA"))
+            if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+              module.add(self.setSgprToInUseState("SrdScaleA"))
+          if not self.states.preloadScaleB:
+            module.add(self.setSgprToInUseState("AddressScaleB"))
+            if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+              module.add(self.setSgprToInUseState("SrdScaleB"))
+        if kernel["ProblemType"]["UseScaleAlphaVec"]:
+          module.add(self.setSgprToInUseState("AddressScaleAlphaVec"))
+          module.add(self.setSgprToInUseState("SrdScaleAlphaVec"))
 
       # Issue read scale A/B value for later use
       if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') and \
@@ -9001,6 +9009,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SLoadB32(dst=sgpr(sgprScaleC), base=sgpr("AddressScaleC",2), soffset=0, comment="load scaleC"))
         module.add(label)
 
+      vectorDataTypes = VectorDataTypes()
       if (kernel["ProblemType"]["UseScaleAlphaVec"]) and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
         labelStr = self.labels.getNameInc("ScaleAlphaVec")
         if self.states.FactorDim == 3:
@@ -9014,11 +9023,11 @@ class KernelWriterAssembly(KernelWriter):
         else:
           module.add(allocPostLoopSrdSuppress("ScaleAlphaVec", labelStr, sgprLength=sgpr("SizeI")))
         module.add(SMulI32(dst=sgpr("SrdScaleAlphaVec+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleAlphaVec+2"), comment="ScaleAlphaVec scaled by BPE"))# scaled by BPE
+        vectorDataTypes.scaleAlpha.dataType = kernel["ProblemType"]["ComputeDataType"]
 
       if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
         module.add(self.SrdTDinit(kernel))
 
-      vectorDataTypes = VectorDataTypes()
       # Add ScaleABVec support here
       # Issue read scale A/B vector value for later use
       if ((kernel["ProblemType"]["UseScaleAB"] == "Vector")) and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
@@ -9176,25 +9185,39 @@ class KernelWriterAssembly(KernelWriter):
         totalTmpVgpr = self.getNumOfTempVgprs(vectorDataTypes, kernel, 1, factorDim)
         tmpVgpr      = self.vgprPool.checkOutAligned(totalTmpVgpr, 2, "store tmps")
         tmpVgprRes   = RegisterPoolResource(idx=tmpVgpr, size=4)
+        offsetVgpr  = self.vgprPool.checkOut(1, 1)
         with self.allocTmpSgpr(3, 1) as tmpSgprRes:
           module.add(self.readVectorToLDS(vectorDataTypes, kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes, factorDim))
+        self.vgprPool.checkIn(offsetVgpr)
+        self.vgprPool.checkIn(tmpVgpr)
 
       # Undefine LDS load related sgprs
-      if kernel["ProblemType"]["UseScaleAB"]:
-        if gsuAccumBackup == 'MultipleBufferSingleKernel' and (gsuLimit > 1 and gsuLimitIdx == 0):
-          module.add(self.setSgprToFreeState("AddressScaleA"))
-          module.add(self.setSgprToFreeState("AddressScaleB"))
-          if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
-            module.add(self.setSgprToFreeState("SrdScaleA"))
-            module.add(self.setSgprToFreeState("SrdScaleB"))
-        elif gsuLimitIdx == 0:
-          pass
-        else:
-          module.add(self.undefineSgpr("AddressScaleA"))
-          module.add(self.undefineSgpr("AddressScaleB"))
-          if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
-            module.add(self.undefineSgpr("SrdScaleA"))
-            module.add(self.undefineSgpr("SrdScaleB"))
+      if gsuLimit > 1 and gsuLimitIdx == 0:
+        if kernel["ProblemType"]["UseScaleAB"]:
+          if not self.states.preloadScaleA:
+            module.add(self.setSgprToFreeState("AddressScaleA"))
+            if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+              module.add(self.setSgprToFreeState("SrdScaleA"))
+          if not self.states.preloadScaleB:
+            module.add(self.setSgprToFreeState("AddressScaleB"))
+            if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+              module.add(self.setSgprToFreeState("SrdScaleB"))
+        if kernel["ProblemType"]["UseScaleAlphaVec"]:
+          module.add(self.setSgprToFreeState("AddressScaleAlphaVec"))
+          module.add(self.setSgprToFreeState("SrdScaleAlphaVec"))
+      else:
+        if kernel["ProblemType"]["UseScaleAB"]:
+          if not self.states.preloadScaleA:
+            module.add(self.undefineSgpr("AddressScaleA"))
+            if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+              module.add(self.undefineSgpr("SrdScaleA"))
+          if not self.states.preloadScaleB:
+            module.add(self.undefineSgpr("AddressScaleB"))
+            if (kernel["ProblemType"]["UseScaleAB"] == "Vector"):
+              module.add(self.undefineSgpr("SrdScaleB"))
+        if kernel["ProblemType"]["UseScaleAlphaVec"]:
+          module.add(self.undefineSgpr("AddressScaleAlphaVec"))
+          module.add(self.undefineSgpr("SrdScaleAlphaVec"))
 
       if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') and \
         ((kernel["ProblemType"]["DataTypeA"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters()) or \
@@ -10007,28 +10030,27 @@ class KernelWriterAssembly(KernelWriter):
 
     return module
 
-  def addBiasGlobalLoad(self, dataType, kernel, biasVgpr, addr0, addr1, offset, gwvw, comment=""):
+  def addVecGlobalLoad(self, dataType, kernel, vecVgpr, addr0, addr1, offset, gwvw, comment=""):
     """
-    Add bias for the element with addrCalc, elementIdx, and biasVgpr.
-    biasVgpr is one or more vgpr :temp vGPR ( = gwvw * numbytes // 4 + 1 if cvt is needed)
+    Add vec for the element with addrCalc, elementIdx, and vecVgpr.
+    vecVgpr is one or more vgpr :temp vGPR ( = gwvw * numbytes // 4 + 1 if cvt is needed)
     """
-    # Add bias here
+    # Add vec here
     module = Module(comment)
-    if self.states.useBias == DataDirection.READ:
-      bps = dataType.numBytes() * gwvw
+    bps = dataType.numBytes() * gwvw
 
-      useBuffer = kernel["BufferLoad"]
-      if dataType.isHalf() or dataType.isBFloat16():
-        module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
-                          addr0, addr1, soffset=0, offset=offset, hi16=0, comment=comment))
-      elif dataType.isInt32() or dataType.isSingle():
-        module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
-                          addr0, addr1, soffset=0, offset=offset, comment=comment))
-      elif dataType.isDouble() or dataType.isSingleComplex() :
-        module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
-                          addr0, addr1, soffset=0, offset=offset, comment=comment))
-      else:
-        printExit("Unsupported %s type %s."%(comment, str(dataType)))
+    useBuffer = kernel["BufferLoad"]
+    if dataType.isHalf() or dataType.isBFloat16():
+      module.add(self.chooseGlobalRead(useBuffer, bps, vecVgpr, \
+                        addr0, addr1, soffset=0, offset=offset, hi16=0, comment=comment))
+    elif dataType.isInt32() or dataType.isSingle():
+      module.add(self.chooseGlobalRead(useBuffer, bps, vecVgpr, \
+                        addr0, addr1, soffset=0, offset=offset, comment=comment))
+    elif dataType.isDouble() or dataType.isSingleComplex() :
+      module.add(self.chooseGlobalRead(useBuffer, bps, vecVgpr, \
+                        addr0, addr1, soffset=0, offset=offset, comment=comment))
+    else:
+      printExit("Unsupported %s type %s."%(comment, str(dataType)))
     return module
 
   ##############################################################################
@@ -10097,9 +10119,8 @@ class KernelWriterAssembly(KernelWriter):
         addr0 = vgpr(addrCalc.addrBiasVgpr,2)
         addr1 = ""
     else:
-      addr0 = ""
-      addr1 = ""
-    return self.addBiasGlobalLoad(dataType, kernel, biasVgpr, addr0, addr1, addrCalc.biasOffset[factorDim], gwvw, comment="Load Bias")
+      return Module("Empty load")
+    return self.addVecGlobalLoad(dataType, kernel, biasVgpr, addr0, addr1, addrCalc.biasOffset[factorDim], gwvw, comment="Load Bias")
 
   ##############################################################################
   def addStore(self, kernel, ss, tc: str, addrCalc, sumIdx, tmpS01, edge, comment):
@@ -10350,7 +10371,7 @@ class KernelWriterAssembly(KernelWriter):
     for i in range(turn):
       if i != 0:
         module.add(VAddU32(dst=vgpr(offsetVgpr), src0=offset, src1=vgpr(offsetVgpr), comment="add subgroup offset"))
-      module.add(self.addBiasGlobalLoad(dataType, kernel, tmpVgpr1 + shiftOffset, addr0, addr1, 0, gwvw, comment="Load %s"%srdName))
+      module.add(self.addVecGlobalLoad(dataType, kernel, tmpVgpr1 + shiftOffset, addr0, addr1, 0, gwvw, comment="Load %s"%srdName))
       # TODO: Will this work if gwvw > 1?
       tmpVgpr1 += 1
     return module
@@ -10387,9 +10408,14 @@ class KernelWriterAssembly(KernelWriter):
           elif dataType == kernel["ProblemType"]["ComputeDataType"]:
             pass # Same, no need to convert
           else:
-            printExit("Unrecognized bias type %s."%str(dataType))
+            printExit("[Compute fp32] Unrecognized data type %s."%str(dataType))
+        elif kernel["ProblemType"]["ComputeDataType"].isInt32():
+          if dataType == kernel["ProblemType"]["ComputeDataType"]:
+            pass # Same, no need to convert
+          else:
+            printExit("[Compute int32] Unrecognized data type %s."%str(dataType))
         else:
-          printExit("Does not support ComputeDataType != float")
+          printExit("Does not support ComputeDataType == %s"%str(kernel["ProblemType"]["ComputeDataType"]))
         if setToOne:
           module.add(VCndMaskB32(
             dst=vgpr(tmpVgpr1 + i * gwvw), \
@@ -10411,6 +10437,7 @@ class KernelWriterAssembly(KernelWriter):
     biasDataType   = vectorDataTypes.bias.dataType
     scaleADataType = vectorDataTypes.scaleA.dataType
     scaleBDataType = vectorDataTypes.scaleB.dataType
+    scaleAlphaDataType = vectorDataTypes.scaleAlpha.dataType
 
     # Calculate nums of vgpr for store data
     totalReg  = 0
@@ -10418,6 +10445,10 @@ class KernelWriterAssembly(KernelWriter):
     if biasDataType:
       vectorDataTypes.bias.dstVgpr = totalReg
       vectorDataTypes.bias.turn = self.getTurn(kernel, gwvw, dim)[0]
+      totalReg = totalReg + (self.getTurn(kernel, gwvw, dim)[0] * regPerVec)
+    if scaleAlphaDataType:
+      vectorDataTypes.scaleAlpha.dstVgpr = totalReg
+      vectorDataTypes.scaleAlpha.turn = self.getTurn(kernel, gwvw, dim)[0]
       totalReg = totalReg + (self.getTurn(kernel, gwvw, dim)[0] * regPerVec)
     if scaleADataType:
       vectorDataTypes.scaleA.dstVgpr = totalReg
@@ -10436,6 +10467,12 @@ class KernelWriterAssembly(KernelWriter):
     if biasDataType:
       vectorDataTypes.bias.offsetVgpr = offsetVgprStart
       tmpVgprNum = tmpVgprNum + 1
+    if scaleAlphaDataType:
+      if (scaleAlphaDataType, 1) in dimKey:
+        vectorDataTypes.scaleAlpha.offsetVgpr = dimKey[(scaleAlphaDataType, dim)]
+      else:
+        vectorDataTypes.scaleAlpha.offsetVgpr = offsetVgprStart + tmpVgprNum
+        tmpVgprNum = tmpVgprNum + 1
     if scaleADataType:
       if (scaleADataType, 0) in dimKey:
         vectorDataTypes.scaleA.offsetVgpr = dimKey[(scaleADataType, dim)]
@@ -10453,18 +10490,22 @@ class KernelWriterAssembly(KernelWriter):
   def readVectorToLDS(self, vectorDataTypes: VectorDataTypes, kernel, gwvw, offsetVgpr, tmpSgpr, tmpVgpr1Res: RegisterPoolResource, dim):
     assert gwvw == 1
     # Params
-    biasDataType     = vectorDataTypes.bias.dataType
-    scaleADataType   = vectorDataTypes.scaleA.dataType
-    scaleBDataType   = vectorDataTypes.scaleB.dataType
-    biasBpe          = int(self.states.bpr * biasDataType.numRegisters()) if biasDataType else 0
-    scaleABpe        = int(self.states.bpr * scaleADataType.numRegisters()) if scaleADataType else 0
-    scaleBBpe        = int(self.states.bpr * scaleBDataType.numRegisters()) if scaleBDataType else 0
-    biasDstVgpr      = vectorDataTypes.bias.dstVgpr
-    scaleADstVgpr    = vectorDataTypes.scaleA.dstVgpr
-    scaleBDstVgpr    = vectorDataTypes.scaleB.dstVgpr
-    biasOffsetVgpr   = vectorDataTypes.bias.offsetVgpr + tmpVgpr1Res.idx
-    scaleAOffsetVgpr = vectorDataTypes.scaleA.offsetVgpr + tmpVgpr1Res.idx
-    scaleBOffsetVgpr = vectorDataTypes.scaleB.offsetVgpr + tmpVgpr1Res.idx
+    biasDataType         = vectorDataTypes.bias.dataType
+    scaleADataType       = vectorDataTypes.scaleA.dataType
+    scaleBDataType       = vectorDataTypes.scaleB.dataType
+    scaleAlphaDataType   = vectorDataTypes.scaleAlpha.dataType
+    biasBpe              = int(self.states.bpr * biasDataType.numRegisters()) if biasDataType else 0
+    scaleABpe            = int(self.states.bpr * scaleADataType.numRegisters()) if scaleADataType else 0
+    scaleBBpe            = int(self.states.bpr * scaleBDataType.numRegisters()) if scaleBDataType else 0
+    scaleAlphaBpe        = int(self.states.bpr * scaleAlphaDataType.numRegisters()) if scaleAlphaDataType else 0
+    biasDstVgpr          = vectorDataTypes.bias.dstVgpr
+    scaleADstVgpr        = vectorDataTypes.scaleA.dstVgpr
+    scaleBDstVgpr        = vectorDataTypes.scaleB.dstVgpr
+    scaleAlphaDstVgpr    = vectorDataTypes.scaleAlpha.dstVgpr
+    biasOffsetVgpr       = vectorDataTypes.bias.offsetVgpr + tmpVgpr1Res.idx
+    scaleAOffsetVgpr     = vectorDataTypes.scaleA.offsetVgpr + tmpVgpr1Res.idx
+    scaleBOffsetVgpr     = vectorDataTypes.scaleB.offsetVgpr + tmpVgpr1Res.idx
+    scaleAlphaOffsetVgpr = vectorDataTypes.scaleAlpha.offsetVgpr + tmpVgpr1Res.idx
 
     module = Module("ReadVecToLds")
     module.addComment2("Read vector to LDS")
@@ -10485,13 +10526,15 @@ class KernelWriterAssembly(KernelWriter):
                                   comment="Global bias address scaled by BPE"))
     offsetSequences = []
     if dim == 0:
-      offsetSequences.append([scaleADataType, scaleAOffsetVgpr, scaleABpe, "scaleA"])
-      offsetSequences.append([scaleBDataType, scaleBOffsetVgpr, scaleBBpe, "scaleB"])
+      offsetSequences.append([scaleAlphaDataType, scaleAlphaOffsetVgpr, scaleAlphaBpe, "scaleAlpha", dim])
+      offsetSequences.append([scaleADataType, scaleAOffsetVgpr, scaleABpe, "scaleA", 0])
+      offsetSequences.append([scaleBDataType, scaleBOffsetVgpr, scaleBBpe, "scaleB", 1])
     else:
-      offsetSequences.append([scaleBDataType, scaleBOffsetVgpr, scaleBBpe, "scaleB"])
-      offsetSequences.append([scaleADataType, scaleAOffsetVgpr, scaleABpe, "scaleA"])
+      offsetSequences.append([scaleAlphaDataType, scaleAlphaOffsetVgpr, scaleAlphaBpe, "scaleAlpha", dim])
+      offsetSequences.append([scaleBDataType, scaleBOffsetVgpr, scaleBBpe, "scaleB", 1])
+      offsetSequences.append([scaleADataType, scaleAOffsetVgpr, scaleABpe, "scaleA", 0])
     for index, offsetSequence in enumerate(offsetSequences):
-      if index == 1:
+      if offsetSequence[4] != dim:
         dimAnother = 1 if dim == 0 else 0
         module.addModuleAsFlatItems(self.calculateVectorGlobalOffset(kernel, offsetVgpr, tmpSgpr, dimAnother))
       if offsetSequence[0] and (offsetSequence[1] not in offsetIsInit):
@@ -10506,6 +10549,9 @@ class KernelWriterAssembly(KernelWriter):
     if biasDataType:
       biasShiftOffset = self.getGlobalShiftOffset(kernel, biasDataType, gwvw)
       globalLoadsModule.addModuleAsFlatItems(self.addVectorGlobalLoad(kernel, "Bias", biasOffsetVgpr, biasShiftOffset, biasDataType, biasBpe, gwvw, tmpVgpr1Res, biasDstVgpr, dim))
+    if scaleAlphaDataType:
+      scaleAlphaShiftOffset = self.getGlobalShiftOffset(kernel, scaleAlphaDataType, gwvw)
+      globalLoadsModule.addModuleAsFlatItems(self.addVectorGlobalLoad(kernel, "ScaleAlphaVec", scaleAlphaOffsetVgpr, scaleAlphaShiftOffset, scaleAlphaDataType, scaleAlphaBpe, gwvw, tmpVgpr1Res, scaleAlphaDstVgpr, dim))
     if scaleADataType:
       scaleAShiftOffset = self.getGlobalShiftOffset(kernel, scaleADataType, gwvw)
       globalLoadsModule.addModuleAsFlatItems(self.addVectorGlobalLoad(kernel, "ScaleA", scaleAOffsetVgpr, scaleAShiftOffset, scaleADataType, scaleABpe, gwvw, tmpVgpr1Res, scaleADstVgpr, 0))
@@ -10518,6 +10564,7 @@ class KernelWriterAssembly(KernelWriter):
       if isinstance(item, MUBUFReadInstruction):
         vmcnt = vmcnt + 1
     module.add(globalLoadsModule)
+    assert vmcnt > 0
 
     # Local write
     # In local write, all vector shares the same offsetVgpr since the internal data types are all the same.
@@ -10538,6 +10585,15 @@ class KernelWriterAssembly(KernelWriter):
       subGroupOffset = [0]
       storeModules.add(self.addVectorLocalStore(kernel, "Bias", offsetVgpr, biasShiftOffset, biasDataType, gwvw, tmpVgpr1Res, biasDstVgpr, subGroupOffset, dim, comment="store bias"))
       dstOffset = kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.bias.turn - subGroupOffset[0]
+    if scaleAlphaDataType:
+      if dstOffset > 0:
+        storeModules.add(VAddU32(dst=vgpr(offsetVgpr), \
+                                src0=(dstOffset), \
+                                src1=vgpr(offsetVgpr), \
+                                comment="add lds offset"))
+      subGroupOffset = [0]
+      storeModules.add(self.addVectorLocalStore(kernel, "ScaleAlphaVec", offsetVgpr, scaleAlphaShiftOffset, scaleAlphaDataType, gwvw, tmpVgpr1Res, scaleAlphaDstVgpr, subGroupOffset, dim, setToOne=True, comment="store scaleAlpha"))
+      dstOffset = kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleAlpha.turn - subGroupOffset[0]
     if scaleADataType:
       if dstOffset > 0:
         storeModules.add(VAddU32(dst=vgpr(offsetVgpr), \
