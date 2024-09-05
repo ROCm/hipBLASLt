@@ -207,7 +207,7 @@ def Tensile(userArgs):
     argParser.add_argument("--alternate-format", dest="AlternateFormat", action="store_true",
             help="Alternate format for config_file(s): first file is alternate config "
             "and optional second file is size list")
-    argParser.add_argument("--use-cache", dest="useCache", action="store_true",
+    argParser.add_argument("--use-cache", dest="useCache", action="store_false",
             help="Ignore cache; redo parameter forking and solution generation")
     # yapf: enable
 
