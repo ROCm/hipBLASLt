@@ -78,13 +78,19 @@ def runBenchmark(benchType, args, executable_folder, probYamlFolder, out_csv_Fil
         print(header)
         print(content)
 
-def command_perf(arguments, executable_folder, probYaml_foler):
+def command_perf(arguments, probYaml_foler):
     """Run bench"""
 
     if arguments.workspace:
-        print(f'output data to {arguments.workspace}')
+        print(f'Output data to {arguments.workspace}')
     else:
         print("Workspace not set. use -w /path/of/workspace")
+        return
+
+    if arguments.execFolder:
+        print(f'Will call cpp bench executable from folder {arguments.execFolder}')
+    else:
+        print("execFolder not set. use -e /path/of/execFolder")
         return
 
     if arguments.suite is None:
@@ -94,6 +100,7 @@ def command_perf(arguments, executable_folder, probYaml_foler):
         generator = SuiteProblemGenerator(arguments.suite)
 
     out_folder = arguments.workspace
+    exec_folder = arguments.execFolder
 
     needExportCSV = (arguments.csv == True) or (arguments.pts == True)
 
@@ -114,7 +121,7 @@ def command_perf(arguments, executable_folder, probYaml_foler):
         # only the first time we need to write header
         writeCSVHeader = True
         for p in problemSet.generate_problems():
-            runBenchmark(pTypeName, p.args, executable_folder, probYaml_foler, csv_file, writeCSVHeader)
+            runBenchmark(pTypeName, p.args, exec_folder, probYaml_foler, csv_file, writeCSVHeader)
             writeCSVHeader = False
 
         if csv_file is not None:
@@ -147,7 +154,14 @@ def main():
                         '--workspace',
                         type=str,
                         help='workspace folder keeping the perf data',
-                        default=os.path.join(dir_of_this_repo, "hipBlasLt_benchmark/"))
+                        default=os.path.join(dir_of_this_repo, "hipBLASLt_benchmark/"))
+
+    # this argument is mainly used in jenkins/pts. For local dev, just use the default
+    parser.add_argument('-e',
+                        '--execFolder',
+                        type=str,
+                        help='folder where the cpp bench executables are located',
+                        default=executable_folder)
 
     parser.add_argument('--suite',
                         type=str,
@@ -170,7 +184,7 @@ def main():
 
     arguments = parser.parse_args()
 
-    command_perf(arguments, executable_folder, probYaml_folder)
+    command_perf(arguments, probYaml_folder)
 
     sys.exit(0)
 
