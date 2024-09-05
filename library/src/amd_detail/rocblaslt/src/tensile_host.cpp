@@ -1577,7 +1577,13 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         std::shared_ptr<Tensile::Hardware>                                               hardware;
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
-        hardware     = Tensile::hip::GetDevice(*deviceProp);
+
+        if(!library)
+        {
+            return rocblaslt_status_invalid_pointer;
+        }
+
+        hardware = Tensile::hip::GetDevice(*deviceProp);
 
         std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
         rocblaslt_matmul_heuristic_result heuristicResult;
@@ -1810,7 +1816,13 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
         std::shared_ptr<Tensile::Hardware>                                               hardware;
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
-        hardware     = Tensile::hip::GetDevice(*deviceProp);
+
+        if(!library)
+        {
+            return rocblaslt_status_invalid_pointer;
+        }
+
+        hardware = Tensile::hip::GetDevice(*deviceProp);
 
         int* solutionIndex = (int*)algo.data;
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
@@ -1947,6 +1959,11 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
+        if(!library)
+        {
+            return rocblaslt_status_invalid_pointer;
+        }
+
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
         {
             std::shared_ptr<TensileDataGemm> data
@@ -2012,6 +2029,11 @@ rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_ha
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
+        if(!library)
+        {
+            return rocblaslt_status_invalid_pointer;
+        }
+
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
             std::shared_ptr<TensileDataGroupedGemm> data
@@ -2069,6 +2091,11 @@ rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       hand
         std::shared_ptr<Tensile::Hardware>                                               hardware;
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+
+        if(!library)
+        {
+            return rocblaslt_status_invalid_pointer;
+        }
 
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
@@ -2139,6 +2166,11 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
         std::shared_ptr<Tensile::Hardware>                                               hardware;
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+
+        if(!library)
+        {
+            return rocblaslt_status_invalid_pointer;
+        }
 
         int* solutionIndex = (int*)algo.data;
         // don't overwrite data->algoIndex = *solutionIndex; here
@@ -2233,6 +2265,11 @@ std::vector<std::shared_ptr<Tensile::ContractionSolution>>
 
     static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
 
+    if(!library)
+    {
+        return {};
+    }
+
     hardware = Tensile::hip::GetDevice(*deviceProp);
 
     std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
@@ -2269,6 +2306,11 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
 
     // auto &adapter =
     static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
+
+    if(!library)
+    {
+        return rocblaslt_status_invalid_pointer;
+    }
 
     hardware = Tensile::hip::GetDevice(*deviceProp);
 
@@ -2313,6 +2355,11 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
 
     // auto &adapter =
     static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
+
+    if(!library)
+    {
+        return rocblaslt_status_invalid_pointer;
+    }
 
     hardware = Tensile::hip::GetDevice(*deviceProp);
 
@@ -2444,6 +2491,12 @@ rocblaslt_status
 #else
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 #endif
+
+    if(!library)
+    {
+        return rocblaslt_status_invalid_pointer;
+    }
+
     hardware = Tensile::hip::GetDevice(*deviceProp);
 
     int  lastSolutionIndex = library->solutions.rbegin()->first;
@@ -2490,6 +2543,12 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
 #else
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 #endif
+
+    if(!library)
+    {
+        return rocblaslt_status_invalid_pointer;
+    }
+
     hardware              = Tensile::hip::GetDevice(*deviceProp);
     *workspaceSizeInBytes = 0;
 
@@ -2596,8 +2655,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
                 {
                     std::ostringstream msg;
-                    msg << "Match "
-                        << "[" << i << "]: " << solution->description();
+                    msg << "Match " << "[" << i << "]: " << solution->description();
                     solution->problemPredicate->debugEval(tensile_prob.gemms[i], msg);
                     msg << std::endl;
                     log_info(__func__, msg.str());
@@ -2696,6 +2754,11 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
     // auto &adapter =
     static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
 
+    if(!library)
+    {
+        return rocblaslt_status_invalid_pointer;
+    }
+
     hardware = Tensile::hip::GetDevice(*deviceProp);
 
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
@@ -2769,8 +2832,14 @@ std::string getKernelNameFromData(rocblaslt_handle             handle,
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
-    int  gsu     = 0;
-    int  wgm     = 0;
+
+    if(!library)
+    {
+        return std::string();
+    }
+
+    int                                    gsu = 0;
+    int                                    wgm = 0;
     std::vector<Tensile::KernelInvocation> kernels;
 
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
@@ -2806,10 +2875,16 @@ std::string getSolutionNameFromData(rocblaslt_handle             handle,
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
 
-    auto adapter       = get_library_and_adapter(&library, &deviceProp, handle->device);
-    int  gsu           = 0;
-    int  wgm           = 0;
-    int  solutionIndex = -1;
+    auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+
+    if(!library)
+    {
+        return std::string();
+    }
+
+    int gsu           = 0;
+    int wgm           = 0;
+    int solutionIndex = -1;
 
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
@@ -2854,6 +2929,11 @@ std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
+    if(!library)
+    {
+        return std::string();
+    }
+
     int* solutionIndex = (int*)algo.data;
     auto solution      = library->getSolutionByIndex(*solutionIndex);
     return solution->kernelName;
@@ -2865,6 +2945,11 @@ std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblasl
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+
+    if(!library)
+    {
+        return std::string();
+    }
 
     int* solutionIndex = (int*)algo.data;
     auto solution      = library->getSolutionByIndex(*solutionIndex);
