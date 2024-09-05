@@ -51,8 +51,8 @@ The signature for each KernArgsVersion is described here.
    3. 14-bit GSU
 4. 32-bit WGM control info
    1. 10-bit WGMXCCG
-   2. 10-bit WGMXCC
-   3. 12-bit WGM (with negative support)
+   2. 6-bit WGMXCC
+   3. 16-bit WGM (with negative support)
 
 ### Version 1
 

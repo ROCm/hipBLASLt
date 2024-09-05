@@ -834,7 +834,6 @@ namespace Tensile
         uint32_t       wgmxccg      = 0;
         const uint32_t mask16       = 0xFFFF;
         const uint32_t mask14       = 0x3FFF;
-        const uint32_t mask12       = 0xFFF;
         const uint32_t mask8        = 0xFF;
         uint32_t       internalArg0 = 0;
         uint32_t       internalArg1 = 0;
@@ -860,7 +859,7 @@ namespace Tensile
                 wgmxcc = param.wgmxcc() > 0 ? param.wgmxcc() : sizeMapping.workGroupMappingXCC;
                 wgmxccg
                     = param.wgmxccg() > 0 ? param.wgmxccg() : sizeMapping.workGroupMappingXCCGroup;
-                internalArg1 = internalArg1 | (wgmxccg << 22) | (wgmxcc << 12) | (mask12 & wgm);
+                internalArg1 = internalArg1 | (wgmxccg << 22) | (wgmxcc << 16) | (mask16 & wgm);
             }
         }
 

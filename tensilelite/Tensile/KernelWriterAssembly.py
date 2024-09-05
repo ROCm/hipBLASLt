@@ -1188,8 +1188,8 @@ class KernelWriterAssembly(KernelWriter):
       WGMXCCSgpr   = tmpSgpr2+1
       CU_CountSgpr = WGMXCCSgpr+1
  
-      module.add(SLShiftRightB32(dst=sgpr(WGMXCCSgpr), shiftHex=hex(12), src=sgpr("WGM"), comment="Get WGMXCC"))
-      module.add(SAndB32(dst=sgpr(WGMXCCSgpr), src0=hex(0x3FF), src1=sgpr(WGMXCCSgpr), comment="Get WGMXCC"))
+      module.add(SLShiftRightB32(dst=sgpr(WGMXCCSgpr), shiftHex=hex(16), src=sgpr("WGM"), comment="Get WGMXCC"))
+      module.add(SAndB32(dst=sgpr(WGMXCCSgpr), src0=hex(0x3F), src1=sgpr(WGMXCCSgpr), comment="Get WGMXCC"))
       module.add(SLShiftRightB32(dst=sgpr(CU_CountSgpr), shiftHex=hex(22), src=sgpr("WGM"), comment="Get CU_Count"))
  
       label_skipWGMXCC = Label(label="skip_WGMXCC", comment="skip WGMXCC if no enough WGs to remap")
@@ -2018,12 +2018,7 @@ class KernelWriterAssembly(KernelWriter):
     # Do branch
     
     # Restore WGM
-    tmpSgpr = self.sgprPool.checkOut(2, preventOverflow=0)
-    module.add(SOrB32(dst=sgpr(tmpSgpr), src0=sgpr("WGM"), src1=hex(0xFFFFF000), comment=""))
-    module.add(SAndB32(dst=sgpr("WGM"), src0=sgpr("WGM"), src1=hex(0x00000FFF), comment=""))
-    module.add(SAndB32(dst=sgpr(tmpSgpr+1), src0=sgpr("WGM"), src1=hex(0x800), comment=""))
-    module.add(SCSelectB32(dst=sgpr("WGM"), src0=sgpr(tmpSgpr), src1=sgpr("WGM"), comment=""))
-    self.sgprPool.checkIn(tmpSgpr)
+    module.add(SSExtI16toI32(dst=sgpr("WGM"), src=sgpr("WGM"), comment="Restore WGM"))
 
     wgmLabel         = Label(label=self.labels.getNameInc("WGM"), comment="")
     wgmLabelPositive = Label(label=self.labels.getNameInc("WGMPositive"), comment="")
