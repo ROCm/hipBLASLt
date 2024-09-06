@@ -19,6 +19,7 @@ GlobalParameters:
   NumWarmups: 0
   EnqueuesPerSync: 1
   # NumBenchmarks: 10
+  SleepPercent: 50
 
 BenchmarkProblems:
 
