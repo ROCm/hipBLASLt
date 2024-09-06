@@ -3429,6 +3429,13 @@ class Solution(collections.abc.Mapping):
     state["LdsOffsetBias"] = 0  # TODO: ldsBiasOffset = ldsNumBytesAB
     state["LdsOffsetBiasNonGSU"] = 0
     state["LdsOffsetBiasGSU"] = 0
+
+    # TODO: Should change name to LdsOffsetEpilogue or something.
+    if state["StoreRemapVectorWidth"]:
+      state["LdsOffsetBiasNonGSU"] = ldsNumBytesRemapCNonGSU
+      state["LdsOffsetBiasGSU"] = ldsNumBytesRemapCGSU
+      state["LdsOffsetBias"] = ldsNumBytesRemapC
+
     epilogueSize = 0
     # Bias
     if state["ProblemType"]["UseBias"]:
@@ -3448,10 +3455,6 @@ class Solution(collections.abc.Mapping):
           for dataType in state["ProblemType"]["BiasDataTypeList"]:
             epilogueSize = max(epilogueSize, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
       else:
-        if state["StoreRemapVectorWidth"]:
-          state["LdsOffsetBiasNonGSU"] = ldsNumBytesRemapCNonGSU
-          state["LdsOffsetBiasGSU"] = ldsNumBytesRemapCGSU
-          state["LdsOffsetBias"] = ldsNumBytesRemapC
         epilogueSize = state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes()
     # Calculate max ldsNumBytes for other epilogues
     if state["ProblemType"]["UseScaleAlphaVec"]:
