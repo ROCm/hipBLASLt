@@ -1041,26 +1041,6 @@ def writeCMake(outputPath, solutionFiles, kernelFiles, libraryStaticFiles, maste
 
   generatedFile.close()
 
-def toKernelObjects(solutions):
-  kernelNames = set()
-  for solution in solutions:
-    solutionKernels = solution.getKernels()
-    for kernel in solutionKernels:
-        kName = Solution.getKeyNoInternalArgs(kernel)
-        if kName not in kernelNames:
-            kernelNames.add(kName)
-            yield kernel
-
-def getKernelHelpObjects(solutions):
-  kernelNames = set()
-  for solution in solutions:
-    solutionHelperKernels = solution.getHelperKernelObjects()
-    for ko in solutionHelperKernels:
-      kName = ko.getKernelName()
-      if kName not in kernelNames:
-        kernelNames.add(kName)
-        yield ko
-
 ################################################################################
 # Generate Kernel Objects From Solutions
 ################################################################################
