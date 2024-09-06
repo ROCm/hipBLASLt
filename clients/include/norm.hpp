@@ -103,12 +103,13 @@ void m_axpy(size_t* N, T* alpha, T* x, int* incx, T* y, int* incy)
 
 // Real
 template <typename T,
-          std::enable_if_t<!(std::is_same<T, hipblaslt_f8_fnuz>{}
-                             || std::is_same<T, hipblaslt_bf8_fnuz>{}
-                             || std::is_same<T, hipblaslt_f8_ocp>{}
-                             || std::is_same<T, hipblaslt_bf8_ocp>{}),
-                           int>
-          = 0>
+          std::enable_if_t<
+              !(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_bf8_fnuz>{}
+#ifdef ROCM_USE_FLOAT8
+                || std::is_same<T, hipblaslt_f8_ocp>{} || std::is_same<T, hipblaslt_bf8_ocp>{}
+#endif
+                ),
+              int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     if(M * N == 0)
@@ -146,11 +147,10 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
     return error;
 }
 
-template <
-    typename T,
-    std::enable_if_t<(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_bf8_fnuz>{}),
-                     int>
-    = 0>
+template <typename T,
+          std::enable_if_t<(std::is_same<T, hipblaslt_f8_fnuz>{}
+                            || std::is_same<T, hipblaslt_bf8_fnuz>{}),
+                           int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     if(M * N == 0)
@@ -188,8 +188,7 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 template <
     typename T,
     std::enable_if_t<(std::is_same<T, hipblaslt_f8_ocp>{} || std::is_same<T, hipblaslt_bf8_ocp>{}),
-                     int>
-    = 0>
+                     int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     if(M * N == 0)
@@ -225,10 +224,10 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 #endif
 
 // For BF16 and half, we convert the results to double first
-template <typename T,
-          typename VEC,
-          std::enable_if_t<std::is_same<T, hipblasLtHalf>{} || std::is_same<T, hip_bfloat16>{}, int>
-          = 0>
+template <
+    typename T,
+    typename VEC,
+    std::enable_if_t<std::is_same<T, hipblasLtHalf>{} || std::is_same<T, hip_bfloat16>{}, int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC&& hCPU, T* hGPU)
 {
     if(M * N == 0)
