@@ -304,7 +304,7 @@ class StreamK(Component):
             module.add(VReadfirstlaneB32(dst=sgpr(tmpSgpr+2), src=vgpr("Serial"), comment="Wave 0 updates flags"))
             module.add(SCmpEQU32(src0=sgpr(tmpSgpr+2), src1=0, comment="Check for wave 0"))
             module.add(SCBranchSCC0(labelName=skipFlagReset.getLabelName(), comment="Skip flag reset"))
-            module.add(SMovB32(dst=sgpr(tmpSgpr+2), src=0, comment="flag data"))
+            # (tmpSgpr+2) contains a vlue of 0, use it to reset the flag
             module.add(SStoreB32(src=sgpr(tmpSgpr+2), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="reset flag"))
             module.add(skipFlagReset)
             writer.sgprPool.checkIn(tmpSgpr)
