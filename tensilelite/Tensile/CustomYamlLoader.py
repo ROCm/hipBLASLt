@@ -1,6 +1,11 @@
 import yaml
 from pathlib import Path
 
+try:
+    DEFAULT_YAML_LOADER = yaml.CSafeLoader
+finally:
+    DEFAULT_YAML_LOADER = yaml.SafeLoader
+
 def parse_general(loader: yaml.Loader):
     if loader.check_event(yaml.MappingStartEvent):
         return parse_mapping(loader)
@@ -129,7 +134,7 @@ def load_yaml_dict_item(yaml_path: Path, loader_type: yaml.Loader, key: str):
 
         return v
 
-def load_logic_gfx_arch(yaml_path: Path, loader_type: yaml.Loader = yaml.CSafeLoader):
+def load_logic_gfx_arch(yaml_path: Path, loader_type: yaml.Loader = DEFAULT_YAML_LOADER):
     try:
         GFX_ARCH_IDX = 2
         arch = load_yaml_sequence_item(yaml_path, loader_type, GFX_ARCH_IDX)
