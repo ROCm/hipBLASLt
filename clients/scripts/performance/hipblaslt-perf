@@ -36,7 +36,7 @@ console = logging.StreamHandler()
 # Parameters for output csv file
 matmul_paramList = ['transA','transB','grouped_gemm','batch_count','m','n','k','alpha','lda','stride_a','beta','ldb','stride_b',
                     'ldc','stride_c','ldd','stride_d','a_type','b_type','c_type','d_type','compute_type','scaleA','scaleB','scaleC',
-                    'scaleD','amaxD','activation_type','bias_vector','bias_type','rotating_buffer','gflops','us']
+                    'scaleD','amaxD','activation_type','bias_vector','bias_type','rotating_buffer','gflops','GB/s','us']
 
 amax_paramList = ['m','n','type','dtype','us']
 

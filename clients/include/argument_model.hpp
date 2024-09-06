@@ -84,7 +84,7 @@ public:
 
         // per/us to per/sec *10^6
         double hipblaslt_gflops = gflops * batch_count / gpu_us * 1e6;
-        double hipblaslt_GBps   = gbytes * batch_count / gpu_us * 1e6;
+        double hipblaslt_GBps   = gbytes / gpu_us * 1e6;
 
         // append performance fields
         if(gflops != ArgumentLogging::NA_value)
@@ -161,7 +161,7 @@ public:
                   double                      gpu_us,
                   double                      flush_us,
                   double                      gflops,
-                  double                      gpu_bytes = ArgumentLogging::NA_value,
+                  double                      gbytes    = ArgumentLogging::NA_value,
                   double                      cpu_us    = ArgumentLogging::NA_value,
                   double                      norm      = ArgumentLogging::NA_value,
                   double                      atol      = ArgumentLogging::NA_value,
@@ -246,7 +246,7 @@ public:
                      gpu_us,
                      flush_us,
                      gflops,
-                     gpu_bytes,
+                     gbytes,
                      cpu_us,
                      norm,
                      atol,

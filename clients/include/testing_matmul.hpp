@@ -964,8 +964,8 @@ void testing_matmul_with_bias(const Arguments& arg,
                               hipDataType      TciB,
                               hipDataType      Tbias)
 {
-    double gpu_time_used, cpu_time_used;
-    gpu_time_used = cpu_time_used = 0.0;
+    double gpu_time_used, cpu_time_used, gpu_mem_gbytes;
+    gpu_time_used = cpu_time_used = gpu_mem_gbytes = 0.0;
     bool                   HMM    = arg.HMM;
     hipblaslt_local_handle handle{arg};
     hipStream_t            stream;
@@ -1096,6 +1096,8 @@ void testing_matmul_with_bias(const Arguments& arg,
                + size_scaleAVec[i] * realDataTypeSize(Talpha)
                + size_scaleBVec[i] * realDataTypeSize(Talpha);
     }
+
+    gpu_mem_gbytes = static_cast<double>(totalRotatingSizeNeeded) / (1024 * 1024 * 1024);
 
     // Calculating block count
     int32_t max_iters   = max(arg.cold_iters, arg.iters);
@@ -3252,7 +3254,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                     gpu_time_used,
                     flush_time_used,
                     flops,
-                    ArgumentLogging::NA_value,
+                    gpu_mem_gbytes,
                     cpu_time_used,
                     hipblaslt_error,
                     hipblaslt_atol,
@@ -3297,7 +3299,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                 best_gpu_time,
                 flush_time_used,
                 best_flops,
-                ArgumentLogging::NA_value,
+                gpu_mem_gbytes,
                 cpu_time_used,
                 best_norm,
                 best_atol,
