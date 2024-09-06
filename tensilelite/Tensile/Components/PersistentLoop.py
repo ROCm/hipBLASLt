@@ -103,16 +103,22 @@ class PersistentLoopOn(PersistentLoop):
         needRecalc = writer.states.numReadsIterCoalescedA > 1 or writer.states.numReadsIterCoalescedB > 1
         # backup LocalReadAddr
         # LdsPad + LBSPP case, need to backup LocalReadAddr even if recalc is not done
-        needBackupLRAddr = needRecalc or (kernel["LdsPadA"] and kernel["LdsBlockSizePerPadA"] or kernel["LdsPadB"] and kernel["LdsBlockSizePerPadB"])
 
-        if needBackupLRAddr:
-            # need to back-up the LRA before reCalculation for wider local read (when no wlr, no need to do this)
-            if writer.oriLraA is None: # and not kernel["DirectToVgprA"]: # no local read code if DirectToVgpr is enabled
-                writer.oriLraA = writer.vgprPool.checkOut(1, "OriLocalReadAddrA")
-                module.add(VMovB32(dst=vgpr(writer.oriLraA), src=vgpr("LocalReadAddrA"), comment="back up LRA for persistent kernel + wider local read"))
-            if writer.oriLraB is None: # and not kernel["DirectToVgprB"]: # no local read code if DirectToVgpr is enabled
-                writer.oriLraB = writer.vgprPool.checkOut(1, "OriLocalReadAddrB")
-                module.add(VMovB32(dst=vgpr(writer.oriLraB), src=vgpr("LocalReadAddrB"), comment="back up LRA for persistent kernel + wider local read"))
+        # The code below backs up LRA at the start of the tail loop and restores at the end of tail loop.
+        # This would be needed if we want to support PersistentKernel in the future (without stream-k).
+        # Backup is not needed for stream-k since LRA is recalculated at the start of the persistent loop for the new tile or partial tile.
+        # Enabling the backup code would require fixing an interaction with the code that reallocates vgprs for the store code.
+
+        # needBackupLRAddr = needRecalc or (kernel["LdsPadA"] and kernel["LdsBlockSizePerPadA"] or kernel["LdsPadB"] and kernel["LdsBlockSizePerPadB"]) and kernel["StreamK"] == 0
+
+        # if needBackupLRAddr:
+        #     # need to back-up the LRA before reCalculation for wider local read (when no wlr, no need to do this)
+        #     if writer.oriLraA is None: # and not kernel["DirectToVgprA"]: # no local read code if DirectToVgpr is enabled
+        #         writer.oriLraA = writer.vgprPool.checkOut(1, "OriLocalReadAddrA")
+        #         module.add(VMovB32(dst=vgpr(writer.oriLraA), src=vgpr("LocalReadAddrA"), comment="back up LRA for persistent kernel + wider local read"))
+        #     if writer.oriLraB is None: # and not kernel["DirectToVgprB"]: # no local read code if DirectToVgpr is enabled
+        #         writer.oriLraB = writer.vgprPool.checkOut(1, "OriLocalReadAddrB")
+        #         module.add(VMovB32(dst=vgpr(writer.oriLraB), src=vgpr("LocalReadAddrB"), comment="back up LRA for persistent kernel + wider local read"))
 
         return module
     
