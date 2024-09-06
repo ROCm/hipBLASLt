@@ -24,7 +24,7 @@ from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, 
     SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SCBranchSCC1, SCmpLeU32, VMovB32, vgpr, \
     SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
     log2, SBarrier, SStoreB32, SLongBranchPositive, SBranch, ceilDivide, replaceHolder, SNop, staticMultiply, SSleep, \
-    VAddF32, VAddF64, SAndB32, SLShiftRightB32
+    VAddF32, VAddF64, SAndB32, SLShiftRightB32, VReadfirstlaneB32
 from ..Common import print2
 # from ..TensileInstructions.Containers import SMEMModifiers
 from ..Component import Component
@@ -300,8 +300,13 @@ class StreamK(Component):
 
             # TODO Barrier here to sync all threads in workgroup, but maybe better to have separate flag for each wavefront (to be tested)
             module.add(SBarrier(comment="wait for all workgroups before resetting flag"))
+            skipFlagReset = Label(label=writer.labels.getNameInc("SK_SkipFlagReset"), comment="")
+            module.add(VReadfirstlaneB32(dst=sgpr(tmpSgpr+2), src=vgpr("Serial"), comment="Wave 0 updates flags"))
+            module.add(SCmpEQU32(src0=sgpr(tmpSgpr+2), src1=0, comment="Check for wave 0"))
+            module.add(SCBranchSCC0(labelName=skipFlagReset.getLabelName(), comment="Skip flag reset"))
             module.add(SMovB32(dst=sgpr(tmpSgpr+2), src=0, comment="flag data"))
             module.add(SStoreB32(src=sgpr(tmpSgpr+2), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="reset flag"))
+            module.add(skipFlagReset)
             writer.sgprPool.checkIn(tmpSgpr)
 
             fixupEdge = [False] # Test no edge variant
@@ -596,8 +601,13 @@ class StreamK(Component):
             module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr), src=sgpr("StreamKIdx"), shiftHex=log2(4), comment="flag offset based on CTA index"))
             with writer.allocTmpSgpr(1) as flagSgprRes:
                 flagSgpr = flagSgprRes.idx
+                skipFlagSet = Label(label=writer.labels.getNameInc("SK_SkipFlagSet"), comment="")
+                module.add(VReadfirstlaneB32(dst=sgpr(flagSgpr), src=vgpr("Serial"), comment="Wave 0 updates flags"))
+                module.add(SCmpEQU32(src0=sgpr(flagSgpr), src1=0, comment="Check for wave 0"))
+                module.add(SCBranchSCC0(labelName=skipFlagSet.getLabelName(), comment="Skip flag set"))
                 module.add(SMovB32(dst=sgpr(flagSgpr), src=1, comment="flag data"))
                 module.add(SStoreB32(src=sgpr(flagSgpr), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="set flag"))
+                module.add(skipFlagSet)
             module.add(SWaitCnt(lgkmcnt=0, comment="wait for flag")) # TODO just for testing
         
         # TODO - if this is the last tile, don't need to jump to next instruction
