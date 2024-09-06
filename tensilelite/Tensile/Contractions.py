@@ -349,9 +349,10 @@ class ProblemType:
             predicates.append(ProblemPredicate("BiasDataTypeWhiteList", value=self.biasDataTypeWhiteList))
             predicates.append(ProblemPredicate("BiasSrcWhiteList", value=self.biasSrcWhiteList))
             predicates.append(ProblemPredicate("AmaxDCheck", value=self.outputAmaxD))
-            if self.activationType == 'all':
+            if self.activationType in ['all', 'hipblaslt_all']:
                 exportType = ActivationType.Export.GRADONLY if self.useGradient else ActivationType.Export.NORMAL
-                enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, exportType=exportType)]
+                supportedBy = ActivationType.SupportedBy.ALL if self.activationType == 'all' else ActivationType.SupportedBy.HIPBLASLT
+                enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, supportedBy, exportType=exportType)]
                 predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=enumList))
             # predicates.append(ProblemPredicate("UseScaleAlphaVec", value=self.useScaleAlphaVec))
             # predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))

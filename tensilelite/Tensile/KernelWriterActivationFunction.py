@@ -79,7 +79,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
 
     ptrStr = self.state["ProblemType"]["ActivationComputeDataType"].toDevice("HIP")
     names = ""
-    if self.state["ProblemType"]["ActivationType"] == 'all':
+    if self.state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
       names += ",\n"
       names += "  %s const activationType"%self.enumName
     for name in self.state["ProblemType"]["ActivationType"].getAdditionalArgStringList(False):
@@ -138,10 +138,13 @@ class KernelWriterActivationFunction(KernelWriterBase):
     if self.state["ProblemType"]["ActivationType"] == 'none':
       return fileString
 
-    activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
     isa = tuple(self.state["Kernel"]["ISA"])
     self._tf.init(isa, globalParameters["AssemblerPath"])
     self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
+
+    activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
+    activationType = self.state["ProblemType"]["ActivationType"]
+    self._tf.setKernelInfo(tuple(self.state["Kernel"]["ISA"]), self.state["Kernel"]["WavefrontSize"])
     activation = ActivationInline(activationCDataType, not self.state["ProblemType"]["ActivationNoGuard"])
 
     fileString = "" # CHeader
@@ -154,8 +157,10 @@ class KernelWriterActivationFunction(KernelWriterBase):
     fileString += "#pragma clang diagnostic push\n"
     fileString += "#pragma clang diagnostic ignored \"-Winline-asm\"\n"
     fileString += self.functionSignature()
-    if self.state["ProblemType"]["ActivationType"] == 'all':
+    if activationType in ['all', 'hipblaslt_all']:
+      supportedBy = ActivationType.SupportedBy.ALL if activationType == 'all' else ActivationType.SupportedBy.HIPBLASLT
       for index, enumStr in enumerate(ActivationType.getEnumStrList(activationCDataType, \
+                                                                    supportedBy, \
                                                                     includeNone=False, \
                                                                     exportType=self.actExportType)):
         if index == 0:
