@@ -58,6 +58,26 @@ namespace Tensile
             return m_gsu;
         }
 
+        void setGSUC(bool gsuc)
+        {
+            m_gsuc = gsuc;
+        }
+
+        bool gsuc() const
+        {
+            return m_gsuc;
+        }
+
+        void setGSUWGMRR(bool gsuwgmrr)
+        {
+            m_gsuwgmrr = gsuwgmrr;
+        }
+
+        bool gsuwgmrr() const
+        {
+            return m_gsuwgmrr;
+        }
+
         void setWgm(int16_t wgm)
         {
             m_wgm = wgm;
@@ -105,6 +125,8 @@ namespace Tensile
 
     private:
         uint16_t       m_gsu            = 0; // default value
+        bool           m_gsuc           = false; // default value
+        bool           m_gsuwgmrr       = false; // default value
         int16_t        m_wgm            = 0; // default value
         DataType       m_biasType       = DataType::None;
         int            m_factorDim      = 0;

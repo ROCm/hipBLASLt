@@ -103,10 +103,13 @@ void m_axpy(size_t* N, T* alpha, T* x, int* incx, T* y, int* incy)
 
 // Real
 template <typename T,
-          std::enable_if_t<!(std::is_same<T, hipblaslt_f8_fnuz>{}
-                             || std::is_same<T, hipblaslt_bf8_fnuz>{}),
-                           int>
-          = 0>
+          std::enable_if_t<
+              !(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_bf8_fnuz>{}
+#ifdef ROCM_USE_FLOAT8
+                || std::is_same<T, hipblaslt_f8_ocp>{} || std::is_same<T, hipblaslt_bf8_ocp>{}
+#endif
+                ),
+              int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     if(M * N == 0)
@@ -144,11 +147,10 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
     return error;
 }
 
-template <
-    typename T,
-    std::enable_if_t<(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_bf8_fnuz>{}),
-                     int>
-    = 0>
+template <typename T,
+          std::enable_if_t<(std::is_same<T, hipblaslt_f8_fnuz>{}
+                            || std::is_same<T, hipblaslt_bf8_fnuz>{}),
+                           int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     if(M * N == 0)
@@ -182,11 +184,50 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
     return error;
 }
 
+#ifdef ROCM_USE_FLOAT8
+template <
+    typename T,
+    std::enable_if_t<(std::is_same<T, hipblaslt_f8_ocp>{} || std::is_same<T, hipblaslt_bf8_ocp>{}),
+                     int> = 0>
+double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
+{
+    if(M * N == 0)
+        return 0;
+    size_t size = N * (size_t)lda;
+
+    host_vector<double> hCPU_double(size);
+    host_vector<double> hGPU_double(size);
+
+    for(int64_t i = 0; i < N; i++)
+    {
+        for(int64_t j = 0; j < M; j++)
+        {
+            size_t idx       = j + i * (size_t)lda;
+            hCPU_double[idx] = double(float(hCPU[idx]));
+            hGPU_double[idx] = double(float(hGPU[idx]));
+        }
+    }
+
+    double work[1];
+    int    incx  = 1;
+    double alpha = -1.0;
+    int    m     = static_cast<int>(M);
+    int    n     = static_cast<int>(N);
+    int    l     = static_cast<int>(lda);
+
+    double cpu_norm = xlange(&norm_type, &m, &n, hCPU_double.data(), &l, work);
+    m_axpy(&size, &alpha, hCPU_double.data(), &incx, hGPU_double.data(), &incx);
+    double error = xlange(&norm_type, &m, &n, hGPU_double.data(), &l, work) / cpu_norm;
+
+    return error;
+}
+#endif
+
 // For BF16 and half, we convert the results to double first
-template <typename T,
-          typename VEC,
-          std::enable_if_t<std::is_same<T, hipblasLtHalf>{} || std::is_same<T, hip_bfloat16>{}, int>
-          = 0>
+template <
+    typename T,
+    typename VEC,
+    std::enable_if_t<std::is_same<T, hipblasLtHalf>{} || std::is_same<T, hip_bfloat16>{}, int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC&& hCPU, T* hGPU)
 {
     if(M * N == 0)
@@ -328,5 +369,11 @@ bool norm_check(double norm_error)
         return norm_error < 0.125;
     if(std::is_same<T, hipblaslt_bf8_fnuz>{})
         return norm_error < 0.25;
+#ifdef ROCM_USE_FLOAT8
+    if(std::is_same<T, hipblaslt_f8_ocp>{})
+        return norm_error < 0.125;
+    if(std::is_same<T, hipblaslt_bf8_ocp>{})
+        return norm_error < 0.25;
+#endif
     return false;
 }

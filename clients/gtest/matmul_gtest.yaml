@@ -678,6 +678,102 @@ Tests:
   unit_check: 1
   gpu_arch: '94[0-2]'
 
+### GFX12 FP8
+- name: matmul_f8_bf8_dst_fp32_gfx12
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_ocp_dst_f32
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [ 0, 1]
+  scaleB: [ 0, 1]
+  bias_vector: [0, 1]
+  bias_type: bf16_r
+  unit_check: 0
+  norm_check: 1
+  gpu_arch: '120[0-1]'
+
+- name: matmul_f8_bf8_dst_fp16_gfx12
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_ocp_dst_f16
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [ 0, 1]
+  scaleB: [ 0, 1]
+  bias_vector: [0, 1]
+  bias_type: f16_r
+  unit_check: 1
+  gpu_arch: '120[0-1]'
+
+- name: matmul_f8_bf8_dst_bf16_gfx12
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_ocp_dst_bf16
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [ 0, 1]
+  scaleB: [ 0, 1]
+  bias_vector: [0, 1]
+  bias_type: bf16_r
+  unit_check: 1
+  gpu_arch: '120[0-1]'
+
+#scale ab vector//no solution
+#  scaleA: [2]
+#  scaleB: [2]
+
+- name: matmul_real_1b_dst_f8_SCDInt1_gfx12
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_ocp_dst_f8
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [0, 1]
+  scaleB: [0, 1]
+  scaleC: [0] # will use default value '1'
+  scaleD: [0] # will use default value '1'
+  bias_vector: [0, 1]
+  bias_type: f16_r
+  unit_check: 1
+  gpu_arch: '120[0-1]'
+
+- name: matmul_real_1b_dst_f8_SCDNotInt_gfx12
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_ocp_dst_f8
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [0, 1]
+  scaleB: [0, 1]
+  scaleC: [1] # will use random value from 0.0 to 1.0
+  scaleD: [1] # will use random value from 0.0 to 1.0
+  bias_vector: [0, 1]
+  bias_type: f16_r
+  unit_check: 1
+  gpu_arch: '120[0-1]'
+
+### END
 - name: matmul_real_1b_dst_f8_SCDInt1
   category: pre_checkin
   function:
@@ -697,11 +793,10 @@ Tests:
   unit_check: 1
   gpu_arch: '94[0-2]'
 
-#TODO: extend to all f8 transpose and datatype if necessary
-- name: matmul_real_f8_dst_f8_TT
+- name: matmul_real_1b_dst_1b_smallsize
   category: pre_checkin
   function:
-    matmul: *f8_precision_dst_f8
+    matmul: *real_precisions_1b_dst_1b
   matrix_size:
     - { M:  1,   N:  1,    K:  1    }
     - { M:  1,   N:  1,    K:  127  }
@@ -725,8 +820,7 @@ Tests:
     - { M:  129, N:  1,    K:  129  }
     - { M:  129, N:  2,    K:  129  }
     - { M:  129, N:  3,    K:  129  }
-  transA: T
-  transB: T
+  transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0.0, 2.0 ]
   scaleA: [0, 1]

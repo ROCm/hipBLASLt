@@ -78,6 +78,8 @@ namespace Tensile
 
         int getSolutionIndex() const;
 
+        bool getSolutionSelectionTrace() const;
+
         int getGridbasedTopSols() const;
         
         bool printStreamKGridInfo() const;
@@ -95,6 +97,7 @@ namespace Tensile
         bool        m_debugSelection      = false;
         bool        m_experimentSelection = false;
         int         m_solution_index      = -1;
+        bool        m_solselTrace         = false;
         std::string m_metric              = "";
         int         m_gridbasedTopSols    = 1;
         bool        m_benchmark           = false;

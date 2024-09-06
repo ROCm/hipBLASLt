@@ -57,6 +57,9 @@ if( BUILD_WITH_TENSILE )
   if(Tensile_LAZY_LIBRARY_LOADING)
     set(Tensile_Options ${Tensile_Options} LAZY_LIBRARY_LOADING)
   endif()
+  if(Tensile_KEEP_BUILD_TMP)
+    set(Tensile_Options ${Tensile_Options} KEEP_BUILD_TMP)
+  endif()
 
   # Add a build target for Tensile kernel library
   # Runtime language is HIP by default
@@ -91,6 +94,9 @@ if( BUILD_WITH_TENSILE )
   # Create a unique name for TensileHost compiled for rocBLAS
   set_target_properties( TensileHost PROPERTIES OUTPUT_NAME rocblaslt-tensile CXX_EXTENSIONS NO )
 
+  set_target_properties( TensileHost PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  set_target_properties( TensileHost PROPERTIES C_VISIBILITY_PRESET hidden)
+
   # Tensile host depends on libs build target
   add_dependencies( TensileHost TENSILE_LIBRARY_TARGET )
 
@@ -108,6 +114,10 @@ if( BUILD_WITH_TENSILE )
   )
 
 endif( ) # BUILD_WITH_TENSILE
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/CompileSourceKernel.cmake)
+
+CompileSourceKernel(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/matrix_transform.cpp "${Tensile_ARCHITECTURE}" "${Tensile_BUILD_ID}" ${PROJECT_BINARY_DIR}/Tensile/library)
 
 set(DL_LIB dl)
 

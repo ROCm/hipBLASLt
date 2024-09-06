@@ -63,6 +63,7 @@ BenchmarkProblems:
         - GlobalSplitU: [1,2,4]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - GlobalSplitUCoalesced: [False,True]
+        - GlobalSplitUWorkGroupMappingRoundRobin: [False,True]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]

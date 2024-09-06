@@ -536,7 +536,9 @@ class SizeMapping:
                  'workspaceSizePerElemBias',
                  'activationFused',
                  'CustomKernelName',
-                 'workGroupMappingXCC'
+                 'workGroupMappingXCC',
+                 'globalSplitUCoalesced',
+                 'globalSplitUWorkGroupMappingRoundRobin'
                  ]
 
     @classmethod
@@ -576,7 +578,9 @@ class SizeMapping:
                    workspaceSizePerElemBias = d['_WorkspaceSizePerElemBias'],
                    activationFused          = d['ActivationFused'],
                    CustomKernelName         = d['CustomKernelName'],
-                   workGroupMappingXCC      = d['WorkGroupMappingXCC']
+                   workGroupMappingXCC      = d['WorkGroupMappingXCC'],
+                   globalSplitUCoalesced    = d['GlobalSplitUCoalesced'],
+                   globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin']
                    )
 
     @classmethod

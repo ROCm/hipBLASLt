@@ -147,6 +147,9 @@ namespace Tensile
         void append(std::string const& name, T value);
 
         template <typename T>
+        void appendAligned(std::string const& name, T value);
+
+        template <typename T>
         void appendUnbound(std::string const& name);
 
         template <typename T>
@@ -348,10 +351,15 @@ namespace Tensile
     }
 
     template <typename T>
+    void KernelArguments::appendAligned(std::string const& name, T value)
+    {
+        alignTo(alignof(T));
+        append(name, value, true);
+    }
+
+    template <typename T>
     inline void KernelArguments::append(std::string const& name, T value, bool bound)
     {
-        // alignTo(alignof(T));
-
         size_t offset = m_data.size();
         size_t size   = sizeof(T);
 

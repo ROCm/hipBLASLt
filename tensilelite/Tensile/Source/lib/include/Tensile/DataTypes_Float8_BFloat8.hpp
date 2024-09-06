@@ -37,6 +37,8 @@
 #define HIP_HOST __host__
 #define HIP_DEVICE __device__
 
+#include <hip/hip_fp8.h>
+
 namespace tensile_hip_f8_impl
 {
 
@@ -111,6 +113,26 @@ namespace Tensile
 #else
         return hip_f8_bias_mode_bit_host;
 #endif
+    }
+
+    static inline bool IsOCPSupported()
+    {
+        int             deviceId;
+        hipDeviceProp_t deviceProperties;
+        auto            removePrefix = [](const std::string& s) {
+            size_t pos = s.find("gfx");
+            if(pos != std::string::npos)
+            {
+                return s.substr(pos + 3);
+            }
+            return s;
+        };
+        static_cast<void>(hipGetDevice(&deviceId));
+        static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+        auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
+        if(stoi(gpu_arch_no_prefix) / 100 == 12)
+            return true;
+        return false;
     }
 
     // data type
@@ -191,6 +213,68 @@ namespace Tensile
 
         // only host code is simulated
         explicit HIP_HOST
+#elif defined(__gfx1200__)
+        // constructor from float using s/w simulation
+        // Device implementation using intrinsic code
+        explicit HIP_DEVICE Float8_BFloat8(float                v,
+                                           hip_f8_rounding_mode rm = hip_f8_rounding_mode::standard,
+                                           uint32_t             rng = 0)
+        {
+            union
+            {
+                float    fval;
+                uint32_t i32val;
+                uint8_t  i8val[4]; // not endian independent
+            } val;
+
+            uint32_t ival = 0;
+            val.fval      = v;
+
+            if(T == hip_f8_type::bf8)
+            {
+                // add clipping code.. by default, always clipping for now
+                if((val.i32val & 0x7F800000) != 0x7F800000) // all exp bits  are 1 --> NaN or INF
+                    val.fval = __builtin_amdgcn_fmed3f(val.fval, 57344.0, -57344.0);
+
+                // TODO: make it compile-time
+                if(rm == hip_f8_rounding_mode::stochastic)
+                {
+                    ival       = __builtin_amdgcn_cvt_sr_bf8_f32(val.fval, rng, ival, 0); // 0 pos
+                    val.i32val = ival;
+                    data       = val.i8val[0]; // little endian
+                }
+                else // RNE CVT
+                {
+                    ival = __builtin_amdgcn_cvt_pk_bf8_f32(
+                        val.fval, val.fval, ival, false); // false -> WORD0
+                    val.i32val = ival;
+                    data       = val.i8val[0];
+                }
+            }
+            else // fp8
+            {
+                if((val.i32val & 0x7F800000) != 0x7F800000) // all exp bits  are 1 --> NaN or INF
+                    val.fval = __builtin_amdgcn_fmed3f(val.fval, 448.0, -448.0);
+
+                // TODO: make this if-statement compile-time
+                if(rm == hip_f8_rounding_mode::stochastic)
+                {
+                    ival       = __builtin_amdgcn_cvt_sr_fp8_f32(val.fval, rng, ival, 0); // 0 pos
+                    val.i32val = ival;
+                    data       = val.i8val[0]; // little endian
+                }
+                else // RNE CVT
+                {
+                    ival = __builtin_amdgcn_cvt_pk_fp8_f32(
+                        val.fval, val.fval, ival, false); // false -> WORD0
+                    val.i32val = ival;
+                    data       = val.i8val[0];
+                }
+            }
+        }
+
+        // only host code is simulated
+        explicit HIP_HOST
 #else // gfx940
         explicit HIP_HOST_DEVICE
 #endif // gfx940
@@ -202,7 +286,13 @@ namespace Tensile
             // NOTE: made clipping default again
             if(T == hip_f8_type::bf8)
             {
-                if(get_hip_f8_bias_mode())
+#if defined(HIP_FP8_TYPE_OCP)
+                if(IsOCPSupported())
+                    data = internal::cast_to_f8<float, false /*is_funz*/>(
+                        v, 2, 5, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
+                else
+#endif
+                    if(get_hip_f8_bias_mode())
                 {
                     data = tensile_hip_f8_impl::
                         cast_to_f8<2, 5, float, true /*negative_zero_nan*/, true /*clip*/>(
@@ -217,7 +307,13 @@ namespace Tensile
             }
             else /* fp8*/
             {
-                if(get_hip_f8_bias_mode())
+#if defined(HIP_FP8_TYPE_OCP)
+                if(IsOCPSupported())
+                    data = internal::cast_to_f8<float, false /*is_funz*/>(
+                        v, 3, 4, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
+                else
+#endif
+                    if(get_hip_f8_bias_mode())
                 {
                     data = tensile_hip_f8_impl::
                         cast_to_f8<3, 4, float, true /*negative_zero_nan*/, true /*clip*/>(
@@ -234,6 +330,16 @@ namespace Tensile
 
         // constructor from double
 #if defined(__gfx940__)
+        // convert double to f32 and call constructor
+        explicit HIP_DEVICE Float8_BFloat8(double               v,
+                                           hip_f8_rounding_mode rm = hip_f8_rounding_mode::standard,
+                                           uint32_t             rng = 0)
+            : Float8_BFloat8(static_cast<float>(v), rm, rng)
+        {
+        }
+
+        explicit HIP_HOST
+#elif defined(__gfx1200__)
         // convert double to f32 and call constructor
         explicit HIP_DEVICE Float8_BFloat8(double               v,
                                            hip_f8_rounding_mode rm = hip_f8_rounding_mode::standard,
@@ -264,6 +370,16 @@ namespace Tensile
         }
 
         explicit HIP_HOST
+#elif defined(__gfx1200__)
+        // no h/w inst for cvt from f16, just convert f16 to f32 and call constructor
+        explicit HIP_DEVICE Float8_BFloat8(_Float16             v,
+                                           hip_f8_rounding_mode rm = hip_f8_rounding_mode::standard,
+                                           uint32_t             rng = 0)
+            : Float8_BFloat8((float)v, rm, rng)
+        {
+        }
+
+        explicit HIP_HOST
 #else
         explicit HIP_HOST_DEVICE
 #endif
@@ -275,7 +391,13 @@ namespace Tensile
             // NOTE: made clipping default again
             if(T == hip_f8_type::bf8)
             {
-                if(get_hip_f8_bias_mode())
+#if defined(HIP_FP8_TYPE_OCP)
+                if(IsOCPSupported())
+                    data = internal::cast_to_f8<float, false /*is_funz*/>(
+                        v, 2, 5, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
+                else
+#endif
+                    if(get_hip_f8_bias_mode())
                 {
                     data = tensile_hip_f8_impl::
                         cast_to_f8<2, 5, _Float16, true /*negative_zero_nan*/, true /*clip*/>(
@@ -290,7 +412,13 @@ namespace Tensile
             }
             else /* fp8*/
             {
-                if(get_hip_f8_bias_mode())
+#if defined(HIP_FP8_TYPE_OCP)
+                if(IsOCPSupported())
+                    data = internal::cast_to_f8<float, false /*is_funz*/>(
+                        v, 3, 4, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
+                else
+#endif
+                    if(get_hip_f8_bias_mode())
                 {
                     data = tensile_hip_f8_impl::
                         cast_to_f8<3, 4, _Float16, true /*negative_zero_nan*/, true /*clip*/>(
@@ -343,7 +471,23 @@ namespace Tensile
             return fval;
         }
         explicit inline HIP_HOST operator float() const
-
+#elif defined(__gfx1200__)
+        // builtin conversion
+        explicit inline HIP_DEVICE operator float() const
+        {
+            float    fval;
+            uint32_t i32val = static_cast<uint32_t>(data);
+            if(T == hip_f8_type::bf8)
+                // workaround: use inline asm instead of builtin function
+                fval = __builtin_amdgcn_cvt_f32_bf8(i32val, 0);
+            //asm volatile("v_cvt_f32_bf8 %0, %1 src0_sel:BYTE_0" : "=v"(fval) : "v"(i32val));
+            else
+                // workaround: use inline asm instead of builtin function
+                fval = __builtin_amdgcn_cvt_f32_fp8(i32val, 0);
+            //asm volatile("v_cvt_f32_fp8 %0, %1 src0_sel:BYTE_0" : "=v"(fval) : "v"(i32val));
+            return fval;
+        }
+        explicit inline HIP_HOST operator float() const
 #else // non gfx940
 
         explicit inline HIP_HOST_DEVICE operator float() const
@@ -352,7 +496,12 @@ namespace Tensile
             assert(T == hip_f8_type::fp8 || T == hip_f8_type::bf8);
             if(T == hip_f8_type::bf8)
             {
-                if(get_hip_f8_bias_mode())
+#if defined(HIP_FP8_TYPE_OCP)
+                if(IsOCPSupported())
+                    return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
+                else
+#endif
+                    if(get_hip_f8_bias_mode())
                 {
                     return tensile_hip_f8_impl::
                         cast_from_f8<2, 5, float, true /*negative_zero_nan*/>(data);
@@ -365,7 +514,12 @@ namespace Tensile
             }
             else /* fp8*/
             {
-                if(get_hip_f8_bias_mode())
+#if defined(HIP_FP8_TYPE_OCP)
+                if(IsOCPSupported())
+                    return internal::cast_from_f8<float, false /*is_funz*/>(data, 3, 4, false);
+                else
+#endif
+                    if(get_hip_f8_bias_mode())
                 {
                     return tensile_hip_f8_impl::
                         cast_from_f8<3, 4, float, true /*negative_zero_nan*/>(data);
@@ -405,6 +559,13 @@ namespace Tensile
         }
 
         explicit inline HIP_HOST operator _Float16() const
+#elif defined(__gfx1200__)
+        explicit inline HIP_DEVICE operator _Float16() const
+        {
+            return _Float16(float(*this)); // convert to float, then convert to f16
+        }
+
+        explicit inline HIP_HOST operator _Float16() const
 #else
         explicit inline HIP_HOST_DEVICE operator _Float16() const
 #endif
@@ -412,7 +573,12 @@ namespace Tensile
             assert(T == hip_f8_type::fp8 || T == hip_f8_type::bf8);
             if(T == hip_f8_type::bf8)
             {
-                if(get_hip_f8_bias_mode())
+#if defined(HIP_FP8_TYPE_OCP)
+                if(IsOCPSupported())
+                    return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
+                else
+#endif
+                    if(get_hip_f8_bias_mode())
                 {
                     return tensile_hip_f8_impl::
                         cast_from_f8<2, 5, _Float16, true /*negative_zero_nan*/>(data);
@@ -425,7 +591,12 @@ namespace Tensile
             }
             else /* fp8*/
             {
-                if(get_hip_f8_bias_mode())
+#if defined(HIP_FP8_TYPE_OCP)
+                if(IsOCPSupported())
+                    return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
+                else
+#endif
+                    if(get_hip_f8_bias_mode())
                 {
                     return tensile_hip_f8_impl::
                         cast_from_f8<3, 4, _Float16, true /*negative_zero_nan*/>(data);
@@ -445,7 +616,7 @@ namespace Tensile
         // check for zero
         inline HIP_HOST_DEVICE bool is_zero() const
         {
-            if(get_hip_f8_bias_mode())
+            if(get_hip_f8_bias_mode() || IsOCPSupported())
             {
                 return data == 0x00;
             }
@@ -458,7 +629,13 @@ namespace Tensile
         // check for nan
         inline HIP_HOST_DEVICE bool is_nan() const
         {
-            if(get_hip_f8_bias_mode())
+            if(IsOCPSupported())
+            {
+                return (T == hip_f8_type::fp8)   ? ((data & 0x7f) == 0x7f)
+                       : (T == hip_f8_type::bf8) ? ((data & 0x7f) > 0x7c)
+                                                 : false;
+            }
+            else if(get_hip_f8_bias_mode())
             {
                 return data == 0x80;
             }
@@ -482,7 +659,11 @@ namespace Tensile
         // check for inf
         inline HIP_HOST_DEVICE bool is_inf() const
         {
-            if(get_hip_f8_bias_mode())
+            if(IsOCPSupported())
+            {
+                return (T == hip_f8_type::bf8) ? (data & 0x7f) == 0x7c : false;
+            }
+            else if(get_hip_f8_bias_mode())
             {
                 return data == 0x80;
             }

@@ -31,6 +31,9 @@
 #include "TypedId.hpp"
 
 #include <cstddef>
+#include <omp.h>
+
+#define MAX_OMP_THREADS 64
 
 namespace Tensile
 {
@@ -530,6 +533,7 @@ namespace Tensile
             // For 2D bias reduction, d batch = 1
             if((tensor.dimensions() == 3 && tensor.sizes()[2] == 1) || tensor.dimensions() == 2)
             {
+omp_set_num_threads(MAX_OMP_THREADS);
 #pragma omp parallel for
                 for(size_t bNum = 0; bNum < biasTensor.totalLogicalElements();
                     bNum += validationStride)
@@ -681,6 +685,7 @@ namespace Tensile
                                            && !std::is_same<Accumulator, std::complex<float>>();
 
             // gemm
+omp_set_num_threads(MAX_OMP_THREADS);
 #pragma omp parallel for
             for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStrideGemm)
             {
@@ -976,6 +981,7 @@ namespace Tensile
                                          actArgs);
                 }
 
+omp_set_num_threads(MAX_OMP_THREADS);
 #pragma omp critical
                 {
                     if constexpr(notCmplxAmaxD)
