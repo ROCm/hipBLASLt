@@ -55,7 +55,6 @@ import sys
 from timeit import default_timer as timer
 from pathlib import Path
 from typing import Sequence
-import concurrent.futures
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -1116,45 +1115,35 @@ def generateLogicDataAndSolutions(logicFiles, args):
       for _, lazyLib in lib.lazyLibraries.items():
         yield from libraryIter(lazyLib)
 
-  with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
-    futureToPath = {executor.submit(LibraryIO.parseLibraryLogicFile, *p): p[0] for p in fIter}
+  for library in Common.ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator"):
+    _, architectureName, _, _, _, newLibrary, srcFile = library
 
-    for future in concurrent.futures.as_completed(futureToPath):
-      library = future.result()
+    if architectureName == "":
+      continue
 
-      if library[1] == "":
-        continue
-
-      _, architectureName, _, _, _, newLibrary, srcFile = library
-
-      if globalParameters["PackageLibrary"]:
-        if architectureName in masterLibraries:
-          masterLibraries[architectureName].merge(newLibrary)
-        else:
-          masterLibraries[architectureName] = newLibrary
-          masterLibraries[architectureName].version = args.version
-      elif globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
-        if architectureName in masterLibraries:
-          nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
-        else:
-          masterLibraries[architectureName] = newLibrary
-          masterLibraries[architectureName].version = args.version
+    if globalParameters["PackageLibrary"]:
+      if architectureName in masterLibraries:
+        masterLibraries[architectureName].merge(newLibrary)
       else:
-        if fullMasterLibrary is None:
-          fullMasterLibrary = newLibrary
-          fullMasterLibrary.version = args.version
-        else:
-          fullMasterLibrary.merge(newLibrary)
+        masterLibraries[architectureName] = newLibrary
+        masterLibraries[architectureName].version = args.version
+    elif globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
+      if architectureName in masterLibraries:
+        nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
+      else:
+        masterLibraries[architectureName] = newLibrary
+        masterLibraries[architectureName].version = args.version
+    else:
+      if fullMasterLibrary is None:
+        fullMasterLibrary = newLibrary
+        fullMasterLibrary.version = args.version
+      else:
+        fullMasterLibrary.merge(newLibrary)
 
-      if args.GenSolTable:
-        # Match yaml file solutions to solution index
-        for localIdx, _, s in libraryIter(newLibrary):
-          matchTable[s.index] = [srcFile, localIdx]
-
-    # if problemType not in logicData:
-    #   logicData[problemType] = []
-    # logicData[problemType].append((scheduleName, deviceNames, \
-    #     solutionsForSchedule, indexOrder, exactLogic, rangeLogic ))
+    if args.GenSolTable:
+      # Match yaml file solutions to solution index
+      for localIdx, _, s in libraryIter(newLibrary):
+        matchTable[s.index] = [srcFile, localIdx]
 
   if globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
     if "fallback" in masterLibraries.keys():
@@ -1435,9 +1424,7 @@ def TensileCreateLibrary():
   # Parse logicData, solutions, and masterLibraries from logic files
   solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args)
 
-  # kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
-  kernels = list(toKernelObjects(solutions))
-  kernelHelperObjs = list(getKernelHelpObjects(solutions))
+  kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
 
   # if any kernels are assembly, append every ISA supported
   kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels)

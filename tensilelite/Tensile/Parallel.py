@@ -152,7 +152,7 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
   pool.close()
   return rv
 
-def ParallelMap2(function, objects, message="", enable=True, multiArg=True):
+def ParallelMap2(function, objects, message="", enable=True, multiArg=True, return_as="list"):
   """
   Generally equivalent to list(map(function, objects)), possibly executing in parallel.
 
@@ -182,7 +182,7 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True):
 
   pcall = pcallWithGlobalParamsMultiArg if multiArg else pcallWithGlobalParamsSingleArg
   pargs = zip(objects, itertools.repeat(globalParameters))
-  rv = Parallel(n_jobs=threadCount,timeout=99999)(delayed(pcall)(function, a, params) for a, params in pargs)
+  rv = Parallel(n_jobs=threadCount,timeout=99999, return_as=return_as)(delayed(pcall)(function, a, params) for a, params in pargs)
 
   totalTime = time.time() - currentTime
   print("{0}Done. ({1:.1f} secs elapsed)".format(message, totalTime))
