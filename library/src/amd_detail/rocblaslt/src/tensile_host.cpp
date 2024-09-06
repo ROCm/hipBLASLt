@@ -2991,17 +2991,14 @@ std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
-<<<<<<< HEAD
     std::shared_ptr<Tensile::Hardware>                                               hardware;
     hardware = Tensile::hip::GetDevice(*deviceProp);
-=======
 
     if(!library)
     {
         return std::string();
     }
 
->>>>>>> upstream/develop
     int* solutionIndex = (int*)algo.data;
     auto solution      = library->getSolutionByIndex(*hardware, *solutionIndex);
     return solution->kernelName;
@@ -3013,17 +3010,14 @@ std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblasl
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
-<<<<<<< HEAD
     std::shared_ptr<Tensile::Hardware>                                               hardware;
     hardware = Tensile::hip::GetDevice(*deviceProp);
-=======
 
     if(!library)
     {
         return std::string();
     }
 
->>>>>>> upstream/develop
     int* solutionIndex = (int*)algo.data;
     auto solution      = library->getSolutionByIndex(*hardware , *solutionIndex);
     return solution->solutionName;
