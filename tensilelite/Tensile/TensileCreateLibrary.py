@@ -1115,7 +1115,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
       for _, lazyLib in lib.lazyLibraries.items():
         yield from libraryIter(lazyLib)
 
-  for library in Common.ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator"):
+  for library in Common.ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered"):
     _, architectureName, _, _, _, newLibrary, srcFile = library
 
     if architectureName == "":
