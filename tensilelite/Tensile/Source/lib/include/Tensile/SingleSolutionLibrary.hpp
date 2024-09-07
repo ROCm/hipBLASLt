@@ -136,7 +136,7 @@ namespace Tensile
                 if(!(*solution->hardwarePredicate)(hardware))
                     return std::shared_ptr<MySolution>();
 
-                size_t ws = (*solution).requiredWorkspaceSizeGroupedGemm(problems);
+                size_t ws = (*solution).requiredWorkspaceSizeGroupedGemm(problems, hardware);
 
                 for(int idx = 0; idx < problems.size(); idx++)
                 {
@@ -150,7 +150,7 @@ namespace Tensile
                 if(solution->requiredHostWorkspaceSizePerProblem == static_cast<size_t>(-1))
                 {
                     solution->requiredHostWorkspaceSizePerProblem
-                        = solution->requiredHostSizeGroupedGemmSingle(problems[0]);
+                        = solution->requiredHostSizeGroupedGemmSingle(problems[0],hardware);
                 }
 
                 return solution;
@@ -220,7 +220,7 @@ namespace Tensile
 
                 if(searchType == SolutionLibrarySearchType::DEFAULT)
                 {
-                    size_t ws = (*solution).requiredWorkspaceSizeGroupedGemm(problems);
+                    size_t ws = (*solution).requiredWorkspaceSizeGroupedGemm(problems, hardware);
 
                     for(int idx = 0; idx < problems.size(); idx++)
                     {
@@ -266,7 +266,7 @@ namespace Tensile
                 if(solution->requiredHostWorkspaceSizePerProblem == static_cast<size_t>(-1))
                 {
                     solution->requiredHostWorkspaceSizePerProblem
-                        = solution->requiredHostSizeGroupedGemmSingle(problems[0]);
+                        = solution->requiredHostSizeGroupedGemmSingle(problems[0],hardware);
                 }
                 return SolutionSet<MySolution>({solution});
             }
