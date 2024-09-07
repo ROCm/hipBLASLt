@@ -73,10 +73,10 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct MappingTraits<ContractionSolution::SizeMapping, IO>
+        struct MappingTraits<SizeMapping, IO>
         {
             using iot = IOTraits<IO>;
-            static void mapping(IO& io, ContractionSolution::SizeMapping& s)
+            static void mapping(IO& io, SizeMapping& s)
             {
                 iot::mapRequired(io, "waveNum", s.waveNum);
 
@@ -100,6 +100,8 @@ namespace Tensile
                 iot::mapOptional(io, "packBatchDims", s.packBatchDims);
                 iot::mapOptional(io, "packSummationDims", s.packSummationDims);
                 iot::mapOptional(io, "magicDivAlg", s.magicDivAlg);
+                iot::mapOptional(io, "streamK", s.streamK);
+                iot::mapOptional(io, "streamKAtomic", s.streamKAtomic);
                 iot::mapOptional(io, "persistentKernel", s.persistentKernel);
                 iot::mapOptional(io, "persistentKernelAlongBatch", s.persistentKernelAlongBatch);
                 iot::mapRequired(io, "sourceKernel", s.sourceKernel);

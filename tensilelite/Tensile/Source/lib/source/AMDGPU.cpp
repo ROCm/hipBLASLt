@@ -39,6 +39,11 @@ namespace Tensile
         : processor(p)
         , computeUnitCount(cus)
         , deviceName(name)
+        , skDynamicGrid(getSKDynamicGrid())
+        , skMaxCUs(getSKMaxCUs())
+        , skGridMultiplier(getSKGridMultiplier())
+        , skFixedGrid(getSKFixedGrid())
+        , skFullTiles(getSKFullTiles())
     {
     }
 

@@ -103,12 +103,12 @@ namespace Tensile
             if(solution->requiredHostWorkspaceSizePerProblem == static_cast<size_t>(-1))
             {
                 solution->requiredHostWorkspaceSizePerProblem
-                    = solution->requiredHostSizeGroupedGemmSingle(problem);
+                    = solution->requiredHostSizeGroupedGemmSingle(problem,hardware);
             }
             return solution;
         }
 
-        virtual std::shared_ptr<MySolution> getSolutionByIndex(const int index) const override
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(Hardware const&  hardware, const int index) const override
         {
             if(solutions.find(index) == solutions.end())
             {
@@ -137,7 +137,7 @@ namespace Tensile
                                                       solution->problemType.groupedGemm,
                                                       std::numeric_limits<size_t>::max());
                 solution->requiredHostWorkspaceSizePerProblem
-                    = solution->requiredHostSizeGroupedGemmSingle(problem);
+                    = solution->requiredHostSizeGroupedGemmSingle(problem,hardware);
             }
             return solution;
         }

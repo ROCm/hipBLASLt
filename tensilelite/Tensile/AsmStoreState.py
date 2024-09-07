@@ -39,7 +39,7 @@ class StoreState:
     # the generation of the store code.
     ##############################################################################
     class StoreConstConfig:
-        def __init__(self, kernelWriter, kernel, ss, gwvw, edge, beta, atomic):
+        def __init__(self, kernelWriter, kernel, ss, gwvw, edge, beta, atomic, isWorkspace=False):
             self.gwvw = gwvw
             self.lsu = kernel["LocalSplitU"]
 
@@ -76,14 +76,18 @@ class StoreState:
                 self.numElementsPerBatchLimitedBySgprs = 1 # dummy value
                   #assert self.numElementsPerBatchLimitedBySgprs > 0, "numElementsPerBatchLimitedBySgprs=0 for %s"%self.kernelName
 
+            bpeC = kernelWriter.states.bpeCexternal
+            if isWorkspace:
+                bpeC = kernelWriter.states.bpeCinternal
+
             if atomic:
                 # flat atomics have another VGPR to allow different data for return#
                 regsPerElement = 2 if kernel["BufferStore"] else (3 + 1) # + 1 for alignment
                 # The atomic loop processes multiple elements in single instruction
                 # so will use VGPR from consec elements? TODO
-                self.numVgprsPerDataPerVI = (1.0 * regsPerElement * kernelWriter.states.bpeCexternal) / kernelWriter.states.bpr
+                self.numVgprsPerDataPerVI = (1.0 * regsPerElement * bpeC) / kernelWriter.states.bpr
             elif beta:
-                self.numVgprsPerDataPerVI = (1.0 * kernelWriter.states.bpeCexternal) / kernelWriter.states.bpr
+                self.numVgprsPerDataPerVI = (1.0 * bpeC) / kernelWriter.states.bpr
             else:
                 self.numVgprsPerDataPerVI = 0.0
 
@@ -104,7 +108,7 @@ class StoreState:
             self.lsuStartVgprOffset = 0
 
     # StoreState constructor:
-    def __init__(self, kernelWriter, kernel, gwvw, edge, beta, atomic, elements):
+    def __init__(self, kernelWriter, kernel, gwvw, edge, beta, atomic, elements, isWorkspace=False):
         self.kernelWriter = kernelWriter
         self.kernel = kernel
         self.lsu = kernel["LocalSplitU"]
@@ -158,7 +162,7 @@ class StoreState:
             if not atomic and len(kernel["PackedC1IndicesX"]) == 1:
                 self.optSrdIncForRow = 1
 
-        if kernel["StoreRemapVectorWidth"]:
+        if kernel["StoreRemapVectorWidth"] and not isWorkspace:
             self.optSrdIncForRow = 1
 
         if kernel["ProblemType"]["UseInitialStridesCD"]:
@@ -173,7 +177,7 @@ class StoreState:
         assert (not (self.optSingleColVgpr and self.optSharedColVgpr))
 
 
-        self.cfg = self.StoreConstConfig(kernelWriter, kernel, self, gwvw, edge, beta, atomic)
+        self.cfg = self.StoreConstConfig(kernelWriter, kernel, self, gwvw, edge, beta, atomic, isWorkspace)
 
         # Use to detect new rows:
         self.lastCoordOffset1 = 0
@@ -262,9 +266,22 @@ class StoreState:
         # For detecting when we are running first batch
         self.firstBatch = True
 
+        # TODO code migrated from globalWrite, comments outdated with respect to features like activation
+        # how many vgprs are needed for zero elements
+        # 2 for addressC in vgpr for addition - already checked out
+        # 2 for coord0,1 of thread - already checked out
+        # 2 for tmp - already checked out
+
+        # 5 = how many vgprs are needed per element (flat)
+        #  - 2 for addr
+        #  - 3 for GLOBAL_OFFSET_C calculation (can overlap below, therefore max)
+        #  - if beta gwvw*rpe for new value
+        #  - if atomic 2*rpe for old and cmp values
+
         # Calculate numVgprsPerElement
         # print("numVgprsPerAddr=%u, numVgprsPerDataPerVI=%u, numVgprPerValuC=%u"%(self.cfg.numVgprsPerAddr, self.cfg.numVgprsPerDataPerVI, self.cfg.numVgprPerValuC))
         self.numVgprsPerElement = self.cfg.numVgprPerValuC*gwvw + self.cfg.numVgprsPerAddr + int(ceil(self.cfg.numVgprsPerDataPerVI * gwvw))
+        # TODO STREAM-K Update numVgprsPerElement for workspace
         if kernel["GroupLoadStore"] and kernel["ProblemType"]["UseBeta"]:
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
@@ -377,7 +394,7 @@ class StoreState:
 
         return self.elementCoord0, self.elementCoord1
 
-    def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL, factorDim):
+    def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL, factorDim, isWorkspace=False):
 
         self.elementAddr              = []
         self.elementDataE             = []
@@ -394,6 +411,9 @@ class StoreState:
         #generate elementCoord0/1
         self.getStoreElementsInfoForBatch(kernel, batchElements)
         kw = self.kernelWriter
+        dataType = kernel["ProblemType"]["DestDataType"]
+        if isWorkspace:
+            dataType = kernel["ProblemType"]["ComputeDataType"]
 
         biasVgprMap = {}
         scaleAVecVgprMap = {}
@@ -514,7 +534,7 @@ class StoreState:
                 if self.cfg.halfDataRegPerVI:
                     # TODO- check (H,H,H,H,S,S)
                     if kernel["ProblemType"]["HighPrecisionAccumulate"] and \
-                       (kernel["ProblemType"]["DestDataType"].isBFloat16() or kernel["ProblemType"]["DestDataType"].isHalf()):
+                       (dataType.isBFloat16() or dataType.isHalf()):
                         data = kw.vgprPool.checkOutAligned(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw), \
                               int(ceil(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw))), "writeBatch-data for ei=%u and ei=%u"%(elementIdx,elementIdx+1), preventOverflow=not isOptNLL)
                     else:
