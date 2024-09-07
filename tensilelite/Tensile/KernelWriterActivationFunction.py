@@ -91,8 +91,15 @@ class KernelWriterActivationFunction(KernelWriterBase):
 
   def getInlineAsm(self, activation: ActivationInline, spaces: int, activationType: str):
     activationStrList = []
+
+    isa = tuple(self.state["Kernel"]["ISA"])
+    if not self._tf.isInit():
+      self._tf.init(isa, globalParameters["AssemblerPath"])
+    self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
+
     for arch in self.supportedArchs:
-      self._tf.setKernelInfo(tuple(arch), self.state["Kernel"]["WavefrontSize"])
+      self._tf.init(arch, globalParameters["AssemblerPath"])
+      self._tf.setKernelInfo(arch, self.state["Kernel"]["WavefrontSize"])
       activationStrList.append(activation.generateInlineAssemblyBody(spaces, activationType))
 
     activationStrSetList = list(set(activationStrList))
@@ -132,9 +139,10 @@ class KernelWriterActivationFunction(KernelWriterBase):
       return fileString
 
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
+    isa = tuple(self.state["Kernel"]["ISA"])
     if not self._tf.isInit():
-      self._tf.init(tuple(self.state["Kernel"]["ISA"]), globalParameters["AssemblerPath"])
-    self._tf.setKernelInfo(tuple(self.state["Kernel"]["ISA"]), self.state["Kernel"]["WavefrontSize"])
+      self._tf.init(isa, globalParameters["AssemblerPath"])
+    self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
     activation = ActivationInline(activationCDataType, not self.state["ProblemType"]["ActivationNoGuard"])
 
     fileString = "" # CHeader
