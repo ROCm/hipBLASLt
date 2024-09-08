@@ -50,15 +50,17 @@ def is_float(value):
 
 def parse_scalar(loader: yaml.Loader):
     assert loader.check_event(yaml.ScalarEvent)
-    value: str = loader.get_event().value
+    evt = loader.get_event()
+    value: str = evt.value
     value_lower: str = value.lower()
 
     if value_lower in ('true', 'yes',):
         return True
     elif value_lower in ('false', 'no',):
         return False
-    elif value_lower in ('null',):
-        return None
+    elif value_lower in ('null', '', '~'):
+        if not evt.style:
+            return None
     elif value_lower.lstrip('+-').isnumeric():
         return int(value_lower)
     elif is_float(value_lower):
