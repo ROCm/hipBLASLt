@@ -171,6 +171,84 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
 
+  #########################################
+  ## TN - standard (No Bias)
+  #########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: H
+      DestDataType: H
+      ComputeDataType: s
+      HighPrecisionAccumulate:  True
+      TransposeA: True
+      TransposeB: False
+      UseBeta: True
+      Sparse: 1
+      Batched: True
+      Activation: True
+      UseBias: 0
+      UseScaleAlphaVec: 3
+
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+        #- EdgeType: ["ShiftPtr"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [32, 32, 16, 1,  1,  1, 1,  1, 1 ]
+          - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
+          - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
+          - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
+          - [32, 32, 16, 1,  1,  4, 4,  2, 2 ]
+          - [32, 32, 16, 1,  1,  4, 2,  2, 4 ]
+        - GlobalReadVectorWidthA: [4,8]
+        - VectorWidthA: [1,2,4]
+        - VectorWidthB: [1,2,4]
+        - DepthU: [32,64]
+        - TransposeLDS: [-1]
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - LdsPadMetadata: [-1]
+        - StaggerU: [0,4]
+        - ScheduleIterAlg: [3]
+        - PrefetchLocalRead: [1,2,3]
+        - ClusterLocalRead: [1]
+        - PrefetchGlobalRead: [2]
+        - StoreRemapVectorWidth: [-1]
+        - GlobalSplitU: [1,2]
+        - GlobalSplitUAlgorithm: [MultipleBuffer]
+        - 1LDSBuffer: [-1]
+        - DirectToVgprSparseMetadata: [0,1]
+        - WorkGroupMapping: [18]
+        - StoreVectorWidth: [-1]
+        - AssertFree0ElementMultiple: [1,8]
+      BenchmarkForkParameters:
+      JoinParameters:
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [16, 16, 1, 16] # classic format
+          - Exact: [16, 16, 1, 32] # classic format
+          - Exact: [16, 16, 1, 64] # classic format
+          - Exact: [16, 16, 1, 96] # classic format
+          - Exact: [16, 16, 1, 128] # classic format
+          - Exact: [256, 256, 1, 16] # classic format
+          - Exact: [256, 256, 1, 32] # classic format
+          - Exact: [256, 256, 1, 64] # classic format
+          - Exact: [256, 256, 1, 96] # classic format
+          - Exact: [256, 256, 1, 128] # classic format
+          - Exact: [384, 384, 1, 16] # classic format
+          - Exact: [384, 384, 1, 32] # classic format
+          - Exact: [384, 384, 1, 64] # classic format
+          - Exact: [384, 384, 1, 96] # classic format
+          - Exact: [384, 384, 1, 128] # classic format
+        - BiasTypeArgs: ['s', 'h']
+        - FactorDimArgs: [0, 1]
+        - ActivationArgs:
+          - [Enum: none]
+
   #######################################
   # NT - standard
   #######################################

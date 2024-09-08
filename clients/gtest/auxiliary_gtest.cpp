@@ -70,6 +70,11 @@ namespace
             || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
             || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_bf8_fnuz>{})
             || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
+#ifdef ROCM_USE_FLOAT8
+            || (std::is_same<TiA, hipblaslt_f8_ocp>{} && std::is_same<TiB, hipblaslt_f8_ocp>{})
+            || (std::is_same<TiA, hipblaslt_f8_ocp>{} && std::is_same<TiB, hipblaslt_bf8_ocp>{})
+            || (std::is_same<TiA, hipblaslt_bf8_ocp>{} && std::is_same<TiB, hipblaslt_f8_ocp>{})
+#endif
             || (std::is_same<TiA, double>{} && std::is_same<TiB, double>{})
             || (std::is_same<TiA, hipblasLtInt8>{} && std::is_same<TiB, hipblasLtInt8>{})
             || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblasLtHalf>{})

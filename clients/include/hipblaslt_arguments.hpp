@@ -42,9 +42,6 @@
 // Predeclare enumerator
 enum hipblaslt_argument : int;
 
-/*! \brief device matches pattern */
-bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern);
-
 /***************************************************************************
  *! \brief Class used to parse command arguments in both client & gtest    *
  * WARNING: If this data is changed, then hipblaslt_common.yaml must also be *
@@ -140,8 +137,8 @@ struct Arguments
     hipDataType           bias_type;
     hipblaslt_bias_source bias_source;
     bool                  bias_vector;
-    ScalingFormat           scaleA;
-    ScalingFormat           scaleB;
+    ScalingFormat         scaleA;
+    ScalingFormat         scaleB;
     bool                  scaleC;
     bool                  scaleD;
     bool                  scaleE;

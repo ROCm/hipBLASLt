@@ -266,12 +266,12 @@ class VCmpXInstruction(CommonInstruction):
         return kStr
 
 class VCvtInstruction(CommonInstruction):
-    def __init__(self, cvtType: CvtType, dst, src, sdwa: Optional[SDWAModifiers] = None, \
+    def __init__(self, cvtType: CvtType, dst, src, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers]=None, \
                  comment="") -> None:
         if isinstance(src, list):
-            super().__init__(InstType.INST_CVT, dst, src, sdwa, None, comment)
+            super().__init__(InstType.INST_CVT, dst, src, sdwa, vop3, comment)
         else:
-            super().__init__(InstType.INST_CVT, dst, [src], sdwa, None, comment)
+            super().__init__(InstType.INST_CVT, dst, [src], sdwa, vop3, comment)
         self.cvtType = cvtType
 
 class MFMAInstruction(Instruction):
@@ -1268,6 +1268,11 @@ class SCmpGeI32(CommonInstruction):
     def __init__(self, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_I32, None, [src0, src1], None, None, comment)
         self.setInst("s_cmp_ge_i32")
+
+class SCmpGeU32(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
+        self.setInst("s_cmp_ge_u32")
 
 class SCmpGtI32(CommonInstruction):
     def __init__(self, src0, src1, comment="") -> None:
@@ -2347,7 +2352,7 @@ class VCmpNeU64(VCmpInstruction):
         super().__init__(InstType.INST_U64, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmp_ne_u64")
 
-class VCmpClassF32(VCmpXInstruction):
+class VCmpClassF32(VCmpInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmp_class_f32")
@@ -2498,74 +2503,74 @@ class VXorB32(CommonInstruction):
 # V Convert
 class VCvtF16toF32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_F16_to_F32, dst, src, sdwa, comment)
+        super().__init__(CvtType.CVT_F16_to_F32, dst, src, sdwa, None, comment)
         self.setInst("v_cvt_f32_f16")
 
 class VCvtF32toF16(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_F32_to_F16, dst, src, sdwa, comment)
+        super().__init__(CvtType.CVT_F32_to_F16, dst, src, sdwa, None, comment)
         self.setInst("v_cvt_f16_f32")
 
 class VCvtF32toU32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_F32_to_U32, dst, src, sdwa, comment)
+        super().__init__(CvtType.CVT_F32_to_U32, dst, src, sdwa, None, comment)
         self.setInst("v_cvt_u32_f32")
 
 class VCvtU32toF32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_U32_to_F32, dst, src, sdwa, comment)
+        super().__init__(CvtType.CVT_U32_to_F32, dst, src, sdwa, None, comment)
         self.setInst("v_cvt_f32_u32")
 
 class VCvtI32toF32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_I32_to_F32, dst, src, sdwa, comment)
+        super().__init__(CvtType.CVT_I32_to_F32, dst, src, sdwa, None, comment)
         self.setInst("v_cvt_f32_i32")
 
 class VCvtF32toI32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_F32_to_I32, dst, src, sdwa, comment)
+        super().__init__(CvtType.CVT_F32_to_I32, dst, src, sdwa, None, comment)
         self.setInst("v_cvt_i32_f32")
 
 class VCvtFP8toF32(VCvtInstruction):
-    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_FP8_to_F32, dst, src, sdwa, comment)
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_FP8_to_F32, dst, src, sdwa, vop3, comment)
         self.setInst("v_cvt_f32_fp8")
 
 class VCvtBF8toF32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_BF8_to_F32, dst, src, sdwa, comment)
+        super().__init__(CvtType.CVT_BF8_to_F32, dst, src, sdwa, None, comment)
         self.setInst("v_cvt_f32_bf8")
 
 class VCvtPkFP8toF32(VCvtInstruction):
-    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_PK_FP8_to_F32, dst, src, sdwa, comment)
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_PK_FP8_to_F32, dst, src, sdwa, vop3, comment)
         self.setInst("v_cvt_pk_f32_fp8")
 
 class VCvtPkBF8toF32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_PK_BF8_to_F32, dst, src, sdwa, comment)
+        super().__init__(CvtType.CVT_PK_BF8_to_F32, dst, src, sdwa, None, comment)
         self.setInst("v_cvt_pk_f32_bf8")
 
 class VCvtPkF32toFP8(VCvtInstruction):
     def __init__(self, dst, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_PK_F32_to_FP8, dst, [src0, src1], vop3, comment)
+        super().__init__(CvtType.CVT_PK_F32_to_FP8, dst, [src0, src1], None, vop3, comment)
         self.setInst("v_cvt_pk_fp8_f32")
 
 class VCvtPkF32toBF8(VCvtInstruction):
     def __init__(self, dst, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_PK_F32_to_BF8, dst, [src0, src1], vop3, comment)
+        super().__init__(CvtType.CVT_PK_F32_to_BF8, dst, [src0, src1], None, vop3, comment)
         self.setInst("v_cvt_pk_bf8_f32")
 
 class VCvtSRF32toFP8(VCvtInstruction):
     # op_sel=[0,0,sel1,sel2]
     def __init__(self, dst, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_SR_F32_to_FP8, dst, [src0, src1], vop3, comment)
+        super().__init__(CvtType.CVT_SR_F32_to_FP8, dst, [src0, src1], None, vop3, comment)
         self.setInst("v_cvt_sr_fp8_f32")
 
 class VCvtSRF32toBF8(VCvtInstruction):
     # op_sel=[0,0,sel1,sel2]
     def __init__(self, dst, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_SR_F32_to_BF8, dst, [src0, src1], vop3, comment)
+        super().__init__(CvtType.CVT_SR_F32_to_BF8, dst, [src0, src1], None, vop3, comment)
         self.setInst("v_cvt_sr_bf8_f32")
 
 # V Mask

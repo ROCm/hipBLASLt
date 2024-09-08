@@ -1125,10 +1125,10 @@ class Solution(collections.abc.Mapping):
     self.initReductionKernelObjects()
 
   ########################################
-  # create BetaONly Kernels
+  # create BetaOnly Kernels
   def initBetaOnlyKernelObjects(self):
     self.betaOnlyKernelObjects = []
-    if self["GlobalSplitU"] > 1:
+    if self["GlobalSplitU"] > 1 or (self["StreamK"] > 0 and self["StreamKAtomic"] == 1):
       if self["ProblemType"]["UseBias"]:
         for btype in self["ProblemType"]["BiasDataTypeList"]:
           state = {}
@@ -1938,7 +1938,10 @@ class Solution(collections.abc.Mapping):
     computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
     state["_GlobalAccumulation"] = None
     computeName  = state["ProblemType"]["ComputeDataType"].toName()
-    if state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
+    if state["StreamK"] > 0 and state["StreamKAtomic"] == 0:
+      # StreamK Workspace size
+      state["_GlobalAccumulation"] = 'PartialsBuffer'
+    elif state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
       if computeName != state["ProblemType"]["DestDataType"].toName():
         state["_GlobalAccumulation"] = 'SingleBuffer'
     elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
@@ -1953,6 +1956,35 @@ class Solution(collections.abc.Mapping):
     if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
       state["SynchronizerSizeCheck"] = 1
     #   state["BatchSizeEqual"] = 1
+
+    isa = tuple(state["ISA"])
+    
+    if state["StreamK"] != 0:
+      state["GlobalSplitU"] = 0 # Cannot enable both Stream-K and GSU
+      if state["MIWaveGroup"][0] * state["MIWaveGroup"][1] != 4:
+        reject(state, "Stream-K requries MIWaveGroup0*MIWaveGroup1=4")
+      if not state["EnableMatrixInstruction"]:
+        reject(state, "Stream-K requires MatrixInstruction")
+      if globalParameters["AsmCaps"][isa]["HasWMMA"]:
+        reject(state, "Stream-K untested with WMMA")
+      # if state["PersistentKernel"]:
+      #   reject(state, "Cannot enable both Stream-K and PersistentKernel")
+      if not state["ProblemType"]["StridedBatched"]:
+        reject(state, "General batch not supported with Stream-K")
+      if state["ProblemType"]["GroupedGemm"]:
+        reject(state, "Grouped gemm not yet supported with Stream-K")
+      if state["StreamKAtomic"] == 1:
+        if not state["ProblemType"]["DataType"].isSingle():
+          reject(state, "Atomic Stream-K currently only tested for SGEMM")
+        if not state["BufferStore"]:
+          reject(state, "Atomic Stream-K requires BufferStore")
+        if state["LocalSplitU"] > 1:
+          reject(state, "Atomic Stream-K not working with LocalSplitU")
+    else:
+      # If not using StreamK, clear other stream-k settings to avoid duplicate kernels
+      state["StreamKAtomic"] = 0
+      state["StreamKXCCMapping"] = 0
+      state["DebugStreamK"] = 0
 
     computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
     state["_WorkspaceSizePerElemC"] = computeBytes
@@ -1976,8 +2008,6 @@ class Solution(collections.abc.Mapping):
       state["ExpandPointerSwap"] = 1
       state["1LDSBuffer"] = 1
       print2("\nSet SIA=2, force PrefetchLocalRead=1, ExpandPointerSwap=1, 1LDSBuffer=1")
-
-    isa = tuple(state["ISA"])
 
     if state["WavefrontSize"] == 32 and not globalParameters["ArchCaps"][isa]["HasWave32"]:
       reject(state, "WavefrontSize=32 not supported for ISA {}".format(isa))
@@ -2925,10 +2955,11 @@ class Solution(collections.abc.Mapping):
       reject(state, "Source KernelLanguage only supports LdsPadA == LdsPadB")
       return
 
-    # NoTailLoop parameter initialization. Set True for the following cases
-    #  1. ASEM is multiple of DepthU. TailLoop code will not be used in this case.
+    # NoTailLoop parameter initialization.
+    # If ASEM is multiple of DepthU TailLoop will not be used.
+    # Unless kernel is Stream-K; Stream-K always requires TailLoop to handle work division.
     state["NoTailLoop"] = False
-    if state["AssertSummationElementMultiple"] % state["DepthU"] == 0:
+    if state["AssertSummationElementMultiple"] % state["DepthU"] == 0 and state["StreamK"] == 0:
       state["NoTailLoop"] = True
 
     ########################################
@@ -3429,9 +3460,17 @@ class Solution(collections.abc.Mapping):
     state["LdsOffsetBias"] = 0  # TODO: ldsBiasOffset = ldsNumBytesAB
     state["LdsOffsetBiasNonGSU"] = 0
     state["LdsOffsetBiasGSU"] = 0
+
+    # TODO: Should change name to LdsOffsetEpilogue or something.
+    if state["StoreRemapVectorWidth"]:
+      state["LdsOffsetBiasNonGSU"] = ldsNumBytesRemapCNonGSU
+      state["LdsOffsetBiasGSU"] = ldsNumBytesRemapCGSU
+      state["LdsOffsetBias"] = ldsNumBytesRemapC
+
+    epilogueSize = 0
+    # Bias
     if state["ProblemType"]["UseBias"]:
       # Currently all offsets starts from 0
-      ldsBiasMaxElements = 0
       if state["ProblemType"]["Gradient"]:
         if state["ProblemType"]["BiasSrc"] == "A":
           tile01 = state["ProblemType"]["Index01A"]
@@ -3445,15 +3484,15 @@ class Solution(collections.abc.Mapping):
         if tile01 > -1:
           maxKId = state["WavefrontSize"] // ((state["MatrixInstM"] if (tile01 == 0) else state["MatrixInstN"]) * state["MatrixInstB"])
           for dataType in state["ProblemType"]["BiasDataTypeList"]:
-            ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
+            epilogueSize = max(epilogueSize, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
       else:
-        if state["StoreRemapVectorWidth"]:
-          state["LdsOffsetBiasNonGSU"] = ldsNumBytesRemapCNonGSU
-          state["LdsOffsetBiasGSU"] = ldsNumBytesRemapCGSU
-          state["LdsOffsetBias"] = ldsNumBytesRemapC
-        for dataType in state["ProblemType"]["BiasDataTypeList"]:
-          ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile0"] * dataType.numBytes())
-      ldsNumBytes = max(ldsNumBytes, state["LdsOffsetBias"] + ldsBiasMaxElements)
+        epilogueSize = state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes()
+    # Calculate max ldsNumBytes for other epilogues
+    if state["ProblemType"]["UseScaleAlphaVec"]:
+      epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes()
+    if state["ProblemType"]["UseScaleAB"] == "Vector":
+      epilogueSize += state["NumThreads"] * 2 * state["ProblemType"]["ComputeDataType"].numBytes()
+    ldsNumBytes = max(ldsNumBytes, state["LdsOffsetBias"] + epilogueSize)
 
     state["LdsBytesNoAmax"] = ldsNumBytes
     if state["ProblemType"]["OutputAmaxD"]:
@@ -3814,7 +3853,7 @@ class Solution(collections.abc.Mapping):
 
     if globalParameters["SplitGSU"]:
       state_copy["GlobalSplitU"] = "M" if (state_copy["GlobalSplitU"] > 1) else state_copy["GlobalSplitU"]
-    else:
+    elif state["GlobalSplitU"] > 0:
       state_copy["GlobalSplitU"] = "M"
     state_copy["WorkGroupMapping"] = "M"
     state_copy["WorkGroupMappingXCC"] = "M"
@@ -3872,7 +3911,7 @@ class Solution(collections.abc.Mapping):
     if ignoreInternalArgs:
       if globalParameters["SplitGSU"]:
         state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1) else state["GlobalSplitU"]
-      else:
+      elif state["GlobalSplitU"] > 0:
         requiredParameters["GlobalSplitU"] = False
       requiredParameters["WorkGroupMapping"] = False
       requiredParameters["WorkGroupMappingXCC"] = False

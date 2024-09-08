@@ -609,6 +609,7 @@ namespace Tensile
             m_beta); // Set enum using beta to potentially allow for faster solutions
         consistencyCheck();
         normalize();
+        calcArithmeticIntensity();
     }
 
     size_t ContractionProblemGemm::toAPos(size_t idx) const
@@ -639,6 +640,53 @@ namespace Tensile
         assert(!found->isA);
 
         return found->i;
+    }
+
+    size_t ContractionProblemGemm::getNumTiles(SizeMapping const& sizeMapping) const
+    {
+        // Get the normal WorkGroup numbers by sizeMapping MacroTile
+        dim3 numWG(1, 1, 1);
+        for(size_t i = 0; i < m_freeIndicesA.size(); i++)
+        {
+            numWG.x *= m_freeSizesA.at(i);
+        }
+        for(size_t i = 0; i < m_freeIndicesB.size(); i++)
+        {
+            numWG.y *= m_freeSizesB.at(i);
+        }
+        for(size_t i = 0; i < m_batchIndices.size(); i++)
+        {
+            if(sizeMapping.packBatchDims & 0x1)
+                numWG.x *= m_batchSizes[i];
+            if(sizeMapping.packBatchDims & 0x2)
+                numWG.y *= m_batchSizes[i];
+            if(!sizeMapping.packBatchDims)
+                numWG.z *= m_batchSizes[i];
+        }
+
+        numWG.x = CeilDivide(numWG.x, sizeMapping.macroTile.x);
+        numWG.y = CeilDivide(numWG.y, sizeMapping.macroTile.y);
+        if(sizeMapping.streamK == 0)
+            numWG.y *= sizeMapping.globalSplitU;
+
+        size_t problemTiles = numWG.x * numWG.y;
+        if(sizeMapping.persistentKernelAlongBatch || sizeMapping.streamK != 0)
+            problemTiles *= numWG.z;
+
+        return problemTiles;
+    }
+
+    size_t ContractionProblemGemm::getItersPerTile(SizeMapping const& sizeMapping) const
+    {
+        size_t boundSize = 1;
+        for(size_t i = 0; i < m_boundIndices.size(); ++i)
+        {
+            boundSize *= m_boundSizes[i];
+        }
+
+        size_t itersPerTile = CeilDivide(boundSize, sizeMapping.depthU);
+
+        return itersPerTile;
     }
 
     void ContractionProblemGemm::checkPersistentKernelEligibility(
@@ -1018,6 +1066,42 @@ namespace Tensile
             TENSILE_ASSERT_EXC(cUse == 1);
         for(int dUse : dUseCount)
             TENSILE_ASSERT_EXC(dUse == 1);
+    }
+
+    void ContractionProblemGemm::calcArithmeticIntensity()
+    {
+        size_t problemSize = 1;
+        for(size_t i = 0; i < m_problemSizes.size(); ++i)
+        {
+            problemSize *= m_problemSizes[i];
+        }
+        double gflop = 2 * problemSize * 1e-9;
+
+        size_t aSize = 1;
+        for(size_t i = 0; i < a().dimensions(); ++i)
+        {
+            aSize *= a().sizes()[i];
+        }
+        size_t bSize = 1;
+        for(size_t i = 0; i < b().dimensions(); ++i)
+        {
+            bSize *= b().sizes()[i];
+        }
+        size_t cSize = 1;
+        for(size_t i = 0; i < c().dimensions(); ++i)
+        {
+            cSize *= c().sizes()[i];
+        }
+        if(m_beta != 0) // If problem includes beta, update gflops and gbytes
+        {
+            gflop += 2 * cSize * 1e-9; // Include (+ beta * C) in gflops
+            cSize *= 2; // Include read C and write D in gbytes
+        }
+        double gbyte
+            = (aSize * a().elementBytes() + bSize * b().elementBytes() + cSize * c().elementBytes())
+              * 1e-9;
+
+        m_arithmeticIntensity = gflop / gbyte;
     }
 
     size_t ContractionProblemGemm::freeSizeA(size_t idx) const

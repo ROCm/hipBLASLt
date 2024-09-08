@@ -1086,12 +1086,20 @@ namespace Tensile
             return getOperationDescription();
         }
 
+        size_t getNumTiles(SizeMapping const& sizeMapping) const;
+        size_t getItersPerTile(SizeMapping const& sizeMapping) const;
+
         void checkPersistentKernelEligibility(ContractionSolution const& solution,
                                               Hardware const&            hardware);
 
         bool getPersistentKernelEligibility() const
         {
             return m_eligibleForPK;
+        }
+
+        double  arithmeticIntensity() const
+        {
+            return m_arithmeticIntensity;
         }
 
         virtual std::vector<ConstantDescriptor> const constants() const
@@ -1171,7 +1179,7 @@ namespace Tensile
 
         KernelLanguage    m_kernelLanguage    = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric = PerformanceMetric::DeviceEfficiency;
-
+        double m_arithmeticIntensity;
         DataType m_alphaType         = DataType::None; // if not assigned, will follow d-type
         DataType m_betaType          = DataType::None; // for bwd-compatible
         DataType m_scaleAType        = DataType::None; // if not assigned, will follow alpha-type
@@ -1213,6 +1221,7 @@ namespace Tensile
 
         void normalize();
         void normalizeSparse();
+        void calcArithmeticIntensity();
 
         void consistencyCheck() const;
 
