@@ -171,6 +171,7 @@ else()
     set( Tensile_COMPILER "amdclang++" CACHE STRING "Tensile compiler")
     set( Tensile_LIBRARY_FORMAT "msgpack" CACHE STRING "Tensile library format")
     set( Tensile_CPU_THREADS "" CACHE STRING "Number of threads for Tensile parallel build")
+    set( Tensile_BUILD_SUB_FOLDER "" CACHE STRING "Build only the logic files in the sub-folder" )
 
     option( Tensile_MERGE_FILES "Tensile to merge kernels and solutions files?" ON )
     option( Tensile_SHORT_FILENAMES "Tensile to use short file names? Use if compiler complains they're too long." OFF )

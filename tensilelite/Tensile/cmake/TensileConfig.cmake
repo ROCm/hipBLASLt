@@ -173,6 +173,10 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--embed-library-key=${Tensile_EMBED_KEY}")
   endif()
 
+  if(Tensile_BUILD_SUB_FOLDER)
+    set(Options ${Options} "--logic-sub-folder=${Tensile_BUILD_SUB_FOLDER}")
+  endif()
+
   if(Tensile_CODE_OBJECT_VERSION)
     set(Options ${Options} "--code-object-version=${Tensile_CODE_OBJECT_VERSION}")
   endif()

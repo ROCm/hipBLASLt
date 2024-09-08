@@ -1307,6 +1307,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--keep-build-tmp", dest="KeepBuildTmp", action="store_true",
                           default=False, help="Do not remove the temporary build directory (may required hundreds of GBs of space)"),
   argParser.add_argument("--validate-library", dest="ValidateLibrary", action="store_true", default=False)
+  argParser.add_argument("--logic-sub-folder", dest="LogicSubFolder", type=str, action="store", default="")
 
   args = argParser.parse_args()
 
@@ -1352,6 +1353,7 @@ def TensileCreateLibrary():
   arguments["BuildIdKind"] = args.BuildIdKind
   arguments["KeepBuildTmp"] = args.KeepBuildTmp
   arguments["ValidateLibrary"] = args.ValidateLibrary
+  arguments["LogicSubFolder"] = args.LogicSubFolder
 
   for key, value in args.global_parameters:
     arguments[key] = value
@@ -1389,12 +1391,18 @@ def TensileCreateLibrary():
   else:
     printExit("Unrecognized LogicFormat", args.LogicFormat)
 
+  logicSubFolder = None
+  if arguments["LogicSubFolder"] is not "":
+    logicSubFolder = arguments["LogicSubFolder"]
+    print1("Build logic files only in sub-folder: %s" % logicSubFolder)
+
   logicFiles = []
   for root, dirs, files in os.walk(logicPath):
     logicFiles += [os.path.join(root, f) for f in files
                        if os.path.splitext(f)[1]==logicExtFormat \
                        and (any(logicArch in os.path.splitext(f)[0] for logicArch in logicArchs) \
-                       or "hip" in os.path.splitext(f)[0]) ]
+                       or "hip" in os.path.splitext(f)[0]) \
+                       and ((logicSubFolder is None) or (logicSubFolder in os.path.join(root, f)))]
 
   print1("# LibraryLogicFiles:" % logicFiles)
   for logicFile in logicFiles:

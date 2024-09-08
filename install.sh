@@ -48,6 +48,7 @@ function display_help()
   echo "    [--codecoverage] build with code coverage profiling enabled"
   echo "    [--gprof] enable profiling functionality with GNU gprof"
   echo "    [--keep-build-tmp] do not remove the temporary build artifacts or build_tmp"
+  echo "    [--logic-sub-folder] specify a sub-path to build logics under the sub-path (default is empty which does nothing)"
 }
 
 # This function is helpful for dockerfiles that do not have sudo installed, but the default user is root
@@ -392,7 +393,7 @@ tensile_msgpack_backend=true
 update_cmake=true
 enable_gprof=false
 keep_build_tmp=false
-
+logic_sub_folder=
 
 rocm_path=/opt/rocm
 if ! [ -z ${ROCM_PATH+x} ]; then
@@ -406,7 +407,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,legacy_hipblas_direct --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,legacy_hipblas_direct,logic-sub-folder: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -517,6 +518,9 @@ while true; do
         --legacy_hipblas_direct)
             legacy_hipblas_direct=true
             shift ;;
+        --logic-sub-folder)
+            logic_sub_folder=${2}
+            shift 2 ;;
         --) shift ; break ;;
         *)  echo "Unexpected command line parameter received: '${1}'; aborting";
             exit 1
@@ -726,6 +730,10 @@ pushd .
 
   if [[ -n "${tensile_version}" ]]; then
     cmake_common_options="${cmake_common_options} -DTENSILE_VERSION=${tensile_version}"
+  fi
+
+  if [[ -n "${logic_sub_folder}" ]]; then
+    cmake_common_options="${cmake_common_options} -DTensile_BUILD_SUB_FOLDER=${logic_sub_folder}"
   fi
 
   tensile_opt=""
