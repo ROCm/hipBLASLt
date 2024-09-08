@@ -172,10 +172,10 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
 ###############################
 # Reading and parsing functions
 ###############################
-def read(filename):
+def read(filename, customizedLoader=False):
     name, extension = os.path.splitext(filename)
     if extension == ".yaml":
-        return load_yaml_stream(filename, yamlLoader)
+        return load_yaml_stream(filename, yamlLoader) if customizedLoader else readYAML(filename)
     if extension == ".json":
         return readJson(filename)
     else:
@@ -245,7 +245,7 @@ class LibraryLogic(NamedTuple):
 
 def parseLibraryLogicFile(filename, archs=None):
     """Wrapper function to read and parse a library logic file."""
-    return parseLibraryLogicData(read(filename), filename, archs)
+    return parseLibraryLogicData(read(filename, True), filename, archs)
 
 
 def parseLibraryLogicData(data, srcFile="?", archs=None):

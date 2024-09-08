@@ -3,7 +3,8 @@ from pathlib import Path
 
 try:
     DEFAULT_YAML_LOADER = yaml.CSafeLoader
-finally:
+except:
+    print('CSafeLoader is not installed.')
     DEFAULT_YAML_LOADER = yaml.SafeLoader
 
 def parse_general(loader: yaml.Loader):
