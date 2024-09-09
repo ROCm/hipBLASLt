@@ -69,7 +69,9 @@
 #undef ROCM_USE_FLOAT8
 #endif
 
+#if defined(__HIPCC__)
 #include <hip/hip_fp8.h>
+#endif
 
 #if defined(__HIP_PLATFORM_AMD__)
 #include "hipblaslt-types.h"
