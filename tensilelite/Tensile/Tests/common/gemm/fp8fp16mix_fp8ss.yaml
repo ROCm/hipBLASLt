@@ -30,6 +30,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
+      ActivationType: hipblaslt_all
       UseScaleAB: "Scalar"
       UseScaleCD: False
       UseScaleAlphaVec: 0
@@ -98,6 +99,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
+      ActivationType: all
       UseScaleAB: "Scalar"
       UseScaleCD: False
       UseScaleAlphaVec: 0
@@ -165,6 +167,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
+      ActivationType: hipblaslt_all
       UseScaleAB: "Scalar"
       UseScaleCD: False
       UseScaleAlphaVec: 0
@@ -233,6 +236,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
+      ActivationType: hipblaslt_all
       UseScaleAB: "Scalar"
       UseScaleCD: False
       UseScaleAlphaVec: 0
@@ -304,6 +308,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
+      ActivationType: all
       UseScaleAB: "Scalar"
       UseScaleCD: False
       UseScaleAlphaVec: 1
@@ -540,6 +545,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
+      ActivationType: hipblaslt_all
       UseScaleAB: "Scalar"
       UseScaleCD: False
       UseScaleAlphaVec: 1

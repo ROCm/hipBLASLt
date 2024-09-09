@@ -39,12 +39,12 @@ BenchmarkProblems:
       UseBeta: True
       SparseA: False
       Activation: True
+      ActivationType: all
       ActivationHPA: True
       UseBias: 1
       SupportUserArgs: True
       BiasDataTypeList: ['s', 'h']
       Batched: True
-      ActivationType:  all
       UseScaleAB: "Scalar"
       UseScaleAlphaVec: 1
       ActivationFused: true

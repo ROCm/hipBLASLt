@@ -33,6 +33,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
+      ActivationType: all
       UseScaleAB: "Scalar"
       UseScaleAlphaVec: 1
       UseBias: 1
@@ -97,6 +98,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
+      ActivationType: all
       UseScaleAB: "Scalar"
       UseScaleAlphaVec: 1
       UseBias: 1
