@@ -22,14 +22,19 @@
 #
 ################################################################################
 
-import collections
 import itertools
 import os
 import sys
 import time
+import concurrent.futures
 
 from joblib import Parallel, delayed
 
+def joblibParallelSupportsGenerator():
+  import joblib
+  from distutils.version import StrictVersion
+  joblibVer = joblib.__version__
+  return StrictVersion(joblibVer) >= StrictVersion("1.4.0")
 
 def CPUThreadCount(enable=True):
   from .Common import globalParameters
@@ -152,6 +157,22 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
   pool.close()
   return rv
 
+def ParallelMapReturnAsGenerator(function, objects, message="", enable=True, multiArg=True):
+  from .Common import globalParameters
+  from . import Utils
+  threadCount = CPUThreadCount(enable)
+  print("{0}Launching {1} threads...".format(message, threadCount))
+
+  if threadCount <= 1 and globalParameters["ShowProgressBar"]:
+    # Provide a progress bar for single-threaded operation.
+    callFunc = lambda args: function(*args) if multiArg else lambda args: function(args)
+    return [callFunc(args) for args in Utils.tqdm(objects, message)]
+
+  with concurrent.futures.ProcessPoolExecutor(max_workers=threadCount) as executor:
+    resultFutures = (executor.submit(function, *arg if multiArg else arg) for arg in objects)
+    for result in concurrent.futures.as_completed(resultFutures):
+      yield result.result()
+
 def ParallelMap2(function, objects, message="", enable=True, multiArg=True, return_as="list"):
   """
   Generally equivalent to list(map(function, objects)), possibly executing in parallel.
@@ -161,6 +182,10 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True, retu
     multiArg: True if objects represent multiple arguments
                 (differentiates multi args vs single collection arg)
   """
+
+  if return_as in ('generator', 'generator_unordered') and not joblibParallelSupportsGenerator():
+    return ParallelMapReturnAsGenerator(function, objects, message, enable, multiArg)
+
   from .Common import globalParameters
   from . import Utils
   threadCount = CPUThreadCount(enable)
@@ -182,7 +207,11 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True, retu
 
   pcall = pcallWithGlobalParamsMultiArg if multiArg else pcallWithGlobalParamsSingleArg
   pargs = zip(objects, itertools.repeat(globalParameters))
-  rv = Parallel(n_jobs=threadCount,timeout=99999, return_as=return_as)(delayed(pcall)(function, a, params) for a, params in pargs)
+
+  if joblibParallelSupportsGenerator():
+    rv = Parallel(n_jobs=threadCount,timeout=99999, return_as=return_as)(delayed(pcall)(function, a, params) for a, params in pargs)
+  else:
+    rv = Parallel(n_jobs=threadCount,timeout=99999)(delayed(pcall)(function, a, params) for a, params in pargs)
 
   totalTime = time.time() - currentTime
   print("{0}Done. ({1:.1f} secs elapsed)".format(message, totalTime))
