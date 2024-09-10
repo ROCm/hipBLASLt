@@ -98,12 +98,12 @@ namespace Tensile
             return m_wgmxcc;
         }
 
-        void setWGMXCCG(uint16_t wgmxccg)
+        void setWGMXCCG(int16_t wgmxccg)
         {
             m_wgmxccg = wgmxccg;
         }
 
-        uint16_t wgmxccg() const
+        int16_t wgmxccg() const
         {
             return m_wgmxccg;
         }
@@ -149,7 +149,7 @@ namespace Tensile
         bool           m_gsuwgmrr       = false; // default value
         int16_t        m_wgm            = 0; // default value
         uint16_t       m_wgmxcc         = 0; // default value
-        uint16_t       m_wgmxccg        = 0; // default value
+        int16_t        m_wgmxccg        = -1; // default value
         DataType       m_biasType       = DataType::None;
         int            m_factorDim      = 0;
         ActivationType m_activationType = ActivationType::None;

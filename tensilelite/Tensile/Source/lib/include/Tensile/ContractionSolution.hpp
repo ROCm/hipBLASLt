@@ -146,7 +146,7 @@ namespace Tensile
         std::string customKernelName;
 
         int  workGroupMappingXCC                    = 1;
-        int  workGroupMappingXCCGroup               = 0;
+        int  workGroupMappingXCCGroup               = -1;
         bool globalSplitUCoalesced                  = false;
         bool globalSplitUWorkGroupMappingRoundRobin = false;
     };
@@ -375,6 +375,7 @@ namespace Tensile
                         uint32_t                            argType,
                         KA&                                 args,
                         uint32_t                            numWorkGroups,
+                        Hardware const*                     hardware,
                         const ContractionProblemParameters& param) const;
 
         template <typename KA>

@@ -794,7 +794,7 @@ namespace Tensile
         if constexpr(insertKernelArgs)
             if(!internalArgsSupport.useUniversalArgs)
                 kernelArgs<T_Debug, true>(
-                    0, (uint32_t)KERNELARGTYPE::NORMAL, args, 0, problem.getParams());
+                    0, (uint32_t)KERNELARGTYPE::NORMAL, args, 0, hardware, problem.getParams());
 
         if(!problemType.useScaleAB.empty()) //kernel input data
         {
@@ -957,6 +957,7 @@ namespace Tensile
                                          uint32_t                            argType,
                                          KA&                                 args,
                                          uint32_t                            numWorkGroups,
+                                         Hardware const*                     hardware,
                                          const ContractionProblemParameters& param) const
     {
         if constexpr(!Legacy)
@@ -972,7 +973,7 @@ namespace Tensile
         bool           gsuwgmrr     = false; // initialized false
         int32_t        wgm          = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
         uint32_t       wgmxcc       = 0;
-        uint32_t       wgmxccg      = 0;
+        int32_t        wgmxccg      = -1;
         const uint32_t mask16       = 0xFFFF;
         const uint32_t mask14       = 0x3FFF;
         const uint32_t mask8        = 0xFF;
@@ -1000,6 +1001,12 @@ namespace Tensile
                 wgmxcc = param.wgmxcc() > 0 ? param.wgmxcc() : sizeMapping.workGroupMappingXCC;
                 wgmxccg
                     = param.wgmxccg() > 0 ? param.wgmxccg() : sizeMapping.workGroupMappingXCCGroup;
+                if(wgmxccg == -1)
+                {
+                    AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(hardware);
+                    assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
+                    wgmxccg = pAMDGPU->computeUnitCount;
+                }
                 internalArg1 = internalArg1 | (wgmxccg << 22) | (wgmxcc << 16) | (mask16 & wgm);
             }
         }
@@ -1145,7 +1152,7 @@ namespace Tensile
 
         if(internalArgsSupport.useUniversalArgs)
         {
-            kernelArgs<T_Debug, false>(1, 0, rv.args, getNumWorkGroups(rv), problem.getParams());
+            kernelArgs<T_Debug, false>(1, 0, rv.args, getNumWorkGroups(rv), &hardware, problem.getParams());
         }
         singleCallArgs<T_Debug, true>(problem, inputs, 0, &hardware, rv.args);
 
@@ -1367,6 +1374,7 @@ namespace Tensile
                                            (uint32_t)argType,
                                            rv.args,
                                            getNumWorkGroups(rv),
+                                           &hardware,
                                            problems[0].getParams());
                 // For user input
                 if(argType == KERNELARGTYPE::USERARGS)
@@ -1388,7 +1396,7 @@ namespace Tensile
                                          rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y
                                              / rv.workGroupSize.z);
                 kernelArgs<T_Debug, true>(
-                    0, (uint32_t)KERNELARGTYPE::NORMAL, rv.args, 0, problems[0].getParams());
+                    0, (uint32_t)KERNELARGTYPE::NORMAL, rv.args, 0, &hardware, problems[0].getParams());
             }
 
             rv.args.append<void const*>("Synchronizer", (void*)inputs.grouped[0].Synchronizer);
