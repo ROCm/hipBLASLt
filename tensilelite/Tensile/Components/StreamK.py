@@ -50,7 +50,7 @@ class XCCMappingOn(XCCMapping):
     @classmethod
     def matches(cls, writer, debug=False):
         return writer.states.kernel["StreamKXCCMapping"] > 0
-    
+
     def __call__(self, writer, kernel):
         module = Module("XCCMapping On")
 
@@ -104,14 +104,14 @@ class StreamK(Component):
     @abc.abstractmethod
     def preLoop(self, writer, kernel):
         pass
-        
+
     @abc.abstractmethod
     def graWorkGroup(self, writer, kernel, tPA, tPB):
         pass
-        
+
     def skTileIndex(self, writer, kernel, sTmp, tPA, tPB):
         module = Module("StreamK skTileIndex")
-    
+
         # Always reset pointers to handle odd-exit case which moves LRO to the upper bank
         if kernel["PrefetchGlobalRead"]: # not self.prefetchAcrossPersistent
             module.add(writer.localReadResetOffsets(kernel, tPA))
@@ -132,7 +132,7 @@ class StreamK(Component):
         module.add(SSubU32(dst=sgpr("StreamKLocalEnd"), src0=sgpr("StreamKLocalEnd"), src1=sgpr(sTmp+1), comment="2. Local iteration end (SK tile)"))
 
         return module
-        
+
     def skIndexToWG(self, writer, kernel, sTmp):
         module = Module("StreamK skIndexToWG")
 
@@ -150,7 +150,7 @@ class StreamK(Component):
         module.addSpaceLine()
 
         return module
-    
+
     @abc.abstractmethod
     def computeLoadSrd(self, writer, kernel, tc, sTmp):
         pass
@@ -177,7 +177,7 @@ class StreamK(Component):
 
     def graAddressesCommon(self, writer, kernel, tP, vTmp):
         module = Module("StreamK Common graAddresses")
-        
+
         tc = tP["tensorChar"]
         # StreamK partial tile - offset to tile start index
         tmpOffset = writer.sgprPool.checkOut(2, "skStartOffset", preventOverflow=0)
@@ -209,11 +209,11 @@ class StreamK(Component):
         module.add(SCMovB32(dst=sgpr("StaggerUIter"), src=0, comment="set stagger=0 for partial tiles"))
 
         return module
-    
+
     @abc.abstractmethod
     def tailLoopNumIter(self, writer, kernel, loopCounter):
         pass
-    
+
     def tailLoopNumIterCommon(self, writer, kernel, loopCounter):
         module = Module("StreamK Common tailLoopNumIter")
 
@@ -223,7 +223,7 @@ class StreamK(Component):
         module.add(SCMovB32(dst=loopCounter, src=hex(0), comment="This WG not completing tile"))
 
         return module
-    
+
     @abc.abstractmethod
     def calculateLoopNumIter(self, writer, kernel, loopCounterName, loopIdx, tmpSgprInfo):
         pass
@@ -248,7 +248,7 @@ class StreamK(Component):
             module.add(SSubU32(dst=sgpr(loopCounterName), src0=sgpr(loopCounterName), src1=sgpr(tmpSgpr), comment="Adjust loop counter for tail loop"))
 
         return module
-    
+
     @abc.abstractmethod
     def storeBranches(self, writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct):
         pass
@@ -259,7 +259,7 @@ class StreamK(Component):
         # No branches for atomic mode
         if kernel["StreamKAtomic"]:
             return module
-        
+
         skFixupLabel = Label(label=writer.labels.getNameInc("SK_Fixup"), comment="")
         skStoreLabel = Label(label=writer.labels.getNameInc("SK_Store"), comment="")
 
@@ -311,7 +311,7 @@ class StreamK(Component):
 
             fixupEdge = [False] # Test no edge variant
             module.add(self.fixupStep(writer, kernel, vectorWidths, elements, fixupEdge, tmpVgpr, cvtVgprStruct, sCtaIdx))
-            
+
             if kernel["StreamK"] >= 2:
                 sIterCount = writer.sgprPool.checkOut(1, "iterCount", preventOverflow=0)
                 module.add(SAddU32(dst=sgpr(sIterCount), src0=sgpr("SKItersPerWG"), src1=1, comment="Add extra iter"))
@@ -324,14 +324,14 @@ class StreamK(Component):
                 module.add(SAddU32(dst=sgpr(sFixupEnd), src0=sgpr(sFixupEnd), src1=sgpr("SKItersPerWG"), comment="next partial tile iteration"))
             module.add(SCmpLtU32(src0=sgpr(sFixupEnd), src1=sgpr("ItersPerTile"), comment="done loading partial tiles?"))
             module.add(SCBranchSCC1(labelName=skFixupLabel.getLabelName(), comment="Branch to continue fixup loop"))
-            
+
             writer.sgprPool.checkIn(sFixupEnd)
             writer.sgprPool.checkIn(sCtaIdx)
 
         module.add(skStoreLabel)
 
         return module
-    
+
     @abc.abstractmethod
     def writePartials(self, writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct, endLabel):
         pass
@@ -342,11 +342,11 @@ class StreamK(Component):
         # No partials for atomic mode
         if kernel["StreamKAtomic"]:
             return module
-        
+
         module.add(skPartialsLabel)
         if kernel["DebugStreamK"] & 2 != 0:
             return module
-        
+
         # fixupEdge = [False] # Temporary hack to test no edge variant
         edges = [False]
 
@@ -362,7 +362,7 @@ class StreamK(Component):
             module.add(partialsLabels[edge])
             module.add(self.computeWorkspaceSrd(writer, kernel, sgpr("StreamKIdx")))
             module.add(self.partialsWriteProcedure(writer, kernel, vectorWidths, elements, False, False, edge, tmpVgpr, cvtVgprStruct, endLabel))
-        
+
         return module
 
     def computeWorkspaceSrd(self, writer, kernel, sCtaIdx, tmpSgpr = None):
@@ -389,7 +389,7 @@ class StreamK(Component):
             writer.sgprPool.checkIn(tmpLocal)
 
         return module
-    
+
     def partialsWriteProcedure(self, writer, kernel, vectorWidths, elements, alpha, beta, edge, tmpVgpr, cvtVgprStruct, endLabel):
         module = Module("StreamK Common partialsWriteProcedure")
 
@@ -418,7 +418,7 @@ class StreamK(Component):
         # Calculate Vgprs for Write Batching
         ########################################
 
-        ss = StoreState(writer, kernel, gwvw, edge, beta, False, elements[edgeI], isWorkspace=True)
+        ss = StoreState(writer, kernel, gwvw, edge, beta, False, elements[edgeI], dim=0, isWorkspace=True)
 
         #print self.vgprPool.state()
         # Use VGPR up to next occupancy threshold:
@@ -452,7 +452,7 @@ class StreamK(Component):
 
         # TODO: Minimum elems for StoreRemap
         # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
-        minElements = 1 
+        minElements = 1
         if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
             minElements = 2
         elif kernel["ProblemType"]["DataType"].is8bitFloat():
@@ -609,9 +609,9 @@ class StreamK(Component):
                 module.add(SStoreB32(src=sgpr(flagSgpr), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="set flag"))
                 module.add(skipFlagSet)
             module.add(SWaitCnt(lgkmcnt=0, comment="wait for flag")) # TODO just for testing
-        
+
         # TODO - if this is the last tile, don't need to jump to next instruction
-        # NOTE: in SR kernel, we need long branch since PRNG explodes the line of codes 
+        # NOTE: in SR kernel, we need long branch since PRNG explodes the line of codes
         if kernel["ProblemType"]["StochasticRounding"]: # in-device RND
             with self.allocTmpSgpr(3) as tmpSgprInfo:
                 module.add(SLongBranchPositive(endLabel, tmpSgprInfo))
@@ -744,7 +744,7 @@ class StreamK(Component):
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8NanInf), "0x207", "Nan and +/- inf" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Max), "0x47600000", "BF8 Max value 57344 as float32" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", "BF8 Min value -57344 as float32" ))
-        
+
         # DestDataType for 8bit Float can only be F8 or B8
         # if kernel["ProblemType"]["DestDataType"].isFloat8() or kernel["ProblemType"]["DestDataType"].isBFloat8(): # F8 is always HPA
         #     # make vgprF8Temp0 always even to use pk instruction later
@@ -752,11 +752,11 @@ class StreamK(Component):
         #         vgprF8Temp0 = tmpCVTVgpr
         #         vgprF8Max = vgprF8Temp0 + 2
         #         vgprF8Min = vgprF8Temp0 + 3
-        #     else: 
+        #     else:
         #         vgprF8Max = tmpCVTVgpr
         #         vgprF8Temp0 = vgprF8Max + 1
         #         vgprF8Min = vgprF8Max + 3
-            
+
         #     if kernel["ProblemType"]["Fp32toFp8SWClip"]:
         #         # set flag of f32 NaN and +/- INF for v_cmp_class
         #         vgprFp32NanInfFlag = vgprF8Min + 1
@@ -765,7 +765,7 @@ class StreamK(Component):
         #         if kernel["ProblemType"]["DestDataType"].isFloat8():
         #             kStr += inst("v_mov_b32", vgpr(vgprF8Max), "0x43700000", "save 240.0f as max for clipping" )
         #             kStr += inst("v_mov_b32", vgpr(vgprF8Min), "0xC3700000", "save -240.0f as min for clipping" )
-        #         else: #BFloat8 
+        #         else: #BFloat8
         #             kStr += inst("v_mov_b32", vgpr(vgprF8Max), "0x47600000", "save 57344.0f as max for clipping" )
         #             kStr += inst("v_mov_b32", vgpr(vgprF8Min), "0xC7600000", "save -57344`.0f as min for clipping" )
 
@@ -786,7 +786,7 @@ class StreamK(Component):
             else:
                 increment = (kernel["WavefrontSize"] * 4) * storeWidth * writer.states.bpeCinternal
                 module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Inc sgpr offset"))
-            
+
             # TODO StreamK need this packing code???
             # if self.asmCaps["HasWMMA"] and kernel["EnableMatrixInstructionStore"] and kernel["ProblemType"]["DestDataType"].isHalf() and (not kernel["ProblemType"]["HighPrecisionAccumulate"]):
             #     for vi in range(0, gwvw):
@@ -875,9 +875,7 @@ class StreamK(Component):
             # Calculate Vgprs for Write Batching
             ########################################
 
-            # ss = StoreState(writer, kernel, gwvw, edge, beta, False, elements[edgeI], isWorkspace=True)
-            ss = StoreState(writer, kernel, gwvw, edge, True, False, elements[edgeI], isWorkspace=True)
-            # ss = StoreState(writer, kernel, gwvw, edge, False, False, elements[edgeI], isWorkspace=True)
+            ss = StoreState(writer, kernel, gwvw, edge, True, False, elements[edgeI], dim=0, isWorkspace=True)
 
             # how many vgprs are needed for zero elements
             # 2 for addressC in vgpr for addition - already checked out
@@ -928,7 +926,7 @@ class StreamK(Component):
 
             # TODO: Minimum elems for StoreRemap
             # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
-            minElements = 1 
+            minElements = 1
             if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
                 minElements = 2
             elif kernel["ProblemType"]["DataType"].is8bitFloat():
@@ -1017,7 +1015,7 @@ class StreamK(Component):
 
             # if no atomics and no edge, then write whole vectors
             # ERROR commented out in globalWriteELements, causes numVectorsPerBatch to not be int
-            # if not edge: # not atomic and 
+            # if not edge: # not atomic and
             #    numVectorsPerBatch = numElementsPerBatch / kernel["GlobalWriteVectorWidth"]
             #    #print "    NumVectorsPerBatch", numVectorsPerBatch
             #    numElementsPerBatch = numVectorsPerBatch * kernel["GlobalWriteVectorWidth"]
@@ -1208,7 +1206,7 @@ class StreamK(Component):
 
         ########################################
         # wait for batched load
-        if not interleaveStoreVmcnt: # beta and 
+        if not interleaveStoreVmcnt: # beta and
             module.add(SWaitCnt(vmcnt=0, comment="wait C"))
             if writer.states.archCaps["SeparateVscnt"]:
                 module.add(SWaitCnt(vscnt=0, comment="writes"))
@@ -1251,12 +1249,12 @@ class StreamK(Component):
         #         vgprF8Temp1 = vgprF8Temp0 + 1
         #         vgprF8Max = vgprF8Temp0 + 2
         #         vgprF8Min = vgprF8Temp0 + 3
-        #     else: 
+        #     else:
         #         vgprF8Max = tmpCVTVgpr
         #         vgprF8Temp0 = vgprF8Max + 1
         #         vgprF8Temp1 = vgprF8Max + 2
         #         vgprF8Min = vgprF8Max + 3
-            
+
         #     if kernel["ProblemType"]["Fp32toFp8SWClip"]:
         #         # set flag of f32 NaN and +/- INF for v_cmp_class
         #         vgprFp32NanInfFlag = vgprF8Min + 1
@@ -1265,7 +1263,7 @@ class StreamK(Component):
         #         if kernel["ProblemType"]["DestDataType"].isFloat8():
         #             kStr += inst("v_mov_b32", vgpr(vgprF8Max), "0x43700000", "save 240.0f as max for clipping" )
         #             kStr += inst("v_mov_b32", vgpr(vgprF8Min), "0xC3700000", "save -240.0f as min for clipping" )
-        #         else: #BFloat8 
+        #         else: #BFloat8
         #             kStr += inst("v_mov_b32", vgpr(vgprF8Max), "0x47600000", "save 57344.0f as max for clipping" )
         #             kStr += inst("v_mov_b32", vgpr(vgprF8Min), "0xC7600000", "save -57344`.0f as min for clipping" )
 
@@ -1360,7 +1358,7 @@ class StreamK(Component):
                         #         vgpr(dataCExternal), vgpr("ValuC+%u"%sumIdxV), \
                         #         "op_sel:[0,%u,0] op_sel_hi:[0,1,0]" % (hi16), \
                         #         "//C*=beta")
-                
+
                 elif kernel["ProblemType"]["ComputeDataType"].isBFloat16():
                     if kernel["ProblemType"]["HighPrecisionAccumulate"]:
                         # dataV+0 = new c = old c*beta + rC
@@ -1423,7 +1421,7 @@ class StreamK(Component):
                 elif kernel["ProblemType"]["ComputeDataType"].isSingle():
                     newSumIdxV = sumIdxV - writer.states.c.startVgprValu
                     module.add(VAddF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr("ValuC+%u"%newSumIdxV), src1=vgpr(dataV+0), comment="accum partials"))
-                
+
                 elif kernel["ProblemType"]["ComputeDataType"].isInt32():
                     newSumIdxV = sumIdxV - writer.states.c.startVgprValu
                     # assume we will need to replace v_mac_f32 with v_add_u32 and s_mul_lo_i32
@@ -1518,7 +1516,7 @@ class StreamK(Component):
         #         kStr += self.assert_eq(vgpr(sumIdx), sgpr(tmpS01))
 
 
-        if edge and (not kernel["BufferStore"]): # atomic or 
+        if edge and (not kernel["BufferStore"]): # atomic or
             # subsequent batch must start with full exec mask
             # BufferStore doesn't need exec since it used buffer range checking when
             # possible
@@ -1583,24 +1581,24 @@ class StreamKOff(StreamK):
     def computeLoadSrd(self, writer, kernel, tc, sTmp):
         module = Module("StreamK Off computeLoadSrd")
         return module
-    
+
     def graAddresses(self, writer, kernel, tP, vTmp):
         module = Module("StreamK Off graAddresses")
 
         tc = tP["tensorChar"]
         module.add(VMovB32(dst=vgpr(vTmp+0), src=sgpr("Address%s+0" % tc)))
         module.add(VMovB32(dst=vgpr(vTmp+1), src=sgpr("Address%s+1" % tc)))
-        
+
         return module
-    
+
     def declareStaggerParms(self, writer, kernel):
         module = Module("StreamK Off declareStaggerParms")
         return module
-    
+
     def tailLoopNumIter(self, writer, kernel, loopCounter):
         module = Module("StreamK Off tailLoopNumIter")
         return module
-    
+
     def calculateLoopNumIter(self, writer, kernel, loopCounterName, loopIdx, tmpSgprInfo):
         module = Module("StreamK Off calculateLoopNumIter")
 
@@ -1616,11 +1614,11 @@ class StreamKOff(StreamK):
             module.add(scalarStaticDivideAndRemainder(qReg=quotient, rReg=None, dReg=dividend, divisor=divisor, tmpSgprRes=tmpSgprInfo, doRemainder=0))
 
         return module
-    
+
     def storeBranches(self, writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct):
         module = Module("StreamK Off storeBranches")
         return module
-    
+
     def writePartials(self, writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct, endLabel):
         module = Module("StreamK Off writePartials")
         return module
@@ -1671,7 +1669,7 @@ class StreamKBasic(StreamK):
         module = Module("StreamK Basic graAddresses")
         module.add(self.graAddressesCommon(writer, kernel, tP, vTmp))
         return module
-    
+
     def declareStaggerParms(self, writer, kernel):
         module = Module("StreamK Basic declareStaggerParms")
         module.add(self.declareStaggerParmsCommon(writer, kernel))
@@ -1691,7 +1689,7 @@ class StreamKBasic(StreamK):
         module = Module("StreamK Basic storeBranches")
         module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct))
         return module
-    
+
     def writePartials(self, writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct, endLabel):
         module = Module("StreamK Basic writePartials")
         module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct, endLabel))
@@ -1781,7 +1779,7 @@ class StreamKTwoTileOriginal(StreamK):
         module = Module("StreamK TwoTileOriginal graAddresses")
         module.add(self.graAddressesCommon(writer, kernel, tP, vTmp))
         return module
-    
+
     def declareStaggerParms(self, writer, kernel):
         module = Module("StreamK TwoTileOriginal declareStaggerParms")
         module.add(self.declareStaggerParmsCommon(writer, kernel))
@@ -1796,7 +1794,7 @@ class StreamKTwoTileOriginal(StreamK):
         module = Module("StreamK TwoTileOriginal calculateLoopNumIter")
         module.add(self.calculateLoopNumIterCommon(writer, kernel, loopCounterName, loopIdx, tmpSgprInfo))
         return module
-        
+
     def storeBranches(self, writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct):
         module = Module("StreamK TwoTileOriginal storeBranches")
         module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct))
@@ -1906,7 +1904,7 @@ class StreamKTwoTileDPFirst(StreamK):
         # TODO Shouldn't need this check!
         module.add(SCmpLtU32(src0=sgpr("StreamKIter"), src1=sgpr("TotalIters"), comment="Make sure there's work to do"))
         module.add(writer.longBranchScc0(Label("KernelEnd", ""), posNeg=1)) # reuse tmp
-        
+
         # If in SK, next iteration is sTmp+2
         # Increment StreamK iteration
         module.add(skUpdateDone)
@@ -1947,7 +1945,7 @@ class StreamKTwoTileDPFirst(StreamK):
         module = Module("StreamK TwoTileDPFirst storeBranches")
         module.add(self.storeBranchesCommon(writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct))
         return module
-    
+
     def writePartials(self, writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct, endLabel):
         module = Module("StreamK TwoTileDPFirst writePartials")
         module.add(self.writePartialsCommon(writer, kernel, skPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct, endLabel))

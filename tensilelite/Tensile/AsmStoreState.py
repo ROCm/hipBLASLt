@@ -108,11 +108,12 @@ class StoreState:
             self.lsuStartVgprOffset = 0
 
     # StoreState constructor:
-    def __init__(self, kernelWriter, kernel, gwvw, edge, beta, atomic, elements, isWorkspace=False):
+    def __init__(self, kernelWriter, kernel, gwvw, edge, beta, atomic, elements, dim, isWorkspace=False):
         self.kernelWriter = kernelWriter
         self.kernel = kernel
         self.lsu = kernel["LocalSplitU"]
         self.lsuStartVgprOffset = 0
+        self.factorDim = dim
 
         self.isReset = False
         #--
@@ -290,21 +291,24 @@ class StoreState:
             if (kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["ActivationType"] != 'none'):
                 numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
                 self.numVgprsPerElement += numVgprs * gwvw # Loaded data
+        # We will use the same vgpr + ds_offset to load the vec addr
+
         if self.useBias != DataDirection.NONE:
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # Bias address
             if self.useBias == DataDirection.READ:
                 numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-                self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
-
-        if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
-            self.numVgprsPerElement += self.cfg.numVgprsPerAddr * 2  # ScaleAVec + ScaleBVec address
-            numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-            self.numVgprsPerElement += numVgprs * gwvw + (numVgprs * (2 if gwvw >= 2 else 1)) # Loaded data
+                self.numVgprsPerElement += numVgprs * gwvw if self.factorDim == 0 else min(gwvw, 2) # Loaded data
 
         if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # ScaleAlphaVec address
             numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-            self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
+            self.numVgprsPerElement += numVgprs * gwvw if self.factorDim == 0 else min(gwvw, 2) # Loaded data
+
+        if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+            self.numVgprsPerElement += self.cfg.numVgprsPerAddr * 2  # ScaleAVec + ScaleBVec address
+            numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+            self.numVgprsPerElement += numVgprs * gwvw + (numVgprs * min(gwvw, 2)) # Loaded data
+
         # Calculate align
         self.align = 1
         # align adjustment
@@ -607,7 +611,7 @@ class StoreState:
 
             if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
                 coordOffset = coordOffset0 if factorDim == 0 else coordOffset1
-                gwvw = self.cfg.gwvw if factorDim == 0 else (2 if self.cfg.gwvw >= 2 else 1)
+                gwvw = self.cfg.gwvw if factorDim == 0 else min(self.cfg.gwvw, 2)
                 if coordOffset in scaleAlphaVecVgprMap:
                     dataScaleAlphaVec = scaleAlphaVecVgprMap[coordOffset]
                 else:
