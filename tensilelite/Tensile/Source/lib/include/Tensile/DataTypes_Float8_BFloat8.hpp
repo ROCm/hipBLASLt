@@ -37,7 +37,9 @@
 #define HIP_HOST __host__
 #define HIP_DEVICE __device__
 
+#ifdef HIP_FP8_TYPE_OCP
 #include <hip/hip_fp8.h>
+#endif
 
 namespace tensile_hip_f8_impl
 {
@@ -487,7 +489,7 @@ namespace Tensile
             //asm volatile("v_cvt_f32_fp8 %0, %1 src0_sel:BYTE_0" : "=v"(fval) : "v"(i32val));
             return fval;
         }
-        explicit inline HIP_HOST operator float() const
+        explicit inline HIP_HOST   operator float() const
 #else // non gfx940
 
         explicit inline HIP_HOST_DEVICE operator float() const
