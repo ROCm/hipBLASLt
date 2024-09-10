@@ -1142,7 +1142,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
     def libraryIter(lib: MasterSolutionLibrary):
       if len(lib.solutions):
         for i, s in enumerate(lib.solutions.items()):
-          yield i, *s
+          yield (i, *s)
       else:
         for _, lazyLib in lib.lazyLibraries.items():
           yield from libraryIter(lazyLib)
