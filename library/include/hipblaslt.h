@@ -941,6 +941,7 @@ hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t              lightHan
                                          hipblasLtMatrixLayout_t Cdesc,
                                          hipStream_t             stream);
 
+#ifdef __cplusplus
 /*! \brief device matches pattern */
 inline bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
 {
@@ -955,8 +956,6 @@ inline bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
     std::regex arch_regex(pattern.data());
     return std::regex_search(gpu_arch.data(), arch_regex);
 }
-
-#ifdef __cplusplus
 }
 #endif
 
