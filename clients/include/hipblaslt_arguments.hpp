@@ -34,7 +34,6 @@
 #include <istream>
 #include <map>
 #include <ostream>
-#include <string_view>
 #include <tuple>
 
 #define HIPBLASLT_MAX_REQUESTED_SOLUTION_NUM 65536
