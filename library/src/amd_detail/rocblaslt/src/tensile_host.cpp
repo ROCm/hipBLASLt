@@ -1417,7 +1417,6 @@ namespace
                 auto lib
                     = Tensile::LoadLibraryFile<Tensile::ContractionProblemGemm>(tensileLibPath);
 #endif
-                static_cast<void>(adapter.initializeLazyLoading(processor, path));
                 if(!lib)
                     std::cerr << "\nrocblaslt error: Could not load " << tensileLibPath
                               << std::endl;
@@ -1429,6 +1428,8 @@ namespace
                 }
                 return 0;
             }();
+
+            static_cast<void>(adapter.initializeLazyLoading(processor, path));
 
             if(!m_library && once != 0)
             {
