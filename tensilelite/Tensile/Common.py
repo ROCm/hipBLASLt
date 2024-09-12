@@ -274,6 +274,8 @@ globalParameters["SeparateArchitectures"] = False # write Tensile library metada
 
 globalParameters["LazyLibraryLoading"] = False # Load library and code object files when needed instead of at startup
 
+globalParameters["EnableMarker"] = False # Enable Tensile markers
+
 globalParameters["UseUserArgs"] = False
 
 globalParameters["RotatingBufferSize"] = 0 # Size in MB
@@ -738,7 +740,7 @@ validParameters = {
     # These predicates can be used to adjust solution selection compute-bound or memory-bound problems.
     "AssertAIGreaterThanEqual": -1,
     "AssertAILessThanEqual":    -1,
-    
+
     # Stagger the start summation position of the tiles.
     # Elements from the summation dimension are loaded at offsets rather than all starting at 0.
     # StaggerU is the max 'clicks' of StaggerUStride bytes where each wg starts ; see StaggerUMapping
@@ -793,7 +795,7 @@ validParameters = {
     # True:  wg issused oder = {(wg0,wg0,wg0)|(wg1,wg1,wg1)|(wg2,wg2,wg2)|...|(wgn,wgn,wgn)}
     #   -> workgroups split up the summation -> faster GR but slower GW
     "GlobalSplitUWorkGroupMappingRoundRobin":        [False, True],
-    
+
     # 0=don't use magic div (source only)
     # 1=magic div alg #1.  Slightly faster but limited range (if magic number is 2^32)
     # 2=magic div alg#2.  Slightly slower but handles all unsigned ints up to 2^32
@@ -1184,7 +1186,7 @@ defaultBenchmarkCommonParameters = [
     {"AssertSummationElementMultiple": [ 1 ] },
     {"AssertFree0ElementMultiple": [ 1 ] },
     {"AssertFree1ElementMultiple": [ 1 ] },
-  
+
     {"AssertAIGreaterThanEqual":   [-1]},
     {"AssertAILessThanEqual":      [-1]},
 
