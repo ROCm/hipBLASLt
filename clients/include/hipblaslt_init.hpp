@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 #pragma once
 
 #include "hipblaslt_math.hpp"
+#include "hipblaslt_ostream.hpp"
 #include "hipblaslt_random.hpp"
 #include <cinttypes>
 #include <hipblaslt/hipblaslt.h>
@@ -41,7 +42,8 @@
 
 // Initialize matrices with random values
 template <typename T>
-void hipblaslt_init(T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+inline void
+    hipblaslt_init(T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
     {
@@ -62,7 +64,8 @@ void hipblaslt_init(T* A, size_t M, size_t N, size_t lda, size_t stride = 0, siz
 
 // Initialize matrices with random values
 template <typename T>
-void hipblaslt_init_small(T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+inline void hipblaslt_init_small(
+    T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
     {
@@ -82,22 +85,91 @@ void hipblaslt_init_small(T* A, size_t M, size_t N, size_t lda, size_t stride = 
 }
 
 // Initialize matrices with random values
-template <typename T>
-inline void hipblaslt_init(
-    std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+inline void hipblaslt_init(void*       A,
+                           size_t      M,
+                           size_t      N,
+                           size_t      lda,
+                           hipDataType type,
+                           size_t      stride      = 0,
+                           size_t      batch_count = 1)
 {
-    hipblaslt_init(A.data(), M, N, lda, stride, batch_count);
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init<float>(static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init<double>(static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init<hip_bfloat16>(static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init<int32_t>(static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init" << std::endl;
+        break;
+    }
+}
+
+inline void hipblaslt_init_small(void*       A,
+                                 size_t      M,
+                                 size_t      N,
+                                 size_t      lda,
+                                 hipDataType type,
+                                 size_t      stride      = 0,
+                                 size_t      batch_count = 1)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_small<float>(static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_small<double>(static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_small<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_32I:
+        hipblaslt_init_small<int32_t>(static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_small" << std::endl;
+        break;
+    }
 }
 
 template <typename T>
-inline void hipblaslt_init_small(
-    std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
-{
-    hipblaslt_init_small(A.data(), M, N, lda, stride, batch_count);
-}
-
-template <typename T>
-void hipblaslt_init_sin(
+inline void hipblaslt_init_sin(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
@@ -110,11 +182,59 @@ void hipblaslt_init_sin(
         }
 }
 
-template <typename T>
-inline void hipblaslt_init_sin(
-    std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+inline void hipblaslt_init_sin(void*       A,
+                               size_t      M,
+                               size_t      N,
+                               size_t      lda,
+                               hipDataType type,
+                               size_t      stride      = 0,
+                               size_t      batch_count = 1)
 {
-    hipblaslt_init_sin(A.data(), M, N, lda, stride, batch_count);
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_sin<float>(static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_sin<double>(static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_sin<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_sin<hip_bfloat16>(
+            static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_sin<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_sin<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_sin<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_sin<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_sin<int32_t>(static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_sin<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_sin" << std::endl;
+        break;
+    }
 }
 
 // Initialize matrix so adjacent entries have alternating sign.
@@ -125,7 +245,7 @@ inline void hipblaslt_init_sin(
 // arithmetic where the exponent has only 5 bits, and the
 // mantissa 10 bits.
 template <typename T>
-void hipblaslt_init_alternating_sign(
+inline void hipblaslt_init_alternating_sign(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
@@ -141,16 +261,67 @@ void hipblaslt_init_alternating_sign(
         }
 }
 
-template <typename T>
-void hipblaslt_init_alternating_sign(
-    std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+inline void hipblaslt_init_alternating_sign(void*       A,
+                                            size_t      M,
+                                            size_t      N,
+                                            size_t      lda,
+                                            hipDataType type,
+                                            size_t      stride      = 0,
+                                            size_t      batch_count = 1)
 {
-    hipblaslt_init_alternating_sign(A.data(), M, N, lda, stride, batch_count);
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_alternating_sign<float>(
+            static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_alternating_sign<double>(
+            static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_alternating_sign<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_alternating_sign<hip_bfloat16>(
+            static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_alternating_sign<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_alternating_sign<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_alternating_sign<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_alternating_sign<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_alternating_sign<int32_t>(
+            static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_alternating_sign<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_alternating_sign" << std::endl;
+        break;
+    }
 }
 
 // Initialize matrix so adjacent entries have alternating sign.
 template <typename T>
-void hipblaslt_init_hpl_alternating_sign(
+inline void hipblaslt_init_hpl_alternating_sign(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
@@ -166,15 +337,66 @@ void hipblaslt_init_hpl_alternating_sign(
         }
 }
 
-template <typename T>
-void hipblaslt_init_hpl_alternating_sign(
-    std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+inline void hipblaslt_init_hpl_alternating_sign(void*       A,
+                                                size_t      M,
+                                                size_t      N,
+                                                size_t      lda,
+                                                hipDataType type,
+                                                size_t      stride      = 0,
+                                                size_t      batch_count = 1)
 {
-    hipblaslt_init_hpl_alternating_sign(A.data(), M, N, lda, stride, batch_count);
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_hpl_alternating_sign<float>(
+            static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_hpl_alternating_sign<double>(
+            static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_hpl_alternating_sign<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_hpl_alternating_sign<hip_bfloat16>(
+            static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_hpl_alternating_sign<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_hpl_alternating_sign<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_hpl_alternating_sign<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_hpl_alternating_sign<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_hpl_alternating_sign<int32_t>(
+            static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_hpl_alternating_sign<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_hpl_alternating_sign" << std::endl;
+        break;
+    }
 }
 
 template <typename T>
-void hipblaslt_init_cos(
+inline void hipblaslt_init_cos(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
@@ -187,16 +409,64 @@ void hipblaslt_init_cos(
         }
 }
 
-template <typename T>
-inline void hipblaslt_init_cos(
-    std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+inline void hipblaslt_init_cos(void*       A,
+                               size_t      M,
+                               size_t      N,
+                               size_t      lda,
+                               hipDataType type,
+                               size_t      stride      = 0,
+                               size_t      batch_count = 1)
 {
-    hipblaslt_init_cos(A.data(), M, N, lda, stride, batch_count);
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_cos<float>(static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_cos<double>(static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_cos<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_cos<hip_bfloat16>(
+            static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_cos<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_cos<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_cos<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_cos<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_cos<int32_t>(static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_cos<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_cos" << std::endl;
+        break;
+    }
 }
 
 // Initialize vector with HPL-like random values
 template <typename T>
-void hipblaslt_init_hpl(
+inline void hipblaslt_init_hpl(
     std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
@@ -206,7 +476,7 @@ void hipblaslt_init_hpl(
 }
 
 template <typename T>
-void hipblaslt_init_hpl(
+inline void hipblaslt_init_hpl(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
@@ -215,39 +485,238 @@ void hipblaslt_init_hpl(
                 A[i + j * lda + i_batch * stride] = random_hpl_generator<T>();
 }
 
+inline void hipblaslt_init_hpl(void*       A,
+                               size_t      M,
+                               size_t      N,
+                               size_t      lda,
+                               hipDataType type,
+                               size_t      stride      = 0,
+                               size_t      batch_count = 1)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_hpl<float>(static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_hpl<double>(static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_hpl<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_hpl<hip_bfloat16>(
+            static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_hpl<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_hpl<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_hpl<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_hpl<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_hpl<int32_t>(static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_hpl<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_hpl" << std::endl;
+        break;
+    }
+}
+
 /* ============================================================================================ */
 /*! \brief  Initialize an array with random data, with NaN where appropriate */
 
 template <typename T>
-void hipblaslt_init_nan(T* A, size_t N)
+inline void hipblaslt_init_nan(T* A, size_t N)
 {
     for(size_t i = 0; i < N; ++i)
         A[i] = T(hipblaslt_nan_rng());
 }
 
 template <typename T>
-void hipblaslt_init_nan(T* A, size_t start_offset, size_t end_offset)
+inline void hipblaslt_init_nan(T* A, size_t start_offset, size_t end_offset)
 {
     for(size_t i = start_offset; i < end_offset; ++i)
         A[i] = T(hipblaslt_nan_rng());
 }
 
+inline void hipblaslt_init_nan(void* A, size_t N, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_nan<float>(static_cast<float*>(A), N);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_nan<double>(static_cast<double*>(A), N);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_nan<hipblasLtHalf>(static_cast<hipblasLtHalf*>(A), N);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_nan<hip_bfloat16>(static_cast<hip_bfloat16*>(A), N);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_nan<hipblaslt_f8_fnuz>(static_cast<hipblaslt_f8_fnuz*>(A), N);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_nan<hipblaslt_bf8_fnuz>(static_cast<hipblaslt_bf8_fnuz*>(A), N);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_nan<hipblaslt_f8_ocp>(static_cast<hipblaslt_f8_ocp*>(A), N);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_nan<hipblaslt_bf8_ocp>(static_cast<hipblaslt_bf8_ocp*>(A), N);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_nan<int32_t>(static_cast<int32_t*>(A), N);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_nan<hipblasLtInt8>(static_cast<hipblasLtInt8*>(A), N);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_nan" << std::endl;
+        break;
+    }
+}
+
+inline void hipblaslt_init_nan(void* A, size_t start_offset, size_t end_offset, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_nan<float>(static_cast<float*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_nan<double>(static_cast<double*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_nan<hipblasLtHalf>(static_cast<hipblasLtHalf*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_nan<hip_bfloat16>(static_cast<hip_bfloat16*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_nan<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_nan<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), start_offset, end_offset);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_nan<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_nan<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), start_offset, end_offset);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_nan<int32_t>(static_cast<int32_t*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_nan<hipblasLtInt8>(static_cast<hipblasLtInt8*>(A), start_offset, end_offset);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_nan" << std::endl;
+        break;
+    }
+}
+
 template <typename T>
-void hipblaslt_init_nan_tri(
+inline void hipblaslt_init_nan_tri(
     bool upper, T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
         for(size_t i = 0; i < M; ++i)
             for(size_t j = 0; j < N; ++j)
             {
-                T val                             = upper ? (j >= i ? T(hipblaslt_nan_rng()) : 0)
-                                                          : (j <= i ? T(hipblaslt_nan_rng()) : 0);
+                T val = upper ? (j >= i ? T(hipblaslt_nan_rng()) : static_cast<T>(0))
+                              : (j <= i ? T(hipblaslt_nan_rng()) : static_cast<T>(0));
                 A[i + j * lda + i_batch * stride] = val;
             }
 }
 
+inline void hipblaslt_init_nan_tri(bool        upper,
+                                   void*       A,
+                                   size_t      M,
+                                   size_t      N,
+                                   size_t      lda,
+                                   hipDataType type,
+                                   size_t      stride      = 0,
+                                   size_t      batch_count = 1)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_nan_tri(upper, static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_nan_tri(upper, static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_nan_tri(
+            upper, static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_nan_tri(
+            upper, static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_nan_tri(
+            upper, static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_nan_tri(
+            upper, static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_nan_tri(
+            upper, static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_nan_tri(
+            upper, static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_nan_tri(upper, static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_nan_tri(
+            upper, static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_nan_tri" << std::endl;
+        break;
+    }
+}
+
 template <typename T>
-void hipblaslt_init_nan(
+inline void hipblaslt_init_nan(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
@@ -256,32 +725,122 @@ void hipblaslt_init_nan(
                 A[i + j * lda + i_batch * stride] = T(hipblaslt_nan_rng());
 }
 
-template <typename T>
-void hipblaslt_init_nan(
-    std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+inline void hipblaslt_init_nan(void*       A,
+                               size_t      M,
+                               size_t      N,
+                               size_t      lda,
+                               hipDataType type,
+                               size_t      stride      = 0,
+                               size_t      batch_count = 1)
 {
-    hipblaslt_init_nan(A.data(), M, N, lda, stride, batch_count);
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_nan<float>(static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_nan<double>(static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_nan<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_nan<hip_bfloat16>(
+            static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_nan<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_nan<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_nan<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_nan<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_nan<int32_t>(static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_nan<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_nan" << std::endl;
+        break;
+    }
 }
 
 /* ============================================================================================ */
 /*! \brief  Initialize an array with random data, with Inf where appropriate */
 
 template <typename T>
-void hipblaslt_init_inf(T* A, size_t N)
+inline void hipblaslt_init_inf(T* A, size_t N)
 {
     for(size_t i = 0; i < N; ++i)
-        A[i] = T(hipblaslt_inf_rng());
+        A[i] = static_cast<T>(hipblaslt_inf_rng());
 }
 
 template <typename T>
-void hipblaslt_init_inf(T* A, size_t start_offset, size_t end_offset)
+inline void hipblaslt_init_inf(T* A, size_t start_offset, size_t end_offset)
 {
     for(size_t i = start_offset; i < end_offset; ++i)
-        A[i] = T(hipblaslt_inf_rng());
+        A[i] = static_cast<T>(hipblaslt_inf_rng());
+}
+
+inline void hipblaslt_init_inf(void* A, size_t N, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_inf<float>(static_cast<float*>(A), N);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_inf<double>(static_cast<double*>(A), N);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_inf<hipblasLtHalf>(static_cast<hipblasLtHalf*>(A), N);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_inf<hip_bfloat16>(static_cast<hip_bfloat16*>(A), N);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_inf<hipblaslt_f8_fnuz>(static_cast<hipblaslt_f8_fnuz*>(A), N);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_inf<hipblaslt_bf8_fnuz>(static_cast<hipblaslt_bf8_fnuz*>(A), N);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_inf<hipblaslt_f8_ocp>(static_cast<hipblaslt_f8_ocp*>(A), N);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_inf<hipblaslt_bf8_ocp>(static_cast<hipblaslt_bf8_ocp*>(A), N);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_inf<int32_t>(static_cast<int32_t*>(A), N);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_inf<hipblasLtInt8>(static_cast<hipblasLtInt8*>(A), N);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_inf" << std::endl;
+        break;
+    }
 }
 
 template <typename T>
-void hipblaslt_init_inf(
+inline void hipblaslt_init_inf(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
@@ -290,18 +849,112 @@ void hipblaslt_init_inf(
                 A[i + j * lda + i_batch * stride] = T(hipblaslt_inf_rng());
 }
 
-template <typename T>
-void hipblaslt_init_inf(
-    std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+inline void hipblaslt_init_inf(void* A, size_t start_offset, size_t end_offset, hipDataType type)
 {
-    hipblaslt_init_inf(A.data(), M, N, lda, stride, batch_count);
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_inf<float>(static_cast<float*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_inf<double>(static_cast<double*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_inf<hipblasLtHalf>(static_cast<hipblasLtHalf*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_inf<hip_bfloat16>(static_cast<hip_bfloat16*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_inf<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_inf<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), start_offset, end_offset);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_inf<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_inf<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), start_offset, end_offset);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_inf<int32_t>(static_cast<int32_t*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_inf<hipblasLtInt8>(static_cast<hipblasLtInt8*>(A), start_offset, end_offset);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_inf" << std::endl;
+        break;
+    }
+}
+
+inline void hipblaslt_init_inf(void*       A,
+                               size_t      M,
+                               size_t      N,
+                               size_t      lda,
+                               hipDataType type,
+                               size_t      stride      = 0,
+                               size_t      batch_count = 1)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_inf<float>(static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_inf<double>(static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_inf<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_inf<hip_bfloat16>(
+            static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_inf<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_inf<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_inf<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_inf<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_inf<int32_t>(static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_inf<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_inf" << std::endl;
+        break;
+    }
 }
 
 /* ============================================================================================ */
 /*! \brief  Initialize an array with random data, with zero */
 
 template <typename T>
-void hipblaslt_init_zero(
+inline void hipblaslt_init_zero(
     std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
@@ -311,7 +964,7 @@ void hipblaslt_init_zero(
 }
 
 template <typename T>
-void hipblaslt_init_zero(
+inline void hipblaslt_init_zero(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
@@ -321,14 +974,117 @@ void hipblaslt_init_zero(
 }
 
 template <typename T>
-void hipblaslt_init_zero(T* A, size_t start_offset, size_t end_offset)
+inline void hipblaslt_init_zero(T* A, size_t start_offset, size_t end_offset)
 {
     for(size_t i = start_offset; i < end_offset; ++i)
         A[i] = T(hipblaslt_zero_rng());
 }
 
+inline void hipblaslt_init_zero(void*       A,
+                                size_t      M,
+                                size_t      N,
+                                size_t      lda,
+                                hipDataType type,
+                                size_t      stride      = 0,
+                                size_t      batch_count = 1)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_zero<float>(static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_zero<double>(static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_zero<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_zero<hip_bfloat16>(
+            static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_zero<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_zero<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_zero<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_zero<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_zero<int32_t>(static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_zero<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_zero" << std::endl;
+        break;
+    }
+}
+
+inline void hipblaslt_init_zero(void* A, size_t start_offset, size_t end_offset, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_zero<float>(static_cast<float*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_zero<double>(static_cast<double*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_zero<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_zero<hip_bfloat16>(static_cast<hip_bfloat16*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_zero<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_zero<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), start_offset, end_offset);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_zero<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_zero<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), start_offset, end_offset);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_zero<int32_t>(static_cast<int32_t*>(A), start_offset, end_offset);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_zero<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), start_offset, end_offset);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_zero" << std::endl;
+        break;
+    }
+}
+
 template <typename T>
-void hipblaslt_init_alt_impl_big(
+inline void hipblaslt_init_alt_impl_big(
     std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     const hipblasLtHalf ieee_half_max(65280.0);
@@ -349,8 +1105,65 @@ inline void hipblaslt_init_alt_impl_big(
                 A[i + j * lda + i_batch * stride] = T(ieee_half_max);
 }
 
+inline void hipblaslt_init_alt_impl_big(void*       A,
+                                        size_t      M,
+                                        size_t      N,
+                                        size_t      lda,
+                                        hipDataType type,
+                                        size_t      stride      = 0,
+                                        size_t      batch_count = 1)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_alt_impl_big<float>(static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_alt_impl_big<double>(
+            static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_alt_impl_big<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_alt_impl_big<hip_bfloat16>(
+            static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_alt_impl_big<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_alt_impl_big<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_alt_impl_big<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_alt_impl_big<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_alt_impl_big<int32_t>(
+            static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_alt_impl_big<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_alt_impl_big" << std::endl;
+        break;
+    }
+}
+
 template <typename T>
-void hipblaslt_init_alt_impl_small(
+inline void hipblaslt_init_alt_impl_small(
     std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     const hipblasLtHalf ieee_half_small(0.0000607967376708984375);
@@ -361,7 +1174,7 @@ void hipblaslt_init_alt_impl_small(
 }
 
 template <typename T>
-void hipblaslt_init_alt_impl_small(
+inline void hipblaslt_init_alt_impl_small(
     T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     const hipblasLtHalf ieee_half_small(0.0000607967376708984375);
@@ -369,6 +1182,64 @@ void hipblaslt_init_alt_impl_small(
         for(size_t i = 0; i < M; ++i)
             for(size_t j = 0; j < N; ++j)
                 A[i + j * lda + i_batch * stride] = T(ieee_half_small);
+}
+
+inline void hipblaslt_init_alt_impl_small(void*       A,
+                                          size_t      M,
+                                          size_t      N,
+                                          size_t      lda,
+                                          hipDataType type,
+                                          size_t      stride      = 0,
+                                          size_t      batch_count = 1)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        hipblaslt_init_alt_impl_small<float>(
+            static_cast<float*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_64F:
+        hipblaslt_init_alt_impl_small<double>(
+            static_cast<double*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16F:
+        hipblaslt_init_alt_impl_small<hipblasLtHalf>(
+            static_cast<hipblasLtHalf*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_16BF:
+        hipblaslt_init_alt_impl_small<hip_bfloat16>(
+            static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        hipblaslt_init_alt_impl_small<hipblaslt_f8_fnuz>(
+            static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        hipblaslt_init_alt_impl_small<hipblaslt_bf8_fnuz>(
+            static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        hipblaslt_init_alt_impl_small<hipblaslt_f8_ocp>(
+            static_cast<hipblaslt_f8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        hipblaslt_init_alt_impl_small<hipblaslt_bf8_ocp>(
+            static_cast<hipblaslt_bf8_ocp*>(A), M, N, lda, stride, batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        hipblaslt_init_alt_impl_small<int32_t>(
+            static_cast<int32_t*>(A), M, N, lda, stride, batch_count);
+        break;
+    case HIP_R_8I:
+        hipblaslt_init_alt_impl_small<hipblasLtInt8>(
+            static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in hipblaslt_init_alt_impl_small" << std::endl;
+        break;
+    }
 }
 
 /* ============================================================================================ */
