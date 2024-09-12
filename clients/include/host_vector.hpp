@@ -89,13 +89,13 @@ struct host_vector : std::vector<T>
     {
         hipError_t hip_err;
 
-        if(that.use_HMM && hipSuccess != (hip_err = hipDeviceSynchronize()))
+        if(that.m_type == HIPBLASLT_DEVICE_MEMORY_MANAGED && hipSuccess != (hip_err = hipDeviceSynchronize()))
             return hip_err;
 
         return hipMemcpy(*this,
                          that,
                          sizeof(T) * this->size(),
-                         that.use_HMM ? hipMemcpyHostToHost : hipMemcpyDeviceToHost);
+                         that.m_type == HIPBLASLT_DEVICE_MEMORY_MANAGED ? hipMemcpyHostToHost : hipMemcpyDeviceToHost);
     }
 
     //!

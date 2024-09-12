@@ -56,10 +56,9 @@ public:
     //! @brief Constructor.
     //! @param n The length of the vector.
     //! @param inc The increment.
-    //! @param HMM         HipManagedMemory Flag.
-    //!
-    explicit device_vector(size_t n, int64_t inc = 1, bool HMM = false)
-        : d_vector<T>{n * std::abs(inc), HMM}
+    //! @param memType Memory type enum.
+    explicit device_vector(size_t n, int64_t inc = 1, hipblaslt_device_memory_type memType = HIPBLASLT_DEVICE_MEMORY_NORMAL)
+        : d_vector<T>{n * std::abs(inc), memType}
         , m_n{n}
         , m_inc{inc}
         , m_data{this->device_vector_setup()}
@@ -136,7 +135,7 @@ public:
                 = hipMemcpy(m_data + i_block * this->nmemb() / block_count,
                             (const T*)that,
                             this->nmemb() * sizeof(T) / block_count,
-                            this->use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
+                            this->m_type == HIPBLASLT_DEVICE_MEMORY_MANAGED ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
             if(status != hipSuccess)
             {
                 return status;

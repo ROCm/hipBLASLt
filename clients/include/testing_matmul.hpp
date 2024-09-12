@@ -677,7 +677,11 @@ void testing_matmul_with_bias(const Arguments& arg)
 {
     double gpu_time_used, cpu_time_used;
     gpu_time_used = cpu_time_used = 0.0;
-    bool                   HMM    = arg.HMM;
+    hipblaslt_device_memory_type memType = arg.HMM? HIPBLASLT_DEVICE_MEMORY_MANAGED : HIPBLASLT_DEVICE_MEMORY_NORMAL;
+    hipblaslt_device_memory_type memTypeA = arg.uncachedA? HIPBLASLT_DEVICE_MEMORY_UNCACHED : memType;
+    hipblaslt_device_memory_type memTypeB = arg.uncachedB? HIPBLASLT_DEVICE_MEMORY_UNCACHED : memType;
+    hipblaslt_device_memory_type memTypeC = arg.uncachedC? HIPBLASLT_DEVICE_MEMORY_UNCACHED : memType;
+    hipblaslt_device_memory_type memTypeD = arg.uncachedD? HIPBLASLT_DEVICE_MEMORY_UNCACHED : memType;
     hipblaslt_local_handle handle{arg};
     hipStream_t            stream;
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
@@ -988,15 +992,15 @@ void testing_matmul_with_bias(const Arguments& arg)
         }
 
         // allocate memory on device
-        dA[i] = new device_vector<TiA>(size_A[i] * block_count, 1, HMM);
-        dB[i] = new device_vector<TiB>(size_B[i] * block_count, 1, HMM);
-        dC[i] = new device_vector<To>(size_C[i] * block_count, 1, HMM);
+        dA[i] = new device_vector<TiA>(size_A[i] * block_count, 1, memTypeA);
+        dB[i] = new device_vector<TiB>(size_B[i] * block_count, 1, memTypeB);
+        dC[i] = new device_vector<To>(size_C[i] * block_count, 1, memTypeC);
         if(!arg.c_equal_d)
-            dD[i] = new device_vector<To>(size_D[i] * block_count, 1, HMM);
+            dD[i] = new device_vector<To>(size_D[i] * block_count, 1, memTypeD);
         else
             dD[i] = dC[i];
-        dBias[i]          = new device_vector<Tbias>(size_bias[i] * block_count, 1, HMM);
-        dScaleAlphaVec[i] = new device_vector<Talpha>(size_scaleAlphaVec[i] * block_count, 1, HMM);
+        dBias[i]          = new device_vector<Tbias>(size_bias[i] * block_count, 1, memType);
+        dScaleAlphaVec[i] = new device_vector<Talpha>(size_scaleAlphaVec[i] * block_count, 1, memType);
 
         CHECK_DEVICE_ALLOCATION(dA[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dB[i]->memcheck());
@@ -1007,7 +1011,7 @@ void testing_matmul_with_bias(const Arguments& arg)
         CHECK_DEVICE_ALLOCATION(dScaleAlphaVec[i]->memcheck());
         if(arg.use_e)
         {
-            dE[i] = new device_vector<To>(size_E[i] * block_count, 1, HMM);
+            dE[i] = new device_vector<To>(size_E[i] * block_count, 1, memType);
             CHECK_DEVICE_ALLOCATION(dE[i]->memcheck());
         }
         else
@@ -1017,33 +1021,33 @@ void testing_matmul_with_bias(const Arguments& arg)
 
         if(arg.scaleA)
         {
-            dScaleA[i] = new device_vector<Talpha>(size_scaleAVec[i] * block_count, 1, HMM);
+            dScaleA[i] = new device_vector<Talpha>(size_scaleAVec[i] * block_count, 1, memType);
             CHECK_DEVICE_ALLOCATION(dScaleA[i]->memcheck());
         }
         if(arg.scaleB)
         {
-            dScaleB[i] = new device_vector<Talpha>(size_scaleBVec[i] * block_count, 1, HMM);
+            dScaleB[i] = new device_vector<Talpha>(size_scaleBVec[i] * block_count, 1, memType);
             CHECK_DEVICE_ALLOCATION(dScaleB[i]->memcheck());
         }
         if(arg.scaleC)
         {
-            dScaleC[i] = new device_vector<Talpha>(1, 1, HMM);
+            dScaleC[i] = new device_vector<Talpha>(1, 1, memType);
             CHECK_DEVICE_ALLOCATION(dScaleC[i]->memcheck());
         }
         if(arg.scaleD)
         {
-            dScaleD[i] = new device_vector<Talpha>(1, 1, HMM);
+            dScaleD[i] = new device_vector<Talpha>(1, 1, memType);
             CHECK_DEVICE_ALLOCATION(dScaleD[i]->memcheck());
         }
         if(arg.amaxD)
         {
             epilogue_on[i] = true;
-            dAmaxD[i]      = new device_vector<Talpha>(1, 1, HMM);
+            dAmaxD[i]      = new device_vector<Talpha>(1, 1, memType);
             CHECK_DEVICE_ALLOCATION(dAmaxD[i]->memcheck());
         }
         if(arg.scaleE)
         {
-            dScaleE[i] = new device_vector<Talpha>(1, 1, HMM);
+            dScaleE[i] = new device_vector<Talpha>(1, 1, memType);
             CHECK_DEVICE_ALLOCATION(dScaleE[i]->memcheck());
         }
 
@@ -2238,7 +2242,7 @@ void testing_matmul_with_bias(const Arguments& arg)
 
     CHECK_SOLUTION_FOUND(returnedAlgoCount);
 
-    dWorkspace = new device_vector<unsigned char>(workspace_size * block_count, 1, HMM);
+    dWorkspace = new device_vector<unsigned char>(workspace_size * block_count, 1, memType);
     CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
 
     if(arg.use_user_args)
