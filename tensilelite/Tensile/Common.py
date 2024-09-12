@@ -614,6 +614,8 @@ validParameters = {
 
     # Attempt to load directly from global memory into Vgpr.
     # Assembly only
+    "DirectToVgprA":              [ False, True ],
+    "DirectToVgprB":              [ False ], #[ False, True ], # TODO: enable DTVB
     "DirectToVgprSparseMetadata": [ False, True ],
 
     # Attempt to load directly from global memory into LDS.
@@ -1177,6 +1179,8 @@ defaultBenchmarkCommonParameters = [
 
     {"BufferLoad":                [ True ] },
     {"BufferStore":               [ True ] },
+    {"DirectToVgprA":             [ False ] },
+    {"DirectToVgprB":             [ False ] },
     {"DirectToVgprSparseMetadata":[ False ] },
     {"DirectToLds":               [ False ] },
     {"UseSgprForGRO":             [ -1 ] },
