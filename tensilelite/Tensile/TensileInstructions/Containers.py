@@ -109,6 +109,7 @@ class MUBUFModifiers(Container):
 
     def __str__(self) -> str:
         hasGLCModifier = self.asmCaps["HasGLCModifier"]
+        hasNTModifier = self.asmCaps["HasNTModifier"]
         forceStoreSC1 = self.archCaps["ForceStoreSC1"] and self.isStore
         kStr = ""
         if self.offen:
@@ -119,7 +120,7 @@ class MUBUFModifiers(Container):
             kStr += " " + getGlcBitName(hasGLCModifier)
         if self.slc or forceStoreSC1:
             kStr += " " + getSlcBitName(hasGLCModifier)
-        if self.nt:
+        if hasNTModifier and self.nt:
             kStr += " nt"
         if self.lds:
             kStr += " lds"
