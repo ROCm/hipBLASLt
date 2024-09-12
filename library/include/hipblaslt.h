@@ -69,7 +69,9 @@
 #undef ROCM_USE_FLOAT8
 #endif
 
+#if defined(__HIPCC__)
 #include <hip/hip_fp8.h>
+#endif
 
 #if defined(__HIP_PLATFORM_AMD__)
 #include "hipblaslt-types.h"
@@ -940,22 +942,6 @@ hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t              lightHan
                                          void*                   C,
                                          hipblasLtMatrixLayout_t Cdesc,
                                          hipStream_t             stream);
-
-/*! \brief device matches pattern */
-inline bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
-{
-    if(!pattern.length())
-    {
-        return true;
-    }
-
-    constexpr char    prefix[]   = "gfx";
-    const std::size_t prefix_len = std::string_view(prefix).length();
-    gpu_arch.remove_prefix(prefix_len);
-    std::regex arch_regex(pattern.data());
-    return std::regex_search(gpu_arch.data(), arch_regex);
-}
-
 #ifdef __cplusplus
 }
 #endif
