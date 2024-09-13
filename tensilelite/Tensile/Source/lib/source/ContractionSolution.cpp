@@ -972,7 +972,7 @@ namespace Tensile
         bool           gsuc         = false; // initialized false
         bool           gsuwgmrr     = false; // initialized false
         int32_t        wgm          = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
-        uint32_t       wgmxcc       = 0;
+        uint32_t       wgmxcc       = 1;
         int32_t        wgmxccg      = -1;
         const uint32_t mask16       = 0xFFFF;
         const uint32_t mask14       = 0x3FFF;
@@ -998,10 +998,10 @@ namespace Tensile
             }
             else if(internalArgsSupport.version == 2)
             {
-                wgmxcc = param.wgmxcc() > 0 ? param.wgmxcc() : sizeMapping.workGroupMappingXCC;
+                wgmxcc = param.wgmxcc() > 1 ? param.wgmxcc() : sizeMapping.workGroupMappingXCC;
                 wgmxccg
-                    = param.wgmxccg() > 0 ? param.wgmxccg() : sizeMapping.workGroupMappingXCCGroup;
-                if(wgmxccg == -1)
+                    = param.wgmxccg() != 0 ? param.wgmxccg() : sizeMapping.workGroupMappingXCCGroup;
+                if(wgmxcc > 1 && wgmxccg == -1)
                 {
                     AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(hardware);
                     assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);

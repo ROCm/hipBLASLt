@@ -149,7 +149,7 @@ namespace Tensile
         bool           m_gsuwgmrr       = false; // default value
         int16_t        m_wgm            = 0; // default value
         uint16_t       m_wgmxcc         = 0; // default value
-        int16_t        m_wgmxccg        = -1; // default value
+        int16_t        m_wgmxccg        = 0; // default value
         DataType       m_biasType       = DataType::None;
         int            m_factorDim      = 0;
         ActivationType m_activationType = ActivationType::None;

@@ -145,8 +145,8 @@ namespace Tensile
 
         std::string customKernelName;
 
-        int  workGroupMappingXCC                    = 1;
-        int  workGroupMappingXCCGroup               = -1;
+        int  workGroupMappingXCC                    = 0;
+        int  workGroupMappingXCCGroup               = 0;
         bool globalSplitUCoalesced                  = false;
         bool globalSplitUWorkGroupMappingRoundRobin = false;
     };
