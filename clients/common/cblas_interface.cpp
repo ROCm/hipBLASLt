@@ -99,7 +99,7 @@ void cblas_gemm(hipblasOperation_t     transA,
                 bool                   isScaleBVec,
                 bool                   alt)
 {
-    using TcCast  = std::conditional_t<std::is_same<Tc, int32_t>::value, double, Tc>;
+    using TcCast   = std::conditional_t<std::is_same<Tc, int32_t>::value, double, Tc>;
     using TciACast = std::conditional_t<std::is_same<TciA, int32_t>::value, double, TciA>;
     using TciBCast = std::conditional_t<std::is_same<TciB, int32_t>::value, double, TciB>;
 
@@ -118,21 +118,21 @@ void cblas_gemm(hipblasOperation_t     transA,
         {
             if(transA == HIPBLAS_OP_N)
             {
-                #pragma omp for
+#pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
                 {
                     auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
-                    A_Tc[i] = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA))
+                    A_Tc[i]     = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA))
                               * AlphaVec[i % m];
                 }
             }
             else
             {
-                #pragma omp for
+#pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
                 {
                     auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
-                    A_Tc[i] = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA))
+                    A_Tc[i]     = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA))
                               * AlphaVec[i / k];
                 }
             }
@@ -141,20 +141,20 @@ void cblas_gemm(hipblasOperation_t     transA,
         {
             if(transA == HIPBLAS_OP_N)
             {
-                #pragma omp for
+#pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
                 {
                     auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
-                    A_Tc[i] = static_cast<TcCast>(A[i]) * scaleA * AlphaVec[i % m];
+                    A_Tc[i]     = static_cast<TcCast>(A[i]) * scaleA * AlphaVec[i % m];
                 }
             }
             else
             {
-                #pragma omp for
+#pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
                 {
-                    auto scaleA = isScaleAVec ? scaleAVec[i  / k] : scaleAVec[0];
-                    A_Tc[i] = static_cast<TcCast>(A[i]) * scaleA * AlphaVec[i / k];
+                    auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
+                    A_Tc[i]     = static_cast<TcCast>(A[i]) * scaleA * AlphaVec[i / k];
                 }
             }
         }
@@ -166,20 +166,20 @@ void cblas_gemm(hipblasOperation_t     transA,
         {
             if(transA == HIPBLAS_OP_N)
             {
-                #pragma omp for
+#pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
                 {
                     auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
-                    A_Tc[i] = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA));
+                    A_Tc[i]     = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA));
                 }
             }
             else
             {
-                #pragma omp for
+#pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
                 {
                     auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
-                    A_Tc[i] = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA));
+                    A_Tc[i]     = static_cast<TcCast>(static_cast<TciACast>(A[i] * scaleA));
                 }
             }
         }
@@ -187,20 +187,20 @@ void cblas_gemm(hipblasOperation_t     transA,
         {
             if(transA == HIPBLAS_OP_N)
             {
-                #pragma omp for
+#pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
                 {
                     auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
-                    A_Tc[i] = static_cast<TcCast>(A[i] * scaleA);
+                    A_Tc[i]     = static_cast<TcCast>(A[i] * scaleA);
                 }
             }
             else
             {
-                #pragma omp for
+#pragma omp for
                 for(size_t i = 0; i < sizeA; i++)
                 {
                     auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
-                    A_Tc[i] = static_cast<TcCast>(A[i] * scaleA);
+                    A_Tc[i]     = static_cast<TcCast>(A[i] * scaleA);
                 }
             }
         }
@@ -211,20 +211,20 @@ void cblas_gemm(hipblasOperation_t     transA,
     {
         if(transB == HIPBLAS_OP_N)
         {
-            #pragma omp for
+#pragma omp for
             for(size_t i = 0; i < sizeB; i++)
             {
                 auto scaleB = isScaleBVec ? scaleBVec[i / k] : scaleBVec[0];
-                B_Tc[i] = static_cast<TcCast>(static_cast<TciBCast>(B[i] * scaleB));
+                B_Tc[i]     = static_cast<TcCast>(static_cast<TciBCast>(B[i] * scaleB));
             }
         }
         else
         {
-            #pragma omp for
+#pragma omp for
             for(size_t i = 0; i < sizeB; i++)
             {
                 auto scaleB = isScaleBVec ? scaleBVec[i % n] : scaleBVec[0];
-                B_Tc[i] = static_cast<TcCast>(static_cast<TciBCast>(B[i] * scaleB));
+                B_Tc[i]     = static_cast<TcCast>(static_cast<TciBCast>(B[i] * scaleB));
             }
         }
     }
@@ -232,20 +232,20 @@ void cblas_gemm(hipblasOperation_t     transA,
     {
         if(transB == HIPBLAS_OP_N)
         {
-            #pragma omp for
+#pragma omp for
             for(size_t i = 0; i < sizeB; i++)
             {
                 auto scaleB = isScaleBVec ? scaleBVec[i / k] : scaleBVec[0];
-                B_Tc[i] = static_cast<TcCast>(B[i] * scaleB);
+                B_Tc[i]     = static_cast<TcCast>(B[i] * scaleB);
             }
         }
         else
         {
-            #pragma omp for
+#pragma omp for
             for(size_t i = 0; i < sizeB; i++)
             {
                 auto scaleB = isScaleBVec ? scaleBVec[i % n] : scaleBVec[0];
-                B_Tc[i] = static_cast<TcCast>(B[i] * scaleB);
+                B_Tc[i]     = static_cast<TcCast>(B[i] * scaleB);
             }
         }
     }
@@ -318,81 +318,161 @@ void cblas_gemm(hipblasOperation_t     transA,
     }
 }
 
-#define CREATEFUNCTION(TiA, TiB, To, Tc, TciA, TciB)                                        \
-    template void cblas_gemm<TiA, TiB, To, Tc, TciA, TciB>(hipblasOperation_t     transA,   \
-                                                    hipblasOperation_t     transB,     \
-                                                    int64_t                m,          \
-                                                    int64_t                n,          \
-                                                    int64_t                k,          \
-                                                    Tc                     alpha,      \
-                                                    const TiA*             A,          \
-                                                    int64_t                lda,        \
-                                                    const TiB*             B,          \
-                                                    int64_t                ldb,        \
-                                                    Tc                     beta,       \
-                                                    std::add_pointer_t<To> C,          \
-                                                    int64_t                ldc,        \
-                                                    const Tc*              AlphaVec,   \
-                                                    const Tc*              scaleAVec,  \
-                                                    const Tc*              scaleBVec,  \
-                                                    Tc                     scaleD,     \
-                                                    bool                   isScaleAVec,\
-                                                    bool                   isScaleBVec,\
-                                                    bool                   alt);
+#define CREATEFUNCTION(TiA, TiB, To, Tc, TciA, TciB)                                           \
+    template void cblas_gemm<TiA, TiB, To, Tc, TciA, TciB>(hipblasOperation_t     transA,      \
+                                                           hipblasOperation_t     transB,      \
+                                                           int64_t                m,           \
+                                                           int64_t                n,           \
+                                                           int64_t                k,           \
+                                                           Tc                     alpha,       \
+                                                           const TiA*             A,           \
+                                                           int64_t                lda,         \
+                                                           const TiB*             B,           \
+                                                           int64_t                ldb,         \
+                                                           Tc                     beta,        \
+                                                           std::add_pointer_t<To> C,           \
+                                                           int64_t                ldc,         \
+                                                           const Tc*              AlphaVec,    \
+                                                           const Tc*              scaleAVec,   \
+                                                           const Tc*              scaleBVec,   \
+                                                           Tc                     scaleD,      \
+                                                           bool                   isScaleAVec, \
+                                                           bool                   isScaleBVec, \
+                                                           bool                   alt);
 
 CREATEFUNCTION(hip_bfloat16, hip_bfloat16, hip_bfloat16, float, hip_bfloat16, hip_bfloat16)
 CREATEFUNCTION(hip_bfloat16, hip_bfloat16, float, float, hip_bfloat16, hip_bfloat16)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, float, float, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, float, float, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz)
-CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz, float, float, hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
+CREATEFUNCTION(
+    hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
+CREATEFUNCTION(
+    hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, float, float, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz)
+CREATEFUNCTION(
+    hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, float, float, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz)
+CREATEFUNCTION(
+    hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz, float, float, hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz,
+               hipblasLtHalf,
+               float,
+               hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz)
 //
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, float, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz, float, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz)
-CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, float, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, float, hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz)
-CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz, float, hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz,
+               float,
+               hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz,
+               hipblaslt_bf8_fnuz,
+               float,
+               hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_f8_fnuz,
+               float,
+               hipblaslt_f8_fnuz,
+               hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_bf8_fnuz,
+               float,
+               hipblaslt_f8_fnuz,
+               hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_bf8_fnuz,
+               hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz,
+               float,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_bf8_fnuz,
+               hipblaslt_f8_fnuz,
+               hipblaslt_bf8_fnuz,
+               float,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_bf8_fnuz,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_f8_fnuz,
+               float,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_bf8_fnuz,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_bf8_fnuz,
+               float,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_bf8_fnuz)
 //
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hip_bfloat16, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, hipblasLtHalf, float, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, hip_bfloat16, float, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz)
-CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz, hipblasLtHalf, float, hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz)
-CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz, hip_bfloat16, float, hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz)
-CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, hip_bfloat16, float, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz)
+CREATEFUNCTION(
+    hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hip_bfloat16, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_bf8_fnuz,
+               hipblaslt_f8_fnuz,
+               hipblasLtHalf,
+               float,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz,
+               hipblaslt_bf8_fnuz,
+               hipblasLtHalf,
+               float,
+               hipblaslt_f8_fnuz,
+               hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz,
+               hipblaslt_bf8_fnuz,
+               hip_bfloat16,
+               float,
+               hipblaslt_f8_fnuz,
+               hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_bf8_fnuz,
+               hipblaslt_bf8_fnuz,
+               hipblasLtHalf,
+               float,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_bf8_fnuz,
+               hipblaslt_bf8_fnuz,
+               hip_bfloat16,
+               float,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_bf8_fnuz,
+               hipblaslt_f8_fnuz,
+               hip_bfloat16,
+               float,
+               hipblaslt_bf8_fnuz,
+               hipblaslt_f8_fnuz)
 #ifdef ROCM_USE_FLOAT8
-CREATEFUNCTION(hipblaslt_f8_ocp, hipblaslt_f8_ocp, float, float, hipblaslt_f8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblaslt_bf8_ocp, hipblaslt_f8_ocp, float, float, hipblaslt_bf8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblaslt_f8_ocp, hipblaslt_bf8_ocp, float, float, hipblaslt_f8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblaslt_bf8_ocp, hipblaslt_bf8_ocp, float, float, hipblaslt_bf8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblaslt_f8_ocp, hipblaslt_f8_ocp, hipblasLtHalf, float, hipblaslt_f8_ocp, hipblaslt_f8_ocp)
+CREATEFUNCTION(hipblaslt_f8, hipblaslt_f8, float, float, hipblaslt_f8, hipblaslt_f8)
+CREATEFUNCTION(hipblaslt_bf8, hipblaslt_f8, float, float, hipblaslt_bf8, hipblaslt_f8)
+CREATEFUNCTION(hipblaslt_f8, hipblaslt_bf8, float, float, hipblaslt_f8, hipblaslt_bf8)
+CREATEFUNCTION(hipblaslt_bf8, hipblaslt_bf8, float, float, hipblaslt_bf8, hipblaslt_bf8)
+CREATEFUNCTION(hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float, hipblaslt_f8, hipblaslt_f8)
 //
-CREATEFUNCTION(hipblaslt_f8_ocp, hipblaslt_f8_ocp, hipblaslt_f8_ocp, float, hipblaslt_f8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblaslt_f8_ocp, hipblaslt_f8_ocp, hipblaslt_bf8_ocp, float, hipblaslt_f8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblaslt_f8_ocp, hipblaslt_bf8_ocp, hipblaslt_f8_ocp, float, hipblaslt_f8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblaslt_f8_ocp, hipblaslt_bf8_ocp, hipblaslt_bf8_ocp, float, hipblaslt_f8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblaslt_bf8_ocp, hipblaslt_f8_ocp, hipblaslt_f8_ocp, float, hipblaslt_bf8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblaslt_bf8_ocp, hipblaslt_f8_ocp, hipblaslt_bf8_ocp, float, hipblaslt_bf8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblaslt_bf8_ocp, hipblaslt_bf8_ocp, hipblaslt_f8_ocp, float, hipblaslt_bf8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblaslt_bf8_ocp, hipblaslt_bf8_ocp, hipblaslt_bf8_ocp, float, hipblaslt_bf8_ocp, hipblaslt_bf8_ocp)
+CREATEFUNCTION(hipblaslt_f8, hipblaslt_f8, hipblaslt_f8, float, hipblaslt_f8, hipblaslt_f8)
+CREATEFUNCTION(hipblaslt_f8, hipblaslt_f8, hipblaslt_bf8, float, hipblaslt_f8, hipblaslt_f8)
+CREATEFUNCTION(hipblaslt_f8, hipblaslt_bf8, hipblaslt_f8, float, hipblaslt_f8, hipblaslt_bf8)
+CREATEFUNCTION(hipblaslt_f8, hipblaslt_bf8, hipblaslt_bf8, float, hipblaslt_f8, hipblaslt_bf8)
+CREATEFUNCTION(hipblaslt_bf8, hipblaslt_f8, hipblaslt_f8, float, hipblaslt_bf8, hipblaslt_f8)
+CREATEFUNCTION(hipblaslt_bf8, hipblaslt_f8, hipblaslt_bf8, float, hipblaslt_bf8, hipblaslt_f8)
+CREATEFUNCTION(hipblaslt_bf8, hipblaslt_bf8, hipblaslt_f8, float, hipblaslt_bf8, hipblaslt_bf8)
+CREATEFUNCTION(hipblaslt_bf8, hipblaslt_bf8, hipblaslt_bf8, float, hipblaslt_bf8, hipblaslt_bf8)
 //
-CREATEFUNCTION(hipblaslt_f8_ocp, hipblaslt_f8_ocp, hip_bfloat16, float, hipblaslt_f8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblaslt_bf8_ocp, hipblaslt_f8_ocp, hipblasLtHalf, float, hipblaslt_bf8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblaslt_f8_ocp, hipblaslt_bf8_ocp, hipblasLtHalf, float, hipblaslt_f8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblaslt_f8_ocp, hipblaslt_bf8_ocp, hip_bfloat16, float, hipblaslt_f8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblaslt_bf8_ocp, hipblaslt_bf8_ocp, hipblasLtHalf, float, hipblaslt_bf8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblaslt_bf8_ocp, hipblaslt_bf8_ocp, hip_bfloat16, float, hipblaslt_bf8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblaslt_bf8_ocp, hipblaslt_f8_ocp, hip_bfloat16, float, hipblaslt_bf8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblaslt_f8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblaslt_f8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblaslt_bf8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_ocp, hipblaslt_f8_ocp)
-CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_ocp, hipblaslt_bf8_ocp)
-CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_bf8_ocp, hipblaslt_f8_ocp)
+CREATEFUNCTION(hipblaslt_f8, hipblaslt_f8, hip_bfloat16, float, hipblaslt_f8, hipblaslt_f8)
+CREATEFUNCTION(hipblaslt_bf8, hipblaslt_f8, hipblasLtHalf, float, hipblaslt_bf8, hipblaslt_f8)
+CREATEFUNCTION(hipblaslt_f8, hipblaslt_bf8, hipblasLtHalf, float, hipblaslt_f8, hipblaslt_bf8)
+CREATEFUNCTION(hipblaslt_f8, hipblaslt_bf8, hip_bfloat16, float, hipblaslt_f8, hipblaslt_bf8)
+CREATEFUNCTION(hipblaslt_bf8, hipblaslt_bf8, hipblasLtHalf, float, hipblaslt_bf8, hipblaslt_bf8)
+CREATEFUNCTION(hipblaslt_bf8, hipblaslt_bf8, hip_bfloat16, float, hipblaslt_bf8, hipblaslt_bf8)
+CREATEFUNCTION(hipblaslt_bf8, hipblaslt_f8, hip_bfloat16, float, hipblaslt_bf8, hipblaslt_f8)
+CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblaslt_f8, hipblaslt_f8)
+CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblaslt_f8, hipblaslt_bf8)
+CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblaslt_bf8, hipblaslt_f8)
+CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8, hipblaslt_f8)
+CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8, hipblaslt_bf8)
+CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_bf8, hipblaslt_f8)
 
 #endif
 CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf, hipblasLtHalf)
@@ -400,9 +480,12 @@ CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hip_bfloat16,
 CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
 CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz)
 CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz)
-CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz)
+CREATEFUNCTION(
+    hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
+CREATEFUNCTION(
+    hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz)
+CREATEFUNCTION(
+    hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz)
 CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hip_bfloat16, hip_bfloat16)
 CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblasLtHalf, hipblasLtHalf)
 CREATEFUNCTION(float, float, float, float, float, float)
@@ -411,17 +494,31 @@ CREATEFUNCTION(int8_t, int8_t, int32_t, int32_t, int8_t, int8_t)
 CREATEFUNCTION(int8_t, int8_t, int8_t, int32_t, int8_t, int8_t)
 // Mix precision
 // FP16FP8 mix FP16 in MFMA
-CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, hipblasLtHalf, hipblasLtHalf)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, hipblaslt_f8_fnuz, float, hipblasLtHalf, hipblasLtHalf)
+CREATEFUNCTION(
+    hipblasLtHalf, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, hipblasLtHalf, hipblasLtHalf)
+CREATEFUNCTION(
+    hipblaslt_f8_fnuz, hipblasLtHalf, hipblaslt_f8_fnuz, float, hipblasLtHalf, hipblasLtHalf)
 CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, hipblasLtHalf, float, hipblasLtHalf, hipblasLtHalf)
 CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf, hipblasLtHalf)
 CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, float, float, hipblasLtHalf, hipblasLtHalf)
 CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, float, float, hipblasLtHalf, hipblasLtHalf)
 // Mix precision
 // FP16FP8 mix FP8 in MFMA
-CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, hipblaslt_f8_fnuz, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
-CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblasLtHalf,
+               hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz,
+               float,
+               hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz,
+               hipblasLtHalf,
+               hipblaslt_f8_fnuz,
+               float,
+               hipblaslt_f8_fnuz,
+               hipblaslt_f8_fnuz)
+CREATEFUNCTION(
+    hipblasLtHalf, hipblaslt_f8_fnuz, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
+CREATEFUNCTION(
+    hipblaslt_f8_fnuz, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
 CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, float, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)
 CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, float, float, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz)

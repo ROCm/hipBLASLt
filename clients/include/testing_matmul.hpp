@@ -1174,8 +1174,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                 hipblaslt_init_small<Talpha>(*hScaleC[i], 1, 1, 1);
             }
 #ifdef ROCM_USE_FLOAT8
-            else if constexpr(std::is_same<To, hipblaslt_f8_ocp>::value
-                         || std::is_same<To, hipblaslt_bf8_ocp>::value)
+            else if constexpr(std::is_same<To, hipblaslt_f8>::value
+                              || std::is_same<To, hipblaslt_bf8>::value)
             {
                 hipblaslt_init_small<Talpha>(*hScaleC[i], 1, 1, 1);
             }
@@ -1194,8 +1194,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                 hipblaslt_init_small<Talpha>(*hScaleD[i], 1, 1, 1);
             }
 #ifdef ROCM_USE_FLOAT8
-            else if constexpr(std::is_same<To, hipblaslt_f8_ocp>::value
-                         || std::is_same<To, hipblaslt_bf8_ocp>::value)
+            else if constexpr(std::is_same<To, hipblaslt_f8>::value
+                              || std::is_same<To, hipblaslt_bf8>::value)
             {
                 hipblaslt_init_small<Talpha>(*hScaleD[i], 1, 1, 1);
             }

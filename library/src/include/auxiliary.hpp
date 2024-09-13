@@ -313,12 +313,12 @@ __host__ __device__ inline bool hipblaslt_isnan(hipblaslt_bf8_fnuz arg)
 }
 
 #ifdef ROCM_USE_FLOAT8
-__host__ __device__ inline bool hipblaslt_isnan(hipblaslt_f8_ocp arg)
+__host__ __device__ inline bool hipblaslt_isnan(hipblaslt_f8 arg)
 {
     return arg.is_nan();
 }
 
-__host__ __device__ inline bool hipblaslt_isnan(hipblaslt_bf8_ocp arg)
+__host__ __device__ inline bool hipblaslt_isnan(hipblaslt_bf8 arg)
 {
     return arg.is_nan();
 }
