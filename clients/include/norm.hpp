@@ -566,10 +566,14 @@ bool norm_check(double norm_error, hipDataType type)
     case HIP_R_16BF:
         return norm_error < 0.1;
     case HIP_R_8F_E4M3_FNUZ:
+#ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
+#endif
         return norm_error < 0.125;
     case HIP_R_8F_E5M2_FNUZ:
+#ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E5M2:
+#endif
         return norm_error < 0.25;
     case HIP_R_32I:
         return norm_error < 0.0001;
