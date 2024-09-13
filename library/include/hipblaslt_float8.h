@@ -43,12 +43,12 @@ typedef struct
 typedef struct
 {
     uint8_t data;
-} hipblaslt_f8_ocp;
+} hipblaslt_f8;
 
 typedef struct
 {
     uint8_t data;
-} hipblaslt_bf8_ocp;
+} hipblaslt_bf8;
 #endif
 
 #else // __cplusplus < 201103L || (!defined(__HCC__) && !defined(__HIPCC__))
@@ -441,7 +441,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz
 };
 
 #ifdef ROCM_USE_FLOAT8
-struct HIPBLASLT_EXPORT hipblaslt_f8_ocp
+struct HIPBLASLT_EXPORT hipblaslt_f8
 {
     uint8_t data;
     enum class hipblaslt_hip_f8_rounding_mode
@@ -451,16 +451,16 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_ocp
     };
 
     // default constructor
-    HIP_HOST_DEVICE hipblaslt_f8_ocp() = default;
+    HIP_HOST_DEVICE hipblaslt_f8() = default;
 
     // constructor from float
 #if defined(__gfx1200__) || defined(__gfx1201__)
 
     // NOTE: ON-DEVICE... always optimal bias
-    explicit HIP_DEVICE hipblaslt_f8_ocp(float                          v,
-                                         hipblaslt_hip_f8_rounding_mode rm
-                                         = hipblaslt_hip_f8_rounding_mode::standard,
-                                         uint32_t rng = 0)
+    explicit HIP_DEVICE hipblaslt_f8(float                          v,
+                                     hipblaslt_hip_f8_rounding_mode rm
+                                     = hipblaslt_hip_f8_rounding_mode::standard,
+                                     uint32_t rng = 0)
     {
         __hip_fp8_e4m3 tmp(v);
         data = tmp.__x;
@@ -472,10 +472,9 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_ocp
     // both Host and DEVICE for non-gfx940 using s/w simulation
     explicit HIP_HOST_DEVICE
 #endif
-        hipblaslt_f8_ocp(float                          v,
-                         hipblaslt_hip_f8_rounding_mode rm
-                         = hipblaslt_hip_f8_rounding_mode::standard,
-                         uint32_t rng = 0)
+        hipblaslt_f8(float                          v,
+                     hipblaslt_hip_f8_rounding_mode rm  = hipblaslt_hip_f8_rounding_mode::standard,
+                     uint32_t                       rng = 0)
     {
 #ifdef hipblaslt_F8_downcast_clipping
         data = internal::cast_to_f8<float, false /*is_funz*/>(
@@ -487,35 +486,35 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_ocp
     }
 
     // Constructor from half
-    explicit HIP_HOST_DEVICE hipblaslt_f8_ocp(_Float16                       v,
-                                              hipblaslt_hip_f8_rounding_mode rm
-                                              = hipblaslt_hip_f8_rounding_mode::standard,
-                                              uint32_t rng = 0)
-        : hipblaslt_f8_ocp((float)v, rm, rng)
+    explicit HIP_HOST_DEVICE hipblaslt_f8(_Float16                       v,
+                                          hipblaslt_hip_f8_rounding_mode rm
+                                          = hipblaslt_hip_f8_rounding_mode::standard,
+                                          uint32_t rng = 0)
+        : hipblaslt_f8((float)v, rm, rng)
     {
     }
     // constructor from bfloat16
-    explicit HIP_HOST_DEVICE hipblaslt_f8_ocp(hip_bfloat16                   v,
-                                              hipblaslt_hip_f8_rounding_mode rm
-                                              = hipblaslt_hip_f8_rounding_mode::standard,
-                                              uint32_t rng = 0)
-        : hipblaslt_f8_ocp((float)v, rm, rng)
+    explicit HIP_HOST_DEVICE hipblaslt_f8(hip_bfloat16                   v,
+                                          hipblaslt_hip_f8_rounding_mode rm
+                                          = hipblaslt_hip_f8_rounding_mode::standard,
+                                          uint32_t rng = 0)
+        : hipblaslt_f8((float)v, rm, rng)
     {
     }
     // constructor from int
-    explicit HIP_HOST_DEVICE hipblaslt_f8_ocp(int                            v,
-                                              hipblaslt_hip_f8_rounding_mode rm
-                                              = hipblaslt_hip_f8_rounding_mode::standard,
-                                              uint32_t rng = 0)
-        : hipblaslt_f8_ocp((float)v, rm, rng)
+    explicit HIP_HOST_DEVICE hipblaslt_f8(int                            v,
+                                          hipblaslt_hip_f8_rounding_mode rm
+                                          = hipblaslt_hip_f8_rounding_mode::standard,
+                                          uint32_t rng = 0)
+        : hipblaslt_f8((float)v, rm, rng)
     {
     }
     // constructor from double
-    explicit HIP_HOST_DEVICE hipblaslt_f8_ocp(double                         v,
-                                              hipblaslt_hip_f8_rounding_mode rm
-                                              = hipblaslt_hip_f8_rounding_mode::standard,
-                                              uint32_t rng = 0)
-        : hipblaslt_f8_ocp((float)v, rm, rng)
+    explicit HIP_HOST_DEVICE hipblaslt_f8(double                         v,
+                                          hipblaslt_hip_f8_rounding_mode rm
+                                          = hipblaslt_hip_f8_rounding_mode::standard,
+                                          uint32_t rng = 0)
+        : hipblaslt_f8((float)v, rm, rng)
     {
     }
 
@@ -567,14 +566,14 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_ocp
     }
 
     // assignment overloading only from the same F8 types
-    inline __host__ __device__ hipblaslt_f8_ocp& operator=(const hipblaslt_f8_ocp& a)
+    inline __host__ __device__ hipblaslt_f8& operator=(const hipblaslt_f8& a)
     {
         data = a.data;
         return *this;
     }
 };
 
-struct HIPBLASLT_EXPORT hipblaslt_bf8_ocp
+struct HIPBLASLT_EXPORT hipblaslt_bf8
 {
     uint8_t data;
     enum class hipblaslt_hip_f8_rounding_mode
@@ -584,16 +583,16 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_ocp
     };
 
     // default constructor
-    HIP_HOST_DEVICE hipblaslt_bf8_ocp() = default;
+    HIP_HOST_DEVICE hipblaslt_bf8() = default;
 
     // constructor from float
 #if defined(__gfx1200__) || defined(__gfx1201__)
 
     // NOTE: ON-DEVICE... always optimal bias
-    explicit HIP_DEVICE hipblaslt_bf8_ocp(float                          v,
-                                          hipblaslt_hip_f8_rounding_mode rm
-                                          = hipblaslt_hip_f8_rounding_mode::standard,
-                                          uint32_t rng = 0)
+    explicit HIP_DEVICE hipblaslt_bf8(float                          v,
+                                      hipblaslt_hip_f8_rounding_mode rm
+                                      = hipblaslt_hip_f8_rounding_mode::standard,
+                                      uint32_t rng = 0)
     {
         __hip_fp8_e5m2 tmp(v);
         data = tmp.__x;
@@ -605,10 +604,9 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_ocp
     // both Host and DEVICE for non-gfx940 using s/w simulation
     explicit HIP_HOST_DEVICE
 #endif
-        hipblaslt_bf8_ocp(float                          v,
-                          hipblaslt_hip_f8_rounding_mode rm
-                          = hipblaslt_hip_f8_rounding_mode::standard,
-                          uint32_t rng = 0)
+        hipblaslt_bf8(float                          v,
+                      hipblaslt_hip_f8_rounding_mode rm  = hipblaslt_hip_f8_rounding_mode::standard,
+                      uint32_t                       rng = 0)
     {
 #ifdef hipblaslt_F8_downcast_clipping
         data = internal::cast_to_f8<float, false /*is_funz*/>(
@@ -620,35 +618,35 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_ocp
     }
 
     // Constructor from half
-    explicit HIP_HOST_DEVICE hipblaslt_bf8_ocp(_Float16                       v,
-                                               hipblaslt_hip_f8_rounding_mode rm
-                                               = hipblaslt_hip_f8_rounding_mode::standard,
-                                               uint32_t rng = 0)
-        : hipblaslt_bf8_ocp((float)v, rm, rng)
+    explicit HIP_HOST_DEVICE hipblaslt_bf8(_Float16                       v,
+                                           hipblaslt_hip_f8_rounding_mode rm
+                                           = hipblaslt_hip_f8_rounding_mode::standard,
+                                           uint32_t rng = 0)
+        : hipblaslt_bf8((float)v, rm, rng)
     {
     }
     // constructor from bfloat16
-    explicit HIP_HOST_DEVICE hipblaslt_bf8_ocp(hip_bfloat16                   v,
-                                               hipblaslt_hip_f8_rounding_mode rm
-                                               = hipblaslt_hip_f8_rounding_mode::standard,
-                                               uint32_t rng = 0)
-        : hipblaslt_bf8_ocp((float)v, rm, rng)
+    explicit HIP_HOST_DEVICE hipblaslt_bf8(hip_bfloat16                   v,
+                                           hipblaslt_hip_f8_rounding_mode rm
+                                           = hipblaslt_hip_f8_rounding_mode::standard,
+                                           uint32_t rng = 0)
+        : hipblaslt_bf8((float)v, rm, rng)
     {
     }
     // constructor from int
-    explicit HIP_HOST_DEVICE hipblaslt_bf8_ocp(int                            v,
-                                               hipblaslt_hip_f8_rounding_mode rm
-                                               = hipblaslt_hip_f8_rounding_mode::standard,
-                                               uint32_t rng = 0)
-        : hipblaslt_bf8_ocp((float)v, rm, rng)
+    explicit HIP_HOST_DEVICE hipblaslt_bf8(int                            v,
+                                           hipblaslt_hip_f8_rounding_mode rm
+                                           = hipblaslt_hip_f8_rounding_mode::standard,
+                                           uint32_t rng = 0)
+        : hipblaslt_bf8((float)v, rm, rng)
     {
     }
     // constructor from double
-    explicit HIP_HOST_DEVICE hipblaslt_bf8_ocp(double                         v,
-                                               hipblaslt_hip_f8_rounding_mode rm
-                                               = hipblaslt_hip_f8_rounding_mode::standard,
-                                               uint32_t rng = 0)
-        : hipblaslt_bf8_ocp((float)v, rm, rng)
+    explicit HIP_HOST_DEVICE hipblaslt_bf8(double                         v,
+                                           hipblaslt_hip_f8_rounding_mode rm
+                                           = hipblaslt_hip_f8_rounding_mode::standard,
+                                           uint32_t rng = 0)
+        : hipblaslt_bf8((float)v, rm, rng)
     {
     }
 
@@ -700,7 +698,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_ocp
     }
 
     // assignment overloading only from the same F8 types
-    inline __host__ __device__ hipblaslt_bf8_ocp& operator=(const hipblaslt_bf8_ocp& a)
+    inline __host__ __device__ hipblaslt_bf8& operator=(const hipblaslt_bf8& a)
     {
         data = a.data;
         return *this;
@@ -735,27 +733,27 @@ namespace std
         return a;
     }
 #ifdef ROCM_USE_FLOAT8
-    inline hipblaslt_f8_ocp sin(hipblaslt_f8_ocp a)
+    inline hipblaslt_f8 sin(hipblaslt_f8 a)
     {
-        return hipblaslt_f8_ocp(sinf(float(a)));
+        return hipblaslt_f8(sinf(float(a)));
     }
-    inline hipblaslt_f8_ocp cos(hipblaslt_f8_ocp a)
+    inline hipblaslt_f8 cos(hipblaslt_f8 a)
     {
-        return hipblaslt_f8_ocp(cosf(float(a)));
+        return hipblaslt_f8(cosf(float(a)));
     }
-    inline hipblaslt_bf8_ocp sin(hipblaslt_bf8_ocp a)
+    inline hipblaslt_bf8 sin(hipblaslt_bf8 a)
     {
-        return hipblaslt_bf8_ocp(sinf(float(a)));
+        return hipblaslt_bf8(sinf(float(a)));
     }
-    inline hipblaslt_bf8_ocp cos(hipblaslt_bf8_ocp a)
+    inline hipblaslt_bf8 cos(hipblaslt_bf8 a)
     {
-        return hipblaslt_bf8_ocp(cosf(float(a)));
+        return hipblaslt_bf8(cosf(float(a)));
     }
-    __device__ __host__ constexpr hipblaslt_f8_ocp real(const hipblaslt_f8_ocp& a)
+    __device__ __host__ constexpr hipblaslt_f8 real(const hipblaslt_f8& a)
     {
         return a;
     }
-    __device__ __host__ constexpr hipblaslt_bf8_ocp real(const hipblaslt_bf8_ocp& a)
+    __device__ __host__ constexpr hipblaslt_bf8 real(const hipblaslt_bf8& a)
     {
         return a;
     }
@@ -917,154 +915,154 @@ inline __host__ __device__ bool operator>(hipblaslt_f8_fnuz a, hipblaslt_f8_fnuz
 }
 
 #ifdef ROCM_USE_FLOAT8
-inline std::ostream& operator<<(std::ostream& os, const hipblaslt_f8_ocp& f8)
+inline std::ostream& operator<<(std::ostream& os, const hipblaslt_f8& f8)
 {
     return os << float(f8);
 }
 
-inline std::ostream& operator<<(std::ostream& os, const hipblaslt_bf8_ocp& bf8)
+inline std::ostream& operator<<(std::ostream& os, const hipblaslt_bf8& bf8)
 {
     return os << float(bf8);
 }
 
 // all + operator overloading with mixed types
 // mixed types, always converts to f32, does computation in f32, and returns float
-inline __host__ __device__ float operator+(const float fa, hipblaslt_f8_ocp b)
+inline __host__ __device__ float operator+(const float fa, hipblaslt_f8 b)
 {
     return (fa + float(b));
 }
 
-inline __host__ __device__ float operator+(const float fa, hipblaslt_bf8_ocp b)
+inline __host__ __device__ float operator+(const float fa, hipblaslt_bf8 b)
 {
     return (fa + float(b));
 }
 
-inline __host__ __device__ float operator+(hipblaslt_f8_ocp a, const float fb)
+inline __host__ __device__ float operator+(hipblaslt_f8 a, const float fb)
 {
     return (float(a) + fb);
 }
 
-inline __host__ __device__ float operator+(hipblaslt_bf8_ocp a, const float fb)
+inline __host__ __device__ float operator+(hipblaslt_bf8 a, const float fb)
 {
     return (float(a) + fb);
 }
 
-inline __host__ __device__ float operator+(hipblaslt_f8_ocp a, hipblaslt_bf8_ocp b)
+inline __host__ __device__ float operator+(hipblaslt_f8 a, hipblaslt_bf8 b)
 {
     return (float(a) + float(b));
 }
 
-inline __host__ __device__ float operator+(hipblaslt_bf8_ocp a, hipblaslt_f8_ocp b)
+inline __host__ __device__ float operator+(hipblaslt_bf8 a, hipblaslt_f8 b)
 {
     return (float(a) + float(b));
 }
 
-inline __host__ __device__ hipblaslt_f8_ocp operator+(hipblaslt_f8_ocp a, hipblaslt_f8_ocp b)
+inline __host__ __device__ hipblaslt_f8 operator+(hipblaslt_f8 a, hipblaslt_f8 b)
 {
-    return hipblaslt_f8_ocp(float(a) + float(b));
+    return hipblaslt_f8(float(a) + float(b));
 }
 
-inline __host__ __device__ hipblaslt_bf8_ocp operator+(hipblaslt_bf8_ocp a, hipblaslt_bf8_ocp b)
+inline __host__ __device__ hipblaslt_bf8 operator+(hipblaslt_bf8 a, hipblaslt_bf8 b)
 {
-    return hipblaslt_bf8_ocp(float(a) + float(b));
+    return hipblaslt_bf8(float(a) + float(b));
 }
 
-inline __host__ __device__ hipblaslt_f8_ocp& operator+=(hipblaslt_f8_ocp& a, hipblaslt_f8_ocp b)
+inline __host__ __device__ hipblaslt_f8& operator+=(hipblaslt_f8& a, hipblaslt_f8 b)
 {
-    return a = hipblaslt_f8_ocp(float(a) + float(b));
+    return a = hipblaslt_f8(float(a) + float(b));
 }
 
-inline __host__ __device__ hipblaslt_bf8_ocp& operator+=(hipblaslt_bf8_ocp& a, hipblaslt_bf8_ocp b)
+inline __host__ __device__ hipblaslt_bf8& operator+=(hipblaslt_bf8& a, hipblaslt_bf8 b)
 {
-    return a = hipblaslt_bf8_ocp(float(a) + float(b));
+    return a = hipblaslt_bf8(float(a) + float(b));
 }
 
 // overloading multiplication, always returns float,
-inline __host__ __device__ float operator*(hipblaslt_f8_ocp a, hipblaslt_f8_ocp b)
+inline __host__ __device__ float operator*(hipblaslt_f8 a, hipblaslt_f8 b)
 {
     return float(a) * float(b);
 }
 
-inline __host__ __device__ float operator*(float a, hipblaslt_f8_ocp b)
+inline __host__ __device__ float operator*(float a, hipblaslt_f8 b)
 {
     return (a * float(b));
 }
 
-inline __host__ __device__ float operator*(hipblaslt_f8_ocp a, float b)
+inline __host__ __device__ float operator*(hipblaslt_f8 a, float b)
 {
     return (float(a) * b);
 }
 
-inline __host__ __device__ float operator*(int32_t a, hipblaslt_f8_ocp b)
+inline __host__ __device__ float operator*(int32_t a, hipblaslt_f8 b)
 {
     return ((float)a * float(b));
 }
 
-inline __host__ __device__ float operator*(double a, hipblaslt_f8_ocp b)
+inline __host__ __device__ float operator*(double a, hipblaslt_f8 b)
 {
     return ((float)a * float(b));
 }
 
-inline __host__ __device__ float operator*(hipblaslt_bf8_ocp a, hipblaslt_bf8_ocp b)
+inline __host__ __device__ float operator*(hipblaslt_bf8 a, hipblaslt_bf8 b)
 {
     return float(a) * float(b);
 }
 
-inline __host__ __device__ float operator*(float a, hipblaslt_bf8_ocp b)
+inline __host__ __device__ float operator*(float a, hipblaslt_bf8 b)
 {
     return (a * float(b));
 }
 
-inline __host__ __device__ float operator*(hipblaslt_bf8_ocp a, float b)
+inline __host__ __device__ float operator*(hipblaslt_bf8 a, float b)
 {
     return (float(a) * b);
 }
 
-inline __host__ __device__ float operator*(int32_t a, hipblaslt_bf8_ocp b)
+inline __host__ __device__ float operator*(int32_t a, hipblaslt_bf8 b)
 {
     return ((float)a * float(b));
 }
 
-inline __host__ __device__ float operator*(double a, hipblaslt_bf8_ocp b)
+inline __host__ __device__ float operator*(double a, hipblaslt_bf8 b)
 {
     return ((float)a * float(b));
 }
 
 // overloading for mixed f8 and bf8 types
-inline __host__ __device__ float operator*(hipblaslt_f8_ocp a, hipblaslt_bf8_ocp b)
+inline __host__ __device__ float operator*(hipblaslt_f8 a, hipblaslt_bf8 b)
 {
     return float(a) * float(b);
 }
 
-inline __host__ __device__ float operator*(hipblaslt_bf8_ocp a, hipblaslt_f8_ocp b)
+inline __host__ __device__ float operator*(hipblaslt_bf8 a, hipblaslt_f8 b)
 {
     return float(a) * float(b);
 }
 
 // overloading for compare
-inline __host__ __device__ bool operator==(hipblaslt_f8_ocp a, hipblaslt_f8_ocp b)
+inline __host__ __device__ bool operator==(hipblaslt_f8 a, hipblaslt_f8 b)
 {
     return (a.data == b.data);
 }
-inline __host__ __device__ bool operator==(hipblaslt_bf8_ocp a, hipblaslt_bf8_ocp b)
+inline __host__ __device__ bool operator==(hipblaslt_bf8 a, hipblaslt_bf8 b)
 {
     return (a.data == b.data);
 }
 
-inline __host__ __device__ bool operator!=(hipblaslt_f8_ocp a, hipblaslt_f8_ocp b)
+inline __host__ __device__ bool operator!=(hipblaslt_f8 a, hipblaslt_f8 b)
 {
     return (a.data != b.data);
 }
-inline __host__ __device__ bool operator!=(hipblaslt_bf8_ocp a, hipblaslt_bf8_ocp b)
+inline __host__ __device__ bool operator!=(hipblaslt_bf8 a, hipblaslt_bf8 b)
 {
     return (a.data != b.data);
 }
 
-inline __host__ __device__ bool operator>=(hipblaslt_f8_ocp a, hipblaslt_f8_ocp b)
+inline __host__ __device__ bool operator>=(hipblaslt_f8 a, hipblaslt_f8 b)
 {
     return static_cast<float>(a) >= static_cast<float>(b);
 }
-inline __host__ __device__ bool operator>(hipblaslt_f8_ocp a, hipblaslt_f8_ocp b)
+inline __host__ __device__ bool operator>(hipblaslt_f8 a, hipblaslt_f8 b)
 {
     return static_cast<float>(a) > static_cast<float>(b);
 }
