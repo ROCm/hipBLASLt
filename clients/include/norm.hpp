@@ -27,6 +27,7 @@
 #pragma once
 
 #include "cblas.h"
+#include "hipblaslt_ostream.hpp"
 #include "hipblaslt_vector.hpp"
 #include "norm.hpp"
 #include "utility.hpp"
@@ -223,55 +224,6 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 }
 #endif
 
-// For BF16 and half, we convert the results to double first
-template <
-    typename T,
-    typename VEC,
-    std::enable_if_t<std::is_same<T, hipblasLtHalf>{} || std::is_same<T, hip_bfloat16>{}, int> = 0>
-double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC&& hCPU, T* hGPU)
-{
-    if(M * N == 0)
-        return 0;
-    size_t              size = N * (size_t)lda;
-    host_vector<double> hCPU_double(size);
-    host_vector<double> hGPU_double(size);
-
-    for(int64_t i = 0; i < N; i++)
-    {
-        for(int64_t j = 0; j < M; j++)
-        {
-            size_t idx       = j + i * (size_t)lda;
-            hCPU_double[idx] = hCPU[idx];
-            hGPU_double[idx] = hGPU[idx];
-        }
-    }
-
-    return norm_check_general<double>(norm_type, M, N, lda, hCPU_double, hGPU_double);
-}
-
-// For int8, we convert the results to int first
-template <typename T, typename VEC, std::enable_if_t<std::is_same<T, int8_t>{}, int> = 0>
-double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC&& hCPU, T* hGPU)
-{
-    if(M * N == 0)
-        return 0;
-    size_t           size = N * (size_t)lda;
-    host_vector<int> hCPU_int(size);
-    host_vector<int> hGPU_int(size);
-
-    for(int64_t i = 0; i < N; i++)
-    {
-        for(int64_t j = 0; j < M; j++)
-        {
-            size_t idx    = j + i * (size_t)lda;
-            hCPU_int[idx] = hCPU[idx];
-            hGPU_int[idx] = hGPU[idx];
-        }
-    }
-
-    return norm_check_general<int>(norm_type, M, N, lda, hCPU_int, hGPU_int);
-}
-
 /* ============== Norm Check for strided_batched case ============= */
 template <typename T, template <typename> class VEC, typename T_hpa>
 double norm_check_general(char        norm_type,
@@ -300,6 +252,48 @@ double norm_check_general(char        norm_type,
         auto index = i * stride_a;
 
         auto error = norm_check_general(norm_type, M, N, lda, (T_hpa*)hCPU + index, hGPU + index);
+
+        if(norm_type == 'F' || norm_type == 'f')
+        {
+            cumulative_error += error;
+        }
+        else if(norm_type == 'O' || norm_type == 'o' || norm_type == 'I' || norm_type == 'i')
+        {
+            cumulative_error = cumulative_error > error ? cumulative_error : error;
+        }
+    }
+
+    return cumulative_error;
+}
+
+/* ============== Norm Check for strided_batched case ============= */
+template <typename T, typename T_hpa>
+double norm_check_general(char    norm_type,
+                          int64_t M,
+                          int64_t N,
+                          int64_t lda,
+                          int64_t stride_a,
+                          T_hpa*  hCPU,
+                          T*      hGPU,
+                          int64_t batch_count)
+{
+    if(M * N == 0)
+        return 0;
+    // norm type can be O', 'I', 'F', 'o', 'i', 'f' for one, infinity or Frobenius norm
+    // one norm is max column sum
+    // infinity norm is max row sum
+    // Frobenius is l2 norm of matrix entries
+    //
+    // use triangle inequality ||a+b|| <= ||a|| + ||b|| to calculate upper limit for Frobenius norm
+    // of strided batched matrix
+
+    double cumulative_error = 0.0;
+
+    for(size_t i = 0; i < batch_count; i++)
+    {
+        auto index = i * stride_a;
+
+        auto error = norm_check_general(norm_type, M, N, lda, hCPU + index, hGPU + index);
 
         if(norm_type == 'F' || norm_type == 'f')
         {
@@ -350,6 +344,187 @@ double norm_check_general(
     return cumulative_error;
 }
 
+double norm_check_general(
+    char norm_type, int64_t M, int64_t N, int64_t lda, void* hCPU, void* hGPU, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        return norm_check_general<float>(
+            norm_type, M, N, lda, static_cast<float*>(hCPU), static_cast<float*>(hGPU));
+    case HIP_R_64F:
+        return norm_check_general<double>(
+            norm_type, M, N, lda, static_cast<double*>(hCPU), static_cast<double*>(hGPU));
+    case HIP_R_16F:
+        return norm_check_general<hipblasLtHalf>(norm_type,
+                                                 M,
+                                                 N,
+                                                 lda,
+                                                 static_cast<hipblasLtHalf*>(hCPU),
+                                                 static_cast<hipblasLtHalf*>(hGPU));
+    case HIP_R_16BF:
+        return norm_check_general<hip_bfloat16>(norm_type,
+                                                M,
+                                                N,
+                                                lda,
+                                                static_cast<hip_bfloat16*>(hCPU),
+                                                static_cast<hip_bfloat16*>(hGPU));
+    case HIP_R_8F_E4M3_FNUZ:
+        return norm_check_general<hipblaslt_f8_fnuz>(norm_type,
+                                                     M,
+                                                     N,
+                                                     lda,
+                                                     static_cast<hipblaslt_f8_fnuz*>(hCPU),
+                                                     static_cast<hipblaslt_f8_fnuz*>(hGPU));
+    case HIP_R_8F_E5M2_FNUZ:
+        return norm_check_general<hipblaslt_bf8_fnuz>(norm_type,
+                                                      M,
+                                                      N,
+                                                      lda,
+                                                      static_cast<hipblaslt_bf8_fnuz*>(hCPU),
+                                                      static_cast<hipblaslt_bf8_fnuz*>(hGPU));
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        return norm_check_general<hipblaslt_f8_ocp>(norm_type,
+                                                    M,
+                                                    N,
+                                                    lda,
+                                                    static_cast<hipblaslt_f8_ocp*>(hCPU),
+                                                    static_cast<hipblaslt_f8_ocp*>(hGPU));
+    case HIP_R_8F_E5M2:
+        return norm_check_general<hipblaslt_bf8_ocp>(norm_type,
+                                                     M,
+                                                     N,
+                                                     lda,
+                                                     static_cast<hipblaslt_bf8_ocp*>(hCPU),
+                                                     static_cast<hipblaslt_bf8_ocp*>(hGPU));
+#endif
+    case HIP_R_32I:
+        return norm_check_general<int32_t>(
+            norm_type, M, N, lda, static_cast<int32_t*>(hCPU), static_cast<int32_t*>(hGPU));
+    case HIP_R_8I:
+        return norm_check_general<hipblasLtInt8>(norm_type,
+                                                 M,
+                                                 N,
+                                                 lda,
+                                                 static_cast<hipblasLtInt8*>(hCPU),
+                                                 static_cast<hipblasLtInt8*>(hGPU));
+    default:
+        hipblaslt_cerr << "Error type in norm_check_general" << std::endl;
+        return 0;
+    }
+}
+
+double norm_check_general(char        norm_type,
+                          int64_t     M,
+                          int64_t     N,
+                          int64_t     lda,
+                          int64_t     stride_a,
+                          void*       hCPU,
+                          void*       hGPU,
+                          int64_t     batch_count,
+                          hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        return norm_check_general<float>(norm_type,
+                                         M,
+                                         N,
+                                         lda,
+                                         stride_a,
+                                         static_cast<float*>(hCPU),
+                                         static_cast<float*>(hGPU),
+                                         batch_count);
+    case HIP_R_64F:
+        return norm_check_general<double>(norm_type,
+                                          M,
+                                          N,
+                                          lda,
+                                          stride_a,
+                                          static_cast<double*>(hCPU),
+                                          static_cast<double*>(hGPU),
+                                          batch_count);
+    case HIP_R_16F:
+        return norm_check_general<hipblasLtHalf>(norm_type,
+                                                 M,
+                                                 N,
+                                                 lda,
+                                                 stride_a,
+                                                 static_cast<hipblasLtHalf*>(hCPU),
+                                                 static_cast<hipblasLtHalf*>(hGPU),
+                                                 batch_count);
+    case HIP_R_16BF:
+        return norm_check_general<hip_bfloat16>(norm_type,
+                                                M,
+                                                N,
+                                                lda,
+                                                stride_a,
+                                                static_cast<hip_bfloat16*>(hCPU),
+                                                static_cast<hip_bfloat16*>(hGPU),
+                                                batch_count);
+    case HIP_R_8F_E4M3_FNUZ:
+        return norm_check_general<hipblaslt_f8_fnuz>(norm_type,
+                                                     M,
+                                                     N,
+                                                     lda,
+                                                     stride_a,
+                                                     static_cast<hipblaslt_f8_fnuz*>(hCPU),
+                                                     static_cast<hipblaslt_f8_fnuz*>(hGPU),
+                                                     batch_count);
+    case HIP_R_8F_E5M2_FNUZ:
+        return norm_check_general<hipblaslt_bf8_fnuz>(norm_type,
+                                                      M,
+                                                      N,
+                                                      lda,
+                                                      stride_a,
+                                                      static_cast<hipblaslt_bf8_fnuz*>(hCPU),
+                                                      static_cast<hipblaslt_bf8_fnuz*>(hGPU),
+                                                      batch_count);
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        return norm_check_general<hipblaslt_f8_ocp>(norm_type,
+                                                    M,
+                                                    N,
+                                                    lda,
+                                                    stride_a,
+                                                    static_cast<hipblaslt_f8_ocp*>(hCPU),
+                                                    static_cast<hipblaslt_f8_ocp*>(hGPU),
+                                                    batch_count);
+    case HIP_R_8F_E5M2:
+        return norm_check_general<hipblaslt_bf8_ocp>(norm_type,
+                                                     M,
+                                                     N,
+                                                     lda,
+                                                     stride_a,
+                                                     static_cast<hipblaslt_bf8_ocp*>(hCPU),
+                                                     static_cast<hipblaslt_bf8_ocp*>(hGPU),
+                                                     batch_count);
+#endif
+    case HIP_R_32I:
+        return norm_check_general<int32_t>(norm_type,
+                                           M,
+                                           N,
+                                           lda,
+                                           stride_a,
+                                           static_cast<int32_t*>(hCPU),
+                                           static_cast<int32_t*>(hGPU),
+                                           batch_count);
+    case HIP_R_8I:
+        return norm_check_general<hipblasLtInt8>(norm_type,
+                                                 M,
+                                                 N,
+                                                 lda,
+                                                 stride_a,
+                                                 static_cast<hipblasLtInt8*>(hCPU),
+                                                 static_cast<hipblasLtInt8*>(hGPU),
+                                                 batch_count);
+    default:
+        hipblaslt_cerr << "Error type in norm_check_general" << std::endl;
+        return 0;
+    }
+}
+
 template <typename T>
 bool norm_check(double norm_error)
 {
@@ -376,4 +551,31 @@ bool norm_check(double norm_error)
         return norm_error < 0.25;
 #endif
     return false;
+}
+
+bool norm_check(double norm_error, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        return norm_error < 0.00001;
+    case HIP_R_64F:
+        return norm_error < 0.000000000001;
+    case HIP_R_16F:
+        return norm_error < 0.01;
+    case HIP_R_16BF:
+        return norm_error < 0.1;
+    case HIP_R_8F_E4M3_FNUZ:
+    case HIP_R_8F_E4M3:
+        return norm_error < 0.125;
+    case HIP_R_8F_E5M2_FNUZ:
+    case HIP_R_8F_E5M2:
+        return norm_error < 0.25;
+    case HIP_R_32I:
+        return norm_error < 0.0001;
+    case HIP_R_8I:
+        return norm_error < 0.01;
+    default:
+        return false;
+    }
 }
