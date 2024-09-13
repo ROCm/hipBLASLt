@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -121,7 +121,7 @@ inline void hipblaslt_init(std::vector<T>& that, bool seedReset = false)
 {
     if(seedReset)
         hipblaslt_seedrand();
-    hipblaslt_init(that, that.size(), 1, 1);
+    hipblaslt_init(that.data(), that.size(), 1, 1);
 }
 
 template <typename T>
@@ -129,7 +129,7 @@ inline void hipblaslt_init_alternating_sign(std::vector<T>& that, bool seedReset
 {
     if(seedReset)
         hipblaslt_seedrand();
-    hipblaslt_init_alternating_sign(that, that.size(), 1, 1);
+    hipblaslt_init_alternating_sign(that.data(), that.size(), 1, 1);
 }
 
 template <typename T>
@@ -137,7 +137,7 @@ inline void hipblaslt_init_sin(std::vector<T>& that, bool seedReset = false)
 {
     if(seedReset)
         hipblaslt_seedrand();
-    hipblaslt_init_sin(that, that.size(), 1, 1);
+    hipblaslt_init_sin(that.data(), that.size(), 1, 1);
 }
 
 template <typename T>
@@ -145,7 +145,7 @@ inline void hipblaslt_init_cos(std::vector<T>& that, bool seedReset = false)
 {
     if(seedReset)
         hipblaslt_seedrand();
-    hipblaslt_init_cos(that, that.size(), 1, 1);
+    hipblaslt_init_cos<T>(that.data(), that.size(), 1, 1);
 }
 
 template <typename T>
@@ -153,7 +153,7 @@ inline void hipblaslt_init_hpl(std::vector<T>& that, bool seedReset = false)
 {
     if(seedReset)
         hipblaslt_seedrand();
-    hipblaslt_init_hpl(that, that.size(), 1, 1);
+    hipblaslt_init_hpl(that.data(), that.size(), 1, 1);
 }
 
 template <typename T>
@@ -161,7 +161,7 @@ inline void hipblaslt_init_alt_impl_big(std::vector<T>& that, bool seedReset = f
 {
     if(seedReset)
         hipblaslt_seedrand();
-    hipblaslt_init_alt_impl_big(that, that.size(), 1, 1);
+    hipblaslt_init_alt_impl_big(that.data(), that.size(), 1, 1);
 }
 
 template <typename T>
@@ -169,7 +169,7 @@ inline void hipblaslt_init_alt_impl_small(std::vector<T>& that, bool seedReset =
 {
     if(seedReset)
         hipblaslt_seedrand();
-    hipblaslt_init_alt_impl_small(that, that.size(), 1, 1);
+    hipblaslt_init_alt_impl_small(that.data(), that.size(), 1, 1);
 }
 
 template <typename T>
@@ -177,7 +177,7 @@ inline void hipblaslt_init_zero(std::vector<T>& that, bool seedReset = false)
 {
     if(seedReset)
         hipblaslt_seedrand();
-    hipblaslt_init_zero(that, that.size(), 1, 1);
+    hipblaslt_init_zero(that.data(), that.size(), 1, 1);
 }
 
 //!
@@ -231,9 +231,9 @@ inline void hipblaslt_init_vector(host_vector<T>&          hx,
     else if(arg.initialization == hipblaslt_initialization::trig_float)
     {
         if(seedReset)
-            hipblaslt_init_cos(hx, 1, N, incx, stride_x, batch_count);
+            hipblaslt_init_cos(hx.data(), 1, N, incx, stride_x, batch_count);
         else
-            hipblaslt_init_sin(hx, 1, N, incx, stride_x, batch_count);
+            hipblaslt_init_sin(hx.data(), 1, N, incx, stride_x, batch_count);
     }
     else if(arg.initialization == hipblaslt_initialization::zero)
     {
@@ -294,9 +294,9 @@ inline void hipblaslt_init_matrix(host_vector<T>&          hA,
     else if(arg.initialization == hipblaslt_initialization::trig_float)
     {
         if(seedReset)
-            hipblaslt_init_cos(hA, M, N, lda, stride_A, batch_count);
+            hipblaslt_init_cos<T>(hA.data(), M, N, lda, stride_A, batch_count);
         else
-            hipblaslt_init_sin(hA, M, N, lda, stride_A, batch_count);
+            hipblaslt_init_sin<T>(hA.data(), M, N, lda, stride_A, batch_count);
     }
     else if(arg.initialization == hipblaslt_initialization::zero)
     {

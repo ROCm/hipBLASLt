@@ -131,7 +131,8 @@ public:
                 {
                     name_line << ",atol";
                     if(atol == 1) // atol == init value
-                        val_line << "," << "failed";
+                        val_line << ","
+                                 << "failed";
                     else
                         val_line << "," << atol;
                 }
@@ -139,7 +140,8 @@ public:
                 {
                     name_line << ",rtol";
                     if(rtol == 1) // rtol == init value
-                        val_line << "," << "failed";
+                        val_line << ","
+                                 << "failed";
                     else
                         val_line << "," << rtol;
                 }
@@ -147,8 +149,8 @@ public:
         }
     }
 
-    template <typename T>
-    void log_args(hipblaslt_internal_ostream& str,
+    void log_args(hipDataType                 Tc,
+                  hipblaslt_internal_ostream& str,
                   size_t                      index,
                   int32_t                     solution_index,
                   std::string&                solution_name,
@@ -187,10 +189,48 @@ public:
 
 #if __cplusplus >= 201703L
         // C++17
-        (ArgumentsHelper::apply<Args>(print, arg, T{}), ...);
+        //(ArgumentsHelper::apply<Args>(print, arg, T{}), ...);
+        switch(Tc)
+        {
+        case HIP_R_32F:
+            (ArgumentsHelper::apply<Args>(print, arg, float{}), ...);
+            break;
+        case HIP_R_64F:
+            (ArgumentsHelper::apply<Args>(print, arg, double{}), ...);
+            break;
+        case HIP_R_16F:
+            (ArgumentsHelper::apply<Args>(print, arg, hipblasLtHalf{}), ...);
+            break;
+        case HIP_R_32I:
+            (ArgumentsHelper::apply<Args>(print, arg, int32_t{}), ...);
+            break;
+        default:
+            hipblaslt_cerr << "Error type in log_args" << std::endl;
+            (ArgumentsHelper::apply<Args>(print, arg, float{}), ...);
+            break;
+        }
 #else
         // C++14. TODO: Remove when C++17 is used
-        (void)(int[]){(ArgumentsHelper::apply<Args>{}()(print, arg, T{}), 0)...};
+        //(void)(int[]){(ArgumentsHelper::apply<Args>{}()(print, arg, T{}), 0)...};
+        switch(Tc)
+        {
+        case HIP_R_32F:
+            (void)(int[]){(ArgumentsHelper::apply<Args>{}()(print, arg, float{}), 0)...};
+            break;
+        case HIP_R_64F:
+            (void)(int[]){(ArgumentsHelper::apply<Args>{}()(print, arg, double{}), 0)...};
+            break;
+        case HIP_R_16F:
+            (void)(int[]){(ArgumentsHelper::apply<Args>{}()(print, arg, hipblasLtHalf{}), 0)...};
+            break;
+        case HIP_R_32I:
+            (void)(int[]){(ArgumentsHelper::apply<Args>{}()(print, arg, int32_t{}), 0)...};
+            break;
+        default:
+            hipblaslt_cerr << "Error type in log_args" << std::endl;
+            (void)(int[]){(ArgumentsHelper::apply<Args>{}()(print, arg, float{}), 0)...};
+            break;
+        }
 #endif
 
         // Additional name and value list
