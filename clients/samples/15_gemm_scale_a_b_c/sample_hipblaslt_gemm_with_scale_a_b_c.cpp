@@ -32,7 +32,7 @@
 #include <iostream>
 #include <vector>
 
-void simpleGemmScaleAB(hipblasLtHandle_t  handle,
+void simpleGemmScaleABC(hipblasLtHandle_t  handle,
                        hipblasOperation_t trans_a,
                        hipblasOperation_t trans_b,
                        int64_t            m,
@@ -49,18 +49,20 @@ void simpleGemmScaleAB(hipblasLtHandle_t  handle,
                        int64_t            max_workspace_size,
                        hipStream_t        stream,
                        float              h_scale_a,
-                       float              h_scale_b);
+                       float              h_scale_b,
+                       float              h_scale_c);
 
 int main()
 {
     Runner<hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblasLtHalf, float, float> runner(
-        128, 128, 128, 1, 1.f, 0.f, 32 * 1024 * 1024);
+        128, 128, 128, 1, 1.f, 1.f, 32 * 1024 * 1024);
 
     float scale_a = 0.5f; // scale A setting
     float scale_b = 2.0f; // scale B setting
-    std::cout << "Running with Scale A = " << scale_a << " and Scale B = " << scale_b << std::endl;
-    runner.run([&runner, scale_a, scale_b] {
-        simpleGemmScaleAB(runner.handle,
+    float scale_c = 2.0f; // scale C setting
+    std::cout << "Running with Scale A = " << scale_a << ", Scale B = " << scale_b << ", and Scale C = " << scale_c << std::endl;
+    runner.run([&runner, scale_a, scale_b, scale_c] {
+        simpleGemmScaleABC(runner.handle,
                           HIPBLAS_OP_N,
                           HIPBLAS_OP_N,
                           runner.m,
@@ -77,13 +79,14 @@ int main()
                           runner.max_workspace_size,
                           runner.stream,
                           scale_a,
-                          scale_b);
+                          scale_b,
+                          scale_c);
     });
 
     return 0;
 }
 
-void simpleGemmScaleAB(hipblasLtHandle_t  handle,
+void simpleGemmScaleABC(hipblasLtHandle_t  handle,
                        hipblasOperation_t trans_a,
                        hipblasOperation_t trans_b,
                        int64_t            m,
@@ -100,22 +103,27 @@ void simpleGemmScaleAB(hipblasLtHandle_t  handle,
                        int64_t            max_workspace_size,
                        hipStream_t        stream,
                        float              h_scale_a,
-                       float              h_scale_b)
+                       float              h_scale_b,
+                       float              h_scale_c)
 {
     float* d_scale_a;
     float* d_scale_b;
+    float* d_scale_c;
     CHECK_HIP_ERROR(hipMalloc(&d_scale_a, sizeof(float)));
     CHECK_HIP_ERROR(hipMalloc(&d_scale_b, sizeof(float)));
+    CHECK_HIP_ERROR(hipMalloc(&d_scale_c, sizeof(float)));
     CHECK_HIP_ERROR(
         hipMemcpyAsync(d_scale_a, &h_scale_a, sizeof(float), hipMemcpyHostToDevice, stream));
     CHECK_HIP_ERROR(
         hipMemcpyAsync(d_scale_b, &h_scale_b, sizeof(float), hipMemcpyHostToDevice, stream));
+    CHECK_HIP_ERROR(
+        hipMemcpyAsync(d_scale_c, &h_scale_c, sizeof(float), hipMemcpyHostToDevice, stream));
 
     hipblasLtMatrixLayout_t matA, matB, matC, matD;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIP_R_8F_E4M3_FNUZ, m, k, m));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, HIP_R_8F_E4M3_FNUZ, k, n, k));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_16F, m, n, m));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_16F, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_8F_E4M3_FNUZ, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_8F_E4M3_FNUZ, m, n, m));
 
     hipblasLtMatmulDesc_t matmul;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, HIPBLAS_COMPUTE_32F, HIP_R_32F));
@@ -124,11 +132,13 @@ void simpleGemmScaleAB(hipblasLtHandle_t  handle,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
-    // Set A and B matrix scale factors
+    //Set A, B, and C matrix scale factors
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER, &d_scale_a, sizeof(float*)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER, &d_scale_b, sizeof(float*)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_C_SCALE_POINTER, &d_scale_c, sizeof(float*)));
 
     hipblasLtMatmulPreference_t pref;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
