@@ -210,10 +210,10 @@ inline void copy_buf(HipHostBuffer& src, HipHostBuffer& dst, hipDataType type)
         break;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        copy_buf<hipblaslt_f8_ocp>(src, dst);
+        copy_buf<hipblaslt_f8>(src, dst);
         break;
     case HIP_R_8F_E5M2:
-        copy_buf<hipblaslt_bf8_ocp>(src, dst);
+        copy_buf<hipblaslt_bf8>(src, dst);
         break;
 #endif
     case HIP_R_32I:
@@ -237,8 +237,8 @@ inline void transform_buf(HipHostBuffer& src, HipHostBuffer& dst)
     {
 #ifdef ROCM_USE_FLOAT8
         if constexpr(std::is_same<Tc, float>::value
-                     || !(std::is_same<T1, hipblaslt_bf8_ocp>::value
-                          || std::is_same<T1, hipblaslt_f8_ocp>::value))
+                     || !(std::is_same<T1, hipblaslt_bf8>::value
+                          || std::is_same<T1, hipblaslt_f8>::value))
 #endif
             std::transform(static_cast<T1*>(src.buf()),
                            static_cast<T1*>(src.end()),
@@ -295,10 +295,10 @@ inline void
         break;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        _transform_buf<hipblaslt_f8_ocp>(src, dst, typeTc);
+        _transform_buf<hipblaslt_f8>(src, dst, typeTc);
         break;
     case HIP_R_8F_E5M2:
-        _transform_buf<hipblaslt_bf8_ocp>(src, dst, typeTc);
+        _transform_buf<hipblaslt_bf8>(src, dst, typeTc);
         break;
 #endif
     case HIP_R_32I:

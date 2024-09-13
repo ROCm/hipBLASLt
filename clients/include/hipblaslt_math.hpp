@@ -84,14 +84,14 @@ inline hipblaslt_bf8_fnuz negate(hipblaslt_bf8_fnuz x)
 
 #ifdef ROCM_USE_FLOAT8
 template <>
-inline hipblaslt_f8_ocp negate(hipblaslt_f8_ocp x)
+inline hipblaslt_f8 negate(hipblaslt_f8 x)
 {
     x.data ^= 0x80;
     return x;
 }
 
 template <>
-inline hipblaslt_bf8_ocp negate(hipblaslt_bf8_ocp x)
+inline hipblaslt_bf8 negate(hipblaslt_bf8 x)
 {
     x.data ^= 0x80;
     return x;

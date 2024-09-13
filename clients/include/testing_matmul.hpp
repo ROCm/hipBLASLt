@@ -97,11 +97,11 @@ Tout cast_from_type(void* in, hipDataType type, size_t index)
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
         if constexpr(std::is_same<Tout, float>::value)
-            return static_cast<Tout>((static_cast<hipblaslt_f8_ocp*>(in))[index]);
+            return static_cast<Tout>((static_cast<hipblaslt_f8*>(in))[index]);
         return 0;
     case HIP_R_8F_E5M2:
         if constexpr(std::is_same<Tout, float>::value)
-            return static_cast<Tout>((static_cast<hipblaslt_bf8_ocp*>(in))[index]);
+            return static_cast<Tout>((static_cast<hipblaslt_bf8*>(in))[index]);
         return 0;
 #endif
     case HIP_R_32I:
@@ -139,10 +139,10 @@ void saturate_cast_to_type(void* dst, Tin src, hipDataType typeD, size_t indexD)
         return;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        static_cast<hipblaslt_f8_ocp*>(dst)[indexD] = saturate_cast<hipblaslt_f8_ocp>(src);
+        static_cast<hipblaslt_f8*>(dst)[indexD] = saturate_cast<hipblaslt_f8>(src);
         return;
     case HIP_R_8F_E5M2:
-        static_cast<hipblaslt_bf8_ocp*>(dst)[indexD] = saturate_cast<hipblaslt_bf8_ocp>(src);
+        static_cast<hipblaslt_bf8*>(dst)[indexD] = saturate_cast<hipblaslt_bf8>(src);
         return;
 #endif
     case HIP_R_32I:

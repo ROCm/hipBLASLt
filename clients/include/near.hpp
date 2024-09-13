@@ -199,8 +199,8 @@ template <>
 inline void near_check_general(int64_t                 M,
                                int64_t                 N,
                                int64_t                 lda,
-                               const hipblaslt_f8_ocp* hCPU,
-                               const hipblaslt_f8_ocp* hGPU,
+                               const hipblaslt_f8* hCPU,
+                               const hipblaslt_f8* hGPU,
                                double                  abs_error)
 {
     NEAR_CHECK(M, N, lda, 0, hCPU, hGPU, 1, abs_error, NEAR_ASSERT_FP8);
@@ -210,8 +210,8 @@ template <>
 inline void near_check_general(int64_t                  M,
                                int64_t                  N,
                                int64_t                  lda,
-                               const hipblaslt_bf8_ocp* hCPU,
-                               const hipblaslt_bf8_ocp* hGPU,
+                               const hipblaslt_bf8* hCPU,
+                               const hipblaslt_bf8* hGPU,
                                double                   abs_error)
 {
     NEAR_CHECK(M, N, lda, 0, hCPU, hGPU, 1, abs_error, NEAR_ASSERT_FP8);
@@ -289,8 +289,8 @@ inline void near_check_general(int64_t                 M,
                                int64_t                 N,
                                int64_t                 lda,
                                int64_t                 strideA,
-                               const hipblaslt_f8_ocp* hCPU,
-                               const hipblaslt_f8_ocp* hGPU,
+                               const hipblaslt_f8* hCPU,
+                               const hipblaslt_f8* hGPU,
                                int64_t                 batch_count,
                                double                  abs_error)
 {
@@ -302,8 +302,8 @@ inline void near_check_general(int64_t                  M,
                                int64_t                  N,
                                int64_t                  lda,
                                int64_t                  strideA,
-                               const hipblaslt_bf8_ocp* hCPU,
-                               const hipblaslt_bf8_ocp* hGPU,
+                               const hipblaslt_bf8* hCPU,
+                               const hipblaslt_bf8* hGPU,
                                int64_t                  batch_count,
                                double                   abs_error)
 {
@@ -375,8 +375,8 @@ template <>
 inline void near_check_general(int64_t                             M,
                                int64_t                             N,
                                int64_t                             lda,
-                               const host_vector<hipblaslt_f8_ocp> hCPU[],
-                               const host_vector<hipblaslt_f8_ocp> hGPU[],
+                               const host_vector<hipblaslt_f8> hCPU[],
+                               const host_vector<hipblaslt_f8> hGPU[],
                                int64_t                             batch_count,
                                double                              abs_error)
 {
@@ -387,8 +387,8 @@ template <>
 inline void near_check_general(int64_t                              M,
                                int64_t                              N,
                                int64_t                              lda,
-                               const host_vector<hipblaslt_bf8_ocp> hCPU[],
-                               const host_vector<hipblaslt_bf8_ocp> hGPU[],
+                               const host_vector<hipblaslt_bf8> hCPU[],
+                               const host_vector<hipblaslt_bf8> hGPU[],
                                int64_t                              batch_count,
                                double                               abs_error)
 {
@@ -461,8 +461,8 @@ template <>
 inline void near_check_general(int64_t                       M,
                                int64_t                       N,
                                int64_t                       lda,
-                               const hipblaslt_f8_ocp* const hCPU[],
-                               const hipblaslt_f8_ocp* const hGPU[],
+                               const hipblaslt_f8* const hCPU[],
+                               const hipblaslt_f8* const hGPU[],
                                int64_t                       batch_count,
                                double                        abs_error)
 {
@@ -473,8 +473,8 @@ template <>
 inline void near_check_general(int64_t                        M,
                                int64_t                        N,
                                int64_t                        lda,
-                               const hipblaslt_bf8_ocp* const hCPU[],
-                               const hipblaslt_bf8_ocp* const hGPU[],
+                               const hipblaslt_bf8* const hCPU[],
+                               const hipblaslt_bf8* const hGPU[],
                                int64_t                        batch_count,
                                double                         abs_error)
 {
@@ -560,8 +560,8 @@ inline void near_check_general(int64_t     M,
                            N,
                            lda,
                            strideA,
-                           static_cast<hipblaslt_f8_ocp*>(hCPU),
-                           static_cast<hipblaslt_f8_ocp*>(hGPU),
+                           static_cast<hipblaslt_f8*>(hCPU),
+                           static_cast<hipblaslt_f8*>(hGPU),
                            batch_count,
                            abs_error);
         break;
@@ -570,8 +570,8 @@ inline void near_check_general(int64_t     M,
                            N,
                            lda,
                            strideA,
-                           static_cast<hipblaslt_bf8_ocp*>(hCPU),
-                           static_cast<hipblaslt_bf8_ocp*>(hGPU),
+                           static_cast<hipblaslt_bf8*>(hCPU),
+                           static_cast<hipblaslt_bf8*>(hGPU),
                            batch_count,
                            abs_error);
         break;

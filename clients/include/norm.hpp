@@ -103,14 +103,15 @@ void m_axpy(size_t* N, T* alpha, T* x, int* incx, T* y, int* incy)
 /*! \brief compare the norm error of two matrices hCPU & hGPU */
 
 // Real
-template <typename T,
-          std::enable_if_t<
-              !(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_bf8_fnuz>{}
+template <
+    typename T,
+    std::enable_if_t<!(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_bf8_fnuz>{}
 #ifdef ROCM_USE_FLOAT8
-                || std::is_same<T, hipblaslt_f8_ocp>{} || std::is_same<T, hipblaslt_bf8_ocp>{}
+                       || std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_bf8>{}
 #endif
-                ),
-              int> = 0>
+                       ),
+                     int>
+    = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     if(M * N == 0)
@@ -151,7 +152,8 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 template <typename T,
           std::enable_if_t<(std::is_same<T, hipblaslt_f8_fnuz>{}
                             || std::is_same<T, hipblaslt_bf8_fnuz>{}),
-                           int> = 0>
+                           int>
+          = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     if(M * N == 0)
@@ -188,8 +190,8 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 #ifdef ROCM_USE_FLOAT8
 template <
     typename T,
-    std::enable_if_t<(std::is_same<T, hipblaslt_f8_ocp>{} || std::is_same<T, hipblaslt_bf8_ocp>{}),
-                     int> = 0>
+    std::enable_if_t<(std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_bf8>{}), int>
+    = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     if(M * N == 0)
@@ -385,19 +387,19 @@ double norm_check_general(
                                                       static_cast<hipblaslt_bf8_fnuz*>(hGPU));
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        return norm_check_general<hipblaslt_f8_ocp>(norm_type,
+        return norm_check_general<hipblaslt_f8>(norm_type,
                                                     M,
                                                     N,
                                                     lda,
-                                                    static_cast<hipblaslt_f8_ocp*>(hCPU),
-                                                    static_cast<hipblaslt_f8_ocp*>(hGPU));
+                                                    static_cast<hipblaslt_f8*>(hCPU),
+                                                    static_cast<hipblaslt_f8*>(hGPU));
     case HIP_R_8F_E5M2:
-        return norm_check_general<hipblaslt_bf8_ocp>(norm_type,
+        return norm_check_general<hipblaslt_bf8>(norm_type,
                                                      M,
                                                      N,
                                                      lda,
-                                                     static_cast<hipblaslt_bf8_ocp*>(hCPU),
-                                                     static_cast<hipblaslt_bf8_ocp*>(hGPU));
+                                                     static_cast<hipblaslt_bf8*>(hCPU),
+                                                     static_cast<hipblaslt_bf8*>(hGPU));
 #endif
     case HIP_R_32I:
         return norm_check_general<int32_t>(
@@ -483,22 +485,22 @@ double norm_check_general(char        norm_type,
                                                       batch_count);
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        return norm_check_general<hipblaslt_f8_ocp>(norm_type,
+        return norm_check_general<hipblaslt_f8>(norm_type,
                                                     M,
                                                     N,
                                                     lda,
                                                     stride_a,
-                                                    static_cast<hipblaslt_f8_ocp*>(hCPU),
-                                                    static_cast<hipblaslt_f8_ocp*>(hGPU),
+                                                    static_cast<hipblaslt_f8*>(hCPU),
+                                                    static_cast<hipblaslt_f8*>(hGPU),
                                                     batch_count);
     case HIP_R_8F_E5M2:
-        return norm_check_general<hipblaslt_bf8_ocp>(norm_type,
+        return norm_check_general<hipblaslt_bf8>(norm_type,
                                                      M,
                                                      N,
                                                      lda,
                                                      stride_a,
-                                                     static_cast<hipblaslt_bf8_ocp*>(hCPU),
-                                                     static_cast<hipblaslt_bf8_ocp*>(hGPU),
+                                                     static_cast<hipblaslt_bf8*>(hCPU),
+                                                     static_cast<hipblaslt_bf8*>(hGPU),
                                                      batch_count);
 #endif
     case HIP_R_32I:
@@ -545,9 +547,9 @@ bool norm_check(double norm_error)
     if(std::is_same<T, hipblaslt_bf8_fnuz>{})
         return norm_error < 0.25;
 #ifdef ROCM_USE_FLOAT8
-    if(std::is_same<T, hipblaslt_f8_ocp>{})
+    if(std::is_same<T, hipblaslt_f8>{})
         return norm_error < 0.125;
-    if(std::is_same<T, hipblaslt_bf8_ocp>{})
+    if(std::is_same<T, hipblaslt_bf8>{})
         return norm_error < 0.25;
 #endif
     return false;

@@ -104,10 +104,10 @@ struct perf_matmul<
         || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
         || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_bf8_fnuz>{})
 #ifdef ROCM_USE_FLOAT8
-        || (std::is_same<TiA, hipblaslt_f8_ocp>{} && std::is_same<TiB, hipblaslt_f8_ocp>{})
-        || (std::is_same<TiA, hipblaslt_f8_ocp>{} && std::is_same<TiB, hipblaslt_bf8_ocp>{})
-        || (std::is_same<TiA, hipblaslt_bf8_ocp>{} && std::is_same<TiB, hipblaslt_f8_ocp>{})
-        || (std::is_same<TiA, hipblaslt_bf8_ocp>{} && std::is_same<TiB, hipblaslt_bf8_ocp>{})
+        || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_f8>{})
+        || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_bf8>{})
+        || (std::is_same<TiA, hipblaslt_bf8>{} && std::is_same<TiB, hipblaslt_f8>{})
+        || (std::is_same<TiA, hipblaslt_bf8>{} && std::is_same<TiB, hipblaslt_bf8>{})
 #endif
         || (std::is_same<TiA, double>{} && std::is_same<TiB, double>{})
         || (std::is_same<TiA, hipblasLtInt8>{} && std::is_same<TiB, hipblasLtInt8>{})
@@ -823,7 +823,7 @@ try
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
 
-    auto scaleString2Enum = [](std::string &s) {
+    auto scaleString2Enum = [](std::string& s) {
         if(s == "s")
             return Arguments::ScalingFormat::Scalar;
         if(s == "v")
