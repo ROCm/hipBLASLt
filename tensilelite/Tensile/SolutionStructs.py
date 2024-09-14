@@ -1807,9 +1807,6 @@ class Solution(collections.abc.Mapping):
 
     # disable the following combinations for initial implementation
     # TODO: enable them
-    if not state["ScheduleIterAlg"] == 3:
-      reject(state, "DirectToVgpr is for ScheduleIterAlg==3 only (tentative)")
-      return False
     if state["LocalSplitU"] != 1:
       reject(state, "LSU should be 1 for DirectToVgpr (tentative)")
       return False
@@ -1898,9 +1895,9 @@ class Solution(collections.abc.Mapping):
       reject(state, "DirectToVgpr%c does not supports TLU=False GlobalReadVectorWidth%c(%u) != LocalReadVectorWidth(%u)"%(tc, tc, state["GlobalReadVectorWidth%c"%tc], state["LocalReadVectorWidth"]))
       return False
 
-    # Does not work with SIA<3 and PGR=2
-    if state["ScheduleIterAlg"] < 3 and state["PrefetchGlobalRead"] == 2:
-      reject(state, "DirectToVgpr%c does not supports ScheduleIterAlg < 3 and PrefetchGlobalRead==2"%(tc))
+    # Does not work with SIA<3
+    if state["ScheduleIterAlg"] < 3:
+      reject(state, "DirectToVgpr%c does not supports ScheduleIterAlg < 3"%(tc))
       return False
 
     # Does not work with InnerUnroll>1

@@ -440,7 +440,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(self.defineSgpr("ShadowLimitMetadata", 2, 2))
 
     module.add(self.defineSgpr("StaggerUIter", 1))  # stagger loop iterations, used for various iter counts in the code
-    isDTVAorB = (not (kernel["DirectToVgprA"] and kernel["DirectToVgprB"])) and (kernel["DirectToVgprA"] or kernel["DirectToVgprB"])
+    isDTVAorB = (kernel["DirectToVgprA"] != kernel["DirectToVgprB"]) #  only one of them is enabled
     if kernel["PrefetchGlobalRead"] == 2 and isDTVAorB:
       # PGR2 + DTVA or B (only 1 side), need separate StaggerUIter for DTV load
       module.add(self.defineSgpr("StaggerUIterDTV", 1))  # stagger loop iterations, used for various iter counts in the code
@@ -3872,7 +3872,7 @@ class KernelWriterAssembly(KernelWriter):
           imod.add(self.incrementSrd(tP["tpsMetadata"], sgpr(staggerTmp), sgpr(staggerTmp+1)))
 
     if tP["isB"]:
-      isDTVAorB = (not (kernel["DirectToVgprA"] and kernel["DirectToVgprB"])) and (kernel["DirectToVgprA"] or kernel["DirectToVgprB"])
+      isDTVAorB = (kernel["DirectToVgprA"] != kernel["DirectToVgprB"]) #  only one of them is enabled
       if kernel["PrefetchGlobalRead"] == 2 and isDTVAorB:
         # PGR2 + DTVA or B (only 1 side), need separate StaggerUIter for DTV load
         imod.add(SAddU32(dst=sgpr("StaggerUIterDTV"), src0=sgpr("StaggerUIter"), \
