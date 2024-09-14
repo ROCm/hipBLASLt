@@ -186,6 +186,7 @@ namespace Tensile
         {
             return kernelName;
         }
+
         virtual std::string name() const
         {
             return solutionName;

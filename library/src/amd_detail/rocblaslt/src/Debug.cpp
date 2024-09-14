@@ -38,6 +38,11 @@
 
 namespace rocblaslt
 {
+    bool Debug::preload() const
+    {
+        return m_preloadAllKernels;
+    }
+
     Debug::Debug()
         : m_value(DEBUG_SM)
         , m_value2(DEBUG_SM2)
@@ -51,6 +56,9 @@ namespace rocblaslt
                 printf("HIPBLASLT_ENABLE_MARKER is not defined. Please rebuild with -DHIPBLASLT_ENABLE_MARKER=ON\n");
 #endif
         }
+
+        const char *hipblaslt_preload = std::getenv("HIPBLASLT_PRELOAD_KERNELS");
+        m_preloadAllKernels = hipblaslt_preload && strtol(hipblaslt_preload, nullptr, 0) != 0;
     }
 
 } // namespace rocblaslt

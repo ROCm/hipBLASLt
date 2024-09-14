@@ -181,6 +181,7 @@ namespace
         constexpr auto            NUM_WORKITEMS{NumThreadsM * NumThreadsN};
         Tensile::KernelInvocation invocation{kernelName,
                                              "hipblasltTransform.hsaco",
+                                             false,
                                              {NUM_WORKITEMS, 1, 1},
                                              {numWg, 1, batchSize},
                                              {numWg * NUM_WORKITEMS, 1, batchSize},
