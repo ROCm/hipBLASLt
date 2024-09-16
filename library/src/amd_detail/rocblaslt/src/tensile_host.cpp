@@ -63,6 +63,8 @@
 #include <libgen.h>
 #include <link.h>
 #include <unistd.h>
+#include <regex>
+#include <string_view>
 
 #define HIPBLASLT_LIB_PATH "/opt/rocm/hipblaslt/lib"
 
@@ -103,6 +105,31 @@ namespace
         default:
             throw std::runtime_error("Unsupported alpha, beta type.");
         }
+    }
+
+    inline bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
+    {
+        if(!pattern.length())
+        {
+            return true;
+        }
+
+        constexpr char    prefix[]   = "gfx";
+        const std::size_t prefix_len = std::string_view(prefix).length();
+        gpu_arch.remove_prefix(prefix_len);
+        std::regex arch_regex(pattern.data());
+        return std::regex_search(gpu_arch.data(), arch_regex);
+    }
+
+    inline bool IsOCPSupported()
+    {
+        int             deviceId;
+        hipDeviceProp_t deviceProperties;
+        static_cast<void>(hipGetDevice(&deviceId));
+        static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+        if(gpu_arch_match(deviceProperties.gcnArchName, "12\\d{2}"))
+            return true;
+        return false;
     }
 
     inline Tensile::ActivationType getTensileActivationType(rocblaslt_epilogue epilogue)
@@ -201,11 +228,6 @@ namespace
 
     hipDataType tensile2HipType(Tensile::DataType type)
     {
-        int             deviceId;
-        hipDeviceProp_t deviceProperties;
-        static_cast<void>(hipGetDevice(&deviceId));
-        static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-
         switch(type)
         {
         case Tensile::DataType::Float:
@@ -218,13 +240,13 @@ namespace
             return HIP_R_16BF;
         case Tensile::DataType::Float8:
 #ifdef ROCM_USE_FLOAT8
-            if(gpu_arch_match(deviceProperties.gcnArchName, "12\\d{2}"))
+            if(IsOCPSupported())
                 return HIP_R_8F_E4M3;
 #endif
             return HIP_R_8F_E4M3_FNUZ;
         case Tensile::DataType::BFloat8:
 #ifdef ROCM_USE_FLOAT8
-            if(gpu_arch_match(deviceProperties.gcnArchName, "12\\d{2}"))
+            if(IsOCPSupported())
                 return HIP_R_8F_E5M2;
 #endif
             return HIP_R_8F_E5M2_FNUZ;
@@ -1395,7 +1417,6 @@ namespace
                 auto lib
                     = Tensile::LoadLibraryFile<Tensile::ContractionProblemGemm>(tensileLibPath);
 #endif
-                static_cast<void>(adapter.initializeLazyLoading(processor, path));
                 if(!lib)
                     std::cerr << "\nrocblaslt error: Could not load " << tensileLibPath
                               << std::endl;
@@ -1407,6 +1428,8 @@ namespace
                 }
                 return 0;
             }();
+
+            static_cast<void>(adapter.initializeLazyLoading(processor, path));
 
             if(!m_library && once != 0)
             {

@@ -998,7 +998,7 @@ namespace Tensile
             }
             else if(internalArgsSupport.version == 2)
             {
-                wgmxcc = param.wgmxcc() > 1 ? param.wgmxcc() : sizeMapping.workGroupMappingXCC;
+                wgmxcc = param.wgmxcc() > 0 ? param.wgmxcc() : sizeMapping.workGroupMappingXCC;
                 wgmxccg
                     = param.wgmxccg() != 0 ? param.wgmxccg() : sizeMapping.workGroupMappingXCCGroup;
                 if(wgmxcc > 1 && wgmxccg == -1)

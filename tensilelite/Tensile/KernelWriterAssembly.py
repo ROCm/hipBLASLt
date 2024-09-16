@@ -7461,7 +7461,7 @@ class KernelWriterAssembly(KernelWriter):
     storevw = self.LSUfullVw
     atomic = False # atomic is for GSU > 1
     beta = True
-    ss = StoreState(self, kernel, storevw, False, beta, atomic, self.LSUelements)
+    ss = StoreState(self, kernel, storevw, False, beta, atomic, self.LSUelements, dim=0)
     self.LSUelemCoord0, self.LSUelemCoord1 = ss.getStoreElementsInfoForBatch(kernel, self.LSUelements)
 
     with self.allocTmpSgpr(1) as tmpSgprInfo:
@@ -9504,7 +9504,7 @@ class KernelWriterAssembly(KernelWriter):
     # Calculate Vgprs for Write Batching
     ########################################
 
-    ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI])
+    ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], dim=factorDim)
 
     #print self.vgprPool.state()
     # Use VGPR up to next occupancy threshold:
@@ -10321,12 +10321,12 @@ class KernelWriterAssembly(KernelWriter):
       elif kernel["ProblemType"]["ComputeDataType"].isInt32():
         maskConst = 1
 
+    turnOffset = 0
     for i in range(turn):
       if i != 0:
-        module.add(VAddU32(dst=vgpr(offsetVgpr), src0=offset, src1=vgpr(offsetVgpr), comment="add subgroup offset"))
-        subGroupOffset[0] = subGroupOffset[0] + offset
+        turnOffset += offset
       bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvw
-      ds  = DSModifiers(offset=0)
+      ds  = DSModifiers(offset=(subGroupOffset[0] + turnOffset))
       dst = vgpr(offsetVgpr)
       for vi in range(gwvw):
         # Does not support hi/lo yet
@@ -10511,38 +10511,19 @@ class KernelWriterAssembly(KernelWriter):
 
     # Get all local stores
     storeModules = Module("Store")
-    dstOffset = 0
+    subGroupOffset = [0]
     if biasDataType:
-      subGroupOffset = [0]
       storeModules.add(self.addVectorLocalStore(kernel, "Bias", offsetVgpr, biasShiftOffset, biasDataType, gwvw, tmpVgpr1Res, biasDstVgpr, subGroupOffset, dim, comment="store bias"))
-      dstOffset = kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.bias.turn - subGroupOffset[0]
+      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.bias.turn
     if scaleAlphaDataType:
-      if dstOffset > 0:
-        storeModules.add(VAddU32(dst=vgpr(offsetVgpr), \
-                                src0=(dstOffset), \
-                                src1=vgpr(offsetVgpr), \
-                                comment="add lds offset"))
-      subGroupOffset = [0]
       storeModules.add(self.addVectorLocalStore(kernel, "ScaleAlphaVec", offsetVgpr, scaleAlphaShiftOffset, scaleAlphaDataType, gwvw, tmpVgpr1Res, scaleAlphaDstVgpr, subGroupOffset, dim, setToOne=True, comment="store scaleAlpha"))
-      dstOffset = kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleAlpha.turn - subGroupOffset[0]
+      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleAlpha.turn
     if scaleADataType:
-      if dstOffset > 0:
-        storeModules.add(VAddU32(dst=vgpr(offsetVgpr), \
-                                src0=(dstOffset), \
-                                src1=vgpr(offsetVgpr), \
-                                comment="add lds offset"))
-      subGroupOffset = [0]
       storeModules.add(self.addVectorLocalStore(kernel, "ScaleA", offsetVgpr, scaleAShiftOffset, scaleADataType, gwvw, tmpVgpr1Res, scaleADstVgpr, subGroupOffset, 0, setToOne=True, comment="store scaleA"))
-      dstOffset = kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleA.turn - subGroupOffset[0]
+      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleA.turn
     if scaleBDataType:
-      if dstOffset > 0:
-        storeModules.add(VAddU32(dst=vgpr(offsetVgpr), \
-                                src0=(dstOffset), \
-                                src1=vgpr(offsetVgpr), \
-                                comment="add lds offset"))
-      subGroupOffset = [0]
       storeModules.add(self.addVectorLocalStore(kernel, "ScaleB", offsetVgpr, scaleBShiftOffset, scaleBDataType, gwvw, tmpVgpr1Res, scaleBDstVgpr, subGroupOffset, 1, setToOne=True, comment="store scaleB"))
-      dstOffset = kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleB.turn - subGroupOffset[0]
+      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleB.turn
     # We move s_barrier before local load. Add barrier here to avoid race condition if lds offset starts from 0
     if kernel["LdsOffsetBias"] == 0:
       module.add(SBarrier(comment="wait for all global loads."))
