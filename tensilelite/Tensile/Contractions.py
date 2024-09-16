@@ -498,8 +498,8 @@ class ProblemPredicate(Properties.Predicate):
             value = globalParameters['MinKForGSU']
             rv += [cls('GlobalSplitUCheckMinK', value=[value, state["GlobalSplitU"]])]
 
-        if ('WorkGroupMappingXCC' in state) and ('WorkGroupMappingXCCGroup' in state) and (state['WorkGroupMappingXCCGroup'] == -1):
-            rv += [cls("WorkgroupMappingXCCCheck", value=state['WorkGroupMappingXCC'])]
+        if ('WorkGroupMappingXCC' in state) and ('WorkGroupMappingXCCGroup' in state):
+            rv += [cls("WorkgroupMappingXCCCheck", value=[state['WorkGroupMappingXCC'], state['WorkGroupMappingXCCGroup']])]
 
         return rv
 

@@ -2563,8 +2563,8 @@ namespace Tensile
                     HasIndex = false,
                     HasValue = true
                 };
-                int    value;
-                size_t cuCount;
+                std::array<int, 2> value;
+                size_t             cuCount;
 
                 WorkgroupMappingXCCCheck()
                 {
@@ -2574,7 +2574,7 @@ namespace Tensile
                     AMDGPU const*   pAMDGPU  = dynamic_cast<AMDGPU const*>(&hardware);
                     cuCount                  = pAMDGPU->computeUnitCount;
                 }
-                WorkgroupMappingXCCCheck(bool value)
+                WorkgroupMappingXCCCheck(std::array<int, 2> value)
                     : value(value)
                 {
                     auto pHardware = hip::GetCurrentDevice();
@@ -2591,14 +2591,22 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return cuCount % value == 0;
+                    size_t WGMXCCG = (value[1] == -1) ? cuCount : value[1];
+                    return WGMXCCG % value[0] == 0;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    return debugEvalCmp(
-                        problem, stream, "cuCount", cuCount, "%", "WGMXCC", value, "==", 0);
+                    return debugEvalCmp(problem,
+                                        stream,
+                                        "cuCount",
+                                        (value[1] == -1) ? cuCount : value[1],
+                                        "%",
+                                        "WGMXCC",
+                                        value[0],
+                                        "==",
+                                        0);
                 }
             };
         } // namespace Contraction

@@ -2152,9 +2152,6 @@ class Solution(collections.abc.Mapping):
 
     state["WorkGroupMappingXCC"] = abs(state["WorkGroupMappingXCC"])
 
-    if state["WorkGroupMappingXCCGroup"] != -1 and state["WorkGroupMappingXCCGroup"] % state["WorkGroupMappingXCC"] != 0:
-      reject(state, "WGMXCCG %d must be multiple of WGMXCC %d",state["WorkGroupMappingXCCGroup"],state["WorkGroupMappingXCC"])
-
     problemType = state["ProblemType"]
 
     for (tc,batchMask) in (('A', 0x1), ('B', 0x2)):
