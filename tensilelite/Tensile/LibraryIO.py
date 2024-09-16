@@ -290,8 +290,15 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
             for key, value in customConfig.items():
                 solutionState[key] = value
         solutionObject = Solution(solutionState)
-        if solutionObject["ProblemType"] != problemType:
-            printExit(f"ProblemType in library logic file {srcFile} doesn't match solution: {problemType} != {solutionObject['ProblemType']}")
+        solutionProblemType = solutionObject["ProblemType"]
+        if problemType != solutionProblemType:
+            # find the mismatched items in ProblemType
+            results = ""
+            solIdx = solutionObject["SolutionIndex"]
+            for item in problemType:
+                if problemType[item] != solutionProblemType[item]:
+                    results += f"\t{item}: {problemType[item]} != {solutionProblemType[item]}\n"
+            printExit(f"ProblemType in library logic file {srcFile} doesn't match solution(idx={solIdx}): \n{results}")
         return solutionObject
 
     solutions = [solutionStateToSolution(solutionState) for solutionState in data["Solutions"]]
