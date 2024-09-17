@@ -117,6 +117,8 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::F32XdlMathOpEqual>(),
                     Base::template Pair<Predicates::Contraction::SupportDeviceUserArguments>(),
                     Base::template Pair<Predicates::Contraction::WorkgroupMappingXCCCheck>(),
+                    Base::template Pair<Predicates::Contraction::SwizzleTensorA>(),
+                    Base::template Pair<Predicates::Contraction::SwizzleTensorB>()
                 });
 
                 auto gmap = Generic::GetSubclasses();
@@ -499,6 +501,18 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::F32XdlMathOpEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::F32XdlMathOpEqual, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::SwizzleTensorA, IO>
+            : public AutoMappingTraits<Predicates::Contraction::SwizzleTensorA, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::SwizzleTensorB, IO>
+            : public AutoMappingTraits<Predicates::Contraction::SwizzleTensorB, IO>
         {
         };
 
