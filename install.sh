@@ -312,27 +312,34 @@ install_msgpack_from_source( )
 
 install_blis()
 {
-    #Download prebuilt AMD multithreaded blis
-    if [[ ! -e "${build_dir}/deps/blis/lib/libblis.a" ]]; then
-      case "${ID}" in
-          centos|rhel|sles|opensuse-leap)
-              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
-              ;;
-          ubuntu)
-              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
-              ;;
-          *)
-              echo "Unsupported OS for this script"
-              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
-              ;;
-      esac
+    if [[ ! -e "/opt/AMD/aocl/aocl-linux-gcc-4.2.0/gcc/lib_ILP64/libblis-mt.a" ]] &&
+        [[ ! -e "/opt/AMD/aocl/aocl-linux-aocc-4.1.0/aocc/lib_ILP64/libblis-mt.a" ]] &&
+        [[ ! -e "/opt/AMD/aocl/aocl-linux-aocc-4.0/lib_ILP64/libblis-mt.a"  ]] &&
+        [[ ! -e "/usr/local/lib/libblis.a" ]]; then
+        pushd .
+        #Download prebuilt AMD multithreaded blis
+        if [[ ! -e "./blis/lib/libblis.a" ]]; then
+          case "${ID}" in
+              centos|rhel|sles|opensuse-leap)
+                  wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
+                  ;;
+              ubuntu)
+                  wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
+                  ;;
+              *)
+                  echo "Unsupported OS for this script"
+                  wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
+                  ;;
+          esac
 
-      tar -xvf blis.tar.gz
-      rm -rf blis/amd-blis-mt
-      mv amd-blis-mt blis
-      rm blis.tar.gz
-      cd blis/lib
-      ln -sf libblis-mt.a libblis.a
+          tar -xvf blis.tar.gz
+          rm -rf blis/amd-blis-mt
+          mv amd-blis-mt blis
+          rm blis.tar.gz
+          cd blis/lib
+          ln -sf libblis-mt.a libblis.a
+        fi
+        popd
     fi
 }
 
@@ -381,7 +388,7 @@ matrices_dir_install=
 gpu_architecture=all
 cpu_ref_lib=blis
 tensile_cov=
-tensile_threads=
+tensile_threads=32
 tensile_fork=
 tensile_merge_files=
 tensile_tag=
@@ -475,7 +482,7 @@ while true; do
             tensile_fork=${2}
             shift 2 ;;
         -j)
-            tensile_threads=${2}
+            tensile_threads=32
             shift 2;;
         -b|--branch)
             tensile_tag=${2}
@@ -709,7 +716,7 @@ pushd .
   fi
 
   if [[ -n "${tensile_threads}" ]]; then
-    cmake_common_options="${cmake_common_options} -DTensile_CPU_THREADS=${tensile_threads}"
+    cmake_common_options="${cmake_common_options} -DTensile_CPU_THREADS=32"
   fi
 
   if [[ -n "${tensile_fork}" ]]; then
