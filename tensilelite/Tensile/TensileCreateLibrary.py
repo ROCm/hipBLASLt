@@ -1384,8 +1384,11 @@ def TensileCreateLibrary():
   else:
     printExit("Unrecognized LogicFormat", args.LogicFormat)
 
+  def archMatch(arch: str, archs: list[str]):
+    return (arch in archs) or any(a.startswith(arch) for a in archs)
+
   def validLogicFile(p: Path):
-    return p.suffix == logicExtFormat and ("all" in archs or load_logic_gfx_arch(p) in archs)
+    return p.suffix == logicExtFormat and ("all" in archs or archMatch(load_logic_gfx_arch(p), archs))
 
   logicFiles = []
 
