@@ -381,7 +381,7 @@ matrices_dir_install=
 gpu_architecture=all
 cpu_ref_lib=blis
 tensile_cov=
-tensile_threads=
+tensile_threads=$(nproc)
 tensile_fork=
 tensile_merge_files=
 tensile_tag=
@@ -708,10 +708,6 @@ pushd .
       fi
   fi
 
-  if [[ -n "${tensile_threads}" ]]; then
-    cmake_common_options="${cmake_common_options} -DTensile_CPU_THREADS=${tensile_threads}"
-  fi
-
   if [[ -n "${tensile_fork}" ]]; then
     cmake_common_options="${cmake_common_options} -Dtensile_fork=${tensile_fork}"
   fi
@@ -733,8 +729,8 @@ pushd .
     tensile_opt="${tensile_opt} -DBUILD_WITH_TENSILE=OFF"
    else
     tensile_opt="${tensile_opt} -DTensile_LOGIC=${tensile_logic} -DTensile_CODE_OBJECT_VERSION=${tensile_cov}"
-    if [[ ${build_jobs} != $(nproc) ]]; then
-      tensile_opt="${tensile_opt} -DTensile_CPU_THREADS=${build_jobs}"
+    if [[ ${tensile_threads} != $(nproc) ]]; then
+      tensile_opt="${tensile_opt} -DTensile_CPU_THREADS=${tensile_threads}"
     fi
   fi
 
