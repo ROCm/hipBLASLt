@@ -26,6 +26,7 @@
 
 #include "DataInitialization.hpp"
 #include "Utility.hpp"
+#include "TensorDataManipulation.hpp"
 // #include "DataInitializationTyped.hpp"
 
 #include <Tensile/Utils.hpp>
@@ -1709,6 +1710,55 @@ namespace Tensile
                                        p.cpuInput.valid.get(),
                                        p.maxElements,
                                        hipMemcpyHostToDevice);
+                if(ptr == nullptr)
+                    std::__throw_runtime_error("error");
+            }
+        }
+
+        void DataInitialization::copySwizzledToGPUBuffer(ContractionProblemGemm const& problem)
+        {
+            for(size_t i = 0; i < m_vdata.size(); i++)
+            {
+                auto& desc = problem.tensors()[i];
+                auto  it   = m_vdata[i].pristine.find(desc.dataType());
+                if(it == m_vdata[i].pristine.end())
+                    continue;
+                auto& p = m_vdata[i].pristine[desc.dataType()];
+                if(p.gpuInput.valid.get() == nullptr || p.cpuInput.valid.get() == nullptr)
+                    continue;
+
+                bool needSwizzle = (problem.swizzleTensorA() && i == ContractionProblemGemm::TENSOR::A)
+                    || (problem.swizzleTensorB() && i == ContractionProblemGemm::TENSOR::B);
+
+                void *ptr{};
+                //FIXME: Not good, need to use format to specify the way for swizzling.
+                //TODO: Support more swizzling type, such as 32x32x8, currently we have 16x16x8 only.
+                if(needSwizzle)
+                {
+                    using Tensor = Tensor::Manipulation::Tensor;
+                    constexpr size_t MiM = 16;
+                    constexpr size_t MiK = 16;
+                    constexpr size_t MiKv = 4;
+                    constexpr size_t PackK = 2;
+                    auto unrolledSize = desc.sizes()[0];
+                    auto tiledSize = desc.sizes()[1];
+                    auto tmpTensor = Tensor::create<Half>({tiledSize, unrolledSize});
+                    memcpy(tmpTensor.as<void>(), p.cpuInput.valid.get(), tmpTensor.getNumBytes());
+                    tmpTensor.reshape({tiledSize / MiM, MiM, unrolledSize / (MiK * PackK), MiK / MiKv , MiKv * PackK});
+                    Tensor permuted = permute(tmpTensor, {0, 2, 3, 1, 4});
+                    ptr = copyInputBuffers(desc,
+                                           p.gpuInput.valid.get(),
+                                           permuted.as<void>(),
+                                           p.maxElements,
+                                           hipMemcpyHostToDevice);
+                } else {
+                    ptr = copyInputBuffers(desc,
+                                            p.gpuInput.valid.get(),
+                                            p.cpuInput.valid.get(),
+                                            p.maxElements,
+                                            hipMemcpyHostToDevice);
+                }
+
                 if(ptr == nullptr)
                     std::__throw_runtime_error("error");
             }

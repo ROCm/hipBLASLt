@@ -335,6 +335,8 @@ namespace Tensile
                         initializeCPUInputs(problem);
                     if(m_problemDependentData)
                         copyValidToGPUBuffer(problem);
+                    if(problem.swizzleTensorA() || problem.swizzleTensorB())
+                        copySwizzledToGPUBuffer(problem);
 
                     // gpu to gpu
                     copyInputs(m_gpuPtrs,
@@ -844,13 +846,15 @@ namespace Tensile
             virtual bool needMoreBenchmarkRuns() const override
             {
                 return false;
-            };
-            virtual void preBenchmarkRun() override{};
-            virtual void postBenchmarkRun() override{};
-            virtual void preProblem(ContractionProblem* const problem) override{};
-            virtual void postProblem() override{};
-            virtual void preSolution(ContractionSolution const& solution) override{};
-            virtual void postSolution() override{};
+            }
+            virtual void preBenchmarkRun() override{}
+            virtual void postBenchmarkRun() override{}
+            virtual void preProblem(ContractionProblem* const problem) override{}
+            virtual void postProblem() override{}
+            virtual void preSolution(ContractionSolution const& solution) override{
+
+            }
+            virtual void postSolution() override{}
             virtual bool needMoreRunsInSolution() const override
             {
                 return m_numRunsInSolution < m_numRunsPerSolution;
@@ -860,43 +864,43 @@ namespace Tensile
             {
                 return 0;
             };
-            virtual void setNumWarmupRuns(size_t count) override{};
-            virtual void preWarmup() override{};
-            virtual void postWarmup() override{};
+            virtual void setNumWarmupRuns(size_t count) override{}
+            virtual void preWarmup() override{}
+            virtual void postWarmup() override{}
             virtual void validateWarmups(std::shared_ptr<ProblemInputs> inputs,
                                          TimingEvents const&            startEvents,
                                          TimingEvents const&            stopEvents) override
             {
                 m_numRunsInSolution++;
-            };
+            }
 
             virtual size_t numSyncs() override
             {
                 return 0;
-            };
-            virtual void setNumSyncs(size_t count) override{};
-            virtual void preSyncs() override{};
-            virtual void postSyncs() override{};
+            }
+            virtual void setNumSyncs(size_t count) override{}
+            virtual void preSyncs() override{}
+            virtual void postSyncs() override{}
 
             virtual size_t numEnqueuesPerSync() override
             {
                 return 0;
-            };
-            virtual void setNumEnqueuesPerSync(size_t count) override{};
-            virtual void preEnqueues(hipStream_t const& stream) override{};
+            }
+            virtual void setNumEnqueuesPerSync(size_t count) override{}
+            virtual void preEnqueues(hipStream_t const& stream) override{}
             virtual void postEnqueues(TimingEvents const& startEvents,
                                       TimingEvents const& stopEvents,
-                                      hipStream_t const&  stream) override{};
+                                      hipStream_t const&  stream) override{}
             virtual void validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
                                           TimingEvents const&            startEvents,
-                                          TimingEvents const&            stopEvents) override{};
+                                          TimingEvents const&            stopEvents) override{}
 
-            virtual void finalizeReport() override{};
+            virtual void finalizeReport() override{}
 
             virtual int error() const override
             {
                 return 0;
-            };
+            }
 
         protected:
             // Memory input for class DataInitialization
@@ -948,6 +952,8 @@ namespace Tensile
             void allocNewGPUInputs();
 
             void copyValidToGPUBuffer(ContractionProblemGemm const& problem);
+
+            void copySwizzledToGPUBuffer(ContractionProblemGemm const& problem);
 
             void initializeGPUBatchedInputs(ContractionProblemGemm const& problem);
 

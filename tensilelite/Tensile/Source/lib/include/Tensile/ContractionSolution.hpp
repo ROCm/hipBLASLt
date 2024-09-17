@@ -504,6 +504,8 @@ namespace Tensile
             int                   sparse                     = 0;
             bool                  stochasticRounding         = false;
             bool                  supportDeviceUserArguments = false;
+            bool                  swizzleTensorA             = false;
+            bool                  swizzleTensorB             = false;
         };
 
         struct LinearModel
