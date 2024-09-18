@@ -91,19 +91,15 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
       elseif(EXISTS      "/opt/AMD/aocl/aocl-linux-aocc-4.1.0/aocc/lib_ILP64/libblis-mt.a" )
         set( BLAS_LIBRARY /opt/AMD/aocl/aocl-linux-aocc-4.1.0/aocc/lib_ILP64/libblis-mt.a )
         set( BLIS_INCLUDE_DIR /opt/AMD/aocl/aocl-linux-aocc-4.1.0/aocc/include_ILP64/ )
-        set( WARN_NOT_ILP64_PREFERRED true )
       elseif(EXISTS      "/opt/AMD/aocl/aocl-linux-aocc-4.0/lib_ILP64/libblis-mt.a" )
         set( BLAS_LIBRARY /opt/AMD/aocl/aocl-linux-aocc-4.0/lib_ILP64/libblis-mt.a )
         set( BLIS_INCLUDE_DIR /opt/AMD/aocl/aocl-linux-aocc-4.0/include_ILP64/ )
-        set( WARN_NOT_ILP64_PREFERRED true )
       elseif(EXISTS      "${BUILD_DIR}/deps/amd-blis/lib/ILP64/libblis-mt.a") # 4.0 and 4.1.0
         set( BLAS_LIBRARY ${BUILD_DIR}/deps/amd-blis/lib/ILP64/libblis-mt.a )
         set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/amd-blis/include/ILP64 )
-        set( WARN_NOT_ILP64_PREFERRED true )
       elseif(EXISTS      "${BUILD_DIR}/deps/blis/lib/libblis.a")
         set( BLAS_LIBRARY ${BUILD_DIR}/deps/blis/lib/libblis.a )
         set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/blis/include/blis )
-        set( WARN_NOT_ILP64_PREFERRED true )
       elseif(EXISTS      "/usr/local/lib/libblis.a")
         set( BLAS_LIBRARY /usr/local/lib/libblis.a )
         set( BLIS_INCLUDE_DIR /usr/local/include/blis )
@@ -120,10 +116,6 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
 
   # Linking lapack library requires fortran flags
   find_package( cblas REQUIRED CONFIG ) 
-
-  if ( WARN_NOT_ILP64_PREFERRED )
-    message( WARNING "Using ${BLAS_LIBRARY} as reference library, 64-bit tests may fail. Test suite should be run with --gtest_filter=-*stress*")
-  endif()
 
   # Find the package ROCmSMI
   if(NOT WIN32)
