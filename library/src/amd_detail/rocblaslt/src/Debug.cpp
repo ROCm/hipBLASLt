@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +24,33 @@
  *
  *******************************************************************************/
 
-#pragma once
-#include "handle.h"
-#ifndef LEGACY_HIPBLAS_DIRECT
-#include <hipblas-common/hipblas-common.h>
-#else
-#include <hipblas/hipblas.h>
-#endif
-#include <rocblaslt.h>
 #include <Debug.hpp>
-hipblasStatus_t hipErrorToHIPBLASStatus(hipError_t status);
 
-hipblasStatus_t RocBlasLtStatusToHIPStatus(rocblaslt_status_ status);
+#include <mutex>
+
+#ifndef DEBUG_SM
+#define DEBUG_SM 0
+#endif
+
+#ifndef DEBUG_SM2
+#define DEBUG_SM2 0
+#endif
+
+namespace rocblaslt
+{
+    Debug::Debug()
+        : m_value(DEBUG_SM)
+        , m_value2(DEBUG_SM2)
+    {
+        const char* hipblaslt_marker = std::getenv("HIPBLASLT_ENABLE_MARKER");
+        if(hipblaslt_marker)
+        {
+            m_printMarker = strtol(hipblaslt_marker, nullptr, 0) != 0;
+#ifndef HIPBLASLT_ENABLE_MARKER
+            if(m_printMarker)
+                printf("HIPBLASLT_ENABLE_MARKER is not defined. Please rebuild with -DHIPBLASLT_ENABLE_MARKER=ON\n");
+#endif
+        }
+    }
+
+} // namespace rocblaslt

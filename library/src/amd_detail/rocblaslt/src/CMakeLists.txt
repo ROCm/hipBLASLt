@@ -123,6 +123,7 @@ set(DL_LIB dl)
 
 # rocBLASLt source
 set(rocblaslt_source
+  src/amd_detail/rocblaslt/src/Debug.cpp
   src/amd_detail/rocblaslt/src/handle.cpp
   src/amd_detail/rocblaslt/src/status.cpp
   src/amd_detail/rocblaslt/src/rocblaslt_auxiliary.cpp

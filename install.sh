@@ -392,6 +392,8 @@ tensile_msgpack_backend=true
 update_cmake=true
 enable_gprof=false
 keep_build_tmp=false
+disable_hipblaslt_marker=false
+enable_tensile_marker=false
 
 
 rocm_path=/opt/rocm
@@ -406,7 +408,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,legacy_hipblas_direct --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -517,6 +519,12 @@ while true; do
         --legacy_hipblas_direct)
             legacy_hipblas_direct=true
             shift ;;
+        --disable-hipblaslt-marker)
+            disable_hipblaslt_marker=true
+            shift;;
+        --enable-tensile-marker)
+            enable_tensile_marker=true
+            shift;;
         --) shift ; break ;;
         *)  echo "Unexpected command line parameter received: '${1}'; aborting";
             exit 1
@@ -758,6 +766,14 @@ pushd .
 
   if [[ "${keep_build_tmp}" == true ]]; then
     tensile_opt="${tensile_opt} -DTensile_KEEP_BUILD_TMP=ON"
+  fi
+
+  if [[ "${disable_hipblaslt_marker}" == true ]]; then
+    tensile_opt="${tensile_opt} -DHIPBLASLT_ENABLE_MARKER=OFF"
+  fi
+
+  if [[ "${enable_tensile_marker}" == true ]]; then
+    tensile_opt="${tensile_opt} -DTensile_ENABLE_MARKER=ON"
   fi
 
   echo $cmake_common_options

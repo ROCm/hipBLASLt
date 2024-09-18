@@ -41,10 +41,6 @@
 #include <Tensile/Properties.hpp>
 #include <Tensile/Utils.hpp>
 
-// #ifdef ENABLE_ROCTX
-// #include <roctracer/roctx.h>
-// #endif
-
 namespace Tensile
 {
     /**

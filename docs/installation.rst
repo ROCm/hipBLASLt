@@ -146,7 +146,8 @@ Build library manually
 Dependencies for hipBLASLt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `hipBLAS-common <https://github.com/ROCm/hipBLAS-common>`_ header files are required to be installed on your system.
+1. The `hipBLAS-common <https://github.com/ROCm/hipBLAS-common>`_ header files are required to be installed on your system.
+2. Usually `roctx <https://github.com/ROCm/roctracer>`_ library is pre-installed, if not please install it on your system.
 
 Building hipBLASLt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

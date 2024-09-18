@@ -30,6 +30,16 @@ list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH_ENV_VALUE} /opt/rocm)
 
 project(Tensile)
 
+option(Tensile_ENABLE_MARKER "ENable roctx marker in Tensile" OFF)
+
+if(Tensile_ENABLE_MARKER)
+    find_library(rocTracer roctx64)
+    if(NOT rocTracer)
+        message(FATAL_ERROR "roctracer not found, but Tensile_ENABLE_MARKER is enabled")
+    endif()
+    add_definitions(-DTensile_ENABLE_MARKER)
+endif()
+
 set(TENSILE_USE_HIP      ON CACHE BOOL "Use the Hip runtime.")
 if(Tensile_LIBRARY_FORMAT MATCHES "msgpack")
     set(TENSILE_USE_MSGPACK  ON CACHE BOOL "Use message pack for parsing config files.")

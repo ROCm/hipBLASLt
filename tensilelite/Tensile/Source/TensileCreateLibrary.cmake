@@ -40,6 +40,7 @@ function(TensileCreateLibraryCmake
     Tensile_CPU_THREADS
     Tensile_SEPARATE_ARCHITECTURES
     Tensile_LAZY_LIBRARY_LOADING,
+    Tensile_ENABLE_MARKER,
     Tensile_BUILD_ID)
 
 # make Tensile_PACKAGE_LIBRARY and optional parameter
@@ -87,6 +88,10 @@ function(TensileCreateLibraryCmake
 
   if(${Tensile_LAZY_LIBRARY_LOADING})
     set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--lazy-library-loading")
+  endif()
+
+  if(Tensile_ENABLE_MARKER)
+    set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--enable-marker")
   endif()
 
   if(${Tensile_SHORT_FILE_NAMES})

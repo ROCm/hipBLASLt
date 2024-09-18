@@ -145,6 +145,10 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--lazy-library-loading")
   endif()
 
+  if(Tensile_ENABLE_MARKER)
+    set(Options ${Options} "--enable-marker")
+  endif()
+
   if(Tensile_KEEP_BUILD_TMP)
     set(Options ${Options} "--keep-build-tmp")
   endif()

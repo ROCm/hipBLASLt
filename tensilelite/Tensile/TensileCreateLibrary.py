@@ -1289,6 +1289,8 @@ def TensileCreateLibrary():
                          default=False, help="Separates TensileLibrary file by architecture")
   argParser.add_argument("--lazy-library-loading", dest="LazyLibraryLoading", action="store_true",
                          default=False, help="Loads Tensile libraries when needed instead of upfront.")
+  argParser.add_argument("--enable-marker", dest="EnableMarker", action="store_true",
+                         default=False, help="Enable marker in Tensile.")
   argParser.add_argument("--build-client", dest="BuildClient", action="store_true",
                          help="Build Tensile client")
   argParser.add_argument("--client-config", dest="ClientConfig", action="store_true",
@@ -1318,6 +1320,7 @@ def TensileCreateLibrary():
   arguments["Architecture"] = args.Architecture
   arguments["SeparateArchitectures"] = args.SeparateArchitectures
   arguments["LazyLibraryLoading"] = args.LazyLibraryLoading
+  arguments["EnableMarker"] = args.EnableMarker
   arguments["CxxCompiler"] = args.CxxCompiler
   if args.CmakeCxxCompiler:
     os.environ["CMAKE_CXX_COMPILER"] = args.CmakeCxxCompiler

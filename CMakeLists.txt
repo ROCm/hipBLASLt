@@ -95,6 +95,8 @@ option(USE_CUDA "Look for CUDA and use that as a backend if found" OFF)
 option(Tensile_MERGE_FILES "Tensile to merge kernels and solutions files?" ON)
 option(Tensile_SEPARATE_ARCHITECTURES "Tensile to use GPU architecture specific files?" ON)
 option(Tensile_LAZY_LIBRARY_LOADING "Tensile to load kernels on demand?" ON)
+# For roctx
+option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt" ON)
 
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
@@ -237,6 +239,15 @@ if( LEGACY_HIPBLAS_DIRECT )
   find_package( hipblas REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 else()
   find_package( hipblas-common REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+endif()
+
+if(HIPBLASLT_ENABLE_MARKER)
+  find_library(rocTracer roctx64)
+  if(NOT rocTracer)
+    message(FATAL_ERROR "roctracer not found, but HIPBLASLT_ENABLE_MARKER is enabled")
+  endif()
+  add_definitions(-DHIPBLASLT_ENABLE_MARKER)
+  rocm_package_add_dependencies(DEPENDS "roctracer >= 1.0.0")
 endif()
 
 # Setup version
