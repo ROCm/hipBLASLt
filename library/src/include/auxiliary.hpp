@@ -28,6 +28,36 @@
 
 #include <hipblaslt/hipblaslt.h>
 #include <iostream>
+#include <regex>
+#include <string_view>
+
+/*! \brief device matches pattern */
+inline
+bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
+{
+    if(!pattern.length())
+    {
+        return true;
+    }
+
+    constexpr char    prefix[]   = "gfx";
+    const std::size_t prefix_len = std::string_view(prefix).length();
+    gpu_arch.remove_prefix(prefix_len);
+    std::regex arch_regex(pattern.data());
+    return std::regex_search(gpu_arch.data(), arch_regex);
+}
+
+inline
+bool IsOCPSupported()
+{
+    int             deviceId;
+    hipDeviceProp_t deviceProperties;
+    static_cast<void>(hipGetDevice(&deviceId));
+    static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+    if(gpu_arch_match(deviceProperties.gcnArchName, "12\\d{2}"))
+        return true;
+    return false;
+}
 
 HIPBLASLT_EXPORT
 constexpr const char* hipblas_status_to_string(hipblasStatus_t status)
@@ -113,6 +143,12 @@ constexpr const char* hip_datatype_to_string(hipDataType type)
         return "f8_r";
     case HIP_R_8F_E5M2_FNUZ:
         return "bf8_r";
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        return "f8_r";
+    case HIP_R_8F_E5M2:
+        return "bf8_r";
+#endif
     default:
         return "non-supported type";
     }
@@ -147,13 +183,28 @@ constexpr const char* hipblas_computetype_to_string(hipblasComputeType_t type)
 HIPBLASLT_EXPORT
 constexpr hipDataType string_to_hip_datatype(const std::string& value)
 {
+    if (value == "f8_r")
+    {
+#ifdef ROCM_USE_FLOAT8
+	if (IsOCPSupported())
+            return HIP_R_8F_E4M3;
+#endif
+        return HIP_R_8F_E4M3_FNUZ;
+    }
+    else if (value == "bf8_r")
+    {
+#ifdef ROCM_USE_FLOAT8
+        if(IsOCPSupported())
+            return HIP_R_8F_E5M2;
+#endif
+        return HIP_R_8F_E5M2_FNUZ;
+    }
+
     return
         value == "f32_r" || value == "s" ? HIP_R_32F  :
         value == "f64_r" || value == "d" ? HIP_R_64F  :
         value == "f16_r" || value == "h" ? HIP_R_16F  :
         value == "bf16_r"                ? HIP_R_16BF  :
-        value == "f8_r"                ? HIP_R_8F_E4M3_FNUZ  :
-        value == "bf8_r"                ? HIP_R_8F_E5M2_FNUZ  :
         value == "i8_r" || value == "i8" ? HIP_R_8I  :
         value == "i32_r" || value == "i" ? HIP_R_32I  :
         HIPBLASLT_DATATYPE_INVALID;
@@ -278,6 +329,18 @@ __host__ __device__ inline bool hipblaslt_isnan(hipblaslt_bf8_fnuz arg)
 {
     return arg.is_nan();
 }
+
+#ifdef ROCM_USE_FLOAT8
+__host__ __device__ inline bool hipblaslt_isnan(hipblaslt_f8_ocp arg)
+{
+    return arg.is_nan();
+}
+
+__host__ __device__ inline bool hipblaslt_isnan(hipblaslt_bf8_ocp arg)
+{
+    return arg.is_nan();
+}
+#endif
 
 /*******************************************************************************
  * \brief  returns true if arg is Infinity

@@ -65,8 +65,10 @@ namespace Tensile
 
         SolutionAdapter::~SolutionAdapter()
         {
+            Debug::Instance().markerStart("UnloadCodeObjectFiles");
             for(auto module : m_modules)
                 HIP_CHECK_PRINT(hipModuleUnload(module));
+            Debug::Instance().markerStop();
         }
 
         std::string removeXnack(std::string coFilename)
@@ -81,6 +83,7 @@ namespace Tensile
 
         hipError_t SolutionAdapter::loadCodeObjectFile(std::string const& path)
         {
+            Debug::Instance().markerStart("loadCodeObjectFile", path);
             hipModule_t module;
 
             HIP_CHECK_RETURN(hipModuleLoad(&module, path.c_str()));
@@ -98,6 +101,7 @@ namespace Tensile
                 start        = (start == std::string::npos) ? 0 : start + 1;
                 m_loadedCOFiles.insert(removeXnack(std::string(path.begin() + start, path.end())));
             }
+            Debug::Instance().markerStop();
             return hipSuccess;
         }
 

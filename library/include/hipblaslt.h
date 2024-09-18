@@ -53,12 +53,25 @@
 #endif
 
 #include <memory>
+#include <regex>
 #include <vector>
 
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_complex.h>
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
+#include <hip/hip_version.h>
+
+#if HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR > 2 \
+    && HIP_VERSION_PATCH > 42130 //tmp before gfx94 use hip f8 header
+#define ROCM_USE_FLOAT8 1
+#else
+#undef ROCM_USE_FLOAT8
+#endif
+
+#if defined(__HIPCC__)
+#include <hip/hip_fp8.h>
+#endif
 
 #if defined(__HIP_PLATFORM_AMD__)
 #include "hipblaslt-types.h"
@@ -710,7 +723,8 @@ hipblasStatus_t hipblasLtMatmulPreferenceGetAttribute(hipblasLtMatmulPreference_
  *  This function retrieves the possible algorithms for the matrix multiply
  * operation hipblasLtMatmul() function with the given input matrices A, B and
  * C, and the output matrix D. The output is placed in heuristicResultsArray[]
- * in the order of increasing estimated compute time.
+ * in the order of increasing estimated compute time. Note that the wall duration
+ * increases if the requestedAlgoCount increases.
  *
  *  @param[in]
  *  handle                  Pointer to the allocated hipBLASLt handle for the

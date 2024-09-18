@@ -227,13 +227,14 @@ class StateValues:
   numStoreSgprNames: List[str]           = field(init=False) # For post-loop kernel args
   numStoreSgprNameSizes: List[int]       = field(init=False) # For post-loop kernel args
   numStoreSgprToLoad: int                = 0 # For post-loop kernel args
-  numStoreSgprNames2: List[str]           = field(init=False) # For post-loop kernel args
-  numStoreSgprNameSizes2: List[int]       = field(init=False) # For post-loop kernel args
-  numStoreSgprToLoad2: int                = 0 # For post-loop kernel args
+  numStoreSgprNames2: List[str]          = field(init=False) # For post-loop kernel args
+  numStoreSgprNameSizes2: List[int]      = field(init=False) # For post-loop kernel args
+  numStoreSgprToLoad2: int               = 0 # For post-loop kernel args
   numStoreSgprInst: int                  = 0 # For pose-loop kernel args
   numStoreSgprInstExt: int               = 0 # For pose-loop kernel args
   numSgprAddressBias: int                = 0
   numSgprAddressGSUSync: int             = 0
+  numSgprStreamK: int                    = 0
   BiasType: int                          = 0
   BiasStride: int                        = 0
   FactorDim: int                         = 0
@@ -326,6 +327,7 @@ class StateVgprs:
 @dataclass
 class CodeModules:
   accVgprRead: Optional[Module]               = None
+  accVgprWrite: Optional[Module]              = None
   mulAlphaMultipleBuffer: Optional[Module]    = None
   mulAlphaOther: Optional[Module]             = None
   localWriteA: Optional[Module]               = None
@@ -623,7 +625,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # interleave pack code
       # BF16 or FP16: each packCode is for one 32-bit reg,  1 packing inst: half-to-single x1
       # INT8        : each packCode is for one 32-bit regs, 3 packing inst: byte-to-half x2 + half-to-single x1
-      if self.states.archCaps["HasEccHalf"]:
+      if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
         instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
       else:
         instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
@@ -679,7 +681,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           packAIdx += instPerPack if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
           packBIdx += instPerPack if i % kernel["MIWaveTileA"] == 0 else 0
           # blockWidth < 1, means 0.5 or 0.25 (BF,H,Int8)
-          if self.states.archCaps["HasEccHalf"]:
+          if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
             packAIdx = packAIdx if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"] else 0
             packBIdx = packBIdx if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"] else 0
           else:
@@ -794,7 +796,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # BF16 or FP16: each packCode is for one 32-bit reg,  1 packing inst: half-to-single x1
       # INT8        : each packCode is for one 32-bit regs, 3 packing inst: byte-to-half x2 + half-to-single x1
       ####
-      if self.states.archCaps["HasEccHalf"]:
+      if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
         instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
       else:
         instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
@@ -1165,7 +1167,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             else:
               packMIdx += instPerPackM if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
           # blockWidth < 1, means 0.5 or 0.25 (BF,H,Int8)
-          if self.states.archCaps["HasEccHalf"]:
+          if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
             packAIdx = packAIdx if tPA["bpe"] < 4 and (not kernel["UnrollMajorLDSA"] or kernel["ConvertAfterDS"]) else 0
             packBIdx = packBIdx if tPB["bpe"] < 4 and (not kernel["UnrollMajorLDSB"] or kernel["ConvertAfterDS"]) else 0
           else:
@@ -1347,7 +1349,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # work-group assignments
     module.addComment1("global read addresses: work-group")
     if not forceNoTileCode:
-      module.add(self.graWorkGroup(kernel))
+      module.add(self.graWorkGroup(kernel, tensorParametersA, tensorParametersB))
 
     self.dontAppendCode = forceNoTileCode
 
@@ -1357,6 +1359,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ProblemType"]["Sparse"] == 2:
       tPM = tensorParametersB["tpsMetadata"]
       tPMRef = tensorParametersB
+
+    if kernel["StreamK"] != 0:
+      module.add(self.localReadAddresses(kernel, tensorParametersA, tensorParametersB, tPM))
+      module.add(self.localWriteAddresses(kernel, tensorParametersA, tensorParametersB, tPM))
 
     # tile assignments
     module.addComment1("global read addresses: tile offset assignment a")
@@ -1465,43 +1471,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.addComment1("global read addresses: addresses b")
       module.add(self.graAddresses(kernel, tensorParametersB))
 
-    # increments
-    def graIncrementsAB():
-      module.addComment1("global read addresses: increments a")
-      for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-        module.add(self.graIncrements(kernel, i, tensorParametersA))
-      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-        module.addComment1("global read addresses: increments metadata")
-        for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-          module.add(self.graIncrements(kernel, i, tPM))
-      module.addComment1("global read addresses: increments b")
-      for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-        module.add(self.graIncrements(kernel, i, tensorParametersB))
-
-    addBranch = False
-    for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-      if i != self.states.unrollIdx:
-        addBranch = True
-        break
-    if addBranch:
-      gsuBackup   = kernel["GlobalSplitU"]
-      gsuLabel    = Label(label=self.labels.getNameInc("GSU"), comment="")
-      gsuLabelEnd = Label(label=self.labels.getNameInc("GSU_End"), comment="")
-      with self.allocTmpSgpr(1) as tmpSgprGSU:
-        module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-        module.add(SCmpEQU32(src0=sgpr(tmpSgprGSU.idx), src1=1, comment="GSU == 1 ?"))
-      module.add(SCBranchSCC1(labelName=gsuLabel.getLabelName(), comment="branch if GSU == 1"))
-      module.addComment1("global read addresses: increments a")
-      kernel["GlobalSplitU"] = 2
-    graIncrementsAB()
-    if addBranch:
-      module.add(SBranch(gsuLabelEnd.getLabelName()))
-      module.add(gsuLabel)
-      kernel["GlobalSplitU"] = 1
-      graIncrementsAB()
-      kernel["GlobalSplitU"] = gsuBackup
-      module.add(gsuLabelEnd)
-
+    # Add increment code
+    gsuComponent = Component.GSU.find(self)
+    module.add(gsuComponent.setupNewTile(self, kernel, tensorParametersA, tensorParametersB, tPM))
 
     self.dontAppendCode = self.dontAppendCode or forceNoTileCode
 
@@ -1551,7 +1523,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
 
     if self.do["executeToInitEnd"]:
-      module.add(self.functionEnd(kernel, False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     ####################################
     # prefetch: unrolled loop prefix
@@ -1793,7 +1765,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.noLoadLoopBody(kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast, dsWriteBA=dsWriteBA))
 
     if self.do["executeToLoopEnd"] and isOptNLL:
-      module.add(self.functionEnd(kernel, False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
     module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL, isNotLast=dsWriteBA))
@@ -2135,10 +2107,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(Label("ASM_Start", "Main body of the asm kernel"))
     module.add(self.defineAndResources(kernel, tensorParametersA, tensorParametersB, tPM))
 
+    # Initialize stream-k loop
+    skComponent = Component.StreamK.find(self)
+    module.add(skComponent.preLoop(self, kernel))
+    # Open persistent loop
+    loopComponent = Component.PersistentLoop.find(self)
+    module.add(loopComponent.openPersistentLoop(self, kernel))
+        
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
     if self.do["executeToPrefetchEnd"]:
-      module.add(self.functionEnd(kernel, False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     pack = [ Module() for i in range (self.states.numVgprBuffer) ]
     self.preLoopLocalWriteCode = None
@@ -2157,8 +2136,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # These cases loop back and run the prefetch loop again
       # we need an extra barrier to ensure that the ds_reads (either for SR or MFMA) from previous iteration
       # have finished before we generate the prefetch for the next summation index.
-      if self.states.actualSummationLoops>1:
-        module.add(SBarrier())
+      if kernel["StreamK"] > 0 or self.states.actualSummationLoops>1:
+        module.add(SBarrier(comment="For stream-k / persistent loop"))
 
       # local write
       self.preLoopLocalWriteCode = self.preLoopLocalWriteDo(kernel, tensorParametersA, tensorParametersB)
@@ -2288,47 +2267,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # execute the NLL inside each unroll iteration not just once at the end.
     if kernel["PrefetchGlobalRead"]:
       if not kernel["SuppressNoLoadLoop"]:
-        gsuLabel = Label(label=self.labels.getNameInc("GSU"), comment="")
-        with self.allocTmpSgpr(1) as tmpSgprGSU:
-          module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-          module.add(SCmpEQU32(src0=sgpr(tmpSgprGSU.idx), src1=1, comment="GSU == 1 ?"))
-        noLoadLoopModules = None
-        acclen = 0
-        gsuBackup          = kernel["GlobalSplitU"]
-        gsuAccumBackup     = kernel["_GlobalAccumulation"]
-        bpeCexternalBackup = self.states.bpeCexternal
-        kernel["GlobalSplitU"] = 1
-        kernel["_GlobalAccumulation"] = None
-        self.states.bpeCexternal = self.states.bpeCexternalGSU1
-        if kernel["KernelLanguage"] == "Assembly" and kernel["OptNoLoadLoop"] and \
-           kernel["BufferLoad"] and kernel["BufferStore"] and self.states.doShadowInit and \
-           kernel["LocalSplitU"]==1 and \
-           self.states.actualSummationLoops==1:
-
-          # two different noLoadLoops:
-          # 1. OptNLL & PAP global-read interleaved (only for PAP=ON)
-          # (2. OptNLL : No PAP global-read (For PAP=OFF, or PAP=ON but the last tile))
-          #  -> this is unified with 1. global-read is invalidated at the last tile.
-          # 3. OrdinaryNLL (Not Opt.)
-          self.saveLocalPointers(kernel, tensorParametersA, tensorParametersB)
-          # deepCopy packCode for OptNLL noLoadLoop
-          deepCopyPack = fastdeepcopy(pack)
-          noLoadLoopModules = self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=True, isNGLL=False, pack=deepCopyPack)
-          acclen = noLoadLoopModules.countType(Instruction)
-          self.restoreLocalPointers(kernel, tensorParametersA, tensorParametersB)
-        kernel["GlobalSplitU"] = gsuBackup
-        kernel["_GlobalAccumulation"] = gsuAccumBackup
-        self.states.bpeCexternal = bpeCexternalBackup
-
-        if acclen > 16384:
-          with self.allocTmpSgpr(3) as tmpSgprInfo:
-            module.add(self.longBranchScc0(gsuLabel, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="branch if GSU != 1"))
-        else:
-          module.add(SCBranchSCC0(labelName=gsuLabel.getLabelName(), comment="branch if GSU != 1"))
-
-        if noLoadLoopModules != None:
-          module.add(noLoadLoopModules)
-        module.add(gsuLabel)
+        gsuComponent = Component.GSU.find(self)
+        module.add(gsuComponent.noLoadLoop(self, kernel, tensorParametersA, tensorParametersB, pack))
         module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=False, pack=pack))
 
     if self.states.actualSummationLoops>1:
@@ -2507,7 +2447,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
                         (self.states.lastValuAB, self.states.lastVgprForReads))
 
     if self.do["executeToLoopEnd"]:
-      module.add(self.functionEnd(kernel, False))
+      module.add(self.functionEnd(kernel, addLabel=False))
 
     # extra summation loops: global increment and close
     for i in reversed(range(self.states.otherSummationLoops)):
@@ -2565,7 +2505,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.addComment1("LocalSplitU: global write")
       module.add(self.localSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
 
-
     else:
       ####################################
       # NOT LocalSplitU
@@ -2580,7 +2519,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.notLocalSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
 
     # function suffix
-    module.add(self.functionEnd(kernel, True))
+    module.add(self.functionEnd(kernel, addLabel=True))
     module.add(self.functionSuffix(kernel))
 
     # Tensile pass
@@ -2615,8 +2554,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     version = tuple(kernel["ISA"])
     if self.ti == None:
       self.ti = TensileInstructions()
-    if not self.ti.isInit():
-      self.ti.init(version, globalParameters["AssemblerPath"])
+    self.ti.init(version, globalParameters["AssemblerPath"])
     self.ti.setKernelInfo(version, kernel["WavefrontSize"])
 
     self.consts = ConstValues()
@@ -2980,8 +2918,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.bpeCinternal = int(self.states.bpr * kernel["ProblemType"]["ComputeDataType"].numRegisters())
 
     self.states.bpeCexternalGSU1 = int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
-    self.states.bpeCexternal = self.states.bpeCinternal if kernel["_GlobalAccumulation"] else \
-      self.states.bpeCexternalGSU1
+    self.states.bpeCexternal = self.states.bpeCexternalGSU1
+    if kernel["_GlobalAccumulation"] and kernel["_GlobalAccumulation"] != 'PartialsBuffer':
+      self.states.bpeCexternal = self.states.bpeCinternal
+      
 
     # special case for wmma h and b
     if (kernel["EnableMatrixInstruction"]
@@ -3182,7 +3122,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         kernel["GlobalReadVectorWidthA"] * bpeMax) / (float)(self.states.bpr))
       numVgprG2Local = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
         kernel["GlobalReadVectorWidthA"] * tensorParametersA["bpe"]) / (float)(self.states.bpr))
-      if self.states.archCaps["HasEccHalf"]:
+      if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
         tpA      = self.states.bpr if bpeMax * vwa < self.states.bpr else bpeMax * vwa
         tpALocal = self.states.bpr if tensorParametersA["bpe"] * vwa < self.states.bpr else tensorParametersA["bpe"] * vwa
         self.states.a.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
@@ -3205,7 +3145,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         kernel["GlobalReadVectorWidthB"] * bpeMax) / (float)(self.states.bpr))
       numVgprG2Local = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
         kernel["GlobalReadVectorWidthB"] * tensorParametersB["bpe"]) / (float)(self.states.bpr))
-      if self.states.archCaps["HasEccHalf"]:
+      if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
         tpB      = self.states.bpr if bpeMax * vwb < self.states.bpr else bpeMax * vwb
         tpBLocal = self.states.bpr if tensorParametersB["bpe"] * vwb < self.states.bpr else tensorParametersB["bpe"] * vwb
         self.states.b.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
@@ -3568,6 +3508,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     numSgprAddressC = self.states.rpga # til end
     numSgprAddressA = self.states.rpga # til read offsets
     numSgprAddressB = self.states.rpga # til read offsets
+    numSgprAddressWS = self.states.rpga
+    numSgprAddressFlags = self.states.rpga
 
     numSgprAddressMetadata = self.states.rpga if kernel["ProblemType"]["Sparse"] else 0
 
@@ -3638,9 +3580,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.db["EnableAsserts"]:
       self.defineSgpr("SaveExecMask", 2, 2)
 
-    self.defineSgpr("GSUSumIdx", 2, 2)
-    self.defineSgpr("GSULog2BpeC", 1)
-    self.defineSgpr("GSULog2BpeD", 1)
+    if kernel["GlobalSplitU"] > 0:
+      self.defineSgpr("GSUSumIdx", 2, 2)
+      self.defineSgpr("GSULog2BpeC", 1)
+      self.defineSgpr("GSULog2BpeD", 1)
     self.defineSgpr("StaggerU", 1)
     self.defineSgpr("WGM", 1)
 
@@ -3723,13 +3666,18 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("AddressB", numSgprAddressB)
     if kernel["ProblemType"]["Sparse"]:
       self.defineSgpr("AddressMetadata", numSgprAddressMetadata)
+    if kernel["StreamK"] > 0 and kernel["StreamKAtomic"] == 0:
+      self.defineSgpr("AddressWS", numSgprAddressWS)
+      self.defineSgpr("AddressFlags", numSgprAddressFlags)
+      self.states.numSgprStreamK += numSgprAddressWS + numSgprAddressFlags
+    
     #asm input interface depen
     self.defineSgpr("StridesD", self.states.d.numSgprStrides)
     self.defineSgpr("StridesC", self.states.c.numSgprStrides)
     self.defineSgpr("StridesA", self.states.a.numSgprStrides)
     self.defineSgpr("StridesB", self.states.b.numSgprStrides)
     if kernel["ProblemType"]["Sparse"]:
-        self.defineSgpr("StridesMetadata", self.states.m.numSgprStrides)
+      self.defineSgpr("StridesMetadata", self.states.m.numSgprStrides)
 
     # for packed batches without stride restrictions need to do something different here
     assert sorted(kernel["PackedC0IdxChars"]+kernel["PackedC1IdxChars"]) == \
@@ -3751,16 +3699,46 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
       self.states.numSgprBeta = numSgprBeta
 
-    self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
-
     if GSUAMBSK:
+      self.defineSgpr("AddressTD", numSgprAddressD, align=2)
+      self.states.numSgprAddressGSUSync += numSgprAddressD
+      self.defineSgpr("Synchronizer", 2, align=2)
+      self.states.numSgprAddressGSUSync += 2
       self.defineSgpr("GSUSync", 1)
       self.states.numSgprAddressGSUSync += 1
-      self.defineSgpr("AddressTD", numSgprAddressD)
-      self.states.numSgprAddressGSUSync += numSgprAddressD
-      self.defineSgpr("Synchronizer", 2)
-      self.states.numSgprAddressGSUSync += 2
 
+    if kernel["StreamK"]:
+      # StreamK args
+      self.defineSgpr("MagicNumberProblemNumGroupTiles0", 1) # Magic number to use for division
+      self.defineSgpr("MagicShiftProblemNumGroupTiles0", 1) # Magic shift/abit to use for division alg 2
+      self.defineSgpr("ItersPerTile", 1)
+      self.defineSgpr("MagicNumberItersPerTile", 1)
+      self.defineSgpr("MagicShiftItersPerTile", 1)
+      self.defineSgpr("MagicNumProblemNumGroupTiles0By1", 1)  # for PKAB, use for Magic Div Alg 2 by (nwg0*nwg1)
+      self.defineSgpr("MagicShiftProblemNumGroupTiles0By1", 1)  # for PKAB, use for Magic Div Alg 2 by (nwg0*nwg1)
+      self.defineSgpr("TotalIters", 1)
+      self.defineSgpr("SKItersPerWG", 1)
+      self.states.numSgprStreamK += 9
+      if kernel["StreamK"] >= 2: # Two-tile SK
+        self.defineSgpr("skGrid", 1)
+        self.defineSgpr("skTiles", 1)
+        self.defineSgpr("skExtraIters", 1)
+        # self.defineSgpr("dpTilesPerWG", 1, kernarg=True)
+        self.states.numSgprStreamK += 3
+
+    if kernel["GlobalSplitU"] > 0:
+      self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
+
+    if kernel["StreamK"]:
+      # StreamK vars
+      self.defineSgpr("StreamKIdx", 1)
+      self.defineSgpr("StreamKIter", 1)
+      self.defineSgpr("StreamKIterEnd", 1)
+      self.defineSgpr("StreamKLocalStart", 1)
+      self.defineSgpr("StreamKLocalEnd", 1)
+      if kernel["StreamKAtomic"] == 0:
+        self.defineSgpr("SrdWS", 4, 4)
+    
     #------------------------
     # Registers defined below this point are not available in the post-loop
     # Post-loop is after tail loop exits, ie the store code.
@@ -3770,14 +3748,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     for key, _ in self.sgprs.items():
       self.states.nonPostLoopSgpr.append(key)
     # Manually remove some additional unused sgpr
-    self.states.nonPostLoopSgpr.remove("WGM")
     for i in range(kernel["ProblemType"]["NumIndicesSummation"]):
       self.states.nonPostLoopSgpr.remove(self.loopCounterName(kernel,i))
     self.states.nonPostLoopSgpr.remove("OrigLoopCounter")
-    self.states.nonPostLoopSgpr.remove("AddressA")
-    self.states.nonPostLoopSgpr.remove("AddressB")
-    self.states.nonPostLoopSgpr.remove("StridesA")
-    self.states.nonPostLoopSgpr.remove("StridesB")
+
+    if not kernel["StreamK"]:
+      # Persistent loop requires arguments to remain for next tile
+      self.states.nonPostLoopSgpr.remove("WGM")
+      self.states.nonPostLoopSgpr.remove("AddressA")
+      self.states.nonPostLoopSgpr.remove("AddressB")
+      self.states.nonPostLoopSgpr.remove("StridesA")
+      self.states.nonPostLoopSgpr.remove("StridesB")
 
     self.states.preloadScaleA = False
     self.states.preloadScaleB = False
@@ -3797,6 +3778,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAlpha + numSgprAddressMetadata + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + \
       self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + self.states.b.numSgprStrides + self.states.m.numSgprStrides + \
+      self.states.numSgprStreamK + \
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2
     # Get kernel argument end here
     ###################################
@@ -4025,6 +4007,20 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   @abc.abstractmethod
   def functionSignature(self):
+    return ""
+
+  ##############################################################################
+  # Local Read Addresses
+  ##############################################################################
+  @abc.abstractmethod
+  def localReadAddresses(self, kernel, tPA, tPB, tPM):
+    return ""
+
+  ##############################################################################
+  # Local Write Addresses
+  ##############################################################################
+  @abc.abstractmethod
+  def localWriteAddresses(self, kernel, tPA, tPB, tPM):
     return ""
 
   ##############################################################################

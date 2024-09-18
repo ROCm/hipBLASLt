@@ -115,13 +115,13 @@ public:
                  hipblasComputeType_t          type_compute,
                  hipblaslt_ext::GemmEpilogueV2 epilogue)
     {
-        this->m                    = m;
-        this->n                    = n;
-        this->k                    = k;
-        this->batch                = batch;
-        this->alpha                = alpha;
-        this->beta                 = beta;
-        this->epilogue             = epilogue;
+        this->m        = m;
+        this->n        = n;
+        this->k        = k;
+        this->batch    = batch;
+        this->alpha    = alpha;
+        this->beta     = beta;
+        this->epilogue = epilogue;
 
         this->problem.setOpA(op_a);
         this->problem.setOpB(op_b);
@@ -187,6 +187,10 @@ int32_t type2Size(hipDataType type)
     {
     case hipDataType::HIP_R_8F_E4M3_FNUZ:
     case hipDataType::HIP_R_8F_E5M2_FNUZ:
+#ifdef ROCM_USE_FLOAT8
+    case hipDataType::HIP_R_8F_E4M3:
+    case hipDataType::HIP_R_8F_E5M2:
+#endif
         return sizeof(float) / 4;
     case hipDataType::HIP_R_32F:
         return sizeof(float);
@@ -208,6 +212,14 @@ void initData(hipDataType type, void* data, int m, int n, int lda, int stride, i
             (hipblaslt_f8_fnuz*)data, m, n, lda, stride, batch_count);
     }
     break;
+#ifdef ROCM_USE_FLOAT8
+    case hipDataType::HIP_R_8F_E4M3:
+    {
+        hipblaslt_init_cos<hipblaslt_f8_ocp>(
+            (hipblaslt_f8_ocp*)data, m, n, lda, stride, batch_count);
+    }
+    break;
+#endif
     case hipDataType::HIP_R_16F:
     {
         hipblaslt_init_cos<hipblasLtHalf>((hipblasLtHalf*)data, m, n, lda, stride, batch_count);
@@ -248,7 +260,7 @@ public:
     uint32_t rotating           = 0; // Size in MB
     uint32_t cold_iters         = 1000;
     uint32_t iters              = 10;
-    int64_t  max_workspace_size = 32 * 1024 * 1024;
+    int64_t  max_workspace_size = 128 * 1024 * 1024;
     bool     graph_mode         = false;
 };
 
@@ -444,7 +456,8 @@ int main(int argc, char** argv)
         initNoCopy(&l.c, l.d_c, l.m, l.n, l.batch, l.problem.getTypeC(), block_count);
         initNoCopy(&l.d, l.d_d, l.m, l.n, l.batch, l.problem.getTypeD(), block_count);
         if(l.is_using_bias)
-            initAndCopy(&l.bias, l.d_bias, 1, 1, l.batch, l.epilogue.getBiasDataType(), block_count);
+            initAndCopy(
+                &l.bias, l.d_bias, 1, 1, l.batch, l.epilogue.getBiasDataType(), block_count);
         for(int b = 0; b < block_count; b++)
         {
             l.gemms->push_back(hipblaslt_ext::Gemm(handle,

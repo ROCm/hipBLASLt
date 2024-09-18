@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include "datatype_interface.hpp"
 #include "hipblaslt_datatype2string.hpp"
 #include "hipblaslt_math.hpp"
 #include "hipblaslt_ostream.hpp"
@@ -34,16 +35,12 @@
 #include <istream>
 #include <map>
 #include <ostream>
-#include <string_view>
 #include <tuple>
 
 #define HIPBLASLT_MAX_REQUESTED_SOLUTION_NUM 65536
 
 // Predeclare enumerator
 enum hipblaslt_argument : int;
-
-/*! \brief device matches pattern */
-bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern);
 
 /***************************************************************************
  *! \brief Class used to parse command arguments in both client & gtest    *
@@ -140,8 +137,8 @@ struct Arguments
     hipDataType           bias_type;
     hipblaslt_bias_source bias_source;
     bool                  bias_vector;
-    ScalingFormat           scaleA;
-    ScalingFormat           scaleB;
+    ScalingFormat         scaleA;
+    ScalingFormat         scaleB;
     bool                  scaleC;
     bool                  scaleD;
     bool                  scaleE;
@@ -332,6 +329,171 @@ private:
         return T(r);
     }
 };
+
+inline bool alpha_isnan_type(const Arguments& arg, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        return arg.alpha_isnan<float>();
+    case HIP_R_64F:
+        return arg.alpha_isnan<double>();
+    case HIP_R_16F:
+        return arg.alpha_isnan<hipblasLtHalf>();
+    case HIP_R_32I:
+        return arg.alpha_isnan<int32_t>();
+    default:
+        hipblaslt_cerr << "Error type in alpha_isnan_type()" << std::endl;
+        return arg.alpha_isnan<float>();
+    }
+}
+
+inline bool beta_isnan_type(const Arguments& arg, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        return arg.beta_isnan<float>();
+    case HIP_R_64F:
+        return arg.beta_isnan<double>();
+    case HIP_R_16F:
+        return arg.beta_isnan<hipblasLtHalf>();
+    case HIP_R_32I:
+        return arg.beta_isnan<int32_t>();
+    default:
+        hipblaslt_cerr << "Error type in beta_isnan_type()" << std::endl;
+        return arg.beta_isnan<float>();
+    }
+}
+
+inline void set_alpha_type(computeTypeInterface& h_alpha, const Arguments& arg, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        h_alpha.f32 = arg.get_alpha<float>();
+        return;
+    case HIP_R_64F:
+        h_alpha.f64 = arg.get_alpha<double>();
+        return;
+    case HIP_R_16F:
+        h_alpha.f16 = arg.get_alpha<hipblasLtHalf>();
+        return;
+    case HIP_R_32I:
+        h_alpha.i32 = arg.get_alpha<int32_t>();
+        return;
+    default:
+        hipblaslt_cerr << "Error type in set_alpha_type()" << std::endl;
+        return;
+    }
+}
+
+inline void set_beta_type(computeTypeInterface& h_beta, const Arguments& arg, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        h_beta.f32 = arg.get_beta<float>();
+        return;
+    case HIP_R_64F:
+        h_beta.f64 = arg.get_beta<double>();
+        return;
+    case HIP_R_16F:
+        h_beta.f16 = arg.get_beta<hipblasLtHalf>();
+        return;
+    case HIP_R_32I:
+        h_beta.i32 = arg.get_beta<int32_t>();
+        return;
+    default:
+        hipblaslt_cerr << "Error type in set_beta_type()" << std::endl;
+        return;
+    }
+}
+
+inline void set_computeInterface(computeTypeInterface& src, void* ptr, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        src.f32 = *(float*)ptr;
+        return;
+    case HIP_R_64F:
+        src.f64 = *(double*)ptr;
+        return;
+    case HIP_R_16F:
+        src.f16 = *(hipblasLtHalf*)ptr;
+        return;
+    case HIP_R_32I:
+        src.i32 = *(int32_t*)ptr;
+        return;
+    default:
+        hipblaslt_cerr << "Error type in set_computeInterface()" << std::endl;
+        return;
+    }
+}
+
+inline void set_computeInterface(computeTypeInterface& src, double value, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        src.f32 = static_cast<float>(value);
+        return;
+    case HIP_R_64F:
+        src.f64 = static_cast<double>(value);
+        return;
+    case HIP_R_16F:
+        src.f16 = static_cast<hipblasLtHalf>(value);
+        return;
+    case HIP_R_32I:
+        src.i32 = static_cast<int32_t>(value);
+        return;
+    default:
+        hipblaslt_cerr << "Error type in set_computeInterface()" << std::endl;
+        return;
+    }
+}
+
+inline void
+    mul_computeInterface(computeTypeInterface& dst, computeTypeInterface& src, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        dst.f32 *= src.f32;
+        return;
+    case HIP_R_64F:
+        dst.f64 *= src.f64;
+        return;
+    case HIP_R_16F:
+        dst.f16 *= src.f16;
+        return;
+    case HIP_R_32I:
+        dst.i32 *= src.i32;
+        return;
+    default:
+        hipblaslt_cerr << "Error type in mul_computeInterface()" << std::endl;
+        return;
+    }
+}
+
+inline double get_computeInterface(const computeTypeInterface src, hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        return (double)src.f32;
+    case HIP_R_64F:
+        return (double)src.f64;
+    case HIP_R_16F:
+        return (double)src.f16;
+    case HIP_R_32I:
+        return (double)src.i32;
+    default:
+        hipblaslt_cerr << "Error type in get_computeInterface()" << std::endl;
+        return 0;
+    }
+}
 
 // We make sure that the Arguments struct is C-compatible
 static_assert(std::is_standard_layout<Arguments>{},
@@ -691,7 +853,7 @@ namespace ArgumentsHelper
                 func("rotating_buffer", arg.rotating);
         };
 };
-// clang-format on
+    // clang-format on
 
 #else
 #error "Unsupported C++ version"

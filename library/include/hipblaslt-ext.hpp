@@ -438,7 +438,8 @@ namespace hipblaslt_ext
         *  This function retrieves the possible algorithms for the matrix multiply
         * operation hipblasLtMatmul() function with the given data and compute tpye.
         * The output is placed in heuristicResult in the order of increasing
-        * estimated compute time.
+        * estimated compute time. Note that the wall duration increases if the
+        * requestedAlgoCount increases.
         *
         *  @param[in]
         *  requestedAlgoCount  number of requested algorithms.

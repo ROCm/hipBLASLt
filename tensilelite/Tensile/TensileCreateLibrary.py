@@ -40,6 +40,7 @@ from .Common import globalParameters, HR, print1, print2, printExit, ensurePath,
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
+from .CustomYamlLoader import load_logic_gfx_arch
 
 import argparse
 import collections
@@ -53,7 +54,6 @@ import subprocess
 import sys
 from timeit import default_timer as timer
 from pathlib import Path
-from copy import deepcopy
 from typing import Sequence
 
 def timing(func):
@@ -349,7 +349,7 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
 
 def buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath):
     args    = zip(itertools.repeat(CxxCompiler), itertools.repeat(outputPath), kernelFiles)
-    coFiles = Common.ParallelMap(buildSourceCodeObjectFile, args, "Compiling source kernels", method=lambda x: x.starmap)
+    coFiles = Common.ParallelMap2(buildSourceCodeObjectFile, args, "Compiling source kernels")
 
     return itertools.chain.from_iterable(coFiles)
 
@@ -571,13 +571,13 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
 
   kernelFiles += buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs)
 
-  kernelsToBuild = list(kernels)
+  kernelsToBuild = kernels
   if errorTolerant:
       def success(kernel):
           writer = kernelWriterAssembly
           kernelName = writer.getKernelName(kernel)
           return kernelName not in kernelsWithBuildErrs
-      kernelsToBuild = list(filter(success, kernelsToBuild))
+      kernelsToBuild = filter(success, kernelsToBuild)
   elif len(kernelsWithBuildErrs) > 0:
     print("\nKernel compilation failed in one or more subprocesses. May want to set CpuThreads=0 and re-run to make debug easier")
     printExit("** kernel compilation failure **")
@@ -831,7 +831,7 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
   sourceLibFiles = []
   asmLibFiles = []
 
-  asmKernels = list([k for k in kernels if k['KernelLanguage'] == 'Assembly'])
+  asmKernels = (k for k in kernels if k['KernelLanguage'] == 'Assembly')
 
   # Build a list of kernel object names.
   for kernel in asmKernels:
@@ -845,7 +845,7 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
   if supportedCompiler(CxxCompiler):
     sourceArchs, _ = splitArchs()
   else:
-    raise RuntimeError("Unknown compiler %s" % cxxCompiler)
+    raise RuntimeError("Unknown compiler %s" % CxxCompiler)
 
   # Asm based kernels target the configured ISA
   asmArchs = collections.defaultdict(list)
@@ -1080,17 +1080,26 @@ def generateLogicDataAndSolutions(logicFiles, args):
   else:
     archs = args.Architecture.split("_") # workaround for cmake list in list issue
 
-  fIter = zip(logicFiles, itertools.repeat(archs))
-  libraries = Common.ParallelMap(LibraryIO.parseLibraryLogicFile, fIter, "Reading logic files", method=lambda x: x.starmap)
-
   solutions = []
   masterLibraries = {}
   fullMasterLibrary = None
-
   nextSolIndex = 0
+  matchTable = {}
+  fIter = zip(logicFiles, itertools.repeat(archs))
 
-  for logic in filter(lambda i: i[1] != "", Utils.tqdm(libraries, "Processing logic data")):
-    (_, architectureName, _, _, _, newLibrary, _) = logic
+  def libraryIter(lib: MasterSolutionLibrary):
+    if len(lib.solutions):
+      for i, s in enumerate(lib.solutions.items()):
+        yield i, *s
+    else:
+      for _, lazyLib in lib.lazyLibraries.items():
+        yield from libraryIter(lazyLib)
+
+  for library in Common.ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered"):
+    _, architectureName, _, _, _, newLibrary, srcFile = library
+
+    if architectureName == "":
+      continue
 
     if globalParameters["PackageLibrary"]:
       if architectureName in masterLibraries:
@@ -1111,10 +1120,10 @@ def generateLogicDataAndSolutions(logicFiles, args):
       else:
         fullMasterLibrary.merge(newLibrary)
 
-    # if problemType not in logicData:
-    #   logicData[problemType] = []
-    # logicData[problemType].append((scheduleName, deviceNames, \
-    #     solutionsForSchedule, indexOrder, exactLogic, rangeLogic ))
+    if args.GenSolTable:
+      # Match yaml file solutions to solution index
+      for localIdx, _, s in libraryIter(newLibrary):
+        matchTable[s.index] = [srcFile, localIdx]
 
   if globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
     if "fallback" in masterLibraries.keys():
@@ -1137,21 +1146,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
   # remove duplicates while preserving order
   solutions = dict.fromkeys(solutions).keys()
 
-  # Match yaml file solutions to solution index
   if args.GenSolTable:
-    def libraryIter(lib: MasterSolutionLibrary):
-      if len(lib.solutions):
-        for i, s in enumerate(lib.solutions.items()):
-          yield i, *s
-      else:
-        for _, lazyLib in lib.lazyLibraries.items():
-          yield from libraryIter(lazyLib)
-
-    matchTable = {}
-    for logic in filter(lambda i: i[1] != "", Utils.tqdm(libraries, "Match yaml file solutions to solution index")):
-      (_, architectureName, _, _, _, newLibrary, srcFile) = logic
-      for localIdx, _, s in libraryIter(newLibrary):
-        matchTable[s.index] = [srcFile, localIdx]
     LibraryIO.write("MatchTable", matchTable)
 
   return solutions, masterLibraries, fullMasterLibrary
@@ -1294,6 +1289,8 @@ def TensileCreateLibrary():
                          default=False, help="Separates TensileLibrary file by architecture")
   argParser.add_argument("--lazy-library-loading", dest="LazyLibraryLoading", action="store_true",
                          default=False, help="Loads Tensile libraries when needed instead of upfront.")
+  argParser.add_argument("--enable-marker", dest="EnableMarker", action="store_true",
+                         default=False, help="Enable marker in Tensile.")
   argParser.add_argument("--build-client", dest="BuildClient", action="store_true",
                          help="Build Tensile client")
   argParser.add_argument("--client-config", dest="ClientConfig", action="store_true",
@@ -1323,6 +1320,7 @@ def TensileCreateLibrary():
   arguments["Architecture"] = args.Architecture
   arguments["SeparateArchitectures"] = args.SeparateArchitectures
   arguments["LazyLibraryLoading"] = args.LazyLibraryLoading
+  arguments["EnableMarker"] = args.EnableMarker
   arguments["CxxCompiler"] = args.CxxCompiler
   if args.CmakeCxxCompiler:
     os.environ["CMAKE_CXX_COMPILER"] = args.CmakeCxxCompiler
@@ -1389,12 +1387,17 @@ def TensileCreateLibrary():
   else:
     printExit("Unrecognized LogicFormat", args.LogicFormat)
 
+  def archMatch(arch: str, archs: list[str]):
+    return (arch in archs) or any(a.startswith(arch) for a in archs)
+
+  def validLogicFile(p: Path):
+    return p.suffix == logicExtFormat and ("all" in archs or archMatch(load_logic_gfx_arch(p), archs))
+
   logicFiles = []
-  for root, dirs, files in os.walk(logicPath):
-    logicFiles += [os.path.join(root, f) for f in files
-                       if os.path.splitext(f)[1]==logicExtFormat \
-                       and (any(logicArch in os.path.splitext(f)[0] for logicArch in logicArchs) \
-                       or "hip" in os.path.splitext(f)[0]) ]
+
+  for root, _, files in os.walk(logicPath):
+    logics = (os.path.join(root, f) for f in files)
+    logicFiles += [file for file in logics if validLogicFile(Path(file))]
 
   print1("# LibraryLogicFiles:" % logicFiles)
   for logicFile in logicFiles:

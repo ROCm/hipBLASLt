@@ -77,7 +77,8 @@ class TensileInstructions:
 
     def setKernelInfo(self, isaVersion: Tuple[int, int, int], wavefrontSize: int) -> None:
         if isaVersion not in self._isaInfo: # type: ignore
-            printExit("Current isa %s not initialized. Initialized isas are %s"%(str(isaVersion), str(self._isaInfo.keys())))
+            import traceback
+            printExit(f"Current isa {str(isaVersion)} not initialized. Initialized isas are {str(self._isaInfo.keys())}, traceback: {traceback.format_stack()}")
         with self._lock:
             if len(self._kernelInfo) > 1000:
                 self._kernelInfo = _removeIdent(self._kernelInfo)
@@ -329,8 +330,10 @@ def _initArchCaps(isaVersion) -> dict:
     rv["TransOpWait"]        = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     rv["SDWAWait"]           = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     rv["VgprBank"]           = (isaVersion[0] in (10, 11, 12))
+    rv["DSLow16NotPreserve"]       = isaVersion[0] == (12)
     rv["WrokGroupIdFromTTM"] = isaVersion[0] == (12)
     rv["NoSDWA"]             = isaVersion[0] == (12)
+    rv["HasFP8_OCP"]         = isaVersion[0] == (12)
     return rv
 
 def _initAsmBugs(asmCaps) -> dict:

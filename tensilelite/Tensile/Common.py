@@ -259,7 +259,7 @@ globalParameters["PerfModelL2ReadBwMul"] = 2
 globalParameters["PerfModelReadEfficiency"] = 0.85
 
 # limitation for training
-globalParameters["MaxWorkspaceSize"] = 32 * 1024 * 1024 # max workspace for training (32M)
+globalParameters["MaxWorkspaceSize"] = 128 * 1024 * 1024 # max workspace for training (128M)
 globalParameters["MinKForGSU"] = 32 # min K size to use GlobalSplitU algorithm (only for HPA now)
 
 # control if a solution is run for a given problem
@@ -273,6 +273,8 @@ globalParameters["PristineOnGPU"] = True # use Pristine memory on Tensile trainn
 globalParameters["SeparateArchitectures"] = False # write Tensile library metadata to separate files for each architecture
 
 globalParameters["LazyLibraryLoading"] = False # Load library and code object files when needed instead of at startup
+
+globalParameters["EnableMarker"] = False # Enable Tensile markers
 
 globalParameters["UseUserArgs"] = False
 
@@ -542,7 +544,8 @@ validParameters = {
 
     # Split the unroll summation into multiple sections and combine the sections
     # GSU applies only to the unroll summation dimension
-    "GlobalSplitU":               list(range(1, 1024+1)),
+    # Set to 0 to disable GSU, kernel code will be generated without GSU support
+    "GlobalSplitU":               list(range(0, 1024+1)),
 
     # choose how to do GlobalSplitU
     # 1: use atomic operation to accumulate on one buffer
@@ -732,6 +735,12 @@ validParameters = {
     # 1 indicates no assertion (since all sizes are multiples of 1)
     "AssertFree1ElementMultiple" : [1,2,4,8,16],
 
+    # Assertions that require arithmetic intensity to be specified value.
+    # Arithmetic intensity measures the ratio of computation to memory bandwidth required for a problem.
+    # These predicates can be used to adjust solution selection compute-bound or memory-bound problems.
+    "AssertAIGreaterThanEqual": -1,
+    "AssertAILessThanEqual":    -1,
+
     # Stagger the start summation position of the tiles.
     # Elements from the summation dimension are loaded at offsets rather than all starting at 0.
     # StaggerU is the max 'clicks' of StaggerUStride bytes where each wg starts ; see StaggerUMapping
@@ -786,7 +795,7 @@ validParameters = {
     # True:  wg issused oder = {(wg0,wg0,wg0)|(wg1,wg1,wg1)|(wg2,wg2,wg2)|...|(wgn,wgn,wgn)}
     #   -> workgroups split up the summation -> faster GR but slower GW
     "GlobalSplitUWorkGroupMappingRoundRobin":        [False, True],
-    
+
     # 0=don't use magic div (source only)
     # 1=magic div alg #1.  Slightly faster but limited range (if magic number is 2^32)
     # 2=magic div alg#2.  Slightly slower but handles all unsigned ints up to 2^32
@@ -915,6 +924,53 @@ validParameters = {
     # Only support for kernel whose totalVgpr counts less than 256 and gcn that has control bit ACC_CD.
     "MIArchVgpr":               [False, True],
 
+    # StreamK (SK) kernels divide work evenly among CUs by splitting along MT and K dimensions.
+    # Total work units are calculated as (#MTs x #LoopIters) and divided among workgroups.
+    # In most cases each workgroup will calculate a partial tile that are accumulated in a fixup step in the same kernel
+    # 0 : Standard data-parallel kernel
+    # 1 : Basic StreamK
+    # 2 : Two-Tile StreamK (each WG completes an even number of sk iterations, followed by an even number of dp tiles)
+    # 3 : Two-Tile StreamK with DP before SK tiles
+    # StreamK kernels can adjust the number of CUs being used.
+    # Using fewer sometimes increases overall throughput by allowing other kernels to run in parallel.
+    # StreamK grid is controlled by setting these enviornment variables:
+    # TENSILE_STREAMK_FIXED_GRID lets you override the default grid size with a specific number
+    #   0 = override disabled (default)
+    # TENSILE_STREAMK_FULL_TILES sets the number of full tiles to be included in stream-k work
+    #   -1 = use prediction model for best performance (default)
+    #   0 = only remainder tiles run in stream-k
+    #   1+ = remainder + 1 (or more) full grids of tiles run in stream-k
+    # TENSILE_STREAMK_DYNAMIC_GRID enables dynamic grid mode, which automatically limits the number of CUs used:
+    #   0 = Off, use all CUs (default)
+    #   1 = Only reduce CUs for small problems to number of output tiles when num_tiles < CU count.
+    #   2 = Also reduce CUs used for large sizes to improve data-parallel portion and reduce power.
+    #   3 = Analytically predict the best grid-size by weighing the cost of the fix-up step and the cost of processing MACs.
+    # TENSILE_STREAMK_MAX_CUS allows the user to manually set maximum number of CUs used, which could free up some CUs for
+    #   other operations to run in parallel with gemm.
+    # TENSILE_STREAMK_GRID_MULTIPLIER lets you set how many workgroups are created per CU being used.
+    #   1 = 1 WG per CU (default), for example. 2 will launch WGs = 2 x CU count.
+    # The priority of these environment variables is defined as follows:
+    # TENSILE_STREAMK_FIXED_GRID > TENSILE_STREAMK_DYNAMIC_GRID > TENSILE_STREAMK_MAX_CUS > TENSILE_STREAMK_GRID_MULTIPLIER
+    "StreamK": [0, 1, 2, 3],
+    # Determines if StreamK kernel uses atomics
+    # 0: uses workspace to store partial tiles, accumulate in deterministic fix-up step
+    # 1: uses atomics to accumulate partial tiles
+    "StreamKAtomic": [0, 1],
+    # Enables XCC-based remapping of workgroups, set the value to the number of XCCs
+    # for the device/configuration being used
+    # 0: uses default workgroup assignment
+    # 2+: remaps workgroups to be contiguous within an XCC for a given number of XCCs
+    "StreamKXCCMapping": [0] + list(range(2, 9)),
+    # Debug settings for stream-k kernels to disable parts of the kernel
+    #   Bit 0: Don't generate fixup code
+    #   Bit 1: Don't generate write to partials code
+    # Both parts can be disabled together
+    #   0 = Debug mode off, generate full kernel
+    #   1 = No fixup
+    #   2 = No partials
+    #   3 = Nofixup and no partials
+    "DebugStreamK": [0, 1, 2, 3],
+
     # Controls desired width (#elements) for loads from global memory -> LDS.
     # and eliminates the pointer unshift logic
     # -1 : Set GlobalReadVectorWidth =  VectorWidth
@@ -1015,6 +1071,7 @@ validParameters = {
     "NonTemporalC":               list(range(0,8)),
     "NonTemporalA":               list(range(0,8)),
     "NonTemporalB":               list(range(0,8)),
+    "NonTemporalWS":              list(range(0,8)),
     "NonTemporalMetadata":        list(range(0,8)),
     "NonTemporal":                list(range(-1,8)),
 
@@ -1130,6 +1187,9 @@ defaultBenchmarkCommonParameters = [
     {"AssertFree0ElementMultiple": [ 1 ] },
     {"AssertFree1ElementMultiple": [ 1 ] },
 
+    {"AssertAIGreaterThanEqual":   [-1]},
+    {"AssertAILessThanEqual":      [-1]},
+
     {"StaggerU":                  [ 32 ] },   # recommend [0,32]
     {"StaggerUStride":            [ 256 ] },  # recommend 256 for V10,V20
     {"StaggerUMapping":           [ 0 ] },    # recommend [0,1]
@@ -1155,6 +1215,7 @@ defaultBenchmarkCommonParameters = [
     {"NonTemporalC":              [ 0 ] },
     {"NonTemporalA":              [ 0 ] },
     {"NonTemporalB":              [ 0 ] },
+    {"NonTemporalWS":             [ 0 ] },
     {"NonTemporalMetadata":       [ 0 ] },
     {"NonTemporal":               [ -1 ] },
     {"PreloadKernArgs":           [ True ] },
@@ -1169,6 +1230,10 @@ defaultBenchmarkCommonParameters = [
     {"StoreSyncOpt":              [ 0 ] },
     {"GroupLoadStore":            [ False ] },
     {"MIArchVgpr":                [ False ] },
+    {"StreamK":                   [ 0 ] },
+    {"StreamKAtomic":             [ 0 ] },
+    {"StreamKXCCMapping":         [ 0 ] },
+    {"DebugStreamK":              [ 0 ] },
     {"ActivationFused":           [ True  ] },
     {"ActivationFuncCall":        [ True  ] },
     {"ActivationAlt":             [ False ] },
