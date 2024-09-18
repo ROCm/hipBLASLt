@@ -77,7 +77,8 @@ class TensileInstructions:
 
     def setKernelInfo(self, isaVersion: Tuple[int, int, int], wavefrontSize: int) -> None:
         if isaVersion not in self._isaInfo: # type: ignore
-            printExit("Current isa %s not initialized. Initialized isas are %s"%(str(isaVersion), str(self._isaInfo.keys())))
+            import traceback
+            printExit(f"Current isa {str(isaVersion)} not initialized. Initialized isas are {str(self._isaInfo.keys())}, traceback: {traceback.format_stack()}")
         with self._lock:
             if len(self._kernelInfo) > 1000:
                 self._kernelInfo = _removeIdent(self._kernelInfo)
