@@ -3957,10 +3957,9 @@ class Solution(collections.abc.Mapping):
   @staticmethod
   def getSerialNaming(objs):
     data = {}
-    for objIdx in range(0, len(objs)):
-      obj = objs[objIdx]
+    for obj in objs:
       for paramName in sorted(obj.keys()):
-        if paramName in list(validParameters.keys()):
+        if paramName in validParameters.keys():
           paramValue = obj[paramName]
           if paramName in data:
             if paramValue not in data[paramName]:
@@ -3969,7 +3968,7 @@ class Solution(collections.abc.Mapping):
             data[paramName] = [ paramValue ]
     maxObjs = 1
     for paramName in data:
-      if not isinstance(data[paramName][0],dict):
+      if not isinstance(data[paramName][0], dict):
         data[paramName] = sorted(data[paramName])
       maxObjs *= len(data[paramName])
     numDigits = len(str(maxObjs))
