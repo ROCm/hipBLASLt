@@ -216,6 +216,16 @@ namespace Tensile
         const char* tensile_gridbased_batch_exp = std::getenv("TENSILE_GRIDBASED_BATCH_EXP");
         if(tensile_gridbased_batch_exp)
             m_gridbasedBatchExp = strtol(tensile_gridbased_batch_exp, nullptr, 0) != 0;
+
+        const char* tensile_marker = std::getenv("TENSILE_ENABLE_MARKER");
+        if(tensile_marker)
+        {
+            m_printMarker = strtol(tensile_marker, nullptr, 0) != 0;
+#ifndef Tensile_ENABLE_MARKER
+            if(m_printMarker)
+                printf("TENSILE_ENABLE_MARKER is not supported in this build. Please rebuild with -DTensile_ENABLE_MARKER=ON\n");
+#endif
+        }
     }
 
 } // namespace Tensile

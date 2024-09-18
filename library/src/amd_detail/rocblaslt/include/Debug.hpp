@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,14 +25,62 @@
  *******************************************************************************/
 
 #pragma once
-#include "handle.h"
-#ifndef LEGACY_HIPBLAS_DIRECT
-#include <hipblas-common/hipblas-common.h>
-#else
-#include <hipblas/hipblas.h>
-#endif
-#include <rocblaslt.h>
-#include <Debug.hpp>
-hipblasStatus_t hipErrorToHIPBLASStatus(hipError_t status);
 
-hipblasStatus_t RocBlasLtStatusToHIPStatus(rocblaslt_status_ status);
+#include <cstdlib>
+#include <string>
+#ifdef HIPBLASLT_ENABLE_MARKER
+#include <roctracer/roctx.h>
+#endif
+
+namespace rocblaslt
+{
+    template <typename Class>
+    class LazySingleton
+    {
+    public:
+        static Class& Instance()
+        {
+            static Class rocInstance;
+
+            return rocInstance;
+        }
+
+    private:
+    };
+
+    /**
+ * @brief Common place for defining flags which enable debug behaviour.
+ */
+    class Debug : public LazySingleton<Debug>
+    {
+    public:
+        __attribute__((always_inline)) inline void markerStart(const char* name) const
+        {
+#ifdef HIPBLASLT_ENABLE_MARKER
+            if(m_printMarker)
+            {
+                roctxRangePush(name);
+            }
+#endif
+        }
+
+        __attribute__((always_inline)) inline void markerStop() const
+        {
+#ifdef HIPBLASLT_ENABLE_MARKER
+            if(m_printMarker)
+            {
+                roctxRangePop();
+            }
+#endif
+        }
+
+    private:
+        friend LazySingleton<Debug>;
+
+        int         m_value;
+        int         m_value2;
+        bool        m_printMarker = false;
+
+        Debug();
+    };
+} // namespace rocblaslt
