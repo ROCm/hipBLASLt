@@ -7670,7 +7670,7 @@ class KernelWriterAssembly(KernelWriter):
     storevw = self.LSUfullVw
     atomic = False # atomic is for GSU > 1
     beta = True
-    ss = StoreState(self, kernel, storevw, False, beta, atomic, self.LSUelements)
+    ss = StoreState(self, kernel, storevw, False, beta, atomic, self.LSUelements, dim=0)
     self.LSUelemCoord0, self.LSUelemCoord1 = ss.getStoreElementsInfoForBatch(kernel, self.LSUelements)
 
     with self.allocTmpSgpr(1) as tmpSgprInfo:
@@ -9713,7 +9713,7 @@ class KernelWriterAssembly(KernelWriter):
     # Calculate Vgprs for Write Batching
     ########################################
 
-    ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI])
+    ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], dim=factorDim)
 
     #print self.vgprPool.state()
     # Use VGPR up to next occupancy threshold:
