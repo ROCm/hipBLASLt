@@ -137,6 +137,23 @@ def loadData(filename):
     data = yaml.load(stream, yaml.SafeLoader)
     return data
 
+def compareProblemType(origData, incData):
+    # ProblemType defined in originalFiles
+    problemType = origData[4]
+    results = ""
+    solIdx = 0
+    # Compare ProblemType of originalFiles and incrementalFiles
+    for i, _ in enumerate(incData[5]):
+        incProblemType = incData[5][i]["ProblemType"]
+        if problemType !=  incProblemType:
+            for item in problemType:
+                if problemType[item] != incProblemType[item]:
+                    results += f"\t{item}: {problemType[item]} != {incProblemType[item]}\n"
+            solIdx = i
+            break
+    if (results):
+        sys.exit(f"[Error] ProblemType in library logic doesn't match solution(idx={solIdx}): \n{results}")
+
 # this is for complying the behavior of legacy merge script, where incremental logic
 # file always replaces the base logic file even it's slower in performance -
 # in the future we may let default force merge policy = False
@@ -376,6 +393,9 @@ def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSi
         "| Add solution tags:", addSolutionTags)
         origData = loadData(origFile)
         incData = loadData(incFile)
+
+        # Terminate when ProblemType of originalFiles and incrementalFiles mismatch
+        compareProblemType(origData, incData)
 
         # So far "SolutionIndex" in logic yamls has zero impact on actual 1-1 size mapping (but the order of the Solution does)
         # since mergeLogic() takes that value very seriously so we reindex them here so it doesn't choke on duplicated SolutionIndex
