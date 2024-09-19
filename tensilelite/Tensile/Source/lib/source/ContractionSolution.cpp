@@ -1051,6 +1051,8 @@ namespace Tensile
     {
         KernelInvocation rv;
 
+        rv.isSingleCall = true;
+
         rv.args = KernelArguments(T_Debug);
 
         rv.args.reserve(1024, 128);
@@ -1318,6 +1320,8 @@ namespace Tensile
         void const*                                      userArgs) const
     {
         KernelInvocation rv;
+        rv.isSingleCall = true;
+
         if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
         {
             rv.kernelName = kernelName;
