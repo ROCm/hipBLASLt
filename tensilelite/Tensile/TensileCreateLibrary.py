@@ -1305,7 +1305,9 @@ def TensileCreateLibrary():
   argParser.add_argument("--keep-build-tmp", dest="KeepBuildTmp", action="store_true",
                           default=False, help="Do not remove the temporary build directory (may required hundreds of GBs of space)"),
   argParser.add_argument("--validate-library", dest="ValidateLibrary", action="store_true", default=False)
-  argParser.add_argument("--logic-filter", dest="LogicFilter", action="store", default="*", type=str)
+  argParser.add_argument("--logic-filter", dest="LogicFilter", action="store", default="*", type=str,
+                        help="Cutomsized logic filter, default is *, i.e. all logics."
+                        " Example: gfx942/GridBased/* for building equality of gfx942 only")
 
   args = argParser.parse_args()
 

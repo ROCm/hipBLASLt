@@ -48,6 +48,7 @@ function display_help()
   echo "    [--codecoverage] build with code coverage profiling enabled"
   echo "    [--gprof] enable profiling functionality with GNU gprof"
   echo "    [--keep-build-tmp] do not remove the temporary build artifacts or build_tmp"
+  echo "    [--dev-logic-filter] logic filter for developer, example: gfx942/Equality/* for building equality of gfx942 only"
 }
 
 # This function is helpful for dockerfiles that do not have sudo installed, but the default user is root
