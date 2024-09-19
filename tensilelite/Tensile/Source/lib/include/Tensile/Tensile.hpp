@@ -123,6 +123,8 @@ namespace Tensile
         std::string kernelName;
         std::string codeObjectFile; //Code object file kernel is located in
 
+        bool isSingleCall = false;
+
         dim3   workGroupSize;
         dim3   numWorkGroups;
         dim3   numWorkItems;

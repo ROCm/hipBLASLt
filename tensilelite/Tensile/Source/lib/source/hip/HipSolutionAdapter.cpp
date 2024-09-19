@@ -181,10 +181,54 @@ namespace Tensile
             }
         }
 
+        bool SolutionAdapter::FindCodeObject(std::string const& codeObjectFile)
+        {
+            //If required code object file hasn't yet been loaded, load it now
+            m_access.lock();
+            bool loaded = m_loadedCOFiles.find(removeXnack(codeObjectFile))
+                          != m_loadedCOFiles.end();
+            std::string codeObjectDir = m_codeObjectDirectory;
+            m_access.unlock();
+
+            if(!loaded)
+            {
+                //Try other xnack versions
+                size_t     loc = codeObjectFile.rfind('.');
+                hipError_t err;
+
+                for(auto ver : {"", "-xnack-", "-xnack+"})
+                {
+                    std::string modifiedCOName = codeObjectFile;
+                    modifiedCOName.insert(loc, ver);
+                    err = loadCodeObjectFile(codeObjectDir + modifiedCOName);
+
+                    if(err == hipSuccess)
+                        break;
+                }
+                return false;
+            }
+            return true;
+        }
+
         hipError_t SolutionAdapter::initKernel(std::string const& name)
         {
             hipFunction_t function;
             return getKernel(function, name);
+        }
+
+        hipError_t SolutionAdapter::initKernels(std::vector<std::string> const& kernelNames)
+        {
+            hipFunction_t rv;
+
+            for(auto name : kernelNames)
+            {
+                hipFunction_t function;
+                auto result = getKernel(function, name);
+                if(result != hipSuccess)
+                    return result;
+            }
+
+            return hipSuccess;
         }
 
         hipError_t SolutionAdapter::getKernel(hipFunction_t& rv, std::string const& name)
@@ -266,33 +310,12 @@ namespace Tensile
         hipError_t SolutionAdapter::launchKernel(KernelInvocation const& kernel,
                                                  hipStream_t             stream,
                                                  hipEvent_t              startEvent,
-                                                 hipEvent_t              stopEvent)
+                                                 hipEvent_t              stopEvent,
+                                                 bool                    isKernelLoaded)
         {
-            if(!kernel.codeObjectFile.empty())
+            if(!isKernelLoaded && !kernel.codeObjectFile.empty())
             {
-                //If required code object file hasn't yet been loaded, load it now
-                m_access.lock();
-                bool loaded = m_loadedCOFiles.find(removeXnack(kernel.codeObjectFile))
-                              != m_loadedCOFiles.end();
-                std::string codeObjectDir = m_codeObjectDirectory;
-                m_access.unlock();
-
-                if(!loaded)
-                {
-                    //Try other xnack versions
-                    size_t     loc = kernel.codeObjectFile.rfind('.');
-                    hipError_t err;
-
-                    for(auto ver : {"", "-xnack-", "-xnack+"})
-                    {
-                        std::string modifiedCOName = kernel.codeObjectFile;
-                        modifiedCOName.insert(loc, ver);
-                        err = loadCodeObjectFile(codeObjectDir + modifiedCOName);
-
-                        if(err == hipSuccess)
-                            break;
-                    }
-                }
+                FindCodeObject(kernel.codeObjectFile);
             }
 
             if(m_debug)
@@ -357,7 +380,8 @@ namespace Tensile
         hipError_t SolutionAdapter::launchKernels(std::vector<KernelInvocation> const& kernels,
                                                   hipStream_t                          stream,
                                                   hipEvent_t                           startEvent,
-                                                  hipEvent_t                           stopEvent)
+                                                  hipEvent_t                           stopEvent,
+                                                  bool                                 isKernelLoaded)
         {
             auto first = kernels.begin();
             auto last  = kernels.end() - 1;
@@ -372,7 +396,7 @@ namespace Tensile
                 if(iter == last)
                     kStop = stopEvent;
 
-                HIP_CHECK_RETURN(launchKernel(*iter, stream, kStart, kStop));
+                HIP_CHECK_RETURN(launchKernel(*iter, stream, kStart, kStop, isKernelLoaded));
             }
             return hipSuccess;
         }
