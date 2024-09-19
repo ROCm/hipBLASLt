@@ -32,6 +32,7 @@
 #pragma once
 
 #include "hipblaslt_math.hpp"
+#include "hipblaslt_ostream.hpp"
 #include "hipblaslt_test.hpp"
 #include "hipblaslt_vector.hpp"
 #include <hipblaslt/hipblaslt.h>
@@ -113,7 +114,7 @@
 // TODO: Replace std::remove_cv_t with std::type_identity_t in C++20
 // It is only used to make T_hpa non-deduced
 template <typename T, typename T_hpa = T>
-void unit_check_general(
+inline void unit_check_general(
     int64_t M, int64_t N, int64_t lda, const std::remove_cv_t<T_hpa>* hCPU, const T* hGPU);
 
 template <>
@@ -124,8 +125,11 @@ inline void unit_check_general(
 }
 
 template <>
-inline void unit_check_general(
-    int64_t M, int64_t N, int64_t lda, const hipblaslt_bf8_fnuz* hCPU, const hipblaslt_bf8_fnuz* hGPU)
+inline void unit_check_general(int64_t                   M,
+                               int64_t                   N,
+                               int64_t                   lda,
+                               const hipblaslt_bf8_fnuz* hCPU,
+                               const hipblaslt_bf8_fnuz* hGPU)
 {
     UNIT_CHECK(M, N, lda, 0, hCPU, hGPU, 1, ASSERT_BF8_EQ);
 }
@@ -196,13 +200,13 @@ inline void
 }
 
 template <typename T, typename T_hpa = T>
-void unit_check_general(int64_t                        M,
-                        int64_t                        N,
-                        int64_t                        lda,
-                        int64_t                        strideA,
-                        const std::remove_cv_t<T_hpa>* hCPU,
-                        const T*                       hGPU,
-                        int64_t                        batch_count);
+inline void unit_check_general(int64_t                        M,
+                               int64_t                        N,
+                               int64_t                        lda,
+                               int64_t                        strideA,
+                               const std::remove_cv_t<T_hpa>* hCPU,
+                               const T*                       hGPU,
+                               int64_t                        batch_count);
 
 template <>
 inline void unit_check_general(int64_t             M,
@@ -242,25 +246,25 @@ inline void unit_check_general(int64_t                   M,
 
 #ifdef ROCM_USE_FLOAT8
 template <>
-inline void unit_check_general(int64_t                  M,
-                               int64_t                  N,
-                               int64_t                  lda,
-                               int64_t                  strideA,
+inline void unit_check_general(int64_t                 M,
+                               int64_t                 N,
+                               int64_t                 lda,
+                               int64_t                 strideA,
                                const hipblaslt_f8_ocp* hCPU,
                                const hipblaslt_f8_ocp* hGPU,
-                               int64_t                  batch_count)
+                               int64_t                 batch_count)
 {
     UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_F8_EQ);
 }
 
 template <>
-inline void unit_check_general(int64_t                   M,
-                               int64_t                   N,
-                               int64_t                   lda,
-                               int64_t                   strideA,
+inline void unit_check_general(int64_t                  M,
+                               int64_t                  N,
+                               int64_t                  lda,
+                               int64_t                  strideA,
                                const hipblaslt_bf8_ocp* hCPU,
                                const hipblaslt_bf8_ocp* hGPU,
-                               int64_t                   batch_count)
+                               int64_t                  batch_count)
 {
     UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_BF8_EQ);
 }
@@ -351,12 +355,12 @@ inline void unit_check_general(int64_t        M,
 }
 
 template <typename T, typename T_hpa = T>
-void unit_check_general(int64_t                                    M,
-                        int64_t                                    N,
-                        int64_t                                    lda,
-                        const host_vector<std::remove_cv_t<T_hpa>> hCPU[],
-                        const host_vector<T>                       hGPU[],
-                        int64_t                                    batch_count);
+inline void unit_check_general(int64_t                                    M,
+                               int64_t                                    N,
+                               int64_t                                    lda,
+                               const host_vector<std::remove_cv_t<T_hpa>> hCPU[],
+                               const host_vector<T>                       hGPU[],
+                               int64_t                                    batch_count);
 
 template <>
 inline void unit_check_general(int64_t                         M,
@@ -436,12 +440,12 @@ inline void unit_check_general(int64_t                   M,
 }
 
 template <typename T, typename T_hpa = T>
-void unit_check_general(int64_t                              M,
-                        int64_t                              N,
-                        int64_t                              lda,
-                        const std::remove_cv_t<T_hpa>* const hCPU[],
-                        const T* const                       hGPU[],
-                        int64_t                              batch_count);
+inline void unit_check_general(int64_t                              M,
+                               int64_t                              N,
+                               int64_t                              lda,
+                               const std::remove_cv_t<T_hpa>* const hCPU[],
+                               const T* const                       hGPU[],
+                               int64_t                              batch_count);
 
 template <>
 inline void unit_check_general(int64_t                   M,
@@ -551,4 +555,108 @@ inline int64_t unit_check_diff(
                     }
     } while(0);
     return error;
+}
+
+inline void unit_check_general(int64_t     M,
+                               int64_t     N,
+                               int64_t     lda,
+                               int64_t     strideA,
+                               void*       hCPU,
+                               void*       hGPU,
+                               int64_t     batch_count,
+                               hipDataType type)
+{
+    switch(type)
+    {
+    case HIP_R_32F:
+        unit_check_general(
+            M, N, lda, strideA, static_cast<float*>(hCPU), static_cast<float*>(hGPU), batch_count);
+        break;
+    case HIP_R_64F:
+        unit_check_general(M,
+                           N,
+                           lda,
+                           strideA,
+                           static_cast<double*>(hCPU),
+                           static_cast<double*>(hGPU),
+                           batch_count);
+        break;
+    case HIP_R_16F:
+        unit_check_general(M,
+                           N,
+                           lda,
+                           strideA,
+                           static_cast<hipblasLtHalf*>(hCPU),
+                           static_cast<hipblasLtHalf*>(hGPU),
+                           batch_count);
+        break;
+    case HIP_R_16BF:
+        unit_check_general(M,
+                           N,
+                           lda,
+                           strideA,
+                           static_cast<hip_bfloat16*>(hCPU),
+                           static_cast<hip_bfloat16*>(hGPU),
+                           batch_count);
+        break;
+    case HIP_R_8F_E4M3_FNUZ:
+        unit_check_general(M,
+                           N,
+                           lda,
+                           strideA,
+                           static_cast<hipblaslt_f8_fnuz*>(hCPU),
+                           static_cast<hipblaslt_f8_fnuz*>(hGPU),
+                           batch_count);
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+        unit_check_general(M,
+                           N,
+                           lda,
+                           strideA,
+                           static_cast<hipblaslt_bf8_fnuz*>(hCPU),
+                           static_cast<hipblaslt_bf8_fnuz*>(hGPU),
+                           batch_count);
+        break;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        unit_check_general(M,
+                           N,
+                           lda,
+                           strideA,
+                           static_cast<hipblaslt_f8_ocp*>(hCPU),
+                           static_cast<hipblaslt_f8_ocp*>(hGPU),
+                           batch_count);
+        break;
+    case HIP_R_8F_E5M2:
+        unit_check_general(M,
+                           N,
+                           lda,
+                           strideA,
+                           static_cast<hipblaslt_bf8_ocp*>(hCPU),
+                           static_cast<hipblaslt_bf8_ocp*>(hGPU),
+                           batch_count);
+        break;
+#endif
+    case HIP_R_32I:
+        unit_check_general(M,
+                           N,
+                           lda,
+                           strideA,
+                           static_cast<int32_t*>(hCPU),
+                           static_cast<int32_t*>(hGPU),
+                           batch_count);
+        break;
+    case HIP_R_8I:
+        unit_check_general(M,
+                           N,
+                           lda,
+                           strideA,
+                           static_cast<hipblasLtInt8*>(hCPU),
+                           static_cast<hipblasLtInt8*>(hGPU),
+                           batch_count);
+        break;
+    default:
+        hipblaslt_cerr << "Error type in unit_check_general" << std::endl;
+        break;
+    }
 }

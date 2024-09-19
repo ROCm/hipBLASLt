@@ -1248,49 +1248,63 @@ class KernelWriterAssembly(KernelWriter):
     module.addComment1("remap workgroup to XCCs")
     with self.allocTmpSgpr(6, 2) as tmpSgprRes:
       tmpSgpr      = tmpSgprRes.idx
-      tmpSgprRes1  = RegisterPoolResource(idx=tmpSgprRes.idx, size=3)
-
-      tmpSgpr0 = tmpSgprRes.idx + 3
-      tmpSgpr1 = tmpSgpr0+1
-      tmpSgpr2 = tmpSgpr1+1
-
-      WGMXCC = kernel["WorkGroupMappingXCC"]
-      CU_Count = kernel["WorkGroupMappingXCCGroup"]
+      tmpSgpr0     = tmpSgpr+1
+      tmpSgpr1     = tmpSgpr0+1
+      tmpSgpr2     = tmpSgpr1+1
+      WGMXCCSgpr   = tmpSgpr2+1
+      CU_CountSgpr = WGMXCCSgpr+1
+ 
+      module.add(SLShiftRightB32(dst=sgpr(WGMXCCSgpr), shiftHex=hex(16), src=sgpr("WGM"), comment="Get WGMXCC"))
+      module.add(SAndB32(dst=sgpr(WGMXCCSgpr), src0=hex(0x3F), src1=sgpr(WGMXCCSgpr), comment="Get WGMXCC"))
+      module.add(SLShiftRightB32(dst=sgpr(CU_CountSgpr), shiftHex=hex(22), src=sgpr("WGM"), comment="Get CU_Count"))
+ 
       label_skipWGMXCC = Label(label="skip_WGMXCC", comment="skip WGMXCC if no enough WGs to remap")
+ 
+      module.addComment0("remap WGs if WGMXCC > 1")
+      module.add(SCmpGtU32(src0=sgpr(WGMXCCSgpr), src1=1))
+      module.add(SCBranchSCC0(label_skipWGMXCC.getLabelName()))
+ 
       module.addComment0("only remap WGs in the range")
-      module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=None, dReg=sgpr(tmpSgprNumWorkGroups), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=0))
-      module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=WGMXCC))
+      tmpVgpr     = self.vgprPool.checkOut(2)
+      tmpVgprRes  = RegisterPoolResource(tmpVgpr, 2)
+      module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr0, dReg=tmpSgprNumWorkGroups, divReg=WGMXCCSgpr, rReg=None, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=0))
+      module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr(WGMXCCSgpr)))
       module.add(SCmpGeU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
       module.add(SCBranchSCC1(label_skipWGMXCC.getLabelName()))
-      if CU_Count == 0:
-        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=tmpSgpr1, dReg=sgpr("WorkGroup0"), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=1))
-        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr2), rReg=None, dReg=sgpr(tmpSgprNumWorkGroups), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=0))
-        module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgpr2)))
-        module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
-      else:
-        module.addComment0("temp0 = (wg//CU_Count)*CU_Count")
-        tmpVgpr     = self.vgprPool.checkOut(2)
-        tmpVgprRes  = RegisterPoolResource(tmpVgpr, 2)
-        module.add(SMovB32(dst=sgpr(tmpSgprRes1.idx), src=CU_Count))
-        module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr0, dReg="WorkGroup0", divReg=tmpSgprRes1.idx, rReg=tmpSgpr1, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=1, comment="wg//CU_Count"))
-        module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=CU_Count))
-        module.addComment0("temp1 = (wg%CU_Count)//WGMXCC")
-        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr1), rReg=None, dReg=sgpr(tmpSgpr1), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=0))
-        module.addComment0("temp0 = temp0 + temp1")
-        module.add(SAddU32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
-        module.addComment0("temp1 = (wg%WGMXCC) * ((WGs - (WGs//CU_Count) * CU_Count) if (wg > (WGs//CU_Count) * CU_Count) else CU_Count)//WGMXCC")
-        module.add(SMovB32(dst=sgpr(tmpSgprRes1.idx), src=CU_Count))
-        module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr1, dReg=tmpSgprNumWorkGroups, divReg=tmpSgprRes1.idx, rReg=None, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=0, comment="WGs//CU_Count"))
-        self.vgprPool.checkIn(tmpVgpr)
-        module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=CU_Count))
-        module.add(SSubU32(dst=sgpr(tmpSgpr2), src0=sgpr(tmpSgprNumWorkGroups), src1=sgpr(tmpSgpr1)))
-        module.add(SCmpGtU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr1)))
-        module.add(SCSelectB32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr2), src1=CU_Count))
-        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr1), rReg=None, dReg=sgpr(tmpSgpr1), divisor=WGMXCC, tmpSgprRes=tmpSgprRes1, doRemainder=0))
-        module.add(scalarStaticRemainder(qReg=tmpSgpr, rReg=tmpSgpr2, dReg="WorkGroup0", divisor=WGMXCC, tmpSgprRes=tmpSgprRes1))
-        module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgpr2)))
-        module.addComment0("WorkGroup0 = temp0 + temp1")
-        module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
+ 
+      label_XCCG_nonzero = Label(label="XCCG_nonzero", comment="")
+      module.add(SCmpEQU32(src0=sgpr(CU_CountSgpr), src1=0, comment="CU_Count == 0 ?"))
+      module.add(SCBranchSCC0(label_XCCG_nonzero.getLabelName()))
+ 
+      # CU_count == 0
+      module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr0, dReg="WorkGroup0", divReg=WGMXCCSgpr, rReg=tmpSgpr1, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=1))
+      module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr2, dReg=tmpSgprNumWorkGroups, divReg=WGMXCCSgpr, rReg=None, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=0))
+      module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgpr2)))
+      module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
+      module.add(SBranch(label_skipWGMXCC.getLabelName()))
+ 
+      # CU_count > 0
+      module.add(label_XCCG_nonzero)
+      module.addComment0("temp0 = (wg//CU_Count)*CU_Count")
+      module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr0, dReg="WorkGroup0", divReg=CU_CountSgpr, rReg=tmpSgpr1, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=1, comment="wg//CU_Count"))
+      module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr(CU_CountSgpr)))
+      module.addComment0("temp1 = (wg%CU_Count)//WGMXCC")
+      module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr1, dReg=tmpSgpr1, divReg=WGMXCCSgpr, rReg=None, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=0))
+      module.addComment0("temp0 = temp0 + temp1")
+      module.add(SAddU32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
+      module.addComment0("temp1 = (wg%WGMXCC) * ((WGs - (WGs//CU_Count) * CU_Count) if (wg > (WGs//CU_Count) * CU_Count) else CU_Count)//WGMXCC")
+      module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr1, dReg=tmpSgprNumWorkGroups, divReg=CU_CountSgpr, rReg=None, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=0, comment="WGs//CU_Count"))
+      module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(CU_CountSgpr)))
+      module.add(SSubU32(dst=sgpr(tmpSgpr2), src0=sgpr(tmpSgprNumWorkGroups), src1=sgpr(tmpSgpr1)))
+      module.add(SCmpGtU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr1)))
+      module.add(SCSelectB32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr2), src1=sgpr(CU_CountSgpr)))
+      module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr1, dReg=tmpSgpr1, divReg=WGMXCCSgpr, rReg=None, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=0))
+      module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr, dReg="WorkGroup0", divReg=WGMXCCSgpr, rReg=tmpSgpr2, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=1))
+      self.vgprPool.checkIn(tmpVgpr)
+      module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgpr2)))
+      module.addComment0("WorkGroup0 = temp0 + temp1")
+      module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
+ 
       module.add(label_skipWGMXCC)
     return module
 
@@ -1373,10 +1387,9 @@ class KernelWriterAssembly(KernelWriter):
       commonArgs.add(self.argLoader.loadKernArg(sgprPackedArgs, "KernArgAddress", hex(4), dword=1))
       commonArgs.addComment1("Load WGM data")
       commonArgs.add(self.argLoader.loadKernArg("WGM", "KernArgAddress", hex(8), dword=1))
-      if (self.states.kernel["WorkGroupMappingXCC"] > 1):
-        tmpSgprNumWorkGroups = self.sgprPool.checkOut(1, preventOverflow=0)
-        commonArgs.addComment1("Load num of WGs")
-        commonArgs.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(12), dword=1))
+      tmpSgprNumWorkGroups = self.sgprPool.checkOut(1, preventOverflow=0)
+      commonArgs.addComment1("Load num of WGs")
+      commonArgs.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(12), dword=1))
       ########################################
       # kernel args parameters
       load = self.states.numSgprToLoad
@@ -1469,8 +1482,7 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.add(SMovB64(dst=sgpr("KernArgAddress", 2), src=sgpr(preloadSgprStartIdx+4, 2), comment="Load address of kernel arguments"))
         moduleArgs.add(perloadLabelLoadEnd)
         moduleArgs.add(SMovB32(dst=sgpr("WGM"), src=sgpr(preloadSgprStartIdx+2), comment="Preload internal args2"))
-        if (self.states.kernel["WorkGroupMappingXCC"] > 1):
-          moduleArgs.add(SMovB32(dst=sgpr(tmpSgprNumWorkGroups), src=sgpr(preloadSgprStartIdx+3), comment="Load num of WGs"))
+        moduleArgs.add(SMovB32(dst=sgpr(tmpSgprNumWorkGroups), src=sgpr(preloadSgprStartIdx+3), comment="Load num of WGs"))
         # add common kern entry label
         moduleRegInit.add(common_kern_entry)
         for i in range(kernel["ProblemType"]["NumIndicesC"]):
@@ -1594,10 +1606,9 @@ class KernelWriterAssembly(KernelWriter):
       labelMultiGemmEnd = Label(label="MultiGemmEnd", comment="")
       module.add(moduleArgs)
       module.add(moduleRegInit)
-      if (self.states.kernel["WorkGroupMappingXCC"] > 1):
-        module.add(self.wgmXCC(kernel, tmpSgprNumWorkGroups))
-        self.sgprPool.checkIn(tmpSgprNumWorkGroups)
-        tmpSgprNumWorkGroups = None
+      module.add(self.wgmXCC(kernel, tmpSgprNumWorkGroups))
+      self.sgprPool.checkIn(tmpSgprNumWorkGroups)
+      tmpSgprNumWorkGroups = None
       module.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=0))
       self.sgprPool.checkIn(sgprArgType)
       sgprArgType = None # Cannot be used after this point
@@ -1988,6 +1999,10 @@ class KernelWriterAssembly(KernelWriter):
     ########################################
     # Blocked rows or columns
     # Do branch
+    
+    # Restore WGM
+    module.add(SSExtI16toI32(dst=sgpr("WGM"), src=sgpr("WGM"), comment="Restore WGM"))
+
     wgmLabel         = Label(label=self.labels.getNameInc("WGM"), comment="")
     wgmLabelPositive = Label(label=self.labels.getNameInc("WGMPositive"), comment="")
     module.add(SCmpGtI32(src0=sgpr("WGM"), src1=1, comment="WGM > 1 ?"))
@@ -7446,7 +7461,7 @@ class KernelWriterAssembly(KernelWriter):
     storevw = self.LSUfullVw
     atomic = False # atomic is for GSU > 1
     beta = True
-    ss = StoreState(self, kernel, storevw, False, beta, atomic, self.LSUelements)
+    ss = StoreState(self, kernel, storevw, False, beta, atomic, self.LSUelements, dim=0)
     self.LSUelemCoord0, self.LSUelemCoord1 = ss.getStoreElementsInfoForBatch(kernel, self.LSUelements)
 
     with self.allocTmpSgpr(1) as tmpSgprInfo:
@@ -9489,7 +9504,7 @@ class KernelWriterAssembly(KernelWriter):
     # Calculate Vgprs for Write Batching
     ########################################
 
-    ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI])
+    ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], dim=factorDim)
 
     #print self.vgprPool.state()
     # Use VGPR up to next occupancy threshold:
@@ -10306,12 +10321,12 @@ class KernelWriterAssembly(KernelWriter):
       elif kernel["ProblemType"]["ComputeDataType"].isInt32():
         maskConst = 1
 
+    turnOffset = 0
     for i in range(turn):
       if i != 0:
-        module.add(VAddU32(dst=vgpr(offsetVgpr), src0=offset, src1=vgpr(offsetVgpr), comment="add subgroup offset"))
-        subGroupOffset[0] = subGroupOffset[0] + offset
+        turnOffset += offset
       bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvw
-      ds  = DSModifiers(offset=0)
+      ds  = DSModifiers(offset=(subGroupOffset[0] + turnOffset))
       dst = vgpr(offsetVgpr)
       for vi in range(gwvw):
         # Does not support hi/lo yet
@@ -10496,38 +10511,19 @@ class KernelWriterAssembly(KernelWriter):
 
     # Get all local stores
     storeModules = Module("Store")
-    dstOffset = 0
+    subGroupOffset = [0]
     if biasDataType:
-      subGroupOffset = [0]
       storeModules.add(self.addVectorLocalStore(kernel, "Bias", offsetVgpr, biasShiftOffset, biasDataType, gwvw, tmpVgpr1Res, biasDstVgpr, subGroupOffset, dim, comment="store bias"))
-      dstOffset = kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.bias.turn - subGroupOffset[0]
+      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.bias.turn
     if scaleAlphaDataType:
-      if dstOffset > 0:
-        storeModules.add(VAddU32(dst=vgpr(offsetVgpr), \
-                                src0=(dstOffset), \
-                                src1=vgpr(offsetVgpr), \
-                                comment="add lds offset"))
-      subGroupOffset = [0]
       storeModules.add(self.addVectorLocalStore(kernel, "ScaleAlphaVec", offsetVgpr, scaleAlphaShiftOffset, scaleAlphaDataType, gwvw, tmpVgpr1Res, scaleAlphaDstVgpr, subGroupOffset, dim, setToOne=True, comment="store scaleAlpha"))
-      dstOffset = kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleAlpha.turn - subGroupOffset[0]
+      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleAlpha.turn
     if scaleADataType:
-      if dstOffset > 0:
-        storeModules.add(VAddU32(dst=vgpr(offsetVgpr), \
-                                src0=(dstOffset), \
-                                src1=vgpr(offsetVgpr), \
-                                comment="add lds offset"))
-      subGroupOffset = [0]
       storeModules.add(self.addVectorLocalStore(kernel, "ScaleA", offsetVgpr, scaleAShiftOffset, scaleADataType, gwvw, tmpVgpr1Res, scaleADstVgpr, subGroupOffset, 0, setToOne=True, comment="store scaleA"))
-      dstOffset = kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleA.turn - subGroupOffset[0]
+      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleA.turn
     if scaleBDataType:
-      if dstOffset > 0:
-        storeModules.add(VAddU32(dst=vgpr(offsetVgpr), \
-                                src0=(dstOffset), \
-                                src1=vgpr(offsetVgpr), \
-                                comment="add lds offset"))
-      subGroupOffset = [0]
       storeModules.add(self.addVectorLocalStore(kernel, "ScaleB", offsetVgpr, scaleBShiftOffset, scaleBDataType, gwvw, tmpVgpr1Res, scaleBDstVgpr, subGroupOffset, 1, setToOne=True, comment="store scaleB"))
-      dstOffset = kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleB.turn - subGroupOffset[0]
+      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleB.turn
     # We move s_barrier before local load. Add barrier here to avoid race condition if lds offset starts from 0
     if kernel["LdsOffsetBias"] == 0:
       module.add(SBarrier(comment="wait for all global loads."))

@@ -189,8 +189,9 @@ public:
     template <typename T, std::enable_if_t<std::is_integral<T>{}, int> = 0>
     explicit operator T()
     {
-        return rand2() ? std::numeric_limits<T>::min : std::numeric_limits<T>::max;
+        return rand2() ? std::numeric_limits<T>::min() : std::numeric_limits<T>::max();
     }
+
     // Random float
     template <typename T, std::enable_if_t<!std::is_integral<T>{}, int> = 0>
     explicit operator T()

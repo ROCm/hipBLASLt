@@ -67,6 +67,7 @@ def clientExecutableEnvironment(builddir=None):
                'TENSILE_USE_MSGPACK': 'ON',
                'TENSILE_USE_LLVM': 'OFF' if (os.name == "nt") else 'ON',
                'Tensile_LIBRARY_FORMAT': globalParameters["LibraryFormat"],
+               'Tensile_ENABLE_MARKER' : globalParameters["EnableMarker"],
                'CMAKE_CXX_COMPILER': os.path.join(globalParameters["ROCmBinPath"], CxxCompiler),
                'CMAKE_C_COMPILER': os.path.join(globalParameters["ROCmBinPath"], CCompiler)}
 

@@ -2009,6 +2009,12 @@ class Solution(collections.abc.Mapping):
       state["1LDSBuffer"] = 1
       print2("\nSet SIA=2, force PrefetchLocalRead=1, ExpandPointerSwap=1, 1LDSBuffer=1")
 
+    if not globalParameters["AsmCaps"][isa]["HasNTModifier"]:
+      # force to disable nt flag if it is not supported by arch
+      for ch in ["", "A", "B", "C", "D", "E", "WS", "Metadata"]:
+        if state["NonTemporal%s"%ch] >= 4:
+          state["NonTemporal%s"%ch] -= 4
+
     if state["WavefrontSize"] == 32 and not globalParameters["ArchCaps"][isa]["HasWave32"]:
       reject(state, "WavefrontSize=32 not supported for ISA {}".format(isa))
 
@@ -2151,9 +2157,6 @@ class Solution(collections.abc.Mapping):
     state["LocalWriteUseSgprB"] = False
 
     state["WorkGroupMappingXCC"] = abs(state["WorkGroupMappingXCC"])
-
-    if state["WorkGroupMappingXCCGroup"] % state["WorkGroupMappingXCC"] != 0:
-      reject(state, "WGMXCCG %d must be multiple of WGMXCC %d",state["WorkGroupMappingXCCGroup"],state["WorkGroupMappingXCC"])
 
     problemType = state["ProblemType"]
 
@@ -3856,6 +3859,8 @@ class Solution(collections.abc.Mapping):
     elif state["GlobalSplitU"] > 0:
       state_copy["GlobalSplitU"] = "M"
     state_copy["WorkGroupMapping"] = "M"
+    state_copy["WorkGroupMappingXCC"] = "M"
+    state_copy["WorkGroupMappingXCCGroup"] = "M"
     state_copy["StaggerU"] = "M"
     state_copy["StaggerUStride"] = "M"
     state_copy["StaggerUMapping"] = "M"
@@ -3912,6 +3917,8 @@ class Solution(collections.abc.Mapping):
       elif state["GlobalSplitU"] > 0:
         requiredParameters["GlobalSplitU"] = False
       requiredParameters["WorkGroupMapping"] = False
+      requiredParameters["WorkGroupMappingXCC"] = False
+      requiredParameters["WorkGroupMappingXCCGroup"] = False
       requiredParameters["StaggerU"] = False
       requiredParameters["StaggerUStride"] = False
       requiredParameters["StaggerUMapping"] = False
@@ -3936,6 +3943,8 @@ class Solution(collections.abc.Mapping):
     state["GlobalSplitU"] = backup
     requiredParameters["GlobalSplitU"] = True
     requiredParameters["WorkGroupMapping"] = True
+    requiredParameters["WorkGroupMappingXCC"] = True
+    requiredParameters["WorkGroupMappingXCCGroup"] = True
     requiredParameters["StaggerU"] = True
     requiredParameters["StaggerUStride"] = True
     requiredParameters["StaggerUMapping"] = True
@@ -3951,10 +3960,9 @@ class Solution(collections.abc.Mapping):
   @staticmethod
   def getSerialNaming(objs):
     data = {}
-    for objIdx in range(0, len(objs)):
-      obj = objs[objIdx]
+    for obj in objs:
       for paramName in sorted(obj.keys()):
-        if paramName in list(validParameters.keys()):
+        if paramName in validParameters.keys():
           paramValue = obj[paramName]
           if paramName in data:
             if paramValue not in data[paramName]:
@@ -3963,7 +3971,7 @@ class Solution(collections.abc.Mapping):
             data[paramName] = [ paramValue ]
     maxObjs = 1
     for paramName in data:
-      if not isinstance(data[paramName][0],dict):
+      if not isinstance(data[paramName][0], dict):
         data[paramName] = sorted(data[paramName])
       maxObjs *= len(data[paramName])
     numDigits = len(str(maxObjs))
