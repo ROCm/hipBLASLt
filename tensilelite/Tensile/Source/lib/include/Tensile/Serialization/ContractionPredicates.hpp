@@ -116,6 +116,7 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::Sparse>(),
                     Base::template Pair<Predicates::Contraction::F32XdlMathOpEqual>(),
                     Base::template Pair<Predicates::Contraction::SupportDeviceUserArguments>(),
+                    Base::template Pair<Predicates::Contraction::WorkgroupMappingXCCCheck>(),
                 });
 
                 auto gmap = Generic::GetSubclasses();
@@ -504,6 +505,12 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::SupportDeviceUserArguments, IO>
             : public AutoMappingTraits<Predicates::Contraction::SupportDeviceUserArguments, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::WorkgroupMappingXCCCheck, IO>
+            : public AutoMappingTraits<Predicates::Contraction::WorkgroupMappingXCCCheck, IO>
         {
         };
     } // namespace Serialization
