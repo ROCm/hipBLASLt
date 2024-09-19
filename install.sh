@@ -48,7 +48,7 @@ function display_help()
   echo "    [--codecoverage] build with code coverage profiling enabled"
   echo "    [--gprof] enable profiling functionality with GNU gprof"
   echo "    [--keep-build-tmp] do not remove the temporary build artifacts or build_tmp"
-  echo "    [--dev-logic-filter] logic filter for developer, example: gfx942/Equality/* for building equality of gfx942 only"
+  echo "    [--logic-yaml-filter] logic filter for developer, example: gfx942/Equality/* for building equality of gfx942 only"
 }
 
 # This function is helpful for dockerfiles that do not have sudo installed, but the default user is root
@@ -410,7 +410,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker,dev-logic-filter: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker,logic-yaml-filter: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -527,7 +527,7 @@ while true; do
         --enable-tensile-marker)
             enable_tensile_marker=true
             shift;;
-        --dev_logic_filter|--dev-logic-filter)
+        --logic_yaml_filter|--logic-yaml-filter)
             logic_filter=${2}
             shift 2;;
         --) shift ; break ;;
