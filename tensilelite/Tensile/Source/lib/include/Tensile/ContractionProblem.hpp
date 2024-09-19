@@ -1253,6 +1253,23 @@ namespace Tensile
                           void*                _Synchronizer,
                           unsigned char const* _metadata);
 
+        ContractionInputs(void const* _a,
+                        void const* _b,
+                        void const* _c,
+                        void*       _d,
+                        ConstantVariant    _alpha,
+                        ConstantVariant     _beta,
+                        void*    _ws = nullptr)
+            : a(_a)
+            , b(_b)
+            , c(_c)
+            , d(_d)
+            , alpha(_alpha)
+            , beta(_beta)
+            , ws(_ws)
+        {
+        }
+
         // TODO: Remove this
         void const* a     = nullptr;
         void const* b     = nullptr;
