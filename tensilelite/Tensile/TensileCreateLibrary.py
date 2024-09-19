@@ -54,7 +54,7 @@ import subprocess
 import sys
 from timeit import default_timer as timer
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, List
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -1090,7 +1090,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
   def libraryIter(lib: MasterSolutionLibrary):
     if len(lib.solutions):
       for i, s in enumerate(lib.solutions.items()):
-        yield i, *s
+        yield (i, *s)
     else:
       for _, lazyLib in lib.lazyLibraries.items():
         yield from libraryIter(lazyLib)
@@ -1384,7 +1384,7 @@ def TensileCreateLibrary():
   else:
     printExit("Unrecognized LogicFormat", args.LogicFormat)
 
-  def archMatch(arch: str, archs: list[str]):
+  def archMatch(arch: str, archs: List[str]):
     return (arch in archs) or any(a.startswith(arch) for a in archs)
 
   def validLogicFile(p: Path):
