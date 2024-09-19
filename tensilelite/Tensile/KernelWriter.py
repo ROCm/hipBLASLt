@@ -750,6 +750,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       macIterItems = macIterCode.flatitems()
       skipLocalWriteWaitcnt = 0
       localReadsWaitcnt = 0
+      localReadsIssuedInThisIter = 0
       curPackIdx = 0
       packAIdx = 0
       packBIdx = 0
@@ -991,6 +992,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           while (localReadItemsThisLoop):
             item = localReadItemsThisLoop.pop(0)
             iterCode.add(item)
+            localReadsIssuedInThisIter += 1
             if (i == 0):
               localReadsWaitcnt += 1
           item = Module()
@@ -1009,6 +1011,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           if localReadItemsThisLoop:
             item = localReadItemsThisLoop.pop(0)
             iterCode.add(item)
+            localReadsIssuedInThisIter += 1
             if (i == 0):
               localReadsWaitcnt += 1
         if not localReadItemsThisLoop and latencyLeft > 0 and iteration < isBarrier and \
@@ -1148,6 +1151,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
         ####
         # scheduled wait localReads
         ####
+        if kernel["UnrollMajorLDSB"] and not (kernel["ProblemType"]["DataTypeB"].isFloat8() and kernel["ConvertAfterDS"]):
+          if iteration == 0 and i == kernel["MIWaveTileA"]:
+            # add 1 more waitcnt before using ds read data
+            waitCode2 = fastdeepcopy(waitCode)
+            waitCode2.lgkmcnt = localReadsIssuedInThisIter
+            iterCode.add(waitCode2)
         if i == 0:
           iterCode.add(waitCode)
 
@@ -1279,6 +1288,15 @@ class KernelWriter(metaclass=abc.ABCMeta):
           if (iteration < numReadsIterB and not dataAtIterB < max(dataAtIterA,dataAtIterB)) or numPrefetchIter:
             localReads -= self.states.numReadsPerIterB
           localReads += localReadsWaitcnt
+          if iteration == 0 and kernel["UnrollMajorLDSB"] and not (kernel["ProblemType"]["DataTypeB"].isFloat8() and kernel["ConvertAfterDS"]):
+            # We issued LR with A[0]->B[0]->A[1:]->B[1:] order.
+            # We need to calculate how many B[N:] needed by 1st mfma.
+            # If not UnrollMajorLDSB, we have packB which will be issued ahead.
+            # If ConvertAfterDS and DataTypeB=FP8, we have cvtB which will be issued ahead.
+            localReadsNotWaited = self.states.numReadsPerIterB//kernel["InnerUnroll"] - self.states.numReadsPerUnrollB
+            if localReadsNotWaited > 0:
+              localReads += localReadsNotWaited
+
         lgkmcnt += localReads
         iterCode.addComment0("numPrefetchIter=%u" % numPrefetchIter)
         iterCode.addComment0("dataAtIterA=%u numReadsIterA=%u skipReadsIterA=%u readsPerIterA=%u" % (dataAtIterA, numReadsIterA, skipReadsIterA, self.states.numReadsPerIterA))
@@ -1329,6 +1347,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
                 lgkmcnt = localWrites  # this only survives if writes are at the end
 
       waitCode.comment += " old=%u, new=%u newLW=%u newLR=%u" % (waitCode.lgkmcnt, lgkmcnt,localWrites,localReads)
+      if iteration == 0:
+        waitCode.comment += " for iteration == 0"
       waitCode.lgkmcnt = lgkmcnt
       # This line is added for backward compatibility
       waitCode.vscnt = waitCode.vmcnt if waitCode.lgkmcnt != -1 and waitCode.vmcnt != -1 and self.states.archCaps["SeparateVscnt"] else -1
