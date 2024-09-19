@@ -79,6 +79,7 @@ if ( NOT hip_FOUND )
   find_package( hip REQUIRED CONFIG PATHS ${ROCM_PATH} )
 endif( )
 
+
 if( BUILD_CLIENTS_SAMPLES )
   add_subdirectory( samples )
 endif( )
@@ -86,7 +87,7 @@ endif( )
 if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
 
   # Linking lapack library requires fortran flags
-  find_package( cblas REQUIRED CONFIG ) 
+  find_package( cblas REQUIRED CONFIG )
   if(${BLIS_FOUND})
     set( BLAS_LIBRARY ${BLIS_LIB} )
     set( BLIS_CPP ../common/blis_interface.cpp )
