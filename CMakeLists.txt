@@ -126,6 +126,10 @@ if(NOT BUILD_CUDA)
     endif()
 endif()
 
+if (LINK_BLIS)
+  include(cmake/findBLIS.cmake)
+endif()
+
 if (USE_CUDA)
 	find_package( CUDA REQUIRED )
     # Hip headers required of all clients; clients use hip to allocate device memory
