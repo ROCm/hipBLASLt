@@ -498,6 +498,9 @@ class ProblemPredicate(Properties.Predicate):
             value = globalParameters['MinKForGSU']
             rv += [cls('GlobalSplitUCheckMinK', value=[value, state["GlobalSplitU"]])]
 
+        if ('WorkGroupMappingXCC' in state) and ('WorkGroupMappingXCCGroup' in state):
+            rv += [cls("WorkgroupMappingXCCCheck", value=[state['WorkGroupMappingXCC'], state['WorkGroupMappingXCCGroup']])]
+
         return rv
 
     @classmethod
@@ -537,6 +540,7 @@ class SizeMapping:
                  'activationFused',
                  'CustomKernelName',
                  'workGroupMappingXCC',
+                 'workGroupMappingXCCGroup',
                  'globalSplitUCoalesced',
                  'globalSplitUWorkGroupMappingRoundRobin'
                  ]
@@ -579,6 +583,7 @@ class SizeMapping:
                    activationFused          = d['ActivationFused'],
                    CustomKernelName         = d['CustomKernelName'],
                    workGroupMappingXCC      = d['WorkGroupMappingXCC'],
+                   workGroupMappingXCCGroup = d['WorkGroupMappingXCCGroup'],
                    globalSplitUCoalesced    = d['GlobalSplitUCoalesced'],
                    globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin']
                    )

@@ -2158,9 +2158,6 @@ class Solution(collections.abc.Mapping):
 
     state["WorkGroupMappingXCC"] = abs(state["WorkGroupMappingXCC"])
 
-    if state["WorkGroupMappingXCCGroup"] % state["WorkGroupMappingXCC"] != 0:
-      reject(state, "WGMXCCG %d must be multiple of WGMXCC %d",state["WorkGroupMappingXCCGroup"],state["WorkGroupMappingXCC"])
-
     problemType = state["ProblemType"]
 
     for (tc,batchMask) in (('A', 0x1), ('B', 0x2)):
@@ -3862,6 +3859,8 @@ class Solution(collections.abc.Mapping):
     elif state["GlobalSplitU"] > 0:
       state_copy["GlobalSplitU"] = "M"
     state_copy["WorkGroupMapping"] = "M"
+    state_copy["WorkGroupMappingXCC"] = "M"
+    state_copy["WorkGroupMappingXCCGroup"] = "M"
     state_copy["StaggerU"] = "M"
     state_copy["StaggerUStride"] = "M"
     state_copy["StaggerUMapping"] = "M"
@@ -3918,6 +3917,8 @@ class Solution(collections.abc.Mapping):
       elif state["GlobalSplitU"] > 0:
         requiredParameters["GlobalSplitU"] = False
       requiredParameters["WorkGroupMapping"] = False
+      requiredParameters["WorkGroupMappingXCC"] = False
+      requiredParameters["WorkGroupMappingXCCGroup"] = False
       requiredParameters["StaggerU"] = False
       requiredParameters["StaggerUStride"] = False
       requiredParameters["StaggerUMapping"] = False
@@ -3942,6 +3943,8 @@ class Solution(collections.abc.Mapping):
     state["GlobalSplitU"] = backup
     requiredParameters["GlobalSplitU"] = True
     requiredParameters["WorkGroupMapping"] = True
+    requiredParameters["WorkGroupMappingXCC"] = True
+    requiredParameters["WorkGroupMappingXCCGroup"] = True
     requiredParameters["StaggerU"] = True
     requiredParameters["StaggerUStride"] = True
     requiredParameters["StaggerUMapping"] = True
