@@ -87,8 +87,6 @@ namespace Tensile
         
         bool printStreamKGridInfo() const;
 
-        bool printStreamKGridInfo() const;
-
         bool gridBasedKDTree() const;
 
         bool gridBasedBatchExp() const;

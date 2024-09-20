@@ -180,9 +180,7 @@ TEST_P(LibraryPerformanceTest, Solve)
 
     if(solution)
     {
-        // TypedContractionInputs<float> inputs{&a, &b, &c, &d, 1.0, float(problem.beta())};
         ContractionInputs inputs{&a, &b, &c, &d, 1.0, float(problem.beta())};
-        // ContractionInputs inputs{&a, &b, &c, &d, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, 1.0f, float(problem.beta())};
         for(int i = 0; i < 100000; i++)
         {
             solution->solve(problem, inputs, hardware);
@@ -292,18 +290,8 @@ std::vector<LibraryPerformanceTest::ParamType> GetLibraries(std::string const& e
 
     for(auto const& gpu : gpus)
     {
-        rv.push_back(std::make_tuple(gpu, "KernelsNew." + ext, false, false));
-        // rv.push_back(std::make_tuple(gpu, "KernelsLite." + ext, false, false));
-        // rv.push_back(std::make_tuple(gpu, "KernelsLiteMixed." + ext, false, true));
-        // rv.push_back(std::make_tuple(gpu, "KernelsLiteNavi." + ext, true, false));
-        // rv.push_back(std::make_tuple(gpu, "KernelsTileLite." + ext, false, false));
-        // rv.push_back(std::make_tuple(gpu, "rocBLAS_Full." + ext, false, true));
+        rv.push_back(std::make_tuple(gpu, "Kernels." + ext, false, false));
     }
-
-    // rv.push_back(std::make_tuple(
-    //     AMDGPU(AMDGPU::Processor::gfx908, 64, "Arcturus"), "rocBLAS_Full." + ext, false, true));
-    // rv.push_back(std::make_tuple(
-    //     AMDGPU(AMDGPU::Processor::gfx1010, 40, "Navi"), "KernelsLiteNavi." + ext, true, false));
 
     return rv;
 }
