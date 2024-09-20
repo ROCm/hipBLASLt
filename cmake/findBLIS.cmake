@@ -47,8 +47,9 @@ else()
     set(BLIS_INCLUDE_DIR ${BLIS_ROOT}/include/blis)
 endif()
 
-set(BLIS_FOUND TRUE PARENT_SCOPE)
-set(BLIS_INCLUDE_DIR ${BLIS_INCLUDE_DIR} PARENT_SCOPE)
-set(BLIS_LIB ${BLIS_LIB} PARENT_SCOPE)
-message("BLIS heeader directory found: ${BLIS_INCLUDE_DIR}")
+
+set(BLIS_FOUND TRUE)
+set(BLIS_INCLUDE_DIR ${BLIS_INCLUDE_DIR})
+set(BLIS_LIB ${BLIS_LIB})
+message("BLIS header directory found: ${BLIS_INCLUDE_DIR}")
 message("BLIS lib found: ${BLIS_LIB}")
