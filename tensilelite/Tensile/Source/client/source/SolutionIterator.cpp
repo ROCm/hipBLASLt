@@ -113,7 +113,7 @@ namespace Tensile
             if(solution.requiredHostWorkspaceSizePerProblem == static_cast<size_t>(-1))
             {
                 solution.requiredHostWorkspaceSizePerProblem
-                    = solution.requiredHostSizeGroupedGemmSingle(problem);
+                    = solution.requiredHostSizeGroupedGemmSingle(problem, *m_hardware);
             }
             return true;
         }
@@ -124,7 +124,7 @@ namespace Tensile
             {
                 for(int idx = 0; idx < problems->gemms.size(); idx++)
                 {
-                    size_t ws      = solution.requiredWorkspaceSizeGroupedGemm(problems->gemms);
+                    size_t ws      = solution.requiredWorkspaceSizeGroupedGemm(problems->gemms, *m_hardware);
                     auto&  problem = problems->gemms[idx];
                     problem.setWorkspaceSizeGroupedGemm(ws);
                     problem.setGroupedGemmCount(problems->gemms.size());

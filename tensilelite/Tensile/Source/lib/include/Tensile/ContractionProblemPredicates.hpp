@@ -31,6 +31,9 @@
 #include <Tensile/KernelLanguageTypes.hpp>
 #include <Tensile/Predicates.hpp>
 
+#include <Tensile/hip/HipHardware.hpp>
+#include <Tensile/AMDGPU.hpp>
+
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -1069,6 +1072,83 @@ namespace Tensile
                 {
                     return debugEvalCmp(
                         problem, stream, "prob", problem.deterministicMode(), "==", "sol", value);
+                }
+            };
+
+            struct AIGreaterThanEqual
+                : public Predicate_CRTP<AIGreaterThanEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+
+                double value;
+
+                AIGreaterThanEqual() = default;
+                AIGreaterThanEqual(double value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "AIGreaterThanEqual";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.arithmeticIntensity() >= value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&             stream) const override
+                {
+                    bool rv = (*this)(problem);
+
+                    stream << *this << ": (" << problem.arithmeticIntensity() << " >= " << value
+                           << ") == " << rv;
+
+                    return rv;
+                }
+            };
+
+            struct AILessThanEqual : public Predicate_CRTP<AILessThanEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+
+                double value;
+
+                AILessThanEqual() = default;
+                AILessThanEqual(double value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "AILessThanEqual";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.arithmeticIntensity() <= value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&             stream) const override
+                {
+                    bool rv = (*this)(problem);
+
+                    stream << *this << ": (" << problem.arithmeticIntensity() << " <= " << value
+                           << ") == " << rv;
+
+                    return rv;
                 }
             };
 
@@ -2472,6 +2552,61 @@ namespace Tensile
                                             "sol",
                                             value);
                     return rv;
+                }
+            };
+
+            struct WorkgroupMappingXCCCheck
+                : public Predicate_CRTP<WorkgroupMappingXCCCheck, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                std::array<int, 2> value;
+                size_t             cuCount;
+
+                WorkgroupMappingXCCCheck()
+                {
+                    auto pHardware = hip::GetCurrentDevice();
+                    assert(pHardware != nullptr);
+                    Hardware const& hardware = *pHardware;
+                    AMDGPU const*   pAMDGPU  = dynamic_cast<AMDGPU const*>(&hardware);
+                    cuCount                  = pAMDGPU->computeUnitCount;
+                }
+                WorkgroupMappingXCCCheck(std::array<int, 2> value)
+                    : value(value)
+                {
+                    auto pHardware = hip::GetCurrentDevice();
+                    assert(pHardware != nullptr);
+                    Hardware const& hardware = *pHardware;
+                    AMDGPU const*   pAMDGPU  = dynamic_cast<AMDGPU const*>(&hardware);
+                    cuCount                  = pAMDGPU->computeUnitCount;
+                }
+
+                static std::string Type()
+                {
+                    return "WorkgroupMappingXCCCheck";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    size_t WGMXCCG = (value[1] == -1) ? cuCount : value[1];
+                    return WGMXCCG % value[0] == 0;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(problem,
+                                        stream,
+                                        "cuCount",
+                                        (value[1] == -1) ? cuCount : value[1],
+                                        "%",
+                                        "WGMXCC",
+                                        value[0],
+                                        "==",
+                                        0);
                 }
             };
         } // namespace Contraction

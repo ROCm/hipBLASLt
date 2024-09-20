@@ -159,13 +159,15 @@ namespace
                 betaPtr = dummyScalarPtr<ScaleType>();
             }
 
+            const ScaleType *nullScalePtr = nullptr;
+
             kArgs.appendAligned("c", c);
             kArgs.appendAligned("a", a);
             kArgs.appendAligned("b", b);
             kArgs.appendAligned("alpha", *alphaPtr);
-            kArgs.appendAligned("alphaPtr", nullptr);
+            kArgs.appendAligned("alphaPtr", nullScalePtr);
             kArgs.appendAligned("beta", *betaPtr);
-            kArgs.appendAligned("betaPtr", nullptr);
+            kArgs.appendAligned("betaPtr", nullScalePtr);
             kArgs.appendAligned("m", m);
             kArgs.appendAligned("n", n);
             kArgs.appendAligned("ldA", ldA);
@@ -179,6 +181,7 @@ namespace
         constexpr auto            NUM_WORKITEMS{NumThreadsM * NumThreadsN};
         Tensile::KernelInvocation invocation{kernelName,
                                              "hipblasltTransform.hsaco",
+                                             false,
                                              {NUM_WORKITEMS, 1, 1},
                                              {numWg, 1, batchSize},
                                              {numWg * NUM_WORKITEMS, 1, batchSize},

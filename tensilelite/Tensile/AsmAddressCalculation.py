@@ -322,6 +322,7 @@ class AddrCalculation:
                                              src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
                                              src1=vgpr(self.addrBiasVgpr), \
                                              comment="add bias lds offset"))
+                        ss.singleColBiasAddrUpdated = True
                         return module
                     if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                         if self.referenceVgpr and self.referenceDim == dim:

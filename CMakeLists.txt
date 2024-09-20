@@ -55,6 +55,20 @@ else( )
     set (HIP_PATH $ENV{HIP_PATH} )
 endif( )
 
+if (DEFINED ENV{ROCM_PATH})
+  set(rocm_bin "$ENV{ROCM_PATH}/bin")
+else()
+  set(rocm_bin "/opt/rocm/bin")
+endif()
+
+if (NOT DEFINED ENV{CXX} AND NOT CMAKE_CXX_COMPILER)
+  set(CMAKE_CXX_COMPILER "${rocm_bin}/amdclang++")
+endif()
+
+if (NOT DEFINED ENV{CC} AND NOT CMAKE_C_COMPILER)
+  set(CMAKE_C_COMPILER "${rocm_bin}/amdclang")
+endif()
+
 # hipBLASLt project
 project(hipblaslt LANGUAGES CXX)
 
@@ -95,6 +109,8 @@ option(USE_CUDA "Look for CUDA and use that as a backend if found" OFF)
 option(Tensile_MERGE_FILES "Tensile to merge kernels and solutions files?" ON)
 option(Tensile_SEPARATE_ARCHITECTURES "Tensile to use GPU architecture specific files?" ON)
 option(Tensile_LAZY_LIBRARY_LOADING "Tensile to load kernels on demand?" ON)
+# For roctx
+option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt" ON)
 
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
@@ -137,11 +153,17 @@ if (USE_CUDA)
     list( APPEND HIP_INCLUDE_DIRS "${HIP_ROOT_DIR}/include" )
 else()
 
-
-    #Set the AMDGPU_TARGETS with backward compatiblity
-    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-        TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx940;gfx941;gfx942;gfx1100;gfx1101;;gfx1200;gfx1201"
-    )
+    if (NOT BUILD_ADDRESS_SANITIZER)
+      #Set the AMDGPU_TARGETS with backward compatiblity
+      rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
+          TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx940;gfx941;gfx942;gfx1100;gfx1101;;gfx1200;gfx1201"
+      )
+    else()
+      #build xnack-supported targets only
+      rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
+          TARGETS "gfx908:xnack+;gfx90a:xnack+;gfx940:xnack+;gfx941:xnack+;gfx942:xnack+"
+      )
+    endif()
 
     if (AMDGPU_TARGETS)
         set(TMPAMDGPU_TARGETS "${AMDGPU_TARGETS}")
@@ -237,6 +259,15 @@ if( LEGACY_HIPBLAS_DIRECT )
   find_package( hipblas REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 else()
   find_package( hipblas-common REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+endif()
+
+if(HIPBLASLT_ENABLE_MARKER)
+  find_library(rocTracer roctx64)
+  if(NOT rocTracer)
+    message(FATAL_ERROR "roctracer not found, but HIPBLASLT_ENABLE_MARKER is enabled")
+  endif()
+  add_definitions(-DHIPBLASLT_ENABLE_MARKER)
+  rocm_package_add_dependencies(DEPENDS "roctracer >= 1.0.0")
 endif()
 
 # Setup version

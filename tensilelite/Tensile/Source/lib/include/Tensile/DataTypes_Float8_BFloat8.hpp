@@ -115,8 +115,10 @@ namespace Tensile
 #endif
     }
 
+    static bool        isOcpF8;
     static inline bool IsOCPSupported()
     {
+        static bool     do_once = false;
         int             deviceId;
         hipDeviceProp_t deviceProperties;
         auto            removePrefix = [](const std::string& s) {
@@ -127,12 +129,19 @@ namespace Tensile
             }
             return s;
         };
-        static_cast<void>(hipGetDevice(&deviceId));
-        static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-        auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
-        if(stoi(gpu_arch_no_prefix) / 100 == 12)
-            return true;
-        return false;
+
+        if(!do_once)
+        {
+            static_cast<void>(hipGetDevice(&deviceId));
+            static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+            auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
+            if(stoi(gpu_arch_no_prefix) / 100 == 12)
+                isOcpF8 = true;
+            else
+                isOcpF8 = false;
+            do_once = true;
+        }
+        return isOcpF8;
     }
 
     // data type
@@ -292,17 +301,19 @@ namespace Tensile
                         v, 2, 5, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
                 else
 #endif
+                {
                     if(get_hip_f8_bias_mode())
-                {
-                    data = tensile_hip_f8_impl::
-                        cast_to_f8<2, 5, float, true /*negative_zero_nan*/, true /*clip*/>(
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
-                }
-                else
-                {
-                    data = tensile_hip_f8_impl::
-                        cast_to_f8<2, 5, float, false /*negative_zero_nan*/, true /*clip*/>(
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    {
+                        data = tensile_hip_f8_impl::
+                            cast_to_f8<2, 5, float, true /*negative_zero_nan*/, true /*clip*/>(
+                                v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    }
+                    else
+                    {
+                        data = tensile_hip_f8_impl::
+                            cast_to_f8<2, 5, float, false /*negative_zero_nan*/, true /*clip*/>(
+                                v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    }
                 }
             }
             else /* fp8*/
@@ -313,17 +324,19 @@ namespace Tensile
                         v, 3, 4, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
                 else
 #endif
+                {
                     if(get_hip_f8_bias_mode())
-                {
-                    data = tensile_hip_f8_impl::
-                        cast_to_f8<3, 4, float, true /*negative_zero_nan*/, true /*clip*/>(
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
-                }
-                else
-                {
-                    data = tensile_hip_f8_impl::
-                        cast_to_f8<3, 4, float, false /*negative_zero_nan*/, true /*clip*/>(
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    {
+                        data = tensile_hip_f8_impl::
+                            cast_to_f8<3, 4, float, true /*negative_zero_nan*/, true /*clip*/>(
+                                v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    }
+                    else
+                    {
+                        data = tensile_hip_f8_impl::
+                            cast_to_f8<3, 4, float, false /*negative_zero_nan*/, true /*clip*/>(
+                                v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    }
                 }
             }
         }
@@ -397,17 +410,19 @@ namespace Tensile
                         v, 2, 5, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
                 else
 #endif
+                {
                     if(get_hip_f8_bias_mode())
-                {
-                    data = tensile_hip_f8_impl::
-                        cast_to_f8<2, 5, _Float16, true /*negative_zero_nan*/, true /*clip*/>(
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
-                }
-                else
-                {
-                    data = tensile_hip_f8_impl::
-                        cast_to_f8<2, 5, _Float16, false /*negative_zero_nan*/, true /*clip*/>(
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    {
+                        data = tensile_hip_f8_impl::
+                            cast_to_f8<2, 5, _Float16, true /*negative_zero_nan*/, true /*clip*/>(
+                                v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    }
+                    else
+                    {
+                        data = tensile_hip_f8_impl::
+                            cast_to_f8<2, 5, _Float16, false /*negative_zero_nan*/, true /*clip*/>(
+                                v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    }
                 }
             }
             else /* fp8*/
@@ -418,17 +433,19 @@ namespace Tensile
                         v, 3, 4, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
                 else
 #endif
+                {
                     if(get_hip_f8_bias_mode())
-                {
-                    data = tensile_hip_f8_impl::
-                        cast_to_f8<3, 4, _Float16, true /*negative_zero_nan*/, true /*clip*/>(
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
-                }
-                else
-                {
-                    data = tensile_hip_f8_impl::
-                        cast_to_f8<3, 4, _Float16, false /*negative_zero_nan*/, true /*clip*/>(
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    {
+                        data = tensile_hip_f8_impl::
+                            cast_to_f8<3, 4, _Float16, true /*negative_zero_nan*/, true /*clip*/>(
+                                v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    }
+                    else
+                    {
+                        data = tensile_hip_f8_impl::
+                            cast_to_f8<3, 4, _Float16, false /*negative_zero_nan*/, true /*clip*/>(
+                                v, (rm == hip_f8_rounding_mode::stochastic), rng);
+                    }
                 }
             }
         }
@@ -501,15 +518,17 @@ namespace Tensile
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
                 else
 #endif
+                {
                     if(get_hip_f8_bias_mode())
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<2, 5, float, true /*negative_zero_nan*/>(data);
-                }
-                else
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<2, 5, float, false /*negative_zero_nan*/>(data);
+                    {
+                        return tensile_hip_f8_impl::
+                            cast_from_f8<2, 5, float, true /*negative_zero_nan*/>(data);
+                    }
+                    else
+                    {
+                        return tensile_hip_f8_impl::
+                            cast_from_f8<2, 5, float, false /*negative_zero_nan*/>(data);
+                    }
                 }
             }
             else /* fp8*/
@@ -519,15 +538,17 @@ namespace Tensile
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 3, 4, false);
                 else
 #endif
+                {
                     if(get_hip_f8_bias_mode())
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<3, 4, float, true /*negative_zero_nan*/>(data);
-                }
-                else
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<3, 4, float, false /*negative_zero_nan*/>(data);
+                    {
+                        return tensile_hip_f8_impl::
+                            cast_from_f8<3, 4, float, true /*negative_zero_nan*/>(data);
+                    }
+                    else
+                    {
+                        return tensile_hip_f8_impl::
+                            cast_from_f8<3, 4, float, false /*negative_zero_nan*/>(data);
+                    }
                 }
             }
         }
@@ -578,15 +599,17 @@ namespace Tensile
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
                 else
 #endif
+                {
                     if(get_hip_f8_bias_mode())
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<2, 5, _Float16, true /*negative_zero_nan*/>(data);
-                }
-                else
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<2, 5, _Float16, false /*negative_zero_nan*/>(data);
+                    {
+                        return tensile_hip_f8_impl::
+                            cast_from_f8<2, 5, _Float16, true /*negative_zero_nan*/>(data);
+                    }
+                    else
+                    {
+                        return tensile_hip_f8_impl::
+                            cast_from_f8<2, 5, _Float16, false /*negative_zero_nan*/>(data);
+                    }
                 }
             }
             else /* fp8*/
@@ -596,15 +619,17 @@ namespace Tensile
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
                 else
 #endif
+                {
                     if(get_hip_f8_bias_mode())
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<3, 4, _Float16, true /*negative_zero_nan*/>(data);
-                }
-                else
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<3, 4, _Float16, false /*negative_zero_nan*/>(data);
+                    {
+                        return tensile_hip_f8_impl::
+                            cast_from_f8<3, 4, _Float16, true /*negative_zero_nan*/>(data);
+                    }
+                    else
+                    {
+                        return tensile_hip_f8_impl::
+                            cast_from_f8<3, 4, _Float16, false /*negative_zero_nan*/>(data);
+                    }
                 }
             }
         }
@@ -616,7 +641,11 @@ namespace Tensile
         // check for zero
         inline HIP_HOST_DEVICE bool is_zero() const
         {
-            if(get_hip_f8_bias_mode() || IsOCPSupported())
+            if(get_hip_f8_bias_mode()
+#if defined(HIP_FP8_TYPE_OCP)
+               || IsOCPSupported()
+#endif
+            )
             {
                 return data == 0x00;
             }
@@ -629,29 +658,35 @@ namespace Tensile
         // check for nan
         inline HIP_HOST_DEVICE bool is_nan() const
         {
+#if defined(HIP_FP8_TYPE_OCP)
             if(IsOCPSupported())
             {
                 return (T == hip_f8_type::fp8)   ? ((data & 0x7f) == 0x7f)
                        : (T == hip_f8_type::bf8) ? ((data & 0x7f) > 0x7c)
                                                  : false;
             }
-            else if(get_hip_f8_bias_mode())
-            {
-                return data == 0x80;
-            }
             else
+#endif
             {
-                if(T == hip_f8_type::bf8)
+                if(get_hip_f8_bias_mode())
                 {
-                    return (data == 0x7d) || (data == 0x7e) || (data == 0x7f) || (data == 0xfd)
-                           || (data == 0xfe) || (data == 0xff);
+                    return data == 0x80;
                 }
                 else
                 {
-                    return (data == 0x79) || (data == 0x7a) || (data == 0x7b) || (data == 0x7c)
-                           || (data == 0x7d) || (data == 0x7e) || (data == 0x7f) || (data == 0xf9)
-                           || (data == 0xfa) || (data == 0xfb) || (data == 0xfc) || (data == 0xfd)
-                           || (data == 0xfe) || (data == 0xff);
+                    if(T == hip_f8_type::bf8)
+                    {
+                        return (data == 0x7d) || (data == 0x7e) || (data == 0x7f) || (data == 0xfd)
+                               || (data == 0xfe) || (data == 0xff);
+                    }
+                    else
+                    {
+                        return (data == 0x79) || (data == 0x7a) || (data == 0x7b) || (data == 0x7c)
+                               || (data == 0x7d) || (data == 0x7e) || (data == 0x7f)
+                               || (data == 0xf9) || (data == 0xfa) || (data == 0xfb)
+                               || (data == 0xfc) || (data == 0xfd) || (data == 0xfe)
+                               || (data == 0xff);
+                    }
                 }
             }
         }
@@ -659,23 +694,28 @@ namespace Tensile
         // check for inf
         inline HIP_HOST_DEVICE bool is_inf() const
         {
+#if defined(HIP_FP8_TYPE_OCP)
             if(IsOCPSupported())
             {
                 return (T == hip_f8_type::bf8) ? (data & 0x7f) == 0x7c : false;
             }
-            else if(get_hip_f8_bias_mode())
-            {
-                return data == 0x80;
-            }
             else
+#endif
             {
-                if(T == hip_f8_type::bf8)
+                if(get_hip_f8_bias_mode())
                 {
-                    return (data == 0x7c) || (data == 0xfc);
+                    return data == 0x80;
                 }
                 else
                 {
-                    return (data == 0x78) || (data == 0xf8);
+                    if(T == hip_f8_type::bf8)
+                    {
+                        return (data == 0x7c) || (data == 0xfc);
+                    }
+                    else
+                    {
+                        return (data == 0x78) || (data == 0xf8);
+                    }
                 }
             }
         }

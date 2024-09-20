@@ -88,6 +88,26 @@ namespace Tensile
             return m_wgm;
         }
 
+        void setWGMXCC(uint16_t wgmxcc)
+        {
+            m_wgmxcc = wgmxcc;
+        }
+
+        uint16_t wgmxcc() const
+        {
+            return m_wgmxcc;
+        }
+
+        void setWGMXCCG(int16_t wgmxccg)
+        {
+            m_wgmxccg = wgmxccg;
+        }
+
+        int16_t wgmxccg() const
+        {
+            return m_wgmxccg;
+        }
+
         void setBiasEnum(DataType dataType)
         {
             m_biasType = dataType;
@@ -128,6 +148,8 @@ namespace Tensile
         bool           m_gsuc           = false; // default value
         bool           m_gsuwgmrr       = false; // default value
         int16_t        m_wgm            = 0; // default value
+        uint16_t       m_wgmxcc         = 0; // default value
+        int16_t        m_wgmxccg        = 0; // default value
         DataType       m_biasType       = DataType::None;
         int            m_factorDim      = 0;
         ActivationType m_activationType = ActivationType::None;
@@ -1064,12 +1086,20 @@ namespace Tensile
             return getOperationDescription();
         }
 
+        size_t getNumTiles(SizeMapping const& sizeMapping) const;
+        size_t getItersPerTile(SizeMapping const& sizeMapping) const;
+
         void checkPersistentKernelEligibility(ContractionSolution const& solution,
                                               Hardware const&            hardware);
 
         bool getPersistentKernelEligibility() const
         {
             return m_eligibleForPK;
+        }
+
+        double  arithmeticIntensity() const
+        {
+            return m_arithmeticIntensity;
         }
 
         virtual std::vector<ConstantDescriptor> const constants() const
@@ -1149,7 +1179,7 @@ namespace Tensile
 
         KernelLanguage    m_kernelLanguage    = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric = PerformanceMetric::DeviceEfficiency;
-
+        double m_arithmeticIntensity;
         DataType m_alphaType         = DataType::None; // if not assigned, will follow d-type
         DataType m_betaType          = DataType::None; // for bwd-compatible
         DataType m_scaleAType        = DataType::None; // if not assigned, will follow alpha-type
@@ -1191,6 +1221,7 @@ namespace Tensile
 
         void normalize();
         void normalizeSparse();
+        void calcArithmeticIntensity();
 
         void consistencyCheck() const;
 
