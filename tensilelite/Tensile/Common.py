@@ -274,6 +274,8 @@ globalParameters["SeparateArchitectures"] = False # write Tensile library metada
 
 globalParameters["LazyLibraryLoading"] = False # Load library and code object files when needed instead of at startup
 
+globalParameters["EnableMarker"] = False # Enable Tensile markers
+
 globalParameters["UseUserArgs"] = False
 
 globalParameters["RotatingBufferSize"] = 0 # Size in MB
@@ -740,7 +742,7 @@ validParameters = {
     # These predicates can be used to adjust solution selection compute-bound or memory-bound problems.
     "AssertAIGreaterThanEqual": -1,
     "AssertAILessThanEqual":    -1,
-    
+
     # Stagger the start summation position of the tiles.
     # Elements from the summation dimension are loaded at offsets rather than all starting at 0.
     # StaggerU is the max 'clicks' of StaggerUStride bytes where each wg starts ; see StaggerUMapping
@@ -795,7 +797,7 @@ validParameters = {
     # True:  wg issused oder = {(wg0,wg0,wg0)|(wg1,wg1,wg1)|(wg2,wg2,wg2)|...|(wgn,wgn,wgn)}
     #   -> workgroups split up the summation -> faster GR but slower GW
     "GlobalSplitUWorkGroupMappingRoundRobin":        [False, True],
-    
+
     # 0=don't use magic div (source only)
     # 1=magic div alg #1.  Slightly faster but limited range (if magic number is 2^32)
     # 2=magic div alg#2.  Slightly slower but handles all unsigned ints up to 2^32
@@ -825,9 +827,10 @@ validParameters = {
     #
     # Formula for wgSerial:
     # wgSerial = wg0 + (wg1 % WorkGroupMapping) * nwg0
-    "WorkGroupMapping":           list(range(-1024,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
-    "WorkGroupMappingXCC":        list(range(1,1024+1)),  # change a workgroup's id so that contiguous workgroup can map on same XCC
-    "WorkGroupMappingXCCGroup":   list(range(0,1024+1)),  # change a workgroup's id so that contiguous workgroup can map on same XCC, remap workgroup in a group of WGMXCCG.
+    "WorkGroupMapping":           list(range(-1024, 1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
+    "WorkGroupMappingXCC":        list(range(1, 64)),  # change a workgroup's id so that contiguous workgroup can map on same XCC
+    # -1 : WorkGroupMappingXCCGroup will be set to CU_count at runtime. Please ensure that (CU_count % WGMXCC == 0).
+    "WorkGroupMappingXCCGroup":   list(range(-1, 1024)),  # change a workgroup's id so that contiguous workgroup can map on same XCC, remap workgroup in a group of WGMXCCG.
 
     "MaxOccupancy":               list(range(1, 40+1)),       # wg / CU; if cache thrashing is hurting performance, this allocates extra lds to artificially limit occupancy
     "WorkGroup":                  validWorkGroups,      # ( wg0 x wg1 x LocalSplitU ) dimensions of the workgroup which will operate on a tile and share lds
@@ -1188,7 +1191,7 @@ defaultBenchmarkCommonParameters = [
     {"AssertSummationElementMultiple": [ 1 ] },
     {"AssertFree0ElementMultiple": [ 1 ] },
     {"AssertFree1ElementMultiple": [ 1 ] },
-  
+
     {"AssertAIGreaterThanEqual":   [-1]},
     {"AssertAILessThanEqual":      [-1]},
 
@@ -1206,7 +1209,7 @@ defaultBenchmarkCommonParameters = [
     {"WorkGroup":                 [ [16,16,1]] },
     {"WorkGroupMapping":          [ 8 ] },
     {"WorkGroupMappingXCC":       [ 1 ] },
-    {"WorkGroupMappingXCCGroup":  [ 0 ] },
+    {"WorkGroupMappingXCCGroup":  [ -1 ] },
     {"ThreadTile":                [ [4,4] ] },
     {"WavefrontSize":             [ 64 ]},
     {"MatrixInstruction":         [ [] ] },

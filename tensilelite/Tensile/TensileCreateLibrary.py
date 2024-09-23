@@ -54,7 +54,7 @@ import subprocess
 import sys
 from timeit import default_timer as timer
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, List
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -1090,7 +1090,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
   def libraryIter(lib: MasterSolutionLibrary):
     if len(lib.solutions):
       for i, s in enumerate(lib.solutions.items()):
-        yield i, *s
+        yield (i, *s)
     else:
       for _, lazyLib in lib.lazyLibraries.items():
         yield from libraryIter(lazyLib)
@@ -1289,6 +1289,8 @@ def TensileCreateLibrary():
                          default=False, help="Separates TensileLibrary file by architecture")
   argParser.add_argument("--lazy-library-loading", dest="LazyLibraryLoading", action="store_true",
                          default=False, help="Loads Tensile libraries when needed instead of upfront.")
+  argParser.add_argument("--enable-marker", dest="EnableMarker", action="store_true",
+                         default=False, help="Enable marker in Tensile.")
   argParser.add_argument("--build-client", dest="BuildClient", action="store_true",
                          help="Build Tensile client")
   argParser.add_argument("--client-config", dest="ClientConfig", action="store_true",
@@ -1318,6 +1320,7 @@ def TensileCreateLibrary():
   arguments["Architecture"] = args.Architecture
   arguments["SeparateArchitectures"] = args.SeparateArchitectures
   arguments["LazyLibraryLoading"] = args.LazyLibraryLoading
+  arguments["EnableMarker"] = args.EnableMarker
   arguments["CxxCompiler"] = args.CxxCompiler
   if args.CmakeCxxCompiler:
     os.environ["CMAKE_CXX_COMPILER"] = args.CmakeCxxCompiler
@@ -1384,7 +1387,7 @@ def TensileCreateLibrary():
   else:
     printExit("Unrecognized LogicFormat", args.LogicFormat)
 
-  def archMatch(arch: str, archs: list[str]):
+  def archMatch(arch: str, archs: List[str]):
     return (arch in archs) or any(a.startswith(arch) for a in archs)
 
   def validLogicFile(p: Path):

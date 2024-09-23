@@ -314,6 +314,7 @@ hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
     const auto                numWorkgroups = getSoftmaxNumWorkgroups(m, tileM);
     Tensile::KernelInvocation invocation{kernelName,
                                          sol->getCodeObjectPath(),
+                                         false,
                                          {WORKGROUP_SIZE, 1, 1},
                                          {numWorkgroups, 1, 1},
                                          {numWorkgroups * WORKGROUP_SIZE, 1, 1},

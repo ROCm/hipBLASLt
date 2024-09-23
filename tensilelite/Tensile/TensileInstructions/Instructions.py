@@ -1554,6 +1554,11 @@ class SMovkI32(CommonInstruction):
         super().__init__(InstType.INST_I32, dst, [src], None, None, comment)
         self.setInst("s_movk_i32")
 
+class SSExtI16toI32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, [src], None, None, comment)
+        self.setInst("s_sext_i32_i16")
+
 # S exec
 class SAndSaveExecB32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:

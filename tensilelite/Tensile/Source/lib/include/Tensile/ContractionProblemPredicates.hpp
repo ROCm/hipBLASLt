@@ -31,6 +31,9 @@
 #include <Tensile/KernelLanguageTypes.hpp>
 #include <Tensile/Predicates.hpp>
 
+#include <Tensile/hip/HipHardware.hpp>
+#include <Tensile/AMDGPU.hpp>
+
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -2549,6 +2552,61 @@ namespace Tensile
                                             "sol",
                                             value);
                     return rv;
+                }
+            };
+
+            struct WorkgroupMappingXCCCheck
+                : public Predicate_CRTP<WorkgroupMappingXCCCheck, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                std::array<int, 2> value;
+                size_t             cuCount;
+
+                WorkgroupMappingXCCCheck()
+                {
+                    auto pHardware = hip::GetCurrentDevice();
+                    assert(pHardware != nullptr);
+                    Hardware const& hardware = *pHardware;
+                    AMDGPU const*   pAMDGPU  = dynamic_cast<AMDGPU const*>(&hardware);
+                    cuCount                  = pAMDGPU->computeUnitCount;
+                }
+                WorkgroupMappingXCCCheck(std::array<int, 2> value)
+                    : value(value)
+                {
+                    auto pHardware = hip::GetCurrentDevice();
+                    assert(pHardware != nullptr);
+                    Hardware const& hardware = *pHardware;
+                    AMDGPU const*   pAMDGPU  = dynamic_cast<AMDGPU const*>(&hardware);
+                    cuCount                  = pAMDGPU->computeUnitCount;
+                }
+
+                static std::string Type()
+                {
+                    return "WorkgroupMappingXCCCheck";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    size_t WGMXCCG = (value[1] == -1) ? cuCount : value[1];
+                    return WGMXCCG % value[0] == 0;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(problem,
+                                        stream,
+                                        "cuCount",
+                                        (value[1] == -1) ? cuCount : value[1],
+                                        "%",
+                                        "WGMXCC",
+                                        value[0],
+                                        "==",
+                                        0);
                 }
             };
         } // namespace Contraction

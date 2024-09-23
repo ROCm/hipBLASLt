@@ -65,21 +65,27 @@ namespace Tensile
             hipError_t launchKernel(KernelInvocation const& kernel,
                                     hipStream_t             stream,
                                     hipEvent_t              startEvent,
-                                    hipEvent_t              stopEvent);
+                                    hipEvent_t              stopEvent,
+                                    bool                    isKernelLoaded = false);
 
             hipError_t launchKernels(std::vector<KernelInvocation> const& kernels);
 
             hipError_t launchKernels(std::vector<KernelInvocation> const& kernels,
                                      hipStream_t                          stream,
                                      hipEvent_t                           startEvent,
-                                     hipEvent_t                           stopEvent);
+                                     hipEvent_t                           stopEvent,
+                                     bool                                 isKernelLoaded = false);
 
             hipError_t launchKernels(std::vector<KernelInvocation> const& kernels,
                                      hipStream_t                          stream,
                                      std::vector<hipEvent_t> const&       startEvents,
                                      std::vector<hipEvent_t> const&       stopEvents);
 
+            bool FindCodeObject(std::string const& codeObjectFile);
+
             hipError_t initKernel(std::string const& name);
+
+            hipError_t initKernels(std::vector<std::string> const& kernelNames);
 
         private:
             hipError_t getKernel(hipFunction_t& rv, std::string const& name);
