@@ -165,6 +165,15 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
     latencyLeft = writer.states.miLatencyLeft
     miLatencyLeft = writer.states.miLatencyLeft
     tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
+
+    # we can skip some LR waitcnt
+    isLocalReadsOpt = False
+    tmpLatencyLeft  = 0
+    tmpNumMfmaForLR = 0
+    localReadsNotWaited = writer.states.numReadsPerIterB//kernel["InnerUnroll"] - writer.states.numReadsPerUnrollB
+    if kernel["UnrollMajorLDSB"] and localReadsNotWaited > 0:
+        isLocalReadsOpt = True
+
     for iui in range(kernel["InnerUnroll"]):
         # ds_read[A][0]
         for i in range(writer.states.numReadsPerUnrollA):
@@ -198,6 +207,9 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
                 if latencyLeft < 0:
                     writer.states.numMfmaForLR += 1
                     latencyLeft = max(miLatencyLeft - tPM["localReadInstruction"].issueLatency*2,0)
+        if isLocalReadsOpt:
+            tmpLatencyLeft = latencyLeft
+            tmpNumMfmaForLR = writer.states.numMfmaForLR
         # ds_read[B][1:]
         for i in range(writer.states.numReadsPerIterB//kernel["InnerUnroll"] - writer.states.numReadsPerUnrollB):
             latencyLeft -= tensorParametersB["localReadInstruction"].issueLatency*2
@@ -208,7 +220,11 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
     # latency: 40 quad-cycle for 4 word, 20 quad-cycle for 2 word, 10 quad-cycle for 1 word / half word
     writer.states.numMfmaForNextLoopLR = writer.states.numMfmaForLR
     latencyForLR = roundUp(tensorParametersB["localReadInstruction"].blockWidth)*10
-    latencyForLR -= max(latencyLeft,0) # remaining latency in mfma
+    if isLocalReadsOpt:
+        latencyForLR = min(latencyForLR, (writer.states.numMfmaForLR - tmpNumMfmaForLR) * writer.states.miLatency)
+        latencyForLR -= max(tmpLatencyLeft,0) # remaining latency in mfma
+    else:
+        latencyForLR -= max(latencyLeft,0) # remaining latency in mfma
     latencyForLR -= writer.states.miLatency # last LR will have 1 mfma latency
     while latencyForLR > 0:
         latencyForLR -= writer.states.miLatency
