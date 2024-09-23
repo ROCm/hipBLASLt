@@ -190,6 +190,12 @@ void simpleGemmGetAllAlgos(hipblasLtHandle_t  handle,
     if(validIdx.empty())
     {
         std::cerr << "No valid solution found!" << std::endl;
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
         return;
     }
 
@@ -218,5 +224,6 @@ void simpleGemmGetAllAlgos(hipblasLtHandle_t  handle,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     return;
 }

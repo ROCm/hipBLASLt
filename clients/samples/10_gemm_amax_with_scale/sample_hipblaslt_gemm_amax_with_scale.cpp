@@ -160,6 +160,16 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
     if(returnedAlgoCount == 0)
     {
         std::cerr << "No valid solution found!" << std::endl;
+        CHECK_HIP_ERROR(hipFree(d_in_scale));
+        CHECK_HIP_ERROR(hipFree(d_out_amax));
+        CHECK_HIP_ERROR(hipFree(in_scale));
+        CHECK_HIP_ERROR(hipFree(out_amax));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
         return;
     }
 
@@ -190,10 +200,8 @@ void simpleGemmAmaxWithScale(hipblasLtHandle_t  handle,
     // deallocate memory space of amax
     CHECK_HIP_ERROR(hipFree(d_in_scale));
     CHECK_HIP_ERROR(hipFree(d_out_amax));
-
     CHECK_HIP_ERROR(hipFree(in_scale));
     CHECK_HIP_ERROR(hipFree(out_amax));
-
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
