@@ -2615,8 +2615,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     version = tuple(kernel["ISA"])
     if self.ti == None:
       self.ti = TensileInstructions()
-    if not self.ti.isInit():
-      self.ti.init(version, globalParameters["AssemblerPath"])
+    self.ti.init(version, globalParameters["AssemblerPath"])
     self.ti.setKernelInfo(version, kernel["WavefrontSize"])
 
     self.consts = ConstValues()
