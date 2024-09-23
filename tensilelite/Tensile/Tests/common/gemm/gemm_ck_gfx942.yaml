@@ -68,8 +68,64 @@ BenchmarkProblems:
         - BiasTypeArgs: ['s']
         - ActivationArgs:
           - [Enum: Relu]
+  -
+    - # ProblemType
+      OperationType: GEMM
+      # DataTypeA: f8
+      # DataTypeB: h
+      UseScaleAB: "Vector"
 
-LibraryLogic:
-    ScheduleName: "aquavanjaram"
-    DeviceNames: ["Device 0049", "Device 0050"]
-    ArchitectureName: "gfx942"
+      DataType: f8
+      DestDataType: b
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 1
+      TransposeB: 0
+      UseBeta: True
+      Batched: True
+
+      UseBias: 1
+      BiasDataTypeList: [S,B]
+      Activation: True
+      ActivationType: all
+      UseScaleAlphaVec: 1
+
+      # GroupedGemm: True
+      # SupportUserArgs: True
+    - # BenchmarkProblemSizeGroup - Standard
+      CustomKernels:
+        [
+          "Custom_Cijk_Alik_Bljk_F8BS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_K1_MIWT4_16_DTVA",
+          "Custom_Cijk_Alik_Bljk_F8BS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA",
+          "Custom_Cijk_Alik_Bljk_F8BS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x224x128_MI16x16x1_SN_K1_MIWT4_14_DTVA",
+          "Custom_Cijk_Alik_Bljk_F8BS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x224x128_MI16x16x1_SN_K1_MIWT4_14_WSGRB2_DTVA"
+        ]
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [255,255,1,1]
+          - Exact: [255,255,1,8]
+          - Exact: [255,255,1,9]
+          - Exact: [255,255,1,16]
+          - Exact: [255,255,1,17]
+          - Exact: [255,255,1,24]
+          - Exact: [255,255,1,25]
+          - Exact: [255,255,1,32]
+          - Exact: [255,255,1,64]
+          - Exact: [255,255,1,96]
+          - Exact: [255,255,1,128]
+          - Exact: [255,255,1,160]
+          - Exact: [255,255,1,192]
+          - Exact: [255,255,1,224]
+          - Exact: [255,255,1,256]
+        - BiasTypeArgs: ['s','b']
+        - ActivationArgs:
+          - [Enum: Relu]
+
+
+
+
