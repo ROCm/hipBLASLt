@@ -259,7 +259,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bljk_HSS_BH_Bias_AH_MT32x32x64_MI16x16x16x1_SN_MIWT1_1_WG32_4_1
+    SolutionNameMin: Cijk_Alik_Bljk_HSS_BH_Bias_HAH_MT32x32x64_MI16x16x16x1_SN_MIWT1_1_WG32_4_1
     SourceSwap: 1
     StaggerU: 4
     StaggerUMapping: 0
@@ -502,7 +502,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Alik_Bljk_HSS_BH_Bias_AH_MT16x16x64_MI16x16x16x1_SN_MIWT1_1_WG16_2_1
+    SolutionNameMin: Cijk_Alik_Bljk_HSS_BH_Bias_HAH_MT16x16x64_MI16x16x16x1_SN_MIWT1_1_WG16_2_1
     SourceSwap: 1
     StaggerU: 4
     StaggerUMapping: 0
@@ -745,7 +745,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 2
-    SolutionNameMin: Cijk_Alik_Bljk_HSS_BH_Bias_AH_MT32x16x64_MI16x16x16x1_SN_MIWT1_1_WG32_2_1
+    SolutionNameMin: Cijk_Alik_Bljk_HSS_BH_Bias_HAH_MT32x16x64_MI16x16x16x1_SN_MIWT1_1_WG32_2_1
     SourceSwap: 1
     StaggerU: 4
     StaggerUMapping: 0
@@ -988,7 +988,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 3
-    SolutionNameMin: Cijk_Alik_Bljk_HSS_BH_Bias_AH_MT16x32x64_MI16x16x16x1_SN_MIWT1_1_WG16_4_1
+    SolutionNameMin: Cijk_Alik_Bljk_HSS_BH_Bias_HAH_MT16x32x64_MI16x16x16x1_SN_MIWT1_1_WG16_4_1
     SourceSwap: 1
     StaggerU: 4
     StaggerUMapping: 0

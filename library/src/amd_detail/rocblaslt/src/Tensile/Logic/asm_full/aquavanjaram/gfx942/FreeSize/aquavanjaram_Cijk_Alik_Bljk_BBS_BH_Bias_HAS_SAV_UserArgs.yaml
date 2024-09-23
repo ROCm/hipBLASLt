@@ -112,7 +112,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_MT32x16x256_MI16x16x1_SN_GRVWA8_GRVWB8_LBSPPA1024_LBSPPB512_LPA8_LPB8_MIWT1_1_NTA0_NTD1_PLR1_SU0_SUS0
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_Bias_HAS_SAV_MT32x16x256_MI16x16x1_SN_GRVWA8_GRVWB8_LBSPPA1024_LBSPPB512_LPA8_LPB8_MIWT1_1_NTA0_NTD1_PLR1_SU0_SUS0
     LSCA: 256
     LSCB: 256
     LSPA: 2
@@ -281,7 +281,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_MT32x16x256_MI16x16x1_SN_GRVWA8_GRVWB8_GSU1_LBSPPA1024_LBSPPB512_LPA8_LPB8_MIWT1_1_NTA0_NTD1_PLR1_SU0_SUS0
+    SolutionNameMin: Cijk_Alik_Bljk_BBS_BH_Bias_HAS_SAV_MT32x16x256_MI16x16x1_SN_GRVWA8_GRVWB8_GSU1_LBSPPA1024_LBSPPB512_LPA8_LPB8_MIWT1_1_NTA0_NTD1_PLR1_SU0_SUS0
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0

@@ -117,7 +117,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_MT64x16x32_MI16x16x1_SN_LDSB0_AFC1_GSU1_MIWT1_1_PGR0_PLR3
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_Bias_HAS_SAV_MT64x16x32_MI16x16x1_SN_LDSB0_AFC1_GSU1_MIWT1_1_PGR0_PLR3
     LSCA: 32
     LSCB: 32
     LSPA: 2
@@ -282,7 +282,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bljk_BBS_BH_Bias_AS_SAV_MT64x16x32_MI16x16x1_SN_LDSB0_AFC1_GSU1_MIWT1_1_PGR0_PLR3
+    SolutionNameMin: Cijk_Alik_Bljk_BBS_BH_Bias_HAS_SAV_MT64x16x32_MI16x16x1_SN_LDSB0_AFC1_GSU1_MIWT1_1_PGR0_PLR3
     SourceSwap: 1
     StaggerU: 4
     StaggerUMapping: 0

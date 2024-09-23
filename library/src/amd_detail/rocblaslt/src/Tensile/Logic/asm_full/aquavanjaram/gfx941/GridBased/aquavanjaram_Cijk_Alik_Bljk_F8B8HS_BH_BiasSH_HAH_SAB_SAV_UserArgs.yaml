@@ -267,7 +267,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bljk_F8B8HS_BH_BiasH_AH_SAB_SAV_MT256x256x32_MI32x32x16x1_SN_1LDSB0_EPS0_MIWT4_4_PGR2_SS1_SVW1_WG64_4_1
+    SolutionNameMin: Cijk_Alik_Bljk_F8B8HS_BH_BiasH_HAH_SAB_SAV_MT256x256x32_MI32x32x16x1_SN_1LDSB0_EPS0_MIWT4_4_PGR2_SS1_SVW1_WG64_4_1
     SourceSwap: true
     StaggerU: 32
     StaggerUMapping: 0
@@ -514,7 +514,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Alik_Bljk_F8B8HS_BH_BiasH_AH_SAB_SAV_MT16x16x32_MI16x16x32x1_SN_1LDSB1_EPS0_MIWT1_1_PGR2_SS1_SVW1_WG16_4_1
+    SolutionNameMin: Cijk_Alik_Bljk_F8B8HS_BH_BiasH_HAH_SAB_SAV_MT16x16x32_MI16x16x32x1_SN_1LDSB1_EPS0_MIWT1_1_PGR2_SS1_SVW1_WG16_4_1
     SourceSwap: true
     StaggerU: 32
     StaggerUMapping: 0

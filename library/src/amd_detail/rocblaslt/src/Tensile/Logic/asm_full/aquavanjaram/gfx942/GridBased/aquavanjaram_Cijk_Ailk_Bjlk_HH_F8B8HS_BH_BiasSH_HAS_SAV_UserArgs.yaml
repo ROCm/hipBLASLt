@@ -114,7 +114,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB1_MIWT1_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB1_MIWT1_1
     LSCA: 16
     LSCB: 16
     LSPA: 4
@@ -284,7 +284,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB1_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB1_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -374,7 +374,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA4_GRVWB1_MIWT1_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA4_GRVWB1_MIWT1_1
     LSCA: 16
     LSCB: 16
     LSPA: 16
@@ -544,7 +544,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA4_GRVWB1_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA4_GRVWB1_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -634,7 +634,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB1_MIWT1_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB1_MIWT1_1
     LSCA: 16
     LSCB: 16
     LSPA: 32
@@ -804,7 +804,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 2
-    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB1_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB1_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -894,7 +894,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB4_MIWT1_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB4_MIWT1_1
     LSCA: 16
     LSCB: 16
     LSPA: 4
@@ -1064,7 +1064,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 3
-    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB4_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB4_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -1154,7 +1154,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB4_MIWT1_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB4_MIWT1_1
     LSCA: 16
     LSCB: 16
     LSPA: 32
@@ -1324,7 +1324,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 4
-    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB4_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB4_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -1414,7 +1414,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB8_MIWT1_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB8_MIWT1_1
     LSCA: 16
     LSCB: 16
     LSPA: 4
@@ -1584,7 +1584,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 5
-    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB8_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA1_GRVWB8_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -1674,7 +1674,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB8_MIWT1_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB8_MIWT1_1
     LSCA: 16
     LSCB: 16
     LSPA: 32
@@ -1844,7 +1844,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 6
-    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_AS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB8_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HH_F8B8HS_BH_BiasSH_HAS_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_GRVWA8_GRVWB8_GSU1_MIWT1_1_SU32_SUM0_SUS256_WGM8
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0

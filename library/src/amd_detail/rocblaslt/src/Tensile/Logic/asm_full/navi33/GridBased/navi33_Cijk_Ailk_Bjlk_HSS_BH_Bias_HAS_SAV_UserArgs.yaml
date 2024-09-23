@@ -113,7 +113,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT64x96x32_MI16x16x1_SN_LDSB0_GRVWA2_GRVWB8_LBSPPA2048_LBSPPB3072_MIWT2_3_NLCA1_NLCB3_SS0_WG32_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT64x96x32_MI16x16x1_SN_LDSB0_GRVWA2_GRVWB8_LBSPPA2048_LBSPPB3072_MIWT2_3_NLCA1_NLCB3_SS0_WG32_4_1
     LSCA: 64
     LSCB: 32
     LSPA: 4
@@ -282,7 +282,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT64x96x32_MI16x16x1_SN_LDSB0_GRVWA2_GRVWB8_GSU1_LBSPPA2048_LBSPPB3072_MIWT2_3_NLCA1_NLCB3_SS0_SU32_SUM0_SUS256_WG32_4_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT64x96x32_MI16x16x1_SN_LDSB0_GRVWA2_GRVWB8_GSU1_LBSPPA2048_LBSPPB3072_MIWT2_3_NLCA1_NLCB3_SS0_SU32_SUM0_SUS256_WG32_4_1_WGM8
     SourceSwap: 0
     StaggerU: 32
     StaggerUMapping: 0
@@ -372,7 +372,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT48x128x32_MI16x16x1_SN_LDSB0_GRVWA2_GRVWB8_LBSPPA1536_LBSPPB4096_MIWT3_2_NLCA3_NLCB1_SS0_WG16_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT48x128x32_MI16x16x1_SN_LDSB0_GRVWA2_GRVWB8_LBSPPA1536_LBSPPB4096_MIWT3_2_NLCA3_NLCB1_SS0_WG16_8_1
     LSCA: 16
     LSCB: 128
     LSPA: 16
@@ -541,7 +541,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT48x128x32_MI16x16x1_SN_LDSB0_GRVWA2_GRVWB8_GSU1_LBSPPA1536_LBSPPB4096_MIWT3_2_NLCA3_NLCB1_SS0_SU32_SUM0_SUS256_WG16_8_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT48x128x32_MI16x16x1_SN_LDSB0_GRVWA2_GRVWB8_GSU1_LBSPPA1536_LBSPPB4096_MIWT3_2_NLCA3_NLCB1_SS0_SU32_SUM0_SUS256_WG16_8_1_WGM8
     SourceSwap: 0
     StaggerU: 32
     StaggerUMapping: 0
@@ -631,7 +631,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT64x16x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_LBSPPA2048_LBSPPB512_MIWT1_1_NLCA1_NLCB1_SS1_WG64_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT64x16x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_LBSPPA2048_LBSPPB512_MIWT1_1_NLCA1_NLCB1_SS1_WG64_2_1
     LSCA: 64
     LSCB: 16
     LSPA: 16
@@ -800,7 +800,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 2
-    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT64x16x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_GSU1_LBSPPA2048_LBSPPB512_MIWT1_1_NLCA1_NLCB1_SS1_SU32_SUM0_SUS256_WG64_2_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT64x16x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_GSU1_LBSPPA2048_LBSPPB512_MIWT1_1_NLCA1_NLCB1_SS1_SU32_SUM0_SUS256_WG64_2_1_WGM8
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -890,7 +890,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT128x48x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_LBSPPA4096_LBSPPB1536_MIWT2_3_NLCA1_NLCB3_SS1_WG64_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT128x48x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_LBSPPA4096_LBSPPB1536_MIWT2_3_NLCA1_NLCB3_SS1_WG64_2_1
     LSCA: 128
     LSCB: 16
     LSPA: 8
@@ -1059,7 +1059,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 3
-    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT128x48x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_GSU1_LBSPPA4096_LBSPPB1536_MIWT2_3_NLCA1_NLCB3_SS1_SU32_SUM0_SUS256_WG64_2_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT128x48x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_GSU1_LBSPPA4096_LBSPPB1536_MIWT2_3_NLCA1_NLCB3_SS1_SU32_SUM0_SUS256_WG64_2_1_WGM8
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -1149,7 +1149,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT64x96x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_LBSPPA2048_LBSPPB3072_MIWT2_3_NLCA1_NLCB3_SS1_WG32_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT64x96x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_LBSPPA2048_LBSPPB3072_MIWT2_3_NLCA1_NLCB3_SS1_WG32_4_1
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -1318,7 +1318,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 4
-    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT64x96x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_GSU1_LBSPPA2048_LBSPPB3072_MIWT2_3_NLCA1_NLCB3_SS1_SU32_SUM0_SUS256_WG32_4_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT64x96x32_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_GSU1_LBSPPA2048_LBSPPB3072_MIWT2_3_NLCA1_NLCB3_SS1_SU32_SUM0_SUS256_WG32_4_1_WGM8
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -1408,7 +1408,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT32x32x64_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_LBSPPA1024_LBSPPB1024_MIWT1_1_NLCA1_NLCB1_SS1_WG32_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT32x32x64_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_LBSPPA1024_LBSPPB1024_MIWT1_1_NLCA1_NLCB1_SS1_WG32_4_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -1577,7 +1577,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 5
-    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT32x32x64_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_GSU1_LBSPPA1024_LBSPPB1024_MIWT1_1_NLCA1_NLCB1_SS1_SU32_SUM0_SUS256_WG32_4_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT32x32x64_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_GSU1_LBSPPA1024_LBSPPB1024_MIWT1_1_NLCA1_NLCB1_SS1_SU32_SUM0_SUS256_WG32_4_1_WGM8
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -1667,7 +1667,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT64x32x64_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_LBSPPA2048_LBSPPB1024_MIWT2_1_NLCA1_NLCB1_SS1_WG32_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT64x32x64_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_LBSPPA2048_LBSPPB1024_MIWT2_1_NLCA1_NLCB1_SS1_WG32_4_1
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -1836,7 +1836,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 6
-    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_AS_SAV_UserArgs_MT64x32x64_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_GSU1_LBSPPA2048_LBSPPB1024_MIWT2_1_NLCA1_NLCB1_SS1_SU32_SUM0_SUS256_WG32_4_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT64x32x64_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB2_GSU1_LBSPPA2048_LBSPPB1024_MIWT2_1_NLCA1_NLCB1_SS1_SU32_SUM0_SUS256_WG32_4_1_WGM8
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
