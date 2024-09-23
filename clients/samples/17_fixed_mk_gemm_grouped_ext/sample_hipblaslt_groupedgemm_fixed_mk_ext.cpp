@@ -201,6 +201,9 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
     if(validIdx.empty())
     {
         std::cerr << "No valid solution found!" << std::endl;
+        CHECK_HIP_ERROR(hipFree(d_n));
+        CHECK_HIP_ERROR(hipFree(userArgs));
+        CHECK_HIP_ERROR(hipFree(d_userArgs));
         return;
     }
 
@@ -235,6 +238,7 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
         }
     }
 
+    CHECK_HIP_ERROR(hipFree(d_n));
     CHECK_HIP_ERROR(hipFree(userArgs));
     CHECK_HIP_ERROR(hipFree(d_userArgs));
     return;
