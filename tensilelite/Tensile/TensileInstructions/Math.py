@@ -342,13 +342,14 @@ def scalarUInt32RegDivide(qReg, dReg, divReg, tmpSgprRes: RegisterPoolResource, 
 
 def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: RegisterPoolResource, wavewidth, doRemainder=True, comment=""):
     dComment = "%s = %s / %s"    % (sgpr(qReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
-    rComment = "%s = %s %% %s" % (sgpr(rReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
+    if doRemainder:
+        rComment = "%s = %s %% %s" % (sgpr(rReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
 
     assert tmpVgprRes.size >= 2
     tmpVgpr0 = tmpVgprRes.idx
     tmpVgpr1 = tmpVgprRes.idx + 1
 
-    module = Module("vectorUInt32DivideAndRemainder")
+    module = Module("scalarUInt32DivideAndRemainder")
     module.add(VCvtU32toF32(dst=vgpr(tmpVgpr0), src=sgpr(divReg), comment=dComment))
     module.add(VRcpIFlagF32(dst=vgpr(tmpVgpr0), src=vgpr(tmpVgpr0), comment=dComment))
     module.add(VCvtU32toF32(dst=vgpr(tmpVgpr1), src=sgpr(dReg), comment=dComment))

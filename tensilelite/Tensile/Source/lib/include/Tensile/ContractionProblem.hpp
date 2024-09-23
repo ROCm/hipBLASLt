@@ -88,6 +88,26 @@ namespace Tensile
             return m_wgm;
         }
 
+        void setWGMXCC(uint16_t wgmxcc)
+        {
+            m_wgmxcc = wgmxcc;
+        }
+
+        uint16_t wgmxcc() const
+        {
+            return m_wgmxcc;
+        }
+
+        void setWGMXCCG(int16_t wgmxccg)
+        {
+            m_wgmxccg = wgmxccg;
+        }
+
+        int16_t wgmxccg() const
+        {
+            return m_wgmxccg;
+        }
+
         void setBiasEnum(DataType dataType)
         {
             m_biasType = dataType;
@@ -128,6 +148,8 @@ namespace Tensile
         bool           m_gsuc           = false; // default value
         bool           m_gsuwgmrr       = false; // default value
         int16_t        m_wgm            = 0; // default value
+        uint16_t       m_wgmxcc         = 0; // default value
+        int16_t        m_wgmxccg        = 0; // default value
         DataType       m_biasType       = DataType::None;
         int            m_factorDim      = 0;
         ActivationType m_activationType = ActivationType::None;
