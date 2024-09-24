@@ -10907,6 +10907,9 @@ class KernelWriterAssembly(KernelWriter):
     module.add(SWaitCnt(lgkmcnt=0))
     module.addSpaceLine()
 
+    module.add(SCmpEQU64(sgpr("AddrAmaxOut", 2), hex(0), "amaxD == nullptr ?"))
+    module.add(SCBranchSCC1(self.label_amax_end.getLabelName(), "skip amaxD if nullptr"))
+
     return module
 
   def amax_intra_wave_reduction(self, kernel, postfix) -> Module:
@@ -10937,7 +10940,7 @@ class KernelWriterAssembly(KernelWriter):
   def amax_inter_wave_reduction(self, kernel) -> Module:
     wave_size = kernel["WavefrontSize"]
     numWorkItems = kernel["NumThreads"]
-    amaxOutType = kernel["ProblemType"]["DataTypeAmaxD"]
+    amaxOutType = kernel["ProblemType"]["ComputeDataType"]
     amax_lds_start = kernel["LdsBytesNoAmax"]
 
     label_wave_inter = Label("wave_inter", 'wave_inter')
@@ -11023,19 +11026,18 @@ class KernelWriterAssembly(KernelWriter):
   def amax_output_result(self, kernel) -> Module:
     wave_size = kernel["WavefrontSize"]
     amaxInType = kernel["ProblemType"]["ComputeDataType"]
-    amaxOutType = kernel["ProblemType"]["DataTypeAmaxD"]
+    amaxOutType = kernel["ProblemType"]["ComputeDataType"]
 
     mod = Module("output_result")
     mod.addComment0("output_result")
 
-    label_end = Label("end", 'end')
     label_final_loop = Label("final_loop", 'final_loop')
     label_final_output = Label("final_output", 'final_output')
     mod.addSpaceLine()
 
     mod.add(VReadfirstlaneB32(sgpr("Tmp"), vgpr("Serial")))
     mod.add(SCmpEQU32(sgpr("Tmp"), 0))
-    mod.add(SCBranchSCC0(label_end.getLabelName()))
+    mod.add(SCBranchSCC0(self.label_amax_end.getLabelName()))
     mod.addSpaceLine()
 
     # if self.arch.find("gfx94") != -1:
@@ -11061,7 +11063,7 @@ class KernelWriterAssembly(KernelWriter):
     mod.add(SAtomicDec(sgpr("Tmp"), sgpr("AddressSy",2), SMEMModifiers(glc=True)))
     mod.add(SWaitCnt(vmcnt=0, lgkmcnt=0))
     mod.add(SCmpEQU32(sgpr("Tmp"), 1))
-    mod.add(SCBranchSCC0(label_end.getLabelName()))
+    mod.add(SCBranchSCC0(self.label_amax_end.getLabelName()))
     mod.addSpaceLine()
 
     mod.add(SLShiftLeftB32(sgpr("Tmp"), int(log2(amaxInType.numBytes())), sgpr("NumGroup")))
@@ -11111,7 +11113,7 @@ class KernelWriterAssembly(KernelWriter):
     # TODO- select inst
     mod.add(BufferStoreB32(vgpr("AmaxOut"), vgpr("Offset"), sgpr("Dst",4), 0, MUBUFModifiers(offen=True)))
     mod.addSpaceLine()
-    mod.add(label_end)
+    mod.add(self.label_amax_end)
     mod.addSpaceLine()
 
     return mod
@@ -11124,6 +11126,7 @@ class KernelWriterAssembly(KernelWriter):
     self.amaxVgprSizes = [1, 1, 1, 1]
     self.amaxSgprArgNames = ["AddrAmaxOut", "AddressWk", "AddressSy"]
     self.amaxSgprArgSizes = [2, 2, 2]
+    self.label_amax_end = Label("amax_end", 'amax_end')
 
     module.addSpaceLine()
     module.add(SBarrier())

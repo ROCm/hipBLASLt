@@ -1262,7 +1262,6 @@ defaultProblemType = {
     "DataTypeA":                0,                # A data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DataTypeB":                0,                # B data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DataTypeE":                0,                # E data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
-    "DataTypeAmaxD":            0,                # AmaxD data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DestDataType":             0,                # destination data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "ComputeDataType":          0,                # compute data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "F32XdlMathOp":             0,                # reducing intermediate precision from f32 to a specific type, such as "x", as listed in SolutionStructs.py::DataType.
