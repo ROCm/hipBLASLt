@@ -33,6 +33,7 @@ BenchmarkProblems:
       Batched: True
       UseBias: 1
       Activation: True
+      ActivationType: all
       UseScaleAlphaVec: 1
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -109,6 +110,7 @@ BenchmarkProblems:
       Batched: True
       UseBias: 1
       Activation: True
+      ActivationType: all
       UseScaleAlphaVec: 1
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:

@@ -2590,7 +2590,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       assert self.exclasses.biasSumUnroll
 
 
-    if kernel["ProblemType"]["ActivationType"] == 'all':
+    if kernel["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
       self.exclasses.activation.setUseCache(True)
     self.exclasses.activation.setGuard(not kernel["ProblemType"]["ActivationNoGuard"])
     self.exclasses.activation.setAlt(kernel["ActivationAlt"])
@@ -3998,7 +3998,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
         self.states.numStoreSgprNames.append(name)
         self.states.numStoreSgprNameSizes.append(self.states.numActivationArgSize)
-      if kernel["ProblemType"]["ActivationType"] == 'all':
+      if kernel["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
         self.states.numActivationTypeArgSize = 1
         self.states.numStoreSgprNames.append("ActivationType")
         self.states.numStoreSgprNameSizes.append(1)

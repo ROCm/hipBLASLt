@@ -72,7 +72,7 @@ class KernelWriterActivationOnly(KernelWriterBase):
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
     enumName = "Tensile::ActivationType_%s"%activationCDataType.toChar()
     if self.state["ProblemType"]["ActivationType"] != 'none':
-      if self.state["ProblemType"]["ActivationType"] == 'all':
+      if self.state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
         kStr += "  %s const activationType,%s" % (enumName, self.endLine)
       for name in self.state["ProblemType"]["ActivationType"].getAdditionalArgStringList():
         kStr += "  %s const %s,%s" % (activationCDataType.toDevice(self.language), name, self.endLine)
@@ -187,7 +187,7 @@ class KernelWriterActivationOnly(KernelWriterBase):
     typeActivationStr = self.state["ProblemType"]["ActivationComputeDataType"].toDevice(self.language)
     if self.state["ProblemType"]["ActivationType"] != 'none':
       names = ""
-      if self.state["ProblemType"]["ActivationType"] == 'all':
+      if self.state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
         names += ", activationType"
       for name in self.state["ProblemType"]["ActivationType"].getAdditionalArgStringList():
         names += (", " + name)
@@ -217,7 +217,7 @@ class KernelWriterActivationOnly(KernelWriterBase):
     name += "_"
     name += self.state["ProblemType"]["DestDataType"].toChar()
     if self.state["ProblemType"]["ActivationType"] != 'none':
-      if self.state["ProblemType"]["ActivationType"] == 'all':
+      if self.state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
         name += "_%s"%"A"
       else:
         name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
@@ -250,7 +250,7 @@ class KernelWriterActivationOnly(KernelWriterBase):
       fileString += "#include <hip/hip_fp16.h>\n"
       fileString += "\n"
       activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
-      if self.state["ProblemType"]["ActivationType"] == 'all':
+      if self.state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
         fileString += "#include \"Tensile%sActivation%s_%s_%s.h\"\n"%(self.actGradientPrefix, \
                                                                       self.gaurdStr, \
                                                                       activationCDataType.toChar(), \

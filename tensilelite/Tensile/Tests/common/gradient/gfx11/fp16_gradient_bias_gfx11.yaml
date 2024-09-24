@@ -37,6 +37,7 @@ BenchmarkProblems:
       UseBias: True
       BiasSrc: "D"
       Activation: True
+      ActivationType: all
       ActivationGuard: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:

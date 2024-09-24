@@ -820,7 +820,7 @@ namespace
 
         // set Actvation
         tensileProblem.setActivationType(is_act_enabled(prob.epilogue)
-                                             ? Tensile::ActivationType::All
+                                             ? Tensile::ActivationType::Hipblaslt_all
                                              : Tensile::ActivationType::None);
         tensileProblem.setActivationComputeType(compute_type);
         tensileProblem.setParams().setActivationEnum(getTensileActivationType(prob.epilogue));
@@ -981,7 +981,7 @@ namespace
 
         // set Actvation
         tensileProblem.setActivationType(is_act_enabled(prob.epilogue)
-                                             ? Tensile::ActivationType::All
+                                             ? Tensile::ActivationType::Hipblaslt_all
                                              : Tensile::ActivationType::None);
         tensileProblem.setActivationComputeType(compute_type);
         tensileProblem.setParams().setActivationEnum(getTensileActivationType(prob.epilogue));

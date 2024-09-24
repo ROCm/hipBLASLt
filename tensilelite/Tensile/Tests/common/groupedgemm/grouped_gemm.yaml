@@ -30,6 +30,7 @@ BenchmarkProblems:
       Batched: True
       UseBias:       1
       Activation:    True
+      ActivationType: hipblaslt_all
       GroupedGemm:   True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -79,6 +80,7 @@ BenchmarkProblems:
       Batched: True
       UseBias:       1
       Activation:    True
+      ActivationType: all
       GroupedGemm:   True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:

@@ -134,7 +134,8 @@ def main( config ):
           factorDimEnums = lc["FactorDimArgs"]
         if "ICacheFlush" in lc:
           icacheFlushArgs = lc["ICacheFlush"]
-    activationArgs = ActivationArgs(problemType, activationEnums) if problemType["ActivationType"] == 'all' else ""
+    isForAll = True if problemType["ActivationType"] in ['all', 'hipblaslt_all'] else False
+    activationArgs = ActivationArgs(problemType, activationEnums) if isForAll else ""
     factorDimArgs = FactorDimArgs(problemType, factorDimEnums)
     clientParametersPaths.append(writeClientConfig(
                                   forBenchmark=False,

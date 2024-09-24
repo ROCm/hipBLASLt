@@ -34,6 +34,7 @@ BenchmarkProblems:
     #UseBias: 1
     Batched: True
     #Activation: True
+    ActivationType: all
     #ActivationHPA: True
   - InitialSolutionParameters: 
     BenchmarkCommonParameters:

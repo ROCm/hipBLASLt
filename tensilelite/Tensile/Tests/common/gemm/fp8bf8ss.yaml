@@ -36,6 +36,7 @@ BenchmarkProblems:
       BiasDataTypeList: [s,b]
       UseScaleAB: "Scalar"
       Activation:    True
+      ActivationType: hipblaslt_all
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
