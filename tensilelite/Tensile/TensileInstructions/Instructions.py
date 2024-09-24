@@ -774,7 +774,7 @@ class DSStoreInstruction(LocalWriteInstruction):
         self.ds             = ds
 
     def getParams(self) -> list:
-        return [self.dstAddr, self.src0, self.src1]
+        return [self.dstAddr, self.src0, self.src1, self.ds]
 
     def preStr(self):
         if self.kernel.isa[0] < 11:
