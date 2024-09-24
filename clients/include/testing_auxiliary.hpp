@@ -35,8 +35,8 @@
 #include "hipblaslt_vector.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
-#include <hipblaslt/hipblaslt.h>
 #include <hipblaslt/hipblaslt-ext.hpp> // Add check for hipblaslt-ext
+#include <hipblaslt/hipblaslt.h>
 
 void testing_aux_handle_init_bad_arg(const Arguments& arg)
 {
@@ -268,10 +268,9 @@ void testing_aux_matmul_get_attr_bad_arg(const Arguments& arg)
                           HIPBLAS_STATUS_INVALID_VALUE);
     // test sizeWritten is nullptr, and the return state should be success
     data = HIPBLASLT_EPILOGUE_RELU;
-    EXPECT_HIPBLAS_STATUS(
-        hipblasLtMatmulDescGetAttribute(
-            matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &data, sizeof(data), nullptr),
-        HIPBLAS_STATUS_SUCCESS);
+    EXPECT_HIPBLAS_STATUS(hipblasLtMatmulDescGetAttribute(
+                              matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &data, sizeof(data), nullptr),
+                          HIPBLAS_STATUS_SUCCESS);
     // test return buffer value equals HIPBLASLT_EPILOGUE_DEFAULT
     EXPECT_EQ(data, HIPBLASLT_EPILOGUE_DEFAULT);
 }
@@ -311,23 +310,25 @@ void testing_aux_matmul_pref_get_attr_bad_arg(const Arguments& arg)
             nullptr, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &data, sizeof(data), &sizeWritten),
         HIPBLAS_STATUS_INVALID_VALUE);
 
-    // Test with sizeInBytes = 0 and sizeWritten = NULL (should be INVALID_VALUE)  
-    EXPECT_HIPBLAS_STATUS(
-        hipblasLtMatmulPreferenceGetAttribute(
-            pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &data, 0, nullptr),
-        HIPBLAS_STATUS_INVALID_VALUE);
+    // Test with sizeInBytes = 0 and sizeWritten = NULL (should be INVALID_VALUE)
+    EXPECT_HIPBLAS_STATUS(hipblasLtMatmulPreferenceGetAttribute(
+                              pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &data, 0, nullptr),
+                          HIPBLAS_STATUS_INVALID_VALUE);
 
     // Test with non-zero sizeInBytes and buf = NULL (should be INVALID_VALUE)
     EXPECT_HIPBLAS_STATUS(
-        hipblasLtMatmulPreferenceGetAttribute(
-            pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, nullptr, sizeof(uint64_t), &sizeWritten),
+        hipblasLtMatmulPreferenceGetAttribute(pref,
+                                              HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
+                                              nullptr,
+                                              sizeof(uint64_t),
+                                              &sizeWritten),
         HIPBLAS_STATUS_INVALID_VALUE);
 
     // Test with correct size (should be SUCCESS)
     EXPECT_HIPBLAS_STATUS(
         hipblasLtMatmulPreferenceGetAttribute(
             pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &data, sizeof(uint64_t), &sizeWritten),
-        HIPBLAS_STATUS_SUCCESS);   
+        HIPBLAS_STATUS_SUCCESS);
 }
 
 void testing_aux_matmul_pref_get_attr(const Arguments& arg)
@@ -347,8 +348,11 @@ void testing_aux_matmul_pref_get_attr(const Arguments& arg)
 
     // Get the attribute
     EXPECT_HIPBLAS_STATUS(
-        hipblasLtMatmulPreferenceGetAttribute(
-            pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &data_get, sizeof(data_get), &sizeWritten),
+        hipblasLtMatmulPreferenceGetAttribute(pref,
+                                              HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
+                                              &data_get,
+                                              sizeof(data_get),
+                                              &sizeWritten),
         HIPBLAS_STATUS_SUCCESS);
 
     // Verify that the get value matches the set value
@@ -357,10 +361,12 @@ void testing_aux_matmul_pref_get_attr(const Arguments& arg)
 
     // Test getting other attributes (assuming they have default values)
     int32_t search_mode;
-    EXPECT_HIPBLAS_STATUS(
-        hipblasLtMatmulPreferenceGetAttribute(
-            pref, HIPBLASLT_MATMUL_PREF_SEARCH_MODE, &search_mode, sizeof(search_mode), &sizeWritten),
-        HIPBLAS_STATUS_SUCCESS);
+    EXPECT_HIPBLAS_STATUS(hipblasLtMatmulPreferenceGetAttribute(pref,
+                                                                HIPBLASLT_MATMUL_PREF_SEARCH_MODE,
+                                                                &search_mode,
+                                                                sizeof(search_mode),
+                                                                &sizeWritten),
+                          HIPBLAS_STATUS_SUCCESS);
 
     // You might want to add more attribute tests here
 }
@@ -379,14 +385,14 @@ void testing_aux_get_sol_with_null_biasaddr(const Arguments& arg)
 
     hipStream_t        stream;
     hipblasLtHandle_t  handle;
-    hipblasOperation_t trans_a = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    hipblasOperation_t trans_b = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    int64_t            m = arg.M[0];
-    int64_t            n = arg.N[0];
-    int64_t            k = arg.K[0];
+    hipblasOperation_t trans_a     = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    hipblasOperation_t trans_b     = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    int64_t            m           = arg.M[0];
+    int64_t            n           = arg.N[0];
+    int64_t            k           = arg.K[0];
     int64_t            batch_count = 1;
-    float              alpha = arg.alpha;
-    float              beta = arg.beta;
+    float              alpha       = arg.alpha;
+    float              beta        = arg.beta;
     void*              d_a;
     void*              d_b;
     void*              d_c;
@@ -421,15 +427,14 @@ void testing_aux_get_sol_with_null_biasaddr(const Arguments& arg)
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, arg.a_type, m, n, m));
 
     hipblasLtMatmulDesc_t matmul;
-    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_BIAS;
-    CHECK_HIPBLASLT_ERROR(
-        hipblasLtMatmulDescCreate(&matmul, arg.compute_type, arg.scale_type));
+    hipblasLtEpilogue_t   epilogue = HIPBLASLT_EPILOGUE_BIAS;
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, arg.compute_type, arg.scale_type));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-        matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue,sizeof(epilogue)));
+        matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
 
     hipblasLtMatmulPreference_t pref;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
@@ -457,6 +462,12 @@ void testing_aux_get_sol_with_null_biasaddr(const Arguments& arg)
     CHECK_HIP_ERROR(hipFree(d_b));
     CHECK_HIP_ERROR(hipFree(d_c));
     CHECK_HIP_ERROR(hipFree(d_d));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
 }
@@ -472,20 +483,20 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
 
     hipStream_t        stream;
     hipblasLtHandle_t  handle;
-    hipblasOperation_t trans_a = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    hipblasOperation_t trans_b = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    int64_t            m = arg.M[0];
-    int64_t            n = arg.N[0];
-    int64_t            k = arg.K[0];
+    hipblasOperation_t trans_a     = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    hipblasOperation_t trans_b     = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    int64_t            m           = arg.M[0];
+    int64_t            n           = arg.N[0];
+    int64_t            k           = arg.K[0];
     int64_t            batch_count = 1;
     // Setting alpha = 0.
-    float              alpha = 0;
-    float              beta = arg.beta;
+    float alpha = 0;
+    float beta  = arg.beta;
     // Setting d_a, d_b as nullptr.
-    void*              d_a = NULL;
-    void*              d_b = NULL;
-    void*              d_c;
-    void*              d_d;
+    void* d_a = NULL;
+    void* d_b = NULL;
+    void* d_c;
+    void* d_d;
 
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
@@ -499,8 +510,7 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, arg.a_type, m, n, m));
 
     hipblasLtMatmulDesc_t matmul;
-    CHECK_HIPBLASLT_ERROR(
-        hipblasLtMatmulDescCreate(&matmul, arg.compute_type, arg.scale_type));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, arg.compute_type, arg.scale_type));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
@@ -508,7 +518,7 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
 
     hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-        matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue,sizeof(epilogue)));
+        matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
 
     // Set User Preference attributes
     hipblasLtMatmulPreference_t pref;
@@ -550,6 +560,12 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
 
     CHECK_HIP_ERROR(hipFree(d_c));
     CHECK_HIP_ERROR(hipFree(d_d));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
 }
@@ -565,20 +581,20 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b_ext(const Arguments& arg)
 
     hipStream_t        stream;
     hipblasLtHandle_t  handle;
-    hipblasOperation_t trans_a = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    hipblasOperation_t trans_b = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    int64_t            m = arg.M[0];
-    int64_t            n = arg.N[0];
-    int64_t            k = arg.K[0];
+    hipblasOperation_t trans_a     = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    hipblasOperation_t trans_b     = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    int64_t            m           = arg.M[0];
+    int64_t            n           = arg.N[0];
+    int64_t            k           = arg.K[0];
     int64_t            batch_count = 1;
     // Setting alpha = 0.
-    float              alpha = 0;
-    float              beta = arg.beta;
+    float alpha = 0;
+    float beta  = arg.beta;
     // Setting d_a, d_b as nullptr.
-    void*              d_a = NULL;
-    void*              d_b = NULL;
-    void*              d_c;
-    void*              d_d;
+    void* d_a = NULL;
+    void* d_b = NULL;
+    void* d_c;
+    void* d_d;
 
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
@@ -586,7 +602,7 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b_ext(const Arguments& arg)
     CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(OutType)));
 
     hipblaslt_ext::GemmPreferenceV2 gemmPref;
-    hipblaslt_ext::Gemm gemm(
+    hipblaslt_ext::Gemm             gemm(
         handle, trans_a, trans_b, arg.a_type, arg.a_type, arg.a_type, arg.a_type, arg.compute_type);
 
     hipblaslt_ext::GemmEpilogue
@@ -628,14 +644,14 @@ void testing_aux_matmul_alg_null_matmul(const Arguments& arg)
 
     hipStream_t        stream;
     hipblasLtHandle_t  handle;
-    hipblasOperation_t trans_a = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    hipblasOperation_t trans_b = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    int64_t            m = arg.M[0];
-    int64_t            n = arg.N[0];
-    int64_t            k = arg.K[0];
+    hipblasOperation_t trans_a     = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    hipblasOperation_t trans_b     = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    int64_t            m           = arg.M[0];
+    int64_t            n           = arg.N[0];
+    int64_t            k           = arg.K[0];
     int64_t            batch_count = 1;
-    float              alpha = arg.alpha;
-    float              beta = arg.beta;
+    float              alpha       = arg.alpha;
+    float              beta        = arg.beta;
     void*              d_a;
     void*              d_b;
     void*              d_c;
@@ -670,8 +686,7 @@ void testing_aux_matmul_alg_null_matmul(const Arguments& arg)
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, arg.a_type, m, n, m));
 
     hipblasLtMatmulDesc_t matmul;
-    CHECK_HIPBLASLT_ERROR(
-        hipblasLtMatmulDescCreate(&matmul, arg.compute_type, arg.scale_type));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, arg.compute_type, arg.scale_type));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
@@ -702,6 +717,11 @@ void testing_aux_matmul_alg_null_matmul(const Arguments& arg)
     CHECK_HIP_ERROR(hipFree(d_b));
     CHECK_HIP_ERROR(hipFree(d_c));
     CHECK_HIP_ERROR(hipFree(d_d));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
     CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
 }
