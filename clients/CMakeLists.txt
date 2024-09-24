@@ -31,8 +31,13 @@ if( NOT DEFINED CMAKE_CONFIGURATION_TYPES AND NOT DEFINED CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." )
 endif()
 
-project( hipblaslt-clients LANGUAGES CXX C  )
 
+# TODO: move this fortran and root level CMakeLists.txt cxx and c compiler vars to toolchain-linux
+if (NOT DEFINED ENV{FC} AND NOT CMAKE_Fortran_COMPILER)
+  set(CMAKE_Fortran_COMPILER "gfortran")
+endif()
+
+project( hipblaslt-clients LANGUAGES CXX C Fortran )
 
 if( SKIP_LIBRARY )
   include_directories(${HIPBLASLT_LIBRARY_DIR}/include
