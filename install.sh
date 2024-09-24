@@ -381,6 +381,7 @@ matrices_dir=
 matrices_dir_install=
 gpu_architecture=all
 cpu_ref_lib=blis
+tensile_logic=
 tensile_cov=
 tensile_threads=$(nproc)
 tensile_fork=
@@ -740,8 +741,11 @@ pushd .
   tensile_opt=""
   if [[ "${build_tensile}" == false ]]; then
     tensile_opt="${tensile_opt} -DBUILD_WITH_TENSILE=OFF"
-   else
-    tensile_opt="${tensile_opt} -DTensile_LOGIC=${tensile_logic} -DTensile_CODE_OBJECT_VERSION=${tensile_cov}"
+  else
+    if [[ -n "${tensile_logic}" ]]; then
+      tensile_opt="${tensile_opt} -DTensile_LOGIC=${tensile_logic}"
+    fi
+    tensile_opt="${tensile_opt} -DTensile_CODE_OBJECT_VERSION=${tensile_cov}"
     if [[ ${tensile_threads} != $(nproc) ]]; then
       tensile_opt="${tensile_opt} -DTensile_CPU_THREADS=${tensile_threads}"
     fi
