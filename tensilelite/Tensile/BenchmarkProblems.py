@@ -317,7 +317,8 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                 "ForkParams": benchmarkStep.forkParams,
                 "ParamGroups": benchmarkStep.paramGroups,
                 "CustomKernels": benchmarkStep.customKernels,
-                "CustomKernelWildcard": benchmarkStep.customKernelWildcard
+                "CustomKernelWildcard": benchmarkStep.customKernelWildcard,
+                "InternalSupportParams": benchmarkStep.internalSupportParams                                
             }
             LibraryIO.writeYAML(cachePath, cacheData)
 
@@ -341,7 +342,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
             writeClientConfigIni(benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
                                  benchmarkStep.factorDimArgs, benchmarkStep.activationArgs,
-                                 benchmakrStep.icacheFlushArgs, conProblemType,
+                                 benchmarkStep.icacheFlushArgs, conProblemType,
                                  globalParameters["WorkingPath"], codeObjectFiles, resultsFileName,
                                  outFile)
 
