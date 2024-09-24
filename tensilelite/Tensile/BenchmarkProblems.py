@@ -78,6 +78,9 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
     for kernelName in customKernels:
         print1("# Processing custom kernel {}".format(kernelName))
         solution = getCustomKernelSolutionObj(kernelName, internalSupportParams)
+        # The ActivationType setting in YAML is meaningless in customKernel case.
+        # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
+        solution["ProblemType"]["ActivationType"] = problemType["ActivationType"]
         if solution["ProblemType"] != problemType:
             # Raise error if this kernel was specifically requested and problem type doesn't match
             if failOnMismatch:

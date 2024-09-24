@@ -38,6 +38,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 1
 
     - # BenchmarkProblemSizeGroup - Standard - All problem
@@ -117,6 +118,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 1
 
     - # BenchmarkProblemSizeGroup - Standard - All problem
@@ -196,6 +198,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 1
 
     - # BenchmarkProblemSizeGroup - Standard - All problem
@@ -275,6 +278,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 1
 
     - # BenchmarkProblemSizeGroup - Standard - All problem
@@ -354,6 +358,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 1
 
     - # BenchmarkProblemSizeGroup - Standard - All problem
@@ -433,6 +438,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 1
 
     - # BenchmarkProblemSizeGroup - Standard - All problem
@@ -512,6 +518,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 1
 
     - # BenchmarkProblemSizeGroup - Standard - All problem
@@ -591,6 +598,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 1
 
     - # BenchmarkProblemSizeGroup - Standard - All problem
