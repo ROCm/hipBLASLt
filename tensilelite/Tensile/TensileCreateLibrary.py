@@ -1307,7 +1307,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--validate-library", dest="ValidateLibrary", action="store_true", default=False)
   argParser.add_argument("--logic-filter", dest="LogicFilter", action="store", default="*", type=str,
                         help="Cutomsized logic filter, default is *, i.e. all logics."
-                        " Example: gfx942/GridBased/* for building equality of gfx942 only")
+                        " Example: gfx942/Equality/* for building equality of gfx942 only")
 
   args = argParser.parse_args()
 
