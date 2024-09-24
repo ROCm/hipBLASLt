@@ -131,11 +131,6 @@ hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle)
 try
 {
     rocblaslt::Debug::Instance().markerStart("hipblasLtCreate");
-    // TODO: Synchronizer size pass into predicate SynchronizerSizeCheck
-    // 1K just for small size now, need to cal corner case if support all situations
-    void* d_Synchronizer = nullptr;
-    CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 40960 * sizeof(int)));
-    CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 40960));
 
     // Check if handle is valid
     if(handle == nullptr)
@@ -147,6 +142,11 @@ try
     int             deviceId;
     hipError_t      err;
     hipblasStatus_t retval = HIPBLAS_STATUS_SUCCESS;
+    // TODO: Synchronizer size pass into predicate SynchronizerSizeCheck
+    // 1K just for small size now, need to cal corner case if support all situations
+    void* d_Synchronizer = nullptr;
+    CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 40960 * sizeof(int)));
+    CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 40960));
 
     err = hipGetDevice(&deviceId);
     if(err == hipSuccess)

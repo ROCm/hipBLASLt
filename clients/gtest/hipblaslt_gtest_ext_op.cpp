@@ -299,6 +299,8 @@ TEST_P(ExtOpLayerNormTest, layernormSuccess)
     err = hipFree(gpuMean);
     err = hipFree(gpuInvvar);
     err = hipFree(gpuInput);
+    err = hipFree(gpuGamma);
+    err = hipFree(gpuBeta);
 }
 
 template <typename Ti, typename To>
