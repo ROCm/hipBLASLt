@@ -1844,7 +1844,6 @@ class Solution(collections.abc.Mapping):
 
     # numBytes < 4 case
     if numBytes < 4:
-      # Does not work with TLU = True and numBytes < 4 (not supported)
       if state["ProblemType"]["TLU%c"%tc]:
         doable = Solution.isVgprForLocalReadPackingDoable(state)
         # Disable TLU + DTV + packing for now (TODO: enable it)

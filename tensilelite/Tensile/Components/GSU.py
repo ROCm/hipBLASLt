@@ -414,7 +414,7 @@ class GSUOn(GSU):
             # 3. OrdinaryNLL (Not Opt.)
 
             noLoadLoopModules = Module("noLoadLoop")
-            for NLLindex in range(1, NLLnum + 1):
+            for NLLindex in range(0, NLLnum):
               writer.saveLocalPointers(kernel, tensorParametersA, tensorParametersB)
               # deepCopy packCode for OptNLL noLoadLoop
               deepCopyPack = fastdeepcopy(pack)

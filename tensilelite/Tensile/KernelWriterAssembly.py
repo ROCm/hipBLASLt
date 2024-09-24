@@ -5414,7 +5414,7 @@ class KernelWriterAssembly(KernelWriter):
   # or in the PAP code.
   # isOptNLL : this is for the store-interleaved NLL optimization
   ##############################################################################
-  def openSumAtLeastUnroll(self, kernel, prefetch, isOptNLL, isNGLL=False, NLLindex=1, NLLnum=1):
+  def openSumAtLeastUnroll(self, kernel, prefetch, isOptNLL, isNGLL=False, NLLindex=0, NLLnum=1):
     isLongBranch = False
     if kernel["EnableMatrixInstruction"] and kernel["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
       acclen = getAccToArchLen(kernel)
@@ -5449,7 +5449,7 @@ class KernelWriterAssembly(KernelWriter):
               module.add(self.longBranchScc1(lastIterEnd, posNeg=1, tmpSgprInfo=tmpSgprInfo))
 
     else:
-      if isOptNLL and NLLindex==1:
+      if isOptNLL and NLLindex==0:
         skipOptNLL = Label("OptNLL_End", "")
         with self.allocTmpSgpr(4) as tmpSgprInfo:
           tmpSgpr = tmpSgprInfo.idx
@@ -5574,11 +5574,11 @@ class KernelWriterAssembly(KernelWriter):
         OptOrOrd = "Opt" if isOptNLL else "Ord"
         loopLabel2ndNLL = Label("%sNLL_second"%(OptOrOrd), "second %s NoLoadLoop entry"%OptOrOrd )
         # NLL + double buffer (NLLnum==2) case (PGR1/2), we need to generate 2 NLL (first and second buffer)
-        if NLLindex == 1:
+        if NLLindex == 0:
           # first NLL, jump to second code if OrigLoopCounter is odd
           module.add(SBitcmp1B32(src0=sgpr("OrigLoopCounter"), src1=hex(0), comment="test if OrigLoopCounter is Odd ?"))
           module.add(SCBranchSCC1(labelName=loopLabel2ndNLL.getLabelName(), comment="jump to second NoLoadLoop" ))
-        else: # NLLindex==2
+        else: # NLLindex==1
           module.add(loopLabel2ndNLL)
 
     return module

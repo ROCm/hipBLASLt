@@ -1582,14 +1582,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # No Load Loop Body
   ##############################################################################
-  def noLoadLoopBody( self, kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast, NLLindex=1, NLLnum=1):
+  def noLoadLoopBody( self, kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast, NLLindex=0, NLLnum=1):
     module = Module("noLoadLoopBody")
     expand = kernel["ExpandPointerSwap"]
     lastuIdx = False
     pflr     = self.states.numItersPLR
     localWriteEndIter = kernel["LoopIters"] - self.states.numItersPLR - 1
     dsWriteBA = False
-    if isNGLL and kernel["UnrollLoopSwapGlobalReadOrder"] == 1 and NLLindex == 1 and NLLnum == 2:
+    if isNGLL and kernel["UnrollLoopSwapGlobalReadOrder"] == 1 and NLLindex == 0 and NLLnum == 2:
       dsWriteBA = True
 
     # vregSetIdx for DTV GlobalRead
@@ -1599,10 +1599,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     isDTVAB = kernel["DirectToVgprA"] or kernel["DirectToVgprB"]
     if isDTVAB:
       if isNGLL:
-        if NLLindex == 1 and NLLnum == 2:
+        if NLLindex == 0 and NLLnum == 2:
           vregSetIdxGR = 1
       else:
-        if NLLindex == 2 and NLLnum == 2:
+        if NLLindex == 1 and NLLnum == 2:
           vregSetIdxGR = 1
       # for MFMA, use opposite side
       vregSetIdxMFMA = 1 - vregSetIdxGR
@@ -1790,13 +1790,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
   #
   # isOptNLL : the NLL is to be optimized for the alpha=1 and non-edge case
   ##############################################################################
-  def noLoadLoop( self, kernel, tensorParametersA, tensorParametersB, isOptNLL, isNGLL, pack, NLLindex=1, NLLnum=1):
+  def noLoadLoop( self, kernel, tensorParametersA, tensorParametersB, isOptNLL, isNGLL, pack, NLLindex=0, NLLnum=1):
     module = Module("noLoadLoop")
     LoopNameComment = "NoGlobalLoadLoop" if isNGLL else "NoLoadLoop"
     isOptNLLComment = "Opt" if isOptNLL else "Ord"
     startComment = "%s. %s - Begin " % (isOptNLLComment, LoopNameComment)
     if NLLnum > 1:
-      startComment = startComment + "%u/%u"%(NLLindex, NLLnum)
+      startComment = startComment + "%u/%u"%(NLLindex+1, NLLnum)
     module.addComment2(startComment)
     NLLfirst = True
     NLLlast = True
@@ -1849,7 +1849,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.functionEnd(kernel, addLabel=False))
 
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
-    module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL, isNotLast=(NLLindex<NLLnum)))
+    module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL, isNotLast=(NLLindex<(NLLnum-1))))
 
     if self.states.FactorDim == 3:
       self.updateBranchPlaceHolder(module, ["skipOptNLL_placeholder", "skipOptNLL_scc1_placeholder"] , ["OptNLL_End", "OptNLL_End"], ["SCBranchSCC0", "SCBranchSCC1"])
@@ -2385,7 +2385,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     if kernel["PrefetchGlobalRead"] == 2:
       # NGLL code generation
-      NGLLindex = 1
+      NGLLindex = 0
       NGLLnum = 2 if needSecondNGLL else 1
       if needSecondNGLL:
         # generate extra NGLL for second GR buffer
@@ -2404,7 +2404,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         NLLnum = 2 if needSecondNLL else 1
         gsuComponent = Component.GSU.find(self)
         module.add(gsuComponent.noLoadLoop(self, kernel, tensorParametersA, tensorParametersB, pack))
-        for NLLindex in range(1, NLLnum + 1):
+        for NLLindex in range(0, NLLnum):
           self.saveLocalPointers(kernel, tensorParametersA, tensorParametersB)
           # deepCopy packCode for OptNLL noLoadLoop
           deepCopyPack = fastdeepcopy(pack)
@@ -4506,7 +4506,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # At Least 1 Unroll
   ##############################################################################
   @abc.abstractmethod
-  def openSumAtLeastUnroll(self, kernel, prefetch, isOptNLL, isNGLL=False, NLLindex=1, NLLnum=1):
+  def openSumAtLeastUnroll(self, kernel, prefetch, isOptNLL, isNGLL=False, NLLindex=0, NLLnum=1):
     return ""
 
   @abc.abstractmethod
