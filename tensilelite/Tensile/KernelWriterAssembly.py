@@ -5236,7 +5236,7 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def openSumAtLeastUnroll(self, kernel, prefetch, isOptNLL):
     isLongBranch = False
-    if kernel["EnableMatrixInstruction"] and kernel["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
+    if kernel["EnableMatrixInstruction"] and kernel["ProblemType"]["ActivationType"] == 'all':
       acclen = getAccToArchLen(kernel)
       # Just a rough calculation
       if acclen > 100 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
@@ -9324,8 +9324,7 @@ class KernelWriterAssembly(KernelWriter):
         activationCDataType = kernel["ProblemType"]["ActivationComputeDataType"]
         activationLabelList = {}
         toActModuleList = {}
-        supportedBy = ActivationType.SupportedBy.ALL if kernel["ProblemType"]["ActivationType"] == 'all' else ActivationType.SupportedBy.HIPBLASLT
-        activationEnumStrList = ActivationType.getEnumStrList(activationCDataType, supportedBy, exportType=actExportType)
+        activationEnumStrList = ActivationType.getEnumStrList(activationCDataType, exportType=actExportType)
         for gwvw in vectorWidths:
           if gwvw in activationLabelList:
             continue
@@ -11149,7 +11148,6 @@ class KernelWriterAssembly(KernelWriter):
     activationLabelSuffix = self.labels.getNameInc( \
       "%s%s"%("_Beta" if beta else "", "_Edge" if edge else ""))
     activationCDataType = kernel["ProblemType"]["ActivationComputeDataType"]
-    activationType = kernel["ProblemType"]["ActivationType"]
     activationEndLabel = Label("Activation_End%s"%activationLabelSuffix, "")
     activationLabelModules = []
     activationEnumStrList = []
@@ -11157,11 +11155,10 @@ class KernelWriterAssembly(KernelWriter):
       activationLabelModules.append("")
       activationEnumStrList.append("none")
     elif ((kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')) and kernel["ActivationFused"]) and \
-      (activationType != 'none'):
-      if activationType in ['all', 'hipblaslt_all']:
+      (kernel["ProblemType"]["ActivationType"] != 'none'):
+      if kernel["ProblemType"]["ActivationType"] == 'all':
         exportType = ActivationType.Export.GRADONLY if kernel["ProblemType"]["Gradient"] else ActivationType.Export.NORMAL
-        supportedBy = ActivationType.SupportedBy.ALL if activationType == 'all' else ActivationType.SupportedBy.HIPBLASLT
-        activationEnumStrList = ActivationType.getEnumStrList(activationCDataType, supportedBy, exportType=exportType)
+        activationEnumStrList = ActivationType.getEnumStrList(activationCDataType, exportType=exportType)
         for _, enumStr in enumerate(activationEnumStrList):
           activationLabelModule = Label("Activation_%s%s"% (enumStr.capitalize(), activationLabelSuffix), "")
           activationLabelModules.append(activationLabelModule)

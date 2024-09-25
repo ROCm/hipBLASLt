@@ -206,15 +206,11 @@ class ProblemType(Mapping):
       self["BiasDataTypeList"] = []
 
     # Activation
-    # Currently, ActivationType supports only 'all' and 'hipblaslt_all', and is active only when the Activation configuration is set to True.
-    # Otherwise, ActivationType will be set to 'none'.
     if "Activation" in config:
-      typeStr = config.get("ActivationType", 'none')
-      if typeStr not in ['all', 'hipblaslt_all']:
-        typeStr = 'none'
+      typeStr = 'all' if config["Activation"] else 'none'
+      self["ActivationType"] = ActivationType(typeStr)
     else:
-      typeStr = 'none'
-    self["ActivationType"] = ActivationType(typeStr)
+      self["ActivationType"] = ActivationType('none')
     if "ActivationComputeDataType" in config:
       self["ActivationComputeDataType"] = DataType(config["ActivationComputeDataType"])
     else:
@@ -537,8 +533,6 @@ class ProblemType(Mapping):
     if self["ActivationType"] != 'none':
       if self["ActivationType"] == 'all':
         name += "_A"
-      elif self["ActivationType"] == 'hipblaslt_all':
-        name += "_HA"
       else:
         name += "_%s"%str(self["ActivationType"]).upper()
       name += self["ActivationComputeDataType"].toChar()
@@ -1013,7 +1007,7 @@ class ActivationArgs:
           for sizeTypeKey in dictionary:
             if sizeTypeKey == "Enum":
               actSetting.activationEnum = ActivationType(dictionary[sizeTypeKey])
-        if problemType["ActivationType"] in ['all', 'hipblaslt_all']:
+        if problemType["ActivationType"] == 'all':
           if (not actSetting.activationEnum):
             printExit("Must provide an activation enum if Activation is set to True.")
         else:
@@ -1211,7 +1205,7 @@ class Solution(collections.abc.Mapping):
 
   def initActivationEnumHeaderObjects(self):
     self.activationEnumHeaderObjects = []
-    if self["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
+    if ((self["ProblemType"]["ActivationType"] != 'none') and (self["ProblemType"]["ActivationType"] == 'all')) :
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
       state["ProblemType"]["GroupedGemm"] = False
@@ -1220,7 +1214,7 @@ class Solution(collections.abc.Mapping):
 
   def initActivationFunctionObjects(self):
     self.activationFunctionObjects = []
-    if self["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
+    if ((self["ProblemType"]["ActivationType"] != 'none') and (self["ProblemType"]["ActivationType"] == 'all')) :
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
       state["ProblemType"]["GroupedGemm"] = False
@@ -3730,7 +3724,7 @@ class Solution(collections.abc.Mapping):
 
     # Activation
     # Function call is set to false if GSU != 1 or Activation is not fused or ActivationType is not All.
-    if not (state["ActivationFused"] and state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']) \
+    if not (state["ActivationFused"] and state["ProblemType"]["ActivationType"] == 'all') \
       and state["ActivationFuncCall"]:
       state["ActivationFuncCall"] = False
 

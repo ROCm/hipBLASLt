@@ -31,7 +31,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationType: all
       UseBias: 3
       BiasDataTypeList: ['s']
 
@@ -103,7 +102,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationType: all
       UseBias: 3
       BiasDataTypeList: ['s']
 
@@ -175,7 +173,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationType: all
       UseBias: 3
       BiasDataTypeList: ['s']
 
@@ -247,7 +244,6 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
-      ActivationType: all
       UseBias: 3
       BiasDataTypeList: ['s']
 

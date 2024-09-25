@@ -896,8 +896,7 @@ namespace Tensile
                     }
                 }
             }
-            if(problemType.activationType == ActivationType::All
-               || problemType.activationType == ActivationType::Hipblaslt_all)
+            if(problemType.activationType == ActivationType::All)
             {
                 args.template append<uint32_t>(
                     "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
@@ -1718,8 +1717,7 @@ namespace Tensile
                     }
                 }
             }
-            if(problemType.activationType == ActivationType::All
-               || problemType.activationType == ActivationType::Hipblaslt_all)
+            if(problemType.activationType == ActivationType::All)
             {
                 args.template append<uint32_t>(
                     "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
@@ -2119,13 +2117,7 @@ namespace Tensile
         if(problemType.activationType != ActivationType::None)
         {
             if(problemType.activationType == ActivationType::All)
-	    {
-		name += "_A";
-	    }
-	    else if(problemType.activationType == ActivationType::Hipblaslt_all)
-	    {
-                name += "_HA";
-	    }
+                name += "_A";
             else
             {
                 std::string actName = ToString(problemType.activationType);
@@ -2219,8 +2211,7 @@ namespace Tensile
 
         if(problemType.activationType != ActivationType::None)
         {
-            if(problemType.activationType == ActivationType::All
-               || problemType.activationType == ActivationType::Hipblaslt_all)
+            if(problemType.activationType == ActivationType::All)
             {
                 rv.args.append<uint32_t>(
                     "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
@@ -2278,13 +2269,7 @@ namespace Tensile
         if(problemType.activationType != ActivationType::None)
         {
             if(problemType.activationType == ActivationType::All)
-	    {
-		name += "_A";
-	    }
-            else if(problemType.activationType == ActivationType::Hipblaslt_all)
-	    {
-                name += "_HA";
-	    }
+                name += "_A";
             else
             {
                 std::string actName = ToString(problemType.activationType);

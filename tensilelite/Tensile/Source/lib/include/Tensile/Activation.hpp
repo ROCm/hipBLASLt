@@ -64,7 +64,6 @@ namespace Tensile
         Geluscaling,
         Silu,
         All,
-        Hipblaslt_all,
         Exp, // Verification use only.
         Count
     };

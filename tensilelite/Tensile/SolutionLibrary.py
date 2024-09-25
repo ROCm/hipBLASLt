@@ -402,8 +402,6 @@ class MasterSolutionLibrary:
                 if problemType.activationType != 'none':
                     if str(problemType.activationType).upper() == 'ALL':
                         placeholderName += "_A"
-                    elif str(problemType.activationType).upper() == 'HIPBLASLT_ALL':
-                        placeholderName += "_HA"
                     else:
                         placeholderName += "_%s"%str(problemType.activationType).upper()
                 if problemType.useBias:

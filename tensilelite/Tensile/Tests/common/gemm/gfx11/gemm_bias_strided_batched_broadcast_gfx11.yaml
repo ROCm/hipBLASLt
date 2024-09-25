@@ -32,7 +32,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationType: all
       SetConstStrideBias: [[2, 0]] #set bias stride = 0
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -97,7 +96,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationType: all
       SetConstStrideBias: [[2, 0]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -162,7 +160,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationType: all
       SetConstStrideBias: [[2, 0]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -227,7 +224,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationType: all
       SetConstStrideBias: [[2, 0]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -292,7 +288,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationType: all
       SetConstStrideBias: [[2, 0]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -357,7 +352,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationType: all
       SetConstStrideBias: [[2, 0]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -422,7 +416,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationType: all
       SetConstStrideBias: [[2, 0]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -487,7 +480,6 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
-      ActivationType: all
       SetConstStrideBias: [[2, 0]]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -553,7 +545,6 @@ BenchmarkProblems:
       #UseBias: True
       Batched: True
       Activation: True
-      ActivationType: all
       SetConstStrideBias: [[2, 0]]
       BiasDataTypeList: ['s']
 
@@ -620,7 +611,6 @@ BenchmarkProblems:
       #UseBias: True
       Batched: True
       Activation: True
-      ActivationType: all
       SetConstStrideBias: [[2, 0]]
       #BiasDataTypeList: ['s']
 

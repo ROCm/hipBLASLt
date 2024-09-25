@@ -41,7 +41,6 @@ BenchmarkProblems:
 
       UseBias: 1
       Activation: True
-      ActivationType: all
       UseScaleAlphaVec: 1
 
       GroupedGemm: True
@@ -131,7 +130,6 @@ BenchmarkProblems:
 
       UseBias: 1
       Activation: True
-      ActivationType: all
       UseScaleAlphaVec: 1
 
       GroupedGemm: True
@@ -217,7 +215,6 @@ BenchmarkProblems:
 
       UseBias: 1
       Activation: True
-      ActivationType: all
       UseScaleAlphaVec: 1
 
       GroupedGemm: True
@@ -302,7 +299,6 @@ BenchmarkProblems:
 
       UseBias: 1
       Activation: True
-      ActivationType: all
       UseScaleAlphaVec: 1
 
       GroupedGemm: True

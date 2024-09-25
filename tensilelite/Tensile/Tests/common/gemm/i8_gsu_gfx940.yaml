@@ -36,7 +36,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
-      ActivationType: all
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -85,7 +84,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
-      ActivationType: all
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -134,7 +132,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
-      ActivationType: all
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -183,7 +180,6 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation: True
-      ActivationType: all
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
