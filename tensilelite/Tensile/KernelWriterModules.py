@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -50,11 +50,13 @@ def allocPostLoopSrdSuppress(ch: str, labelStr: str, sgprLength) -> Module:
 #   - Pending global reads.  (skipGlobalRead)
 #   - Pending local write.  (skipLocalWrite)
 #   - Pending local reads (skipLocalRead)
+# specify global read in inst unit (for DirectToVgpr. Optional):
+#   - Pending global reads in inst unit.
 # If a skip* arg is -1, the associated component does not contribute to
 # the expected lgkmcnt or vmcnt
 ##############################################################################
 def wait(states, kernel, tPA, tPB, skipGlobalRead, skipLocalWrite, \
-    skipLocalRead, conservativeWaitCnt: int, comment):
+    skipLocalRead, conservativeWaitCnt: int, comment, skipGlobalReadInst=-1):
     # skip = -1 -> ignore
     # skip =  n -> waitcnt(n*num)
 
@@ -62,9 +64,9 @@ def wait(states, kernel, tPA, tPB, skipGlobalRead, skipLocalWrite, \
 
     if skipLocalWrite > -1 or skipLocalRead > -1:
         if skipLocalWrite > -1:
-            numA = 0 if kernel["DirectToLdsA"] \
+            numA = 0 if (kernel["DirectToLdsA"] or  kernel["DirectToVgprA"]) \
                    else tPA["nrp"]*tPA["nrc"]*max(tPA["nwcv"],tPA["nwpv"])//tPA["nwcvpi"]
-            numB = 0 if kernel["DirectToLdsB"] \
+            numB = 0 if (kernel["DirectToLdsB"] or  kernel["DirectToVgprB"]) \
                    else tPB["nrp"]*tPB["nrc"]*max(tPB["nwcv"],tPB["nwpv"])//tPB["nwcvpi"]
 
             numM = 0
@@ -73,24 +75,32 @@ def wait(states, kernel, tPA, tPB, skipGlobalRead, skipLocalWrite, \
               numM = tPM["nrp"]*tPM["nrc"]*max(tPM["nwcv"],tPM["nwpv"])//tPM["nwcvpi"]
             lgkmcnt += skipLocalWrite * (numA + numB + numM)
         if skipLocalRead > -1:
-            readsPerIter = states.numReadsPerIterA + states.numReadsPerIterB + states.numReadsPerIterMetadata
+            numReadsPerIterA = 0 if kernel["DirectToVgprA"] else states.numReadsPerIterA
+            numReadsPerIterB = 0 if kernel["DirectToVgprB"] else states.numReadsPerIterB
+            readsPerIter = numReadsPerIterA + numReadsPerIterB + states.numReadsPerIterMetadata
             lgkmcnt += skipLocalRead * readsPerIter
 
-    vmcnt = 0 if skipGlobalRead > -1 else -1
-    if skipGlobalRead > -1:
+    skipGR = skipGlobalRead > -1 or skipGlobalReadInst > -1
+    vmcnt = 0 if skipGR else -1
+    if skipGR:
         numA = kernel["NumLoadsPerpendicularA"] * kernel["NumLoadsCoalescedA"]
         numB = kernel["NumLoadsPerpendicularB"] * kernel["NumLoadsCoalescedB"]
         numM = 0
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
           numM = kernel["NumLoadsPerpendicularMetadata"] * kernel["NumLoadsCoalescedMetadata"]
-        vmcnt += skipGlobalRead * (numA + numB + numM)
+        numGR = 0
+        if skipGlobalRead > -1:
+          numGR += skipGlobalRead * (numA + numB + numM)
+        if skipGlobalReadInst > -1:
+          numGR += skipGlobalReadInst
+        vmcnt += numGR
 
         # Unlike flat loads, BufferLoad do not increment the outstanding
         # lgkmcnt
         if lgkmcnt > -1 and not kernel["BufferLoad"]:
-            lgkmcnt += skipGlobalRead * (numA + numB + numM)
+            lgkmcnt += numGR
 
-    if (conservativeWaitCnt & 0x2) and skipGlobalRead != -1 or \
+    if (conservativeWaitCnt & 0x2) and skipGR or \
        (conservativeWaitCnt & 0x4) and skipLocalWrite != -1 or \
        (conservativeWaitCnt & 0x8) and skipLocalRead  != -1:
         imod = Module("ConservativeWaitCnt")
@@ -113,13 +123,14 @@ def wait(states, kernel, tPA, tPB, skipGlobalRead, skipLocalWrite, \
 ##############################################################################
 # SyncThreads
 ##############################################################################
-def syncThreads(kernel, archCaps, comment=""):
+def syncThreads(kernel, archCaps, comment="", skipForceWaitcnt0=False):
     imod = Module("syncThreads")
     if kernel["NumThreads"] > kernel["WavefrontSize"]:
         if archCaps["SeparateVscnt"]:
             imod.add(SWaitCnt(lgkmcnt="null", comment="extra navi wait"))
         elif kernel["ScheduleIterAlg"] == 2 \
-          or kernel["PrefetchGlobalRead"] == 2:
+          or kernel["PrefetchGlobalRead"] == 2 \
+          or skipForceWaitcnt0:
             imod.addComment("Skip force waitcnt0")
         elif archCaps["Waitcnt0Disabled"]:
             # FIXME: should we add s_waitcnt_vscnt?
