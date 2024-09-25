@@ -179,7 +179,7 @@ class LraTileAssignmentMFMA(LraTileAssignment):
                 "1. N offset: nOffset = nIdx * nStride(%u)" % strideTile))
             # block offset
             if num1DBlocks > 1:
-                module.add(vectorStaticDivide(dummy, dummy, dividedForBlkId, tmpVgprRes, \
+                module.add(vectorStaticDivide(dummy, kReg, dividedForBlkId, tmpVgprRes, \
                     "2. block offset: bnIdx = wtid / dividedForBlkId(%u)" % dividedForBlkId))
                 module.add(vectorStaticRemainder(dummy, dummy, dummy, num1DBlocks, tmpVgprRes, tmpSgprInfo, \
                     "2. block offset: bnIdx = bnIdx %% num1DBlocks(%u)" % num1DBlocks))
