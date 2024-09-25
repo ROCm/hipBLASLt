@@ -3207,93 +3207,29 @@ class KernelWriterAssembly(KernelWriter):
 
     if isDTVAB:
       # offset calculation for DirectToVgpr
-      # ported code from LraTileAssignmentMFMA for DirectToVgpr
-      isMfma = self.states.asmCaps["HasMFMA"]
-      # get constant parameter
-      tile01           = tP["tile01Idx"]
-      waveWidth        = self.states.kernel["WavefrontSize"]
-      inputPerThread   = kernel["LocalReadVectorWidth"] if not self.states.inTailLoop else kernel["MIInputPerThread%s"%tc]
+      # call function from LraTileAssignmentMFMA for DirectToVgpr
+      module.addComment0("TileAssignment for DirectToVgpr%s" % tc)
+      component = Component.LraTileAssignment.find(self)
+      module.add(component.LraTileAssignmentCode(self, kernel, tP, tReg, uReg, tmpVgprRes, dividendReg=dividendReg, isDTVAB=True))
 
-      # parameter for get each type index
-      dividendForKId   = kernel["MatrixInstM"] * kernel["MatrixInstB"]
-      num1DBlocks      = kernel["MatrixInstBM"] if (tile01 == 0) else kernel["MatrixInstBN"]
-      num1DWaves       = kernel["MIWaveGroup"][0] if (tile01 == 0) else kernel["MIWaveGroup"][1]
-      if kernel["SourceSwap"]:
-          dividedForBlkId  = kernel["MatrixInstM"] if (tile01 == 0) else (kernel["MatrixInstM"] * kernel["MatrixInstBM"])
-      else:
-          dividedForBlkId  = (kernel["MatrixInstN"] * kernel["MatrixInstBN"]) if (tile01 == 0) else kernel["MatrixInstN"]
-      dividedForWaveId = waveWidth if (tile01 == 0) else (waveWidth * kernel["MIWaveGroup"][0])
-
-      # TLU case, glvw and vw are applied to the same direction. No need to apply both.
-      # non TLU case, glvw and vw are applied to the different direction. We need to apply vw here.
-      vectorWidth = 1 if tP["tlu"] else kernel["VectorWidth%s"%tc]
-      maxKId = waveWidth // ((kernel["MatrixInstM"] if (tile01 == 0) else kernel["MatrixInstN"]) * kernel["MatrixInstB"])
-      strideTile  = 1 # tentative. Actual stride will be applied later.
-      strideBlock = kernel["MatrixInstM"] * strideTile
-      strideWave  = kernel["MatrixInstM"] * num1DBlocks * strideTile * vectorWidth
-
-      with self.allocTmpSgpr(1) as tmpSgprInfo:
-        # tile offset
-        module.add(vectorStaticRemainder(qReg, qReg, dividendReg, waveWidth, tmpVgprRes, tmpSgprInfo, \
-            "0. thread id in wave: wtid = tid %% wavelength(%u)" % waveWidth))
-        module.add(vectorStaticRemainder(rReg, rReg, qReg, kernel["MatrixInstN"], tmpVgprRes, tmpSgprInfo, \
-            "1. N offset: nIdx = wtid %% MI_N(%u)" % kernel["MatrixInstN"]))
-        module.add(staticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
-            "1. N offset: nOffset = nIdx * nStride(%u)" % strideTile))
-        # block offset
-        if num1DBlocks > 1:
-            tmpVgpr2 = self.vgprPool.checkOut(1, "tmpVgpr2", self.states.preventVgprOverflowDuringNewTile)
-            module.add(vectorStaticDivide(tmpVgpr2, qReg, dividedForBlkId, tmpVgprRes, \
-                "2. block offset: bnIdx = wtid / dividedForBlkId(%u)" % dividedForBlkId))
-            module.add(vectorStaticRemainder(tmpVgpr2, tmpVgpr2, tmpVgpr2, num1DBlocks, tmpVgprRes, tmpSgprInfo, \
-                "2. block offset: bnIdx = bnIdx %% num1DBlocks(%u)" % num1DBlocks))
-            module.add(staticMultiply(vgpr(tmpVgpr2), vgpr(tmpVgpr2), strideBlock, tmpSgprInfo, \
-                "2. block offset: bnOffset = bnIdx * strideBlock(%u)" % strideBlock))
-            module.add(VAddU32(dst=vgpr(rReg), src0=vgpr(tmpVgpr2), src1=vgpr(rReg), \
-                comment="3. add N and block offset: bnOffset = block and N offset"))
-            self.vgprPool.checkIn(tmpVgpr2)
-        else:
-            module.addComment0("Skip. 2. block offset: bnOffset = 0 when num1DBlocks = 1")
-
-        module.add(staticMultiply(vgpr(rReg), vgpr(rReg), vectorWidth, tmpSgprInfo, \
-            "4. apply VectorWidth: bnOffset = bnOffset * vw(%u)" % vectorWidth))
-        # unroll offset
-        if isMfma and (dividendForKId != waveWidth):
-            module.add(vectorStaticDivide(qReg, qReg, dividendForKId, tmpVgprRes, \
-            "5. K offset: kIdx = wtid / (MIN(%u) * MIBB(%u))" % (kernel["MatrixInstN"], kernel["MatrixInstB"])))
-
-        # wave offset
-        if num1DWaves > 1:
-            tmpVgpr3 = self.vgprPool.checkOut(1, "tmpVgpr3", self.states.preventVgprOverflowDuringNewTile)
-            module.add(vectorStaticDivide(tmpVgpr3, dividendReg, dividedForWaveId, tmpVgprRes, \
-                "7. wave offset in N dimen: wtid = tid / dividedForWaveId(%u)" % dividedForWaveId))
-            module.add(vectorStaticRemainder(tmpVgpr3, tmpVgpr3, tmpVgpr3, num1DWaves, tmpVgprRes, tmpSgprInfo, \
-                "7. wave offset in M dimen: wtid0 = wtid / num1DWaves(%u)" % num1DWaves))
-            module.add(staticMultiply(vgpr(tmpVgpr3), vgpr(tmpVgpr3), strideWave, tmpSgprInfo, \
-                "7. wave offset in M dimen: wOffset = wtid0 * W0Stride(%u)" % strideWave))
-            module.add(VAddU32(dst=vgpr(rReg), src0=vgpr(tmpVgpr3), src1=vgpr(rReg), \
-                comment="7. final local read offset: flrOffset = lrOffset + WOffset"))
-            self.vgprPool.checkIn(tmpVgpr3)
-
-        # localSplitU case. Calculate LSU offset here
-        if kernel["LocalSplitU"] > 1:
-          # allocate resources
-          wave_id    = self.vgprPool.checkOut(1) # quotient
-          # constant
-          lsu         = kernel["LocalSplitU"]
-          du          = kernel["DepthU"]
-          lsuStride   = du // lsu
-          numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-          # generate instruction
-          module.add(vectorStaticDivide(wave_id, "Serial", kernel["WavefrontSize"] * numWaves, tmpVgprRes, comment="LSU offset: Get LSU wave_id"))
-          module.add(VMulLOU32(dst=vgpr(wave_id), src0=hex(lsuStride), src1=vgpr(wave_id), \
-            comment="LSU offset: lsuoffset = wave_id*lsuStride*(MT%u+PAD)"%tile01))
-          module.add(VAddU32(dst=vgpr(qReg), src0=vgpr(wave_id), src1=vgpr(qReg), \
-            comment="LSU Offset: offset += lsuoffset" ))
-          self.vgprPool.checkIn(wave_id)
+      # DTV+localSplitU case. Calculate LSU offset here
+      if kernel["LocalSplitU"] > 1:
+        # allocate resources
+        wave_id    = self.vgprPool.checkOut(1) # quotient
+        # constant
+        lsu         = kernel["LocalSplitU"]
+        du          = kernel["DepthU"]
+        lsuStride   = du // lsu
+        numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
+        # generate instruction
+        module.add(vectorStaticDivide(wave_id, "Serial", kernel["WavefrontSize"] * numWaves, tmpVgprRes, comment="LSU offset: Get LSU wave_id"))
+        module.add(VMulLOU32(dst=vgpr(wave_id), src0=hex(lsuStride), src1=vgpr(wave_id), \
+          comment="LSU offset: lsuoffset = wave_id*lsuStride*(MT%u+PAD)"%tile01))
+        module.add(VAddU32(dst=vgpr(qReg), src0=vgpr(wave_id), src1=vgpr(qReg), \
+          comment="LSU Offset: offset += lsuoffset" ))
+        self.vgprPool.checkIn(wave_id)
     else:
       module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpVgprRes))
-
 
     if kernel["WaveSeparateGlobalRead%s"%tc] == 1:
       with self.allocTmpSgpr(1) as tmpSgprInfo:
