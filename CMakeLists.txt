@@ -69,6 +69,11 @@ if (NOT DEFINED ENV{CC} AND NOT CMAKE_C_COMPILER)
   set(CMAKE_C_COMPILER "${rocm_bin}/amdclang")
 endif()
 
+# TODO: move this and cxx and c compiler vars to toolchain-linux
+if (NOT DEFINED ENV{FC} AND NOT CMAKE_Fortran_COMPILER)
+  set(CMAKE_Fortran_COMPILER "gfortran")
+endif()
+
 # hipBLASLt project
 project(hipblaslt LANGUAGES CXX)
 

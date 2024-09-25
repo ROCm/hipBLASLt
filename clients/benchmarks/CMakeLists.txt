@@ -82,7 +82,7 @@ if (NOT WIN32)
   endif()
   list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
 
-  if (CMAKE_Fortran_COMPILER MATCHES "gfortran")
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
     list( APPEND COMMON_LINK_LIBS "-lgfortran") # for lapack
   else()
     list( APPEND COMMON_LINK_LIBS "-lflang -lflangrti") # for lapack

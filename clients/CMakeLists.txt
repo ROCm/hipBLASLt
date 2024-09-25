@@ -32,11 +32,6 @@ if( NOT DEFINED CMAKE_CONFIGURATION_TYPES AND NOT DEFINED CMAKE_BUILD_TYPE )
 endif()
 
 
-# TODO: move this fortran and root level CMakeLists.txt cxx and c compiler vars to toolchain-linux
-if (NOT DEFINED ENV{FC} AND NOT CMAKE_Fortran_COMPILER)
-  set(CMAKE_Fortran_COMPILER "gfortran")
-endif()
-
 project( hipblaslt-clients LANGUAGES CXX C Fortran )
 
 if( SKIP_LIBRARY )
