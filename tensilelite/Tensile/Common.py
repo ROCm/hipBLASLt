@@ -284,6 +284,7 @@ globalParameters["RotatingMode"] = 0 # Default is 0, allocated in order A0B0C0D0
 
 globalParameters["BuildIdKind"] = "sha1"
 globalParameters["ValidateLibrary"] = False
+globalParameters["AsmDebug"] = False # Set to True to keep debug information for compiled code objects
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
