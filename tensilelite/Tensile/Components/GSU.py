@@ -387,6 +387,9 @@ class GSUOn(GSU):
     def noLoadLoop(self, writer, kernel, tensorParametersA, tensorParametersB, pack):
         module = Module("GSU On noLoadLoop")
 
+        isDTV = (kernel["DirectToVgprA"] or kernel["DirectToVgprB"])
+        needSecondNLL  = isDTV # need 2 NLL for 2 buffers (PGR1/2)
+        NLLnum = 2 if needSecondNLL else 1
         gsuLabel = Label(label=writer.labels.getNameInc("GSU"), comment="")
         with writer.allocTmpSgpr(1) as tmpSgprGSU:
             module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
@@ -409,12 +412,16 @@ class GSUOn(GSU):
             # (2. OptNLL : No PAP global-read (For PAP=OFF, or PAP=ON but the last tile))
             #  -> this is unified with 1. global-read is invalidated at the last tile.
             # 3. OrdinaryNLL (Not Opt.)
-            writer.saveLocalPointers(kernel, tensorParametersA, tensorParametersB)
-            # deepCopy packCode for OptNLL noLoadLoop
-            deepCopyPack = fastdeepcopy(pack)
-            noLoadLoopModules = writer.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=True, isNGLL=False, pack=deepCopyPack)
+
+            noLoadLoopModules = Module("noLoadLoop")
+            for NLLindex in range(0, NLLnum):
+              writer.saveLocalPointers(kernel, tensorParametersA, tensorParametersB)
+              # deepCopy packCode for OptNLL noLoadLoop
+              deepCopyPack = fastdeepcopy(pack)
+              noLoadLoopModules.add(writer.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=True, isNGLL=False, pack=deepCopyPack, NLLindex=NLLindex, NLLnum=NLLnum))
+              writer.restoreLocalPointers(kernel, tensorParametersA, tensorParametersB)
+
             acclen = noLoadLoopModules.countType(Instruction)
-            writer.restoreLocalPointers(kernel, tensorParametersA, tensorParametersB)
         kernel["GlobalSplitU"] = gsuBackup
         kernel["_GlobalAccumulation"] = gsuAccumBackup
         writer.states.bpeCexternal = bpeCexternalBackup

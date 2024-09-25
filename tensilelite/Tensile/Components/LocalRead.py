@@ -520,4 +520,8 @@ class LocalReadMFMA(LocalRead):
                             elif kernel["ProblemType"]["DataType"].isSingle():
                                 localReadCode.add(writer.assert_eq( dbgVgpr, 1.0) )
 
+        # DTV case, do not return local read code. Return pack code only.
+        if (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]:
+          imod = Module("LocalReadDo%s_I%s (Empty)" % (tP["tensorChar"],iui))
+
         return imod, pack
