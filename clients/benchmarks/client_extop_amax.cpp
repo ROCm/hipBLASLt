@@ -106,7 +106,7 @@ int parseArgs(int                       argc,
             }
             else if(arg == "-m" || arg == "--m")
             {
-                n = std::stoul(argv[++i]);
+                m = std::stoul(argv[++i]);
             }
             else if(arg == "-n" || arg == "--n")
             {
@@ -240,8 +240,8 @@ int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, hipblaslt_initia
     hipErr = hipEventElapsedTime(&dur, beg, end);
     dur *= 1000; // to mju-s
 
-    std::cout << "[amax]:m,n,type,dtype,us\n";
-    std::cout << std::to_string(m) << "," << std::to_string(n) << "," << hip_datatype_to_string(type) << ","
+    std::cout << "[amax]:function,m,n,type,dtype,us\n";
+    std::cout << "amax," << std::to_string(m) << "," << std::to_string(n) << "," << hip_datatype_to_string(type) << ","
               << hip_datatype_to_string(dtype) << "," << std::to_string(dur / numRuns) << std::endl;
 
     hipErr = hipEventDestroy(beg);
