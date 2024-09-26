@@ -1,0 +1,108 @@
+GlobalParameters:
+  # MinimumRequiredVersion: 4.14.0
+  # ForceRedoBenchmarkProblems: False
+  # ForceRedoLibraryLogic: False
+  # ForceRedoLibraryClient: False
+  # MergeFiles: False
+  # ForceGenerateKernel: True
+  # CMakeBuildType: Debug
+
+  NumElementsToValidate: 0
+  # ValidationPrintValids: True
+  # ValidationMaxToPrint: 256
+  NumWarmups: 10
+  NumBenchmarks: 1
+  SyncsPerBenchmark: 1
+  EnqueuesPerSync: 100
+  MinFlopsPerSync: 10737418240
+  MaxEnqueuesPerSync: 100
+  SleepPercent: 0
+  PrintSolutionRejectionReason: True
+  PrintWinnersOnly: True
+  CSVExportWinner: 1
+  CSVMergeSameProblemID: 1
+  Device: 0
+  MinKForGSU: 64
+  MaxWorkspaceSize: 33554432
+  MaxFileName: 256
+  KernelTime: True
+  RotatingBufferSize: 512
+
+  # mark
+  KeepBuildTmp: True
+
+BenchmarkProblems:
+  ########################################
+  # NN - standard
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+
+      DataType: h
+      DestDataType: h
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 0
+      TransposeB: 0
+      UseBeta: True
+      Batched: True
+      UseBias: 1
+      Activation: True
+      UseScaleAlphaVec: 0
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - DepthU: [64]
+        - VectorWidthA: [4]
+        - VectorWidthB: [4]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
+        - LocalReadVectorWidth: [-1]
+        - TransposeLDS: [2]
+
+        # - TransposeLDS: [1]
+        # - LdsBlockSizePerPadA: [-1]
+        # - LdsBlockSizePerPadB: [-1]
+        # - LdsPadA: [-1]
+        # - LdsPadB: [-1]
+        - WorkGroupMapping: [1]
+        - WorkGroupMappingXCC: [1] #[1,4,8,38,32,304]
+        - WorkGroupMappingXCCGroup: [0] #[0,1,4,8,38,32,304]
+        # - StaggerUMapping: [0]
+        # - StaggerU: [0]
+        # - StaggerUStride: [-1]
+        # - GlobalSplitU: [2]
+        # - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        # - GlobalReadPerMfma: [1]
+        # - LocalWritePerMfma: [-1]
+        # - StoreRemapVectorWidth: [0]
+        # - StoreVectorWidth: [-1]
+        # - SourceSwap: [1]
+        # - NumElementsPerBatchStore: [0]
+        # - ClusterLocalRead: [1]
+        # - MaxOccupancy: [40]
+        # - ExpandPointerSwap: [0]
+        # - StorePriorityOpt: [0]
+        # - StoreSyncOpt: [0]
+        # - UnrollLoopSwapGlobalReadOrder: [0]
+        - ScheduleIterAlg: [1]
+        # - 1LDSBuffer: [0]
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [5280, 1, 1, 1184] # size 6
+        - BiasTypeArgs: ['s']
+        - ActivationArgs:
+          - [Enum: none]
+LibraryLogic:
+    ScheduleName: "aquavanjaram"
+    DeviceNames: ["Device 0049", "Device 0050"]
+    ArchitectureName: "gfx942"
+    LibraryType: "Equality"
+
+# LibraryClient:

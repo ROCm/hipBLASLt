@@ -1078,7 +1078,7 @@ class KernelWriterAssembly(KernelWriter):
         else kernel["LoopIters"] - 1
       for m in range(0, 1+PLR):
           macro = Macro("MAC_%ux%u_X%u" % (kernel["ThreadTile0"], kernel["ThreadTile1"], m), "")
-          component = Component.MAC.find(self)
+          component = Component.MAC.find(self, debug = True)
           if not component:
             printExit("Assembly doesn't support datatype %s" % kernel["ProblemType"]["DataType"])
           innerModule = component(self, tPA, tPB, m, kernel["InnerUnroll"])

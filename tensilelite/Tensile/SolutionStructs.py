@@ -2282,9 +2282,13 @@ class Solution(collections.abc.Mapping):
         state["UnrollMajorLDSA"] = 1
         state["UnrollMajorLDSB"] = 1
     else: # mac instruction
-      state["TransposeLDS"] =  0
-      state["UnrollMajorLDSA"] = False
-      state["UnrollMajorLDSB"] = False
+      # mark
+      # state["TransposeLDS"] =  0
+      # state["UnrollMajorLDSA"] = False
+      # state["UnrollMajorLDSB"] = False
+      state["TransposeLDS"] =  2
+      state["UnrollMajorLDSA"] = True
+      state["UnrollMajorLDSB"] = True
 
     if state["VectorWidthA"] == -1:
       if state["EnableMatrixInstruction"]:
@@ -2526,8 +2530,11 @@ class Solution(collections.abc.Mapping):
           if (ldsNumBytesAlignedA + ldsNumBytesAlignedB) > globalParameters["MaxLDS"]:
             state["LocalReadVectorWidth"] //= 2
     else:
-      if state["LocalReadVectorWidth"] == -1:
-        state["LocalReadVectorWidth"] = 1
+      # mark
+      # if state["LocalReadVectorWidth"] == -1:
+      #   state["LocalReadVectorWidth"] = 1
+      state["LocalReadVectorWidth"] = 2
+      print("force LocalReadVectorWidth = 2")
 
     if state["ConvertAfterDS"]:
         if (state["ProblemType"]["DataType"].isHalf() == False):
@@ -2697,8 +2704,12 @@ class Solution(collections.abc.Mapping):
         if state["EnableMatrixInstruction"] and globalParameters["AsmCaps"][isa]['HasWMMA']:
           reject(state, "Half WMMA doesn't support single buffer GSU")
           return
-      if (not state["EnableMatrixInstruction"]) and (state["VectorWidthA"] < 2 or state["VectorWidthB"] < 2):
-        reject(state, "Assembly half requires VectorWidth >= 2 for non-MFMA mode")
+      # mark
+      # if (not state["EnableMatrixInstruction"]) and (state["VectorWidthA"] < 2 or state["VectorWidthB"] < 2):
+      #   reject(state, "Assembly half requires VectorWidth >= 2 for non-MFMA mode")
+      if (not state["EnableMatrixInstruction"]) and (state["InnerUnroll"] != 2):
+        state["InnerUnroll"] = 2
+        print("Force InnerUnroll == 2 for non-MFMA mode")
 
     ########################################
     # Search DepthU
@@ -3009,8 +3020,9 @@ class Solution(collections.abc.Mapping):
               state["LSPB"] % (state["LdsBlockSizePerPadB"] // (state["_DepthUB"] * state["ProblemType"]["DataType"].numBytes())) != 0:
             reject(state, "can't pad by addrVgpr or instOffset")
     else:
-      if state["UnrollMajorLDSA"] or state["UnrollMajorLDSB"]:
-        reject(state, "didn't support UnrollMajorLDS in VALU mode yet")
+      # mark
+      # if state["UnrollMajorLDSA"] or state["UnrollMajorLDSB"]:
+      #   reject(state, "didn't support UnrollMajorLDS in VALU mode yet")
       if state["LdsBlockSizePerPadA"] != 0 or state["LdsBlockSizePerPadB"] != 0:
         reject(state, "didn't support LdsBlockSizePerPad in VALU mode yet")
 
@@ -3217,9 +3229,9 @@ class Solution(collections.abc.Mapping):
         state["LdsBlockSizePerPadB"] = 128
     assert(state["LdsPadB"] >= 0)
 
-
-    if (state["UnrollMajorLDSA"] or state["UnrollMajorLDSB"]) and (not state["EnableMatrixInstruction"]):
-        reject(state, "UnrollMajorLDS Supports only in EnableMatrixInstruction=1")
+    # mark
+    # if (state["UnrollMajorLDSA"] or state["UnrollMajorLDSB"]) and (not state["EnableMatrixInstruction"]):
+    #     reject(state, "UnrollMajorLDS Supports only in EnableMatrixInstruction=1")
 
     ldsNumBytesA, ldsNumBytesAlignedA, ldsNumBytesB, ldsNumBytesAlignedB, ldsNumBytesMetadata, ldsNumBytesAlignedMetadata = calcLdsNumBytes(state["LdsPadA"], state["LdsBlockSizePerPadA"], state["LdsPadB"], state["LdsBlockSizePerPadB"])
 
