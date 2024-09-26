@@ -33,16 +33,16 @@ from specs import get_machine_specs
 
 console = logging.StreamHandler()
 
-# Parameters for output csv file
-matmul_paramList = ['transA','transB','grouped_gemm','batch_count','m','n','k','alpha','lda','stride_a','beta','ldb','stride_b',
+# Parameters for output csv file, we track fields according to each function.
+matmul_paramList = ['function','transA','transB','grouped_gemm','batch_count','m','n','k','alpha','lda','stride_a','beta','ldb','stride_b',
                     'ldc','stride_c','ldd','stride_d','a_type','b_type','c_type','d_type','compute_type','scaleA','scaleB','scaleC',
                     'scaleD','amaxD','activation_type','bias_vector','bias_type','rotating_buffer','gflops','GB/s','us']
 
-amax_paramList = ['m','n','type','dtype','us']
+amax_paramList = ['function','m','n','type','dtype','us']
 
 # maps of paramList
 benchTrackedParams = {'matmul' : matmul_paramList,
-                     'amax' : amax_paramList}
+                      'amax' : amax_paramList}
 
 # maps of benchmark executable
 benchExecs = {'matmul' : 'hipblaslt-bench',
@@ -52,19 +52,19 @@ benchExecs = {'matmul' : 'hipblaslt-bench',
 def extractTrackedParams(d, trackedParam):
     return [d[p] for p in trackedParam]
 
-def runBenchmark(benchType, args, executable_folder, probYamlFolder, out_csv_File, write_csv_header):
+def runBenchmark(benchType, prob_args, executable_folder, probYamlFolder, out_csv_File, write_csv_header):
 
     # get the actual exec-path of this bench type
     benchExec = benchExecs[benchType]
     benchCmd = pathlib.Path(os.path.join(executable_folder, benchExec)).resolve()
 
-    csvKeys, benchResults, success = bench.run_bench(benchCmd, probYamlFolder, args, True)
-
-    header = ''
-    header += ','.join([str(key) for key in csvKeys])+'\n'
-
+    csvKeys, benchResults, success = bench.run_bench(benchCmd, probYamlFolder, prob_args, True)
     # get the actual params we want to track and show in csv of this bench type
     trackedParams = benchTrackedParams[benchType]
+    # TODO- check csvKeys == trackedParams
+    header = ''
+    header += ','.join([str(key) for key in trackedParams])+'\n'
+
     content = ''
     for eachResult in benchResults:
         extracted = extractTrackedParams(eachResult, trackedParams)

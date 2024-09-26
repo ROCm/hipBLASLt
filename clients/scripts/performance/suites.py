@@ -82,7 +82,7 @@ def amax_set_1():
 def matmul_set_1():
     """gemm benchset 1"""
 
-    problemlist = [Problem(args={"--yaml" : "matmul_probset1_bench.yaml"})]
+    problemlist = [Problem(args={"--log_function_name" : "" , "--yaml" : "matmul_probset1_bench.yaml"})]
     yield ProblemSet(benchType="matmul", name="benchset_1", problems=problemlist)
 
 
