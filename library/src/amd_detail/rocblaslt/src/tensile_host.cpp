@@ -36,6 +36,7 @@
 #include "rocblaslt-types.h"
 #include "rocblaslt_mat_utils.hpp"
 #include "tensile_host.hpp"
+#include "Debug.hpp"
 
 //#include <Tensile/AMDGPU.hpp>
 #include <Tensile/Contractions.hpp>
@@ -819,7 +820,7 @@ namespace
 
         // set Actvation
         tensileProblem.setActivationType(is_act_enabled(prob.epilogue)
-                                             ? Tensile::ActivationType::All
+                                             ? Tensile::ActivationType::Hipblaslt_all
                                              : Tensile::ActivationType::None);
         tensileProblem.setActivationComputeType(compute_type);
         tensileProblem.setParams().setActivationEnum(getTensileActivationType(prob.epilogue));
@@ -980,7 +981,7 @@ namespace
 
         // set Actvation
         tensileProblem.setActivationType(is_act_enabled(prob.epilogue)
-                                             ? Tensile::ActivationType::All
+                                             ? Tensile::ActivationType::Hipblaslt_all
                                              : Tensile::ActivationType::None);
         tensileProblem.setActivationComputeType(compute_type);
         tensileProblem.setParams().setActivationEnum(getTensileActivationType(prob.epilogue));
@@ -1695,11 +1696,41 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
         else
         {
-            status = hip2RocStatus(adapter->launchKernels(
-                solution->solve(data->problem, GetTensileInputs(prob), *hardware),
+            auto kernels = solution->solve(data->problem, GetTensileInputs(prob),*hardware);
+            // Remove this after supports getting comgr buffers from hip.
+            bool isPreloaded = false;
+            if(rocblaslt::Debug::Instance().preload())
+            {
+                for(size_t i = 0; i < kernels.size(); i++)
+                {
+                    if(!kernels[i].codeObjectFile.empty())
+                    {
+                        auto isAlreadyLoaded = adapter->FindCodeObject(kernels[i].codeObjectFile);
+                        if(!isAlreadyLoaded || !kernels[i].isSingleCall)
+                        {
+                            if(kernels[i].isSingleCall)
+                            {
+                                auto solutions = library->findAllSolutions(
+                                    data->problem, *hardware, Tensile::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
+                                std::vector<std::string> kernelNames;
+                                for(auto s : solutions)
+                                {
+                                    kernelNames.push_back(s->KernelName());
+                                }
+                                static_cast<void>(adapter->initKernels(kernelNames));
+                            }
+                            else
+                                static_cast<void>(adapter->initKernel(kernels[i].kernelName));
+                        }
+                    }
+                }
+                isPreloaded = true;
+            }
+            status = hip2RocStatus(adapter->launchKernels(kernels,
                 prob.stream,
                 nullptr,
-                nullptr));
+                nullptr,
+                isPreloaded));
         }
     }
     catch(const std::exception& e)

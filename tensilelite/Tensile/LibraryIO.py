@@ -28,6 +28,7 @@ from .SolutionStructs import Solution, ProblemSizes, ProblemType
 from . import __version__
 from . import Common
 from . import SolutionLibrary
+from .CustomYamlLoader import load_yaml_stream
 
 from typing import NamedTuple, List
 import os
@@ -171,10 +172,10 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
 ###############################
 # Reading and parsing functions
 ###############################
-def read(filename):
+def read(filename, customizedLoader=False):
     name, extension = os.path.splitext(filename)
     if extension == ".yaml":
-        return readYAML(filename)
+        return load_yaml_stream(filename, yamlLoader) if customizedLoader else readYAML(filename)
     if extension == ".json":
         return readJson(filename)
     else:
@@ -244,7 +245,7 @@ class LibraryLogic(NamedTuple):
 
 def parseLibraryLogicFile(filename, archs=None):
     """Wrapper function to read and parse a library logic file."""
-    return parseLibraryLogicData(read(filename), filename, archs)
+    return parseLibraryLogicData(read(filename, True), filename, archs)
 
 
 def parseLibraryLogicData(data, srcFile="?", archs=None):
@@ -289,9 +290,19 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
             customConfig = getCustomKernelConfig(solutionState["CustomKernelName"], isp)
             for key, value in customConfig.items():
                 solutionState[key] = value
+            # The ActivationType setting in YAML is meaningless in customKernel case.
+            # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
+            solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
         solutionObject = Solution(solutionState)
-        if solutionObject["ProblemType"] != problemType:
-            printExit(f"ProblemType in library logic file {srcFile} doesn't match solution: {problemType} != {solutionObject['ProblemType']}")
+        solutionProblemType = solutionObject["ProblemType"]
+        if problemType != solutionProblemType:
+            # find the mismatched items in ProblemType
+            results = ""
+            solIdx = solutionObject["SolutionIndex"]
+            for item in problemType:
+                if problemType[item] != solutionProblemType[item]:
+                    results += f"\t{item}: {problemType[item]} != {solutionProblemType[item]}\n"
+            printExit(f"ProblemType in library logic file {srcFile} doesn't match solution(idx={solIdx}): \n{results}")
         return solutionObject
 
     solutions = [solutionStateToSolution(solutionState) for solutionState in data["Solutions"]]

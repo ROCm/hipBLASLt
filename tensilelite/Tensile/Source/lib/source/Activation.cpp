@@ -57,6 +57,8 @@ namespace Tensile
             return "Silu";
         case ActivationType::All:
             return "All";
+        case ActivationType::Hipblaslt_all:
+            return "Hipblaslt_all";
         case ActivationType::None:
             return "None";
         default:
@@ -120,6 +122,10 @@ namespace Tensile
         else if(strValue == ToString(ActivationType::All))
         {
             t = ActivationType::All;
+        }
+        else if(strValue == ToString(ActivationType::Hipblaslt_all))
+        {
+            t = ActivationType::Hipblaslt_all;
         }
         else if(strValue == ToString(ActivationType::None))
         {

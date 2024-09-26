@@ -35,6 +35,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "Debug.hpp"
+
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
 
@@ -128,21 +130,23 @@ extern "C" {
 hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle)
 try
 {
-    // TODO: Synchronizer size pass into predicate SynchronizerSizeCheck
-    // 1K just for small size now, need to cal corner case if support all situations
-    void* d_Synchronizer = nullptr;
-    CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 40960 * sizeof(int)));
-    CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 40960));
+    rocblaslt::Debug::Instance().markerStart("hipblasLtCreate");
 
     // Check if handle is valid
     if(handle == nullptr)
     {
+        rocblaslt::Debug::Instance().markerStop();
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
 
     int             deviceId;
     hipError_t      err;
     hipblasStatus_t retval = HIPBLAS_STATUS_SUCCESS;
+    // TODO: Synchronizer size pass into predicate SynchronizerSizeCheck
+    // 1K just for small size now, need to cal corner case if support all situations
+    void* d_Synchronizer = nullptr;
+    CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 40960 * sizeof(int)));
+    CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 40960));
 
     err = hipGetDevice(&deviceId);
     if(err == hipSuccess)
@@ -150,6 +154,7 @@ try
         retval = RocBlasLtStatusToHIPStatus(rocblaslt_create((rocblaslt_handle*)handle));
         (*(rocblaslt_handle*)handle)->Synchronizer = d_Synchronizer;
     }
+    rocblaslt::Debug::Instance().markerStop();
     return retval;
 }
 catch(...)
@@ -160,12 +165,15 @@ catch(...)
 hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle)
 try
 {
+    rocblaslt::Debug::Instance().markerStart("hipblasLtDestroy");
     if(handle != nullptr and (*(rocblaslt_handle)handle).Synchronizer != nullptr)
     {
         CHECK_HIP_ERROR(hipFree((*(rocblaslt_handle)handle).Synchronizer));
     }
 
-    return RocBlasLtStatusToHIPStatus(rocblaslt_destroy((const rocblaslt_handle)handle));
+    auto status = RocBlasLtStatusToHIPStatus(rocblaslt_destroy((const rocblaslt_handle)handle));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -179,8 +187,11 @@ hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matDescr,
                                             int64_t                  ld)
 try
 {
-    return RocBlasLtStatusToHIPStatus(rocblaslt_matrix_layout_create(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatrixLayoutCreate");
+    auto status = RocBlasLtStatusToHIPStatus(rocblaslt_matrix_layout_create(
         (rocblaslt_matrix_layout*)matDescr, valueType, rows, cols, ld));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -190,8 +201,11 @@ catch(...)
 hipblasStatus_t hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t descr)
 try
 {
-    return RocBlasLtStatusToHIPStatus(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatrixLayoutDestroy");
+    auto status = RocBlasLtStatusToHIPStatus(
         rocblaslt_matrix_layout_destory((const rocblaslt_matrix_layout)descr));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -203,8 +217,11 @@ hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
                                           hipDataType            scaleType)
 try
 {
-    return RocBlasLtStatusToHIPStatus(rocblaslt_matmul_desc_create(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulDescCreate");
+    auto status = RocBlasLtStatusToHIPStatus(rocblaslt_matmul_desc_create(
         (rocblaslt_matmul_desc*)matmulDesc, (rocblaslt_compute_type)computeType, scaleType));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -217,11 +234,14 @@ hipblasStatus_t hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t       
                                                   size_t                           sizeInBytes)
 try
 {
-    return RocBlasLtStatusToHIPStatus(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatrixLayoutSetAttribute");
+    auto status = RocBlasLtStatusToHIPStatus(
         rocblaslt_matrix_layout_set_attribute((rocblaslt_matrix_layout)matLayout,
                                               (rocblaslt_matrix_layout_attribute)attr,
                                               buf,
                                               sizeInBytes));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -235,12 +255,15 @@ hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t       
                                                   size_t*                          sizeWritten)
 try
 {
-    return RocBlasLtStatusToHIPStatus(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatrixLayoutGetAttribute");
+    auto status = RocBlasLtStatusToHIPStatus(
         rocblaslt_matrix_layout_get_attribute((rocblaslt_matrix_layout)matLayout,
                                               (rocblaslt_matrix_layout_attribute)attr,
                                               buf,
                                               sizeInBytes,
                                               sizeWritten));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -250,8 +273,11 @@ catch(...)
 hipblasStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t descr)
 try
 {
-    return RocBlasLtStatusToHIPStatus(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulDescDestroy");
+    auto status = RocBlasLtStatusToHIPStatus(
         rocblaslt_matmul_desc_destroy((const rocblaslt_matmul_desc)descr));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -264,11 +290,14 @@ hipblasStatus_t hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t           
                                                 size_t                          sizeInBytes)
 try
 {
-    return RocBlasLtStatusToHIPStatus(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulDescSetAttribute");
+    auto status = RocBlasLtStatusToHIPStatus(
         rocblaslt_matmul_desc_set_attribute((rocblaslt_matmul_desc)matmulDesc,
                                             (rocblaslt_matmul_desc_attributes)matmulAttr,
                                             buf,
                                             sizeInBytes));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -281,12 +310,15 @@ hipblasStatus_t hipblasLtMatmulDescGetAttribute(hipblasLtMatmulDesc_t           
                                                 size_t*                         sizeWritten)
 try
 {
-    return RocBlasLtStatusToHIPStatus(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulDescGetAttribute");
+    auto status = RocBlasLtStatusToHIPStatus(
         rocblaslt_matmul_desc_get_attribute((rocblaslt_matmul_desc)matmulDesc,
                                             (rocblaslt_matmul_desc_attributes)matmulAttr,
                                             buf,
                                             sizeInBytes,
                                             sizeWritten));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -296,8 +328,11 @@ catch(...)
 hipblasStatus_t hipblasLtMatmulPreferenceCreate(hipblasLtMatmulPreference_t* pref)
 try
 {
-    return RocBlasLtStatusToHIPStatus(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulPreferenceCreate");
+    auto status = RocBlasLtStatusToHIPStatus(
         rocblaslt_matmul_preference_create((rocblaslt_matmul_preference*)pref));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -306,8 +341,11 @@ catch(...)
 hipblasStatus_t hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference_t pref)
 try
 {
-    return RocBlasLtStatusToHIPStatus(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulPreferenceDestroy");
+    auto status = RocBlasLtStatusToHIPStatus(
         rocblaslt_matmul_preference_destroy((const rocblaslt_matmul_preference)pref));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -321,11 +359,14 @@ hipblasStatus_t
                                           size_t                                dataSize)
 try
 {
-    return RocBlasLtStatusToHIPStatus(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulPreferenceSetAttribute");
+    auto status = RocBlasLtStatusToHIPStatus(
         rocblaslt_matmul_preference_set_attribute((rocblaslt_matmul_preference)pref,
                                                   (rocblaslt_matmul_preference_attributes)attribute,
                                                   data,
                                                   dataSize));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -340,12 +381,15 @@ hipblasStatus_t
                                           size_t*                               sizeWritten)
 try
 {
-    return RocBlasLtStatusToHIPStatus(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulPreferenceGetAttribute");
+    auto status = RocBlasLtStatusToHIPStatus(
         rocblaslt_matmul_preference_get_attribute((rocblaslt_matmul_preference)pref,
                                                   (rocblaslt_matmul_preference_attributes)attribute,
                                                   data,
                                                   sizeInBytes,
                                                   sizeWritten));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -365,7 +409,8 @@ hipblasStatus_t
                                     int*                             returnAlgoCount)
 try
 {
-    return RocBlasLtStatusToHIPStatus(rocblaslt_matmul_algo_get_heuristic(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulAlgoGetHeuristic");
+    auto status = RocBlasLtStatusToHIPStatus(rocblaslt_matmul_algo_get_heuristic(
         (rocblaslt_handle)handle,
         (rocblaslt_matmul_desc)matmulDesc,
         (rocblaslt_matrix_layout)Adesc,
@@ -376,6 +421,8 @@ try
         requestedAlgoCount,
         (rocblaslt_matmul_heuristic_result*)heuristicResultsArray,
         returnAlgoCount));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 catch(...)
 {
@@ -400,6 +447,7 @@ hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
                                 hipStream_t                  stream)
 try
 {
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatmul");
     hipblasStatus_t return_status = HIPBLAS_STATUS_SUCCESS;
 
     return_status = RocBlasLtStatusToHIPStatus(rocblaslt_matmul((rocblaslt_handle)handle,
@@ -418,7 +466,7 @@ try
                                                                 workspace,
                                                                 workspaceSizeInBytes,
                                                                 stream));
-
+    rocblaslt::Debug::Instance().markerStop();
     return return_status;
 }
 catch(...)
@@ -429,6 +477,7 @@ catch(...)
 hipblasStatus_t hipblasLtMatrixTransformDescCreate(hipblasLtMatrixTransformDesc_t* transformDesc,
                                                    hipDataType                     scaleType)
 {
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatrixTransformDescCreate");
     static_assert(sizeof(rocblaslt_matrix_transform_desc)
                       <= sizeof(hipblasLtMatrixTransformDescOpaque_t),
                   "hipblasLtMatrixTransformDescOpaque_t must have enough space");
@@ -436,13 +485,16 @@ hipblasStatus_t hipblasLtMatrixTransformDescCreate(hipblasLtMatrixTransformDesc_
     desc.scaleType = scaleType;
     *transformDesc = new hipblasLtMatrixTransformDescOpaque_t;
     memcpy((*transformDesc)->data, &desc, sizeof(desc));
+    rocblaslt::Debug::Instance().markerStop();
     return HIPBLAS_STATUS_SUCCESS;
 }
 
 hipblasStatus_t hipblasLtMatrixTransformDescDestroy(hipblasLtMatrixTransformDesc_t transformDesc)
 {
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatrixTransformDescDestroy");
     if(transformDesc)
         delete transformDesc;
+    rocblaslt::Debug::Instance().markerStop();
     return HIPBLAS_STATUS_SUCCESS;
 }
 
@@ -452,8 +504,10 @@ hipblasStatus_t
                                              const void*                              buf,
                                              size_t                                   sizeInBytes)
 {
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatrixTransformDescSetAttribute");
     if(!buf || sizeInBytes != sizeof(int32_t))
     {
+        rocblaslt::Debug::Instance().markerStop();
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
 
@@ -488,9 +542,11 @@ hipblasStatus_t
     }
     default:
         assert(false && "Unknown attribute");
+        rocblaslt::Debug::Instance().markerStop();
         return HIPBLAS_STATUS_INVALID_VALUE;
         break;
     }
+    rocblaslt::Debug::Instance().markerStop();
     return HIPBLAS_STATUS_SUCCESS;
 }
 
@@ -501,18 +557,22 @@ hipblasStatus_t
                                              size_t                                   sizeInBytes,
                                              size_t*                                  sizeWritten)
 {
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatrixTransformDescGetAttribute");
     if(!sizeInBytes && !sizeWritten)
     {
+        rocblaslt::Debug::Instance().markerStop();
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
 
     if(sizeInBytes && !sizeWritten)
     {
+        rocblaslt::Debug::Instance().markerStop();
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
 
     if(sizeInBytes != sizeof(int32_t))
     {
+        rocblaslt::Debug::Instance().markerStop();
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
 
@@ -543,6 +603,7 @@ hipblasStatus_t
         break;
     }
     default:
+        rocblaslt::Debug::Instance().markerStop();
         return HIPBLAS_STATUS_INVALID_VALUE;
         assert(false && "Unknown attribute");
         break;
@@ -550,6 +611,7 @@ hipblasStatus_t
 
     memcpy(buf, &value, sizeInBytes);
     *sizeWritten = sizeof(int32_t);
+    rocblaslt::Debug::Instance().markerStop();
     return HIPBLAS_STATUS_SUCCESS;
 }
 
@@ -565,7 +627,8 @@ hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t              lightHan
                                          hipblasLtMatrixLayout_t Cdesc,
                                          hipStream_t             stream)
 {
-    return RocBlasLtStatusToHIPStatus(rocblaslt_matrix_transform(
+    rocblaslt::Debug::Instance().markerStart("hipblasLtMatrixTransform");
+    auto status = RocBlasLtStatusToHIPStatus(rocblaslt_matrix_transform(
         (rocblaslt_handle)lightHandle,
         reinterpret_cast<rocblaslt_matrix_transform_desc*>(&transformDesc->data[0]),
         alpha,
@@ -577,6 +640,8 @@ hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t              lightHan
         C,
         (rocblaslt_matrix_layout)Cdesc,
         stream));
+    rocblaslt::Debug::Instance().markerStop();
+    return status;
 }
 
 // Other Utilities

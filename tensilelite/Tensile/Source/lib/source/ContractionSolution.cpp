@@ -794,7 +794,7 @@ namespace Tensile
         if constexpr(insertKernelArgs)
             if(!internalArgsSupport.useUniversalArgs)
                 kernelArgs<T_Debug, true>(
-                    0, (uint32_t)KERNELARGTYPE::NORMAL, args, 0, problem.getParams());
+                    0, (uint32_t)KERNELARGTYPE::NORMAL, args, 0, hardware, problem.getParams());
 
         if(!problemType.useScaleAB.empty()) //kernel input data
         {
@@ -896,7 +896,8 @@ namespace Tensile
                     }
                 }
             }
-            if(problemType.activationType == ActivationType::All)
+            if(problemType.activationType == ActivationType::All
+               || problemType.activationType == ActivationType::Hipblaslt_all)
             {
                 args.template append<uint32_t>(
                     "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
@@ -957,6 +958,7 @@ namespace Tensile
                                          uint32_t                            argType,
                                          KA&                                 args,
                                          uint32_t                            numWorkGroups,
+                                         Hardware const*                     hardware,
                                          const ContractionProblemParameters& param) const
     {
         if constexpr(!Legacy)
@@ -967,14 +969,17 @@ namespace Tensile
             args.template append<uint32_t>("gemm_count", gemmCount);
         }
 
-        uint32_t gsu      = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
-        bool     gsuc     = false; // initialized false
-        bool     gsuwgmrr = false; // initialized false
-        int32_t  wgm      = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
+        uint32_t       gsu          = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
+        bool           gsuc         = false; // initialized false
+        bool           gsuwgmrr     = false; // initialized false
+        int32_t        wgm          = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
+        uint32_t       wgmxcc       = 1;
+        int32_t        wgmxccg      = -1;
         const uint32_t mask16       = 0xFFFF;
         const uint32_t mask14       = 0x3FFF;
         const uint32_t mask8        = 0xFF;
         uint32_t       internalArg0 = 0;
+        uint32_t       internalArg1 = 0;
 
         if(internalArgsSupport.wgm && internalArgsSupport.version == 0)
         {
@@ -986,13 +991,35 @@ namespace Tensile
             internalArg0      = internalArg0 | wgShift8;
         }
 
+        if(internalArgsSupport.wgm && internalArgsSupport.version >= 1)
+        {
+            if(internalArgsSupport.version == 1)
+            {
+                internalArg1 = wgm;
+            }
+            else if(internalArgsSupport.version == 2)
+            {
+                wgmxcc = param.wgmxcc() > 0 ? param.wgmxcc() : sizeMapping.workGroupMappingXCC;
+                wgmxccg
+                    = param.wgmxccg() != 0 ? param.wgmxccg() : sizeMapping.workGroupMappingXCCGroup;
+                if(wgmxcc > 1 && wgmxccg == -1)
+                {
+                    AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(hardware);
+                    assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
+                    wgmxccg = pAMDGPU->computeUnitCount;
+                }
+                internalArg1 = internalArg1 | (wgmxccg << 22) | (wgmxcc << 16) | (mask16 & wgm);
+            }
+        }
+
         // support gsuc and gsuwgmrr after version 2
         if(internalArgsSupport.version >= 2)
         {
             gsuc     = param.gsuc() > 0 ? param.gsuc() : sizeMapping.globalSplitUCoalesced;
-            gsuwgmrr = param.gsuwgmrr() > 0 ? param.gsuwgmrr() : sizeMapping.globalSplitUWorkGroupMappingRoundRobin;
+            gsuwgmrr = param.gsuwgmrr() > 0 ? param.gsuwgmrr()
+                                            : sizeMapping.globalSplitUWorkGroupMappingRoundRobin;
         }
-        
+
         internalArg0
             = internalArg0 | ((uint32_t)gsuc << 15) | ((uint32_t)gsuwgmrr << 14) | (mask14 & gsu);
 
@@ -1012,12 +1039,7 @@ namespace Tensile
 
         if(internalArgsSupport.version >= 1)
         {
-            int32_t internalArg1 = 0;
-            if(internalArgsSupport.wgm)
-            {
-                args.template append<int32_t>("internalArgs1", wgm);
-            }
-
+            args.template append<int32_t>("internalArgs1", internalArg1);
             args.template append<uint32_t>("numWorkGroups", numWorkGroups);
         }
     }
@@ -1029,6 +1051,8 @@ namespace Tensile
                                                 Hardware const&                     hardware) const
     {
         KernelInvocation rv;
+
+        rv.isSingleCall = true;
 
         rv.args = KernelArguments(T_Debug);
 
@@ -1131,7 +1155,7 @@ namespace Tensile
 
         if(internalArgsSupport.useUniversalArgs)
         {
-            kernelArgs<T_Debug, false>(1, 0, rv.args, getNumWorkGroups(rv), problem.getParams());
+            kernelArgs<T_Debug, false>(1, 0, rv.args, getNumWorkGroups(rv), &hardware, problem.getParams());
         }
         singleCallArgs<T_Debug, true>(problem, inputs, 0, &hardware, rv.args);
 
@@ -1297,6 +1321,8 @@ namespace Tensile
         void const*                                      userArgs) const
     {
         KernelInvocation rv;
+        rv.isSingleCall = true;
+
         if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
         {
             rv.kernelName = kernelName;
@@ -1353,6 +1379,7 @@ namespace Tensile
                                            (uint32_t)argType,
                                            rv.args,
                                            getNumWorkGroups(rv),
+                                           &hardware,
                                            problems[0].getParams());
                 // For user input
                 if(argType == KERNELARGTYPE::USERARGS)
@@ -1374,7 +1401,7 @@ namespace Tensile
                                          rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y
                                              / rv.workGroupSize.z);
                 kernelArgs<T_Debug, true>(
-                    0, (uint32_t)KERNELARGTYPE::NORMAL, rv.args, 0, problems[0].getParams());
+                    0, (uint32_t)KERNELARGTYPE::NORMAL, rv.args, 0, &hardware, problems[0].getParams());
             }
 
             rv.args.append<void const*>("Synchronizer", (void*)inputs.grouped[0].Synchronizer);
@@ -1691,7 +1718,8 @@ namespace Tensile
                     }
                 }
             }
-            if(problemType.activationType == ActivationType::All)
+            if(problemType.activationType == ActivationType::All
+               || problemType.activationType == ActivationType::Hipblaslt_all)
             {
                 args.template append<uint32_t>(
                     "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
@@ -2091,7 +2119,13 @@ namespace Tensile
         if(problemType.activationType != ActivationType::None)
         {
             if(problemType.activationType == ActivationType::All)
-                name += "_A";
+	    {
+		name += "_A";
+	    }
+	    else if(problemType.activationType == ActivationType::Hipblaslt_all)
+	    {
+                name += "_HA";
+	    }
             else
             {
                 std::string actName = ToString(problemType.activationType);
@@ -2185,7 +2219,8 @@ namespace Tensile
 
         if(problemType.activationType != ActivationType::None)
         {
-            if(problemType.activationType == ActivationType::All)
+            if(problemType.activationType == ActivationType::All
+               || problemType.activationType == ActivationType::Hipblaslt_all)
             {
                 rv.args.append<uint32_t>(
                     "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
@@ -2243,7 +2278,13 @@ namespace Tensile
         if(problemType.activationType != ActivationType::None)
         {
             if(problemType.activationType == ActivationType::All)
-                name += "_A";
+	    {
+		name += "_A";
+	    }
+            else if(problemType.activationType == ActivationType::Hipblaslt_all)
+	    {
+                name += "_HA";
+	    }
             else
             {
                 std::string actName = ToString(problemType.activationType);

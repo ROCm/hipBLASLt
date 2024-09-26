@@ -723,7 +723,8 @@ hipblasStatus_t hipblasLtMatmulPreferenceGetAttribute(hipblasLtMatmulPreference_
  *  This function retrieves the possible algorithms for the matrix multiply
  * operation hipblasLtMatmul() function with the given input matrices A, B and
  * C, and the output matrix D. The output is placed in heuristicResultsArray[]
- * in the order of increasing estimated compute time.
+ * in the order of increasing estimated compute time. Note that the wall duration
+ * increases if the requestedAlgoCount increases.
  *
  *  @param[in]
  *  handle                  Pointer to the allocated hipBLASLt handle for the

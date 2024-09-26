@@ -215,8 +215,7 @@ void initData(hipDataType type, void* data, int m, int n, int lda, int stride, i
 #ifdef ROCM_USE_FLOAT8
     case hipDataType::HIP_R_8F_E4M3:
     {
-        hipblaslt_init_cos<hipblaslt_f8_ocp>(
-            (hipblaslt_f8_ocp*)data, m, n, lda, stride, batch_count);
+        hipblaslt_init_cos<hipblaslt_f8>((hipblaslt_f8*)data, m, n, lda, stride, batch_count);
     }
     break;
 #endif

@@ -264,7 +264,7 @@ private:
         m_isMultiXCDSupported = true;
 #endif
 
-        m_thread = std::thread([=, this]() { this->runLoop(); });
+        m_thread = std::thread([this]() { this->runLoop(); });
         return;
     }
 
@@ -274,7 +274,7 @@ private:
         {
             std::unique_lock<std::mutex> lock(m_mutex);
 
-            m_task   = std::move(Task([=, this]() { this->collect(); }));
+            m_task   = std::move(Task([this]() { this->collect(); }));
             m_future = m_task.get_future();
 
             m_stop = false;

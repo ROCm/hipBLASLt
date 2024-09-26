@@ -1335,6 +1335,12 @@ class SCmpGtU32(CommonInstruction):
         super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
         self.setInst("s_cmp_gt_u32")
 
+# S bitcmp
+class SBitcmp1B32(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_B32, None, [src0, src1], None, None, comment)
+        self.setInst("s_bitcmp1_b32")
+
 # S Cmp K
 # SCC = (S0.u == SIMM16)
 class _SCmpKEQU32(CommonInstruction):
@@ -1547,6 +1553,11 @@ class SMovkI32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__(InstType.INST_I32, dst, [src], None, None, comment)
         self.setInst("s_movk_i32")
+
+class SSExtI16toI32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, [src], None, None, comment)
+        self.setInst("s_sext_i32_i16")
 
 # S exec
 class SAndSaveExecB32(CommonInstruction):

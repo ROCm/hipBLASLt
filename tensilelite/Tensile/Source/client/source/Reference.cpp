@@ -374,8 +374,9 @@ namespace Tensile
             // Only cast to float in BFloat16
             constexpr bool needCast = std::is_same<BFloat16, T>();
             using castT             = std::conditional_t<needCast, float, T>;
-            auto new_type
-                = activationType == ActivationType::All ? activationType2 : activationType;
+            const auto isForAll = activationType == ActivationType::All
+                                  || activationType == ActivationType::Hipblaslt_all;
+            auto new_type = isForAll ? activationType2 : activationType;
             if(new_type == ActivationType::Abs)
             {
                 return static_cast<T>(std::max(static_cast<castT>(val), -static_cast<castT>(val)));
@@ -464,8 +465,9 @@ namespace Tensile
                        ActivationType activationType2,
                        std::vector<T> args)
         {
-            auto new_type
-                = activationType == ActivationType::All ? activationType2 : activationType;
+            const auto isForAll = activationType == ActivationType::All ||
+                                  activationType == ActivationType::Hipblaslt_all;
+            auto new_type = isForAll ? activationType2 : activationType;
             if(new_type == ActivationType::Abs)
             {
                 return static_cast<T>(std::abs(val));

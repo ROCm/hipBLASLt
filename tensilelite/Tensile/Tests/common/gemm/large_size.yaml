@@ -30,6 +30,7 @@ BenchmarkProblems:
       UseBias: 1
       Batched: True
       Activation: True
+      ActivationType: hipblaslt_all
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:

@@ -24,6 +24,7 @@ import ctypes
 import math
 import struct
 from collections import OrderedDict
+from enum import IntFlag
 
 from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterContainer, \
                           VCC, EXEC, vgpr, sgpr, Holder, fastdeepcopy, DataType, SNop, \
@@ -123,6 +124,12 @@ class ActivationType:
         GRADONLY = 1
         BOTH = 2
 
+    # Use bit mask to maintain the supported information.
+    class SupportedBy(IntFlag):
+        HIPBLASLT = 0b01
+        TENSILE = 0b10
+        ALL = 0b11
+
     stringList = ['alpha', 'beta', 'gamma', 'delta' ]
     # Exp is only for verification. So we will not return exp in the supported list.
                                                                              # Half,Single,Double,BFloat16,  Int8, Int16, Int32
@@ -130,19 +137,45 @@ class ActivationType:
 
     # Note: The BFloat16 gemm uses Single type activations. The int8 gemm uses int32 type activations.
                                                                                  # Half,Single,Double,BFloat16,  Int8, Int16, Int32
-    lookup = OrderedDict([('none',        ActivationTypeRegister('none', False, 0,        True,  True,  True,    True,  True,  True,  True)), \
-                          ('abs',         ActivationTypeRegister('abs', False, 0,         True,  True,  True,    True, False, False,  True)), \
-                          ('clippedrelu', ActivationTypeRegister('clippedrelu', False, 2, True,  True,  True,   False, False, False,  True)), \
-                          ('gelu',        ActivationTypeRegister('gelu', False, 0,        True,  True, False,   False, False, False, False)), \
-                          ('leakyrelu',   ActivationTypeRegister('leakyrelu', False, 1,   True,  True,  True,   False, False, False,  True)), \
-                          ('relu',        ActivationTypeRegister('relu', False, 0,        True,  True,  True,   False, False, False,  True)), \
-                          ('sigmoid',     ActivationTypeRegister('sigmoid', False, 0,     True,  True, False,   False, False, False, False)), \
-                          ('tanh',        ActivationTypeRegister('tanh', False, 2,        True,  True, False,   False, False, False, False)), \
-                          ('dgelu',       ActivationTypeRegister('dgelu', True, 0,       False,  True, False,   False, False, False, False)), \
-                          ('geluscaling', ActivationTypeRegister('geluscaling', False, 1, True,  True, False,   False, False, False, False)), \
-                          ('silu',        ActivationTypeRegister('silu', False, 0,        True,  True, False,   False, False, False, False)), \
-                          ('all',         ActivationTypeRegister('all', False, 0)) ])
-
+    lookup = OrderedDict([('none', { \
+                            'instance': ActivationTypeRegister('none', False, 0,        True,  True,  True,    True,  True,  True,  True), \
+                            'supported_by': SupportedBy.TENSILE | SupportedBy.HIPBLASLT}), \
+                          ('abs', { \
+                            'instance': ActivationTypeRegister('abs', False, 0,         True,  True,  True,    True, False, False,  True), \
+                            'supported_by': SupportedBy.TENSILE}), \
+                          ('clippedrelu', { \
+                            'instance': ActivationTypeRegister('clippedrelu', False, 2, True,  True,  True,   False, False, False,  True), \
+                            'supported_by': SupportedBy.TENSILE}), \
+                          ('gelu', { \
+                            'instance': ActivationTypeRegister('gelu', False, 0,        True,  True, False,   False, False, False, False), \
+                            'supported_by': SupportedBy.TENSILE | SupportedBy.HIPBLASLT}), \
+                          ('leakyrelu', { \
+                            'instance': ActivationTypeRegister('leakyrelu', False, 1,   True,  True,  True,   False, False, False,  True), \
+                            'supported_by': SupportedBy.TENSILE}), \
+                          ('relu', { \
+                            'instance': ActivationTypeRegister('relu', False, 0,        True,  True,  True,   False, False, False,  True), \
+                            'supported_by': SupportedBy.TENSILE | SupportedBy.HIPBLASLT}), \
+                          ('sigmoid', { \
+                            'instance': ActivationTypeRegister('sigmoid', False, 0,     True,  True, False,   False, False, False, False), \
+                            'supported_by': SupportedBy.TENSILE}), \
+                          ('tanh', {  \
+                            'instance': ActivationTypeRegister('tanh', False, 2,        True,  True, False,   False, False, False, False), \
+                            'supported_by': SupportedBy.TENSILE}), \
+                          ('dgelu', { \
+                            'instance': ActivationTypeRegister('dgelu', True, 0,       False,  True, False,   False, False, False, False), \
+                            'supported_by': SupportedBy.TENSILE | SupportedBy.HIPBLASLT}), \
+                          ('geluscaling', { \
+                            'instance': ActivationTypeRegister('geluscaling', False, 1, True,  True, False,   False, False, False, False), \
+                            'supported_by': SupportedBy.TENSILE}), \
+                          ('silu', { \
+                            'instance': ActivationTypeRegister('silu', False, 0,        True,  True, False,   False, False, False, False), \
+                            'supported_by': SupportedBy.TENSILE}), \
+                          ('hipblaslt_all', { \
+                            'instance': ActivationTypeRegister('hipblaslt_all', False, 0), \
+                            'supported_by': SupportedBy.HIPBLASLT}), \
+                          ('all', { \
+                            'instance': ActivationTypeRegister('all', False, 0), \
+                            'supported_by': SupportedBy.TENSILE | SupportedBy.HIPBLASLT}) ])
     def __init__(self, value):
         if isinstance(value, str):
             strValue = value.lower()
@@ -166,16 +199,22 @@ class ActivationType:
             return False
 
     def getAdditionalArgNum(self, exportType: Export=Export.NORMAL):
-        if self.value == 'all':
+        if self.value in ['all', 'hipblaslt_all']:
             maxArgNum = 0
-            for _, activationInst in self.lookup.items():
+            for _, value in self.lookup.items():
+                activationInst = value['instance']
                 if self.passActivation(activationInst.isGradient, exportType):
                     continue
                 maxArgNum = max(maxArgNum, activationInst.extraArgs)
             return maxArgNum
         elif self.value in self.lookup:
-            return self.lookup[self.value].extraArgs
+            return self.lookup[self.value]['instance'].extraArgs
         return 0
+    # Check if the given components are supported by the configuration using a bit mask.
+    # This function performs a bitwise AND operation between the config and components
+    # to determine if the specified components are included in the configuration.
+    def fitSupported(self, config: SupportedBy, components: SupportedBy):
+        return (config & components)
     def getAdditionalArgStringList(self, addPrefix=True):
         list = []
         for i in range(0, self.getAdditionalArgNum()):
@@ -188,13 +227,15 @@ class ActivationType:
     def getEnumIndex(cls, enumStr):
         return list(cls.lookup.keys()).index(enumStr)
     @classmethod
-    def getEnumStrList(cls, dataType, includeNone = True, exportType: Export=Export.NORMAL):
+    def getEnumStrList(cls, dataType, configSupported, includeNone = True, exportType: Export=Export.NORMAL):
         enumList = []
-        for key, activationInst in cls.lookup.items():
+        for key, value in cls.lookup.items():
+            activationInst = value['instance']
+            components = value['supported_by']
             if cls.passActivation(cls, activationInst.isGradient, exportType):
                 continue
-            if (((key != 'none') or includeNone) and (key != 'all')):
-                if activationInst.typeAvailable(dataType):
+            if (((key != 'none') or includeNone) and (key not in ['all', 'hipblaslt_all'])):
+                if (activationInst.typeAvailable(dataType)) and (cls.fitSupported(cls, configSupported, components)) :
                     enumList.append(key)
         if not enumList:
             printWarning("No available activation for this data type %s.\n"%str(dataType))
@@ -327,7 +368,12 @@ class ActivationModule:
 
     def getAllGprUsage(self, cDataType, actType, exportType: ActivationType.Export=ActivationType.Export.NORMAL) -> dict:
         usage = {}
-        enumList = ActivationType.getEnumStrList(cDataType, exportType=exportType) if actType == 'all' else [str(actType)]
+        if actType == 'all':
+            enumList = ActivationType.getEnumStrList(cDataType, configSupported=ActivationType.SupportedBy.ALL, exportType=exportType)
+        elif actType == 'hipblaslt_all':
+            enumList = ActivationType.getEnumStrList(cDataType, configSupported=ActivationType.SupportedBy.HIPBLASLT, exportType=exportType)
+        else:
+            enumList = [str(actType)]
         for enumStr in enumList:
             _ = self.getModule(cDataType, enumStr, 0, 1) # dummy vgpr
             usage[enumStr] = {"vgpr": self.vgprCounter, "sgpr": self.sgprCounter}

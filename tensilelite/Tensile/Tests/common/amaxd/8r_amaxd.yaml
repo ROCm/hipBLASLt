@@ -43,6 +43,7 @@ BenchmarkProblems:
       UseScaleCD: True # scale is available only for fp8 type
       UseScaleAlphaVec: 1
       Activation: True # must be true if there is any of bias scale
+      ActivationType: all
       BiasDataTypeList: ['h'] #
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -113,6 +114,7 @@ BenchmarkProblems:
       UseScaleCD: True # scale is available only for fp8 type
       UseScaleAlphaVec: 1
       Activation: True # must be true if there is any of bias scale
+      ActivationType: all
       BiasDataTypeList: ['h'] #
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -182,6 +184,7 @@ BenchmarkProblems:
       UseScaleCD: True # scale is available only for fp8 type
       UseScaleAlphaVec: 1
       Activation: True # must be true if there is any of bias scale
+      ActivationType: all
       BiasDataTypeList: ['h'] #
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -252,6 +255,7 @@ BenchmarkProblems:
       UseScaleCD: True # scale is available only for fp8 type
       UseScaleAlphaVec: 1
       Activation: True # must be true if there is any of bias scale
+      ActivationType: all
       BiasDataTypeList: ['h'] #
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:

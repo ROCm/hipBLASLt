@@ -145,6 +145,10 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--lazy-library-loading")
   endif()
 
+  if(Tensile_ENABLE_MARKER)
+    set(Options ${Options} "--enable-marker")
+  endif()
+
   if(Tensile_KEEP_BUILD_TMP)
     set(Options ${Options} "--keep-build-tmp")
   endif()
@@ -193,6 +197,10 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--asm-debug")
   endif()
 
+  if(Tensile_LOGIC_FILTER)
+    set(Options ${Options} "--logic-filter=${Tensile_LOGIC_FILTER}")
+  endif()
+
   if(Tensile_LIBRARY_FORMAT)
     set(Options ${Options} "--library-format=${Tensile_LIBRARY_FORMAT}")
     if(Tensile_LIBRARY_FORMAT MATCHES "yaml")
@@ -210,11 +218,7 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--build-id=${Tensile_BUILD_ID}")
   endif()
 
-  if (WIN32)
-    set(CommandLine ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
-  else()
-    set(CommandLine ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
-  endif()
+  set(CommandLine ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
   message(STATUS "Tensile_CREATE_COMMAND: ${CommandLine}")
 
   if(Tensile_EMBED_LIBRARY)

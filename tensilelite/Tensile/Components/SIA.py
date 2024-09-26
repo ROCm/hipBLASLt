@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -165,6 +165,15 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
     latencyLeft = writer.states.miLatencyLeft
     miLatencyLeft = writer.states.miLatencyLeft
     tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
+
+    # we can skip some LR waitcnt
+    isLocalReadsOpt = False
+    tmpLatencyLeft  = 0
+    tmpNumMfmaForLR = 0
+    localReadsNotWaited = writer.states.numReadsPerIterB//kernel["InnerUnroll"] - writer.states.numReadsPerUnrollB
+    if kernel["UnrollMajorLDSB"] and localReadsNotWaited > 0:
+        isLocalReadsOpt = True
+
     for iui in range(kernel["InnerUnroll"]):
         # ds_read[A][0]
         for i in range(writer.states.numReadsPerUnrollA):
@@ -198,6 +207,9 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
                 if latencyLeft < 0:
                     writer.states.numMfmaForLR += 1
                     latencyLeft = max(miLatencyLeft - tPM["localReadInstruction"].issueLatency*2,0)
+        if isLocalReadsOpt:
+            tmpLatencyLeft = latencyLeft
+            tmpNumMfmaForLR = writer.states.numMfmaForLR
         # ds_read[B][1:]
         for i in range(writer.states.numReadsPerIterB//kernel["InnerUnroll"] - writer.states.numReadsPerUnrollB):
             latencyLeft -= tensorParametersB["localReadInstruction"].issueLatency*2
@@ -208,7 +220,11 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
     # latency: 40 quad-cycle for 4 word, 20 quad-cycle for 2 word, 10 quad-cycle for 1 word / half word
     writer.states.numMfmaForNextLoopLR = writer.states.numMfmaForLR
     latencyForLR = roundUp(tensorParametersB["localReadInstruction"].blockWidth)*10
-    latencyForLR -= max(latencyLeft,0) # remaining latency in mfma
+    if isLocalReadsOpt:
+        latencyForLR = min(latencyForLR, (writer.states.numMfmaForLR - tmpNumMfmaForLR) * writer.states.miLatency)
+        latencyForLR -= max(tmpLatencyLeft,0) # remaining latency in mfma
+    else:
+        latencyForLR -= max(latencyLeft,0) # remaining latency in mfma
     latencyForLR -= writer.states.miLatency # last LR will have 1 mfma latency
     while latencyForLR > 0:
         latencyForLR -= writer.states.miLatency
@@ -618,15 +634,13 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched):
     #################
     itemsLWToSched = list(writer.codes.localWriteA.items()) + list(writer.codes.localWriteB.items())
     if kernel["PrefetchGlobalRead"] == 2:
-        # PrefetchGlobalRead + DirectToLds case, need to add dummy list to insert global read
+        # PrefetchGlobalRead + DirectToLds/DirectToVgpr case, need to add dummy list to insert global read
         tmpList = []
-        numItemsBeforeStoreC = 0
         numDummy = 0
-        if kernel["DirectToLdsA"]:
-            numDummy += max(len(list(writer.codes.globalReadA.middle.items())) - numItemsBeforeStoreC, 0)
-        if kernel["DirectToLdsB"]:
-            numReadB = len(list(writer.codes.globalReadB.middle.items()))
-            numDummy += max(numReadB - numItemsBeforeStoreC, 0)
+        if kernel["DirectToLdsA"] or kernel["DirectToVgprA"]:
+            numDummy += len(list(writer.codes.globalReadA.middle.items()))
+        if kernel["DirectToLdsB"] or kernel["DirectToVgprB"]:
+            numDummy += len(list(writer.codes.globalReadB.middle.items()))
         for i in range(numDummy):
             tmpList.append(Module())
         # add dummy at the top of the list
@@ -706,7 +720,6 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
             writesPerItem = item.countType(LocalWriteInstruction)
             if kernel["ProblemType"]["Sparse"] and not writesPerItem:
                 writesPerItem = item.name.startswith("MetadataWrite") and item.countType(VMovB32)
-            readsToWaitAdjustForStoreC = 0
             if writesPerItem:
                 imod.addComment0("sched write - iter %u writesPerItem=%u"%(u,writesPerItem))
                 imodNGLL.addComment0("sched write - iter %u writesPerItem=%u"%(u,writesPerItem))
@@ -717,23 +730,16 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
                 readsToWait = readsToWait - 1
                 readsToWaitNGLL = readsToWaitNGLL - 1
                 imod.add(SWaitCnt(lgkmcnt=-1, \
-                    vmcnt=min(maxVmcnt, readsToWait + readsToWaitAdjustForStoreC), vscnt=-1, \
+                    vmcnt=min(maxVmcnt, readsToWait), vscnt=-1, \
                     comment="wait for global read before writing to local"))
                 imodNGLL.add(SWaitCnt(lgkmcnt=-1, \
-                    vmcnt=min(maxVmcnt, readsToWaitNGLL + readsToWaitAdjustForStoreC), vscnt=-1, \
+                    vmcnt=min(maxVmcnt, readsToWaitNGLL), vscnt=-1, \
                     comment="wait for global read before writing to local"))
             # PK and StoreCUnroll is removed so you cannot find any HolderContainer in s_waitcnt
             if kernel["PrefetchGlobalRead"]==2:
                 hasHolder, wcList = hasHolderInWaitCnt(item)
                 if hasHolder:
                     readsToWaitAdjust = readsToWait
-                    if kernel["PrefetchGlobalRead"]==2:
-                    # PGR=2 special cases
-                        if (not kernel["ProblemType"]["UseBeta"]):
-                        # no Load C case
-                            if not firstIter:
-                            # PGR=2 and not firstIter case, HolderContainer includes num of storeC from previous Iter
-                                readsToWaitAdjust += readsToWaitAdjustForStoreC
                     if kernel["NoLdsWriteCode"] and kernel["PrefetchGlobalRead"]!=2:
                         # DirectToLds for both A and B case, use  the number of global read for both A and B as vmcnt (only for PGR=1)
                         readsToWaitAdjust = len(list(writer.codes.globalReadA.middle.items())) + len(list(writer.codes.globalReadB.middle.items()))
