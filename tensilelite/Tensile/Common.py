@@ -829,7 +829,7 @@ validParameters = {
     # Formula for wgSerial:
     # wgSerial = wg0 + (wg1 % WorkGroupMapping) * nwg0
     "WorkGroupMapping":           list(range(-1024, 1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
-    "WorkGroupMappingXCC":        list(range(1, 64)),  # change a workgroup's id so that contiguous workgroup can map on same XCC
+    "WorkGroupMappingXCC":        [1,2,4,8,16,32],  # change a workgroup's id so that contiguous workgroup can map on same XCC
     # -1 : WorkGroupMappingXCCGroup will be set to CU_count at runtime. Please ensure that (CU_count % WGMXCC == 0).
     "WorkGroupMappingXCCGroup":   list(range(-1, 1024)),  # change a workgroup's id so that contiguous workgroup can map on same XCC, remap workgroup in a group of WGMXCCG.
 
