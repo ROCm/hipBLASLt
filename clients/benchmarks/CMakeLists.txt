@@ -81,8 +81,11 @@ if (NOT WIN32)
     target_link_libraries( hipblaslt-bench PRIVATE lapack cblas )
   endif()
   list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
-  if (NOT BUILD_FORTRAN_CLIENTS)
-    list( APPEND COMMON_LINK_LIBS "-lgfortran -lflang -lflangrti") # for lapack
+
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    list( APPEND COMMON_LINK_LIBS "-lgfortran") # for lapack
+  else()
+    list( APPEND COMMON_LINK_LIBS "-lflang -lflangrti") # for lapack
   endif()
 else()
   list( APPEND COMMON_LINK_LIBS "libomp")
