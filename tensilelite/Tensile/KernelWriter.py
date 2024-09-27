@@ -943,6 +943,40 @@ class KernelWriter(metaclass=abc.ABCMeta):
               vacancy["latencyLeft"] = 0
       numReadsInst = len(localReadItemsThisLoop) if iteration < isBarrier else len(localReadItemsNextLoop)
 
+      # Add space to avoid LR FIFO stall
+      # lrStallLatencyBuffer:
+      # 40 quad-cycle - 4 x miLatency for b128
+      # 20 quad-cycle - 4 x miLatency for b64 (equal to one miLatency)
+      # 10 quad-cycle - 4 x miLatency for b32 (no stall)
+      # so no stall happen for b64/b32/b16
+      localReadThisLoopFIFO = []
+      localReadNextLoopFIFO = []
+      def checkLocalReadFIFOFull(currentMFMA, fifo, lrItems, numLR, numLREven):
+        if numLREven >= 1.0:
+          return max(ceil(numLREven), numLR)
+        numToBeIssued = 0
+        for n in range(numLR):
+          if len(lrItems) <= n:
+            break
+          item = lrItems[n]
+          if not isinstance(item, DSLoadB128):
+            numToBeIssued += 1
+            continue
+          # The FIFO length is 16 so that each wave has 16/numWaves buffer.
+          numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1] * kernel["LocalSplitU"]
+          lrStallLatencyBuffer = 40 - ((16 / numWaves) * self.states.miLatency)
+          if len(fifo) < (16 / numWaves):
+            fifo.append(currentMFMA)
+          else:
+            oldMFMA = fifo[0]
+            if (currentMFMA - oldMFMA) * self.states.miLatency >= lrStallLatencyBuffer:
+              fifo.pop(0)
+              fifo.append(currentMFMA)
+            else:
+              break
+          numToBeIssued += 1
+        return numToBeIssued
+      
       for i in range(numMfmaPerIter):
         mfmaIndex = iteration * numMfmaPerIter + i
         insertInst = iterCode.countType(Instruction)
@@ -951,8 +985,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         ####
         # scheduled local read
         ####
-        readLeft = numReadsInst
-        latencyLeft = self.states.miLatencyLeft
+        numReadsInst = len(localReadItemsThisLoop)
+        readLeft     = numReadsInst
+        latencyLeft  = self.states.miLatencyLeft
         # with PrefetchLocalRead, localreads can interleave with mfma
         if self.states.numItersPLR and iteration < isBarrier:
           # take ds_write into account to schedule ds_read, assume A and B localwrite have same width (TLDS=1)
@@ -967,22 +1002,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
           # at least 1 instruction
           readLeftLROPT = max(readLeftLROPT,1)
           # evenly schedule localread with each mfma
-          readLeftLREven = numReadsInst // numMfmaPerIter
-          if (numReadsInst % (numMfmaPerIter)) > i:
-            readLeftLREven += 1
+          readLeftLREven = numReadsInst / (numMfmaPerIter - i)
           # we want no localreads at first mfma
           if (iteration == 0) and numMfmaPerIter != 1:
-            numMfmaForLR = numMfmaPerIter - 1
-            if i < numMfmaPerIter - numMfmaForLR:
+            if i == 0:
               readLeftLREven = 0
               readLeftLROPT = 0
             # rest mfma help to schedule those localReads
             else:
-              readLeftLREven = numReadsInst // (numMfmaPerIter-1)
-              if (numReadsInst % (numMfmaPerIter-1)) >= i:
-                readLeftLREven += 1
+              readLeftLREven = numReadsInst / (numMfmaPerIter - i)
           # if there are too many localreads, change strategy to even.
-          readLeft = max(readLeftLREven,readLeftLROPT)
+          readLeft = checkLocalReadFIFOFull(mfmaIndex, localReadThisLoopFIFO, localReadItemsThisLoop, readLeftLROPT, readLeftLREven)
         if not self.states.numItersPLR and iteration < isBarrier:
           for j in range(len(localReadItemsThisLoop)):
             latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
@@ -1117,6 +1147,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         # localReads for next loop should after barrier
         ####
         latencyLeft = self.states.miLatencyLeft
+        numReadsInst = len(localReadItemsNextLoop)
         if self.states.numItersPLR and iteration >= isBarrier:
           readLeftLROPT = 0
           for j in range(len(localReadItemsNextLoop)):
@@ -1124,10 +1155,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             readLeftLROPT += 1 if latencyLeft >= 0 else 0
           # at least 1 instruction
           readLeftLROPT = max(readLeftLROPT,1)
-          # evenly schedule localread with each mfma
-          readLeftLREven = numReadsInst // numMfmaPerIter
-          if (numReadsInst % (numMfmaPerIter)) > i:
-            readLeftLREven += 1
+          readLeftLREven = numReadsInst / (numMfmaPerIter - i)
           # we want no localreads at barrier mfma
           if (iteration == isBarrier) and numMfmaPerIter != 1:
             numMfmaForLR = self.states.numMfmaForNextLoopLR
@@ -1136,11 +1164,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
               readLeftLROPT = 0
             # rest mfma help to schedule those localReads
             else:
-              readLeftLREven = numReadsInst // (numMfmaPerIter-1)
-              if (numReadsInst % (numMfmaPerIter-1)) >= i:
-                readLeftLREven += 1
+              readLeftLREven = numReadsInst / (numMfmaPerIter - i)
           # if there are too many localreads, change strategy to even.
-          readLeft = max(readLeftLREven,readLeftLROPT)
+          readLeft = checkLocalReadFIFOFull(mfmaIndex, localReadNextLoopFIFO, localReadItemsNextLoop, readLeftLROPT, readLeftLREven)
         for j in range(readLeft):
           if localReadItemsNextLoop:
             item = localReadItemsNextLoop.pop(0)
