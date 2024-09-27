@@ -142,6 +142,29 @@ class SIA1(SIA):
 ################################################################################
 ################################################################################
 
+def checkLocalReadFIFO(localReadFIFO, miLatency, numWaves, currentMFMA, blockWidth):
+    # Add space to avoid LR FIFO stall
+    # lrStallLatencyBuffer:
+    # 40 quad-cycle - 4 x miLatency for b128
+    # 20 quad-cycle - 4 x miLatency for b64 (equal to one miLatency)
+    # 10 quad-cycle - 4 x miLatency for b32 (no stall)
+    # so no stall happen for b64/b32/b16
+    if blockWidth < 4:
+        return False
+    # The FIFO length is 16 so that each wave has 16/numWaves buffer.
+    lrStallLatencyBuffer = roundUp(blockWidth) * 10 - ((16 / numWaves) * miLatency)
+    if len(localReadFIFO) < (16 / numWaves):
+        localReadFIFO.append(currentMFMA)
+    else:
+        oldMFMA = localReadFIFO[0]
+        if (currentMFMA - oldMFMA) * miLatency > lrStallLatencyBuffer:
+            localReadFIFO.pop(0)
+            localReadFIFO.append(currentMFMA)
+        else:
+            # FIFO is full
+            return True
+    return False
+
 def getScheduleParams(kernel):
     numGlobalReadInsPerIter = roundUp(kernel["GlobalReadPerMfma"] * PRECISION) if kernel["GlobalReadPerMfma"] > 0 else PRECISION
     numLocalWriteModPerIter = roundUp(kernel["LocalWritePerMfma"] * PRECISION) if kernel["LocalWritePerMfma"] > 0 else PRECISION
@@ -170,13 +193,19 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
     isLocalReadsOpt = False
     tmpLatencyLeft  = 0
     tmpNumMfmaForLR = 0
-    localReadsNotWaited = writer.states.numReadsPerIterB//kernel["InnerUnroll"] - writer.states.numReadsPerUnrollB
+    localReadsNotWaited = writer.states.numReadsPerIterB // kernel["InnerUnroll"] - writer.states.numReadsPerUnrollB
     if kernel["UnrollMajorLDSB"] and localReadsNotWaited > 0:
         isLocalReadsOpt = True
+
+    # check instruction FIFO
+    localReadFIFO = []
+    numWaves      = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1] * kernel["LocalSplitU"]
 
     for iui in range(kernel["InnerUnroll"]):
         # ds_read[A][0]
         for i in range(writer.states.numReadsPerUnrollA):
+            while(checkLocalReadFIFO(localReadFIFO, writer.states.miLatency, numWaves, writer.states.numMfmaForLR, tensorParametersA["localReadInstruction"].blockWidth)):
+                writer.states.numMfmaForLR += 1
             latencyLeft -= tensorParametersA["localReadInstruction"].issueLatency*2
             if latencyLeft < 0:
                 writer.states.numMfmaForLR += 1
@@ -190,12 +219,16 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
                     latencyLeft = max(miLatencyLeft - tPM["localReadInstruction"].issueLatency*2,0)
         # ds_read[B][0]
         for i in range(writer.states.numReadsPerUnrollB):
+            while(checkLocalReadFIFO(localReadFIFO, writer.states.miLatency, numWaves,writer.states.numMfmaForLR, tensorParametersB["localReadInstruction"].blockWidth)):
+                writer.states.numMfmaForLR += 1
             latencyLeft -= tensorParametersB["localReadInstruction"].issueLatency*2
             if latencyLeft < 0:
                 writer.states.numMfmaForLR += 1
                 latencyLeft = max(miLatencyLeft - tensorParametersB["localReadInstruction"].issueLatency*2,0)
         # ds_read[A][1:]
         for i in range(writer.states.numReadsPerIterA//kernel["InnerUnroll"] - writer.states.numReadsPerUnrollA):
+            while(checkLocalReadFIFO(localReadFIFO, writer.states.miLatency, numWaves, writer.states.numMfmaForLR, tensorParametersA["localReadInstruction"].blockWidth)):
+                writer.states.numMfmaForLR += 1
             latencyLeft -= tensorParametersA["localReadInstruction"].issueLatency*2
             if latencyLeft < 0:
                 writer.states.numMfmaForLR += 1
@@ -212,6 +245,8 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
             tmpNumMfmaForLR = writer.states.numMfmaForLR
         # ds_read[B][1:]
         for i in range(writer.states.numReadsPerIterB//kernel["InnerUnroll"] - writer.states.numReadsPerUnrollB):
+            while(checkLocalReadFIFO(localReadFIFO, writer.states.miLatency, numWaves, writer.states.numMfmaForLR, tensorParametersB["localReadInstruction"].blockWidth)):
+                writer.states.numMfmaForLR += 1
             latencyLeft -= tensorParametersB["localReadInstruction"].issueLatency*2
             if latencyLeft < 0:
                 writer.states.numMfmaForLR += 1
@@ -255,6 +290,9 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
         numMfmaToSched = roundUp(numGRIncInst/numInstPerMfma)
         lwStartMfmaIndex = 1 + numMfmaToSched
     else:
+        # check instruction FIFO
+        localReadFIFO = []
+        numWaves      = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1] * kernel["LocalSplitU"]
         # for 1LDSB, we have to issue localwrites after localreads
         if kernel["ClusterLocalRead"]:
             # we have enough vgprBuffer to schedule localReads in the front of loop
@@ -268,6 +306,8 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
                 for iui in range(kernel["InnerUnroll"]):
                     # ds_read[A][0]
                     for i in range(writer.states.numReadsPerUnrollA * doReadA):
+                        while(checkLocalReadFIFO(localReadFIFO, writer.states.miLatency, numWaves, numMfmaForCurrentLoopLR, tensorParametersA["localReadInstruction"].blockWidth)):
+                            numMfmaForCurrentLoopLR += 1
                         latencyLeft -= tensorParametersA["localReadInstruction"].issueLatency*2
                         if latencyLeft < 0:
                             numMfmaForCurrentLoopLR += 1
@@ -280,12 +320,16 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
                             latencyLeft = max(writer.states.miLatencyLeft - tPM["localReadInstruction"].issueLatency*2,0)
                     # ds_read[B][0]
                     for i in range(writer.states.numReadsPerUnrollB * doReadB):
+                        while(checkLocalReadFIFO(localReadFIFO, writer.states.miLatency, numWaves, numMfmaForCurrentLoopLR, tensorParametersB["localReadInstruction"].blockWidth)):
+                            numMfmaForCurrentLoopLR += 1
                         latencyLeft -= tensorParametersB["localReadInstruction"].issueLatency*2
                         if latencyLeft < 0:
                             numMfmaForCurrentLoopLR += 1
                             latencyLeft = max(writer.states.miLatencyLeft - tensorParametersB["localReadInstruction"].issueLatency*2,0)
                     # ds_read[A][1:]
                     for i in range((writer.states.numReadsPerIterA//kernel["InnerUnroll"]  - writer.states.numReadsPerUnrollA) * doReadA):
+                        while(checkLocalReadFIFO(localReadFIFO, writer.states.miLatency, numWaves, numMfmaForCurrentLoopLR, tensorParametersA["localReadInstruction"].blockWidth)):
+                            numMfmaForCurrentLoopLR += 1
                         latencyLeft -= tensorParametersA["localReadInstruction"].issueLatency*2
                         if latencyLeft < 0:
                             numMfmaForCurrentLoopLR += 1
@@ -298,6 +342,8 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
                             latencyLeft = max(writer.states.miLatencyLeft - tPM["localReadInstruction"].issueLatency*2,0)
                     # ds_read[B][1:]
                     for i in range((writer.states.numReadsPerIterB//kernel["InnerUnroll"]  - writer.states.numReadsPerUnrollB) * doReadB):
+                        while(checkLocalReadFIFO(localReadFIFO, writer.states.miLatency, numWaves, numMfmaForCurrentLoopLR, tensorParametersB["localReadInstruction"].blockWidth)):
+                            numMfmaForCurrentLoopLR += 1
                         latencyLeft -= tensorParametersB["localReadInstruction"].issueLatency*2
                         if latencyLeft < 0:
                             numMfmaForCurrentLoopLR += 1
