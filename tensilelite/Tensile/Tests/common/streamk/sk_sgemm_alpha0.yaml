@@ -6,7 +6,7 @@ GlobalParameters:
   BoundsCheck: False
   KernelTime: False
   DataInitTypeAlpha: 0
-  DataInitTypeBeta: 1
+  DataInitTypeBeta: 2
   DataInitTypeA: 12
   DataInitTypeB: 13
   DataInitTypeC: 12
