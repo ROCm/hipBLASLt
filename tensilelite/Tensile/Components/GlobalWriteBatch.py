@@ -994,17 +994,16 @@ class GlobalWriteBatchWriter:
       if self.loadE:
         vmcnt = 0
         commentList.append("E")
-      if (self.kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-        vmcnt = 0
-        commentList.append("ScaleABVec")
-      if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-        vmcnt = 0
-        commentList.append("ScaleAlphaVec")
-        # print("ScaleAlphaVec vmcnt")
       # Local read wait
       if self.parentWriter.states.useBias == DataDirection.READ:
         lgkmcnt = 0
         commentList.append("Bias LDS")
+      if (self.kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+        lgkmcnt = 0
+        commentList.append("ScaleABVec")
+      if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+        lgkmcnt = 0
+        commentList.append("ScaleAlphaVec")
       if (vmcnt != -1) or (lgkmcnt != -1):
         # Get comment
         comment = "wait for " + commentList[0]
