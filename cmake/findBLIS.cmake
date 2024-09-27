@@ -47,6 +47,11 @@ else()
     set(BLIS_INCLUDE_DIR ${BLIS_ROOT}/include/blis)
 endif()
 
+set(BLIS_FOUND TRUE)
+set(BLIS_INCLUDE_DIR ${BLIS_INCLUDE_DIR})
+set(BLIS_LIB ${BLIS_LIB})
+message("BLIS heeader directory found: ${BLIS_INCLUDE_DIR}")
+message("BLIS lib found: ${BLIS_LIB}")
 
 set(BLIS_FOUND TRUE)
 set(BLIS_INCLUDE_DIR ${BLIS_INCLUDE_DIR})
