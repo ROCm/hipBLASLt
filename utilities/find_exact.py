@@ -71,7 +71,7 @@ defaultBenchOptions = {"ProblemType": {
     "RequestedSolutions": 2, # Only works in AlgoMethod heuristic
     "SolutionIndex": None, # Only works in AlgoMethod index
     "ApiMethod": "cpp",
-    "RotatingBuffer": 0,
+    "RotatingBuffer": 512,
 }, "TuningParameters": {
     "SplitK": [0]
 }, "ProblemSizes": []}
