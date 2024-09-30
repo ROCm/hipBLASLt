@@ -52,7 +52,7 @@ Follow these steps to run the tuning:
 2. Ensure the ``MatchTable.yaml`` file exists in ``build/release/library``.
 3. Run the command ``python3 find_exact.py <your yaml file> <hipblaslt_root_folder>/build/release <output folder>``
 
-You should see the following message appears, in this case is NN FP32 tuning:
+You should see the following message appear. The following example is for NN FP32 tuning:
 
 .. code-block:: bash
 
