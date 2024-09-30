@@ -2603,7 +2603,7 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     size_t WGMXCCG = (value[1] == -1) ? cuCount : value[1];
-                    return WGMXCCG % value[0] == 0;
+                    return ((value[0] & (value[0] - 1)) == 0) && WGMXCCG % value[0] == 0;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,

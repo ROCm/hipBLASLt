@@ -1548,6 +1548,18 @@ class SCMovB64(CommonInstruction):
         super().__init__(InstType.INST_B64, dst, [src], None, None, comment)
         self.setInst("s_cmov_b64")
 
+# Find first bit
+class SFf1B32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
+        self.setInst("s_ff1_i32_b32")
+
+# Bit field mask
+class SBfmB32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_bfm_b32")
+
 # Sign ext
 class SMovkI32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
