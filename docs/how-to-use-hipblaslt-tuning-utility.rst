@@ -48,9 +48,9 @@ The ``find_exact.py`` file is found in the ``utilities`` directory.
 
 Follow these steps to run the tuning:
 
-1. Run ``./install.sh`` first. See :ref:`installation`.
-2. Make sure the ``MatchTable.yaml`` in ``build/release/library`` exists.
-3. execute ``python3 find_exact.py <your yaml file> <hipblaslt_root_folder>/build/release <output folder>``
+1. Run ``./install.sh`` first. See :ref:`installation` for more details.
+2. Ensure the ``MatchTable.yaml`` file exists in ``build/release/library``.
+3. Run the command ``python3 find_exact.py <your yaml file> <hipblaslt_root_folder>/build/release <output folder>``
 
 You should see the following message appears, in this case is NN FP32 tuning:
 
