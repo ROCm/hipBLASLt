@@ -41,7 +41,7 @@ The file ``template.yaml`` is under ``utilities``.
     - [128, 128, 128]  # M, N, K
     CreateLogic: {}  # Fixed
 
-Run the tuning utility
+Running the tuning utility
 =================================
 
 The ``find_exact.py`` file is found in the ``utilities`` directory.
