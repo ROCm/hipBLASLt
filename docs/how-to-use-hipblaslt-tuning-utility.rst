@@ -73,4 +73,4 @@ The final structure of the output folder is as follows:
 
 .. image:: images/hipblaslt-tuning-folder-structure.png
 
-Folder ``0_Bench`` stores the raw benchmark results. Folder ``1_LogicYaml`` stores the output tuned Equality logic yaml.
+The ``0_Bench`` folder stores the raw benchmark results. The ``1_LogicYaml`` folder stores the output, which is a tuned Equality logic yaml file.
