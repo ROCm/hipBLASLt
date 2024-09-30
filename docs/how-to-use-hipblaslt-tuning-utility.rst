@@ -44,7 +44,7 @@ The file ``template.yaml`` is under ``utilities``.
 Run the tuning utility
 =================================
 
-The file ``find_exact.py`` is under ``utilities``.
+The ``find_exact.py`` file is found in the ``utilities`` directory.
 
 Steps to run the tuning:
 
