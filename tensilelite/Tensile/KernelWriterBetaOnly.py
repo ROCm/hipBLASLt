@@ -248,7 +248,7 @@ class KernelWriterBetaOnly(KernelWriterBase):
       id_str = "id0"
       if self.state["ProblemType"]["UseBias"] == 3:
         id_str = "idb"
-        kStr += "  %s idb = ( arg.factorDim == 0 ? (%s)id0 : id1);%s" % (self.uint64Str, self.uint64Str, self.endLine)
+        kStr += "  %s idb = ( factorDim == 0 ? (%s)id0 : id1);%s" % (self.uint64Str, self.uint64Str, self.endLine)
       elif self.state["ProblemType"]["UseBias"] == 2:
         id_str = "id1"
       if problemType["NumIndicesC"] > 2:
