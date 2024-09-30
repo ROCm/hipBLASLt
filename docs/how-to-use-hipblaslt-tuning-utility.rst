@@ -69,7 +69,7 @@ After the tuning completes, the following message will appear:
      --Found file <output folder>/0_Bench/result_NN_SSS_88x12x664.txt
     Writing logic yaml files: 100%|███████| 1/1 [00:05<00:00,  5.69s/it]
 
-The final folder structure of the output folder is:
+The final structure of the output folder is as follows:
 
 .. image:: images/hipblaslt-tuning-folder-structure.png
 
