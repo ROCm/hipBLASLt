@@ -10,7 +10,7 @@ Using the hipBLASLt Tuning Utility
 
 hipBLASLt has a simple utility that uses the existing kernel pools and searches for the best solution for a given problem size.
 
-The template.yaml
+The template.yaml file
 =================================
 
 The ``template.yaml`` file can be found in the ``utilities`` directory.
