@@ -5,7 +5,7 @@
 .. _how-to-use-hipblaslt-tuning-utility:
 
 ********************************
-hipBLASLt Tuning Utility
+Using the hipBLASLt Tuning Utility
 ********************************
 
 hipBLASLt has a simple utility that uses the existing kernel pools and searches for the best solution for a given problem size.
