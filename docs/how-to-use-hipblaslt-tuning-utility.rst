@@ -46,7 +46,7 @@ Run the tuning utility
 
 The ``find_exact.py`` file is found in the ``utilities`` directory.
 
-Steps to run the tuning:
+Follow these steps to run the tuning:
 
 1. Run ``./install.sh`` first. See :ref:`installation`.
 2. Make sure the ``MatchTable.yaml`` in ``build/release/library`` exists.
