@@ -21,34 +21,30 @@
 #
 # ########################################################################
 
-file(GLOB BLIS_AOCL_LIB_1 /opt/AMD/aocl/aocl-linux-gcc-*/gcc/lib_ILP64/libblis-mt.a)  # Possible location 1
-file(GLOB BLIS_AOCL_LIB_2 /opt/AMD/aocl/aocl-linux-aocc-*/aocc/lib_ILP64/libblis-mt.a)  # Possible location 2
-file(GLOB BLIS_LOCAL_LIB /usr/local/lib/libblis.a)  # Possible location 3
-file(GLOB BLIS_DEPS_LIB ${CMAKE_SOURCE_DIR}/build/deps/blis/lib/libblis.a)  # wget location
-
-set(BLIS_LIBS ${BLIS_AOCL_LIB_1} ${BLIS_AOCL_LIB_2} ${BLIS_DEPS_LIB} ${BLIS_LOCAL_LIB})
-
-# Remove empty strings
-foreach(item IN LISTS BLIS_LIBS)
-    if(NOT item STREQUAL "")
-        list(APPEND BLIS_LIBS_NON_EMPTY_LIST "${item}")
-    endif()
-endforeach()
-
-list (GET BLIS_LIBS_NON_EMPTY_LIST 0 BLIS_LIB)
-if("${BLIS_LIB}" STREQUAL "NOTFOUND")
-    message(FATAL_ERROR "BLIS lib not found.")
-endif()
-
-get_filename_component(BLIS_ROOT "${BLIS_LIB}/../.." ABSOLUTE)
-if(BLIS_ROOT MATCHES "aocl-linux-")
-    set(BLIS_INCLUDE_DIR ${BLIS_ROOT}/include_ILP64/)
+if(EXISTS          "/opt/AMD/aocl/aocl-linux-gcc-4.2.0/gcc/lib_ILP64/libblis-mt.a" )
+    set( BLIS_LIB /opt/AMD/aocl/aocl-linux-gcc-4.2.0/gcc/lib_ILP64/libblis-mt.a )
+    set( BLIS_INCLUDE_DIR /opt/AMD/aocl/aocl-linux-gcc-4.2.0/gcc/include_ILP64/ )
+elseif(EXISTS      "/opt/AMD/aocl/aocl-linux-aocc-4.1.0/aocc/lib_ILP64/libblis-mt.a" )
+    set( BLIS_LIB /opt/AMD/aocl/aocl-linux-aocc-4.1.0/aocc/lib_ILP64/libblis-mt.a )
+    set( BLIS_INCLUDE_DIR /opt/AMD/aocl/aocl-linux-aocc-4.1.0/aocc/include_ILP64/ )
+elseif(EXISTS      "/opt/AMD/aocl/aocl-linux-aocc-4.0/lib_ILP64/libblis-mt.a" )
+    set( BLIS_LIB /opt/AMD/aocl/aocl-linux-aocc-4.0/lib_ILP64/libblis-mt.a )
+    set( BLIS_INCLUDE_DIR /opt/AMD/aocl/aocl-linux-aocc-4.0/include_ILP64/ )
+elseif(EXISTS      "${BUILD_DIR}/deps/amd-blis/lib/ILP64/libblis-mt.a") # 4.0 and 4.1.0
+    set( BLIS_LIB ${BUILD_DIR}/deps/amd-blis/lib/ILP64/libblis-mt.a )
+    set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/amd-blis/include/ILP64 )
+elseif(EXISTS      "${BUILD_DIR}/deps/blis/lib/libblis.a")
+    set( BLIS_LIB ${BUILD_DIR}/deps/blis/lib/libblis.a )
+    set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/blis/include/blis )
+elseif(EXISTS      "/usr/local/lib/libblis.a")
+    set( BLIS_LIB /usr/local/lib/libblis.a )
+    set( BLIS_INCLUDE_DIR /usr/local/include/blis )
 else()
-    set(BLIS_INCLUDE_DIR ${BLIS_ROOT}/include/blis)
+    message(FATAL_ERROR "BLIS lib not found.")
 endif()
 
 set(BLIS_FOUND TRUE)
 set(BLIS_INCLUDE_DIR ${BLIS_INCLUDE_DIR})
 set(BLIS_LIB ${BLIS_LIB})
-message("BLIS heeader directory found: ${BLIS_INCLUDE_DIR}")
+message("BLIS header directory found: ${BLIS_INCLUDE_DIR}")
 message("BLIS lib found: ${BLIS_LIB}")
