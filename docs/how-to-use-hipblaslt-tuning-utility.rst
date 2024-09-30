@@ -13,7 +13,7 @@ hipBLASLt has a simple utility that uses the existing kernel pools and searches 
 The template.yaml
 =================================
 
-The file ``template.yaml`` is under ``utilities``.
+The ``template.yaml`` file can be found in the ``utilities`` directory.
 
 .. code-block:: yaml
 
