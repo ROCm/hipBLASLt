@@ -12,7 +12,7 @@ subtrees:
     - file: ext-reference
     - file: ext-ops
     - file: logging-heuristics
-  - caption: Utilities
+  - caption: How To
     entries:
     - file: how-to-use-hipblaslt-tuning-utility
   - caption: Contribution
