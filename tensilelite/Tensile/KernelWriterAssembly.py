@@ -1891,6 +1891,7 @@ class KernelWriterAssembly(KernelWriter):
         # Conditional set summation dimensions to 0 on SCC==1
         for i in range(0, self.states.numSgprSizesSum):
           module.add(SMovB32(dst=sgpr("SizesSum+%u"%(i)), src=hex(0), comment="Set summation dim=0 if Alpha == 0"))
+        # Short circuit for stream-k is handled in the stream-k component by skipping partial tiles and setting loop counter to 0
 
         # Jump here if alpha is non-zero
         module.add(endCheckLabel)
