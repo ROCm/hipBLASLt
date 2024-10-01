@@ -4,7 +4,7 @@ root: index
 subtrees:
   - caption: Install
     entries:
-    - file: installation    
+    - file: installation
   - caption: API reference
     entries:
     - file: datatypes
@@ -12,6 +12,9 @@ subtrees:
     - file: ext-reference
     - file: ext-ops
     - file: logging-heuristics
+  - caption: How to
+    entries:
+    - file: how-to-use-hipblaslt-tuning-utility
   - caption: Contribution
     entries:
     - file: source-org
