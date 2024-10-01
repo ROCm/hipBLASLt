@@ -1353,6 +1353,10 @@ defaultProblemType = {
     # Activation
     "Activation":               False,
     "ActivationNoGuard":        False,
+    # ActivationType supports "none", "all" (10 activations) and "hipblaslt_all" (dgelu, gelu and relu).
+    # It is active only when the Activation configuration is set to True. Otherwise, ActivationType will be set to "none".
+    "ActivationType":           "none",
+
     # AmaxD
     "OutputAmaxD":              False,
     # For kernels putting arguments in workspaces instead of kernel arguments, they can choose to support user arguments input instead.
