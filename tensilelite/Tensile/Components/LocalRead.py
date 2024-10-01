@@ -55,7 +55,12 @@ class LocalReadVALU(LocalRead):
         offsetMultiplier  = 1 # instruction.offsetMultiplier
         valuIdx           = 0
         numVectorsPerTile = (kernel["ThreadTile%u"%tile01]//kernel["VectorWidthA"])
-        numReadsPerVector = (kernel["VectorWidthA"] * tP["bpe"]) // (blockWidth*4) # bytes/register
+        # huang
+        numReadsPerVector = (kernel["LocalReadVectorWidth"] * tP["bpe"]) // (blockWidth*4) # bytes/register
+        # numReadsPerVector = (kernel["VectorWidthA"] * tP["bpe"]) // (blockWidth*4) # bytes/register
+
+        print("local read:", tc, numVectorsPerTile, numReadsPerVector)
+        print(instruction)
 
         for vIdx in range(0, numVectorsPerTile):
             for rIdx in range(0, int(numReadsPerVector)):

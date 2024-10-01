@@ -3087,9 +3087,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       valuBlocksA = (1 + kernel["PrefetchLocalRead"]) * kernel["InnerUnroll"]
       valuBlocksB = (1 + kernel["PrefetchLocalRead"]) * kernel["InnerUnroll"]
 
-      # mark
-      self.states.a.numVgprValuPerBlock = kernel["ThreadTileA"] * tensorParametersA["bpe"] * 2 // self.states.bpr
-      self.states.b.numVgprValuPerBlock = kernel["ThreadTileB"] * tensorParametersB["bpe"] * 2 // self.states.bpr
+      # huang
+      self.states.a.numVgprValuPerBlock = kernel["ThreadTileA"] * tensorParametersA["bpe"] * kernel["NumDotElements"] // self.states.bpr
+      self.states.b.numVgprValuPerBlock = kernel["ThreadTileB"] * tensorParametersB["bpe"] * kernel["NumDotElements"] // self.states.bpr
 
       self.states.c.numVgprValu = kernel["ThreadTile0"] * kernel["ThreadTile1"] * kernel["ProblemType"]["ComputeDataType"].numRegisters()
       self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * valuBlocksA

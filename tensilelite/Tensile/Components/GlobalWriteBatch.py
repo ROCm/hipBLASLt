@@ -991,7 +991,7 @@ class GlobalWriteBatchWriter:
       if self.beta:
         vmcnt = 0
         commentList.append("Beta")
-      # mark
+      # huang
       if hasattr(self, 'loadE') and self.loadE:
         vmcnt = 0
         commentList.append("E")
@@ -1082,7 +1082,7 @@ class GlobalWriteBatchWriter:
         if self.beta:
           waitLoadCnt += self.betaLoadIssued[elementIdx]
           waitLoadCntStrList.append("%d (beta)"%self.betaLoadIssued[elementIdx])
-        # mark
+        # huang
         if hasattr(self, 'loadE') and self.loadE:
           waitLoadCnt += self.eLoadIssued[elementIdx]
           waitLoadCntStrList.append("%d (load E)"%self.eLoadIssued[elementIdx])

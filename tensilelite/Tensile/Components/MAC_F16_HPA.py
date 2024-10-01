@@ -25,7 +25,7 @@
 from ..TensileInstructions import DataType, Module, vgpr, SSetPrior, VFmaMixF32, VMadMixF32, VOP3PModifiers, VDot2F32F16, VDot2CF32F16
 from ..Component import Component, MAC
 
-# mark
+# huang
 class FMA_F16_HPA_DOT2(MAC):
     asmCaps = lambda caps: caps['v_dot2_f32_f16'] or caps['v_dot2c_f32_f16']
     #archCaps = {}

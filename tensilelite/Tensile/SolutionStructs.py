@@ -2282,7 +2282,7 @@ class Solution(collections.abc.Mapping):
         state["UnrollMajorLDSA"] = 1
         state["UnrollMajorLDSB"] = 1
     else: # mac instruction
-      # mark
+      # huang
       # state["TransposeLDS"] =  0
       # state["UnrollMajorLDSA"] = False
       # state["UnrollMajorLDSB"] = False
@@ -2530,7 +2530,7 @@ class Solution(collections.abc.Mapping):
           if (ldsNumBytesAlignedA + ldsNumBytesAlignedB) > globalParameters["MaxLDS"]:
             state["LocalReadVectorWidth"] //= 2
     else:
-      # mark
+      # huang
       # if state["LocalReadVectorWidth"] == -1:
       #   state["LocalReadVectorWidth"] = 1
       state["LocalReadVectorWidth"] = 2
@@ -2571,7 +2571,7 @@ class Solution(collections.abc.Mapping):
               state["GlobalReadVectorWidthA"] = int(curGRVW)
             curGRVW *= 2
     else:
-      # mark
+      # huang
       state["GlobalReadVectorWidthA"] = 8
       # state["GlobalReadVectorWidthA"] = 1
 
@@ -2593,7 +2593,7 @@ class Solution(collections.abc.Mapping):
               state["GlobalReadVectorWidthB"] = int(curGRVW)
             curGRVW *= 2
     else:
-      # mark
+      # huang
       # state["GlobalReadVectorWidthB"] = 8
       state["GlobalReadVectorWidthB"] = 1
 
@@ -2708,7 +2708,7 @@ class Solution(collections.abc.Mapping):
         if state["EnableMatrixInstruction"] and globalParameters["AsmCaps"][isa]['HasWMMA']:
           reject(state, "Half WMMA doesn't support single buffer GSU")
           return
-      # mark
+      # huang
       # if (not state["EnableMatrixInstruction"]) and (state["InnerUnroll"] != 2):
       #   state["InnerUnroll"] = 2
       #   print("Force InnerUnroll == 2 for non-MFMA mode")
@@ -3024,7 +3024,7 @@ class Solution(collections.abc.Mapping):
               state["LSPB"] % (state["LdsBlockSizePerPadB"] // (state["_DepthUB"] * state["ProblemType"]["DataType"].numBytes())) != 0:
             reject(state, "can't pad by addrVgpr or instOffset")
     else:
-      # mark
+      # huang
       # if state["UnrollMajorLDSA"] or state["UnrollMajorLDSB"]:
       #   reject(state, "didn't support UnrollMajorLDS in VALU mode yet")
       if state["LdsBlockSizePerPadA"] != 0 or state["LdsBlockSizePerPadB"] != 0:
@@ -3233,7 +3233,7 @@ class Solution(collections.abc.Mapping):
         state["LdsBlockSizePerPadB"] = 128
     assert(state["LdsPadB"] >= 0)
 
-    # mark
+    # huang
     # if (state["UnrollMajorLDSA"] or state["UnrollMajorLDSB"]) and (not state["EnableMatrixInstruction"]):
     #     reject(state, "UnrollMajorLDS Supports only in EnableMatrixInstruction=1")
 
@@ -3555,9 +3555,10 @@ class Solution(collections.abc.Mapping):
     state["LoopIters"] = state["LoopUnroll"]
     if state["EnableMatrixInstruction"]:
       state["LoopIters"] //= state["MatrixInstK"]
-    # mark
+    # huang
     else:
-      state["LoopIters"] //= 2
+      state["NumDotElements"] = 2
+      state["LoopIters"] //= state["NumDotElements"]
 
     if state["LoopIters"] < 1:
       reject(state, "LoopIters need to greater than 0")

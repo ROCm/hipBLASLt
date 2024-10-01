@@ -60,7 +60,7 @@ BenchmarkProblems:
         - ThreadTile: 
           - [2, 1]
         - WorkGroup: 
-          - [64, 1, 1]
+          - [16, 8, 1]
         - InnerUnroll: [1]
         - AssertFree0ElementMultiple: [16]
         - AssertFree1ElementMultiple: [1]
