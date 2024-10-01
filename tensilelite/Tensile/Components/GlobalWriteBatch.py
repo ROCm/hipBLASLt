@@ -991,7 +991,8 @@ class GlobalWriteBatchWriter:
       if self.beta:
         vmcnt = 0
         commentList.append("Beta")
-      if self.loadE:
+      # mark
+      if hasattr(self, 'loadE') and self.loadE:
         vmcnt = 0
         commentList.append("E")
       if (self.kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
@@ -1081,7 +1082,8 @@ class GlobalWriteBatchWriter:
         if self.beta:
           waitLoadCnt += self.betaLoadIssued[elementIdx]
           waitLoadCntStrList.append("%d (beta)"%self.betaLoadIssued[elementIdx])
-        if self.loadE:
+        # mark
+        if hasattr(self, 'loadE') and self.loadE:
           waitLoadCnt += self.eLoadIssued[elementIdx]
           waitLoadCntStrList.append("%d (load E)"%self.eLoadIssued[elementIdx])
         # Calculate local loads

@@ -1413,7 +1413,7 @@ class Solution(collections.abc.Mapping):
   #   state[LSPA]
   @staticmethod
   def setGlobalLoadTileDimClassic(state, tc, numLoads, totalVectorsCoalesced, totalElementsPerp, depthU):
-
+    print("GLVW: %d %d" % (state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"]))
     if state["WaveSeparateGlobalRead%s"%tc]:
       totalElementsPerp = roundupRatio(totalElementsPerp, state["NumThreads"] // state["WavefrontSize"])
 
@@ -2571,7 +2571,9 @@ class Solution(collections.abc.Mapping):
               state["GlobalReadVectorWidthA"] = int(curGRVW)
             curGRVW *= 2
     else:
-      state["GlobalReadVectorWidthA"] = 1
+      # mark
+      state["GlobalReadVectorWidthA"] = 8
+      # state["GlobalReadVectorWidthA"] = 1
 
     # Default GlobalReadVectorWidthB
     if state["EnableMatrixInstruction"]:
@@ -2591,6 +2593,8 @@ class Solution(collections.abc.Mapping):
               state["GlobalReadVectorWidthB"] = int(curGRVW)
             curGRVW *= 2
     else:
+      # mark
+      # state["GlobalReadVectorWidthB"] = 8
       state["GlobalReadVectorWidthB"] = 1
 
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
@@ -2705,11 +2709,11 @@ class Solution(collections.abc.Mapping):
           reject(state, "Half WMMA doesn't support single buffer GSU")
           return
       # mark
+      # if (not state["EnableMatrixInstruction"]) and (state["InnerUnroll"] != 2):
+      #   state["InnerUnroll"] = 2
+      #   print("Force InnerUnroll == 2 for non-MFMA mode")
       # if (not state["EnableMatrixInstruction"]) and (state["VectorWidthA"] < 2 or state["VectorWidthB"] < 2):
       #   reject(state, "Assembly half requires VectorWidth >= 2 for non-MFMA mode")
-      if (not state["EnableMatrixInstruction"]) and (state["InnerUnroll"] != 2):
-        state["InnerUnroll"] = 2
-        print("Force InnerUnroll == 2 for non-MFMA mode")
 
     ########################################
     # Search DepthU
@@ -3551,6 +3555,9 @@ class Solution(collections.abc.Mapping):
     state["LoopIters"] = state["LoopUnroll"]
     if state["EnableMatrixInstruction"]:
       state["LoopIters"] //= state["MatrixInstK"]
+    # mark
+    else:
+      state["LoopIters"] //= 2
 
     if state["LoopIters"] < 1:
       reject(state, "LoopIters need to greater than 0")

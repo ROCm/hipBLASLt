@@ -1078,7 +1078,7 @@ class KernelWriterAssembly(KernelWriter):
         else kernel["LoopIters"] - 1
       for m in range(0, 1+PLR):
           macro = Macro("MAC_%ux%u_X%u" % (kernel["ThreadTile0"], kernel["ThreadTile1"], m), "")
-          component = Component.MAC.find(self, debug = True)
+          component = Component.MAC.find(self)
           if not component:
             printExit("Assembly doesn't support datatype %s" % kernel["ProblemType"]["DataType"])
           innerModule = component(self, tPA, tPB, m, kernel["InnerUnroll"])
@@ -9555,12 +9555,10 @@ class KernelWriterAssembly(KernelWriter):
     # set atomicW after we potentially resize GWVW
     atomicW = min(gwvw, self.getVectorAtomicWidth(kernel))
 
-    # print("NumVgprAvailable", numVgprAvailable)
     if ss.numVgprsPerElement:
       numElementsPerBatch = numVgprAvailable // ss.numVgprsPerElement
     else:
       numElementsPerBatch = len(elements[edgeI]) # max, do 'em all
-
     assert(self.states.c.numVgprValu % gwvw == 0) # sanity check
 
     numElementsPerBatch = numElementsPerBatch if not kernel["NumElementsPerBatchStore"] else min(kernel["NumElementsPerBatchStore"],numElementsPerBatch)

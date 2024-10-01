@@ -45,6 +45,7 @@ class NotLocalFullTileElementsVALU(NotLocalFullTileElements):
             vectorwidth = kernel["VectorWidthA"] if kernel["_VectorStore"] else 1
             vectorwidth = min(vectorwidth, writer.maxGwvw(kernel))
 
+        # mark
         # Full tile loop:
         for tt1 in range(0, kernel["ThreadTile1"]//kernel["VectorWidthA"]):
             for vc1 in range(0, kernel["VectorWidthA"]):
@@ -52,6 +53,14 @@ class NotLocalFullTileElementsVALU(NotLocalFullTileElements):
                     for vc0 in range(0, kernel["VectorWidthA"], vectorwidth): # note step by fullVw
                         element = (tt1, tt0, vc1, vc0)
                         elements.append(element)
+        
+        # # Full tile loop:
+        # for tt1 in range(0, kernel["ThreadTile1"]//kernel["VectorWidthA"]):
+        #     for vc1 in range(0, kernel["VectorWidthA"]):
+        #         for tt0 in range(0, kernel["ThreadTile0"]//kernel["VectorWidthA"]):
+        #             for vc0 in range(0, kernel["VectorWidthA"], vectorwidth): # note step by fullVw
+        #                 element = (tt1, tt0, vc1, vc0)
+        #                 elements.append(element)
 
         return (vectorwidth, elements, vectorwidth, elements)
 

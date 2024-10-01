@@ -3087,12 +3087,24 @@ class KernelWriter(metaclass=abc.ABCMeta):
       valuBlocksA = (1 + kernel["PrefetchLocalRead"]) * kernel["InnerUnroll"]
       valuBlocksB = (1 + kernel["PrefetchLocalRead"]) * kernel["InnerUnroll"]
 
-      self.states.a.numVgprValuPerBlock = kernel["ThreadTileA"] * tensorParametersA["bpe"] // self.states.bpr
-      self.states.b.numVgprValuPerBlock = kernel["ThreadTileB"] * tensorParametersB["bpe"] // self.states.bpr
+      # mark
+      self.states.a.numVgprValuPerBlock = kernel["ThreadTileA"] * tensorParametersA["bpe"] * 2 // self.states.bpr
+      self.states.b.numVgprValuPerBlock = kernel["ThreadTileB"] * tensorParametersB["bpe"] * 2 // self.states.bpr
 
       self.states.c.numVgprValu = kernel["ThreadTile0"] * kernel["ThreadTile1"] * kernel["ProblemType"]["ComputeDataType"].numRegisters()
       self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * valuBlocksA
       self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocksB
+
+      # origin
+      # valuBlocksA = (1 + kernel["PrefetchLocalRead"]) * kernel["InnerUnroll"]
+      # valuBlocksB = (1 + kernel["PrefetchLocalRead"]) * kernel["InnerUnroll"]
+
+      # self.states.a.numVgprValuPerBlock = kernel["ThreadTileA"] * tensorParametersA["bpe"] // self.states.bpr
+      # self.states.b.numVgprValuPerBlock = kernel["ThreadTileB"] * tensorParametersB["bpe"] // self.states.bpr
+
+      # self.states.c.numVgprValu = kernel["ThreadTile0"] * kernel["ThreadTile1"] * kernel["ProblemType"]["ComputeDataType"].numRegisters()
+      # self.states.a.numVgprValu = self.states.a.numVgprValuPerBlock * valuBlocksA
+      # self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocksB
 
     if kernel["ProblemType"]["Sparse"]:
       if kernel["DirectToVgprSparseMetadata"]:
