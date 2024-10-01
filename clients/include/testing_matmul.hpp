@@ -966,7 +966,7 @@ void testing_matmul_with_bias(const Arguments& arg,
 {
     double gpu_time_used, cpu_time_used, gpu_mem_gbytes;
     gpu_time_used = cpu_time_used = gpu_mem_gbytes = 0.0;
-    bool                   HMM    = arg.HMM;
+    bool                   HMM                     = arg.HMM;
     hipblaslt_local_handle handle{arg};
     hipStream_t            stream;
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
@@ -1522,7 +1522,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                 CHECK_HIP_ERROR(synchronize(hScaleA[i], dScaleA[i]));
             }
             else
-                CHECK_HIP_ERROR(synchronize(dScaleA[i], hScaleA[i]));
+                CHECK_HIP_ERROR(synchronize(dScaleA[i], hScaleA[i], block_count));
         }
 
         if(arg.scaleB)
@@ -1539,7 +1539,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                 CHECK_HIP_ERROR(synchronize(hScaleB[i], dScaleB[i]));
             }
             else
-                CHECK_HIP_ERROR(synchronize(dScaleB[i], hScaleB[i]));
+                CHECK_HIP_ERROR(synchronize(dScaleB[i], hScaleB[i], block_count));
         }
 
         if(arg.scaleC)
