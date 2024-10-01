@@ -152,14 +152,14 @@ private:
 };
 
 inline hipError_t
-    synchronize(HipDeviceBuffer& dBuf, const HipHostBuffer& hBuf, std::size_t repeats = 1)
+    synchronize(HipDeviceBuffer& dBuf, const HipHostBuffer& hBuf, std::size_t block_count = 1)
 {
     hipError_t hip_err;
-    for(size_t i = 0; i < repeats; ++i)
+    for(size_t i_block = 0; i_block < block_count; i_block++)
     {
-        hip_err = hipMemcpy(dBuf.as<char>() + i * dBuf.getNumBytes() / repeats,
+        hip_err = hipMemcpy(dBuf.as<char>() + i_block * dBuf.getNumBytes() / block_count,
                             hBuf.as<char>(),
-                            dBuf.getNumBytes() / repeats,
+                            dBuf.getNumBytes() / block_count,
                             dBuf.use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
 
         if(hip_err != hipSuccess)
