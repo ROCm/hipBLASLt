@@ -218,10 +218,13 @@ if ( NOT BUILD_CUDA )
     else()
       set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/hipblaslt" CACHE PATH "path to tensile library" )
     endif()
-    rocm_install(
-      DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
-      DESTINATION ${HIPBLASLT_TENSILE_LIBRARY_DIR}
-      COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME})
+# For ASAN package, Tensile library files are not required
+    if( NOT ENABLE_ASAN_PACKAGING )
+      rocm_install(
+        DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
+        DESTINATION ${HIPBLASLT_TENSILE_LIBRARY_DIR}
+        COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME})
+    endif()
 endif()
 
 # Export targets
