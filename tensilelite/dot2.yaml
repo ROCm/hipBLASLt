@@ -7,9 +7,9 @@ GlobalParameters:
   # ForceGenerateKernel: True
   # CMakeBuildType: Debug
 
-  NumElementsToValidate: 0
-  # ValidationPrintValids: True
-  # ValidationMaxToPrint: 256
+  NumElementsToValidate: -1 
+  ValidationPrintValids: True
+  ValidationMaxToPrint: 4
   NumWarmups: 10
   NumBenchmarks: 1
   SyncsPerBenchmark: 1
@@ -55,18 +55,17 @@ BenchmarkProblems:
       BenchmarkCommonParameters:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
-        # - MatrixInstruction:
-            # - [16, 16, 16, 1,  1,   1, 1,  1,1 ]
         - ThreadTile: 
           - [2, 1]
         - WorkGroup: 
-          - [16, 8, 1]
+          - [64, 1, 1]
+          # - [8, 8, 1]
         - InnerUnroll: [1]
         - AssertFree0ElementMultiple: [16]
         - AssertFree1ElementMultiple: [1]
         - AssertSummationElementMultiple: [32]
-        - PrefetchGlobalRead: [1]
-        - PrefetchLocalRead: [0]
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
         - DepthU: [64]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
@@ -106,7 +105,13 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [5280, 1, 1, 1184] # size 6
+          # - Exact: [1248, 1248, 1, 5280]
+          - Exact: [128, 1, 1, 5280] # size 1
+          - Exact: [1248, 1, 1, 5280] # size 1
+          - Exact: [1920, 1, 1, 5280] # size 2
+          - Exact: [5280, 1, 1, 1056] # size 3 & 4
+          - Exact: [5280, 1, 1, 1184] # size 5 & 6
+          - Exact: [8320, 1, 1, 5280] # size 7
         - BiasTypeArgs: ['s']
         - ActivationArgs:
           - [Enum: none]

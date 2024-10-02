@@ -54,13 +54,15 @@ class LocalReadVALU(LocalRead):
         blockWidth        = instruction.blockWidth
         offsetMultiplier  = 1 # instruction.offsetMultiplier
         valuIdx           = 0
-        numVectorsPerTile = (kernel["ThreadTile%u"%tile01]//kernel["VectorWidthA"])
         # huang
+        numVectorsPerTile = (kernel["ThreadTile%u"%tile01] * kernel["NumDotElements"] // kernel["LocalReadVectorWidth"])
         numReadsPerVector = (kernel["LocalReadVectorWidth"] * tP["bpe"]) // (blockWidth*4) # bytes/register
-        # numReadsPerVector = (kernel["VectorWidthA"] * tP["bpe"]) // (blockWidth*4) # bytes/register
+        LdsPad           = kernel["LdsPad%s"%tc] if kernel["LdsBlockSizePerPad%s"%tc] == 0 else 0
+        tileStride        = kernel["_DepthU%s"%tc] + LdsPad if kernel["UnrollMajorLDS%s" % tP["tensorChar"]] else 1
+        
 
         print("local read:", tc, numVectorsPerTile, numReadsPerVector)
-        print(instruction)
+        # print(instruction)
 
         for vIdx in range(0, numVectorsPerTile):
             for rIdx in range(0, int(numReadsPerVector)):
@@ -72,7 +74,8 @@ class LocalReadVALU(LocalRead):
                 # paramList.append(vgpr("LocalReadAddr%s"%tc))
 
                 for oIdx in range(0, numOffsets):
-                    paramList.append(((rIdx*blockWidth + kernel["SubGroup%u"%tile01] * (vIdx*numOffsets+oIdx)*kernel["VectorWidthA"] \
+                    # huang
+                    paramList.append(((rIdx*blockWidth + kernel["SubGroup%u"%tile01] * (vIdx*numOffsets+oIdx) * tileStride \
                       + tP["localReadOffset"]) * tP["bpe"] + tP["localReadSwapByteOffset"]) // offsetMultiplier)
                     # print("Debug: Matrix{}, rIdx offset {}, vIdx offset {}, bpe {}, net offset {}".format( \
                     #     tP["tensorChar"], \

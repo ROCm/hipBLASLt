@@ -3426,6 +3426,7 @@ class KernelWriterAssembly(KernelWriter):
       finalVgpr = vgpr("LocalReadAddr%s"%tc)
 
       # LSU offset
+      # huang todo: support LSU
       with self.allocTmpSgpr(1) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
         sgid = self.vgprPool.checkOut(1) # quotient
@@ -3929,6 +3930,10 @@ class KernelWriterAssembly(KernelWriter):
         module.add(scalarStaticDivideAndRemainder(tmpSgpr, loopCounterName, \
           "SizesSum+%u"%loopIdx, kernel["DepthU"], RegisterPoolResource(tmpSgpr+2, 2), 2))
         loopCounter = sgpr(loopCounterName)
+        # huang
+        if not kernel["EnableMatrixInstruction"]:
+          module.add(SLShiftRightB32(dst=loopCounter, shiftHex=hex(log2(kernel["NumDotElements"])), src=loopCounter))
+        
 
         if kernel["LocalSplitU"] > 1:
           # we cannot set loopCounter zero and skip tail loop because we need all waves to do global read.
@@ -7240,8 +7245,11 @@ class KernelWriterAssembly(KernelWriter):
     LdsPad = kernel["LdsPad%s"%tc] if kernel["LdsBlockSizePerPad%s"%tc] == 0 else 0
 
     if self.states.inTailLoop:
-      inc = (kernel["MacroTile%s" % tP["tensorChar"]] + LdsPad) * tP["bpeDS"]
-      comment = " ((MT+PAD)*bpeDS)"
+      # huang
+      inc = kernel["LocalReadVectorWidth"] * tP["bpeDS"]
+      comment = "(LocalReadVectorWidth*bpeDS)"
+      # inc = (kernel["MacroTile%s" % tP["tensorChar"]] + LdsPad) * tP["bpeDS"]
+      # comment = " ((MT+PAD)*bpeDS)"
       if kernel["EnableMatrixInstruction"]:
         matrixInstK = kernel["MatrixInstK"]
         if kernel["UnrollMajorLDS%s" % tc]:
@@ -7316,7 +7324,8 @@ class KernelWriterAssembly(KernelWriter):
                 if sparseB:
                   offsetInc //= 2
         else:
-          offsetInc = (kernel["MacroTile%s"%tP["tensorChar"]] + LdsPad)
+          # huang
+          offsetInc = kernel["LocalReadVectorWidth"]
         tP["localReadOffset"] += offsetInc
         module.addComment0("N/A, lro->%d" % tP["localReadOffset"])
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:

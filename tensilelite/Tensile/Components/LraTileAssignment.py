@@ -49,6 +49,11 @@ class LraTileAssignmentVALU(LraTileAssignment):
         # allocate resources
         qReg    = writer.vgprPool.checkOut(1,"qReg") # quotient
         rReg    = writer.vgprPool.checkOut(1,"rReg") # remainder
+        # huang
+        tc               = tP["tensorChar"]
+        umlds            = kernel["UnrollMajorLDS%s" % tc]
+        LdsPad           = kernel["LdsPad%s" % tc] if kernel["LdsBlockSizePerPad%s" % tc] == 0 else 0
+        strideTile       = kernel["_DepthU%s"%tc] + LdsPad if umlds else 1
 
         with writer.allocTmpSgpr(1) as tmpSgprInfo:
             if tP["tileIdx"] == 0:
@@ -62,6 +67,11 @@ class LraTileAssignmentVALU(LraTileAssignment):
 
                 # generate instruction
                 module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpSgprInfo))
+                
+                # huang
+                # tile offset
+                module.add(staticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
+                "1. N offset: nOffset = nIdx * nStride(%u)" % strideTile))
 
                 # release and return resource
                 tP["gpr"]["lro"] = rReg
@@ -77,6 +87,11 @@ class LraTileAssignmentVALU(LraTileAssignment):
 
                 # generate instruction
                 module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpSgprInfo))
+
+                # huang
+                # tile offset
+                module.add(staticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
+                "1. M offset: mOffset = mIdx * mStride(%u)" % strideTile))
 
                 # release and return resource
                 tP["gpr"]["lro"] = rReg
