@@ -68,7 +68,7 @@ class XCCMappingOn(XCCMapping):
                 sTmpRes  = RegisterPoolResource(idx=sTmp, size=2)
 
             # sGridC = ceil(grid / xccm)
-            module.add(SAddU32(dst=sgpr(sXCC), src0=sgpr("skGrid"), src1=hex(kernel["StreamKXCCMapping"] - 1), comment="ceil(grid/xccm)"))
+            module.add(SAddU32(dst=sgpr(sGridC), src0=sgpr("skGrid"), src1=hex(kernel["StreamKXCCMapping"] - 1), comment="ceil(grid/xccm)"))
             module.add(scalarStaticDivideAndRemainder(qReg=sGridC, rReg=None, dReg=sGridC, divisor=kernel["StreamKXCCMapping"], tmpSgprRes=sTmpRes, doRemainder=0))
             # sGridF = floor(grid / xccm)
             # sGridM = grid % xccm
