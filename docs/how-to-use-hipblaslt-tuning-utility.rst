@@ -38,7 +38,7 @@ The ``template.yaml`` file can be found in the ``utilities`` directory.
         # SplitK list control parameter example
         # SplitK: [0, 4, 8]  # [0] For disable
     ProblemSizes:
-    - [128, 128, 128]  # M, N, K
+    - [128, 128, 1, 128]  # M, N, B, K
     CreateLogic: {}  # Fixed
 
 Running the tuning utility
