@@ -19,6 +19,6 @@ Bench:
     # SplitK list control parameter example
     # SplitK: [0, 4, 8]
   ProblemSizes:
-  - [128, 128, 128]
-  - [128, 128, 128]
+  - [128, 128, 1, 128]
+  - [128, 128, 1, 128]
 CreateLogic: {}
