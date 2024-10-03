@@ -140,7 +140,6 @@ public:
             m_size = m_capacity = 0;
         }
         m_d.reset(d);
-        // m_d = std::make_unique<char[]>(capacity);
     }
 
     char* get()
@@ -154,7 +153,6 @@ public:
 
 private:
     std::unique_ptr<char, decltype(&hipHostFree)> m_d{nullptr, &hipHostFree};
-    // std::unique_ptr<char[]> m_d;
 };
 
 /* ============================================================================================ */
@@ -213,6 +211,7 @@ private:
     void restore(M& dm)
     {
         auto& pool = dm.is_managed() ? m_pool_managed : m_pool;
+        // insert in (sorted) pool
         pool.insert(std::lower_bound(pool.begin(), pool.end(), dm.capacity()), std::move(dm));
     }
 };
