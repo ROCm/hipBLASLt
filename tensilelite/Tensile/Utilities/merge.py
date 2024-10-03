@@ -97,35 +97,35 @@ def sanitizeSolutions(solList):
             sol["StaggerUStride"] = 0
             sol["_staggerStrideShift"] = 0
 
-def removeUnusedKernels(origData, prefix=""):
-    origNumSolutions = len(origData[5])
+def removeUnusedKernels(oriData, prefix=""):
+    origNumSolutions = len(oriData[5])
 
-    kernelsInUse = [ index for _, [index, _] in origData[7] ]
-    for i, solution in enumerate(origData[5]):
+    kernelsInUse = [ index for _, [index, _] in oriData[7] ]
+    for i, solution in enumerate(oriData[5]):
         solutionIndex = solution["SolutionIndex"]
-        origData[5][i]["__InUse__"] = True if solutionIndex in kernelsInUse else False
+        oriData[5][i]["__InUse__"] = True if solutionIndex in kernelsInUse else False
 
     # debug prints
-    for o in [o for o in origData[5] if o["__InUse__"]==False]:
+    for o in [o for o in oriData[5] if o["__InUse__"]==False]:
         debug("{}Solution ({}) {} is unused".format(
             prefix,
             o["SolutionIndex"],
             o["SolutionNameMin"] if "SolutionNameMin" in o else "(SolutionName N/A)"))
 
     # filter out dangling kernels
-    origData[5] = [ {k: v for k, v in o.items() if k != "__InUse__"}
-                    for o in origData[5] if o["__InUse__"]==True ]
+    oriData[5] = [ {k: v for k, v in o.items() if k != "__InUse__"}
+                    for o in oriData[5] if o["__InUse__"]==True ]
 
     # reindex solutions
     idMap = {} # new = idMap[old]
-    for i, solution in enumerate(origData[5]):
+    for i, solution in enumerate(oriData[5]):
         idMap[solution["SolutionIndex"]] = i
-        origData[5][i]["SolutionIndex"] = i
-    for i, [size, [oldSolIndex, eff]] in enumerate(origData[7]):
-        origData[7][i] = [size, [idMap[oldSolIndex], eff]]
+        oriData[5][i]["SolutionIndex"] = i
+    for i, [size, [oldSolIndex, eff]] in enumerate(oriData[7]):
+        oriData[7][i] = [size, [idMap[oldSolIndex], eff]]
 
-    numInvalidRemoved = origNumSolutions - len(origData[5])
-    return origData, numInvalidRemoved
+    numInvalidRemoved = origNumSolutions - len(oriData[5])
+    return oriData, numInvalidRemoved
 
 def loadData(filename):
     try:
@@ -137,18 +137,37 @@ def loadData(filename):
     data = yaml.load(stream, yaml.SafeLoader)
     return data
 
-def compareProblemType(origData, incData):
-    # ProblemType defined in originalFiles
-    problemType = origData[4]
+def compareProblemType(oriData, incData):
+    # ProblemType defined in originalFiles and incrementalFiles
+    oriProblemType = oriData[4] # header
+    incProblemType = incData[4] # header
+    # Delete waived ProblemType items in originalFiles
+    waivedItems = [item for item in oriProblemType if item not in incProblemType]
+    if waivedItems:
+        # Header ProblemType
+        for item in waivedItems:
+            oriProblemType.pop(item)
+        # Kernel ProblemType
+        for i, _ in enumerate(oriData[5]):
+            # TODO: delete this for loop if kernel ProblemType is removed in the future
+            oriKernelProblemType = oriData[5][i]["ProblemType"]
+            for item in waivedItems:
+                try:
+                    oriKernelProblemType.pop(item)
+                except KeyError:
+                    oriSolutionIndex = oriData[5][i]["SolutionIndex"]
+                    print(f"[Warning] Popping '{item}' failed in oriData(idx={oriSolutionIndex})")
+        
     results = ""
     solIdx = 0
-    # Compare ProblemType of originalFiles and incrementalFiles
+    # Compare existing ProblemType items of originalFiles with incrementalFiles
     for i, _ in enumerate(incData[5]):
-        incProblemType = incData[5][i]["ProblemType"]
-        if problemType !=  incProblemType:
-            for item in problemType:
-                if problemType[item] != incProblemType[item]:
-                    results += f"\t{item}: {problemType[item]} != {incProblemType[item]}\n"
+        # TODO: check header ProblemType if kernel ProblemType is removed in the future
+        incKernelProblemType = incData[5][i]["ProblemType"]
+        if oriProblemType !=  incKernelProblemType:
+            for item in oriProblemType:
+                if oriProblemType[item] != incKernelProblemType[item]:
+                    results += f"\t{item}: {oriProblemType[item]} != {incKernelProblemType[item]}\n"
             solIdx = i
             break
     if (results):
@@ -285,9 +304,9 @@ def findFastestCompatibleSolution(origDict, sizeMapping):
 
 
 # returns merged logic data as list
-def mergeLogic(origData, incData, forceMerge, trimSize=True, addSolutionTags=False, noEff=False):
-    origNumSizes = len(origData[7])
-    origNumSolutions = len(origData[5])
+def mergeLogic(oriData, incData, forceMerge, trimSize=True, addSolutionTags=False, noEff=False):
+    origNumSizes = len(oriData[7])
+    origNumSolutions = len(oriData[5])
 
     incNumSizes = len(incData[7])
     incNumSolutions = len(incData[5])
@@ -296,14 +315,14 @@ def mergeLogic(origData, incData, forceMerge, trimSize=True, addSolutionTags=Fal
     verbose(incNumSizes, "sizes and", incNumSolutions, "kernels in incremental logic file")
 
     # Add SolutionTag to distinguish solutions with different requirements
-    origTaggedSizes = addSolutionTagToKeys(origData[7], origData[5])
+    origTaggedSizes = addSolutionTagToKeys(oriData[7], oriData[5])
     incTaggedSizes  = addSolutionTagToKeys(incData[7],  incData[5])
     if addSolutionTags:
-        origData[7] = origTaggedSizes
+        oriData[7] = origTaggedSizes
         incData[7]  = incTaggedSizes
     # Print warning if addSolutionTags=False results in removed sizes
     else:
-        origSet       = {tuple(size) for size, [_, _] in origData[7]}
+        origSet       = {tuple(size) for size, [_, _] in oriData[7]}
         origTaggedSet = {tuple(size) for size, [_, _] in origTaggedSizes}
         incSet        = {tuple(size) for size, [_, _] in incData[7]}
         incTaggedSet  = {tuple(size) for size, [_, _] in incTaggedSizes}
@@ -320,18 +339,18 @@ def mergeLogic(origData, incData, forceMerge, trimSize=True, addSolutionTags=Fal
     if trimSize:
         # trim 8-tuple gemm size format to 4-tuple [m, n, b, k]
         # TODO future gemm size could include dictionary format so need robust preprocessing
-        [origData[7], origNumSizes] = fixSizeInconsistencies(origData[7], "base")
+        [oriData[7], origNumSizes] = fixSizeInconsistencies(oriData[7], "base")
         [incData[7], incNumSizes] = fixSizeInconsistencies(incData[7], "incremental")
 
-    sanitizeSolutions(origData[5])
+    sanitizeSolutions(oriData[5])
     sanitizeSolutions(incData[5])
-    origData, numOrigRemoved = removeUnusedKernels(origData, "Base logic file: ")
+    oriData, numOrigRemoved = removeUnusedKernels(oriData, "Base logic file: ")
     incData, numIncRemoved = removeUnusedKernels(incData, "Inc logic file: ")
 
-    solutionPool = deepcopy(origData[5])
-    solutionMap = deepcopy(origData[7])
+    solutionPool = deepcopy(oriData[5])
+    solutionMap = deepcopy(oriData[7])
 
-    origDict = {tuple(origSize): [i, origEff] for i, [origSize, [origIndex, origEff]] in enumerate(origData[7])}
+    origDict = {tuple(origSize): [i, origEff] for i, [origSize, [origIndex, origEff]] in enumerate(oriData[7])}
     for incSize, [incIndex, incEff] in incData[7]:
         incSolution = findSolutionWithIndex(incData[5], incIndex)
 
@@ -364,13 +383,13 @@ def mergeLogic(origData, incData, forceMerge, trimSize=True, addSolutionTags=Fal
     if addSolutionTags:
         solutionMap = removeSolutionTagFromKeys(solutionMap)
 
-    mergedData = deepcopy(origData)
+    mergedData = deepcopy(oriData)
     mergedData[5] = solutionPool
     mergedData[7] = solutionMap
     mergedData, numReplaced = removeUnusedKernels(mergedData, "Merged data: ")
 
-    numSizesAdded = len(solutionMap)-len(origData[7])
-    numSolutionsAdded = len(solutionPool)-len(origData[5])
+    numSizesAdded = len(solutionMap)-len(oriData[7])
+    numSolutionsAdded = len(solutionPool)-len(oriData[5])
     numSolutionsRemoved = numReplaced+numOrigRemoved # incremental file not counted
 
     return [mergedData, numSizesAdded, numSolutionsAdded, numSolutionsRemoved]
@@ -391,18 +410,18 @@ def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSi
 
         msg("Base logic file:", origFile, "| Incremental:", incFile, "| Merge policy: %s"%("Forced" if forceMerge else "Winner"), "| Trim size:", trimSize,
         "| Add solution tags:", addSolutionTags)
-        origData = loadData(origFile)
+        oriData = loadData(origFile)
         incData = loadData(incFile)
 
         # Terminate when ProblemType of originalFiles and incrementalFiles mismatch
-        compareProblemType(origData, incData)
+        compareProblemType(oriData, incData)
 
         # So far "SolutionIndex" in logic yamls has zero impact on actual 1-1 size mapping (but the order of the Solution does)
         # since mergeLogic() takes that value very seriously so we reindex them here so it doesn't choke on duplicated SolutionIndex
-        origData = reindexSolutions(origData)
+        oriData = reindexSolutions(oriData)
         incData = reindexSolutions(incData)
 
-        mergedData, *stats = mergeLogic(origData, incData, forceMerge, trimSize, addSolutionTags, noEff)
+        mergedData, *stats = mergeLogic(oriData, incData, forceMerge, trimSize, addSolutionTags, noEff)
         msg(stats[0], "size(s) and", stats[1], "kernel(s) added,", stats[2], "kernel(s) removed")
 
         with open(os.path.join(outputPath, basename), "w") as outFile:
