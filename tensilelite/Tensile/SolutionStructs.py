@@ -1862,10 +1862,12 @@ class Solution(collections.abc.Mapping):
         if not Solution.isVgprForLocalReadPackingDoable(state):
           reject(state, "Does not meet the requirement for DirectToVgpr%c + TLU%c + numByte < 4"%(tc, tc))
           return False
-      if numBytes * state["VectorWidth%c"%tc] < 4:
-        # no support for DTV + TLU + numBytes * VectorWidth< 4
-        reject(state, "DirectToVgpr%c does not support TLU%c + numByte * VectorWidth%c < 4"%(tc, tc, tc))
-        return False
+        if numBytes * state["VectorWidth%c"%tc] < 4:
+          # no support for DTV + TLU + numBytes * VectorWidth< 4
+          reject(state, "DirectToVgpr%c does not support TLU%c + numByte * VectorWidth%c < 4"%(tc, tc, tc))
+          return False
+        # force ClusterLocalRead=1 for DTV + pack
+        state["ClusterLocalRead"] = 1
     else:
       # numBytes >= 4 case
       if state["ProblemType"]["TLU%c"%tc] and state["MIInputPerThread"] > 1:
