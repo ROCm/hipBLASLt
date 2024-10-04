@@ -419,11 +419,11 @@ try
 
         ("transA",
          value<char>(&arg.transA)->default_value('N'),
-         "N = no transpose, T = transpose, C = conjugate transpose")
+         "N = no transpose, T = transpose")
 
         ("transB",
          value<char>(&arg.transB)->default_value('N'),
-         "N = no transpose, T = transpose, C = conjugate transpose")
+         "N = no transpose, T = transpose")
 
         ("batch_count",
          value<int32_t>(&arg.batch_count)->default_value(1),
