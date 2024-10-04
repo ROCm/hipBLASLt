@@ -9592,7 +9592,7 @@ class KernelWriterAssembly(KernelWriter):
         # are likely to be low-performing so likely not worth optimizing.
         if shrinkDb:
           print("WARNING: half requires at least two elements per batch")
-        self.states.overflowedResources = 3
+        # self.states.overflowedResources = 3
 
     assert numElementsPerBatch > 0, "numElementsPerBatch=0 for %s"%self.states.kernelName
 

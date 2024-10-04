@@ -9,7 +9,7 @@ GlobalParameters:
 
   NumElementsToValidate: -1 
   ValidationPrintValids: True
-  ValidationMaxToPrint: 4
+  # ValidationMaxToPrint: 4
   NumWarmups: 10
   NumBenchmarks: 1
   SyncsPerBenchmark: 1
@@ -56,11 +56,11 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - ThreadTile: 
-          - [2, 1]
+          - [1, 1]
         - WorkGroup: 
           - [64, 1, 1]
           # - [8, 8, 1]
-        - InnerUnroll: [1]
+        - InnerUnroll: [4]
         - AssertFree0ElementMultiple: [16]
         - AssertFree1ElementMultiple: [1]
         - AssertSummationElementMultiple: [32]
@@ -74,19 +74,15 @@ BenchmarkProblems:
         - LocalReadVectorWidth: [2]
         - StoreVectorWidth: [1]
         - TransposeLDS: [2]
-        
-
-        # - LdsBlockSizePerPadA: [-1]
-        # - LdsBlockSizePerPadB: [-1]
-        # - LdsPadA: [-1]
-        # - LdsPadB: [-1]
+        - StaggerUMapping: [0]
+        - StaggerU: [32]
+        - StaggerUStride: [-1]
+        # - GlobalSplitU: [4]
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
         - WorkGroupMapping: [1]
         - WorkGroupMappingXCC: [1] #[1,4,8,38,32,304]
         - WorkGroupMappingXCCGroup: [0] #[0,1,4,8,38,32,304]
-        # - StaggerUMapping: [0]
-        # - StaggerU: [0]
-        # - StaggerUStride: [-1]
-        # - GlobalSplitU: [6]
         # - GlobalSplitUAlgorithm: ["MultipleBufferSingleKernel"]
         # - GlobalReadPerMfma: [1]
         # - LocalWritePerMfma: [-1]
@@ -106,7 +102,7 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           # - Exact: [1248, 1248, 1, 5280]
-          - Exact: [128, 1, 1, 5280] # size 1
+          - Exact: [128, 1, 1, 5280] # size 0
           - Exact: [1248, 1, 1, 5280] # size 1
           - Exact: [1920, 1, 1, 5280] # size 2
           - Exact: [5280, 1, 1, 1056] # size 3 & 4

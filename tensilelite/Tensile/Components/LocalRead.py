@@ -61,7 +61,7 @@ class LocalReadVALU(LocalRead):
         tileStride        = kernel["_DepthU%s"%tc] + LdsPad if kernel["UnrollMajorLDS%s" % tP["tensorChar"]] else 1
         
 
-        print("local read:", tc, numVectorsPerTile, numReadsPerVector)
+        # print("local read:", tc, numVectorsPerTile, numReadsPerVector)
         # print(instruction)
 
         for vIdx in range(0, numVectorsPerTile):

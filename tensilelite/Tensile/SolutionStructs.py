@@ -3558,6 +3558,8 @@ class Solution(collections.abc.Mapping):
     # huang
     else:
       state["NumDotElements"] = 2
+      if state["LoopIters"] % state["NumDotElements"] != 0:
+        reject(state, "LoopIters need to be multiple of NumDotElements!")
       state["LoopIters"] //= state["NumDotElements"]
 
     if state["LoopIters"] < 1:
