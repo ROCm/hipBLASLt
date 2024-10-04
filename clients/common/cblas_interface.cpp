@@ -685,6 +685,187 @@ void cast_mul_with_Tci(customVector<TcCast>& dst,
     }
 }
 
+// legacy BLAS implementation
+// gemm for dim and leading dims <= 600 so no int64 multiplies
+template <typename T>
+void small_gemm(hipblasOperation_t transA,
+                hipblasOperation_t transB,
+                int               m,
+                int               n,
+                int               k,
+                T                 alpha,
+                const T*          A,
+                int               lda,
+                const T*          B,
+                int               ldb,
+                T                 beta,
+                T*                C,
+                int               ldc)
+{
+    bool notTA = (transA == HIPBLAS_OP_N);
+    bool notTB = (transB == HIPBLAS_OP_N);
+
+    if(!m or !n or (alpha == 0.0 or !k) && (beta == 1.0))
+        return;
+
+    if(alpha == 0.0)
+    {
+        if(beta == 0.0)
+        {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                for(int i = 0; i < m; ++i)
+                {
+                    C[j * ldc + i] = 0.0;
+                }
+            }
+        }
+        else
+        {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                for(int i = 0; i < m; ++i)
+                {
+                    C[j * ldc + i] *= beta;
+                }
+            }
+        }
+        return;
+    }
+
+    if(notTB)
+    {
+        if(notTA)
+        {
+            // C = alpha*A*B + beta*C.
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                if(beta == 0.0)
+                {
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] = 0.0;
+                    }
+                }
+                else if(beta != 1.0)
+                {
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] *= beta;
+                    }
+                }
+
+                for(int l = 0; l < k; ++l)
+                {
+                    float temp = alpha * B[j * ldb + l];
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] += temp * A[l * lda + i];
+                    }
+                }
+            }
+        }
+        else
+        {
+            // C = alpha*A**T*B + beta*C
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                for(int i = 0; i < m; ++i)
+                {
+                    float temp = 0.0f;
+                    for(int l = 0; l < k; ++l)
+                    {
+                        temp += A[i * lda + l] * B[j * ldb + l];
+                    }
+                    if(beta == 0.0f)
+                    {
+                        C[j * ldc + i] = alpha * temp;
+                    }
+                    else
+                    {
+                        C[j * ldc + i] = alpha * temp + beta * C[j * ldc + i];
+                    }
+                }
+            }
+        }
+    }
+    else // TB
+    {
+        if(notTA)
+        {
+            //  C = alpha*A*B**T + beta*C
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                if(beta == 0.0)
+                {
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] = 0.0;
+                    }
+                }
+                else if(beta != 1.0)
+                {
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] = beta * C[j * ldc + i];
+                    }
+                }
+
+                for(int l = 0; l < k; ++l)
+                {
+                    float temp = alpha * B[l * ldb + j];
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] += temp * A[l * lda + i];
+                    }
+                }
+            }
+        }
+        else
+        {
+            // C = alpha*A**T*B**T + beta*C
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                for(int i = 0; i < m; ++i)
+                {
+                    float temp = 0.0;
+                    for(int l = 0; l < k; ++l)
+                    {
+                        temp += A[i * lda + l] * B[l * ldb + j];
+                    }
+
+                    if(beta == 0.0)
+                    {
+                        C[j * ldc + i] = alpha * temp;
+                    }
+                    else
+                    {
+                        C[j * ldc + i] = alpha * temp + beta * C[j * ldc + i];
+                    }
+                }
+            }
+        }
+    }
+}
+
 template <typename Tc>
 void cblas_gemm(hipblasOperation_t       transA,
                 hipblasOperation_t       transB,
@@ -785,7 +966,10 @@ void cblas_gemm(hipblasOperation_t       transA,
     //printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
     if constexpr(std::is_same<TcCast, float>::value)
     {
-        cblas_sgemm(CblasColMajor,
+        static constexpr int64_t small = 600; // seeing random NaNs with blis on some small sizes
+        if(m > small || n > small || k > small || lda > small || ldb > small || ldc > small)
+        {
+            cblas_sgemm(CblasColMajor,
                     HIPOperationToCBLASTanspose(transA),
                     HIPOperationToCBLASTanspose(transB),
                     m,
@@ -799,10 +983,18 @@ void cblas_gemm(hipblasOperation_t       transA,
                     betaCast,
                     C_Tc,
                     ldc);
+        }
+        else
+        {
+            small_gemm<float>(transA, transB, m, n, k, alphaCast, A_Tc, lda, B_Tc, ldb, betaCast, C_Tc, ldc);
+        }
     }
     else if constexpr(std::is_same<TcCast, double>::value)
     {
-        cblas_dgemm(CblasColMajor,
+        static constexpr int64_t small = 600; // seeing random NaNs with blis on some small sizes
+        if(m > small || n > small || k > small || lda > small || ldb > small || ldc > small)
+        {        
+            cblas_dgemm(CblasColMajor,
                     HIPOperationToCBLASTanspose(transA),
                     HIPOperationToCBLASTanspose(transB),
                     m,
@@ -816,6 +1008,11 @@ void cblas_gemm(hipblasOperation_t       transA,
                     betaCast,
                     C_Tc,
                     ldc);
+        }
+        else
+        {
+            small_gemm<double>(transA, transB, m, n, k, alphaCast, A_Tc, lda, B_Tc, ldb, betaCast, C_Tc, ldc);
+        }
     }
 
     if(scaleD != 1)

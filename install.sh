@@ -314,27 +314,34 @@ install_msgpack_from_source( )
 
 install_blis()
 {
-    #Download prebuilt AMD multithreaded blis
-    if [[ ! -e "${build_dir}/deps/blis/lib/libblis.a" ]]; then
-      case "${ID}" in
-          centos|rhel|sles|opensuse-leap|almalinux)
-              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
-              ;;
-          ubuntu)
-              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
-              ;;
-          *)
-              echo "Unsupported OS for this script"
-              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
-              ;;
-      esac
+    if [[ ! -e "/opt/AMD/aocl/aocl-linux-gcc-4.2.0/gcc/lib_ILP64/libblis-mt.a" ]] &&
+        [[ ! -e "/opt/AMD/aocl/aocl-linux-aocc-4.1.0/aocc/lib_ILP64/libblis-mt.a" ]] &&
+        [[ ! -e "/opt/AMD/aocl/aocl-linux-aocc-4.0/lib_ILP64/libblis-mt.a"  ]] &&
+        [[ ! -e "/usr/local/lib/libblis.a" ]]; then
+        pushd .
+        #Download prebuilt AMD multithreaded blis
+        if [[ ! -e "./blis/lib/libblis.a" ]]; then
+          case "${ID}" in
+              centos|rhel|sles|opensuse-leap)
+                  wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
+                  ;;
+              ubuntu)
+                  wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
+                  ;;
+              *)
+                  echo "Unsupported OS for this script"
+                  wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
+                  ;;
+          esac
 
-      tar -xvf blis.tar.gz
-      rm -rf blis/amd-blis-mt
-      mv amd-blis-mt blis
-      rm blis.tar.gz
-      cd blis/lib
-      ln -sf libblis-mt.a libblis.a
+          tar -xvf blis.tar.gz
+          rm -rf blis/amd-blis-mt
+          mv amd-blis-mt blis
+          rm blis.tar.gz
+          cd blis/lib
+          ln -sf libblis-mt.a libblis.a
+        fi
+        popd
     fi
 }
 
