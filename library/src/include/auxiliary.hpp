@@ -97,9 +97,9 @@ constexpr const char* hipblas_operation_to_string(hipblasOperation_t value)
     case HIPBLAS_OP_T:
         return "T";
     case HIPBLAS_OP_C:
-        return "C";
+    default:
+        return "invalid";
     }
-    return "invalid";
 }
 
 HIPBLASLT_EXPORT
@@ -115,7 +115,6 @@ constexpr hipblasOperation_t char_to_hipblas_operation(char value)
         return HIPBLAS_OP_T;
     case 'C':
     case 'c':
-        return HIPBLAS_OP_C;
     default:
         return static_cast<hipblasOperation_t>(0);
     }
@@ -214,7 +213,7 @@ HIPBLASLT_EXPORT
 constexpr hipDataType string_to_hip_datatype_assert(const std::string& value)
 {
     auto datatype = string_to_hip_datatype(value);
-    if(static_cast<int>(datatype) == 0)
+    if(datatype == HIPBLASLT_DATATYPE_INVALID)
     {
         std::cout << "The supported types are f32_r, f64_r, f16_r, bf16_r, f8_r, bf8_r, i8_r, i32_r." << std::endl;
         exit(1);
