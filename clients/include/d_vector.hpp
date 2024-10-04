@@ -210,6 +210,8 @@ private:
 
     void restore(M& dm)
     {
+        if(!dm.get() || !dm.capacity())
+            return;
         auto& pool = dm.is_managed() ? m_pool_managed : m_pool;
         // insert in (sorted) pool
         pool.insert(std::lower_bound(pool.begin(), pool.end(), dm.capacity()), std::move(dm));
