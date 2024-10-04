@@ -63,6 +63,34 @@ __device__ uint32_t pseudo_random_device(size_t idx)
     return s;
 }
 
+/*! \brief  generate a random number in range [1,2,3,4,5,6,7,8,9,10] */
+template <typename T>
+__device__ T random_int(size_t idx)
+{
+    return T(pseudo_random_device(idx) % 10 + 1.f);
+}
+
+/*! \brief  generate a random number in range [-2,-1,0,1,2] */
+template <>
+__device__ hipblasLtHalf random_int<hipblasLtHalf>(size_t idx)
+{
+    return hipblasLtHalf(pseudo_random_device(idx) % 5 - 2.f);
+}
+
+/*! \brief  generate a random number in range [-2,-1,0,1,2] */
+template <>
+__device__ hip_bfloat16 random_int<hip_bfloat16>(size_t idx)
+{
+    return hip_bfloat16(pseudo_random_device(idx) % 5 - 2.f);
+}
+
+/*! \brief  generate a random number in range [1,2,3] */
+template <>
+__device__ int8_t random_int<int8_t>(size_t idx)
+{
+    return pseudo_random_device(idx) % 3 + 1;
+}
+
 template <typename T>
 void hipblaslt_init_device(ABC                      abc,
                            hipblaslt_initialization init,
@@ -90,7 +118,7 @@ void hipblaslt_init_device(ABC                      abc,
         case hipblaslt_initialization::rand_int:
             if(abc == ABC::A || abc == ABC::C)
                 fill_batch(A, M, N, lda, stride, batch_count, [](size_t idx) -> T {
-                    return T(pseudo_random_device(idx) % 10 + 1.f);
+                    return random_int<T>(idx);
                 });
             else if(abc == ABC::B)
             {
@@ -99,7 +127,7 @@ void hipblaslt_init_device(ABC                      abc,
                     auto b     = idx / stride;
                     auto j     = (idx - b * stride) / lda;
                     auto i     = (idx - b * stride) - j * lda;
-                    auto value = T(pseudo_random_device(idx) % 10 + 1.f);
+                    auto value = random_int<T>(idx);
                     return (i ^ j) & 1 ? value : negate(value);
                 });
             }
