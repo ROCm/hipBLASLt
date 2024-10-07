@@ -77,18 +77,6 @@ constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
         return "f32_f16_r";
     case rocblaslt_compute_f32_fast_bf16:
         return "f32_bf16_r";
-    case rocblaslt_compute_f32_fast_f8_fnuz:
-    case rocblaslt_compute_f32_fast_f8_ocp:
-        return "f32_f8_r";
-    case rocblaslt_compute_f32_fast_bf8_fnuz:
-    case rocblaslt_compute_f32_fast_bf8_ocp:
-        return "f32_bf8_r";
-    case rocblaslt_compute_f32_fast_f8bf8_fnuz:
-    case rocblaslt_compute_f32_fast_f8bf8_ocp:
-        return "f32_f8bf8_r";
-    case rocblaslt_compute_f32_fast_bf8f8_fnuz:
-    case rocblaslt_compute_f32_fast_bf8f8_ocp:
-        return "f32_bf8f8_r";
     default:
         return "invalidType";
     }
