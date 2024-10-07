@@ -91,6 +91,23 @@ __device__ int8_t random_int<int8_t>(size_t idx)
     return pseudo_random_device(idx) % 3 + 1;
 }
 
+/*! \brief  generate a random number in HPL-like [-0.5,0.5] doubles  */
+template <typename T>
+__device__ T random_hpl(size_t idx)
+{
+    auto r = pseudo_random_device(idx);
+    return T(double(r) / double(std::numeric_limits<decltype(r)>::max()) - 0.5);
+}
+
+/*! \brief  generate a random number in [-1.0,1.0] doubles  */
+template <>
+__device__ int8_t random_hpl(size_t idx)
+{
+    auto r = pseudo_random_device(idx);
+    auto v = nearbyint(double(r) / double(std::numeric_limits<decltype(r)>::max()) * 2. - 1.);
+    return int8_t(v > 127.f ? 127.f : v < -128.f ? -128.f : v);
+}
+
 template <typename T>
 void hipblaslt_init_device(ABC                      abc,
                            hipblaslt_initialization init,
@@ -144,8 +161,7 @@ void hipblaslt_init_device(ABC                      abc,
             break;
         case hipblaslt_initialization::hpl:
             fill_batch(A, M, N, lda, stride, batch_count, [](size_t idx) -> T {
-                auto r = pseudo_random_device(idx);
-                return T(double(r) / double(std::numeric_limits<decltype(r)>::max()) - 0.5);
+                return random_hpl<T>(idx);
             });
             break;
         case hipblaslt_initialization::special:
