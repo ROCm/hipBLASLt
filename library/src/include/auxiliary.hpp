@@ -231,14 +231,14 @@ constexpr hipblasComputeType_t string_to_hipblas_computetype(const std::string& 
         value == "i32_r" || value == "i" ? HIPBLAS_COMPUTE_32I :
         value == "f32_f16_r" ? HIPBLAS_COMPUTE_32F_FAST_16F :
         value == "f32_bf16_r" ? HIPBLAS_COMPUTE_32F_FAST_16BF :
-        static_cast<hipblasComputeType_t>(0);
+        HIPBLASLT_COMPUTE_TYPE_INVALID;
 }
 
 HIPBLASLT_EXPORT
 constexpr hipblasComputeType_t string_to_hipblas_computetype_assert(const std::string& value)
 {
     auto computetytpe = string_to_hipblas_computetype(value);
-    if(static_cast<int>(computetytpe) == 0)
+    if(computetytpe == HIPBLASLT_COMPUTE_TYPE_INVALID)
     {
         std::cout << "The supported types are f32_r, xf32_r, f64_r, i32_r, f32_f16_r." << std::endl;
         exit(1);
