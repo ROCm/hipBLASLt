@@ -32955,7 +32955,7 @@
     WavefrontSize: 64
     WorkGroup: [16, 16, 1]
     WorkGroupMapping: 4
-    WorkGroupMappingXCC: 304
+    WorkGroupMappingXCC: 8
     WorkGroupMappingXCCGroup: 0
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
@@ -33487,7 +33487,7 @@
     WavefrontSize: 64
     WorkGroup: [32, 4, 1]
     WorkGroupMapping: 38
-    WorkGroupMappingXCC: 38
+    WorkGroupMappingXCC: 8
     WorkGroupMappingXCCGroup: 0
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
@@ -57545,7 +57545,7 @@
     WavefrontSize: 64
     WorkGroup: [32, 8, 1]
     WorkGroupMapping: 1
-    WorkGroupMappingXCC: 304
+    WorkGroupMappingXCC: 8
     WorkGroupMappingXCCGroup: 0
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 9]
