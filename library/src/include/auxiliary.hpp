@@ -173,6 +173,14 @@ constexpr const char* hipblas_computetype_to_string(hipblasComputeType_t type)
         return "f32_f16_r";
     case HIPBLAS_COMPUTE_32F_FAST_16BF:
         return "f32_bf16_r";
+    case HIPBLAS_COMPUTE_32F_FAST_8F_FNUZ:
+        return "f32_f8_r";
+    case HIPBLAS_COMPUTE_32F_FAST_8BF_FNUZ:
+        return "f32_bf8_r";
+    case HIPBLAS_COMPUTE_32F_FAST_8F8BF_FNUZ:
+        return "f32_f8bf8_r";
+    case HIPBLAS_COMPUTE_32F_FAST_8BF8F_FNUZ:
+        return "f32_bf8f8_r";
     default:
         return "non-supported compute type";
     }
@@ -232,6 +240,10 @@ constexpr hipblasComputeType_t string_to_hipblas_computetype(const std::string& 
         value == "i32_r" || value == "i" ? HIPBLAS_COMPUTE_32I :
         value == "f32_f16_r" ? HIPBLAS_COMPUTE_32F_FAST_16F :
         value == "f32_bf16_r" ? HIPBLAS_COMPUTE_32F_FAST_16BF :
+        value == "f32_f8_r" ? HIPBLAS_COMPUTE_32F_FAST_8F_FNUZ :
+        value == "f32_bf8_r" ? HIPBLAS_COMPUTE_32F_FAST_8BF_FNUZ :
+        value == "f32_f8bf8_r" ? HIPBLAS_COMPUTE_32F_FAST_8F8BF_FNUZ :
+        value == "f32_bf8f8_r" ? HIPBLAS_COMPUTE_32F_FAST_8BF8F_FNUZ :
         static_cast<hipblasComputeType_t>(0);
 }
 
