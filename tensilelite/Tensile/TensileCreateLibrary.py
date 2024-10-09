@@ -41,6 +41,7 @@ from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
+from .Com.ArchVariant import ArchVariant, extractArchVariant, matchArchVariant, parseArchVariantString
 
 import argparse
 import collections
@@ -53,6 +54,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import functools
 from timeit import default_timer as timer
 from pathlib import Path
 from typing import Sequence, List
@@ -1262,6 +1264,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
   argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["default", "V4", "V5"], action="store")
   argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
+  argParser.add_argument("--arch-variant",           dest="ArchVariant",       type=str, default=None, help="Architecture variant to build. All non-matching variants will be filtered out. Example: 'id=1234;cu=80'")
   argParser.add_argument("--merge-files",            dest="MergeFiles",        action="store_true")
   argParser.add_argument("--no-merge-files",         dest="MergeFiles",        action="store_false")
   argParser.add_argument("--num-merged-files",       dest="NumMergedFiles",    type=int, default=1, help="Number of files the kernels should be written into.")
@@ -1319,6 +1322,7 @@ def TensileCreateLibrary():
                         " Example: gfx942/Equality/* for building equality of gfx942 only")
 
   args = argParser.parse_args()
+
 
   logicPath = args.LogicPath
   outputPath = args.OutputPath
@@ -1415,6 +1419,14 @@ def TensileCreateLibrary():
   print1(f"# Experimental:      {args.Experimental}")
   if not args.Experimental:
     logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
+
+  if args.ArchVariant:
+    requestedGfxArchs = archs
+    requestedDeviceIds, requestedCuCounts = parseArchVariantString(args.ArchVariant)
+    print1(f"# Arch variant filter: gfx={requestedGfxArchs}, id={requestedDeviceIds}, cu={requestedCuCounts}")
+
+    fn = functools.partial(matchArchVariant, requestedGfxArchs, requestedDeviceIds, requestedCuCounts)
+    logicFiles = list(filter(fn, logicFiles))
 
   print1(f"# LibraryLogicFiles: {len(logicFiles)}")
   for logicFile in logicFiles:
