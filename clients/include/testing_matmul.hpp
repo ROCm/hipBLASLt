@@ -1376,7 +1376,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                               lda[i],
                               TiA,
                               stride_a[i],
-                              num_batches[i]);
+                              block_count);
         hipblaslt_init_device(ABC::B,
                               arg.initialization,
                               alpha_isnan_type(arg, Talpha),
@@ -1386,7 +1386,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                               ldb[i],
                               TiB,
                               stride_b[i],
-                              num_batches[i]);
+                              block_count);
         hipblaslt_init_device(ABC::C,
                               arg.initialization,
                               beta_isnan_type(arg, Talpha),
@@ -1396,7 +1396,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                               ldc[i],
                               To,
                               stride_c[i],
-                              num_batches[i]);
+                              block_count);
         if(arg.unit_check || arg.norm_check || arg.allclose_check)
         {
             CHECK_HIP_ERROR(synchronize(hA[i], dA[i]));
