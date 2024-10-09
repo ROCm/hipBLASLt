@@ -162,6 +162,24 @@ inline hipError_t
     return hip_err;
 }
 
+inline hipError_t broadcast(HipDeviceBuffer& dBuf, std::size_t repeats)
+{
+    hipError_t hip_err;
+    for(size_t i = 1; i < repeats; ++i)
+    {
+        hip_err = hipMemcpy(dBuf.as<char>() + i * dBuf.getNumBytes() / repeats,
+                            dBuf.as<char>(),
+                            dBuf.getNumBytes() / repeats,
+                            dBuf.use_HMM ? hipMemcpyHostToHost : hipMemcpyDeviceToDevice);
+
+        if(hip_err != hipSuccess)
+        {
+            return hip_err;
+        }
+    }
+    return hip_err;
+}
+
 inline hipError_t synchronize(HipHostBuffer& hBuf, const HipDeviceBuffer& dBuf)
 {
     hipError_t hip_err;
