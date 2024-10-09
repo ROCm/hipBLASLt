@@ -2144,7 +2144,7 @@ class Solution(collections.abc.Mapping):
     #   state["BatchSizeEqual"] = 1
 
     isa = tuple(state["ISA"])
-    
+
     if state["StreamK"] != 0:
       state["GlobalSplitU"] = 0 # Cannot enable both Stream-K and GSU
       state["GlobalSplitUAlgorithm"] = "MultipleBuffer" # Set default Algorithm
@@ -2749,10 +2749,14 @@ class Solution(collections.abc.Mapping):
     if state["ProblemType"]["SwizzleTensorA"]:
       if state["ProblemType"]["TransposeA"] is False:
         reject(state, f"Tensor A swizzling supports TN or TT only")
+      if state["DirectToVgprA"] is False:
+        reject(state, f"Tensor A swizzling requires DirectToVgprA")
 
     if state["ProblemType"]["SwizzleTensorB"]:
       if state["ProblemType"]["TransposeB"] is True:
         reject(state, f"Tensor B swizzling supports NN or TN only")
+      if state["DirectToVgprB"] is False:
+        reject(state, f"Tensor B swizzling requires DirectToVgprB")
 
     def calcOptGRVW(lrvw: int, unrollMajorLDS: bool, datatype: DataType) -> int:
       # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.

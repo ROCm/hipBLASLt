@@ -54,9 +54,9 @@ class GSU(Component):
             module.add(SMulI32(dst=sgpr("GlobalReadIncs%s+%u"%(tc, loopIdx)), \
                 src0=m, src1=stride, \
                 comment="incr%s unrollIdx)"%(tc) ))
-        
+
         return module
-    
+
     @abc.abstractmethod
     def calculateLoopNumIter(self, writer, kernel, loopCounterName, tmpSgprInfo):
         pass
@@ -89,7 +89,7 @@ class GSU(Component):
         module.addComment1("global read addresses: increments b")
         for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
             module.add(writer.graIncrements(kernel, i, tensorParametersB))
-        
+
         return module
 
 class GSUOff(GSU):
@@ -101,11 +101,11 @@ class GSUOff(GSU):
     def graWorkGroup(self, writer, kernel):
         module = Module("GSU Off graWorkGroup")
         return module
-    
+
     def computeLoadSrd(self, writer, kernel, tP, stmp, tileStart):
         module = Module("GSU Off computeLoadSrd")
         return module
-    
+
     def graIncrements(self, writer, kernel, loopIdx, tP):
         module = Module("GSU Off graIncrements")
 
@@ -121,11 +121,11 @@ class GSUOff(GSU):
         module.add(self.graIncrementsCommon(writer, loopIdx, tc, stride, m))
 
         return module
-    
+
     def calculateLoopNumIter(self, writer, kernel, loopCounterName, tmpSgprInfo):
         module = Module("GSU Off calculateLoopNumIter")
         return module
-    
+
     def computeStoreSrdStart(self, writer, kernel):
         module = Module("GSU Off computeStoreSrdStart")
         return module
@@ -133,7 +133,7 @@ class GSUOff(GSU):
     def noLoadLoop(self, writer, kernel, tensorParametersA, tensorParametersB, pack):
         module = Module("GSU Off noLoadLoop")
         return module
-    
+
     def tailLoopNumIter(self, writer, kernel, loopCounter):
         module = Module("GSU Off tailLoopNumIter")
         return module
@@ -142,7 +142,7 @@ class GSUOff(GSU):
         module = Module("GSU Off setupNewTile")
 
         module.add(self.graIncrementsAB(writer, kernel, tensorParametersA, tensorParametersB, tPM))
-        
+
         return module
 
 class GSUOn(GSU):
@@ -150,7 +150,7 @@ class GSUOn(GSU):
     @classmethod
     def matches(cls, writer, debug=False):
         return writer.states.kernel["GlobalSplitU"] > 0
-    
+
     def __call__(self):
         assert(0)
 
@@ -174,7 +174,7 @@ class GSUOn(GSU):
             module.add(SMovB64(dst=sgpr("AddressD",2), src=sgpr("AddressTD",2)))
             module.add(SMovB64(dst=sgpr("AddressTD",2), src=sgpr("WSDstart",2)))
             module.add(extReadEpilogueLabeltmp)
-            
+
         module.addComment("GSU-not-WGMapRR :nwg1 = (size%s + MT%s - 1) / MT%s;" \
             % (writer.states.tileChar1, writer.states.tileChar1, writer.states.tileChar1))
 
@@ -207,12 +207,15 @@ class GSUOn(GSU):
         module.add(gsuLabelEnd)
 
         return module
-    
+
     def computeLoadSrd(self, writer, kernel, tP, stmp, tileStart):
         module = Module("GSU On computeLoadSrd")
 
         tc = tP["tensorChar"]
         depthU = kernel["DepthU"]
+        # Swizzled for A, TODO- test for B
+        depthUDivSW = "%s%s"%(kernel["DepthU"], "*MI_M") if (tP["isSwizzled"] and tc == 'A') else "%s"%kernel["DepthU"]
+        #
         depthUDiv = kernel["DepthU"]
         gsuOffsetStr = "gsuOffset = DepthU*bpeGR*GSUSumIdx"
         divider = 1
@@ -230,7 +233,7 @@ class GSUOn(GSU):
         module.add(SAndB32(dst=sgpr(stmp), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
         module.add(SCBranchSCC1(labelName=gsucLabel.getLabelName(), comment="branch if GSUC == 1"))
         gsuOffsetStr = "gsuOffset = DepthU*GSUSumIdx"
-        module.addModuleAsFlatItems(writer.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), depthUDiv, sgpr("GSUSumIdx"), gsuOffsetStr))
+        module.addModuleAsFlatItems(writer.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), depthUDivSW, sgpr("GSUSumIdx"), gsuOffsetStr))
         module.add(SBranch(gsucLabelEnd.getLabelName()))
         module.add(gsucLabel)
         gsuOffsetStr = "gsuOffset = DepthU*accumulatedNumOfLoopCounterL"
@@ -253,7 +256,7 @@ class GSUOn(GSU):
         module.add(SAddCU32(dst=sgpr(tileStart+1), src0=sgpr(tileStart+1), src1=sgpr(stmp+1), comment="accum GsuOffset term to tilestart"))
 
         return module
-    
+
     def graIncrements(self, writer, kernel, loopIdx, tP):
         module = Module("GSU On graIncrements")
 
@@ -268,8 +271,11 @@ class GSUOn(GSU):
 
             tcGR = tc if tc == "Metadata" else (tc + "GR")
 
+            # DVTA + SwA
+            mult_MI_M = "*MI_M" if tc == "A" and kernel["ProblemType"]["SwizzleTensorA"] else ""
+
             module.add(SAndB32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-            module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr(gsuSgpr), src1="DepthU*Bpe%s"%(tcGR), comment="GSU*DepthU*Bpe"))
+            module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr(gsuSgpr), src1="DepthU*Bpe%s%s"%(tcGR, mult_MI_M), comment="GSU*DepthU*Bpe%s"%(mult_MI_M)))
             module.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
 
             m = sgpr(gsuSgpr)
@@ -278,7 +284,7 @@ class GSUOn(GSU):
                 m.setMinus(True)
 
             incr = sgpr("GlobalReadIncs%s+%u"%(tc, loopIdx))
-            duBpe = "DepthU*Bpe%s"%(tcGR)
+            duBpe = "DepthU*Bpe%s%s"%(tcGR, mult_MI_M)
             # multiply by stride, optimizing if unit stride
             if writer.isConstUnitStride(stride):
                 module.add(SCSelectB32(dst=incr, src0=duBpe, src1=m, comment="incr%s (unrollIdx)"%(tc)))
@@ -293,7 +299,7 @@ class GSUOn(GSU):
                     module.add(SLShiftRightB32(dst=incr, shiftHex=hex(log2(8)), src=incr))
 
         return module
-    
+
     def calculateLoopNumIter(self, writer, kernel, loopCounterName, tmpSgprInfo):
         module = Module("GSU On calculateLoopNumIter")
 
@@ -342,7 +348,7 @@ class GSUOn(GSU):
         module.add(SCMovB32(dst=loopCounter, src=sgpr(tmpSgprRes.idx), comment="numIterMyWg++ if needed"))
 
         return module
-    
+
     def computeStoreSrdStart(self, writer, kernel):
         module = Module("GSU On computeStoreSrdStart")
 
@@ -381,7 +387,7 @@ class GSUOn(GSU):
                 module.add(SAddU32(dst=sgpr("SrdD+0"), src0=sgpr("SrdD+0"), src1=sgpr(tmpSgprX2), comment="add lo GSU offset to SRD"))
                 module.add(SAddCU32(dst=sgpr("SrdD+1"), src0=sgpr("SrdD+1"), src1=sgpr(tmpSgpr1), comment="add hi GSU offset to SRD"))
             module.add(gsuLabel)
-    
+
         return module
 
     def noLoadLoop(self, writer, kernel, tensorParametersA, tensorParametersB, pack):
@@ -443,7 +449,7 @@ class GSUOn(GSU):
         module.add(gsuLabel)
 
         return module
-    
+
     def tailLoopNumIter(self, writer, kernel, loopCounter):
         module = Module("GSU On tailLoopNumIter")
 
@@ -477,7 +483,7 @@ class GSUOn(GSU):
             module.add(gsucLabelEnd)
 
         return module
-    
+
     def setupNewTile(self, writer, kernel, tensorParametersA, tensorParametersB, tPM):
         module = Module("GSU On setupNewTile")
 

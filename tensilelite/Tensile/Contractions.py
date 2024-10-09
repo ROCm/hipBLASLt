@@ -467,7 +467,7 @@ class ProblemPredicate(Properties.Predicate):
         if ('GlobalSplitU' in state) and (state['GlobalSplitU'] > 1):
             if ('_GlobalAccumulation' not in state) or (state['_GlobalAccumulation'] != 'MultipleBuffer'):
                 rv += [cls("DeterministicMode", value = False)]
-        
+
         if ('StreamK' in state) and (state['StreamK'] > 0) and ('StreamKAtomic' in state) and (state['StreamKAtomic'] == 1):
             # StreamKAtomic = 1 uses atomic for partial tiles
             rv += [cls("DeterministicMode", value = False)]
@@ -508,9 +508,14 @@ class ProblemPredicate(Properties.Predicate):
             rv += [cls("WorkgroupMappingXCCCheck", value=[state['WorkGroupMappingXCC'], state['WorkGroupMappingXCCGroup']])]
         if state['ProblemType']['SwizzleTensorA']:
             rv += [cls('SwizzleTensorA', value=state['ProblemType']['SwizzleTensorA'])]
+            rv += [cls("Free0SizeMultiple", index=0, value=state['MacroTile0'])]
+            rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
+
 
         if state['ProblemType']['SwizzleTensorB']:
             rv += [cls('SwizzleTensorB', value=state['ProblemType']['SwizzleTensorB'])]
+            rv += [cls("Free1SizeMultiple", index=0, value=state['MacroTile1'])]
+            rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
 
         return rv
 
