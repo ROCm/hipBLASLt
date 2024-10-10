@@ -5,7 +5,7 @@
 - Activation: false
   ActivationComputeDataType: 0
   ActivationNoGuard: false
-  ActivationType: none
+  ActivationType: hipblaslt_all
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
   Batched: true
@@ -214,7 +214,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -480,7 +480,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -746,7 +746,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -1012,7 +1012,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -1285,7 +1285,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -1563,7 +1563,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -1841,7 +1841,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -2119,7 +2119,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -2397,7 +2397,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -2675,7 +2675,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -2953,7 +2953,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -3231,7 +3231,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -3509,7 +3509,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -3787,7 +3787,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -4065,7 +4065,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -4343,7 +4343,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -4621,7 +4621,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -4899,7 +4899,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -5177,7 +5177,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -5455,7 +5455,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -5733,7 +5733,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -6011,7 +6011,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -6289,7 +6289,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -6567,7 +6567,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -6845,7 +6845,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -7123,7 +7123,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -7401,7 +7401,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -7679,7 +7679,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -7957,7 +7957,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -8235,7 +8235,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -8513,7 +8513,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -8791,7 +8791,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -9069,7 +9069,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -9347,7 +9347,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -9625,7 +9625,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -9903,7 +9903,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -10181,7 +10181,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -10459,7 +10459,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -10737,7 +10737,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -11015,7 +11015,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -11293,7 +11293,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -11571,7 +11571,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -11849,7 +11849,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -12127,7 +12127,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -12405,7 +12405,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -12683,7 +12683,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -12961,7 +12961,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -13239,7 +13239,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -13517,7 +13517,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -13795,7 +13795,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -14073,7 +14073,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -14351,7 +14351,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -14629,7 +14629,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -14907,7 +14907,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -15185,7 +15185,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
@@ -15463,7 +15463,7 @@
       Activation: false
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
