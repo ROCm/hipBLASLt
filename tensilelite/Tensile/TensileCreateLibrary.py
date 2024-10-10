@@ -1405,17 +1405,19 @@ def TensileCreateLibrary():
   print1(f"# LogicFilter: {globPattern}")
   logicFiles = (os.path.join(logicPath, file) for file in glob.iglob(globPattern, recursive=True))
   logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
-  logicFiles = [file for file in logicFiles if not "Experimental/" in file]
 
   if args.ArchVariant:
-    requestedGfxArchs = archs
+    requestedGfxArchs = set(archs)
     requestedDeviceIds, requestedCuCounts = parseArchVariantString(args.ArchVariant)
     print1(f"# Arch variant filter: gfx={requestedGfxArchs}, id={requestedDeviceIds}, cu={requestedCuCounts}")
 
+    numLogicFilesAllVariants = len(logicFiles)
     fn = functools.partial(matchArchVariant, requestedGfxArchs, requestedDeviceIds, requestedCuCounts)
     logicFiles = list(filter(fn, logicFiles))
+    print1(f"#   Filtered {numLogicFilesAllVariants - len(logicFiles)} logic files")
 
   print1(f"# LibraryLogicFiles({len(logicFiles)}):")
+  exit(1)
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
 

@@ -160,6 +160,11 @@ def test_parseArchVariantString_success():
     assert deviceIds == set()
     assert cuCounts == {64, 32}
 
+    spec = "id=abcd"
+    deviceIds, cuCounts = parseArchVariantString(spec)
+    assert deviceIds == {"abcd"}
+    assert cuCounts == set()
+
     # Empty specification string
     spec = ""
     deviceIds, cuCounts = parseArchVariantString(spec)
@@ -173,11 +178,11 @@ def test_parseArchVariantString_failure():
     with pytest.raises(ValueError, match=r"Invalid architecture variant string(.*)"):
         parseArchVariantString(spec)
 
-    spec = "id=abcd;cd=ef"
+    spec = "id=12345"
     with pytest.raises(ValueError, match=r"Invalid architecture variant string(.*)"):
         parseArchVariantString(spec)
 
-    spec = "id=12345"
+    spec = "cu=ab"
     with pytest.raises(ValueError, match=r"Invalid architecture variant string(.*)"):
         parseArchVariantString(spec)
 
