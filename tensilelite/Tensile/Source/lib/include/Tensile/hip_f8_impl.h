@@ -32,7 +32,9 @@
     && HIP_VERSION_PATCH > 42130 //tmp before gfx94 use hip f8 header
 #define HIP_FP8_TYPE_OCP 1
 #endif
+#if defined(HIP_FP8_TYPE_OCP)
 #include <hip/hip_fp8.h>
+#endif
 
 namespace tensile_hip_f8_impl
 {
