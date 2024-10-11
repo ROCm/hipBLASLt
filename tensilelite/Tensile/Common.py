@@ -618,7 +618,7 @@ validParameters = {
     # Attempt to load directly from global memory into Vgpr.
     # Assembly only
     "DirectToVgprA":              [ False, True ],
-    "DirectToVgprB":              [ False ], #[ False, True ], # TODO: enable DTVB
+    "DirectToVgprB":              [ False, True ],
     "DirectToVgprSparseMetadata": [ False, True ],
 
     # Attempt to load directly from global memory into LDS.

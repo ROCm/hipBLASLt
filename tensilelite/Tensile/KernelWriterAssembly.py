@@ -551,13 +551,15 @@ class KernelWriterAssembly(KernelWriter):
     # PLR index: from X0 to X<LoopIters-1> (at most) -> VGPRs will be duplicated LoopIters times (at most)
     # eg, if LoopIters = 4, there would be at most 4*VGPRs
     PLR = self.states.numVgprBuffer
-    # double the number of VgprValue if self.states.vgprValuDouble is true
-    if self.states.vgprValuDouble:
-      PLR *= 2
+    numBi = PLR
     ri = 0
     if self.states.a.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
+      numBiFactor = numBi
+      if kernel["DirectToVgprA"] and self.states.lrvwTileA > 1:
+        # DirectToVgpr case, we need LoopIters * 2 buffers
+        numBiFactor = kernel["LoopIters"] * 2
       if self.states.lrvwTileA > 1:
-        for bi in range(0,PLR): # buffer indices
+        for bi in range(0,numBiFactor): # buffer indices
           for iui in range(0, kernel["InnerUnroll"]):
             module.add(RegSet("v", "vgprValuA_X%u_I%u"%(bi,iui), self.states.a.startVgprValu+ri))
             ri += self.states.a.numVgprValuPerBlock
@@ -565,9 +567,9 @@ class KernelWriterAssembly(KernelWriter):
             ri = 0
         ri = 0
         if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]:
-          for data in range(0,kernel["MIInputPerThreadA"]):
-            for bi in range(0,PLR): # buffer indices
-              for iui in range(0, kernel["InnerUnroll"]):
+          for bi in range(0,numBiFactor): # buffer indices
+            for iui in range(0, kernel["InnerUnroll"]):
+              for data in range(0,kernel["MIInputPerThreadA"]):
                 module.add(RegSet("v", "vgprValuA_X%u_I%u_D%u"%(bi,iui,data), self.states.a.startVgprValuPack+ri))
                 ri += ceil(kernel["VectorWidthA"] * tPA["bpe"] / self.states.bpr) * kernel["MIWaveTileA"] // kernel["VectorWidthA"]
       else:
@@ -587,8 +589,12 @@ class KernelWriterAssembly(KernelWriter):
 
     ri = 0
     if self.states.b.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
+      numBiFactor = numBi
+      if kernel["DirectToVgprB"] and self.states.lrvwTileB > 1:
+        # DirectToVgpr case, we need LoopIters * 2 buffers
+        numBiFactor = kernel["LoopIters"] * 2
       if self.states.lrvwTileB > 1:
-        for bi in range(0,PLR): # buffer indices
+        for bi in range(0,numBiFactor): # buffer indices
           for iui in range(0, kernel["InnerUnroll"]):
             module.add(RegSet("v", "vgprValuB_X%u_I%u"%(bi,iui), self.states.b.startVgprValu+ri))
             ri += self.states.b.numVgprValuPerBlock
@@ -596,9 +602,9 @@ class KernelWriterAssembly(KernelWriter):
             ri = 0
         ri = 0
         if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]:
-          for data in range(0,kernel["MIInputPerThreadB"]):
-            for bi in range(0,PLR): # buffer indices
-              for iui in range(0, kernel["InnerUnroll"]):
+          for bi in range(0,numBiFactor): # buffer indices
+            for iui in range(0, kernel["InnerUnroll"]):
+              for data in range(0,kernel["MIInputPerThreadB"]):
                 module.add(RegSet("v", "vgprValuB_X%u_I%u_D%u"%(bi,iui,data), self.states.b.startVgprValuPack+ri))
                 ri += ceil(kernel["VectorWidthB"] * tPB["bpe"] / self.states.bpr) * kernel["MIWaveTileB"] // kernel["VectorWidthB"]
       else:
@@ -2305,11 +2311,19 @@ class KernelWriterAssembly(KernelWriter):
       v = tP["gpr"]["unrollOffsets"]
       strideIdx = (tP["lsp"] if tP["tlu"] else tP["lsc"])
       stride = kernel[strideIdx]
+      if (tc == "A" or tc == "B") and kernel["DirectToVgpr%s"%tc] and kernel["LocalSplitU"] > 1:
+        # DTV + LSU case, we need to divide stride by LSU
+        stride = stride // kernel["LocalSplitU"]
       prevStride = 0
       totalStride = 0
+      dtvKInterval = self.states.dtvKIntervalA if tP["isA"] else self.states.dtvKIntervalB
       module.add(VMovB32(dst=vgpr(v), src=vgpr(tP["gpr"]["uReg"]), comment="gro%s%s_%u"%(tP["tensorChar"], self.states.unrollChar, 0)))
       for l in range(1, tP["nru"]):
         totalStride += stride
+        if dtvKInterval > 1:
+          # DirectToVgpr + k interval > 1 case, stride * dtvKInterval is added every dtvKInterval. 
+          # Add mod in mod != 0 case
+          totalStride = stride * (l - (l % dtvKInterval)) + (l % dtvKInterval)
         currStride = totalStride - prevStride
         prevStride = totalStride
         module.add(VAddCOU32(dst=vgpr(v+l), dst1=VCC(), src0=currStride, \
@@ -3208,12 +3222,38 @@ class KernelWriterAssembly(KernelWriter):
       with self.allocTmpSgpr(1) as tmpSgprInfo:
         module.add(vectorStaticRemainder(dummy, dividendReg, "Serial", kernel["WavefrontSize"], tmpVgprRes, tmpSgprInfo))
 
+    # store DirectToVgpr K interval for later use
+    dtvKInterval = 1
+
     if isDTVAB:
       # offset calculation for DirectToVgpr
       # call function from LraTileAssignmentMFMA for DirectToVgpr
       module.addComment0("TileAssignment for DirectToVgpr%s" % tc)
       component = Component.LraTileAssignment.find(self)
       module.add(component.LraTileAssignmentCode(self, kernel, tP, tReg, uReg, tmpVgprRes, dividendReg=dividendReg, isDTVAB=True))
+
+      # The other side of lrvw
+      if tP["isA"]:
+        # the other is B
+        tluOther = kernel["ProblemType"]["TLUB"]
+        if tluOther:
+          lrvwOther = self.states.lrvwTileB
+        else:
+          lrvwOther = self.states.lrvwUnrollB
+      else:
+        # the other is A
+        tluOther = kernel["ProblemType"]["TLUA"]
+        if tluOther:
+          lrvwOther = self.states.lrvwTileA
+        else:
+          lrvwOther = self.states.lrvwUnrollA
+      if lrvwOther >= 2 and (not tluOther) and tP["tlu"]:
+        # DirectToVgpr + LocalReadVectorWidth>=2 case, multiply qReg by lrvwOther
+        dtvKInterval = lrvwOther
+      if  tluOther and tP["tlu"]:
+        # DirectToVgpr + both TLU case, multiply qReg by kernel["MIInputPerThread"]
+        dtvKInterval = kernel["MIInputPerThread"]
+      module.add(staticMultiply(vgpr(qReg), vgpr(qReg), dtvKInterval, None))
 
       # DTV+localSplitU case. Calculate LSU offset here
       if kernel["LocalSplitU"] > 1:
@@ -3227,10 +3267,11 @@ class KernelWriterAssembly(KernelWriter):
         # generate instruction
         module.add(vectorStaticDivide(wave_id, "Serial", kernel["WavefrontSize"] * numWaves, tmpVgprRes, comment="LSU offset: Get LSU wave_id"))
         module.add(VMulLOU32(dst=vgpr(wave_id), src0=hex(lsuStride), src1=vgpr(wave_id), \
-          comment="LSU offset: lsuoffset = wave_id*lsuStride*(MT%u+PAD)"%tile01))
+          comment="LSU offset: lsuoffset = wave_id*lsuStride(%u)" % (lsuStride)))
         module.add(VAddU32(dst=vgpr(qReg), src0=vgpr(wave_id), src1=vgpr(qReg), \
           comment="LSU Offset: offset += lsuoffset" ))
         self.vgprPool.checkIn(wave_id)
+
     else:
       module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpVgprRes))
 
@@ -3269,6 +3310,13 @@ class KernelWriterAssembly(KernelWriter):
     tP["gpr"]["lwoT"] = tReg
     tP["gpr"]["uReg"] = uReg
     self.vgprPool.checkIn(tmpVgpr)
+
+    # store DirectToVgpr K interval for later use
+    if tP["isA"]:
+      self.states.dtvKIntervalA = dtvKInterval
+    elif tP["isB"]:
+      self.states.dtvKIntervalB = dtvKInterval
+
     return module
 
   ##############################################################################
@@ -4818,7 +4866,7 @@ class KernelWriterAssembly(KernelWriter):
     tc = tP["tensorChar"]
 
     statesAorB = self.states.a if tP["isA"] else self.states.b
-    numVgprValuPerBlock = statesAorB.numVgprValuPerBlock
+    numVgprValuPerBlock = kernel["MIWaveTile%c"%tc] * kernel["MIInputPerThread%c"%tc] * tP["bpe"] // self.states.bpr
     numIterPerCoalescedRead = self.states.numIterPerCoalescedReadA if tP["isA"] else self.states.numIterPerCoalescedReadB
     numReadsIterCoalesced   = self.states.numReadsIterCoalescedA   if tP["isA"] else self.states.numReadsIterCoalescedB
 
@@ -4828,9 +4876,7 @@ class KernelWriterAssembly(KernelWriter):
     vgprBuffer_new_offset = m_or_u%numIterPerCoalescedRead*innerUnroll*vgprPerInput
     # DirectToVgpr + pack special case
     # offset vgprBuffer_new
-    # TODO: implement DTV + pack
-    #packDTV = self.packDTVA if tc == "A" else self.packDTVB
-    packDTV = False
+    packDTV = self.states.packDTVA if tP["isA"] else self.states.packDTVB
     if packDTV:
       # DTV + pack case, offset bufferIdx for local read packing instructions
       numBi = kernel["LoopIters"]
@@ -4840,9 +4886,6 @@ class KernelWriterAssembly(KernelWriter):
     iui_new_offset = iui%numReadsIterCoalesced*vgprPerInput
     ab_new = idxAB*vgprPerInput*numReadsIterCoalesced
     abStr = "Valu%c_X%u_I%u+%u+%u+%u" % (tc, vgprBuffer_new, iui_new, ab_new, vgprBuffer_new_offset, iui_new_offset)
-    # TODO: implement DTV + pack
-    #packDTV = self.packDTVA if tP["isA"] else self.packDTVB
-    packDTV = False # tentative
     if kernel["DirectToVgpr%c"%tc] and not packDTV:
       # overwrite aStr/bStr for DirectToVgpr (except for pack DTV case)
       numVgprPerBlock = statesAorB.numVgprG2LAllocated
@@ -4938,7 +4981,8 @@ class KernelWriterAssembly(KernelWriter):
       vgprBufferM_new_offset = m%self.states.numIterPerCoalescedReadMetadata*kernel["InnerUnroll"]*vgprPerInputM
 
     # handle multiple K element in MFMA instruction
-    if tail and kernel["MatrixInstK"] > 1:
+    # MIK=1 case, we still need this code for Coalesced case
+    if tail and (kernel["MatrixInstK"] > 1 or numReadsIterCoalescedA > 1 or numReadsIterCoalescedB > 1):
       if not is_wmma_v1: #mfma or wmma_v2
         kReg    = self.vgprPool.checkOut(1,"kReg") # remainder
         if kernel["LocalSplitU"] > 1:
@@ -5737,7 +5781,8 @@ class KernelWriterAssembly(KernelWriter):
           tmpS =    incLower + 2
           tmpIncSparse = incLower + 3
           suStr = "StaggerUIter"
-          if kernel["PrefetchGlobalRead"] == 2 and (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]:
+          tcOther = "B" if tP["isA"] else "A"
+          if kernel["PrefetchGlobalRead"] == 2 and (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc] and (not kernel["DirectToVgpr%s"%tcOther]):
             suStr += "DTV"
           if prefetchIndex:
             imod.add(SAddU32(dst=sgpr(tmpS), src0=self.loopCounter(kernel, self.states.unrollIdx), src1=prefetchIndex, comment="remove pf(%u)"%prefetchIndex))
