@@ -113,7 +113,7 @@ class Macro(Item):
         if printModuleNames:
             s += "// %s { \n" % self.name
         s += ".macro " + str(self.macro).replace(",", "")
-        s += "".join([("    " + str(x).replace(",", "")) for x in self.itemList])
+        s += "".join([("    " + str(x).replace(", ", " ")) for x in self.itemList])
         s += ".endm\n"
         if printModuleNames:
             s += "// } %s\n" % self.name

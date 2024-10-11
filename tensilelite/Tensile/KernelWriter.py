@@ -3494,7 +3494,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if tensorParametersA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]:
       self.states.a.startVgprValuPack = vgprIdx
       if self.states.lrvwTileA > 1:
-        numVgprValuPackA = ceil(kernel["VectorWidthA"] * tensorParametersA["bpe"] / self.states.bpr) * kernel["MIWaveTileA"] // kernel["VectorWidthA"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadA"]
+        if kernel["EnableMatrixInstruction"]:
+          numVgprValuPackA = ceil(kernel["VectorWidthA"] * tensorParametersA["bpe"] / self.states.bpr) * kernel["MIWaveTileA"] // kernel["VectorWidthA"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadA"]
+        else:
+          PLR = kernel["PrefetchLocalRead"] if kernel["PrefetchLocalRead"] < kernel["LoopIters"] else kernel["LoopIters"] - 1
+          PLRplus1A = (1+PLR) # if not self.packDTVA else kernel["LoopIters"]
+          self.states.a.numVgprValu //= PLRplus1A
+          numElemPerBprA = (4 / tensorParametersA["bpe"])
+          numLoadPerReg = max(1, int(numElemPerBprA)//self.states.lrvwTileA)
+          valuBlocksPack = PLRplus1A * numLoadPerReg
+          numVgprValuPackA = self.states.a.numVgprValu * valuBlocksPack
       else:
         numVgprValuPackA = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackA * (int(4/tensorParametersA["bpeDS"]) - 1)
     vgprIdx += numVgprValuPackA
@@ -3517,7 +3526,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if tensorParametersB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]:
       self.states.b.startVgprValuPack = vgprIdx
       if self.states.lrvwTileB > 1:
-        numVgprValuPackB = ceil(kernel["VectorWidthB"] * tensorParametersB["bpe"] / self.states.bpr) * kernel["MIWaveTileB"] // kernel["VectorWidthB"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadB"]
+        if kernel["EnableMatrixInstruction"]:
+          numVgprValuPackB = ceil(kernel["VectorWidthB"] * tensorParametersB["bpe"] / self.states.bpr) * kernel["MIWaveTileB"] // kernel["VectorWidthB"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadB"]
+        else:
+          PLR = kernel["PrefetchLocalRead"] if kernel["PrefetchLocalRead"] < kernel["LoopIters"] else kernel["LoopIters"] - 1
+          PLRplus1B = (1+PLR) # if not self.packDTVA else kernel["LoopIters"]
+          self.states.b.numVgprValu //= PLRplus1B
+          numElemPerBprB = (4 / tensorParametersB["bpe"])
+          numLoadPerReg = max(1, int(numElemPerBprB)//self.states.lrvwTileB)
+          valuBlocksPack = PLRplus1B * numLoadPerReg
+          numVgprValuPackB = self.states.b.numVgprValu * valuBlocksPack
       else:
         numVgprValuPackB = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackB * (int(4/tensorParametersB["bpeDS"]) - 1)
     vgprIdx += numVgprValuPackB

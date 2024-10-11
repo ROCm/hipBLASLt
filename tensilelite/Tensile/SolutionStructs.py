@@ -2878,6 +2878,8 @@ class Solution(collections.abc.Mapping):
         if state["EnableMatrixInstruction"] and globalParameters["AsmCaps"][isa]['HasWMMA']:
           reject(state, "Half WMMA doesn't support single buffer GSU")
           return
+      if (not state["EnableMatrixInstruction"]) and (state["VectorWidthA"] < 2 or state["VectorWidthB"] < 2):
+        reject(state, "Assembly half requires VectorWidth >= 2 for non-MFMA mode")
 
     ########################################
     # Search DepthU

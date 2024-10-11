@@ -564,7 +564,7 @@ class KernelWriterAssembly(KernelWriter):
           if (tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]):
             ri = 0
         ri = 0
-        if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]:
+        if kernel["EnableMatrixInstruction"] and tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]:
           for data in range(0,kernel["MIInputPerThreadA"]):
             for bi in range(0,PLR): # buffer indices
               for iui in range(0, kernel["InnerUnroll"]):
@@ -576,7 +576,7 @@ class KernelWriterAssembly(KernelWriter):
             module.add(RegSet("v", "vgprValuA_X%u_I%u"%(bi,iui), self.states.a.startVgprValu+ri))
             ri += self.states.a.numVgprValuPerBlock
         ri = 0
-        if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]:
+        if kernel["EnableMatrixInstruction"] and tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]:
           for data in range(1,int(self.states.bpr/tPA["bpeDS"])):
             for bi in range(0,PLR): # buffer indices
               if bi % self.states.numVgprBufferPackA == 0:
@@ -584,6 +584,8 @@ class KernelWriterAssembly(KernelWriter):
               for iui in range(0, kernel["InnerUnroll"]):
                 module.add(RegSet("v", "vgprValuA_X%u_I%u_D%u"%(bi,iui,data), self.states.a.startVgprValuPack+ri))
                 ri += self.states.a.numVgprValuPerBlock
+    else:
+      raise RuntimeError("numVgprValu of A shoud be greater than 0")
 
     ri = 0
     if self.states.b.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
@@ -595,7 +597,7 @@ class KernelWriterAssembly(KernelWriter):
           if (tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]):
             ri = 0
         ri = 0
-        if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]:
+        if kernel["EnableMatrixInstruction"] and tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]:
           for data in range(0,kernel["MIInputPerThreadB"]):
             for bi in range(0,PLR): # buffer indices
               for iui in range(0, kernel["InnerUnroll"]):
@@ -607,7 +609,7 @@ class KernelWriterAssembly(KernelWriter):
             module.add(RegSet("v", "vgprValuB_X%u_I%u"%(bi,iui), self.states.b.startVgprValu+ri))
             ri += self.states.b.numVgprValuPerBlock
         ri = 0
-        if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]:
+        if kernel["EnableMatrixInstruction"] and tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]:
           for data in range(1,int(self.states.bpr/tPB["bpeDS"])):
             for bi in range(0,PLR): # buffer indices
               if bi % self.states.numVgprBufferPackB == 0:
@@ -615,6 +617,8 @@ class KernelWriterAssembly(KernelWriter):
               for iui in range(0, kernel["InnerUnroll"]):
                 module.add(RegSet("v", "vgprValuB_X%u_I%u_D%u"%(bi,iui,data), self.states.b.startVgprValuPack+ri))
                 ri += self.states.b.numVgprValuPerBlock
+    else:
+      raise RuntimeError("numVgprValu of B shoud be greater than 0")
 
     if kernel["ConvertAfterDS"]:
       cvtTemp = max(self.states.a.startVgprValuCvtTemp, self.states.b.startVgprValuCvtTemp)
