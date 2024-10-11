@@ -177,9 +177,7 @@ inline rocblaslt_status validateMatmulArgs(int64_t                m,
     if(string_to_hip_datatype(hip_datatype_to_string(type_a)) == HIPBLASLT_DATATYPE_INVALID
        || string_to_hip_datatype(hip_datatype_to_string(type_b)) == HIPBLASLT_DATATYPE_INVALID
        || string_to_hip_datatype(hip_datatype_to_string(type_c)) == HIPBLASLT_DATATYPE_INVALID
-       || string_to_hip_datatype(hip_datatype_to_string(type_d)) == HIPBLASLT_DATATYPE_INVALID
-       || string_to_hipblas_computetype(rocblaslt_compute_type_string(compute_type))
-              == HIPBLASLT_COMPUTE_TYPE_INVALID)
+       || string_to_hip_datatype(hip_datatype_to_string(type_d)) == HIPBLASLT_DATATYPE_INVALID)
         status = rocblaslt_status_not_implemented;
 
     if(status != rocblaslt_status_continue)
