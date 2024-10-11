@@ -1947,9 +1947,7 @@ class Solution(collections.abc.Mapping):
   # determine can we use DirectToLds
   @staticmethod
   def isDirectToLdsDoable(state, tc):
-    numBytes = state["ProblemType"]["DataType"].numBytes()
-
-    # x2/x4 support for directToLds
+    # x2/x4 support for directToLds (no longer supported)
 
     # numelements_perlane = 4/numBytes
     # TN with transposeLDS feature should work as long as state["AssertSummationElementMultiple"] % (numelements_perlane*2) = 0
@@ -1960,24 +1958,42 @@ class Solution(collections.abc.Mapping):
     #TN
     # use for all precisions with TransposeLDS=1
 
-    if state["ProblemType"]["DataType"].isHalf() and state["AssertSummationElementMultiple"] % (2 * state["GlobalReadVectorWidth%c"%tc])  != 0:
-      reject(state, "can't use DirectToLds for FP16 with AssertSummationElementMultiple %u" % state["AssertSummationElementMultiple"])
+    numBytesAB = state["ProblemType"]["DataType%s"%tc].numBytes()
+    numBytesPerLoad = state["GlobalReadVectorWidth%s"%tc] * numBytesAB
+
+    # so far, numBytesAB<4 case, TLU=False only (continue with False)
+    if numBytesAB < 4 and state["ProblemType"]["TLU%c"%tc]:
       return False
 
-    if state["ProblemType"]["DataType"].isBFloat16() and state["AssertSummationElementMultiple"] % (2 * state["GlobalReadVectorWidth%c"%tc]) != 0:
-      reject(state, "can't use DirectToLds for BF16 with AssertSummationElementMultiple %u" % state["AssertSummationElementMultiple"])
+    # numBytesPerLoad == 4 only
+    if numBytesPerLoad != 4:
+      reject(state, "DirectToLds can only be used with buffer loads requiring 1 register")
+      return False
+
+    # so far MFMA only (TODO: enable non MFMA case)
+    if not state["EnableMatrixInstruction"]:
+      reject(state, "DirectToLds is for MatrixInstruction only for now (tentative)")
+      return False
+
+    # so far, DirectToLds does not work with StreamK (TODO: enable StreamK case)
+    if state["StreamK"]:
+      reject(state, "DirectToLds does not support StreamK (tentative)")
+      return False
+
+    # DTL + LocalReadVectorWidth > MIInputPerThread does not work
+    # Need support for TailLoop
+    if state["LocalReadVectorWidth"] > state["MIInputPerThread"]:
+      reject(state, "DirectToLds does not work with LocalReadVectorWidth > MIInputPerThread")
+      return False
+
+    if state["AssertSummationElementMultiple"] % state["GlobalReadVectorWidth%c"%tc]  != 0:
+      reject(state, "can't use DirectToLds with AssertSummationElementMultiple(%u) %% GlobalReadVectorWidth%c(%u)" % \
+            (state["AssertSummationElementMultiple"], tc,  state["GlobalReadVectorWidth%c"%tc]))
       return False
 
     if state["NumThreads"] % state["WavefrontSize"] != 0:
       reject(state, "can't use DirectToLds for NumThreads % WavefrontSize != 0")
       return False
-
-    # GLVW*BPe only for precision(s) < 4 (bpe)
-    #if (state["ProblemType"]["TLU%c"%tc] == True and numBytes < 4):
-    if (numBytes < 4):
-      if state["GlobalReadVectorWidth%c"%tc] * numBytes != 4:
-        reject(state, "can't use DirectToLds for bpe < 4 and GlobalReadVectorWidth * numBytes != 4"%tc)
-        return False
 
     if state["ProblemType"]["TLU%c"%tc] == state["UnrollMajorLDS%c" % tc]:
       reject(state, "can't use DirectToLds for TLU%c == UnrollMajorLDS%c"%(tc, tc))
@@ -1985,40 +2001,33 @@ class Solution(collections.abc.Mapping):
 
     # avoid picking x2&x4 for precisions < f32/f64 in [ProblemType][TLU] == TRUE
     if not state["EnableMatrixInstruction"]:
-      if state["GlobalReadVectorWidth%c"%tc] * numBytes * state["WavefrontSize"] > 256:
-        reject(state, "can't use DirectToLds for not EnableMatrixInstruction and GlobalReadVectorWidth%c * bpe * WavefrontSize > 256"%tc)
+      if state["GlobalReadVectorWidth%c"%tc] * numBytesAB * state["WavefrontSize"] > 256:
+        reject(state, "can't use DirectToLds for not EnableMatrixInstruction and GlobalReadVectorWidth%c * bpe%c * WavefrontSize > 256"%(tc,tc))
         return False
-
-    # TODO revisit fp32 case for failure
-    #if state["ProblemType"]["TLU%c"%tc] and numBytes < 8 and state["GlobalReadVectorWidth%c"%tc] * numBytes > 4:
-    if numBytes < 8 and state["GlobalReadVectorWidth%c"%tc] * numBytes > 4:
-      reject(state, "can't use DirectToLds for TLU%c and bpe < 8 and GlobalReadVectorWidth%c * bpe > 4"%(tc, tc))
-      return False
-
 
     if state["WaveSeparateGlobalRead%c" % tc]:
-      if state["LSC%c"%tc] * state["LSP%c"%tc] * numBytes != state["WavefrontSize"] * state["GlobalReadVectorWidth%c"%tc] * numBytes:
-        reject(state, "can't use DirectToLds for LSC%c and LSP%c * bpe!= WavefrontSize * GlobalReadVectorWidth%c * bpe > 4"%(tc, tc, tc))
+      if state["LSC%c"%tc] * state["LSP%c"%tc] * numBytesAB != state["WavefrontSize"] * state["GlobalReadVectorWidth%c"%tc] * numBytesAB:
+        reject(state, "can't use DirectToLds for LSC%c and LSP%c * bpe!= WavefrontSize * GlobalReadVectorWidth%c * bpe%c > 4"%(tc, tc, tc, tc))
         return False
     else:
-      if state["LSC%c"%tc] * state["LSP%c"%tc] * numBytes != state["NumThreads"] * state["GlobalReadVectorWidth%c"%tc] * numBytes:
-        reject(state, "can't use DirectToLds for LSC%c and LSP%c * bpe != NumThreads * GlobalReadVectorWidth%c * bpe > 4"%(tc, tc, tc))
+      if state["LSC%c"%tc] * state["LSP%c"%tc] * numBytesAB != state["NumThreads"] * state["GlobalReadVectorWidth%c"%tc] * numBytesAB:
+        reject(state, "can't use DirectToLds for LSC%c and LSP%c * bpe != NumThreads * GlobalReadVectorWidth%c * bpe%c > 4"%(tc, tc, tc, tc))
         return False
 
-    if (state["LdsBlockSizePerPad%c"%tc] == 0) \
-        and (state["LdsPad%c"%tc] != 0):
-        #        and ((state["LSC%c"%tc] * numBytes) != (state["NumThreads"] * 4)): // TODO:
-        #        and ((state["LSC%c"%tc] * numBytes) % (state["WavefrontSize"] * 4) != 0):
-      reject(state, "can't use DirectToLds for LdsBlockSizePerPad%c == 0 and LdsPad%c != 0"%(tc, tc))
-      return False
+    #if (state["LdsBlockSizePerPad%c"%tc] == 0) \
+    #    and (state["LdsPad%c"%tc] != 0):
+    #    #        and ((state["LSC%c"%tc] * numBytes) != (state["NumThreads"] * 4)): // TODO:
+    #    #        and ((state["LSC%c"%tc] * numBytes) % (state["WavefrontSize"] * 4) != 0):
+    #  reject(state, "can't use DirectToLds for LdsBlockSizePerPad%c == 0 and LdsPad%c != 0"%(tc, tc))
+    #  return False
 
-    if (state["LdsBlockSizePerPad%c"%tc] != 0) \
-        and (state["LdsPad%c"%tc] != 0) \
-        and (state["LdsBlockSizePerPad%c"%tc] != state["WavefrontSize"] * state["GlobalReadVectorWidth%c"%tc] * numBytes):
-        #        and (state["LdsBlockSizePerPad%tc"] % (state["WavefrontSize"] * 4) != 0): // TODO:
-      reject(state, "can't use DirectToLds for LdsBlockSizePerPad%c != 0 and LdsPad%c != 0 and \
-              LdsBlockSizePerPad%c != WavefrontSize * GlobalReadVectorWidth%c * bpe"%(tc, tc, tc, tc))
-      return False
+    #if (state["LdsBlockSizePerPad%c"%tc] != 0) \
+    #    and (state["LdsPad%c"%tc] != 0) \
+    #    and (state["LdsBlockSizePerPad%c"%tc] != state["WavefrontSize"] * state["GlobalReadVectorWidth%c"%tc] * numBytesAB):
+    #    #        and (state["LdsBlockSizePerPad%tc"] % (state["WavefrontSize"] * 4) != 0): // TODO:
+    #  reject(state, "can't use DirectToLds for LdsBlockSizePerPad%c != 0 and LdsPad%c != 0 and \
+    #          LdsBlockSizePerPad%c != WavefrontSize * GlobalReadVectorWidth%c * bpe%c"%(tc, tc, tc, tc, tc))
+    #  return False
 
     # so far, DirectToLds does not work well with PGR=2
     # performance is not good and a lot of ds_read for DTL can cause scheduling issue(need fix)
@@ -2602,6 +2611,13 @@ class Solution(collections.abc.Mapping):
               ldsPadM = 0
         assert(ldsPadM >= 0)
 
+      # set ldsPadA,B=0 for DirectToLds or DirectToVgpr
+      # TODO: enable ldsPad for DirectToLds (if needed)
+      if state["DirectToLds"] or state["DirectToVgprA"]:
+        ldsPadA = 0
+      if state["DirectToLds"] or state["DirectToVgprB"]:
+        ldsPadB = 0
+
       return ldsPadA, ldsPadB, ldsPadM
 
     def calcLdsBlockSizePerPad(lrvw: int) -> int:
@@ -2635,6 +2651,13 @@ class Solution(collections.abc.Mapping):
               LdsBlockSizePerPadB = 0
         else:
           LdsBlockSizePerPadB = 0
+
+      # set LdsBlockSizePerPadA,B=0 for DirectToLds or DirectToVgpr
+      if state["DirectToLds"] or state["DirectToVgprA"]:
+        LdsBlockSizePerPadA = 0
+      if state["DirectToLds"] or state["DirectToVgprB"]:
+        LdsBlockSizePerPadB = 0
+
       return LdsBlockSizePerPadA, LdsBlockSizePerPadB
 
     def calcLdsNumBytes(ldsPadA: int, LdsBlockSizePerPadA: int, ldsPadB: int, LdsBlockSizePerPadB: int) -> int:
@@ -2693,18 +2716,12 @@ class Solution(collections.abc.Mapping):
       autoLRVW = 0
       if state["LocalReadVectorWidth"] == -1:
         autoLRVW = 1
-        if state["TransposeLDS"]:
+        if state["TransposeLDS"] and (not state["DirectToLds"]):
           state["LocalReadVectorWidth"] = 16 // state["ProblemType"]["DataType"].numBytes()
         else:
           state["LocalReadVectorWidth"] = state["MIInputPerThread"]
-        # enable less than state["MIInputPerThread"]
-        # for fp64 this means ds_read_b32
-        if ((state["DirectToLdsA"] and state["ProblemType"]["TLUA"]) or \
-            (state["DirectToLdsB"] and state["ProblemType"]["TLUB"])):
-              state["LocalReadVectorWidth"] = 1 if (state["ProblemType"]["DataType"].numBytes() >= 4) else state["LocalReadVectorWidth"]
       else:
-        # support LocalReadVectorWidth < miInputPerThread for directToLdsX2/X4
-        if state["LocalReadVectorWidth"] < state["MIInputPerThread"] and not (state["DirectToLdsA"] or state["DirectToLdsB"]):
+        if state["LocalReadVectorWidth"] < state["MIInputPerThread"]:
           reject(state, "LocalReadVectorWidth < %u" %(state["MIInputPerThread"]))
         if state["LocalReadVectorWidth"] > state["MIInputPerThread"] and not state["TransposeLDS"]:
           reject(state, "LocalReadVectorWidth require Transpose LDS")
@@ -3168,13 +3185,9 @@ class Solution(collections.abc.Mapping):
     if state["DirectToVgprA"]:
       if not Solution.isDirectToVgprDoable(state, 'A'):
         return  # rejected
-      # disable DTL
-      state["DirectToLdsA"] = False
     if state["DirectToVgprB"]:
       if not  Solution.isDirectToVgprDoable(state, 'B'):
         return  # rejected
-      # disable DTL
-      state["DirectToLdsB"] = False
 
     ########################################
     # LDS
@@ -3384,17 +3397,14 @@ class Solution(collections.abc.Mapping):
     # MatrixInstruction rules:
     # DirectToLDS is supported for TLU=0  (make sure transposeLDS=1)
     # LDS (load size coalesced) * LSPA must load some multiple of 256 bytes.
-    # added support for loadX2/loadx4 .
-    # x2/x4 (use x4 for better load efficiency)
-    # x2/x4 support for NT layout for f64/f32   TN layout (f16/bf16/f32/f64) with transposeLDS=1
-    # ignore x2/x4 precision < 4 bytes in NT layout
+    # No longer support loadX2/loadx4 .
     if state["DirectToLds"]:
-      if Solution.isDirectToLdsDoable(state, 'A'):
+      if (not state["DirectToVgprA"]) and Solution.isDirectToLdsDoable(state, 'A'):
         state["DirectToLdsA"] = True
         state["LocalWriteUseSgprA"] = True
         #print("DirectToLdsA", state["DirectToLdsA"])
 
-      if Solution.isDirectToLdsDoable(state, 'B'):
+      if (not state["DirectToVgprB"]) and Solution.isDirectToLdsDoable(state, 'B'):
         state["DirectToLdsB"] = True
         state["LocalWriteUseSgprB"] = True
         #print("DirectToLdsB", state["DirectToLdsB"])
@@ -3422,14 +3432,6 @@ class Solution(collections.abc.Mapping):
       if auto_LdsBlockSizePerPadB_for_mix:
         state["LdsBlockSizePerPadB"] = 128
     assert(state["LdsPadB"] >= 0)
-
-    # DirectToVgpr case, set 0 to lds related variables
-    if state["DirectToVgprA"]:
-      state["LdsPadA"] = 0
-      state["LdsBlockSizePerPadA"] = 0
-    if state["DirectToVgprB"]:
-      state["LdsPadB"] = 0
-      state["LdsBlockSizePerPadB"] = 0
 
     if (state["UnrollMajorLDSA"] or state["UnrollMajorLDSB"]) and (not state["EnableMatrixInstruction"]):
         reject(state, "UnrollMajorLDS Supports only in EnableMatrixInstruction=1")
@@ -3759,6 +3761,11 @@ class Solution(collections.abc.Mapping):
     # Since we use PLR >= LoopIters for allocating numberOfIters vgprBuffer for a while
     # we need to support both PLR >= LoopIters and CLR parameter for solutions in rocBLAS
     if state["ClusterLocalRead"] and state["PrefetchLocalRead"] >= state["LoopIters"] and not state["ScheduleIterAlg"] == 2:
+      # 1 or 2 Byte input + DTVA or DTVB case, does not work with PLR=0. Reject it here.
+      if state["ProblemType"]["DataType"].numBytes() < 4 and \
+         (state["ProblemType"]["TLUA"] and state["DirectToVgprA"] or state["ProblemType"]["TLUB"] and state["DirectToVgprB"]):
+        reject(state, "DirectToVgpr does not work with 1 or 2 Byte input + TLU + PrefetchLocalRead(%u) >= LoopIters(%u)"%(state["PrefetchLocalRead"], state["LoopIters"]))
+        return
       state["ClusterLocalRead"] = 0
       state["PrefetchLocalRead"] = 0
     if not state["EnableMatrixInstruction"]:

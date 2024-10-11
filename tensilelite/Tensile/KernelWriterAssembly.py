@@ -337,10 +337,6 @@ class KernelWriterAssembly(KernelWriter):
       if tChar == "Metadata":
         localReadWidth = (self.states.lrvwTileMetadata * tP["bpeDS"]) / bpr
 
-    # for directToLds x2/x4 support
-    if kernel["DirectToLds%s"%tChar]:
-      localReadWidth  = 1    # for fp64 its f32
-
     #localReadStridePerpendicular = 0
     localRead2Perpendicular = False
     localReadStrideCoalesced = kernel[tP["tt"]] * tP["bpeDS"] // bpr
@@ -466,11 +462,6 @@ class KernelWriterAssembly(KernelWriter):
 
     if kernel["ProblemType"]["StochasticRounding"]:
       module.add(self.defineSgpr("RNDSeed", 1))
-
-    if kernel["LocalWriteUseSgprA"]:
-        module.add(self.defineSgpr("LocalWriteAddrA", 1))
-    if kernel["LocalWriteUseSgprB"]:
-        module.add(self.defineSgpr("LocalWriteAddrB", 1))
 
     if kernel["_UseSgprForGRO"]:
       needFirstSgprOffset = kernel["DirectToLdsA"] and kernel["UseInstOffsetForGRO"]
@@ -1101,7 +1092,7 @@ class KernelWriterAssembly(KernelWriter):
     module.setNoOpt(True)
     return module
 
-  def checkResources(self, mkb: KernelBody):
+  def checkResources(self, kernel, mkb: KernelBody):
     # register allocation
     totalVgprs = self.vgprPool.size()
     totalAgprs = self.agprPool.size()
@@ -1120,7 +1111,10 @@ class KernelWriterAssembly(KernelWriter):
       elif self.states.overflowedResources == 4:
         msg = "Occupancy limit"
       elif self.states.overflowedResources == 5:
-        msg = "reading and writing LDS at same time require 2 LDS buffer"
+        if kernel["DirectToLdsA"] or kernel["DirectToLdsB"]:
+          msg = "cannot schedule local read with DirectToLds"
+        else:
+          msg = "reading and writing LDS at same time require 2 LDS buffer"
       elif self.states.overflowedResources == 6:
         msg = "SIA2 better with occupancy 2"
       else:
@@ -3434,6 +3428,8 @@ class KernelWriterAssembly(KernelWriter):
 
     if kernel["LocalWriteUseSgpr%s"%tc]:
       # TODO: Can refactor code above to Compute this directly:
+      if self.states.archCaps["CrosslaneWait"]:
+        module.add(SNop(waitState=0, comment="1 wait states required before reading vgpr by lane"))
       module.add(VReadfirstlaneB32(
           dst=sgpr("LocalWriteAddr%s"%tc), \
           src=vgpr(destVgpr), \
@@ -6025,12 +6021,17 @@ class KernelWriterAssembly(KernelWriter):
                   #   numElementsPerLoad = 2
                   # elif self.states.archCaps["HasEccHalf"]:
                   #   destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
+                  if (not tP["isM"]) and kernel["DirectToLds%c"%tc] and (not tP["tlu"]) and tP["glvw"]>=4 and kernel["AssertSummationElementMultiple"] % 4 == 0:
+                    # Pack four byte values into a single load dword (for DTL only for now)
+                    numElementsPerLoad = 4
+                    dataIsByte = False
+                  else:
+                    dataIsByte = True
 
                   # Check out 3 regs once , for component 1,2,3 (r = 1,2,3)
                   if r == 1:
                     packInt8Code = Module()
                     destVgprHi = self.vgprPool.checkOut( int8TempVgpr , 'destVgprHi')
-                  dataIsByte = True
                   regIdx = r // 4
                   if (tP["localWriteInstruction"].blockWidth <= 0.5) and (r%2 == 0) and not tP["isM"]:
                       numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
@@ -6698,11 +6699,18 @@ class KernelWriterAssembly(KernelWriter):
       if internalPointerSwap:
         tP["localWriteSwapByteOffset"] = 0
       else:
-        module.add(VAndB32(
-            dst=vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-            src0=resetMask, \
-            src1=vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-            comment="reset to Red"))
+        if kernel["LocalWriteUseSgpr%s"%tc]:
+          module.add(SAndB32(
+              dst=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              src0=resetMask, \
+              src1=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              comment="reset to Red"))
+        else:
+          module.add(VAndB32(
+              dst=vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              src0=resetMask, \
+              src1=vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              comment="reset to Red"))
     if needMetaReset:
       if kernel["DirectToVgprSparseMetadata"]:
         tP["metadataWriteSwapByteOffset"] = 0
@@ -7425,27 +7433,6 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   ##############################################################################
-  # Local Read offset conversion for DirectToLds
-  ##############################################################################
-  def localReadOffsetConvForDTL(self, kernel, tP, offset_val):
-    tc = tP["tensorChar"]
-    bit2 = offset_val & 4
-    bit3 = offset_val & 8
-    bit4 = offset_val & 16
-    bit5 = offset_val & 32
-    if (kernel["GlobalReadVectorWidth%s"%tc] * tP["bpe"] == 8):
-      # dword_x2 case
-      # (bit2<<3) | (bit3 >>1) | (bit4>>1) | (bit5>>1)
-      newVal = (bit2<<3) | (bit3 >>1) | (bit4>>1) | (bit5>>1)
-    else:  #if (kernel["GlobalReadVectorWidth%s"%tc] * tP["bpe"] == 16):  # most preferred case
-      # dword_x4 case
-      # (bit2<<3) | (bit3 <<1) | (bit4>>2) | (bit5>>2)
-      newVal = (bit2<<3) | (bit3 <<1) | (bit4>>2) | (bit5>>2)
-    offset_val = offset_val & (~0x3c)
-    offset_val = offset_val | newVal
-    return offset_val
-
-  ##############################################################################
   # Local Read: Increment A/B
   ##############################################################################
   def localReadInc(self, kernel, iui, tP):
@@ -7464,21 +7451,8 @@ class KernelWriterAssembly(KernelWriter):
       if kernel["EnableMatrixInstruction"]:
         matrixInstK = kernel["MatrixInstK"]
         if kernel["UnrollMajorLDS%s" % tc]:
-          if kernel["DirectToLds%s" % tc] and kernel["GlobalReadVectorWidth%c"%tc] * tP["bpe"] > 4:
-            # DirectToLds special case. Need special address coonversion
-            localReadOffset = kernel["MatrixInstK"] * max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB)
-            localReadOffset *= tP["bpe"]
-            prev_offset_val = 0 if iui == 0 else localReadOffset * iui
-            offset_val = localReadOffset * (iui + 1)
-            # offset conversion or DirectToLds
-            prev_offset_val= self.localReadOffsetConvForDTL(kernel, tP, prev_offset_val)
-            offset_val= self.localReadOffsetConvForDTL(kernel, tP, offset_val)
-            inc = offset_val - prev_offset_val
-            matrixInstK = 1 # multiplying matrixInstK is not necessary
-            comment = ""
-          else:
-            inc = tP["bpeDS"] * max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB)
-            comment = " (bpeDS)"
+          inc = tP["bpeDS"] * max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB)
+          comment = " (bpeDS)"
         inc *= matrixInstK
         if kernel["ProblemType"]["Sparse"]:
           if (kernel["ProblemType"]["Sparse"] == 2 and tc == "B") or (kernel["ProblemType"]["Sparse"] == 1 and tc == "A"):
@@ -9981,45 +9955,49 @@ class KernelWriterAssembly(KernelWriter):
       # Nested buffer load implementation function for easy branching for soffset
       def bufferLoadImpl(soffset):
         nonlocal rv
+        factor = max(1, 4//bpl)
+        dst = None if lds else vgpr(destVgpr, rpv*factor)
         if bpl==1 and hi16:
-          rv.add(BufferLoadD16HIU8(dst=vgpr(destVgpr, rpv*4), vaddr=addr0, saddr=addr1, \
+          rv.add(BufferLoadD16HIU8(dst=dst, vaddr=addr0, saddr=addr1, \
                                   soffset=soffset, mubuf=mubuf, comment=comment))
           return rv
         elif bpl==1 and not hi16:
-          rv.add(BufferLoadD16U8(dst=vgpr(destVgpr, rpv*4), vaddr=addr0, saddr=addr1, \
+          rv.add(BufferLoadD16U8(dst=dst, vaddr=addr0, saddr=addr1, \
                                 soffset=soffset, mubuf=mubuf, comment=comment))
           return rv
         elif bpl==2 and hi16:
-          rv.add(BufferLoadD16HIB16(dst=vgpr(destVgpr, rpv*2), vaddr=addr0, saddr=addr1, \
+          rv.add(BufferLoadD16HIB16(dst=dst, vaddr=addr0, saddr=addr1, \
                                     soffset=soffset, mubuf=mubuf, comment=comment))
           return rv
         elif bpl==2 and not hi16:
-          rv.add(BufferLoadD16B16(dst=vgpr(destVgpr, rpv*2), vaddr=addr0, saddr=addr1, \
+          rv.add(BufferLoadD16B16(dst=dst, vaddr=addr0, saddr=addr1, \
                                   soffset=soffset, mubuf=mubuf, comment=comment))
           return rv
         elif bpl==4:
-          rv.add(BufferLoadB32(dst=vgpr(destVgpr, rpv), vaddr=addr0, saddr=addr1, \
+          rv.add(BufferLoadB32(dst=dst, vaddr=addr0, saddr=addr1, \
                               soffset=soffset, mubuf=mubuf, comment=comment))
           return rv
         elif bpl==8:
-          rv.add(BufferLoadB64(dst=vgpr(destVgpr, rpv), vaddr=addr0, saddr=addr1, \
+          rv.add(BufferLoadB64(dst=dst, vaddr=addr0, saddr=addr1, \
                               soffset=soffset, mubuf=mubuf, comment=comment))
           return rv
         elif bpl==16:
-          rv.add(BufferLoadB128(dst=vgpr(destVgpr, rpv), vaddr=addr0, saddr=addr1, \
+          rv.add(BufferLoadB128(dst=dst, vaddr=addr0, saddr=addr1, \
                                 soffset=soffset, mubuf=mubuf, comment=comment))
           return rv
         elif bpl==32:
           # split into two dwordx4 loads. Second load offset is +0.5 bpl
           rv = Module("emulated _buffer_load_b256")
-          rv.add(BufferLoadB128(dst=vgpr(destVgpr, rpv//2), vaddr=addr0, saddr=addr1, \
+          dst = None if lds else vgpr(destVgpr, rpv//2)
+          rv.add(BufferLoadB128(dst=dst, vaddr=addr0, saddr=addr1, \
                                 soffset=soffset, mubuf=mubuf, comment=comment))
           mubuf2 = MUBUFModifiers(offen=True, offset12=offset+bpl/2, glc=glc, slc=slc, nt=nt, lds=lds)
           if isinstance(destVgpr, str):
             dst2 = destVgpr + "+" + str(int(rpv//2))
           elif isinstance(destVgpr, int):
             dst2 = int(destVgpr + int(rpv//2))
-          rv.add(BufferLoadB128(dst=vgpr(dst2, rpv//2), vaddr=addr0, saddr=addr1, \
+          dst = None if lds else vgpr(dst2, rpv//2)
+          rv.add(BufferLoadB128(dst=dst, vaddr=addr0, saddr=addr1, \
                                 soffset=soffset, mubuf=mubuf2, comment=comment))
           return rv
         else:
