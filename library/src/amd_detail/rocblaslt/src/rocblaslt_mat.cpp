@@ -441,13 +441,6 @@ rocblaslt_status
                                             beta[i],
                                             C[i],
                                             D[i],
-                                            matA[i]->type,
-                                            matB[i]->type,
-                                            matC[i]->type,
-                                            matD[i]->type,
-                                            matmul_descr[i]->compute_type,
-                                            matmul_descr[i]->op_A,
-                                            matmul_descr[i]->op_B,
                                             num_batches_a,
                                             num_batches_b,
                                             num_batches_c,
@@ -781,33 +774,6 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
                                                   std::shared_ptr<void>& gemmData,
                                                   size_t&                gemmCount)
 {
-    // Internal assign
-    void*                   A             = inputs.a;
-    void*                   B             = inputs.b;
-    void*                   C             = inputs.c;
-    void*                   D             = inputs.d;
-    void*                   alpha         = inputs.alpha;
-    void*                   beta          = inputs.beta;
-    void*                   scaleA        = inputs.scaleA;
-    void*                   scaleB        = inputs.scaleB;
-    void*                   scaleC        = inputs.scaleC;
-    void*                   scaleD        = inputs.scaleD;
-    void*                   scaleE        = inputs.scaleE;
-    void*                   amaxD         = nullptr;
-    hipblasOperation_t&     opA           = problemtype.op_a;
-    hipblasOperation_t&     opB           = problemtype.op_b;
-    hipDataType&            type_a        = problemtype.type_a;
-    hipDataType&            type_b        = problemtype.type_b;
-    hipDataType&            type_c        = problemtype.type_c;
-    hipDataType&            type_d        = problemtype.type_d;
-    int                     num_batches_a = b;
-    rocblaslt_compute_type& compute_type  = problemtype.type_compute;
-    rocblaslt_epilogue&     epilogue      = rocEpilogue.mode;
-
-    // Others
-    bool strided_batch = true;
-    bool grouped_gemm  = false;
-
     auto status = validateMatmulArgs(m,
                                      n,
                                      k,
@@ -817,13 +783,6 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
                                      inputs.beta,
                                      inputs.c,
                                      inputs.d,
-                                     type_a,
-                                     type_b,
-                                     type_c,
-                                     type_d,
-                                     compute_type,
-                                     opA,
-                                     opB,
                                      b,
                                      b,
                                      b,
@@ -889,6 +848,33 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
     }
     if(status != rocblaslt_status_continue)
         return status;
+
+    // Internal assign
+    void*                   A             = inputs.a;
+    void*                   B             = inputs.b;
+    void*                   C             = inputs.c;
+    void*                   D             = inputs.d;
+    void*                   alpha         = inputs.alpha;
+    void*                   beta          = inputs.beta;
+    void*                   scaleA        = inputs.scaleA;
+    void*                   scaleB        = inputs.scaleB;
+    void*                   scaleC        = inputs.scaleC;
+    void*                   scaleD        = inputs.scaleD;
+    void*                   scaleE        = inputs.scaleE;
+    void*                   amaxD         = nullptr;
+    hipblasOperation_t&     opA           = problemtype.op_a;
+    hipblasOperation_t&     opB           = problemtype.op_b;
+    hipDataType&            type_a        = problemtype.type_a;
+    hipDataType&            type_b        = problemtype.type_b;
+    hipDataType&            type_c        = problemtype.type_c;
+    hipDataType&            type_d        = problemtype.type_d;
+    int                     num_batches_a = b;
+    rocblaslt_compute_type& compute_type  = problemtype.type_compute;
+    rocblaslt_epilogue&     epilogue      = rocEpilogue.mode;
+
+    // Others
+    bool strided_batch = true;
+    bool grouped_gemm  = false;
 
     int8_t alpha_1[16] = {0}; // use dScaleAlphaVec instead, original alpha => 1.0
     if(scaleAlphaVec)
@@ -1204,13 +1190,6 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
                                             inputs[i].beta,
                                             inputs[i].c,
                                             inputs[i].d,
-                                            type_a,
-                                            type_b,
-                                            type_c,
-                                            type_d,
-                                            compute_type,
-                                            opA,
-                                            opB,
                                             b[i],
                                             b[i],
                                             b[i],

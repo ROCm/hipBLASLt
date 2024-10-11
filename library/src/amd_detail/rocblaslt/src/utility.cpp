@@ -215,6 +215,7 @@ const char* hipblasOperation_to_string(hipblasOperation_t op)
     case HIPBLAS_OP_T:
         return "OP_T";
     case HIPBLAS_OP_C:
+        return "OP_C";
     default:
         return "Invalid";
     }
