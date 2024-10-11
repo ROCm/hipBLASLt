@@ -71,9 +71,16 @@ class SIA3(SIA):
             noSchedLocalWrite(writer, kernel, tensorParametersA, tensorParametersB, localWriteEndIter)
             writer.states.lwStartMfmaIndex = writer.states.lwEndMfmaIndex
         else:
-            itemsLWToSched, numWritesToSched = prepareLWInstToSched(writer, kernel, numLocalWritesPerSched)
+            itemsLWToSched, numWritesToSched = prepareLWInstToSched(writer, kernel, numLocalWritesPerSched, isNGLL=isNGLL)
             startIter = assignLWSchedIndexSIA3(writer, kernel, numLocalWritesPerSched, localWriteEndIter, numWritesToSched)
             readsToWait, readsToWaitNGLL = getReadsToWait(writer, kernel)
+            # add waitcnt for DirectToVgpr + PGR1. Delaying wait for DirectToVgpr global read
+            if (kernel["DirectToVgprA"] or kernel["DirectToVgprB"]) and kernel["PrefetchGlobalRead"] == 1:
+              # DirectToVgpr + swapGlobalRead case, actual DTV load is in self.globalReadBCode (due to swap).
+              # Need to check self.globalReadBCode
+              readsToWaitDTV = len(list(writer.codes.globalReadB.middle.items()))
+              readsToWait += readsToWaitDTV
+              readsToWaitNGLL += readsToWaitDTV
             # make sure numLocalWriteModPerIter is enough to schedule localwrite
             startIterItem = numLocalWriteModPerIter - (writer.states.lwStartMfmaIndex % writer.states.numMfmaPerIter) * numLocalWritesPerSched
             schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSched, localWriteEndIter, \
@@ -676,7 +683,7 @@ def noSchedLocalWrite(writer, kernel, tensorParametersA, tensorParametersB, loca
         imod.addComment1("local write B")
         imod.add(writer.codes.localWriteB)
 
-def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched):
+def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched, isNGLL=False):
     #################
     # create a plan #
     #################
@@ -685,14 +692,28 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched):
         # PrefetchGlobalRead + DirectToLds/DirectToVgpr case, need to add dummy list to insert global read
         tmpList = []
         numDummy = 0
+        lenA = len(list(writer.codes.globalReadA.middle.items()))
+        lenB = len(list(writer.codes.globalReadB.middle.items()))
+        # A/B swap check for DTV. NGLL case, no swap
+        swapped = writer.isSwapGlobalReadOrderForDtvOrDtl(kernel) and (not isNGLL)
+        insertDummyTop = True
+        if swapped:
+          # swap A and B (SwapGlobalReadOrder case, the actual content is swapped (B is in globalReadACode). Need adjustment)
+          lenA, lenB = lenB, lenA
         if kernel["DirectToLdsA"] or kernel["DirectToVgprA"]:
-            numDummy += len(list(writer.codes.globalReadA.middle.items()))
+            numDummy += lenA
+            insertDummyTop = (not swapped)
         if kernel["DirectToLdsB"] or kernel["DirectToVgprB"]:
-            numDummy += len(list(writer.codes.globalReadB.middle.items()))
+            numDummy += lenB
+            insertDummyTop = swapped
         for i in range(numDummy):
             tmpList.append(Module())
-        # add dummy at the top of the list
-        itemsLWToSched = tmpList + itemsLWToSched
+        if insertDummyTop:
+          # add dummy at the top of the list
+          itemsLWToSched = tmpList + itemsLWToSched
+        else:
+          # add dummy at the bottom of the list
+          itemsLWToSched = itemsLWToSched + tmpList
     # extend localWrite by inserting empty Module
     # See getNumLocalWritePerMfma for how this work
     itemsLWToSchedTemp = []
