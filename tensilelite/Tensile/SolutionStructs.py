@@ -1808,6 +1808,7 @@ class Solution(collections.abc.Mapping):
   def isDirectToVgprDoable(state, tc):
     MIindex = 0 if tc == 'A' else 1
     numBytes = state["ProblemType"]["DataType"].numBytes()
+    numBytesGR = state["ProblemType"]["DataType%s"%tc].numBytes()
     # With MatrixInstruction only
     if not state["EnableMatrixInstruction"] :
       reject(state, "DirectToVgpr is for MatrixInstruction only")
@@ -1835,9 +1836,6 @@ class Solution(collections.abc.Mapping):
       if not state["ConvertAfterDS"]:
         reject(state, "DirectToVgpr%s + input conversion + ConvertAfterDS=False not supported"%(tc))
         return False
-      # disable DTV + input type conversion for now (TODO: enable)
-      reject(state, "DirectToVgpr%s + input conversion not supported"%(tc))
-      return False
 
     # check if the DataType can support DirectToVgpr
     if not Solution.isDirectToVgprSupportDataType(state):
@@ -1855,16 +1853,17 @@ class Solution(collections.abc.Mapping):
       reject(state, "DirectToVgpr%c does not supports TLU%c = False + S/C/D/ZGEMM"%(tc, tc))
       return False
 
+    if numBytesGR * state["GlobalReadVectorWidth%c"%tc] < 4:
+      # no support for DTV + numBytesGR * GlobalReadVectorWidth< 4
+      reject(state, "DirectToVgpr%c does not support TLU%c + numByte * GlobalReadVectorWidth%c < 4"%(tc, tc, tc))
+      return False
+
     if numBytes < 4:
       # numBytes < 4 case
       if state["ProblemType"]["TLU%c"%tc]:
         # use pack logic (with v_perm) same as local read (only if VgprForLocalReadPacking is doable)
         if not Solution.isVgprForLocalReadPackingDoable(state):
           reject(state, "Does not meet the requirement for DirectToVgpr%c + TLU%c + numByte < 4"%(tc, tc))
-          return False
-        if numBytes * state["VectorWidth%c"%tc] < 4:
-          # no support for DTV + TLU + numBytes * VectorWidth< 4
-          reject(state, "DirectToVgpr%c does not support TLU%c + numByte * VectorWidth%c < 4"%(tc, tc, tc))
           return False
         # force ClusterLocalRead=1 for DTV + pack
         state["ClusterLocalRead"] = 1

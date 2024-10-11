@@ -555,7 +555,7 @@ class KernelWriterAssembly(KernelWriter):
     ri = 0
     if self.states.a.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
       numBiFactor = numBi
-      if kernel["DirectToVgprA"] and self.states.lrvwTileA > 1:
+      if kernel["DirectToVgprA"] and (self.states.packDTVA or self.states.convDTVA):
         # DirectToVgpr case, we need LoopIters * 2 buffers
         numBiFactor = kernel["LoopIters"] * 2
       if self.states.lrvwTileA > 1:
@@ -573,14 +573,14 @@ class KernelWriterAssembly(KernelWriter):
                 module.add(RegSet("v", "vgprValuA_X%u_I%u_D%u"%(bi,iui,data), self.states.a.startVgprValuPack+ri))
                 ri += ceil(kernel["VectorWidthA"] * tPA["bpe"] / self.states.bpr) * kernel["MIWaveTileA"] // kernel["VectorWidthA"]
       else:
-        for bi in range(0,PLR): # buffer indices
+        for bi in range(0,numBiFactor): # buffer indices
           for iui in range(0, kernel["InnerUnroll"]):
             module.add(RegSet("v", "vgprValuA_X%u_I%u"%(bi,iui), self.states.a.startVgprValu+ri))
             ri += self.states.a.numVgprValuPerBlock
         ri = 0
         if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]:
           for data in range(1,int(self.states.bpr/tPA["bpeDS"])):
-            for bi in range(0,PLR): # buffer indices
+            for bi in range(0,numBiFactor): # buffer indices
               if bi % self.states.numVgprBufferPackA == 0:
                 ri = (data-1) * kernel["InnerUnroll"] * self.states.numVgprBufferPackA * self.states.a.numVgprValuPerBlock
               for iui in range(0, kernel["InnerUnroll"]):
@@ -590,7 +590,7 @@ class KernelWriterAssembly(KernelWriter):
     ri = 0
     if self.states.b.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
       numBiFactor = numBi
-      if kernel["DirectToVgprB"] and self.states.lrvwTileB > 1:
+      if kernel["DirectToVgprB"] and (self.states.packDTVB or self.states.convDTVB):
         # DirectToVgpr case, we need LoopIters * 2 buffers
         numBiFactor = kernel["LoopIters"] * 2
       if self.states.lrvwTileB > 1:
@@ -608,14 +608,14 @@ class KernelWriterAssembly(KernelWriter):
                 module.add(RegSet("v", "vgprValuB_X%u_I%u_D%u"%(bi,iui,data), self.states.b.startVgprValuPack+ri))
                 ri += ceil(kernel["VectorWidthB"] * tPB["bpe"] / self.states.bpr) * kernel["MIWaveTileB"] // kernel["VectorWidthB"]
       else:
-        for bi in range(0,PLR): # buffer indices
+        for bi in range(0,numBiFactor): # buffer indices
           for iui in range(0, kernel["InnerUnroll"]):
             module.add(RegSet("v", "vgprValuB_X%u_I%u"%(bi,iui), self.states.b.startVgprValu+ri))
             ri += self.states.b.numVgprValuPerBlock
         ri = 0
         if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]:
           for data in range(1,int(self.states.bpr/tPB["bpeDS"])):
-            for bi in range(0,PLR): # buffer indices
+            for bi in range(0,numBiFactor): # buffer indices
               if bi % self.states.numVgprBufferPackB == 0:
                 ri = (data-1) * kernel["InnerUnroll"] * self.states.numVgprBufferPackB * self.states.b.numVgprValuPerBlock
               for iui in range(0, kernel["InnerUnroll"]):
@@ -4877,7 +4877,8 @@ class KernelWriterAssembly(KernelWriter):
     # DirectToVgpr + pack special case
     # offset vgprBuffer_new
     packDTV = self.states.packDTVA if tP["isA"] else self.states.packDTVB
-    if packDTV:
+    convDTV = self.states.convDTVA if tP["isA"] else self.states.convDTVB
+    if packDTV or convDTV:
       # DTV + pack case, offset bufferIdx for local read packing instructions
       numBi = kernel["LoopIters"]
       vgprBuffer_new += vregSetIdx * numBi
@@ -4886,7 +4887,7 @@ class KernelWriterAssembly(KernelWriter):
     iui_new_offset = iui%numReadsIterCoalesced*vgprPerInput
     ab_new = idxAB*vgprPerInput*numReadsIterCoalesced
     abStr = "Valu%c_X%u_I%u+%u+%u+%u" % (tc, vgprBuffer_new, iui_new, ab_new, vgprBuffer_new_offset, iui_new_offset)
-    if kernel["DirectToVgpr%c"%tc] and not packDTV:
+    if kernel["DirectToVgpr%c"%tc] and not (packDTV or convDTV):
       # overwrite aStr/bStr for DirectToVgpr (except for pack DTV case)
       numVgprPerBlock = statesAorB.numVgprG2LAllocated
       numVgprPerBlock //= 2 # DTV case, buffer is doubled. //2 to calculate single size
@@ -5992,6 +5993,10 @@ class KernelWriterAssembly(KernelWriter):
               loopCnt += 1
               graIdx = i * self.states.rpgo if kernel["BufferLoad"] else i * self.states.rpga
               g2lIdx = i * loadWidth * tP["bpeRatio"]
+              if (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc] and kernel["ConvertAfterDS"]:
+                # DTV + ConvertAfterDS case, if bpe > bpeGR, we need to shift g2lIdx for conversion
+                if tP["bpe"] > tP["bpeGR"]:
+                  g2lIdx *= tP["bpe"] // tP["bpeGR"]
 
               destVgprHi = None
               dataIsByte = False
@@ -6448,6 +6453,10 @@ class KernelWriterAssembly(KernelWriter):
               loopCnt += 1
               graIdx = i * self.states.rpgo if kernel["BufferLoad"] else i * self.states.rpga
               g2lIdx = i * loadWidth * tP["bpeRatio"]
+              if (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc] and kernel["ConvertAfterDS"]:
+                # DTV + ConvertAfterDS case, if bpe > bpeGR, we need to shift g2lIdx for conversion
+                if tP["bpe"] > tP["bpeGR"]:
+                  g2lIdx *= tP["bpe"] // tP["bpeGR"]
               # Each load may contains a small bundle of instructions, package them together in loadModule:
               loadModule = Module("load%u"%loopCnt)
               imod.middle.add(loadModule)
