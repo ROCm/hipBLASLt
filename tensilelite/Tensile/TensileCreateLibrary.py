@@ -839,7 +839,7 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
   asmArchs = collections.defaultdict(list)
   for kernel in asmKernels:
     kernelName = kernelWriterAssembly.getKernelFileBase(kernel)
-    asmKernelNames += [kernelName]
+    asmKernelNames.append(kernelName)
     asmArchs[kernelName].append(getGfxName(kernel['ISA']))
 
   kernelHelperObjNames = [ko.getKernelName() for ko in kernelHelperObjs]
