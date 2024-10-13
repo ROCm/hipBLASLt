@@ -36,29 +36,29 @@ public:
     HipDeviceBuffer(hipDataType dtype, std::size_t numElements, bool HMM = false)
         : d_vector_type(dtype, numElements, HMM)
         , numBytes(realDataTypeSize(dtype) * numElements)
-        , buffer{this->device_vector_setup(), &hipFree}
+        , buffer(this->device_vector_setup())
     {
     }
 
     ~HipDeviceBuffer()
     {
-        this->device_vector_teardown(static_cast<char*>(buffer.get()));
+        this->device_vector_teardown(static_cast<char*>(buffer));
         buffer = nullptr;
     }
 
-    HipDeviceBuffer(const HipDeviceBuffer&)            = delete;
-    HipDeviceBuffer(HipDeviceBuffer&&)                 = default;
+    HipDeviceBuffer(const HipDeviceBuffer&) = delete;
+    HipDeviceBuffer(HipDeviceBuffer&&)      = default;
     HipDeviceBuffer& operator=(const HipDeviceBuffer&) = delete;
-    HipDeviceBuffer& operator=(HipDeviceBuffer&&)      = default;
+    HipDeviceBuffer& operator=(HipDeviceBuffer&&) = default;
 
     void* buf()
     {
-        return buffer.get();
+        return buffer;
     }
 
     const void* buf() const
     {
-        return buffer.get();
+        return buffer;
     }
 
     std::size_t getNumBytes() const
@@ -79,25 +79,28 @@ public:
     }
 
 private:
-    std::size_t                               numBytes;
-    std::unique_ptr<void, decltype(&hipFree)> buffer;
+    std::size_t numBytes;
+    void*       buffer;
 };
 
 class HipHostBuffer
 {
 public:
     HipHostBuffer(hipDataType dtype, std::size_t numElements)
-        : numBytes(realDataTypeSize(dtype) * numElements ? realDataTypeSize(dtype) * numElements
-                                                         : realDataTypeSize(dtype))
-        , buffer(createBuffer(numBytes))
+        : buffer(memory_pool<h_memory>::Get(realDataTypeSize(dtype) * numElements
+                                                ? realDataTypeSize(dtype) * numElements
+                                                : realDataTypeSize(dtype)))
     {
     }
 
-    ~HipHostBuffer()                               = default;
-    HipHostBuffer(const HipHostBuffer&)            = delete;
-    HipHostBuffer(HipHostBuffer&&)                 = default;
+    ~HipHostBuffer()
+    {
+        memory_pool<h_memory>::Restore(buffer);
+    }
+    HipHostBuffer(const HipHostBuffer&) = delete;
+    HipHostBuffer(HipHostBuffer&&)      = default;
     HipHostBuffer& operator=(const HipHostBuffer&) = delete;
-    HipHostBuffer& operator=(HipHostBuffer&&)      = default;
+    HipHostBuffer& operator=(HipHostBuffer&&) = default;
 
     void* end()
     {
@@ -121,7 +124,7 @@ public:
 
     std::size_t getNumBytes() const
     {
-        return numBytes;
+        return buffer.bytes();
     }
 
     template <typename T>
@@ -137,18 +140,7 @@ public:
     }
 
 private:
-    std::size_t                                      numBytes;
-    std::unique_ptr<void, decltype(&hipFree)>        buffer;
-    static std::unique_ptr<void, decltype(&hipFree)> createBuffer(std::size_t numBytes)
-    {
-        void* rawBuf{};
-        (void)hipHostMalloc(&rawBuf, numBytes);
-        if(!rawBuf)
-        {
-            hipblaslt_cerr << "Error to allocate memory in HipHostBuffer" << std::endl;
-        }
-        return std::unique_ptr<void, decltype(&hipFree)>(rawBuf, &hipFree);
-    }
+    h_memory buffer;
 };
 
 inline hipError_t
@@ -161,6 +153,24 @@ inline hipError_t
                             hBuf.as<char>(),
                             dBuf.getNumBytes() / block_count,
                             dBuf.use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
+
+        if(hip_err != hipSuccess)
+        {
+            return hip_err;
+        }
+    }
+    return hip_err;
+}
+
+inline hipError_t broadcast(HipDeviceBuffer& dBuf, std::size_t repeats)
+{
+    hipError_t hip_err;
+    for(size_t i = 1; i < repeats; ++i)
+    {
+        hip_err = hipMemcpy(dBuf.as<char>() + i * dBuf.getNumBytes() / repeats,
+                            dBuf.as<char>(),
+                            dBuf.getNumBytes() / repeats,
+                            dBuf.use_HMM ? hipMemcpyHostToHost : hipMemcpyDeviceToDevice);
 
         if(hip_err != hipSuccess)
         {

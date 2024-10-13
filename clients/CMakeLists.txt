@@ -100,7 +100,7 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
       find_package(ROCmSMI REQUIRED)
       list( APPEND COMMON_LINK_LIBS rocm_smi )
   endif()
-  
+
   # common source files used in subdirectories benchmarks and gtest thus ../common
   set( hipblaslt_test_bench_common
       ../common/singletons.cpp
@@ -111,6 +111,7 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
       ../common/hipblaslt_parse_data.cpp
       ../common/hipblaslt_arguments.cpp
       ../common/hipblaslt_random.cpp
+      ../common/hipblaslt_init_device.cpp
       ${BLIS_CPP}
     )
 

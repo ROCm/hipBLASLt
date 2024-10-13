@@ -38,14 +38,196 @@
 #define MAX_DTYPE_SIZE sizeof(double)
 
 /* ============================================================================================ */
+/*! \brief  (abstract class) wrapper around a pointer to hip device or pinned host memory, including allocation size in bytes */
+class hip_memory
+{
+public:
+    size_t bytes() const
+    {
+        return m_size;
+    }
+    size_t capacity() const
+    {
+        return m_capacity;
+    }
+
+    void resize(size_t s)
+    {
+        assert(s <= m_capacity);
+        m_size = s;
+    }
+
+    bool is_managed() const
+    {
+        return m_managed;
+    }
+
+    bool operator<(size_t s) const
+    {
+        return capacity() < s;
+    }
+
+protected:
+    hip_memory(size_t size, size_t capacity, bool use_HMM = false)
+        : m_size(size)
+        , m_capacity(capacity)
+        , m_managed(use_HMM)
+    {
+    }
+    virtual ~hip_memory() = default;
+
+    size_t m_size     = 0;
+    size_t m_capacity = 0;
+    bool   m_managed  = false;
+};
+
+/* ============================================================================================ */
+/*! \brief  wrapper around a pointer to device memory, including allocation size in bytes */
+class d_memory : public hip_memory
+{
+public:
+    d_memory()
+        : hip_memory(0, 0, false)
+    {
+    }
+
+    d_memory(size_t size, size_t capacity, bool use_HMM = false)
+        : hip_memory(size, capacity, use_HMM)
+    {
+        char* d = nullptr;
+        if((use_HMM ? hipMallocManaged(&d, capacity) : hipMalloc(&d, capacity)) != hipSuccess)
+        {
+            hipblaslt_cerr << "Error allocating (" << (m_size >> 30) << " GB) device memory"
+                           << std::endl;
+            d      = nullptr;
+            m_size = m_capacity = 0;
+        }
+        m_d.reset(d);
+    }
+
+    char* get()
+    {
+        return m_d.get();
+    }
+    const char* get() const
+    {
+        return m_d.get();
+    }
+
+private:
+    std::unique_ptr<char, decltype(&hipFree)> m_d{nullptr, &hipFree};
+};
+
+/* ============================================================================================ */
+/*! \brief  wrapper around a pointer to pinned host memory (hipHostMalloc), including allocation size in bytes */
+class h_memory : public hip_memory
+{
+public:
+    h_memory()
+        : hip_memory(0, 0, false)
+    {
+    }
+
+    h_memory(size_t size, size_t capacity, bool use_HMM = false)
+        : hip_memory(size, capacity, false)
+    {
+        char* d = nullptr;
+        if(hipHostMalloc(&d, capacity) != hipSuccess)
+        {
+            hipblaslt_cerr << "Error allocating (" << (m_size >> 30) << " GB) host memory"
+                           << std::endl;
+            d      = nullptr;
+            m_size = m_capacity = 0;
+        }
+        m_d.reset(d);
+    }
+
+    char* get()
+    {
+        return m_d.get();
+    }
+    const char* get() const
+    {
+        return m_d.get();
+    }
+
+private:
+    std::unique_ptr<char, decltype(&hipHostFree)> m_d{nullptr, &hipHostFree};
+};
+
+/* ============================================================================================ */
+/*! \brief  memory pool class to keep track of memory in either M = d_memory, or M = h_memory objects */
+template <typename M>
+class memory_pool
+{
+public:
+    static M Get(size_t m_bytes, bool use_HMM = false)
+    {
+        return Instance().get(m_bytes, use_HMM);
+    }
+
+    static void Restore(M& dm)
+    {
+        Instance().restore(dm);
+    }
+
+private:
+    std::vector<M> m_pool, m_pool_managed;
+
+    static memory_pool& Instance()
+    {
+        static memory_pool buffer;
+        return buffer;
+    }
+
+    M get(size_t bytes, bool use_HMM = false)
+    {
+        auto& pool = use_HMM ? m_pool_managed : m_pool;
+        auto  it   = std::lower_bound(pool.begin(), pool.end(), bytes);
+        if(it != pool.end() && // found a buffer that is large enough ..
+           it->capacity() < 4 * bytes) // but not way too large
+        {
+            auto p = std::move(*it);
+            p.resize(bytes);
+            pool.erase(it);
+            return p;
+        }
+        else
+        {
+            // remove the (largest) buffer that was too small
+            if(it != pool.begin())
+                pool.erase(it - 1);
+            // Allocate 20% extra for later reuse
+            auto e = M(bytes, bytes * 1.2, use_HMM);
+            if(e.get())
+                return e;
+            hipblaslt_cerr << "Clearing memory pool" << std::endl;
+            // allocation failed, so clear the pool and try again (without the 20%)
+            pool.clear();
+            return M(bytes, bytes, use_HMM);
+        }
+    }
+
+    void restore(M& dm)
+    {
+        if(!dm.get() || !dm.capacity())
+            return;
+        auto& pool = dm.is_managed() ? m_pool_managed : m_pool;
+        // insert in (sorted) pool
+        pool.insert(std::lower_bound(pool.begin(), pool.end(), dm.capacity()), std::move(dm));
+    }
+};
+
+/* ============================================================================================ */
 /*! \brief  base-class to allocate/deallocate device memory */
 template <typename T>
 class d_vector
 {
 private:
-    size_t m_size;
-    size_t m_pad, m_guard_len;
-    size_t m_bytes;
+    size_t   m_size;
+    size_t   m_pad, m_guard_len;
+    size_t   m_bytes;
+    d_memory m_mem;
 
     static bool m_init_guard;
 
@@ -89,16 +271,10 @@ public:
 
     T* device_vector_setup()
     {
-        T* d = nullptr;
-        if(use_HMM ? hipMallocManaged(&d, m_bytes) : (hipMalloc)(&d, m_bytes) != hipSuccess)
-        {
-            hipblaslt_cerr << "Error allocating " << m_bytes << " m_bytes (" << (m_bytes >> 30)
-                           << " GB)" << std::endl;
-
-            d = nullptr;
-        }
+        m_mem = memory_pool<d_memory>::Get(m_bytes, use_HMM);
+        T* d  = reinterpret_cast<T*>(m_mem.get());
 #ifdef GOOGLE_TEST
-        else
+        if(d)
         {
             if(m_guard_len > 0)
             {
@@ -173,12 +349,8 @@ public:
                 delete[] host;
             }
 #endif
-            // Free device memory
-            if((hipFree)(d) != hipSuccess)
-            {
-                hipblaslt_cerr << "free device memory failed" << std::endl;
-            }
         }
+        memory_pool<d_memory>::Restore(m_mem);
     }
 };
 
@@ -191,6 +363,7 @@ private:
     hipDataType m_dtype;
     size_t      m_pad, m_guard_len;
     size_t      m_bytes;
+    d_memory    m_mem;
 
     inline static bool m_init_guard_type;
 
@@ -236,16 +409,10 @@ public:
 
     char* device_vector_setup()
     {
-        char* d = nullptr;
-        if(use_HMM ? hipMallocManaged(&d, m_bytes) : (hipMalloc)(&d, m_bytes) != hipSuccess)
-        {
-            hipblaslt_cerr << "Error allocating " << m_bytes << " m_bytes (" << (m_bytes >> 30)
-                           << " GB)" << std::endl;
-
-            d = nullptr;
-        }
+        m_mem   = memory_pool<d_memory>::Get(m_bytes, use_HMM);
+        char* d = m_mem.get();
 #ifdef GOOGLE_TEST
-        else
+        if(d)
         {
             if(m_guard_len > 0)
             {
@@ -330,12 +497,8 @@ public:
                 delete[] host;
             }
 #endif
-            // Free device memory
-            if((hipFree)(d) != hipSuccess)
-            {
-                hipblaslt_cerr << "free device memory failed" << std::endl;
-            }
         }
+        memory_pool<d_memory>::Restore(m_mem);
     }
 };
 
