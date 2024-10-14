@@ -835,8 +835,12 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
   asmKernels = (k for k in kernels if k['KernelLanguage'] == 'Assembly')
 
   # Build a list of kernel object names.
+  # Asm based kernels target the configured ISA
+  asmArchs = collections.defaultdict(list)
   for kernel in asmKernels:
-    asmKernelNames += [kernelWriterAssembly.getKernelFileBase(kernel)]
+    kernelName = kernelWriterAssembly.getKernelFileBase(kernel)
+    asmKernelNames.append(kernelName)
+    asmArchs[kernelName].append(getGfxName(kernel['ISA']))
 
   kernelHelperObjNames = [ko.getKernelName() for ko in kernelHelperObjs]
 
@@ -847,11 +851,6 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
     sourceArchs, _ = splitArchs()
   else:
     raise RuntimeError("Unknown compiler %s" % CxxCompiler)
-
-  # Asm based kernels target the configured ISA
-  asmArchs = collections.defaultdict(list)
-  for (kernelName, kernel) in zip(asmKernelNames, asmKernels):
-    asmArchs[kernelName].append(getGfxName(kernel['ISA']))
 
   # Build a list of source files
   if not globalParameters["MergeFiles"]:
