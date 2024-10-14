@@ -895,6 +895,8 @@ void testing_matmul(const Arguments& arg)
 
     // after this, real bias type should not be invalid
     hipDataType real_bias_type = derive_unset_bias_type(arg);
+    Arguments   arg_revised    = arg;
+    arg_revised.bias_type      = real_bias_type;
 
     // for all f8/bf8 cases including mix mode
     if((realDataTypeSize(tiA) == 1 || realDataTypeSize(tiB) == 1)
@@ -904,22 +906,26 @@ void testing_matmul(const Arguments& arg)
         {
             if(real_bias_type == HIP_R_16BF)
             {
-                return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_16BF);
+                return testing_matmul_with_bias(
+                    arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_16BF);
             }
             else
             {
-                return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
+                return testing_matmul_with_bias(
+                    arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
             }
         }
         else
         {
             if(real_bias_type == HIP_R_16F)
             {
-                return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_16F);
+                return testing_matmul_with_bias(
+                    arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_16F);
             }
             else
             {
-                return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
+                return testing_matmul_with_bias(
+                    arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
             }
         }
     }
@@ -927,28 +933,28 @@ void testing_matmul(const Arguments& arg)
     {
         if(real_bias_type == HIP_R_16F)
         {
-            return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_16F);
+            return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_16F);
         }
         else
         {
-            return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
+            return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
         }
     }
     else if(to == HIP_R_16BF)
     {
         if(real_bias_type == HIP_R_16BF)
         {
-            return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_16BF);
+            return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_16BF);
         }
         else
         {
-            return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
+            return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
         }
     }
     else if(to == HIP_R_32F || to == HIP_R_32I || to == HIP_R_8I || to == HIP_R_64F)
     {
         //set Tbias to To
-        return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, to);
+        return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, to);
     }
     // shouldn't arrive here
     CHECK_SUCCESS(false);
@@ -1724,7 +1730,7 @@ void testing_matmul_with_bias(const Arguments& arg,
     // Get Heuristic results
     int32_t requestAlgoCount = arg.requested_solution_num < 0 ? HIPBLASLT_MAX_REQUESTED_SOLUTION_NUM
                                                               : arg.requested_solution_num;
-    int                                           returnedAlgoCount = 0;
+    int     returnedAlgoCount = 0;
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
     std::vector<size_t>                           heuristicTuningIndex;
 
@@ -2553,12 +2559,12 @@ void testing_matmul_with_bias(const Arguments& arg,
                                TciA,
                                TciB,
                                false);
-                    auto                        pos    = stride_d[gemmIdx] * batchIdx;
-                    std::vector<HipHostBuffer>* hEInst = arg.gradient ? &hE : &hE_gold;
-                    void*                       ePos   = ((*hEInst).size() <= gemmIdx)
-                                     ? nullptr
-                                     : ((*hEInst)[gemmIdx].as<char>() + pos * realDataTypeSize(To));
-                    auto  applyBias = arg.gradient ? false : arg.bias_vector;
+                    auto                        pos       = stride_d[gemmIdx] * batchIdx;
+                    std::vector<HipHostBuffer>* hEInst    = arg.gradient ? &hE : &hE_gold;
+                    void*                       ePos      = ((*hEInst).size() <= gemmIdx)
+                                                                ? nullptr
+                                                                : ((*hEInst)[gemmIdx].as<char>() + pos * realDataTypeSize(To));
+                    auto                        applyBias = arg.gradient ? false : arg.bias_vector;
                     void* hBias_buf = ((hBias).size() <= gemmIdx) ? nullptr : hBias[gemmIdx].buf();
 
                     switch(arg.activation_type)
@@ -2927,9 +2933,9 @@ void testing_matmul_with_bias(const Arguments& arg,
                     {
                         auto ptr_matmul = matmul[i % block_count][0];
                         auto ptr_alpha  = arg.scaleAlpha_vector
-                                             ? (dScaleAlphaVec[0].as<char>())
+                                              ? (dScaleAlphaVec[0].as<char>())
                                                    + (i % block_count) * size_scaleAlphaVec[0]
-                                             : alpha_in[0];
+                                              : alpha_in[0];
                         EXPECT_HIPBLAS_STATUS(
                             hipblasLtMatmul(
                                 handle,
@@ -2967,9 +2973,9 @@ void testing_matmul_with_bias(const Arguments& arg,
                     {
                         auto ptr_matmul = matmul[i % block_count][0];
                         auto ptr_alpha  = arg.scaleAlpha_vector
-                                             ? (dScaleAlphaVec[0].as<char>())
+                                              ? (dScaleAlphaVec[0].as<char>())
                                                    + (i % block_count) * size_scaleAlphaVec[0]
-                                             : alpha_in[0];
+                                              : alpha_in[0];
                         EXPECT_HIPBLAS_STATUS(
                             hipblasLtMatmul(
                                 handle,
