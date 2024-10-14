@@ -175,8 +175,7 @@ class KernelWriterConversion(KernelWriterBase):
         kStr += "  unsigned int size%s;%s" % (self.indexChars[i], self.endLine)
       else:
         kStr += "  unsigned int size%s;%s" % (self.indexChars[i], self.endLine)
-    kStr += "  unsigned char gsu;%s" % (self.endLine)
-    kStr += "  unsigned char reserved[3];%s" % (self.endLine)
+    kStr += "  unsigned int gsu;%s" % (self.endLine)
 
     if enableFactorDim:
       kStr += "  unsigned int factorDim;%s" % (self.endLine)
