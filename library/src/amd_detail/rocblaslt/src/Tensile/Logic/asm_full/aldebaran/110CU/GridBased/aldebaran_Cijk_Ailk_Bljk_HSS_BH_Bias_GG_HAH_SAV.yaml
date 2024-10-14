@@ -38442,7 +38442,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAlphaVec: 0
       UseScaleAlphaVec: 1
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -38688,7 +38687,6 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAlphaVec: 0
       UseScaleAlphaVec: 1
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
