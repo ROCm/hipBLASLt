@@ -1268,6 +1268,8 @@ def TensileCreateLibrary():
   argParser.add_argument("--package-library",        dest="PackageLibrary",    action="store_true", default=False)
   argParser.add_argument("--embed-library",          dest="EmbedLibrary",
                          help="Embed (new) library files into static variables.  Specify the name of the library.")
+  argParser.add_argument("--validate-matrix-instructions", dest="ValidateMatrixInstructions", action="store_true",
+                         help="Check that the requested matrix instructions are valid.")
 
   argParser.add_argument("--embed-library-key",      dest="EmbedLibraryKey", default=None,
                          help="Access key for embedding library files.")
@@ -1334,6 +1336,7 @@ def TensileCreateLibrary():
   arguments["LibraryPrintDebug"] = args.LibraryPrintDebug
   arguments["CodeFromFiles"] = False
   arguments["EmbedLibrary"] = args.EmbedLibrary
+  arguments["ValidateMatrixInstructions"] = args.ValidateMatrixInstructions
   arguments["LogicFormat"]  = args.LogicFormat
   arguments["LibraryFormat"] = args.LibraryFormat
   if args.no_enumerate:
