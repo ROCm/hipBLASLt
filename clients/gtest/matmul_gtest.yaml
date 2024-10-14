@@ -66,6 +66,15 @@ Tests:
   alpha_beta: *alpha_beta_range
   c_equal_d: [false, true]
 
+- name: matmul_skinny_i8
+  category: quick
+  function:
+    matmul: *integer_precisions_i8
+  matrix_size: *skinny_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha: [ 0.0, 1.0 ]
+  beta: [ 0.0, 2.0 ]
+
 - name: matmul_medium
   category: pre_checkin
   function:
