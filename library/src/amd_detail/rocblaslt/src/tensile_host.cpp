@@ -1565,27 +1565,6 @@ namespace
 #endif
 } // namespace
 
-struct TensileDataGemm
-{
-    bool                                   enableEpilogue = true;
-    TensileLite::ContractionProblemGemm        problem;
-    TensileLite::ContractionInputs             inputs;
-    std::vector<TensileLite::KernelInvocation> kernels;
-    int                                    algoIndex = std::numeric_limits<int>::max();
-};
-
-struct TensileDataGroupedGemm
-{
-    bool                                   enableEpilogue = true;
-    TensileLite::ContractionProblemGroupedGemm problem;
-    TensileLite::ContractionGroupedInputs      inputs;
-    std::vector<TensileLite::KernelInvocation> kernels;
-    int                                    algoIndex = std::numeric_limits<int>::max();
-    std::shared_ptr<void>                  hipHostMemory;
-    size_t                                 hipHostMemorySize;
-    bool                                   useUserArgs = false;
-};
-
 void initTensileGemmData(rocblaslt_handle       handle,
                          rocblaslt::RocGemmType gemmType,
                          hipblasOperation_t     opA,

@@ -56,6 +56,27 @@ constexpr double value_category(const T& beta)
     return beta == T(0) ? 0.0 : beta == T(1) ? 1.0 : beta == T(-1) ? -1.0 : 2.0;
 }
 
+struct TensileDataGemm
+{
+    bool                                   enableEpilogue = true;
+    Tensile::ContractionProblemGemm        problem;
+    Tensile::ContractionInputs             inputs;
+    std::vector<Tensile::KernelInvocation> kernels;
+    int                                    algoIndex = std::numeric_limits<int>::max();
+};
+
+struct TensileDataGroupedGemm
+{
+    bool                                   enableEpilogue = true;
+    Tensile::ContractionProblemGroupedGemm problem;
+    Tensile::ContractionGroupedInputs      inputs;
+    std::vector<Tensile::KernelInvocation> kernels;
+    int                                    algoIndex = std::numeric_limits<int>::max();
+    std::shared_ptr<void>                  hipHostMemory;
+    size_t                                 hipHostMemorySize;
+    bool                                   useUserArgs = false;
+};
+
 /********************************************************************
  * RocblasltContractionProblem captures the arguments for a GEMM-like *
  * contraction problem, to be passed to runContractionProblem.      *
