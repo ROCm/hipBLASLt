@@ -64,17 +64,34 @@ constexpr const char* rocblaslt_datatype_string(hipDataType type)
     }
 }
 
-// return precision string for rocblaslt_compute_type
 constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
 {
     switch(type)
     {
     case rocblaslt_compute_f32:
-        return "f32";
+        return "f32_r";
     case rocblaslt_compute_f32_fast_xf32:
-        return "xf32";
+        return "xf32_r";
     case rocblaslt_compute_i32:
-        return "i32";
+        return "i32_r";
+    case rocblaslt_compute_f64:
+        return "f64_r";
+    case rocblaslt_compute_f32_fast_f16:
+        return "f32_f16_r";
+    case rocblaslt_compute_f32_fast_bf16:
+        return "f32_bf16_r";
+    case rocblaslt_compute_f32_fast_f8_ocp:
+    case rocblaslt_compute_f32_fast_f8_fnuz:
+        return "f32_f8_r";
+    case rocblaslt_compute_f32_fast_bf8_ocp:
+    case rocblaslt_compute_f32_fast_bf8_fnuz:
+        return "f32_bf8_r";
+    case rocblaslt_compute_f32_fast_f8bf8_ocp:
+    case rocblaslt_compute_f32_fast_f8bf8_fnuz:
+        return "f32_f8bf8_r";
+    case rocblaslt_compute_f32_fast_bf8f8_ocp:
+    case rocblaslt_compute_f32_fast_bf8f8_fnuz:
+        return "f32_bf8f8_r";
     default:
         return "invalidType";
     }
@@ -250,7 +267,7 @@ void log_api(const char* func, H head, Ts&&... xs)
 // can be input to the executable rocblaslt-bench.
 template <typename... Ts>
 void log_bench(const char* func, Ts&&... xs)
-{   
+{
     std::lock_guard<std::mutex> lock(log_mutex);
     std::ostream* os = get_logger_os();
     *os << "hipblaslt-bench ";
