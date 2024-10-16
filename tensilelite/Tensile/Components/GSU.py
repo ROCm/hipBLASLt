@@ -213,10 +213,11 @@ class GSUOn(GSU):
 
         tc = tP["tensorChar"]
         depthU = kernel["DepthU"]
+        depthUDiv = kernel["DepthU"]
         # Swizzled for A, TODO- test for B
         depthUDivSW = "%s%s"%(kernel["DepthU"], "*MI_M") if (tP["isSwizzled"] and tc == 'A') else "%s"%kernel["DepthU"]
+        depthUDiv = depthUDivSW
         #
-        depthUDiv = kernel["DepthU"]
         gsuOffsetStr = "gsuOffset = DepthU*bpeGR*GSUSumIdx"
         divider = 1
         if kernel["ProblemType"]["Sparse"]:
