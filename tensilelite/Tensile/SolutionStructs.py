@@ -2014,21 +2014,6 @@ class Solution(collections.abc.Mapping):
         reject(state, "can't use DirectToLds for LSC%c and LSP%c * bpe != NumThreads * GlobalReadVectorWidth%c * bpe%c > 4"%(tc, tc, tc, tc))
         return False
 
-    #if (state["LdsBlockSizePerPad%c"%tc] == 0) \
-    #    and (state["LdsPad%c"%tc] != 0):
-    #    #        and ((state["LSC%c"%tc] * numBytes) != (state["NumThreads"] * 4)): // TODO:
-    #    #        and ((state["LSC%c"%tc] * numBytes) % (state["WavefrontSize"] * 4) != 0):
-    #  reject(state, "can't use DirectToLds for LdsBlockSizePerPad%c == 0 and LdsPad%c != 0"%(tc, tc))
-    #  return False
-
-    #if (state["LdsBlockSizePerPad%c"%tc] != 0) \
-    #    and (state["LdsPad%c"%tc] != 0) \
-    #    and (state["LdsBlockSizePerPad%c"%tc] != state["WavefrontSize"] * state["GlobalReadVectorWidth%c"%tc] * numBytesAB):
-    #    #        and (state["LdsBlockSizePerPad%tc"] % (state["WavefrontSize"] * 4) != 0): // TODO:
-    #  reject(state, "can't use DirectToLds for LdsBlockSizePerPad%c != 0 and LdsPad%c != 0 and \
-    #          LdsBlockSizePerPad%c != WavefrontSize * GlobalReadVectorWidth%c * bpe%c"%(tc, tc, tc, tc, tc))
-    #  return False
-
     # so far, DirectToLds does not work well with PGR=2
     # performance is not good and a lot of ds_read for DTL can cause scheduling issue(need fix)
     if state["PrefetchGlobalRead"] == 2:

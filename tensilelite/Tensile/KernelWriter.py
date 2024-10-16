@@ -2625,7 +2625,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.addComment1("Tail: remove ValuA/B vgpr buffer [%u...%u) from pool" % \
                           (self.states.a.startVgprValu , self.states.lastValuAB))
 
-      # add address vgpr to vgprPool
+        # add address vgpr to vgprPool
         self.vgprPool.add(self.states.lastValuAB , \
           self.states.lastVgprForReads - self.states.lastValuAB, "address vgpr") # Add as available
         module.addComment1("Tail: add address/G2L vgpr [%u...%u) to pool" % \
