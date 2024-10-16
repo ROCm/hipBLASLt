@@ -28,7 +28,7 @@ from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, 
 from ..Common import print2
 # from ..TensileInstructions.Containers import SMEMModifiers
 from ..Component import Component
-from ..AsmStoreState import StoreState
+from ..AsmStoreState import StoreState, VectorDataTypes
 import abc
 from copy import deepcopy
 
@@ -418,7 +418,8 @@ class StreamK(Component):
         # Calculate Vgprs for Write Batching
         ########################################
 
-        ss = StoreState(writer, kernel, gwvw, edge, beta, False, elements[edgeI], dim=0, isWorkspace=True)
+        vectorDataTypes = VectorDataTypes()
+        ss = StoreState(writer, kernel, gwvw, edge, beta, False, elements[edgeI], vectorDataTypes, dim=0, isWorkspace=True)
 
         #print self.vgprPool.state()
         # Use VGPR up to next occupancy threshold:
@@ -875,7 +876,8 @@ class StreamK(Component):
             # Calculate Vgprs for Write Batching
             ########################################
 
-            ss = StoreState(writer, kernel, gwvw, edge, True, False, elements[edgeI], dim=0, isWorkspace=True)
+            vectorDataTypes = VectorDataTypes()
+            ss = StoreState(writer, kernel, gwvw, edge, True, False, elements[edgeI], vectorDataTypes, dim=0, isWorkspace=True)
 
             # how many vgprs are needed for zero elements
             # 2 for addressC in vgpr for addition - already checked out
