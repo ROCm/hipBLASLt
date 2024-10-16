@@ -30,12 +30,12 @@ elseif(EXISTS      "/opt/AMD/aocl/aocl-linux-aocc-4.1.0/aocc/lib_ILP64/libblis-m
 elseif(EXISTS      "/opt/AMD/aocl/aocl-linux-aocc-4.0/lib_ILP64/libblis-mt.a" )
     set( BLIS_LIB /opt/AMD/aocl/aocl-linux-aocc-4.0/lib_ILP64/libblis-mt.a )
     set( BLIS_INCLUDE_DIR /opt/AMD/aocl/aocl-linux-aocc-4.0/include_ILP64/ )
-elseif(EXISTS      "${BUILD_DIR}/deps/amd-blis/lib/ILP64/libblis-mt.a") # 4.0 and 4.1.0
-    set( BLIS_LIB ${BUILD_DIR}/deps/amd-blis/lib/ILP64/libblis-mt.a )
-    set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/amd-blis/include/ILP64 )
-elseif(EXISTS      "${BUILD_DIR}/deps/blis/lib/libblis.a")
-    set( BLIS_LIB ${BUILD_DIR}/deps/blis/lib/libblis.a )
-    set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/blis/include/blis )
+elseif(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/../deps/amd-blis/lib/ILP64/libblis-mt.a") # 4.0 and 4.1.0
+    set( BLIS_LIB ${CMAKE_CURRENT_BINARY_DIR}/../deps/amd-blis/lib/ILP64/libblis-mt.a )
+    set( BLIS_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/../deps/amd-blis/include/ILP64 )
+elseif(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/../deps/blis/lib/libblis.a")
+    set( BLIS_LIB ${CMAKE_CURRENT_BINARY_DIR}/../deps/blis/lib/libblis.a )
+    set( BLIS_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/../deps/blis/include/blis )
 elseif(EXISTS      "/usr/local/lib/libblis.a")
     set( BLIS_LIB /usr/local/lib/libblis.a )
     set( BLIS_INCLUDE_DIR /usr/local/include/blis )

@@ -61,6 +61,10 @@ class DataInitName(Enum):
   DenormMin = 19
   DenormMax = 20
   RandomNegPosLimited = 21
+  TrigIndSin = 23
+  TrigIndCos = 24
+  TrigIndAbsSin = 25
+  TrigIndAbsCos = 26
 
 class ClientLogLevel(Enum):
   Error = 0

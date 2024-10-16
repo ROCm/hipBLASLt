@@ -895,6 +895,8 @@ void testing_matmul(const Arguments& arg)
 
     // after this, real bias type should not be invalid
     hipDataType real_bias_type = derive_unset_bias_type(arg);
+    Arguments   arg_revised    = arg;
+    arg_revised.bias_type      = real_bias_type;
 
     // for all f8/bf8 cases including mix mode
     if((realDataTypeSize(tiA) == 1 || realDataTypeSize(tiB) == 1)
@@ -904,22 +906,26 @@ void testing_matmul(const Arguments& arg)
         {
             if(real_bias_type == HIP_R_16BF)
             {
-                return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_16BF);
+                return testing_matmul_with_bias(
+                    arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_16BF);
             }
             else
             {
-                return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
+                return testing_matmul_with_bias(
+                    arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
             }
         }
         else
         {
             if(real_bias_type == HIP_R_16F)
             {
-                return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_16F);
+                return testing_matmul_with_bias(
+                    arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_16F);
             }
             else
             {
-                return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
+                return testing_matmul_with_bias(
+                    arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
             }
         }
     }
@@ -927,28 +933,28 @@ void testing_matmul(const Arguments& arg)
     {
         if(real_bias_type == HIP_R_16F)
         {
-            return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_16F);
+            return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_16F);
         }
         else
         {
-            return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
+            return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
         }
     }
     else if(to == HIP_R_16BF)
     {
         if(real_bias_type == HIP_R_16BF)
         {
-            return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_16BF);
+            return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_16BF);
         }
         else
         {
-            return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
+            return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, HIP_R_32F);
         }
     }
     else if(to == HIP_R_32F || to == HIP_R_32I || to == HIP_R_8I || to == HIP_R_64F)
     {
         //set Tbias to To
-        return testing_matmul_with_bias(arg, tiA, tiB, to, tc, tciA, tciB, to);
+        return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, to);
     }
     // shouldn't arrive here
     CHECK_SUCCESS(false);
@@ -1367,72 +1373,47 @@ void testing_matmul_with_bias(const Arguments& arg,
 
         hipblaslt_seedrand();
 
-        // Initial Data on CPU
-        if(alpha_isnan_type(arg, Talpha))
-        {
-            hipblaslt_init_nan(
-                hA[i].buf(), A_row[i], A_col[i], lda[i], TiA, stride_a[i], num_batches[i]);
-            hipblaslt_init_nan(
-                hB[i].buf(), B_row[i], B_col[i], ldb[i], TiB, stride_b[i], num_batches[i]);
-        }
-        else
-        {
-            if(arg.initialization == hipblaslt_initialization::rand_int)
-            {
-                hipblaslt_init(
-                    hA[i].buf(), A_row[i], A_col[i], lda[i], TiA, stride_a[i], num_batches[i]);
-                hipblaslt_init_alternating_sign(
-                    hB[i].buf(), B_row[i], B_col[i], ldb[i], TiB, stride_b[i], num_batches[i]);
-            }
-            else if(arg.initialization == hipblaslt_initialization::trig_float)
-            {
-                hipblaslt_init_sin(
-                    hA[i].buf(), A_row[i], A_col[i], lda[i], TiA, stride_a[i], num_batches[i]);
-                hipblaslt_init_cos(
-                    hB[i].buf(), B_row[i], B_col[i], ldb[i], TiB, stride_b[i], num_batches[i]);
-            }
-            else if(arg.initialization == hipblaslt_initialization::hpl)
-            {
-                hipblaslt_init_hpl(
-                    hA[i].buf(), A_row[i], A_col[i], lda[i], TiA, stride_a[i], num_batches[i]);
-                hipblaslt_init_hpl(
-                    hB[i].buf(), B_row[i], B_col[i], ldb[i], TiB, stride_b[i], num_batches[i]);
-            }
-            else if(arg.initialization == hipblaslt_initialization::special)
-            {
-                hipblaslt_init_alt_impl_big(
-                    hA[i].buf(), A_row[i], A_col[i], lda[i], TiA, num_batches[i]);
-                hipblaslt_init_alt_impl_small(
-                    hB[i].buf(), B_row[i], B_col[i], ldb[i], TiB, num_batches[i]);
-            }
-            else if(arg.initialization == hipblaslt_initialization::zero)
-            {
-                hipblaslt_init_zero(
-                    hA[i].buf(), A_row[i], A_col[i], lda[i], TiA, stride_a[i], num_batches[i]);
-                hipblaslt_init_zero(
-                    hB[i].buf(), B_row[i], B_col[i], ldb[i], TiB, stride_b[i], num_batches[i]);
-            }
-        }
+        hipblaslt_init_device(ABC::A,
+                              arg.initialization,
+                              alpha_isnan_type(arg, Talpha),
+                              dA[i].buf(),
+                              A_row[i],
+                              A_col[i],
+                              lda[i],
+                              TiA,
+                              stride_a[i],
+                              num_batches[i]);
+        hipblaslt_init_device(ABC::B,
+                              arg.initialization,
+                              alpha_isnan_type(arg, Talpha),
+                              dB[i].buf(),
+                              B_row[i],
+                              B_col[i],
+                              ldb[i],
+                              TiB,
+                              stride_b[i],
+                              num_batches[i]);
+        hipblaslt_init_device(ABC::C,
+                              arg.initialization,
+                              beta_isnan_type(arg, Talpha),
+                              dC[i].buf(),
+                              M[i],
+                              N[i],
+                              ldc[i],
+                              To,
+                              stride_c[i],
+                              num_batches[i]);
 
-        if(beta_isnan_type(arg, Talpha))
+        // broadcast first block
+        CHECK_HIP_ERROR(broadcast(dA[i], block_count));
+        CHECK_HIP_ERROR(broadcast(dB[i], block_count));
+        CHECK_HIP_ERROR(broadcast(dC[i], block_count));
+
+        if(arg.unit_check || arg.norm_check || arg.allclose_check)
         {
-            hipblaslt_init_nan(hC[i].buf(), M[i], N[i], ldc[i], To, stride_c[i], num_batches[i]);
-        }
-        else
-        {
-            if(arg.initialization == hipblaslt_initialization::rand_int)
-                hipblaslt_init(hC[i].buf(), M[i], N[i], ldc[i], To, stride_c[i], num_batches[i]);
-            else if(arg.initialization == hipblaslt_initialization::trig_float)
-                hipblaslt_init_sin(
-                    hC[i].buf(), M[i], N[i], ldc[i], To, stride_c[i], num_batches[i]);
-            else if(arg.initialization == hipblaslt_initialization::hpl)
-                hipblaslt_init_hpl(
-                    hC[i].buf(), M[i], N[i], ldc[i], To, stride_c[i], num_batches[i]);
-            else if(arg.initialization == hipblaslt_initialization::special)
-                hipblaslt_init(hC[i].buf(), M[i], N[i], ldc[i], To, stride_c[i], num_batches[i]);
-            else if(arg.initialization == hipblaslt_initialization::zero)
-                hipblaslt_init_zero(
-                    hC[i].buf(), M[i], N[i], ldc[i], To, stride_c[i], num_batches[i]);
+            CHECK_HIP_ERROR(synchronize(hA[i], dA[i]));
+            CHECK_HIP_ERROR(synchronize(hB[i], dB[i]));
+            CHECK_HIP_ERROR(synchronize(hC[i], dC[i]));
         }
 
         if(arg.gradient && arg.use_e)
@@ -1484,10 +1465,6 @@ void testing_matmul_with_bias(const Arguments& arg,
         if(arg.scaleAlpha_vector)
             hipblaslt_init(hScaleAlphaVec[i].buf(), M[i], 1, M[i], Talpha);
 
-        // copy data from CPU to device
-        CHECK_HIP_ERROR(synchronize(dA[i], hA[i], block_count));
-        CHECK_HIP_ERROR(synchronize(dB[i], hB[i], block_count));
-        CHECK_HIP_ERROR(synchronize(dC[i], hC[i], block_count));
         if(arg.gradient && arg.use_e)
         {
             CHECK_HIP_ERROR(synchronize(dE[i], hE[i], block_count));
@@ -1772,22 +1749,24 @@ void testing_matmul_with_bias(const Arguments& arg,
 
     for(int32_t b = 0; b < block_count; b++)
     {
-        gemmVec.push_back(hipblaslt_ext::Gemm(handle,
-                                              transA,
-                                              transB,
-                                              arg.a_type,
-                                              arg.b_type,
-                                              arg.c_type,
-                                              arg.d_type,
-                                              arg.compute_type));
-        groupedGemmVec.push_back(hipblaslt_ext::GroupedGemm(handle,
-                                                            transA,
-                                                            transB,
-                                                            arg.a_type,
-                                                            arg.b_type,
-                                                            arg.c_type,
-                                                            arg.d_type,
-                                                            arg.compute_type));
+        if(!do_grouped_gemm)
+            gemmVec.push_back(hipblaslt_ext::Gemm(handle,
+                                                  transA,
+                                                  transB,
+                                                  arg.a_type,
+                                                  arg.b_type,
+                                                  arg.c_type,
+                                                  arg.d_type,
+                                                  arg.compute_type));
+        else
+            groupedGemmVec.push_back(hipblaslt_ext::GroupedGemm(handle,
+                                                                transA,
+                                                                transB,
+                                                                arg.a_type,
+                                                                arg.b_type,
+                                                                arg.c_type,
+                                                                arg.d_type,
+                                                                arg.compute_type));
     }
 
     std::vector<hipblaslt_ext::GemmEpilogueV2> extepilogue;
