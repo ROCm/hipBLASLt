@@ -35,7 +35,7 @@ class AddrCalculation:
     # coord1Vgpr : VGPR which tracks the last coord1 calculation.
     #          If this is new coord1, just overwrite it with latest calc.
     def __init__(self, kernelWriter, ss, addrCVgpr, addrDVgpr, addrGSUSyncVgprs, addrEVgpr, addrBiasVgpr, addrScaleAVecVgpr, addrScaleBVecVgpr, addrScaleAlphaVecVgpr, element, \
-        coordOffset0, coord1Vgpr, coordOffset1, rowInc, newCoord1):
+        coordOffset0, coord1Vgpr, coordOffset1, rowInc, newCoord1, vectorDataTypes):
         self.kernelWriter = kernelWriter
 
         # vgprs for address, could be more than one (for flat)
@@ -55,6 +55,7 @@ class AddrCalculation:
         self.rowInc = rowInc
         self.rowIncDirtyRowPtr = 0 # rowInc was used to modify rowPtr, need to recompute addr
         self.newCoord1 = newCoord1 # vgpr that stores newCoord1
+        self.vectorDataTypes = vectorDataTypes
 
         self.biasOffset = [0, 0]
         self.scaleAVecOffset = 0
@@ -62,23 +63,23 @@ class AddrCalculation:
         self.scaleAlphaVecOffset = [0, 0]
         if ss.optSingleColVgpr:
             # optimized stores use the load offset for coordOffset0 calculations.
-            self.biasOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal
-            self.biasOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal
-            self.scaleAVecOffset = coordOffset0 * kernelWriter.states.bpeCinternal
-            self.scaleBVecOffset = coordOffset1 * kernelWriter.states.bpeCinternal
-            self.scaleAlphaVecOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal
-            self.scaleAlphaVecOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal
+            self.biasOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.bias.ldsOffset
+            self.biasOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.bias.ldsOffset
+            self.scaleAVecOffset = coordOffset0 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.scaleA.ldsOffset
+            self.scaleBVecOffset = coordOffset1 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.scaleB.ldsOffset
+            self.scaleAlphaVecOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.scaleAlpha.ldsOffset
+            self.scaleAlphaVecOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.scaleAlpha.ldsOffset
             self.globalOffset  = coordOffset0 * kernelWriter.states.bpeCexternal
             self.globalOffsetE = coordOffset0 * kernelWriter.states.bpeE
             self.globalOffsetInternal = coordOffset0 * kernelWriter.states.bpeCinternal
         else:
             # else non-opt stores include the coord0 offset into VGPR address calcs
-            self.biasOffset[0]   = 0
-            self.biasOffset[1]   = 0
-            self.scaleAVecOffset = 0
-            self.scaleBVecOffset = 0
-            self.scaleAlphaVecOffset[0]   = 0
-            self.scaleAlphaVecOffset[1]   = 0
+            self.biasOffset[0]   = self.vectorDataTypes.bias.ldsOffset
+            self.biasOffset[1]   = self.vectorDataTypes.bias.ldsOffset
+            self.scaleAVecOffset = self.vectorDataTypes.scaleA.ldsOffset
+            self.scaleBVecOffset = self.vectorDataTypes.scaleB.ldsOffset
+            self.scaleAlphaVecOffset[0] = self.vectorDataTypes.scaleAlpha.ldsOffset
+            self.scaleAlphaVecOffset[1] = self.vectorDataTypes.scaleAlpha.ldsOffset
             self.globalOffset = 0
             self.globalOffsetE = 0
             self.globalOffsetInternal = 0
@@ -239,29 +240,6 @@ class AddrCalculation:
 
         return module
 
-    def calculateLDSOffset(self, kernel, tc, dim, isRef=False):
-        # TODO: Currently LDS Vector read is hardcoded to gwvw == 1
-        offset = 0
-        if not isRef:
-            if kernel["LdsOffsetBias"] != 0:
-                offset = offset + kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()
-        if self.kernelWriter.states.useBias == DataDirection.READ:
-            offset = offset + kernel["NumThreads"] * self.kernelWriter.states.bpeCinternal * self.kernelWriter.getTurn(kernel, 1, dim)[0]
-
-        if tc == 'ScaleAlphaVec':
-            return offset
-        if kernel["ProblemType"]["UseScaleAlphaVec"]:
-            offset = offset + kernel["NumThreads"] * self.kernelWriter.states.bpeCinternal * self.kernelWriter.getTurn(kernel, 1, dim)[0]
-
-        if tc == 'ScaleAVec':
-            return offset
-        if kernel["ProblemType"]["UseScaleAB"] == "Vector":
-            offset = offset + kernel["NumThreads"] * self.kernelWriter.states.bpeCinternal * self.kernelWriter.getTurn(kernel, 1, 0)[0]
-        if tc == 'ScaleBVec':
-            return offset
-
-        return offset
-
     def emitScaleToBpe(self, kernel, ss, tmpVgpr, tmpSgpr, singleUpdate, tc, dim):
         """
         Needs 3 temporary VGPRs
@@ -321,16 +299,12 @@ class AddrCalculation:
                           module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
                                              src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
                                              src1=vgpr(self.addrBiasVgpr), \
-                                             comment="add bias lds offset"))
+                                             comment="add lds offset"))
                         ss.singleColBiasAddrUpdated = True
                         return module
                     if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                         if self.referenceVgpr and self.referenceDim == dim:
-                            offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                            module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                                src0=offset, \
-                                                src1=vgpr(self.referenceVgpr), \
-                                                comment="add ScaleAlphaVec offset (1)"))
+                            pass
                         else:
                             module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                             coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
@@ -339,20 +313,15 @@ class AddrCalculation:
                                                     shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
                                                     src=vgpr(self.addrScaleAlphaVecVgpr), \
                                                     comment="ScaleAlpha address scaled by BPE"))
-                            offset = self.calculateLDSOffset(kernel, tc, dim)
-                            if offset > 0:
+                            if kernel["LdsOffsetBias"] != 0:
                                 module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                                    src0=(offset), \
-                                                    src1=vgpr(self.addrScaleAlphaVecVgpr), \
-                                                    comment="add ScaleAlphaVec lds offset"))
+                                                   src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                                   src1=vgpr(self.addrScaleAlphaVecVgpr), \
+                                                   comment="add lds offset"))
                         return module
                     if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                         if self.referenceVgpr and self.referenceDim == 0:
-                            offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                            module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                                src0=offset, \
-                                                src1=vgpr(self.referenceVgpr), \
-                                                comment="add ScaleAVec offset"))
+                            pass
                         else:
                             module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
                             module.add(VSubU32(dst=vgpr(self.addrScaleAVecVgpr), src0=vgpr(self.coord0Vgpr), src1=sgpr(tmpSgpr)))
@@ -360,20 +329,15 @@ class AddrCalculation:
                                                     shiftHex=hex(log2(kw.states.bpeCinternal)), \
                                                     src=vgpr(self.addrScaleAVecVgpr), \
                                                     comment="ScaleAVec address scaled by BPE"))
-                            offset = self.calculateLDSOffset(kernel, tc, dim)
-                            if offset > 0:
+                            if kernel["LdsOffsetBias"] != 0:
                                 module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                                    src0=(offset), \
-                                                    src1=vgpr(self.addrScaleAVecVgpr), \
-                                                    comment="add ScaleAVec lds offset"))
+                                                   src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                                   src1=vgpr(self.addrScaleAVecVgpr), \
+                                                   comment="add lds offset"))
                         return module
                     if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                         if self.referenceVgpr and self.referenceDim == 1:
-                            offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                            module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                                src0=offset, \
-                                                src1=vgpr(self.referenceVgpr), \
-                                                comment="add ScaleB Vec offset"))
+                            pass
                         else:
                             module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile1"], src1=sgpr("WorkGroup1"), comment="wgp1 * MT1"))
                             module.add(VSubU32(dst=vgpr(self.addrScaleBVecVgpr), src0=vgpr(self.coord1Vgpr), src1=sgpr(tmpSgpr)))
@@ -381,12 +345,11 @@ class AddrCalculation:
                                                     shiftHex=hex(log2(kw.states.bpeCinternal)), \
                                                     src=vgpr(self.addrScaleBVecVgpr), \
                                                     comment="ScaleBVec address scaled by BPE"))
-                            offset = self.calculateLDSOffset(kernel, tc, dim)
-                            if offset > 0:
+                            if kernel["LdsOffsetBias"] != 0:
                                 module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                                    src0=(offset), \
-                                                    src1=vgpr(self.addrScaleBVecVgpr), \
-                                                    comment="add ScaleBVec lds offset"))
+                                                   src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                                   src1=vgpr(self.addrScaleBVecVgpr), \
+                                                   comment="add lds offset"))
                         return module
                     if tc == 'C':
                         ss.singleColCAddrUpdated    = True
@@ -418,15 +381,11 @@ class AddrCalculation:
                         module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
                                            src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
                                            src1=vgpr(self.addrBiasVgpr), \
-                                           comment="add bias lds offset"))
+                                           comment="add lds offset"))
                     return module
                 if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                     if self.referenceVgpr and self.referenceDim == dim:
-                        offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                        module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                            src0=offset, \
-                                            src1=vgpr(self.referenceVgpr), \
-                                            comment="add ScaleAlphaVec offset (2)"))
+                        pass
                     else:
                         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                         coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
@@ -435,20 +394,15 @@ class AddrCalculation:
                                                 shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
                                                 src=vgpr(self.addrScaleAlphaVecVgpr), \
                                                 comment="ScaleAlpha address scaled by BPE"))
-                        offset = self.calculateLDSOffset(kernel, tc, dim)
-                        if offset > 0:
+                        if kernel["LdsOffsetBias"] != 0:
                             module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                                src0=(offset), \
-                                                src1=vgpr(self.addrScaleAlphaVecVgpr), \
-                                                comment="add ScaleAlphaVec lds offset"))
+                                               src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                               src1=vgpr(self.addrScaleAlphaVecVgpr), \
+                                               comment="add lds offset"))
                     return module
                 if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                     if self.referenceVgpr and self.referenceDim == 0:
-                        offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                        module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                            src0=offset, \
-                                            src1=vgpr(self.referenceVgpr), \
-                                            comment="add ScaleAVec offset"))
+                        pass
                     else:
                         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
                         module.add(VSubU32(dst=vgpr(self.addrScaleAVecVgpr), src0=vgpr(self.coord0Vgpr), src1=sgpr(tmpSgpr)))
@@ -456,20 +410,15 @@ class AddrCalculation:
                                                 shiftHex=hex(log2(kw.states.bpeCinternal)), \
                                                 src=vgpr(self.addrScaleAVecVgpr), \
                                                 comment="ScaleAVec address scaled by BPE"))
-                        offset = self.calculateLDSOffset(kernel, tc, dim)
-                        if offset > 0:
+                        if kernel["LdsOffsetBias"] != 0:
                             module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                                src0=(offset), \
-                                                src1=vgpr(self.addrScaleAVecVgpr), \
-                                                comment="add ScaleAVec lds offset"))
+                                               src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                               src1=vgpr(self.addrScaleAVecVgpr), \
+                                               comment="add lds offset"))
                     return module
                 if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                     if self.referenceVgpr and self.referenceDim == 1:
-                        offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                        module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                            src0=offset, \
-                                            src1=vgpr(self.referenceVgpr), \
-                                            comment="add ScaleB Vec offset"))
+                        pass
                     else:
                         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile1"], src1=sgpr("WorkGroup1"), comment="wgp1 * MT1"))
                         module.add(VSubU32(dst=vgpr(self.addrScaleBVecVgpr), src0=vgpr(self.coord1Vgpr), src1=sgpr(tmpSgpr)))
@@ -477,12 +426,11 @@ class AddrCalculation:
                                                 shiftHex=hex(log2(kw.states.bpeCinternal)), \
                                                 src=vgpr(self.addrScaleBVecVgpr), \
                                                 comment="ScaleBVec address scaled by BPE"))
-                        offset = self.calculateLDSOffset(kernel, tc, dim)
-                        if offset > 0:
+                        if kernel["LdsOffsetBias"] != 0:
                             module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                                src0=(offset), \
-                                                src1=vgpr(self.addrScaleBVecVgpr), \
-                                                comment="add ScaleBVec lds offset"))
+                                               src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                               src1=vgpr(self.addrScaleBVecVgpr), \
+                                               comment="add lds offset"))
                     return module
                 packedIndices = kernel["PackedC0IndicesX"]
                 if len(packedIndices) > 1:
@@ -512,15 +460,11 @@ class AddrCalculation:
                     module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
                                        src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
                                        src1=vgpr(self.addrBiasVgpr), \
-                                       comment="add bias lds offset"))
+                                       comment="add lds offset"))
                 return module
             if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                 if self.referenceVgpr and self.referenceDim == dim:
-                    offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                    module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                        src0=offset, \
-                                        src1=vgpr(self.referenceVgpr), \
-                                        comment="add ScaleAlphaVec offset (3)"))
+                    pass
                 else:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                     coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
@@ -529,20 +473,15 @@ class AddrCalculation:
                                             shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
                                             src=vgpr(self.addrScaleAlphaVecVgpr), \
                                             comment="ScaleAlpha address scaled by BPE"))
-                    offset = self.calculateLDSOffset(kernel, tc, dim)
-                    if offset > 0:
+                    if kernel["LdsOffsetBias"] != 0:
                         module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                            src0=(offset), \
-                                            src1=vgpr(self.addrScaleAlphaVecVgpr), \
-                                            comment="add ScaleAlphaVec lds offset"))
+                                           src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                           src1=vgpr(self.addrScaleAlphaVecVgpr), \
+                                           comment="add lds offset"))
                 return module
             if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                 if self.referenceVgpr and self.referenceDim == 0:
-                    offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                    module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                        src0=offset, \
-                                        src1=vgpr(self.referenceVgpr), \
-                                        comment="add ScaleAVec offset"))
+                    pass
                 else:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
                     module.add(VSubU32(dst=vgpr(self.addrScaleAVecVgpr), src0=vgpr(self.coord0Vgpr), src1=sgpr(tmpSgpr)))
@@ -550,20 +489,15 @@ class AddrCalculation:
                                             shiftHex=hex(log2(kw.states.bpeCinternal)), \
                                             src=vgpr(self.addrScaleAVecVgpr), \
                                             comment="ScaleAVec address scaled by BPE"))
-                    offset = self.calculateLDSOffset(kernel, tc, dim)
-                    if offset > 0:
+                    if kernel["LdsOffsetBias"] != 0:
                         module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                            src0=(offset), \
-                                            src1=vgpr(self.addrScaleAVecVgpr), \
-                                            comment="add ScaleAVec lds offset"))
+                                           src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                           src1=vgpr(self.addrScaleAVecVgpr), \
+                                           comment="add lds offset"))
                 return module
             if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                 if self.referenceVgpr and self.referenceDim == 1:
-                    offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                    module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                        src0=offset, \
-                                        src1=vgpr(self.referenceVgpr), \
-                                        comment="add ScaleB Vec offset"))
+                    pass
                 else:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile1"], src1=sgpr("WorkGroup1"), comment="wgp1 * MT1"))
                     module.add(VSubU32(dst=vgpr(self.addrScaleBVecVgpr), src0=vgpr(self.coord1Vgpr), src1=sgpr(tmpSgpr)))
@@ -571,12 +505,11 @@ class AddrCalculation:
                                             shiftHex=hex(log2(kw.states.bpeCinternal)), \
                                             src=vgpr(self.addrScaleBVecVgpr), \
                                             comment="ScaleBVec address scaled by BPE"))
-                    offset = self.calculateLDSOffset(kernel, tc, dim)
-                    if offset > 0:
-                        module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                            src0=(offset), \
-                                            src1=vgpr(self.addrScaleBVecVgpr), \
-                                            comment="add ScaleBVec lds offset"))
+                if kernel["LdsOffsetBias"] != 0:
+                    module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
+                                       src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                       src1=vgpr(self.addrScaleBVecVgpr), \
+                                       comment="add lds offset"))
                 return module
             packedIndices = kernel["PackedC0IndicesX"]
             if len(packedIndices) > 1:
@@ -812,14 +745,10 @@ class AddrCalculation:
                     module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
                                        src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
                                        src1=vgpr(self.addrBiasVgpr), \
-                                       comment="add bias lds offset"))
+                                       comment="add lds offset"))
             elif tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                 if self.referenceVgpr and self.referenceDim == dim:
-                    offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                    module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                        src0=offset, \
-                                        src1=vgpr(self.referenceVgpr), \
-                                        comment="add ScaleAlphaVec offset (4)"))
+                    pass
                 else:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                     coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
@@ -828,19 +757,14 @@ class AddrCalculation:
                                             shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
                                             src=vgpr(self.addrScaleAlphaVecVgpr), \
                                             comment="ScaleAlpha address scaled by BPE"))
-                    offset = self.calculateLDSOffset(kernel, tc, dim)
-                    if offset > 0:
+                    if kernel["LdsOffsetBias"] != 0:
                         module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                            src0=(offset), \
-                                            src1=vgpr(self.addrScaleAlphaVecVgpr), \
-                                            comment="add ScaleAlphaVec lds offset"))
+                                           src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                           src1=vgpr(self.addrScaleAlphaVecVgpr), \
+                                           comment="add lds offset"))
             elif tc == 'ScaleA' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                 if self.referenceVgpr and self.referenceDim == 0:
-                    offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                    module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                        src0=offset, \
-                                        src1=vgpr(self.referenceVgpr), \
-                                        comment="add ScaleAVec offset"))
+                    pass
                 else:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
                     module.add(VSubU32(dst=vgpr(self.addrScaleAVecVgpr), src0=vgpr(self.coord0Vgpr), src1=sgpr(tmpSgpr)))
@@ -848,19 +772,14 @@ class AddrCalculation:
                                             shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
                                             src=vgpr(self.addrScaleAVecVgpr), \
                                             comment="ScaleAVec address scaled by BPE"))
-                    offset = self.calculateLDSOffset(kernel, tc, dim)
-                    if offset > 0:
-                        module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                            src0=(offset), \
-                                            src1=vgpr(self.addrScaleAVecVgpr), \
-                                            comment="add ScaleAVec lds offset"))
+                if kernel["LdsOffsetBias"] != 0:
+                    module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
+                                       src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                       src1=vgpr(self.addrScaleAVecVgpr), \
+                                       comment="add lds offset"))
             elif tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                 if self.referenceVgpr and self.referenceDim == 1:
-                    offset = self.calculateLDSOffset(kernel, tc, self.referenceDim, isRef=True)
-                    module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                        src0=offset, \
-                                        src1=vgpr(self.referenceVgpr), \
-                                        comment="add ScaleB Vec offset"))
+                    pass
                 else:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile1"], src1=sgpr("WorkGroup1"), comment="wgp1 * MT1"))
                     module.add(VSubU32(dst=vgpr(self.addrScaleBVecVgpr), src0=vgpr(self.coord1Vgpr), src1=sgpr(tmpSgpr)))
@@ -868,12 +787,11 @@ class AddrCalculation:
                                             shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
                                             src=vgpr(self.addrScaleBVecVgpr), \
                                             comment="ScaleBVec address scaled by BPE"))
-                    offset = self.calculateLDSOffset(kernel, tc, dim)
-                    if offset > 0:
-                        module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                            src0=(offset), \
-                                            src1=vgpr(self.addrScaleBVecVgpr), \
-                                            comment="add ScaleBVec lds offset"))
+                if kernel["LdsOffsetBias"] != 0:
+                    module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
+                                       src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                       src1=vgpr(self.addrScaleBVecVgpr), \
+                                       comment="add lds offset"))
             else:
                 # store a copy of the offset in 2 of the tmpVgpr for D
                 module.add(VAddCOU32(dst=vgpr(addrVgpr+0), dst1=VCC(), src0=vgpr(BufAddr+0), src1=vgpr(tmpVgpr+2), \
