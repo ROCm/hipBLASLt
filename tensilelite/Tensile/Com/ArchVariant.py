@@ -2,7 +2,6 @@ import re
 from pathlib import Path
 from typing import NamedTuple, Optional, Union, Tuple, Set
 
-
 class ArchVariant(NamedTuple):
     Name: str
     Gfx: str
@@ -69,14 +68,14 @@ def extractArchVariant(file: Union[str, Path]) -> ArchVariant:
     return ArchVariant(Name=name, Gfx=gfx, DeviceIds=deviceIds, CUCount=cu)
 
 
-def parseArchVariantString(spec: str) -> Tuple[Set[str], Set[int]]:
-    """Parses an architecture variant specification to extract device IDs and CU counts.
+def parseArchVariantString(spec: Set[str]) -> Tuple[Set[str], Set[int]]:
+    """Parses a set of architecture variant specs to extract device IDs and CU counts.
 
-    An architecture variant specification must have the following form: "id=1234;cu=64".
-    Note that all entries must be separated by a semicolon.
+    An architecture variant specification must have the following form: "id=1234,cu=64".
+    Note that all entries must be separated by a comma.
 
     Args:
-        spec: The specification string in the format "id=1234;cu=64;id=5678;cu=32".
+        spec: The specification string in the format "id=1234,cu=64,id=5678,cu=32".
 
     Returns:
         A tuple containing a set of device IDs and a set of CU counts. If an empty string
@@ -94,13 +93,17 @@ def parseArchVariantString(spec: str) -> Tuple[Set[str], Set[int]]:
     deviceIds = set()
     cuCounts = set()
 
+    idKey = "id"
+    cuKey = "cu"
+    split = "="
+
     if spec:
-        for s in spec.strip().split(";"):
-            key, _, value = s.partition("=")
+        for s in spec:
+            key, _, value = s.strip().partition(split)
             value = value.strip()
-            if key == "id" and all(v in hexChars for v in value) and len(value) == deviceIdLength:
+            if key == idKey and all(v in hexChars for v in value.lower()) and len(value) == deviceIdLength:
                 deviceIds.add(value)
-            elif key == "cu" and value.isdigit():
+            elif key == cuKey and value.isdigit():
                 cuCounts.add(int(value))
             else:
                 raise ValueError(f"Invalid architecture variant string: {spec}")
@@ -134,8 +137,8 @@ def matchArchVariant(
     variant = extractArchVariant(targetLogicFile)
     conditions = [
         variant.Gfx in gfxNames,
-        any(id in deviceIds for id in variant.DeviceIds),
-        variant.CUCount in cuCounts or variant.CUCount == None,
+        any(id in deviceIds for id in variant.DeviceIds) or deviceIds == set(),
+        variant.CUCount in cuCounts or variant.CUCount == None or cuCounts == set(),
     ]
     if all(conditions):
         return True

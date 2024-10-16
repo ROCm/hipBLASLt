@@ -36,12 +36,12 @@ from . import Utils
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, CMakeHeader, assignGlobalParameters, \
-                    architectureMap, supportedCompiler, printWarning
+                    architectureMap, supportedCompiler, printWarning, splitArchsFromGlobal
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
-from .Com.ArchVariant import ArchVariant, extractArchVariant, matchArchVariant, parseArchVariantString
+from .Com.ArchVariant import matchArchVariant, parseArchVariantString
 
 import argparse
 import collections
@@ -54,10 +54,10 @@ import shlex
 import shutil
 import subprocess
 import sys
-import functools
 from timeit import default_timer as timer
 from pathlib import Path
 from typing import Sequence, List
+from functools import partial
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -197,35 +197,46 @@ def which(p):
                 return candidate
     return None
 
-def splitArchs():
-  # Helper for architecture
-  def isSupported(arch):
-    return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
-           globalParameters["AsmCaps"][arch]["SupportedSource"]
+# def splitArchsFromGlobal():
+#   # Helper for architecture
+#   def isSupported(arch):
+#     return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
+#            globalParameters["AsmCaps"][arch]["SupportedSource"]
 
-  if ";" in globalParameters["Architecture"]:
-    wantedArchs = globalParameters["Architecture"].split(";")
-  else:
-    wantedArchs = globalParameters["Architecture"].split("_")
-  archs = []
-  cmdlineArchs = []
-  if "all" in wantedArchs:
-    for arch in globalParameters['SupportedISA']:
-      if isSupported(arch):
-        if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
-          if (arch == (9,0,10)):
-            archs += [getGfxName(arch) + '-xnack+']
-            cmdlineArchs += [getGfxName(arch) + ':xnack+']
-          archs += [getGfxName(arch) + '-xnack-']
-          cmdlineArchs += [getGfxName(arch) + ':xnack-']
-        else:
-          archs += [getGfxName(arch)]
-          cmdlineArchs += [getGfxName(arch)]
-  else:
-    for arch in wantedArchs:
-      archs += [re.sub(":", "-", arch)]
-      cmdlineArchs += [arch]
-  return archs, cmdlineArchs
+#   if ";" in globalParameters["Architecture"]:
+#     wantedArchs = globalParameters["Architecture"].split(";")
+#   else:
+#     wantedArchs = globalParameters["Architecture"].split("_")
+
+#   gfxArchs = set()
+#   cmdlineArchs = set()
+#   archVariants = set()
+
+#   if "all" in wantedArchs:
+#     for arch in globalParameters['SupportedISA']:
+#       if isSupported(arch):
+#         if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
+#           if (arch == (9,0,10)):
+#             gfxArchs.add(getGfxName(arch) + '-xnack+')
+#             cmdlineArchs.add(getGfxName(arch) + ':xnack+')
+#           gfxArchs.add(getGfxName(arch) + '-xnack-')
+#           cmdlineArchs.add(getGfxName(arch) + ':xnack-')
+#         else:
+#           gfxArchs.add(getGfxName(arch))
+#           cmdlineArchs.add(getGfxName(arch))
+#   else:
+#     for archspec in wantedArchs:
+#       archspec = archspec.strip()
+#       if match := re.search(r'\[(.*?)\]', archspec):  # extract arch variants
+#         archVariants.add(match.group(1))
+#         archspec = archspec[:match.start()]
+#       if archspec in architectureMap:
+#         gfxArchs.add(re.sub(":", "-", archspec))
+#         cmdlineArchs.add(archspec)
+#         print1(f"# Arch: {archspec}, Variants {archVariants}")
+#       else:
+#         printExit("Architecture %s not supported" % archspec)
+#   return gfxArchs, cmdlineArchs, ','.join(archVariants)
 
 def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
     buildPath = ensurePath(os.path.join(globalParameters['WorkingPath'], 'code_object_tmp'))
@@ -242,7 +253,7 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
     coFilenames = []
 
     if supportedCompiler(CxxCompiler):
-      archs, cmdlineArchs = splitArchs()
+      archs, cmdlineArchs, _ = splitArchsFromGlobal(globalParameters)
 
       archFlags = ['--offload-arch=' + arch for arch in cmdlineArchs]
 
@@ -846,7 +857,7 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
 
   # Source based kernels are built for all supported architectures
   if supportedCompiler(CxxCompiler):
-    sourceArchs, _ = splitArchs()
+    sourceArchs, _, _ = splitArchsFromGlobal()
   else:
     raise RuntimeError("Unknown compiler %s" % CxxCompiler)
 
@@ -1075,20 +1086,14 @@ def generateKernelObjectsFromSolutions(solutions):
 # Generate Logic Data and Solutions
 ################################################################################
 @timing
-def generateLogicDataAndSolutions(logicFiles, args):
-
-  # skip the logic which architectureName is not in the build target.
-  if ";" in args.Architecture:
-    archs = args.Architecture.split(";") # user arg list format
-  else:
-    archs = args.Architecture.split("_") # workaround for cmake list in list issue
+def generateLogicDataAndSolutions(logicFiles, args, gfxArchs):
 
   solutions = []
   masterLibraries = {}
   fullMasterLibrary = None
   nextSolIndex = 0
   matchTable = {}
-  fIter = zip(logicFiles, itertools.repeat(archs))
+  fIter = zip(logicFiles, itertools.repeat(gfxArchs))
 
   def libraryIter(lib: MasterSolutionLibrary):
     if len(lib.solutions):
@@ -1130,6 +1135,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
 
   if globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
     if "fallback" in masterLibraries.keys():
+      print1(f"Found a fallback")
       for key, value in masterLibraries.items():
         if key != "fallback":
           value.merge(masterLibraries["fallback"])
@@ -1144,7 +1150,10 @@ def generateLogicDataAndSolutions(logicFiles, args):
           sol.originalSolution._state["codeObjectFile"] = name
           solutions.append(sol.originalSolution)
   else:
-    solutions = [sol.originalSolution for _, sol in fullMasterLibrary.solutions.items()]
+    try:
+      solutions = [sol.originalSolution for _, sol in fullMasterLibrary.solutions.items()]
+    except AttributeError:
+      raise ValueError(f"No solutions found, check that your logic filter and search directory are correct.")
 
   # remove duplicates while preserving order
   solutions = dict.fromkeys(solutions).keys()
@@ -1257,9 +1266,11 @@ def TensileCreateLibrary():
   argParser.add_argument("RuntimeLanguage", help="Which runtime language?", choices=["OCL", "HIP", "HSA"])
   argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       choices=["hipcc", "amdclang++"], action="store", default="amdclang++")
   argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
-  argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["default", "V4", "V5"], action="store")
-  argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
-  argParser.add_argument("--arch-variant",           dest="ArchVariant",       type=str, default=None, help="Architecture variant to build. All non-matching variants will be filtered out. Example: 'id=1234;cu=80'")
+  argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["default", "V4", "V5"], default="default", action="store")
+  argParser.add_argument("--architecture",           dest="Architecture", type=str, action="store", default="all", 
+                         help="Supported archs: " + " ".join(architectureMap.keys()) + "You may also "\
+                          "specify an arch variant to build, enclosed within square brackets, all "\
+                          "non-matching variants will be filtered out. Example: 'gfx942[id=1234,cu=80]'")
   argParser.add_argument("--merge-files",            dest="MergeFiles",        action="store_true")
   argParser.add_argument("--no-merge-files",         dest="MergeFiles",        action="store_false")
   argParser.add_argument("--num-merged-files",       dest="NumMergedFiles",    type=int, default=1, help="Number of files the kernels should be written into.")
@@ -1366,22 +1377,13 @@ def TensileCreateLibrary():
 
   print1("# CodeObjectVersion from TensileCreateLibrary: %s" % arguments["CodeObjectVersion"])
   print1("# CxxCompiler       from TensileCreateLibrary: %s" % CxxCompiler)
-  print1("# Architecture      from TensileCreateLibrary: %s" % arguments["Architecture"])
   print1("# LibraryFormat     from TensileCreateLibrary: %s" % libraryFormat)
 
   if not os.path.exists(logicPath):
     printExit("LogicPath %s doesn't exist" % logicPath)
 
-  if ";" in arguments["Architecture"]:
-    archs = arguments["Architecture"].split(";") # user arg list format
-  else:
-    archs = arguments["Architecture"].split("_") # workaround for cmake list in list issue
-  logicArchs = set()
-  for arch in archs:
-    if arch in architectureMap:
-      logicArchs.add(architectureMap[arch])
-    else:
-      printExit("Architecture %s not supported" % arch)
+  gfxArchs, _, variantSpec = splitArchsFromGlobal(globalParameters)
+  print1("# Architecture      from TensileCreateLibrary: gfxArchs=%s variantSpec=%s" % (gfxArchs, variantSpec))
 
   if globalParameters["LazyLibraryLoading"] and not (globalParameters["MergeFiles"] and globalParameters["SeparateArchitectures"]):
     printExit("--lazy-library-loading requires --merge-files and --separate-architectures enabled")
@@ -1399,25 +1401,25 @@ def TensileCreateLibrary():
     return (arch in archs) or any(a.startswith(arch) for a in archs)
 
   def validLogicFile(p: Path):
-    return p.suffix == logicExtFormat and ("all" in archs or archMatch(load_logic_gfx_arch(p), archs))
+    return p.suffix == logicExtFormat and ("all" in gfxArchs or archMatch(load_logic_gfx_arch(p), gfxArchs))
 
   globPattern = os.path.join(logicPath, f"**/{args.LogicFilter}{logicExtFormat}")
   print1(f"# LogicFilter: {globPattern}")
   logicFiles = (os.path.join(logicPath, file) for file in glob.iglob(globPattern, recursive=True))
   logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
 
-  if args.ArchVariant:
-    requestedGfxArchs = set(archs)
-    requestedDeviceIds, requestedCuCounts = parseArchVariantString(args.ArchVariant)
-    print1(f"# Arch variant filter: gfx={requestedGfxArchs}, id={requestedDeviceIds}, cu={requestedCuCounts}")
+  if variantSpec:
+      devIds, cuCounts = parseArchVariantString(variantSpec)
+      print1(f"# Arch variant filter: gfx={gfxArchs}, id={devIds}, cu={cuCounts}")
 
-    numLogicFilesAllVariants = len(logicFiles)
-    fn = functools.partial(matchArchVariant, requestedGfxArchs, requestedDeviceIds, requestedCuCounts)
-    logicFiles = list(filter(fn, logicFiles))
-    print1(f"#   Filtered {numLogicFilesAllVariants - len(logicFiles)} logic files")
+      numAllVariants = len(logicFiles)
+      func = partial(matchArchVariant, gfxArchs, devIds, cuCounts)
+      logicFiles = list(filter(func, logicFiles))
+      print1(f"#   Filtered {numAllVariants - len(logicFiles)} logic files")
 
+  if not logicFiles:
+    printExit(f"No logic files found with logic filer: {globPattern}")
   print1(f"# LibraryLogicFiles({len(logicFiles)}):")
-  exit(1)
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
 
@@ -1426,7 +1428,7 @@ def TensileCreateLibrary():
   ##############################################################################
 
   # Parse logicData, solutions, and masterLibraries from logic files
-  solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args)
+  solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args, gfxArchs)
 
   kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
 

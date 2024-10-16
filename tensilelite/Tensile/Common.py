@@ -25,6 +25,7 @@
 from . import __version__
 from . import Parallel
 from .TensileInstructions import getGfxName, TensileInstructions
+from .Com.ArchVariant import parseArchVariantString
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -34,6 +35,7 @@ import os.path
 import subprocess
 import sys
 import time
+import re
 
 startTime = time.time()
 
@@ -1840,6 +1842,60 @@ def ClientExecutionLock():
 # convert python list to C++ initializer style syntax
 def listToInitializer(l):
   return "{" + ','.join(map(str, l)) + "}"
+
+def splitArchsFromGlobal(globalParameters):
+    """Use this function to access the Architecture string from the globalParameters
+    
+    Since an architecture string can contain multiple architectures, and variants,
+    this function serves as an efficient implementation to provide consistent results
+    when requiring details about user provided architecture.
+    """
+    def isSupported(arch):
+        return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
+               globalParameters["AsmCaps"][arch]["SupportedSource"]
+
+    def getWantedArchs(globalArchSpec):
+        return globalArchSpec.split(";") if ";" in globalArchSpec else globalArchSpec.split("_")
+
+    def processArchs(wantedArchs, extensionArchs):
+        variantRegex = re.compile(r'\[(.*?)\]')  # matches text between square brackets
+        gfxArchs, cmdlineArchs, variants = set(), set(), set()
+
+        for archspec in wantedArchs:
+            archspec = archspec.strip()
+            if match := re.search(variantRegex, archspec):  # extract arch variants
+                variants.update(s.strip() for s in match.group(1).split(","))
+                archspec = archspec[:match.start()]
+            if archspec in architectureMap:
+                gfxArchs.add(re.sub(":", "-", archspec))
+                cmdlineArchs.add(archspec)
+            else:
+                raise ValueError(f"Architecture {archspec} not supported")
+
+        return gfxArchs, cmdlineArchs, variants
+
+    globalArchSpec = globalParameters["Architecture"]
+    wantedArchs = getWantedArchs(globalArchSpec)
+    extensionArchs = {(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)}
+
+    if "all" in wantedArchs:
+        gfxArchs = set()
+        cmdlineArchs = set()
+        for arch in globalParameters['SupportedISA']:
+            if isSupported(arch):
+                if arch in extensionArchs:
+                    if arch == (9,0,10):
+                        gfxArchs.add(getGfxName(arch) + '-xnack+')
+                        cmdlineArchs.add(getGfxName(arch) + ':xnack+')
+                    gfxArchs.add(getGfxName(arch) + '-xnack-')
+                    cmdlineArchs.add(getGfxName(arch) + ':xnack-')
+                else:
+                    gfxArchs.add(getGfxName(arch))
+                    cmdlineArchs.add(getGfxName(arch))
+        return gfxArchs, cmdlineArchs, set()
+
+    return processArchs(wantedArchs, extensionArchs)
+
 
 ################################################################################
 # Progress Bar Printing

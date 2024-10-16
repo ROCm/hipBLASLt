@@ -24,7 +24,7 @@
 
 from copy import deepcopy
 
-from .Common import globalParameters, CHeader, gfxArch, getGfxName
+from .Common import globalParameters, CHeader, gfxArch, getGfxName, splitArchsFromGlobal
 from .KernelWriterBase import KernelWriterBase
 from .TensileInstructions import DataType
 
@@ -67,15 +67,17 @@ class KernelWriterConversion(KernelWriterBase):
     self.tileChar1 = self.indexChars[self.state["ProblemType"]["Index1"]]
 
     # Get supported archs
-    if ";" in globalParameters["Architecture"]:
-      self.supportedArchs = globalParameters["Architecture"].split(";")
-    else:
-      self.supportedArchs = globalParameters["Architecture"].split("_")
-    if "all" in self.supportedArchs:
-      self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
-    else:
-      for idx, arch in enumerate(self.supportedArchs):
-        self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
+    gfxArchs, _, _ = splitArchsFromGlobal(globalParameters)
+    self.supportedArchs = gfxArchs
+    # if ";" in globalParameters["Architecture"]:
+    #   self.supportedArchs = globalParameters["Architecture"].split(";")
+    # else:
+    #   self.supportedArchs = globalParameters["Architecture"].split("_")
+    # if "all" in self.supportedArchs:
+    #   self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
+    # else:
+    #   for idx, arch in enumerate(self.supportedArchs):
+    #     self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
 
     self.gsuKernels = [self.state["GlobalSplitU"]]
     if self.state["GenPGRPostKernels"]:
