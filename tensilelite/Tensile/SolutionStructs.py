@@ -1923,9 +1923,13 @@ class Solution(collections.abc.Mapping):
       reject(state, "DirectToVgpr%c does not supports InnerUnroll>1"%(tc))
       return False
 
+    if tc == 'A' and (state["ProblemType"]["TLUA"] == state["UnrollMajorLDSA"]):
+      reject(state, "DirectToVgprA does not supports TLUA = UnrollMajorLDSA (different pattern of A)")
+      return False
+
     # Reject TLU = UnrollMajorLDS (B only)
     if tc == 'B' and (state["ProblemType"]["TLUA"] == state["UnrollMajorLDSA"] or state["ProblemType"]["TLUB"] == state["UnrollMajorLDSB"]):
-      reject(state, "DirectToVgpr%c does not supports TLU = UnrollMajorLDS"%(tc))
+      reject(state, "DirectToVgprB does not supports TLUA = UnrollMajorLDSA or TLUB = UnrollMajorLDSB")
       return False
 
     # does not work with UnrollLoopSwapGlobalReadOrder

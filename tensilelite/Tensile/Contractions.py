@@ -506,16 +506,17 @@ class ProblemPredicate(Properties.Predicate):
 
         if ('WorkGroupMappingXCC' in state) and ('WorkGroupMappingXCCGroup' in state):
             rv += [cls("WorkgroupMappingXCCCheck", value=[state['WorkGroupMappingXCC'], state['WorkGroupMappingXCCGroup']])]
+
+        # TODO- To improve the perf of these non-multiples cases
         if state['ProblemType']['SwizzleTensorA']:
             rv += [cls('SwizzleTensorA', value=state['ProblemType']['SwizzleTensorA'])]
-            rv += [cls("Free0SizeMultiple", index=0, value=state['MacroTile0'])]
-            rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
-
+            # rv += [cls("Free0SizeMultiple", index=0, value=state['MacroTile0'])]
+            # rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
 
         if state['ProblemType']['SwizzleTensorB']:
             rv += [cls('SwizzleTensorB', value=state['ProblemType']['SwizzleTensorB'])]
-            rv += [cls("Free1SizeMultiple", index=0, value=state['MacroTile1'])]
-            rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
+            # rv += [cls("Free1SizeMultiple", index=0, value=state['MacroTile1'])]
+            # rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
 
         return rv
 

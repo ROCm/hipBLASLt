@@ -562,7 +562,7 @@ class KernelWriterAssembly(KernelWriter):
                 ri += self.states.a.numVgprValuPerBlock
 
     ri = 0
-    if self.states.b.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
+    if self.states.b.numVgprValu > 0: # Do not generate vgprValuB if numVgprValuB is 0
       numBiFactor = numBi
       if kernel["DirectToVgprB"] and (self.states.packDTVB or self.states.convDTVB):
         # DirectToVgpr case, we need LoopIters * 2 buffers
@@ -609,7 +609,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(RegSet("v", "vgprValuMetadata", self.states.m.startVgprValu))
       else:
         ri = 0
-        if self.states.m.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
+        if self.states.m.numVgprValu > 0: # Do not generate vgprValu if numVgprValu is 0
           if self.states.lrvwTileMetadata > 1:
             for bi in range(0,PLR): # buffer indices
               for iui in range(0, kernel["InnerUnroll"]):

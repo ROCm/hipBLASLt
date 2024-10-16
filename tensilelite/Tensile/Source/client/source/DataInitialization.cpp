@@ -1749,7 +1749,7 @@ namespace Tensile
                     ptr = copyInputBuffers(desc,
                                            p.gpuInput.valid.get(),
                                            permuted.as<void>(),
-                                           p.maxElements,
+                                           permuted.getDesc().flattenSize(),
                                            hipMemcpyHostToDevice);
                 } else {
                     ptr = copyInputBuffers(desc,

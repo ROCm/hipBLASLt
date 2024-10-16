@@ -213,10 +213,10 @@ class GSUOn(GSU):
 
         tc = tP["tensorChar"]
         depthU = kernel["DepthU"]
-        # Swizzled for A, TODO- test for B
-        depthUDivSW = "%s%s"%(kernel["DepthU"], "*MI_M") if (tP["isSwizzled"] and tc == 'A') else "%s"%kernel["DepthU"]
-        #
         depthUDiv = kernel["DepthU"]
+        # Swizzled for A, TODO- check for SwizzleTensorB
+        depthUDiv = "%s%s"%(kernel["DepthU"], "*MI_M") if (tP["isSwizzled"] and tc == 'A') else "%s"%kernel["DepthU"]
+        #
         gsuOffsetStr = "gsuOffset = DepthU*bpeGR*GSUSumIdx"
         divider = 1
         if kernel["ProblemType"]["Sparse"]:
@@ -233,7 +233,7 @@ class GSUOn(GSU):
         module.add(SAndB32(dst=sgpr(stmp), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
         module.add(SCBranchSCC1(labelName=gsucLabel.getLabelName(), comment="branch if GSUC == 1"))
         gsuOffsetStr = "gsuOffset = DepthU*GSUSumIdx"
-        module.addModuleAsFlatItems(writer.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), depthUDivSW, sgpr("GSUSumIdx"), gsuOffsetStr))
+        module.addModuleAsFlatItems(writer.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), depthUDiv, sgpr("GSUSumIdx"), gsuOffsetStr))
         module.add(SBranch(gsucLabelEnd.getLabelName()))
         module.add(gsucLabel)
         gsuOffsetStr = "gsuOffset = DepthU*accumulatedNumOfLoopCounterL"
@@ -427,7 +427,7 @@ class GSUOn(GSU):
                 # last NLL or  pack DTV case, no deep copy for pack
                 # pack code for local prefetch is generated in noLoadLoopBody and used for DTV even
                 deepCopyPack = pack
-              else: 
+              else:
                 # deepCopy packCode for OptNLL noLoadLoop
                 deepCopyPack = fastdeepcopy(pack)
               noLoadLoopModules.add(writer.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=True, isNGLL=False, pack=deepCopyPack, NLLindex=NLLindex, NLLnum=NLLnum))
