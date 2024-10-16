@@ -4,46 +4,46 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 
 ## (Unreleased) hipBLASLt 0.10.0
 
-### Additions
+### Added
 
-* Support V2 CPP extension api for backward compatiblity
-* Support for datatype: Int8 in with Int8 out
-* Support for datatype: FP32/FP64 for gfx110x
-* Add Extension API: `hipblaslt_ext::matmulIsTuned`
+* Support the V2 CPP extension API for backward compatibility
+* Support for data type Int8 in with Int8 out
+* Support for data type FP32/FP64 for gfx110x
+* Add the Extension API `hipblaslt_ext::matmulIsTuned`
 * Output atol and rtol for hipblaslt-bench validation
-* Output bench command for hipblaslt CPP ext API path if "HIPBLASLT_LOG_MASK=32" is set
-* Support odd size for FP8/BF8 gemm
+* Output the bench command for hipblaslt CPP ext API path if `HIPBLASLT_LOG_MASK=32` is set
+* Support odd sizes for FP8/BF8 GEMM
 
-### Optimizations
+### Changed
 
-* Support fused kernel for HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER for FP8/BF8 datatype
-* Improve library loading time
-* Improve overall performance of first returned solution
+* Reorganize and add more sample code
+* Add a dependency with the hipblas-common package and remove the dependency with the hipblas package
 
-### Changes
+### Optimized
 
-* Re-organize and add more sample codes
-* Dependent with hipblas-common package and remove the dependency with hipblas package
+* Support fused kernel for HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER for FP8/BF8 data type
+* Improve the library loading time
+* Improve the overall performance of first returned solution
 
-### Deprecations
+### Upcoming changes
 
-*  V1 CPP extensioin API will be deprecated in a future release of hipBLASLt
+*  The V1 CPP extension API will be deprecated in a future release of hipBLASLt
 
 ## hipBLASLt 0.8.0
 
-### Additions
+### Added
 
 * Extension APIs:
   * `hipblasltExtAMaxWithScale`
 * `GemmTuning` extension parameter to set wgm by user
-* Support HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER for FP8/BF8 datatype
-* Support for FP8/BF8 input, FP32/FP16/BF16/F8/BF8 output (only for gfx94x platform)
-* Support HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT and HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT for FP16 input datatype to use FP8/BF8 mfma
-* Support for gfx110x
+* Support HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER for the FP8/BF8 data types
+* Support for FP8/BF8 input, FP32/FP16/BF16/F8/BF8 output (only for the gfx94x architectures)
+* Support HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT and HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT for FP16 input data type to use FP8/BF8 mfma
+* Support for the gfx110x architecture
 
-### Optimizations
+### Optimized
 
-* Improve library loading time
+* Improve the library loading time
 
 ## hipBLASLt 0.7.0
 
