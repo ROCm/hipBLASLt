@@ -143,29 +143,34 @@ def test_extractArchVariant_empty_file():
 
 def test_parseArchVariantString_success():
     # Valid specification with device IDs and CU counts
-    spec = "id=1234;cu=64;id=5678;cu=32"
+    spec = {"id=1234","cu=64","id=5678","cu=32"}
     deviceIds, cuCounts = parseArchVariantString(spec)
     assert deviceIds == {"1234", "5678"}
     assert cuCounts == {64, 32}
 
     # Valid specification with only device IDs
-    spec = "id=1234;id=5678"
+    spec = {"id=1234","id=5678"}
     deviceIds, cuCounts = parseArchVariantString(spec)
     assert deviceIds == {"1234", "5678"}
     assert cuCounts == set()
 
     # Valid specification with only CU counts
-    spec = "cu=64;cu=32"
+    spec = {"cu=64","cu=32"}
     deviceIds, cuCounts = parseArchVariantString(spec)
     assert deviceIds == set()
     assert cuCounts == {64, 32}
 
-    spec = "id=abcd"
+    spec = {"id=abcd"}
     deviceIds, cuCounts = parseArchVariantString(spec)
     assert deviceIds == {"abcd"}
     assert cuCounts == set()
 
-    # Empty specification string
+    # Empty specification
+    spec = {}
+    deviceIds, cuCounts = parseArchVariantString(spec)
+    assert deviceIds == set()
+    assert cuCounts == set()
+
     spec = ""
     deviceIds, cuCounts = parseArchVariantString(spec)
     assert deviceIds == set()
@@ -174,7 +179,15 @@ def test_parseArchVariantString_success():
 
 def test_parseArchVariantString_failure():
     # Invalid specification format
+    spec = {"id=1234", "invalid=64"}
+    with pytest.raises(ValueError, match=r"Invalid architecture variant string(.*)"):
+        parseArchVariantString(spec)
+
     spec = "id=1234;invalid=64"
+    with pytest.raises(ValueError, match=r"Invalid architecture variant string(.*)"):
+        parseArchVariantString(spec)
+
+    spec = {"id=12345"}
     with pytest.raises(ValueError, match=r"Invalid architecture variant string(.*)"):
         parseArchVariantString(spec)
 
@@ -182,7 +195,15 @@ def test_parseArchVariantString_failure():
     with pytest.raises(ValueError, match=r"Invalid architecture variant string(.*)"):
         parseArchVariantString(spec)
 
+    spec = {"cu=ab"}
+    with pytest.raises(ValueError, match=r"Invalid architecture variant string(.*)"):
+        parseArchVariantString(spec)
+
     spec = "cu=ab"
+    with pytest.raises(ValueError, match=r"Invalid architecture variant string(.*)"):
+        parseArchVariantString(spec)
+
+    spec = {"cu=-12"}
     with pytest.raises(ValueError, match=r"Invalid architecture variant string(.*)"):
         parseArchVariantString(spec)
 

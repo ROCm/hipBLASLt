@@ -23,7 +23,7 @@
 from copy import deepcopy
 
 from .TensileInstructions import TensileInstructions
-from .Common import globalParameters, CHeader, gfxArch, getGfxName
+from .Common import globalParameters, CHeader, gfxArch, getGfxName, splitArchsFromGlobal
 from .Activation import ActivationInline, ActivationType
 from .KernelWriterBase import KernelWriterBase
 
@@ -46,15 +46,18 @@ class KernelWriterActivationFunction(KernelWriterBase):
                                                     self.state["ProblemType"]["ActivationComputeDataType"])
 
     # Get supported archs
-    if ";" in globalParameters["Architecture"]:
-      self.supportedArchs = globalParameters["Architecture"].split(";")
-    else:
-      self.supportedArchs = globalParameters["Architecture"].split("_")
-    if "all" in self.supportedArchs:
-      self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
-    else:
-      for idx, arch in enumerate(self.supportedArchs):
-        self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
+    gfxArchs, _, _ = splitArchsFromGlobal(globalParameters)
+    self.supportedArchs = gfxArchs
+
+    # if ";" in globalParameters["Architecture"]:
+    #   self.supportedArchs = globalParameters["Architecture"].split(";")
+    # else:
+    #   self.supportedArchs = globalParameters["Architecture"].split("_")
+    # if "all" in self.supportedArchs:
+    #   self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
+    # else:
+    #   for idx, arch in enumerate(self.supportedArchs):
+    #     self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
 
     # derive parameter
     self.language = "HIP"
