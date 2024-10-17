@@ -49,16 +49,6 @@ class KernelWriterActivationFunction(KernelWriterBase):
     gfxArchs, _, _ = splitArchsFromGlobal(globalParameters)
     self.supportedArchs = gfxArchs
 
-    # if ";" in globalParameters["Architecture"]:
-    #   self.supportedArchs = globalParameters["Architecture"].split(";")
-    # else:
-    #   self.supportedArchs = globalParameters["Architecture"].split("_")
-    # if "all" in self.supportedArchs:
-    #   self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
-    # else:
-    #   for idx, arch in enumerate(self.supportedArchs):
-    #     self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
-
     # derive parameter
     self.language = "HIP"
     self.kernelName = self.getKernelName()
