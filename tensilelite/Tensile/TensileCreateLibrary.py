@@ -197,46 +197,6 @@ def which(p):
                 return candidate
     return None
 
-# def splitArchsFromGlobal():
-#   # Helper for architecture
-#   def isSupported(arch):
-#     return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
-#            globalParameters["AsmCaps"][arch]["SupportedSource"]
-
-#   if ";" in globalParameters["Architecture"]:
-#     wantedArchs = globalParameters["Architecture"].split(";")
-#   else:
-#     wantedArchs = globalParameters["Architecture"].split("_")
-
-#   gfxArchs = set()
-#   cmdlineArchs = set()
-#   archVariants = set()
-
-#   if "all" in wantedArchs:
-#     for arch in globalParameters['SupportedISA']:
-#       if isSupported(arch):
-#         if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
-#           if (arch == (9,0,10)):
-#             gfxArchs.add(getGfxName(arch) + '-xnack+')
-#             cmdlineArchs.add(getGfxName(arch) + ':xnack+')
-#           gfxArchs.add(getGfxName(arch) + '-xnack-')
-#           cmdlineArchs.add(getGfxName(arch) + ':xnack-')
-#         else:
-#           gfxArchs.add(getGfxName(arch))
-#           cmdlineArchs.add(getGfxName(arch))
-#   else:
-#     for archspec in wantedArchs:
-#       archspec = archspec.strip()
-#       if match := re.search(r'\[(.*?)\]', archspec):  # extract arch variants
-#         archVariants.add(match.group(1))
-#         archspec = archspec[:match.start()]
-#       if archspec in architectureMap:
-#         gfxArchs.add(re.sub(":", "-", archspec))
-#         cmdlineArchs.add(archspec)
-#         print1(f"# Arch: {archspec}, Variants {archVariants}")
-#       else:
-#         printExit("Architecture %s not supported" % archspec)
-#   return gfxArchs, cmdlineArchs, ','.join(archVariants)
 
 def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
     buildPath = ensurePath(os.path.join(globalParameters['WorkingPath'], 'code_object_tmp'))
