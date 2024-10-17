@@ -6446,7 +6446,7 @@ class KernelWriterAssembly(KernelWriter):
               loadModule = Module("load%u"%loopCnt)
               imod.middle.add(loadModule)
 
-              if self.states.archCaps["HasEccHalf"] and not tP["isM"]:
+              if (self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]) and not tP["isM"]:
                 numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L if tc =='B' else self.states.m.numVgprG2L
                 eccBpe = tP["bpeDS"] if kernel["ConvertAfterDS"] else max(tP["bpeGR"], tP["bpe"])
                 eccOffset = _getEccOffset(loadWidth, bpr=self.states.bpr, bpe=eccBpe, \
@@ -7040,7 +7040,7 @@ class KernelWriterAssembly(KernelWriter):
               g2lIdxDict[g2lIdx] = 0
             instHi = g2lIdxDict[g2lIdx]
 
-            if self.states.archCaps["HasEccHalf"]:
+            if self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]:
               numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L if tc == 'B' else self.states.m.numVgprG2L
               eccinstHi = instHi
               # FIXME: Workaround, unique pattern in 8bit + glvw == 2...
