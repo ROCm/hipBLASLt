@@ -69,7 +69,7 @@
 #undef ROCM_USE_FLOAT8
 #endif
 
-#if defined(__HIPCC__)
+#if defined(__HIPCC__) && defined(HIP_FP8_TYPE_OCP)
 #include <hip/hip_fp8.h>
 #endif
 

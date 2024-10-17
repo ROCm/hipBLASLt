@@ -37,7 +37,9 @@
 #define HIP_HOST __host__
 #define HIP_DEVICE __device__
 
+#if defined(HIP_FP8_TYPE_OCP)
 #include <hip/hip_fp8.h>
+#endif
 
 namespace tensile_hip_f8_impl
 {
