@@ -323,6 +323,11 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
     n = num_cols_d;
     k = (opA == HIPBLAS_OP_N) ? num_cols_a : num_rows_a;
 
+    if(compute_type == rocblaslt_compute_f16) {
+        compute_type = rocblaslt_compute_f32;
+        log_api(__func__, "setting compute_type to f16_r is not supported in hipBLASLt; it will automatically fallback to f32_r");
+    }
+
     auto status = validateMatmulArgs(m,
                                      n,
                                      k,
