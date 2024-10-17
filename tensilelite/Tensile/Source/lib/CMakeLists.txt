@@ -46,6 +46,7 @@ set(tensile_sources  ${tensile_sources}
     source/ScalarValueTypes.cpp
     source/TensorDescriptor.cpp
     source/Tensile.cpp
+    source/UserDrivenTuningParser.cpp
     source/Utils.cpp
     )
 
