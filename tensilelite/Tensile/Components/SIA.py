@@ -308,8 +308,8 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
             numMfmaForCurrentLoopLR = 1
             latencyLeft = writer.states.miLatencyLeft
             for u in range(kernel["LoopIters"] - writer.states.numItersPLR):
-                doReadA = (u < kernel["LoopIters"] // writer.states.numIterPerCoalescedReadA - writer.states.numItersPLR)
-                doReadB = (u < kernel["LoopIters"] // writer.states.numIterPerCoalescedReadB - writer.states.numItersPLR)
+                doReadA = (u < kernel["LoopIters"] // writer.states.numIterPerCoalescedReadA - writer.states.numItersPLR) and not kernel["DirectToVgprA"]
+                doReadB = (u < kernel["LoopIters"] // writer.states.numIterPerCoalescedReadB - writer.states.numItersPLR) and not kernel["DirectToVgprB"]
                 doReadM = (u < kernel["LoopIters"] // writer.states.numIterPerCoalescedReadMetadata - writer.states.numItersPLR)
                 doReadM = doReadM and (kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"])
                 for iui in range(kernel["InnerUnroll"]):
