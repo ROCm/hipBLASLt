@@ -46,6 +46,7 @@ def test_splitArchsFromGlobal_with_variants0():
         "SupportedISA": ["gfx906", "gfx908"]
     }
 
+    # Fails because of semicolon in variant string
     with pytest.raises(ValueError, match="Architecture gfx906\\[variant1 not supported"):
         splitArchsFromGlobal(globalParameters)
 
@@ -62,11 +63,11 @@ def test_splitArchsFromGlobal_with_variants1():
     gfxArchs, cmdlineArchs, variants = splitArchsFromGlobal(globalParameters)
     assert gfxArchs == {"gfx906", "gfx908"}
     assert cmdlineArchs == {"gfx906", "gfx908"}
-    assert variants == {"variant1", "variant2"}
+    assert variants == {"gfx906": ["variant1"], "gfx908": ["variant2"]}
 
 def test_splitArchsFromGlobal_with_variants2():
     globalParameters = {
-        "Architecture": "gfx90a:xnack-[variant1,variant2];gfx942[variant3]",
+        "Architecture": "gfx90a:xnack-[variant1,variant2];gfx942[variant3,variant4]",
         "AsmCaps": {
             "gfx90a:xnack-": {"SupportedISA": True, "SupportedSource": True},
             "gfx942": {"SupportedISA": True, "SupportedSource": True},
@@ -77,7 +78,7 @@ def test_splitArchsFromGlobal_with_variants2():
     gfxArchs, cmdlineArchs, variants = splitArchsFromGlobal(globalParameters)
     assert gfxArchs == {"gfx90a-xnack-", "gfx942"}
     assert cmdlineArchs == {"gfx90a:xnack-", "gfx942"}
-    assert variants == {"variant1", "variant2", "variant3"}
+    assert variants == {"gfx90a:xnack-": ["variant1", "variant2"], "gfx942": ["variant3", "variant4"]}
 
 def test_splitArchsFromGlobal_unsupported_arch():
     globalParameters = {

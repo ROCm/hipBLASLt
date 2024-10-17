@@ -41,7 +41,7 @@ from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
-from .Com.ArchVariant import matchArchVariant, parseArchVariantString
+from .Com.ArchVariant import matchArchVariant
 
 import argparse
 import collections
@@ -1389,8 +1389,8 @@ def TensileCreateLibrary():
   if not os.path.exists(logicPath):
     printExit("LogicPath %s doesn't exist" % logicPath)
 
-  gfxArchs, _, variantSpec = splitArchsFromGlobal(globalParameters)
-  print1("# Architecture      from TensileCreateLibrary: gfxArchs=%s variantSpec=%s" % (gfxArchs, variantSpec))
+  gfxArchs, _, variantMap = splitArchsFromGlobal(globalParameters)
+  print1("# Architecture      from TensileCreateLibrary: gfxArchs=%s variantMap=%s" % (gfxArchs, variantMap))
 
   if globalParameters["LazyLibraryLoading"] and not (globalParameters["MergeFiles"] and globalParameters["SeparateArchitectures"]):
     printExit("--lazy-library-loading requires --merge-files and --separate-architectures enabled")
@@ -1419,21 +1419,26 @@ def TensileCreateLibrary():
   if not args.Experimental:
     logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
 
-  if variantSpec:
-      devIds, cuCounts = parseArchVariantString(variantSpec)
-      print1(f"# Arch variant filter: gfx={gfxArchs}, id={devIds}, cu={cuCounts}")
-
+  if variantMap:
+      print1(f"# Arch variant filter: {variantMap}")
       numAllVariants = len(logicFiles)
-      func = partial(matchArchVariant, gfxArchs, devIds, cuCounts)
-      logicFiles = list(filter(func, logicFiles))
+      variantMap = {gfx: {item: set() for item in variants} for gfx, variants in variantMap.items()}
+      logicFiles = [file for file in logicFiles if matchArchVariant(variantMap, Path(file))]
       print1(f"#   Filtered {numAllVariants - len(logicFiles)} logic files")
 
   if not logicFiles:
     printExit(f"No logic files found with logic filer: {globPattern}")
+<<<<<<< HEAD
   print1(f"# LibraryLogicFiles: {len(logicFiles)}")
+=======
+  print1(f"# LibraryLogicFiles({len(logicFiles)}):")
+
+>>>>>>> 01c50c1b... feat: selective variant filtering
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
   
+
+  exit(1)
 
   ##############################################################################
   # Parse config files
