@@ -966,13 +966,13 @@ class StreamK(Component):
                 elif gwvw != gwvwOrig:
                     ss.gwvw = gwvw # make both representations consistent
                     if shrinkDb:
-                        print2(3, "info: %s shrank gwvw from %u to %u but kept occupancy same=%u." \
+                        print2("info: %s shrank gwvw from %u to %u but kept occupancy same=%u." \
                             % (writer.states.kernelName, gwvwOrig, gwvw, currentOccupancy))
 
                 if numVgprAvailable < minElements*ss.numVgprsPerElement:
-                    print2(3, "info: growing pool += %d * %d for GlobalWrite\n" \
+                    print2("info: growing pool += %d * %d for GlobalWrite\n" \
                         % (minElements,ss.numVgprsPerElement))
-                    print2(3, writer.vgprPool.state())
+                    print2(writer.vgprPool.state())
                     # tl = []
                     # for i in range(0,minElements):
                     #     tl.append(self.vgprPool.checkOut(numVgprsPerElement, "grow-pool for GlobalWrite"))
@@ -981,7 +981,7 @@ class StreamK(Component):
                     writer.vgprPool.growPool(0, minElements, ss.numVgprsPerElement, \
                         "grow-pool for GlobalWrite")
                     numVgprAvailable = writer.vgprPool.available()
-                    print2(3, writer.vgprPool.state())
+                    print2(writer.vgprPool.state())
 
             # print("NumVgprAvailable", numVgprAvailable)
             if ss.numVgprsPerElement:

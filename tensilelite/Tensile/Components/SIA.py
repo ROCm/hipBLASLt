@@ -280,7 +280,7 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
     writer.states.lwEndMfmaIndex = max(writer.states.syncPlrMfmaIndex - numMfmaBetweenLWandBarrier,0) if writer.states.numItersPLR else numMfmaPerIter*kernel["LoopIters"] - 1
     if kernel["DirectToLds"] and kernel["PrefetchGlobalRead"] == 2:
         # DirectToLds + PGR=2 case, lwEndMfmaIndex must be after the end of local read (excluding local reads for next iter)
-        lrEnd = min(writer.states.syncPlrMfmaIndex - 1, writer.states.numMfmaForLR * (kernel["LoopIters"] - writer.states.numItersPLR))
+        lrEnd = min(writer.states.syncPlrMfmaIndex - 1, writer.states.numMfmaForNextLoopLR)
         if writer.states.lwEndMfmaIndex < lrEnd:
             writer.states.lwEndMfmaIndex = lrEnd
     return numMfmaBetweenLWandBarrier, latencyLeft
@@ -292,7 +292,7 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
     #########
     # Get localWriteStart
     #########
-    if not kernel["1LDSBuffer"]:
+    if not (kernel["1LDSBuffer"] or kernel["DirectToLds"]):
         # TODO: replace here for real number of globalReadIncInst
         numGRIncInst = 18 # Always on. Original logic: 12 if not kernel["StaggerU"] else 18
         numInstPerMfma = max(roundUp(writer.states.miLatencyLeft/2),1)
@@ -701,9 +701,15 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched, isNGLL=False):
           # swap A and B (SwapGlobalReadOrder case, the actual content is swapped (B is in globalReadACode). Need adjustment)
           lenA, lenB = lenB, lenA
         if kernel["DirectToLdsA"] or kernel["DirectToVgprA"]:
+            if kernel["DirectToLdsA"]:
+              # PGR2 + DTLcase, footer code is added in middle. Need to subtract 1 (for footer inst)
+              lenA -= 1
             numDummy += lenA
             insertDummyTop = (not swapped)
         if kernel["DirectToLdsB"] or kernel["DirectToVgprB"]:
+            if kernel["DirectToLdsB"]:
+              # PGR2 + DTLcase, footer code is added in middle. Need to subtract 1 (for footer inst)
+              lenB -= 1
             numDummy += lenB
             insertDummyTop = swapped
         for i in range(numDummy):
@@ -747,7 +753,7 @@ def assignLWSchedIndexSIA3(writer, kernel, numLocalWritesPerSched, localWriteEnd
         lrEnd = min(writer.states.lwEndMfmaIndex, writer.states.numMfmaForLR * (kernel["LoopIters"] - writer.states.numItersPLR))
         if writer.states.lwStartMfmaIndex < lrEnd:
             writer.states.lwStartMfmaIndex = lrEnd
-    if kernel["1LDSBuffer"]:
+    if kernel["1LDSBuffer"] or kernel["DirectToLds"]:
         writer.states.sync1LdsMfmaIndex = max(writer.states.lwStartMfmaIndex - 1, 0)
     startIter = writer.states.lwStartMfmaIndex//numMfmaPerIter
     assert startIter < localWriteEndIter+1 # startIter should be at or before the endIter

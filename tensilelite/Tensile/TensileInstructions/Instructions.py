@@ -539,13 +539,14 @@ class MUBUFReadInstruction(GlobalReadInstruction):
         return [self.dst, self.vaddr, self.saddr, self.soffset]
 
     def getArgStr(self) -> str:
+        dstStr = "" if self.dst == None else str(self.dst) + ", "
         if self.asmCaps["HasMUBUFConst"]:
-          return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
+          return dstStr + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
         else:
           if str(self.soffset)=="0":
-            return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + "null"
+            return dstStr + str(self.vaddr) + ", " + str(self.saddr) + ", " + "null"
           else:
-            return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
+            return dstStr + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
 
     def toList(self) -> list:
         self.preStr()

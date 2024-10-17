@@ -236,8 +236,8 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
     rv["HasExplicitCO"]     = _tryAssembler(isaVersion, assemblerPath, "v_add_co_u32 v0,vcc,v0,1", isDebug)
     rv["HasExplicitNC"]     = _tryAssembler(isaVersion, assemblerPath, "v_add_nc_u32 v0,v0,1", isDebug)
 
-    rv["HasDirectToLds"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dword v40, v36, s[24:27], s28 offen offset:0 lds", isDebug) \
-                                or _tryAssembler(isaVersion, assemblerPath, "buffer_load_b32 v40, v36, s[24:27], s28 offen offset:0 lds", isDebug)
+    rv["HasDirectToLds"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dword v36, s[24:27], s28 offen offset:0 lds", isDebug) \
+                                or _tryAssembler(isaVersion, assemblerPath, "buffer_load_b32 v36, s[24:27], s28 offen offset:0 lds", isDebug)
     rv["HasAddLshl"]        = _tryAssembler(isaVersion, assemblerPath, "v_add_lshl_u32 v47, v36, v34, 0x2", isDebug)
     rv["HasLshlOr"]         = _tryAssembler(isaVersion, assemblerPath, "v_lshl_or_b32 v47, v36, 0x2, v34", isDebug)
     rv["HasSMulHi"]         = _tryAssembler(isaVersion, assemblerPath, "s_mul_hi_u32 s47, s36, s34", isDebug)
@@ -326,6 +326,7 @@ def _initArchCaps(isaVersion) -> dict:
     rv["HasWave32"]          = isaVersion[0] in (10, 11, 12)
     rv["HasAccCD"]           = (isaVersion in [(9,0,10), (9,4,0), (9,4,1), (9,4,2)])
     rv["ArchAccUnifiedRegs"] = (isaVersion in [(9,0,10), (9,4,0), (9,4,1), (9,4,2)])
+    rv["CrosslaneWait"]      = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     rv["ForceStoreSC1"]      = (isaVersion in [(9,4,0), (9,4,1)])
     rv["TransOpWait"]        = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     rv["SDWAWait"]           = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
