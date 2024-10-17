@@ -164,7 +164,7 @@ inline hipError_t
 
 inline hipError_t broadcast(HipDeviceBuffer& dBuf, std::size_t repeats)
 {
-    hipError_t hip_err;
+    hipError_t hip_err = hipSuccess;
     for(size_t i = 1; i < repeats; ++i)
     {
         hip_err = hipMemcpy(dBuf.as<char>() + i * dBuf.getNumBytes() / repeats,
