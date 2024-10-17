@@ -297,7 +297,7 @@ class AddrCalculation:
                                                 comment="Bias address scaled by BPE"))
                         if kernel["LdsOffsetBias"] != 0:
                           module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
-                                             src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                             src0=(kernel["LdsOffsetBias"]), \
                                              src1=vgpr(self.addrBiasVgpr), \
                                              comment="add lds offset"))
                         ss.singleColBiasAddrUpdated = True
@@ -315,7 +315,7 @@ class AddrCalculation:
                                                     comment="ScaleAlpha address scaled by BPE"))
                             if kernel["LdsOffsetBias"] != 0:
                                 module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                                   src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                                   src0=(kernel["LdsOffsetBias"]), \
                                                    src1=vgpr(self.addrScaleAlphaVecVgpr), \
                                                    comment="add lds offset"))
                         return module
@@ -331,7 +331,7 @@ class AddrCalculation:
                                                     comment="ScaleAVec address scaled by BPE"))
                             if kernel["LdsOffsetBias"] != 0:
                                 module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                                   src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                                   src0=(kernel["LdsOffsetBias"]), \
                                                    src1=vgpr(self.addrScaleAVecVgpr), \
                                                    comment="add lds offset"))
                         return module
@@ -347,7 +347,7 @@ class AddrCalculation:
                                                     comment="ScaleBVec address scaled by BPE"))
                             if kernel["LdsOffsetBias"] != 0:
                                 module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                                   src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                                   src0=(kernel["LdsOffsetBias"]), \
                                                    src1=vgpr(self.addrScaleBVecVgpr), \
                                                    comment="add lds offset"))
                         return module
@@ -379,7 +379,7 @@ class AddrCalculation:
                                             comment="Bias address scaled by BPE"))
                     if kernel["LdsOffsetBias"] != 0:
                         module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
-                                           src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                           src0=(kernel["LdsOffsetBias"]), \
                                            src1=vgpr(self.addrBiasVgpr), \
                                            comment="add lds offset"))
                     return module
@@ -396,7 +396,7 @@ class AddrCalculation:
                                                 comment="ScaleAlpha address scaled by BPE"))
                         if kernel["LdsOffsetBias"] != 0:
                             module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                               src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                               src0=(kernel["LdsOffsetBias"]), \
                                                src1=vgpr(self.addrScaleAlphaVecVgpr), \
                                                comment="add lds offset"))
                     return module
@@ -412,7 +412,7 @@ class AddrCalculation:
                                                 comment="ScaleAVec address scaled by BPE"))
                         if kernel["LdsOffsetBias"] != 0:
                             module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                               src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                               src0=(kernel["LdsOffsetBias"]), \
                                                src1=vgpr(self.addrScaleAVecVgpr), \
                                                comment="add lds offset"))
                     return module
@@ -428,7 +428,7 @@ class AddrCalculation:
                                                 comment="ScaleBVec address scaled by BPE"))
                         if kernel["LdsOffsetBias"] != 0:
                             module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                               src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                               src0=(kernel["LdsOffsetBias"]), \
                                                src1=vgpr(self.addrScaleBVecVgpr), \
                                                comment="add lds offset"))
                     return module
@@ -458,7 +458,7 @@ class AddrCalculation:
                                         comment="Bias address scaled by BPE"))
                 if kernel["LdsOffsetBias"] != 0:
                     module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
-                                       src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                       src0=(kernel["LdsOffsetBias"]), \
                                        src1=vgpr(self.addrBiasVgpr), \
                                        comment="add lds offset"))
                 return module
@@ -475,7 +475,7 @@ class AddrCalculation:
                                             comment="ScaleAlpha address scaled by BPE"))
                     if kernel["LdsOffsetBias"] != 0:
                         module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                           src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                           src0=(kernel["LdsOffsetBias"]), \
                                            src1=vgpr(self.addrScaleAlphaVecVgpr), \
                                            comment="add lds offset"))
                 return module
@@ -491,7 +491,7 @@ class AddrCalculation:
                                             comment="ScaleAVec address scaled by BPE"))
                     if kernel["LdsOffsetBias"] != 0:
                         module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                           src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                           src0=(kernel["LdsOffsetBias"]), \
                                            src1=vgpr(self.addrScaleAVecVgpr), \
                                            comment="add lds offset"))
                 return module
@@ -507,7 +507,7 @@ class AddrCalculation:
                                             comment="ScaleBVec address scaled by BPE"))
                 if kernel["LdsOffsetBias"] != 0:
                     module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                       src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                       src0=(kernel["LdsOffsetBias"]), \
                                        src1=vgpr(self.addrScaleBVecVgpr), \
                                        comment="add lds offset"))
                 return module
@@ -743,7 +743,7 @@ class AddrCalculation:
                                         comment="Bias address scaled by BPE"))
                 if kernel["LdsOffsetBias"] != 0:
                     module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
-                                       src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                       src0=(kernel["LdsOffsetBias"]), \
                                        src1=vgpr(self.addrBiasVgpr), \
                                        comment="add lds offset"))
             elif tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
@@ -759,7 +759,7 @@ class AddrCalculation:
                                             comment="ScaleAlpha address scaled by BPE"))
                     if kernel["LdsOffsetBias"] != 0:
                         module.add(VAddU32(dst=vgpr(self.addrScaleAlphaVecVgpr), \
-                                           src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                           src0=(kernel["LdsOffsetBias"]), \
                                            src1=vgpr(self.addrScaleAlphaVecVgpr), \
                                            comment="add lds offset"))
             elif tc == 'ScaleA' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
@@ -774,7 +774,7 @@ class AddrCalculation:
                                             comment="ScaleAVec address scaled by BPE"))
                 if kernel["LdsOffsetBias"] != 0:
                     module.add(VAddU32(dst=vgpr(self.addrScaleAVecVgpr), \
-                                       src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                       src0=(kernel["LdsOffsetBias"]), \
                                        src1=vgpr(self.addrScaleAVecVgpr), \
                                        comment="add lds offset"))
             elif tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
@@ -789,7 +789,7 @@ class AddrCalculation:
                                             comment="ScaleBVec address scaled by BPE"))
                 if kernel["LdsOffsetBias"] != 0:
                     module.add(VAddU32(dst=vgpr(self.addrScaleBVecVgpr), \
-                                       src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                       src0=(kernel["LdsOffsetBias"]), \
                                        src1=vgpr(self.addrScaleBVecVgpr), \
                                        comment="add lds offset"))
             else:
