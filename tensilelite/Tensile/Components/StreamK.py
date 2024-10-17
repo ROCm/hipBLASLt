@@ -24,11 +24,11 @@ from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, 
     SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SCBranchSCC1, SCmpLeU32, VMovB32, vgpr, \
     SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
     log2, SBarrier, SStoreB32, SLongBranchPositive, SBranch, ceilDivide, replaceHolder, SNop, staticMultiply, SSleep, \
-    VAddF32, VAddF64, SAndB32, SLShiftRightB32, VReadfirstlaneB32
+    VAddF32, VAddF64, SAndB32, SLShiftRightB32, VReadfirstlaneB32, SBranchIfNotZero
 from ..Common import print2
 # from ..TensileInstructions.Containers import SMEMModifiers
 from ..Component import Component
-from ..AsmStoreState import StoreState
+from ..AsmStoreState import StoreState, VectorDataTypes
 import abc
 from copy import deepcopy
 
@@ -233,6 +233,12 @@ class StreamK(Component):
 
         # Use StreamK params for loop count
         module.add(SSubU32(dst=sgpr(loopCounterName), src0=sgpr("StreamKLocalEnd"), src1=sgpr("StreamKLocalStart"), comment="StreamK loop counter = localEnd - localStart"))
+        # Short circuit if alpha==0 (set loopCounter to 0 to skip main loop)
+        alphaLabel2 = Label("SKAlphaCheck2", "")
+        module.add(SBranchIfNotZero("Alpha", kernel["ProblemType"]["ComputeDataType"], alphaLabel2))
+        module.add(SMovB32(dst=sgpr(loopCounterName), src=0, comment="Skip iterations"))
+        module.add(alphaLabel2)
+
         # Adjust loop count for tail loop
         if not kernel["NoTailLoop"]:
             tmpSgpr = tmpSgprInfo.idx
@@ -418,7 +424,8 @@ class StreamK(Component):
         # Calculate Vgprs for Write Batching
         ########################################
 
-        ss = StoreState(writer, kernel, gwvw, edge, beta, False, elements[edgeI], dim=0, isWorkspace=True)
+        vectorDataTypes = VectorDataTypes()
+        ss = StoreState(writer, kernel, gwvw, edge, beta, False, elements[edgeI], vectorDataTypes, dim=0, isWorkspace=True)
 
         #print self.vgprPool.state()
         # Use VGPR up to next occupancy threshold:
@@ -875,7 +882,8 @@ class StreamK(Component):
             # Calculate Vgprs for Write Batching
             ########################################
 
-            ss = StoreState(writer, kernel, gwvw, edge, True, False, elements[edgeI], dim=0, isWorkspace=True)
+            vectorDataTypes = VectorDataTypes()
+            ss = StoreState(writer, kernel, gwvw, edge, True, False, elements[edgeI], vectorDataTypes, dim=0, isWorkspace=True)
 
             # how many vgprs are needed for zero elements
             # 2 for addressC in vgpr for addition - already checked out
@@ -958,13 +966,13 @@ class StreamK(Component):
                 elif gwvw != gwvwOrig:
                     ss.gwvw = gwvw # make both representations consistent
                     if shrinkDb:
-                        print2(3, "info: %s shrank gwvw from %u to %u but kept occupancy same=%u." \
+                        print2("info: %s shrank gwvw from %u to %u but kept occupancy same=%u." \
                             % (writer.states.kernelName, gwvwOrig, gwvw, currentOccupancy))
 
                 if numVgprAvailable < minElements*ss.numVgprsPerElement:
-                    print2(3, "info: growing pool += %d * %d for GlobalWrite\n" \
+                    print2("info: growing pool += %d * %d for GlobalWrite\n" \
                         % (minElements,ss.numVgprsPerElement))
-                    print2(3, writer.vgprPool.state())
+                    print2(writer.vgprPool.state())
                     # tl = []
                     # for i in range(0,minElements):
                     #     tl.append(self.vgprPool.checkOut(numVgprsPerElement, "grow-pool for GlobalWrite"))
@@ -973,7 +981,7 @@ class StreamK(Component):
                     writer.vgprPool.growPool(0, minElements, ss.numVgprsPerElement, \
                         "grow-pool for GlobalWrite")
                     numVgprAvailable = writer.vgprPool.available()
-                    print2(3, writer.vgprPool.state())
+                    print2(writer.vgprPool.state())
 
             # print("NumVgprAvailable", numVgprAvailable)
             if ss.numVgprsPerElement:
@@ -1910,7 +1918,21 @@ class StreamKTwoTileDPFirst(StreamK):
         module.add(skUpdateDone)
         module.add(SMovB32(dst=sgpr("StreamKIter"), src=sgpr(sTmp+1), comment="Store current iteration"))
 
+        # Map SK index to WG
         module.add(self.skIndexToWG(writer, kernel, sTmp))
+
+        # Short circuit if alpha==0 (skip main loop and reading A/B, only do beta * C)
+        # To skip main loop in stream-k, we check if this WG is responsible for writing results (ie: WG starts tile)
+        # If WG starts tile then set LocalEnd=ItersPerTile to skip fixup step, and set loopCounter to 0 to skip main loop
+        # If WG does not start tile, skip to end of persistent loop to check for other SK tile
+        alphaLabel = Label("SKAlphaCheck", "")
+        module.add(SBranchIfNotZero("Alpha", kernel["ProblemType"]["ComputeDataType"], alphaLabel))
+        # Skip to end if not doing the global write
+        module.add(SCmpEQU32(src0=sgpr("StreamKLocalStart"), src1=0, comment="does wg start tile?"))
+        endLabel = Label("GW_End", "")
+        module.add(writer.longBranchScc0(endLabel, posNeg=1))
+        module.add(SMovB32(dst=sgpr("StreamKLocalEnd"), src=sgpr("ItersPerTile"), comment="Skip iterations"))
+        module.add(alphaLabel)
 
         writer.sgprPool.checkIn(sTmp)
 

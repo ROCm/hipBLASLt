@@ -2,23 +2,50 @@
 
 Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hipBLASLt](https://rocm.docs.amd.com/projects/hipBLASLt/en/latest/index.html).
 
-## (Unreleased) hipBLASLt 0.8.0
+## (Unreleased) hipBLASLt 0.10.0
 
-### Additions
+### Added
+
+* Support the V2 CPP extension API for backward compatibility
+* Support for data type Int8 in with Int8 out
+* Support for data type FP32/FP64 for gfx110x
+* Add the Extension API `hipblaslt_ext::matmulIsTuned`
+* Output atol and rtol for hipblaslt-bench validation
+* Output the bench command for hipblaslt CPP ext API path if `HIPBLASLT_LOG_MASK=32` is set
+* Support odd sizes for FP8/BF8 GEMM
+
+### Changed
+
+* Reorganize and add more sample code
+* Add a dependency with the hipblas-common package and remove the dependency with the hipblas package
+
+### Optimized
+
+* Support fused kernel for HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER for FP8/BF8 data type
+* Improve the library loading time
+* Improve the overall performance of first returned solution
+
+### Upcoming changes
+
+*  The V1 CPP extension API will be deprecated in a future release of hipBLASLt
+
+## hipBLASLt 0.8.0
+
+### Added
 
 * Extension APIs:
   * `hipblasltExtAMaxWithScale`
 * `GemmTuning` extension parameter to set wgm by user
-* Support HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER for FP8/BF8 datatype
-* Support for FP8/BF8 input, FP32/FP16/BF16/F8/BF8 output (only for gfx94x platform)
-* Support HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT and HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT for FP16 input datatype to use FP8/BF8 mfma
-* Support for gfx110x
+* Support HIPBLASLT_MATMUL_DESC_AMAX_D_POINTER for the FP8/BF8 data types
+* Support for FP8/BF8 input, FP32/FP16/BF16/F8/BF8 output (only for the gfx94x architectures)
+* Support HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT and HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT for FP16 input data type to use FP8/BF8 mfma
+* Support for the gfx110x architecture
 
-### Optimizations
+### Optimized
 
-* Improve library loading time
+* Improve the library loading time
 
-## (Unreleased) hipBLASLt 0.7.0
+## hipBLASLt 0.7.0
 
 ### Additions
 
@@ -29,7 +56,6 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 * `GemmTuning` extension parameter to set split-k by user
 * Support for mixed-precision datatype: FP16/FP8 in with FP16 out
 * Add CMake support for documentation
-* Support for datatype: Int8 in Int8 out
 
 ### Deprecations
 
