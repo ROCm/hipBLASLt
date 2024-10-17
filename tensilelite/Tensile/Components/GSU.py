@@ -417,7 +417,7 @@ class GSUOn(GSU):
             for NLLindex in range(0, NLLnum):
               writer.saveLocalPointers(kernel, tensorParametersA, tensorParametersB)
               # copy pack
-              if NLLindex == NLLnum - 1 or (writer.states.packDTVA or writer.states.packDTVB):
+              if NLLindex == NLLnum - 1 or (writer.states.packDTVA or writer.states.packDTVB or writer.states.convDTVA or writer.states.convDTVB):
                 # last NLL or  pack DTV case, no deep copy for pack
                 # pack code for local prefetch is generated in noLoadLoopBody and used for DTV even
                 deepCopyPack = pack
