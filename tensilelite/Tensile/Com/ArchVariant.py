@@ -1,12 +1,14 @@
 import re
 from pathlib import Path
-from typing import NamedTuple, Optional, Union, Tuple, Set
+from typing import NamedTuple, Optional, Union, Tuple, Set, Dict
+
+from ..Common import printWarning
 
 class ArchVariant(NamedTuple):
     Name: str
     Gfx: str
-    DeviceIds: Set[str]
-    CUCount: Optional[int] = None
+    DeviceIds: Optional[Set[str]]
+    CUCount: Optional[str] = None
 
 
 class LogicFileError(Exception):
@@ -44,7 +46,7 @@ def extractArchVariant(file: Union[str, Path]) -> ArchVariant:
     def l2(line: str):
         if match := re.match(r"- \{Architecture: (\w+), CUCount: (\d+)\}", line):
             architecture, cu_count = match.groups()
-            return architecture, int(cu_count)
+            return architecture, f"cu={cu_count}"
         elif match := re.match(r"- gfx(\w+)", line):
             return line[2:].strip(), None
         else:
@@ -53,9 +55,15 @@ def extractArchVariant(file: Union[str, Path]) -> ArchVariant:
             )
 
     def l3(line: str):
+        emulationIds = {"0049", "0050", "0051"}
         if re.match(r"- \[Device", line):
-            devices = re.findall(r"Device (\w+)", line)
-            return set(devices)
+            devIds = re.findall(r"Device (\w+)", line)
+            if any(id in emulationIds for id in devIds):
+                printWarning("Emulation device IDs found, interpreting as fallback device ID for now...")
+                return None
+            return set(f"id={id}" for id in devIds)
+        if re.match(r"- \[All devices", line):
+            return None
         else:
             raise LogicFileError(f"No device IDs found: line: {line}")
 
@@ -68,51 +76,8 @@ def extractArchVariant(file: Union[str, Path]) -> ArchVariant:
     return ArchVariant(Name=name, Gfx=gfx, DeviceIds=deviceIds, CUCount=cu)
 
 
-def parseArchVariantString(spec: Set[str]) -> Tuple[Set[str], Set[int]]:
-    """Parses a set of architecture variant specs to extract device IDs and CU counts.
-
-    An architecture variant specification must have the following form: "id=1234,cu=64".
-    Note that all entries must be separated by a comma.
-
-    Args:
-        spec: The specification string in the format "id=1234,cu=64,id=5678,cu=32".
-
-    Returns:
-        A tuple containing a set of device IDs and a set of CU counts. If an empty string
-        is provided, empty sets will be returned.
-
-    Raises:
-        ValueError: If the specification string is invalid for the following reasons:
-            - The device ID is not 4 characters long.
-            - The device ID contains a non-hexadecimal character.
-            - The CU count is not a positive integer.
-    """
-    deviceIdLength = 4
-    hexChars = "1234567890abcdef"
-
-    deviceIds = set()
-    cuCounts = set()
-
-    idKey = "id"
-    cuKey = "cu"
-    split = "="
-
-    if spec:
-        for s in spec:
-            key, _, value = s.strip().partition(split)
-            value = value.strip()
-            if key == idKey and all(v in hexChars for v in value.lower()) and len(value) == deviceIdLength:
-                deviceIds.add(value)
-            elif key == cuKey and value.isdigit():
-                cuCounts.add(int(value))
-            else:
-                raise ValueError(f"Invalid architecture variant string: {spec}")
-
-    return deviceIds, cuCounts
-
-
 def matchArchVariant(
-    gfxNames: Set[str], deviceIds: Set[str], cuCounts: Set[int], targetLogicFile: Union[str, Path]
+    variantMap: dict, targetLogicFile: Path
 ):
     """Determines if the architecture variant specified in the target logic file matches the given criteria.
 
@@ -135,11 +100,38 @@ def matchArchVariant(
         return False
 
     variant = extractArchVariant(targetLogicFile)
-    conditions = [
-        variant.Gfx in gfxNames,
-        any(id in deviceIds for id in variant.DeviceIds) or deviceIds == set(),
-        variant.CUCount in cuCounts or variant.CUCount == None or cuCounts == set(),
-    ]
-    if all(conditions):
-        return True
-    return False
+    
+    if variant.Gfx not in variantMap:
+        return False
+
+    variantMapFiles = variantMap[variant.Gfx]
+    
+    # If CUCount is None and device Ids is None, then this is a fallback file b/c no predicates are specified
+    if variant.CUCount == None and variant.DeviceIds == None:
+        print("Fallback: ", targetLogicFile.name)
+        addAsFallbackList = []
+        for key in variantMapFiles:
+            if targetLogicFile.name not in variantMapFiles[key]:
+                addAsFallbackList.append(True)
+        return any(addAsFallbackList)
+            
+    
+    addAsVariantList = []
+    if variant.DeviceIds != None:
+        print("Device Ids: ", variant.DeviceIds)
+        for key in variantMapFiles:
+            if "id" in key:
+                for id in variant.DeviceIds:
+                    if id == key:
+                        variantMapFiles[key].add(targetLogicFile.name)
+                        addAsVariantList.append(True)
+
+    if variant.CUCount != None:
+        print("CU Count: ", variant.CUCount)
+        for key in variantMapFiles:
+            if "cu" in key:
+                if variant.CUCount == key:
+                    variantMapFiles[key].add(targetLogicFile.name)
+                    addAsVariantList.append(True)
+
+    return any(addAsVariantList)

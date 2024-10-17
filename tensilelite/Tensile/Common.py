@@ -22,10 +22,10 @@
 #
 ################################################################################
 
+import collections
 from . import __version__
 from . import Parallel
 from .TensileInstructions import getGfxName, TensileInstructions
-from .Com.ArchVariant import parseArchVariantString
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -1857,22 +1857,22 @@ def splitArchsFromGlobal(globalParameters):
     def getWantedArchs(globalArchSpec):
         return globalArchSpec.split(";") if ";" in globalArchSpec else globalArchSpec.split("_")
 
-    def processArchs(wantedArchs, extensionArchs):
+    def processArchs(wantedArchs):
         variantRegex = re.compile(r'\[(.*?)\]')  # matches text between square brackets
-        gfxArchs, cmdlineArchs, variants = set(), set(), set()
-
+        gfxArchs, cmdlineArchs, = set(), set()
+        variantMap = collections.defaultdict(list)
         for archspec in wantedArchs:
             archspec = archspec.strip()
             if match := re.search(variantRegex, archspec):  # extract arch variants
-                variants.update(s.strip() for s in match.group(1).split(","))
                 archspec = archspec[:match.start()]
+                variantMap[archspec].extend(s.strip() for s in match.group(1).split(","))
             if archspec in architectureMap:
                 gfxArchs.add(re.sub(":", "-", archspec))
                 cmdlineArchs.add(archspec)
             else:
                 raise ValueError(f"Architecture {archspec} not supported")
 
-        return gfxArchs, cmdlineArchs, variants
+        return gfxArchs, cmdlineArchs, variantMap
 
     globalArchSpec = globalParameters["Architecture"]
     wantedArchs = getWantedArchs(globalArchSpec)
@@ -1892,9 +1892,9 @@ def splitArchsFromGlobal(globalParameters):
                 else:
                     gfxArchs.add(getGfxName(arch))
                     cmdlineArchs.add(getGfxName(arch))
-        return gfxArchs, cmdlineArchs, set()
+        return gfxArchs, cmdlineArchs, dict() 
 
-    return processArchs(wantedArchs, extensionArchs)
+    return processArchs(wantedArchs)
 
 
 ################################################################################

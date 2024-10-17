@@ -3,6 +3,7 @@ import pytest
 
 from typing import NamedTuple, Optional, Set
 from unittest.mock import patch
+from pathlib import Path
 
 from Tensile.Com.ArchVariant import (
     ArchVariant,
@@ -213,27 +214,35 @@ def test_parseArchVariantString_failure():
 
 @patch("Tensile.Com.ArchVariant.extractArchVariant")
 def test_matchArchVariant_success(mock_extract):
+    targetFile = Path.cwd() / "valid_file.txt"
+
     mock_extract.return_value = MockArchVariant("foo", "gfx942", {"1234", "5678"}, 64)
-    assert matchArchVariant({"gfx942"}, {"1234"}, {64}, "valid_file.txt") == True
+    assert matchArchVariant({"gfx942": {"id=1234": set(), "cu=64": set()}}, targetFile) == True
 
     mock_extract.return_value = MockArchVariant("foo", "gfx942", {"1234", "5678"}, None)
-    assert matchArchVariant({"gfx942"}, {"1234"}, {64}, "valid_file.txt") == True
+    variantMap = {"gfx942": {"id=1234": set(), "cu=64": set()}}
+    assert matchArchVariant(variantMap, targetFile) == True
+    assert variantMap == {"gfx942": {"id=1234": {targetFile.name}, "cu=64": set()}}
 
     mock_extract.return_value = MockArchVariant("foo", "gfx942", {"1234", "5678"}, None)
-    assert matchArchVariant({"gfx942"}, {"1234"}, set(), "valid_file.txt") == True
+    variantMap = {"gfx942": {"id=1234": set()}}
+    assert matchArchVariant(variantMap, targetFile) == True
+    assert variantMap == {"gfx942": {"id=1234": {targetFile.name}}}
 
 @patch("Tensile.Com.ArchVariant.extractArchVariant")
 def test_matchArchVariant_failure(mock_extract):
+    targetFile = Path.cwd() / "valid_file.txt"
+
     # Gfx name doesn't match
-    mock_extract.return_value = MockArchVariant("foo", "gfx942", {"1234", "5678"}, 64)
-    assert matchArchVariant({"gfx906"}, {"1234"}, {64}, "valid_file.txt") == False
+    mock_extract.return_value = MockArchVariant("foo", "gfx90a", {"1234", "5678"}, 64)
+    assert matchArchVariant({"gfx942": {"id=1234": set(), "cu=64": set()}}, targetFile) == False
 
     # Device ID doesn't match
-    mock_extract.return_value = MockArchVariant("foo", "gfx942", {"1234", "5678"}, 64)
-    assert matchArchVariant({"gfx942"}, {"9999"}, {64}, "valid_file.txt") == False
+    mock_extract.return_value = MockArchVariant("foo", "gfx942", {"1234", "5678"}, None)
+    assert matchArchVariant({"gfx942": {"id=9999": set(), "cu=64": set()}}, targetFile) == False
 
     # CU count doesn't match
-    mock_extract.return_value = MockArchVariant("foo", "gfx942", {"1234", "5678"}, 64)
-    assert matchArchVariant({"gfx942"}, {"1234"}, {32}, "valid_file.txt") == False
+    mock_extract.return_value = MockArchVariant("foo", "gfx942", None, 64)
+    assert matchArchVariant({"gfx942": {"id=1234": set(), "cu=32": set()}}, targetFile) == False
 
-    assert matchArchVariant({"gfx942"}, {"1234"}, {64}, "experimental/file.txt") == False
+    assert matchArchVariant({"gfx942": {"id=1234": set(), "cu=32": set()}}, Path.cwd()/"experimental"/"file.txt") == False
