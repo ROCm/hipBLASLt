@@ -618,7 +618,7 @@ class GlobalWriteBatchWriter:
 
       def addEpilogueLoad(modGwvw, ldName: str, addrVecVgpr, addrVec, dataVec, loadedDataVec, vecOffset, gwvw, referenceVgpr, dim, referenceDim, skipLoad=False, comment=""):
         loadsIssued = 0
-        module.add(addrCalc.emitLdChangeReference(self.kernel, self.ss, ldName, self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrVecVgpr, addrVec, dim, referenceVgpr, referenceDim))
+        module.add(addrCalc.emitLdChange(self.kernel, self.ss, ldName, self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrVecVgpr, addrVec, dim))
         ldsAddrVgpr = referenceVgpr if (referenceVgpr and (dim == referenceDim)) else addrVecVgpr
         if dataVec not in loadedDataVec:
           if self.kernel["GroupLoadStore"]:
