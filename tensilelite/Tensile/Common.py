@@ -1648,7 +1648,7 @@ def assignGlobalParameters( config ):
   if os.name == "nt":
     globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
   else:
-    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm_agent_enumerator")
+    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
 
   if "CxxCompiler" in config:
     globalParameters["CxxCompiler"] = config["CxxCompiler"]
