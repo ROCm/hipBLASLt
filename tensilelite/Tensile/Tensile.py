@@ -31,12 +31,14 @@ import sys
 import argparse
 from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR
+from .Utilities.Profile import profile
 from . import BenchmarkProblems
 from . import ClientWriter
 from . import LibraryIO
 from . import LibraryLogic
 from . import __version__
 from datetime import datetime
+
 
 
 ###############################################################################
@@ -186,6 +188,7 @@ def argUpdatedGlobalParameters(args):
 # Tensile
 # - below entry points call here
 ################################################################################
+@profile
 def Tensile(userArgs):
     global globalParameters
 
