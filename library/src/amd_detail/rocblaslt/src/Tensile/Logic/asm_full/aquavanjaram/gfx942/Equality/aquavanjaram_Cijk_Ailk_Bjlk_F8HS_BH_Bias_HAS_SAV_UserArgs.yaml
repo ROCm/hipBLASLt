@@ -2,15 +2,15 @@
 - aquavanjaram
 - gfx942
 - [Device 0049, Device 0050]
-- Activation: false
+- Activation: true
   ActivationComputeDataType: 0
   ActivationNoGuard: false
-  ActivationType: none
+  ActivationType: hipblaslt_all
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
   Batched: true
-  BetaOnlyUseBias: false
-  BiasDataTypeList: []
+  BetaOnlyUseBias: true
+  BiasDataTypeList: [0, 4]
   BiasSrc: D
   ComplexConjugateA: false
   ComplexConjugateB: false
@@ -66,16 +66,16 @@
   TransposeA: false
   TransposeB: true
   UseBeta: true
-  UseBias: 0
+  UseBias: 1
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ''
-  UseScaleAlphaVec: 0
+  UseScaleAB: "Scalar"
+  UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 8
@@ -113,7 +113,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT32x32x64_MI16x16x1_SN_CLR1_GRVWA8_GRVWB8_LBSPPA256_LBSPPB256_LPA16_LPB16_MIWT1_1_NLCB1_PLR1_SVW1_VWA1_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT32x32x64_MI16x16x1_SN_CLR1_GRVWA8_GRVWB8_LBSPPA256_LBSPPB256_LPA16_LPB16_MIWT1_1_NLCB1_PLR1_SVW1_VWA1_VWB1_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 64
@@ -207,15 +207,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -271,18 +271,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT32x32x64_MI16x16x1_SN_CLR1_GRVWA8_GRVWB8_GSU1_LBSPPA256_LBSPPB256_LPA16_LPB16_MIWT1_1_NLCB1_PLR1_SU4_SUM0_SUS256_SVW1_VWA1_VWB1_WG32_8_1_WGM0
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT32x32x64_MI16x16x1_SN_CLR1_GRVWA8_GRVWB8_GSU1_LBSPPA256_LBSPPB256_LPA16_LPB16_MIWT1_1_NLCB1_PLR1_SU4_SUM0_SUS256_SVW1_VWA1_VWB1_WG32_8_1_WGM0
     SourceSwap: true
     StaggerU: 4
     StaggerUMapping: 0
@@ -334,7 +334,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 8
@@ -372,7 +372,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_LBSPPA1024_LBSPPB1024_LPA64_LPB64_MIWT4_4_NLCB1_PLR1_SVW4_VWA4_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_LBSPPA1024_LBSPPB1024_LPA64_LPB64_MIWT4_4_NLCB1_PLR1_SVW4_VWA4_VWB4_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -466,15 +466,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -530,18 +530,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA1024_LBSPPB1024_LPA64_LPB64_MIWT4_4_NLCB1_PLR1_SU0_SUM0_SUS0_SVW4_VWA4_VWB4_WG32_8_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA1024_LBSPPB1024_LPA64_LPB64_MIWT4_4_NLCB1_PLR1_SU0_SUM0_SUS0_SVW4_VWA4_VWB4_WG32_8_1_WGM8
     SourceSwap: true
     StaggerU: 0
     StaggerUMapping: 0
@@ -593,7 +593,7 @@
     _staggerStrideShift: 0
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 8
@@ -631,7 +631,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_LBSPPA1024_LBSPPB2048_LPA64_LPB0_MIWT4_8_NLCB1_PLR1_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_LBSPPA1024_LBSPPB2048_LPA64_LPB0_MIWT4_8_NLCB1_PLR1_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -725,15 +725,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -789,18 +789,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 2
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA1024_LBSPPB2048_LPA64_LPB0_MIWT4_8_NLCB1_PLR1_SU0_SUM0_SUS0_SVW4_VWA4_VWB8_WG32_8_1_WGM0
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA1024_LBSPPB2048_LPA64_LPB0_MIWT4_8_NLCB1_PLR1_SU0_SUM0_SUS0_SVW4_VWA4_VWB8_WG32_8_1_WGM0
     SourceSwap: true
     StaggerU: 0
     StaggerUMapping: 0
@@ -852,7 +852,7 @@
     _staggerStrideShift: 0
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 8
@@ -890,7 +890,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIWT8_8_NLCB1_PLR1_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIWT8_8_NLCB1_PLR1_SVW8_VWA8_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -984,15 +984,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -1048,18 +1048,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 3
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIWT8_8_NLCB1_PLR1_SU4_SUM0_SUS256_SVW8_VWA8_VWB8_WG32_8_1_WGM40
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIWT8_8_NLCB1_PLR1_SU4_SUM0_SUS256_SVW8_VWA8_VWB8_WG32_8_1_WGM40
     SourceSwap: true
     StaggerU: 4
     StaggerUMapping: 0
@@ -1111,7 +1111,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 8
@@ -1149,7 +1149,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x128_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIWT8_8_NLCB1_PLR1_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIWT8_8_NLCB1_PLR1_SVW8_VWA8_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -1243,15 +1243,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -1307,18 +1307,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 4
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x128_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIWT8_8_NLCB1_PLR1_SU8_SUM0_SUS256_SVW8_VWA8_VWB8_WG32_8_1_WGM40
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_GSU1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIWT8_8_NLCB1_PLR1_SU8_SUM0_SUS256_SVW8_VWA8_VWB8_WG32_8_1_WGM40
     SourceSwap: true
     StaggerU: 8
     StaggerUMapping: 0
@@ -1370,7 +1370,7 @@
     _staggerStrideShift: 1
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -1418,7 +1418,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA512_LBSPPB512_LPA48_LPB64_MIAV1_MIWT4_2_NTC0_NTD0_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB2_WG16_8_2
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT64x64x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA512_LBSPPB512_LPA48_LPB64_MIAV1_MIWT4_2_NTC0_NTD0_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB2_WG16_8_2
     LSCA: 64
     LSCB: 64
     LSPA: 64
@@ -1514,15 +1514,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -1581,18 +1581,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 5
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA512_LBSPPB512_LPA48_LPB64_MIAV1_MIWT4_2_NTC0_NTD0_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB2_WG16_8_2_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT64x64x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA512_LBSPPB512_LPA48_LPB64_MIAV1_MIWT4_2_NTC0_NTD0_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB2_WG16_8_2_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -1650,7 +1650,7 @@
     _staggerStrideShift: 0
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -1698,7 +1698,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV1_MIWT4_2_NTC0_NTD0_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB2_WG16_8_2
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT64x64x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV1_MIWT4_2_NTC0_NTD0_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB2_WG16_8_2
     LSCA: 64
     LSCB: 64
     LSPA: 64
@@ -1794,15 +1794,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -1861,18 +1861,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 6
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV1_MIWT4_2_NTC0_NTD0_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB2_WG16_8_2_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT64x64x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV1_MIWT4_2_NTC0_NTD0_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB2_WG16_8_2_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -1930,7 +1930,7 @@
     _staggerStrideShift: 0
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -1978,7 +1978,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x32x128_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB256_LPA48_LPB32_MIAV1_MIWT4_2_NTC3_NTD3_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB2_WG32_4_2
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x32x128_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB256_LPA48_LPB32_MIAV1_MIWT4_2_NTC3_NTD3_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB2_WG32_4_2
     LSCA: 128
     LSCB: 32
     LSPA: 32
@@ -2074,15 +2074,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -2141,18 +2141,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 7
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x32x128_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB256_LPA48_LPB32_MIAV1_MIWT4_2_NTC3_NTD3_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB2_WG32_4_2_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x32x128_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB256_LPA48_LPB32_MIAV1_MIWT4_2_NTC3_NTD3_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB2_WG32_4_2_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -2210,7 +2210,7 @@
     _staggerStrideShift: 0
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -2258,7 +2258,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB48_MIAV0_MIWT4_8_NTC3_NTD3_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB48_MIAV0_MIWT4_8_NTC3_NTD3_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -2354,15 +2354,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -2421,18 +2421,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 8
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x128_MI16x16x1_SN_CLR1_GRVWB16_GSU9_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB48_MIAV0_MIWT4_8_NTC3_NTD3_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB8_WG64_4_1_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x128_MI16x16x1_SN_CLR1_GRVWB16_GSU9_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB48_MIAV0_MIWT4_8_NTC3_NTD3_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB8_WG64_4_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -2490,7 +2490,7 @@
     _staggerStrideShift: 0
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -2538,7 +2538,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -2634,15 +2634,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -2701,18 +2701,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 9
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -2770,7 +2770,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -2818,7 +2818,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA64_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA64_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -2914,15 +2914,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -2981,18 +2981,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 10
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA64_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA64_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -3050,7 +3050,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -3098,7 +3098,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB32_MIAV0_MIWT4_8_NTC0_NTD0_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB32_MIAV0_MIWT4_8_NTC0_NTD0_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -3194,15 +3194,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -3261,18 +3261,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 11
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU3_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB32_MIAV0_MIWT4_8_NTC0_NTD0_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB8_WG64_4_1_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU3_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB32_MIAV0_MIWT4_8_NTC0_NTD0_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB8_WG64_4_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -3330,7 +3330,7 @@
     _staggerStrideShift: 0
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -3378,7 +3378,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB0_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB0_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -3474,15 +3474,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -3541,18 +3541,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 12
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB0_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB0_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -3610,7 +3610,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -3658,7 +3658,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB32_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB32_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB4_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -3754,15 +3754,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -3821,18 +3821,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 13
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB32_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA0_LPB32_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -3890,7 +3890,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -3938,7 +3938,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA8_LPB16_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA8_LPB16_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -4034,15 +4034,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -4101,18 +4101,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 14
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA8_LPB16_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA8_LPB16_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -4170,7 +4170,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -4218,7 +4218,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -4314,15 +4314,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -4381,18 +4381,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 15
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_GSU3_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_GSU3_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -4450,7 +4450,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -4498,7 +4498,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA4_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA4_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -4594,15 +4594,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -4661,18 +4661,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 16
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA4_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA4_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -4730,7 +4730,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -4778,7 +4778,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -4874,15 +4874,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -4941,18 +4941,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 17
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -5010,7 +5010,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -5058,7 +5058,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -5154,15 +5154,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -5221,18 +5221,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 18
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -5290,7 +5290,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -5338,7 +5338,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -5434,15 +5434,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -5501,18 +5501,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 19
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -5570,7 +5570,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -5618,7 +5618,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA32_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA32_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -5714,15 +5714,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -5781,18 +5781,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 20
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA32_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA32_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -5850,7 +5850,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -5898,7 +5898,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -5994,15 +5994,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -6061,18 +6061,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 21
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -6130,7 +6130,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -6178,7 +6178,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -6274,15 +6274,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -6341,18 +6341,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 22
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM32_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM32_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -6410,7 +6410,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -6458,7 +6458,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA32_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA32_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -6554,15 +6554,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -6621,18 +6621,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 23
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA32_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA32_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -6690,7 +6690,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -6738,7 +6738,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA32_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA32_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -6834,15 +6834,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -6901,18 +6901,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 24
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA32_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA32_LPB64_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -6970,7 +6970,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -7018,7 +7018,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA64_LPB0_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA64_LPB0_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -7114,15 +7114,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -7181,18 +7181,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 25
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA64_LPB0_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA64_LPB0_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -7250,7 +7250,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -7298,7 +7298,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB48_MIAV0_MIWT4_8_NTC3_NTD3_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB48_MIAV0_MIWT4_8_NTC3_NTD3_NLCA1_NLCB1_SPO0_SSO0_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -7394,15 +7394,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -7461,18 +7461,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 26
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU3_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB48_MIAV0_MIWT4_8_NTC3_NTD3_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU3_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB48_MIAV0_MIWT4_8_NTC3_NTD3_NLCA1_NLCB1_SU0_SUM0_SUS0_SPO0_SSO0_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -7530,7 +7530,7 @@
     _staggerStrideShift: 0
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -7578,7 +7578,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x192x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1536_LPA16_LPB64_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x192x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1536_LPA16_LPB64_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG32_8_1
     LSCA: 256
     LSCB: 64
     LSPA: 16
@@ -7674,15 +7674,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -7741,18 +7741,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 27
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x192x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1536_LPA16_LPB64_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x192x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1536_LPA16_LPB64_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -7810,7 +7810,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -7858,7 +7858,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA32_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA32_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -7954,15 +7954,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -8021,18 +8021,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 28
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA32_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA32_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -8090,7 +8090,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -8138,7 +8138,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -8234,15 +8234,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -8301,18 +8301,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 29
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -8370,7 +8370,7 @@
     _staggerStrideShift: 1
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -8418,7 +8418,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB16_MIAV0_MIWT8_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB4_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB16_MIAV0_MIWT8_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB4_WG16_16_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -8514,15 +8514,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -8581,18 +8581,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 30
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU2_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB16_MIAV0_MIWT8_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB4_WG16_16_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU2_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB16_MIAV0_MIWT8_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB4_WG16_16_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -8650,7 +8650,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -8698,7 +8698,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB64_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB64_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -8794,15 +8794,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -8861,18 +8861,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 31
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB64_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB64_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -8930,7 +8930,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -8978,7 +8978,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA64_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA64_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -9074,15 +9074,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -9141,18 +9141,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 32
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA64_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA64_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -9210,7 +9210,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -9258,7 +9258,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -9354,15 +9354,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -9421,18 +9421,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 33
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -9490,7 +9490,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -9538,7 +9538,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT192x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1536_LBSPPB2048_LPA16_LPB48_MIAV0_MIWT6_8_NTC4_NTD4_NLCA3_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT192x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1536_LBSPPB2048_LPA16_LPB48_MIAV0_MIWT6_8_NTC4_NTD4_NLCA3_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB8_WG32_8_1
     LSCA: 64
     LSCB: 256
     LSPA: 64
@@ -9634,15 +9634,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -9701,18 +9701,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 34
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT192x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1536_LBSPPB2048_LPA16_LPB48_MIAV0_MIWT6_8_NTC4_NTD4_NLCA3_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT192x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1536_LBSPPB2048_LPA16_LPB48_MIAV0_MIWT6_8_NTC4_NTD4_NLCA3_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -9770,7 +9770,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -9818,7 +9818,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA64_LPB0_MIAV0_MIWT2_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB4_WG128_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA64_LPB0_MIAV0_MIWT2_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB4_WG128_2_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -9914,15 +9914,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -9981,18 +9981,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 35
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA64_LPB0_MIAV0_MIWT2_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB4_WG128_2_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA64_LPB0_MIAV0_MIWT2_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB4_WG128_2_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -10050,7 +10050,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -10098,7 +10098,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -10194,15 +10194,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -10261,18 +10261,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 36
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -10330,7 +10330,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -10378,7 +10378,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -10474,15 +10474,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -10541,18 +10541,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 37
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA16_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -10610,7 +10610,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -10658,7 +10658,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -10754,15 +10754,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -10821,18 +10821,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 38
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -10890,7 +10890,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -10938,7 +10938,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -11034,15 +11034,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -11101,18 +11101,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 39
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -11170,7 +11170,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -11218,7 +11218,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA8_LPB48_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA8_LPB48_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -11314,15 +11314,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -11381,18 +11381,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 40
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA8_LPB48_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA8_LPB48_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -11450,7 +11450,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -11498,7 +11498,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -11594,15 +11594,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -11661,18 +11661,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 41
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -11730,7 +11730,7 @@
     _staggerStrideShift: 1
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -11778,7 +11778,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA8_LPB32_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB1024_LPA8_LPB32_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -11874,15 +11874,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -11941,18 +11941,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 42
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA8_LPB32_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB1024_LPA8_LPB32_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -12010,7 +12010,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -12058,7 +12058,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT64x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA512_LBSPPB2048_LPA32_LPB16_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT64x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA512_LBSPPB2048_LPA32_LPB16_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG16_16_1
     LSCA: 64
     LSCB: 256
     LSPA: 64
@@ -12154,15 +12154,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -12221,18 +12221,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 43
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT64x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA512_LBSPPB2048_LPA32_LPB16_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG16_16_1_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT64x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA512_LBSPPB2048_LPA32_LPB16_MIAV1_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG16_16_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -12290,7 +12290,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -12338,7 +12338,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -12434,15 +12434,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -12501,18 +12501,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 44
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -12570,7 +12570,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -12618,7 +12618,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA64_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA64_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -12714,15 +12714,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -12781,18 +12781,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 45
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_GSU3_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA64_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_GSU3_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA64_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -12850,7 +12850,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -12898,7 +12898,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA48_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA48_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -12994,15 +12994,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -13061,18 +13061,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 46
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA48_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA48_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -13130,7 +13130,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -13178,7 +13178,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA48_LPB64_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB2_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA48_LPB64_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB2_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -13274,15 +13274,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -13341,18 +13341,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 47
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA48_LPB64_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB2_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA48_LPB64_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB2_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -13410,7 +13410,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -13458,7 +13458,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB48_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB2_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB48_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB2_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -13554,15 +13554,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -13621,18 +13621,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 48
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB48_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB48_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -13690,7 +13690,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -13738,7 +13738,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA48_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA48_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -13834,15 +13834,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -13901,18 +13901,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 49
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA48_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA48_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -13970,7 +13970,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -14018,7 +14018,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -14114,15 +14114,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -14181,18 +14181,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 50
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -14250,7 +14250,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -14298,7 +14298,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -14394,15 +14394,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -14461,18 +14461,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 51
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA64_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -14530,7 +14530,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -14578,7 +14578,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA16_LPB32_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB4_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA16_LPB32_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB4_WG64_4_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -14674,15 +14674,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -14741,18 +14741,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 52
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA16_LPB32_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB4_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA16_LPB32_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB4_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -14810,7 +14810,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -14858,7 +14858,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA32_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB2_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA32_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB2_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -14954,15 +14954,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -15021,18 +15021,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 53
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA32_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB2_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA32_LPB32_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB2_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -15090,7 +15090,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -15138,7 +15138,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -15234,15 +15234,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -15301,18 +15301,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 54
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -15370,7 +15370,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -15418,7 +15418,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA48_LPB0_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB4_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA48_LPB0_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB4_WG64_4_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -15514,15 +15514,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -15581,18 +15581,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 55
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA48_LPB0_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB4_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA48_LPB0_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB4_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -15650,7 +15650,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -15698,7 +15698,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA32_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA32_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -15794,15 +15794,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -15861,18 +15861,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 56
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA32_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA32_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -15930,7 +15930,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -15978,7 +15978,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -16074,15 +16074,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -16141,18 +16141,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 57
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -16210,7 +16210,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -16258,7 +16258,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -16354,15 +16354,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -16421,18 +16421,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 58
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -16490,7 +16490,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -16538,7 +16538,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA16_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA16_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -16634,15 +16634,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -16701,18 +16701,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 59
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA16_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA16_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -16770,7 +16770,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -16818,7 +16818,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB64_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB64_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -16914,15 +16914,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -16981,18 +16981,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 60
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB64_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB64_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -17050,7 +17050,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -17098,7 +17098,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA0_LPB8_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA0_LPB8_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -17194,15 +17194,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -17261,18 +17261,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 61
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA0_LPB8_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA0_LPB8_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -17330,7 +17330,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -17378,7 +17378,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -17474,15 +17474,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -17541,18 +17541,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 62
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB32_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -17610,7 +17610,7 @@
     _staggerStrideShift: 1
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -17658,7 +17658,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -17754,15 +17754,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -17821,18 +17821,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 63
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA48_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGMn16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -17890,7 +17890,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -17938,7 +17938,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA48_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA48_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -18034,15 +18034,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -18101,18 +18101,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 64
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA48_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x128_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA48_LPB48_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -18170,7 +18170,7 @@
     _staggerStrideShift: 1
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -18218,7 +18218,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA16_LPB0_MIAV0_MIWT2_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB4_WG128_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA16_LPB0_MIAV0_MIWT2_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW2_VWA2_VWB4_WG128_2_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -18314,15 +18314,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -18381,18 +18381,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 65
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA16_LPB0_MIAV0_MIWT2_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB4_WG128_2_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA16_LPB0_MIAV0_MIWT2_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW2_VWA2_VWB4_WG128_2_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -18450,7 +18450,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -18498,7 +18498,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -18594,15 +18594,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -18661,18 +18661,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 66
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA64_LPB16_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -18730,7 +18730,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -18778,7 +18778,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -18874,15 +18874,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -18941,18 +18941,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 67
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x384x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB3072_LPA0_LPB32_MIAV0_MIWT8_6_NTC4_NTD4_NLCA1_NLCB3_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB2_WG16_16_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -19010,7 +19010,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -19058,7 +19058,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 16
@@ -19154,15 +19154,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -19221,18 +19221,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 68
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x128x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB1024_LPA16_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -19290,7 +19290,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -19338,7 +19338,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA16_LPB8_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA16_LPB8_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG64_4_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -19434,15 +19434,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -19501,18 +19501,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 69
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA16_LPB8_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA16_LPB8_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -19570,7 +19570,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -19618,7 +19618,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x128_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -19714,15 +19714,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -19781,18 +19781,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 70
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x128_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM32_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -19850,7 +19850,7 @@
     _staggerStrideShift: 1
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -19898,7 +19898,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA0_LPB16_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_K1_LBSPPA0_LBSPPB0_LPA0_LPB16_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB4_WG64_4_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -19994,15 +19994,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -20061,18 +20061,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 71
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA0_LPB16_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x64_MI32x32x1_SN_CLR1_GRVWB8_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA0_LBSPPB0_LPA0_LPB16_MIAV0_MIWT4_4_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB4_WG64_4_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -20130,7 +20130,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -20178,7 +20178,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA48_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA48_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -20274,15 +20274,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -20341,18 +20341,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 72
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA48_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM48_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA48_LPB64_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM48_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -20410,7 +20410,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -20458,7 +20458,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1
     LSCA: 128
     LSCB: 256
     LSPA: 32
@@ -20554,15 +20554,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -20621,18 +20621,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 73
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT128x256x64_MI16x16x1_SN_CLR1_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA1024_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT4_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW4_VWA4_VWB8_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -20690,7 +20690,7 @@
     _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: true
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
@@ -20738,7 +20738,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x128_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_CLR0_GRVWB16_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -20834,15 +20834,15 @@
     PrefetchLocalRead: 1
     PreloadKernArgs: true
     ProblemType:
-      Activation: false
+      Activation: true
       ActivationComputeDataType: 0
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: hipblaslt_all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: false
-      BiasDataTypeList: []
+      BetaOnlyUseBias: true
+      BiasDataTypeList: [0, 4]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -20901,18 +20901,18 @@
       TransposeA: false
       TransposeB: true
       UseBeta: true
-      UseBias: 0
+      UseBias: 1
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 0
+      UseScaleAB: "Scalar"
+      UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 74
-    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_UserArgs_MT256x256x128_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bjlk_F8HS_BH_Bias_HAS_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_CLR0_GRVWB16_GSU1_GSUC0_GSUWGMRR0_K1_LBSPPA2048_LBSPPB2048_LPA0_LPB0_MIAV0_MIWT8_8_NTC4_NTD4_NLCA1_NLCB1_SU32_SUM0_SUS256_SPO1_SSO4_SVW8_VWA8_VWB8_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
