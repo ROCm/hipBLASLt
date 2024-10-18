@@ -1890,6 +1890,8 @@ def splitArchsFromGlobal(globalParameters):
                 variants = verifyVariant([re.sub(" ", "", s.lower()) for s in match.group(1).split(",")])
                 variantMap[archspec].extend(variants)
             if archspec in architectureMap:
+                if archspec not in variantMap:
+                    variantMap[archspec] = []
                 gfxArchs.add(re.sub(":", "-", archspec))
                 cmdlineArchs.add(archspec)
             else:
