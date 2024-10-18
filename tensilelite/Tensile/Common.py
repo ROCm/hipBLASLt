@@ -1357,7 +1357,9 @@ defaultProblemType = {
     # AmaxD
     "OutputAmaxD":              False,
     # For kernels putting arguments in workspaces instead of kernel arguments, they can choose to support user arguments input instead.
-    "SupportUserArgs":          True
+    "SupportUserArgs":          True,
+    "SwizzleTensorA":           False,
+    "SwizzleTensorB":           False,
     }
 
 defaultProblemSizes = [{"Range": [ [2880], 0, 0 ]}]
