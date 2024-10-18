@@ -318,7 +318,9 @@ class MasterSolutionLibrary:
             newLib.rows.append({"predicate": pred, "library": library})
 
             if lazyLibrary:
-                if cuCount: placeholderName += "_CU" + str(cuCount)
+                #Don't separate placeholderName for different CUCount arch
+                #It allows different CuCount Arch can share kernel object to reduce overall library size
+                #if cuCount: placeholderName += "_CU" + str(cuCount)
                 placeholderName += "_" + str(devicePart)
 
             return newLib, placeholderName
