@@ -817,7 +817,7 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
 
   # Source based kernels are built for all supported architectures
   if supportedCompiler(CxxCompiler):
-    sourceArchs, _, _ = splitArchsFromGlobal()
+    sourceArchs, _, _ = splitArchsFromGlobal(globalParameters)
   else:
     raise RuntimeError("Unknown compiler %s" % CxxCompiler)
 
@@ -1342,8 +1342,11 @@ def TensileCreateLibrary():
   if not os.path.exists(logicPath):
     printExit("LogicPath %s doesn't exist" % logicPath)
 
-  gfxArchs, _, variantMap = splitArchsFromGlobal(globalParameters)
-  print1("# Architecture      from TensileCreateLibrary: gfxArchs=%s variantMap=%s" % (gfxArchs, variantMap))
+  gfxArchs, _, variants = splitArchsFromGlobal(globalParameters)
+  print1("# Architecture      from TensileCreateLibrary: %s" % gfxArchs)
+  print1("# Variants:\n" + "\n".join(
+      f"#   {arch}: {', '.join(v) if v else ''}" for arch, v in variants.items()
+  ))
 
   if globalParameters["LazyLibraryLoading"] and not (globalParameters["MergeFiles"] and globalParameters["SeparateArchitectures"]):
     printExit("--lazy-library-loading requires --merge-files and --separate-architectures enabled")
@@ -1368,10 +1371,9 @@ def TensileCreateLibrary():
   logicFiles = (os.path.join(logicPath, file) for file in glob.iglob(globPattern, recursive=True))
   logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
 
-  if variantMap:
-      print1(f"# Arch variant filter: {variantMap}")
+  if variants:
       numAllVariants = len(logicFiles)
-      variantMap = {gfx: {item: set() for item in variants} for gfx, variants in variantMap.items()}
+      variantMap = {gfx: {item: set() for item in variants} for gfx, variants in variants.items()}
       logicFiles = [file for file in logicFiles if matchArchVariant(variantMap, Path(file))]
       print1(f"#   Filtered {numAllVariants - len(logicFiles)} logic files")
 
@@ -1382,7 +1384,6 @@ def TensileCreateLibrary():
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
 
-  exit(1)
 
   ##############################################################################
   # Parse config files

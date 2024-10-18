@@ -59,7 +59,7 @@ def extractArchVariant(file: Union[str, Path]) -> ArchVariant:
         if re.match(r"- \[Device", line):
             devIds = re.findall(r"Device (\w+)", line)
             if any(id in emulationIds for id in devIds):
-                printWarning("Emulation device ID found, interpreting as fallback device...")
+                # printWarning("Emulation device ID found, interpreting as fallback device...")
                 return None
             return set(f"id={id}" for id in devIds)
         if re.match(r"- \[all devices", line.lower()):
@@ -104,9 +104,12 @@ def matchArchVariant(
 
     variantMapFiles = variantMap[variant.Gfx]
     
+    # Map is empty if no variants are specified for this gfx, so accept all files
+    if variantMapFiles == {}:
+        return True
+    
     # If CUCount is None and device Ids is None, then this is a fallback file b/c no predicates are specified
     if variant.CUCount == None and variant.DeviceIds == None:
-        print("Fallback: ", targetLogicFile.name)
         addAsFallbackList = []
         for key in variantMapFiles:
             if targetLogicFile.name not in variantMapFiles[key]:
@@ -116,7 +119,6 @@ def matchArchVariant(
     
     addAsVariantList = []
     if variant.DeviceIds != None:
-        print("Device Ids: ", variant.DeviceIds)
         for key in variantMapFiles:
             if "id" in key:
                 for id in variant.DeviceIds:
@@ -125,7 +127,6 @@ def matchArchVariant(
                         addAsVariantList.append(True)
 
     if variant.CUCount != None:
-        print("CU Count: ", variant.CUCount)
         for key in variantMapFiles:
             if "cu" in key:
                 if variant.CUCount == key and targetLogicFile.name not in variantMapFiles[key]:
