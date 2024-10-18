@@ -84,7 +84,7 @@ namespace Tensile
         bool getSolutionSelectionTrace() const;
 
         int getGridbasedTopSols() const;
-
+        
         bool printStreamKGridInfo() const;
 
         bool gridBasedKDTree() const;

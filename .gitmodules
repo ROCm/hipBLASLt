@@ -1,0 +1,3 @@
+[submodule "tensilelite/HostLibraryTests/googletest"]
+	path = tensilelite/HostLibraryTests/googletest
+	url = https://github.com/google/googletest.git
