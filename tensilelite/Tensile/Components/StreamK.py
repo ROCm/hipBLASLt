@@ -64,7 +64,7 @@ class XCCMappingOn(XCCMapping):
             sqTmp = writer.sgprPool.checkOut(1, "sqTmp", preventOverflow=False)
             divisor = kernel["StreamKXCCMapping"]
             if ((divisor & (divisor - 1)) != 0): # Need temp registers if not power of 2
-                sTmp = writer.sgprPool.checkOut(2, "sTmp", preventOverflow=False)
+                sTmp = writer.sgprPool.checkOutAligned(2, 2, "sTmp", preventOverflow=False)
                 sTmpRes  = RegisterPoolResource(idx=sTmp, size=2)
 
             # sGridC = ceil(grid / xccm)
