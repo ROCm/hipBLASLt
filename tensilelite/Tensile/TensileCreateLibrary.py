@@ -53,6 +53,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 from timeit import default_timer as timer
 from pathlib import Path
 from typing import Sequence, List
@@ -1095,7 +1096,9 @@ def generateLogicDataAndSolutions(logicFiles, args):
       for _, lazyLib in lib.lazyLibraries.items():
         yield from libraryIter(lazyLib)
 
-  for library in Common.ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered"):
+  logicProcessBegTime = time.time()
+
+  for library in Common.ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading & Processing Logics...", return_as="generator_unordered"):
     _, architectureName, _, _, _, newLibrary, srcFile = library
 
     if architectureName == "":
@@ -1148,6 +1151,9 @@ def generateLogicDataAndSolutions(logicFiles, args):
 
   if args.GenSolTable:
     LibraryIO.write("MatchTable", matchTable)
+
+  logicProcessEndTime = time.time()
+  print(f"Loading & Processing Logics Done({logicProcessEndTime-logicProcessBegTime:.2f} secs elapsed)")
 
   return solutions, masterLibraries, fullMasterLibrary
 

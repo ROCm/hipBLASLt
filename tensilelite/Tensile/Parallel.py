@@ -214,6 +214,8 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True, retu
     rv = Parallel(n_jobs=threadCount,timeout=99999)(delayed(pcall)(function, a, params) for a, params in pargs)
 
   totalTime = time.time() - currentTime
-  print("{0}Done. ({1:.1f} secs elapsed)".format(message, totalTime))
-  sys.stdout.flush()
+
+  if return_as == 'list':
+    print("{0}Done. ({1:.1f} secs elapsed)".format(message, totalTime))
+    sys.stdout.flush()
   return rv
