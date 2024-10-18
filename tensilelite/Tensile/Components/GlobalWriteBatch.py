@@ -151,6 +151,102 @@ class GlobalWriteBatchWriter:
     self._epilog(module)
     return module
 
+  def globalStoreWait(self, elementIdx, waitCnter, vmcntTotalIssued, lgkmcntTotalIssued, interleaveStoreVmcnt: bool):
+    vmcnt = -1
+    lgkmcnt = -1
+    vscnt = -1
+    if interleaveStoreVmcnt:
+      waitLocalLoadCnt = 0
+      waitLocalLoadCntStrList = []
+      waitLoadCnt = 0
+      waitLoadCntStrList = []
+      # Calculate global loads
+      if self.beta:
+        waitLoadCnt += self.betaLoadIssued[elementIdx]
+        waitLoadCntStrList.append("%d (beta)"%self.betaLoadIssued[elementIdx])
+      if self.loadE:
+        waitLoadCnt += self.eLoadIssued[elementIdx]
+        waitLoadCntStrList.append("%d (load E)"%self.eLoadIssued[elementIdx])
+      # Calculate local loads
+      if self.parentWriter.states.useBias == DataDirection.READ:
+        waitLocalLoadCnt += self.biasLoadIssued[elementIdx]
+        waitLocalLoadCntStrList.append("%d (bias)"%self.biasLoadIssued[elementIdx])
+      if (self.kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+        waitLocalLoadCnt += self.scaleAVecLoadIssued[elementIdx]
+        waitLocalLoadCntStrList.append("%d (scaleAVec)"%self.scaleAVecLoadIssued[elementIdx])
+        waitLocalLoadCnt += self.scaleBVecLoadIssued[elementIdx]
+        waitLocalLoadCntStrList.append("%d (scaleBVec)"%self.scaleBVecLoadIssued[elementIdx])
+      if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+        waitLocalLoadCnt += self.scaleAlphaVecLoadIssued[elementIdx]
+        waitLocalLoadCntStrList.append("%d (scaleAlphaVec)"%self.scaleAlphaVecLoadIssued[elementIdx])
+      # Get vmcnt and lgkmcnt
+      vmcnt = vmcntTotalIssued - waitLoadCnt
+      if waitCnter[0] > 0  or vmcnt != waitCnter[0] : # Check if global load issued > 0
+        if waitCnter[0] == vmcnt: # No need to wait if the global load cnt doesn't change
+          vmcnt = -1
+        else:
+          waitCnter[0] = vmcnt
+      else:
+        vmcnt = -1
+
+      lgkmcnt = lgkmcntTotalIssued - waitLocalLoadCnt
+      if waitCnter[1] > 0 or lgkmcnt != waitCnter[1]: # Check if local load issued > 0
+        if waitCnter[1] == lgkmcnt: # No need to wait if the local load cnt doesn't change
+          lgkmcnt = -1
+        else:
+          waitCnter[1] = lgkmcnt
+      else:
+        lgkmcnt = -1
+      # Get vscnt
+      if vmcnt != -1:
+        if self.parentWriter.states.archCaps["SeparateVscnt"]:
+          vscnt = 0
+        else:
+          vscnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
+      else:
+        vscnt = -1
+      if (vmcnt != -1) or (vscnt != -1) or (lgkmcnt != -1):
+        # Get comment
+        comment = ""
+        if vmcnt != -1:
+          tmp = ""
+          for cntStr in waitLoadCntStrList:
+            tmp += " - %s"%cntStr
+          comment = "vmcnt(%s) = %d%s"%(vmcnt, vmcntTotalIssued, tmp)
+        if lgkmcnt != -1:
+          tmp = ""
+          for cntStr in waitLocalLoadCntStrList:
+            tmp += " - %s"%cntStr
+          comment = comment + (" " if comment else "") + "lgkmcnt(%d) = %d%s"%(lgkmcnt, lgkmcntTotalIssued, tmp)
+        if not self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
+          return SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="%s (interleaved)"%comment)
+    else:
+      commentList = []
+      # Global read wait
+      if self.beta:
+        vmcnt = 0
+        commentList.append("Beta")
+      if self.loadE:
+        vmcnt = 0
+        commentList.append("E")
+      # Local read wait
+      if self.parentWriter.states.useBias == DataDirection.READ:
+        lgkmcnt = 0
+        commentList.append("Bias LDS")
+      if (self.kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+        lgkmcnt = 0
+        commentList.append("ScaleABVec")
+      if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+        lgkmcnt = 0
+        commentList.append("ScaleAlphaVec")
+      if (vmcnt != -1) or (lgkmcnt != -1):
+        # Get comment
+        comment = "wait for " + commentList[0]
+        for c in commentList[1:]:
+          comment += ", %s"%c
+        return SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment=comment)
+    return None
+
   ##############################################################################
   # choose the ADD instruction for combining external C with internal C
   # used in atomic=1 case to compute expected external data
@@ -687,38 +783,6 @@ class GlobalWriteBatchWriter:
           if len(mod.items()) > index:
             module.add(mod.items()[index])
 
-      # This is a helper function that generates vector global read
-      # The following is an example of how to use scaleVecPattern
-      # We are changing scaleAlphaVector to local read
-      # if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-      #   modGwvwScaleAlpha = Module("GwvwScaleAlpha")
-      #   self.loadsScaleAlphaVecIssued += scaleVecPattern(modGwvwScaleAlpha, "AlphaVec", "Alpha", dataScaleAlphaVec, self.addrScaleAlphaVec, loadedDataScaleAlphaVec, addrScaleAlphaVecVgpr, addrCalc.scaleAlphaVecOffset[self.factorDim], factor_gwvw, True, skipLoad=skipLoad)
-      #   modGwvwScale.append(modGwvwScaleAlpha)
-      # self.scaleAlphaVecLoadIssued.append(len(loadedDataScaleAlphaVec) if self.factorDim else len(loadedDataScaleAlphaVec) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16))
-
-      def scaleVecPattern(modGwvw, name: str, srdName: str, dataScaleVec, addrScaleVec, loadedDataScaleVec, addrScaleVecVgpr, scaleVecOffset, factor_gwvw, addVecPostFix, skipLoad=False):
-        loadsScaleVecIssued = 0
-        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Scale%sVec'%srdName, self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrScaleVecVgpr, addrScaleVec, self.factorDim))
-        if dataScaleVec not in loadedDataScaleVec:
-          # Shift right several vgprs for cvt ops if needed
-          numVgprs = int(ceil(self.kernel["ProblemType"]["ComputeDataType"].numRegisters() * self.ss.cfg.gwvw))
-          reg = self.kernel["ProblemType"]["ComputeDataType"].numRegisters() if self.kernel["ProblemType"]["ComputeDataType"].numRegisters() >= 1 else 1
-          gprShiftScaleVec = dataScaleVec + (self.ss.cfg.gwvw * reg - numVgprs)
-          if self.kernel["GroupLoadStore"]:
-            # Group scaleVec load with C input to
-            loadInputCode.add(self.parentWriter.addScaleVecLoad(self.kernel, self.ss, name, srdName, addrScaleVecVgpr, gprShiftScaleVec, factor_gwvw, scaleVecOffset, addVecPostFix))
-          else:
-            module.add(self.parentWriter.addScaleVecLoad(self.kernel, self.ss, name, srdName, addrScaleVecVgpr, gprShiftScaleVec, factor_gwvw, scaleVecOffset, addVecPostFix))
-          loadedDataScaleVec[dataScaleVec] = ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16)
-          loadsScaleVecIssued = ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16)
-          if (self.ss.cfg.gwvw != factor_gwvw) and (not skipLoad):
-            bpl = self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw
-            bpr = ceil(bpl / self.parentWriter.states.bpr)
-            #For below ds_read instruction do not add bias issued , because of all ds_load instructions need to be completed at the same time in this batch.
-            for r in range(self.ss.cfg.gwvw - 1):
-              modGwvw.add(self.parentWriter.addScaleVecLoad(self.kernel, self.ss, name, srdName, addrScaleVecVgpr, gprShiftScaleVec  + (r + 1) * bpr, factor_gwvw, scaleVecOffset, addVecPostFix))
-        return loadsScaleVecIssued
-
       if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1):
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'E', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrEVgpr, self.addrE, 0))
       if self.storeBiasD == 1:
@@ -990,32 +1054,9 @@ class GlobalWriteBatchWriter:
     # wait for batched load
     # Here we wait all
     if not interleaveStoreVmcnt:
-      vmcnt = -1
-      lgkmcnt = -1
-      commentList = []
-      # Global read wait
-      if self.beta:
-        vmcnt = 0
-        commentList.append("Beta")
-      if self.loadE:
-        vmcnt = 0
-        commentList.append("E")
-      # Local read wait
-      if self.parentWriter.states.useBias == DataDirection.READ:
-        lgkmcnt = 0
-        commentList.append("Bias LDS")
-      if (self.kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-        lgkmcnt = 0
-        commentList.append("ScaleABVec")
-      if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-        lgkmcnt = 0
-        commentList.append("ScaleAlphaVec")
-      if (vmcnt != -1) or (lgkmcnt != -1):
-        # Get comment
-        comment = "wait for " + commentList[0]
-        for c in commentList[1:]:
-          comment += ", %s"%c
-        module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=-1, comment=comment))
+      waitcntInst = self.globalStoreWait(0, [], 0, 0, False)
+      if waitcntInst:
+        module.add(waitcntInst)
 
     module.addComment1("apply mask, calc new C and issue writes")
     # module.add(self.getBomb()) # can see store addresses just before the store inst
@@ -1073,76 +1114,11 @@ class GlobalWriteBatchWriter:
       if self.edge and not self.kernel["BufferStore"]:
         module.add(self.getEdgeMovInstType()(EXEC(), sgpr(mask, self.laneSGPRC), "sgprs -> exec"))
 
-      # if GWVW=1 the half path still assumes we have
-      # at least two stores so does some combining across VI -
-      # for example assuming we can have two elements and can use pk_mul
-      # here:
       if interleaveStoreVmcnt:
-        waitLocalLoadCnt = 0
-        waitLocalLoadCntStrList = []
-        waitLoadCnt = 0
-        waitLoadCntStrList = []
-        # Calculate global loads
-        if self.beta:
-          waitLoadCnt += self.betaLoadIssued[elementIdx]
-          waitLoadCntStrList.append("%d (beta)"%self.betaLoadIssued[elementIdx])
-        if self.loadE:
-          waitLoadCnt += self.eLoadIssued[elementIdx]
-          waitLoadCntStrList.append("%d (load E)"%self.eLoadIssued[elementIdx])
-        # Calculate local loads
-        if self.parentWriter.states.useBias == DataDirection.READ:
-          waitLocalLoadCnt += self.biasLoadIssued[elementIdx]
-          waitLocalLoadCntStrList.append("%d (bias)"%self.biasLoadIssued[elementIdx])
-        if (self.kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-          waitLocalLoadCnt += self.scaleAVecLoadIssued[elementIdx]
-          waitLocalLoadCntStrList.append("%d (scaleAVec)"%self.scaleAVecLoadIssued[elementIdx])
-          waitLocalLoadCnt += self.scaleBVecLoadIssued[elementIdx]
-          waitLocalLoadCntStrList.append("%d (scaleBVec)"%self.scaleBVecLoadIssued[elementIdx])
-        if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
-          waitLocalLoadCnt += self.scaleAlphaVecLoadIssued[elementIdx]
-          waitLocalLoadCntStrList.append("%d (scaleAlphaVec)"%self.scaleAlphaVecLoadIssued[elementIdx])
-        # Get vmcnt and lgkmcnt
-        vmcnt = vmcntTotalIssued - waitLoadCnt
-        if waitCnter[0] > 0  or vmcnt != waitCnter[0] : # Check if global load issued > 0
-          if waitCnter[0] == vmcnt: # No need to wait if the global load cnt doesn't change
-            vmcnt = -1
-          else:
-            waitCnter[0] = vmcnt
-        else:
-          vmcnt = -1
-
-        lgkmcnt = lgkmcntTotalIssued - waitLocalLoadCnt
-        if waitCnter[1] > 0 or lgkmcnt != waitCnter[1]: # Check if local load issued > 0
-          if waitCnter[1] == lgkmcnt: # No need to wait if the local load cnt doesn't change
-            lgkmcnt = -1
-          else:
-            waitCnter[1] = lgkmcnt
-        else:
-          lgkmcnt = -1
-        # Get vscnt
-        if vmcnt != -1:
-          if self.parentWriter.states.archCaps["SeparateVscnt"]:
-            vscnt = 0
-          else:
-            vscnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
-        else:
-          vscnt = -1
-        if (vmcnt != -1) or (vscnt != -1) or (lgkmcnt != -1):
-          # Get comment
-          comment = ""
-          if vmcnt != -1:
-            tmp = ""
-            for cntStr in waitLoadCntStrList:
-              tmp += " - %s"%cntStr
-            comment = "vmcnt(%s) = %d%s"%(vmcnt, vmcntTotalIssued, tmp)
-          if lgkmcnt != -1:
-            tmp = ""
-            for cntStr in waitLocalLoadCntStrList:
-              tmp += " - %s"%cntStr
-            comment = comment + (" " if comment else "") + "lgkmcnt(%d) = %d%s"%(lgkmcnt, lgkmcntTotalIssued, tmp)
+        waitcntInst = self.globalStoreWait(elementIdx, waitCnter, vmcntTotalIssued, lgkmcntTotalIssued, True)
+        if waitcntInst:
           module.addSpaceLine()
-          if not self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
-            module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="%s (interleaved)"%comment))
+          module.add(waitcntInst)
 
       def applyScaleVec(vecModule, addressStr, dataScaleVec, factorDim, isGlobal=True):
         if not self.beta and not self.applyAlpha: # case for beta-0 and alpha == 1,(OptNLL)
