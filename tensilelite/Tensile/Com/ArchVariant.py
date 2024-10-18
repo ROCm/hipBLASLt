@@ -59,10 +59,10 @@ def extractArchVariant(file: Union[str, Path]) -> ArchVariant:
         if re.match(r"- \[Device", line):
             devIds = re.findall(r"Device (\w+)", line)
             if any(id in emulationIds for id in devIds):
-                printWarning("Emulation device IDs found, interpreting as fallback device ID for now...")
+                printWarning("Emulation device ID found, interpreting as fallback device...")
                 return None
             return set(f"id={id}" for id in devIds)
-        if re.match(r"- \[All devices", line):
+        if re.match(r"- \[all devices", line.lower()):
             return None
         else:
             raise LogicFileError(f"No device IDs found: line: {line}")
@@ -78,17 +78,15 @@ def extractArchVariant(file: Union[str, Path]) -> ArchVariant:
 
 def matchArchVariant(
     variantMap: dict, targetLogicFile: Path
-):
+) -> bool:
     """Determines if the architecture variant specified in the target logic file matches the given criteria.
 
     Args:
-        gfxNames: A set of valid GFX names to match against.
-        deviceIds: A set of valid device IDs to match against.
-        cuCounts: A set of valid CU counts to match against.
+        variantMap: A dictionary mapping GFX names to their corresponding variant files.
         targetLogicFile: Path to the target logic file.
 
     Returns:
-        bool: True if the architecture variant matches the given criteria, False otherwise.
+        True if the architecture variant matches the given criteria, False otherwise.
 
     Raises:
         LineNotFoundError: If the target logic file does not contain the expected lines.
@@ -122,7 +120,7 @@ def matchArchVariant(
         for key in variantMapFiles:
             if "id" in key:
                 for id in variant.DeviceIds:
-                    if id == key:
+                    if id == key and targetLogicFile.name not in variantMapFiles[key]:
                         variantMapFiles[key].add(targetLogicFile.name)
                         addAsVariantList.append(True)
 
@@ -130,7 +128,7 @@ def matchArchVariant(
         print("CU Count: ", variant.CUCount)
         for key in variantMapFiles:
             if "cu" in key:
-                if variant.CUCount == key:
+                if variant.CUCount == key and targetLogicFile.name not in variantMapFiles[key]:
                     variantMapFiles[key].add(targetLogicFile.name)
                     addAsVariantList.append(True)
 

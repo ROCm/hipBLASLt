@@ -1857,6 +1857,19 @@ def splitArchsFromGlobal(globalParameters):
     def getWantedArchs(globalArchSpec):
         return globalArchSpec.split(";") if ";" in globalArchSpec else globalArchSpec.split("_")
 
+    def verifyVariant(variantSpec: list):
+        deviceIdLength = 4
+        hexChars = "1234567890abcdef"
+        for spec in variantSpec:
+            key, _, val = spec.partition("=")
+            if key == "id" and all(c in hexChars for c in val.lower()) and len(val) == deviceIdLength:
+                continue
+            elif key == "cu" and val.isdigit():
+                continue
+            else:
+                raise ValueError(f"Invalid architecture variant: {spec}")
+        return variantSpec
+
     def processArchs(wantedArchs):
         variantRegex = re.compile(r'\[(.*?)\]')  # matches text between square brackets
         gfxArchs, cmdlineArchs, = set(), set()
@@ -1865,7 +1878,8 @@ def splitArchsFromGlobal(globalParameters):
             archspec = archspec.strip()
             if match := re.search(variantRegex, archspec):  # extract arch variants
                 archspec = archspec[:match.start()]
-                variantMap[archspec].extend(s.strip() for s in match.group(1).split(","))
+                variants = verifyVariant([re.sub(" ", "", s.lower()) for s in match.group(1).split(",")])
+                variantMap[archspec].extend(variants)
             if archspec in architectureMap:
                 gfxArchs.add(re.sub(":", "-", archspec))
                 cmdlineArchs.add(archspec)
