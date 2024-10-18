@@ -228,7 +228,7 @@ globalParameters["LibraryUpdateComment"] = False                  # Include solu
 
 # internal, i.e., gets set during startup
 globalParameters["CurrentISA"] = (0,0,0)
-globalParameters["ROCmAgentEnumeratorPath"] = None      # /opt/rocm/bin/rocm_agent_enumerator
+globalParameters["AMDGPUArchPath"] = None      # /opt/rocm/llvm/bin/amdgpu-arch
 globalParameters["ROCmSMIPath"] = None                  # /opt/rocm/bin/rocm-smi
 globalParameters["AssemblerPath"] = None                # /opt/rocm/llvm/bin/clang++
 globalParameters["WorkingPath"] = os.getcwd()           # path where tensile called from
@@ -1495,8 +1495,8 @@ def detectGlobalCurrentISA():
   """
   global globalParameters
 
-  if globalParameters["CurrentISA"] == (0,0,0) and globalParameters["ROCmAgentEnumeratorPath"]:
-    process = subprocess.run([globalParameters["ROCmAgentEnumeratorPath"]], stdout=subprocess.PIPE)
+  if globalParameters["CurrentISA"] == (0,0,0) and globalParameters["AMDGPUArchPath"]:
+    process = subprocess.run([globalParameters["AMDGPUArchPath"]], stdout=subprocess.PIPE)
     if os.name == "nt":
       line = ""
       for line_in in process.stdout.decode().splitlines():
@@ -1519,7 +1519,7 @@ def detectGlobalCurrentISA():
       if len(archList) > 0:
         globalParameters["CurrentISA"] = archList[globalParameters["Device"]]
     if (process.returncode):
-      printWarning("%s exited with code %u" % (globalParameters["ROCmAgentEnumeratorPath"], process.returncode))
+      printWarning("%s exited with code %u" % (globalParameters["AMDGPUArchPath"], process.returncode))
     return process.returncode
   return 0
 
@@ -1646,9 +1646,9 @@ def assignGlobalParameters( config ):
 
   # ROCm Agent Enumerator Path
   if os.name == "nt":
-    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
+    globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
   else:
-    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
+    globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
 
   if "CxxCompiler" in config:
     globalParameters["CxxCompiler"] = config["CxxCompiler"]
@@ -1687,8 +1687,8 @@ def assignGlobalParameters( config ):
     else:
       globalParameters["ClangOffloadBundlerPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "clang-offload-bundler")
 
-  if "ROCmAgentEnumeratorPath" in config:
-    globalParameters["ROCmAgentEnumeratorPath"] = config["ROCmAgentEnumeratorPath"]
+  if "AMDGPUArchPath" in config:
+    globalParameters["AMDGPUArchPath"] = config["AMDGPUArchPath"]
 
   if "KeepBuildTmp" in config:
       globalParameters["KeepBuildTmp"] = config["KeepBuildTmp"]
