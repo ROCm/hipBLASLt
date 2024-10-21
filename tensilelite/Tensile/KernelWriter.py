@@ -560,7 +560,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   #  localReadCode + otherCode
   ##############################################################################
   def makeSubIterSchedule(self, kernel, tPA, tPB, localReadCode, iteration, pointerLWCode, pointerLRCode, waitCode, macIterCode, \
-      waitLWCode = Module(), syncCode = Module(), packCode = Module(), NLLlast = False):
+      waitLWCode = Module(), syncCode = Module(), packCode = Module(), prevIterCode = Module(), NLLlast = False):
 
     iterCode = Module()
     globalReadCode = fastdeepcopy(self.codes.perIterGlobalRead[iteration])
@@ -1237,7 +1237,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           instsToCheck = [mfma,] + packItems
           numDsInsts = 0
           lastLgkmCnt = -1
-          for ds in filter(lambda j: isinstance(j, (DSLoadInstruction, DSStoreInstruction, SWaitCnt)), reversed(iterCode.flatitems())):
+          for ds in filter(lambda j: isinstance(j, (DSLoadInstruction, DSStoreInstruction, SWaitCnt)), reversed(prevIterCode.flatitems() + iterCode.flatitems())):
             if isinstance(ds, DSLoadInstruction) and hasAnyDependency(ds, instsToCheck):
               break
 
@@ -1248,8 +1248,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
                 lastLgkmCnt = ds.lgkmcnt + numDsInsts
 
           if lastLgkmCnt != numDsInsts:
-            waitDsRead = SWaitCnt(lgkmcnt=numDsInsts, comment="Wait for dependent lr")
-            iterCode.add(waitDsRead)
+            if lastLgkmCnt == -1 or (lastLgkmCnt >= 0 and lastLgkmCnt > numDsInsts):
+              waitDsRead = SWaitCnt(lgkmcnt=numDsInsts, comment="Wait for dependent lr")
+              iterCode.add(waitDsRead)
         else:
           if kernel["UnrollMajorLDSB"] and not (kernel["ProblemType"]["DataTypeB"].isFloat8() and kernel["ConvertAfterDS"]):
             if iteration == 0 and i == kernel["MIWaveTileA"]:
@@ -1910,7 +1911,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, u, kernel["InnerUnroll"]))
 
       subIterCode = self.makeSubIterSchedule(kernel, tensorParametersA, tensorParametersB, localReads, \
-                      u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], NLLlast)
+                      u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], module, NLLlast)
       module.add(subIterCode)
       pack[luIdx] = Module()
     return module
@@ -2311,7 +2312,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       ###############################################################################
       if self.states.numItersPLR or (not globalParameters["UnrollLoopEfficiencyEnable"]):
         subIterCode = self.makeSubIterSchedule(kernel, tensorParametersA, tensorParametersB, localReads, \
-                        u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx])
+                        u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], module)
         module.add(subIterCode) # add scheduled "other", local reads, local writes
         pack[luIdx] = Module()
       else:
