@@ -68,7 +68,7 @@ class KernelWriterConversion(KernelWriterBase):
 
     # Get supported archs
     gfxArchs, _, _ = splitArchsFromGlobal(globalParameters)
-    self.supportedArchs = gfxArchs
+    self.supportedArchs = {gfxArch(gfx) for gfx in gfxArchs}
 
     self.gsuKernels = [self.state["GlobalSplitU"]]
     if self.state["GenPGRPostKernels"]:
