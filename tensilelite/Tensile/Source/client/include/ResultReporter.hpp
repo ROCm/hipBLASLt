@@ -128,7 +128,6 @@ namespace Tensile
             const std::string DeviceIndex         = "device-idx";
             const std::string FanSpeedRPMs        = "fan-rpm";
             const std::string HardwareSampleCount = "hardware-samples";
-            const std::string GfxFrequency        = "gfx-frequency(median)"; // GPU clock in Mhz
         }; // namespace ResultKey
 
         class ResultReporter : public RunListener

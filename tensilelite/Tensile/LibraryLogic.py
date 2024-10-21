@@ -35,7 +35,6 @@ import array
 import csv
 import os
 import time
-import math
 
 ################################################################################
 # Analyze Problem Type
@@ -455,7 +454,6 @@ class LogicAnalyzer:
 
     # iterate over rows
     rowIdx = 0
-    columnOfFreqIdx = -1
     for row in csvFile:
       rowIdx+=1
       if rowIdx == 1:
@@ -468,13 +466,7 @@ class LogicAnalyzer:
         else:
           printWarning("Performance unit %s in %s is unrecognized: assuming GFlops (device efficiency)" % (perfUnit, dataFileName))
           self.perfMetric = "DeviceEfficiency"
-        
-        # get the index of "WinnerFreq"
-        try:
-          columnOfFreqIdx = row.index(" WinnerFreq")
-        except ValueError as e:
-          print(f"Error: {e}")
-            
+
         # get the length of each row, and derive the first column of the solution instead of using wrong "solutionStartIdx = totalSizeIdx + 1"
         rowLength = len(row)
         solutionStartIdx = rowLength - numSolutions
@@ -490,6 +482,7 @@ class LogicAnalyzer:
         for i in range(problemSizeStartIdx, totalSizeIdx):
           problemSize.append(int(row[i]))
         problemSize = tuple(problemSize)
+
         # Exact Problem Size
         if problemSize in self.exactProblemSizes:
 
@@ -510,28 +503,15 @@ class LogicAnalyzer:
                 winnerGFlops = gflops
               solutionIdx += 1
 
-          # calculate effLike
-          # effLike = winnerGFlops / Frequency(MHz)
-          try:
-            frequency = float(row[columnOfFreqIdx])
-            if frequency != 0 and not math.isnan(frequency):
-              effLike = round(float(winnerGFlops) / frequency, 2)
-            else:
-              effLike = float(winnerGFlops)
-              print1("Warning: Frequency is Nan or 0, using GFlops as the efficiency metric")
-          except(ValueError, TypeError):
-            effLike = float(winnerGFlops)
-            print1("Warning: Could not convert frequency value to float, using GFlops as the efficiency metric")
-        
           if winnerIdx != -1:
             if problemSize in self.exactWinners:
               if winnerGFlops > self.exactWinners[problemSize][1]:
                 #print "update exact", problemSize, "CSV index=", winnerIdx, self.exactWinners[problemSize], "->", solutionMap[winnerIdx], winnerGFlops
-                self.exactWinners[problemSize] = [solutionMap[winnerIdx], effLike]
+                self.exactWinners[problemSize] = [solutionMap[winnerIdx], winnerGFlops]
             else:
-              self.exactWinners[problemSize] = [solutionMap[winnerIdx], effLike]
+              self.exactWinners[problemSize] = [solutionMap[winnerIdx], winnerGFlops]
               #print "new exact", problemSize, "CSV index=", winnerIdx, self.exactWinners[problemSize]
-            
+
         # Range Problem Size
         elif problemSize in self.rangeProblemSizes:
           problemIndices = []
