@@ -47,7 +47,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
 
     # Get supported archs
     gfxArchs, _, _ = splitArchsFromGlobal(globalParameters)
-    self.supportedArchs = gfxArchs
+    self.supportedArchs = {gfxArch(gfx) for gfx in gfxArchs}
 
     # derive parameter
     self.language = "HIP"
