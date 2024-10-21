@@ -1233,8 +1233,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if self.states.numItersPLR == 0 and kernel["EnableMatrixInstruction"] and self.do["OptimizeNumItersPLR0"]:
           lgkmcnt = -1
           mfmas = [mfma for mfma in macIterCode.flatitems() if isinstance(mfma, MFMAInstruction)]
-          mfma = mfmas[i]
-          instsToCheck = [mfma,] + packItems
+          ## To support do["MAC"] is False
+          mfma = [mfmas[i],] if len(mfmas) > 0 else []
+          instsToCheck = mfma + packItems
           numDsInsts = 0
           lastLgkmCnt = -1
           for ds in filter(lambda j: isinstance(j, (DSLoadInstruction, DSStoreInstruction, SWaitCnt)), reversed(prevIterCode.flatitems() + iterCode.flatitems())):
