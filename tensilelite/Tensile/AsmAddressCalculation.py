@@ -799,6 +799,19 @@ class AddrCalculation:
                 (tc != 'ScaleAlphaVec' and (not (tc == 'Bias' and self.kernelWriter.states.useBias == DataDirection.READ)) and tc != 'ScaleAVec' and tc != 'ScaleBVec'):
                 module.add(VCndMaskB32(dst=vgpr(addrVgpr), src0=vgpr(bufferOOB), src1=vgpr(addrVgpr), \
                                src2=sgpr(mask,laneSGPRCount), comment="LD%s clip if OOB. offset" % tc ))
+            # huang
+            if kernel["WaveSplitK"] > 1 and (tc == 'D' or tc == 'TD'):
+                kidx = self.kernelWriter.vgprPool.checkOut(1, "kidx")
+                kMask = self.kernelWriter.sgprPool.checkOutAligned(2, 4, "kMask", preventOverflow = 0)
+
+                module.add(VAndB32(dst=vgpr(kidx), src0=(kernel["WaveSplitK"]-1), src1=vgpr("Serial"), comment="kidx = Serial % WaveSplitK"))
+                module.add(VCmpEQI32(dst=sgpr(kMask,laneSGPRCount), src0=vgpr(kidx), src1=(kernel["WaveSplitK"]-1), comment="kidx == WaveSplitK-1" ))
+                module.add(VCndMaskB32(dst=vgpr(addrVgpr), src0=vgpr(bufferOOB), src1=vgpr(addrVgpr), \
+                               src2=sgpr(kMask,laneSGPRCount), comment="LD%s clip if kidx != 0. offset" % tc ))
+
+                self.kernelWriter.vgprPool.checkIn(kidx)
+                self.kernelWriter.sgprPool.checkIn(kMask)
+
         else:
             if tc == 'Bias' and kernel["ProblemType"]["UseBias"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
                 module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))

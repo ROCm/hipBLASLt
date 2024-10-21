@@ -55,8 +55,8 @@ class LocalReadVALU(LocalRead):
         offsetMultiplier  = 1 # instruction.offsetMultiplier
         valuIdx           = 0
         # huang
-        numVectorsPerTile = (kernel["ThreadTile%u"%tile01] * kernel["NumDotElements"] // kernel["LocalReadVectorWidth"])
-        numReadsPerVector = (kernel["LocalReadVectorWidth"] * tP["bpe"]) // (blockWidth*4) # bytes/register
+        numVectorsPerTile = kernel["ThreadTile%u"%tile01]
+        numReadsPerVector = (writer.states.lrvwUnrollA * tP["bpe"]) // (blockWidth*4) # bytes/register
         LdsPad           = kernel["LdsPad%s"%tc] if kernel["LdsBlockSizePerPad%s"%tc] == 0 else 0
         tileStride        = kernel["_DepthU%s"%tc] + LdsPad if kernel["UnrollMajorLDS%s" % tP["tensorChar"]] else 1
         

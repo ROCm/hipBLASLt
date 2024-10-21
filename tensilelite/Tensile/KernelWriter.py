@@ -1623,9 +1623,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
       doReadM = doReadM or (hasLiveLdsData and u > localWriteEndIter)
       doReadM = doReadM and (kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"])
       for iui in range(0,kernel["InnerUnroll"]):
-        doReadA = doReadA and iui*self.states.numReadsIterCoalescedA < kernel["InnerUnroll"]
-        doReadB = doReadB and iui*self.states.numReadsIterCoalescedB < kernel["InnerUnroll"]
-        doReadM = doReadM and iui*self.states.numReadsIterCoalescedMetadata < kernel["InnerUnroll"]
+        # huang
+        if kernel["EnableMatrixInstruction"]:
+          doReadA = doReadA and iui*self.states.numReadsIterCoalescedA < kernel["InnerUnroll"]
+          doReadB = doReadB and iui*self.states.numReadsIterCoalescedB < kernel["InnerUnroll"]
+          doReadM = doReadM and iui*self.states.numReadsIterCoalescedMetadata < kernel["InnerUnroll"]
+        else:
+          doReadA = doReadA and iui == 0
+          doReadB = doReadB and iui == 0
+          doReadM = doReadM and iui == 0
+        
         if doReadA:
           localReads.addComment1("local read a")
           localReadCodeA, packCodeA = self.localReadDo(kernel, plrIdx*self.states.numIterPerCoalescedReadA, iui*self.states.numReadsIterCoalescedA, 0, tensorParametersA)
@@ -1964,9 +1971,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
         # use the next buffer set (do not change the index of pack[])
         plrIdxLR += 1
       for iui in range(0,kernel["InnerUnroll"]):
-        doReadA = doReadA and iui*self.states.numReadsIterCoalescedA < kernel["InnerUnroll"]
-        doReadB = doReadB and iui*self.states.numReadsIterCoalescedB < kernel["InnerUnroll"]
-        doReadM = doReadM and iui*self.states.numReadsIterCoalescedMetadata < kernel["InnerUnroll"]
+        # huang
+        if kernel["EnableMatrixInstruction"]:
+          doReadA = doReadA and iui*self.states.numReadsIterCoalescedA < kernel["InnerUnroll"]
+          doReadB = doReadB and iui*self.states.numReadsIterCoalescedB < kernel["InnerUnroll"]
+          doReadM = doReadM and iui*self.states.numReadsIterCoalescedMetadata < kernel["InnerUnroll"]
+        else:
+          doReadA = doReadA and iui == 0
+          doReadB = doReadB and iui == 0
+          doReadM = doReadM and iui == 0
+          
         if doReadA:
           localReads.addComment1("local read a")
           localReadCodeA, packCodeA = self.localReadDo(kernel, plrIdxLR*self.states.numIterPerCoalescedReadA, iui*self.states.numReadsIterCoalescedA, 0, tensorParametersA)
@@ -2184,6 +2198,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
           pack[plrIdx] = Module()
           for espi in range(0, 1):
             for iui in range(0,kernel["InnerUnroll"]):
+              # huang
+              if not kernel["EnableMatrixInstruction"] and iui > 0:
+                break
               if iui*self.states.numReadsIterCoalescedA < kernel["InnerUnroll"]:
                 module.addComment1("local read prefetch a")
                 localReadCodeA, packCodeA = self.localReadDo(kernel, plrIdx*self.states.numIterPerCoalescedReadA, iui*self.states.numReadsIterCoalescedA, espi, tensorParametersA)
@@ -2397,6 +2414,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       for mValue in range(mEnd):
         pack[0] = Module()
         for iui in range(0, tailLoopInnerUnroll):
+          # huang
+          if not kernel["EnableMatrixInstruction"] and iui > 0:
+            break
           # Reading 16-bit data from LDS requires packing when ECC enabled
           module.addComment1("local read a")
           localReadCodeA, packCodeA = self.localReadDo(kernel, 0, iui, 0, tensorParametersA)
@@ -2711,12 +2731,18 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["UnrollMajorLDSA"]:
       divider = 2 if (kernel["ProblemType"]["Sparse"] == 1) else 1
       self.states.lrvwUnrollA = kernel["LocalReadVectorWidth"] // divider
+      # huang
+      if not kernel["EnableMatrixInstruction"]:
+        self.states.lrvwUnrollA *= kernel["InnerUnroll"]
     else:
       self.states.lrvwUnrollA = 1
 
     if kernel["UnrollMajorLDSB"]:
       divider = 2 if (kernel["ProblemType"]["Sparse"] == 2) else 1
       self.states.lrvwUnrollB = kernel["LocalReadVectorWidth"] // divider
+      # huang
+      if not kernel["EnableMatrixInstruction"]:
+        self.states.lrvwUnrollB *= kernel["InnerUnroll"]
     else:
       self.states.lrvwUnrollB = 1
 
@@ -3290,6 +3316,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Avoid bank conflict between VgprA and VgprC
     if(self.states.archCaps["VgprBank"]):
       vgprIdx += 2
+    # huang: alignment hack
+    if not kernel["EnableMatrixInstruction"]:
+      vgprIdx = ((vgprIdx+3)//4)*4 
     self.states.a.startVgprValu  = vgprIdx
     vgprIdx += self.states.a.numVgprValu
     numVgprValuPackA = 0
@@ -3874,8 +3903,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
         numB //= self.states.numReadsIterCoalescedB
 
     else: # mac instruction
-      numA = kernel["InnerUnroll"]*(kernel["ThreadTile0"] // kernel["VectorWidthA"]) // tensorParametersA["localReadInstruction"].numOffsets
-      numB = kernel["InnerUnroll"]*(kernel["ThreadTile1"] // kernel["VectorWidthB"]) // tensorParametersB["localReadInstruction"].numOffsets
+      # huang
+      numA = (kernel["ThreadTile0"] // kernel["VectorWidthA"]) // tensorParametersA["localReadInstruction"].numOffsets
+      numB = (kernel["ThreadTile1"] // kernel["VectorWidthB"]) // tensorParametersB["localReadInstruction"].numOffsets
+      # numA = kernel["InnerUnroll"]*(kernel["ThreadTile0"] // kernel["VectorWidthA"]) // tensorParametersA["localReadInstruction"].numOffsets
+      # numB = kernel["InnerUnroll"]*(kernel["ThreadTile1"] // kernel["VectorWidthB"]) // tensorParametersB["localReadInstruction"].numOffsets
 
     self.states.numReadsPerIterA = numA
     self.states.numReadsPerIterB = numB

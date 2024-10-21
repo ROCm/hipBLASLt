@@ -23,7 +23,7 @@
 from .Base import Item, fastdeepcopy
 from .Enums import InstType, CvtType
 from .Containers import DSModifiers, FLATModifiers, MUBUFModifiers, SMEMModifiers, SDWAModifiers, VOP3PModifiers, VCC, \
-                        RegisterContainer, HolderContainer, EXEC
+                        RegisterContainer, HolderContainer, EXEC, DPPModifiers
 from .Formatting import formatStr, printExit
 import abc
 from enum import Enum
@@ -117,16 +117,18 @@ class CompositeInstruction(Instruction):
         self.preStr()
         return '\n'.join([str(s) for s in self.instructions])
 
+# huang: add dpp
 class CommonInstruction(Instruction):
     def __init__(self, instType: InstType, dst, srcs: list, \
                  sdwa: Optional[SDWAModifiers]=None, vop3: Optional[VOP3PModifiers]=None, \
-                 comment="") -> None:
+                 comment="", dpp: Optional[DPPModifiers]=None) -> None:
         super().__init__(instType, comment)
         self.dst      = dst
         self.dst1     = None # Usually we don't need this
         self.srcs     = srcs
         self.sdwa     = sdwa
         self.vop3     = vop3
+        self.dpp      = dpp
 
     def getArgStr(self) -> str:
         kStr = ""
@@ -165,6 +167,7 @@ class CommonInstruction(Instruction):
             l.extend(self.srcs)
         l.extend(self.sdwa.toList()) if self.sdwa else ""
         l.extend(self.vop3.toList()) if self.vop3 else ""
+        l.extend(self.dpp.toList()) if self.dpp else ""
         l.append(self.comment)
         return l
 
@@ -173,7 +176,66 @@ class CommonInstruction(Instruction):
         kStr = self.instStr + " " + self.getArgStr()
         kStr += str(self.sdwa) if self.sdwa else ""
         kStr += str(self.vop3) if self.vop3 else ""
+        kStr += str(self.dpp) if self.dpp else ""
         return self.formatWithComment(kStr)
+
+# class CommonInstruction(Instruction):
+#     def __init__(self, instType: InstType, dst, srcs: list, \
+#                  sdwa: Optional[SDWAModifiers]=None, vop3: Optional[VOP3PModifiers]=None, \
+#                  comment="") -> None:
+#         super().__init__(instType, comment)
+#         self.dst      = dst
+#         self.dst1     = None # Usually we don't need this
+#         self.srcs     = srcs
+#         self.sdwa     = sdwa
+#         self.vop3     = vop3
+
+#     def getArgStr(self) -> str:
+#         kStr = ""
+#         if self.dst:
+#             kStr += str(self.dst)
+#         if self.dst1:
+#             if kStr:
+#                 kStr += ", "
+#             kStr += str(self.dst1)
+#         if self.srcs:
+#             if kStr:
+#                 kStr += ", "
+#             kStr += str(self.srcs[0])
+#         for i in self.srcs[1:]:
+#             kStr += ", " + str(i)
+#         return kStr
+
+#     def getParams(self) -> list:
+#         l = []
+#         if self.dst:
+#             l.append(self.dst)
+#         if self.dst1:
+#             l.append(self.dst1)
+#         if self.srcs:
+#             l.extend(self.srcs)
+#         return l
+
+#     def toList(self) -> list:
+#         self.preStr()
+#         l = [self.instStr]
+#         if self.dst:
+#             l.append(self.dst)
+#         if self.dst1:
+#             l.append(self.dst1)
+#         if self.srcs:
+#             l.extend(self.srcs)
+#         l.extend(self.sdwa.toList()) if self.sdwa else ""
+#         l.extend(self.vop3.toList()) if self.vop3 else ""
+#         l.append(self.comment)
+#         return l
+
+#     def __str__(self) -> str:
+#         self.preStr()
+#         kStr = self.instStr + " " + self.getArgStr()
+#         kStr += str(self.sdwa) if self.sdwa else ""
+#         kStr += str(self.vop3) if self.vop3 else ""
+#         return self.formatWithComment(kStr)
 
 class BranchInstruction(Instruction):
     def __init__(self, labelName: str, comment="") -> None:
@@ -1871,9 +1933,11 @@ class VAddF16(CommonInstruction):
         super().__init__(InstType.INST_F16, dst, [src0, src1], sdwa, None, comment)
         self.setInst("v_add_f16")
 
+# huang: add dpp
 class VAddF32(CommonInstruction):
-    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, None, comment)
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, dpp: Optional[DPPModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, None, comment, dpp)
+        # super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, None, comment)
         self.setInst("v_add_f32")
 
 class VAddF64(CommonInstruction):

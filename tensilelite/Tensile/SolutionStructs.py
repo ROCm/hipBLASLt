@@ -1329,6 +1329,8 @@ class Solution(collections.abc.Mapping):
       state["MatrixInstBN"]        = state["MIBlock"][5]
 
       state["LocalSplitU"]         = 1
+      # huang
+      state["WaveSplitK"] = 1
       state["MIOutputVectorWidth"], state["MIRegPerOut"] = Solution.getMIOutputInfo(state)
 
       if state["MatrixInstM"] == 4:
@@ -1353,12 +1355,17 @@ class Solution(collections.abc.Mapping):
 
       state["SubGroup0"]   = state["WorkGroup"][0]
       state["SubGroup1"]   = state["WorkGroup"][1]
-      state["LocalSplitU"] = state["WorkGroup"][2]
+      # huang
+      # state["LocalSplitU"] = state["WorkGroup"][2]
+      state["LocalSplitU"] = state["WorkGroup"][2] if state['WavefrontSize'] % state["WorkGroup"][2] != 0 else 1 
+      state["WaveSplitK"] = state["WorkGroup"][2] if state['WavefrontSize'] % state["WorkGroup"][2] == 0 else 1 
 
-    state["LocalSplitU"] = state["WorkGroup"][2]
+    # huang
+    # state["LocalSplitU"] = state["WorkGroup"][2]
 
+    # huang
     if "SubGroup0" in state and "SubGroup1" in state and "LocalSplitU" in state:
-      state["NumThreads"]  = state["SubGroup0"] * state["SubGroup1"] * state["LocalSplitU"]
+      state["NumThreads"]  = state["SubGroup0"] * state["SubGroup1"] * state["LocalSplitU"] * state["WaveSplitK"]
       if (state["NumThreads"] % state['WavefrontSize']) != 0:
         reject(state, f"size of WorkGroup {state['NumThreads']} should be multiple of WavefrontSize {state['WavefrontSize']}")
 
@@ -1413,7 +1420,6 @@ class Solution(collections.abc.Mapping):
   #   state[LSPA]
   @staticmethod
   def setGlobalLoadTileDimClassic(state, tc, numLoads, totalVectorsCoalesced, totalElementsPerp, depthU):
-    print("GLVW: %d %d" % (state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"]))
     if state["WaveSeparateGlobalRead%s"%tc]:
       totalElementsPerp = roundupRatio(totalElementsPerp, state["NumThreads"] // state["WavefrontSize"])
 
@@ -2286,7 +2292,8 @@ class Solution(collections.abc.Mapping):
       # state["TransposeLDS"] =  0
       # state["UnrollMajorLDSA"] = False
       # state["UnrollMajorLDSB"] = False
-      state["TransposeLDS"] =  2
+      if state["TransposeLDS"] != 2:
+        reject(state, "dot2 kernel does not support TransposeLDS != 2")
       state["UnrollMajorLDSA"] = True
       state["UnrollMajorLDSB"] = True
 
@@ -2533,8 +2540,9 @@ class Solution(collections.abc.Mapping):
       # huang
       # if state["LocalReadVectorWidth"] == -1:
       #   state["LocalReadVectorWidth"] = 1
+      if state["LocalReadVectorWidth"] != 2 and state["LocalReadVectorWidth"] != -1:
+        reject(state, "dot2 kernel does not support LocalReadVectorWidth != 2")
       state["LocalReadVectorWidth"] = 2
-      print("force LocalReadVectorWidth = 2")
 
     if state["ConvertAfterDS"]:
         if (state["ProblemType"]["DataType"].isHalf() == False):
@@ -2572,8 +2580,12 @@ class Solution(collections.abc.Mapping):
             curGRVW *= 2
     else:
       # huang
-      state["GlobalReadVectorWidthA"] = 8
-      # state["GlobalReadVectorWidthA"] = 1
+      
+      if state["GlobalReadVectorWidthA"] == -1:
+        state["GlobalReadVectorWidthA"] = max(1, min(8, min(state["MacroTile0"], state["MacroTile0"] * state["DepthU"] // state["NumThreads"])))
+      # if state["GlobalReadVectorWidthA"] not in [-1, 8]:
+      #   reject(state, "Currently requires GRVWA = 8 for dot2 kernel")
+      # state["GlobalReadVectorWidthA"] = 4
 
     # Default GlobalReadVectorWidthB
     if state["EnableMatrixInstruction"]:
@@ -2594,8 +2606,11 @@ class Solution(collections.abc.Mapping):
             curGRVW *= 2
     else:
       # huang
-      # state["GlobalReadVectorWidthB"] = 8
-      state["GlobalReadVectorWidthB"] = 1
+      if state["GlobalReadVectorWidthB"] not in [-1, 1]:
+        reject(state, "Currently requires GRVWB = 1 for dot2 kernel")
+      # state["GlobalReadVectorWidthB"] = 1
+      if state["GlobalReadVectorWidthB"] == -1:
+        state["GlobalReadVectorWidthB"] = max(1, min(8, min(state["DepthU"], state["MacroTile1"] * state["DepthU"] // state["NumThreads"])))
 
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
     if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
@@ -2644,7 +2659,8 @@ class Solution(collections.abc.Mapping):
       return
 
     # LocalSplitU too large?
-    numElementsPerWorkGroup = state["MacroTile0"]*state["MacroTile1"]
+    # huang
+    numElementsPerWorkGroup = state["MacroTile0"]*state["MacroTile1"]*state["WaveSplitK"]
 
     if numElementsPerWorkGroup < state["NumThreads"]:
       reject(state, "NumElementsPerWorkGroup %u < NumThreads %u; reduce LocalSplitU" \
@@ -2677,7 +2693,8 @@ class Solution(collections.abc.Mapping):
         reject(state, "LocalSplitU but NumThreads=%u not divisible by MT0=%u for sideways store" \
             % (state["NumThreads"], state["MacroTile0"]))
         return
-      if state["MacroTile0"]*state["MacroTile1"] % state["NumThreads"] != 0:
+      # huang
+      if state["EnableMatrixInstruction"] and state["MacroTile0"]*state["MacroTile1"] % state["NumThreads"] != 0:
         reject(state, "LocalSplitU but MT0*MT1=%u elements doesn't divide into NumThreads=%u" \
             % (state["MacroTile0"]*state["MacroTile1"], state["NumThreads"]))
         return
@@ -2709,11 +2726,23 @@ class Solution(collections.abc.Mapping):
           reject(state, "Half WMMA doesn't support single buffer GSU")
           return
       # huang
-      # if (not state["EnableMatrixInstruction"]) and (state["InnerUnroll"] != 2):
-      #   state["InnerUnroll"] = 2
-      #   print("Force InnerUnroll == 2 for non-MFMA mode")
-      # if (not state["EnableMatrixInstruction"]) and (state["VectorWidthA"] < 2 or state["VectorWidthB"] < 2):
-      #   reject(state, "Assembly half requires VectorWidth >= 2 for non-MFMA mode")
+      if not state["EnableMatrixInstruction"]:
+        if state["InnerUnroll"] not in [1,2,4]:
+          reject(state, "Currently requires InnerUnroll = 1,2 or 4 for dot2 kernel")
+        if state["WaveSplitK"] not in [1,2,4,8,16,32,64]:
+          reject(state, "Unsupported WaveSplitK value. Need to be power of 2 and does not exceed 64.")
+        if state["DepthU"] % (state["LocalReadVectorWidth"] * state["InnerUnroll"] * state["WaveSplitK"]) != 0:
+          reject(state, "Non-valid DepthU for dot2 kernel, need to be multiple of (LocalReadVectorWidth * InnerUnroll * WaveSplitK) for atomics on unrolled loop")
+        if state["AssertSummationElementMultiple"] % (state["LocalReadVectorWidth"] * state["InnerUnroll"] * state["WaveSplitK"]) != 0:
+          reject(state, "Non-valid ASEM for dot2 kernel, need to be multiple of (LocalReadVectorWidth * InnerUnroll * WaveSplitK) for atomics on tail loop")
+        if (not state["EnableMatrixInstruction"]) and (state["VectorWidthA"] != 1 or state["VectorWidthB"] != 1):
+          reject(state, "Currently requires VectorWidth = 1 for dot2 kernel")
+        if state["ThreadTile0"] != 1 or state["ThreadTile1"] != 1:
+          reject(state, "Currently requires ThreadTile = 1 for dot2 kernel")
+        if state["ScheduleLocalWrite"] != 1:
+          reject(state, "Currently requires ScheduleLocalWrite = 1 for dot2 kernel")
+        if state["GlobalSplitU"] > 1 and state["WaveSplitK"] > 1:
+          reject(state, "Currently doesn't support GlobalSplitU > 1 with WaveSplitK > 1 for dot2 kernel")
 
     ########################################
     # Search DepthU
@@ -3262,8 +3291,9 @@ class Solution(collections.abc.Mapping):
       state["LdsOffsetB"] = state["LdsOffsetMetadata"] + ldsNumBytesAlignedMetadata
       ldsNumBytesAB = state["LdsOffsetB"] + ldsNumBytesB
 
+    # huang
     # lds buffer size for reduction
-    ldsNumBytesReduction = state["LocalSplitU"] * state["MacroTile0"] * state["MacroTile1"] * state["ProblemType"]["ComputeDataType"].numBytes() if state["LocalSplitU"] > 1 else 0
+    ldsNumBytesReduction = state["LocalSplitU"] * state["MacroTile0"] * state["MacroTile1"] * state["ProblemType"]["ComputeDataType"].numBytes() if (state["LocalSplitU"] > 1) else 0
 
     # lds max occupancy
     ldsSizeOccupancy = globalParameters["DeviceLDS"] // state["MaxOccupancy"]
@@ -3541,6 +3571,9 @@ class Solution(collections.abc.Mapping):
       state["Valid"] = False
     if state["KernelLanguage"] != "Assembly" and state["InnerUnroll"] != 1:
       reject(state, "InnerUnroll only supported on assembly")
+    # huang
+    if not state["EnableMatrixInstruction"] and state["LoopUnroll"] % state["InnerUnroll"] != 0:
+      reject(state, "LoopIters need to be multiple of InnerUnroll")
     state["LoopUnroll"] //= state["InnerUnroll"]
 
     if 0:
@@ -3558,9 +3591,9 @@ class Solution(collections.abc.Mapping):
     # huang
     else:
       state["NumDotElements"] = 2
-      if state["LoopIters"] % state["NumDotElements"] != 0:
-        reject(state, "LoopIters need to be multiple of NumDotElements!")
-      state["LoopIters"] //= state["NumDotElements"]
+      if state["LoopIters"] % (state["NumDotElements"] * state["WaveSplitK"]) != 0:
+        reject(state, "LoopIters need to be multiple of (NumDotElements * WaveSplitK) !")
+      state["LoopIters"] //= (state["NumDotElements"] * state["WaveSplitK"])
 
     if state["LoopIters"] < 1:
       reject(state, "LoopIters need to greater than 0")
@@ -3571,9 +3604,10 @@ class Solution(collections.abc.Mapping):
     if state["ClusterLocalRead"] and state["PrefetchLocalRead"] >= state["LoopIters"] and not state["ScheduleIterAlg"] == 2:
       state["ClusterLocalRead"] = 0
       state["PrefetchLocalRead"] = 0
+    # huang 
     if not state["EnableMatrixInstruction"]:
       state["ClusterLocalRead"] = 0
-      state["PrefetchLocalRead"] = 0
+    #   state["PrefetchLocalRead"] = 0
 
     # reject iterations are not enough to use wider local read
     if state["EnableMatrixInstruction"] and state["PrefetchLocalRead"] > 0:

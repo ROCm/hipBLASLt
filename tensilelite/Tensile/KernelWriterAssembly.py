@@ -3419,29 +3419,39 @@ class KernelWriterAssembly(KernelWriter):
       # constant
       tile01      = tP["tile01Idx"]
       LdsPad      = kernel["LdsPad%s" % tc] if kernel["LdsBlockSizePerPad%s" % tc] == 0 else 0
-      divisor     = kernel["SubGroup0"] * kernel["SubGroup1"]
+      # huang
+      # divisor     = kernel["SubGroup0"] * kernel["SubGroup1"]
+      divisor = kernel["WaveSplitK"]
+      lrvw = self.states.lrvwUnrollA
+
       mtAddPad    = kernel["MacroTile%u" % tile01] + LdsPad
 
       # final offset
       finalVgpr = vgpr("LocalReadAddr%s"%tc)
 
       # LSU offset
-      # huang todo: support LSU
+      # huang: support WaveSplitK
       with self.allocTmpSgpr(1) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
-        sgid = self.vgprPool.checkOut(1) # quotient
-        module.add(vectorStaticDivide(sgid, "Serial", divisor, tmpSgpr, \
-          "LSU offset: sgid = Serial / subGroup(%u)" % divisor))
-        module.add(staticMultiply(vgpr(sgid), vgpr(sgid), mtAddPad, tmpSgprInfo, \
-          "LSU offset: lsuoffset = sgid*(MT%u+PAD)"%tile01))
-        # module.add(SMovB32(dst=sgpr(tmpSgpr), src=mtAddPad*lsuStride, \
-        #   comment="LSU offset: stride = lsuStride(%u)*(MT%u(%u) + PAD%u(%u))" % (lsuStride,tile01, kernel["MacroTile%u" % tile01], tile01, LdsPad)))
-        module.add(staticMultiply(vgpr(tP["gpr"]["lro"]), vgpr(tP["gpr"]["lro"]), kernel["VectorWidthB"], tmpSgprInfo, \
-          "Final Offset: lr%sOffset * VW" % tc))
+        # sgid = self.vgprPool.checkOut(1) # quotient
+        kidx = self.vgprPool.checkOut(1) # remainder
+        qReg = self.vgprPool.checkOut(1) # quotient, unused here
+        # module.add(vectorStaticDivide(sgid, "Serial", divisor, tmpSgpr, \
+        #   "LSU offset: sgid = Serial / subGroup(%u)" % divisor))
+        # module.add(staticMultiply(vgpr(sgid), vgpr(sgid), mtAddPad, tmpSgprInfo, \
+        #   "LSU offset: lsuoffset = sgid*(MT%u+PAD)"%tile01))
+        module.add(vectorStaticRemainder(qReg, kidx, "Serial", divisor, tmpSgpr, \
+          "WSK offset: kidx = Serial %% wsk(%u)" % divisor))
+
+        module.add(staticMultiply(vgpr(kidx), vgpr(kidx), lrvw, tmpSgprInfo, \
+          "*= lrvw"))
+
         # Final offset
-        module.add(VAddLShiftLeftU32(dst=finalVgpr, shiftHex=hex(log2(tP["bpe"])), src0=vgpr(sgid), src1=vgpr(tP["gpr"]["lro"]), \
+        module.add(VAddLShiftLeftU32(dst=finalVgpr, shiftHex=hex(log2(tP["bpe"])), src0=vgpr(kidx), src1=vgpr(tP["gpr"]["lro"]), \
           comment="Final Offset: add padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
-        self.vgprPool.checkIn(sgid)
+        self.vgprPool.checkIn(kidx)
+        # huang
+        self.vgprPool.checkIn(qReg)
 
       # release resources
       self.vgprPool.checkIn(tP["gpr"]["lro"])
@@ -3932,7 +3942,7 @@ class KernelWriterAssembly(KernelWriter):
         loopCounter = sgpr(loopCounterName)
         # huang
         if not kernel["EnableMatrixInstruction"]:
-          module.add(SLShiftRightB32(dst=loopCounter, shiftHex=hex(log2(kernel["NumDotElements"])), src=loopCounter))
+          module.add(SLShiftRightB32(dst=loopCounter, shiftHex=hex(log2(kernel["NumDotElements"] * kernel["WaveSplitK"])), src=loopCounter))
         
 
         if kernel["LocalSplitU"] > 1:
@@ -4198,60 +4208,62 @@ class KernelWriterAssembly(KernelWriter):
       else:
         endCounter = 0
 
-      if kernel["AssertSummationElementMultiple"] % (kernel["DepthU"] * 2) == 0 and endCounter > 0:
-        # if AssertSummationElementMultiple is multiple of DepthU*2, loop exit is necessary only once in 2 Loop iterations
-        #  In endCounter % 2 == 1 case, exit at lc % 2 == 0 (= oddLabel). It means no exit if not oddLabel
-        #  In endCounter % 2 == 0 case, exit at lc % 2 == 1 (= not oddLabel). It means no exit if oddLabel
-        # No exit case, no code is necessary except for final Loop
+      # huang
+      # if kernel["AssertSummationElementMultiple"] % (kernel["DepthU"] * 2) == 0 and endCounter > 0:
+      #   # if AssertSummationElementMultiple is multiple of DepthU*2, loop exit is necessary only once in 2 Loop iterations
+      #   #  In endCounter % 2 == 1 case, exit at lc % 2 == 0 (= oddLabel). It means no exit if not oddLabel
+      #   #  In endCounter % 2 == 0 case, exit at lc % 2 == 1 (= not oddLabel). It means no exit if oddLabel
+      #   # No exit case, no code is necessary except for final Loop
 
-        # decrement by 2 if PGR=2 and StaggerU is 0, else 1
-        if kernel["PrefetchGlobalRead"]==2:
-          with self.allocTmpSgpr(2) as tmpSgprInfo:
-            tmpSgpr = tmpSgprInfo.idx
-            module.add(SCmpEQU32(src0=sgpr("StaggerU"), src1=0))
-            module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=hex(2), src1=hex(1)))
-            decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
-                src1=sgpr(tmpSgpr), \
-                comment="dec counter%s"%(loopChar) )
-        else:
-          decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
-              src1=1, \
-              comment="dec counter%s"%(loopChar) )
-        condCode = SCmpEQI32(src0=loopCounter, \
-            src1=hex(endCounter), \
-            comment="counter%s==%d"%(loopChar,endCounter) )
+      #   # decrement by 2 if PGR=2 and StaggerU is 0, else 1
+      #   if kernel["PrefetchGlobalRead"]==2:
+      #     with self.allocTmpSgpr(2) as tmpSgprInfo:
+      #       tmpSgpr = tmpSgprInfo.idx
+      #       module.add(SCmpEQU32(src0=sgpr("StaggerU"), src1=0))
+      #       module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=hex(2), src1=hex(1)))
+      #       decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
+      #           src1=sgpr(tmpSgpr), \
+      #           comment="dec counter%s"%(loopChar) )
+      #   else:
+      #     decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
+      #         src1=1, \
+      #         comment="dec counter%s"%(loopChar) )
+      #   condCode = SCmpEQI32(src0=loopCounter, \
+      #       src1=hex(endCounter), \
+      #       comment="counter%s==%d"%(loopChar,endCounter) )
 
-        noExit = False
+      #   noExit = False
 
-        if endCounter%2 != 0:
-          if not oddLabel:
-            noExit = True
-        else:
-          if oddLabel:
-            noExit = True
+      #   if endCounter%2 != 0:
+      #     if not oddLabel:
+      #       noExit = True
+      #   else:
+      #     if oddLabel:
+      #       noExit = True
 
-        if noExit:
-          # No exit. No dec code if decValue is 2
-          if decValue == 2:
-            decCode = ""
-          condCode = ""
-          nonFinalJumpNeeded = False
-          if finalLoop:
-            # No exit and finalLoop case, use s_branch (no condition)
-            finalJump = SBranch
+      #   if noExit:
+      #     # No exit. No dec code if decValue is 2
+      #     # huang
+      #     if decValue == 2:
+      #       decCode = ""
+      #     condCode = ""
+      #     nonFinalJumpNeeded = False
+      #     if finalLoop:
+      #       # No exit and finalLoop case, use s_branch (no condition)
+      #       finalJump = SBranch
 
-        if decCode: module.add(decCode)
-        if condCode: module.add(condCode)
-      else:
-        module.add(SSubU32(
-            dst=loopCounter, src0=loopCounter, \
-            src1=1, \
-            comment="dec counter%s"%(loopChar) ))
+      #   if decCode: module.add(decCode)
+      #   if condCode: module.add(condCode)
+      # else:
+      module.add(SSubU32(
+          dst=loopCounter, src0=loopCounter, \
+          src1=1, \
+          comment="dec counter%s"%(loopChar) ))
 
-        module.add(SCmpEQI32(
-            src0=loopCounter, \
-            src1=hex(endCounter), \
-            comment="counter%s==%d"%(loopChar,endCounter) ))
+      module.add(SCmpEQI32(
+          src0=loopCounter, \
+          src1=hex(endCounter), \
+          comment="counter%s==%d"%(loopChar,endCounter) ))
 
     jumpLabel = loopLabelEnd
     if not tailLoop and not kernel["SuppressNoLoadLoop"] and kernel["ExpandPointerSwap"]:
@@ -7246,7 +7258,7 @@ class KernelWriterAssembly(KernelWriter):
 
     if self.states.inTailLoop:
       # huang
-      inc = kernel["LocalReadVectorWidth"] * tP["bpeDS"]
+      inc = self.states.lrvwUnrollA * kernel["WaveSplitK"] * tP["bpeDS"]
       comment = "(LocalReadVectorWidth*bpeDS)"
       # inc = (kernel["MacroTile%s" % tP["tensorChar"]] + LdsPad) * tP["bpeDS"]
       # comment = " ((MT+PAD)*bpeDS)"
@@ -7325,7 +7337,7 @@ class KernelWriterAssembly(KernelWriter):
                   offsetInc //= 2
         else:
           # huang
-          offsetInc = kernel["LocalReadVectorWidth"]
+          offsetInc = self.states.lrvwUnrollA * kernel["WaveSplitK"]
         tP["localReadOffset"] += offsetInc
         module.addComment0("N/A, lro->%d" % tP["localReadOffset"])
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
@@ -9592,6 +9604,7 @@ class KernelWriterAssembly(KernelWriter):
         # are likely to be low-performing so likely not worth optimizing.
         if shrinkDb:
           print("WARNING: half requires at least two elements per batch")
+        # huang
         # self.states.overflowedResources = 3
 
     assert numElementsPerBatch > 0, "numElementsPerBatch=0 for %s"%self.states.kernelName

@@ -23,7 +23,7 @@
 ################################################################################
 
 from ..TensileInstructions import Module, VAddU32, staticMultiply, vectorStaticDivide, \
-                                vectorStaticRemainder, vectorStaticDivideAndRemainder, RegisterPoolResource, vgpr
+                                vectorStaticRemainder, vectorStaticDivideAndRemainder, RegisterPoolResource, vgpr, VFmaF32
 from ..Component import LraTileAssignment, LraTileProperties
 from dataclasses import dataclass
 
@@ -65,13 +65,25 @@ class LraTileAssignmentVALU(LraTileAssignment):
                 dividendReg = "Serial" # local serial
                 divisor = kernel["SubGroup0"]
 
-                # generate instruction
-                module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpSgprInfo))
-                
                 # huang
-                # tile offset
-                module.add(staticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
-                "1. N offset: nOffset = nIdx * nStride(%u)" % strideTile))
+                # waveSplitK
+                if kernel["WaveSplitK"] > 1:
+                    newSerial = writer.vgprPool.checkOut(1,"newSerial")
+                    module.add(vectorStaticDivide(newSerial, dividendReg, kernel["WaveSplitK"], tmpSgprInfo))
+                    # generate instruction
+                    module.add(vectorStaticDivideAndRemainder(qReg, rReg, newSerial, divisor, tmpSgprInfo))
+                    # tile offset
+                    module.add(staticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
+                    "1. N offset: nOffset = nIdx * nStride(%u)" % strideTile))
+                    writer.vgprPool.checkIn(newSerial)
+                else:
+                    module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpSgprInfo))
+                    # tile offset
+                    module.add(staticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
+                    "1. N offset: nOffset = nIdx * nStride(%u)" % strideTile))
+                
+                
+
 
                 # release and return resource
                 tP["gpr"]["lro"] = rReg

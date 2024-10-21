@@ -187,7 +187,11 @@ class GlobalWriteBatchWriter:
   def GSUSynccodegen(self, labelend, vgprstart, globalOffset, vgproffset):
     module = Module("GSUSYNC")
 
-    WaveNum = str(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1])
+    # huang
+    if self.kernel["EnableMatrixInstruction"]:
+      WaveNum = str(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1])
+    else:
+      WaveNum = str(self.kernel["NumThreads"] // self.kernel["WavefrontSize"])
 
     module.addComment("check done start")
 
@@ -291,8 +295,11 @@ class GlobalWriteBatchWriter:
       addr0 = vgpr(addrCalc.addrDVgpr)
 
       GSUtotal = 16
-      if (self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1]) > 8:
+      # huang
+      if self.kernel["EnableMatrixInstruction"] and (self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1]) > 8:
         GSUtotal = int(GSUtotal/int((self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1])/8))
+      if not self.kernel["EnableMatrixInstruction"] and (self.kernel["ThreadTile"][0]*self.kernel["ThreadTile"][1])*(self.kernel["SubGroup0"]*self.kernel["SubGroup1"]/64) > 8:
+        GSUtotal = int(GSUtotal/int((self.kernel["ThreadTile"][0]*self.kernel["ThreadTile"][1])*(self.kernel["SubGroup0"]*self.kernel["SubGroup1"]/64)/8))
       GSUtotal = max(2,GSUtotal)
       SynchronizerAddEndlabel = [""] * GSUtotal
 
@@ -556,7 +563,9 @@ class GlobalWriteBatchWriter:
     loadedDataScaleBVec = {}
     loadedDataScaleAlphaVec = {}
 
-    if self.kernel["BufferStore"] and self.edge:
+    # huang
+    # if self.kernel["BufferStore"] and self.edge:
+    if self.kernel["BufferStore"] and (self.edge or (self.kernel["WaveSplitK"] > 1)):
       bufferOOB = self.parentWriter.vgprPool.checkOut(1, "BufferOOB")
       module.add(VMovB32(dst=vgpr(bufferOOB), src="BufferOOB"))
     else:
@@ -769,7 +778,9 @@ class GlobalWriteBatchWriter:
           module.add(VMovB32(vgpr(self.tmpVgpr), addrCalc.rowInc, "set shift rows"))
           module.add(VAddU32(vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.tmpVgpr), "shift storeRemap coord1"))
 
-    if self.kernel["BufferStore"] and self.edge:
+    # huang
+    # if self.kernel["BufferStore"] and self.edge:
+    if self.kernel["BufferStore"] and (self.edge or (self.kernel["WaveSplitK"] > 1)):
       self.parentWriter.vgprPool.checkIn(bufferOOB)
 
     module.add(loadInputCode)
@@ -1206,6 +1217,19 @@ class GlobalWriteBatchWriter:
       if self.kernel["ProblemType"]["UseScaleAlphaVec"] and ((self.kernel["GlobalSplitU"] == 1) or (self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
         applyScaleVec(scaleAlphaVecModule, "ScaleAlphaVec", dataScaleAlphaVec, self.factorDim, isGlobal=False)
       module.add(scaleAlphaVecModule)
+
+      # huang: 
+      accK = 1
+      while accK < self.kernel["WaveSplitK"]:
+        for vi in range(0, self.gwvw):
+          sumIdxV   = self.ss.elementSumIdx[elementIdx] + vi
+          vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
+          module.add(SNop(waitState=0, comment="1 wait states"))
+          if accK <= 8:
+            module.add(VAddF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=vgpr("ValuC+%d"%vgprIdx), dpp=DPPModifiers(bound_ctrl=0, row_shr=accK), comment="Reduction for %s elements"%(accK*2) ))
+          else:
+            module.add(VAddF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=vgpr("ValuC+%d"%vgprIdx), dpp=DPPModifiers(bound_ctrl=0, row_bcast=accK-1), comment="Reduction for %s elements"%(accK*2) ))
+        accK *= 2
 
       if self.beta:
         module.add(self._addSumAlphaWithCBeta(self.kernel, self.ss, self.gwvw, elementIdx, vc0, self.tmpVgpr, self.cvtVgprStruct))

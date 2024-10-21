@@ -183,6 +183,36 @@ class SDWAModifiers(Container):
             kStr += " src1_sel:" + self.src1_sel.name
         return kStr
 
+# huang: only a subset of all modifiers is listed here
+@dataclass
+class DPPModifiers(Container):
+    row_shr:    Optional[int] = None
+    row_bcast:  Optional[int] = None
+    bound_ctrl: Optional[int] = None
+
+    def __post_init__(self):
+        super().__init__()
+
+    def toList(self) -> List[str]:
+        l = []
+        if self.row_shr != None:
+            l.append("row_shr:" + str(self.row_shr))
+        if self.row_bcast != None:
+            l.append("row_bcast:" + str(self.row_bcast))
+        if self.bound_ctrl != None:
+            l.append("bound_ctrl:" + str(self.bound_ctrl))
+        return l
+
+    def __str__(self) -> str:
+        kStr = ""
+        if self.row_shr != None:
+            kStr += " row_shr:" + str(self.row_shr)
+        if self.row_bcast != None:
+            kStr += " row_bcast:" + str(self.row_bcast)
+        if self.bound_ctrl != None:
+            kStr += " bound_ctrl:" + str(self.bound_ctrl)
+        return kStr
+
 @dataclass
 class VOP3PModifiers(Container):
     op_sel:     Optional[List[int]] = None
