@@ -448,10 +448,11 @@ class LogicAnalyzer:
     # need to take care if the loaded csv is the export-winner-version
     csvHasWinner = "_CSVWinner" in dataFileName
     if csvHasWinner:
-      # the column of the two are fixed (GFlops, SizeI/J/K/L, LDD/C/A/B, TotalFlops, WinnerGFlops, WinnerTimeUs, WinnerIdx, WinnerName)
+      # the column of the two are fixed: (GFlops, SizeI/J/K/L, LDD/C/A/B, TotalFlops, WinnerFreq, TilesPerCu,
+      #                                   TotalGranularity, WinnerGFlops, WinnerTimeUs, WinnerIdx, WinnerName)
       # the order are implemented in ResultFileReporter.cpp (NewClient) and Client.h (OldClient)
-      columnOfWinnerGFlops = 12
-      columnOfWinnerIdx = 14
+      columnOfWinnerGFlops = 13
+      columnOfWinnerIdx = 15
 
     # iterate over rows
     rowIdx = 0
@@ -468,13 +469,15 @@ class LogicAnalyzer:
         else:
           printWarning("Performance unit %s in %s is unrecognized: assuming GFlops (device efficiency)" % (perfUnit, dataFileName))
           self.perfMetric = "DeviceEfficiency"
-        
+
         # get the index of "WinnerFreq"
         try:
           columnOfFreqIdx = row.index(" WinnerFreq")
+          columnOfWinnerGFlops = row.index(" WinnerGFlops")
+          columnOfWinnerIdx = row.index(" WinnerIdx")
         except ValueError as e:
           print(f"Error: {e}")
-            
+
         # get the length of each row, and derive the first column of the solution instead of using wrong "solutionStartIdx = totalSizeIdx + 1"
         rowLength = len(row)
         solutionStartIdx = rowLength - numSolutions
