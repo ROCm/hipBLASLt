@@ -27,7 +27,6 @@
 #pragma once
 #ifndef ROCBLASLT_UTILS_HPP
 #define ROCBLASLT_UTILS_HPP
-#include "auxiliary.hpp"
 #include "handle.h"
 #include "utility.hpp"
 
@@ -140,81 +139,24 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
 /*******************************************************************************
  * Validate Matmul Arguments
  ******************************************************************************/
-inline rocblaslt_status validateMatmulArgs(int64_t                m,
-                                           int64_t                n,
-                                           int64_t                k,
-                                           const void*            alpha,
-                                           const void*            a,
-                                           const void*            b,
-                                           const void*            beta,
-                                           const void*            c,
-                                           const void*            d,
-                                           hipDataType            type_a,
-                                           hipDataType            type_b,
-                                           hipDataType            type_c,
-                                           hipDataType            type_d,
-                                           rocblaslt_compute_type compute_type,
-                                           hipblasOperation_t     opA,
-                                           hipblasOperation_t     opB,
-                                           int                    num_batches_a  = 1,
-                                           int                    num_batches_b  = 1,
-                                           int                    num_batches_c  = 1,
-                                           int                    num_batches_d  = 1,
-                                           int64_t                batch_stride_a = 0,
-                                           int64_t                batch_stride_b = 0,
-                                           int64_t                batch_stride_c = 0,
-                                           int64_t                batch_stride_d = 0)
+inline rocblaslt_status validateMatmulArgs(int64_t     m,
+                                           int64_t     n,
+                                           int64_t     k,
+                                           const void* alpha,
+                                           const void* a,
+                                           const void* b,
+                                           const void* beta,
+                                           const void* c,
+                                           const void* d,
+                                           int         num_batches_a  = 1,
+                                           int         num_batches_b  = 1,
+                                           int         num_batches_c  = 1,
+                                           int         num_batches_d  = 1,
+                                           int64_t     batch_stride_a = 0,
+                                           int64_t     batch_stride_b = 0,
+                                           int64_t     batch_stride_c = 0,
+                                           int64_t     batch_stride_d = 0)
 {
-    rocblaslt_status status = rocblaslt_status_continue;
-
-    if(!(type_a == HIP_R_32F && type_b == HIP_R_32F && type_c == HIP_R_32F && type_d == HIP_R_32F)
-       && compute_type == rocblaslt_compute_f32_fast_xf32)
-        status = rocblaslt_status_not_implemented;
-    if(!((type_a == HIP_R_8I && type_b == HIP_R_8I && type_c == HIP_R_32I && type_d == HIP_R_32I)
-         || (type_a == HIP_R_8I && type_b == HIP_R_8I && type_c == HIP_R_8I && type_d == HIP_R_8I))
-       && compute_type == rocblaslt_compute_i32)
-        status = rocblaslt_status_not_implemented;
-    if(string_to_hip_datatype(hip_datatype_to_string(type_a)) == HIPBLASLT_DATATYPE_INVALID
-       || string_to_hip_datatype(hip_datatype_to_string(type_b)) == HIPBLASLT_DATATYPE_INVALID
-       || string_to_hip_datatype(hip_datatype_to_string(type_c)) == HIPBLASLT_DATATYPE_INVALID
-       || string_to_hip_datatype(hip_datatype_to_string(type_d)) == HIPBLASLT_DATATYPE_INVALID
-       || string_to_hipblas_computetype(rocblaslt_compute_type_string(compute_type))
-              == HIPBLASLT_COMPUTE_TYPE_INVALID)
-        status = rocblaslt_status_not_implemented;
-
-    if(status != rocblaslt_status_continue)
-    {
-        log_error(__func__,
-                  "invalid args",
-                  "datatype",
-                  "matA",
-                  hipDataType_to_string(type_a),
-                  "matB",
-                  hipDataType_to_string(type_b),
-                  "matC",
-                  hipDataType_to_string(type_c),
-                  "matD",
-                  hipDataType_to_string(type_d),
-                  "computeType",
-                  rocblaslt_compute_type_string(compute_type));
-        return status;
-    }
-
-    if(opA == HIPBLAS_OP_C || opB == HIPBLAS_OP_C)
-        status = rocblaslt_status_not_implemented;
-
-    if(status != rocblaslt_status_continue)
-    {
-        log_error(__func__,
-                  "invalid args",
-                  "op",
-                  "opA",
-                  hipblasOperation_to_string(opA),
-                  "opB",
-                  hipblasOperation_to_string(opB));
-        return status;
-    }
-
     // sizes must not be negative
     if(batch_stride_a < 0 || batch_stride_b < 0 || batch_stride_c < 0 || batch_stride_d < 0)
     {
@@ -390,13 +332,6 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                      beta,
                                      C,
                                      D,
-                                     matA->type,
-                                     matB->type,
-                                     matC->type,
-                                     matD->type,
-                                     compute_type,
-                                     matmul_descr->op_A,
-                                     matmul_descr->op_B,
                                      num_batches_a,
                                      num_batches_b,
                                      num_batches_c,
@@ -406,30 +341,41 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                      batch_stride_c,
                                      batch_stride_d);
 
-    if(status != rocblaslt_status_continue)
-        return status;
-
+    if(status == rocblaslt_status_continue)
+    {
+        if(!(matA->type == HIP_R_32F && matB->type == HIP_R_32F && matC->type == HIP_R_32F
+             && matD->type == HIP_R_32F)
+           && compute_type == rocblaslt_compute_f32_fast_xf32)
+            status = rocblaslt_status_not_implemented;
+        if(!((matA->type == HIP_R_8I && matB->type == HIP_R_8I && matC->type == HIP_R_32I
+              && matD->type == HIP_R_32I)
+             || (matA->type == HIP_R_8I && matB->type == HIP_R_8I && matC->type == HIP_R_8I
+                 && matD->type == HIP_R_8I))
+           && compute_type == rocblaslt_compute_i32)
+            status = rocblaslt_status_not_implemented;
+    }
     const void* alphaVecPtr = matmul_descr->pointermode ? alpha : nullptr;
-    status                  = rocblaslt_epilogue_valid_args(matmul_descr->epilogue,
-                                           num_rows_d,
-                                           num_cols_d,
-                                           matD->type,
-                                           matmul_descr->bias_type,
-                                           matmul_descr->e,
-                                           matmul_descr->lde,
-                                           matmul_descr->stride_e,
-                                           matmul_descr->bias,
-                                           alphaVecPtr,
-                                           alpha,
-                                           matmul_descr->isScaleAVec,
-                                           matmul_descr->isScaleBVec,
-                                           E,
-                                           lde,
-                                           batch_stride_e,
-                                           bias,
-                                           bias_type,
-                                           scaleAlphaVec,
-                                           gradient);
+    if(status == rocblaslt_status_continue)
+        status = rocblaslt_epilogue_valid_args(matmul_descr->epilogue,
+                                               num_rows_d,
+                                               num_cols_d,
+                                               matD->type,
+                                               matmul_descr->bias_type,
+                                               matmul_descr->e,
+                                               matmul_descr->lde,
+                                               matmul_descr->stride_e,
+                                               matmul_descr->bias,
+                                               alphaVecPtr,
+                                               alpha,
+                                               matmul_descr->isScaleAVec,
+                                               matmul_descr->isScaleBVec,
+                                               E,
+                                               lde,
+                                               batch_stride_e,
+                                               bias,
+                                               bias_type,
+                                               scaleAlphaVec,
+                                               gradient);
     return status;
 }
 

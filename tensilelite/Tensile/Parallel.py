@@ -32,9 +32,9 @@ from joblib import Parallel, delayed
 
 def joblibParallelSupportsGenerator():
   import joblib
-  from distutils.version import StrictVersion
+  from packaging.version import Version
   joblibVer = joblib.__version__
-  return StrictVersion(joblibVer) >= StrictVersion("1.4.0")
+  return Version(joblibVer) >= Version("1.4.0")
 
 def CPUThreadCount(enable=True):
   from .Common import globalParameters

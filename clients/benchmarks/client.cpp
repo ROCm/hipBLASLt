@@ -419,11 +419,11 @@ try
 
         ("transA",
          value<char>(&arg.transA)->default_value('N'),
-         "N = no transpose, T = transpose")
+         "N = no transpose, T = transpose, C = conjugate transpose")
 
         ("transB",
          value<char>(&arg.transB)->default_value('N'),
-         "N = no transpose, T = transpose")
+         "N = no transpose, T = transpose, C = conjugate transpose")
 
         ("batch_count",
          value<int32_t>(&arg.batch_count)->default_value(1),
@@ -789,7 +789,7 @@ try
     bool is_f32 = arg.a_type == HIP_R_32F;
     arg.compute_type
         = compute_type == "" ? (HIPBLAS_COMPUTE_32F) : string_to_hipblas_computetype(compute_type);
-    if(arg.compute_type == HIPBLASLT_COMPUTE_TYPE_INVALID)
+    if(arg.compute_type == static_cast<hipblasComputeType_t>(0))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
     //The value HIPBLASLT_DATATYPE_INVALID indicates that the compute_input_typeA has no effect.

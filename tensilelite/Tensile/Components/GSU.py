@@ -416,8 +416,14 @@ class GSUOn(GSU):
             noLoadLoopModules = Module("noLoadLoop")
             for NLLindex in range(0, NLLnum):
               writer.saveLocalPointers(kernel, tensorParametersA, tensorParametersB)
-              # deepCopy packCode for OptNLL noLoadLoop
-              deepCopyPack = fastdeepcopy(pack)
+              # copy pack
+              if NLLindex == NLLnum - 1 or (writer.states.packDTVA or writer.states.packDTVB or writer.states.convDTVA or writer.states.convDTVB):
+                # last NLL or  pack DTV case, no deep copy for pack
+                # pack code for local prefetch is generated in noLoadLoopBody and used for DTV even
+                deepCopyPack = pack
+              else: 
+                # deepCopy packCode for OptNLL noLoadLoop
+                deepCopyPack = fastdeepcopy(pack)
               noLoadLoopModules.add(writer.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=True, isNGLL=False, pack=deepCopyPack, NLLindex=NLLindex, NLLnum=NLLnum))
               writer.restoreLocalPointers(kernel, tensorParametersA, tensorParametersB)
 

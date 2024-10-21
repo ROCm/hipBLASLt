@@ -37,20 +37,18 @@
 
 #include "ResultReporter.hpp"
 
-#define RSMI_CHECK_EXC(expr)                                                                      \
-    do                                                                                            \
-    {                                                                                             \
-        rsmi_status_t e = (expr);                                                                 \
-        if(e)                                                                                     \
-        {                                                                                         \
-            const char* errName = nullptr;                                                        \
-            rsmi_status_string(e, &errName);                                                      \
-            std::ostringstream msg;                                                               \
-            msg << "Error " << e << "(" << errName << ") " << __FILE__ << ":" << __LINE__ << ": " \
-                << std::endl                                                                      \
-                << #expr << std::endl;                                                            \
-            throw std::runtime_error(msg.str());                                                  \
-        }                                                                                         \
+#define RSMI_CHECK_EXC(expr)                                                                                                          \
+    do                                                                                                                                \
+    {                                                                                                                                 \
+        rsmi_status_t e = (expr);                                                                                                     \
+        if(e)                                                                                                                         \
+        {                                                                                                                             \
+            const char* errName = nullptr;                                                                                            \
+            rsmi_status_string(e, &errName);                                                                                          \
+            std::ostringstream msg;                                                                                                   \
+            msg << "Error " << e << "(" << errName << ") " << __FILE__ << ":" << __LINE__ << ": " << std::endl << #expr << std::endl; \
+            throw std::runtime_error(msg.str());                                                                                      \
+        }                                                                                                                             \
     } while(0)
 
 namespace Tensile
@@ -69,9 +67,7 @@ namespace Tensile
             HIP_CHECK_EXC(hipRuntimeGetVersion(&hip_version));
             if(hip_version >= 50220730)
             {
-                HIP_CHECK_EXC(hipDeviceGetAttribute(&props.multiProcessorCount,
-                                                    hipDeviceAttributePhysicalMultiProcessorCount,
-                                                    hipDeviceIndex));
+                HIP_CHECK_EXC(hipDeviceGetAttribute(&props.multiProcessorCount, hipDeviceAttributePhysicalMultiProcessorCount, hipDeviceIndex));
             }
 #endif
 
@@ -104,8 +100,7 @@ namespace Tensile
             }
 
             msg << "]" << std::endl;
-            std::time_t now
-                = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+            std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
             msg << std::put_time(gmtime(&now), "%F %T %z");
 
             throw std::runtime_error(concatenate("RSMI Can't find a device with PCI ID ",
@@ -182,8 +177,7 @@ namespace Tensile
             m_thread = std::thread([this]() { this->runLoop(); });
         }
 
-        void HardwareMonitor::addTempMonitor(rsmi_temperature_type_t   sensorType,
-                                             rsmi_temperature_metric_t metric)
+        void HardwareMonitor::addTempMonitor(rsmi_temperature_type_t sensorType, rsmi_temperature_metric_t metric)
         {
             assertNotActive();
 
@@ -207,8 +201,7 @@ namespace Tensile
             m_fanValues.resize(m_fanMetrics.size());
         }
 
-        double HardwareMonitor::getAverageTemp(rsmi_temperature_type_t   sensorType,
-                                               rsmi_temperature_metric_t metric)
+        double HardwareMonitor::getAverageTemp(rsmi_temperature_type_t sensorType, rsmi_temperature_metric_t metric)
         {
             assertNotActive();
 
@@ -227,8 +220,7 @@ namespace Tensile
                 }
             }
 
-            throw std::runtime_error(concatenate(
-                "Can't read temp value that wasn't requested: ", sensorType, " - ", metric));
+            throw std::runtime_error(concatenate("Can't read temp value that wasn't requested: ", sensorType, " - ", metric));
         }
 
         double HardwareMonitor::getAverageClock(rsmi_clk_type_t clockType)
@@ -257,8 +249,7 @@ namespace Tensile
                 }
             }
 
-            throw std::runtime_error(
-                concatenate("Can't read clock value that wasn't requested: ", clockType));
+            throw std::runtime_error(concatenate("Can't read clock value that wasn't requested: ", clockType));
         }
 
         double HardwareMonitor::getAverageFanSpeed(uint32_t sensorIndex)
@@ -280,8 +271,7 @@ namespace Tensile
                 }
             }
 
-            throw std::runtime_error(
-                concatenate("Can't read fan value that wasn't requested: ", sensorIndex));
+            throw std::runtime_error(concatenate("Can't read fan value that wasn't requested: ", sensorIndex));
         }
 
         void HardwareMonitor::start()
@@ -330,6 +320,7 @@ namespace Tensile
             for(auto& v : m_fanValues)
                 v = 0;
 
+            m_freqValues.clear();
             m_lastCollection = clock::time_point();
             m_nextCollection = clock::time_point();
 
@@ -352,8 +343,7 @@ namespace Tensile
                 std::tie(sensorType, metric) = m_tempMetrics[i];
 
                 int64_t newValue = 0;
-                auto    status
-                    = rsmi_dev_temp_metric_get(m_smiDeviceIndex, sensorType, metric, &newValue);
+                auto    status   = rsmi_dev_temp_metric_get(m_smiDeviceIndex, sensorType, metric, &newValue);
                 if(status != RSMI_STATUS_SUCCESS)
                     m_tempValues[i] = std::numeric_limits<int64_t>::max();
                 else
@@ -410,7 +400,6 @@ namespace Tensile
                         m_clockValues[i] += freq.frequency[freq.current];
                     }
                 }
-
             }
 
             for(int i = 0; i < m_fanMetrics.size(); i++)
@@ -422,14 +411,56 @@ namespace Tensile
                 rsmi_frequencies_t freq;
 
                 int64_t newValue = 0;
-                auto status = rsmi_dev_fan_rpms_get(m_smiDeviceIndex, m_fanMetrics[i], &newValue);
+                auto    status   = rsmi_dev_fan_rpms_get(m_smiDeviceIndex, m_fanMetrics[i], &newValue);
                 if(status != RSMI_STATUS_SUCCESS)
                     m_fanValues[i] = std::numeric_limits<int64_t>::max();
                 else
                     m_fanValues[i] += newValue;
             }
 
+            // Retrieves GPU metrics and updates frequency values if the status is valid.
+            // If an error occurs during retrieval, marks the metric status as invalid.
+            rsmi_gpu_metrics_t gpuMetrics;
+            auto               status = rsmi_dev_gpu_metrics_info_get(m_smiDeviceIndex, &gpuMetrics);
+            if(status != RSMI_STATUS_SUCCESS)
+            {
+                m_hasInvalidGpuMetricStatus = true;
+            }
+            else
+            {
+                if(!m_hasInvalidGpuMetricStatus)
+                {
+                    m_freqValues.push_back(gpuMetrics.average_gfxclk_frequency);
+                }
+            }
+
             m_dataPoints++;
+        }
+
+        double HardwareMonitor::getAverageGfxFreqPowerTemperature(std::vector<uint16_t>& inputDataValues)
+        {
+            assertNotActive();
+
+            if(m_dataPoints == 0)
+                throw std::runtime_error("No data points collected!");
+            if(m_hasInvalidGpuMetricStatus)
+                return std::numeric_limits<double>::quiet_NaN();
+
+            return (std::accumulate(inputDataValues.begin(), inputDataValues.end(), double(0))) / inputDataValues.size();
+        }
+
+        double HardwareMonitor::getMedianGfxFreqPowerTemperature(std::vector<uint16_t>& inputDataValues)
+        {
+            assertNotActive();
+
+            if(m_dataPoints == 0)
+                throw std::runtime_error("No data points collected!");
+            if(m_hasInvalidGpuMetricStatus)
+                return std::numeric_limits<double>::quiet_NaN();
+
+            size_t midValueIndex = inputDataValues.size() / 2;
+            std::nth_element(inputDataValues.begin(), inputDataValues.begin() + midValueIndex, inputDataValues.end());
+            return static_cast<double>(inputDataValues[midValueIndex]);
         }
 
         void HardwareMonitor::sleepIfNecessary()

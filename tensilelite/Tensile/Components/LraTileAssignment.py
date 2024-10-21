@@ -195,10 +195,12 @@ class LraTileAssignmentMFMA(LraTileAssignment):
 
             # unroll offset
             #if isMfma and (dividendForKId != waveWidth):
-            if not isWmma_v1 and (dividendForKId != waveWidth):
-                module.add(vectorStaticDivide(kReg, kReg, dividendForKId, tmpVgprRes, \
-                "5. K offset: kIdx = wtid / (MIN(%u) * MIBB(%u))" % (kernel["MatrixInstN"], kernel["MatrixInstB"])))
-                if not isDTVAB:
+            if not isWmma_v1:
+                if (dividendForKId != waveWidth) or isDTVAB:
+                  # DTVAB case, add this regardless of dividendForKId != waveWidth
+                  module.add(vectorStaticDivide(kReg, kReg, dividendForKId, tmpVgprRes, \
+                  "5. K offset: kIdx = wtid / (MIN(%u) * MIBB(%u))" % (kernel["MatrixInstN"], kernel["MatrixInstB"])))
+                if (dividendForKId != waveWidth) and (not isDTVAB):
                     module.add(staticMultiply(vgpr(kReg), vgpr(kReg), strideK, tmpSgprInfo, \
                     "5. K offset: lrKOffset = kIdx * mStride(%u)" % (strideK)))
                     module.add(VAddU32(dst=vgpr(tReg), src0=vgpr(kReg), src1=vgpr(tReg), \

@@ -36,8 +36,8 @@ cd hipBLASLt; cd build/release
 --compute_input_typeB <value>     Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the argument has no effect. (Default value is: INVALID)
 --scale_type <value>       Precision of scalar. Options: f16_r,bf16_r
 --initialization <value>   Initialize matrix data.Options: rand_int, trig_float, hpl(floating), special, zero  (Default value is: hpl)
---transA <value>           N = no transpose, T = transpose                                                     (Default value is: N)
---transB <value>           N = no transpose, T = transpose                                                     (Default value is: N)
+--transA <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
+--transB <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
 --batch_count <value>      Number of matrices. Only applicable to batched and strided_batched routines         (Default value is: 1)
 --HMM                      Parameter requesting the use of HipManagedMemory
 --verify |-v               Validate GPU results with CPU?

@@ -45,7 +45,7 @@ namespace Tensile
 {
     namespace Client
     {
-        // Problem-indept. from 0~7, and 16 (fixed values for every problem)
+        // Problem-indept. from 0~7, and 16, and 23~26 (fixed values for every problem)
         // And problem-dept. from 8~15 (values depend on problem)
         // RandomNegPosLimited: integer -128~128. fp -1.0~1.0
         enum class InitMode
@@ -73,12 +73,16 @@ namespace Tensile
             DenormMax, // 20
             RandomNegPosLimited, // 21
             Free, // 22
+            TrigIndSin, // 23
+            TrigIndCos, // 24
+            TrigIndAbsSin, // 25
+            TrigIndAbsCos, // 26
             Count
         };
 
         static bool IsProblemDependent(InitMode const& mode)
         {
-            return mode == InitMode::SerialIdx || mode == InitMode::SerialDim0
+             return mode == InitMode::SerialIdx || mode == InitMode::SerialDim0
                    || mode == InitMode::SerialDim1 || mode == InitMode::Identity
                    || mode == InitMode::TrigSin || mode == InitMode::TrigCos
                    || mode == InitMode::TrigAbsSin || mode == InitMode::TrigAbsCos;
@@ -457,6 +461,10 @@ namespace Tensile
                 case InitMode::TrigCos:
                 case InitMode::TrigAbsSin:
                 case InitMode::TrigAbsCos:
+                case InitMode::TrigIndSin:
+                case InitMode::TrigIndCos:
+                case InitMode::TrigIndAbsSin:
+                case InitMode::TrigIndAbsCos:
                 case InitMode::Count:
                     throw std::runtime_error("Invalid InitMode.");
                 }
@@ -535,6 +543,18 @@ namespace Tensile
                 case InitMode::TrigCos:
                 case InitMode::TrigAbsSin:
                 case InitMode::TrigAbsCos:
+                case InitMode::TrigIndSin:
+                    initArrayTrig<T, false, false>(array, elements);
+                    break;
+                case InitMode::TrigIndCos:
+                    initArrayTrig<T, true, false>(array, elements);
+                    break;
+                case InitMode::TrigIndAbsSin:
+                    initArrayTrig<T, false, true>(array, elements);
+                    break;
+                case InitMode::TrigIndAbsCos:
+                    initArrayTrig<T, true, true>(array, elements);
+                    break;
                 case InitMode::Count:
                     throw std::runtime_error("Invalid InitMode.");
                 }
@@ -607,6 +627,18 @@ namespace Tensile
                     initArrayTrig<T, false, true>(array, tensor);
                     break;
                 case InitMode::TrigAbsCos:
+                    initArrayTrig<T, true, true>(array, tensor);
+                    break;
+                case InitMode::TrigIndSin:
+                    initArrayTrig<T, false, false>(array, tensor);
+                    break;
+                case InitMode::TrigIndCos:
+                    initArrayTrig<T, true, false>(array, tensor);
+                    break;
+                case InitMode::TrigIndAbsSin:
+                    initArrayTrig<T, false, true>(array, tensor);
+                    break;
+                case InitMode::TrigIndAbsCos:
                     initArrayTrig<T, true, true>(array, tensor);
                     break;
                 case InitMode::RandomNegPosLimited:
@@ -719,6 +751,16 @@ namespace Tensile
                     std::vector<size_t> coord(tensor.dimensions(), 0);
                     CoordNumbered(idx, coord.begin(), coord.end(), sizes.begin(), sizes.end());
                     array[tensor.index(coord)] = getTrigValue<T>(idx, useCos, useAbs);
+                }
+            }
+
+            template <typename T, bool useCos, bool useAbs>
+            void initArrayTrig(T* array, size_t elements)
+            {
+#pragma omp parallel for
+                for(size_t i = 0; i < elements; i++)
+                {
+                    array[i] = getTrigValue<T>(i, useCos, useAbs);
                 }
             }
 

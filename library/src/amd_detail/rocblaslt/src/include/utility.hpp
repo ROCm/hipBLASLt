@@ -64,22 +64,17 @@ constexpr const char* rocblaslt_datatype_string(hipDataType type)
     }
 }
 
+// return precision string for rocblaslt_compute_type
 constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
 {
     switch(type)
     {
     case rocblaslt_compute_f32:
-        return "f32_r";
+        return "f32";
     case rocblaslt_compute_f32_fast_xf32:
-        return "xf32_r";
+        return "xf32";
     case rocblaslt_compute_i32:
-        return "i32_r";
-    case rocblaslt_compute_f64:
-        return "f64_r";
-    case rocblaslt_compute_f32_fast_f16:
-        return "f32_f16_r";
-    case rocblaslt_compute_f32_fast_bf16:
-        return "f32_bf16_r";
+        return "i32";
     default:
         return "invalidType";
     }
