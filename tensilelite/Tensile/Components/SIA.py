@@ -166,7 +166,7 @@ def checkLocalReadFIFO(localReadFIFO, miLatency, numWaves, currentMFMA, blockWid
         localReadFIFO.append(currentMFMA)
     else:
         oldMFMA = localReadFIFO[0]
-        if (currentMFMA - oldMFMA) * miLatency > lrStallLatencyBuffer:
+        if (currentMFMA - oldMFMA) * miLatency >= lrStallLatencyBuffer:
             localReadFIFO.pop(0)
             localReadFIFO.append(currentMFMA)
         else:
