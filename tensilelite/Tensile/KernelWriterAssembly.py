@@ -1398,7 +1398,7 @@ class KernelWriterAssembly(KernelWriter):
       hbmArgs.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(self.states.userArgsInfo.commonArgsSize), dword=2))
 
       moduleArgs.addModuleAsFlatItems(fastdeepcopy(commonArgs))
-      moduleArgs.add(SWaitCnt(0))
+      moduleArgs.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="load args"))
       moduleArgs.add(SLShiftRightB32(dst=sgpr(sgprArgType), shiftHex=hex(30), src=sgpr(sgprNumsOfGemm), comment="Get arg type"))
       moduleArgs.add(SAndB32(dst=sgpr(sgprNumsOfGemm), src0=hex(0x3FFFFFFF), src1=sgpr(sgprNumsOfGemm), comment="Get nums of gemm"))
 
@@ -1421,11 +1421,11 @@ class KernelWriterAssembly(KernelWriter):
       moduleArgs.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
       moduleArgs.addModuleAsFlatItems(self.getKernelArgLoadModule(kernel, sgprStart, load, 0))
       if self.states.numSgprPreload > 0:
-        moduleArgs.add(SWaitCnt(0))
+        moduleArgs.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="preload"))
       moduleArgs.add(SBranch(labelName=labelLoadEnd.getLabelName()))
       moduleArgs.add(labelHBM)
       moduleArgs.addModuleAsFlatItems(fastdeepcopy(hbmArgs))
-      moduleArgs.add(SWaitCnt(lgkmcnt=0, comment="wait for args to load"))
+      moduleArgs.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for args to load"))
       moduleArgs.add(labelLoadEnd)
 
       if self.states.numSgprPreload > 0:
@@ -1559,10 +1559,10 @@ class KernelWriterAssembly(KernelWriter):
 
       def waitForArgsToLoad():
         if kernel["ProblemType"]["SupportUserArgs"]:
-          moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u/%u bytes of kern args" % \
+          moduleWg.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for %u/%u bytes of kern args" % \
                         (self.argLoader.getOffset() - (self.states.numSgprPreload*4), self.externalArgLoader.getOffset())))
         else:
-          moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % \
+          moduleWg.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for %u bytes of kern args" % \
                               (self.argLoader.getOffset() - (self.states.numSgprPreload*4))))
         moduleWg.addModuleAsFlatItems(moduleScaleAB)
 
@@ -1594,9 +1594,9 @@ class KernelWriterAssembly(KernelWriter):
       if not kernel["ProblemType"]["StridedBatched"]:
         with self.allocTmpSgpr(self.states.laneSGPRCount) as tmpSgpr:
           moduleWg.add(self.loadBatchedAddress(kernel, "WorkGroup2", tmpSgpr))
-        moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait global buffer address ready"))
+        moduleWg.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait global buffer address ready"))
       elif waitForScaleAB:
-        moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for scaleA/B to load"))
+        moduleWg.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for scaleA/B to load"))
 
       labelMultiGemm = Label(label="MultiGemm", comment="")
       labelMultiGemmEnd = Label(label="MultiGemmEnd", comment="")
@@ -1682,7 +1682,7 @@ class KernelWriterAssembly(KernelWriter):
         module.addComment0("Grouped Gemm:: loop start")
         label_Loop_gemm_count = Label("Loop_GemmCount", "")
         module.add(label_Loop_gemm_count)
-        module.add(SWaitCnt(lgkmcnt=0))
+        module.add(SWaitCnt(lgkmcnt=0, kmcnt=0))
         # calculate numTiles
         regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
         module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], tmpSgprRes=regStateRes))
@@ -1724,7 +1724,7 @@ class KernelWriterAssembly(KernelWriter):
         # noLoadLoop
         module.addComment1("Grouped Gemm:: noLoadLoop")
         module.add(label_noLoadLoop)
-        module.add(SWaitCnt(lgkmcnt=0))
+        module.add(SWaitCnt(lgkmcnt=0, kmcnt=0))
         # calculate numTiles
         regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
         module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], tmpSgprRes=regStateRes))
@@ -8967,7 +8967,7 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["ProblemType"]["OutputAmaxD"]:
         module.add(VMovB32(dst=vgpr("AmaxOut"), src="0"))
     if self.states.numStoreSgprToLoad or self.states.numStoreSgprToLoad2: # Wait for kernel args
-      module.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args."%((self.states.numStoreSgprToLoad+self.states.numStoreSgprToLoad2) * 4)))
+      module.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for %u bytes of kern args."%((self.states.numStoreSgprToLoad+self.states.numStoreSgprToLoad2) * 4)))
 
     gsuBackup          = kernel["GlobalSplitU"]
     gsuAccumBackup     = kernel["_GlobalAccumulation"]
@@ -9306,7 +9306,7 @@ class KernelWriterAssembly(KernelWriter):
         assert(kernel["ProblemType"]["ComputeDataType"].isSingle())
         newAlphaVgpr = self.vgprPool.checkOut(1)
         module.add(VMovB32(dst=vgpr(newAlphaVgpr), src=sgpr("Alpha")))
-        module.add(SWaitCnt(lgkmcnt=0, comment="wait for scaleAB load"))
+        module.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for scaleAB load"))
         if kernel["ProblemType"]["DataTypeA"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters():
           module.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=sgpr(sgprScaleA)))
         if kernel["ProblemType"]["DataTypeB"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters():

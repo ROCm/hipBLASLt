@@ -199,7 +199,7 @@ class GlobalWriteBatchWriter:
         lgkmcnt = -1
       # Get vscnt
       if vmcnt != -1:
-        if self.parentWriter.states.archCaps["SeparateVscnt"]:
+        if self.parentWriter.states.archCaps["SeparateVscnt"] or self.parentWriter.states.archCaps["SeparateVMcnt"]:
           vscnt = 0
         else:
           vscnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
