@@ -216,21 +216,15 @@ for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
             dtype_str = json.dumps(dtype)
             if mfma_instruction is None:
                 continue
-            if args.fast:
-                matmul_instruction = next(find_matmul_instruction(mfma_instruction, size, CU))
+            matmul_instruction_gen = find_matmul_instruction(mfma_instruction, size, CU)
+            for matmul_instruction in matmul_instruction_gen:
                 if matmul_instruction is not None:
                     if dtype_str not in matmul_instructions:
                         matmul_instructions[dtype_str] = dict()
                     matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
-            else:
-                matmul_instruction_gen = find_matmul_instruction(mfma_instruction, size, CU)
-                for matmul_instruction in matmul_instruction_gen:
-                    if matmul_instruction is not None:
-                        if dtype_str not in matmul_instructions:
-                            matmul_instructions[dtype_str] = dict()
-                        matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
-
-            
+                    if args.fast:
+                        break
+ 
             if dtype_str in gemm_group:
                 gemm_group[dtype_str].append({'Exact': size})
             else:
