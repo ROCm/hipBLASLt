@@ -1743,6 +1743,21 @@ class _SWaitCntVscnt(Instruction):
     def __str__(self) -> str:
         return self.formatWithComment("s_waitcnt_vscnt null %u"%(self.vscnt))
 
+class _SWaitStorecnt(Instruction):
+    def __init__(self, storecnt: int=-1, comment="") -> None:
+        super().__init__(InstType.INST_NOTYPE, comment)
+        self.storecnt = storecnt
+
+    def getParams(self) -> list:
+        return [self.storecnt]
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def __str__(self) -> str:
+        return self.formatWithComment("s_wait_storecnt %u"%(self.storecnt))
+
 class _SWaitLoadcnt(Instruction):
     def __init__(self, loadcnt: int=-1, comment="") -> None:
         super().__init__(InstType.INST_NOTYPE, comment)
@@ -1797,11 +1812,15 @@ class SWaitCnt(CompositeInstruction):
     If lgkmcnt=vmcnt=vscnt=-1 then the waitcnt is a nop and
     an instruction with a comment is returned.
     """
-    def __init__(self, lgkmcnt: int=-1, vmcnt: int=-1, vscnt: int=-1, comment="", waitAll=False):
+    def __init__(self, lgkmcnt: int=-1, vmcnt: int=-1, vscnt: int=-1, dscnt: int=-1, kmcnt: int=-1, loadcnt: int=-1, storecnt: int=-1, comment="", waitAll=False):
         super().__init__(InstType.INST_NOTYPE, None, None, comment=comment)
-        self.lgkmcnt = lgkmcnt
-        self.vmcnt   = vmcnt
-        self.vscnt   = vscnt
+        self.lgkmcnt = lgkmcnt #LDS, GDS, Constant and Message count, deprecated in gfx12, splits into DScnt and KMcnt
+        self.vmcnt   = vmcnt #Vector memory load count, deprecated in gfx12
+        self.vscnt   = vscnt #Vector memory store, deprecated in gfx12
+        self.dscnt   = dscnt #LDS instruction count, new in gfx12
+        self.kmcnt   = kmcnt #Constant and Message count, new in gfx12
+        self.loadcnt = loadcnt #Vector memory load, new in gfx12
+        self.storecnt= storecnt #Vector memory store, new in gfx12
         self.waitAll = waitAll
 
     def getParams(self) -> list:
@@ -1813,11 +1832,19 @@ class SWaitCnt(CompositeInstruction):
             lgkmcnt = 0
             vmcnt   = 0
             vscnt   = 0
+            dscnt   = 0
+            kmcnt   = 0
+            loadcnt = 0
+            storecnt= 0
             comment = "(Wait all)"
         else:
             lgkmcnt = self.lgkmcnt
             vmcnt   = self.vmcnt
             vscnt   = self.vscnt
+            kmcnt   = self.kmcnt
+            dscnt   = -1 if kmcnt != -1 else self.lgkmcnt
+            loadcnt = self.vmcnt
+            storecnt= self.vscnt
             comment = self.comment
 
         maxVmcnt = self.asmCaps["MaxVmcnt"]
@@ -1826,10 +1853,15 @@ class SWaitCnt(CompositeInstruction):
             self.instructions = [_SWaitCnt(lgkmcnt, vmcnt, comment)]
             if (lgkmcnt != -1 and vmcnt != -1) or vscnt != -1 :
               self.instructions.append(_SWaitCntVscnt(vmcnt, comment))
-        elif self.archCaps["SeparateVMcnt"] or self.archCaps["SeparateLGKMcnt"]: #short-term, will separate them
-            self.instructions = [_SWaitDscnt(0, comment)]
-            self.instructions.append(_SWaitLoadcnt(0, comment))
-            self.instructions.append(_SWaitKMcnt(0, comment))
+        elif self.archCaps["SeparateVMcnt"] or self.archCaps["SeparateLGKMcnt"]:
+            if (dscnt != -1):
+                self.instructions = [_SWaitDscnt(dscnt, comment)]
+            if (kmcnt != -1):
+                self.instructions.append(_SWaitKMcnt(kmcnt, comment))
+            if (loadcnt != -1):
+                self.instructions.append(_SWaitLoadcnt(loadcnt, comment))
+            if (storecnt != -1):
+                self.instructions.append(_SWaitStorecnt(storecnt, comment))
         else:
             vmvscnt = -1
             if vscnt != -1:
