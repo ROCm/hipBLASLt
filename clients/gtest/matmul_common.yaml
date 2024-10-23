@@ -4,8 +4,6 @@ Definitions:
     - { M: 1, N: 1, K: 512 }
     - { M: 1, N: 1024, K: 512 }
     - { M: 1024, N: 1, K: 512 }
-
-  - &skinny_matrix_size_range
     - { M: 1, N: 1, K: 63 }
     - { M: 1, N: 1, K: 64 }
     - { M: 1, N: 1, K: 65 }
