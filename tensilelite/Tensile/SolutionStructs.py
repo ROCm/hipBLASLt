@@ -1328,9 +1328,10 @@ class Solution(collections.abc.Mapping):
       state["MatrixInstBM"]        = state["MIBlock"][4]
       state["MatrixInstBN"]        = state["MIBlock"][5]
 
-      state["LocalSplitU"]         = 1
       # huang
+      state["LocalSplitU"] = state["WorkGroup"][2]
       state["WaveSplitK"] = 1
+      
       state["MIOutputVectorWidth"], state["MIRegPerOut"] = Solution.getMIOutputInfo(state)
 
       if state["MatrixInstM"] == 4:
@@ -1359,9 +1360,6 @@ class Solution(collections.abc.Mapping):
       # state["LocalSplitU"] = state["WorkGroup"][2]
       state["LocalSplitU"] = state["WorkGroup"][2] if state['WavefrontSize'] % state["WorkGroup"][2] != 0 else 1 
       state["WaveSplitK"] = state["WorkGroup"][2] if state['WavefrontSize'] % state["WorkGroup"][2] == 0 else 1 
-
-    # huang
-    # state["LocalSplitU"] = state["WorkGroup"][2]
 
     # huang
     if "SubGroup0" in state and "SubGroup1" in state and "LocalSplitU" in state:
@@ -2580,12 +2578,9 @@ class Solution(collections.abc.Mapping):
             curGRVW *= 2
     else:
       # huang
-      
       if state["GlobalReadVectorWidthA"] == -1:
-        state["GlobalReadVectorWidthA"] = max(1, min(8, min(state["MacroTile0"], state["MacroTile0"] * state["DepthU"] // state["NumThreads"])))
-      # if state["GlobalReadVectorWidthA"] not in [-1, 8]:
-      #   reject(state, "Currently requires GRVWA = 8 for dot2 kernel")
-      # state["GlobalReadVectorWidthA"] = 4
+        coalescedA = state["MacroTile0"] if state["ProblemType"]["TLUA"] else state["DepthU"]
+        state["GlobalReadVectorWidthA"] = max(1, min(8, min(coalescedA, state["MacroTile0"] * state["DepthU"] // state["NumThreads"])))
 
     # Default GlobalReadVectorWidthB
     if state["EnableMatrixInstruction"]:
@@ -2606,11 +2601,9 @@ class Solution(collections.abc.Mapping):
             curGRVW *= 2
     else:
       # huang
-      if state["GlobalReadVectorWidthB"] not in [-1, 1]:
-        reject(state, "Currently requires GRVWB = 1 for dot2 kernel")
-      # state["GlobalReadVectorWidthB"] = 1
       if state["GlobalReadVectorWidthB"] == -1:
-        state["GlobalReadVectorWidthB"] = max(1, min(8, min(state["DepthU"], state["MacroTile1"] * state["DepthU"] // state["NumThreads"])))
+        coalescedB = state["MacroTile1"] if state["ProblemType"]["TLUB"] else state["DepthU"]
+        state["GlobalReadVectorWidthB"] = max(1, min(8, min(coalescedB, state["MacroTile1"] * state["DepthU"] // state["NumThreads"])))
 
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
     if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
@@ -2737,7 +2730,7 @@ class Solution(collections.abc.Mapping):
           reject(state, "Non-valid ASEM for dot2 kernel, need to be multiple of (LocalReadVectorWidth * InnerUnroll * WaveSplitK) for atomics on tail loop")
         if (not state["EnableMatrixInstruction"]) and (state["VectorWidthA"] != 1 or state["VectorWidthB"] != 1):
           reject(state, "Currently requires VectorWidth = 1 for dot2 kernel")
-        if state["ThreadTile0"] != 1 or state["ThreadTile1"] != 1:
+        if (state["ThreadTile0"] != 1 or state["ThreadTile1"] != 1) and state["InnerUnroll"] > 1: 
           reject(state, "Currently requires ThreadTile = 1 for dot2 kernel")
         if state["ScheduleLocalWrite"] != 1:
           reject(state, "Currently requires ScheduleLocalWrite = 1 for dot2 kernel")
@@ -3572,7 +3565,7 @@ class Solution(collections.abc.Mapping):
     if state["KernelLanguage"] != "Assembly" and state["InnerUnroll"] != 1:
       reject(state, "InnerUnroll only supported on assembly")
     # huang
-    if not state["EnableMatrixInstruction"] and state["LoopUnroll"] % state["InnerUnroll"] != 0:
+    if not state["EnableMatrixInstruction"] and (state["LoopUnroll"] % state["InnerUnroll"] != 0):
       reject(state, "LoopIters need to be multiple of InnerUnroll")
     state["LoopUnroll"] //= state["InnerUnroll"]
 
@@ -3607,7 +3600,8 @@ class Solution(collections.abc.Mapping):
     # huang 
     if not state["EnableMatrixInstruction"]:
       state["ClusterLocalRead"] = 0
-    #   state["PrefetchLocalRead"] = 0
+      if state["PrefetchLocalRead"] > 1:
+        reject(state, "dot2 kernel does not support PLR > 1")
 
     # reject iterations are not enough to use wider local read
     if state["EnableMatrixInstruction"] and state["PrefetchLocalRead"] > 0:

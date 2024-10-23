@@ -4243,7 +4243,6 @@ class KernelWriterAssembly(KernelWriter):
 
       #   if noExit:
       #     # No exit. No dec code if decValue is 2
-      #     # huang
       #     if decValue == 2:
       #       decCode = ""
       #     condCode = ""
@@ -7258,10 +7257,13 @@ class KernelWriterAssembly(KernelWriter):
 
     if self.states.inTailLoop:
       # huang
-      inc = self.states.lrvwUnrollA * kernel["WaveSplitK"] * tP["bpeDS"]
-      comment = "(LocalReadVectorWidth*bpeDS)"
-      # inc = (kernel["MacroTile%s" % tP["tensorChar"]] + LdsPad) * tP["bpeDS"]
-      # comment = " ((MT+PAD)*bpeDS)"
+      if kernel["EnableMatrixInstruction"]:
+        inc = (kernel["MacroTile%s" % tP["tensorChar"]] + LdsPad) * tP["bpeDS"]
+        comment = " ((MT+PAD)*bpeDS)"
+      else:
+        inc = self.states.lrvwUnrollA * kernel["WaveSplitK"] * tP["bpeDS"]
+        comment = "(LocalReadVectorWidth*bpeDS)"
+      
       if kernel["EnableMatrixInstruction"]:
         matrixInstK = kernel["MatrixInstK"]
         if kernel["UnrollMajorLDS%s" % tc]:

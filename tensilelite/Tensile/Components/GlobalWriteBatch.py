@@ -298,7 +298,7 @@ class GlobalWriteBatchWriter:
       # huang
       if self.kernel["EnableMatrixInstruction"] and (self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1]) > 8:
         GSUtotal = int(GSUtotal/int((self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1])/8))
-      if not self.kernel["EnableMatrixInstruction"] and (self.kernel["ThreadTile"][0]*self.kernel["ThreadTile"][1])*(self.kernel["SubGroup0"]*self.kernel["SubGroup1"]/64) > 8:
+      if (not self.kernel["EnableMatrixInstruction"]) and (self.kernel["ThreadTile"][0]*self.kernel["ThreadTile"][1])*(self.kernel["SubGroup0"]*self.kernel["SubGroup1"]/64) > 8:
         GSUtotal = int(GSUtotal/int((self.kernel["ThreadTile"][0]*self.kernel["ThreadTile"][1])*(self.kernel["SubGroup0"]*self.kernel["SubGroup1"]/64)/8))
       GSUtotal = max(2,GSUtotal)
       SynchronizerAddEndlabel = [""] * GSUtotal
@@ -1218,7 +1218,7 @@ class GlobalWriteBatchWriter:
         applyScaleVec(scaleAlphaVecModule, "ScaleAlphaVec", dataScaleAlphaVec, self.factorDim, isGlobal=False)
       module.add(scaleAlphaVecModule)
 
-      # huang: 
+      # huang
       accK = 1
       while accK < self.kernel["WaveSplitK"]:
         for vi in range(0, self.gwvw):
@@ -1226,9 +1226,9 @@ class GlobalWriteBatchWriter:
           vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
           module.add(SNop(waitState=0, comment="1 wait states"))
           if accK <= 8:
-            module.add(VAddF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=vgpr("ValuC+%d"%vgprIdx), dpp=DPPModifiers(bound_ctrl=0, row_shr=accK), comment="Reduction for %s elements"%(accK*2) ))
+            module.add(VAddF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=vgpr("ValuC+%d"%vgprIdx), comment="Reduction for %s elements"%(accK*2), dpp=DPPModifiers(bound_ctrl=0, row_shr=accK) ))
           else:
-            module.add(VAddF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=vgpr("ValuC+%d"%vgprIdx), dpp=DPPModifiers(bound_ctrl=0, row_bcast=accK-1), comment="Reduction for %s elements"%(accK*2) ))
+            module.add(VAddF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=vgpr("ValuC+%d"%vgprIdx), comment="Reduction for %s elements"%(accK*2), dpp=DPPModifiers(bound_ctrl=0, row_bcast=accK-1) ))
         accK *= 2
 
       if self.beta:

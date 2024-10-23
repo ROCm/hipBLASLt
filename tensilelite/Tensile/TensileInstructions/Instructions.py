@@ -1935,7 +1935,7 @@ class VAddF16(CommonInstruction):
 
 # huang: add dpp
 class VAddF32(CommonInstruction):
-    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, dpp: Optional[DPPModifiers] = None, comment="") -> None:
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="", dpp: Optional[DPPModifiers] = None) -> None:
         super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, None, comment, dpp)
         # super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, None, comment)
         self.setInst("v_add_f32")

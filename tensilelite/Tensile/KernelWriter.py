@@ -2199,7 +2199,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           for espi in range(0, 1):
             for iui in range(0,kernel["InnerUnroll"]):
               # huang
-              if not kernel["EnableMatrixInstruction"] and iui > 0:
+              if (not kernel["EnableMatrixInstruction"]) and (iui > 0):
                 break
               if iui*self.states.numReadsIterCoalescedA < kernel["InnerUnroll"]:
                 module.addComment1("local read prefetch a")
@@ -2415,7 +2415,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         pack[0] = Module()
         for iui in range(0, tailLoopInnerUnroll):
           # huang
-          if not kernel["EnableMatrixInstruction"] and iui > 0:
+          if (not kernel["EnableMatrixInstruction"]) and (iui > 0):
             break
           # Reading 16-bit data from LDS requires packing when ECC enabled
           module.addComment1("local read a")
