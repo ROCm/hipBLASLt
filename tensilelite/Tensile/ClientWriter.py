@@ -240,6 +240,9 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
   if globalParameters.get("AsmDebug", False):
     callCreateLibraryCmd += " --asm-debug"
 
+  if globalParameters["KeepBuildTmp"]:
+    callCreateLibraryCmd += " --keep-build-tmp"
+
   callCreateLibraryCmd += " --architecture=" + globalParameters["Architecture"]
   callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
   callCreateLibraryCmd += " --cxx-compiler=" + globalParameters["CxxCompiler"]
