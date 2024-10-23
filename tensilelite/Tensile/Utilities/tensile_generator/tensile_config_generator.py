@@ -63,6 +63,7 @@ elif ArchitectureName == 'gfx90a':
     ScheduleName = "aldebaran"
 
 fp16_instruction = [16,16,16,1]
+bf16_instruction = [16,16,8,1]
 tf32_instruction = [16,16,8,1]
 fp32_instruction = [16,16,4,1]
 
@@ -105,6 +106,8 @@ def instruction_map(dtype_dict):
         return fp32_instruction
     elif dtype_dict["DataType"] == 'H':
         return fp16_instruction
+    elif dtype_dict["DataType"] == 'B':
+        return bf16_instruction
     else:
         return None
 
@@ -170,15 +173,13 @@ for i, (k, v) in enumerate(unique_gemms.items()):
 def find_matmul_instruction(mfma_instruction, size, CU):
     for bm in range(int(math.log(mfma_instruction[3],2))+1):
         for m_tiles in reversed(range(1, CU+1)):
-            if size[0] // m_tiles > 256:
-                continue
-            wave_tile_m = math.ceil(size[0] // m_tiles / mfma_instruction[0])
+            m_tile_size = min(size[0] // m_tiles, 256)
+            wave_tile_m = math.ceil(m_tile_size / mfma_instruction[0])
             if wave_tile_m <= 0:
                 continue
             for n_tiles in reversed(range(1, CU+1)):
-                if size[1] // n_tiles > 256:
-                    continue
-                wave_tile_n = math.ceil(size[1] // n_tiles / mfma_instruction[1])
+                n_tile_size = min(size[1] // n_tiles, 256)
+                wave_tile_n = math.ceil(n_tile_size / mfma_instruction[1])
                 if wave_tile_n <= 0:
                     continue
                 matmul_instruction = mfma_instruction + [2**bm, 1, 1, 1, 1]
@@ -255,7 +256,7 @@ for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
         data["BenchmarkProblems"][i][1]["BenchmarkFinalParameters"][0]["ProblemSizes"] = gemm_group[dtype_str]
         for item in data["BenchmarkProblems"][i][1]["ForkParameters"]:
             if "MatrixInstruction" in item:
-                item["MatrixInstruction"] = [list(item) for item in matmul_instructions[dtype_str].values()]
+                item["MatrixInstruction"] = [list(v) for v in matmul_instructions[dtype_str].values()]
             if "WorkGroupMappingXCCGroup" in item:
                 item["WorkGroupMappingXCCGroup"] = [CU]
             if "WorkGroupMappingXCC" in item:
