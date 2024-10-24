@@ -1644,7 +1644,7 @@ def assignGlobalParameters( config ):
 
   globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
 
-  # ROCm Agent Enumerator Path
+  # ROCm AMD GPU Arch Path
   if os.name == "nt":
     globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
   else:
