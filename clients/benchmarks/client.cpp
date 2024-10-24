@@ -790,7 +790,6 @@ try
     arg.compute_type
         = compute_type == "" ? (HIPBLAS_COMPUTE_32F) : string_to_hipblas_computetype(compute_type);
 
-    hipblaslt_cout << "compute_type " << arg.compute_type << std::endl;  
     if(arg.compute_type == static_cast<hipblasComputeType_t>(0))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
