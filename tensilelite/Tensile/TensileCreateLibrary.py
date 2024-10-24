@@ -1336,7 +1336,7 @@ def TensileCreateLibrary():
   arguments["LogicFormat"]  = args.LogicFormat
   arguments["LibraryFormat"] = args.LibraryFormat
   if args.no_enumerate:
-    arguments["ROCmAgentEnumeratorPath"] = False
+    arguments["AMDGPUArchPath"] = False
   arguments["PackageLibrary"] = args.PackageLibrary
 
   arguments["GenerateManifestAndExit"] = args.GenerateManifestAndExit
