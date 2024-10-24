@@ -1,4 +1,4 @@
-## Tensile Config Generator
+## Tensile Config Generator (Beta)
 
 The `tensile_config_generator.py` script is a tool designed to generate Tensile configuration files for hipBLASLt. These configuration files are essential for optimizing GEMM (General Matrix Multiplication) operations on AMD GPUs.
 
