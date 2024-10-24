@@ -166,7 +166,7 @@ def checkLocalReadFIFO(localReadFIFO, miLatency, numWaves, currentMFMA, blockWid
         localReadFIFO.append(currentMFMA)
     else:
         oldMFMA = localReadFIFO[0]
-        if (currentMFMA - oldMFMA) * miLatency > lrStallLatencyBuffer:
+        if (currentMFMA - oldMFMA) * miLatency >= lrStallLatencyBuffer:
             localReadFIFO.pop(0)
             localReadFIFO.append(currentMFMA)
         else:
@@ -939,6 +939,15 @@ def splitDSInstructionIntoSmaller(writer, kernel, item, numLocalWritesPerSched, 
     # LW b32 4-way bank conflict latency ~ 108 cycles
     # round up with quad-cycle
     finalLWCycles  = roundUp(108 / 4)
+
+    # How many mfmas between 2 LWs
+    # the MFMA buffer must be larger then the latency
+    numMfmaBetweenLW = PRECISION // numLocalWritesPerSched
+    mfmaBuffer = numMfmaBetweenLW * miLatency
+    if mfmaBuffer <= finalLWCycles:
+        # no enough cycles between LWs
+        return None, 0, 0
+
     extraSched = roundUp(finalLWCycles / miLatency)
     if (currentModIdx + numLocalWritesPerSched * (div - 1 + extraSched)) >= lenOfItems:
         # no enough cycles before barrier

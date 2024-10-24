@@ -951,11 +951,25 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # 20 quad-cycle - 4 x miLatency for b64 (equal to one miLatency)
       # 10 quad-cycle - 4 x miLatency for b32 (no stall)
       # so no stall happen for b64/b32/b16
-      localReadThisLoopFIFO = []
-      localReadNextLoopFIFO = []
+      if iteration == 0:
+        self.localReadThisLoopFIFO = []
+        self.localReadNextLoopFIFO = []
       def checkLocalReadFIFOFull(currentMFMA, fifo, lrItems, numLR, numLREven):
+        numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1] * kernel["LocalSplitU"]
         if numLREven >= 1.0:
-          return max(ceil(numLREven), numLR)
+          numToBeSched = max(ceil(numLREven), numLR)
+          for n in range(numToBeSched):
+            if len(lrItems) <= n:
+              break
+            item = lrItems[n]
+            if not isinstance(item, DSLoadB128):
+              continue
+            if len(fifo) < (16 / numWaves):
+              fifo.append(currentMFMA)
+            else:
+              fifo.pop(0)
+              fifo.append(currentMFMA)
+          return numToBeSched
         numToBeIssued = 0
         for n in range(numLR):
           if len(lrItems) <= n:
@@ -965,7 +979,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
             numToBeIssued += 1
             continue
           # The FIFO length is 16 so that each wave has 16/numWaves buffer.
-          numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1] * kernel["LocalSplitU"]
           lrStallLatencyBuffer = 40 - ((16 / numWaves) * self.states.miLatency)
           if len(fifo) < (16 / numWaves):
             fifo.append(currentMFMA)
@@ -1016,7 +1029,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             else:
               readLeftLREven = numReadsInst / (numMfmaPerIter - i)
           # if there are too many localreads, change strategy to even.
-          readLeft = checkLocalReadFIFOFull(mfmaIndex, localReadThisLoopFIFO, localReadItemsThisLoop, readLeftLROPT, readLeftLREven)
+          readLeft = checkLocalReadFIFOFull(mfmaIndex, self.localReadThisLoopFIFO, localReadItemsThisLoop, readLeftLROPT, readLeftLREven)
         if not self.states.numItersPLR and iteration < isBarrier:
           for j in range(len(localReadItemsThisLoop)):
             latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
@@ -1170,7 +1183,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             else:
               readLeftLREven = numReadsInst / (numMfmaPerIter - i)
           # if there are too many localreads, change strategy to even.
-          readLeft = checkLocalReadFIFOFull(mfmaIndex, localReadNextLoopFIFO, localReadItemsNextLoop, readLeftLROPT, readLeftLREven)
+          readLeft = checkLocalReadFIFOFull(mfmaIndex, self.localReadNextLoopFIFO, localReadItemsNextLoop, readLeftLROPT, readLeftLREven)
         for j in range(readLeft):
           if localReadItemsNextLoop:
             item = localReadItemsNextLoop.pop(0)
@@ -3815,6 +3828,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.states.totalVgprs < kernel["MinVgprNumber"] or self.states.totalVgprs > kernel["MaxVgprNumber"]:
       raise RuntimeError("Generating asm kernel error: total vgpr: %u not in [%u, %u].\n" % (self.states.totalVgprs, kernel["MinVgprNumber"], kernel["MaxVgprNumber"]))
 
+    agprLimit = kernel["TotalVgprNumber"] - kernel["MaxVgprNumber"]
+    if self.states.totalAgprs > agprLimit:
+      raise RuntimeError("Generating asm kernel error: total agpr: %u not in [0, %u].\n" % (self.states.totalAgprs, agprLimit) )
+
     ########################################
     # SGPR Allocation
     ########################################
@@ -4309,6 +4326,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.numStoreSgprNameSizes.append(1)
       storeSgprLoad += self.states.numActivationTypeArgSize + self.states.numactivationArgTotalSize
     self.states.numStoreSgprToLoad = storeSgprLoad
+
 
     if self.db["InitLds"] : print ("\n***WARNING: InitLds enabled, may impact performance\n")
     if self.db["InitSgpr"] : print ("\n***WARNING: InitSgpr enabled, may impact performance\n")
