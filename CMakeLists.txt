@@ -170,16 +170,19 @@ else()
       )
     endif()
 
-    if (AMDGPU_TARGETS)
-        set(TMPAMDGPU_TARGETS "${AMDGPU_TARGETS}")
-        if(TMPAMDGPU_TARGETS STREQUAL "all" )
-            set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target" FORCE)
-        else()
-            set(AMDGPU_TARGETS "${TMPAMDGPU_TARGETS}" CACHE STRING "AMD GPU targets to compile for" FORCE)
-        endif()
+    if (NOT AMDGPU_TARGETS OR AMDGPU_TARGETS STREQUAL "all")
+        set(TENSILE_AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target" FORCE)
     else()
-        set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
+        set(TENSILE_AMDGPU_TARGETS "${AMDGPU_TARGETS}" CACHE STRING "AMD GPU targets to compile for" FORCE)
     endif()
+
+    # remove any variants contained within brackets for downstream compilation
+    set(NEW_AMDGPU_TARGETS)
+    foreach(ITEM IN LISTS TENSILE_AMDGPU_TARGETS)
+        string(REGEX REPLACE "\\[.*\\]" "" ITEM "${ITEM}")
+        list(APPEND NEW_AMDGPU_TARGETS "${ITEM}")
+    endforeach()
+    string(REPLACE ";" ";" AMDGPU_TARGETS "${NEW_AMDGPU_TARGETS}")
 
     message(STATUS "AMDGPU_TARGETS: ${AMDGPU_TARGETS}")
 
@@ -191,7 +194,7 @@ else()
 
     if( BUILD_WITH_TENSILE )
     # we will have expanded "all" for tensile to ensure consistency as we have local rules
-    set( Tensile_ARCHITECTURE "${AMDGPU_TARGETS}" CACHE STRING "Tensile to use which architecture?" FORCE)
+    set( Tensile_ARCHITECTURE "${TENSILE_AMDGPU_TARGETS}" CACHE STRING "Tensile to use which architecture?" FORCE)
 
     set( Tensile_LOGIC "asm_full" CACHE STRING "Tensile to use which logic?")
     set( Tensile_CODE_OBJECT_VERSION "default" CACHE STRING "Tensile code_object_version")

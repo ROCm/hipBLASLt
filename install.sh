@@ -36,7 +36,7 @@ function display_help()
   echo "    [-i|--install] install after build"
   echo "    [-d|--dependencies] install build dependencies"
   echo "    [-t|--test_local_path] Specify a local path for Tensile instead of remote GIT repo"
-  echo "    [-a|--architecture] Set GPU architecture target(s), e.g., all, gfx90a:xnack+;gfx90a:xnack-"
+  echo "    [-a|--architecture] Set GPU architecture target(s) separated by semicolons with no spaces, e.g., all, gfx90a:xnack+;gfx90a:xnack-"
   echo "    [--cpu_ref_lib <lib>] specify library to use for CPU reference code in testing (blis or lapack)"
   echo "    [-c|--clients] build library clients too (combines with -i & -d)"
   echo "    [-r]--relocatable] create a package to support relocatable ROCm"

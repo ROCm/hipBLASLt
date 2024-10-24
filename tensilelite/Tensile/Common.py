@@ -1891,6 +1891,9 @@ def splitArchsFromGlobal(globalParameters):
         return gfxArchs, cmdlineArchs, variantMap
 
     globalArchSpec = globalParameters["Architecture"]
+    if " " in globalArchSpec:
+        raise ValueError("Architecture string cannot contain spaces")
+
     wantedArchs = getWantedArchs(globalArchSpec)
     extensionArchs = {(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)}
 
