@@ -51,7 +51,7 @@ You can enable the hipBLASLt logging mechanism by setting the following environm
 |"64" - Profile   |
 +-----------------+
 
-``HIPBLASLT_LOG_FILE=<file_name>`` - where ``file_name`` is a path to a logging file. File name may contain ``%i``, that is replaced with the process ID. For example, ``<file_name>_%i.log``.
+``HIPBLASLT_LOG_FILE=<file_name>`` - where ``file_name`` is a path to a logging file. The file name can contain ``%i``, which is replaced with the process ID, for example, ``<file_name>_%i.log``.
 If ``HIPBLASLT_LOG_FILE`` is not defined, the log messages are printed to stdout.
 
 ``HIPBLASLT_ENABLE_MARKER=1``
