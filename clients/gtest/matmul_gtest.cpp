@@ -162,14 +162,14 @@ namespace
 
                 name << '_' << arg.batch_count;
 
-                if(arg.scaleA == Arguments::ScalingFormat::Scalar)
+                if(arg.scaleA == hipblaslt_scaling_format::Scalar)
                     name << "_SA";
-                else if(arg.scaleA == Arguments::ScalingFormat::Vector)
+                else if(arg.scaleA == hipblaslt_scaling_format::Vector)
                     name << "_SAV";
 
-                if(arg.scaleB == Arguments::ScalingFormat::Scalar)
+                if(arg.scaleB == hipblaslt_scaling_format::Scalar)
                     name << "_SB";
-                else if(arg.scaleB == Arguments::ScalingFormat::Vector)
+                else if(arg.scaleB == hipblaslt_scaling_format::Vector)
                     name << "_SBV";
 
                 if(arg.scaleC)

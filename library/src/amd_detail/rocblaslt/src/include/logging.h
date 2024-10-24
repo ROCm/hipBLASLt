@@ -29,10 +29,114 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
+#include "tuple_helper.hpp"
 #include <fstream>
 #include <string>
 #include <sys/types.h>
 #include <unistd.h>
+#include <cmath>
+#include <cstdlib>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <shared_mutex>
+#include <tuple>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
+
+/************************************************************************************
+ * Profile kernel arguments
+ ************************************************************************************/
+template <typename TUP>
+class argument_profile
+{
+    // Output stream
+    mutable std::ostream* os;
+
+    // Mutex for multithreaded access to table
+    mutable std::shared_timed_mutex mutex;
+
+    // Table mapping argument tuples into counts
+    // size_t is used for the map target type since atomic types are not movable, and
+    // the map elements will only be moved when we hold an exclusive lock to the map.
+    std::unordered_map<TUP,
+                       size_t,
+                       typename tuple_helper::hash_t<TUP>,
+                       typename tuple_helper::equal_t<TUP>>
+        map;
+
+public:
+    // A tuple of arguments is looked up in an unordered map.
+    // A count of the number of calls with these arguments is kept.
+    // arg is assumed to be an rvalue for efficiency
+    void operator()(TUP&& arg)
+    {
+        { // Acquire a shared lock for reading map
+            std::shared_lock<std::shared_timed_mutex> lock(mutex);
+
+            // Look up the tuple in the map
+            auto p = map.find(arg);
+
+            // If tuple already exists, atomically increment count and return
+            if(p != map.end())
+            {
+                __atomic_fetch_add(&p->second, 1, __ATOMIC_SEQ_CST);
+                return;
+            }
+        } // Release shared lock
+
+        { // Acquire an exclusive lock for modifying map
+            std::lock_guard<std::shared_timed_mutex> lock(mutex);
+
+            // If doesn't already exist, insert tuple by moving arg and initializing count to 0.
+            // Increment the count after searching for tuple and returning old or new match.
+            // We hold a lock to the map, so we don't have to increment the count atomically.
+            map.emplace(std::move(arg), 0).first->second++;
+        } // Release exclusive lock
+    }
+
+    // Constructor
+    explicit argument_profile(std::ostream* os)
+        : os(os)
+    {
+    }
+
+    // Dump the current profile
+    void dump() const
+    {
+        // Acquire an exclusive lock to use map
+        std::lock_guard<std::shared_timed_mutex> lock(mutex);
+
+        // Clear the output buffer
+        os->clear();
+
+        // Print all of the tuples in the map
+        for(const auto& p : map)
+        {
+            *os << "- ";
+            tuple_helper::print_tuple_pairs(
+                *os, std::tuple_cat(p.first, std::make_tuple("call_count", p.second)));
+        }
+
+        // Flush out the dump
+        os->flush();
+    }
+
+    // Cleanup handler which dumps profile at destruction
+    ~argument_profile()
+    try
+    {
+        dump();
+    }
+    catch(...)
+    {
+        return;
+    }
+};
 
 /**
  *  @brief Logging function

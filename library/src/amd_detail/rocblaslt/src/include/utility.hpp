@@ -274,6 +274,27 @@ void log_bench(const char* func, Ts&&... xs)
     log_arguments_bench(*os, std::forward<Ts>(xs)...);
     *os << std::endl;
 }
+
+// if profile logging is turned on with
+// (handle->layer_mode & rocblaslt_layer_mode_log_profile) == true
+// log_profile will call argument_profile to profile actual arguments,
+// keeping count of the number of times each set of arguments is used
+template <typename... Ts>
+void log_profile(const char* func, Ts&&... xs)
+{
+    // Make a tuple with the arguments
+    auto tup = std::make_tuple("function", func, std::forward<Ts>(xs)...);
+
+    // Set up profile
+    static argument_profile<decltype(tup)> profile(get_logger_os());
+
+    // Add at_quick_exit handler in case the program exits early
+    static int aqe = at_quick_exit([] { profile.~argument_profile(); });
+
+    // Profile the tuple
+    profile(std::move(tup));
+}
+
 // Convert the current C++ exception to rocblaslt_status
 // This allows extern "C" functions to return this function in a catch(...)
 // block while converting all C++ exceptions to an equivalent rocblaslt_status

@@ -54,6 +54,13 @@ typedef enum class _hipblaslt_bias_source
     d = 3,
 } hipblaslt_bias_source;
 
+typedef enum class _hipblaslt_scaling_format
+{
+    none = 0,
+    Scalar = 1,
+    Vector = 2,
+} hipblaslt_scaling_format;
+
 inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
                                               hipblaslt_activation_type   act)
 {
@@ -88,6 +95,7 @@ inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
     }
     return os;
 }
+
 constexpr auto hipblaslt_initialization2string(hipblaslt_initialization init)
 {
     switch(init)
