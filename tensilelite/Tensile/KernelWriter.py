@@ -3828,6 +3828,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.states.totalVgprs < kernel["MinVgprNumber"] or self.states.totalVgprs > kernel["MaxVgprNumber"]:
       raise RuntimeError("Generating asm kernel error: total vgpr: %u not in [%u, %u].\n" % (self.states.totalVgprs, kernel["MinVgprNumber"], kernel["MaxVgprNumber"]))
 
+    agprLimit = kernel["TotalVgprNumber"] - kernel["MaxVgprNumber"]
+    if self.states.totalAgprs > agprLimit:
+      raise RuntimeError("Generating asm kernel error: total agpr: %u not in [0, %u].\n" % (self.states.totalAgprs, agprLimit) )
+
     ########################################
     # SGPR Allocation
     ########################################
