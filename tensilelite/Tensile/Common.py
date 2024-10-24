@@ -1118,6 +1118,8 @@ validParameters = {
 
     "MaxVgprNumber":                list(range(0,257)),
 
+    "TotalVgprNumber":              list(range(0,513)),
+
     # Debug use only.
     "ActivationFused":             [False, True],
 
@@ -1230,6 +1232,7 @@ defaultBenchmarkCommonParameters = [
     {"NoReject":                  [ False ]},
     {"MinVgprNumber":             [0]},
     {"MaxVgprNumber":             [256]},
+    {"TotalVgprNumber":           [512]},
     {"StoreRemapVectorWidth":     [ 0 ] },
     {"SourceSwap":                [ False ] },
     {"StorePriorityOpt":          [ False ] },
