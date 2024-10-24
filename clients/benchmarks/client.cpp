@@ -283,11 +283,11 @@ try
     std::string scale_type;
     std::string bias_type;
     std::string bias_source;
-    std::string scaleAFormat;
-    std::string scaleBFormat;
     std::string initialization;
     std::string filter;
     std::string activation_type;
+    int         scaleAFormat;
+    int         scaleBFormat;    
     int         device_id;
     int         flags             = 0;
     bool        datafile          = hipblaslt_parse_data(argc, argv);
@@ -482,12 +482,12 @@ try
          "Apply bias vector")
 
         ("scaleA",
-         value<std::string>(&scaleAFormat)->default_value(""),
-         "Apply scale for A buffer. s = scalar, v = vector.")
+         value<int>(&scaleAFormat)->default_value(0),
+         "Apply scale for A buffer. 0 = None, 1 = scalar, 2 = vector.")
 
         ("scaleB",
-         value<std::string>(&scaleBFormat)->default_value(""),
-         "Apply scale for B buffer. s = scalar, v = vector.")
+         value<int>(&scaleBFormat)->default_value(0),
+         "Apply scale for B buffer. 0 = None, 1 = scalar, 2 = vector.")
 
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
@@ -789,6 +789,8 @@ try
     bool is_f32 = arg.a_type == HIP_R_32F;
     arg.compute_type
         = compute_type == "" ? (HIPBLAS_COMPUTE_32F) : string_to_hipblas_computetype(compute_type);
+
+    hipblaslt_cout << "compute_type " << arg.compute_type << std::endl;  
     if(arg.compute_type == static_cast<hipblasComputeType_t>(0))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
@@ -823,15 +825,18 @@ try
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
 
-    auto scaleString2Enum = [](std::string& s) {
-        if(s == "s")
-            return Arguments::ScalingFormat::Scalar;
-        if(s == "v")
-            return Arguments::ScalingFormat::Vector;
-        return Arguments::ScalingFormat::None;
+    auto scaleInt2Enum = [](int s) {
+        if(s == 0)    
+            return hipblaslt_scaling_format::none;
+        if(s == 1)
+            return hipblaslt_scaling_format::Scalar;
+        if(s == 2)
+            return hipblaslt_scaling_format::Vector;
+
+        return hipblaslt_scaling_format::none;
     };
-    arg.scaleA = scaleString2Enum(scaleAFormat);
-    arg.scaleB = scaleString2Enum(scaleBFormat);
+    arg.scaleA = scaleInt2Enum(scaleAFormat);
+    arg.scaleB = scaleInt2Enum(scaleBFormat);
 
     if(arg.M[0] < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M[0]));

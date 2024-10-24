@@ -51,7 +51,12 @@ Datatypes:
         a: 1
         b: 2
         d: 3
-
+  - hipblaslt_scaling_format:
+      bases: [ c_int ]
+      attr:    
+        none: 0
+        Scalar: 1
+        Vector: 2
 
 
 Common threads and streams: &common_threads_streams
@@ -353,8 +358,8 @@ Arguments:
   - bias_type: hipDataType
   - bias_source: hipblaslt_bias_source
   - bias_vector: c_bool
-  - scaleA: c_int
-  - scaleB: c_int
+  - scaleA: hipblaslt_scaling_format
+  - scaleB: hipblaslt_scaling_format
   - scaleC: c_bool
   - scaleD: c_bool
   - scaleE: c_bool
@@ -455,8 +460,8 @@ Defaults:
   use_e: false
   gradient: false
   bias_vector: false
-  scaleA: 0
-  scaleB: 0
+  scaleA: none
+  scaleB: none
   scaleC: false
   scaleD: false
   scaleE: false

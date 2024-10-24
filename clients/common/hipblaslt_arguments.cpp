@@ -107,8 +107,8 @@ void Arguments::init()
     bias_type         = HIPBLASLT_DATATYPE_INVALID;
     bias_source       = hipblaslt_bias_source::d;
     bias_vector       = false;
-    scaleA            = ScalingFormat::None;
-    scaleB            = ScalingFormat::None;
+    scaleA            = hipblaslt_scaling_format::none;
+    scaleB            = hipblaslt_scaling_format::none;
     scaleC            = false;
     scaleD            = false;
     scaleE            = false;
