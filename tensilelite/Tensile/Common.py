@@ -22,6 +22,7 @@
 #
 ################################################################################
 
+import collections
 from . import __version__
 from . import Parallel
 from .TensileInstructions import getGfxName, TensileInstructions
@@ -34,6 +35,7 @@ import os.path
 import subprocess
 import sys
 import time
+import re
 
 startTime = time.time()
 
@@ -1844,6 +1846,79 @@ def ClientExecutionLock():
 # convert python list to C++ initializer style syntax
 def listToInitializer(l):
   return "{" + ','.join(map(str, l)) + "}"
+
+def splitArchsFromGlobal(globalParameters):
+    """Use this function to access the Architecture string from the globalParameters
+    
+    Since an architecture string can contain multiple architectures, and variants,
+    this function serves as an efficient implementation to provide consistent results
+    when requiring details about user provided architecture.
+    """
+    def isSupported(arch):
+        return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
+               globalParameters["AsmCaps"][arch]["SupportedSource"]
+
+    def getWantedArchs(globalArchSpec):
+        return globalArchSpec.split(";") if ";" in globalArchSpec else globalArchSpec.split("_")
+
+    def verifyVariant(variantSpec: list):
+        deviceIdLength = 4
+        hexChars = "1234567890abcdef"
+        for spec in variantSpec:
+            key, _, val = spec.partition("=")
+            if key == "id" and all(c in hexChars for c in val.lower()) and len(val) == deviceIdLength:
+                continue
+            elif key == "cu" and val.isdigit():
+                continue
+            else:
+                raise ValueError(f"Invalid architecture variant: {spec}")
+        return variantSpec
+
+    def processArchs(wantedArchs):
+        variantRegex = re.compile(r'\[(.*?)\]')  # matches text between square brackets
+        gfxArchs, cmdlineArchs, = set(), set()
+        variantMap = collections.defaultdict(list)
+        for archspec in wantedArchs:
+            archspec = archspec.strip()
+            if match := re.search(variantRegex, archspec):  # extract arch variants
+                archspec = archspec[:match.start()]
+                variants = verifyVariant([re.sub(" ", "", s.lower()) for s in match.group(1).split(",")])
+                variantMap[archspec].extend(variants)
+            if archspec in architectureMap:
+                if archspec not in variantMap:
+                    variantMap[archspec] = []
+                gfxArchs.add(re.sub(":", "-", archspec))
+                cmdlineArchs.add(archspec)
+            else:
+                raise ValueError(f"Architecture {archspec} not supported")
+
+        return gfxArchs, cmdlineArchs, variantMap
+
+    globalArchSpec = globalParameters["Architecture"]
+    if " " in globalArchSpec:
+        raise ValueError("Architecture string cannot contain spaces")
+
+    wantedArchs = getWantedArchs(globalArchSpec)
+    extensionArchs = {(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)}
+
+    if "all" in wantedArchs:
+        gfxArchs = set()
+        cmdlineArchs = set()
+        for arch in globalParameters['SupportedISA']:
+            if isSupported(arch):
+                if arch in extensionArchs:
+                    if arch == (9,0,10):
+                        gfxArchs.add(getGfxName(arch) + '-xnack+')
+                        cmdlineArchs.add(getGfxName(arch) + ':xnack+')
+                    gfxArchs.add(getGfxName(arch) + '-xnack-')
+                    cmdlineArchs.add(getGfxName(arch) + ':xnack-')
+                else:
+                    gfxArchs.add(getGfxName(arch))
+                    cmdlineArchs.add(getGfxName(arch))
+        return gfxArchs, cmdlineArchs, dict() 
+
+    return processArchs(wantedArchs)
+
 
 ################################################################################
 # Progress Bar Printing
