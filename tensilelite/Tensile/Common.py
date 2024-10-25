@@ -744,7 +744,6 @@ validParameters = {
     # These predicates can be used to adjust solution selection compute-bound or memory-bound problems.
     "AssertAIGreaterThanEqual": -1,
     "AssertAILessThanEqual":    -1,
-
     # Stagger the start summation position of the tiles.
     # Elements from the summation dimension are loaded at offsets rather than all starting at 0.
     # StaggerU is the max 'clicks' of StaggerUStride bytes where each wg starts ; see StaggerUMapping
@@ -1195,6 +1194,9 @@ defaultBenchmarkCommonParameters = [
     {"AssertSummationElementMultiple": [ 1 ] },
     {"AssertFree0ElementMultiple": [ 1 ] },
     {"AssertFree1ElementMultiple": [ 1 ] },
+  
+    {"AssertAIGreaterThanEqual":   [-1]},
+    {"AssertAILessThanEqual":      [-1]},
 
     {"AssertAIGreaterThanEqual":   [-1]},
     {"AssertAILessThanEqual":      [-1]},
