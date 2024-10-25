@@ -370,6 +370,9 @@ endif()
 
 set( CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include" "\${CPACK_PACKAGING_INSTALL_PREFIX}/lib" )
 
+# work around code object stripping failure if using /usr/bin/strip
+set( CPACK_RPM_SPEC_MORE_DEFINE "%define __strip ${rocm_bin}/../llvm/bin/llvm-strip")
+
 # Give hipblaslt compiled for CUDA backend a different name
 if( NOT USE_CUDA )
     set( package_name hipblaslt )
