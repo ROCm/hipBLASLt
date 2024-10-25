@@ -81,6 +81,7 @@ globalParameters["BoundsCheck"] = 0   # Bounds check
 #2: Perform bounds check by front side guard page
 #3: Perform bounds check by back side guard page
 #4: Perform bounds check by both back and front side guard page
+globalParameters["ValidateMatrixInstructions"] = True # Verify that the solution MatrixInstruction is in validMFMA or valdSMFMA
 
 globalParameters["ValidationMaxToPrint"] = 4      # maximum number of mismatches to print
 globalParameters["ValidationPrintValids"] = False # print matches too
@@ -404,18 +405,6 @@ validMFMA["F8B8"] = validMFMA["F8"]
 validMFMA["B8F8"] = validMFMA["F8"]
 validWMMA = [[16,16,16,1], ]
 validTT = 32
-validMFMA["_format9"] = []
-
-for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"], validMFMA["X"], validMFMA["F8"], validWMMA]:
-  for MI in MFMA:
-    for bm in range(int(math.log(MI[3],2))+1):
-      for tt0 in range(1,validTT+1):
-        for tt1 in range(1,validTT+1):
-          for wave_m in range (3):
-            for wave_n in range(3):
-              validMFMA["_format9"].append([MI[0],MI[1],MI[2],MI[3],2**bm,tt0,tt1,2**wave_m, 2**wave_n])
-validMatrixInstructions = [[], [-1]] + validMFMA["H"] + validMFMA["S"] + validMFMA["B"] + validMFMA["D"] + validMFMA["B1k"] + validMFMA["X"]
-validMatrixInstructions = validMatrixInstructions + validMFMA["_format9"]
 
 validSMFMA = {}
 validSMFMA["H"] = [[32,32,16,1], [16,16,32,1]]
@@ -426,19 +415,6 @@ validSMFMA["F8"] = [[32,32,32,1], [16,16,64,1]]
 validSMFMA["B8"] = validSMFMA["F8"]
 validSMFMA["F8B8"] = validSMFMA["F8"]
 validSMFMA["B8F8"] = validSMFMA["F8"]
-validSMFMA["_format9"] = []
-for SMFMA in [validSMFMA["H"], validSMFMA["B"], validSMFMA["4xi8"], validSMFMA["F8"]]:
-  for MI in SMFMA:
-    for bm in range(int(math.log(MI[3],2))+1):
-      for tt0 in range(1,validTT+1):
-        for tt1 in range(1,validTT+1):
-          for wave_m in range (3):
-            for wave_n in range(3):
-              validSMFMA["_format9"].append([MI[0],MI[1],MI[2],MI[3],2**bm,tt0,tt1,2**wave_m, 2**wave_n])
-validSparseMatrixInstructions = validSMFMA["H"] + validSMFMA["B"] + validSMFMA["4xi8"]
-validMatrixInstructions = validMatrixInstructions + validSparseMatrixInstructions + validSMFMA["_format9"]
-
-
 
 # The supported typed GEMM, each entry is (Ti, To, Tc).
 # DataType (Ti)        = The data-type of the input matrices: A/B
@@ -867,7 +843,7 @@ validParameters = {
     #      MatrixInst  BlkM   WT    Wave
     #  - means (32x64) per MI * (4x1) per wave * (2x2) per workgroup = (32*4*2)x(64*1*2) = 256x128 macro tile
     # Tensile will ignore the parameters ThreadTile and WorkGroup when the alternative format is used
-    "MatrixInstruction":          validMatrixInstructions,
+    "MatrixInstruction":          -1,
 
     # StoreRemap: Optimize MatrixInstruction store patterns to enhance performance.
     #             MI output data between each threads are along N dims.
@@ -1612,6 +1588,39 @@ def assignGlobalParameters( config ):
   """
 
   global globalParameters
+
+  if config["ValidateMatrixInstructions"]:
+
+    globalParameters["ValidateMatrixInstructions"] = config["ValidateMatrixInstructions"]
+
+    print1("Matrix instruction validation enabled")
+
+    validMFMA["_format9"] = []
+
+    for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"], validMFMA["X"], validMFMA["F8"], validWMMA]:
+      for MI in MFMA:
+        for bm in range(int(math.log(MI[3],2))+1):
+          for tt0 in range(1,validTT+1):
+            for tt1 in range(1,validTT+1):
+              for wave_m in range (3):
+                for wave_n in range(3):
+                  validMFMA["_format9"].append([MI[0],MI[1],MI[2],MI[3],2**bm,tt0,tt1,2**wave_m, 2**wave_n])
+    validMatrixInstructions = [[], [-1]] + validMFMA["H"] + validMFMA["S"] + validMFMA["B"] + validMFMA["D"] + validMFMA["B1k"] + validMFMA["X"]
+    validMatrixInstructions = validMatrixInstructions + validMFMA["_format9"]
+    
+    validSMFMA["_format9"] = []
+    for SMFMA in [validSMFMA["H"], validSMFMA["B"], validSMFMA["4xi8"], validSMFMA["F8"]]:
+      for MI in SMFMA:
+        for bm in range(int(math.log(MI[3],2))+1):
+          for tt0 in range(1,validTT+1):
+            for tt1 in range(1,validTT+1):
+              for wave_m in range (3):
+                for wave_n in range(3):
+                  validSMFMA["_format9"].append([MI[0],MI[1],MI[2],MI[3],2**bm,tt0,tt1,2**wave_m, 2**wave_n])
+    validSparseMatrixInstructions = validSMFMA["H"] + validSMFMA["B"] + validSMFMA["4xi8"]
+    validMatrixInstructions = validMatrixInstructions + validSparseMatrixInstructions + validSMFMA["_format9"]
+
+    validParameters["MatrixInstruction"] = validMatrixInstructions
 
   # Minimum Required Version
   if "MinimumRequiredVersion" in config:
