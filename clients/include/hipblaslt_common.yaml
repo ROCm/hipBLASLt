@@ -488,3 +488,4 @@ Defaults:
   compute_input_typeA: hipblaslt_datatype_invalid
   compute_input_typeB: hipblaslt_datatype_invalid
   scale_type: hipblaslt_datatype_invalid
+  
