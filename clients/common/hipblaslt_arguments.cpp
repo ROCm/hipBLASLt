@@ -51,7 +51,7 @@ void Arguments::init()
     memset(stride_d, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
     memset(stride_e, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
 
-    user_allocated_workspace = 0;
+    user_allocated_workspace = 128 * 1024 * 1024;
 
     M[0] = 128;
     N[0] = 128;

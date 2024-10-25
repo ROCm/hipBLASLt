@@ -530,8 +530,8 @@ try
          "C and D are stored in same memory")
 
         ("workspace",
-         value<size_t>(&arg.user_allocated_workspace)->default_value(0),
-         "Set fixed workspace memory size instead of using hipblaslt managed memory")
+         value<size_t>(&arg.user_allocated_workspace)->default_value(128 * 1024 * 1024),
+         "Set fixed workspace memory size (bytes) instead of using hipblaslt managed memory")
 
         ("log_function_name",
          bool_switch(&log_function_name)->default_value(false),

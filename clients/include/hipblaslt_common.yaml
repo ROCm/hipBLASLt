@@ -446,7 +446,7 @@ Defaults:
   known_bug_platforms: ''
   name: hipblaslt-bench
   c_equal_d: false
-  user_allocated_workspace: 0
+  user_allocated_workspace: 134217728
   activation_type: none
   activation_arg1: 0
   activation_arg2: 0
