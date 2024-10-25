@@ -83,6 +83,11 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
     auto       TciA = arg.compute_input_typeA;
     auto       TciB = arg.compute_input_typeB;
 
+    // setting compute_type to f16_r will automatically fallback to f32_r
+    if(Tc == HIPBLAS_COMPUTE_16F) {
+        Tc = HIPBLAS_COMPUTE_32F;
+    }
+
     if(arg.d_type == To)
     {
         if(TiA == To && TiB == To && To == HIP_R_16F && Tc == HIPBLAS_COMPUTE_32F)

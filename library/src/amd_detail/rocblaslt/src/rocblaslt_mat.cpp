@@ -398,6 +398,12 @@ rocblaslt_status
     std::vector<bool> gradient_vec;
 
     std::vector<rocblaslt::RocGemmProblemType> tempprobemtype;
+
+    if(compute_type == rocblaslt_compute_f16) {
+        compute_type = rocblaslt_compute_f32;
+        log_api(__func__, "setting compute_type to f16_r is not supported in hipBLASLt; it will automatically fallback to f32_r");
+    }
+
     for(int i = 0; i < matmul_descr.size(); i++)
     {
         // matrix A
@@ -774,6 +780,38 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
                                                   std::shared_ptr<void>& gemmData,
                                                   size_t&                gemmCount)
 {
+    // Internal assign
+    void*                   A             = inputs.a;
+    void*                   B             = inputs.b;
+    void*                   C             = inputs.c;
+    void*                   D             = inputs.d;
+    void*                   alpha         = inputs.alpha;
+    void*                   beta          = inputs.beta;
+    void*                   scaleA        = inputs.scaleA;
+    void*                   scaleB        = inputs.scaleB;
+    void*                   scaleC        = inputs.scaleC;
+    void*                   scaleD        = inputs.scaleD;
+    void*                   scaleE        = inputs.scaleE;
+    void*                   amaxD         = nullptr;
+    hipblasOperation_t&     opA           = problemtype.op_a;
+    hipblasOperation_t&     opB           = problemtype.op_b;
+    hipDataType&            type_a        = problemtype.type_a;
+    hipDataType&            type_b        = problemtype.type_b;
+    hipDataType&            type_c        = problemtype.type_c;
+    hipDataType&            type_d        = problemtype.type_d;
+    int                     num_batches_a = b;
+    rocblaslt_compute_type& compute_type  = problemtype.type_compute;
+    rocblaslt_epilogue&     epilogue      = rocEpilogue.mode;
+
+    // Others
+    bool strided_batch = true;
+    bool grouped_gemm  = false;
+
+    if(compute_type == rocblaslt_compute_f16) {
+        compute_type = rocblaslt_compute_f32;
+        log_api(__func__, "setting compute_type to f16_r is not supported in hipBLASLt; it will automatically fallback to f32_r");
+    }
+
     auto status = validateMatmulArgs(m,
                                      n,
                                      k,
@@ -1178,6 +1216,11 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
     std::vector<bool>    gradient_vec;
 
     std::vector<int8_t[16]> alpha_1(m.size());
+
+    if(compute_type == rocblaslt_compute_f16) {
+        compute_type = rocblaslt_compute_f32;
+        log_api(__func__, "setting compute_type to f16_r is not supported in hipBLASLt; it will automatically fallback to f32_r");
+    }
 
     for(int i = 0; i < m.size(); i++)
     {

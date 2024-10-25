@@ -551,6 +551,9 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
         {
             switch(computeType)
             {
+            case rocblaslt_compute_f16:
+                log_api(__func__, "setting compute_type to f16_r will automatically fallback to f32_r");
+                computeType = rocblaslt_compute_f32;
             case rocblaslt_compute_f32:
             case rocblaslt_compute_f32_fast_xf32:
             case rocblaslt_compute_f64:
