@@ -1104,9 +1104,10 @@ namespace Tensile
         if(gsu > 0)
             rv.numWorkGroups.y *= gsu;
 
-        size_t cuCount = 0;
-        size_t skGrid  = 0;
-        auto   tiles   = problem.getNumTiles(sizeMapping);
+        size_t cuCount   = 0;
+        size_t skGrid    = 0;
+        auto   tiles     = problem.getNumTiles(sizeMapping);
+        int    fullTiles = 0;
         if(sizeMapping.streamK != 0 || sizeMapping.persistentKernel != 0)
         {
             AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(&hardware);
@@ -1118,6 +1119,7 @@ namespace Tensile
                 rv.numWorkGroups.x = skGrid;
                 rv.numWorkGroups.y = 1;
                 rv.numWorkGroups.z = 1;
+                fullTiles          = pAMDGPU->skFullTiles;
             }
         }
 
@@ -1211,11 +1213,14 @@ namespace Tensile
                 // If total tiles is evenly divisble by grid size,
                 // then no Stream-K tiles are needed, all data-parallel
                 uint32_t skTiles = skGrid;
+                // If not evenly divisible, determine number of Stream-K tiles
                 if(tiles % skGrid != 0)
                 {
                     // Number of data-parallel tiles on each workgroup would be:
                     // dpTilesPerWG = bigEnough ? (tiles - skTiles) / skGrid : 0;
-                    skTiles = bigEnough ? skGrid + tiles % skGrid : tiles;
+                    skTiles = bigEnough ? skGrid * fullTiles + tiles % skGrid : tiles;
+                    // Cap Stream-K tiles at total number of tiles in case of large multiplier
+                    skTiles = min(skTiles, tiles);
                 }
 
                 uint32_t skItersPerWG = skTiles * itersPerTile / skGrid;
