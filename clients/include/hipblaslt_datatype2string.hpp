@@ -56,7 +56,7 @@ typedef enum class _hipblaslt_bias_source
 
 typedef enum class _hipblaslt_scaling_format
 {
-    none = 0,
+    none   = 0,
     Scalar = 1,
     Vector = 2,
 } hipblaslt_scaling_format;

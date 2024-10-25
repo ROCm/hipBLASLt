@@ -128,23 +128,23 @@ struct Arguments
     float                     activation_arg1; // threshold when activation type is relu
     float                     activation_arg2; // upperbound when activation type is relu
 
-    hipDataType           bias_type;
-    hipblaslt_bias_source bias_source;
-    bool                  bias_vector;
-    hipblaslt_scaling_format         scaleA;
-    hipblaslt_scaling_format         scaleB;
-    bool                  scaleC;
-    bool                  scaleD;
-    bool                  scaleE;
-    bool                  scaleAlpha_vector;
-    bool                  amaxScaleA;
-    bool                  amaxScaleB;
-    bool                  amaxD;
-    bool                  c_equal_d;
-    bool                  HMM;
-    bool                  use_e;
-    bool                  gradient;
-    bool                  norm_check_assert;
+    hipDataType              bias_type;
+    hipblaslt_bias_source    bias_source;
+    bool                     bias_vector;
+    hipblaslt_scaling_format scaleA;
+    hipblaslt_scaling_format scaleB;
+    bool                     scaleC;
+    bool                     scaleD;
+    bool                     scaleE;
+    bool                     scaleAlpha_vector;
+    bool                     amaxScaleA;
+    bool                     amaxScaleB;
+    bool                     amaxD;
+    bool                     c_equal_d;
+    bool                     HMM;
+    bool                     use_e;
+    bool                     gradient;
+    bool                     norm_check_assert;
 
     // API related
     bool    use_ext;

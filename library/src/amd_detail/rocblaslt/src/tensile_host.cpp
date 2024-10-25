@@ -434,10 +434,10 @@ namespace
     }
 
     const char* tensileComputeInputType_to_profile_string(Tensile::DataType typeCompute,
-                                                        Tensile::DataType F32XdlMathOp,
-                                                        Tensile::DataType typeComputeInput,
-                                                        Tensile::DataType typeA,
-                                                        Tensile::DataType typeB)
+                                                          Tensile::DataType F32XdlMathOp,
+                                                          Tensile::DataType typeComputeInput,
+                                                          Tensile::DataType typeA,
+                                                          Tensile::DataType typeB)
     {
         switch(typeCompute)
         {
@@ -590,77 +590,76 @@ namespace
     }
 
     inline void logProfileFromTensileDataGemm(const Tensile::ContractionProblemGemm& problem,
-                                            const Tensile::ContractionInputs&      inputs,
-                                            bool                                   isCpp)
+                                              const Tensile::ContractionInputs&      inputs,
+                                              bool                                   isCpp)
     {
-        log_profile(
-            "matmul",
-            "M",
-            problem.c().sizes()[0],
-            "N",
-            problem.c().sizes()[1],
-            "K",
-            problem.a().sizes()[problem.boundIndices()[0].a],
-            "lda",
-            problem.a().strides()[1],
-            "ldb",
-            problem.b().strides()[1],
-            "ldc",
-            problem.c().strides()[1],
-            "ldd",
-            problem.d().strides()[1],
-            "stride_a",
-            problem.a().strides()[2],
-            "stride_b",
-            problem.b().strides()[2],
-            "stride_c",
-            problem.c().strides()[2],
-            "stride_d",
-            problem.d().strides()[2],
-            "alpha",
-            ToString(inputs.alpha),
-            "beta",
-            ToString(inputs.beta),
-            "transA",
-            problem.transA() ? "T" : "N",
-            "transB",
-            problem.transB() ? "T" : "N",
-            "batch_count",
-            problem.batchSize(0),
-            "scaleA",
-            problem.useScaleAB().empty() ? 0 : (problem.useScaleAB() == "Vector" ? 2 : 1),
-            "scaleB",
-            problem.useScaleAB().empty() ? 0 : (problem.useScaleAB() == "Vector" ? 2 : 1),
-            "scaleAlpha_vector",
-            problem.useScaleAlphaVec() ? "true" : "false",
-            "gradient",
-            problem.useGradient() ? "true" : "false",
-            "use_e",
-            problem.useE() ? "true" : "false",
-            "bias_vector",
-            problem.useBias() ? "true" : "false",            
-            "bias_source",
-            problem.useBias() ? problem.tensor(problem.biasSrc()).getName() : "d",
-            "a_type",
-            hipDataType_to_bench_string(tensile2HipType(problem.a().dataType())),
-            "b_type",
-            hipDataType_to_bench_string(tensile2HipType(problem.b().dataType())),
-            "c_type",
-            hipDataType_to_bench_string(tensile2HipType(problem.c().dataType())),
-            "d_type",
-            hipDataType_to_bench_string(tensile2HipType(problem.d().dataType())),
-            "scale_type",
-            hipDataType_to_bench_string(tensile2HipType(problem.alphaType())),
-            "bias_type",
-            hipDataType_to_bench_string(tensile2HipType(problem.bias().dataType())),
-            "compute_type",
-            tensileComputeInputType_to_profile_string(problem.computeType(),
-                                                    problem.f32XdlMathOp(),
-                                                    problem.computeInputType(),
-                                                    problem.a().dataType(),
-                                                    problem.b().dataType()),
-            "activation_type",
-            tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
+        log_profile("matmul",
+                    "M",
+                    problem.c().sizes()[0],
+                    "N",
+                    problem.c().sizes()[1],
+                    "K",
+                    problem.a().sizes()[problem.boundIndices()[0].a],
+                    "lda",
+                    problem.a().strides()[1],
+                    "ldb",
+                    problem.b().strides()[1],
+                    "ldc",
+                    problem.c().strides()[1],
+                    "ldd",
+                    problem.d().strides()[1],
+                    "stride_a",
+                    problem.a().strides()[2],
+                    "stride_b",
+                    problem.b().strides()[2],
+                    "stride_c",
+                    problem.c().strides()[2],
+                    "stride_d",
+                    problem.d().strides()[2],
+                    "alpha",
+                    ToString(inputs.alpha),
+                    "beta",
+                    ToString(inputs.beta),
+                    "transA",
+                    problem.transA() ? "T" : "N",
+                    "transB",
+                    problem.transB() ? "T" : "N",
+                    "batch_count",
+                    problem.batchSize(0),
+                    "scaleA",
+                    problem.useScaleAB().empty() ? 0 : (problem.useScaleAB() == "Vector" ? 2 : 1),
+                    "scaleB",
+                    problem.useScaleAB().empty() ? 0 : (problem.useScaleAB() == "Vector" ? 2 : 1),
+                    "scaleAlpha_vector",
+                    problem.useScaleAlphaVec() ? "true" : "false",
+                    "gradient",
+                    problem.useGradient() ? "true" : "false",
+                    "use_e",
+                    problem.useE() ? "true" : "false",
+                    "bias_vector",
+                    problem.useBias() ? "true" : "false",
+                    "bias_source",
+                    problem.useBias() ? problem.tensor(problem.biasSrc()).getName() : "d",
+                    "a_type",
+                    hipDataType_to_bench_string(tensile2HipType(problem.a().dataType())),
+                    "b_type",
+                    hipDataType_to_bench_string(tensile2HipType(problem.b().dataType())),
+                    "c_type",
+                    hipDataType_to_bench_string(tensile2HipType(problem.c().dataType())),
+                    "d_type",
+                    hipDataType_to_bench_string(tensile2HipType(problem.d().dataType())),
+                    "scale_type",
+                    hipDataType_to_bench_string(tensile2HipType(problem.alphaType())),
+                    "bias_type",
+                    hipDataType_to_bench_string(tensile2HipType(problem.bias().dataType())),
+                    "compute_type",
+                    tensileComputeInputType_to_profile_string(problem.computeType(),
+                                                              problem.f32XdlMathOp(),
+                                                              problem.computeInputType(),
+                                                              problem.a().dataType(),
+                                                              problem.b().dataType()),
+                    "activation_type",
+                    tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
     }
 
     inline void
@@ -771,8 +770,8 @@ namespace
     }
 
     inline void logProfileFromTensileDataGemm(const Tensile::ContractionProblemGroupedGemm& problem,
-                                            const Tensile::ContractionGroupedInputs&      inputs,
-                                            bool                                          isCpp)
+                                              const Tensile::ContractionGroupedInputs&      inputs,
+                                              bool                                          isCpp)
     {
         size_t            gemmCount = problem.gemms.size();
         std::stringstream grouped_gemm_profile_string;
@@ -781,38 +780,53 @@ namespace
             grouped_gemm_profile_string << " m: " << problem.gemms[i].c().sizes()[0] << ",";
             grouped_gemm_profile_string << " n: " << problem.gemms[i].c().sizes()[1] << ",";
             grouped_gemm_profile_string
-                << " k: " << problem.gemms[i].a().sizes()[problem.gemms[i].boundIndices()[0].a] << ",";
+                << " k: " << problem.gemms[i].a().sizes()[problem.gemms[i].boundIndices()[0].a]
+                << ",";
             grouped_gemm_profile_string << " lda: " << problem.gemms[i].a().strides()[1] << ",";
             grouped_gemm_profile_string << " ldb: " << problem.gemms[i].b().strides()[1] << ",";
             grouped_gemm_profile_string << " ldc: " << problem.gemms[i].c().strides()[1] << ",";
             grouped_gemm_profile_string << " ldd: " << problem.gemms[i].d().strides()[1] << ",";
             if(problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size())
-                grouped_gemm_profile_string << " lde: "
-                                          << problem.gemms[i]
-                                                 .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
-                                                 .strides()[1] << ",";
-            grouped_gemm_profile_string << " stride_a: " << problem.gemms[i].a().strides()[2] << ",";
-            grouped_gemm_profile_string << " stride_b: " << problem.gemms[i].b().strides()[2] << ",";
-            grouped_gemm_profile_string << " stride_c: " << problem.gemms[i].c().strides()[2] << ",";
+                grouped_gemm_profile_string
+                    << " lde: "
+                    << problem.gemms[i]
+                           .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
+                           .strides()[1]
+                    << ",";
+            grouped_gemm_profile_string << " stride_a: " << problem.gemms[i].a().strides()[2]
+                                        << ",";
+            grouped_gemm_profile_string << " stride_b: " << problem.gemms[i].b().strides()[2]
+                                        << ",";
+            grouped_gemm_profile_string << " stride_c: " << problem.gemms[i].c().strides()[2]
+                                        << ",";
             if(i != (gemmCount - 1))
             {
-                grouped_gemm_profile_string << " stride_d: " << problem.gemms[i].d().strides()[2] << ",";
-                if(problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size())
-                    grouped_gemm_profile_string << " stride_e: "
-                                            << problem.gemms[i]
-                                                    .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
-                                                    .strides()[2] << ",";
+                grouped_gemm_profile_string << " stride_d: " << problem.gemms[i].d().strides()[2]
+                                            << ",";
+                if(problem.gemms[i]
+                       .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
+                       .strides()
+                       .size())
+                    grouped_gemm_profile_string
+                        << " stride_e: "
+                        << problem.gemms[i]
+                               .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
+                               .strides()[2]
+                        << ",";
             }
             else
             {
                 grouped_gemm_profile_string << " stride_d: " << problem.gemms[i].d().strides()[2];
-                if(problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size())
-                    grouped_gemm_profile_string << " stride_e: "
-                                            << problem.gemms[i]
-                                                    .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
-                                                    .strides()[2];                
+                if(problem.gemms[i]
+                       .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
+                       .strides()
+                       .size())
+                    grouped_gemm_profile_string
+                        << " stride_e: "
+                        << problem.gemms[i]
+                               .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
+                               .strides()[2];
             }
-
         }
         log_profile(
             "matmul",
@@ -843,9 +857,11 @@ namespace
             "use_e",
             problem.gemms[0].useE() ? "true" : "false",
             "bias_vector",
-            problem.gemms[0].useBias() ? "true" : "false",            
+            problem.gemms[0].useBias() ? "true" : "false",
             "bias_source",
-            problem.gemms[0].useBias() ? problem.gemms[0].tensor(problem.gemms[0].biasSrc()).getName() : "d",
+            problem.gemms[0].useBias()
+                ? problem.gemms[0].tensor(problem.gemms[0].biasSrc()).getName()
+                : "d",
             "a_type",
             hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].a().dataType())),
             "b_type",
@@ -860,10 +876,10 @@ namespace
             hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].bias().dataType())),
             "compute_type",
             tensileComputeInputType_to_profile_string(problem.gemms[0].computeType(),
-                                                    problem.gemms[0].f32XdlMathOp(),
-                                                    problem.gemms[0].computeInputType(),
-                                                    problem.gemms[0].a().dataType(),
-                                                    problem.gemms[0].b().dataType()),
+                                                      problem.gemms[0].f32XdlMathOp(),
+                                                      problem.gemms[0].computeInputType(),
+                                                      problem.gemms[0].a().dataType(),
+                                                      problem.gemms[0].b().dataType()),
             "activation_type",
             tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()));
     }
@@ -1442,7 +1458,7 @@ namespace
         }
 
         // TensileHost is not copyable or assignable
-        TensileHost(const TensileHost&)            = delete;
+        TensileHost(const TensileHost&) = delete;
         TensileHost& operator=(const TensileHost&) = delete;
 
         // Get the number of devices
@@ -1956,7 +1972,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         {
             logBenchFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, false);
         }
-        else if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
+        if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
         {
             logProfileFromTensileDataGemm(data->problem, data->inputs, false);
         }
@@ -2358,7 +2374,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
             {
                 logBenchFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, true);
             }
-            else if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
+            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
             {
                 logProfileFromTensileDataGemm(data->problem, data->inputs, true);
             }
@@ -2379,7 +2395,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                 logBenchFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, true);
             }
             //TODO: add profile logging for grouped gemm
-            /*else if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
+            /*if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
             {
                 logProfileFromTensileDataGemm(data->problem, data->inputs, true);
             }*/
@@ -3371,8 +3387,13 @@ std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblasl
     std::shared_ptr<hipDeviceProp_t> deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+<<<<<<< HEAD
     std::shared_ptr<TensileLite::Hardware> hardware;
     hardware = TensileLite::hip::GetDevice(*deviceProp);
+=======
+    std::shared_ptr<Tensile::Hardware> hardware;
+    hardware = Tensile::hip::GetDevice(*deviceProp);
+>>>>>>> 46e345ee (Address the comments)
 
     if(!library)
     {

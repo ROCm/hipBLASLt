@@ -49,8 +49,8 @@ class tuple_helper
     template <typename FUNC, typename TUP, size_t... I>
     static void apply_pairs_impl(FUNC&& func, const TUP& tuple, std::index_sequence<I...>)
     {
-        // TODO: Replace with C++17 fold expression
-        // (func(std::get<I * 2>(tuple), std::get<I * 2 + 1>(tuple)), ...);
+        // std::get<I * 2>(tuple) and std::get<I * 2 + 1>(tuple) are used to access elements in the tuple at specific positions, based on the index I.
+        // func(output stream) is called with two parameters (name, value) pair, each obtained from the tuple.
         (void)(int[]){(func(std::get<I * 2>(tuple), std::get<I * 2 + 1>(tuple)), 0)...};
     }
 
@@ -67,8 +67,7 @@ public:
 
     // Print a tuple which is expected to be (name1, value1, name2, value2, ...)
     template <typename TUP>
-    static std::ostream& print_tuple_pairs(std::ostream& os,
-                                                       const TUP&                tuple)
+    static std::ostream& print_tuple_pairs(std::ostream& os, const TUP& tuple)
     {
         static_assert(std::tuple_size<TUP>{} % 2 == 0, "Tuple size must be even");
 

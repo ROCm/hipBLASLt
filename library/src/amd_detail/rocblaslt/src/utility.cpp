@@ -239,7 +239,7 @@ const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode)
     case rocblaslt_layer_mode_log_bench:
         return "Bench";
     case rocblaslt_layer_mode_log_profile:
-        return "Profile";        
+        return "Profile";
     default:
         return "Invalid";
     }
@@ -329,4 +329,3 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
                      hipDataType_to_string(matmul_desc->bias_type));
     return std::string(buf.get());
 }
-
