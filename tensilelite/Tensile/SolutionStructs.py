@@ -496,6 +496,12 @@ class ProblemType(Mapping):
       name += self["F32XdlMathOp"].toChar()
       name += "_"
 
+    if self["SwizzleTensorA"]:
+      name += "STA_"
+
+    if self["SwizzleTensorB"]:
+      name += "STB_"
+
     # Other
     if self["UseBeta"]: name += "B"
     if self["HighPrecisionAccumulate"] and not self["SilentHighPrecisionAccumulate"]: name += "H"
@@ -1917,9 +1923,13 @@ class Solution(collections.abc.Mapping):
       reject(state, "DirectToVgpr%c does not supports InnerUnroll>1"%(tc))
       return False
 
+    if tc == 'A' and (state["ProblemType"]["TLUA"] == state["UnrollMajorLDSA"]):
+      reject(state, "DirectToVgprA does not supports TLUA = UnrollMajorLDSA (different pattern of A)")
+      return False
+
     # Reject TLU = UnrollMajorLDS (B only)
     if tc == 'B' and (state["ProblemType"]["TLUA"] == state["UnrollMajorLDSA"] or state["ProblemType"]["TLUB"] == state["UnrollMajorLDSB"]):
-      reject(state, "DirectToVgpr%c does not supports TLU = UnrollMajorLDS"%(tc))
+      reject(state, "DirectToVgprB does not supports TLUA = UnrollMajorLDSA or TLUB = UnrollMajorLDSB")
       return False
 
     # does not work with UnrollLoopSwapGlobalReadOrder
@@ -2138,7 +2148,7 @@ class Solution(collections.abc.Mapping):
     #   state["BatchSizeEqual"] = 1
 
     isa = tuple(state["ISA"])
-    
+
     if state["StreamK"] != 0:
       state["GlobalSplitU"] = 0 # Cannot enable both Stream-K and GSU
       state["GlobalSplitUAlgorithm"] = "MultipleBuffer" # Set default Algorithm
@@ -2732,6 +2742,25 @@ class Solution(collections.abc.Mapping):
         if (state["ProblemType"]["DataTypeA"].isFloat8() == False) and (state["ProblemType"]["DataTypeB"].isFloat8() == False):
             reject(state, "one of DataTypeA or DataTypeB need to be float8")
             return
+
+    #for tensor swizzling, we force pack-k == 2
+    for tc in ("A", "B",):
+      if state["ProblemType"][f"SwizzleTensor{tc}"]:
+        if not state["EnableMatrixInstruction"]:
+          reject(state, f"Tensor {tc} swizzling supports MI only")
+        state[f"GlobalReadVectorWidth{tc}"] = state[f"MIInputPerThread{tc}"] * 2
+
+    if state["ProblemType"]["SwizzleTensorA"]:
+      if state["ProblemType"]["TransposeA"] is False:
+        reject(state, f"Tensor A swizzling supports TN or TT only")
+      if state["DirectToVgprA"] is False:
+        reject(state, f"Tensor A swizzling requires DirectToVgprA")
+
+    if state["ProblemType"]["SwizzleTensorB"]:
+      if state["ProblemType"]["TransposeB"] is True:
+        reject(state, f"Tensor B swizzling supports NN or TN only")
+      if state["DirectToVgprB"] is False:
+        reject(state, f"Tensor B swizzling requires DirectToVgprB")
 
     def calcOptGRVW(lrvw: int, unrollMajorLDS: bool, datatype: DataType) -> int:
       # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.

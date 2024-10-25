@@ -562,7 +562,7 @@ class KernelWriterAssembly(KernelWriter):
                 ri += self.states.a.numVgprValuPerBlock
 
     ri = 0
-    if self.states.b.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
+    if self.states.b.numVgprValu > 0: # Do not generate vgprValuB if numVgprValuB is 0
       numBiFactor = numBi
       if kernel["DirectToVgprB"] and (self.states.packDTVB or self.states.convDTVB):
         # DirectToVgpr case, we need LoopIters * 2 buffers
@@ -609,7 +609,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(RegSet("v", "vgprValuMetadata", self.states.m.startVgprValu))
       else:
         ri = 0
-        if self.states.m.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
+        if self.states.m.numVgprValu > 0: # Do not generate vgprValu if numVgprValu is 0
           if self.states.lrvwTileMetadata > 1:
             for bi in range(0,PLR): # buffer indices
               for iui in range(0, kernel["InnerUnroll"]):
@@ -791,6 +791,10 @@ class KernelWriterAssembly(KernelWriter):
     module.add(ValueSet("BpeAGRLog2", log2(tPA["bpeGR"])))
     module.add(ValueSet("BpeBGR", tPB["bpeGR"]))
     module.add(ValueSet("BpeBGRLog2", log2(tPB["bpeGR"])))
+    # TODO- get real value from MI-InstM
+    if kernel["ProblemType"]["SwizzleTensorA"]:
+      module.add(ValueSet("MI_M", 16))
+    #
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
       module.add(ValueSet("BpeMetadata", tPM["bpe"]))
       module.add(ValueSet("BpeMetadataLog2", log2(tPM["bpe"])))
@@ -819,19 +823,23 @@ class KernelWriterAssembly(KernelWriter):
     # Flat addressing modes expect the GLOBAL_OFFSET to initialize a full 64-bit address
 
     GOList =  [ \
-        ("C", list(range(0, kernel["ProblemType"]["NumIndicesC"])), kernel["BufferStore"], None), \
-        ("A", kernel["ProblemType"]["IndexAssignmentsA"], kernel["BufferLoad"], tPA), \
-        ("B", kernel["ProblemType"]["IndexAssignmentsB"], kernel["BufferLoad"], tPB) ]
+        ("C", list(range(0, kernel["ProblemType"]["NumIndicesC"])), kernel["BufferStore"], None, False), \
+        ("A", kernel["ProblemType"]["IndexAssignmentsA"], kernel["BufferLoad"], tPA, False), \
+        ("B", kernel["ProblemType"]["IndexAssignmentsB"], kernel["BufferLoad"], tPB, False) ]
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-      GOList.append(("Metadata", kernel["ProblemType"]["IndexAssignmentsMetadata"], kernel["BufferLoad"], tPM))
+      GOList.append(("Metadata", kernel["ProblemType"]["IndexAssignmentsMetadata"], kernel["BufferLoad"], tPM, False))
+    if kernel["ProblemType"]["SwizzleTensorA"]:
+      GOList.append(("A", kernel["ProblemType"]["IndexAssignmentsA"], kernel["BufferLoad"], tPA, True))
 
-    for (tc, indices, justOffset32, tP) in GOList:
+    for (tc, indices, justOffset32, tP, isSwizzled) in GOList:
 
       # BufferStore does not use this macro so don't generate it:
       if tc == "C" and kernel["BufferStore"]:
         continue
 
-      module.addComment1("Global Offset %s"%tc)
+      # function name and comment
+      suffix_tc = tc + "_SWIZZLED" if isSwizzled else tc
+      module.addComment1("Global Offset %s"%suffix_tc)
       numDim = len(indices)
       idxChars = []
       for i in indices:
@@ -869,7 +877,11 @@ class KernelWriterAssembly(KernelWriter):
           elif not justOffset32: # buffer/justOffset32 scalars are included in SRD not the offset, so skip here
             calcDims.append(i)
             macroArgs.append("sgprOffset%s:req" % idxChars[i])
-      macro = Macro("GLOBAL_OFFSET_%s" % tc, "vgprAddr:req", *macroArgs, "vgprTmp:req")
+
+      # swizzle: passing fake stride (swizzled stride)
+      if isSwizzled:
+        macroArgs.append("sgprStrideSW%s:req" % tc)
+      macro = Macro("GLOBAL_OFFSET_%s" % suffix_tc, "vgprAddr:req", *macroArgs, "vgprTmp:req")
 
       # Each index may be skipped, scaled by stride, or unscaled
       # If destLo is unset, no accumulation is necessary.
@@ -977,7 +989,13 @@ class KernelWriterAssembly(KernelWriter):
               offset = "v[\\vgprTmp+0]"
 
             # offset * stride
-            macro.add(VMulLOU32(dst=destLo,
+            if isSwizzled:
+              macro.add(VMulLOU32(dst=destLo,
+                src0="s[\\sgprStrideSW%s]" % tc, \
+                src1=offset, \
+                comment="SWZ: mul d%u lower"%i))
+            else:
+              macro.add(VMulLOU32(dst=destLo,
                 src0=self.strideRef(tc, indices[i]), \
                 src1=offset, \
                 comment="mul d%u lower"%i))
@@ -2239,13 +2257,29 @@ class KernelWriterAssembly(KernelWriter):
         module.add(VLShiftLeftB32(dst=vgpr(v), shiftHex=hex(log2(margin)), src=vgpr(v), comment="gro%s%s_%u *= %d"%(tP["tensorChar"], tP["tileChar"], 0, margin)))
       else:
         module.add(VMovB32(dst=vgpr(v), src=vgpr(tP["gpr"]["tReg"]), comment="gro%s%s_%u"%(tP["tensorChar"], tP["tileChar"], 0) ))
+        # TODO- current for A only
+        if tP["isSwizzled"]:
+          swizzleStridePerWave = self.sgprPool.checkOut(1)
+          WvG_M = kernel["MIWaveGroup"][0]
+          # Calc stride = numKr * WaveG[0], TODO- 32 should be MI_K * 2
+          module.add(SLShiftRightB32(dst=sgpr(swizzleStridePerWave), shiftHex=hex(log2(32)), src=sgpr("SizesSum"),  comment="SWZ: numKr = DimK / 32"))
+          module.add(SMulI32(dst=sgpr(swizzleStridePerWave), src0=hex(WvG_M), src1=sgpr(swizzleStridePerWave), comment="SWZ: numKr *= MI_WvG[0] (%u), how many wave-M per WG" % WvG_M))
 
       for l in range(1, tP["nrt"]):
         strideValue = stride
         if strideInterleave and (l & strideMask) != 0:
           strideValue = 1
-        module.add(VAddCOU32(dst=vgpr(v+l), dst1=VCC(), src0=strideValue, \
+        if not tP["isSwizzled"]:
+          module.add(VAddCOU32(dst=vgpr(v+l), dst1=VCC(), src0=strideValue, \
             src1=vgpr(v+l-1), comment="gro%s%s_%u += %s"%(tP["tensorChar"], tP["tileChar"], l, strideIdx) ))
+        # swizzle
+        else:
+          module.add(VAddCOU32(dst=vgpr(v+l), dst1=VCC(), src0=sgpr(swizzleStridePerWave), \
+            src1=vgpr(v+l-1), comment="SWZ: gro%s%s_%u += (numKr * WaveG[0])"%(tP["tensorChar"], tP["tileChar"], l) ))
+      if tP["isSwizzled"]:
+        self.sgprPool.checkIn(swizzleStridePerWave)
+
+      # TODO- check for swizzle
       if numExtraPackedOffsetsPerTile:
         tmpV = self.vgprPool.checkOutAligned(2,2,"packTmp", self.states.preventVgprOverflowDuringNewTile)
 
@@ -2283,6 +2317,13 @@ class KernelWriterAssembly(KernelWriter):
     tc = tP["tensorChar"]
     if kernel["_UseSgprForGRO"]:
       tP["gpr"]["unrollOffsets"] = tP["gpr"]["uReg"]
+    # TODO- so far only A, check B
+    elif tP["isSwizzled"]:
+      numUnrollOffsets = 1
+      tP["gpr"]["unrollOffsets"] = self.vgprPool.checkOut(numUnrollOffsets, "unrollOffsets", self.states.preventVgprOverflowDuringNewTile)
+      v = tP["gpr"]["unrollOffsets"]
+      module.addComment0("SWZ: Unroll increament is calculated in I-Offset since tile-memory is flattened")
+      module.add(VMovB32(dst=vgpr(v), src=vgpr(tP["gpr"]["uReg"]), comment="SWZ: only one gro%s%s_%u Base"%(tP["tensorChar"], self.states.unrollChar, 0)))
     else:
       numUnrollOffsets = tP["nru"]
       tP["gpr"]["unrollOffsets"] = self.vgprPool.checkOut(numUnrollOffsets, "unrollOffsets", self.states.preventVgprOverflowDuringNewTile)
@@ -2480,6 +2521,11 @@ class KernelWriterAssembly(KernelWriter):
     graIdx = 0
     swapPerpPara = (((tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]) and (not tP["tlu"]) and tP["nrp"] > 1)
 
+    if tP["isSwizzled"]:
+      tP["swizzledBlockSize"] = self.sgprPool.checkOut(1)
+      module.add(SMovB32(dst=sgpr(tP["swizzledBlockSize"]), src=hex(16*32), comment="SWZ: swizzled block = MI_M(%u) * MI_K(%u) * 2" %(16, 16)))
+
+    # DTVA/B always go this way, including swizzled
     if not swapPerpPara:
       for perp in range(0, tP["nrp"]):
         for sPerp in range(0, tP["nrpv"]):
@@ -2497,6 +2543,9 @@ class KernelWriterAssembly(KernelWriter):
               # single loop
               singleModule, graIdx = self.graFinalOffsetsSingleLoop(kernel, tP, tc, tmp, graIdx, perp, sPerp, para, sPara)
               module.add(singleModule)
+
+    if tP["isSwizzled"]:
+      self.sgprPool.checkIn(tP["swizzledBlockSize"])
 
     self.vgprPool.checkIn(tP["gpr"]["lwoT"])
     tP["gpr"]["lwoT"] = None
@@ -2546,7 +2595,10 @@ class KernelWriterAssembly(KernelWriter):
     # single loop start
 
     # vgpr assignments
-    if tP["tlu"]:
+    if tP["isSwizzled"]:
+      vgprTile   = tP["vgprTileOffsets"]   + perp*tVW + sPara*tVS
+      vgprUnroll = tP["gpr"]["unrollOffsets"] # unroll: always use base unroll
+    elif tP["tlu"]:
       vgprTile   = tP["vgprTileOffsets"]   + para*tVW + sPara*tVS
       vgprUnroll = tP["gpr"]["unrollOffsets"] + perp*uVW + sPerp*uVS
     else:
@@ -2557,7 +2609,10 @@ class KernelWriterAssembly(KernelWriter):
       # emit global offset macro
       # TODO -refactor this and macro def to pass all indices, use the ones we need
       if kernel["BufferLoad"]:
-        bfName = "GLOBAL_OFFSET_%s" % tP["tensorChar"]
+        if tP["isSwizzled"]:
+          bfName = "GLOBAL_OFFSET_%s_SWIZZLED" % tP["tensorChar"]
+        else:
+          bfName = "GLOBAL_OFFSET_%s" % tP["tensorChar"]
         bfArgs = ["vgprGlobalReadOffset%s+%u"%(tP["tensorChar"], graIdx)]
       else:
         bfName = "GLOBAL_OFFSET_%s" % tP["tensorChar"]
@@ -2585,6 +2640,15 @@ class KernelWriterAssembly(KernelWriter):
             iaToGpr[i] = vgprUnroll
             bfArgs.append( "%2u" % iaToGpr[i] )
           # other summation indices are ignored
+
+      # Swizzled version:
+      #   1. passing swizzled block size as stride to macro
+      #   2. If moving unroll = advance I-Offset for one swizzled block
+      if tP["isSwizzled"]:
+        bfArgs.append(tP["swizzledBlockSize"])
+        if para > 0:
+          module.add(VAddCOU32(dst=vgpr(vgprTile), dst1=VCC(), src0=hex(1), src1=vgpr(vgprTile), \
+                               comment="SWZ: groAL = groA0I + 1 Block of flattened mem"))
 
       bfArgs.append( "%u" % tmp )
       bfComment = "gRO%s_%u_%u_%u_%u" % (tP["tensorChar"], para, sPara, perp, sPerp)
@@ -3170,7 +3234,8 @@ class KernelWriterAssembly(KernelWriter):
 
     # DTV case, use tlu path
     isDTVAB = (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]
-    if tP["tlu"] or isDTVAB:
+    # swizzled goes to else
+    if (tP["tlu"] or isDTVAB) and (not tP["isSwizzled"]):
       rReg = self.vgprPool.checkOut(1, "lwaTA rReg0", self.states.preventVgprOverflowDuringNewTile) # tile = serial%divisor
       qReg = self.vgprPool.checkOut(1, "lwaTA qReg0", self.states.preventVgprOverflowDuringNewTile) # unroll = serial/divisor
       tReg = rReg
@@ -3203,7 +3268,15 @@ class KernelWriterAssembly(KernelWriter):
     # store DirectToVgpr K interval for later use
     dtvKInterval = 1
 
-    if isDTVAB:
+    if tP["isSwizzled"]:
+      module.addComment0("TileAssignment for DirectToVgpr%s and SwizzleTensor%s" % (tc, tc))
+      module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, kernel["WavefrontSize"], tmpVgprRes))
+      with self.allocTmpSgpr(1) as tmpSgprInfo:
+        tmpSgpr = tmpSgprInfo.idx
+        # Calc numKr, TODO- 32 should be MI_K * 2
+        module.add(SLShiftRightB32(dst=sgpr(tmpSgpr), shiftHex=hex(log2(32)), src=sgpr("SizesSum"),  comment="SWZ: numKr = DimK / 32"))
+        module.add(VMulU32U24(dst=vgpr(qReg), src0=sgpr(tmpSgpr), src1=vgpr(qReg), comment="SWZ: wave-id *= numKr"))
+    elif isDTVAB:
       # offset calculation for DirectToVgpr
       # call function from LraTileAssignmentMFMA for DirectToVgpr
       module.addComment0("TileAssignment for DirectToVgpr%s" % tc)
