@@ -3292,7 +3292,6 @@ std::string getKernelNameFromData(rocblaslt_handle             handle,
     std::string kernelName = "";
     if(kernels.empty())
         return kernelName;
-    std::cout << kernels[0].kernelName << std::endl;
     kernelName += kernels[0].kernelName;
     for(size_t i = 1; i < kernels.size(); i++)
     {
