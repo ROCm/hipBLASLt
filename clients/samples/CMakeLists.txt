@@ -58,6 +58,8 @@ add_executable( sample_hipblaslt_ext_op_layernorm 22_layernorm_ext/sample_hipbla
 add_executable( sample_hipblaslt_gemm_ext_deprecated deprecated/sample_hipblaslt_gemm_ext_deprecated.cpp)
 add_executable( sample_hipblaslt_ext_op_amax 23_amax_ext/sample_hipblaslt_ext_op_amax.cpp)
 add_executable( sample_hipblaslt_ext_op_amax_with_scale 24_amax_with_scale_ext/sample_hipblaslt_ext_op_amax_with_scale.cpp)
+add_executable( sample_hipblaslt_gemm_scale_a_b_vector 25_gemm_scale_a_b_vector/sample_hipblaslt_gemm_scale_a_b_vector.cpp)
+add_executable( sample_hipblaslt_gemm_scale_a_b_vector_ext 25_gemm_scale_a_b_vector_ext/sample_hipblaslt_gemm_scale_a_b_vector_ext.cpp)
 
 
 set(samples sample_hipblaslt_gemm
@@ -95,7 +97,9 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_ext_op_layernorm
             sample_hipblaslt_gemm_ext_deprecated
             sample_hipblaslt_ext_op_amax
-            sample_hipblaslt_ext_op_amax_with_scale)
+            sample_hipblaslt_ext_op_amax_with_scale
+            sample_hipblaslt_gemm_scale_a_b_vector
+            sample_hipblaslt_gemm_scale_a_b_vector_ext)
 
 set( sample_list_all ${samples})
 
