@@ -1710,7 +1710,7 @@ void testing_matmul_with_bias(const Arguments& arg,
     }
 
     // set preference
-    size_t                     max_workspace_size = 128 * 1024 * 1024;
+    size_t                     max_workspace_size = arg.user_allocated_workspace;
     hipblaslt_local_preference pref;
     EXPECT_HIPBLAS_STATUS(
         hipblasLtMatmulPreferenceSetAttribute(pref,
