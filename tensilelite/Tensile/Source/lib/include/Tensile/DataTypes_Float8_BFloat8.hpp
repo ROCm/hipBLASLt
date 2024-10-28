@@ -295,7 +295,7 @@ namespace TensileLite
             // NOTE: made clipping default again
             if(T == hip_f8_type::bf8)
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     data = internal::cast_to_f8<float, false /*is_funz*/>(
                         v, 2, 5, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
@@ -318,7 +318,7 @@ namespace TensileLite
             }
             else /* fp8*/
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     data = internal::cast_to_f8<float, false /*is_funz*/>(
                         v, 3, 4, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
@@ -404,7 +404,7 @@ namespace TensileLite
             // NOTE: made clipping default again
             if(T == hip_f8_type::bf8)
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     data = internal::cast_to_f8<float, false /*is_funz*/>(
                         v, 2, 5, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
@@ -427,7 +427,7 @@ namespace TensileLite
             }
             else /* fp8*/
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     data = internal::cast_to_f8<float, false /*is_funz*/>(
                         v, 3, 4, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
@@ -513,7 +513,7 @@ namespace TensileLite
             assert(T == hip_f8_type::fp8 || T == hip_f8_type::bf8);
             if(T == hip_f8_type::bf8)
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
                 else
@@ -533,7 +533,7 @@ namespace TensileLite
             }
             else /* fp8*/
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 3, 4, false);
                 else
@@ -594,7 +594,7 @@ namespace TensileLite
             assert(T == hip_f8_type::fp8 || T == hip_f8_type::bf8);
             if(T == hip_f8_type::bf8)
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
                 else
@@ -614,7 +614,7 @@ namespace TensileLite
             }
             else /* fp8*/
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
                 else
@@ -642,7 +642,7 @@ namespace TensileLite
         inline HIP_HOST_DEVICE bool is_zero() const
         {
             if(get_hip_f8_bias_mode()
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                || IsOCPSupported()
 #endif
             )
@@ -658,7 +658,7 @@ namespace TensileLite
         // check for nan
         inline HIP_HOST_DEVICE bool is_nan() const
         {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
             if(IsOCPSupported())
             {
                 return (T == hip_f8_type::fp8)   ? ((data & 0x7f) == 0x7f)
@@ -694,7 +694,7 @@ namespace TensileLite
         // check for inf
         inline HIP_HOST_DEVICE bool is_inf() const
         {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
             if(IsOCPSupported())
             {
                 return (T == hip_f8_type::bf8) ? (data & 0x7f) == 0x7c : false;
