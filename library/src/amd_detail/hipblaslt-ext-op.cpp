@@ -227,9 +227,9 @@ namespace
         return lib;
     }
 
-    std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>>& extOpLibraries()
+    std::vector<std::unique_ptr<TensileLite::hip::SolutionAdapter>>& extOpLibraries()
     {
-        static std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> adapters;
+        static std::vector<std::unique_ptr<TensileLite::hip::SolutionAdapter>> adapters;
 
         if(adapters.size())
         {
@@ -241,7 +241,7 @@ namespace
 
         for(std::size_t i = 0; i < numDevices; ++i)
         {
-            adapters.emplace_back(std::make_unique<Tensile::hip::SolutionAdapter>());
+            adapters.emplace_back(std::make_unique<TensileLite::hip::SolutionAdapter>());
         }
 
         int currentDevice{};
@@ -295,7 +295,7 @@ hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
     int         currentDeviceId{};
     auto        err       = hipGetDevice(&currentDeviceId);
     auto&       adapter   = extOpLibraries().at(currentDeviceId);
-    auto        gpu       = Tensile::hip::GetCurrentDevice();
+    auto        gpu       = TensileLite::hip::GetCurrentDevice();
     const auto  archName  = trimArchName(gpu->archName());
     auto&       masterLib = getExtOpMasterLibrary();
     const auto& lib
@@ -306,13 +306,13 @@ hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
         = lib.findBestSolution(SoftmaxProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
-    Tensile::KernelArguments kArgs(false);
+    TensileLite::KernelArguments kArgs(false);
     kArgs.append("input", input);
     kArgs.append("output", output);
     kArgs.append("m", m);
     kArgs.append("n", n);
     const auto                numWorkgroups = getSoftmaxNumWorkgroups(m, tileM);
-    Tensile::KernelInvocation invocation{kernelName,
+    TensileLite::KernelInvocation invocation{kernelName,
                                          sol->getCodeObjectPath(),
                                          false,
                                          {WORKGROUP_SIZE, 1, 1},
@@ -355,7 +355,7 @@ hipblasStatus_t hipblasltLayerNormRun(hipDataType datatype,
     int         currentDeviceId{};
     auto        err       = hipGetDevice(&currentDeviceId);
     auto&       adapter   = extOpLibraries().at(currentDeviceId);
-    auto        gpu       = Tensile::hip::GetCurrentDevice();
+    auto        gpu       = TensileLite::hip::GetCurrentDevice();
     const auto  archName  = trimArchName(gpu->archName());
     auto&       masterLib = getExtOpMasterLibrary();
     const auto& lib
@@ -368,7 +368,7 @@ hipblasStatus_t hipblasltLayerNormRun(hipDataType datatype,
     err                      = adapter->initKernel(kernelName);
     const auto numWorkgroups = m;
 
-    Tensile::KernelInvocation invocation;
+    TensileLite::KernelInvocation invocation;
     invocation.kernelName      = kernelName;
     invocation.codeObjectFile  = sol->getCodeObjectPath();
     invocation.workGroupSize.x = sol->getNumWorkitems();
@@ -381,7 +381,7 @@ hipblasStatus_t hipblasltLayerNormRun(hipDataType datatype,
     invocation.numWorkItems.y  = numWorkgroups;
     invocation.numWorkItems.z  = 1;
     invocation.sharedMemBytes  = 32 * sizeof(float);
-    invocation.args            = Tensile::KernelArguments(false);
+    invocation.args            = TensileLite::KernelArguments(false);
     invocation.args.reserve(60, 9);
     invocation.args.append("output", output);
     invocation.args.append("mean", mean);
@@ -423,7 +423,7 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     int         currentDeviceId{};
     auto        err       = hipGetDevice(&currentDeviceId);
     auto&       adapter   = extOpLibraries().at(currentDeviceId);
-    auto        gpu       = Tensile::hip::GetCurrentDevice();
+    auto        gpu       = TensileLite::hip::GetCurrentDevice();
     const auto  archName  = trimArchName(gpu->archName());
     auto&       masterLib = getExtOpMasterLibrary();
     const auto& lib
@@ -436,7 +436,7 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
 
-    Tensile::KernelInvocation invocation;
+    TensileLite::KernelInvocation invocation;
     invocation.kernelName      = kernelName;
     invocation.codeObjectFile  = sol->getCodeObjectPath();
     invocation.workGroupSize.x = sol->getNumWorkitems();
@@ -449,7 +449,7 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     invocation.numWorkItems.y  = 1;
     invocation.numWorkItems.z  = 1;
     invocation.sharedMemBytes  = 32 * sizeof(float);
-    invocation.args            = Tensile::KernelArguments(false);
+    invocation.args            = TensileLite::KernelArguments(false);
     invocation.args.reserve(20, 3);
     invocation.args.append("output", output);
     invocation.args.append("input", input);
@@ -491,7 +491,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     int         currentDeviceId{};
     auto        err       = hipGetDevice(&currentDeviceId);
     auto&       adapter   = extOpLibraries().at(currentDeviceId);
-    auto        gpu       = Tensile::hip::GetCurrentDevice();
+    auto        gpu       = TensileLite::hip::GetCurrentDevice();
     const auto  archName  = trimArchName(gpu->archName());
     auto&       masterLib = getExtOpMasterLibrary();
     const auto& lib
@@ -513,7 +513,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
 
-    Tensile::KernelInvocation invocation;
+    TensileLite::KernelInvocation invocation;
     invocation.kernelName      = kernelName;
     invocation.codeObjectFile  = sol->getCodeObjectPath();
     invocation.workGroupSize.x = sol->getNumWorkitems();
@@ -526,7 +526,7 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     invocation.numWorkItems.y  = 1;
     invocation.numWorkItems.z  = 1;
     invocation.sharedMemBytes  = 32 * sizeof(float);
-    invocation.args            = Tensile::KernelArguments(false);
+    invocation.args            = TensileLite::KernelArguments(false);
     invocation.args.reserve(20, 3);
     invocation.args.append("output", output);
     invocation.args.append("outputD", outputD);

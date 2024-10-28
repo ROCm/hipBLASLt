@@ -32,7 +32,7 @@
 #include <cstddef>
 #include <unordered_set>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -161,4 +161,4 @@ namespace Tensile
             const static bool flow = true;
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

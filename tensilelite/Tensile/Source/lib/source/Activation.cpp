@@ -27,7 +27,7 @@
 #include <Tensile/Activation.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     std::string ToString(ActivationType d)
     {

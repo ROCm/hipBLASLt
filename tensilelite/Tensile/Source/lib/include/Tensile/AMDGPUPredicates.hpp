@@ -31,7 +31,7 @@
 
 #include <vector>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Predicates
     {
@@ -147,4 +147,4 @@ namespace Tensile
  * @}
  */
     } // namespace Predicates
-} // namespace Tensile
+} // namespace TensileLite

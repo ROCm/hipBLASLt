@@ -26,7 +26,7 @@
 
 #pragma once
 
-namespace Tensile
+namespace TensileLite
 {
     class TensorOp;
 }

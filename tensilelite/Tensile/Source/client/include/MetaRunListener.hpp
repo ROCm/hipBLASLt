@@ -34,7 +34,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -91,4 +91,4 @@ namespace Tensile
         };
 
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

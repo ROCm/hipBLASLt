@@ -34,7 +34,7 @@
 
 #include <Tensile/Singleton.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * @brief Common place for defining flags which enable debug behaviour.
@@ -143,4 +143,4 @@ namespace Tensile
 
         Debug();
     };
-} // namespace Tensile
+} // namespace TensileLite

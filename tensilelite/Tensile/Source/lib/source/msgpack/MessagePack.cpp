@@ -30,7 +30,7 @@
 
 #include <fstream>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -126,7 +126,7 @@ namespace Tensile
             LibraryIOContext<MySolution>    context{filename, preloaded, nullptr};
             Serialization::MessagePackInput min(result.get(), &context);
 
-            Serialization::PointerMappingTraits<Tensile::MasterContractionLibrary,
+            Serialization::PointerMappingTraits<TensileLite::MasterContractionLibrary,
                                                 Serialization::MessagePackInput>::mapping(min, rv);
 
             if(!min.error.empty())
@@ -162,7 +162,7 @@ namespace Tensile
             LibraryIOContext<MySolution>    context{std::string(""), {}, nullptr};
             Serialization::MessagePackInput min(result.get(), &context);
 
-            Serialization::PointerMappingTraits<Tensile::MasterContractionLibrary,
+            Serialization::PointerMappingTraits<TensileLite::MasterContractionLibrary,
                                                 Serialization::MessagePackInput>::mapping(min, rv);
 
             if(!min.error.empty())

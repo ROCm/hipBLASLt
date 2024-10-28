@@ -37,7 +37,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -157,4 +157,4 @@ namespace Tensile
             bool validateSolution(std::shared_ptr<ProblemInputs> inputs);
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

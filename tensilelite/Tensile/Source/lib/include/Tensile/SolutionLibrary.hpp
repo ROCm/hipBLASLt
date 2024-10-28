@@ -33,13 +33,13 @@
 
 #include <Tensile/Tensile.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Tensile
  * \defgroup SolutionLibrary Solution Library Classes
  *
- * \copydoc Tensile::SolutionLibrary
+ * \copydoc TensileLite::SolutionLibrary
  */
 
     enum class SolutionLibrarySearchType
@@ -200,4 +200,4 @@ namespace Tensile
         }
     };
 
-} // namespace Tensile
+} // namespace TensileLite

@@ -35,7 +35,7 @@
 #include "HardwareMonitorListener.hpp"
 #include "ResultReporter.hpp"
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -103,4 +103,4 @@ namespace Tensile
             m_reporter->report(ResultKey::HardwareSampleCount, m_monitor->getSamples());
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

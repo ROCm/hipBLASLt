@@ -33,14 +33,14 @@
 
 #include <cstddef>
 
-LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(Tensile::DataType)
-LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(Tensile::ActivationType)
+LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(TensileLite::DataType)
+LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(TensileLite::ActivationType)
 
 namespace llvm
 {
     namespace yaml
     {
-        namespace sn = Tensile::Serialization;
+        namespace sn = TensileLite::Serialization;
 
         template <typename T>
         struct Hide
@@ -123,7 +123,7 @@ namespace llvm
     } // namespace yaml
 } // namespace llvm
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -185,7 +185,7 @@ namespace Tensile
         };
 
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace llvm
 {
@@ -274,9 +274,9 @@ namespace llvm
         };
 
         template <>
-        struct MappingTraits<std::shared_ptr<Tensile::MasterContractionLibrary>>
+        struct MappingTraits<std::shared_ptr<TensileLite::MasterContractionLibrary>>
         {
-            using obj = Tensile::MasterContractionLibrary;
+            using obj = TensileLite::MasterContractionLibrary;
 
             static void mapping(IO& io, std::shared_ptr<obj>& o)
             {
@@ -286,29 +286,29 @@ namespace llvm
 
         static_assert(
             sn::has_EmptyMappingTraits<
-                std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblemGemm>>,
+                std::shared_ptr<TensileLite::SolutionLibrary<TensileLite::ContractionProblemGemm>>,
                 IO>::value,
             "asdf2");
 
         static_assert(
             sn::has_SerializationTraits<
-                std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblemGemm>>,
+                std::shared_ptr<TensileLite::SolutionLibrary<TensileLite::ContractionProblemGemm>>,
                 IO>::value,
             "asdf");
 
         static_assert(
             !has_SequenceTraits<Hide<
-                std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblemGemm>>>>::value,
+                std::shared_ptr<TensileLite::SolutionLibrary<TensileLite::ContractionProblemGemm>>>>::value,
             "fdsa");
         static_assert(
             has_MappingTraits<
-                Hide<std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblemGemm>>>,
+                Hide<std::shared_ptr<TensileLite::SolutionLibrary<TensileLite::ContractionProblemGemm>>>,
                 EmptyContext>::value,
             "fdsa");
 
         static_assert(
             !missingTraits<
-                Hide<std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblemGemm>>>,
+                Hide<std::shared_ptr<TensileLite::SolutionLibrary<TensileLite::ContractionProblemGemm>>>,
                 EmptyContext>::value,
             "fdsa");
     } // namespace yaml

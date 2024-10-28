@@ -38,7 +38,7 @@
 
 namespace po = boost::program_options;
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -386,4 +386,4 @@ namespace Tensile
             CSVStackFile m_csvOutput;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

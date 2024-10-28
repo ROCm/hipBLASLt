@@ -32,7 +32,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Tensile
@@ -132,14 +132,14 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
     template <>
-    struct hash<Tensile::ArithmeticUnit>
+    struct hash<TensileLite::ArithmeticUnit>
     {
-        inline size_t operator()(Tensile::ArithmeticUnit const& val) const
+        inline size_t operator()(TensileLite::ArithmeticUnit const& val) const
         {
             return hash<int>()(static_cast<int>(val));
         }

@@ -28,7 +28,7 @@
 
 #include <Tensile/Tensile.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Hardware
@@ -281,4 +281,4 @@ namespace Tensile
 
     TENSILE_API std::ostream& operator<<(std::ostream& stream, AMDGPU::Processor p);
     TENSILE_API std::ostream& operator<<(std::ostream& stream, AMDGPU g);
-} // namespace Tensile
+} // namespace TensileLite

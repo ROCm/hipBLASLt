@@ -46,7 +46,7 @@
 #include <Tensile/Serialization/MatchingLibrary.hpp>
 #include <Tensile/Serialization/PlaceholderLibrary.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -195,4 +195,4 @@ namespace Tensile
             const static bool flow = false;
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

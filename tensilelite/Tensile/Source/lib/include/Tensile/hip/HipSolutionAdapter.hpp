@@ -33,11 +33,11 @@
 
 #include <mutex>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace hip
     {
-        class SolutionAdapter : public Tensile::SolutionAdapter
+        class SolutionAdapter : public TensileLite::SolutionAdapter
         {
         public:
             SolutionAdapter();
@@ -108,4 +108,4 @@ namespace Tensile
         std::ostream& operator<<(std::ostream& stream, SolutionAdapter const& adapter);
         std::ostream& operator<<(std::ostream& stream, std::shared_ptr<SolutionAdapter> const& ptr);
     } // namespace hip
-} // namespace Tensile
+} // namespace TensileLite

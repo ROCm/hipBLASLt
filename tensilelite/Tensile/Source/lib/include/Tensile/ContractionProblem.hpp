@@ -38,7 +38,7 @@
 #include <Tensile/TensorDescriptor.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \addtogroup User defined parameters
@@ -1348,4 +1348,4 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite

@@ -32,7 +32,7 @@
 
 #include <Tensile/DistinctType.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
 #if defined(TENSILE_USE_HIP) || defined(TENSILE_USE_FLOAT16_BUILTIN)
     /**
@@ -48,16 +48,16 @@ namespace Tensile
     {
     };
 #endif
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
-    inline ostream& operator<<(ostream& stream, const Tensile::Half val)
+    inline ostream& operator<<(ostream& stream, const TensileLite::Half val)
     {
         return stream << static_cast<float>(val);
     }
 
-    inline std::string to_string(const Tensile::Half val)
+    inline std::string to_string(const TensileLite::Half val)
     {
         return std::to_string(static_cast<float>(val));
     }

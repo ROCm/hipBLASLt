@@ -30,7 +30,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -270,4 +270,4 @@ namespace Tensile
             std::vector<std::shared_ptr<ResultReporter>> m_reporters;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

@@ -36,7 +36,7 @@
 #define DEBUG_SM2 0
 #endif
 
-namespace Tensile
+namespace TensileLite
 {
     std::once_flag debug_init;
 
@@ -228,4 +228,4 @@ namespace Tensile
         }
     }
 
-} // namespace Tensile
+} // namespace TensileLite

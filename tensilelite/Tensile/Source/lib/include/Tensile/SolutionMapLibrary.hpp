@@ -28,10 +28,10 @@
 
 #include <SolutionLibrary.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename MyProblem, typename MySolution, typename>
     class SolutionMapLibrary : public SolutionLibrary<MyProblem, MySolution>
     {
     };
-} // namespace Tensile
+} // namespace TensileLite
