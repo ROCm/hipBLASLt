@@ -33,15 +33,22 @@ To use the `tensile_config_generator.py` script, follow these steps:
    | `--gpus GPUS` | Number of GPUs for tuning hipblaslt |
    | `--topk TOPK` | Top k GEMMs for tuning |
    | `--iters ITERS` | Max tuning iterations |
+   | `--fast BOOL` | If enabled, only tune the matrix instruction with min tile sizes, else, tune full matrix instructions |
+   | `--gridbase_config GRIDBASE_CONFIG` | Path to gridbase config file |
 
-   Example:
+   Equality tuning example:
    ```
-   python ./tensile_config_generator.py --hipblaslt_log ./hipblaslt_gemm_log_example.txt --tensile_config ./tuning_equality_template.yaml --gpus 4 --iters 100
+   python ./tensile_config_generator.py --hipblaslt_log ./hipblaslt_gemm_log_example.txt --tensile_config ./tuning_template.yaml --gpus 4 --iters 100
+   ```
+
+   Gridbase tuning example:
+   ```
+   python ./tensile_config_generator.py --gridbase_config ./gridbase_config_template.yaml --tensile_config ./tuning_template.yaml --gpus 4 --iters 100
    ```
 
 3. Install hipBLASLt and Tensile (change the path to the hipBLASLt repo):
    ```
-   bash ./install.sh -idc -a gfx942 --keep-build-tmp
+   bash ./install.sh -idc -a $(/opt/rocm/llvm/bin/offload-arch) --keep-build-tmp
    ```
 
 4. Tune GEMM kernels using the generated YAML files:
@@ -50,14 +57,19 @@ To use the `tensile_config_generator.py` script, follow these steps:
    ```
 
 5. Merge tune results:
+   MI308:
    For cpx, use the gfx942_20cu folder; for spx, use the gfx942_80cu folder.
    ```
-   python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aquavanjaram/{gfx942_20cu|gfx942_80cu}/Equality/ <tune result directory> library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aquavanjaram/{gfx942_20cu|gfx942_80cu}/Equality/
+   python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aquavanjaram/{gfx942_20cu|gfx942_80cu}/{Equality|GridBased}/ <tune result directory> library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aquavanjaram/{gfx942_20cu|gfx942_80cu}/{Equality|GridBased}/
+   ```
+   MI210:
+   ```
+   python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|GridBased}/ <tune result directory> library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|Gridbase}/
    ```
 
 6. Rebuild hipBLASLt with the merged results:
    ```
-   bash ./install.sh -idc -a gfx942 --keep-build-tmp
+   bash ./install.sh -idc -a $(/opt/rocm/llvm/bin/offload-arch) --keep-build-tmp
    ```
 
 For more detailed information on the script's functionality and advanced usage, please refer to the comments within the `tensile_config_generator.py` file.

@@ -48,9 +48,9 @@ NUM_WARM_UP = 20
 ENQUEUES_PER_SYNC = 20
 res = subprocess.run("/opt/rocm/llvm/bin/offload-arch", shell=True, capture_output=True)
 ArchitectureName = res.stdout.decode('utf-8').strip()
-res = subprocess.run("cat /sys/class/drm/card1/device/current_compute_partition", shell=True, capture_output=True)
 
 if ArchitectureName == 'gfx942':
+    res = subprocess.run("cat /sys/class/drm/card1/device/current_compute_partition", shell=True, capture_output=True)
     if res.stdout.decode('utf-8').strip() == "CPX":
         CU = 20
         XCC = 1
