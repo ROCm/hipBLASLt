@@ -1390,12 +1390,7 @@ def TensileCreateLibrary():
 
   if not logicFiles:
     printExit(f"No logic files found with logic filer: {globPattern}")
-<<<<<<< HEAD
   print1(f"# LibraryLogicFiles: {len(logicFiles)}")
-=======
-  print1(f"# LibraryLogicFiles({len(logicFiles)}):")
-
->>>>>>> 01c50c1b... feat: selective variant filtering
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
   
