@@ -46,11 +46,6 @@ To use the `tensile_config_generator.py` script, follow these steps:
    python ./tensile_config_generator.py --gridbase_config ./gridbase_config_template.yaml --tensile_config ./tuning_template.yaml --gpus 4 --iters 100
    ```
 
-   Gridbase tuning example:
-   ```
-   python ./tensile_config_generator.py --gridbase_config ./gridbase_config_template.yaml --tensile_config ./tuning_gridbase_template.yaml --gpus 4 --iters 100
-   ```
-
 3. Install hipBLASLt and Tensile (change the path to the hipBLASLt repo):
    ```
    bash ./install.sh -idc -a $(/opt/rocm/llvm/bin/offload-arch) --keep-build-tmp
@@ -70,10 +65,6 @@ To use the `tensile_config_generator.py` script, follow these steps:
    MI210:
    ```
    python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|GridBased}/ <tune result directory> library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|Gridbase}/
-   ```
-   MI210:
-   ```
-   python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/Equality/ <tune result directory> library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/Equality/
    ```
 
 6. Rebuild hipBLASLt with the merged results:

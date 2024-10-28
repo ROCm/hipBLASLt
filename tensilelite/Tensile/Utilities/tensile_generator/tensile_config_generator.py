@@ -177,7 +177,7 @@ def extract_dtype(match):
         F32XdlMathOp = 'x'
     return {"Batched": True, "DataType": DataType, "DestDataType": DestDataType, "ComputeDataType": ComputeDataType, "TransposeA": TransposeA, "TransposeB": TransposeB, "HighPrecisionAccumulate": HighPrecisionAccumulate, "F32XdlMathOp": F32XdlMathOp, "OperationType": "GEMM", "UseBeta": True}
 
-def find_matmul_instruction(mfma_instruction, size, CU):
+def find_matmul_instruction(mfma_instruction, size):
     for bm in range(int(math.log(mfma_instruction[3],2))+1):
         for m_tiles in reversed(range(1, CU+1)):
             m_tile_size = min(size[0] // m_tiles, 256)
@@ -262,7 +262,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 dtype_str = json.dumps(dtype)
                 if mfma_instruction is None:
                     continue
-                matmul_instruction_gen = find_matmul_instruction(mfma_instruction, size, CU)
+                matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
                 total_inst = min(len(matmul_instruction_gen) // 3, 5)  # At least 5 insts and max of 33.3% of insts.
                 for index, matmul_instruction in enumerate(matmul_instruction_gen):
                     if matmul_instruction is not None:
@@ -376,13 +376,14 @@ elif args.gridbase_config and args.hipblaslt_log is None:
             mfma_instruction = instruction_map(dtype)
             if mfma_instruction is None:
                 continue
-            matmul_instruction_gen = find_matmul_instruction(mfma_instruction, size, CU)
-            for matmul_instruction in matmul_instruction_gen:
+            matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
+            total_inst = min(len(matmul_instruction_gen) // 3, 5)  # At least 5 insts and max of 33.3% of insts.
+            for index, matmul_instruction in enumerate(matmul_instruction_gen):
                 if matmul_instruction is not None:
                     if dtype_str not in matmul_instructions:
                         matmul_instructions[dtype_str] = dict()
                     matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
-                    if args.fast:
+                    if args.fast and (index > total_inst):
                         break
 
             if dtype_str in gemm_group:
