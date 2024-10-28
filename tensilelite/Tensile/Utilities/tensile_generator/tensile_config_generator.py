@@ -204,6 +204,7 @@ for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
 
     m_sum = 0
     n_sum = 0
+    batch_sum = 0
     k_sum = 0
     for k, v in unique_gemms_subgroup:
         match = re.search(
@@ -232,13 +233,15 @@ for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
                 gemm_group[dtype_str] = [{'Exact': size}]
             m_sum += size[0]
             n_sum += size[1]
+            batch_sum += size[2]
             k_sum += size[3]
 
     m_avg = m_sum / len(unique_gemms_subgroup)
     n_avg = n_sum / len(unique_gemms_subgroup)
+    batch_avg = batch_sum / len(unique_gemms_subgroup)
     k_avg = k_sum / len(unique_gemms_subgroup)
 
-    MinFlopsPerSync = (ENQUEUES_PER_SYNC + args.iters) * m_avg * n_avg * k_avg / 2 
+    MinFlopsPerSync = (ENQUEUES_PER_SYNC + args.iters) * m_avg * n_avg * batch_avg * k_avg / 2 
     # Read the YAML file
     with open(yaml_file, 'r') as f:
         data = yaml.safe_load(f)
