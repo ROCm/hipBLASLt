@@ -160,7 +160,7 @@ struct Arguments
     bool    use_user_args;
     int32_t rotating;
     bool    use_gpu_timer;
-
+    float   skip_slow_solution_ratio;
     // tuning
     int32_t gsu_vector[MAX_SUPPORTED_NUM_PROBLEMS]; // This is for client
     int32_t wgm_vector[MAX_SUPPORTED_NUM_PROBLEMS]; // This is for client
@@ -257,6 +257,7 @@ struct Arguments
     OPER(use_user_args) SEP          \
     OPER(rotating) SEP               \
     OPER(use_gpu_timer) SEP          \
+    OPER(skip_slow_solution_ratio) SEP\
     OPER(gsu_vector) SEP             \
     OPER(wgm_vector) SEP             \
     OPER(print_solution_found) SEP   \
@@ -853,7 +854,7 @@ namespace ArgumentsHelper
                 func("rotating_buffer", arg.rotating);
         };
 };
-    // clang-format on
+// clang-format on
 
 #else
 #error "Unsupported C++ version"
