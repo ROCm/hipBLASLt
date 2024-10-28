@@ -220,10 +220,16 @@ if ( NOT BUILD_CUDA )
     endif()
 # For ASAN package, Tensile library files are not required
     if( NOT ENABLE_ASAN_PACKAGING )
+    if( BUILD_SHARED_LIBS )
+      set( TENSILE_DATA_COMPONENT_NAME ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME} )
+    else()
+      set( TENSILE_DATA_COMPONENT_NAME devel )
+    endif()
+
       rocm_install(
         DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
         DESTINATION ${HIPBLASLT_TENSILE_LIBRARY_DIR}
-        COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME})
+        COMPONENT ${TENSILE_DATA_COMPONENT_NAME})
     endif()
 endif()
 
