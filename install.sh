@@ -785,6 +785,10 @@ pushd .
     cmake_common_options="${cmake_common_options} -DCMAKE_CXX_FLAGS=-pg -DCMAKE_C_FLAGS=-pg"
   fi
 
+  if [[ "${build_address_sanitizer}" == true ]]; then
+    tensile_opt="${tensile_opt} -DTensile_ASAN_BUILD=ON"
+  fi
+
   if [[ "${keep_build_tmp}" == true ]]; then
     tensile_opt="${tensile_opt} -DTensile_KEEP_BUILD_TMP=ON"
   fi
