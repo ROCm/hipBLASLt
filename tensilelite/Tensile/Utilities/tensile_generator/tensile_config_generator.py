@@ -61,7 +61,7 @@ parser.add_argument(
     help="If enabled, only tune the matrix instruction with min tile sizes, else, tune full matrix instructions")
 
 parser.add_argument(
-    "--groups", type=bool, default=False,
+    "--groups", type=bool, default=True,
     help="If enabled, will replace MatrixInstruction with GroupedMatrixInstruction")
 
 parser.add_argument(
