@@ -41,7 +41,7 @@ from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
-from .Com.ArchVariant import matchArchVariant
+from .Com.ArchVariant import filterVariants
 
 import argparse
 import collections
@@ -1350,7 +1350,7 @@ def TensileCreateLibrary():
     printExit("LogicPath %s doesn't exist" % logicPath)
 
   gfxArchs, _, variants = splitArchsFromGlobal(globalParameters)
-  print1("# Architecture      from TensileCreateLibrary: %s" % gfxArchs)
+  print1(f"# Architecture      from TensileCreateLibrary: {', '.join(gfxArchs)}")
   print1("# Variants:\n" + "\n".join(
       f"#   {arch}: {', '.join(v) if v else ''}" for arch, v in variants.items()
   ))
@@ -1383,10 +1383,9 @@ def TensileCreateLibrary():
     logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
 
   if variants:
-      numAllVariants = len(logicFiles)
-      variantMap = {gfx: {item: set() for item in variants} for gfx, variants in variants.items()}
-      logicFiles = [file for file in logicFiles if matchArchVariant(variantMap, Path(file))]
-      print1(f"#   Filtered {numAllVariants - len(logicFiles)} logic files")
+      numPrior= len(logicFiles)
+      logicFiles = filterVariants(logicFiles, variants)
+      print1(f"#   Filtered {numPrior - len(logicFiles)} logic files")
 
   if not logicFiles:
     printExit(f"No logic files found with logic filer: {globPattern}")
@@ -1394,6 +1393,8 @@ def TensileCreateLibrary():
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
   
+
+  exit(1)
 
 
   ##############################################################################
