@@ -80,14 +80,15 @@ Datatypes Supported:
 
 hipblasLtMatmul supports the following computeType, scaleType, Atype/Btype, Ctype/Dtype and Bias Type:
 
-======================= =================== =============== ===============
-computeType             scaleType/Bias Type Atype/Btype     Ctype/Dtype
-======================= =================== =============== ===============
-HIPBLAS_COMPUTE_32F     HIP_R_32F           HIP_R_32F       HIP_R_32F
-HIPBLAS_COMPUTE_32F     HIP_R_32F           HIP_R_16F       HIP_R_16F
-HIPBLAS_COMPUTE_32F     HIP_R_32F           HIP_R_16F       HIP_R_32F
-HIPBLAS_COMPUTE_32F     HIP_R_32F           HIP_R_16BF      HIP_R_16BF
-======================= =================== =============== ===============
+============================= =================== =============== ===============
+computeType                   scaleType/Bias Type Atype/Btype     Ctype/Dtype
+============================= =================== =============== ===============
+HIPBLAS_COMPUTE_32F           HIP_R_32F           HIP_R_32F       HIP_R_32F
+HIPBLAS_COMPUTE_32F_FAST_TF32 HIP_R_32F           HIP_R_32F       HIP_R_32F
+HIPBLAS_COMPUTE_32F           HIP_R_32F           HIP_R_16F       HIP_R_16F
+HIPBLAS_COMPUTE_32F           HIP_R_32F           HIP_R_16F       HIP_R_32F
+HIPBLAS_COMPUTE_32F           HIP_R_32F           HIP_R_16BF      HIP_R_16BF
+============================= =================== =============== ===============
 
 For FP8 type Matmul, hipBLASLt supports the type combinations shown in the following table:
 
