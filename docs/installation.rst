@@ -129,6 +129,15 @@ Common uses of ``install.sh`` to build (dependencies, library, and client) are l
 |                                           | directory, don`t use ``-i`` flag.  |
 +-------------------------------------------+------------------------------------+
 
+Static Library
+----------------
+
+To build static libraries with ``install.sh`` use ``--static``.
+This produces a non-standard static library build. That is, there is an additional runtime dependency 
+which is the entire subdirectory ``hipblaslt/`` located in the ``/opt/rocm/lib`` folder. 
+One can relocate this folder, but the environment variable ``HIPBLASLT_TENSILE_LIBPATH`` must be set
+accordingly.
+
 Dependencies
 --------------
 
