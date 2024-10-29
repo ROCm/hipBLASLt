@@ -207,6 +207,24 @@ def find_matmul_instruction(mfma_instruction, size):
 
                                 yield matmul_instruction
 
+def get_groups(matmul_instruction_gen):
+    # Extract skinny MTs for Groups
+    NONTEMPORALRATIO = 8
+    mi_groups0 = []
+    mi_groups1 = []
+    mi_left = []
+    for mi in matmul_instruction_gen:
+        if mi is not None:
+            mt = [mi[0] * mi[5] * mi[7], mi[1] * mi[6] * mi[8]]
+            ratio = mt[0] / mt[1]
+            if ratio > NONTEMPORALRATIO:
+                mi_groups0.append(mi)
+            elif ratio < (1/NONTEMPORALRATIO):
+                mi_groups1.append(mi)
+            else:
+                mi_left.append(mi)
+    return mi_groups0, mi_groups1, mi_left
+
 def extract_range(data):
     shapes = []
     if 'Exact' in data:
@@ -234,7 +252,7 @@ def calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters):
 
     return (ENQUEUES_PER_SYNC + args.iters) * m_avg * n_avg * batch_avg * k_avg / 2
 
-def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, iters):
+def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, iters, groups):
     MinFlopsPerSync = calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters)
     # Read the YAML file
     with open(yaml_file, 'r') as f:
@@ -251,8 +269,46 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
         if i >= len(data["BenchmarkProblems"]):
             data["BenchmarkProblems"].append(copy.deepcopy(data["BenchmarkProblems"][0]))
         data["BenchmarkProblems"][i][1]["BenchmarkFinalParameters"][0]["ProblemSizes"] = gemm_group[dtype_str]
+
+        # Add groupd here if needed
+        group_params = [[]]
+
+        if groups:
+            if dtype_str in groups:
+                # Add Non Temporal
+                groups[dtype_str][0]["NonTemporalB"] = [0, 4, 7]
+                groups[dtype_str][1]["NonTemporalA"] = [0, 4, 7]
+                for v in groups[dtype_str][0]["MatrixInstruction"].values():
+                    for ntemp in groups[dtype_str][0]["NonTemporalB"]:
+                        g = dict()
+                        g["MatrixInstruction"] = list(v)
+                        g["NonTemporalB"] = ntemp
+                        group_params[0].append(g)
+                for v in groups[dtype_str][1]["MatrixInstruction"].values():
+                    for ntemp in groups[dtype_str][1]["NonTemporalA"]:
+                        g = dict()
+                        g["MatrixInstruction"] = list(v)
+                        g["NonTemporalA"] = ntemp
+                        group_params[0].append(g)
+                for v in matmul_instructions[dtype_str].values():
+                    g = dict()
+                    g["MatrixInstruction"] = list(v)
+                    group_params[0].append(g)
+                for index, item in enumerate(data["BenchmarkProblems"][i][1]["ForkParameters"]):
+                    if "MatrixInstruction" in item:
+                        del item["MatrixInstruction"]
+                        item["Groups"] = {}
+            else:
+                for index, item in enumerate(data["BenchmarkProblems"][i][1]["ForkParameters"]):
+                    if "Groups" in item:
+                        del item["Groups"]
+                        item["MatrixInstruction"] = {}
+
+        print(dtype_str, group_params)
         for item in data["BenchmarkProblems"][i][1]["ForkParameters"]:
-            if "MatrixInstruction" in item:
+            if ("Groups" in item) and group_params[0]:
+                item["Groups"] = group_params
+            elif "MatrixInstruction" in item:
                 item["MatrixInstruction"] = [list(v) for v in matmul_instructions[dtype_str].values()]
             if "WorkGroupMappingXCCGroup" in item:
                 item["WorkGroupMappingXCCGroup"] = [CU]
@@ -294,6 +350,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
     for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
         gemm_group = {}
         matmul_instructions = {}
+        groups = {}
         if unique_gemms_subgroup is None:
             continue
 
@@ -314,7 +371,11 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 if mfma_instruction is None:
                     continue
                 matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
-                total_inst = min(len(matmul_instruction_gen) // 3, 5)  # At least 5 insts and max of 33.3% of insts.
+                mi_groups0, mi_groups1, matmul_instruction_gen = get_groups(matmul_instruction_gen)
+
+                DIV_MI = 3 # 33.3%
+                MIN_MI = 5 # min 5 solutions
+                total_inst = min(len(matmul_instruction_gen) // DIV_MI, MIN_MI)  # At least 5 insts and max of 33.3% of insts.
                 for index, matmul_instruction in enumerate(matmul_instruction_gen):
                     if matmul_instruction is not None:
                         if dtype_str not in matmul_instructions:
@@ -322,6 +383,24 @@ if args.hipblaslt_log and args.gridbase_config is None:
                         matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
                         if args.fast and (index > total_inst):
                             break
+                total_inst = min(len(mi_groups1) // DIV_MI, MIN_MI)
+                for index, mi_0 in enumerate(mi_groups0):
+                    if dtype_str not in groups:
+                        groups[dtype_str] = [{},{}]
+                        groups[dtype_str][0]["MatrixInstruction"] = {}
+                        groups[dtype_str][1]["MatrixInstruction"] = {}
+                    groups[dtype_str][0]["MatrixInstruction"][str(mi_0)] = mi_0
+                    if args.fast and (index > total_inst):
+                        break
+                total_inst = min(len(mi_groups1) // DIV_MI, MIN_MI)
+                for index, mi_1 in enumerate(mi_groups1):
+                    if dtype_str not in groups:
+                        groups[dtype_str] = [{},{}]
+                        groups[dtype_str][0]["MatrixInstruction"] = {}
+                        groups[dtype_str][1]["MatrixInstruction"] = {}
+                    groups[dtype_str][1]["MatrixInstruction"][str(mi_1)] = mi_1
+                    if args.fast and (index > total_inst):
+                        break
 
                 if dtype_str in gemm_group:
                     gemm_group[dtype_str].append({'Exact': size})
@@ -331,7 +410,8 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 n_sum += size[1]
                 batch_sum += size[2]
                 k_sum += size[3]
-        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters)
+        
+        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, groups)
 
 elif args.gridbase_config and args.hipblaslt_log is None:
     unique_gemms = {}
@@ -399,4 +479,4 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                 gemm_group[dtype_str].append({'Exact': size})
             else:
                 gemm_group[dtype_str] = [{'Exact': size}]
-        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters)
+        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, {})
