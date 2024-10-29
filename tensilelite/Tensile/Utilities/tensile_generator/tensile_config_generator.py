@@ -68,23 +68,30 @@ args = parser.parse_args()
 
 NUM_WARM_UP = 20
 ENQUEUES_PER_SYNC = 20
+
+CU_RE = r"Compute Unit:(?P<COMPUTE_UNIT>[\w ]+)"
+
 res = subprocess.run("/opt/rocm/llvm/bin/offload-arch", shell=True, capture_output=True)
 ArchitectureName = res.stdout.decode('utf-8').strip()
+res = subprocess.run("rocminfo | grep Compute", shell=True, capture_output=True, env={"ROCR_VISIBLE_DEVICES":"0"})
+match = re.search(CU_RE, res.stdout.decode('utf-8').split('\n')[-2])
+CU = 0
+if match:
+    CU = int(match.group('COMPUTE_UNIT').strip())
+else:
+    raise RuntimeError("Failed to get compute unit from rocminfo")
 
 if ArchitectureName == 'gfx942':
     res = subprocess.run("cat /sys/class/drm/card1/device/current_compute_partition", shell=True, capture_output=True)
     if res.stdout.decode('utf-8').strip() == "CPX":
-        CU = 20
         XCC = 1
         GSU = [1,2,3,4,5,6,7,8]
     else:
-        CU = 80
         XCC = 4
         GSU = [1,2,3,4]
     DeviceNames = ["Device 0049", "Device 0050"]
     ScheduleName = "aquavanjaram"
 elif ArchitectureName == 'gfx90a':
-    CU = 104
     XCC = 1
     GSU = [1,2,3,4]
     DeviceNames = ["Device 0050", "Device 0051", "Device 0052", "Device 0054", "Device 0062", "Device 7400", "Device 740c"]
