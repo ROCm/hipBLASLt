@@ -294,3 +294,4 @@ LibraryLogic:
   ArchitectureName: gfx942
   DeviceNames: [Device 0049, Device 0050]
   ScheduleName: aquavanjaram
+  LibraryType: GridBased

@@ -68,6 +68,7 @@ args = parser.parse_args()
 
 NUM_WARM_UP = 20
 ENQUEUES_PER_SYNC = 20
+LibraryType = "GridBased"
 
 CU_RE = r"Compute Unit:(?P<COMPUTE_UNIT>[\w ]+)"
 
@@ -304,7 +305,6 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
                         del item["Groups"]
                         item["MatrixInstruction"] = {}
 
-        print(dtype_str, group_params)
         for item in data["BenchmarkProblems"][i][1]["ForkParameters"]:
             if ("Groups" in item) and group_params[0]:
                 item["Groups"] = group_params
@@ -320,6 +320,7 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
     data["LibraryLogic"]["DeviceNames"] = DeviceNames
     data["LibraryLogic"]["ScheduleName"] = ScheduleName
     data["LibraryLogic"]["ArchitectureName"] = ArchitectureName
+    data["LibraryLogic"]["LibraryType"] = LibraryType
     # Write the updated YAML file
     yaml_file = os.path.basename(yaml_file)
     slices = yaml_file.split('.')
@@ -328,6 +329,7 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
 
 
 if args.hipblaslt_log and args.gridbase_config is None:
+    LibraryType = "Equality"
     unique_gemms = {}
     # Read problem sizes from the input file
     with open(args.hipblaslt_log, 'r') as f:
@@ -383,7 +385,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                         matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
                         if args.fast and (index > total_inst):
                             break
-                total_inst = min(len(mi_groups1) // DIV_MI, MIN_MI)
+                total_inst = min(len(mi_groups0) // DIV_MI, MIN_MI)
                 for index, mi_0 in enumerate(mi_groups0):
                     if dtype_str not in groups:
                         groups[dtype_str] = [{},{}]
@@ -410,10 +412,11 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 n_sum += size[1]
                 batch_sum += size[2]
                 k_sum += size[3]
-        
+
         dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, groups)
 
 elif args.gridbase_config and args.hipblaslt_log is None:
+    LibraryType = "GridBased"
     unique_gemms = {}
     gpus = args.gpus
 
