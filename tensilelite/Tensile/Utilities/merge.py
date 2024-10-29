@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -157,7 +157,7 @@ def compareProblemType(oriData, incData):
                 except KeyError:
                     oriSolutionIndex = oriData[5][i]["SolutionIndex"]
                     print(f"[Warning] Popping '{item}' failed in oriData(idx={oriSolutionIndex})")
-        
+
     results = ""
     solIdx = 0
     # Compare existing ProblemType items of originalFiles with incrementalFiles
@@ -404,7 +404,7 @@ def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSi
                          if os.path.split(i)[-1] in [os.path.split(o)[-1] for o in originalFiles] ]
 
     if not incrementalFiles:
-        raise RuntimeError(f"Can't get corresponding base file for {incrementalDir}, please create a new config.")
+        raise RuntimeError(f"Can't get corresponding base file for {incrementalDir}, please create new configs under {originalDir}.")
 
     for incFile in incrementalFiles:
         basename = os.path.split(incFile)[-1]
