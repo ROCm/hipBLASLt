@@ -1350,10 +1350,7 @@ def TensileCreateLibrary():
     printExit("LogicPath %s doesn't exist" % logicPath)
 
   gfxArchs, _, variants = splitArchsFromGlobal(globalParameters)
-  print1(f"# Architecture      from TensileCreateLibrary: {', '.join(gfxArchs)}")
-  print1("# Variants:\n" + "\n".join(
-      f"#   {arch}: {', '.join(v) if v else ''}" for arch, v in variants.items()
-  ))
+  print1(f"# Architecture(s)  from TensileCreateLibrary: {', '.join(gfxArchs)}")
 
   if globalParameters["LazyLibraryLoading"] and not (globalParameters["MergeFiles"] and globalParameters["SeparateArchitectures"]):
     printExit("--lazy-library-loading requires --merge-files and --separate-architectures enabled")
@@ -1383,6 +1380,7 @@ def TensileCreateLibrary():
     logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
 
   if variants:
+      print1("# Variants:\n" + "\n".join(f"#   {arch}: {', '.join(v) if v else 'all variants'}" for arch, v in variants.items()))
       numPrior= len(logicFiles)
       logicFiles = filterVariants(logicFiles, variants)
       print1(f"#   Filtered {numPrior - len(logicFiles)} logic files")
@@ -1393,9 +1391,6 @@ def TensileCreateLibrary():
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
   
-
-  exit(1)
-
 
   ##############################################################################
   # Parse config files
