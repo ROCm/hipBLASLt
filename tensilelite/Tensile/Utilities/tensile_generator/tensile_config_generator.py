@@ -61,6 +61,10 @@ parser.add_argument(
     help="If enabled, only tune the matrix instruction with min tile sizes, else, tune full matrix instructions")
 
 parser.add_argument(
+    "--groups", type=bool, default=False,
+    help="If enabled, will replace MatrixInstruction with GroupedMatrixInstruction")
+
+parser.add_argument(
     "--gridbase_config", type=str, default=None,
     help="Range config path")
 
@@ -373,7 +377,11 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 if mfma_instruction is None:
                     continue
                 matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
-                mi_groups0, mi_groups1, matmul_instruction_gen = get_groups(matmul_instruction_gen)
+                if args.groups:
+                    mi_groups0, mi_groups1, matmul_instruction_gen = get_groups(matmul_instruction_gen)
+                else:
+                    mi_groups0 = []
+                    mi_groups1 = []
 
                 DIV_MI = 3 # 33.3%
                 MIN_MI = 5 # min 5 solutions
