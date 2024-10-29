@@ -66,8 +66,6 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-yaml_file = args.tensile_config
-
 NUM_WARM_UP = 20
 ENQUEUES_PER_SYNC = 20
 res = subprocess.run("/opt/rocm/llvm/bin/offload-arch", shell=True, capture_output=True)
@@ -152,7 +150,7 @@ def datatype_map(dtype):
         return "B"
     else:
         return None
-    
+
 def trans_map(trans):
     if trans == "T":
         return True
@@ -194,7 +192,7 @@ def find_matmul_instruction(mfma_instruction, size):
                     if wave_tile_m // (2**k) >= 1 and wave_tile_m // (2**k) <= 32:
                         matmul_instruction[-4] = wave_tile_m // (2**k)
                         matmul_instruction[-2] = 2**k
-                        
+
                         for l in reversed(range(3)):
                             if wave_tile_n // (2**l) >= 1 and wave_tile_n // (2**l) <= 32:
                                 matmul_instruction[-3] = wave_tile_n // (2**l)
@@ -212,10 +210,64 @@ def extract_range(data):
         shapes += list(set(np.round(np.linspace(int(shape_range[0]), int(shape_range[1]), int(points))).astype(int).tolist()))
     return shapes
 
-def split_gemms_by_gpus(gemm_file, gpus):
+def split_gemms_by_gpus(unique_gemms, gpus):
+    unique_gemms_subgroups = [None] * gpus
+    for i, (k, v) in enumerate(unique_gemms.items()):
+        if unique_gemms_subgroups[i%gpus] is not None:
+            unique_gemms_subgroups[i%gpus].append((k, v))
+        else:
+            unique_gemms_subgroups[i%gpus] = [(k, v)]
+    return unique_gemms_subgroups
+
+def calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters):
+    m_avg = m_sum / len(unique_gemms_subgroup)
+    n_avg = n_sum / len(unique_gemms_subgroup)
+    batch_avg = batch_sum / len(unique_gemms_subgroup)
+    k_avg = k_sum / len(unique_gemms_subgroup)
+
+    return (ENQUEUES_PER_SYNC + args.iters) * m_avg * n_avg * batch_avg * k_avg / 2
+
+def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, iters):
+    MinFlopsPerSync = calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters)
+    # Read the YAML file
+    with open(yaml_file, 'r') as f:
+        data = yaml.safe_load(f)
+    data["GlobalParameters"]["EnqueuesPerSync"] = ENQUEUES_PER_SYNC
+    data["GlobalParameters"]["MaxEnqueuesPerSync"] = iters
+    data["GlobalParameters"]["NumWarmups"] = NUM_WARM_UP
+    data["GlobalParameters"]["MinFlopsPerSync"] = round(MinFlopsPerSync)
+
+    # Update the ProblemSizes
+    for i, dtype_str in enumerate(gemm_group):
+        dtype = json.loads(dtype_str)
+
+        if i >= len(data["BenchmarkProblems"]):
+            data["BenchmarkProblems"].append(copy.deepcopy(data["BenchmarkProblems"][0]))
+        data["BenchmarkProblems"][i][1]["BenchmarkFinalParameters"][0]["ProblemSizes"] = gemm_group[dtype_str]
+        for item in data["BenchmarkProblems"][i][1]["ForkParameters"]:
+            if "MatrixInstruction" in item:
+                item["MatrixInstruction"] = [list(v) for v in matmul_instructions[dtype_str].values()]
+            if "WorkGroupMappingXCCGroup" in item:
+                item["WorkGroupMappingXCCGroup"] = [CU]
+            if "WorkGroupMappingXCC" in item:
+                item["WorkGroupMappingXCC"] = [XCC]
+            if "GlobalSplitU" in item:
+                item["GlobalSplitU"] = list(GSU)
+        data["BenchmarkProblems"][i][0] = dtype
+    data["LibraryLogic"]["DeviceNames"] = DeviceNames
+    data["LibraryLogic"]["ScheduleName"] = ScheduleName
+    data["LibraryLogic"]["ArchitectureName"] = ArchitectureName
+    # Write the updated YAML file
+    yaml_file = os.path.basename(yaml_file)
+    slices = yaml_file.split('.')
+    with open(slices[0]+'.'+str(gpu_idx)+'.'+slices[1], 'w') as f:
+        yaml.dump(data, f, default_flow_style=None)
+
+
+if args.hipblaslt_log and args.gridbase_config is None:
     unique_gemms = {}
     # Read problem sizes from the input file
-    with open(gemm_file, 'r') as f:
+    with open(args.hipblaslt_log, 'r') as f:
         for line in f:
             match = re.search(
                 HIPBLASLT_BENCH_RE, line
@@ -228,17 +280,9 @@ def split_gemms_by_gpus(gemm_file, gpus):
 
     unique_gemms = {k: v for k, v in sorted(unique_gemms.items(), key=lambda item: item[1], reverse=True)[:args.topk]}
     for k, v in unique_gemms.items():
-        print(k, v)
-    unique_gemms_subgroups = [None] * gpus
-    for i, (k, v) in enumerate(unique_gemms.items()):
-        if unique_gemms_subgroups[i%gpus] is not None:
-            unique_gemms_subgroups[i%gpus].append((k, v))
-        else:
-            unique_gemms_subgroups[i%gpus] = [(k, v)]
-    return unique_gemms_subgroups
+        print("Gemm config:", k, "Number:", v)
 
-if args.hipblaslt_log and args.gridbase_config is None:
-    unique_gemms_subgroups = split_gemms_by_gpus(args.hipblaslt_log, args.gpus)
+    unique_gemms_subgroups = split_gemms_by_gpus(unique_gemms, args.gpus)
 
     for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
         gemm_group = {}
@@ -271,7 +315,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                         matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
                         if args.fast and (index > total_inst):
                             break
-    
+
                 if dtype_str in gemm_group:
                     gemm_group[dtype_str].append({'Exact': size})
                 else:
@@ -280,45 +324,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 n_sum += size[1]
                 batch_sum += size[2]
                 k_sum += size[3]
-
-        m_avg = m_sum / len(unique_gemms_subgroup)
-        n_avg = n_sum / len(unique_gemms_subgroup)
-        batch_avg = batch_sum / len(unique_gemms_subgroup)
-        k_avg = k_sum / len(unique_gemms_subgroup)
-
-        MinFlopsPerSync = (ENQUEUES_PER_SYNC + args.iters) * m_avg * n_avg * batch_avg * k_avg / 2 
-        # Read the YAML file
-        with open(yaml_file, 'r') as f:
-            data = yaml.safe_load(f)
-        data["GlobalParameters"]["EnqueuesPerSync"] = ENQUEUES_PER_SYNC
-        data["GlobalParameters"]["MaxEnqueuesPerSync"] = args.iters
-        data["GlobalParameters"]["NumWarmups"] = NUM_WARM_UP
-        data["GlobalParameters"]["MinFlopsPerSync"] = round(MinFlopsPerSync)
-
-        # Update the ProblemSizes
-        for i, dtype_str in enumerate(gemm_group):
-            dtype = json.loads(dtype_str)
-
-            if i>=len(data["BenchmarkProblems"]):
-                data["BenchmarkProblems"].append(copy.deepcopy(data["BenchmarkProblems"][0]))
-            data["BenchmarkProblems"][i][1]["BenchmarkFinalParameters"][0]["ProblemSizes"] = gemm_group[dtype_str]
-            for item in data["BenchmarkProblems"][i][1]["ForkParameters"]:
-                if "MatrixInstruction" in item:
-                    item["MatrixInstruction"] = [list(v) for v in matmul_instructions[dtype_str].values()]
-                if "WorkGroupMappingXCCGroup" in item:
-                    item["WorkGroupMappingXCCGroup"] = [CU]
-                if "WorkGroupMappingXCC" in item:
-                    item["WorkGroupMappingXCC"] = [XCC]
-                if "GlobalSplitU" in item:
-                    item["GlobalSplitU"] = list(GSU)
-            data["BenchmarkProblems"][i][0] = dtype
-        data["LibraryLogic"]["DeviceNames"] = DeviceNames
-        data["LibraryLogic"]["ScheduleName"] = ScheduleName
-        data["LibraryLogic"]["ArchitectureName"] = ArchitectureName
-        # Write the updated YAML file
-        yaml_file = os.path.basename(yaml_file)
-        with open(yaml_file.split('.')[0]+'.'+str(gpu_idx)+'.'+yaml_file.split('.')[1], 'w') as f:
-            yaml.dump(data, f, default_flow_style=None)
+        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters)
 
 elif args.gridbase_config and args.hipblaslt_log is None:
     unique_gemms = {}
@@ -352,12 +358,8 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                         for k in k_shapes:
                             unique_gemms[(dtype_str,m,n,batch,k)] = [m,n,batch,k]
 
-    unique_gemms_subgroups = [None] * gpus
-    for i, (k, v) in enumerate(unique_gemms.items()):
-        if unique_gemms_subgroups[i%gpus] is not None:
-            unique_gemms_subgroups[i%gpus].append((k, v))
-        else:
-            unique_gemms_subgroups[i%gpus] = [(k, v)]
+    unique_gemms_subgroups = split_gemms_by_gpus(unique_gemms, args.gpus)
+
     for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
         gemm_group = {}
         matmul_instructions = {}
@@ -390,42 +392,4 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                 gemm_group[dtype_str].append({'Exact': size})
             else:
                 gemm_group[dtype_str] = [{'Exact': size}]
-
-        m_avg = m_sum / len(unique_gemms_subgroup)
-        n_avg = n_sum / len(unique_gemms_subgroup)
-        batch_avg = batch_sum / len(unique_gemms_subgroup)
-        k_avg = k_sum / len(unique_gemms_subgroup)
-
-        MinFlopsPerSync = (ENQUEUES_PER_SYNC + args.iters) * m_avg * n_avg * batch_avg * k_avg / 2 
-        # Read the YAML file
-        with open(yaml_file, 'r') as f:
-            data = yaml.safe_load(f)
-        data["GlobalParameters"]["EnqueuesPerSync"] = ENQUEUES_PER_SYNC
-        data["GlobalParameters"]["MaxEnqueuesPerSync"] = args.iters
-        data["GlobalParameters"]["NumWarmups"] = NUM_WARM_UP
-        data["GlobalParameters"]["MinFlopsPerSync"] = round(MinFlopsPerSync)
-
-        # Update the ProblemSizes
-        for i, dtype_str in enumerate(gemm_group):
-            dtype = json.loads(dtype_str)
-
-            if i>=len(data["BenchmarkProblems"]):
-                data["BenchmarkProblems"].append(copy.deepcopy(data["BenchmarkProblems"][0]))
-            data["BenchmarkProblems"][i][1]["BenchmarkFinalParameters"][0]["ProblemSizes"] = gemm_group[dtype_str]
-            for item in data["BenchmarkProblems"][i][1]["ForkParameters"]:
-                if "MatrixInstruction" in item:
-                    item["MatrixInstruction"] = [list(v) for v in matmul_instructions[dtype_str].values()]
-                if "WorkGroupMappingXCCGroup" in item:
-                    item["WorkGroupMappingXCCGroup"] = [CU]
-                if "WorkGroupMappingXCC" in item:
-                    item["WorkGroupMappingXCC"] = [XCC]
-                if "GlobalSplitU" in item:
-                    item["GlobalSplitU"] = list(GSU)
-            data["BenchmarkProblems"][i][0] = dtype
-        data["LibraryLogic"]["DeviceNames"] = DeviceNames
-        data["LibraryLogic"]["ScheduleName"] = ScheduleName
-        data["LibraryLogic"]["ArchitectureName"] = ArchitectureName
-        # Write the updated YAML file
-        yaml_file = os.path.basename(yaml_file)
-        with open(yaml_file.split('.')[0]+'.'+str(gpu_idx)+'.'+yaml_file.split('.')[1], 'w') as f:
-            yaml.dump(data, f, default_flow_style=None)
+        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters)
