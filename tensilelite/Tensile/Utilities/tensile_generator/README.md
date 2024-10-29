@@ -66,7 +66,7 @@ To use the `tensile_config_generator.py` script, follow these steps:
    ```
    MI210:
    ```
-   python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|GridBased}/ <tune result directory> library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|Gridbase}/
+   python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|GridBased}/ <tune result directory> library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|GridBased}/
    ```
 
 6. Rebuild hipBLASLt with the merged results:
