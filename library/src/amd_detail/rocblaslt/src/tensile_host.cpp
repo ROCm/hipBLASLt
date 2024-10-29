@@ -67,7 +67,7 @@
 #include <regex>
 #include <string_view>
 
-#define HIPBLASLT_LIB_PATH "/opt/rocm/hipblaslt/lib"
+#define HIPBLASLT_LIB_PATH "/opt/rocm/lib"
 
 #ifdef ENABLE_ROCTX
 #include <roctracer/roctx.h>
