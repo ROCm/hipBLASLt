@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # ########################################################################
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -92,8 +92,13 @@ def process_doc(doc):
     # Functions
     param['Functions'] = doc.get('Functions') or {}
 
+    valid_args = {a[0] for a in get_arguments(doc)}
+
     # Instantiate all of the tests, starting with defaults
     for test in doc['Tests']:
+        for a in test.keys():
+            if a not in valid_args:
+                sys.exit("Argument \"" + a + "\" not recognized\n")
         case = defaults.copy()
         case.update(test)
         generate(case, instantiate)
