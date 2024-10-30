@@ -80,6 +80,7 @@ res = subprocess.run("/opt/rocm/llvm/bin/offload-arch", shell=True, capture_outp
 ArchitectureName = res.stdout.decode('utf-8').strip()
 res = subprocess.run("rocminfo | grep Compute", shell=True, capture_output=True, env={"ROCR_VISIBLE_DEVICES":"0"})
 match = re.search(CU_RE, res.stdout.decode('utf-8').split('\n')[-2])
+NUM_STAGES = 8
 CU = 0
 if match:
     CU = int(match.group('COMPUTE_UNIT').strip())
@@ -104,7 +105,7 @@ elif ArchitectureName == 'gfx90a':
 
 fp16_instructions = [[16,16,16,1]]
 bf16_instructions = [[16,16,8,1]]
-tf32_instructions = [[16,16,8,1], [32,32,4,1]]
+tf32_instructions = [[16,16,8,1]]
 fp32_instructions = [[16,16,4,1]]
 
 
@@ -190,12 +191,16 @@ def extract_dtype(match):
 def find_matmul_instruction(mfma_instruction, size):
     for bm in range(int(math.log(mfma_instruction[3],2))+1):
         for m_tiles in reversed(range(1, CU+1)):
-            m_tile_size = min(size[0] // m_tiles, 256)
+            m_tile_size = size[0] // m_tiles
+            if m_tile_size > 256:
+                continue
             wave_tile_m = math.ceil(m_tile_size / mfma_instruction[0])
             if wave_tile_m <= 0:
                 continue
             for n_tiles in reversed(range(1, CU+1)):
-                n_tile_size = min(size[1] // n_tiles, 256)
+                n_tile_size = size[1] // n_tiles
+                if n_tile_size > 256:
+                    continue
                 wave_tile_n = math.ceil(n_tile_size / mfma_instruction[1])
                 if wave_tile_n <= 0:
                     continue
@@ -371,13 +376,15 @@ if args.hipblaslt_log and args.gridbase_config is None:
 
             if match:
                 size = extract_problem_size(match)
+                original_size = copy.deepcopy(size)
                 dtype = extract_dtype(match)
                 mfma_instructions = instruction_map(dtype)
                 dtype_str = json.dumps(dtype)
                 if mfma_instructions is None:
                     continue
                 mfma_instruction_found = False
-                for mfma_instruction in mfma_instructions:
+                mfma_instruction = mfma_instructions[0]
+                for _ in range(NUM_STAGES):
                     matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
                     if args.groups:
                         mi_groups0, mi_groups1, matmul_instruction_gen = get_groups(matmul_instruction_gen)
@@ -426,8 +433,12 @@ if args.hipblaslt_log and args.gridbase_config is None:
                     if len(matmul_instruction_gen) > 0 or len(mi_groups0) > 0 or len(mi_groups1) > 0:
                         mfma_instruction_found = True
                         break
+                    else:
+                        max_dim = int(np.argmax(size))
+                        size[max_dim] = size[max_dim] // 2
+
                 if not mfma_instruction_found:
-                    print("Can't get mfma instructions for {size}, please contact hipblaslt expert")
+                    print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
         dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, groups)
 
 elif args.gridbase_config and args.hipblaslt_log is None:
@@ -474,6 +485,7 @@ elif args.gridbase_config and args.hipblaslt_log is None:
         k_sum = 0
         for k, size in unique_gemms_subgroup:
             size = list(size)
+            original_size = copy.deepcopy(size)
             dtype_str = k[0]
             m_sum += size[0]
             n_sum += size[1]
@@ -484,7 +496,8 @@ elif args.gridbase_config and args.hipblaslt_log is None:
             if mfma_instructions is None:
                 continue
             mfma_instruction_found = False
-            for mfma_instruction in mfma_instructions:
+            mfma_instruction = mfma_instructions[0]
+            for _ in range(NUM_STAGES):
                 matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
                 total_inst = min(len(matmul_instruction_gen) // 3, 5)  # At least 5 insts and max of 33.3% of insts.
                 for index, matmul_instruction in enumerate(matmul_instruction_gen):
@@ -503,6 +516,9 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                 if len(matmul_instruction_gen) > 0:
                     mfma_instruction_found = True
                     break
+                else:
+                    max_dim = int(np.argmax(size))
+                    size[max_dim] = size[max_dim] // 2
             if not mfma_instruction_found:
-                print("Can't get mfma instructions for {size}, please contact hipblaslt expert")
+                print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
         dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, {})
