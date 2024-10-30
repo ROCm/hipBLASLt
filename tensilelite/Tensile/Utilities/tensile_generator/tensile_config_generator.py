@@ -466,7 +466,7 @@ elif args.gridbase_config and args.hipblaslt_log is None:
             if ComputeDataType == "XS":
                 ComputeDataType = "S"
                 F32XdlMathOp = 'x'
-            dtype = {"Batched": True, "DataType": DataType, "DestDataType": DestDataType, "ComputeDataType": ComputeDataType, "TransposeA": TransposeA, "TransposeB": TransposeB, "HighPrecisionAccumulate": HighPrecisionAccumulate, "F32XdlMathOp": F32XdlMathOp, "OperationType": "GEMM", "UseBeta": True}
+            dtype = {"Batched": True, "DataType": DataType, "DestDataType": DestDataType, "ComputeDataType": ComputeDataType, "TransposeA": TransposeA, "TransposeB": TransposeB, "HighPrecisionAccumulate": HighPrecisionAccumulate, "F32XdlMathOp": F32XdlMathOp, "OperationType": "GEMM", "UseBeta": True, "UseBias": 1, "Activation": True, "ActivationType": "hipblaslt_all", "UseScaleAlphaVec": 1}
             dtype_str = json.dumps(dtype)
             for m in m_shapes:
                 for n in n_shapes:
