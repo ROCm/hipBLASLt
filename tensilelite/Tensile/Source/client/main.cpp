@@ -573,7 +573,7 @@ namespace TensileLite
 int main(int argc, const char* argv[])
 {
     using namespace TensileLite;
-    using namespace TensileLiteLite::Client;
+    using namespace TensileLite::Client;
 
     auto args = parse_args(argc, argv);
 
