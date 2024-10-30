@@ -558,6 +558,12 @@ try
          value<bool>(&arg.use_gpu_timer)->default_value(false),
          "Use hipEventElapsedTime to profile elapsed time.")
 
+        ("skip_slow_solution_ratio",
+          value<float>(&arg.skip_slow_solution_ratio)->default_value(0.0),
+          "Specifies a ratio to skip slow solution when warm up stage. "
+          "Skip condition: (current solution's warm up time * ratio) > best solution's warm up time. "
+          "Ratio range: 0 ~ 1. 0 means no skip.")
+
         ("splitk",
          valueVec<uint32_t>(&gsu_vector),
          "[Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
@@ -843,6 +849,10 @@ try
     int copied = snprintf(arg.function, sizeof(arg.function), "%s", function.c_str());
     if(copied <= 0 || copied >= sizeof(arg.function))
         throw std::invalid_argument("Invalid value for --function");
+
+    if(arg.skip_slow_solution_ratio < 0 || arg.skip_slow_solution_ratio > 1)
+        throw std::invalid_argument(
+            "Valid value for --skip_slow_solution_ratio is in range (0.0 ~ 1.0).");
 
     if(verify)
     {
