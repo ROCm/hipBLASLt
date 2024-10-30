@@ -421,15 +421,6 @@ if args.hipblaslt_log and args.gridbase_config is None:
                         groups[dtype_str][1]["MatrixInstruction"][str(mi_1)] = mi_1
                         if args.fast and (index > total_inst):
                             break
-
-                    if dtype_str in gemm_group:
-                        gemm_group[dtype_str].append({'Exact': list(size)})
-                    else:
-                        gemm_group[dtype_str] = [{'Exact': list(size)}]
-                    m_sum += size[0]
-                    n_sum += size[1]
-                    batch_sum += size[2]
-                    k_sum += size[3]
                     if len(matmul_instruction_gen) > 0 or len(mi_groups0) > 0 or len(mi_groups1) > 0:
                         mfma_instruction_found = True
                         break
@@ -439,6 +430,16 @@ if args.hipblaslt_log and args.gridbase_config is None:
 
                 if not mfma_instruction_found:
                     print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
+                else:
+                    if dtype_str in gemm_group:
+                        gemm_group[dtype_str].append({'Exact': list(original_size)})
+                    else:
+                        gemm_group[dtype_str] = [{'Exact': list(original_size)}]
+                    m_sum += original_size[0]
+                    n_sum += original_size[1]
+                    batch_sum += original_size[2]
+                    k_sum += original_size[3]
+
         dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, groups)
 
 elif args.gridbase_config and args.hipblaslt_log is None:
@@ -487,10 +488,7 @@ elif args.gridbase_config and args.hipblaslt_log is None:
             size = list(size)
             original_size = copy.deepcopy(size)
             dtype_str = k[0]
-            m_sum += size[0]
-            n_sum += size[1]
-            batch_sum += size[2]
-            k_sum += size[3]
+
             dtype = json.loads(dtype_str)
             mfma_instructions = instruction_map(dtype)
             if mfma_instructions is None:
@@ -507,12 +505,6 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                         matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
                         if args.fast and (index > total_inst):
                             break
-
-                if dtype_str in gemm_group:
-                    gemm_group[dtype_str].append({'Exact': size})
-                else:
-                    gemm_group[dtype_str] = [{'Exact': size}]
-
                 if len(matmul_instruction_gen) > 0:
                     mfma_instruction_found = True
                     break
@@ -521,4 +513,14 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                     size[max_dim] = size[max_dim] // 2
             if not mfma_instruction_found:
                 print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
+            else:
+                if dtype_str in gemm_group:
+                    gemm_group[dtype_str].append({'Exact': list(original_size)})
+                else:
+                    gemm_group[dtype_str] = [{'Exact': list(original_size)}]
+                m_sum += original_size[0]
+                n_sum += original_size[1]
+                batch_sum += original_size[2]
+                k_sum += original_size[3]
+
         dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, {})
