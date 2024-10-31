@@ -300,7 +300,7 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
                         g["MatrixInstruction"] = list(v)
                         g["NonTemporalA"] = ntemp
                         group_params[0].append(g)
-                for v in matmul_instructions[dtype_str].values():
+                for v in matmul_instructions.get(dtype_str, dict()).values():
                     g = dict()
                     g["MatrixInstruction"] = list(v)
                     group_params[0].append(g)
