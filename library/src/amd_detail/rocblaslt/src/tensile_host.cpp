@@ -273,13 +273,18 @@ namespace
         case rocblaslt_compute_f32_fast_bf8_fnuz:
         case rocblaslt_compute_f32_fast_f8bf8_fnuz:
         case rocblaslt_compute_f32_fast_bf8f8_fnuz:
-#ifdef ROCM_USE_FLOAT8
+    #ifdef ROCM_USE_FLOAT8
         case rocblaslt_compute_f32_fast_f8_ocp:
         case rocblaslt_compute_f32_fast_bf8_ocp:
         case rocblaslt_compute_f32_fast_f8bf8_ocp:
         case rocblaslt_compute_f32_fast_bf8f8_ocp:
+<<<<<<< HEAD
 #endif
             return TensileLite::DataType::Float;
+=======
+    #endif
+            return Tensile::DataType::Float;
+>>>>>>> 945305a9 (update ProblemOverride)
         case rocblaslt_compute_f64:
             return TensileLite::DataType::Double;
         case rocblaslt_compute_i32:
@@ -1564,6 +1569,55 @@ namespace
     }
 #endif
 } // namespace
+
+struct TensileDataGemm
+{
+    bool                                   enableEpilogue = true;
+    Tensile::ContractionProblemGemm        problem;
+    Tensile::ContractionInputs             inputs;
+    std::vector<Tensile::KernelInvocation> kernels;
+    int                                    algoIndex = std::numeric_limits<int>::max();
+};
+
+struct TensileDataGroupedGemm
+{
+    bool                                   enableEpilogue = true;
+    Tensile::ContractionProblemGroupedGemm problem;
+    Tensile::ContractionGroupedInputs      inputs;
+    std::vector<Tensile::KernelInvocation> kernels;
+    int                                    algoIndex = std::numeric_limits<int>::max();
+    std::shared_ptr<void>                  hipHostMemory;
+    size_t                                 hipHostMemorySize;
+    bool                                   useUserArgs = false;
+};
+
+Tensile::ProblemOverride RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem& problem)
+{
+    return Tensile::ProblemOverride(problem.trans_a == HIPBLAS_OP_N ? false : true,
+                                    problem.trans_b == HIPBLAS_OP_N ? false : true,
+                                    hipDataType_to_tensile_type(problem.a_type),
+                                    roc2TensileType(problem.compute_type),
+                                    hipDataType_to_tensile_type(problem.c_type),
+                                    problem.m,
+                                    problem.n,
+                                    problem.k,
+                                    problem.batch_count);
+}
+
+Tensile::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void> gemmData)
+{
+    std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+
+    return Tensile::ProblemOverride(data->problem.transA(),
+                                    data->problem.transB(),
+                                    data->problem.a().dataType(),
+                                    data->problem.computeInputType(),
+                                    data->problem.c().dataType(),
+                                    data->problem.freeSizeA(0),
+                                    data->problem.freeSizeB(0),
+                                    data->problem.boundSize(0),
+                                    data->problem.batchSize(0));
+}
 
 void initTensileGemmData(rocblaslt_handle       handle,
                          rocblaslt::RocGemmType gemmType,

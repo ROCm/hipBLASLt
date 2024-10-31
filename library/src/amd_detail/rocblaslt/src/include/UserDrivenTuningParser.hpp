@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <Tensile/DataTypes.hpp>
@@ -59,8 +58,7 @@ namespace Tensile
                         size_t   n,
                         size_t   k,
                         size_t   batchSize);
-        ProblemOverride(const RocblasltContractionProblem& problem);
-        ProblemOverride(const ContractionProblemGemm& problem);
+        ProblemOverride(const ProblemOverride& problem);
 
         inline bool transA() const
         {

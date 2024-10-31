@@ -42,6 +42,7 @@
 #include "handle.h"
 //#include "tuple_helper.hpp"
 #include "utility.hpp"
+#include "UserDrivenTuningParser.hpp"
 #include <Tensile/Contractions.hpp>
 #include <Tensile/DataTypes.hpp>
 #include <atomic>
@@ -55,27 +56,6 @@ constexpr double value_category(const T& beta)
 {
     return beta == T(0) ? 0.0 : beta == T(1) ? 1.0 : beta == T(-1) ? -1.0 : 2.0;
 }
-
-struct TensileDataGemm
-{
-    bool                                   enableEpilogue = true;
-    Tensile::ContractionProblemGemm        problem;
-    Tensile::ContractionInputs             inputs;
-    std::vector<Tensile::KernelInvocation> kernels;
-    int                                    algoIndex = std::numeric_limits<int>::max();
-};
-
-struct TensileDataGroupedGemm
-{
-    bool                                   enableEpilogue = true;
-    Tensile::ContractionProblemGroupedGemm problem;
-    Tensile::ContractionGroupedInputs      inputs;
-    std::vector<Tensile::KernelInvocation> kernels;
-    int                                    algoIndex = std::numeric_limits<int>::max();
-    std::shared_ptr<void>                  hipHostMemory;
-    size_t                                 hipHostMemorySize;
-    bool                                   useUserArgs = false;
-};
 
 /********************************************************************
  * RocblasltContractionProblem captures the arguments for a GEMM-like *
@@ -500,3 +480,17 @@ inline TensileLite::DataType hipDataType_to_tensile_type(hipDataType type)
         return TensileLite::DataType::None;
     }
 }
+
+namespace
+{
+    Tensile::DataType roc2TensileType(rocblaslt_compute_type);
+}
+
+namespace Tensile
+{
+    class ProblemOverride;
+}
+
+Tensile::ProblemOverride RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem&);
+
+Tensile::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void>);

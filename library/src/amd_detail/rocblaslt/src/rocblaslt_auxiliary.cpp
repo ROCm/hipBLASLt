@@ -128,7 +128,7 @@ bool problem_override_from_file(rocblaslt_handle&                      handle,
     {
         std::vector<rocblaslt_matmul_heuristic_result> overrideResults;
         std::vector<int> solutionIndex(1);
-        Tensile::ProblemOverride prob_key(problem);
+        Tensile::ProblemOverride prob_key(RocblasltContractionProblem2ProblemOverride(problem));
         auto sol_iter = probSols.equal_range(prob_key);
 
         for (auto sol_idx = std::make_reverse_iterator(sol_iter.second);
@@ -187,9 +187,7 @@ bool problem_override_from_file_cpp(rocblaslt_handle&                           
     {
         std::vector<rocblaslt_matmul_heuristic_result> overrideResults;
         std::vector<int> solutionIndex(1);
-        std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
-
-        Tensile::ProblemOverride prob_key(data->problem);
+        Tensile::ProblemOverride prob_key(TensileDataGemm2ProblemOverride(gemmData));
         auto sol_iter = probSols.equal_range(prob_key);
 
         for (auto sol_idx = std::make_reverse_iterator(sol_iter.second);

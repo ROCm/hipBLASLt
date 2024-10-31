@@ -5,37 +5,6 @@
 #include <sstream>
 #include <utility>
 
-Tensile::DataType roc2TensileType(rocblaslt_compute_type type)
-{
-    switch(type)
-    {
-    case rocblaslt_compute_f32:
-    case rocblaslt_compute_f32_fast_xf32:
-    case rocblaslt_compute_f32_fast_f16:
-    case rocblaslt_compute_f32_fast_bf16:
-    case rocblaslt_compute_f32_fast_f8_fnuz:
-    case rocblaslt_compute_f32_fast_bf8_fnuz:
-    case rocblaslt_compute_f32_fast_f8bf8_fnuz:
-    case rocblaslt_compute_f32_fast_bf8f8_fnuz:
-#ifdef ROCM_USE_FLOAT8
-    case rocblaslt_compute_f32_fast_f8_ocp:
-    case rocblaslt_compute_f32_fast_bf8_ocp:
-    case rocblaslt_compute_f32_fast_f8bf8_ocp:
-    case rocblaslt_compute_f32_fast_bf8f8_ocp:
-#endif
-        return Tensile::DataType::Float;
-    case rocblaslt_compute_f64:
-        return Tensile::DataType::Double;
-    case rocblaslt_compute_i32:
-        return Tensile::DataType::Int32;
-    case rocblaslt_compute_f16:
-        return Tensile::DataType::Half;
-    default:
-        throw std::runtime_error("Unsupported type.");
-    }
-    return Tensile::DataType::None;
-}
-
 namespace Tensile
 {
 
@@ -199,40 +168,20 @@ namespace Tensile
     {
     }
 
-    ProblemOverride::ProblemOverride(const RocblasltContractionProblem& problem)
+    ProblemOverride::ProblemOverride(const ProblemOverride& problem)
     {
-        if (problem.trans_a == HIPBLAS_OP_N)
-            m_transA = false;
-        else   
-            m_transA = true;
-
-        if (problem.trans_b == HIPBLAS_OP_N)
-            m_transB = false;
-        else   
-            m_transB = true;
-        m_inputType     = hipDataType_to_tensile_type(problem.a_type);
-        m_computeType   = roc2TensileType(problem.compute_type);
-        m_outputType    = hipDataType_to_tensile_type(problem.c_type);
-        m_m             = problem.m;
-        m_n             = problem.n;
-        m_k             = problem.k;
-        m_batchSize     = problem.batch_count;
+       
+        m_transA = problem.transA();
+        m_transB = problem.transB();
+        m_inputType     = problem.inputType();
+        m_computeType   = problem.computeType();
+        m_outputType    = problem.outputType();
+        m_m             = problem.m();
+        m_n             = problem.n();
+        m_k             = problem.k();
+        m_batchSize     = problem.batchSize();
         
     }
 
-    ProblemOverride::ProblemOverride(const ContractionProblemGemm& problem)
-    {
-        
-        m_transA        = problem.transA();
-        m_transB        = problem.transB();
-        m_inputType     = problem.a().dataType();
-        m_computeType   = problem.computeInputType();
-        m_outputType    = problem.c().dataType();
-        m_m             = problem.freeSizeA(0);
-        m_n             = problem.freeSizeB(0);
-        m_k             = problem.boundSize(0);
-        m_batchSize     = problem.batchSize(0);
-
-    }
     
 };
