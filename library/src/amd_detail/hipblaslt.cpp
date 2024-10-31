@@ -54,15 +54,11 @@ bool override_path_compare_git_version(OverrideSingleton& override, hipblasLtHan
     if (pos != std::string::npos)
     {
         std::string file_version = firstline.substr(pos + header.length());
-        std::cerr << "hipBLASLt git version: " << git_version << std::endl;
-        std::cerr << "override file git version: " << file_version << std::endl;
         if (file_version == git_version)
             return true;
     }
 
     override.env_mode = false;
-
-    std::cerr << "The hipBLASLt git version and the override file git version are not the same." << std::endl;
 
     return false;
 
@@ -444,7 +440,9 @@ try
     {
         bool override_success = override_path_compare_git_version(override, handle); 
         if (override_success)
-            std::cerr << "HIPBLASLT_TUNING_OVERRIDE_FILE is the correct setting." << std::endl;
+            log_info(__func__, "HIPBLASLT_TUNING_OVERRIDE_FILE is the correct setting.");
+        else
+            log_error(__func__, "The hipBLASLt git version and the override file git version are not the same.");
     }
 
     auto status = RocBlasLtStatusToHIPStatus(rocblaslt_matmul_algo_get_heuristic(

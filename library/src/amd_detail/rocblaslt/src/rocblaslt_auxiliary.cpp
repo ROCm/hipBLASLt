@@ -122,7 +122,7 @@ bool problem_override_from_file(rocblaslt_handle&                      handle,
 
     if (probSols.size() == 0)
     {
-        std::cerr << "\nrocblaslt warning: no valid entries found in override file." << std::endl;
+        log_info(__func__, "No valid entries found in override file.");
     }
     else 
     {
@@ -159,8 +159,13 @@ bool problem_override_from_file(rocblaslt_handle&                      handle,
 
         if (!success)
         {
-            std::cerr << "\nrocblaslt warning: failed to find solution with index: "
-                        << solutionIndex[0] << std::endl; 
+            log_info(__func__, "No valid solution index found in override file.");
+        }
+        else
+        {
+            std::string mapping_result = "Find solution with index: ";
+            mapping_result += std::to_string(solutionIndex[0]);
+            log_info(__func__, mapping_result);
         }
     }
 
@@ -181,7 +186,7 @@ bool problem_override_from_file_cpp(rocblaslt_handle&                           
 
     if (probSols.size() == 0)
     {
-        std::cerr << "\nrocblaslt warning: no valid entries found in override file." << std::endl;
+        log_info(__func__, "No valid entries found in override file.");
     }
     else 
     {
@@ -212,8 +217,13 @@ bool problem_override_from_file_cpp(rocblaslt_handle&                           
 
         if (!success)
         {
-            std::cerr << "\nrocblaslt warning: failed to find solution with index: "
-                        << solutionIndex[0] << std::endl; 
+            log_info(__func__, "No valid solution index found in override file.");
+        }
+        else
+        {
+            std::string mapping_result = "Find solution with index: ";
+            mapping_result += std::to_string(solutionIndex[0]);
+            log_info(__func__, mapping_result);
         }
     }
 
@@ -1520,15 +1530,10 @@ rocblaslt_status
                                                           matmul_desc,
                                                           heuristicResultsArray, 
                                                           override.file_path);
-            if (!override_success){
-
-                std::cerr << "\nrocblaslt warning: One or more problem overrides failed to load from: "
-                          << override.file_path << std::endl;
-            }
-            else
-            {
+            if (override_success)
                 requestedAlgoCount--;
-            }
+
+            log_api(__func__, "returnAlogCount", override_success ? 1 : 0);
         }
 
 
@@ -1792,10 +1797,8 @@ rocblaslt_status
                                                               workspaceBytes,
                                                               override_result, 
                                                               override.file_path);
-            if (!override_success){
-                 std::cerr << "\nrocblaslt warning: One or more problem overrides failed to load from: "
-                           << override.file_path << std::endl;
-            }
+                                                              
+            log_api(__func__, "returnAlogCount", override_success ? 1 : 0);
 
         }
         
