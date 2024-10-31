@@ -273,18 +273,13 @@ namespace
         case rocblaslt_compute_f32_fast_bf8_fnuz:
         case rocblaslt_compute_f32_fast_f8bf8_fnuz:
         case rocblaslt_compute_f32_fast_bf8f8_fnuz:
-    #ifdef ROCM_USE_FLOAT8
+#ifdef ROCM_USE_FLOAT8
         case rocblaslt_compute_f32_fast_f8_ocp:
         case rocblaslt_compute_f32_fast_bf8_ocp:
         case rocblaslt_compute_f32_fast_f8bf8_ocp:
         case rocblaslt_compute_f32_fast_bf8f8_ocp:
-<<<<<<< HEAD
 #endif
             return TensileLite::DataType::Float;
-=======
-    #endif
-            return Tensile::DataType::Float;
->>>>>>> 945305a9 (update ProblemOverride)
         case rocblaslt_compute_f64:
             return TensileLite::DataType::Double;
         case rocblaslt_compute_i32:

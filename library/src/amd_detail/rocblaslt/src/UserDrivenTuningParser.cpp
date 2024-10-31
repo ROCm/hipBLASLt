@@ -43,16 +43,15 @@ namespace Tensile
                     
                     if(problemSolution.second > 0)
                     {
-                        bool duplicated_entry = false;
                         auto sol_iter = m_override.equal_range(problemSolution.first);
                         for (auto sol_idx = sol_iter.first; 
-                            !duplicated_entry && sol_idx != sol_iter.second; 
-                            sol_idx++)
+                             sol_idx != sol_iter.second; 
+                             sol_idx++)
                         {
                             if (sol_idx->second == problemSolution.second)
                             {
-                                duplicated_entry = true;
-                                sol_idx = m_override.erase(sol_idx);
+                                m_override.erase(sol_idx);
+                                break;
                             }
                         }
 
