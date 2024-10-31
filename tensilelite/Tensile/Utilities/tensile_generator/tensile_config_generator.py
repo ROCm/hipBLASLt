@@ -76,10 +76,10 @@ LibraryType = "GridBased"
 
 CU_RE = r"Compute Unit:(?P<COMPUTE_UNIT>[\w ]+)"
 
-res = subprocess.run("/opt/rocm/llvm/bin/offload-arch", shell=True, capture_output=True)
-ArchitectureName = res.stdout.decode('utf-8').strip()
-res = subprocess.run("rocminfo | grep Compute", shell=True, capture_output=True, env={"ROCR_VISIBLE_DEVICES":"0"})
-match = re.search(CU_RE, res.stdout.decode('utf-8').split('\n')[-2])
+res = subprocess.run("/opt/rocm/llvm/bin/offload-arch", stdout=subprocess.PIPE)
+ArchitectureName = res.stdout.decode("utf-8").strip()
+res = subprocess.run("rocminfo | grep Compute", stdout=subprocess.PIPE, shell=True, env={"ROCR_VISIBLE_DEVICES":"0"})
+match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
 NUM_STAGES = 8
 CU = 0
 if match:
@@ -88,8 +88,8 @@ else:
     raise RuntimeError("Failed to get compute unit from rocminfo")
 
 if ArchitectureName == 'gfx942':
-    res = subprocess.run("cat /sys/class/drm/card1/device/current_compute_partition", shell=True, capture_output=True)
-    if res.stdout.decode('utf-8').strip() == "CPX":
+    res = subprocess.run(["cat", "/sys/class/drm/card1/device/current_compute_partition"], stdout=subprocess.PIPE)
+    if res.stdout.decode("utf-8").strip() == "CPX":
         XCC = 1
         GSU = [1,2,3,4,5,6,7,8]
     else:
