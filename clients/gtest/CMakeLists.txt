@@ -23,7 +23,7 @@
 
 #enable_testing()
 find_package( GTest REQUIRED )
-find_package (Python3 COMPONENTS Interpreter)
+find_package (Python3 REQUIRED COMPONENTS Interpreter)
 
 
 set(hipblaslt_test_source
