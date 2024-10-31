@@ -32,10 +32,10 @@ function(virtualenv_install)
     execute_process(
       COMMAND ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install --upgrade setuptools
     )
-    message("${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install ${ARGN}")
+    message("${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install --ignore-installed ${ARGN}")
     execute_process(
       RESULT_VARIABLE rc
-      COMMAND ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install ${ARGN}
+      COMMAND ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install --ignore-installed ${ARGN}
     )
     if(rc)
         message(FATAL_ERROR ${rc})
