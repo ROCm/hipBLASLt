@@ -547,10 +547,10 @@ s_mov_b64 s[sgprKernArgAddress:sgprKernArgAddress+1], s[6:7] // Load address of 
 label_Preload_LoadArgsEnd:
 s_mov_b32 s[sgprWGM], s4                           // Preload internal args2
 s_mov_b32 s50, s5                                  // Load num of WGs
-label_common_kernel_entry:  /// for both preload/non-preload common code
 s_mov_b32 s[sgprWorkGroup0+0], s13                 // restore workgroup id
 s_mov_b32 s[sgprWorkGroup0+1], s14                 // restore workgroup id
 s_mov_b32 s[sgprWorkGroup0+2], s15                 // restore workgroup id
+label_common_kernel_entry:  /// for both preload/non-preload common code
 s_and_b32 s[sgprStaggerU], s49, 0xffff0000         // Restore StaggerU related vars
 s_lshr_b32 s[sgprStaggerU], s[sgprStaggerU], 0x10
 s_and_b32 s[sgprGSU], s49, 0xffff                  // Restore GSUConfig and GSU

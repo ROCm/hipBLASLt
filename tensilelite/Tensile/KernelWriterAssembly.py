@@ -1479,11 +1479,11 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.add(perloadLabelLoadEnd)
         moduleArgs.add(SMovB32(dst=sgpr("WGM"), src=sgpr(preloadSgprStartIdx+2), comment="Preload internal args2"))
         moduleArgs.add(SMovB32(dst=sgpr(tmpSgprNumWorkGroups), src=sgpr(preloadSgprStartIdx+3), comment="Load num of WGs"))
-        # add common kern entry label
-        moduleRegInit.add(common_kern_entry)
         for i in range(kernel["ProblemType"]["NumIndicesC"]):
           moduleRegInit.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+self.states.numSgprPreload+i), \
                       comment="restore workgroup id"))
+        # add common kern entry label
+        moduleRegInit.add(common_kern_entry)
 
       moduleRegInit.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr(sgprPackedArgs), src1=hex(0xFFFF0000), comment="Restore StaggerU related vars"))
       moduleRegInit.add(SLShiftRightB32(dst=sgpr("StaggerU"), shiftHex=hex(16), src=sgpr("StaggerU")))

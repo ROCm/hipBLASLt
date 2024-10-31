@@ -522,10 +522,10 @@ s_branch label_Preload_LoadArgsEnd
 label_Preload_HBMArgs:
 s_mov_b64 s[sgprKernArgAddress:sgprKernArgAddress+1], s[4:5] // Load address of kernel arguments
 label_Preload_LoadArgsEnd:
-label_common_kernel_entry:  /// for both preload/non-preload common code
 s_mov_b32 s[sgprWorkGroup0+0], s13                 // restore workgroup id
 s_mov_b32 s[sgprWorkGroup0+1], s14                 // restore workgroup id
 s_mov_b32 s[sgprWorkGroup0+2], s15                 // restore workgroup id
+label_common_kernel_entry:  /// for both preload/non-preload common code
 s_and_b32 s[sgprWGM], s[sgprGSU], 0xff00           // Restore WGM
 s_lshr_b32 s[sgprWGM], s[sgprWGM], 0x8
 s_and_b32 s[sgprStaggerU], s[sgprGSU], 0xffff0000  // Restore StaggerU related vars
