@@ -2862,7 +2862,7 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
                                      requestedAlgoCount);
         }
 
-        auto algoCount       = min(requestedAlgoCount, solutions.size());
+        auto algoCount       = min(static_cast<size_t>(requestedAlgoCount), solutions.size());
         int  returnAlgoCount = 0;
         heuristicResults.clear();
         heuristicResults.resize(algoCount);
@@ -2886,7 +2886,7 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
         auto solutions = library->findTopSolutionsGroupedGemm(
             data->problem.gemms, *hardware, requestedAlgoCount);
 
-        auto algoCount       = min(requestedAlgoCount, solutions.size());
+        auto algoCount       = min(static_cast<size_t>(requestedAlgoCount), solutions.size());
         int  returnAlgoCount = 0;
         heuristicResults.clear();
         heuristicResults.resize(algoCount);
