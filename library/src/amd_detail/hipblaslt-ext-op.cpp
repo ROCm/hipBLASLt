@@ -221,9 +221,9 @@ namespace
         return elementNumBytes(datatype) * tileM * tileN;
     }
 
-    static const ExtOpMasterLibrary& getExtOpMasterLibrary()
+    static const hipblaslt_ext::ExtOpMasterLibrary& getExtOpMasterLibrary()
     {
-        static ExtOpMasterLibrary lib(getExtOpLibraryPath());
+        static hipblaslt_ext::ExtOpMasterLibrary lib(getExtOpLibraryPath());
         return lib;
     }
 
@@ -300,10 +300,10 @@ hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
     auto&       masterLib = getExtOpMasterLibrary();
     const auto& lib
         = masterLib
-              .getLibrary(archName, SoftmaxSolutionLibrary::opName, hipDataTypeo_char(datatype))
-              ->as<SoftmaxSolutionLibrary>();
+              .getLibrary(archName, hipblaslt_ext::SoftmaxSolutionLibrary::opName, hipDataTypeo_char(datatype))
+              ->as<hipblaslt_ext::SoftmaxSolutionLibrary>();
     auto sol
-        = lib.findBestSolution(SoftmaxProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
+        = lib.findBestSolution(hipblaslt_ext::SoftmaxProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
     TensileLite::KernelArguments kArgs(false);
@@ -360,10 +360,10 @@ hipblasStatus_t hipblasltLayerNormRun(hipDataType datatype,
     auto&       masterLib = getExtOpMasterLibrary();
     const auto& lib
         = masterLib
-              .getLibrary(archName, LayerNormSolutionLibrary::opName, hipDataTypeo_char(datatype))
-              ->as<LayerNormSolutionLibrary>();
+              .getLibrary(archName, hipblaslt_ext::LayerNormSolutionLibrary::opName, hipDataTypeo_char(datatype))
+              ->as<hipblaslt_ext::LayerNormSolutionLibrary>();
     auto sol
-        = lib.findBestSolution(LayerNormProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
+        = lib.findBestSolution(hipblaslt_ext::LayerNormProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
     const auto kernelName    = sol->name();
     err                      = adapter->initKernel(kernelName);
     const auto numWorkgroups = m;
@@ -427,9 +427,9 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     const auto  archName  = trimArchName(gpu->archName());
     auto&       masterLib = getExtOpMasterLibrary();
     const auto& lib
-        = masterLib.getLibrary(archName, AMaxSolutionLibrary::opName, hipDataTypeo_char(datatype))
-              ->as<AMaxSolutionLibrary>();
-    auto       sol        = lib.findBestSolution(AMaxProblem(len,
+        = masterLib.getLibrary(archName, hipblaslt_ext::AMaxSolutionLibrary::opName, hipDataTypeo_char(datatype))
+              ->as<hipblaslt_ext::AMaxSolutionLibrary>();
+    auto       sol        = lib.findBestSolution(hipblaslt_ext::AMaxProblem(len,
                                                 hipDataType_to_tensile_type(datatype),
                                                 hipDataType_to_tensile_type(outDatatype)),
                                     *gpu);
@@ -495,9 +495,9 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     const auto  archName  = trimArchName(gpu->archName());
     auto&       masterLib = getExtOpMasterLibrary();
     const auto& lib
-        = masterLib.getLibrary(archName, AMaxSolutionLibrary::opName, hipDataTypeo_char(datatype))
-              ->as<AMaxSolutionLibrary>();
-    auto sol = lib.findBestSolution(AMaxProblem(len,
+        = masterLib.getLibrary(archName, hipblaslt_ext::AMaxSolutionLibrary::opName, hipDataTypeo_char(datatype))
+              ->as<hipblaslt_ext::AMaxSolutionLibrary>();
+    auto sol = lib.findBestSolution(hipblaslt_ext::AMaxProblem(len,
                                                 hipDataType_to_tensile_type(datatype),
                                                 hipDataType_to_tensile_type(outDatatype),
                                                 hipDataType_to_tensile_type(scaleDatatype),

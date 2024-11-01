@@ -39,6 +39,8 @@
 #include <stdexcept>
 #include <string>
 
+namespace hipblaslt_ext {
+
 class SoftmaxProblem;
 class SoftmaxSolution;
 
@@ -96,11 +98,12 @@ private:
     TensileLite::DataType datatype;
 };
 
+} // namespace hipblaslt
 template <typename IO>
-struct TensileLite::Serialization::MappingTraits<SoftmaxSolution, IO>
+struct TensileLite::Serialization::MappingTraits<hipblaslt_ext::SoftmaxSolution, IO>
 {
     using iot = IOTraits<IO>;
-    static void mapping(IO& io, SoftmaxSolution& s)
+    static void mapping(IO& io, hipblaslt_ext::SoftmaxSolution& s)
     {
         iot::mapRequired(io, "func_name", s.kernelName);
         std::string datatypeStr;
@@ -123,6 +126,8 @@ struct TensileLite::Serialization::MappingTraits<SoftmaxSolution, IO>
 
     const static bool flow = false;
 };
+
+namespace hipblaslt_ext {
 
 class SoftmaxProblem : public TensileLite::Problem
 {
@@ -274,11 +279,13 @@ private:
     TensileLite::DataType datatype;
 };
 
+} //namespace hipblaslt_ext
+
 template <typename IO>
-struct TensileLite::Serialization::MappingTraits<LayerNormSolution, IO>
+struct TensileLite::Serialization::MappingTraits<hipblaslt_ext::LayerNormSolution, IO>
 {
     using iot = IOTraits<IO>;
-    static void mapping(IO& io, LayerNormSolution& s)
+    static void mapping(IO& io, hipblaslt_ext::LayerNormSolution& s)
     {
         std::string datatypeStr;
 
@@ -301,6 +308,8 @@ struct TensileLite::Serialization::MappingTraits<LayerNormSolution, IO>
 
     const static bool flow = false;
 };
+
+namespace hipblaslt_ext {
 
 class LayerNormProblem : public TensileLite::Problem
 {
@@ -445,11 +454,13 @@ private:
     bool              isScale;
 };
 
+} // namespace hipblaslt_ext
+
 template <typename IO>
-struct TensileLite::Serialization::MappingTraits<AMaxSolution, IO>
+struct TensileLite::Serialization::MappingTraits<hipblaslt_ext::AMaxSolution, IO>
 {
     using iot = IOTraits<IO>;
-    static void mapping(IO& io, AMaxSolution& s)
+    static void mapping(IO& io, hipblaslt_ext::AMaxSolution& s)
     {
         std::string datatypeStr;
         std::string outDatatypeStr;
@@ -506,6 +517,8 @@ struct TensileLite::Serialization::MappingTraits<AMaxSolution, IO>
 
     const static bool flow = false;
 };
+
+namespace hipblaslt_ext {
 
 class AMaxProblem : public TensileLite::Problem
 {
@@ -800,3 +813,5 @@ private:
     std::string                                                                          libPath;
     std::string                                                                          libDir;
 };
+
+} // namespace hipblaslt_ext
