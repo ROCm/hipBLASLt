@@ -674,7 +674,7 @@ try
     }
     else if(algo_method_str.compare("index") == 0)
     {
-        arg.algo_method = 2;
+        arg.algo_method = tuningEnv? 1 : 2;
     }
     else
     {
