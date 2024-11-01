@@ -93,12 +93,13 @@ def process_doc(doc):
     param['Functions'] = doc.get('Functions') or {}
 
     valid_args = {a[0] for a in get_arguments(doc)}
+    valid_args.update({'fortran', 'category', 'precision', 'matrix_size', 'transA_transB', 'alpha_beta', 'matmul_algo'})
 
     # Instantiate all of the tests, starting with defaults
     for test in doc['Tests']:
         for a in test.keys():
             if a not in valid_args:
-                sys.exit("Argument \"" + a + "\" not recognized\n")
+                sys.exit("In hipblaslt_gentest.py, argument \"" + a + "\" not recognized\n")
         case = defaults.copy()
         case.update(test)
         generate(case, instantiate)
