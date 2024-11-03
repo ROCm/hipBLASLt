@@ -32,6 +32,7 @@ Our documentation is structured as follows:
   .. grid-item-card:: How to
 
     * :ref:`how-to-use-hipblaslt-tuning-utility`
+    * :ref:`how-to-use-hipblaslt-offline-tuning`
         
   .. grid-item-card:: Contribution
 
