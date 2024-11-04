@@ -74,7 +74,7 @@ class KernelWriterAssembly(KernelWriter):
     maxOccupancy = self.consts.maxOccupancy//multiplier
 
     vgprAllocateAligned = 4    if not doubleVgpr else 8
-    totalVgprs = self.consts.maxVgprs if not doubleVgpr else self.consts.maxVgprs*2
+    totalVgprs = self.consts.maxVgprs
     vgprsAligned = int(ceil(vgprs/vgprAllocateAligned))*vgprAllocateAligned
     vgprsAligned *= multiplier
 
@@ -91,12 +91,8 @@ class KernelWriterAssembly(KernelWriter):
 
     ldsLimitedOccupancy = self.getLdsLimitedOccupancy(ldsSize)
 
-    if not doubleVgpr:
-      vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, vgprs,          doubleVgpr)
-      accvgprLimitedOccupancy = self.getVgprOccupancy(numThreads, accvgprs,       doubleVgpr)
-    else:
-      vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, vgprs+accvgprs, doubleVgpr)
-      accvgprLimitedOccupancy = vgprLimitedOccupancy
+    vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, vgprs,    doubleVgpr)
+    accvgprLimitedOccupancy = self.getVgprOccupancy(numThreads, accvgprs, doubleVgpr)
 
     return min(ldsLimitedOccupancy, vgprLimitedOccupancy, accvgprLimitedOccupancy)
 
