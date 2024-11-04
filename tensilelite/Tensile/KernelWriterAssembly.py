@@ -7982,26 +7982,29 @@ class KernelWriterAssembly(KernelWriter):
             sPerp = 0
             sPara = 0
             needToSplitMetadata = False
+            metadataScalar = 1.0
             if tP["tlu"] != kernel["UnrollMajorLDS%s" % tP["tensorChar"]]:
               if tP["wtc"]:
                 sPerp = s
             else:
               if tP["wtc"]:
                 sPara = s
-                needToSplitMetadata = tP["isM"]
-
+                if tP["isM"]:
+                  needToSplitMetadata = True
+                  metadataScalar = max(1, self.states.bpr // ( tP["glvw"] * tP["bpeGR"]))
             #print("perp:{}/{} para:{}/{} sPerp:{} sPara:{}".format(perp,tP["nrp"],para,tP["nrc"],sPerp,sPara))
             (offset, i, comment) = self.calculateLdsWriteOffset(perp, para, sPerp, sPara, kernel, tP)
 
             # Need refactor, the pattern < glvw in fp8 is not the same as the original.
             # Thus the offset calculation here does not match global read.
             if tP["glvw"] <= 2:
-              g2lIdx = i * blockWidth
+              # In Metadata use metadataScalar to group # of i
+              g2lIdx = (i * blockWidth) * metadataScalar
               if isBpeInputLarger:
                 g2lIdx *= (tP["bpeGR"]// tP["bpeDS"])
               g2lIdx = int(g2lIdx)
             else:
-              g2lIdx = int(i * blockWidth)
+              g2lIdx = int((i * blockWidth) * metadataScalar)
               if isBpeInputLarger:
                 g2lIdx *= (tP["bpeGR"]// tP["bpeDS"])
 

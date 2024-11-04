@@ -3565,6 +3565,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           tpM = self.states.bpr if tensorParametersM["bpeDS"] * vwm < self.states.bpr else tensorParametersM["bpeDS"] * vwm
           self.states.m.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedMetadata"] * kernel["NumLoadsPerpendicularMetadata"] * \
             tpM) / (float)(self.states.bpr))
+          self.states.m.numVgprG2L = self.states.m.numVgprG2LAllocated
         # using _ds_store_b8: need one more vgpr space to do lshr
         if tensorParametersM["localWriteInstruction"].blockWidth == 0.25:
           self.states.m.numVgprG2L = self.states.m.numVgprG2L * 2
