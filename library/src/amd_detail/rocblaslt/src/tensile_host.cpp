@@ -452,6 +452,7 @@ namespace
 
     inline void logBenchFromTensileDataGemm(const TensileLite::ContractionProblemGemm& problem,
                                             const TensileLite::ContractionInputs&      inputs,
+                                            const int&                             solutionIndex,
                                             bool                                   isCpp)
     {
         log_bench(
@@ -537,11 +538,21 @@ namespace
                                                     problem.computeInputType(),
                                                     problem.a().dataType(),
                                                     problem.b().dataType()),
+            "--algo_method",
+            "index",
+            "--solution_index",
+            solutionIndex,
             tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
     }
 
+<<<<<<< HEAD
     inline void logBenchFromTensileDataGemm(const TensileLite::ContractionProblemGroupedGemm& problem,
                                             const TensileLite::ContractionGroupedInputs&      inputs,
+=======
+    inline void logBenchFromTensileDataGemm(const Tensile::ContractionProblemGroupedGemm& problem,
+                                            const Tensile::ContractionGroupedInputs&      inputs,
+                                            const int&                                    solutionIndex,
+>>>>>>> origin/develop
                                             bool                                          isCpp)
     {
         size_t            gemmCount = problem.gemms.size();
@@ -629,6 +640,10 @@ namespace
                                                     problem.gemms[0].computeInputType(),
                                                     problem.gemms[0].a().dataType(),
                                                     problem.gemms[0].b().dataType()),
+            "--algo_method",
+            "index",
+            "--solution_index",
+            solutionIndex,
             tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()));
     }
 
@@ -1682,7 +1697,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         data->inputs       = GetTensileInputs(prob);
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
         {
-            logBenchFromTensileDataGemm(data->problem, data->inputs, false);
+            logBenchFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, false);
         }
 
         auto solution = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
@@ -2079,7 +2094,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             {
-                logBenchFromTensileDataGemm(data->problem, data->inputs, true);
+                logBenchFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, true);
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
         }
@@ -2095,7 +2110,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
             }
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             {
-                logBenchFromTensileDataGemm(data->problem, data->inputs, true);
+                logBenchFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, true);
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
         }

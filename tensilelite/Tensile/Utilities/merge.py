@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 import yaml
 import os
 import sys
+import shutil
 import argparse
 from copy import deepcopy
 from enum import IntEnum
@@ -157,7 +158,7 @@ def compareProblemType(oriData, incData):
                 except KeyError:
                     oriSolutionIndex = oriData[5][i]["SolutionIndex"]
                     print(f"[Warning] Popping '{item}' failed in oriData(idx={oriSolutionIndex})")
-        
+
     results = ""
     solIdx = 0
     # Compare existing ProblemType items of originalFiles with incrementalFiles
@@ -399,9 +400,17 @@ def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSi
     incrementalFiles = allFiles(incrementalDir)
     ensurePath(outputPath)
 
-    # filter the incremental logic files that have the corresponding base file
-    incrementalFiles = [ i for i in incrementalFiles
-                         if os.path.split(i)[-1] in [os.path.split(o)[-1] for o in originalFiles] ]
+    incrementalFilesTemp = []
+    originalFileNames = [os.path.split(o)[-1] for o in originalFiles]
+    for file in incrementalFiles:
+        if os.path.split(file)[-1] in originalFileNames:
+            incrementalFilesTemp.append(file)
+        else:
+            outputFile = os.path.join(outputPath, os.path.split(file)[-1])
+            shutil.copyfile(file, outputFile)
+            msg("Copied", file, "to", outputFile)
+
+    incrementalFiles = incrementalFilesTemp
 
     for incFile in incrementalFiles:
         basename = os.path.split(incFile)[-1]

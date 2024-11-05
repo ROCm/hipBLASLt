@@ -106094,7 +106094,7 @@ Library:
     - {featureIdx: 6, nextIdxGT: -1, nextIdxLTE: -2, threshold: 0.9756673276424408}
 LibraryType: DecisionTree
 MinimumRequiredVersion: 4.33.0
-PerfMetric: Experimental
+PerfMetric: ExperimentalDTree
 ProblemType:
   Activation: true
   ActivationComputeDataType: 0

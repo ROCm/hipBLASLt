@@ -844,7 +844,7 @@ pushd .
         elevate_if_not_root dpkg -i hipblaslt[-\_]*.deb
       ;;
       centos|rhel|almalinux)
-        elevate_if_not_root yum --allowerasing -y localinstall hipblaslt-*.rpm
+        elevate_if_not_root rpm --nodeps -U hipblaslt-*.rpm
       ;;
       fedora)
         elevate_if_not_root dnf install hipblaslt-*.rpm

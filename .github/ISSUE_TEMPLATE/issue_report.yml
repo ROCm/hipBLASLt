@@ -60,6 +60,7 @@ body:
         - AMD Radeon Pro W6800
         - AMD Radeon Pro W6600
         - AMD Radeon Pro W5500
+        - AMD Radeon RX 7900 XTX
         - AMD Radeon RX 7900 XT
         - AMD Radeon RX 7600
         - AMD Radeon RX 6950 XT
@@ -85,6 +86,15 @@ body:
     description: What version(s) of ROCm did you encounter the issue on?
     multiple: true
     options:
+        - ROCm 6.2.3
+        - ROCm 6.2.2
+        - ROCm 6.2.1
+        - ROCm 6.2.0
+        - ROCm 6.1.2
+        - ROCm 6.1.1
+        - ROCm 6.1.0
+        - ROCm 6.0.2
+        - ROCm 6.0.0
         - ROCm 5.7.1
         - ROCm 5.7.0
         - ROCm 5.6.0

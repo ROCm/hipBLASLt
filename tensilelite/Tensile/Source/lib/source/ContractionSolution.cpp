@@ -3093,6 +3093,7 @@ namespace TensileLite
                                                      x,
                                                      y,
                                                      z,
+                                                     1,
                                                      cuCount);
         }
 

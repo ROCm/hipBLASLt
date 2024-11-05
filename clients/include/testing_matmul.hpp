@@ -2761,6 +2761,13 @@ void testing_matmul_with_bias(const Arguments& arg,
     {
         for(size_t sol = 0; sol < heuristicResult.size(); sol++)
         {
+            if((arg.unit_check || arg.norm_check || arg.allclose_check) && arg.c_equal_d)
+            {
+                for(int i = 0; i < gemm_count; i++)
+                {
+                    CHECK_HIP_ERROR(synchronize(dC[i], hC[i], block_count));
+                }
+            }
             if(!do_grouped_gemm)
             {
                 if(arg.use_ext)
@@ -2928,6 +2935,13 @@ void testing_matmul_with_bias(const Arguments& arg,
 
         for(size_t sol = 0; sol < heuristicResult.size(); sol++)
         {
+            if((arg.unit_check || arg.norm_check || arg.allclose_check) && arg.c_equal_d)
+            {
+                for(int i = 0; i < gemm_count; i++)
+                {
+                    CHECK_HIP_ERROR(synchronize(dC[i], hC[i], block_count));
+                }
+            }
             if(!do_grouped_gemm)
             {
                 FrequencyMonitor& freq_monitor = getFrequencyMonitor();
