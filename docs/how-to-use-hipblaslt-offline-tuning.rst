@@ -38,7 +38,7 @@ To find and use the best GEMM kernel for a problem, follow these steps:
     hipblaslt-bench --api_method c -m 1024 -n 512 -k 1024 --lda 1024 --ldb 1024 --ldc 1024 --ldd 1024  --stride_a 0 --stride_b 0 --stride_c 0 --stride_d 0  --alpha 1.000000 --beta 1.000000 --transA N --transB N --batch_count 1  --a_type f16_r --b_type f16_r --c_type f16_r --d_type f16_r --scale_type f32_r --bias_type f32_r   --compute_type f32_r 
 
 
-2. Set the environment variable ``HIPBLASLT_TUNING_FILE=<file_name>`` to tune and store the tuning result of the best solution indices for those GEMM problems, where ``<file_name>`` points to the tuning file.
+2. Set the environment variable ``HIPBLASLT_TUNING_FILE=<file_name>`` to tune and store the tuning result of the best solution indices for the GEMM problems. The ``<file_name>`` points to the tuning file.
 
 - Please note that the default settings will have the following changes in the tuning environment.
 
