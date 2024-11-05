@@ -41,8 +41,10 @@ namespace Tensile
             return "CUEfficiency";
         case PerformanceMetric::DeviceEfficiency:
             return "DeviceEfficiency";
-        case PerformanceMetric::Experimental:
-            return "Experimental";
+        case PerformanceMetric::ExperimentalDTree:
+            return "ExperimentalDTree";
+        case PerformanceMetric::ExperimentalStreamK:
+            return "ExperimentalStreamK";
 
         case PerformanceMetric::Count:
         default:;
@@ -60,8 +62,10 @@ namespace Tensile
             return "CUEff";
         case PerformanceMetric::DeviceEfficiency:
             return "DvEff";
-        case PerformanceMetric::Experimental:
-            return "Test";
+        case PerformanceMetric::ExperimentalDTree:
+            return "DTree";
+        case PerformanceMetric::ExperimentalStreamK:
+            return "StreamK";
 
         case PerformanceMetric::Count:
         default:;
@@ -100,7 +104,8 @@ namespace Tensile
         registerTypeInfo<PerformanceMetric::Auto>();
         registerTypeInfo<PerformanceMetric::CUEfficiency>();
         registerTypeInfo<PerformanceMetric::DeviceEfficiency>();
-        registerTypeInfo<PerformanceMetric::Experimental>();
+        registerTypeInfo<PerformanceMetric::ExperimentalDTree>();
+        registerTypeInfo<PerformanceMetric::ExperimentalStreamK>();
     }
 
     void PerformanceMetricTypeInfo::registerAllTypeInfoOnce()

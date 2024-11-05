@@ -73,7 +73,7 @@ namespace Tensile
 
         bool enableDebugSelection() const;
 
-        bool useExperimentalSelection() const;
+        int useExperimentalSelection() const;
 
         std::string getMetric() const;
 
@@ -101,9 +101,8 @@ namespace Tensile
 #endif
         }
 
-
-        __attribute__((always_inline))
-        inline void markerStart(const char* name, const std::string& objPath) const
+        __attribute__((always_inline)) inline void markerStart(const char*        name,
+                                                               const std::string& objPath) const
         {
 #ifdef Tensile_ENABLE_MARKER
             if(m_printMarker)
@@ -131,7 +130,7 @@ namespace Tensile
         int         m_value2;
         bool        m_naivePropertySearch = false;
         bool        m_debugSelection      = false;
-        bool        m_experimentSelection = false;
+        int         m_experimentSelection = 0;
         int         m_solution_index      = -1;
         bool        m_solselTrace         = false;
         std::string m_metric              = "";

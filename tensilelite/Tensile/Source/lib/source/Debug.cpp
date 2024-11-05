@@ -120,7 +120,7 @@ namespace Tensile
         return m_debugSelection;
     }
 
-    bool Debug::useExperimentalSelection() const
+    int Debug::useExperimentalSelection() const
     {
         return m_experimentSelection;
     }
@@ -185,9 +185,9 @@ namespace Tensile
         if(db_select)
             m_debugSelection = strtol(db_select, nullptr, 0) != 0;
 
-        const char* exp_select = std::getenv("TENSILE_EXPERIMENTAL_SELECTION");
+        const char* exp_select = std::getenv("TENSILE_SOLUTION_SELECTION_METHOD");
         if(exp_select)
-            m_experimentSelection = strtol(exp_select, nullptr, 0) != 0;
+            m_experimentSelection = strtol(exp_select, nullptr, 0);
 
         const char* solsel_trace = std::getenv("TENSILE_SOLUTION_SELECTION_TRACE");
         if(solsel_trace)
@@ -223,7 +223,8 @@ namespace Tensile
             m_printMarker = strtol(tensile_marker, nullptr, 0) != 0;
 #ifndef Tensile_ENABLE_MARKER
             if(m_printMarker)
-                printf("TENSILE_ENABLE_MARKER is not supported in this build. Please rebuild with -DTensile_ENABLE_MARKER=ON\n");
+                printf("TENSILE_ENABLE_MARKER is not supported in this build. Please rebuild with "
+                       "-DTensile_ENABLE_MARKER=ON\n");
 #endif
         }
     }
