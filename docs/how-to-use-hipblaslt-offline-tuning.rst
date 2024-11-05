@@ -10,9 +10,7 @@ User Offline Tuning
 
 ``hipblaslt-bench`` can be used to find the best-performing GEMM kernel for a given set of GEMM problems. Use the command line interface to access this functionality. (See :ref:`clients` for more details.)
 
-Through the User Offline Tuning mechanism, the best solution index for a given problem size obtained by ``hipblaslt-bench`` can be directly used in future GEMM calls.
-
-However, please note that these indices cannot be reused across library releases or across different device architectures.
+``hipblaslt-bench`` provides the best solution index for a given problem size. This index can be used directly in future GEMM calls through the User Offline Tuning mechanism. However, these indices cannot be reused across library releases or across different device architectures.
 
 Running
 =================================
