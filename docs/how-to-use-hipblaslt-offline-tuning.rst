@@ -50,7 +50,7 @@ To find and use the best GEMM kernel for a problem, follow these steps:
     --requested_solution <value>    Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to heuristic.    (Default value is: -1)
     --rotating <value>              Use rotating memory blocks for each iteration, size in MB.                          (Default value is: 512)
 
-- After the tuning completes, the expected output is as follows:
+   After the tuning completes, the expected output is displayed as follows:
 
 .. code-block:: bash
 
