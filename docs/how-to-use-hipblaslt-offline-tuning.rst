@@ -19,7 +19,7 @@ To find and use the best GEMM kernel for a problem, follow these steps:
 
 1. Generate the tuning command line by setting the environment variable ``HIPBLASLT_LOG_MASK=32`` before calling any hipBLASLt APIs. For more details on how to use ``hipblaslt-bench``, see :ref:`Logging and heuristics <logging-heuristics>`.
 
-- In Bash shell:
+   In the Bash shell, set the following environment variable:
 
 .. code-block:: bash
 
