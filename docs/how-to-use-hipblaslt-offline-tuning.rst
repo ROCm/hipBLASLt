@@ -15,7 +15,7 @@ User Offline Tuning
 Running
 =================================
 
-Follow these steps:
+To find and use the best GEMM kernel for a problem, follow these steps:
 
 1. Generate tuning command line by setting environment variable ``HIPBLASLT_LOG_MASK=32`` before calling hipBLASLt APIs if you are unsure how to use ``hipblaslt-bench``. (see :ref:`Logging and heuristics <logging-heuristics>` for more details.)
 
