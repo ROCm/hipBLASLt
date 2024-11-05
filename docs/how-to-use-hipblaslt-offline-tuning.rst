@@ -63,7 +63,7 @@ To find and use the best GEMM kernel for a problem, follow these steps:
 
 3. Set the environment variable ``HIPBLASLT_TUNING_OVERRIDE_FILE=<file_name>`` to load the tuning file and override the default kernel selection with the optimal kernel choices, where ``<file_name>`` points to the tuning file.
 
-- For example, user can use ``hisblaslt-bench`` (algo_method: heuristic) to obtain solutions for a problem, which will include the best tuning solution index.
+   For example, a user can use ``hisblaslt-bench`` (with ``algo_method`` set to ``heuristic``) to obtain the solutions for a problem, which include the best tuning solution index.
 
 .. code-block:: bash
 
