@@ -325,6 +325,31 @@ class RegisterPool:
     #print "available()=", self.available(), "availableBlock()=",maxAvailable
     return blocksAvail * blockSize
 
+  # Size of registers of at least specified blockSize
+  def availableBlockMaxVgpr(self, maxVgpr, blockSize, align):
+    if blockSize ==0:
+      blockSize = 1
+    blocksAvail = 0
+    consecAvailable = 0
+    #for s in self.pool:
+    for i in range(0, maxVgpr):
+      if i >= len(self.pool) :
+        if not (consecAvailable == 0 and i % align != 0):
+          consecAvailable += 1
+      else:
+        s = self.pool[i]
+        if s.status == RegisterPool.Status.Available:
+          if not (consecAvailable == 0 and i % align != 0):
+            # do not increment if the first item is not aligned
+            consecAvailable += 1
+        else:
+          blocksAvail += consecAvailable // blockSize
+          consecAvailable = 0
+    blocksAvail += consecAvailable // blockSize
+    #print self.state()
+    #print "available()=", self.available(), "availableBlock()=",maxAvailable
+    return blocksAvail * blockSize
+
   def availableBlockAtEnd(self):
     availCnt = 0
     for s in reversed(self.pool):

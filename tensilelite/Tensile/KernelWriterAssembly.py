@@ -9683,16 +9683,13 @@ class KernelWriterAssembly(KernelWriter):
 
     ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], vectorDataTypes, dim=factorDim)
 
-    #print self.vgprPool.state()
     # Use VGPR up to next occupancy threshold:
     maxVgprs = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), \
                                           self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
-    if self.states.serializedStore: # get aggressive when serializedStore is on; not necessarily exclusive to this parameter
-      self.vgprPool.growPool(self.vgprPool.size()-self.vgprPool.available(), maxVgprs, 1, \
-        "grow-pool up to next occupancy for GlobalWrite")
-    # Get numVgprAvailable
-    numVgprAvailable = self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
-
+    # Get estimated numVgprAvailable
+    # print("Max vgprs =", maxVgprs, self.vgprPool.size(), self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align))
+    numVgprAvailable = self.vgprPool.availableBlockMaxVgpr(maxVgprs, ss.numVgprsPerElement, ss.align)
+    
     # Grow the register pool if needed - we need enough regs for at least one element
     # Unfortunate since this means the write logic is setting the VGPR requirement
     # for the entire kernel but at least we have a functional kernel.
@@ -9703,42 +9700,12 @@ class KernelWriterAssembly(KernelWriter):
     # TODO: Minimum elems for StoreRemap
     # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
     minElements = 2 if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) else 1
-    minNeeded = minElements * ss.numVgprsPerElement
-    shrinkDb = 0
-    if shrinkDb:
-      print("numVgprAvailable=", numVgprAvailable, "minElements=", minElements, "minNeeded=", minNeeded)
-    if numVgprAvailable < minNeeded:
-      gwvwOrig = gwvw
-      currentOccupancy = self.getOccupancy(kernel["NumThreads"], self.getLdsSize(kernel), \
-          self.vgprPool.size(), self.agprPool.size(), self.states.doubleVgpr)
-      futureOccupancy = self.getOccupancy(kernel["NumThreads"], self.getLdsSize(kernel), \
-          self.vgprPool.size() - numVgprAvailable + minNeeded, self.agprPool.size(), self.states.doubleVgpr)
-
-      if shrinkDb:
-        print("currentOccupancy=%u futureOccupancy=%u VGPRs=%u numVgprAvail=%u vgprPerElem=%u" \
-            % (currentOccupancy, futureOccupancy, self.vgprPool.size(), \
-              numVgprAvailable, minElements*ss.numVgprsPerElement))
-      if futureOccupancy > currentOccupancy:
-        if shrinkDb:
-          print("warning: %s growing VGPR for GlobalWrite batching - this may bloat VGPR usage" % \
-                (self.states.kernelName))
-          print("   numVgprAvailable=", numVgprAvailable, \
-                "numVgprsPerElement=", ss.numVgprsPerElement, "atomic=", atomic, \
-                "beta=", beta, "gwvw=", gwvw)
-      elif gwvw != gwvwOrig:
-        ss.cfg.gwvw = gwvw # make both representations consistent
-        if shrinkDb:
-          print2("info: %s shrank gwvw from %u to %u but kept occupancy same=%u." \
-              % (self.states.kernelName, gwvwOrig, gwvw, currentOccupancy))
-
-      if numVgprAvailable < minElements*ss.numVgprsPerElement:
-        print2("info: growing pool += %d * %d for GlobalWrite\n" \
-            % (minElements,ss.numVgprsPerElement))
-        print2(self.vgprPool.state())
-        self.vgprPool.growPool(0, minElements, ss.numVgprsPerElement, \
-          "grow-pool for GlobalWrite")
-        numVgprAvailable = self.vgprPool.available()
-        print2(self.vgprPool.state())
+    if numVgprAvailable < minElements*ss.numVgprsPerElement:
+      print2("info: growing pool += %d * %d for GlobalWrite\n" \
+          % (minElements,ss.numVgprsPerElement))
+      self.vgprPool.growPool(0, minElements, ss.numVgprsPerElement, \
+        "grow-pool for GlobalWrite")
+      numVgprAvailable = self.vgprPool.available()
 
     # set atomicW after we potentially resize GWVW
     atomicW = min(gwvw, self.getVectorAtomicWidth(kernel))
@@ -9753,9 +9720,8 @@ class KernelWriterAssembly(KernelWriter):
 
     numElementsPerBatch = numElementsPerBatch if not kernel["NumElementsPerBatchStore"] else min(kernel["NumElementsPerBatchStore"],numElementsPerBatch)
 
-    if shrinkDb:
-      print("NumElementsPerBatch=", numElementsPerBatch, "LimitedBySgprs=", ss.cfg.numElementsPerBatchLimitedBySgprs, \
-          "WARNING" if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch else "okay")
+    # print("NumElementsPerBatch=", numElementsPerBatch, "LimitedBySgprs=", ss.cfg.numElementsPerBatchLimitedBySgprs, \
+    #     "WARNING" if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch else "okay")
     if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch:
       numElementsPerBatch = ss.cfg.numElementsPerBatchLimitedBySgprs
 
@@ -9771,8 +9737,7 @@ class KernelWriterAssembly(KernelWriter):
         # to mark overflowedResources rather than generate a kernel that won't work.
         # It might be possible to fix globalWriteBatch to handle this case but these
         # are likely to be low-performing so likely not worth optimizing.
-        if shrinkDb:
-          print("WARNING: half requires at least two elements per batch")
+        print2("WARNING: half requires at least two elements per batch")
         self.states.overflowedResources = 3
 
     assert numElementsPerBatch > 0, "numElementsPerBatch=0 for %s"%self.states.kernelName
@@ -9805,6 +9770,20 @@ class KernelWriterAssembly(KernelWriter):
     #  #print "  NumVectorsPerBatch", numVectorsPerBatch
     #  numElementsPerBatch = numVectorsPerBatch * kernel["GlobalWriteVectorWidth"]
     numBatches = max(1, ceilDivide(len(elements[edgeI]),numElementsPerBatch))
+
+    # Grow pool if needed
+    # Get true numVgprAvailable
+    numVgprAvailable = self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
+    totalNeededVgpr = ss.numVgprsPerElement * numElementsPerBatch
+    # print("Available vgprs =", numVgprAvailable, "Needed vgprs =", totalNeededVgpr, "pool size =", self.vgprPool.size())
+    if numVgprAvailable < totalNeededVgpr:
+      print2("info: growing pool += %d * %d for GlobalWrite\n" \
+          % (numBatches,ss.numVgprsPerElement))
+      availableBlock = min(0, self.vgprPool.available() - numVgprAvailable)
+      self.vgprPool.growPool(0, totalNeededVgpr + availableBlock, 1, "grow-pool for GlobalWrite")
+    # # Get true numVgprAvailable
+    # numVgprAvailable = self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
+    # print("Available vgprs =", numVgprAvailable, "pool size =", self.vgprPool.size())
 
     numSgprs = ss.cfg.numTempSgprPerBatch + ss.cfg.numMaskSgprPerBatch + ss.cfg.numMaskSgprPerElement * numElementsPerBatch
 
