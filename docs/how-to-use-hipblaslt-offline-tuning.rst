@@ -31,7 +31,7 @@ To find and use the best GEMM kernel for a problem, follow these steps:
 
     ./sample_hipblaslt_gemm
 
-- The tuning command will log:
+   The tuning command displays the following log entry:
 
 .. code-block:: bash
 
