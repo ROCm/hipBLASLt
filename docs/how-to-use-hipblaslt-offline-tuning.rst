@@ -61,7 +61,7 @@ To find and use the best GEMM kernel for a problem, follow these steps:
     N,N,0,1,64,64,1024,1.1,64,65536,0.9,1024,65536,64,4096,64,4096,f32_r,f32_r,f32_r,f32_r,f32_r,0,0,0,0,0,none,0,f32_r,512,903.229,55.8608,9.28735,49257
 
 
-3. Set the environment variable ``HIPBLASLT_TUNING_OVERRIDE_FILE=<file_name>`` to load the tuning file and override the default kernel selection with the kernels found, where ``<file_name>`` points to the tuning file.
+3. Set the environment variable ``HIPBLASLT_TUNING_OVERRIDE_FILE=<file_name>`` to load the tuning file and override the default kernel selection with the optimal kernel choices, where ``<file_name>`` points to the tuning file.
 
 - For example, user can use ``hisblaslt-bench`` (algo_method: heuristic) to obtain solutions for a problem, which will include the best tuning solution index.
 
