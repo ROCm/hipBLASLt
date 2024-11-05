@@ -2008,7 +2008,8 @@ class GlobalWriteBatchWriter:
               sb = 0 if vi ==0 else 1
               module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[sb])))
             else:
-              sb = SelectBit.WORD_0 if vi == 0 else SelectBit.WORD_1
+              # Enable WORD_0 of 2-nd VGPR with vi=4 for vw=8
+              sb = SelectBit.WORD_0 if vi%4 == 0 else SelectBit.WORD_1
               module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
           module.add(SNop(waitState=0))
           if kernel["ProblemType"]["ComputeDataType"].isSingle():
@@ -2037,7 +2038,8 @@ class GlobalWriteBatchWriter:
               sb = 0 if vi ==0 else 1
               module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[sb])))
             else:
-              sb = SelectBit.WORD_0 if vi == 0 else SelectBit.WORD_1
+              # Enable WORD_0 of 2-nd VGPR with vi=4 for vw=8
+              sb = SelectBit.WORD_0 if vi%4 == 0 else SelectBit.WORD_1
               module.add(VCvtPkBF8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
           module.add(SNop(waitState=0))
           if kernel["ProblemType"]["ComputeDataType"].isSingle():
