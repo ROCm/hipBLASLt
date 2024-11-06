@@ -1608,7 +1608,7 @@ Tests:
   algo_method: [0,1]
   transA_transB: *transA_transB_range
   alpha: 1
-  beta: 0
+  beta: [0,1]
   requested_solution_num: -1
   unit_check: 1
   gpu_arch: '94[0-2]'
