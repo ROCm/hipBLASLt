@@ -545,14 +545,9 @@ namespace
             tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
     }
 
-<<<<<<< HEAD
     inline void logBenchFromTensileDataGemm(const TensileLite::ContractionProblemGroupedGemm& problem,
                                             const TensileLite::ContractionGroupedInputs&      inputs,
-=======
-    inline void logBenchFromTensileDataGemm(const Tensile::ContractionProblemGroupedGemm& problem,
-                                            const Tensile::ContractionGroupedInputs&      inputs,
                                             const int&                                    solutionIndex,
->>>>>>> origin/develop
                                             bool                                          isCpp)
     {
         size_t            gemmCount = problem.gemms.size();
