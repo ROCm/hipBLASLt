@@ -198,7 +198,7 @@ namespace Tensile
         int         wavefrontSize    = 64;
         int         simdPerCu        = 4;
         int         computeUnitCount = 0;
-        int         skDynamicGrid    = 0;
+        int         skDynamicGrid    = 3;
         int         skMaxCUs         = 0;
         int         skGridMultiplier = 1;
         int         skFixedGrid      = 0;
@@ -221,7 +221,7 @@ namespace Tensile
         const int getSKDynamicGrid() const
         {
             static const char* envStr = std::getenv("TENSILE_STREAMK_DYNAMIC_GRID");
-            static const int   value  = (envStr == NULL ? 0 : std::atoi(envStr));
+            static const int   value  = (envStr == NULL ? 3 : std::atoi(envStr));
             return value;
         }
 
