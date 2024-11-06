@@ -2005,7 +2005,8 @@ class GlobalWriteBatchWriter:
           else:
             isPK = True
             if self.parentWriter.states.archCaps["NoSDWA"]: #cm review
-              sb = 0 if vi ==0 else 1
+              # Enable WORD_0 of 2-nd VGPR with vi=4 for vw=8
+              sb = 0 if vi%4 == 0 else 1
               module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[sb])))
             else:
               # Enable WORD_0 of 2-nd VGPR with vi=4 for vw=8
@@ -2035,7 +2036,8 @@ class GlobalWriteBatchWriter:
           else:
             isPK = True
             if self.parentWriter.states.archCaps["NoSDWA"]: #cm review
-              sb = 0 if vi ==0 else 1
+              # Enable WORD_0 of 2-nd VGPR with vi=4 for vw=8
+              sb = 0 if vi%4 == 0 else 1
               module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[sb])))
             else:
               # Enable WORD_0 of 2-nd VGPR with vi=4 for vw=8
