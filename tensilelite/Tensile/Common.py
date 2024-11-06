@@ -1746,7 +1746,7 @@ def assignGlobalParameters(config, cxxCompiler=None):
       compileArgs = ['perl'] + [which('hipcc')] + ['--version']
       output = subprocess.run(compileArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
     else:
-      compiler = "hipcc"
+      compiler = which("hipcc")
       output = subprocess.run([compiler, "--version"], check=True, stdout=subprocess.PIPE).stdout.decode()
 
     for line in output.split('\n'):
