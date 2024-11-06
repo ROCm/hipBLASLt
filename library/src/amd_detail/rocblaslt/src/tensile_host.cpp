@@ -3386,13 +3386,8 @@ std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblasl
     std::shared_ptr<hipDeviceProp_t> deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
-<<<<<<< HEAD
     std::shared_ptr<TensileLite::Hardware> hardware;
     hardware = TensileLite::hip::GetDevice(*deviceProp);
-=======
-    std::shared_ptr<Tensile::Hardware> hardware;
-    hardware = Tensile::hip::GetDevice(*deviceProp);
->>>>>>> 46e345ee (Address the comments)
 
     if(!library)
     {
