@@ -80,7 +80,7 @@ BenchmarkProblems:
         - DirectToVgprA: [1]
         - StreamK: [0,3]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   2, 2,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   8, 1,  4,1 ]
@@ -177,7 +177,7 @@ BenchmarkProblems:
         - DirectToVgprA: [1]
         - StreamK: [0,2]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   2, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   8, 1,  4,1 ]
@@ -269,7 +269,7 @@ BenchmarkProblems:
         - DirectToVgprB: [1]
         - StreamK: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 2,  1,4 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 4,  1,4 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 8,  1,4 ]
@@ -365,7 +365,7 @@ BenchmarkProblems:
         - DirectToVgprA: [1]
         - StreamK: [0,3]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   2, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   8, 1,  4,1 ]
@@ -423,19 +423,22 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - MatrixInstruction:
-          - [16, 16, 16, 1,  1,   2, 1,  4,1 ]
+          - [16, 16, 16, 1,  1,   1, 1,  4,1 ] # MT = 64x16. Case to check kernel writer works
+          - [16, 16, 16, 1,  1,   2, 1,  4,1 ] # MT = 128x16. Check kernel works without vgprValuA
           - [16, 16, 16, 1,  1,   4, 1,  4,1 ]
+          - [16, 16, 16, 1,  1,   8, 1,  4,1 ] # MT = 512x16. Case to check LDS usage of Epilogues
+          - [16, 16, 16, 1,  1,   5, 1,  2,1 ] # MT = 160x16. Case to check kernel writer works
           - [32, 32,  8, 1,  1,   2, 1,  4,1 ]
           - [32, 32,  8, 1,  1,   4, 1,  4,1 ]
         - WorkGroup:
           - [16,16,1]
-        - GlobalReadVectorWidthA: [4]#[4,8]
-        - GlobalReadVectorWidthB: [4]#[4,8]
+        - GlobalReadVectorWidthA: [2,4,8]
+        - GlobalReadVectorWidthB: [2,4,8]
         - PrefetchGlobalRead: [1,2]
-        - PrefetchLocalRead: [1]
+        - PrefetchLocalRead: [1,2]
         - ClusterLocalRead: [1]
         - NumElementsPerBatchStore: [0]
-        - DepthU: [128]
+        - DepthU: [32,64,128]
         - VectorWidthA: [-1]
         - VectorWidthB: [-1]
         - MIArchVgpr: [0, 1]
@@ -455,10 +458,11 @@ BenchmarkProblems:
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - 1LDSBuffer: [1]
+        - TransposeLDS: [0,1]
         #- GlobalSplitU: [1,2]
         #- GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
-        - LocalReadVectorWidth: [4]#[4,8]
+        - LocalReadVectorWidth: [2,4,8]
         - DirectToVgprA: [1]
         - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
@@ -468,6 +472,7 @@ BenchmarkProblems:
           - Exact: [129,   128, 1, 640]
           - Exact: [256,   255, 1, 1101]
           - Exact: [256,   257, 1, 1101]
+          - Exact: [512,   128, 1, 256]
         - BiasTypeArgs: ['s']
         - ActivationArgs:
           - [Enum: relu]
@@ -533,7 +538,7 @@ BenchmarkProblems:
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprB: [1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 2,  1,4 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 4,  1,4 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 8,  1,4 ]
@@ -591,19 +596,22 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - MatrixInstruction:
-          - [16, 16, 16, 1,  1,   1, 2,  1,4 ]
+          - [16, 16, 16, 1,  1,   1, 1,  1,4 ] # MT = 16x64. Case to check kernel writer works
+          - [16, 16, 16, 1,  1,   1, 2,  1,4 ] # MT = 16x128. Check kernel works without vgprValuA
           - [16, 16, 16, 1,  1,   1, 4,  1,4 ]
+          - [16, 16, 16, 1,  1,   1, 8,  1,4 ] # MT = 16x512. Case to check LDS usage of Epilogues
+          - [16, 16, 16, 1,  1,   1, 5,  1,2 ] # MT = 16x160. Case to check kernel writer works
           - [32, 32,  8, 1,  1,   1, 2,  1,4 ]
           - [32, 32,  8, 1,  1,   1, 4,  1,4 ]
         - WorkGroup:
           - [16,16,1]
-        - GlobalReadVectorWidthA: [4]#[4,8]
-        - GlobalReadVectorWidthB: [4]#[4,8]
+        - GlobalReadVectorWidthA: [2,4,8]
+        - GlobalReadVectorWidthB: [2,4,8]
         - PrefetchGlobalRead: [1,2]
-        - PrefetchLocalRead: [1]
+        - PrefetchLocalRead: [1,2]
         - ClusterLocalRead: [1]
         - NumElementsPerBatchStore: [0]
-        - DepthU: [128]
+        - DepthU: [32,64,128]
         - VectorWidthA: [-1]
         - VectorWidthB: [-1]
         - MIArchVgpr: [0, 1]
@@ -623,10 +631,11 @@ BenchmarkProblems:
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - 1LDSBuffer: [1]
+        - TransposeLDS: [0,1]
         - GlobalSplitU: [1,2]
         #- GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
-        - LocalReadVectorWidth: [4]#[4,8]
+        - LocalReadVectorWidth: [2,4,8]
         - DirectToVgprB: [1]
         - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
@@ -636,6 +645,7 @@ BenchmarkProblems:
           - Exact: [129,   128, 1, 640]
           - Exact: [256,   255, 1, 1101]
           - Exact: [256,   257, 1, 1101]
+          - Exact: [128,   512, 1, 256]
         - BiasTypeArgs: ['s']
         - ActivationArgs:
           - [Enum: relu]
@@ -698,7 +708,7 @@ BenchmarkProblems:
         - DirectToVgprB: [1]
         - StreamK: [0,2]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 2,  1,4 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 4,  1,4 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 8,  1,4 ]
@@ -789,7 +799,7 @@ BenchmarkProblems:
         - DirectToVgprA: [1]
         - StreamK: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   2, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   4, 1,  4,1 ]
@@ -873,7 +883,7 @@ BenchmarkProblems:
         - DirectToVgprB: [1]
         - StreamK: [0,3]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  1,4 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 2,  1,4 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 4,  1,4 ]
@@ -958,7 +968,7 @@ BenchmarkProblems:
         - DirectToVgprA: [1]
         - StreamK: [0,2]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   2, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   4, 1,  4,1 ]
@@ -1043,7 +1053,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - DirectToVgprA: [1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   2, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   4, 1,  4,1 ]
@@ -1126,7 +1136,7 @@ BenchmarkProblems:
         - DirectToVgprA: [1]
         #- StreamK: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   2, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   4, 1,  4,1 ]
@@ -1206,7 +1216,7 @@ BenchmarkProblems:
         - DirectToVgprB: [1]
         #- StreamK: [0,3]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  1,4 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 2,  1,4 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 4,  1,4 ]
@@ -1285,7 +1295,7 @@ BenchmarkProblems:
         - SourceSwap: [1]#[0, 1]
         - DirectToVgprA: [1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   2, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   4, 1,  4,1 ]
@@ -1365,7 +1375,7 @@ BenchmarkProblems:
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 32, 1,  1,   1, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 32, 1,  1,   2, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 32, 1,  1,   4, 1,  4,1 ]
@@ -1622,7 +1632,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [1]
         #- StreamK: [0,2]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   2, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   8, 1,  4,1 ]
@@ -1709,7 +1719,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [1]
         #- StreamK: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 2,  1,4 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 4,  1,4 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 8,  1,4 ]
@@ -1800,7 +1810,7 @@ BenchmarkProblems:
         - ConvertAfterDS: [1]
         - StreamK: [0,3]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   2, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   8, 1,  4,1 ]
@@ -1890,7 +1900,7 @@ BenchmarkProblems:
         - DirectToVgprB: [1]
         - ConvertAfterDS: [1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 2,  1,4 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 4,  1,4 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 8,  1,4 ]
@@ -1915,5 +1925,3 @@ BenchmarkProblems:
           - Exact: [255,   255, 1, 191]
           - Exact: [255,   255, 1, 255]
           - Exact: [255,   255, 1, 256]
-
-
