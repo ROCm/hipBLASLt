@@ -1993,7 +1993,7 @@ class GlobalWriteBatchWriter:
           # Generate single f32 code if edge is detected.
           isPK = False
           if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-            if self.parentWriter.states.archCaps["NoSDWA"]: #cm review
+            if self.parentWriter.states.archCaps["NoSDWA"]:
               sb = 0 if self.gwvw == 1 else 1
               module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
             else:
@@ -2004,7 +2004,7 @@ class GlobalWriteBatchWriter:
             continue
           else:
             isPK = True
-            if self.parentWriter.states.archCaps["NoSDWA"]: #cm review
+            if self.parentWriter.states.archCaps["NoSDWA"]:
               # Enable WORD_0 of 2-nd VGPR with vi=4 for vw=8
               sb = 0 if vi%4 == 0 else 1
               module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[sb])))
@@ -2024,7 +2024,7 @@ class GlobalWriteBatchWriter:
           # Generate single f32 code if edge is detected.
           isPK = False
           if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-            if self.parentWriter.states.archCaps["NoSDWA"]: #cm review
+            if self.parentWriter.states.archCaps["NoSDWA"]:
               sb = 0 if self.gwvw == 1 else 1
               module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
             else:
@@ -2035,7 +2035,7 @@ class GlobalWriteBatchWriter:
             continue
           else:
             isPK = True
-            if self.parentWriter.states.archCaps["NoSDWA"]: #cm review
+            if self.parentWriter.states.archCaps["NoSDWA"]:
               # Enable WORD_0 of 2-nd VGPR with vi=4 for vw=8
               sb = 0 if vi%4 == 0 else 1
               module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[sb])))
