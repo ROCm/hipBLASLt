@@ -41,8 +41,8 @@
 
 #include "handle.h"
 //#include "tuple_helper.hpp"
-#include "utility.hpp"
 #include "UserDrivenTuningParser.hpp"
+#include "utility.hpp"
 #include <Tensile/Contractions.hpp>
 #include <Tensile/DataTypes.hpp>
 #include <atomic>
@@ -491,6 +491,7 @@ namespace Tensile
     class ProblemOverride;
 }
 
-Tensile::ProblemOverride RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem&);
+Tensile::ProblemOverride
+    RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem&);
 
 Tensile::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void>);

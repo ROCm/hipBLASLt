@@ -1,20 +1,19 @@
 #pragma once
 
-#include <Tensile/DataTypes.hpp>
 #include "auxiliary.hpp"
 #include "tensile_host.hpp"
+#include <Tensile/DataTypes.hpp>
 
-
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 class OverrideSingleton
 {
 public:
-    std::string              file_path;
-    bool                     env_mode            = false;
-    
+    std::string file_path;
+    bool        env_mode = false;
+
     static OverrideSingleton& getInstance()
     {
         static OverrideSingleton gInstance;
@@ -27,20 +26,17 @@ public:
     OverrideSingleton& operator=(const OverrideSingleton&) = delete;
 
 private:
-
     OverrideSingleton()
     {
-        char*   Env  =   getenv("HIPBLASLT_TUNING_OVERRIDE_FILE");
-        if (Env)
+        char* Env = getenv("HIPBLASLT_TUNING_OVERRIDE_FILE");
+        if(Env)
         {
-            file_path   =   Env;
-            env_mode    =   true;
+            file_path = Env;
+            env_mode  = true;
         }
     }
 
-    ~OverrideSingleton()
-    {
-    }
+    ~OverrideSingleton() {}
 };
 
 namespace Tensile
@@ -109,12 +105,9 @@ namespace Tensile
         size_t   m_batchSize;
     };
 
+    std::pair<ProblemOverride, int> problemFromEntries(const std::vector<std::string>& entries);
 
-    std::pair<ProblemOverride, int>
-       problemFromEntries(const std::vector<std::string>& entries);
-
-    std::multimap<ProblemOverride, int>
-       getContractionProblemsFromFile(const std::string& path);
+    std::multimap<ProblemOverride, int> getContractionProblemsFromFile(const std::string& path);
 
     template <>
     struct Comparison<ProblemOverride>
@@ -124,8 +117,7 @@ namespace Tensile
             implemented = true
         };
 
-        static int compare(ProblemOverride const& lhs,
-                           ProblemOverride const& rhs)
+        static int compare(ProblemOverride const& lhs, ProblemOverride const& rhs)
         {
             return LexicographicCompare(lhs.transA(),
                                         rhs.transA(),
@@ -148,17 +140,14 @@ namespace Tensile
         }
     };
 
-    
 } // namespace Tensile
-
 
 namespace std
 {
     template <>
     struct hash<Tensile::ProblemOverride>
     {
-        inline size_t
-            operator()(Tensile::ProblemOverride const& po) const
+        inline size_t operator()(Tensile::ProblemOverride const& po) const
         {
             return Tensile::hash_combine(po.transA(),
                                          po.transB(),

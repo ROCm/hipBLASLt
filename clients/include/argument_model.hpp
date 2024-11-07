@@ -27,8 +27,8 @@
 #pragma once
 
 #include "hipblaslt_arguments.hpp"
-#include <string>
 #include <fstream>
+#include <string>
 
 namespace ArgumentLogging
 {
@@ -165,11 +165,11 @@ public:
                   double                      gpu_us,
                   double                      flush_us,
                   double                      gflops,
-                  double                      gbytes    = ArgumentLogging::NA_value,
-                  double                      cpu_us    = ArgumentLogging::NA_value,
-                  double                      norm      = ArgumentLogging::NA_value,
-                  double                      atol      = ArgumentLogging::NA_value,
-                  double                      rtol      = ArgumentLogging::NA_value)
+                  double                      gbytes = ArgumentLogging::NA_value,
+                  double                      cpu_us = ArgumentLogging::NA_value,
+                  double                      norm   = ArgumentLogging::NA_value,
+                  double                      atol   = ArgumentLogging::NA_value,
+                  double                      rtol   = ArgumentLogging::NA_value)
     {
         hipblaslt_internal_ostream name_list;
         hipblaslt_internal_ostream value_list;
@@ -256,21 +256,20 @@ public:
                      atol,
                      rtol);
 
-        if (archName != "")
+        if(archName != "")
         {
             auto delim = ",";
             name_list << delim << "soulution_index";
             value_list << delim << solution_index;
 
-            const char* tuningEnv = getenv("HIPBLASLT_TUNING_FILE");
-            std::string tuningPath = tuningEnv;
+            const char*   tuningEnv  = getenv("HIPBLASLT_TUNING_FILE");
+            std::string   tuningPath = tuningEnv;
             std::ofstream file(tuningPath, std::ios::app);
             file << value_list << delim << archName << delim << cuNum << std::endl;
         }
 
-        str << name_list << "\n" 
-            << value_list << std::endl;
-        
+        str << name_list << "\n" << value_list << std::endl;
+
         if(solution_name != "")
         {
             str << "    --Solution index: " << solution_index << "\n"

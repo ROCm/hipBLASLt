@@ -25,10 +25,10 @@
  *******************************************************************************/
 
 #include "hipblaslt.h"
+#include "UserDrivenTuningParser.hpp"
 #include "exceptions.hpp"
 #include "hipblaslt-ext-op.h"
 #include "hipblaslt_internal.hpp"
-#include "UserDrivenTuningParser.hpp"
 
 #include <hip/hip_runtime_api.h>
 #include <iostream>
@@ -42,26 +42,25 @@
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
 
-bool override_path_compare_git_version(OverrideSingleton& override, hipblasLtHandle_t&   handle)
+bool override_path_compare_git_version(OverrideSingleton& override, hipblasLtHandle_t& handle)
 {
-    char                    git_version[128]; 
+    char git_version[128];
     hipblasLtGetGitRevision(handle, &git_version[0]);
     std::ifstream file_read(override.file_path);
-    std::string firstline;
-    std::string header = "Git Version: ";
+    std::string   firstline;
+    std::string   header = "Git Version: ";
     std::getline(file_read, firstline);
     size_t pos = firstline.find(header);
-    if (pos != std::string::npos)
+    if(pos != std::string::npos)
     {
         std::string file_version = firstline.substr(pos + header.length());
-        if (file_version == git_version)
+        if(file_version == git_version)
             return true;
     }
 
     override.env_mode = false;
 
     return false;
-
 }
 
 hipblasStatus_t hipErrorToHIPBLASStatus(hipError_t status)
@@ -436,13 +435,15 @@ try
     rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulAlgoGetHeuristic");
 
     OverrideSingleton& override = OverrideSingleton::getInstance();
-    if (override.env_mode)
+    if(override.env_mode)
     {
-        bool override_success = override_path_compare_git_version(override, handle); 
-        if (override_success)
+        bool override_success = override_path_compare_git_version(override, handle);
+        if(override_success)
             log_info(__func__, "HIPBLASLT_TUNING_OVERRIDE_FILE is the correct setting.");
         else
-            log_error(__func__, "The hipBLASLt git version and the override file git version are not the same.");
+            log_error(
+                __func__,
+                "The hipBLASLt git version and the override file git version are not the same.");
     }
 
     auto status = RocBlasLtStatusToHIPStatus(rocblaslt_matmul_algo_get_heuristic(

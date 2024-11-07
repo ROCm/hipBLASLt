@@ -33,10 +33,10 @@
  * or reference Tensile identifiers. tensile_host.hpp defines the interface. *
  *****************************************************************************/
 
+#include "Debug.hpp"
 #include "rocblaslt-types.h"
 #include "rocblaslt_mat_utils.hpp"
 #include "tensile_host.hpp"
-#include "Debug.hpp"
 
 //#include <Tensile/AMDGPU.hpp>
 #include <Tensile/Contractions.hpp>
@@ -63,9 +63,9 @@
 #include <glob.h>
 #include <libgen.h>
 #include <link.h>
-#include <unistd.h>
 #include <regex>
 #include <string_view>
+#include <unistd.h>
 
 #define HIPBLASLT_LIB_PATH "/opt/rocm/hipblaslt/lib"
 
@@ -477,7 +477,11 @@ namespace
                                                                                         : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
+<<<<<<< HEAD
                       problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
+=======
+                    problem.tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides()[1])
+>>>>>>> 08b4b2fe (apply clang-format)
                 : "",
             "--stride_a",
             problem.a().strides()[2],
@@ -492,7 +496,11 @@ namespace
                 : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
+<<<<<<< HEAD
                       problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
+=======
+                    problem.tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides()[2])
+>>>>>>> 08b4b2fe (apply clang-format)
                 : "",
             "--alpha",
             ToString(inputs.alpha),
@@ -1245,7 +1253,7 @@ namespace
             return m_devicePropMap.at(deviceName);
         }
 #else
-        auto& get_device_property() const
+        auto&                            get_device_property() const
         {
             return m_deviceProp;
         }
@@ -1586,7 +1594,8 @@ struct TensileDataGroupedGemm
     bool                                   useUserArgs = false;
 };
 
-Tensile::ProblemOverride RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem& problem)
+Tensile::ProblemOverride
+    RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem& problem)
 {
     return Tensile::ProblemOverride(problem.trans_a == HIPBLAS_OP_N ? false : true,
                                     problem.trans_b == HIPBLAS_OP_N ? false : true,
@@ -1734,7 +1743,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
         else
         {
-            auto kernels = solution->solve(data->problem, GetTensileInputs(prob),*hardware);
+            auto kernels = solution->solve(data->problem, GetTensileInputs(prob), *hardware);
             // Remove this after supports getting comgr buffers from hip.
             bool isPreloaded = false;
             if(rocblaslt::Debug::Instance().preload())
@@ -1749,7 +1758,13 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
                             if(kernels[i].isSingleCall)
                             {
                                 auto solutions = library->findAllSolutions(
+<<<<<<< HEAD
                                     data->problem, *hardware, TensileLite::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
+=======
+                                    data->problem,
+                                    *hardware,
+                                    Tensile::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
+>>>>>>> 08b4b2fe (apply clang-format)
                                 std::vector<std::string> kernelNames;
                                 for(auto s : solutions)
                                 {
@@ -1764,11 +1779,8 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
                 }
                 isPreloaded = true;
             }
-            status = hip2RocStatus(adapter->launchKernels(kernels,
-                prob.stream,
-                nullptr,
-                nullptr,
-                isPreloaded));
+            status = hip2RocStatus(
+                adapter->launchKernels(kernels, prob.stream, nullptr, nullptr, isPreloaded));
         }
     }
     catch(const std::exception& e)
@@ -2327,7 +2339,7 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
             std::shared_ptr<TensileDataGroupedGemm> data
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
             auto kernel = solution->solveGroupedGemmGPU(
-                data->problem.gemms, data->inputs,*hardware, deviceUserArgs, workspace, stream);
+                data->problem.gemms, data->inputs, *hardware, deviceUserArgs, workspace, stream);
             status = hip2RocStatus(adapter->launchKernels(kernel, stream, nullptr, nullptr));
         }
         else
@@ -2789,7 +2801,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
 
         bool isSupported  = true;
         bool isNormalGemm = true;
-        auto problemWs    = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms, *hardware);
+        auto problemWs = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms, *hardware);
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
             tensile_prob.gemms[i].setWorkspaceSize(algo->max_workspace_bytes);
@@ -2804,7 +2816,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
                 {
                     std::ostringstream msg;
-                    msg << "Match " << "[" << i << "]: " << solution->description();
+                    msg << "Match "
+                        << "[" << i << "]: " << solution->description();
                     solution->problemPredicate->debugEval(tensile_prob.gemms[i], msg);
                     msg << std::endl;
                     log_info(__func__, msg.str());
@@ -3039,7 +3052,11 @@ std::string getSolutionNameFromData(rocblaslt_handle             handle,
 
     std::shared_ptr<TensileLite::Hardware> hardware;
 
+<<<<<<< HEAD
     hardware     = TensileLite::hip::GetDevice(*deviceProp);
+=======
+    hardware = Tensile::hip::GetDevice(*deviceProp);
+>>>>>>> 08b4b2fe (apply clang-format)
 
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
@@ -3058,7 +3075,7 @@ std::string getSolutionNameFromData(rocblaslt_handle             handle,
     }
     if(solutionIndex == -1)
         return "";
-    auto        solution       = library->getSolutionByIndex( *hardware, solutionIndex);
+    auto        solution       = library->getSolutionByIndex(*hardware, solutionIndex);
     std::string modifiedString = "";
     if(gsu != solution->sizeMapping.globalSplitU && gsu != 0)
     {
@@ -3083,8 +3100,13 @@ std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+<<<<<<< HEAD
     std::shared_ptr<TensileLite::Hardware>                                               hardware;
     hardware = TensileLite::hip::GetDevice(*deviceProp);
+=======
+    std::shared_ptr<Tensile::Hardware> hardware;
+    hardware = Tensile::hip::GetDevice(*deviceProp);
+>>>>>>> 08b4b2fe (apply clang-format)
 
     if(!library)
     {
@@ -3102,8 +3124,13 @@ std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblasl
     std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+<<<<<<< HEAD
     std::shared_ptr<TensileLite::Hardware>                                               hardware;
     hardware = TensileLite::hip::GetDevice(*deviceProp);
+=======
+    std::shared_ptr<Tensile::Hardware> hardware;
+    hardware = Tensile::hip::GetDevice(*deviceProp);
+>>>>>>> 08b4b2fe (apply clang-format)
 
     if(!library)
     {
@@ -3111,7 +3138,7 @@ std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblasl
     }
 
     int* solutionIndex = (int*)algo.data;
-    auto solution      = library->getSolutionByIndex(*hardware , *solutionIndex);
+    auto solution      = library->getSolutionByIndex(*hardware, *solutionIndex);
     return solution->solutionName;
 }
 

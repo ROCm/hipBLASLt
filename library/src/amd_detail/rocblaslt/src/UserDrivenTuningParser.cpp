@@ -1,6 +1,5 @@
 #include "UserDrivenTuningParser.hpp"
 
-
 #include <fstream>
 #include <sstream>
 #include <utility>
@@ -8,20 +7,20 @@
 namespace Tensile
 {
 
-    std::multimap<ProblemOverride, int>
-        getContractionProblemsFromFile(const std::string& path)
+    std::multimap<ProblemOverride, int> getContractionProblemsFromFile(const std::string& path)
     {
-        
+
         static std::multimap<ProblemOverride, int> m_override;
-        
-        if (m_override.size() == 0){
-            
+
+        if(m_override.size() == 0)
+        {
+
             std::ifstream file_read(path);
             std::string   line, entry;
 
-            const auto verion           = "Git Version";
-            const auto delim            = ',';
-            const int  max_entries      = 37;
+            const auto verion      = "Git Version";
+            const auto delim       = ',';
+            const int  max_entries = 37;
 
             while(std::getline(file_read, line))
             {
@@ -40,15 +39,13 @@ namespace Tensile
                     }
 
                     auto problemSolution = problemFromEntries(entries);
-                    
+
                     if(problemSolution.second > 0)
                     {
                         auto sol_iter = m_override.equal_range(problemSolution.first);
-                        for (auto sol_idx = sol_iter.first; 
-                             sol_idx != sol_iter.second; 
-                             sol_idx++)
+                        for(auto sol_idx = sol_iter.first; sol_idx != sol_iter.second; sol_idx++)
                         {
-                            if (sol_idx->second == problemSolution.second)
+                            if(sol_idx->second == problemSolution.second)
                             {
                                 m_override.erase(sol_idx);
                                 break;
@@ -60,16 +57,13 @@ namespace Tensile
                 }
             }
         }
-        
-        
+
         return m_override;
     }
-    
-    
-    std::pair<ProblemOverride, int>
-        problemFromEntries(const std::vector<std::string>& entries)
+
+    std::pair<ProblemOverride, int> problemFromEntries(const std::vector<std::string>& entries)
     {
-        
+
         const size_t entries_n = entries.size();
         if(entries_n != 37)
         {
@@ -80,7 +74,7 @@ namespace Tensile
         bool transA = (entries[0] != "N");
         bool transB = (entries[1] != "N");
 
-        size_t m, n, b, k;
+        size_t   m, n, b, k;
         DataType inputType   = DataType::None;
         DataType outputType  = DataType::None;
         DataType computeType = DataType::None;
@@ -89,18 +83,17 @@ namespace Tensile
 
         try
         {
-            
+
             // TODO: are any additional mapping parameters needed?
 
-            b = std::stol(entries[3]);
-            m = std::stol(entries[4]);
-            n = std::stol(entries[5]);
-            k = std::stol(entries[6]);
-            inputType   = hipDataType_to_tensile_type(string_to_hip_datatype(entries[17]));
-            outputType  = hipDataType_to_tensile_type(string_to_hip_datatype(entries[19]));
-            computeType = hipDataType_to_tensile_type(string_to_hip_datatype(entries[21]));
+            b            = std::stol(entries[3]);
+            m            = std::stol(entries[4]);
+            n            = std::stol(entries[5]);
+            k            = std::stol(entries[6]);
+            inputType    = hipDataType_to_tensile_type(string_to_hip_datatype(entries[17]));
+            outputType   = hipDataType_to_tensile_type(string_to_hip_datatype(entries[19]));
+            computeType  = hipDataType_to_tensile_type(string_to_hip_datatype(entries[21]));
             solution_idx = std::stoi(entries[34]);
-
         }
         catch(std::invalid_argument const& ex)
         {
@@ -117,21 +110,11 @@ namespace Tensile
             return std::make_pair(ProblemOverride{}, -1);
         }
 
-        ProblemOverride  po(transA,
-                            transB,
-                            inputType,
-                            computeType,
-                            outputType,
-                            m,
-                            n,
-                            k,
-                            b);
+        ProblemOverride po(transA, transB, inputType, computeType, outputType, m, n, k, b);
 
         return std::make_pair(po, solution_idx);
-        
     }
 
-    
     ProblemOverride::ProblemOverride()
         : m_transA(false)
         , m_transB(false)
@@ -145,7 +128,6 @@ namespace Tensile
     {
     }
 
-    
     ProblemOverride::ProblemOverride(bool     transA,
                                      bool     transB,
                                      DataType inputType,
@@ -169,18 +151,16 @@ namespace Tensile
 
     ProblemOverride::ProblemOverride(const ProblemOverride& problem)
     {
-       
-        m_transA = problem.transA();
-        m_transB = problem.transB();
-        m_inputType     = problem.inputType();
-        m_computeType   = problem.computeType();
-        m_outputType    = problem.outputType();
-        m_m             = problem.m();
-        m_n             = problem.n();
-        m_k             = problem.k();
-        m_batchSize     = problem.batchSize();
-        
+
+        m_transA      = problem.transA();
+        m_transB      = problem.transB();
+        m_inputType   = problem.inputType();
+        m_computeType = problem.computeType();
+        m_outputType  = problem.outputType();
+        m_m           = problem.m();
+        m_n           = problem.n();
+        m_k           = problem.k();
+        m_batchSize   = problem.batchSize();
     }
 
-    
 };

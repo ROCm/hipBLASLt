@@ -260,10 +260,10 @@ bool tuning_path_compare_git_version(const char* tuningEnv)
     char                   git_version[128];
     hipblaslt_local_handle handle;
     hipblasLtGetGitRevision(handle, &git_version[0]);
-    std::string tuningPath = tuningEnv;
+    std::string   tuningPath = tuningEnv;
     std::ifstream file_read(tuningPath);
 
-    if (file_read.peek() == std::ifstream::traits_type::eof())
+    if(file_read.peek() == std::ifstream::traits_type::eof())
     {
         std::ofstream file_write(tuningPath, std::ios::app);
         file_write << "Git Version: " << (std::string)git_version << std::endl;
@@ -276,18 +276,19 @@ bool tuning_path_compare_git_version(const char* tuningEnv)
         std::string prefix = "Git Version: ";
         std::getline(file_read, firstline);
         size_t pos = firstline.find(prefix);
-        if (pos != std::string::npos)
+        if(pos != std::string::npos)
         {
             std::string file_version = firstline.substr(pos + prefix.length());
             hipblaslt_cout << "tuning file git version: " << file_version << std::endl;
-            if (file_version == git_version)
+            if(file_version == git_version)
             {
                 return true;
             }
         }
     }
 
-    hipblaslt_cout << "The hipBLASLt git version and the tuning file git version are not the same." << std::endl;
+    hipblaslt_cout << "The hipBLASLt git version and the tuning file git version are not the same."
+                   << std::endl;
     return false;
 }
 
@@ -343,17 +344,17 @@ try
     std::vector<uint32_t> gsu_vector, wgm_vector;
     arg.init(); // set all defaults
     const char* tuningEnv = getenv("HIPBLASLT_TUNING_FILE");
-    if (tuningEnv)
+    if(tuningEnv)
     {
         bool tuning_success = tuning_path_compare_git_version(tuningEnv);
-        if (tuning_success)
+        if(tuning_success)
         {
-            hipblaslt_cout << "HIPBLASLT_TUNING_FILE is the correct setting."  << std::endl;
+            hipblaslt_cout << "HIPBLASLT_TUNING_FILE is the correct setting." << std::endl;
         }
         else
             return 1;
     }
-    
+
     options_description desc("hipblaslt-bench command line options");
     desc.add_options()
         // clang-format off
@@ -674,7 +675,7 @@ try
     }
     else if(algo_method_str.compare("index") == 0)
     {
-        arg.algo_method = tuningEnv? 1 : 2;
+        arg.algo_method = tuningEnv ? 1 : 2;
     }
     else
     {
@@ -926,7 +927,7 @@ try
         throw std::invalid_argument("Invalid value for api_method: " + std::to_string(api_method));
         break;
     }
-    
+
     arg.norm_check_assert = false;
     int status            = run_bench_test(arg, filter, any_stride);
     freeFrequencyMonitor();

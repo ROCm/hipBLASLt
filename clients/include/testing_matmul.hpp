@@ -3284,18 +3284,18 @@ void testing_matmul_with_bias(const Arguments& arg,
         e_activation_type, e_bias_vector, e_bias_type, e_rotating
 
             int32_t     solutionIndex = (heuristicResult.size() == 1)
-                                        ? hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo) 
-                                        : -1;
+                                            ? hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo)
+                                            : -1;
             std::string solutionName  = "";
             std::string kernelName    = "";
             std::string archName      = "";
             std::string cuNum         = "";
 
             const char* tuningEnv = getenv("HIPBLASLT_TUNING_FILE");
-            if (tuningEnv && heuristicResult.size() == 1)
+            if(tuningEnv && heuristicResult.size() == 1)
             {
-                archName =  deviceProps.gcnArchName;
-                cuNum    =  std::to_string(deviceProps.multiProcessorCount);
+                archName = deviceProps.gcnArchName;
+                cuNum    = std::to_string(deviceProps.multiProcessorCount);
             }
 
             if(arg.print_solution_found)
@@ -3360,25 +3360,25 @@ void testing_matmul_with_bias(const Arguments& arg,
 
         if(heuristicResult.size() > 1)
         {
-            int32_t     solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[best_sol].algo);
-            std::string solutionName  = "";
-            std::string kernelName    = "";
-            std::string archName      = "";
-            std::string cuNum         = "";
-            const char* tuningEnv = getenv("HIPBLASLT_TUNING_FILE");
-            if (tuningEnv)
+            int32_t solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[best_sol].algo);
+            std::string solutionName = "";
+            std::string kernelName   = "";
+            std::string archName     = "";
+            std::string cuNum        = "";
+            const char* tuningEnv    = getenv("HIPBLASLT_TUNING_FILE");
+            if(tuningEnv)
             {
-                archName =  deviceProps.gcnArchName;
-                cuNum    =  std::to_string(deviceProps.multiProcessorCount);
+                archName = deviceProps.gcnArchName;
+                cuNum    = std::to_string(deviceProps.multiProcessorCount);
             }
 
             if(arg.print_kernel_info)
             {
-                solutionName  = best_s_name;
-                kernelName    = best_k_name;
+                solutionName = best_s_name;
+                kernelName   = best_k_name;
             }
 
-            hipblaslt_cout << "Winner: " << std::endl;    
+            hipblaslt_cout << "Winner: " << std::endl;
             ArgumentModel<argument_param>{}.log_args(
                 Talpha,
                 hipblaslt_cout,
