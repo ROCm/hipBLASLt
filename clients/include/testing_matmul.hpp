@@ -3283,7 +3283,9 @@ void testing_matmul_with_bias(const Arguments& arg,
         e_c_type, e_d_type, e_compute_type, e_scaleA, e_scaleB, e_scaleC, e_scaleD, e_amaxD,      \
         e_activation_type, e_bias_vector, e_bias_type, e_rotating
 
-            int32_t     solutionIndex = (heuristicResult.size() == 1)
+            const char* tuningEnv     = getenv("HIPBLASLT_TUNING_FILE");
+            int32_t     solutionIndex = ((tuningEnv && heuristicResult.size() == 1)
+                                     || (arg.print_solution_found && arg.print_kernel_info))
                                             ? hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo)
                                             : -1;
             std::string solutionName  = "";
@@ -3291,7 +3293,6 @@ void testing_matmul_with_bias(const Arguments& arg,
             std::string archName      = "";
             std::string cuNum         = "";
 
-            const char* tuningEnv = getenv("HIPBLASLT_TUNING_FILE");
             if(tuningEnv && heuristicResult.size() == 1)
             {
                 archName = deviceProps.gcnArchName;
@@ -3322,7 +3323,6 @@ void testing_matmul_with_bias(const Arguments& arg,
                         kernelName = hipblaslt_ext::getKernelNameFromAlgo(
                             handle, heuristicResult[sol].algo);
                     }
-                    solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo);
                 }
                 ArgumentModel<argument_param>{}.log_args(
                     Talpha,
@@ -3360,12 +3360,15 @@ void testing_matmul_with_bias(const Arguments& arg,
 
         if(heuristicResult.size() > 1)
         {
-            int32_t solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[best_sol].algo);
+            const char* tuningEnv = getenv("HIPBLASLT_TUNING_FILE");
+            int32_t     solutionIndex
+                = (tuningEnv || arg.print_kernel_info)
+                      ? hipblaslt_ext::getIndexFromAlgo(heuristicResult[best_sol].algo)
+                      : -1;
             std::string solutionName = "";
             std::string kernelName   = "";
             std::string archName     = "";
             std::string cuNum        = "";
-            const char* tuningEnv    = getenv("HIPBLASLT_TUNING_FILE");
             if(tuningEnv)
             {
                 archName = deviceProps.gcnArchName;
