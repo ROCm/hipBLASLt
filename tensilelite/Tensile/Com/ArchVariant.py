@@ -2,6 +2,8 @@ import re
 from pathlib import Path
 from typing import NamedTuple, Optional, Union, Tuple, Set, Dict, List
 
+from ..Common import printWarning
+
 class ArchVariant(NamedTuple):
     Name: str
     Gfx: str
@@ -36,7 +38,7 @@ def _extractArchVariant(file: Union[str, Path]) -> ArchVariant:
 
     def l0(line: str):
         if not re.match(r"- \{MinimumRequiredVersion", line):
-            raise LogicFileError(f"Expected minimum required version: line: {line}")
+            raise LogicFileError(f"Expected minimum required version:\n  line: {line}  file: {file}")
 
     def l1(line: str):
         return line[2:].strip()
@@ -57,10 +59,9 @@ def _extractArchVariant(file: Union[str, Path]) -> ArchVariant:
         if re.match(r"- \[Device", line):
             devIds = re.findall(r"Device (\w+)", line)
             
-            # Temporary, until we add the correct IDs
             if any(id in emulationIds for id in devIds):
-                # printWarning("Emulation device ID found, interpreting as fallback device...")
-                return None
+                printWarning("Emulation device ID(s) found, ignoring...")
+                devIds = filter(lambda id: id not in emulationIds, devIds)
             return set(f"id={id}" for id in devIds)
         if re.match(r"-\[alldevices", line.lower().replace(" ", "")):
             return None
@@ -86,9 +87,6 @@ def _addVariantMap(variantFiles: Dict[str, Set[Tuple[Path, str]]], spec: str, pa
 def _populateVariantMap(variantMap: Dict[str, Dict[str, Set[Tuple[Path, str]]]], targetLogicFile: Path, fallbackKey: str):
         file = Path(targetLogicFile)
         path, fname = file.parent, file.name
-
-        if "experimental/" in str(file).lower():
-            return
 
         variant = _extractArchVariant(file)
         if variant.Gfx not in variantMap:
