@@ -32,8 +32,7 @@
 #include <string_view>
 
 /*! \brief device matches pattern */
-inline
-bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
+inline bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
 {
     if(!pattern.length())
     {
@@ -47,8 +46,7 @@ bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
     return std::regex_search(gpu_arch.data(), arch_regex);
 }
 
-inline
-bool IsOCPSupported()
+inline bool IsOCPSupported()
 {
     int             deviceId;
     hipDeviceProp_t deviceProperties;
@@ -219,7 +217,7 @@ constexpr hipDataType string_to_hip_datatype_assert(const std::string& value)
     auto datatype = string_to_hip_datatype(value);
     if(datatype == HIPBLASLT_DATATYPE_INVALID)
     {
-        std::cout << "The supported types are f32_r, f64_r, f16_r, bf16_r, f8_r, bf8_r, i8_r, i32_r." << std::endl;
+        std::cout << "The supported types are s,f32_r, d,f64_r, h,f16_r, bf16_r, f8_r, bf8_r, i8,i8_r, i,i32_r (case insensitive)." << std::endl;
         exit(1);
     }
     return datatype;

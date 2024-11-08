@@ -295,6 +295,9 @@ try
             return 1;
     }
 
+    std::string supported_types{
+        "Options: s,f32_r, h,f16_r, bf16_r, d,f64_r, i,i32_r, i8,i8_r, f8_r, bf8_r."};
+
     options_description desc("hipblaslt-bench command line options");
     desc.add_options()
         // clang-format off
@@ -365,36 +368,32 @@ try
          "Options: matmul")
 
         ("precision,r",
-         value<std::string>(&precision)->default_value("f16_r"), "Precision of matrix A,B,C,D  "
-         "Options: f32_r,f16_r,bf16_r,f64_r,i32_r,i8_r")
+         value<std::string>(&precision)->default_value("f16_r"), "Precision of matrix A,B,C,D  " +
+         supported_types)
 
         ("a_type",
-         value<std::string>(&a_type), "Precision of matrix A. "
-        "Options: f32_r,f16_r,bf16_r,i8_r")
+         value<std::string>(&a_type), "Precision of matrix A. " + supported_types)
 
         ("b_type",
-         value<std::string>(&b_type), "Precision of matrix B. "
-        "Options: f32_r,f16_r,bf16_r,i8_r")
+         value<std::string>(&b_type), "Precision of matrix B. " + supported_types)
 
         ("c_type",
-         value<std::string>(&c_type), "Precision of matrix C. "
-         "Options: f32_r,f16_r,bf16_r,i8_r")
+         value<std::string>(&c_type), "Precision of matrix C. " + supported_types)
 
         ("d_type",
-         value<std::string>(&d_type), "Precision of matrix D. "
-        "Options: f32_r,f16_r,bf16_r,i8_r")
+         value<std::string>(&d_type), "Precision of matrix D. " + supported_types)
 
         ("compute_type",
          value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
-         "Options: s,f32_r,x,xf32_r,f64_r,i32_r")
+         "Options: s,f32_r, x,xf32_r, d,f64_r, i,i32_r, f32_f16_r, f32_bf16_r")
 
         ("compute_input_typeA",
-         value<std::string>(&compute_input_typeA), "Precision of computation input A. "
-         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the compute_input_typeA has no effect.")
+         value<std::string>(&compute_input_typeA), "Precision of computation input A. " +
+         supported_types + " The default value indicates that the compute_input_typeA has no effect.")
 
         ("compute_input_typeB",
-         value<std::string>(&compute_input_typeB), "Precision of computation input B. "
-         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the compute_input_typeA has no effect.")
+         value<std::string>(&compute_input_typeB), "Precision of computation input B. " +
+         supported_types + " The default value indicates that the compute_input_typeB has no effect.")
 
         ("scale_type",
          value<std::string>(&scale_type), "Precision of scalar. "
