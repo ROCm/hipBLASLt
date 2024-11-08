@@ -11466,9 +11466,28 @@ class KernelWriterAssembly(KernelWriter):
         self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr) < 2:
       self.states.overflowedResources = 6
 
-    vgprPerCU = 65536
+    if self.states.version[0] == 10:
+      vgprPerCU = 1024 * 32
+    elif self.states.version[0] == 11:
+      if self.states.version[2] == 2:
+        vgprPerCU = 1024 * 32
+      else:
+        vgprPerCU = 1536 * 32
+    elif self.states.version[0] == 12:
+      vgprPerCU = 1536 * 32
+    elif self.states.version[0] == 9:
+      if self.states.archCaps["ArchAccUnifiedRegs"]:
+        vgprPerCU = 2048 * 64
+      else:
+        vgprPerCU = 1024 * 64
+    else:
+      assert 0, "No valid VGPR value for this platform"
+    if self.states.archCaps["ArchAccUnifiedRegs"]:
+      totalVgprUsed = self.vgprPool.size() + self.agprPool.size()
+    else:
+      totalVgprUsed = max(self.vgprPool.size(), self.agprPool.size())
     vgprPerThreadPerOccupancy = vgprPerCU // kernel["NumThreads"]
-    numWorkGroupsPerCU = vgprPerThreadPerOccupancy // max(self.vgprPool.size(), self.agprPool.size())
+    numWorkGroupsPerCU = vgprPerThreadPerOccupancy // totalVgprUsed
     if numWorkGroupsPerCU < 1:
       self.states.overflowedResources = 4
 
