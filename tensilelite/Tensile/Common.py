@@ -1493,7 +1493,7 @@ def gfxArch(name):
 
     return rv
 
-def detectGlobalCurrentISA():
+def detectGlobalCurrentISAWithRocmAgentEnumerator():
   """
   Returns returncode if detection failure
   """
@@ -1524,39 +1524,50 @@ def detectGlobalCurrentISA():
     return process.returncode
   return 0
 
-#def detectGlobalCurrentISA():
-#  """
-#  Returns returncode if detection failure
-#  """
-#  global globalParameters
-#
-#  if globalParameters["CurrentISA"] == (0,0,0) and globalParameters["AMDGPUArchPath"]:
-#    process = subprocess.run([globalParameters["AMDGPUArchPath"]], stdout=subprocess.PIPE)
-#    if os.name == "nt":
-#      line = ""
-#      for line_in in process.stdout.decode().splitlines():
-#        if 'gcnArchName' in line_in:
-#          line += line_in.split()[1]
-#          break # detemine if hipinfo will support multiple arch
-#      arch = gfxArch(line.strip())
-#      if arch is not None:
-#        if arch in globalParameters["SupportedISA"]:
-#          print1("# Detected local GPU with ISA: " + getGfxName(arch))
-#          globalParameters["CurrentISA"] = arch
-#    else:
-#      archList = []
-#      for line in process.stdout.decode().split("\n"):
-#        arch = gfxArch(line.strip())
-#        if arch is not None:
-#          if arch in globalParameters["SupportedISA"]:
-#            print1("# Detected local GPU with ISA: " + getGfxName(arch))
-#            archList.append(arch)
-#      if len(archList) > 0:
-#        globalParameters["CurrentISA"] = archList[globalParameters["Device"]]
-#    if (process.returncode):
-#      printWarning("%s exited with code %u" % (globalParameters["AMDGPUArchPath"], process.returncode))
-#    return process.returncode
-#  return 0
+
+def detectGlobalCurrentISA_(detectionTool):
+  """
+  Returns returncode if detection failure
+  """
+  global globalParameters
+
+  if globalParameters["CurrentISA"] == (0,0,0) and detectionTool:
+    process = subprocess.run([detectionTool], stdout=subprocess.PIPE)
+    if os.name == "nt":
+      line = ""
+      for line_in in process.stdout.decode().splitlines():
+        if 'gcnArchName' in line_in:
+          line += line_in.split()[1]
+          break # detemine if hipinfo will support multiple arch
+      arch = gfxArch(line.strip())
+      if arch is not None:
+        if arch in globalParameters["SupportedISA"]:
+          print1("# Detected local GPU with ISA: " + getGfxName(arch))
+          globalParameters["CurrentISA"] = arch
+    else:
+      archList = []
+      for line in process.stdout.decode().split("\n"):
+        arch = gfxArch(line.strip())
+        if arch is not None:
+          if arch in globalParameters["SupportedISA"]:
+            print1("# Detected local GPU with ISA: " + getGfxName(arch))
+            archList.append(arch)
+      if len(archList) > 0:
+        globalParameters["CurrentISA"] = archList[globalParameters["Device"]]
+    if (process.returncode):
+      printWarning("%s exited with code %u" % (detectionTool, process.returncode))
+    return process.returncode
+  return 0
+
+
+def detectGlobalCurrentISA():
+  """
+  Returns returncode if detection failure
+  """
+  errorCode = detectGlobalCurrentISA_(globalParameters["AMDGPUArchPath"])
+  if errorCode:
+    return detectGlobalCurrentISA_(globalParameters["ROCmAgentEnumeratorPath"])
+  return errorCode
 
 def restoreDefaultGlobalParameters():
   """
@@ -1682,14 +1693,11 @@ def assignGlobalParameters( config ):
   # ROCm AMD GPU Arch Path
   # ROCm Agent Enumerator Path
   if os.name == "nt":
-    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
+    globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
+    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")    
   else:
+    globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
     globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm_agent_enumerator")
-
-  #if os.name == "nt":
-  #  globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
-  #else:
-  #  globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
 
   if "CxxCompiler" in config:
     globalParameters["CxxCompiler"] = config["CxxCompiler"]
