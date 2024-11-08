@@ -455,7 +455,8 @@ rocblaslt_status
                                             batch_stride_a,
                                             batch_stride_b,
                                             batch_stride_c,
-                                            batch_stride_d);
+                                            batch_stride_d,
+                                            matmul_descr[i]->pointermode); // add pointermode to check if alpha is in device memory.
         if(validArgs == rocblaslt_status_success)
             continue;
 
@@ -658,9 +659,9 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
     }
 
     // Check if pointer is valid
-    // Update for the valid case: (alpha=0 && (A=NULL || B=NULL))
+    // Update for the valid case: ((alpha_in_host && alpha=0) && (A=NULL || B=NULL))
     if(alpha == nullptr || beta == nullptr || C == nullptr || D == nullptr
-       || ((*((float*)alpha)) && (A == nullptr || B == nullptr)))
+       || ((matmul_descr->pointermode || (*((float*)alpha))) && (A == nullptr || B == nullptr)))
     {
         log_error(__func__, "invalid data pointer");
         return rocblaslt_status_invalid_pointer;
@@ -831,7 +832,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
                                      batch_stride_a,
                                      batch_stride_b,
                                      batch_stride_c,
-                                     batch_stride_d);
+                                     batch_stride_d,
+                                     nullptr); // add pointermode(nullptr) to check if alpha is in device memory.
 
     void *      bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     int64_t     lde = 0, batch_stride_e = 0;
@@ -1218,7 +1220,8 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
                                             strideA[i],
                                             strideB[i],
                                             strideC[i],
-                                            strideD[i]);
+                                            strideD[i],
+                                            nullptr); // add pointermode(nullptr) to check if alpha is in device memory.
         if(validArgs == rocblaslt_status_success)
             continue;
 
