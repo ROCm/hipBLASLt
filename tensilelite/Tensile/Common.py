@@ -1493,37 +1493,6 @@ def gfxArch(name):
 
     return rv
 
-def detectGlobalCurrentISAWithRocmAgentEnumerator():
-  """
-  Returns returncode if detection failure
-  """
-  global globalParameters
-
-  if globalParameters["CurrentISA"] == (0,0,0) and globalParameters["ROCmAgentEnumeratorPath"]:
-    process = subprocess.run([globalParameters["ROCmAgentEnumeratorPath"]], stdout=subprocess.PIPE)
-    if os.name == "nt":
-      line = ""
-      for line_in in process.stdout.decode().splitlines():
-        if 'gcnArchName' in line_in:
-          line += line_in.split()[1]
-          break # determine if hipinfo will support multiple arch
-      arch = gfxArch(line.strip())
-      if arch is not None:
-        if arch in globalParameters["SupportedISA"]:
-          tPrint(1, "# Detected local GPU with ISA: " + gfxName(arch))
-          globalParameters["CurrentISA"] = arch
-    else:
-      for line in process.stdout.decode().split("\n"):
-        arch = gfxArch(line.strip())
-        if arch is not None:
-          if arch in globalParameters["SupportedISA"]:
-            print1("# Detected local GPU with ISA: " + getGfxName(arch))
-            globalParameters["CurrentISA"] = arch
-    if (process.returncode):
-      printWarning("%s exited with code %u" % (globalParameters["ROCmAgentEnumeratorPath"], process.returncode))
-    return process.returncode
-  return 0
-
 
 def detectGlobalCurrentISA_(detectionTool):
   """
@@ -1566,6 +1535,7 @@ def detectGlobalCurrentISA():
   """
   errorCode = detectGlobalCurrentISA_(globalParameters["AMDGPUArchPath"])
   if errorCode:
+    printWarning("Attempting to detect ISA with rocm_agent_enumerator")
     return detectGlobalCurrentISA_(globalParameters["ROCmAgentEnumeratorPath"])
   return errorCode
 
