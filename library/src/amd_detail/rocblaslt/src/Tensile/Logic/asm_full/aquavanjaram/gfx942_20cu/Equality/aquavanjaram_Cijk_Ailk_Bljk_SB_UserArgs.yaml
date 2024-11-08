@@ -1,7 +1,7 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - {Architecture: gfx942, CUCount: 20}
-- [Device 0049, Device 0050]
+- [Device 74a2]
 - Activation: false
   ActivationComputeDataType: 0
   ActivationNoGuard: false
