@@ -163,7 +163,8 @@ inline rocblaslt_status validateMatmulArgs(int64_t                m,
                                            int64_t                batch_stride_a = 0,
                                            int64_t                batch_stride_b = 0,
                                            int64_t                batch_stride_c = 0,
-                                           int64_t                batch_stride_d = 0)
+                                           int64_t                batch_stride_d = 0, 
+                                           const void*            pointermode    = nullptr) // add pointermode to check if alpha is in device memory.
 {
     rocblaslt_status status = rocblaslt_status_continue;
 
@@ -243,8 +244,8 @@ inline rocblaslt_status validateMatmulArgs(int64_t                m,
         return rocblaslt_status_invalid_pointer;
 
     // pointers must be valid
-    // Update for the valid case: (alpha=0 && (A=NULL || B=NULL))
-    if(n && ((k && (!alpha || ((*((float*)alpha)) && (!a || !b)))) || !c || !d))
+    // Update for the valid case: ((alpha_in_host && alpha=0) && (A=NULL || B=NULL))
+    if(n && ((k && (!alpha || ((pointermode || (*((float*)alpha))) && (!a || !b)))) || !c || !d))
         return rocblaslt_status_invalid_pointer;
 
     return rocblaslt_status_continue;
@@ -405,7 +406,8 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                      batch_stride_a,
                                      batch_stride_b,
                                      batch_stride_c,
-                                     batch_stride_d);
+                                     batch_stride_d,
+                                     matmul_descr->pointermode); // add pointermode to check if alpha is in device memory.
 
     if(status != rocblaslt_status_continue)
         return status;
