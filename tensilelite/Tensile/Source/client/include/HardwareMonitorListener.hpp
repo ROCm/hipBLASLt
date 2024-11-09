@@ -36,7 +36,7 @@
 
 #include "HardwareMonitor_fwd.hpp"
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -108,4 +108,4 @@ namespace Tensile
             std::shared_ptr<HardwareMonitor> m_monitor;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

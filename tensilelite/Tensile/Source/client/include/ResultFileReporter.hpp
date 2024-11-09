@@ -33,7 +33,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -89,4 +89,4 @@ namespace Tensile
             std::map<int64_t, std::unordered_map<std::string, std::string>> m_probMap;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

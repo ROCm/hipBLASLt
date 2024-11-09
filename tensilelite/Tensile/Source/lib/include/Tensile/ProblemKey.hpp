@@ -29,7 +29,7 @@
 #include <Tensile/Debug.hpp>
 #include <Tensile/Properties.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
 
     namespace ProblemKey

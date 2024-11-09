@@ -31,7 +31,7 @@
 
 #include <Tensile/ExactLogicLibrary.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -78,4 +78,4 @@ namespace Tensile
             const static bool flow = false;
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

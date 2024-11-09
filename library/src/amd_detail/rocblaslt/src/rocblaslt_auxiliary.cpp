@@ -1743,7 +1743,7 @@ extern "C" int rocblaslt_matmul_is_tuned(rocblaslt_handle        handle,
     auto& tensile_data = matmul_descr->m_data;
     auto  sols         = getBestRawSolutions(prob, handle, tensile_data, 1, max_workspace_bytes);
 
-    if(sols.size() && sols.front()->tag == Tensile::ContractionSolution::MatchingTag::Equal)
+    if(sols.size() && sols.front()->tag == TensileLite::ContractionSolution::MatchingTag::Equal)
     {
         return 1;
     }

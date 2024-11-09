@@ -34,7 +34,7 @@
 
 #include <boost/program_options.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -96,4 +96,4 @@ namespace Tensile
             bool   m_runOnce      = false;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

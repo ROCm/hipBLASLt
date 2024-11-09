@@ -41,7 +41,7 @@
 
 namespace po = boost::program_options;
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -2588,4 +2588,4 @@ namespace Tensile
             return static_cast<BFloat8>(value);
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

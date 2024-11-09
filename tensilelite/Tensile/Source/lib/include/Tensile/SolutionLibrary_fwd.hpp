@@ -26,7 +26,7 @@
 
 #pragma once
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename MyProblem, typename MySolution>
     struct SolutionLibrary;

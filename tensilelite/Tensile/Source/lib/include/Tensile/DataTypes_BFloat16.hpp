@@ -38,7 +38,7 @@
 
 #define BFLOAT16_Q_NAN_VALUE 0xFFC1
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup DataTypes
@@ -282,37 +282,37 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
-    inline bool isinf(const Tensile::BFloat16& a)
+    inline bool isinf(const TensileLite::BFloat16& a)
     {
         return std::isinf(static_cast<float>(a));
     }
-    inline bool isnan(const Tensile::BFloat16& a)
+    inline bool isnan(const TensileLite::BFloat16& a)
     {
         return std::isnan(static_cast<float>(a));
     }
-    inline bool iszero(const Tensile::BFloat16& a)
+    inline bool iszero(const TensileLite::BFloat16& a)
     {
         return (a.data & 0x7FFF) == 0;
     }
 
-    inline Tensile::BFloat16 abs(const Tensile::BFloat16& a)
+    inline TensileLite::BFloat16 abs(const TensileLite::BFloat16& a)
     {
-        return static_cast<Tensile::BFloat16>(std::abs(static_cast<float>(a)));
+        return static_cast<TensileLite::BFloat16>(std::abs(static_cast<float>(a)));
     }
-    inline Tensile::BFloat16 sin(const Tensile::BFloat16& a)
+    inline TensileLite::BFloat16 sin(const TensileLite::BFloat16& a)
     {
-        return static_cast<Tensile::BFloat16>(std::sin(static_cast<float>(a)));
+        return static_cast<TensileLite::BFloat16>(std::sin(static_cast<float>(a)));
     }
-    inline Tensile::BFloat16 cos(const Tensile::BFloat16& a)
+    inline TensileLite::BFloat16 cos(const TensileLite::BFloat16& a)
     {
-        return static_cast<Tensile::BFloat16>(std::cos(static_cast<float>(a)));
+        return static_cast<TensileLite::BFloat16>(std::cos(static_cast<float>(a)));
     }
 
-    inline std::string to_string(const Tensile::BFloat16& a)
+    inline std::string to_string(const TensileLite::BFloat16& a)
     {
         return std::to_string(static_cast<float>(a));
     }

@@ -33,7 +33,7 @@
 #include <Tensile/Properties.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \addtogroup Properties
@@ -56,7 +56,7 @@ namespace Tensile
         using Predicate = Property<Object, bool>;
 
         /**
- * \copydoc Tensile::Property_CRTP
+ * \copydoc TensileLite::Property_CRTP
  */
         template <typename Class, typename Object>
         using Predicate_CRTP = Property_CRTP<Class, Object, bool>;
@@ -324,4 +324,4 @@ namespace Tensile
  * @}
  */
     } // namespace Predicates
-} // namespace Tensile
+} // namespace TensileLite

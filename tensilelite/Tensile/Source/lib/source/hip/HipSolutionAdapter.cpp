@@ -40,7 +40,7 @@
 #endif
 #include <regex>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace hip
     {
@@ -134,7 +134,7 @@ namespace Tensile
 
         void SolutionAdapter::loadEmbeddedCodeObjects(std::string const& key)
         {
-            auto const& embeddedData = EmbeddedData<Tensile::SolutionAdapter>::Get(key);
+            auto const& embeddedData = EmbeddedData<TensileLite::SolutionAdapter>::Get(key);
 
             if(embeddedData.size() == 0)
             {
@@ -453,4 +453,4 @@ namespace Tensile
             }
         }
     } // namespace hip
-} // namespace Tensile
+} // namespace TensileLite

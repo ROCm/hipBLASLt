@@ -26,7 +26,7 @@
 
 #pragma once
 
-namespace Tensile
+namespace TensileLite
 {
     class Problem;
     class ProblemInputs;
@@ -35,4 +35,4 @@ namespace Tensile
     class Hardware;
     class Solution;
     class SolutionAdapter;
-} // namespace Tensile
+} // namespace TensileLite

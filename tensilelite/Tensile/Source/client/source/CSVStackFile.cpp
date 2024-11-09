@@ -29,7 +29,7 @@
 
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -197,4 +197,4 @@ namespace Tensile
             return m_currentRow[key];
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

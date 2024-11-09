@@ -31,7 +31,7 @@
 #include <Tensile/Contractions.hpp>
 #include <Tensile/EmbeddedData.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename MyProblem, typename MySolution>
     std::shared_ptr<SolutionLibrary<MyProblem, MySolution>>
@@ -49,6 +49,6 @@ namespace Tensile
     template std::shared_ptr<SolutionLibrary<ContractionProblemGemm, ContractionSolution>>
         EmbeddedLibrary<ContractionProblemGemm, ContractionSolution>::NewLibrary(
             std::string const&);
-} // namespace Tensile
+} // namespace TensileLite
 
 #endif

@@ -43,7 +43,7 @@
 #include <roctracer/roctx.h>
 #endif
 
-namespace Tensile
+namespace TensileLite
 {
     namespace streamk
     {
@@ -1249,9 +1249,9 @@ namespace Tensile
     template <typename KA>
     void
         ContractionSolution::calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,
-                                                               const Tensile::dim3& workGroupSize,
-                                                               Tensile::dim3&       numWorkGroups,
-                                                               Tensile::dim3&       numWorkItems,
+                                                               const TensileLite::dim3& workGroupSize,
+                                                               TensileLite::dim3&       numWorkGroups,
+                                                               TensileLite::dim3&       numWorkItems,
                                                                KA&                  h_args) const
     {
 
@@ -1847,9 +1847,9 @@ namespace Tensile
     void ContractionSolution::calculateConversionCallWorkGroupItems(
         std::vector<ContractionSolution::Problem> const& problems,
         size_t&                                          vw,
-        const Tensile::dim3&                             workGroupSize,
-        Tensile::dim3&                                   numWorkGroups,
-        Tensile::dim3&                                   numWorkItems,
+        const TensileLite::dim3&                             workGroupSize,
+        TensileLite::dim3&                                   numWorkGroups,
+        TensileLite::dim3&                                   numWorkItems,
         KA&                                              h_args) const
     {
         if constexpr(std::is_same<KA, KernelArguments>::value)
@@ -3416,4 +3416,4 @@ namespace Tensile
                       << " shiftPtrElemB=" << st.shiftPtrElemB << " depthUorMT0=" << st.depthUorMT0
                       << " depthUorMT1=" << st.depthUorMT1;
     }
-} // namespace Tensile
+} // namespace TensileLite
