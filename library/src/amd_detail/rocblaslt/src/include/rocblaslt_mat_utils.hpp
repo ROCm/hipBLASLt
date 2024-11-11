@@ -244,9 +244,9 @@ inline rocblaslt_status validateMatmulArgs(int64_t                m,
         return rocblaslt_status_invalid_pointer;
 
     // Update for the valid case: ((alpha_in_host && alpha=0) && (A=NULL || B=NULL))
-    bool alpha_A_B_violation = ((pointermode || (*((float*)alpha))) && (!a || !b));
+    bool alpha_A_B_violation = (!alpha || ((pointermode || (*((float*)alpha))) && (!a || !b)));
     // pointers must be valid
-    if(n && ((k && (!alpha || alpha_A_B_violation)) || !c || !d))
+    if(n && ((k && alpha_A_B_violation) || !c || !d))
         return rocblaslt_status_invalid_pointer;
 
     return rocblaslt_status_continue;
