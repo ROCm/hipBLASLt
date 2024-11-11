@@ -4,7 +4,7 @@
 #include <sstream>
 #include <utility>
 
-namespace Tensile
+namespace TensileLite
 {
 
     std::multimap<ProblemOverride, int> getContractionProblemsFromFile(const std::string& path)

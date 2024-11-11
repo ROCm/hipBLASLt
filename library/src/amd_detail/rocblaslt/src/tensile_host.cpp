@@ -83,10 +83,10 @@ namespace
     }
 
     static void assignAlphaBeta(TensileLite::DataType type,
-                                const void*       alphaPtr,
-                                const void*       betaPtr,
-                                double*           alpha,
-                                double*           beta)
+                                const void*           alphaPtr,
+                                const void*           betaPtr,
+                                double*               alpha,
+                                double*               beta)
     {
         switch(type)
         {
@@ -293,8 +293,8 @@ namespace
     }
 
     inline const TensileLite::DataType
-        roc2TensileComputeInputType(const TensileLite::DataType&      typeA,
-                                    const TensileLite::DataType&      typeB,
+        roc2TensileComputeInputType(const TensileLite::DataType&  typeA,
+                                    const TensileLite::DataType&  typeB,
                                     const rocblaslt_compute_type& typeCompute)
     {
         switch(typeCompute)
@@ -366,10 +366,10 @@ namespace
                                      bool                   isGroupedGemm,
                                      size_t                 maxWorkspaceBytes)
     {
-        auto                           typeATensile = hip2TensileType(typeA);
-        auto                           typeBTensile = hip2TensileType(typeB);
+        auto                               typeATensile = hip2TensileType(typeA);
+        auto                               typeBTensile = hip2TensileType(typeB);
         std::vector<TensileLite::DataType> biasDataTypeWhiteList; // dummy
-        std::vector<int>               biasSrcWhiteList; // dummy
+        std::vector<int>                   biasSrcWhiteList; // dummy
         return TensileLite::ContractionProblemGemm::createDefaultProblem(
             (opA != HIPBLAS_OP_N),
             (opB != HIPBLAS_OP_N),
@@ -415,14 +415,15 @@ namespace
         {
             return "xf32_r";
         }
-        else if(typeComputeInput == TensileLite::DataType::BFloat16 && typeA == TensileLite::DataType::Half
-                && typeB == TensileLite::DataType::Half)
+        else if(typeComputeInput == TensileLite::DataType::BFloat16
+                && typeA == TensileLite::DataType::Half && typeB == TensileLite::DataType::Half)
         {
             return "f32_bf16_r";
         }
         else if(typeComputeInput == TensileLite::DataType::Half
                 && (typeA == TensileLite::DataType::Float8 && typeB == TensileLite::DataType::Half
-                    || typeA == TensileLite::DataType::Half && typeB == TensileLite::DataType::Float8))
+                    || typeA == TensileLite::DataType::Half
+                           && typeB == TensileLite::DataType::Float8))
         {
             return "f32_f16_r";
         }
@@ -452,8 +453,8 @@ namespace
 
     inline void logBenchFromTensileDataGemm(const TensileLite::ContractionProblemGemm& problem,
                                             const TensileLite::ContractionInputs&      inputs,
-                                            const int&                             solutionIndex,
-                                            bool                                   isCpp)
+                                            const int& solutionIndex,
+                                            bool       isCpp)
     {
         log_bench(
             __func__,
@@ -473,15 +474,12 @@ namespace
             problem.c().strides()[1],
             "--ldd",
             problem.d().strides()[1],
-            problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size() ? "--lde"
-                                                                                        : "",
+            problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
+                ? "--lde"
+                : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
-<<<<<<< HEAD
-                      problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
-=======
-                    problem.tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides()[1])
->>>>>>> 08b4b2fe (apply clang-format)
+                    problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
                 : "",
             "--stride_a",
             problem.a().strides()[2],
@@ -496,11 +494,7 @@ namespace
                 : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
-<<<<<<< HEAD
-                      problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
-=======
-                    problem.tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides()[2])
->>>>>>> 08b4b2fe (apply clang-format)
+                    problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
                 : "",
             "--alpha",
             ToString(inputs.alpha),
@@ -553,10 +547,11 @@ namespace
             tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
     }
 
-    inline void logBenchFromTensileDataGemm(const TensileLite::ContractionProblemGroupedGemm& problem,
-                                            const TensileLite::ContractionGroupedInputs&      inputs,
-                                            const int&                                    solutionIndex,
-                                            bool                                          isCpp)
+    inline void
+        logBenchFromTensileDataGemm(const TensileLite::ContractionProblemGroupedGemm& problem,
+                                    const TensileLite::ContractionGroupedInputs&      inputs,
+                                    const int&                                        solutionIndex,
+                                    bool                                              isCpp)
     {
         size_t            gemmCount = problem.gemms.size();
         std::stringstream grouped_gemm_bench_string;
@@ -570,20 +565,28 @@ namespace
             grouped_gemm_bench_string << " --ldb " << problem.gemms[i].b().strides()[1];
             grouped_gemm_bench_string << " --ldc " << problem.gemms[i].c().strides()[1];
             grouped_gemm_bench_string << " --ldd " << problem.gemms[i].d().strides()[1];
-            if(problem.gemms[i].tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size())
-                grouped_gemm_bench_string << " --lde "
-                                          << problem.gemms[i]
-                                                 .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
-                                                 .strides()[1];
+            if(problem.gemms[i]
+                   .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
+                   .strides()
+                   .size())
+                grouped_gemm_bench_string
+                    << " --lde "
+                    << problem.gemms[i]
+                           .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
+                           .strides()[1];
             grouped_gemm_bench_string << " --stride_a " << problem.gemms[i].a().strides()[2];
             grouped_gemm_bench_string << " --stride_b " << problem.gemms[i].b().strides()[2];
             grouped_gemm_bench_string << " --stride_c " << problem.gemms[i].c().strides()[2];
             grouped_gemm_bench_string << " --stride_d " << problem.gemms[i].d().strides()[2];
-            if(problem.gemms[i].tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size())
-                grouped_gemm_bench_string << " --stride_e "
-                                          << problem.gemms[i]
-                                                 .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
-                                                 .strides()[2];
+            if(problem.gemms[i]
+                   .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
+                   .strides()
+                   .size())
+                grouped_gemm_bench_string
+                    << " --stride_e "
+                    << problem.gemms[i]
+                           .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
+                           .strides()[2];
         }
         log_bench(
             __func__,
@@ -738,16 +741,18 @@ namespace
         // clang-format on
 
         // Descriptor for input matrix C
-        TensileLite::TensorDescriptor c{"c",
-                                    c_type,
-                                    {prob.m, prob.n, prob.batch_count},
-                                    {prob.row_stride_c, prob.col_stride_c, prob.batch_stride_c}};
+        TensileLite::TensorDescriptor c{
+            "c",
+            c_type,
+            {prob.m, prob.n, prob.batch_count},
+            {prob.row_stride_c, prob.col_stride_c, prob.batch_stride_c}};
 
         // Descriptor for output matrix D
-        TensileLite::TensorDescriptor d{"d",
-                                    d_type,
-                                    {prob.m, prob.n, prob.batch_count},
-                                    {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d}};
+        TensileLite::TensorDescriptor d{
+            "d",
+            d_type,
+            {prob.m, prob.n, prob.batch_count},
+            {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d}};
 
         TensileLite::TensorDescriptor e{"e"};
         TensileLite::TensorDescriptor bias{"bias"};
@@ -759,21 +764,21 @@ namespace
 
         // The ContractionProblemGemm
         TensileLite::ContractionProblemGemm tensileProblem{a,
-                                                       b,
-                                                       c,
-                                                       d,
-                                                       e,
-                                                       bias,
-                                                       scaleA,
-                                                       scaleB,
-                                                       scaleC,
-                                                       scaleD,
-                                                       scaleAlphaVec,
-                                                       freeIndex,
-                                                       batchIndex,
-                                                       boundIndex,
-                                                       value_category(beta),
-                                                       prob.workspaceSize};
+                                                           b,
+                                                           c,
+                                                           d,
+                                                           e,
+                                                           bias,
+                                                           scaleA,
+                                                           scaleB,
+                                                           scaleC,
+                                                           scaleD,
+                                                           scaleAlphaVec,
+                                                           freeIndex,
+                                                           batchIndex,
+                                                           boundIndex,
+                                                           value_category(beta),
+                                                           prob.workspaceSize};
 
         tensileProblem.setComputeInputType(
             roc2TensileComputeInputType(a_type, b_type, prob.compute_type));
@@ -816,9 +821,9 @@ namespace
         }
 
         // set bias mode
-        auto biasSrc = getBiasSrc(prob.epilogue);
-        auto biasSize
-            = (biasSrc == TensileLite::ContractionProblemGemm::TENSOR::B) ? d.sizes()[1] : d.sizes()[0];
+        auto biasSrc  = getBiasSrc(prob.epilogue);
+        auto biasSize = (biasSrc == TensileLite::ContractionProblemGemm::TENSOR::B) ? d.sizes()[1]
+                                                                                    : d.sizes()[0];
         tensileProblem.setUseBias(prob.bias != nullptr);
         auto biasType = hipDataType_to_tensile_type(prob.bias_type);
         tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
@@ -855,8 +860,8 @@ namespace
         return tensileProblem;
     }
 
-    void updateTensileProblem(const RocblasltContractionProblem& prob,
-                              TensileLite::ContractionProblemGemm&   tensileProblem)
+    void updateTensileProblem(const RocblasltContractionProblem&   prob,
+                              TensileLite::ContractionProblemGemm& tensileProblem)
     {
         auto a_type       = hipDataType_to_tensile_type(prob.a_type);
         auto b_type       = hipDataType_to_tensile_type(prob.b_type);
@@ -976,9 +981,9 @@ namespace
 
         auto& d = tensileProblem.tensor(TensileLite::ContractionProblemGemm::TENSOR::D);
         // set bias mode
-        auto biasSrc = getBiasSrc(prob.epilogue);
-        auto biasSize
-            = (biasSrc == TensileLite::ContractionProblemGemm::TENSOR::B) ? d.sizes()[1] : d.sizes()[0];
+        auto biasSrc  = getBiasSrc(prob.epilogue);
+        auto biasSize = (biasSrc == TensileLite::ContractionProblemGemm::TENSOR::B) ? d.sizes()[1]
+                                                                                    : d.sizes()[0];
 
         tensileProblem.setUseBias(prob.bias != nullptr);
         auto biasType = hipDataType_to_tensile_type(prob.bias_type);
@@ -1066,7 +1071,8 @@ namespace
         inputs.amaxD         = reinterpret_cast<void*>(prob.amaxD);
 
         // push 2 activation arguments
-        if(compute_type == TensileLite::DataType::Float || compute_type == TensileLite::DataType::XFloat32)
+        if(compute_type == TensileLite::DataType::Float
+           || compute_type == TensileLite::DataType::XFloat32)
         {
             inputs.activationArgs.push_back(0.0f);
             inputs.activationArgs.push_back(0.0f);
@@ -1190,9 +1196,10 @@ namespace
     class TensileHost
     {
         // The library object
-        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> m_library;
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+            m_library;
 #if ROCBLASLT_TENSILE_LAZY_LOAD
-        std::unordered_set<TensileLite::LazyLoadingInit>                      m_deviceSet;
+        std::unordered_set<TensileLite::LazyLoadingInit>                  m_deviceSet;
         std::unordered_map<std::string, std::shared_ptr<hipDeviceProp_t>> m_devicePropMap;
 #else
         std::shared_ptr<hipDeviceProp_t> m_deviceProp;
@@ -1204,7 +1211,7 @@ namespace
         struct adapter_s
         {
             mutable std::atomic<TensileLite::hip::SolutionAdapter*> adapter{nullptr};
-            mutable std::mutex                                  mutex;
+            mutable std::mutex                                      mutex;
         };
 
         // Each device contains an adapter
@@ -1433,16 +1440,17 @@ namespace
                 m_deviceProp = std::make_shared<hipDeviceProp_t>(prop);
 
                 // Load library
-                auto lib
-                    = TensileLite::LoadLibraryFile<TensileLite::ContractionProblemGemm>(tensileLibPath);
+                auto lib = TensileLite::LoadLibraryFile<TensileLite::ContractionProblemGemm>(
+                    tensileLibPath);
 #endif
                 if(!lib)
                     std::cerr << "\nrocblaslt error: Could not load " << tensileLibPath
                               << std::endl;
                 else
                 {
-                    using MSL = TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>;
-                    m_library = std::dynamic_pointer_cast<MSL>(lib);
+                    using MSL
+                        = TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>;
+                    m_library        = std::dynamic_pointer_cast<MSL>(lib);
                     m_tensileLibPath = tensileLibPath;
                 }
                 return 0;
@@ -1473,7 +1481,8 @@ namespace
 
     // Return the library and adapter for the current HIP device
     TensileLite::hip::SolutionAdapter* get_library_and_adapter(
-        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>* library
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>*
+            library
         = nullptr,
         std::shared_ptr<hipDeviceProp_t>* deviceProp = nullptr,
         int                               device     = -1
@@ -1575,52 +1584,52 @@ namespace
 
 struct TensileDataGemm
 {
-    bool                                   enableEpilogue = true;
-    Tensile::ContractionProblemGemm        problem;
-    Tensile::ContractionInputs             inputs;
-    std::vector<Tensile::KernelInvocation> kernels;
-    int                                    algoIndex = std::numeric_limits<int>::max();
+    bool                                       enableEpilogue = true;
+    TensileLite::ContractionProblemGemm        problem;
+    TensileLite::ContractionInputs             inputs;
+    std::vector<TensileLite::KernelInvocation> kernels;
+    int                                        algoIndex = std::numeric_limits<int>::max();
 };
 
 struct TensileDataGroupedGemm
 {
-    bool                                   enableEpilogue = true;
-    Tensile::ContractionProblemGroupedGemm problem;
-    Tensile::ContractionGroupedInputs      inputs;
-    std::vector<Tensile::KernelInvocation> kernels;
-    int                                    algoIndex = std::numeric_limits<int>::max();
-    std::shared_ptr<void>                  hipHostMemory;
-    size_t                                 hipHostMemorySize;
-    bool                                   useUserArgs = false;
+    bool                                       enableEpilogue = true;
+    TensileLite::ContractionProblemGroupedGemm problem;
+    TensileLite::ContractionGroupedInputs      inputs;
+    std::vector<TensileLite::KernelInvocation> kernels;
+    int                                        algoIndex = std::numeric_limits<int>::max();
+    std::shared_ptr<void>                      hipHostMemory;
+    size_t                                     hipHostMemorySize;
+    bool                                       useUserArgs = false;
 };
 
-Tensile::ProblemOverride
+TensileLite::ProblemOverride
     RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem& problem)
 {
-    return Tensile::ProblemOverride(problem.trans_a == HIPBLAS_OP_N ? false : true,
-                                    problem.trans_b == HIPBLAS_OP_N ? false : true,
-                                    hipDataType_to_tensile_type(problem.a_type),
-                                    roc2TensileType(problem.compute_type),
-                                    hipDataType_to_tensile_type(problem.c_type),
-                                    problem.m,
-                                    problem.n,
-                                    problem.k,
-                                    problem.batch_count);
+    return TensileLite::ProblemOverride(problem.trans_a == HIPBLAS_OP_N ? false : true,
+                                        problem.trans_b == HIPBLAS_OP_N ? false : true,
+                                        hipDataType_to_tensile_type(problem.a_type),
+                                        roc2TensileType(problem.compute_type),
+                                        hipDataType_to_tensile_type(problem.c_type),
+                                        problem.m,
+                                        problem.n,
+                                        problem.k,
+                                        problem.batch_count);
 }
 
-Tensile::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void> gemmData)
+TensileLite::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void> gemmData)
 {
     std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
 
-    return Tensile::ProblemOverride(data->problem.transA(),
-                                    data->problem.transB(),
-                                    data->problem.a().dataType(),
-                                    data->problem.computeInputType(),
-                                    data->problem.c().dataType(),
-                                    data->problem.freeSizeA(0),
-                                    data->problem.freeSizeB(0),
-                                    data->problem.boundSize(0),
-                                    data->problem.batchSize(0));
+    return TensileLite::ProblemOverride(data->problem.transA(),
+                                        data->problem.transB(),
+                                        data->problem.a().dataType(),
+                                        data->problem.computeInputType(),
+                                        data->problem.c().dataType(),
+                                        data->problem.freeSizeA(0),
+                                        data->problem.freeSizeB(0),
+                                        data->problem.boundSize(0),
+                                        data->problem.batchSize(0));
 }
 
 void initTensileGemmData(rocblaslt_handle       handle,
@@ -1656,7 +1665,7 @@ void initTensileGemmData(rocblaslt_handle       handle,
     }
     else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
     {
-        TensileDataGroupedGemm                  data;
+        TensileDataGroupedGemm                      data;
         TensileLite::ContractionProblemGroupedGemm& tensile_probs = data.problem;
         TensileLite::ContractionGroupedInputs&      groupedInputs = data.inputs;
 
@@ -1698,9 +1707,10 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
-        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-        std::shared_ptr<TensileLite::Hardware>                                               hardware;
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                               library;
+        std::shared_ptr<hipDeviceProp_t>       deviceProp;
+        std::shared_ptr<TensileLite::Hardware> hardware;
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
@@ -1758,13 +1768,9 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
                             if(kernels[i].isSingleCall)
                             {
                                 auto solutions = library->findAllSolutions(
-<<<<<<< HEAD
-                                    data->problem, *hardware, TensileLite::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
-=======
                                     data->problem,
                                     *hardware,
-                                    Tensile::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
->>>>>>> 08b4b2fe (apply clang-format)
+                                    TensileLite::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
                                 std::vector<std::string> kernelNames;
                                 for(auto s : solutions)
                                 {
@@ -1908,7 +1914,7 @@ rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem>& pro
         }
         else
         {
-            TensileDataGroupedGemm                  data;
+            TensileDataGroupedGemm                      data;
             TensileLite::ContractionProblemGroupedGemm& tensile_probs = data.problem;
             TensileLite::ContractionGroupedInputs&      groupedInputs = data.inputs;
 
@@ -1970,9 +1976,10 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
-        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-        std::shared_ptr<TensileLite::Hardware>                                               hardware;
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                               library;
+        std::shared_ptr<hipDeviceProp_t>       deviceProp;
+        std::shared_ptr<TensileLite::Hardware> hardware;
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
@@ -2112,9 +2119,10 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
-        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-        std::shared_ptr<TensileLite::Hardware>                                               hardware;
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                               library;
+        std::shared_ptr<hipDeviceProp_t>       deviceProp;
+        std::shared_ptr<TensileLite::Hardware> hardware;
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
@@ -2182,9 +2190,10 @@ rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_ha
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
-        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-        std::shared_ptr<TensileLite::Hardware>                                               hardware;
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                               library;
+        std::shared_ptr<hipDeviceProp_t>       deviceProp;
+        std::shared_ptr<TensileLite::Hardware> hardware;
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
@@ -2245,9 +2254,10 @@ rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       hand
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
-        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-        std::shared_ptr<TensileLite::Hardware>                                               hardware;
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                               library;
+        std::shared_ptr<hipDeviceProp_t>       deviceProp;
+        std::shared_ptr<TensileLite::Hardware> hardware;
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
@@ -2320,9 +2330,10 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
-        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-        std::shared_ptr<TensileLite::Hardware>                                               hardware;
+        std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                               library;
+        std::shared_ptr<hipDeviceProp_t>       deviceProp;
+        std::shared_ptr<TensileLite::Hardware> hardware;
 
         auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
@@ -2374,10 +2385,10 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
 
 void _convertToHeuristicResultArray(
     std::vector<std::shared_ptr<TensileLite::ContractionSolution>>& solutions,
-    int                                                         requestedAlgoCount,
-    rocblaslt_matmul_heuristic_result                           heuristicResultsArray[],
-    int*                                                        returnAlgoCount,
-    size_t                                                      maxWorkSpaceBytes,
+    int                                                             requestedAlgoCount,
+    rocblaslt_matmul_heuristic_result                               heuristicResultsArray[],
+    int*                                                            returnAlgoCount,
+    size_t                                                          maxWorkSpaceBytes,
     const TensileLite::ContractionProblemGemm&                      problem,
     const TensileLite::Hardware&                                    hardware)
 {
@@ -2401,12 +2412,13 @@ void _convertToHeuristicResultArray(
 
 template <typename T>
 inline auto getSolutions(
-    const T&                                                                                inputs,
-    const std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>& library,
+    const T& inputs,
+    const std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>&
+                                                  library,
     const std::shared_ptr<TensileLite::Hardware>& hardware,
     TensileLite::ContractionProblemGemm&          tensile_prob,
-    bool                                      enableEpilogue,
-    const int&                                requestedAlgoCount)
+    bool                                          enableEpilogue,
+    const int&                                    requestedAlgoCount)
 {
     auto solutions = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
     return solutions;
@@ -2419,9 +2431,10 @@ std::vector<std::shared_ptr<TensileLite::ContractionSolution>>
                         int                                requestedAlgoCount,
                         size_t                             maxWorkSpaceBytes)
 {
-    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-    std::shared_ptr<TensileLite::Hardware>                                               hardware;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                           library;
+    std::shared_ptr<hipDeviceProp_t>       deviceProp;
+    std::shared_ptr<TensileLite::Hardware> hardware;
 
     static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
 
@@ -2460,9 +2473,10 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
                                   int*                               returnAlgoCount,
                                   size_t                             maxWorkSpaceBytes)
 {
-    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-    std::shared_ptr<TensileLite::Hardware>                                               hardware;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                           library;
+    std::shared_ptr<hipDeviceProp_t>       deviceProp;
+    std::shared_ptr<TensileLite::Hardware> hardware;
 
     // auto &adapter =
     static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
@@ -2510,9 +2524,10 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
                                  std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
                                  size_t                                          maxWorkSpaceBytes)
 {
-    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-    std::shared_ptr<TensileLite::Hardware>                                               hardware;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                           library;
+    std::shared_ptr<hipDeviceProp_t>       deviceProp;
+    std::shared_ptr<TensileLite::Hardware> hardware;
 
     // auto &adapter =
     static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
@@ -2525,7 +2540,7 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
     hardware = TensileLite::hip::GetDevice(*deviceProp);
 
     std::set<std::shared_ptr<TensileLite::ContractionSolution>> solutions;
-    std::shared_ptr<void>                                   tensile_prob;
+    std::shared_ptr<void>                                       tensile_prob;
 
     if constexpr(std::is_same<MyProblem, TensileLite::ContractionProblemGemm>::value)
     {
@@ -2548,7 +2563,8 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
             solutions = library->findAllSolutions(
                 prob, *hardware, TensileLite::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
         }
-        else if constexpr(std::is_same<MyProblem, TensileLite::ContractionProblemGroupedGemm>::value)
+        else if constexpr(std::is_same<MyProblem,
+                                       TensileLite::ContractionProblemGroupedGemm>::value)
         {
             solutions = library->findAllSolutionsGroupedGemm(
                 prob.gemms, *hardware, TensileLite::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
@@ -2642,9 +2658,10 @@ rocblaslt_status
                           std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
                           size_t                                          maxWorkSpaceBytes)
 {
-    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-    std::shared_ptr<TensileLite::Hardware>                                               hardware;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                           library;
+    std::shared_ptr<hipDeviceProp_t>       deviceProp;
+    std::shared_ptr<TensileLite::Hardware> hardware;
 
 #if ROCBLASLT_TENSILE_LAZY_LOAD
     // isPreload = true is to load placeholder libraries except code objects
@@ -2694,9 +2711,10 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                                      const Tuning*          tuning,
                                      size_t*                workspaceSizeInBytes)
 {
-    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-    std::shared_ptr<TensileLite::Hardware>                                               hardware;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                           library;
+    std::shared_ptr<hipDeviceProp_t>       deviceProp;
+    std::shared_ptr<TensileLite::Hardware> hardware;
 
 #if ROCBLASLT_TENSILE_LAZY_LOAD
     // isPreload = true is a workaround for lazy_lib_load
@@ -2848,7 +2866,9 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle             handle,
 }
 
 template <typename T>
-void setRestrictions(TensileLite::ContractionProblemGemm& tensile_prob, const T* alpha, const T* beta)
+void setRestrictions(TensileLite::ContractionProblemGemm& tensile_prob,
+                     const T*                             alpha,
+                     const T*                             beta)
 {
     tensile_prob.setAlphaRestriction(TensileLite::toScalarValueEnum(*alpha));
     tensile_prob.setBetaRestriction(TensileLite::toScalarValueEnum(*beta));
@@ -2909,9 +2929,10 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
                                   const int              requestedAlgoCount,
                                   std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults)
 {
-    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-    std::shared_ptr<TensileLite::Hardware>                                               hardware;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                           library;
+    std::shared_ptr<hipDeviceProp_t>       deviceProp;
+    std::shared_ptr<TensileLite::Hardware> hardware;
 
     // auto &adapter =
     static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
@@ -2992,8 +3013,9 @@ std::string getKernelNameFromData(rocblaslt_handle             handle,
                                   const rocblaslt::RocGemmType gemmType,
                                   std::shared_ptr<void>        gemmData)
 {
-    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                     library;
+    std::shared_ptr<hipDeviceProp_t> deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
@@ -3002,8 +3024,8 @@ std::string getKernelNameFromData(rocblaslt_handle             handle,
         return std::string();
     }
 
-    int                                    gsu = 0;
-    int                                    wgm = 0;
+    int                                        gsu = 0;
+    int                                        wgm = 0;
     std::vector<TensileLite::KernelInvocation> kernels;
 
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
@@ -3036,8 +3058,9 @@ std::string getSolutionNameFromData(rocblaslt_handle             handle,
                                     const rocblaslt::RocGemmType gemmType,
                                     std::shared_ptr<void>        gemmData)
 {
-    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                     library;
+    std::shared_ptr<hipDeviceProp_t> deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
@@ -3052,11 +3075,7 @@ std::string getSolutionNameFromData(rocblaslt_handle             handle,
 
     std::shared_ptr<TensileLite::Hardware> hardware;
 
-<<<<<<< HEAD
-    hardware     = TensileLite::hip::GetDevice(*deviceProp);
-=======
-    hardware = Tensile::hip::GetDevice(*deviceProp);
->>>>>>> 08b4b2fe (apply clang-format)
+    hardware = TensileLite::hip::GetDevice(*deviceProp);
 
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
@@ -3096,17 +3115,13 @@ std::string getSolutionNameFromData(rocblaslt_handle             handle,
 
 std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_matmul_algo& algo)
 {
-    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                     library;
+    std::shared_ptr<hipDeviceProp_t> deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
-<<<<<<< HEAD
-    std::shared_ptr<TensileLite::Hardware>                                               hardware;
+    std::shared_ptr<TensileLite::Hardware> hardware;
     hardware = TensileLite::hip::GetDevice(*deviceProp);
-=======
-    std::shared_ptr<Tensile::Hardware> hardware;
-    hardware = Tensile::hip::GetDevice(*deviceProp);
->>>>>>> 08b4b2fe (apply clang-format)
 
     if(!library)
     {
@@ -3120,17 +3135,13 @@ std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_
 
 std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_matmul_algo& algo)
 {
-    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+    std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
+                                     library;
+    std::shared_ptr<hipDeviceProp_t> deviceProp;
 
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
-<<<<<<< HEAD
-    std::shared_ptr<TensileLite::Hardware>                                               hardware;
+    std::shared_ptr<TensileLite::Hardware> hardware;
     hardware = TensileLite::hip::GetDevice(*deviceProp);
-=======
-    std::shared_ptr<Tensile::Hardware> hardware;
-    hardware = Tensile::hip::GetDevice(*deviceProp);
->>>>>>> 08b4b2fe (apply clang-format)
 
     if(!library)
     {

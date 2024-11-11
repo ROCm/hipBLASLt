@@ -483,15 +483,15 @@ inline TensileLite::DataType hipDataType_to_tensile_type(hipDataType type)
 
 namespace
 {
-    Tensile::DataType roc2TensileType(rocblaslt_compute_type);
+    TensileLite::DataType roc2TensileType(rocblaslt_compute_type);
 }
 
-namespace Tensile
+namespace TensileLite
 {
     class ProblemOverride;
 }
 
-Tensile::ProblemOverride
+TensileLite::ProblemOverride
     RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem&);
 
-Tensile::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void>);
+TensileLite::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void>);

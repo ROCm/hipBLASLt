@@ -39,7 +39,7 @@ private:
     ~OverrideSingleton() {}
 };
 
-namespace Tensile
+namespace TensileLite
 {
     class ProblemOverride
     {
@@ -145,19 +145,19 @@ namespace Tensile
 namespace std
 {
     template <>
-    struct hash<Tensile::ProblemOverride>
+    struct hash<TensileLite::ProblemOverride>
     {
-        inline size_t operator()(Tensile::ProblemOverride const& po) const
+        inline size_t operator()(TensileLite::ProblemOverride const& po) const
         {
-            return Tensile::hash_combine(po.transA(),
-                                         po.transB(),
-                                         po.inputType(),
-                                         po.computeType(),
-                                         po.outputType(),
-                                         po.m(),
-                                         po.n(),
-                                         po.k(),
-                                         po.batchSize());
+            return TensileLite::hash_combine(po.transA(),
+                                             po.transB(),
+                                             po.inputType(),
+                                             po.computeType(),
+                                             po.outputType(),
+                                             po.m(),
+                                             po.n(),
+                                             po.k(),
+                                             po.batchSize());
         }
     };
 } // namespace std
