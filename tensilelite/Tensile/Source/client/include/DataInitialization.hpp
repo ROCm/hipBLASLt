@@ -82,7 +82,7 @@ namespace TensileLite
 
         static bool IsProblemDependent(InitMode const& mode)
         {
-             return mode == InitMode::SerialIdx || mode == InitMode::SerialDim0
+            return mode == InitMode::SerialIdx || mode == InitMode::SerialDim0
                    || mode == InitMode::SerialDim1 || mode == InitMode::Identity
                    || mode == InitMode::TrigSin || mode == InitMode::TrigCos
                    || mode == InitMode::TrigAbsSin || mode == InitMode::TrigAbsCos;
@@ -356,7 +356,10 @@ namespace TensileLite
                                 {
                                     auto& p = it->second;
                                     if(i <= ContractionProblemGemm::TENSOR::METADATA)
-                                        HIP_CHECK_EXC(hipMemcpy(mem[j][i].data.get(), p.gpuInput.current.get(), mem[j][i].size, hipMemcpyDeviceToDevice));
+                                        HIP_CHECK_EXC(hipMemcpy(mem[j][i].data.get(),
+                                                                p.gpuInput.current.get(),
+                                                                mem[j][i].size,
+                                                                hipMemcpyDeviceToDevice));
                                 }
                             }
                     }
@@ -862,7 +865,9 @@ namespace TensileLite
             };
             virtual void setNumWarmupRuns(size_t count) override{};
             virtual void preWarmup() override{};
-            virtual void postWarmup() override{};
+            virtual void postWarmup(TimingEvents const& startEvents,
+                                    TimingEvents const& stopEvents,
+                                    hipStream_t const&  stream) override{};
             virtual void validateWarmups(std::shared_ptr<ProblemInputs> inputs,
                                          TimingEvents const&            startEvents,
                                          TimingEvents const&            stopEvents) override
@@ -1044,7 +1049,7 @@ namespace TensileLite
             /// cannot be used with problem dependent data.
             bool m_problemDependentData = false;
 
-            int64_t               m_rotatingBuffer          = 0;
+            int64_t                         m_rotatingBuffer = 0;
             std::shared_ptr<RotatingMemory> m_rm;
             int32_t                         m_rotatingMode = 0;
         };

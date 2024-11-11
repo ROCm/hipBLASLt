@@ -72,6 +72,14 @@ globalParameters["SyncsPerBenchmark"] = 1         # how iterations of the stream
 globalParameters["EnqueuesPerSync"] = 1           # how many solution enqueues to perform per synchronization
 globalParameters["MaxEnqueuesPerSync"] = -1       # max solution enqueues to perform per synchronization
 globalParameters["SleepPercent"] = 300            # how long to sleep after every data point: 25 means 25% of solution time. Sleeping lets gpu cool down more.
+globalParameters["SkipSlowSolutionRatio"] = 0.0   # Skip slow solution during warm-up stage.
+# The valid range of this ratio is (0.0 ~ 1.0), and 0.0 means no skipping.
+# Skip condition:  warm-up time * ratio > current best sol's warm-up time
+# Suggestion:
+#     Small size :  0.5
+#     Medium size: 0.75
+#     Large size :  0.9
+
 # cProfile
 globalParameters["Profiler"] = 0                  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
 # validation

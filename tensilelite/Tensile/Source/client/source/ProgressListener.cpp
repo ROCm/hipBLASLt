@@ -138,7 +138,11 @@ namespace TensileLite
 
         void ProgressListener::preWarmup() {}
 
-        void ProgressListener::postWarmup() {}
+        void ProgressListener::postWarmup(TimingEvents const& startEvents,
+                                          TimingEvents const& stopEvents,
+                                          hipStream_t const&  stream)
+        {
+        }
 
         void ProgressListener::validateWarmups(std::shared_ptr<ProblemInputs> inputs,
                                                TimingEvents const&            startEvents,
