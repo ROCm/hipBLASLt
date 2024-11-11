@@ -39,7 +39,7 @@
 #include <Tensile/EmbeddedData.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace ocl
     {
@@ -148,7 +148,7 @@ namespace Tensile
 
         void SolutionAdapter::loadEmbeddedCodeObjects(std::string const& key)
         {
-            auto const& embeddedData = EmbeddedData<Tensile::SolutionAdapter>::Get(key);
+            auto const& embeddedData = EmbeddedData<TensileLite::SolutionAdapter>::Get(key);
 
             if(embeddedData.size() == 0)
             {
@@ -376,4 +376,4 @@ namespace Tensile
             }
         }
     } // namespace ocl
-} // namespace Tensile
+} // namespace TensileLite

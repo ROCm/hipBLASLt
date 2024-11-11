@@ -178,7 +178,7 @@ namespace tensile_gfx1200_f8_impl
 //      bfloat8: bf8
 //      f8 is used to consider both float8 and bfloat8
 
-//namespace Tensile
+//namespace TensileLite
 //{
 enum class hip_f8_type
 {
@@ -787,7 +787,7 @@ inline __host__ __device__ tensile_bfloat8
 
 #endif // end of explicit specialization
 
-//} // end of namespace Tensile
+//} // end of namespace TensileLite
 
 namespace std
 {

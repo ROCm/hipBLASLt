@@ -35,7 +35,7 @@
 
 #include "RunListener.hpp"
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -215,4 +215,4 @@ namespace Tensile
             int                                               m_currentSolutionIdx = 0;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

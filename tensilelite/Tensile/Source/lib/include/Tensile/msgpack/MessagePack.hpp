@@ -34,7 +34,7 @@
 
 #include <msgpack.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -134,7 +134,7 @@ namespace Tensile
                     MessagePackInput subRef = createSubRef(value);
                     subRef.input(obj);
                     error.insert(error.end(), subRef.error.begin(), subRef.error.end());
-                    if(Tensile::Debug::Instance().printDataInit())
+                    if(TensileLite::Debug::Instance().printDataInit())
                         usedKeys.insert(key);
                 }
                 else
@@ -166,7 +166,7 @@ namespace Tensile
                 {
                     auto& value = iterator->second;
                     createSubRef(value).input(obj);
-                    if(Tensile::Debug::Instance().printDataInit())
+                    if(TensileLite::Debug::Instance().printDataInit())
                         usedKeys.insert(key);
                 }
             }
@@ -199,7 +199,7 @@ namespace Tensile
             {
                 MappingTraits<T, MessagePackInput, Context>::mapping(*this, obj, ctx);
 
-                if(Tensile::Debug::Instance().printDataInit())
+                if(TensileLite::Debug::Instance().printDataInit())
                     checkUsedKeys();
             }
 
@@ -210,7 +210,7 @@ namespace Tensile
             {
                 MappingTraits<T, MessagePackInput, Context>::mapping(*this, obj);
 
-                if(Tensile::Debug::Instance().printDataInit())
+                if(TensileLite::Debug::Instance().printDataInit())
                     checkUsedKeys();
             }
 
@@ -346,7 +346,7 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct MappingTraits<std::shared_ptr<Tensile::MasterContractionLibrary>, IO>
+        struct MappingTraits<std::shared_ptr<TensileLite::MasterContractionLibrary>, IO>
         {
             using obj = MasterContractionLibrary;
 

@@ -35,7 +35,7 @@
 #include <csignal>
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -311,4 +311,4 @@ namespace Tensile
             return 0;
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

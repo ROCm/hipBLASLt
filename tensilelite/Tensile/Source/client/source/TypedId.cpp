@@ -26,7 +26,7 @@
 
 #include <TypedId.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     template struct TypedGemm<float>;
     template struct TypedGemm<double>;
@@ -65,4 +65,4 @@ namespace Tensile
     template struct TypedGemm<Float8, BFloat8, BFloat8, BFloat8, float, float>;
     template struct TypedGemm<BFloat8, Float8, BFloat8, BFloat8, float, float>;
 #endif
-} // namespace Tensile
+} // namespace TensileLite

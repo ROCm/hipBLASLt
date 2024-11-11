@@ -38,7 +38,7 @@
 #include <boost/program_options.hpp>
 #include <hip/hip_runtime.h>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -113,4 +113,4 @@ namespace Tensile
             double          m_memBandwidthMBps;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

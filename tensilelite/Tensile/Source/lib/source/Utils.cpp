@@ -26,7 +26,7 @@
 
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     StreamRead::StreamRead(std::string const& value, bool except)
         : m_value(value)
@@ -98,4 +98,4 @@ namespace Tensile
         return (size_t)-1;
     }
 
-} // namespace Tensile
+} // namespace TensileLite

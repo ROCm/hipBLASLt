@@ -60,7 +60,7 @@
 
 namespace po = boost::program_options;
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -568,12 +568,12 @@ namespace Tensile
         }
 
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite
 
 int main(int argc, const char* argv[])
 {
-    using namespace Tensile;
-    using namespace Tensile::Client;
+    using namespace TensileLite;
+    using namespace TensileLite::Client;
 
     auto args = parse_args(argc, argv);
 
@@ -592,7 +592,7 @@ int main(int argc, const char* argv[])
     hipStream_t stream   = GetStream(args);
 
     auto                          library = LoadSolutionLibrary(args);
-    Tensile::hip::SolutionAdapter adapter;
+    TensileLite::hip::SolutionAdapter adapter;
     LoadCodeObjects(args, adapter);
 
     auto filename = args["library-file"].as<std::string>();

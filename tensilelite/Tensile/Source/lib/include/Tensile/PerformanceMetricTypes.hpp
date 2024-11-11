@@ -32,7 +32,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Tensile
@@ -47,6 +47,17 @@ namespace Tensile
  */
 
     /**
+ * Experimental options
+ */
+    enum class ExperimentalOption : int
+    {
+        None    = 0,
+        DTree   = 1,
+        StreamK = 2,
+        Count
+    };
+
+    /**
  * Performance Metric
  */
     enum class PerformanceMetric : int
@@ -54,7 +65,8 @@ namespace Tensile
         Auto,
         CUEfficiency,
         DeviceEfficiency,
-        Experimental,
+        ExperimentalDTree,
+        ExperimentalStreamK,
         Count
     };
 
@@ -131,22 +143,27 @@ namespace Tensile
     {
     };
     template <>
-    struct PerformanceMetricInfo<PerformanceMetric::Experimental>
-        : public BasePerformanceMetricInfo<PerformanceMetric::Experimental>
+    struct PerformanceMetricInfo<PerformanceMetric::ExperimentalDTree>
+        : public BasePerformanceMetricInfo<PerformanceMetric::ExperimentalDTree>
+    {
+    };
+    template <>
+    struct PerformanceMetricInfo<PerformanceMetric::ExperimentalStreamK>
+        : public BasePerformanceMetricInfo<PerformanceMetric::ExperimentalStreamK>
     {
     };
 
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
     template <>
-    struct hash<Tensile::PerformanceMetric>
+    struct hash<TensileLite::PerformanceMetric>
     {
-        inline size_t operator()(Tensile::PerformanceMetric const& val) const
+        inline size_t operator()(TensileLite::PerformanceMetric const& val) const
         {
             return hash<int>()(static_cast<int>(val));
         }

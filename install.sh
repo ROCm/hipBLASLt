@@ -785,6 +785,10 @@ pushd .
     cmake_common_options="${cmake_common_options} -DCMAKE_CXX_FLAGS=-pg -DCMAKE_C_FLAGS=-pg"
   fi
 
+  if [[ "${build_address_sanitizer}" == true ]]; then
+    tensile_opt="${tensile_opt} -DTensile_ASAN_BUILD=ON"
+  fi
+
   if [[ "${keep_build_tmp}" == true ]]; then
     tensile_opt="${tensile_opt} -DTensile_KEEP_BUILD_TMP=ON"
   fi
@@ -840,7 +844,7 @@ pushd .
         elevate_if_not_root dpkg -i hipblaslt[-\_]*.deb
       ;;
       centos|rhel|almalinux)
-        elevate_if_not_root yum --allowerasing -y localinstall hipblaslt-*.rpm
+        elevate_if_not_root rpm --nodeps -U hipblaslt-*.rpm
       ;;
       fedora)
         elevate_if_not_root dnf install hipblaslt-*.rpm

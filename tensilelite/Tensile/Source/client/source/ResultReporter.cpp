@@ -26,7 +26,7 @@
 
 #include "ResultReporter.hpp"
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -75,4 +75,4 @@ namespace Tensile
             return stream;
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

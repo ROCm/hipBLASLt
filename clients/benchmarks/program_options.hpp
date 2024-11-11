@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -549,7 +549,7 @@ namespace roc
                 const value_base* val = opt.get_val().get();
                 if(printvalue && !dynamic_cast<const value<bool>*>(val))
                     left << " <value>";
-                os << std::setw(26) << std::left << left.str() << " " << std::setw(82) << std::left
+                os << std::setw(34) << std::left << left.str() << " " << std::setw(82) << std::left
                    << opt.get_desc() << " ";
                 left.str(std::string());
 

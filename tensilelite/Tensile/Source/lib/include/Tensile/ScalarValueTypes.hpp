@@ -34,7 +34,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Tensile
@@ -159,14 +159,14 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
     template <>
-    struct hash<Tensile::ScalarValue>
+    struct hash<TensileLite::ScalarValue>
     {
-        inline size_t operator()(Tensile::ScalarValue const& val) const
+        inline size_t operator()(TensileLite::ScalarValue const& val) const
         {
             return hash<int>()(static_cast<int>(val));
         }

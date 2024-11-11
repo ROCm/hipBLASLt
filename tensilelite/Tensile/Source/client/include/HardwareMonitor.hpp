@@ -37,7 +37,7 @@
 #include <rocm_smi/rocm_smi.h>
 #include <rocm_smi/rocm_smi64Config.h>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -153,4 +153,4 @@ namespace Tensile
             std::vector<std::vector<uint64_t>> m_SYSCLK_array;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

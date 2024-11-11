@@ -173,6 +173,7 @@ globalParameters["CMakeCXXFlags"] = ""            # pass flags to cmake
 globalParameters["CMakeCFlags"] = ""              # pass flags to cmake
 globalParameters["DebugKernel"] = False           # assembly only, kernel gets buffer for debug "printing"; kernel writes data to memory, gets coppied to host and printed
 globalParameters["LibraryPrintDebug"] = False     # solutions will print enqueue info when enqueueing a kernel
+globalParameters["AsanBuild"] = False             # build with asan
 globalParameters["SaveTemps"] = False             # Generate intermediate results of hip kernels
 globalParameters["KeepBuildTmp"] = False          # If true, do not remove artifacts in build_tmp
 
@@ -946,11 +947,12 @@ validParameters = {
     #   -1 = use prediction model for best performance (not yet implemented)
     #   0 = only remainder tiles run in stream-k
     #   1+ = remainder + 1 (or more) full grids of tiles run in stream-k (default=1)
-    # TENSILE_STREAMK_DYNAMIC_GRID enables dynamic grid mode, which automatically limits the number of CUs used:
-    #   0 = Off, use all CUs (default)
+    # TENSILE_STREAMK_DYNAMIC_GRID selects dynamic grid mode, which automatically limits the number of CUs used:
+    #   0 = Off, always use all CUs.
     #   1 = Only reduce CUs for small problems to number of output tiles when num_tiles < CU count.
     #   2 = Also reduce CUs used for large sizes to improve data-parallel portion and reduce power.
-    #   3 = Analytically predict the best grid-size by weighing the cost of the fix-up step and the cost of processing MACs.
+    #   3 = Analytically predict the best grid-size by weighing the cost of the fix-up step and the cost of processing MACs (default).
+    #       Note: dynamic grid coefficients currently apply to gfx942 variants
     # TENSILE_STREAMK_MAX_CUS allows the user to manually set maximum number of CUs used, which could free up some CUs for
     #   other operations to run in parallel with gemm.
     # TENSILE_STREAMK_GRID_MULTIPLIER lets you set how many workgroups are created per CU being used.
@@ -1708,6 +1710,9 @@ def assignGlobalParameters( config ):
 
   if "AMDGPUArchPath" in config:
     globalParameters["AMDGPUArchPath"] = config["AMDGPUArchPath"]
+
+  if "AsanBuild" in config:
+    globalParameters["AsanBuild"] = config["AsanBuild"]
 
   if "KeepBuildTmp" in config:
       globalParameters["KeepBuildTmp"] = config["KeepBuildTmp"]

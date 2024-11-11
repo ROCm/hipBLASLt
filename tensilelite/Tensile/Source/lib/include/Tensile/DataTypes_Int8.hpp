@@ -32,7 +32,7 @@
 
 #include <Tensile/DistinctType.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup DataTypes
@@ -40,11 +40,11 @@ namespace Tensile
     struct Int8 : public DistinctType<int8_t, Int8>
     {
     };
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
-    inline ostream& operator<<(ostream& stream, const Tensile::Int8 val)
+    inline ostream& operator<<(ostream& stream, const TensileLite::Int8 val)
     {
         return stream << static_cast<int32_t>(val);
     }

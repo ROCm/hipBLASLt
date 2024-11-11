@@ -29,7 +29,7 @@
 #include <Tensile/Comparison.hpp>
 #include <Tensile/TensorDescriptor.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     template <>
     struct Comparison<TensorDescriptor>
@@ -50,20 +50,20 @@ namespace Tensile
         }
     };
 
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
 
     template <>
-    struct hash<Tensile::TensorDescriptor>
+    struct hash<TensileLite::TensorDescriptor>
     {
-        inline size_t operator()(Tensile::TensorDescriptor const& tensor) const
+        inline size_t operator()(TensileLite::TensorDescriptor const& tensor) const
         {
-            return Tensile::combine_hashes(
+            return TensileLite::combine_hashes(
                 std::hash<size_t>()((size_t)tensor.dataType()),
-                Tensile::hash_combine_iter(tensor.sizes().begin(), tensor.sizes().end()),
-                Tensile::hash_combine_iter(tensor.strides().begin(), tensor.strides().end()));
+                TensileLite::hash_combine_iter(tensor.sizes().begin(), tensor.sizes().end()),
+                TensileLite::hash_combine_iter(tensor.strides().begin(), tensor.strides().end()));
         }
     };
 } // namespace std

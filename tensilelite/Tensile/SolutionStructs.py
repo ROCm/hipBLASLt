@@ -39,6 +39,7 @@ from .KernelWriterActivationFunction import KernelWriterActivationFunction
 from .KernelWriterActivationOnly import KernelWriterActivationOnly
 from .KernelWriterReduction import KernelWriterReduction
 
+from .AsmStoreState import VectorDataTypes
 from .Activation import ActivationType
 
 from .CustomKernels import isCustomKernelConfig
@@ -1917,9 +1918,9 @@ class Solution(collections.abc.Mapping):
       reject(state, "DirectToVgpr%c does not supports InnerUnroll>1"%(tc))
       return False
 
-    # Reject TLU = UnrollMajorLDS (B only)
-    if tc == 'B' and (state["ProblemType"]["TLUA"] == state["UnrollMajorLDSA"] or state["ProblemType"]["TLUB"] == state["UnrollMajorLDSB"]):
-      reject(state, "DirectToVgpr%c does not supports TLU = UnrollMajorLDS"%(tc))
+    # Reject TLU = UnrollMajorLDS
+    if state["ProblemType"]["TLU%c"%tc] == state["UnrollMajorLDS%c"%tc]:
+      reject(state, "DirectToVgpr%c does not supports TLU%c = UnrollMajorLDS%c"%(tc, tc, tc))
       return False
 
     # does not work with UnrollLoopSwapGlobalReadOrder
@@ -2138,7 +2139,7 @@ class Solution(collections.abc.Mapping):
     #   state["BatchSizeEqual"] = 1
 
     isa = tuple(state["ISA"])
-    
+
     if state["StreamK"] != 0:
       state["GlobalSplitU"] = 0 # Cannot enable both Stream-K and GSU
       state["GlobalSplitUAlgorithm"] = "MultipleBuffer" # Set default Algorithm
@@ -3673,6 +3674,40 @@ class Solution(collections.abc.Mapping):
       state["LdsOffsetBiasGSU"] = ldsNumBytesRemapCGSU
       state["LdsOffsetBias"] = ldsNumBytesRemapC
 
+    # Calcualte the correct LDS usages
+    def calcEpilogueTurns(factorDims: List) -> int:
+      divisor = state["SubGroup0"] * state["SubGroup1"]
+      # d will be a list containing 0 or 1
+      maxTurn = 0
+      for d in range(len(factorDims)):
+        turn = math.ceil(state["MacroTile%d"%d] / divisor)
+        maxTurn = max(maxTurn, turn)
+      return maxTurn
+
+    # Calc the required LDS
+    vecDT = VectorDataTypes()
+    biasDim = state["ProblemType"]["UseBias"]
+    savDim = state["ProblemType"]["UseScaleAlphaVec"]
+    sAB = state["ProblemType"]["UseScaleAB"] == "Vector"
+    # Calc LDS for Bias
+    if biasDim == 1:
+      vecDT.bias.turn = calcEpilogueTurns([0])
+    elif biasDim == 2:
+      vecDT.bias.turn = calcEpilogueTurns([1])
+    elif biasDim == 3:
+      vecDT.bias.turn = calcEpilogueTurns([0, 1])
+    # Calc LDS for SAV
+    if savDim == 1:
+      vecDT.scaleAlpha.turn = calcEpilogueTurns([0])
+    elif savDim == 2:
+      vecDT.scaleAlpha.turn = calcEpilogueTurns([1])
+    elif savDim == 3:
+      vecDT.scaleAlpha.turn = calcEpilogueTurns([0, 1])
+    # Calc LDS for ScaleA, ScaleB
+    if sAB:
+      vecDT.scaleA.turn = calcEpilogueTurns([0])
+      vecDT.scaleB.turn = calcEpilogueTurns([1])
+
     epilogueSize = 0
     # Bias
     if state["ProblemType"]["UseBias"]:
@@ -3690,14 +3725,14 @@ class Solution(collections.abc.Mapping):
         if tile01 > -1:
           maxKId = state["WavefrontSize"] // ((state["MatrixInstM"] if (tile01 == 0) else state["MatrixInstN"]) * state["MatrixInstB"])
           for dataType in state["ProblemType"]["BiasDataTypeList"]:
-            epilogueSize = max(epilogueSize, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
+            epilogueSize = max(epilogueSize, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes()) # TODO- GetTurn ?
       else:
-        epilogueSize = state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes()
+        epilogueSize = state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * vecDT.bias.turn
     # Calculate max ldsNumBytes for other epilogues
     if state["ProblemType"]["UseScaleAlphaVec"]:
-      epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes()
+      epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * vecDT.scaleAlpha.turn
     if state["ProblemType"]["UseScaleAB"] == "Vector":
-      epilogueSize += state["NumThreads"] * 2 * state["ProblemType"]["ComputeDataType"].numBytes()
+      epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * (vecDT.scaleA.turn + vecDT.scaleB.turn)
     ldsNumBytes = max(ldsNumBytes, state["LdsOffsetBias"] + epilogueSize)
 
     state["LdsBytesNoAmax"] = ldsNumBytes

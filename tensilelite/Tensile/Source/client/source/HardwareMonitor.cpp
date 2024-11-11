@@ -53,7 +53,7 @@
         }                                                                                         \
     } while(0)
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -509,4 +509,4 @@ namespace Tensile
         }
 
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

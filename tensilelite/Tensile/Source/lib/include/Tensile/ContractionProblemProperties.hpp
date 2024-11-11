@@ -31,7 +31,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \addtogroup PropertyClasses
@@ -223,4 +223,4 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite

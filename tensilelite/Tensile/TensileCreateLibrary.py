@@ -214,8 +214,12 @@ def splitArchs():
           if (arch == (9,0,10)):
             archs += [getGfxName(arch) + '-xnack+']
             cmdlineArchs += [getGfxName(arch) + ':xnack+']
-          archs += [getGfxName(arch) + '-xnack-']
-          cmdlineArchs += [getGfxName(arch) + ':xnack-']
+          if globalParameters["AsanBuild"]:
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          else:
+            archs += [getGfxName(arch) + '-xnack-']
+            cmdlineArchs += [getGfxName(arch) + ':xnack-']
         else:
           archs += [getGfxName(arch)]
           cmdlineArchs += [getGfxName(arch)]
@@ -255,6 +259,8 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
       hipFlags += ['-I', outputPath]
       hipFlags += ["-Xoffload-linker", "--build-id=%s"%globalParameters["BuildIdKind"]]
       hipFlags += ['-std=c++17']
+      if globalParameters["AsanBuild"]:
+        hipFlags += ["-fsanitize=address", "-shared-libasan", "-fuse-ld=lld"]
       if globalParameters["SaveTemps"]:
         hipFlags += ['--save-temps']
 
@@ -1301,6 +1307,8 @@ def TensileCreateLibrary():
   argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
                          help="Keep debug information for built code objects")
   argParser.add_argument("--build-id", dest="BuildIdKind", action="store", default="sha1")
+  argParser.add_argument("--address-sanitizer", dest="AsanBuild", action="store_true",
+                         default=False, help="Enable ASAN build.")
   argParser.add_argument("--keep-build-tmp", dest="KeepBuildTmp", action="store_true",
                           default=False, help="Do not remove the temporary build directory (may required hundreds of GBs of space)"),
   argParser.add_argument("--validate-library", dest="ValidateLibrary", action="store_true", default=False)
@@ -1352,6 +1360,7 @@ def TensileCreateLibrary():
   arguments["AsmDebug"] = args.AsmDebug
   arguments["BuildIdKind"] = args.BuildIdKind
   arguments["KeepBuildTmp"] = args.KeepBuildTmp
+  arguments["AsanBuild"] = args.AsanBuild
   arguments["ValidateLibrary"] = args.ValidateLibrary
 
   for key, value in args.global_parameters:

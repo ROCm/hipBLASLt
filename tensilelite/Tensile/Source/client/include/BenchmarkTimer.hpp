@@ -36,7 +36,7 @@
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/ContractionSolution.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -131,4 +131,4 @@ namespace Tensile
             float         m_flushTimeUs;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite
