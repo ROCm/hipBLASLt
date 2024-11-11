@@ -50,11 +50,11 @@ set(tensile_sources  ${tensile_sources}
     )
 
 if(TENSILE_USE_LLVM)
-    find_package(LLVM 13.0 QUIET CONFIG)
+    #find_package(LLVM 13.0 QUIET CONFIG)
     if(NOT LLVM_FOUND)
-        find_package(LLVM 12.0 QUIET CONFIG)
+        #find_package(LLVM 12.0 QUIET CONFIG)
         if(NOT LLVM_FOUND)
-            find_package(LLVM REQUIRED CONFIG)
+            #find_package(LLVM REQUIRED CONFIG)
         endif()
     endif()
 
@@ -120,9 +120,23 @@ if(TENSILE_USE_MSGPACK)
     endif()
 endif()
 
+find_library(LLVMObjectYAML_LIBRARY
+NAMES LLVMObjectYAML
+PATHS ${LLVM_LIBRARY_DIR})
+message("LLVMObjectYAML_LIBRARY: ${LLVMObjectYAML_LIBRARY}")
+
 if(TENSILE_USE_LLVM)
     target_compile_definitions(TensileHost PUBLIC -DTENSILE_YAML=1)
-    target_link_libraries(TensileHost PRIVATE LLVM)
+    find_library(LLVMObjectYAML_LIBRARY
+        NAMES LLVMObjectYAML
+        PATHS ${LLVM_LIBRARY_DIR})
+    message("LLVMObjectYAML_LIBRARY: ${LLVMObjectYAML_LIBRARY}")
+    #Use LLVM shared libs if LLVMObjectYAML static lib cannot be found
+    if(LLVMObjectYAML_LIBRARY)
+        target_link_libraries(TensileHost PRIVATE LLVMObjectYAML )
+    else()
+        target_link_libraries(TensileHost PRIVATE LLVM )
+    endif()
     target_include_directories(TensileHost PRIVATE ${LLVM_INCLUDE_DIRS})
 endif()
 
