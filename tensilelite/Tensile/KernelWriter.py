@@ -384,6 +384,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.do["GlobalWrite"] = True
     self.do["EdgeWrite"]   = True
     self.do["KeepDirectToLdsAlloc"] = False  # If true, keep regs used for LDS alloc even if not used
+    self.do["OptimizeNumItersPLR0"] = True
 
     self.do["executeToInitEnd"] = 0
     self.do["executeToPrefetchEnd"] = 0
@@ -559,7 +560,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   #  localReadCode + otherCode
   ##############################################################################
   def makeSubIterSchedule(self, kernel, tPA, tPB, localReadCode, iteration, pointerLWCode, pointerLRCode, waitCode, macIterCode, \
-      waitLWCode = Module(), syncCode = Module(), packCode = Module(), NLLlast = False):
+      waitLWCode = Module(), syncCode = Module(), packCode = Module(), prevIterCode = Module(), NLLlast = False):
 
     iterCode = Module()
     globalReadCode = fastdeepcopy(self.codes.perIterGlobalRead[iteration])
@@ -993,6 +994,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
         return numToBeIssued
 
       oneBufferScheduling = kernel["1LDSBuffer"] or kernel["DirectToLdsA"] or kernel["DirectToLdsB"]
+      
+      def hasDependency(lr: DSLoadInstruction, inst: MFMAInstruction | Instruction) -> bool:
+        lrDataReg = lr.dst
+        srcRegs = [inst.a, inst.b,] if isinstance(inst, MFMAInstruction) else inst.srcs
+        return any((lrDataReg & r) for r in srcRegs if isinstance(r, RegisterContainer))
+
+      def hasAnyDependency(lr: DSLoadInstruction, insts: List[Instruction]):
+        return any(hasDependency(lr, inst) for inst in insts)
 
       for i in range(numMfmaPerIter):
         mfmaIndex = iteration * numMfmaPerIter + i
@@ -1003,36 +1012,63 @@ class KernelWriter(metaclass=abc.ABCMeta):
         # scheduled local read
         ####
         numReadsInst = len(localReadItemsThisLoop)
-        readLeft     = numReadsInst
-        latencyLeft  = self.states.miLatencyLeft
-        # with PrefetchLocalRead, localreads can interleave with mfma
-        if self.states.numItersPLR and iteration < isBarrier:
-          # take ds_write into account to schedule ds_read, assume A and B localwrite have same width (TLDS=1)
-          if (mfmaIndex >= self.states.lwStartMfmaIndex) and not globalReadCode.countType(GlobalReadInstruction):
-            for j in range(min(len(writeItems),self.states.numLocalWriteModPerMfma)):
-              if writeItems[j].countType(LocalWriteInstruction):
-                latencyLeft -= (tPA["localWriteInstruction"].issueLatency*2)
-          readLeftLROPT = 0
-          for j in range(len(localReadItemsThisLoop)):
-            latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
-            readLeftLROPT += 1 if latencyLeft >= 0 else 0
-          # at least 1 instruction
-          readLeftLROPT = max(readLeftLROPT,1)
-          # evenly schedule localread with each mfma
-          readLeftLREven = numReadsInst / (numMfmaPerIter - i)
-          # we want no localreads at first mfma
-          if (iteration == 0) and numMfmaPerIter != 1:
-            if i == 0:
-              readLeftLREven = 0
-              readLeftLROPT = 0
-            # rest mfma help to schedule those localReads
+        readLeft = numReadsInst
+        latencyLeft = self.states.miLatencyLeft
+        if iteration < isBarrier:
+          # with PrefetchLocalRead, localreads can interleave with mfma
+          if self.states.numItersPLR:
+            # take ds_write into account to schedule ds_read, assume A and B localwrite have same width (TLDS=1)
+            if (mfmaIndex >= self.states.lwStartMfmaIndex) and not globalReadCode.countType(GlobalReadInstruction):
+              for j in range(min(len(writeItems),self.states.numLocalWriteModPerMfma)):
+                if writeItems[j].countType(LocalWriteInstruction):
+                  latencyLeft -= (tPA["localWriteInstruction"].issueLatency*2)
+            readLeftLROPT = 0
+            for j in range(len(localReadItemsThisLoop)):
+              latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
+              readLeftLROPT += 1 if latencyLeft >= 0 else 0
+            # at least 1 instruction
+            readLeftLROPT = max(readLeftLROPT,1)
+            # evenly schedule localread with each mfma
+            readLeftLREven = numReadsInst / (numMfmaPerIter - i)
+            # we want no localreads at first mfma
+            if (iteration == 0) and numMfmaPerIter != 1:
+              if i == 0:
+                readLeftLREven = 0
+                readLeftLROPT = 0
+              # rest mfma help to schedule those localReads
+              else:
+                readLeftLREven = numReadsInst / (numMfmaPerIter - i)
+            # if there are too many localreads, change strategy to even.
+            readLeft = checkLocalReadFIFOFull(mfmaIndex, self.localReadThisLoopFIFO, localReadItemsThisLoop, readLeftLROPT, readLeftLREven)
+          elif kernel["EnableMatrixInstruction"] and self.do["OptimizeNumItersPLR0"]:
+            # if numItersPLR == 0, try to schedule local reads with instruction level prefetch.
+            mfmas = [mfma for mfma in macIterCode.flatitems() if isinstance(mfma, MFMAInstruction)]
+            if i + 1 != numMfmaPerIter:
+              numLocalReadShouldSchedule = 0
+              # prefetch load for next wave tile along M since we re-use B first.
+              tileM: int = kernel["MIWaveTileA"]
+              instsToCheck = mfmas[i:min(i+tileM+1, numMfmaPerIter)] + packItems
+              localReadItemsThisLoop = sorted(localReadItemsThisLoop, key=lambda o: hasAnyDependency(o, instsToCheck), reverse=True)
+
+              for lr in localReadItemsThisLoop:
+                if hasAnyDependency(lr, instsToCheck):
+                  numLocalReadShouldSchedule += 1
+                else:
+                  break
+              readLeft = numLocalReadShouldSchedule
+              if len(localReadItemsThisLoop) and readLeft == 0:
+                numRemainMfmas = numMfmaPerIter - i - 1
+                avgNumMfmasPerLr = numRemainMfmas // len(localReadItemsThisLoop)
+
+                if avgNumMfmasPerLr > 0 and i % avgNumMfmasPerLr == 0:
+                  readLeft = 1
+              latencyLeft -= readLeft * tPA["localWriteInstruction"].issueLatency * 2
             else:
-              readLeftLREven = numReadsInst / (numMfmaPerIter - i)
-          # if there are too many localreads, change strategy to even.
-          readLeft = checkLocalReadFIFOFull(mfmaIndex, self.localReadThisLoopFIFO, localReadItemsThisLoop, readLeftLROPT, readLeftLREven)
-        if not self.states.numItersPLR and iteration < isBarrier:
-          for j in range(len(localReadItemsThisLoop)):
-            latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
+              readLeft = len(localReadItemsThisLoop)
+              latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
+          else:
+            latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
+
         # force to schedule all remaining localreads before start to schedule localwrite.
         if mfmaIndex == self.states.sync1LdsMfmaIndex and oneBufferScheduling:
           iterCode.addComment0("schedule remaining localreads for one buffer scheduling")
@@ -1194,14 +1230,37 @@ class KernelWriter(metaclass=abc.ABCMeta):
         ####
         # scheduled wait localReads
         ####
-        if kernel["UnrollMajorLDSB"] and not (kernel["ProblemType"]["DataTypeB"].isFloat8() and kernel["ConvertAfterDS"]):
-          if iteration == 0 and i == kernel["MIWaveTileA"]:
-            # add 1 more waitcnt before using ds read data
-            waitCode2 = fastdeepcopy(waitCode)
-            waitCode2.lgkmcnt = localReadsIssuedInThisIter
-            iterCode.add(waitCode2)
-        if i == 0:
-          iterCode.add(waitCode)
+        if self.states.numItersPLR == 0 and kernel["EnableMatrixInstruction"] and self.do["OptimizeNumItersPLR0"]:
+          lgkmcnt = -1
+          mfmas = [mfma for mfma in macIterCode.flatitems() if isinstance(mfma, MFMAInstruction)]
+          ## To support do["MAC"] is False
+          mfma = [mfmas[i],] if len(mfmas) > 0 else []
+          instsToCheck = mfma + packItems
+          numDsInsts = 0
+          lastLgkmCnt = -1
+          for ds in filter(lambda j: isinstance(j, (DSLoadInstruction, DSStoreInstruction, SWaitCnt)), reversed(prevIterCode.flatitems() + iterCode.flatitems())):
+            if isinstance(ds, DSLoadInstruction) and hasAnyDependency(ds, instsToCheck):
+              break
+
+            if isinstance(ds, DSLoadInstruction) and not hasAnyDependency(ds, instsToCheck) or isinstance(ds, DSStoreInstruction):
+              numDsInsts += 1
+            elif isinstance(ds, SWaitCnt):
+              if ds.lgkmcnt >= 0 and lastLgkmCnt == -1:
+                lastLgkmCnt = ds.lgkmcnt + numDsInsts
+
+          if lastLgkmCnt != numDsInsts:
+            if lastLgkmCnt == -1 or (lastLgkmCnt >= 0 and lastLgkmCnt > numDsInsts):
+              waitDsRead = SWaitCnt(lgkmcnt=numDsInsts, comment="Wait for dependent lr")
+              iterCode.add(waitDsRead)
+        else:
+          if kernel["UnrollMajorLDSB"] and not (kernel["ProblemType"]["DataTypeB"].isFloat8() and kernel["ConvertAfterDS"]):
+            if iteration == 0 and i == kernel["MIWaveTileA"]:
+              # add 1 more waitcnt before using ds read data
+              waitCode2 = fastdeepcopy(waitCode)
+              waitCode2.lgkmcnt = localReadsIssuedInThisIter
+              iterCode.add(waitCode2)
+          if i == 0:
+            iterCode.add(waitCode)
 
         ####
         # scheduled pack
@@ -1853,7 +1912,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, u, kernel["InnerUnroll"]))
 
       subIterCode = self.makeSubIterSchedule(kernel, tensorParametersA, tensorParametersB, localReads, \
-                      u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], NLLlast)
+                      u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], module, NLLlast)
       module.add(subIterCode)
       pack[luIdx] = Module()
     return module
@@ -2254,7 +2313,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       ###############################################################################
       if self.states.numItersPLR or (not globalParameters["UnrollLoopEfficiencyEnable"]):
         subIterCode = self.makeSubIterSchedule(kernel, tensorParametersA, tensorParametersB, localReads, \
-                        u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx])
+                        u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], module)
         module.add(subIterCode) # add scheduled "other", local reads, local writes
         pack[luIdx] = Module()
       else:
