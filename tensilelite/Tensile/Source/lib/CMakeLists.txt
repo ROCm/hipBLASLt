@@ -131,7 +131,10 @@ if(TENSILE_USE_LLVM)
         NAMES LLVMObjectYAML
         PATHS ${LLVM_LIBRARY_DIR})
     message("LLVMObjectYAML_LIBRARY: ${LLVMObjectYAML_LIBRARY}")
-    #Use LLVM shared libs if LLVMObjectYAML static lib cannot be found
+    if(BUILD_SHARED_LIBS)
+        find_package(LLVM REQUIRED)
+    endif()
+    # Use LLVM shared libs if LLVMObjectYAML static lib cannot be found
     if(LLVMObjectYAML_LIBRARY)
         target_link_libraries(TensileHost PRIVATE LLVMObjectYAML )
     else()
