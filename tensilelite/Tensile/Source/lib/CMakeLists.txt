@@ -50,14 +50,15 @@ set(tensile_sources  ${tensile_sources}
     )
 
 if(TENSILE_USE_LLVM)
-    #find_package(LLVM 13.0 QUIET CONFIG)
-    if(NOT LLVM_FOUND)
-        #find_package(LLVM 12.0 QUIET CONFIG)
+    if(BUILD_SHARED_LIBS)
+        #find_package(LLVM 13.0 QUIET CONFIG)
         if(NOT LLVM_FOUND)
-            #find_package(LLVM REQUIRED CONFIG)
+            #find_package(LLVM 12.0 QUIET CONFIG)
+            if(NOT LLVM_FOUND)
+                #find_package(LLVM REQUIRED CONFIG)
+            endif()
         endif()
     endif()
-
     set(tensile_sources ${tensile_sources}
         source/llvm/YAML.cpp
         source/llvm/Loading.cpp
@@ -131,9 +132,6 @@ if(TENSILE_USE_LLVM)
         NAMES LLVMObjectYAML
         PATHS ${LLVM_LIBRARY_DIR})
     message("LLVMObjectYAML_LIBRARY: ${LLVMObjectYAML_LIBRARY}")
-    if(BUILD_SHARED_LIBS)
-        find_package(LLVM REQUIRED)
-    endif()
     # Use LLVM shared libs if LLVMObjectYAML static lib cannot be found
     if(LLVMObjectYAML_LIBRARY)
         target_link_libraries(TensileHost PRIVATE LLVMObjectYAML )
