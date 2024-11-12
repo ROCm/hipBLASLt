@@ -3,6 +3,7 @@
 #include "auxiliary.hpp"
 #include "tensile_host.hpp"
 #include <Tensile/DataTypes.hpp>
+#include <shared_mutex>
 
 #include <map>
 #include <string>
@@ -41,6 +42,7 @@ private:
 
 namespace TensileLite
 {
+
     class ProblemOverride
     {
     public:
@@ -107,7 +109,7 @@ namespace TensileLite
 
     std::pair<ProblemOverride, int> problemFromEntries(const std::vector<std::string>& entries);
 
-    std::multimap<ProblemOverride, int> getContractionProblemsFromFile(const std::string& path);
+    void getContractionProblemsFromFile(const std::string& path);
 
     template <>
     struct Comparison<ProblemOverride>
@@ -140,6 +142,58 @@ namespace TensileLite
         }
     };
 
+    class OverrideMap
+    {
+    public:
+        static OverrideMap& getMap()
+        {
+            static OverrideMap gInstance;
+            return gInstance;
+        }
+
+        OverrideMap() {}
+        ~OverrideMap() {}
+        // copy contructor
+        OverrideMap(const OverrideMap&) = delete;
+        // assignment operator
+        OverrideMap& operator=(const OverrideMap&) = delete;
+
+        int size()
+        {
+            std::shared_lock<std::shared_timed_mutex> lock(m_mutex);
+            auto                                      size = m_override.size();
+            return size;
+        }
+
+        auto find(const ProblemOverride& prob_key)
+        {
+            std::shared_lock<std::shared_timed_mutex> lock(m_mutex);
+            auto                                      iter = m_override.equal_range(prob_key);
+            return iter;
+        }
+
+        void add(const std::pair<ProblemOverride, int>& problemSolution)
+        {
+            std::lock_guard<std::shared_timed_mutex> lock(m_mutex);
+            m_override.insert(problemSolution);
+        }
+
+        void erase(std::multimap<ProblemOverride, int>::iterator& sol_idx)
+        {
+            std::lock_guard<std::shared_timed_mutex> lock(m_mutex);
+            m_override.erase(sol_idx);
+        }
+
+        std::mutex& getLock()
+        {
+            return m_guard;
+        }
+
+    private:
+        std::multimap<ProblemOverride, int> m_override;
+        std::mutex                          m_guard;
+        std::shared_timed_mutex             m_mutex;
+    };
 } // namespace Tensile
 
 namespace std

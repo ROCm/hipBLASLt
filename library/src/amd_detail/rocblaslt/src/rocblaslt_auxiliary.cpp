@@ -113,10 +113,11 @@ bool problem_override_from_file(rocblaslt_handle&                 handle,
                                 const std::string&                file_path)
 {
 
-    bool success  = false;
-    auto probSols = TensileLite::getContractionProblemsFromFile(file_path);
+    bool success = false;
+    TensileLite::getContractionProblemsFromFile(file_path);
+    TensileLite::OverrideMap& m_override = TensileLite::OverrideMap::getMap();
 
-    if(probSols.size() == 0)
+    if(m_override.size() == 0)
     {
         log_info(__func__, "No valid entries found in override file.");
     }
@@ -125,7 +126,7 @@ bool problem_override_from_file(rocblaslt_handle&                 handle,
         std::vector<rocblaslt_matmul_heuristic_result> overrideResults;
         std::vector<int>                               solutionIndex(1);
         TensileLite::ProblemOverride prob_key(RocblasltContractionProblem2ProblemOverride(problem));
-        auto                         sol_iter = probSols.equal_range(prob_key);
+        auto                         sol_iter = m_override.find(prob_key);
 
         for(auto sol_idx = std::make_reverse_iterator(sol_iter.second);
             !success && sol_idx != std::make_reverse_iterator(sol_iter.first);
@@ -182,10 +183,11 @@ bool problem_override_from_file_cpp(
     const std::string&                              file_path)
 {
 
-    bool success  = false;
-    auto probSols = TensileLite::getContractionProblemsFromFile(file_path);
+    bool success = false;
+    TensileLite::getContractionProblemsFromFile(file_path);
+    TensileLite::OverrideMap& m_override = TensileLite::OverrideMap::getMap();
 
-    if(probSols.size() == 0)
+    if(m_override.size() == 0)
     {
         log_info(__func__, "No valid entries found in override file.");
     }
@@ -194,7 +196,7 @@ bool problem_override_from_file_cpp(
         std::vector<rocblaslt_matmul_heuristic_result> overrideResults;
         std::vector<int>                               solutionIndex(1);
         TensileLite::ProblemOverride prob_key(TensileDataGemm2ProblemOverride(gemmData));
-        auto                         sol_iter = probSols.equal_range(prob_key);
+        auto                         sol_iter = m_override.find(prob_key);
 
         for(auto sol_idx = std::make_reverse_iterator(sol_iter.second);
             !success && sol_idx != std::make_reverse_iterator(sol_iter.first);

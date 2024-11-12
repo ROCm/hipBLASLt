@@ -1,16 +1,17 @@
 #include "UserDrivenTuningParser.hpp"
-
 #include <fstream>
+#include <shared_mutex>
 #include <sstream>
 #include <utility>
 
 namespace TensileLite
 {
 
-    std::multimap<ProblemOverride, int> getContractionProblemsFromFile(const std::string& path)
+    void getContractionProblemsFromFile(const std::string& path)
     {
-
-        static std::multimap<ProblemOverride, int> m_override;
+        OverrideMap&                m_override = OverrideMap::getMap();
+        std::mutex&                 map_guard  = m_override.getLock();
+        std::lock_guard<std::mutex> lock(map_guard);
 
         if(m_override.size() == 0)
         {
@@ -42,7 +43,7 @@ namespace TensileLite
 
                     if(problemSolution.second > 0)
                     {
-                        auto sol_iter = m_override.equal_range(problemSolution.first);
+                        auto sol_iter = m_override.find(problemSolution.first);
                         for(auto sol_idx = sol_iter.first; sol_idx != sol_iter.second; sol_idx++)
                         {
                             if(sol_idx->second == problemSolution.second)
@@ -52,13 +53,11 @@ namespace TensileLite
                             }
                         }
 
-                        m_override.insert(problemSolution);
+                        m_override.add(problemSolution);
                     }
                 }
             }
         }
-
-        return m_override;
     }
 
     std::pair<ProblemOverride, int> problemFromEntries(const std::vector<std::string>& entries)
