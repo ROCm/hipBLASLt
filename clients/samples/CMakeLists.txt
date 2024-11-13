@@ -141,9 +141,28 @@ foreach( exe ${sample_list_hip_device} )
   target_link_libraries( ${exe} PRIVATE hip::device )
 endforeach( )
 
-foreach( exe ${sample_list_all} )
-  rocm_install(TARGETS ${exe} COMPONENT samples)
+# Install executables to libexec
+foreach( exe ${samples} )
+  install(
+    TARGETS ${exe}
+    RUNTIME 
+    DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/hipblaslt-samples
+    COMPONENT samples
+  )
 endforeach( )
+
+# Install source files to share
+install(
+  DIRECTORY
+    ${CMAKE_CURRENT_SOURCE_DIR}/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/hipblaslt/samples
+  COMPONENT samples
+  FILES_MATCHING 
+  PATTERN "*.cpp"
+  PATTERN "*.h"
+  PATTERN "CMakeLists.txt" EXCLUDE
+  PATTERN "build" EXCLUDE
+)
 
 # Add tests for samples
 foreach( exe ${samples} )
