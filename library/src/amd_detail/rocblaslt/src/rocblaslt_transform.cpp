@@ -29,6 +29,7 @@
 #include "rocblaslt-types.h"
 #include "rocblaslt.h"
 #include <Tensile/hip/HipSolutionAdapter.hpp>
+#include <Tensile/hip/HipUtils.hpp>
 #include <functional>
 #include <hipblaslt/hipblaslt-types.h>
 #include <libgen.h>
@@ -36,6 +37,7 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include <vector>
 
 namespace
 {
@@ -65,23 +67,35 @@ namespace
 
     TensileLite::hip::SolutionAdapter& transformAdapter()
     {
-        static auto& adapter = []() -> TensileLite::hip::SolutionAdapter& {
-            static TensileLite::hip::SolutionAdapter adp;
-            auto                                 coPath   = transformCodeObjectPath();
-            const std::string                    coFolder = dirname(&coPath[0]);
+        using AdapterPtr     = std::unique_ptr<TensileLite::hip::SolutionAdapter>;
+        static auto& adapter = []() -> std::vector<AdapterPtr>& {
+            static std::vector<AdapterPtr> adapters;
+            int                            numDevices{};
+            HIP_CHECK_EXC(hipGetDeviceCount(&numDevices));
+            for(int i = 0; i < numDevices; ++i)
+            {
+                adapters.emplace_back(new TensileLite::hip::SolutionAdapter);
+            }
+            auto              coPath   = transformCodeObjectPath();
+            const std::string coFolder = dirname(&coPath[0]);
             try
             {
-                (void)adp.initializeLazyLoading("", coFolder);
+                for(auto& adp : adapters)
+                {
+                    (void)adp->initializeLazyLoading("", coFolder);
+                }
             }
             catch(const std::runtime_error& e)
             {
                 rocblaslt_log_error(
                     "transformCodeObject", "TransformCodeObjectPath", coFolder.c_str());
             }
-            return adp;
+            return adapters;
         }();
 
-        return adapter;
+        int        deviceId{};
+        HIP_CHECK_EXC(hipGetDevice(&deviceId));
+        return *adapter.at(deviceId);
     }
 
     rocblaslt_matrix_layout dummyMatrixLayout()
@@ -159,7 +173,7 @@ namespace
                 betaPtr = dummyScalarPtr<ScaleType>();
             }
 
-            const ScaleType *nullScalePtr = nullptr;
+            const ScaleType* nullScalePtr = nullptr;
 
             kArgs.appendAligned("c", c);
             kArgs.appendAligned("a", a);
