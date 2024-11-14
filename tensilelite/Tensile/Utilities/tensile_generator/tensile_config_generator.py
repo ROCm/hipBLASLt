@@ -61,12 +61,16 @@ parser.add_argument(
     help="If enabled, only tune the matrix instruction with min tile sizes, else, tune full matrix instructions")
 
 parser.add_argument(
-    "--groups", type=bool, default=True,
+    "--groups", type=bool, default=False,
     help="If enabled, will replace MatrixInstruction with GroupedMatrixInstruction")
 
 parser.add_argument(
     "--gridbase_config", type=str, default=None,
     help="Range config path")
+
+parser.add_argument(
+    "--full_mfma", type=bool, default=False,
+    help="If enabled, will search for all mfma instructions")
 
 args = parser.parse_args()
 
@@ -81,6 +85,8 @@ ArchitectureName = res.stdout.decode("utf-8").strip()
 res = subprocess.run("rocminfo | grep Compute", stdout=subprocess.PIPE, shell=True, env={"ROCR_VISIBLE_DEVICES":"0"})
 match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
 NUM_STAGES = 8
+DIV_MI = 3 # 33.3%
+MIN_MI = 5 # min 5 solutions
 CU = 0
 if match:
     CU = int(match.group('COMPUTE_UNIT').strip())
@@ -103,10 +109,18 @@ elif ArchitectureName == 'gfx90a':
     DeviceNames = ["Device 0050", "Device 0051", "Device 0052", "Device 0054", "Device 0062", "Device 7400", "Device 740c"]
     ScheduleName = "aldebaran"
 
-fp16_instructions = [[16,16,16,1]]
-bf16_instructions = [[16,16,8,1]]
-tf32_instructions = [[16,16,8,1]]
-fp32_instructions = [[16,16,4,1]]
+if args.full_mfma:
+    fp16_instructions = [[32,32,4,2], [32,32,8,1], [16,16,4,4], [16,16,16,1], [4,4,4,16]]
+    bf16_instructions = [[32,32,4,2], [32,32,8,1], [16,16,4,4], [16,16,16,1], [4,4,4,16]]
+    tf32_instructions = [[32,32,2,2], [32,32,4,1], [16,16,2,4], [16,16,8,1], [4,4,2,16]]
+    fp32_instructions = [[32,32,1,2], [32,32,2,1], [16,16,1,4], [16,16,4,1], [4,4,1,16]]
+    fp8_instructions = [[32,32,16,1], [16,16,32,1]]
+else:
+    fp16_instructions = [[16,16,16,1]]
+    bf16_instructions = [[16,16,16,1],[32,32,8,1]]
+    tf32_instructions = [[16,16,8,1]]
+    fp32_instructions = [[16,16,4,1]]
+    fp8_instructions = [[16,16,32,1]]
 
 
 HIPBLASLT_BENCH_RE = (
@@ -136,6 +150,35 @@ HIPBLASLT_BENCH_RE = (
     r"--compute_type (?P<COMPUTE_TYPE>[\w ]+)")
 
 
+HIPBLASLT_BENCH_RE2 = (
+    r"(?P<CMD>\w+) --api_method c "
+    r"-m (?P<M>[\d ]+)"
+    r"-n (?P<N>[\d ]+)"
+    r"-k (?P<K>[\d ]+)"
+    r"--lda (?P<LDA>[\d ]+)"
+    r"--ldb (?P<LDB>[\d ]+)"
+    r"--ldc (?P<LDC>[\d ]+)"
+    r"--ldd (?P<LDD>[\d ]+)"
+    r"--stride_a (?P<STRIDE_A>[\d ]+)"
+    r"--stride_b (?P<STRIDE_B>[\d ]+)"
+    r"--stride_c (?P<STRIDE_C>[\d ]+)"
+    r"--stride_d (?P<STRIDE_D>[\d ]+)"
+    r"--alpha (?P<ALPHA>[\d\. ]+)"
+    r"--beta (?P<BETA>[\d\. ]+)"
+    r"--transA (?P<TRANS_A>[\w ]+)"
+    r"--transB (?P<TRANS_B>[\w ]+)"
+    r"--batch_count (?P<BATCH_COUNT>[\d ]+)"
+    r"--scaleA (?P<SCALE_A>[\w ]+)"
+    r"--scaleB (?P<SCALE_B>[\w ]+)"
+    r"--bias_vector --bias_source (?P<BIAS_SOURCE>[\w ]+)"
+    r"--a_type (?P<A_TYPE>[\w ]+)"
+    r"--b_type (?P<B_TYPE>[\w ]+)"
+    r"--c_type (?P<C_TYPE>[\w ]+)"
+    r"--d_type (?P<D_TYPE>[\w ]+)"
+    r"--scale_type (?P<SCALE_TYPE>[\w ]+)"
+    r"--bias_type (?P<BIAS_TYPE>[\w ]+)"
+    r"--compute_type (?P<COMPUTE_TYPE>[\w ]+)")
+
 # Function to extract problem sizes from a line
 def extract_problem_size(match):
     return [int(match.group('M').strip()), int(match.group('N').strip()), int(match.group('BATCH_COUNT').strip()), int(match.group('K').strip())]
@@ -149,6 +192,8 @@ def instruction_map(dtype_dict):
         return fp16_instructions
     elif dtype_dict["DataType"] == 'B':
         return bf16_instructions
+    elif dtype_dict["DataType"] == 'F8':
+        return fp8_instructions
     else:
         return None
 
@@ -161,6 +206,8 @@ def datatype_map(dtype):
         return "XS"
     elif dtype == "bf16_r":
         return "B"
+    elif dtype == "f8_r":
+        return "F8"
     else:
         return None
 
@@ -178,7 +225,7 @@ def extract_dtype(match):
     ComputeDataType = datatype_map(match.group('COMPUTE_TYPE').strip())
     TransposeA = trans_map(match.group('TRANS_A').strip())
     TransposeB = trans_map(match.group('TRANS_B').strip())
-    if DataType in ["H", "B"]:
+    if DataType in ["H", "B", "F8"]:
         HighPrecisionAccumulate = True
     else:
         HighPrecisionAccumulate = False
@@ -343,9 +390,14 @@ if args.hipblaslt_log and args.gridbase_config is None:
     # Read problem sizes from the input file
     with open(args.hipblaslt_log, 'r') as f:
         for line in f:
-            match = re.search(
-                HIPBLASLT_BENCH_RE, line
-            )
+            if 'f8_r' in line:
+                match = re.search(
+                    HIPBLASLT_BENCH_RE2, line
+                )
+            else:
+                match = re.search(
+                    HIPBLASLT_BENCH_RE, line
+                )
             if match:
                 if line in unique_gemms:
                     unique_gemms[line] += 1
@@ -369,10 +421,16 @@ if args.hipblaslt_log and args.gridbase_config is None:
         n_sum = 0
         batch_sum = 0
         k_sum = 0
+
         for k, v in unique_gemms_subgroup:
-            match = re.search(
-                HIPBLASLT_BENCH_RE, k
-            )
+            if 'f8_r' in k:
+                match = re.search(
+                    HIPBLASLT_BENCH_RE2, k
+                )
+            else:
+                match = re.search(
+                    HIPBLASLT_BENCH_RE, k
+                )
 
             if match:
                 size = extract_problem_size(match)
@@ -382,51 +440,49 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 dtype_str = json.dumps(dtype)
                 if mfma_instructions is None:
                     continue
+                
                 mfma_instruction_found = False
-                mfma_instruction = mfma_instructions[0]
-                for _ in range(NUM_STAGES):
-                    matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
-                    if args.groups:
-                        mi_groups0, mi_groups1, matmul_instruction_gen = get_groups(matmul_instruction_gen)
-                    else:
-                        mi_groups0 = []
-                        mi_groups1 = []
+                for mfma_instruction in mfma_instructions:
+                    for _ in range(NUM_STAGES):
+                        matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
+                        if args.groups:
+                            mi_groups0, mi_groups1, matmul_instruction_gen = get_groups(matmul_instruction_gen)
+                        else:
+                            mi_groups0 = []
+                            mi_groups1 = []
 
-                    DIV_MI = 3 # 33.3%
-                    MIN_MI = 5 # min 5 solutions
-                        
-                    total_inst = min(len(matmul_instruction_gen) // DIV_MI, MIN_MI)  # At least 5 insts and max of 33.3% of insts.
-                    for index, matmul_instruction in enumerate(matmul_instruction_gen):
-                        if matmul_instruction is not None:
-                            if dtype_str not in matmul_instructions:
-                                matmul_instructions[dtype_str] = dict()
-                            matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
+                        total_inst = min(len(matmul_instruction_gen) // DIV_MI, MIN_MI)  # At least 5 insts and max of 33.3% of insts.
+                        for index, matmul_instruction in enumerate(matmul_instruction_gen):
+                            if matmul_instruction is not None:
+                                if dtype_str not in matmul_instructions:
+                                    matmul_instructions[dtype_str] = dict()
+                                matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
+                                if args.fast and (index > total_inst):
+                                    break
+                        total_inst = min(len(mi_groups0) // DIV_MI, MIN_MI)
+                        for index, mi_0 in enumerate(mi_groups0):
+                            if dtype_str not in groups:
+                                groups[dtype_str] = [{},{}]
+                                groups[dtype_str][0]["MatrixInstruction"] = {}
+                                groups[dtype_str][1]["MatrixInstruction"] = {}
+                            groups[dtype_str][0]["MatrixInstruction"][str(mi_0)] = mi_0
                             if args.fast and (index > total_inst):
                                 break
-                    total_inst = min(len(mi_groups0) // DIV_MI, MIN_MI)
-                    for index, mi_0 in enumerate(mi_groups0):
-                        if dtype_str not in groups:
-                            groups[dtype_str] = [{},{}]
-                            groups[dtype_str][0]["MatrixInstruction"] = {}
-                            groups[dtype_str][1]["MatrixInstruction"] = {}
-                        groups[dtype_str][0]["MatrixInstruction"][str(mi_0)] = mi_0
-                        if args.fast and (index > total_inst):
+                        total_inst = min(len(mi_groups1) // DIV_MI, MIN_MI)
+                        for index, mi_1 in enumerate(mi_groups1):
+                            if dtype_str not in groups:
+                                groups[dtype_str] = [{},{}]
+                                groups[dtype_str][0]["MatrixInstruction"] = {}
+                                groups[dtype_str][1]["MatrixInstruction"] = {}
+                            groups[dtype_str][1]["MatrixInstruction"][str(mi_1)] = mi_1
+                            if args.fast and (index > total_inst):
+                                break
+                        if len(matmul_instruction_gen) > 0 or len(mi_groups0) > 0 or len(mi_groups1) > 0:
+                            mfma_instruction_found = True
                             break
-                    total_inst = min(len(mi_groups1) // DIV_MI, MIN_MI)
-                    for index, mi_1 in enumerate(mi_groups1):
-                        if dtype_str not in groups:
-                            groups[dtype_str] = [{},{}]
-                            groups[dtype_str][0]["MatrixInstruction"] = {}
-                            groups[dtype_str][1]["MatrixInstruction"] = {}
-                        groups[dtype_str][1]["MatrixInstruction"][str(mi_1)] = mi_1
-                        if args.fast and (index > total_inst):
-                            break
-                    if len(matmul_instruction_gen) > 0 or len(mi_groups0) > 0 or len(mi_groups1) > 0:
-                        mfma_instruction_found = True
-                        break
-                    else:
-                        max_dim = int(np.argmax(size))
-                        size[max_dim] = size[max_dim] // 2
+                        else:
+                            max_dim = int(np.argmax(size))
+                            size[max_dim] = size[max_dim] // 2
 
                 if not mfma_instruction_found:
                     print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
@@ -494,23 +550,23 @@ elif args.gridbase_config and args.hipblaslt_log is None:
             if mfma_instructions is None:
                 continue
             mfma_instruction_found = False
-            mfma_instruction = mfma_instructions[0]
-            for _ in range(NUM_STAGES):
-                matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
-                total_inst = min(len(matmul_instruction_gen) // 3, 5)  # At least 5 insts and max of 33.3% of insts.
-                for index, matmul_instruction in enumerate(matmul_instruction_gen):
-                    if matmul_instruction is not None:
-                        if dtype_str not in matmul_instructions:
-                            matmul_instructions[dtype_str] = dict()
-                        matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
-                        if args.fast and (index > total_inst):
-                            break
-                if len(matmul_instruction_gen) > 0:
-                    mfma_instruction_found = True
-                    break
-                else:
-                    max_dim = int(np.argmax(size))
-                    size[max_dim] = size[max_dim] // 2
+            for mfma_instruction in mfma_instructions:
+                for _ in range(NUM_STAGES):
+                    matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
+                    total_inst = min(len(matmul_instruction_gen) // 3, 5)  # At least 5 insts and max of 33.3% of insts.
+                    for index, matmul_instruction in enumerate(matmul_instruction_gen):
+                        if matmul_instruction is not None:
+                            if dtype_str not in matmul_instructions:
+                                matmul_instructions[dtype_str] = dict()
+                            matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
+                            if args.fast and (index > total_inst):
+                                break
+                    if len(matmul_instruction_gen) > 0:
+                        mfma_instruction_found = True
+                        break
+                    else:
+                        max_dim = int(np.argmax(size))
+                        size[max_dim] = size[max_dim] // 2
             if not mfma_instruction_found:
                 print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
             else:
