@@ -675,11 +675,6 @@ pushd .
   # #################################################
   # configure & build
   # #################################################
-  if [ -v ${Python_ROOT+x} ]; then
-    echo "Python_ROOT is unset or empty. Setting to /usr."
-    export Python_ROOT=/usr
-  fi  
-
   cmake_common_options="-DAMDGPU_TARGETS=${gpu_architecture}"
   cmake_client_options=""
 

@@ -1,4 +1,10 @@
 
+if(NOT $ENV{Python_ROOT} AND NOT Python_ROOT)
+    message("Python_ROOT is unset. Setting Python_ROOT to /usr.")
+    message("Configure Python_ROOT variable if a different installation is prferred.")
+    set(Python_ROOT /usr)
+endif()
+
 find_package(Python REQUIRED COMPONENTS Interpreter)
 
 set(VIRTUALENV_PYTHON_EXE ${Python_EXECUTABLE})
