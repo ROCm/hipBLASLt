@@ -995,7 +995,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
       oneBufferScheduling = kernel["1LDSBuffer"] or kernel["DirectToLdsA"] or kernel["DirectToLdsB"]
       
-      def hasDependency(lr: DSLoadInstruction, inst: MFMAInstruction | SMFMAInstruction | Instruction) -> bool:
+      def hasDependency(lr: DSLoadInstruction, inst: Instruction) -> bool:
         lrDataReg = lr.dst
 
         if isinstance(inst, MFMAInstruction):
