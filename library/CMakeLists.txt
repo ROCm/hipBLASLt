@@ -103,7 +103,6 @@ if( BUILD_WITH_TENSILE )
     list(TRANSFORM TensileHost_SOURCES PREPEND "${TensileHost_SOURCE_DIR}${seperator}")
     # add dependent sources from TensileHost for static build
     target_sources(hipblaslt PRIVATE ${TensileHost_SOURCES})
-    endif()
   endif()
 
   target_compile_definitions(hipblaslt PRIVATE ${TENSILE_DEFINES} )
