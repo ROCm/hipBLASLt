@@ -50,26 +50,30 @@ class MAC_F32C_Plain(MAC):
                     cStr = "v[vgprValuC+({a}+{b}*{ThreadTile0})*2]".format_map(vars)
                     aStr = "v[vgprValuA_X{m}_I{iui}+{a}*2]".format_map(vars)
                     bStr = "v[vgprValuB_X{m}_I{iui}+{b}*2]".format_map(vars)
-                    module.addInst("_v_mac_f32", cStr, aStr, bStr, "")
+                    # module.addInst("_v_mac_f32", cStr, aStr, bStr, "")
+                    raise NotImplmentedError
 
                     cStr = "v[vgprValuC+({a}+{b}*{ThreadTile0})*2]".format_map(vars)
                     aStr = "v[vgprValuA_X{m}_I{iui}+{a}*2+1]".format_map(vars)
                     bStr = "v[vgprValuB_X{m}_I{iui}+{b}*2+1]".format_map(vars)
                     sign = "-" if (not kernel["ProblemType"]["ComplexConjugateA"] and not kernel["ProblemType"]["ComplexConjugateB"]) or \
                             (kernel["ProblemType"]["ComplexConjugateA"] and kernel["ProblemType"]["ComplexConjugateB"]) else ""
-                    module.addInst("_v_mac_f32", cStr, sign + aStr, bStr, "")
+                    # module.addInst("_v_mac_f32", cStr, sign + aStr, bStr, "")
+                    raise NotImplmentedError
 
                     cStr = "v[vgprValuC+({a}+{b}*{ThreadTile0})*2+1]".format_map(vars)
                     aStr = "v[vgprValuA_X{m}_I{iui}+{a}*2]".format_map(vars)
                     bStr = "v[vgprValuB_X{m}_I{iui}+{b}*2+1]".format_map(vars)
                     sign = "-" if kernel["ProblemType"]["ComplexConjugateB"] else ""
-                    module.addInst("_v_mac_f32", cStr, aStr, sign + bStr, "")
+                    # module.addInst("_v_mac_f32", cStr, aStr, sign + bStr, "")
+                    raise NotImplmentedError
 
                     cStr = "v[vgprValuC+({a}+{b}*{ThreadTile0})*2+1]".format_map(vars)
                     aStr = "v[vgprValuA_X{m}_I{iui}+{a}*2+1]".format_map(vars)
                     bStr = "v[vgprValuB_X{m}_I{iui}+{b}*2]".format_map(vars)
                     sign = "-" if kernel["ProblemType"]["ComplexConjugateA"] else ""
-                    module.addInst("_v_mac_f32", cStr, sign + aStr, bStr, "")
+                    # module.addInst("_v_mac_f32", cStr, sign + aStr, bStr, "")
+                    raise NotImplmentedError
 
                     module.add(priority(writer, 1, "Raise priority while processing macs"))
         module.add(priority(writer, 0, "Reset priority after macs"))

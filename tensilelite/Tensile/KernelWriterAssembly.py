@@ -7274,10 +7274,11 @@ class KernelWriterAssembly(KernelWriter):
       else:
         imod.add(SCMovB32(sgpr("SrdMetadata+2"), sgpr("ShadowLimitMetadata+0"), "Move shadow to real if we are within 2^32"))
     else:
-      imod.addInst(SSubU32(sgpr("SrdMetadata+2"), \
-                           sgpr("SrdMetadata+2"), \
-                           incSparseLower, \
-                           "limit -= inc)" ))
+      # imod.addInst(SSubU32(sgpr("SrdMetadata+2"), \
+      #                      sgpr("SrdMetadata+2"), \
+      #                      incSparseLower, \
+      #                      "limit -= inc)" ))
+      raise NotImplementedError
     return imod
 
   ##############################################################################

@@ -51,26 +51,30 @@ class FMA_F64C_Plain(MAC):
                     cStr = "v[vgprValuC+({a}+{b}*{ThreadTile0})*4+0:(vgprValuC+{a}+{b}*{ThreadTile0})*4+1]".format_map(vars)
                     aStr = "v[vgprValuA_X{m}_I{iui}+{a}*4+0:vgprValuA_X{m}_I{iui}+{a}*4+1]".format_map(vars)
                     bStr = "v[vgprValuB_X{m}_I{iui}+{b}*4+0:vgprValuB_X{m}_I{iui}+{b}*4+1]".format_map(vars)
-                    module.addInst("v_fma_f64", cStr, aStr, bStr, cStr, "")
+                    # module.addInst("v_fma_f64", cStr, aStr, bStr, cStr, "")
+                    raise NotImplementedError
                     # c.real -= a.imag * b.imag
                     cStr = "v[vgprValuC+({a}+{b}*{ThreadTile0})*4+0:(vgprValuC+{a}+{b}*{ThreadTile0})*4+1]".format_map(vars)
                     aStr = "v[vgprValuA_X{m}_I{iui}+{a}*4+2:vgprValuA_X{m}_I{iui}+{a}*4+3]".format_map(vars)
                     bStr = "v[vgprValuB_X{m}_I{iui}+{b}*4+2:vgprValuB_X{m}_I{iui}+{b}*4+3]".format_map(vars)
                     sign = "-" if (not kernel["ProblemType"]["ComplexConjugateA"] and not kernel["ProblemType"]["ComplexConjugateB"]) or \
                             (kernel["ProblemType"]["ComplexConjugateA"] and kernel["ProblemType"]["ComplexConjugateB"]) else ""
-                    module.addInst("v_fma_f64", cStr, aStr, sign + bStr, cStr, "")
+                    # module.addInst("v_fma_f64", cStr, aStr, sign + bStr, cStr, "")
+                    raise NotImplementedError
                     # c.imag += a.real * b.imag
                     cStr = "v[vgprValuC+({a}+{b}*{ThreadTile0})*4+2:(vgprValuC+{a}+{b}*{ThreadTile0})*4+3]".format_map(vars)
                     aStr = "v[vgprValuA_X{m}_I{iui}+{a}*4+0:vgprValuA_X{m}_I{iui}+{a}*4+1]".format_map(vars)
                     bStr = "v[vgprValuB_X{m}_I{iui}+{b}*4+2:vgprValuB_X{m}_I{iui}+{b}*4+3]".format_map(vars)
                     sign = "-" if kernel["ProblemType"]["ComplexConjugateB"] else ""
-                    module.addInst("v_fma_f64", cStr, aStr, sign + bStr, cStr, "")
+                    # module.addInst("v_fma_f64", cStr, aStr, sign + bStr, cStr, "")
+                    raise NotImplementedError
                     # c.imag += a.imag * b.real
                     cStr = "v[vgprValuC+({a}+{b}*{ThreadTile0})*4+2:(vgprValuC+{a}+{b}*{ThreadTile0})*4+3]".format_map(vars)
                     aStr = "v[vgprValuA_X{m}_I{iui}+{a}*4+2:vgprValuA_X{m}_I{iui}+{a}*4+3]".format_map(vars)
                     bStr = "v[vgprValuB_X{m}_I{iui}+{b}*4+0:vgprValuB_X{m}_I{iui}+{b}*4+1]".format_map(vars)
                     sign = "-" if kernel["ProblemType"]["ComplexConjugateA"] else ""
-                    module.addInst("v_fma_f64", cStr, sign + aStr, bStr, cStr, "")
+                    # module.addInst("v_fma_f64", cStr, sign + aStr, bStr, cStr, "")
+                    raise NotImplementedError
 
                     module.add(priority(writer, 1, "Raise priority while processing macs"))
 

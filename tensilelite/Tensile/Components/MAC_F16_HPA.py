@@ -134,7 +134,8 @@ class FMA_F16_HPA_MAD_MIX(MAC):
                     cStr = "v[vgprValuC + {cIdxExpr}]".format_map(vars) # *2 b/c of fp32
                     aStr = "v[{aBase}+{blockA}]".format_map(vars)
                     bStr = "v[{bBase}+{blockB}]".format_map(vars)
-                    module.addInst(instruction, cStr, aStr, bStr, cStr, "op_sel:[0,0,0]", "op_sel_hi:[1,1,0]", "ValuC[%u] iui=%u" % (cidx, vars["iui"]))
+                    # module.addInst(instruction, cStr, aStr, bStr, cStr, "op_sel:[0,0,0]", "op_sel_hi:[1,1,0]", "ValuC[%u] iui=%u" % (cidx, vars["iui"]))
+                    raise NotImplementedError
 
                     module.add(priority(writer, 1, "Raise priority while processing macs"))
 
@@ -142,18 +143,21 @@ class FMA_F16_HPA_MAD_MIX(MAC):
                     cidx  = eval(vars["cIdxExpr"])
                     cStr  = "v[vgprValuC + {cIdxExpr}]".format_map(vars) # *2 b/c of fp32
                     opSel = "op_sel:[1,0,0]" if writer.tPA["tileIdx"] == 0 else "op_sel:[0,1,0]"
-                    module.addInst(instruction, cStr, aStr, bStr, cStr, opSel, "op_sel_hi:[1,1,0]", "ValuC[%u]" % cidx)
+                    # module.addInst(instruction, cStr, aStr, bStr, cStr, opSel, "op_sel_hi:[1,1,0]", "ValuC[%u]" % cidx)
+                    raise NotImplementedError
 
                     vars["cIdxExpr"] = "{block0}*2 + {block1}*{ThreadTile0}*2 + {Half_ThreadTile0}*2 + 0".format_map(vars)
                     cidx  = eval(vars["cIdxExpr"])
                     cStr  = "v[vgprValuC+{cIdxExpr}]".format_map(vars)
                     opSel = "op_sel:[0,1,0]" if writer.tPA["tileIdx"] == 0 else "op_sel:[1,0,0]"
-                    module.addInst(instruction, cStr, aStr, bStr, cStr, opSel, "op_sel_hi:[1,1,0]", "ValuC[%u]" % cidx)
+                    # module.addInst(instruction, cStr, aStr, bStr, cStr, opSel, "op_sel_hi:[1,1,0]", "ValuC[%u]" % cidx)
+                    raise NotImplementedError
 
                     vars["cIdxExpr"] = "{block0}*2+{block1}*{ThreadTile0}*2+{Half_ThreadTile0}*2+1".format_map(vars)
                     cidx = eval(vars["cIdxExpr"])
                     cStr = "v[vgprValuC+{cIdxExpr}]".format_map(vars)
-                    module.addInst(instruction, cStr, aStr, bStr, cStr, "op_sel:[1,1,0]", "op_sel_hi:[1,1,0]", "ValuC[%u]" % cidx)
+                    # module.addInst(instruction, cStr, aStr, bStr, cStr, "op_sel:[1,1,0]", "op_sel_hi:[1,1,0]", "ValuC[%u]" % cidx)
+                    raise NotImplementedError
 
         module.add(priority(writer, 0, "Reset priority after macs"))
 

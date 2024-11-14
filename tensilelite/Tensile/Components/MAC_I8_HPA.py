@@ -51,9 +51,11 @@ class FMA_I8_HPA(MAC):
                 idx  = a %  elemPerReg
                 sStr = f'v[vgprValuA_X{m}_I{iui}+{src}]'
                 tStr = f'v[vgprValuA_X{m}_I{iui}+{a}]'
-                module.addInst("v_lshlrev_b32", tStr, {(spacePerReg-idx-1)*8}, sStr, "")
+                # module.addInst("v_lshlrev_b32", tStr, {(spacePerReg-idx-1)*8}, sStr, "")
+                raise NotImplementedError
                 module.add(priority(writer, 1, "Raise priority while processing macs"))
-                module.addInst("v_ashrrev_i32", tStr, {(spacePerReg    -1)*8}, tStr, "")
+                # module.addInst("v_ashrrev_i32", tStr, {(spacePerReg    -1)*8}, tStr, "")
+
 
         for b in range(kernel["ThreadTile1"]-1, -1, -1):
             for iui in range(0, innerUnroll):
@@ -61,9 +63,11 @@ class FMA_I8_HPA(MAC):
                 idx  = b %  elemPerReg
                 sStr = f'v[vgprValuB_X{m}_I{iui}+{src}]'
                 tStr = f'v[vgprValuB_X{m}_I{iui}+{b}]'
-                module.addInst("v_lshlrev_b32", tStr, {(spacePerReg-idx-1)*8}, sStr, "")
+                # module.addInst("v_lshlrev_b32", tStr, {(spacePerReg-idx-1)*8}, sStr, "")
+                raise NotImplementedError
                 module.add(priority(writer, 1, "Raise priority while processing macs"))
-                module.addInst("v_ashrrev_i32", tStr, {(spacePerReg    -1)*8}, tStr, "")
+                # module.addInst("v_ashrrev_i32", tStr, {(spacePerReg    -1)*8}, tStr, "")
+                raise NotImplementedError
 
         ThreadTile0 = kernel["ThreadTile0"]
         for b in range(0, kernel["ThreadTile1"]):
@@ -72,7 +76,8 @@ class FMA_I8_HPA(MAC):
                     cStr = f'v[vgprValuC + {a} + {b}*{ThreadTile0}]'
                     aStr = f'v[vgprValuA_X{m}_I{iui} + {a}]'
                     bStr = f'v[vgprValuB_X{m}_I{iui} + {b}]'
-                    module.addInst("v_mad_i32_i24", cStr, aStr, bStr, cStr, "")
+                    # module.addInst("v_mad_i32_i24", cStr, aStr, bStr, cStr, "")
+                    raise NotImplementedError
                     module.add(priority(writer, 1, "Raise priority while processing macs"))
 
         module.add(priority(writer, 0, "Reset priority after macs"))

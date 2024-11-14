@@ -69,13 +69,13 @@ class MAC_F16_Plain(MAC):
                             cStr = "v[vgprValuC+{blockA}+{blockB}*{ThreadTile0}+0]".format_map(vars)
                             aStr = "v[vgprValuA_X{m}_I{iui}+{blockA}]".format_map(vars)
                             bStr = "v[vgprValuB_X{m}_I{iui}+{blockB}]".format_map(vars)
-                            module.addInst("v_mac_f16", cStr, aStr, bStr, "")
+                            # module.addInst("v_mac_f16", cStr, aStr, bStr, "")
+                            raise NotImplementedError
                             module.add(priority(writer, 1, "Raise priority while processing macs"))
 
         module.add(priority(writer, 0, "Reset priority after macs"))
         return module
-
-
+        
 class FMA_F16_NonPacked(MAC):
     asmCaps = {"v_fma_f16": True,
                "v_pk_fma_f16": False}
@@ -119,11 +119,14 @@ class FMA_F16_NonPacked(MAC):
                     aStr = "v[vgprValuA_X{m}_I{iui} + {blockA}]".format_map(vars)
                     bStr = "v[vgprValuB_X{m}_I{iui} + {blockB}]".format_map(vars)
 
-                    module.addInst("v_fma_f16", cStr0, aStr, bStr, cStr0, "op_sel:[0,0,0,0]", cIdxExpr0)
+                    # module.addInst("v_fma_f16", cStr0, aStr, bStr, cStr0, "op_sel:[0,0,0,0]", cIdxExpr0)
+                    raise NotImplementedError
+
                     module.add(priority(writer, 1, "Raise priority while processing macs"))
-                    module.addInst("v_fma_f16", cStr1, aStr, bStr, cStr1, "op_sel:[0,1,0,0]", cIdxExpr1)
-                    module.addInst("v_fma_f16", cStr0, aStr, bStr, cStr0, "op_sel:[1,0,1,1]", cIdxExpr0)
-                    module.addInst("v_fma_f16", cStr1, aStr, bStr, cStr1, "op_sel:[1,1,1,1]", cIdxExpr1)
+                    # module.addInst("v_fma_f16", cStr1, aStr, bStr, cStr1, "op_sel:[0,1,0,0]", cIdxExpr1)
+                    # module.addInst("v_fma_f16", cStr0, aStr, bStr, cStr0, "op_sel:[1,0,1,1]", cIdxExpr0)
+                    # module.addInst("v_fma_f16", cStr1, aStr, bStr, cStr1, "op_sel:[1,1,1,1]", cIdxExpr1)
+                    raise NotImplementedError
 
         module.add(priority(writer, 0, "Reset priority after macs"))
         return module
@@ -168,7 +171,8 @@ class FMA_F16_Packed(MAC):
                     aStr = "v[vgprValuA_X{m}_I{iui} + {blockA}]".format_map(vars)
                     bStr = "v[vgprValuB_X{m}_I{iui} + {blockB}]".format_map(vars)
 
-                    module.addInst("v_pk_fma_f16", cStr, aStr, bStr, cStr, "op_sel:[0,0,0]", "op_sel_hi:[1,0,1]", cIdxExpr)
+                    # module.addInst("v_pk_fma_f16", cStr, aStr, bStr, cStr, "op_sel:[0,0,0]", "op_sel_hi:[1,0,1]", cIdxExpr)
+                    raise NotImplementedError
                     module.add(priority(writer, 1, "Raise priority while processing macs"))
 
                     cIdxExpr = "{blockA} + {blockB}*{ThreadTile0} + {Half_ThreadTile0}".format_map(vars)
@@ -176,7 +180,8 @@ class FMA_F16_Packed(MAC):
 
                     cStr = "v[vgprValuC + {cIdxExpr}]".format_map(vars)
 
-                    module.addInst("v_pk_fma_f16", cStr, aStr, bStr, cStr, "op_sel:[0,1,0]", "op_sel_hi:[1,1,1]", cIdxExpr)
+                    # module.addInst("v_pk_fma_f16", cStr, aStr, bStr, cStr, "op_sel:[0,1,0]", "op_sel_hi:[1,1,1]", cIdxExpr)
+                    raise NotImplementedError
 
         module.add(priority(writer, 0, "Reset priority after macs"))
         return module

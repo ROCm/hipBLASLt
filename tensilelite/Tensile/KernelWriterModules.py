@@ -340,6 +340,7 @@ def moveMIoutToArch(kernel, startVgprAlphaTmp):
       itemList[destIdx] = VMovB32(dst=vgpr(Holder(name="ValuC")),
                                                      src=vgpr("ValuC+%u"%srcIdx), comment="Rearrange MI out reg")
     elif kernel["ProblemType"]["ComputeDataType"].isSingleComplex():
+        raise NotImplementedError
         accImOffset = accVgprImagNumOffset(kernel, lrvwB)
         cimod = Module()
         cimod.add(VMovB32(dst=vgpr(Holder(name="ValuC")), src=vgpr("ValuC+%u"%srcIdx), comment="Rearrange MI out reg"))
