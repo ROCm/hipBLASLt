@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,8 +31,4 @@ if(NOT BUILD_CUDA)
                        src/amd_detail/hipblaslt-ext-op.cpp
                          ${hipblaslt_source_common}
                          ${rocblaslt_source})
-else()
-  # hipBLASLt CUDA source
-  # TODO
-  #set(hipblaslt_source src/nvcc_detail/hipblaslt.cpp)
 endif()
