@@ -29,14 +29,6 @@
  *  C++ style flexible API to let user set attributes for solution selection.
  */
 
-//! HIP = Heterogeneous-compute Interface for Portability
-//!
-//! Define a extremely thin runtime layer that allows source code to be compiled
-//! unmodified through either AMD HCC or NVCC. Key features tend to be in the
-//! spirit and terminology of CUDA, but with a portable path to other
-//! accelerators as well.
-//
-
 #pragma once
 #include "hipblaslt/hipblaslt.h"
 
@@ -402,7 +394,7 @@ namespace hipblaslt_ext
         int8_t   beta[16]; //!< The beta value.
         // Epilogue inputs
         void* scaleA; //!< The scaleA input pointer.
-        void* scaleB; //!< The scaleA input pointer.
+        void* scaleB; //!< The scaleB input pointer.
         void* scaleC; //!< The scaleC input pointer.
         void* scaleD; //!< The scaleD input pointer.
         void* scaleAlphaVec; //!< The scaleAlpha vector input pointer.

@@ -37,23 +37,22 @@
 
 #include "ResultReporter.hpp"
 
-#define RSMI_CHECK_EXC(expr)                                                                      \
-    do                                                                                            \
-    {                                                                                             \
-        rsmi_status_t e = (expr);                                                                 \
-        if(e)                                                                                     \
-        {                                                                                         \
-            const char* errName = nullptr;                                                        \
-            rsmi_status_string(e, &errName);                                                      \
-            std::ostringstream msg;                                                               \
-            msg << "Error " << e << "(" << errName << ") " << __FILE__ << ":" << __LINE__ << ": " \
-                << std::endl                                                                      \
-                << #expr << std::endl;                                                            \
-            throw std::runtime_error(msg.str());                                                  \
-        }                                                                                         \
+#define RSMI_CHECK_EXC(expr)                                                                                   \
+    do                                                                                                         \
+    {                                                                                                          \
+        rsmi_status_t e = (expr);                                                                              \
+        if(e)                                                                                                  \
+        {                                                                                                      \
+            const char* errName = nullptr;                                                                     \
+            rsmi_status_string(e, &errName);                                                                   \
+            std::ostringstream msg;                                                                            \
+            msg << "Error " << e << "(" << errName << ") " << __FILE__ << ":" << __LINE__ << ": " << std::endl \
+                << #expr << std::endl;                                                                         \
+            throw std::runtime_error(msg.str());                                                               \
+        }                                                                                                      \
     } while(0)
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -69,9 +68,8 @@ namespace Tensile
             HIP_CHECK_EXC(hipRuntimeGetVersion(&hip_version));
             if(hip_version >= 50220730)
             {
-                HIP_CHECK_EXC(hipDeviceGetAttribute(&props.multiProcessorCount,
-                                                    hipDeviceAttributePhysicalMultiProcessorCount,
-                                                    hipDeviceIndex));
+                HIP_CHECK_EXC(hipDeviceGetAttribute(
+                    &props.multiProcessorCount, hipDeviceAttributePhysicalMultiProcessorCount, hipDeviceIndex));
             }
 #endif
 
@@ -104,8 +102,7 @@ namespace Tensile
             }
 
             msg << "]" << std::endl;
-            std::time_t now
-                = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+            std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
             msg << std::put_time(gmtime(&now), "%F %T %z");
 
             throw std::runtime_error(concatenate("RSMI Can't find a device with PCI ID ",
@@ -182,8 +179,7 @@ namespace Tensile
             m_thread = std::thread([this]() { this->runLoop(); });
         }
 
-        void HardwareMonitor::addTempMonitor(rsmi_temperature_type_t   sensorType,
-                                             rsmi_temperature_metric_t metric)
+        void HardwareMonitor::addTempMonitor(rsmi_temperature_type_t sensorType, rsmi_temperature_metric_t metric)
         {
             assertNotActive();
 
@@ -207,8 +203,7 @@ namespace Tensile
             m_fanValues.resize(m_fanMetrics.size());
         }
 
-        double HardwareMonitor::getAverageTemp(rsmi_temperature_type_t   sensorType,
-                                               rsmi_temperature_metric_t metric)
+        double HardwareMonitor::getAverageTemp(rsmi_temperature_type_t sensorType, rsmi_temperature_metric_t metric)
         {
             assertNotActive();
 
@@ -227,8 +222,8 @@ namespace Tensile
                 }
             }
 
-            throw std::runtime_error(concatenate(
-                "Can't read temp value that wasn't requested: ", sensorType, " - ", metric));
+            throw std::runtime_error(
+                concatenate("Can't read temp value that wasn't requested: ", sensorType, " - ", metric));
         }
 
         double HardwareMonitor::getAverageClock(rsmi_clk_type_t clockType)
@@ -257,8 +252,7 @@ namespace Tensile
                 }
             }
 
-            throw std::runtime_error(
-                concatenate("Can't read clock value that wasn't requested: ", clockType));
+            throw std::runtime_error(concatenate("Can't read clock value that wasn't requested: ", clockType));
         }
 
         double HardwareMonitor::getAverageFanSpeed(uint32_t sensorIndex)
@@ -280,8 +274,7 @@ namespace Tensile
                 }
             }
 
-            throw std::runtime_error(
-                concatenate("Can't read fan value that wasn't requested: ", sensorIndex));
+            throw std::runtime_error(concatenate("Can't read fan value that wasn't requested: ", sensorIndex));
         }
 
         void HardwareMonitor::start()
@@ -352,8 +345,7 @@ namespace Tensile
                 std::tie(sensorType, metric) = m_tempMetrics[i];
 
                 int64_t newValue = 0;
-                auto    status
-                    = rsmi_dev_temp_metric_get(m_smiDeviceIndex, sensorType, metric, &newValue);
+                auto    status   = rsmi_dev_temp_metric_get(m_smiDeviceIndex, sensorType, metric, &newValue);
                 if(status != RSMI_STATUS_SUCCESS)
                     m_tempValues[i] = std::numeric_limits<int64_t>::max();
                 else
@@ -410,7 +402,6 @@ namespace Tensile
                         m_clockValues[i] += freq.frequency[freq.current];
                     }
                 }
-
             }
 
             for(int i = 0; i < m_fanMetrics.size(); i++)
@@ -422,13 +413,33 @@ namespace Tensile
                 rsmi_frequencies_t freq;
 
                 int64_t newValue = 0;
-                auto status = rsmi_dev_fan_rpms_get(m_smiDeviceIndex, m_fanMetrics[i], &newValue);
+                auto    status   = rsmi_dev_fan_rpms_get(m_smiDeviceIndex, m_fanMetrics[i], &newValue);
                 if(status != RSMI_STATUS_SUCCESS)
                     m_fanValues[i] = std::numeric_limits<int64_t>::max();
                 else
                     m_fanValues[i] += newValue;
             }
 
+            // Retrieves the maximum hardware supported frequency.
+            rsmi_frequencies_t freqs;
+            auto               status = rsmi_dev_gpu_clk_freq_get(m_smiDeviceIndex, RSMI_CLK_TYPE_SYS, &freqs);
+            if(status != RSMI_STATUS_SUCCESS)
+            {
+                m_hasInvalidGpuFreqStatus = true;
+            }
+            else
+            {
+                if(!m_hasInvalidGpuFreqStatus && !has_maxFreqValues)
+                {
+                    m_maxFreqValues = 0;
+                    for(auto freq : freqs.frequency)
+                    {
+                        m_maxFreqValues = std::max(m_maxFreqValues, freq);
+                    }
+                    has_maxFreqValues = true;
+                    m_maxFreqValues /= cMhzToHz; // Convert to MHz
+                }
+            }
             m_dataPoints++;
         }
 
@@ -509,4 +520,4 @@ namespace Tensile
         }
 
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

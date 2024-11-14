@@ -32,7 +32,7 @@
 #include <Tensile/Serialization/Base.hpp>
 #include <Tensile/Serialization/Properties.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -52,13 +52,13 @@ namespace Tensile
         };
 
         template <typename MyProblem, typename MySolution, typename IO>
-        struct CustomMappingTraits<Tensile::LibraryMap<MyProblem, MySolution, std::string>, IO>
+        struct CustomMappingTraits<TensileLite::LibraryMap<MyProblem, MySolution, std::string>, IO>
             : public DefaultCustomMappingTraits<
-                  Tensile::LibraryMap<MyProblem, MySolution, std::string>,
+                  TensileLite::LibraryMap<MyProblem, MySolution, std::string>,
                   IO,
                   true,
                   false>
         {
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

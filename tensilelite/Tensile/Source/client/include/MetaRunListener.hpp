@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -59,7 +59,9 @@ namespace Tensile
             virtual size_t numWarmupRuns() override;
             virtual void   setNumWarmupRuns(size_t count) override;
             virtual void   preWarmup() override;
-            virtual void   postWarmup() override;
+            virtual void   postWarmup(TimingEvents const& startEvents,
+                                      TimingEvents const& stopEvents,
+                                      hipStream_t const&  stream) override;
             virtual void   validateWarmups(std::shared_ptr<ProblemInputs> inputs,
                                            TimingEvents const&            startEvents,
                                            TimingEvents const&            stopEvents) override;
@@ -91,4 +93,4 @@ namespace Tensile
         };
 
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

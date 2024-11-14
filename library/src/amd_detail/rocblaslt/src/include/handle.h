@@ -143,16 +143,17 @@ struct _rocblaslt_matmul_desc
     hipblasOperation_t op_B = HIPBLAS_OP_N;
     // epilogue operation
     rocblaslt_epilogue epilogue = ROCBLASLT_EPILOGUE_DEFAULT;
+    // alpha,beta pointer mode
+    rocblaslt_pointer_mode pointermode = rocblaslt_pointer_mode_host;
     // bias vector pointer
-    void*       bias        = nullptr;
-    void*       scaleA      = nullptr;
-    void*       scaleB      = nullptr;
-    void*       scaleC      = nullptr;
-    void*       scaleD      = nullptr;
-    void*       scaleE      = nullptr;
-    void*       pointermode = nullptr;
-    void*       amaxD       = nullptr;
-    hipDataType bias_type   = HIPBLASLT_DATATYPE_INVALID;
+    void*       bias      = nullptr;
+    void*       scaleA    = nullptr;
+    void*       scaleB    = nullptr;
+    void*       scaleC    = nullptr;
+    void*       scaleD    = nullptr;
+    void*       scaleE    = nullptr;
+    void*       amaxD     = nullptr;
+    hipDataType bias_type = HIPBLASLT_DATATYPE_INVALID;
     // E
     void*   e        = nullptr;
     int64_t lde      = 0;

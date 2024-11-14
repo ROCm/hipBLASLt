@@ -31,7 +31,7 @@
 
 #include <sys/time.h>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -138,7 +138,11 @@ namespace Tensile
 
         void ProgressListener::preWarmup() {}
 
-        void ProgressListener::postWarmup() {}
+        void ProgressListener::postWarmup(TimingEvents const& startEvents,
+                                          TimingEvents const& stopEvents,
+                                          hipStream_t const&  stream)
+        {
+        }
 
         void ProgressListener::validateWarmups(std::shared_ptr<ProblemInputs> inputs,
                                                TimingEvents const&            startEvents,
@@ -200,4 +204,4 @@ namespace Tensile
         }
 
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

@@ -30,7 +30,7 @@
 #include <iostream>
 #include <math.h>
 
-namespace Tensile
+namespace TensileLite
 {
     void RotatingMemory::addRotatingSize(std::vector<size_t> sizes)
     {

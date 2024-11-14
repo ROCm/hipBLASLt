@@ -60,7 +60,7 @@
 
 namespace po = boost::program_options;
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -263,6 +263,7 @@ namespace Tensile
                 ("num-enqueues-per-sync",    po::value<int>()->default_value(1), "Enqueues per sync, will affect by min-flops-per-sync")
                 ("max-enqueues-per-sync",    po::value<int>()->default_value(-1), "Max Enqueues per sync, will affect by min-flops-per-sync")
                 ("num-syncs-per-benchmark",  po::value<int>()->default_value(1), "Syncs per benchmark")
+                ("skip-slow-solution-ratio", po::value<float>()->default_value(0.0), "ratio to skip slow solution during warm-up stage")
                 ("min-flops-per-sync",       po::value<size_t>()->default_value(0), "Minimum number of flops per sync to increase stability for small problems.")
                 ("use-gpu-timer",            po::value<bool>()->default_value(true), "Use GPU timer")
                 ("sleep-percent",            po::value<int>()->default_value(0), "Sleep percentage")
@@ -568,12 +569,12 @@ namespace Tensile
         }
 
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite
 
 int main(int argc, const char* argv[])
 {
-    using namespace Tensile;
-    using namespace Tensile::Client;
+    using namespace TensileLite;
+    using namespace TensileLite::Client;
 
     auto args = parse_args(argc, argv);
 
@@ -591,8 +592,8 @@ int main(int argc, const char* argv[])
     auto        hardware = GetHardware(args);
     hipStream_t stream   = GetStream(args);
 
-    auto                          library = LoadSolutionLibrary(args);
-    Tensile::hip::SolutionAdapter adapter;
+    auto                              library = LoadSolutionLibrary(args);
+    TensileLite::hip::SolutionAdapter adapter;
     LoadCodeObjects(args, adapter);
 
     auto filename = args["library-file"].as<std::string>();
@@ -625,6 +626,14 @@ int main(int argc, const char* argv[])
     bool        exitOnError      = args["exit-on-error"].as<bool>();
     bool        groupedGemm      = args["grouped-gemm"].as<bool>();
     const auto& icacheFlushArgs  = args["icache-flush-args"].as<std::vector<bool>>();
+
+    float skip_slow_solution_ratio = args["skip-slow-solution-ratio"].as<float>();
+    if(skip_slow_solution_ratio > 1.0 || skip_slow_solution_ratio < 0.0)
+    {
+        std::cout << "Invalid Skip Slow Solution Ratio: " << skip_slow_solution_ratio << std::endl;
+        std::cout << "Please Set Valid Ratio : (0.0 ~ 1.0)." << std::endl;
+        exit(1);
+    }
 
     if(firstSolutionIdx < 0)
         firstSolutionIdx = library->solutions.begin()->first;
@@ -765,57 +774,54 @@ int main(int argc, const char* argv[])
                                 }
 
                                 size_t       warmupInvocations = listeners.numWarmupRuns();
-                                size_t       eventCount        = gpuTimer ? kernels[0].size() : 0;
-                                TimingEvents warmupStartEvents(warmupInvocations, eventCount);
-                                TimingEvents warmupStopEvents(warmupInvocations, eventCount);
+                                size_t       warmupEventCount  = kernels[0].size();
+                                TimingEvents warmupStartEvents(warmupInvocations, warmupEventCount);
+                                TimingEvents warmupStopEvents(warmupInvocations, warmupEventCount);
 
+                                listeners.preWarmup();
                                 for(int i = 0; i < warmupInvocations; i++)
                                 {
                                     size_t kIdx = i % kernels.size();
-                                    listeners.preWarmup();
-                                    if(gpuTimer)
-                                        HIP_CHECK_EXC(adapter.launchKernels(kernels[kIdx],
-                                                                            stream,
-                                                                            warmupStartEvents[i],
-                                                                            warmupStopEvents[i]));
-                                    else
-                                        HIP_CHECK_EXC(adapter.launchKernels(
-                                            kernels[kIdx], stream, nullptr, nullptr));
-                                    listeners.postWarmup();
+                                    HIP_CHECK_EXC(adapter.launchKernels(kernels[kIdx],
+                                                                        stream,
+                                                                        warmupStartEvents[i],
+                                                                        warmupStopEvents[i]));
                                     // Do validation after first warmup
                                     if(i == 0)
                                         listeners.validateWarmups(
                                             inputs, warmupStartEvents, warmupStopEvents);
                                 }
+                                listeners.postWarmup(warmupStartEvents, warmupStopEvents, stream);
 
-                                size_t syncs = listeners.numSyncs();
-                                size_t enq   = listeners.numEnqueuesPerSync();
+                                size_t syncs      = listeners.numSyncs();
+                                size_t enq        = listeners.numEnqueuesPerSync();
+                                size_t eventCount = gpuTimer ? kernels[0].size() : 0;
 
                                 listeners.preSyncs();
-
-                                for(int i = 0; i < syncs; i++)
-                                {
-                                    TimingEvents startEvents(enq, eventCount);
-                                    TimingEvents stopEvents(enq, eventCount);
-
-                                    listeners.preEnqueues(stream);
-
-                                    for(int j = 0; j < enq; j++)
+                                if(enq)
+                                    for(int i = 0; i < syncs; i++)
                                     {
-                                        size_t kIdx = ((i * enq) + j) % kernels.size();
-                                        HIP_CHECK_EXC(adapter.launchKernels(
-                                            kernels[kIdx], stream, nullptr, nullptr));
+                                        TimingEvents startEvents(enq, eventCount);
+                                        TimingEvents stopEvents(enq, eventCount);
 
-                                        if(icacheFlush)
+                                        listeners.preEnqueues(stream);
+
+                                        for(int j = 0; j < enq; j++)
                                         {
-                                            hipLaunchKernelGGL(
-                                                flush_icache, flushGridSize, 64, 0, stream);
-                                        }
-                                    }
+                                            size_t kIdx = ((i * enq) + j) % kernels.size();
+                                            HIP_CHECK_EXC(adapter.launchKernels(
+                                                kernels[kIdx], stream, nullptr, nullptr));
 
-                                    listeners.postEnqueues(startEvents, stopEvents, stream);
-                                    listeners.validateEnqueues(inputs, startEvents, stopEvents);
-                                }
+                                            if(icacheFlush)
+                                            {
+                                                hipLaunchKernelGGL(
+                                                    flush_icache, flushGridSize, 64, 0, stream);
+                                            }
+                                        }
+
+                                        listeners.postEnqueues(startEvents, stopEvents, stream);
+                                        listeners.validateEnqueues(inputs, startEvents, stopEvents);
+                                    }
 
                                 listeners.postSyncs();
 

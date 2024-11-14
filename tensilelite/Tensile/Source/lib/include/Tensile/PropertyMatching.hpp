@@ -41,7 +41,7 @@
 #include <Tensile/Properties.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
      * \ingroup Tensile
@@ -1342,4 +1342,4 @@ namespace Tensile
             }
         };
     } // namespace Matching
-} // namespace Tensile
+} // namespace TensileLite

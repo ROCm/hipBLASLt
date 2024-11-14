@@ -26,7 +26,7 @@
 
 #pragma once
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup DataTypes
@@ -74,11 +74,11 @@ namespace Tensile
     };
 
     static_assert(sizeof(Int8x4) == 4, "Int8x4 must be 4 bytes.");
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
-    inline std::string to_string(const Tensile::Int8x4& val)
+    inline std::string to_string(const TensileLite::Int8x4& val)
     {
         return "(" + std::to_string(val.a) + ", " + std::to_string(val.b) + ", "
                + std::to_string(val.c) + ", " + std::to_string(val.d) + ")";

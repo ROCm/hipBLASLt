@@ -35,7 +35,7 @@
 
 #define MAX_OMP_THREADS 64
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -781,15 +781,15 @@ omp_set_num_threads(MAX_OMP_THREADS);
                                 if(std::is_same<Float8BFloat8,
                                                 typename Inputs::ComputeInputType>::value)
                                 {
-                                    auto aValCast = static_cast<Tensile::Float8>(aVal);
-                                    auto bValCast = static_cast<Tensile::BFloat8>(bVal);
+                                    auto aValCast = static_cast<TensileLite::Float8>(aVal);
+                                    auto bValCast = static_cast<TensileLite::BFloat8>(bVal);
                                     value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                                 }
                                 else if(std::is_same<BFloat8Float8,
                                                      typename Inputs::ComputeInputType>::value)
                                 {
-                                    auto aValCast = static_cast<Tensile::BFloat8>(aVal);
-                                    auto bValCast = static_cast<Tensile::Float8>(bVal);
+                                    auto aValCast = static_cast<TensileLite::BFloat8>(aVal);
+                                    auto bValCast = static_cast<TensileLite::Float8>(bVal);
                                     value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                                 }
                                 else
@@ -1102,7 +1102,7 @@ omp_set_num_threads(MAX_OMP_THREADS);
                 }
             }
 
-            return Tensile::GemmTypeId(problem.a().dataType(),
+            return TensileLite::GemmTypeId(problem.a().dataType(),
                                        problem.b().dataType(),
                                        problem.c().dataType(),
                                        problem.d().dataType(),
@@ -1486,4 +1486,4 @@ omp_set_num_threads(MAX_OMP_THREADS);
             }
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

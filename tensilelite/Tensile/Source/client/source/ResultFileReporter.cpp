@@ -28,7 +28,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -159,6 +159,7 @@ namespace Tensile
                 m_output.setHeaderForKey(ResultKey::LDA, "LDA");
                 m_output.setHeaderForKey(ResultKey::LDB, "LDB");
                 m_output.setHeaderForKey(ResultKey::TotalFlops, "TotalFlops");
+                m_output.setHeaderForKey(ResultKey::GfxFrequency, "DeviceMaxFreq");
                 if(m_extraCol)
                 {
                     m_output.setHeaderForKey(ResultKey::TilesPerCu, "TilesPerCu");
@@ -319,4 +320,4 @@ namespace Tensile
             }
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

@@ -1004,7 +1004,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                     log_error(__func__, "invalid buf size", sizeInBytes);
                     return rocblaslt_status_invalid_value;
                 }
-                memcpy(buf, &matmulDesc->pointermode, sizeof(void*));
+                memcpy(buf, &matmulDesc->pointermode, sizeof(int32_t));
                 break;
             case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
                 if(sizeWritten)
@@ -1743,7 +1743,7 @@ extern "C" int rocblaslt_matmul_is_tuned(rocblaslt_handle        handle,
     auto& tensile_data = matmul_descr->m_data;
     auto  sols         = getBestRawSolutions(prob, handle, tensile_data, 1, max_workspace_bytes);
 
-    if(sols.size() && sols.front()->tag == Tensile::ContractionSolution::MatchingTag::Equal)
+    if(sols.size() && sols.front()->tag == TensileLite::ContractionSolution::MatchingTag::Equal)
     {
         return 1;
     }

@@ -26,7 +26,7 @@
 
 #include <Tensile/AMDGPU.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     TENSILE_API std::string AMDGPU::type() const
     {
@@ -84,4 +84,4 @@ namespace Tensile
     {
         return stream << g.description();
     }
-} // namespace Tensile
+} // namespace TensileLite

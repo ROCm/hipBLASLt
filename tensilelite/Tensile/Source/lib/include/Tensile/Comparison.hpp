@@ -28,7 +28,7 @@
 
 #include <type_traits>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Utilities
@@ -218,7 +218,7 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
@@ -227,7 +227,7 @@ namespace std
     {
         inline size_t operator()(tuple<Types...> const& tup) const
         {
-            return Tensile::hash_tuple(tup);
+            return TensileLite::hash_tuple(tup);
         }
     };
 } // namespace std

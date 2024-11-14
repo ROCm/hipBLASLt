@@ -72,6 +72,14 @@ globalParameters["SyncsPerBenchmark"] = 1         # how iterations of the stream
 globalParameters["EnqueuesPerSync"] = 1           # how many solution enqueues to perform per synchronization
 globalParameters["MaxEnqueuesPerSync"] = -1       # max solution enqueues to perform per synchronization
 globalParameters["SleepPercent"] = 300            # how long to sleep after every data point: 25 means 25% of solution time. Sleeping lets gpu cool down more.
+globalParameters["SkipSlowSolutionRatio"] = 0.0   # Skip slow solution during warm-up stage.
+# The valid range of this ratio is (0.0 ~ 1.0), and 0.0 means no skipping.
+# Skip condition:  warm-up time * ratio > current best sol's warm-up time
+# Suggestion:
+#     Small size :  0.5
+#     Medium size: 0.75
+#     Large size :  0.9
+
 # cProfile
 globalParameters["Profiler"] = 0                  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
 # validation
@@ -287,6 +295,8 @@ globalParameters["RotatingMode"] = 0 # Default is 0, allocated in order A0B0C0D0
 globalParameters["BuildIdKind"] = "sha1"
 globalParameters["ValidateLibrary"] = False
 globalParameters["AsmDebug"] = False # Set to True to keep debug information for compiled code objects
+
+globalParameters["UseEffLike"] = True # Set to False to use winnerGFlops as the performance metric
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
@@ -946,11 +956,12 @@ validParameters = {
     #   -1 = use prediction model for best performance (not yet implemented)
     #   0 = only remainder tiles run in stream-k
     #   1+ = remainder + 1 (or more) full grids of tiles run in stream-k (default=1)
-    # TENSILE_STREAMK_DYNAMIC_GRID enables dynamic grid mode, which automatically limits the number of CUs used:
-    #   0 = Off, use all CUs (default)
+    # TENSILE_STREAMK_DYNAMIC_GRID selects dynamic grid mode, which automatically limits the number of CUs used:
+    #   0 = Off, always use all CUs.
     #   1 = Only reduce CUs for small problems to number of output tiles when num_tiles < CU count.
     #   2 = Also reduce CUs used for large sizes to improve data-parallel portion and reduce power.
-    #   3 = Analytically predict the best grid-size by weighing the cost of the fix-up step and the cost of processing MACs.
+    #   3 = Analytically predict the best grid-size by weighing the cost of the fix-up step and the cost of processing MACs (default).
+    #       Note: dynamic grid coefficients currently apply to gfx942 variants
     # TENSILE_STREAMK_MAX_CUS allows the user to manually set maximum number of CUs used, which could free up some CUs for
     #   other operations to run in parallel with gemm.
     # TENSILE_STREAMK_GRID_MULTIPLIER lets you set how many workgroups are created per CU being used.

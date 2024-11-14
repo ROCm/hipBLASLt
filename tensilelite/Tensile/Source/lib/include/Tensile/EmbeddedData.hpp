@@ -36,7 +36,7 @@
 #include <Tensile/Macros.hpp>
 #include <Tensile/Singleton.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Tensile
@@ -132,7 +132,7 @@ namespace Tensile
         }
     };
 
-} // namespace Tensile
+} // namespace TensileLite
 
 #define TENSILE_CONCATENATE_SYMBOLS(a, b) TENSILE_CONCATENATE_SYMBOLS1(a, b)
 #define TENSILE_CONCATENATE_SYMBOLS1(a, b) TENSILE_CONCATENATE_SYMBOLS2(a, b)

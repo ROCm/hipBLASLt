@@ -32,7 +32,7 @@
 #include <Tensile/ContractionProblemPredicates.hpp>
 #include <Tensile/SolutionLibrary.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \addtogroup SolutionLibrary
@@ -314,4 +314,4 @@ namespace Tensile
  * @}
  */
 
-} // namespace Tensile
+} // namespace TensileLite

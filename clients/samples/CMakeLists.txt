@@ -58,6 +58,7 @@ add_executable( sample_hipblaslt_ext_op_layernorm 22_layernorm_ext/sample_hipbla
 add_executable( sample_hipblaslt_gemm_ext_deprecated deprecated/sample_hipblaslt_gemm_ext_deprecated.cpp)
 add_executable( sample_hipblaslt_ext_op_amax 23_amax_ext/sample_hipblaslt_ext_op_amax.cpp)
 add_executable( sample_hipblaslt_ext_op_amax_with_scale 24_amax_with_scale_ext/sample_hipblaslt_ext_op_amax_with_scale.cpp)
+add_executable( sample_hipblaslt_gemm_with_TF32 25_gemm_with_TF32/sample_hipblaslt_gemm_with_TF32.cpp)
 
 
 set(samples sample_hipblaslt_gemm
@@ -95,7 +96,8 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_ext_op_layernorm
             sample_hipblaslt_gemm_ext_deprecated
             sample_hipblaslt_ext_op_amax
-            sample_hipblaslt_ext_op_amax_with_scale)
+            sample_hipblaslt_ext_op_amax_with_scale
+            sample_hipblaslt_gemm_with_TF32)
 
 set( sample_list_all ${samples})
 
@@ -139,9 +141,28 @@ foreach( exe ${sample_list_hip_device} )
   target_link_libraries( ${exe} PRIVATE hip::device )
 endforeach( )
 
-foreach( exe ${sample_list_all} )
-  rocm_install(TARGETS ${exe} COMPONENT samples)
+# Install executables to libexec
+foreach( exe ${samples} )
+  install(
+    TARGETS ${exe}
+    RUNTIME 
+    DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/hipblaslt-samples
+    COMPONENT samples
+  )
 endforeach( )
+
+# Install source files to share
+install(
+  DIRECTORY
+    ${CMAKE_CURRENT_SOURCE_DIR}/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/hipblaslt/samples
+  COMPONENT samples
+  FILES_MATCHING 
+  PATTERN "*.cpp"
+  PATTERN "*.h"
+  PATTERN "CMakeLists.txt" EXCLUDE
+  PATTERN "build" EXCLUDE
+)
 
 # Add tests for samples
 foreach( exe ${samples} )
