@@ -102,7 +102,6 @@ globalParameters["SolutionSelectionAlg"] = 1          # algorithm to determine w
 globalParameters["ExpandRanges"] = True          # expand ranges into exact configs before writing logic file.  False ignores ranges.
 globalParameters["ExitAfterKernelGen"] = False     # Exit after generating kernels
 globalParameters["GenerateSourcesAndExit"] = False # Exit after kernel source generation.
-globalParameters["ShowProgressBar"] = True     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["WavefrontWidth"] = 64     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["ExitOnFails"] = 1     # 1: Exit after benchmark run if failures detected.  2: Exit during benchmark run.
 globalParameters["CpuThreads"] = -1  # How many CPU threads to use for kernel generation.  0=no threading, -1 == nproc, N=min(nproc,N).  TODO - 0 sometimes fails with a kernel name error?  0 does not check error codes correctly
