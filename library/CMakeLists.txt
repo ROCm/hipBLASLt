@@ -103,22 +103,6 @@ if( BUILD_WITH_TENSILE )
     list(TRANSFORM TensileHost_SOURCES PREPEND "${TensileHost_SOURCE_DIR}${seperator}")
     # add dependent sources from TensileHost for static build
     target_sources(hipblaslt PRIVATE ${TensileHost_SOURCES})
-
-    # recreate LLVM static dependencies
-    if (${Tensile_LIBRARY_FORMAT} STREQUAL "yaml")
-      #find_package(LLVM 13.0 QUIET CONFIG)
-      if(NOT LLVM_FOUND)
-          #find_package(LLVM 12.0 QUIET CONFIG)
-          if(NOT LLVM_FOUND)
-              #find_package(LLVM REQUIRED CONFIG)
-          endif()
-      endif()
-      #find_library(LLVMObjectYAML_LIBRARY
-      #  NAMES LLVMObjectYAML
-      #  PATHS ${LLVM_LIBRARY_DIR})
-      #message("LLVMObjectYAML_LIBRARY: ${LLVMObjectYAML_LIBRARY}")
-
-      #target_link_libraries(hipblaslt PRIVATE LLVMObjectYAML )  # match tensile
     endif()
   endif()
 
