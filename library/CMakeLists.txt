@@ -173,8 +173,6 @@ endif()
 if(NOT BUILD_CUDA)
 # Target link libraries
   target_link_libraries(hipblaslt PRIVATE hip::device ${DL_LIB})
-else()
-  target_link_libraries(hipblaslt PRIVATE ${CUDA_cublaslt_LIBRARY})
 endif()
 
 if(HIPBLASLT_ENABLE_MARKER)
