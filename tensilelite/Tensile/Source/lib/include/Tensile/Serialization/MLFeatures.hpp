@@ -93,10 +93,50 @@ namespace TensileLite
                 return SubclassMap({Base::template Pair<MLFeatures::FreeSizeA>(),
                                     Base::template Pair<MLFeatures::FreeSizeB>(),
                                     Base::template Pair<MLFeatures::BoundSize>(),
+                                    Base::template Pair<MLFeatures::BatchSize>(),
                                     Base::template Pair<MLFeatures::Tile0Granularity>(),
                                     Base::template Pair<MLFeatures::Tile1Granularity>(),
                                     Base::template Pair<MLFeatures::CUGranularity>(),
-                                    Base::template Pair<MLFeatures::WavesPerSIMD>()});
+                                    Base::template Pair<MLFeatures::WavesPerSIMD>(),
+                                    Base::template Pair<MLFeatures::Log10Flops>()});
+            }
+        };
+
+        // Set Flow
+        template <typename IO>
+        struct MappingTraits<std::shared_ptr<MLFeatures::MLFeature<ContractionSolution>>, IO>
+            : public BaseClassMappingTraits<MLFeatures::MLFeature<ContractionSolution>, IO, true>
+        {
+        };
+
+        template <typename IO>
+        struct SubclassMappingTraits<MLFeatures::MLFeature<ContractionSolution>, IO>
+            : public DefaultSubclassMappingTraits<
+                  SubclassMappingTraits<MLFeatures::MLFeature<ContractionSolution>, IO>,
+                  MLFeatures::MLFeature<ContractionSolution>,
+                  IO>
+        {
+            using Self = SubclassMappingTraits<MLFeatures::MLFeature<ContractionSolution>, IO>;
+            using Base = DefaultSubclassMappingTraits<
+                SubclassMappingTraits<MLFeatures::MLFeature<ContractionSolution>, IO>,
+                MLFeatures::MLFeature<ContractionSolution>,
+                IO>;
+            using SubclassMap = typename Base::SubclassMap;
+            const static SubclassMap subclasses;
+
+            static typename Base::SubclassMap GetSubclasses()
+            {
+                return SubclassMap({Base::template Pair<MLFeatures::MacroTile0>(),
+                                    Base::template Pair<MLFeatures::MacroTile1>(),
+                                    Base::template Pair<MLFeatures::DepthU>(),
+                                    Base::template Pair<MLFeatures::LdsBuffer>(),
+                                    Base::template Pair<MLFeatures::GlobalReadVWA>(),
+                                    Base::template Pair<MLFeatures::GlobalReadVWB>(),
+                                    Base::template Pair<MLFeatures::LocalReadVW>(),
+                                    Base::template Pair<MLFeatures::NumLoadsCoalescedA>(),
+                                    Base::template Pair<MLFeatures::StoreVW>(),
+                                    Base::template Pair<MLFeatures::VectorWidthA>(),
+                                    Base::template Pair<MLFeatures::WorkGroupMapping>()});
             }
         };
 
@@ -108,6 +148,15 @@ namespace TensileLite
         const typename ContractionProblemFeatureSMT<IO>::SubclassMap
             ContractionProblemFeatureSMT<IO>::subclasses
             = ContractionProblemFeatureSMT<IO>::GetSubclasses();
+
+        template <typename IO>
+        using ContractionSolutionFeatureSMT
+            = SubclassMappingTraits<MLFeatures::MLFeature<ContractionSolution>, IO>;
+
+        template <typename IO>
+        const typename ContractionSolutionFeatureSMT<IO>::SubclassMap
+            ContractionSolutionFeatureSMT<IO>::subclasses
+            = ContractionSolutionFeatureSMT<IO>::GetSubclasses();
 
         template <typename IO>
         struct MappingTraits<MLFeatures::FreeSizeA, IO>
@@ -124,6 +173,12 @@ namespace TensileLite
         template <typename IO>
         struct MappingTraits<MLFeatures::BoundSize, IO>
             : public AutoMappingTraits<MLFeatures::BoundSize, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::BatchSize, IO>
+            : public AutoMappingTraits<MLFeatures::BatchSize, IO>
         {
         };
 
@@ -148,6 +203,78 @@ namespace TensileLite
         template <typename IO>
         struct MappingTraits<MLFeatures::WavesPerSIMD, IO>
             : public AutoMappingTraits<MLFeatures::WavesPerSIMD, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::Log10Flops, IO>
+            : public AutoMappingTraits<MLFeatures::Log10Flops, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::MacroTile0, IO>
+            : public AutoMappingTraits<MLFeatures::MacroTile0, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::MacroTile1, IO>
+            : public AutoMappingTraits<MLFeatures::MacroTile1, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::DepthU, IO>
+            : public AutoMappingTraits<MLFeatures::DepthU, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::LdsBuffer, IO>
+            : public AutoMappingTraits<MLFeatures::LdsBuffer, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::GlobalReadVWA, IO>
+            : public AutoMappingTraits<MLFeatures::GlobalReadVWA, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::GlobalReadVWB, IO>
+            : public AutoMappingTraits<MLFeatures::GlobalReadVWB, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::LocalReadVW, IO>
+            : public AutoMappingTraits<MLFeatures::LocalReadVW, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::NumLoadsCoalescedA, IO>
+            : public AutoMappingTraits<MLFeatures::NumLoadsCoalescedA, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::StoreVW, IO>
+            : public AutoMappingTraits<MLFeatures::StoreVW, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::VectorWidthA, IO>
+            : public AutoMappingTraits<MLFeatures::VectorWidthA, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<MLFeatures::WorkGroupMapping, IO>
+            : public AutoMappingTraits<MLFeatures::WorkGroupMapping, IO>
         {
         };
     } // namespace Serialization

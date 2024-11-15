@@ -543,7 +543,12 @@ class SizeMapping:
                  'workGroupMappingXCC',
                  'workGroupMappingXCCGroup',
                  'globalSplitUCoalesced',
-                 'globalSplitUWorkGroupMappingRoundRobin'
+                 'globalSplitUWorkGroupMappingRoundRobin',
+                 'ldsBuffer',
+                 'localReadVectorWidth',
+                 'numLoadsCoalescedA',
+                 'storeVectorWidth',
+                 'vectorWidthA'
                  ]
 
     @classmethod
@@ -586,7 +591,12 @@ class SizeMapping:
                    workGroupMappingXCC      = d['WorkGroupMappingXCC'],
                    workGroupMappingXCCGroup = d['WorkGroupMappingXCCGroup'],
                    globalSplitUCoalesced    = d['GlobalSplitUCoalesced'],
-                   globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin']
+                   globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin'],
+                   ldsBuffer = d['1LDSBuffer'],
+                   localReadVectorWidth = d['LocalReadVectorWidth'],
+                   numLoadsCoalescedA = d['NumLoadsCoalescedA'],
+                   storeVectorWidth = d['StoreVectorWidth'],
+                   vectorWidthA = d['VectorWidthA']
                    )
 
     @classmethod

@@ -31,6 +31,7 @@
 #include <Tensile/AMDGPUPredicates.hpp>
 #include <Tensile/ContractionProblemPredicates.hpp>
 #include <Tensile/DecisionTreeLibrary.hpp>
+#include <Tensile/RegressionTreeLibrary.hpp>
 #include <Tensile/ExactLogicLibrary.hpp>
 #include <Tensile/FreeSizeLibrary.hpp>
 #include <Tensile/GranularitySelectionLibrary.hpp>
@@ -191,6 +192,9 @@ namespace TensileLite
 
         TENSILE_SERIALIZE_VECTOR(false, std::shared_ptr<TensileLite::ContractionSolution>);
 
+        TENSILE_SERIALIZE_VECTOR(
+            false, std::shared_ptr<TensileLite::MLFeatures::MLFeature<TensileLite::ContractionSolution>>);
+
         template <typename Value, typename IO>
         struct SequenceTraits<std::vector<TensileLite::FreeSizeEntry<Value>>, IO>
             : public DefaultSequenceTraits<std::vector<TensileLite::FreeSizeEntry<Value>>, IO, false>
@@ -219,6 +223,17 @@ namespace TensileLite
                   false>
         {
         };
+
+        TENSILE_SERIALIZE_VECTOR(true, TensileLite::RegressionTree::Node);
+        template <typename Key, typename ReturnValue, typename IO>
+        struct SequenceTraits<std::vector<TensileLite::RegressionTree::Tree<Key, ReturnValue>>, IO>
+            : public DefaultSequenceTraits<
+                  std::vector<TensileLite::RegressionTree::Tree<Key, ReturnValue>>,
+                  IO,
+                  false>
+        {
+        };
+
 
         template <typename T, size_t N, typename IO>
         struct SequenceTraits<std::array<T, N>, IO>

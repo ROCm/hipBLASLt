@@ -99,6 +99,7 @@ namespace TensileLite
                     Base::template Pair<Predicates::Contraction::CUEfficiency>(),
                     Base::template Pair<Predicates::Contraction::ExperimentalDTree>(),
                     Base::template Pair<Predicates::Contraction::ExperimentalStreamK>(),
+                    Base::template Pair<Predicates::Contraction::ExperimentalRTree>(),
                     Base::template Pair<Predicates::Contraction::EqualityMatching>(),
                     Base::template Pair<Predicates::Contraction::FreeSizeMatching>(),
                     Base::template Pair<Predicates::Contraction::UseGradientEqual>(),
@@ -391,6 +392,12 @@ namespace TensileLite
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::ExperimentalStreamK, IO>
             : public AutoMappingTraits<Predicates::Contraction::ExperimentalStreamK, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::ExperimentalRTree, IO>
+            : public AutoMappingTraits<Predicates::Contraction::ExperimentalRTree, IO>
         {
         };
 

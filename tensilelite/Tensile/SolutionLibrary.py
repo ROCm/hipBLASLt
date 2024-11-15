@@ -218,6 +218,46 @@ class DecisionTreeLibrary:
         self.trees = trees
         self.nullValue = nullValue
 
+class RegressionTreeLibrary:
+    Tag = "RegressionTree"
+    StateKeys = [("type", "tag"), "table", "trees", "solutionFeatures", "problemFeatures"]
+
+    @classmethod
+    def FromOriginalState(cls, d, solutions):
+        origTable = d["table"]
+        table = []
+
+        try:
+            indexStart  = origTable[0]
+            indexOffset = origTable[1]
+            for index in range(indexStart, indexStart + indexOffset):
+                value = IndexSolutionLibrary(solutions[index])
+                table.append(value)
+        except KeyError:
+            pass
+
+        trees = d["trees"]
+        solution_features = d["solutionFeatures"]
+        problem_features = d["problemFeatures"]
+        return cls(table, trees, solution_features, problem_features)
+
+    @property
+    def tag(self):
+        return self.__class__.Tag
+    
+    def merge(self, other):
+        raise RuntimeError(
+            "RegressionTreeLibrary does not support merging."
+        )
+
+    def remapSolutionIndices(self, indexMap):
+        pass
+
+    def __init__(self, table, trees, solution_features, problem_features):
+        self.table = table
+        self.trees = trees
+        self.solutionFeatures = solution_features
+        self.problemFeatures = problem_features
 
 class ProblemMapLibrary:
     Tag = "ProblemMap"
@@ -393,6 +433,12 @@ class MasterSolutionLibrary:
 
                     treeLib = DecisionTreeLibrary.FromOriginalState(lib, solutions)
                     library.rows.append({"predicate": predicate, "library": treeLib})
+            elif d["LibraryType"] == "RegressionTree":
+                predicate = Properties.Predicate(tag="TruePred")
+
+                regressionLib = RegressionTreeLibrary.FromOriginalState(d["Library"], solutions)
+                library = PredicateLibrary(tag="Problem")
+                library.rows.append({"predicate": predicate, "library": regressionLib})
             else:
                 assert 0 and "Unrecognized LibraryType."
 

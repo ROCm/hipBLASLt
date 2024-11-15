@@ -54,6 +54,7 @@ namespace TensileLite
         None    = 0,
         DTree   = 1,
         StreamK = 2,
+        RTree   = 3,
         Count
     };
 
@@ -67,6 +68,7 @@ namespace TensileLite
         DeviceEfficiency,
         ExperimentalDTree,
         ExperimentalStreamK,
+        ExperimentalRTree,
         Count
     };
 
@@ -152,7 +154,11 @@ namespace TensileLite
         : public BasePerformanceMetricInfo<PerformanceMetric::ExperimentalStreamK>
     {
     };
-
+    template <>
+    struct PerformanceMetricInfo<PerformanceMetric::ExperimentalRTree>
+        : public BasePerformanceMetricInfo<PerformanceMetric::ExperimentalRTree>
+    {
+    };
     /**
  * @}
  */

@@ -1104,6 +1104,27 @@ namespace TensileLite
         m_arithmeticIntensity = gflop / gbyte;
     }
 
+    float ContractionProblemGemm::getLog10Flops() const
+    {
+        size_t problemSize = 1;
+        for(size_t i = 0; i < m_problemSizes.size(); ++i)
+        {
+            problemSize *= m_problemSizes[i];
+        }
+        double flops = 2 * problemSize;
+
+        if(m_beta != 0) // If problem includes beta, update flops
+        {
+            size_t cSize = 1;
+            for(size_t i = 0; i < c().dimensions(); ++i)
+            {
+                cSize *= c().sizes()[i];
+            }
+            flops += 2 * cSize;
+        }
+        return (float)std::log10(flops);
+    }
+
     size_t ContractionProblemGemm::freeSizeA(size_t idx) const
     {
         return m_freeSizesA.at(idx);

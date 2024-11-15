@@ -121,6 +121,12 @@ namespace TensileLite
                 iot::mapRequired(io,
                                  "globalSplitUWorkGroupMappingRoundRobin",
                                  s.globalSplitUWorkGroupMappingRoundRobin);
+
+                iot::mapRequired(io, "ldsBuffer", s.ldsBuffer);
+                iot::mapRequired(io, "localReadVectorWidth", s.localReadVectorWidth);
+                iot::mapRequired(io, "numLoadsCoalescedA", s.numLoadsCoalescedA);
+                iot::mapRequired(io, "storeVectorWidth", s.storeVectorWidth);
+                iot::mapRequired(io, "vectorWidthA", s.vectorWidthA);
             }
 
             const static bool flow = false;

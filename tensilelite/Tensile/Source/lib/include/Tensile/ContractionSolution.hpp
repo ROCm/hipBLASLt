@@ -149,6 +149,12 @@ namespace TensileLite
         int  workGroupMappingXCCGroup               = 0;
         bool globalSplitUCoalesced                  = false;
         bool globalSplitUWorkGroupMappingRoundRobin = false;
+
+        int    ldsBuffer            = 0;
+        size_t localReadVectorWidth = 1;
+        size_t numLoadsCoalescedA   = 1;
+        size_t storeVectorWidth     = 1;
+        size_t vectorWidthA         = 1;
     };
 
     /**

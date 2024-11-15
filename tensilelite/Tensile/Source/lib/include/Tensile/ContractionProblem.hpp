@@ -908,6 +908,9 @@ namespace TensileLite
             case ExperimentalOption::StreamK:
                 return PerformanceMetric::ExperimentalStreamK;
 
+            case ExperimentalOption::RTree:
+                return PerformanceMetric::ExperimentalRTree;
+
             default:
                 // warning?
                 return m_performanceMetric;
@@ -1117,6 +1120,8 @@ namespace TensileLite
         {
             return m_arithmeticIntensity;
         }
+
+        float getLog10Flops() const;
 
         virtual std::vector<ConstantDescriptor> const constants() const
         {

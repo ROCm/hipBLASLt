@@ -45,6 +45,8 @@ namespace TensileLite
             return "ExperimentalDTree";
         case PerformanceMetric::ExperimentalStreamK:
             return "ExperimentalStreamK";
+        case PerformanceMetric::ExperimentalRTree:
+            return "ExperimentalRTree";
 
         case PerformanceMetric::Count:
         default:;
@@ -66,6 +68,8 @@ namespace TensileLite
             return "DTree";
         case PerformanceMetric::ExperimentalStreamK:
             return "StreamK";
+        case PerformanceMetric::ExperimentalRTree:
+            return "RTree";
 
         case PerformanceMetric::Count:
         default:;
@@ -106,6 +110,7 @@ namespace TensileLite
         registerTypeInfo<PerformanceMetric::DeviceEfficiency>();
         registerTypeInfo<PerformanceMetric::ExperimentalDTree>();
         registerTypeInfo<PerformanceMetric::ExperimentalStreamK>();
+        registerTypeInfo<PerformanceMetric::ExperimentalRTree>();
     }
 
     void PerformanceMetricTypeInfo::registerAllTypeInfoOnce()

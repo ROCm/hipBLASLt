@@ -1900,6 +1900,40 @@ namespace TensileLite
                 }
             };
 
+            struct ExperimentalRTree
+                : public Predicate_CRTP<ExperimentalRTree, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = false
+                };
+
+                ExperimentalRTree() = default;
+
+                static std::string Type()
+                {
+                    return "ExperimentalRTree";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return (problem.performanceMetric() == PerformanceMetric::ExperimentalRTree);
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(problem,
+                                        stream,
+                                        "prob",
+                                        problem.performanceMetric(),
+                                        "==",
+                                        "sol: PerformanceMetric::ExperimentalRTree",
+                                        PerformanceMetric::ExperimentalRTree);
+                }
+            };
+
             struct EqualityMatching
                 : public Predicate_CRTP<EqualityMatching, ContractionProblemGemm>
             {
