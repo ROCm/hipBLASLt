@@ -832,8 +832,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
                                      batch_stride_a,
                                      batch_stride_b,
                                      batch_stride_c,
-                                     batch_stride_d,
-                                     nullptr); // add pointermode(nullptr) to check if alpha is in device memory.
+                                     batch_stride_d);
 
     void *      bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     int64_t     lde = 0, batch_stride_e = 0;
@@ -1220,8 +1219,7 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
                                             strideA[i],
                                             strideB[i],
                                             strideC[i],
-                                            strideD[i],
-                                            nullptr); // add pointermode(nullptr) to check if alpha is in device memory.
+                                            strideD[i]);
         if(validArgs == rocblaslt_status_success)
             continue;
 
