@@ -375,7 +375,7 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
         data["BenchmarkProblems"][i][0] = dtype
     data["LibraryLogic"]["DeviceNames"] = DeviceNames
     data["LibraryLogic"]["ScheduleName"] = ScheduleName
-    data["LibraryLogic"]["ArchitectureName"] = ArchitectureName
+    data["LibraryLogic"]["ArchitectureName"] = {"Architecture": ArchitectureName, "CUCount": CU}
     data["LibraryLogic"]["LibraryType"] = LibraryType
     # Write the updated YAML file
     yaml_file = os.path.basename(yaml_file)
