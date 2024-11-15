@@ -995,9 +995,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
       oneBufferScheduling = kernel["1LDSBuffer"] or kernel["DirectToLdsA"] or kernel["DirectToLdsB"]
       
-      def hasDependency(lr: DSLoadInstruction, inst: MFMAInstruction | Instruction) -> bool:
+      def hasDependency(lr: DSLoadInstruction, inst: Instruction) -> bool:
         lrDataReg = lr.dst
-        srcRegs = [inst.a, inst.b,] if isinstance(inst, MFMAInstruction) else inst.srcs
+
+        if isinstance(inst, MFMAInstruction):
+          srcRegs = [inst.a, inst.b,]
+        elif isinstance(inst, SMFMAInstruction):
+          srcRegs = [inst.a, inst.b, inst.metadata]
+        else:
+          srcRegs = inst.srcs
+
         return any((lrDataReg & r) for r in srcRegs if isinstance(r, RegisterContainer))
 
       def hasAnyDependency(lr: DSLoadInstruction, insts: List[Instruction]):
@@ -1042,7 +1049,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             readLeft = checkLocalReadFIFOFull(mfmaIndex, self.localReadThisLoopFIFO, localReadItemsThisLoop, readLeftLROPT, readLeftLREven)
           elif kernel["EnableMatrixInstruction"] and self.do["OptimizeNumItersPLR0"]:
             # if numItersPLR == 0, try to schedule local reads with instruction level prefetch.
-            mfmas = [mfma for mfma in macIterCode.flatitems() if isinstance(mfma, MFMAInstruction)]
+            mfmas = [mfma for mfma in macIterCode.flatitems() if isinstance(mfma, (MFMAInstruction, SMFMAInstruction,))]
             if i + 1 != numMfmaPerIter:
               numLocalReadShouldSchedule = 0
               # prefetch load for next wave tile along M since we re-use B first.
@@ -1232,7 +1239,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         ####
         if self.states.numItersPLR == 0 and kernel["EnableMatrixInstruction"] and self.do["OptimizeNumItersPLR0"]:
           lgkmcnt = -1
-          mfmas = [mfma for mfma in macIterCode.flatitems() if isinstance(mfma, MFMAInstruction)]
+          mfmas = [mfma for mfma in macIterCode.flatitems() if isinstance(mfma, (MFMAInstruction, SMFMAInstruction,))]
           ## To support do["MAC"] is False
           mfma = [mfmas[i],] if len(mfmas) > 0 else []
           instsToCheck = mfma + packItems

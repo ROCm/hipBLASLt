@@ -388,11 +388,18 @@ class RegisterContainer:
             else:
                 return "%s%s[%u:%u]" % (minusStr, self.regType, self.regIdx, self.regIdx+self.regNum-1)
 
+    def _sameRegBaseAddr(self, b) -> bool:
+        if self.regName is not None and b.regName is not None:
+            return self.regName.name == b.regName.name
+        elif (self.regName, b.regName,) == (None, None,):
+            return self.regIdx == b.regIdx
+        return False
+
     def __and__(self, b) -> bool:
         if not isinstance(b, RegisterContainer):
             return NotImplemented
 
-        if self.regName == b.regName:
+        if self._sameRegBaseAddr(b):
             lenA = self.regNum
             offsetA = sum(self.regName.offsets)
             lenB = b.regNum
