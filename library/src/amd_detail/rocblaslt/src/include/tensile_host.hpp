@@ -41,6 +41,7 @@
 
 #include "handle.h"
 //#include "tuple_helper.hpp"
+#include "UserDrivenTuningParser.hpp"
 #include "utility.hpp"
 #include <Tensile/Contractions.hpp>
 #include <Tensile/DataTypes.hpp>
@@ -479,3 +480,18 @@ inline TensileLite::DataType hipDataType_to_tensile_type(hipDataType type)
         return TensileLite::DataType::None;
     }
 }
+
+namespace
+{
+    TensileLite::DataType roc2TensileType(rocblaslt_compute_type);
+}
+
+namespace TensileLite
+{
+    class ProblemOverride;
+}
+
+TensileLite::ProblemOverride
+    RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem&);
+
+TensileLite::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void>);
