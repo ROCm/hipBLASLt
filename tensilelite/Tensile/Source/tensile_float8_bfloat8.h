@@ -229,7 +229,7 @@ struct Float8_BFloat8
     }
     // only host code is simulated
     explicit HIP_HOST
-#elif defined(__gfx1200__)
+#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
     // NOTE: ON-DEVICE... always optimal bias
     explicit HIP_DEVICE Float8_BFloat8(float                v,
                                        hip_f8_rounding_mode rm  = hip_f8_rounding_mode::standard,
@@ -376,7 +376,7 @@ struct Float8_BFloat8
         return fval;
     }
     explicit inline HIP_HOST operator float() const
-#elif defined(__gfx1200__)
+#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
     // builtin conversion
     explicit inline HIP_DEVICE operator float() const
     {
@@ -721,7 +721,7 @@ inline __host__ __device__ tensile_float8
     tensile_float8 val;
     val.data = tensile_gfx940_f8_impl::cast_to_f8_from_f32<false, true>(a, rng);
     return val;
-#elif defined(__gfx1200__)
+#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
     tensile_float8 val;
     val.data = internal::cast_to_f8_from_f32<true>(a, true /*saturate*/, __HIP_E4M3, rng);
     return val;
@@ -738,7 +738,7 @@ inline __host__ __device__ tensile_float8
     tensile_float8 val;
     val.data = tensile_gfx940_f8_impl::cast_to_f8_from_f32<false, false>(a, rng);
     return val;
-#elif defined(__gfx1200__)
+#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
     tensile_float8 val;
     val.data = internal::cast_to_f8_from_f32<false>(a, true /*saturate*/, __HIP_E4M3, rng);
     return val;
@@ -755,7 +755,7 @@ inline __host__ __device__ tensile_bfloat8
     tensile_bfloat8 val;
     val.data = tensile_gfx940_f8_impl::cast_to_f8_from_f32<true, true>(a, rng);
     return val;
-#elif defined(__gfx1200__)
+#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
     tensile_bfloat8 val;
     val.data = internal::cast_to_f8_from_f32<true>(a, true /*saturate*/, __HIP_E5M2, rng);
     return val;
@@ -772,7 +772,7 @@ inline __host__ __device__ tensile_bfloat8
     tensile_bfloat8 val;
     val.data = tensile_gfx940_f8_impl::cast_to_f8_from_f32<true, false>(a, rng);
     return val;
-#elif defined(__gfx1200__)
+#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
     tensile_bfloat8 val;
     val.data = internal::cast_to_f8_from_f32<false>(a, true /*saturate*/, __HIP_E5M2, rng);
     return val;
