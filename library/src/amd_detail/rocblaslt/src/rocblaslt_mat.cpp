@@ -456,7 +456,7 @@ rocblaslt_status
                                             batch_stride_b,
                                             batch_stride_c,
                                             batch_stride_d,
-                                            matmul_descr[i]->pointermode); // add pointermode to check if alpha is in device memory.
+                                            matmul_descr[i]->pointermode);
         if(validArgs == rocblaslt_status_success)
             continue;
 
@@ -658,10 +658,11 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
         return rocblaslt_status_invalid_handle;
     }
 
-    // Check if pointer is valid
     // Update for the valid case: ((alpha_in_host && alpha=0) && (A=NULL || B=NULL))
-    if(alpha == nullptr || beta == nullptr || C == nullptr || D == nullptr
-       || ((matmul_descr->pointermode || (*((float*)alpha))) && (A == nullptr || B == nullptr)))
+    bool alpha_A_B_violation
+        = (!alpha || ((matmul_descr->pointermode || (*((float*)alpha))) && (!A || !B)));
+    // Check if pointer is valid
+    if(alpha == nullptr || beta == nullptr || C == nullptr || D == nullptr || alpha_A_B_violation)
     {
         log_error(__func__, "invalid data pointer");
         return rocblaslt_status_invalid_pointer;
