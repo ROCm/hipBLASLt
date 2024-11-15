@@ -680,7 +680,7 @@ class _SignatureKernelDescriptor(Item):
             self.totalVgprs = self.accumOffset + totalAgprs
         else:
             self.accumOffset = None
-            self.totalVgprs = totalVgprs
+            self.totalVgprs = max(totalAgprs, totalVgprs)
         self.originalTotalVgprs = totalVgprs
         self.totalAgprs         = totalAgprs
         self.totalSgprs         = totalSgprs
