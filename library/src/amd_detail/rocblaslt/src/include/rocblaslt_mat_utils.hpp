@@ -163,8 +163,9 @@ inline rocblaslt_status validateMatmulArgs(int64_t                       m,
                                            int64_t                       batch_stride_a = 0,
                                            int64_t                       batch_stride_b = 0,
                                            int64_t                       batch_stride_c = 0,
-                                           int64_t                       batch_stride_d = 0, 
-                                           const rocblaslt_pointer_mode& pointermode    = rocblaslt_pointer_mode_host) // add pointermode to check if alpha is in device memory.
+                                           int64_t                       batch_stride_d = 0,
+                                           const rocblaslt_pointer_mode& pointermode
+                                           = rocblaslt_pointer_mode_host)
 {
     rocblaslt_status status = rocblaslt_status_continue;
 
@@ -408,7 +409,7 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                      batch_stride_b,
                                      batch_stride_c,
                                      batch_stride_d,
-                                     matmul_descr->pointermode); // add pointermode to check if alpha is in device memory.
+                                     matmul_descr->pointermode);
 
     if(status != rocblaslt_status_continue)
         return status;
