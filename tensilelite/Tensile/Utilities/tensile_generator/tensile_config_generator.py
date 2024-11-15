@@ -84,7 +84,7 @@ res = subprocess.run("/opt/rocm/llvm/bin/offload-arch", stdout=subprocess.PIPE)
 ArchitectureName = res.stdout.decode("utf-8").strip()
 res = subprocess.run("rocminfo | grep Compute", stdout=subprocess.PIPE, shell=True, env={"ROCR_VISIBLE_DEVICES":"0"})
 match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
-NUM_STAGES = 8
+NUM_STAGES = 32
 DIV_MI = 3 # 33.3%
 MIN_MI = 5 # min 5 solutions
 CU = 0
@@ -246,7 +246,7 @@ def find_matmul_instruction(mfma_instruction, size):
                 continue
             for n_tiles in reversed(range(1, CU+1)):
                 n_tile_size = size[1] // n_tiles
-                if n_tile_size > 256:
+                if n_tile_size > 256 // m_tile_size:
                     continue
                 wave_tile_n = math.ceil(n_tile_size / mfma_instruction[1])
                 if wave_tile_n <= 0:
@@ -307,7 +307,7 @@ def calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters):
     batch_avg = batch_sum / len(unique_gemms_subgroup)
     k_avg = k_sum / len(unique_gemms_subgroup)
 
-    return (ENQUEUES_PER_SYNC + args.iters) * m_avg * n_avg * batch_avg * k_avg / 2
+    return (ENQUEUES_PER_SYNC + iters) * m_avg * n_avg * batch_avg * k_avg / 2
 
 def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, iters, groups):
     MinFlopsPerSync = calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters)
