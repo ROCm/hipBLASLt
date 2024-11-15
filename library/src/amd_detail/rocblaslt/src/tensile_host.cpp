@@ -433,38 +433,39 @@ namespace
         }
     }
 
-    const char* tensileComputeInputType_to_profile_string(Tensile::DataType typeCompute,
-                                                          Tensile::DataType F32XdlMathOp,
-                                                          Tensile::DataType typeComputeInput,
-                                                          Tensile::DataType typeA,
-                                                          Tensile::DataType typeB)
+    const char* tensileComputeInputType_to_profile_string(TensileLite::DataType typeCompute,
+                                                          TensileLite::DataType F32XdlMathOp,
+                                                          TensileLite::DataType typeComputeInput,
+                                                          TensileLite::DataType typeA,
+                                                          TensileLite::DataType typeB)
     {
         switch(typeCompute)
         {
-        case Tensile::DataType::Float:
+        case TensileLite::DataType::Float:
             break;
-        case Tensile::DataType::Double:
+        case TensileLite::DataType::Double:
             return "c_f64_r";
             break;
-        case Tensile::DataType::Int32:
+        case TensileLite::DataType::Int32:
             return "c_i32_r";
             break;
         default:
             throw std::runtime_error("Unsupported type.");
         }
 
-        if(F32XdlMathOp == Tensile::DataType::XFloat32)
+        if(F32XdlMathOp == TensileLite::DataType::XFloat32)
         {
             return "c_xf32_r";
         }
-        else if(typeComputeInput == Tensile::DataType::BFloat16 && typeA == Tensile::DataType::Half
-                && typeB == Tensile::DataType::Half)
+        else if(typeComputeInput == TensileLite::DataType::BFloat16
+                && typeA == TensileLite::DataType::Half && typeB == TensileLite::DataType::Half)
         {
             return "c_f32_fast_bf16_r";
         }
-        else if(typeComputeInput == Tensile::DataType::Half
-                && (typeA == Tensile::DataType::Float8 && typeB == Tensile::DataType::Half
-                    || typeA == Tensile::DataType::Half && typeB == Tensile::DataType::Float8))
+        else if(typeComputeInput == TensileLite::DataType::Half
+                && (typeA == TensileLite::DataType::Float8 && typeB == TensileLite::DataType::Half
+                    || typeA == TensileLite::DataType::Half
+                           && typeB == TensileLite::DataType::Float8))
         {
             return "c_f32_fast_f16_r";
         }
@@ -474,15 +475,15 @@ namespace
         }
     }
 
-    const char* tensileActivationtType_to_bench_string(Tensile::ActivationType activation)
+    const char* tensileActivationtType_to_bench_string(TensileLite::ActivationType activation)
     {
         switch(activation)
         {
-        case Tensile::ActivationType::DGelu:
-        case Tensile::ActivationType::Gelu:
+        case TensileLite::ActivationType::DGelu:
+        case TensileLite::ActivationType::Gelu:
             return "gelu";
             break;
-        case Tensile::ActivationType::Relu:
+        case TensileLite::ActivationType::Relu:
             return "relu";
             break;
         case TensileLite::ActivationType::None:
@@ -589,9 +590,9 @@ namespace
             tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
     }
 
-    inline void logProfileFromTensileDataGemm(const Tensile::ContractionProblemGemm& problem,
-                                              const Tensile::ContractionInputs&      inputs,
-                                              bool                                   isCpp)
+    inline void logProfileFromTensileDataGemm(const TensileLite::ContractionProblemGemm& problem,
+                                              const TensileLite::ContractionInputs&      inputs,
+                                              bool                                       isCpp)
     {
         log_profile("matmul",
                     "M",
@@ -769,9 +770,10 @@ namespace
             tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()));
     }
 
-    inline void logProfileFromTensileDataGemm(const Tensile::ContractionProblemGroupedGemm& problem,
-                                              const Tensile::ContractionGroupedInputs&      inputs,
-                                              bool                                          isCpp)
+    inline void
+        logProfileFromTensileDataGemm(const TensileLite::ContractionProblemGroupedGemm& problem,
+                                      const TensileLite::ContractionGroupedInputs&      inputs,
+                                      bool                                              isCpp)
     {
         size_t            gemmCount = problem.gemms.size();
         std::stringstream grouped_gemm_profile_string;
@@ -786,11 +788,14 @@ namespace
             grouped_gemm_profile_string << " ldb: " << problem.gemms[i].b().strides()[1] << ",";
             grouped_gemm_profile_string << " ldc: " << problem.gemms[i].c().strides()[1] << ",";
             grouped_gemm_profile_string << " ldd: " << problem.gemms[i].d().strides()[1] << ",";
-            if(problem.gemms[i].tensor(Tensile::ContractionProblemGemm::TENSOR::E).strides().size())
+            if(problem.gemms[i]
+                   .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
+                   .strides()
+                   .size())
                 grouped_gemm_profile_string
                     << " lde: "
                     << problem.gemms[i]
-                           .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
+                           .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
                            .strides()[1]
                     << ",";
             grouped_gemm_profile_string << " stride_a: " << problem.gemms[i].a().strides()[2]
@@ -804,13 +809,13 @@ namespace
                 grouped_gemm_profile_string << " stride_d: " << problem.gemms[i].d().strides()[2]
                                             << ",";
                 if(problem.gemms[i]
-                       .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
+                       .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
                        .strides()
                        .size())
                     grouped_gemm_profile_string
                         << " stride_e: "
                         << problem.gemms[i]
-                               .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
+                               .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
                                .strides()[2]
                         << ",";
             }
@@ -818,13 +823,13 @@ namespace
             {
                 grouped_gemm_profile_string << " stride_d: " << problem.gemms[i].d().strides()[2];
                 if(problem.gemms[i]
-                       .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
+                       .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
                        .strides()
                        .size())
                     grouped_gemm_profile_string
                         << " stride_e: "
                         << problem.gemms[i]
-                               .tensor(Tensile::ContractionProblemGemm::TENSOR::E)
+                               .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
                                .strides()[2];
             }
         }
@@ -883,7 +888,6 @@ namespace
             "activation_type",
             tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()));
     }
-
 #undef GEN_BENCH_ARG
 
     /****************************************************************
@@ -1972,11 +1976,11 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         {
             logBenchFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, false);
         }
+
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
         {
             logProfileFromTensileDataGemm(data->problem, data->inputs, false);
         }
-
         auto solution = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
         if(!solution)
         {
@@ -3271,8 +3275,6 @@ std::string getKernelNameFromData(rocblaslt_handle             handle,
     int                                        gsu = 0;
     int                                        wgm = 0;
     std::vector<TensileLite::KernelInvocation> kernels;
-
-    Tensile::KernelInvocation invocation;
 
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
