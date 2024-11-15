@@ -123,6 +123,8 @@ const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type)
 {
     switch(type)
     {
+    case rocblaslt_compute_f16:
+        return "COMPUTE_16F";
     case rocblaslt_compute_f32:
         return "COMPUTE_32F";
     case rocblaslt_compute_f32_fast_xf32:
