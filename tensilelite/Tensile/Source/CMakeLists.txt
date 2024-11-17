@@ -26,7 +26,7 @@ cmake_minimum_required(VERSION 3.25.2)
 
 # Override all paths arguments as they do not work properly
 file(TO_CMAKE_PATH "$ENV{ROCM_PATH}" ROCM_PATH_ENV_VALUE)
-list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH_ENV_VALUE} /opt/rocm)
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH_ENV_VALUE} /opt/rocm /opt/rocm/lib/llvm)
 
 project(Tensile)
 
