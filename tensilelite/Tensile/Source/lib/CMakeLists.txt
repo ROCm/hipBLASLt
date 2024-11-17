@@ -48,9 +48,8 @@ set(tensile_sources  ${tensile_sources}
     source/Tensile.cpp
     source/Utils.cpp
     )
-
 if(TENSILE_USE_LLVM)
-    if(NOT DEFINED ENV{TENSILE_CLIENT_STATIC} AND NOT TENSILE_CLIENT_STATIC)
+    if("$ENV{TENSILE_CLIENT_STATIC}" STREQUAL "" AND NOT TENSILE_CLIENT_STATIC)
         find_package(LLVM REQUIRED)
     endif()
     set(tensile_sources ${tensile_sources}
