@@ -69,12 +69,15 @@ class KernelWriterAssembly(KernelWriter):
     super(KernelWriterAssembly, self).__init__( \
         kernelMinNaming, kernelSerialNaming)
 
+  def getSgprOccupancy(self, sgprs):
+    return self.states.regCaps["PhysicalMaxSgpr"]//sgprs
+
   def getVgprOccupancy(self, numThreads, vgprs, doubleVgpr=False):
     multiplier = int(ceil(max(numThreads, 256) / 256.0)) # example: wg=512 multiplier=2, 1024=4
     maxOccupancy = self.consts.maxOccupancy//multiplier
 
     vgprAllocateAligned = 4    if not doubleVgpr else 8
-    totalVgprs = self.consts.maxVgprs if not doubleVgpr else self.consts.maxVgprs*2
+    totalVgprs = self.states.regCaps["MaxVgpr"] if not doubleVgpr else self.states.regCaps["MaxVgpr"]*2
     vgprsAligned = int(ceil(vgprs/vgprAllocateAligned))*vgprAllocateAligned
     vgprsAligned *= multiplier
 
@@ -87,7 +90,7 @@ class KernelWriterAssembly(KernelWriter):
     return occupancy
 
   ########################################
-  def getOccupancy(self, numThreads, vgprs, ldsSize, accvgprs=0, doubleVgpr=False):
+  def getOccupancy(self, numThreads, vgprs, sgprs, ldsSize, accvgprs=0, doubleVgpr=False):
 
     ldsLimitedOccupancy = self.getLdsLimitedOccupancy(ldsSize)
 
@@ -97,19 +100,20 @@ class KernelWriterAssembly(KernelWriter):
     else:
       vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, vgprs+accvgprs, doubleVgpr)
       accvgprLimitedOccupancy = vgprLimitedOccupancy
+    sgprLimitedOccupancy = self.getSgprOccupancy(sgprs)
 
-    return min(ldsLimitedOccupancy, vgprLimitedOccupancy, accvgprLimitedOccupancy)
+    return min(ldsLimitedOccupancy, vgprLimitedOccupancy, accvgprLimitedOccupancy, sgprLimitedOccupancy)
 
   # TODO: also consider sgpr
-  def getMaxRegsForOccupancy(self, numThreads, vgprs, ldsSize, accvgprs=0, doubleVgpr=False):
+  def getMaxRegsForOccupancy(self, numThreads, vgprs, sgprs, ldsSize, accvgprs=0, doubleVgpr=False):
     lastVgprs = vgprs
     considerAccVgprs = 0       if not doubleVgpr else accvgprs
-    totalVgprs = self.consts.maxVgprs if not doubleVgpr else self.consts.maxVgprs*2
+    totalVgprs = self.states.regCaps["MaxVgpr"] if not doubleVgpr else self.states.regCaps["MaxVgpr"]*2
 
-    initOccupancy = self.getOccupancy(numThreads, vgprs, ldsSize, accvgprs, doubleVgpr)
+    initOccupancy = self.getOccupancy(numThreads, vgprs, sgprs, ldsSize, accvgprs, doubleVgpr)
     if initOccupancy == 0: return lastVgprs
 
-    while (vgprs + considerAccVgprs) < totalVgprs and vgprs < self.consts.maxVgprs:
+    while (vgprs + considerAccVgprs) < totalVgprs and vgprs < self.states.regCaps["MaxVgpr"]:
       vgprs += 1
       if self.getVgprOccupancy(numThreads, vgprs + considerAccVgprs, doubleVgpr) >= initOccupancy:
         lastVgprs = vgprs
@@ -339,7 +343,7 @@ class KernelWriterAssembly(KernelWriter):
       if self.db["AssertOnSgprOverflow"]:
         raise e
 
-    tmpSgpr = allocTmpGpr(self.sgprPool, num, self.consts.maxSgprs, alignment, tag, overflowListener)
+    tmpSgpr = allocTmpGpr(self.sgprPool, num, self.states.regCaps["MaxSgpr"], alignment, tag, overflowListener)
     return tmpSgpr
 
   def allocTmpSgprList(self, nums: List[int], alignments: Optional[List[int]]=None, tag=None):
@@ -348,7 +352,7 @@ class KernelWriterAssembly(KernelWriter):
       if self.db["AssertOnSgprOverflow"]:
         raise e
 
-    tmpSgpr = allocTmpGprList(self.sgprPool, nums, self.consts.maxSgprs, alignments, tag, overflowListener)
+    tmpSgpr = allocTmpGprList(self.sgprPool, nums, self.states.regCaps["MaxSgpr"], alignments, tag, overflowListener)
     return tmpSgpr
 
   def defineMultiVgprIndex(self, names: List[str], numVgprs: List[int], align=1):
@@ -470,9 +474,9 @@ class KernelWriterAssembly(KernelWriter):
     for i in range(numDummySgpr):
       module.add(self.defineSgpr("DummySgpr%d"%i, 1))
 
-    if self.sgprPool.size() > self.consts.maxSgprs:
+    if self.sgprPool.size() > self.states.regCaps["MaxSgpr"]:
       print ("warning: Number of defined SGPRS (%d) overflowed max SGPRS (%d)." \
-               % (self.sgprPool.size(), self.consts.maxSgprs))
+               % (self.sgprPool.size(), self.states.regCaps["MaxSgpr"]))
 
     # End of define sgprs
     #------------------------
@@ -9684,7 +9688,7 @@ class KernelWriterAssembly(KernelWriter):
     ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], vectorDataTypes, dim=factorDim)
 
     # Use VGPR up to next occupancy threshold:
-    maxVgprs = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), \
+    maxVgprs = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
                                           self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
     # Get estimated numVgprAvailable
     # print("Max vgprs =", maxVgprs, self.vgprPool.size(), self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align))
@@ -11456,13 +11460,13 @@ class KernelWriterAssembly(KernelWriter):
   # Function Suffix
   ##############################################################################
   def functionSuffix(self, kernel):
-    if self.vgprPool.size() > self.consts.maxVgprs:
+    if self.vgprPool.size() > self.states.regCaps["MaxVgpr"]:
       self.states.overflowedResources = 1
-    elif self.sgprPool.size() > self.consts.maxSgprs:
+    elif self.sgprPool.size() > self.states.regCaps["MaxSgpr"]:
       self.states.overflowedResources = 2
 
     if kernel["ScheduleIterAlg"] == 2 and \
-        self.getOccupancy(kernel["NumThreads"], self.vgprPool.size(), \
+        self.getOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
         self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr) < 2:
       self.states.overflowedResources = 6
 
