@@ -149,8 +149,62 @@ HIPBLASLT_BENCH_RE = (
     r"--bias_type (?P<BIAS_TYPE>[\w ]+)"
     r"--compute_type (?P<COMPUTE_TYPE>[\w ]+)")
 
+HIPBLASLT_BENCH_RE_SAB = (
+    r"(?P<CMD>\w+) --api_method c "
+    r"-m (?P<M>[\d ]+)"
+    r"-n (?P<N>[\d ]+)"
+    r"-k (?P<K>[\d ]+)"
+    r"--lda (?P<LDA>[\d ]+)"
+    r"--ldb (?P<LDB>[\d ]+)"
+    r"--ldc (?P<LDC>[\d ]+)"
+    r"--ldd (?P<LDD>[\d ]+)"
+    r"--stride_a (?P<STRIDE_A>[\d ]+)"
+    r"--stride_b (?P<STRIDE_B>[\d ]+)"
+    r"--stride_c (?P<STRIDE_C>[\d ]+)"
+    r"--stride_d (?P<STRIDE_D>[\d ]+)"
+    r"--alpha (?P<ALPHA>[\d\. ]+)"
+    r"--beta (?P<BETA>[\d\. ]+)"
+    r"--transA (?P<TRANS_A>[\w ]+)"
+    r"--transB (?P<TRANS_B>[\w ]+)"
+    r"--batch_count (?P<BATCH_COUNT>[\d ]+)"
+    r"--scaleA (?P<SCALE_A>[\w ]+)"
+    r"--scaleB (?P<SCALE_B>[\w ]+)"
+    r"--a_type (?P<A_TYPE>[\w ]+)"
+    r"--b_type (?P<B_TYPE>[\w ]+)"
+    r"--c_type (?P<C_TYPE>[\w ]+)"
+    r"--d_type (?P<D_TYPE>[\w ]+)"
+    r"--scale_type (?P<SCALE_TYPE>[\w ]+)"
+    r"--bias_type (?P<BIAS_TYPE>[\w ]+)"
+    r"--compute_type (?P<COMPUTE_TYPE>[\w ]+)")
 
-HIPBLASLT_BENCH_RE2 = (
+HIPBLASLT_BENCH_RE_BIAS = (
+    r"(?P<CMD>\w+) --api_method c "
+    r"-m (?P<M>[\d ]+)"
+    r"-n (?P<N>[\d ]+)"
+    r"-k (?P<K>[\d ]+)"
+    r"--lda (?P<LDA>[\d ]+)"
+    r"--ldb (?P<LDB>[\d ]+)"
+    r"--ldc (?P<LDC>[\d ]+)"
+    r"--ldd (?P<LDD>[\d ]+)"
+    r"--stride_a (?P<STRIDE_A>[\d ]+)"
+    r"--stride_b (?P<STRIDE_B>[\d ]+)"
+    r"--stride_c (?P<STRIDE_C>[\d ]+)"
+    r"--stride_d (?P<STRIDE_D>[\d ]+)"
+    r"--alpha (?P<ALPHA>[\d\. ]+)"
+    r"--beta (?P<BETA>[\d\. ]+)"
+    r"--transA (?P<TRANS_A>[\w ]+)"
+    r"--transB (?P<TRANS_B>[\w ]+)"
+    r"--batch_count (?P<BATCH_COUNT>[\d ]+)"
+    r"--bias_vector --bias_source (?P<BIAS_SOURCE>[\w ]+)"
+    r"--a_type (?P<A_TYPE>[\w ]+)"
+    r"--b_type (?P<B_TYPE>[\w ]+)"
+    r"--c_type (?P<C_TYPE>[\w ]+)"
+    r"--d_type (?P<D_TYPE>[\w ]+)"
+    r"--scale_type (?P<SCALE_TYPE>[\w ]+)"
+    r"--bias_type (?P<BIAS_TYPE>[\w ]+)"
+    r"--compute_type (?P<COMPUTE_TYPE>[\w ]+)")
+
+HIPBLASLT_BENCH_RE_SAB_BIAS = (
     r"(?P<CMD>\w+) --api_method c "
     r"-m (?P<M>[\d ]+)"
     r"-n (?P<N>[\d ]+)"
@@ -213,18 +267,33 @@ def datatype_map(dtype):
 
 def trans_map(trans):
     if trans == "T":
-        return True
+        return 1
     elif trans == "N":
-        return False
+        return 0
     else:
         return None
 
+def bias_datatype_map(dtype):
+    if dtype == "f16_r":
+        return [datatype_map('f32_r'), datatype_map('f16_r')]
+    elif dtype == "f32_r":
+        return [datatype_map('f32_r')]
+    elif dtype == "xf32_r":
+        return [datatype_map('f32_r'), datatype_map('xf32_r')]
+    elif dtype == "bf16_r":
+        return [datatype_map('f32_r'), datatype_map('bf16_r')]
+    elif dtype == "f8_r":
+        return [datatype_map('f8_r')]
+    else:
+        return []
+
 def extract_dtype(match):
-    DataType = datatype_map(match.group('A_TYPE').strip())
-    DestDataType = datatype_map(match.group('C_TYPE').strip())
-    ComputeDataType = datatype_map(match.group('COMPUTE_TYPE').strip())
-    TransposeA = trans_map(match.group('TRANS_A').strip())
-    TransposeB = trans_map(match.group('TRANS_B').strip())
+    gdict = match.groupdict()
+    DataType = datatype_map(gdict.get('A_TYPE', '').strip())
+    DestDataType = datatype_map(gdict.get('C_TYPE', '').strip())
+    ComputeDataType = datatype_map(gdict.get('COMPUTE_TYPE', '').strip())
+    TransposeA = trans_map(gdict.get('TRANS_A', '').strip())
+    TransposeB = trans_map(gdict.get('TRANS_B', '').strip())
     if DataType in ["H", "B", "F8"]:
         HighPrecisionAccumulate = True
     else:
@@ -233,7 +302,16 @@ def extract_dtype(match):
     if ComputeDataType == "XS":
         ComputeDataType = "S"
         F32XdlMathOp = 'x'
-    return {"Batched": True, "DataType": DataType, "DestDataType": DestDataType, "ComputeDataType": ComputeDataType, "TransposeA": TransposeA, "TransposeB": TransposeB, "HighPrecisionAccumulate": HighPrecisionAccumulate, "F32XdlMathOp": F32XdlMathOp, "OperationType": "GEMM", "UseBeta": True}
+    res = {"Batched": True, "DataType": DataType, "DestDataType": DestDataType, "ComputeDataType": ComputeDataType, "TransposeA": TransposeA, "TransposeB": TransposeB, "HighPrecisionAccumulate": HighPrecisionAccumulate, "F32XdlMathOp": F32XdlMathOp, "OperationType": "GEMM", "UseBeta": True}
+
+    if gdict.get("BIAS_SOURCE"):
+        res["UseBias"] = 1
+        res["BiasSrc"] = gdict.get('BIAS_SOURCE', '').strip().upper()
+        res["BiasDataTypeList"] = list(bias_datatype_map(gdict.get("BIAS_TYPE", '').strip()))
+    if gdict.get("SCALE_A") is not None and gdict.get("SCALE_B") is not None:
+        res["UseScaleAB"] = "Scalar"
+        res["UseScaleAlphaVec"] = 1
+    return res
 
 def find_matmul_instruction(mfma_instruction, size):
     for bm in range(int(math.log(mfma_instruction[3],2))+1):
@@ -282,6 +360,25 @@ def get_groups(matmul_instruction_gen):
                 mi_left.append(mi)
     return mi_groups0, mi_groups1, mi_left
 
+def match_pattern(line):
+    if 'bias_vector' in line and 'scaleA' in line and 'scaleB' in line:
+        match = re.search(
+            HIPBLASLT_BENCH_RE_SAB_BIAS, line
+        )
+    elif 'bias_vector' in line:
+        match = re.search(
+            HIPBLASLT_BENCH_RE_BIAS, line
+        )
+    elif 'scaleA' in line and 'scaleB' in line:
+        match = re.search(
+            HIPBLASLT_BENCH_RE_SAB, line
+        )
+    else:
+        match = re.search(
+            HIPBLASLT_BENCH_RE, line
+        )
+    return match
+
 def extract_range(data):
     shapes = []
     if 'Exact' in data:
@@ -326,6 +423,8 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
         if i >= len(data["BenchmarkProblems"]):
             data["BenchmarkProblems"].append(copy.deepcopy(data["BenchmarkProblems"][0]))
         data["BenchmarkProblems"][i][1]["BenchmarkFinalParameters"][0]["ProblemSizes"] = gemm_group[dtype_str]
+        if "BiasDataTypeList" in dtype:
+            data["BenchmarkProblems"][i][1]["BenchmarkFinalParameters"].append({"BiasTypeArgs": list(dtype["BiasDataTypeList"])})
 
         # Add groupd here if needed
         group_params = [[]]
@@ -390,14 +489,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
     # Read problem sizes from the input file
     with open(args.hipblaslt_log, 'r') as f:
         for line in f:
-            if 'f8_r' in line:
-                match = re.search(
-                    HIPBLASLT_BENCH_RE2, line
-                )
-            else:
-                match = re.search(
-                    HIPBLASLT_BENCH_RE, line
-                )
+            match = match_pattern(line)
             if match:
                 if line in unique_gemms:
                     unique_gemms[line] += 1
@@ -423,15 +515,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
         k_sum = 0
 
         for k, v in unique_gemms_subgroup:
-            if 'f8_r' in k:
-                match = re.search(
-                    HIPBLASLT_BENCH_RE2, k
-                )
-            else:
-                match = re.search(
-                    HIPBLASLT_BENCH_RE, k
-                )
-
+            match = match_pattern(k)
             if match:
                 size = extract_problem_size(match)
                 original_size = copy.deepcopy(size)
@@ -440,7 +524,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 dtype_str = json.dumps(dtype)
                 if mfma_instructions is None:
                     continue
-                
+
                 mfma_instruction_found = False
                 for mfma_instruction in mfma_instructions:
                     for _ in range(NUM_STAGES):
