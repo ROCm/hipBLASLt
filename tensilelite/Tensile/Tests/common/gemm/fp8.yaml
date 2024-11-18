@@ -220,3 +220,59 @@ BenchmarkProblems:
         - BiasTypeArgs: ['s']
         - ActivationArgs:
           - [Enum: none]
+
+#####################################################
+# FP8HS + Bias S + ScaleAlphaVec + SVW=16 for bpl 64
+#####################################################
+
+  - 
+    - # ProblemType
+      OperationType: GEMM
+      DataType: F8
+      DestDataType: H
+      ComputeDataType: S
+      HighPrecisionAccumulate: true
+      TransposeA: True
+      TransposeB: False
+      UseBeta: True
+      BiasDataTypeList: [s]
+      UseBias: 1
+      UseScaleAlphaVec: 1
+      Batched: True
+      #Activation: True
+      #ActivationHPA: True
+    - InitialSolutionParameters: 
+      BenchmarkCommonParameters:
+        - KernelLanguage: [Assembly]
+      ForkParameters:
+        - 1LDSBuffer: [1]
+        - DepthU: [64, 128]
+        - GlobalReadVectorWidthA: [4, 16]
+        - GlobalReadVectorWidthB: [4, 16]
+        - WaveSeparateGlobalReadA: [0]
+        - WaveSeparateGlobalReadB: [0]
+        - NumElementsPerBatchStore: [16]
+        - NonTemporalA: [0]
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - SourceSwap: [1]
+        - StaggerU: [8]
+        - StorePriorityOpt: [1]
+        - StoreSyncOpt: [4]
+        - WorkGroupMapping: [-48]
+        - WorkGroupMappingXCC: [1]
+        - MIArchVgpr: [1] #[0,1]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - Groups:
+          - - NonTemporalC: 4
+              NonTemporalD: 4
+          - 
+            
+            - MatrixInstruction: [16, 16, 32,  1,  1, 16,  3,  1,  4] # MT 256x192 - TT 16x48  - WG 16x16  - MIBlockM:  1 -- sizes [[(57344, 8192, 1, 8192)]]
+              MIArchVgpr: 0
+       
+      BenchmarkJoinParameters: 
+      BenchmarkFinalParameters:
+      - ProblemSizes:
+        - Exact: [ 1024, 1024, 1, 1024 ]
+      - BiasTypeArgs: ['s']

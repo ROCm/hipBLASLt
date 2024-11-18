@@ -10172,6 +10172,14 @@ class KernelWriterAssembly(KernelWriter):
         module.add(DSLoadB128(dst=vgpr(dstVgpr, 4), src=src, ds=ds, comment=comment))
         ds = DSModifiers(offset=dsOffset+bpl/2)
         module.add(DSLoadB128(dst=vgpr(dstVgpr+4, 4), src=src, ds=ds, comment=comment))
+      elif bpl==64:
+        module.add(DSLoadB128(dst=vgpr(dstVgpr, 4), src=src, ds=ds, comment=comment))
+        ds = DSModifiers(offset=dsOffset+bpl/4)
+        module.add(DSLoadB128(dst=vgpr(dstVgpr+4, 4), src=src, ds=ds, comment=comment))
+        ds = DSModifiers(offset=dsOffset+2*bpl/4)
+        module.add(DSLoadB128(dst=vgpr(dstVgpr+8, 4), src=src, ds=ds, comment=comment))
+        ds = DSModifiers(offset=dsOffset+3*bpl/4)
+        module.add(DSLoadB128(dst=vgpr(dstVgpr+12, 4), src=src, ds=ds, comment=comment))
       else:
         assert 0, "bad bpl"
       return module
