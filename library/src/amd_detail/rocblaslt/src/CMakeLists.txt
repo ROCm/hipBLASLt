@@ -133,5 +133,6 @@ set(rocblaslt_source
   src/amd_detail/rocblaslt/src/rocblaslt_mat.cpp
   src/amd_detail/rocblaslt/src/utility.cpp
   src/amd_detail/rocblaslt/src/rocblaslt_transform.cpp
+  src/amd_detail/rocblaslt/src/UserDrivenTuningParser.cpp
   ${Tensile_SRC}
 )
