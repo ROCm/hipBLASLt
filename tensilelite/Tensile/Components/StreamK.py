@@ -429,7 +429,7 @@ class StreamK(Component):
 
         #print self.vgprPool.state()
         # Use VGPR up to next occupancy threshold:
-        maxVgprs = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), \
+        maxVgprs = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), writer.sgprPool.size(), \
             writer.getLdsSize(kernel), writer.agprPool.size(), writer.states.doubleVgpr)
         if writer.states.serializedStore: # get aggressive when serializedStore is on; not necessarily exclusive to this parameter
             # len(elements[edgeI])
@@ -474,9 +474,9 @@ class StreamK(Component):
         if numVgprAvailable < minNeeded:
             gwvwOrig = gwvw
             currentOccupancy = writer.getOccupancy(kernel["NumThreads"], writer.getLdsSize(kernel), \
-                writer.vgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
+                writer.vgprPool.size(), writer.sgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
             futureOccupancy = writer.getOccupancy(kernel["NumThreads"], writer.getLdsSize(kernel), \
-                writer.vgprPool.size() - numVgprAvailable + minNeeded, writer.agprPool.size(), writer.states.doubleVgpr)
+                writer.vgprPool.size() - numVgprAvailable + minNeeded, writer.sgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
 
             if shrinkDb:
                 print("currentOccupancy=%u futureOccupancy=%u VGPRs=%u numVgprAvail=%u vgprPerElem=%u" \
@@ -904,7 +904,7 @@ class StreamK(Component):
 
             #print self.vgprPool.state()
             # Use VGPR up to next occupancy threshold:
-            maxVgprs = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), \
+            maxVgprs = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), writer.sgprPool.size(), \
                 writer.getLdsSize(kernel), writer.agprPool.size(), writer.states.doubleVgpr)
             if writer.states.serializedStore: # get aggressive when serializedStore is on; not necessarily exclusive to this parameter
                 # len(elements[edgeI])
@@ -948,9 +948,9 @@ class StreamK(Component):
             if numVgprAvailable < minNeeded:
                 gwvwOrig = gwvw
                 currentOccupancy = writer.getOccupancy(kernel["NumThreads"], writer.getLdsSize(kernel), \
-                        writer.vgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
+                        writer.vgprPool.size(), writer.sgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
                 futureOccupancy = writer.getOccupancy(kernel["NumThreads"], writer.getLdsSize(kernel), \
-                        writer.vgprPool.size() - numVgprAvailable + minNeeded, writer.agprPool.size(), writer.states.doubleVgpr)
+                        writer.vgprPool.size() - numVgprAvailable + minNeeded, writer.sgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
 
                 if shrinkDb:
                     print("currentOccupancy=%u futureOccupancy=%u VGPRs=%u numVgprAvail=%u vgprPerElem=%u" \
