@@ -72,6 +72,10 @@ parser.add_argument(
     "--full_mfma", type=bool, default=False,
     help="If enabled, will search for all mfma instructions")
 
+parser.add_argument(
+    "--full_mi", type=bool, default=False,
+    help="If enabled, will search for all mi instructions")
+
 args = parser.parse_args()
 
 NUM_WARM_UP = 20
@@ -525,7 +529,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 if mfma_instructions is None:
                     continue
 
-                mfma_instruction_found = False
+                matmul_instruction_found = False
                 for mfma_instruction in mfma_instructions:
                     for _ in range(NUM_STAGES):
                         matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
@@ -562,13 +566,14 @@ if args.hipblaslt_log and args.gridbase_config is None:
                             if args.fast and (index > total_inst):
                                 break
                         if len(matmul_instruction_gen) > 0 or len(mi_groups0) > 0 or len(mi_groups1) > 0:
-                            mfma_instruction_found = True
-                            break
+                            matmul_instruction_found = True
+                            if not args.full_mi:
+                                break
                         else:
                             max_dim = int(np.argmax(size))
                             size[max_dim] = size[max_dim] // 2
 
-                if not mfma_instruction_found:
+                if not matmul_instruction_found:
                     print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
                 else:
                     if dtype_str in gemm_group:
@@ -633,7 +638,7 @@ elif args.gridbase_config and args.hipblaslt_log is None:
             mfma_instructions = instruction_map(dtype)
             if mfma_instructions is None:
                 continue
-            mfma_instruction_found = False
+            matmul_instruction_found = False
             for mfma_instruction in mfma_instructions:
                 for _ in range(NUM_STAGES):
                     matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
@@ -646,12 +651,12 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                             if args.fast and (index > total_inst):
                                 break
                     if len(matmul_instruction_gen) > 0:
-                        mfma_instruction_found = True
+                        matmul_instruction_found = True
                         break
                     else:
                         max_dim = int(np.argmax(size))
                         size[max_dim] = size[max_dim] // 2
-            if not mfma_instruction_found:
+            if not matmul_instruction_found:
                 print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
             else:
                 if dtype_str in gemm_group:
