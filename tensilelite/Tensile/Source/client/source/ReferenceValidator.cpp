@@ -112,7 +112,11 @@ namespace TensileLite
 
         void ReferenceValidator::preWarmup() {}
 
-        void ReferenceValidator::postWarmup() {}
+        void ReferenceValidator::postWarmup(TimingEvents const& startEvents,
+                                            TimingEvents const& stopEvents,
+                                            hipStream_t const&  stream)
+        {
+        }
 
         bool ReferenceValidator::validateSolution(std::shared_ptr<ProblemInputs> inputs)
         {

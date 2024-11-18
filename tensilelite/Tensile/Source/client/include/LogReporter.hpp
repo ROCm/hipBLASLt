@@ -350,7 +350,14 @@ namespace TensileLite
                    && (!m_PrintWinnersOnly || currentTimeUS < m_winner || !validation
                        || m_firstRun))
                 {
-                    m_csvOutput.writeCurrentRow();
+                    if(std::isnan(currentTimeUS) && validation)
+                        std::cout << curRow[ResultKey::BenchmarkRunNumber] << ","
+                                  << curRow[ResultKey::ProblemProgress] << ","
+                                  << curRow[ResultKey::SolutionProgress]
+                                  << ", Skip Slow Solution: " << curRow[ResultKey::SolutionName]
+                                  << std::endl;
+                    else
+                        m_csvOutput.writeCurrentRow();
                     if(validation)
                     {
                         m_winner = currentTimeUS;

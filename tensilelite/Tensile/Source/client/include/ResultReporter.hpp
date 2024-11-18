@@ -128,6 +128,7 @@ namespace TensileLite
             const std::string DeviceIndex         = "device-idx";
             const std::string FanSpeedRPMs        = "fan-rpm";
             const std::string HardwareSampleCount = "hardware-samples";
+            const std::string GfxFrequency        = "gfx-frequency(maximum)"; // GPU freq in Mhz
         }; // namespace ResultKey
 
         class ResultReporter : public RunListener
@@ -238,7 +239,11 @@ namespace TensileLite
             }
             virtual void setNumWarmupRuns(size_t count) override {}
             virtual void preWarmup() override {}
-            virtual void postWarmup() override {}
+            virtual void postWarmup(TimingEvents const& startEvents,
+                                    TimingEvents const& stopEvents,
+                                    hipStream_t const&  stream) override
+            {
+            }
             virtual void validateWarmups(std::shared_ptr<ProblemInputs> inputs,
                                          TimingEvents const&            startEvents,
                                          TimingEvents const&            stopEvents) override

@@ -69,12 +69,15 @@ class KernelWriterAssembly(KernelWriter):
     super(KernelWriterAssembly, self).__init__( \
         kernelMinNaming, kernelSerialNaming)
 
+  def getSgprOccupancy(self, sgprs):
+    return self.states.regCaps["PhysicalMaxSgpr"]//sgprs
+
   def getVgprOccupancy(self, numThreads, vgprs, doubleVgpr=False):
     multiplier = int(ceil(max(numThreads, 256) / 256.0)) # example: wg=512 multiplier=2, 1024=4
     maxOccupancy = self.consts.maxOccupancy//multiplier
 
     vgprAllocateAligned = 4    if not doubleVgpr else 8
-    totalVgprs = self.consts.maxVgprs if not doubleVgpr else self.consts.maxVgprs*2
+    totalVgprs = self.states.regCaps["MaxVgpr"] if not doubleVgpr else self.states.regCaps["MaxVgpr"]*2
     vgprsAligned = int(ceil(vgprs/vgprAllocateAligned))*vgprAllocateAligned
     vgprsAligned *= multiplier
 
@@ -87,7 +90,7 @@ class KernelWriterAssembly(KernelWriter):
     return occupancy
 
   ########################################
-  def getOccupancy(self, numThreads, vgprs, ldsSize, accvgprs=0, doubleVgpr=False):
+  def getOccupancy(self, numThreads, vgprs, sgprs, ldsSize, accvgprs=0, doubleVgpr=False):
 
     ldsLimitedOccupancy = self.getLdsLimitedOccupancy(ldsSize)
 
@@ -97,19 +100,20 @@ class KernelWriterAssembly(KernelWriter):
     else:
       vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, vgprs+accvgprs, doubleVgpr)
       accvgprLimitedOccupancy = vgprLimitedOccupancy
+    sgprLimitedOccupancy = self.getSgprOccupancy(sgprs)
 
-    return min(ldsLimitedOccupancy, vgprLimitedOccupancy, accvgprLimitedOccupancy)
+    return min(ldsLimitedOccupancy, vgprLimitedOccupancy, accvgprLimitedOccupancy, sgprLimitedOccupancy)
 
   # TODO: also consider sgpr
-  def getMaxRegsForOccupancy(self, numThreads, vgprs, ldsSize, accvgprs=0, doubleVgpr=False):
+  def getMaxRegsForOccupancy(self, numThreads, vgprs, sgprs, ldsSize, accvgprs=0, doubleVgpr=False):
     lastVgprs = vgprs
     considerAccVgprs = 0       if not doubleVgpr else accvgprs
-    totalVgprs = self.consts.maxVgprs if not doubleVgpr else self.consts.maxVgprs*2
+    totalVgprs = self.states.regCaps["MaxVgpr"] if not doubleVgpr else self.states.regCaps["MaxVgpr"]*2
 
-    initOccupancy = self.getOccupancy(numThreads, vgprs, ldsSize, accvgprs, doubleVgpr)
+    initOccupancy = self.getOccupancy(numThreads, vgprs, sgprs, ldsSize, accvgprs, doubleVgpr)
     if initOccupancy == 0: return lastVgprs
 
-    while (vgprs + considerAccVgprs) < totalVgprs and vgprs < self.consts.maxVgprs:
+    while (vgprs + considerAccVgprs) < totalVgprs and vgprs < self.states.regCaps["MaxVgpr"]:
       vgprs += 1
       if self.getVgprOccupancy(numThreads, vgprs + considerAccVgprs, doubleVgpr) >= initOccupancy:
         lastVgprs = vgprs
@@ -339,7 +343,7 @@ class KernelWriterAssembly(KernelWriter):
       if self.db["AssertOnSgprOverflow"]:
         raise e
 
-    tmpSgpr = allocTmpGpr(self.sgprPool, num, self.consts.maxSgprs, alignment, tag, overflowListener)
+    tmpSgpr = allocTmpGpr(self.sgprPool, num, self.states.regCaps["MaxSgpr"], alignment, tag, overflowListener)
     return tmpSgpr
 
   def allocTmpSgprList(self, nums: List[int], alignments: Optional[List[int]]=None, tag=None):
@@ -348,7 +352,7 @@ class KernelWriterAssembly(KernelWriter):
       if self.db["AssertOnSgprOverflow"]:
         raise e
 
-    tmpSgpr = allocTmpGprList(self.sgprPool, nums, self.consts.maxSgprs, alignments, tag, overflowListener)
+    tmpSgpr = allocTmpGprList(self.sgprPool, nums, self.states.regCaps["MaxSgpr"], alignments, tag, overflowListener)
     return tmpSgpr
 
   def defineMultiVgprIndex(self, names: List[str], numVgprs: List[int], align=1):
@@ -470,9 +474,9 @@ class KernelWriterAssembly(KernelWriter):
     for i in range(numDummySgpr):
       module.add(self.defineSgpr("DummySgpr%d"%i, 1))
 
-    if self.sgprPool.size() > self.consts.maxSgprs:
+    if self.sgprPool.size() > self.states.regCaps["MaxSgpr"]:
       print ("warning: Number of defined SGPRS (%d) overflowed max SGPRS (%d)." \
-               % (self.sgprPool.size(), self.consts.maxSgprs))
+               % (self.sgprPool.size(), self.states.regCaps["MaxSgpr"]))
 
     # End of define sgprs
     #------------------------
@@ -1398,7 +1402,7 @@ class KernelWriterAssembly(KernelWriter):
       hbmArgs.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(self.states.userArgsInfo.commonArgsSize), dword=2))
 
       moduleArgs.addModuleAsFlatItems(fastdeepcopy(commonArgs))
-      moduleArgs.add(SWaitCnt(0))
+      moduleArgs.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="load args"))
       moduleArgs.add(SLShiftRightB32(dst=sgpr(sgprArgType), shiftHex=hex(30), src=sgpr(sgprNumsOfGemm), comment="Get arg type"))
       moduleArgs.add(SAndB32(dst=sgpr(sgprNumsOfGemm), src0=hex(0x3FFFFFFF), src1=sgpr(sgprNumsOfGemm), comment="Get nums of gemm"))
 
@@ -1421,11 +1425,11 @@ class KernelWriterAssembly(KernelWriter):
       moduleArgs.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
       moduleArgs.addModuleAsFlatItems(self.getKernelArgLoadModule(kernel, sgprStart, load, 0))
       if self.states.numSgprPreload > 0:
-        moduleArgs.add(SWaitCnt(0))
+        moduleArgs.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="preload"))
       moduleArgs.add(SBranch(labelName=labelLoadEnd.getLabelName()))
       moduleArgs.add(labelHBM)
       moduleArgs.addModuleAsFlatItems(fastdeepcopy(hbmArgs))
-      moduleArgs.add(SWaitCnt(lgkmcnt=0, comment="wait for args to load"))
+      moduleArgs.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for args to load"))
       moduleArgs.add(labelLoadEnd)
 
       if self.states.numSgprPreload > 0:
@@ -1559,10 +1563,10 @@ class KernelWriterAssembly(KernelWriter):
 
       def waitForArgsToLoad():
         if kernel["ProblemType"]["SupportUserArgs"]:
-          moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u/%u bytes of kern args" % \
+          moduleWg.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for %u/%u bytes of kern args" % \
                         (self.argLoader.getOffset() - (self.states.numSgprPreload*4), self.externalArgLoader.getOffset())))
         else:
-          moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % \
+          moduleWg.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for %u bytes of kern args" % \
                               (self.argLoader.getOffset() - (self.states.numSgprPreload*4))))
         moduleWg.addModuleAsFlatItems(moduleScaleAB)
 
@@ -1594,9 +1598,9 @@ class KernelWriterAssembly(KernelWriter):
       if not kernel["ProblemType"]["StridedBatched"]:
         with self.allocTmpSgpr(self.states.laneSGPRCount) as tmpSgpr:
           moduleWg.add(self.loadBatchedAddress(kernel, "WorkGroup2", tmpSgpr))
-        moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait global buffer address ready"))
+        moduleWg.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait global buffer address ready"))
       elif waitForScaleAB:
-        moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for scaleA/B to load"))
+        moduleWg.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for scaleA/B to load"))
 
       labelMultiGemm = Label(label="MultiGemm", comment="")
       labelMultiGemmEnd = Label(label="MultiGemmEnd", comment="")
@@ -1682,7 +1686,7 @@ class KernelWriterAssembly(KernelWriter):
         module.addComment0("Grouped Gemm:: loop start")
         label_Loop_gemm_count = Label("Loop_GemmCount", "")
         module.add(label_Loop_gemm_count)
-        module.add(SWaitCnt(lgkmcnt=0))
+        module.add(SWaitCnt(lgkmcnt=0, kmcnt=0))
         # calculate numTiles
         regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
         module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], tmpSgprRes=regStateRes))
@@ -1724,7 +1728,7 @@ class KernelWriterAssembly(KernelWriter):
         # noLoadLoop
         module.addComment1("Grouped Gemm:: noLoadLoop")
         module.add(label_noLoadLoop)
-        module.add(SWaitCnt(lgkmcnt=0))
+        module.add(SWaitCnt(lgkmcnt=0, kmcnt=0))
         # calculate numTiles
         regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
         module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], tmpSgprRes=regStateRes))
@@ -8967,7 +8971,7 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["ProblemType"]["OutputAmaxD"]:
         module.add(VMovB32(dst=vgpr("AmaxOut"), src="0"))
     if self.states.numStoreSgprToLoad or self.states.numStoreSgprToLoad2: # Wait for kernel args
-      module.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args."%((self.states.numStoreSgprToLoad+self.states.numStoreSgprToLoad2) * 4)))
+      module.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for %u bytes of kern args."%((self.states.numStoreSgprToLoad+self.states.numStoreSgprToLoad2) * 4)))
 
     gsuBackup          = kernel["GlobalSplitU"]
     gsuAccumBackup     = kernel["_GlobalAccumulation"]
@@ -9306,7 +9310,7 @@ class KernelWriterAssembly(KernelWriter):
         assert(kernel["ProblemType"]["ComputeDataType"].isSingle())
         newAlphaVgpr = self.vgprPool.checkOut(1)
         module.add(VMovB32(dst=vgpr(newAlphaVgpr), src=sgpr("Alpha")))
-        module.add(SWaitCnt(lgkmcnt=0, comment="wait for scaleAB load"))
+        module.add(SWaitCnt(lgkmcnt=0, kmcnt=0, comment="wait for scaleAB load"))
         if kernel["ProblemType"]["DataTypeA"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters():
           module.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=sgpr(sgprScaleA)))
         if kernel["ProblemType"]["DataTypeB"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters():
@@ -9684,7 +9688,7 @@ class KernelWriterAssembly(KernelWriter):
     ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], vectorDataTypes, dim=factorDim)
 
     # Use VGPR up to next occupancy threshold:
-    maxVgprs = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), \
+    maxVgprs = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
                                           self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
     # Get estimated numVgprAvailable
     # print("Max vgprs =", maxVgprs, self.vgprPool.size(), self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align))
@@ -10168,6 +10172,14 @@ class KernelWriterAssembly(KernelWriter):
         module.add(DSLoadB128(dst=vgpr(dstVgpr, 4), src=src, ds=ds, comment=comment))
         ds = DSModifiers(offset=dsOffset+bpl/2)
         module.add(DSLoadB128(dst=vgpr(dstVgpr+4, 4), src=src, ds=ds, comment=comment))
+      elif bpl==64:
+        module.add(DSLoadB128(dst=vgpr(dstVgpr, 4), src=src, ds=ds, comment=comment))
+        ds = DSModifiers(offset=dsOffset+bpl/4)
+        module.add(DSLoadB128(dst=vgpr(dstVgpr+4, 4), src=src, ds=ds, comment=comment))
+        ds = DSModifiers(offset=dsOffset+2*bpl/4)
+        module.add(DSLoadB128(dst=vgpr(dstVgpr+8, 4), src=src, ds=ds, comment=comment))
+        ds = DSModifiers(offset=dsOffset+3*bpl/4)
+        module.add(DSLoadB128(dst=vgpr(dstVgpr+12, 4), src=src, ds=ds, comment=comment))
       else:
         assert 0, "bad bpl"
       return module
@@ -11456,13 +11468,13 @@ class KernelWriterAssembly(KernelWriter):
   # Function Suffix
   ##############################################################################
   def functionSuffix(self, kernel):
-    if self.vgprPool.size() > self.consts.maxVgprs:
+    if self.vgprPool.size() > self.states.regCaps["MaxVgpr"]:
       self.states.overflowedResources = 1
-    elif self.sgprPool.size() > self.consts.maxSgprs:
+    elif self.sgprPool.size() > self.states.regCaps["MaxSgpr"]:
       self.states.overflowedResources = 2
 
     if kernel["ScheduleIterAlg"] == 2 and \
-        self.getOccupancy(kernel["NumThreads"], self.vgprPool.size(), \
+        self.getOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
         self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr) < 2:
       self.states.overflowedResources = 6
 

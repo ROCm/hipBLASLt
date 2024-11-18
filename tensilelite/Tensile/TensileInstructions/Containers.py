@@ -388,6 +388,30 @@ class RegisterContainer:
             else:
                 return "%s%s[%u:%u]" % (minusStr, self.regType, self.regIdx, self.regIdx+self.regNum-1)
 
+    def _sameRegBaseAddr(self, b) -> bool:
+        if self.regName is not None and b.regName is not None:
+            return self.regName.name == b.regName.name
+        elif (self.regName, b.regName,) == (None, None,):
+            return self.regIdx == b.regIdx
+        return False
+
+    def __and__(self, b) -> bool:
+        if not isinstance(b, RegisterContainer):
+            return NotImplemented
+
+        if self._sameRegBaseAddr(b):
+            lenA = self.regNum
+            offsetA = sum(self.regName.offsets)
+            lenB = b.regNum
+            offsetB = sum(b.regName.offsets)
+            rangeA = (offsetA, offsetA + lenA,)
+            rangeB = (offsetB, offsetB + lenB,)
+            if rangeA[0] > rangeB[0]:
+                rangeA, rangeB = rangeB, rangeA
+            return rangeA[1] > rangeB[0]
+        return False
+
+
 class HolderContainer(RegisterContainer):
     __slots__ = ('regType', 'regName', 'regIdx', 'regNum', 'isInlineAsm', 'isMinus', \
         'holderName', 'holderIdx', 'holderType')

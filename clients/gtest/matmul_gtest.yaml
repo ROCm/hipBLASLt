@@ -773,6 +773,26 @@ Tests:
   unit_check: 1
   gpu_arch: '120[0-1]'
 
+- name: matmul_one_real_precisions_1b_gfx12
+  category: quick
+  function:
+    matmul: *real_precisions_1b_ocp
+  matrix_size: *one_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha: [ 0.0, 1.0 ]
+  beta: [ 0.0, 2.0 ]
+  gpu_arch: '120[0-1]'
+
+- name: matmul_one_integer_precisions_i8_gfx12
+  category: quick
+  function:
+    matmul: *integer_precisions_i8
+  matrix_size: *one_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha: [ 0.0, 1.0 ]
+  beta: [ 0.0, 2.0 ]
+  gpu_arch: '120[0-1]'
+
 ### END
 - name: matmul_real_1b_dst_f8_SCDInt1
   category: pre_checkin

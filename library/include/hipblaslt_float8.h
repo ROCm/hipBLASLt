@@ -523,8 +523,7 @@ struct HIPBLASLT_EXPORT hipblaslt_f8
     // upcast using device specific intrinsic
     explicit inline HIP_DEVICE operator float() const
     {
-        __hip_fp8_e4m3 tmp(data);
-        return tmp;
+        return internal::cast_to_f32_from_f8(data, __HIP_E4M3);
     }
 
     explicit inline HIP_HOST operator float() const
@@ -655,8 +654,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8
     // upcast using device specific intrinsic
     explicit inline HIP_DEVICE operator float() const
     {
-        __hip_fp8_e5m2 tmp(data);
-        return tmp;
+        return internal::cast_to_f32_from_f8(data, __HIP_E5M2);
     }
 
     explicit inline HIP_HOST operator float() const
