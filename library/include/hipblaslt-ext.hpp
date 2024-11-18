@@ -402,7 +402,7 @@ namespace hipblaslt_ext
         int8_t   beta[16]; //!< The beta value.
         // Epilogue inputs
         void* scaleA; //!< The scaleA input pointer.
-        void* scaleB; //!< The scaleA input pointer.
+        void* scaleB; //!< The scaleB input pointer.
         void* scaleC; //!< The scaleC input pointer.
         void* scaleD; //!< The scaleD input pointer.
         void* scaleAlphaVec; //!< The scaleAlpha vector input pointer.
