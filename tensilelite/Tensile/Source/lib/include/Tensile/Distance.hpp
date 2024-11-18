@@ -356,36 +356,11 @@ namespace TensileLite
             inline double operator()(Key const& p1, Key const& p2) const
             {
                 double distance = 0.0;
+                double gridK = p2.size() > 3 ? p2[3] : p2[2];
 
-                double M = p2[0];
-                double N = p2[1];
-                double B = p2.size() > 3 ? p2[2] : 1;
-                double K = p2.size() > 3 ? p2[3] : p2[2];
-
-                // This is hard coding workaround solution //
-                // If incoming_size falls inside grid boundary (32768 in this case), searching toward larger M,N.
-                // If incoming_N > 32768, searching toward larger M and nearest boundary.
-                // IF incoming_M > 32768, searching toward larger N and nearest boundary.
-                double stepM = (p1[0] <= 32768) ? std::ceil(p1[0] / M) : 1;
-                double stepN = (p1[1] <= 32768) ? std::ceil(p1[1] / N) : 1;
-                if(p1[0] <= 32768 && p1[1] <= 32768)
-                {
-                    distance = std::round(100 * stepM * stepN
-                                          / std::pow((p1[0] * p1[1]) / (stepM * M * stepN * N), 2));
-                }
-                else
-                {
-                    distance = std::round(
-                        10000 * stepM * stepN
-                        * std::pow(std::pow(p1[0] - p2[0], 2) + std::pow(p1[1] - p2[1], 2), 0.5));
-                }
                 // and nearest K
-                double stepK = p1.size() > 3 ? p1[3] : p1[2];
-                distance += (std::abs(K - stepK) / (K + stepK * 8));
-
-                // and nearest B
-                double stepB = p1.size() > 3 ? p1[2] : 1;
-                distance += (std::abs(B - stepB) / (B + stepB * 8));
+                double K = p1.size() > 3 ? p1[3] : p1[2];
+                distance = abs(K - gridK);
 
                 return distance;
             }
