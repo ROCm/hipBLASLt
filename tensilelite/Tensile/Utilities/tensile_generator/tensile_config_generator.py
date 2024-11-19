@@ -95,6 +95,7 @@ match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
 NUM_STAGES = args.num_stages
 DIV_MI = 3 # 33.3%
 MIN_MI = 5 # min 5 solutions
+NONTEMPORALRATIO = 8
 CU = 0
 if match:
     CU = int(match.group('COMPUTE_UNIT').strip())
@@ -283,13 +284,13 @@ def trans_map(trans):
 
 def bias_datatype_map(dtype):
     if dtype == "f16_r":
-        return [datatype_map('f32_r'), datatype_map('f16_r')]
+        return [datatype_map('f16_r')]
     elif dtype == "f32_r":
         return [datatype_map('f32_r')]
     elif dtype == "xf32_r":
-        return [datatype_map('f32_r'), datatype_map('xf32_r')]
+        return [datatype_map('xf32_r')]
     elif dtype == "bf16_r":
-        return [datatype_map('f32_r'), datatype_map('bf16_r')]
+        return [datatype_map('bf16_r')]
     elif dtype == "f8_r":
         return [datatype_map('f8_r')]
     else:
@@ -352,7 +353,6 @@ def find_matmul_instruction(mfma_instruction, size):
 
 def get_groups(matmul_instruction_gen):
     # Extract skinny MTs for Groups
-    NONTEMPORALRATIO = 8
     mi_groups0 = []
     mi_groups1 = []
     mi_left = []
