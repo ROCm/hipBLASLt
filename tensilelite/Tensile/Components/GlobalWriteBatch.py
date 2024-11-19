@@ -78,7 +78,8 @@ class GlobalWriteBatchWriter:
     self.isLocalBarrierInit  = isLocalBarrierInit
     self.activationSetPCStruct = activationSetPCStruct
     self.activationTypeStr     = activationTypeStr
-    self.tmpVgpr = tmpVgpr
+    self.tmpVgpr = tmpVgpr.idx
+    self.tmpVgprSize = tmpVgpr.size
     self.cvtVgprStruct = cvtVgprStruct
     self.batchElementSgprs = batchElementSgprs
     self.tmpSgpr = tmpSgpr
@@ -397,7 +398,7 @@ class GlobalWriteBatchWriter:
         SynchronizerAddEndComment = "Synchronizer read add end_"+str(idx+1)
         SynchronizerAddEndlabel[idx] = Label(self.parentWriter.labels.getNameInc(SynchronizerAddEndlabelString), SynchronizerAddEndComment)
 
-      bufferOOB = self.parentWriter.vgprPool.checkOut(1, "BufferOOB")
+      bufferOOB = self.tmpVgpr + self.tmpVgprSize - 1
       module.add(VMovB32(dst=vgpr(bufferOOB), src="BufferOOB"))
 
       module.add(SMovB32(sgpr(tmpS06+0), sgpr("WSDstart+0"), "Move workspace start"))
@@ -559,7 +560,6 @@ class GlobalWriteBatchWriter:
 
       module.add(SynchronizerAddSkiplabel)
 
-      self.parentWriter.vgprPool.checkIn(bufferOOB)
       self.parentWriter.vgprPool.checkIn(GSUMvgpr)
       module.addComment("buffer add end2\n")
 
@@ -653,7 +653,7 @@ class GlobalWriteBatchWriter:
     loadedDataScaleAlphaVec = {}
 
     if self.kernel["BufferStore"] and self.edge:
-      bufferOOB = self.parentWriter.vgprPool.checkOut(1, "BufferOOB")
+      bufferOOB = self.tmpVgpr + self.tmpVgprSize - 1
       module.add(VMovB32(dst=vgpr(bufferOOB), src="BufferOOB"))
     else:
       bufferOOB = None
@@ -838,9 +838,6 @@ class GlobalWriteBatchWriter:
           module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, self.tmpS01))
           module.add(VMovB32(vgpr(self.tmpVgpr), addrCalc.rowInc, "set shift rows"))
           module.add(VAddU32(vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.tmpVgpr), "shift storeRemap coord1"))
-
-    if self.kernel["BufferStore"] and self.edge:
-      self.parentWriter.vgprPool.checkIn(bufferOOB)
 
     module.add(loadInputCode)
 
