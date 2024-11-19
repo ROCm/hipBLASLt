@@ -73,8 +73,12 @@ parser.add_argument(
     help="If enabled, will search for all mfma instructions")
 
 parser.add_argument(
-    "--full_mi", type=bool, default=False,
+    "--full_stage", type=bool, default=False,
     help="If enabled, will search for all mi instructions")
+
+parser.add_argument(
+    "--num_stages", type=int, default=8,
+    help="How many times to divide matrix")
 
 args = parser.parse_args()
 
@@ -88,7 +92,7 @@ res = subprocess.run("/opt/rocm/llvm/bin/offload-arch", stdout=subprocess.PIPE)
 ArchitectureName = res.stdout.decode("utf-8").strip()
 res = subprocess.run("rocminfo | grep Compute", stdout=subprocess.PIPE, shell=True, env={"ROCR_VISIBLE_DEVICES":"0"})
 match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
-NUM_STAGES = 32
+NUM_STAGES = args.num_stages
 DIV_MI = 3 # 33.3%
 MIN_MI = 5 # min 5 solutions
 CU = 0
@@ -124,7 +128,7 @@ else:
     bf16_instructions = [[16,16,16,1],[32,32,8,1]]
     tf32_instructions = [[16,16,8,1]]
     fp32_instructions = [[16,16,4,1]]
-    fp8_instructions = [[16,16,32,1]]
+    fp8_instructions = [[32,32,16,1], [16,16,32,1]]
 
 
 HIPBLASLT_BENCH_RE = (
@@ -328,7 +332,7 @@ def find_matmul_instruction(mfma_instruction, size):
                 continue
             for n_tiles in reversed(range(1, CU+1)):
                 n_tile_size = size[1] // n_tiles
-                if n_tile_size > 256 // m_tile_size:
+                if n_tile_size > 256:
                     continue
                 wave_tile_n = math.ceil(n_tile_size / mfma_instruction[1])
                 if wave_tile_n <= 0:
@@ -567,10 +571,10 @@ if args.hipblaslt_log and args.gridbase_config is None:
                                 break
                         if len(matmul_instruction_gen) > 0 or len(mi_groups0) > 0 or len(mi_groups1) > 0:
                             matmul_instruction_found = True
-                            if not args.full_mi:
+                            if not args.full_stage:
                                 break
                         else:
-                            max_dim = int(np.argmax(size))
+                            max_dim = int(np.argmax(size[:2]))
                             size[max_dim] = size[max_dim] // 2
 
                 if not matmul_instruction_found:
