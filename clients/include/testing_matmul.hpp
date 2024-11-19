@@ -3015,11 +3015,13 @@ void testing_matmul_with_bias(const Arguments& arg,
                 }
                 else
                 {
-                    if(arg.skip_slow_solution_ratio)
-                        pre_gpu_time(
-                            arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-                    for(int i = 0; i < number_cold_calls; i++)
+                    for(int i = 0; i < number_cold_calls + 1; i++)
                     {
+                        if (i == 1 && arg.skip_slow_solution_ratio){
+                            pre_gpu_time(
+                                arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
+                        }
+
                         auto ptr_matmul = matmul[i % block_count][0];
                         auto ptr_alpha  = arg.scaleAlpha_vector
                                               ? (dScaleAlphaVec[0].as<char>())
@@ -3112,6 +3114,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                               event_gpu_time_end,
                               gpu_time_used,
                               stream);
+                hipblaslt_cout << "gpu_time_used = " << gpu_time_used << "us / " << number_hot_calls << " calls" << std::endl;
                 freq_monitor.stop();
             }
             else
