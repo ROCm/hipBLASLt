@@ -896,13 +896,17 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
 // A function to determine the default compute_input_type
 std::tuple<hipDataType, hipDataType> derive_unset_compute_input_type(const Arguments& arg)
 {
-    static const std::set<hipDataType> supported_compute_input_types = {HIP_R_32F,
-                                                                        HIP_R_16BF,
-                                                                        HIP_R_16F,
-                                                                        HIP_R_8F_E5M2_FNUZ,
-                                                                        HIP_R_8F_E5M2,
-                                                                        HIP_R_8F_E4M3_FNUZ,
-                                                                        HIP_R_8F_E4M3};
+    static const std::set<hipDataType> supported_compute_input_types = {
+        HIP_R_32F,
+        HIP_R_16BF,
+        HIP_R_16F,
+#ifdef ROCM_USE_FLOAT8
+        HIP_R_8F_E4M3,
+        HIP_R_8F_E5M2,
+#endif
+        HIP_R_8F_E4M3_FNUZ,
+        HIP_R_8F_E5M2_FNUZ,
+    };
 
     hipDataType real_compute_input_typeA = arg.compute_input_typeA;
     hipDataType real_compute_input_typeB = arg.compute_input_typeB;
