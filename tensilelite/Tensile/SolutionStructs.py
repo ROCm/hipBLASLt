@@ -2801,8 +2801,6 @@ class Solution(collections.abc.Mapping):
             if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
               state["GlobalReadVectorWidthA"] = int(curGRVW)
             curGRVW *= 2
-    else:
-      state["GlobalReadVectorWidthA"] = 1
 
     # Default GlobalReadVectorWidthB
     if state["EnableMatrixInstruction"]:
@@ -2821,8 +2819,6 @@ class Solution(collections.abc.Mapping):
             if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:
               state["GlobalReadVectorWidthB"] = int(curGRVW)
             curGRVW *= 2
-    else:
-      state["GlobalReadVectorWidthB"] = 1
 
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
     if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
@@ -3830,7 +3826,6 @@ class Solution(collections.abc.Mapping):
       state["PrefetchLocalRead"] = 0
     if not state["EnableMatrixInstruction"]:
       state["ClusterLocalRead"] = 0
-      state["PrefetchLocalRead"] = 0
 
     # reject iterations are not enough to use wider local read
     if state["EnableMatrixInstruction"] and state["PrefetchLocalRead"] > 0:

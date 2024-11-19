@@ -1,5 +1,5 @@
 TestParameters:
-  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx940, skip-gfx941, skip-gfx942, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030] # not supported by arch
+  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx940, skip-gfx941, skip-gfx942] # not supported by arch
 
 GlobalParameters:
   MinimumRequiredVersion: 4.14.0
@@ -20,14 +20,15 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: d
+      DataType: s
+      ComputeDataType: s
       TransposeA: false
       TransposeB: false
-      UseScaleAlphaVec: 0
-      UseBeta: true
-      UseBias: 0
+      # UseScaleAlphaVec: 1
+      # UseBeta: true
+      # UseBias: 1
       Batched: true
-      Activation: false
+      # Activation: true
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -39,11 +40,19 @@ BenchmarkProblems:
         - ThreadTile:
           - [1, 1]
           - [2, 2]
+          - [4, 4]
+          - [8, 8]
         - WorkGroup:
-          - [8, 8, 1]
-        - DepthU: [8, 16]
+          - [4, 8, 1]
+          - [8, 4, 1]
+          - [2, 16, 1]
+          - [16, 2, 1]
+        - DepthU: [8, 16, 32]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
+        - LocalReadVectorWidth: [1]
+        - GlobalReadVectorWidthA: [1]
+        - GlobalReadVectorWidthB: [1]
         - ScheduleIterAlg: [1]
         - WorkGroupMapping: [1]
         - GlobalSplitU: [1]
@@ -60,14 +69,15 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: d
+      DataType: s
+      ComputeDataType: s
       TransposeA: false
       TransposeB: true
-      UseScaleAlphaVec: 0
-      UseBeta: true
-      UseBias: 0
+      # UseScaleAlphaVec: 1
+      # UseBeta: true
+      # UseBias: 1
       Batched: true
-      Activation: false
+      # Activation: true
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -79,11 +89,19 @@ BenchmarkProblems:
         - ThreadTile:
           - [1, 1]
           - [2, 2]
+          - [4, 4]
+          - [8, 8]
         - WorkGroup:
-          - [8, 8, 1]
-        - DepthU: [8, 16]
+          - [4, 8, 1]
+          - [8, 4, 1]
+          - [2, 16, 1]
+          - [16, 2, 1]
+        - DepthU: [8, 16, 32]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
+        - LocalReadVectorWidth: [1]
+        - GlobalReadVectorWidthA: [1]
+        - GlobalReadVectorWidthB: [1]
         - ScheduleIterAlg: [1]
         - WorkGroupMapping: [1]
         - GlobalSplitU: [1]
@@ -100,14 +118,15 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: d
+      DataType: s
+      ComputeDataType: s
       TransposeA: true
       TransposeB: false
-      UseScaleAlphaVec: 0
-      UseBeta: true
-      UseBias: 0
+      # UseScaleAlphaVec: 1
+      # UseBeta: true
+      # UseBias: 1
       Batched: true
-      Activation: false
+      # Activation: true
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -119,11 +138,19 @@ BenchmarkProblems:
         - ThreadTile:
           - [1, 1]
           - [2, 2]
+          - [4, 4]
+          - [8, 8]
         - WorkGroup:
-          - [8, 8, 1]
-        - DepthU: [8, 16]
+          - [4, 8, 1]
+          - [8, 4, 1]
+          - [2, 16, 1]
+          - [16, 2, 1]
+        - DepthU: [8, 16, 32]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
+        - LocalReadVectorWidth: [1]
+        - GlobalReadVectorWidthA: [1]
+        - GlobalReadVectorWidthB: [1]
         - ScheduleIterAlg: [1]
         - WorkGroupMapping: [1]
         - GlobalSplitU: [1]
@@ -140,14 +167,15 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: d
+      DataType: s
+      ComputeDataType: s
       TransposeA: true
       TransposeB: true
-      UseScaleAlphaVec: 0
-      UseBeta: true
-      UseBias: 0
+      # UseScaleAlphaVec: 1
+      # UseBeta: true
+      # UseBias: 1
       Batched: true
-      Activation: false
+      # Activation: true
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -159,11 +187,19 @@ BenchmarkProblems:
         - ThreadTile:
           - [1, 1]
           - [2, 2]
+          - [4, 4]
+          - [8, 8]
         - WorkGroup:
-          - [8, 8, 1]
-        - DepthU: [8, 16]
+          - [4, 8, 1]
+          - [8, 4, 1]
+          - [2, 16, 1]
+          - [16, 2, 1]
+        - DepthU: [8, 16, 32]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
+        - LocalReadVectorWidth: [1]
+        - GlobalReadVectorWidthA: [1]
+        - GlobalReadVectorWidthB: [1]
         - ScheduleIterAlg: [1]
         - WorkGroupMapping: [1]
         - GlobalSplitU: [1]
