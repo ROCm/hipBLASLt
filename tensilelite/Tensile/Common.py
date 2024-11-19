@@ -1125,12 +1125,6 @@ validParameters = {
     # Intended for use with custom kernels which have confirmed to be correct
     "NoReject":                    [False, True],
 
-    "MinVgprNumber":                list(range(0,256)),
-
-    "MaxVgprNumber":                list(range(0,257)),
-
-    "TotalVgprNumber":              list(range(0,513)),
-
     # Debug use only.
     "ActivationFused":             [False, True],
 
@@ -1241,9 +1235,6 @@ defaultBenchmarkCommonParameters = [
     {"PreloadKernArgs":           [ True ] },
     {"CustomKernelName":          [ "" ] },
     {"NoReject":                  [ False ]},
-    {"MinVgprNumber":             [0]},
-    {"MaxVgprNumber":             [256]},
-    {"TotalVgprNumber":           [512]},
     {"StoreRemapVectorWidth":     [ 0 ] },
     {"SourceSwap":                [ False ] },
     {"StorePriorityOpt":          [ False ] },
