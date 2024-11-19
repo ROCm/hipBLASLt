@@ -2974,11 +2974,14 @@ void testing_matmul_with_bias(const Arguments& arg,
                             gemmVec[b].initialize(heuristicResult[sol].algo,
                                                   tuningVec[heuristicTuningIndex[sol]],
                                                   *dWorkspace));
-                    if(arg.skip_slow_solution_ratio)
-                        pre_gpu_time(
-                            arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-                    for(int i = 0; i < number_cold_calls; i++)
+                                                  
+                    const int cold_itr_addition = arg.skip_slow_solution_ratio ? 1 : 0;
+                    for(int i = 0; i < number_cold_calls + cold_itr_addition; i++)
                     {
+                        if (i == 1 && arg.skip_slow_solution_ratio){
+                            pre_gpu_time(
+                                arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
+                        }
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
                         if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, (*dDp));
@@ -3015,7 +3018,8 @@ void testing_matmul_with_bias(const Arguments& arg,
                 }
                 else
                 {
-                    for(int i = 0; i < number_cold_calls + 1; i++)
+                    const int cold_itr_addition = arg.skip_slow_solution_ratio ? 1 : 0;
+                    for(int i = 0; i < number_cold_calls + cold_itr_addition; i++)
                     {
                         if (i == 1 && arg.skip_slow_solution_ratio){
                             pre_gpu_time(
@@ -3114,7 +3118,6 @@ void testing_matmul_with_bias(const Arguments& arg,
                               event_gpu_time_end,
                               gpu_time_used,
                               stream);
-                hipblaslt_cout << "gpu_time_used = " << gpu_time_used << "us / " << number_hot_calls << " calls" << std::endl;
                 freq_monitor.stop();
             }
             else
@@ -3139,11 +3142,14 @@ void testing_matmul_with_bias(const Arguments& arg,
                                                   gemm_count * sizeof(hipblaslt_ext::UserArguments),
                                                   hipMemcpyHostToDevice));
                     }
-                    if(arg.skip_slow_solution_ratio)
-                        pre_gpu_time(
-                            arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-                    for(int i = 0; i < number_cold_calls; i++)
+
+                    const int cold_itr_addition = arg.skip_slow_solution_ratio ? 1 : 0;
+                    for(int i = 0; i < number_cold_calls + cold_itr_addition; i++)
                     {
+                        if(i == 1 && arg.skip_slow_solution_ratio){
+                            pre_gpu_time(
+                                arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
+                        }
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(
                             d_userArgsVec[i % block_count], stream));
                         if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
@@ -3194,11 +3200,13 @@ void testing_matmul_with_bias(const Arguments& arg,
                             false,
                             stream));
 
-                    if(arg.skip_slow_solution_ratio)
-                        pre_gpu_time(
-                            arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-                    for(int i = 0; i < number_cold_calls; i++)
+                    const int cold_itr_addition = arg.skip_slow_solution_ratio ? 1 : 0;
+                    for(int i = 0; i < number_cold_calls + cold_itr_addition; i++)
                     {
+                        if(i == 1 && arg.skip_slow_solution_ratio){
+                            pre_gpu_time(
+                                arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
+                        }
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
                         if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
                             copy_gemm_to_host(stream, gemm_count, hD_1, (*dDp));
