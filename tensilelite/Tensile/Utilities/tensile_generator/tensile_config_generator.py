@@ -190,116 +190,6 @@ HIPBLASLT_BENCH_RE_SAB_BIAS = build_pattern(has_scale=True, has_bias=True)
 HIPBLASLT_BENCH_RE_SAB_BIAS_ACT = build_pattern(has_scale=True, has_bias=True, has_activation=True)
 
 
-# HIPBLASLT_BENCH_RE = (
-#     r"(?P<CMD>\w+) --api_method c "
-#     r"-m (?P<M>[\d ]+)"
-#     r"-n (?P<N>[\d ]+)"
-#     r"-k (?P<K>[\d ]+)"
-#     r"--lda (?P<LDA>[\d ]+)"
-#     r"--ldb (?P<LDB>[\d ]+)"
-#     r"--ldc (?P<LDC>[\d ]+)"
-#     r"--ldd (?P<LDD>[\d ]+)"
-#     r"--stride_a (?P<STRIDE_A>[\d ]+)"
-#     r"--stride_b (?P<STRIDE_B>[\d ]+)"
-#     r"--stride_c (?P<STRIDE_C>[\d ]+)"
-#     r"--stride_d (?P<STRIDE_D>[\d ]+)"
-#     r"--alpha (?P<ALPHA>[\d\. ]+)"
-#     r"--beta (?P<BETA>[\d\. ]+)"
-#     r"--transA (?P<TRANS_A>[\w ]+)"
-#     r"--transB (?P<TRANS_B>[\w ]+)"
-#     r"--batch_count (?P<BATCH_COUNT>[\d ]+)"
-#     r"--a_type (?P<A_TYPE>[\w ]+)"
-#     r"--b_type (?P<B_TYPE>[\w ]+)"
-#     r"--c_type (?P<C_TYPE>[\w ]+)"
-#     r"--d_type (?P<D_TYPE>[\w ]+)"
-#     r"--scale_type (?P<SCALE_TYPE>[\w ]+)"
-#     r"--bias_type (?P<BIAS_TYPE>[\w ]+)"
-#     r"--compute_type (?P<COMPUTE_TYPE>[\w ]+)")
-
-# HIPBLASLT_BENCH_RE_SAB = (
-#     r"(?P<CMD>\w+) --api_method c "
-#     r"-m (?P<M>[\d ]+)"
-#     r"-n (?P<N>[\d ]+)"
-#     r"-k (?P<K>[\d ]+)"
-#     r"--lda (?P<LDA>[\d ]+)"
-#     r"--ldb (?P<LDB>[\d ]+)"
-#     r"--ldc (?P<LDC>[\d ]+)"
-#     r"--ldd (?P<LDD>[\d ]+)"
-#     r"--stride_a (?P<STRIDE_A>[\d ]+)"
-#     r"--stride_b (?P<STRIDE_B>[\d ]+)"
-#     r"--stride_c (?P<STRIDE_C>[\d ]+)"
-#     r"--stride_d (?P<STRIDE_D>[\d ]+)"
-#     r"--alpha (?P<ALPHA>[\d\. ]+)"
-#     r"--beta (?P<BETA>[\d\. ]+)"
-#     r"--transA (?P<TRANS_A>[\w ]+)"
-#     r"--transB (?P<TRANS_B>[\w ]+)"
-#     r"--batch_count (?P<BATCH_COUNT>[\d ]+)"
-#     r"--scaleA (?P<SCALE_A>[\w ]+)"
-#     r"--scaleB (?P<SCALE_B>[\w ]+)"
-#     r"--a_type (?P<A_TYPE>[\w ]+)"
-#     r"--b_type (?P<B_TYPE>[\w ]+)"
-#     r"--c_type (?P<C_TYPE>[\w ]+)"
-#     r"--d_type (?P<D_TYPE>[\w ]+)"
-#     r"--scale_type (?P<SCALE_TYPE>[\w ]+)"
-#     r"--bias_type (?P<BIAS_TYPE>[\w ]+)"
-#     r"--compute_type (?P<COMPUTE_TYPE>[\w ]+)")
-
-# HIPBLASLT_BENCH_RE_BIAS = (
-#     r"(?P<CMD>\w+) --api_method c "
-#     r"-m (?P<M>[\d ]+)"
-#     r"-n (?P<N>[\d ]+)"
-#     r"-k (?P<K>[\d ]+)"
-#     r"--lda (?P<LDA>[\d ]+)"
-#     r"--ldb (?P<LDB>[\d ]+)"
-#     r"--ldc (?P<LDC>[\d ]+)"
-#     r"--ldd (?P<LDD>[\d ]+)"
-#     r"--stride_a (?P<STRIDE_A>[\d ]+)"
-#     r"--stride_b (?P<STRIDE_B>[\d ]+)"
-#     r"--stride_c (?P<STRIDE_C>[\d ]+)"
-#     r"--stride_d (?P<STRIDE_D>[\d ]+)"
-#     r"--alpha (?P<ALPHA>[\d\. ]+)"
-#     r"--beta (?P<BETA>[\d\. ]+)"
-#     r"--transA (?P<TRANS_A>[\w ]+)"
-#     r"--transB (?P<TRANS_B>[\w ]+)"
-#     r"--batch_count (?P<BATCH_COUNT>[\d ]+)"
-#     r"--bias_vector --bias_source (?P<BIAS_SOURCE>[\w ]+)"
-#     r"--a_type (?P<A_TYPE>[\w ]+)"
-#     r"--b_type (?P<B_TYPE>[\w ]+)"
-#     r"--c_type (?P<C_TYPE>[\w ]+)"
-#     r"--d_type (?P<D_TYPE>[\w ]+)"
-#     r"--scale_type (?P<SCALE_TYPE>[\w ]+)"
-#     r"--bias_type (?P<BIAS_TYPE>[\w ]+)"
-#     r"--compute_type (?P<COMPUTE_TYPE>[\w ]+)")
-
-# HIPBLASLT_BENCH_RE_SAB_BIAS = (
-#     r"(?P<CMD>\w+) --api_method c "
-#     r"-m (?P<M>[\d ]+)"
-#     r"-n (?P<N>[\d ]+)"
-#     r"-k (?P<K>[\d ]+)"
-#     r"--lda (?P<LDA>[\d ]+)"
-#     r"--ldb (?P<LDB>[\d ]+)"
-#     r"--ldc (?P<LDC>[\d ]+)"
-#     r"--ldd (?P<LDD>[\d ]+)"
-#     r"--stride_a (?P<STRIDE_A>[\d ]+)"
-#     r"--stride_b (?P<STRIDE_B>[\d ]+)"
-#     r"--stride_c (?P<STRIDE_C>[\d ]+)"
-#     r"--stride_d (?P<STRIDE_D>[\d ]+)"
-#     r"--alpha (?P<ALPHA>[\d\. ]+)"
-#     r"--beta (?P<BETA>[\d\. ]+)"
-#     r"--transA (?P<TRANS_A>[\w ]+)"
-#     r"--transB (?P<TRANS_B>[\w ]+)"
-#     r"--batch_count (?P<BATCH_COUNT>[\d ]+)"
-#     r"--scaleA (?P<SCALE_A>[\w ]+)"
-#     r"--scaleB (?P<SCALE_B>[\w ]+)"
-#     r"--bias_vector --bias_source (?P<BIAS_SOURCE>[\w ]+)"
-#     r"--a_type (?P<A_TYPE>[\w ]+)"
-#     r"--b_type (?P<B_TYPE>[\w ]+)"
-#     r"--c_type (?P<C_TYPE>[\w ]+)"
-#     r"--d_type (?P<D_TYPE>[\w ]+)"
-#     r"--scale_type (?P<SCALE_TYPE>[\w ]+)"
-#     r"--bias_type (?P<BIAS_TYPE>[\w ]+)"
-#     r"--compute_type (?P<COMPUTE_TYPE>[\w ]+)")
-
 # Function to extract problem sizes from a line
 def extract_problem_size(match):
     return [int(match.group('M').strip()), int(match.group('N').strip()), int(match.group('BATCH_COUNT').strip()), int(match.group('K').strip())]
@@ -387,6 +277,7 @@ def find_matmul_instruction(mfma_instruction, size):
     for bm in range(int(math.log(mfma_instruction[3],2))+1):
         for m_tiles in reversed(range(1, CU+1)):
             m_tile_size = size[0] // m_tiles
+            # TODO:fp8 384x384
             if m_tile_size > 256:
                 continue
             wave_tile_m = math.ceil(m_tile_size / mfma_instruction[0])
@@ -409,8 +300,7 @@ def find_matmul_instruction(mfma_instruction, size):
                             if wave_tile_n // (2**l) >= 1 and wave_tile_n // (2**l) <= 32:
                                 matmul_instruction[-3] = wave_tile_n // (2**l)
                                 matmul_instruction[-1] = 2**l
-
-                                yield matmul_instruction
+                                yield copy.deepcopy(matmul_instruction)
 
 def get_groups(matmul_instruction_gen):
     # Extract skinny MTs for Groups
