@@ -78,7 +78,8 @@ class GlobalWriteBatchWriter:
     self.isLocalBarrierInit  = isLocalBarrierInit
     self.activationSetPCStruct = activationSetPCStruct
     self.activationTypeStr     = activationTypeStr
-    self.tmpVgpr = tmpVgpr
+    self.tmpVgpr = tmpVgpr.idx
+    self.tmpVgprSize = tmpVgpr.size
     self.cvtVgprStruct = cvtVgprStruct
     self.batchElementSgprs = batchElementSgprs
     self.tmpSgpr = tmpSgpr
@@ -397,7 +398,7 @@ class GlobalWriteBatchWriter:
         SynchronizerAddEndComment = "Synchronizer read add end_"+str(idx+1)
         SynchronizerAddEndlabel[idx] = Label(self.parentWriter.labels.getNameInc(SynchronizerAddEndlabelString), SynchronizerAddEndComment)
 
-      bufferOOB = self.parentWriter.vgprPool.checkOut(1, "BufferOOB")
+      bufferOOB = self.tmpVgpr + self.tmpVgprSize - 1
       module.add(VMovB32(dst=vgpr(bufferOOB), src="BufferOOB"))
 
       module.add(SMovB32(sgpr(tmpS06+0), sgpr("WSDstart+0"), "Move workspace start"))
@@ -559,7 +560,6 @@ class GlobalWriteBatchWriter:
 
       module.add(SynchronizerAddSkiplabel)
 
-      self.parentWriter.vgprPool.checkIn(bufferOOB)
       self.parentWriter.vgprPool.checkIn(GSUMvgpr)
       module.addComment("buffer add end2\n")
 
@@ -653,7 +653,7 @@ class GlobalWriteBatchWriter:
     loadedDataScaleAlphaVec = {}
 
     if self.kernel["BufferStore"] and self.edge:
-      bufferOOB = self.parentWriter.vgprPool.checkOut(1, "BufferOOB")
+      bufferOOB = self.tmpVgpr + self.tmpVgprSize - 1
       module.add(VMovB32(dst=vgpr(bufferOOB), src="BufferOOB"))
     else:
       bufferOOB = None
@@ -838,9 +838,6 @@ class GlobalWriteBatchWriter:
           module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, self.tmpS01))
           module.add(VMovB32(vgpr(self.tmpVgpr), addrCalc.rowInc, "set shift rows"))
           module.add(VAddU32(vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.tmpVgpr), "shift storeRemap coord1"))
-
-    if self.kernel["BufferStore"] and self.edge:
-      self.parentWriter.vgprPool.checkIn(bufferOOB)
 
     module.add(loadInputCode)
 
@@ -1993,9 +1990,14 @@ class GlobalWriteBatchWriter:
           # Generate single f32 code if edge is detected.
           isPK = False
           if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-            if self.parentWriter.states.archCaps["NoSDWA"]:
+            if self.parentWriter.states.archCaps["VOP3ByteSel"]:
               sb = 0 if self.gwvw == 1 else 1
-              module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
+              clangver = globalParameters['AMDClangVersion'].split(".")
+              clangMaj = int(clangver[0])
+              if not (clangMaj >= 19):
+                module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
+              else:
+                module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(byte_sel=sb)))
             else:
               sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
               module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
@@ -2024,9 +2026,14 @@ class GlobalWriteBatchWriter:
           # Generate single f32 code if edge is detected.
           isPK = False
           if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-            if self.parentWriter.states.archCaps["NoSDWA"]:
+            if self.parentWriter.states.archCaps["VOP3ByteSel"]:
               sb = 0 if self.gwvw == 1 else 1
-              module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
+              clangver = globalParameters['AMDClangVersion'].split(".")
+              clangMaj = int(clangver[0])
+              if not (clangMaj >= 19):
+                module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
+              else:
+                module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(byte_sel=sb)))
             else:
               sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
               module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
@@ -2038,7 +2045,7 @@ class GlobalWriteBatchWriter:
             if self.parentWriter.states.archCaps["NoSDWA"]:
               # Enable WORD_0 of 2-nd VGPR with vi=4 for vw=8
               sb = 0 if vi%4 == 0 else 1
-              module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[sb])))
+              module.add(VCvtPkBF8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[sb])))
             else:
               # Enable WORD_0 of 2-nd VGPR with vi=4 for vw=8
               sb = SelectBit.WORD_0 if vi%4 == 0 else SelectBit.WORD_1

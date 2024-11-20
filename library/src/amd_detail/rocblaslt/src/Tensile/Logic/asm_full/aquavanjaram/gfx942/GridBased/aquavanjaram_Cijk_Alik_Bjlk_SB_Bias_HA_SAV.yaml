@@ -142,8 +142,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 4, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -383,8 +381,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 4, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -514,7 +510,6 @@
     ThreadTile1: 1
     ThreadTileA: 8
     ThreadTileB: 1
-    TotalVgprNumber: 512
     TransposeLDS: 1
     TransposeLDSMetadata: true
     ULSGRODoubleG2L: 0
@@ -663,8 +658,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 4, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -794,7 +787,6 @@
     ThreadTile1: 1
     ThreadTileA: 16
     ThreadTileB: 1
-    TotalVgprNumber: 512
     TransposeLDS: 1
     TransposeLDSMetadata: true
     ULSGRODoubleG2L: 0
@@ -943,8 +935,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 4, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -1074,7 +1064,6 @@
     ThreadTile1: 1
     ThreadTileA: 4
     ThreadTileB: 1
-    TotalVgprNumber: 512
     TransposeLDS: 1
     TransposeLDSMetadata: true
     ULSGRODoubleG2L: 0
@@ -1223,8 +1212,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 4, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -1354,7 +1341,6 @@
     ThreadTile1: 1
     ThreadTileA: 4
     ThreadTileB: 1
-    TotalVgprNumber: 512
     TransposeLDS: 1
     TransposeLDSMetadata: true
     ULSGRODoubleG2L: 0
