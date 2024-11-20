@@ -9693,14 +9693,19 @@ class KernelWriterAssembly(KernelWriter):
 
     ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], vectorDataTypes, dim=factorDim)
 
-    # Use VGPR up to next occupancy threshold:
-    maxVgprs, occupancy = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
-                                                      self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
-    # Set occupancy limit for register pools
-    # TODO: Support GSUMBSK
-    if kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel':
-      self.vgprPool.setOccupancyLimit(self.states.regCaps["MaxVgpr"], self.states.regCaps["PhysicalMaxVgpr"] // occupancy)
-      self.sgprPool.setOccupancyLimit(self.states.regCaps["MaxSgpr"], self.states.regCaps["PhysicalMaxSgpr"] // occupancy)
+    def setOccupancy():
+      # Use VGPR up to next occupancy threshold:
+      maxVgprs, occupancy = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
+                                                        self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
+      # Set occupancy limit for register pools
+      # TODO: Support GSUMBSK
+      # TODO: Support gfx120X
+      if (kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel') and (kernel["ISA"][0] != 12):
+        self.vgprPool.setOccupancyLimit(self.states.regCaps["MaxVgpr"], self.states.regCaps["PhysicalMaxVgpr"] // occupancy)
+        self.sgprPool.setOccupancyLimit(self.states.regCaps["MaxSgpr"], self.states.regCaps["PhysicalMaxSgpr"] // occupancy)
+      return maxVgprs, occupancy
+
+    maxVgprs, occupancy = setOccupancy()
     # Get estimated numVgprAvailable
     # print("Max vgprs =", maxVgprs, self.vgprPool.size(), self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align))
     numVgprAvailable = self.vgprPool.availableBlockMaxVgpr(maxVgprs, ss.numVgprsPerElement, ss.align)
@@ -9721,13 +9726,7 @@ class KernelWriterAssembly(KernelWriter):
           % (minElements,ss.numVgprsPerElement))
       self.vgprPool.growPool(0, minElements, ss.numVgprsPerElement, \
         "grow-pool for GlobalWrite")
-      maxVgprs, occupancy = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
-                                                        self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
-      # Update occupancy limit for register pools
-      # TODO: Support GSUMBSK
-      if kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel':
-        self.vgprPool.setOccupancyLimit(self.states.regCaps["MaxVgpr"], self.states.regCaps["PhysicalMaxVgpr"] // occupancy)
-        self.sgprPool.setOccupancyLimit(self.states.regCaps["MaxSgpr"], self.states.regCaps["PhysicalMaxSgpr"] // occupancy)
+      maxVgprs, occupancy = setOccupancy()
       numVgprAvailable = self.vgprPool.available()
 
     # set atomicW after we potentially resize GWVW
