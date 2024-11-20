@@ -261,7 +261,6 @@ globalParameters["Architecture"] = "all"
 # might be deprecated
 globalParameters["EnableHalf"] = False
 globalParameters["ClientArgs"] = ""
-globalParameters["PackageLibrary"] = False
 
 # perf model
 globalParameters["PerfModelL2ReadHits"] = 0.0
