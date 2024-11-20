@@ -45,7 +45,7 @@
             concatenate("File: ", __FILE__, " (", __LINE__, ") CL Error code: ", (x))); \
     }
 
-namespace Tensile
+namespace TensileLite
 {
 
     namespace ocl
@@ -66,7 +66,7 @@ namespace Tensile
 
     } // namespace ocl
 
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace cl
 {

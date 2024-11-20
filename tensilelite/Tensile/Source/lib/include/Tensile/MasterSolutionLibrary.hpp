@@ -34,7 +34,7 @@
 #include <Tensile/SolutionLibrary.hpp>
 #include <Tensile/Tensile.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
 
     /**
@@ -238,4 +238,4 @@ namespace Tensile
         }
     };
 
-} // namespace Tensile
+} // namespace TensileLite

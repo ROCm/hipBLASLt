@@ -35,7 +35,7 @@
 #include <Tensile/TensorDescriptor.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     const size_t TensorDescriptor::UseDefaultStride = static_cast<size_t>(-1);
 
@@ -120,4 +120,4 @@ namespace Tensile
         return stream << t.ToString();
     }
 
-} // namespace Tensile
+} // namespace TensileLite

@@ -28,7 +28,7 @@
 
 #include <mutex>
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename Class>
     class LazySingleton
@@ -43,4 +43,4 @@ namespace Tensile
 
     private:
     };
-} // namespace Tensile
+} // namespace TensileLite

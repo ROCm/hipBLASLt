@@ -26,7 +26,7 @@
 
 #pragma once
 
-namespace Tensile
+namespace TensileLite
 {
     class ContractionProblemParameters;
     class ContractionProblem;
@@ -34,4 +34,4 @@ namespace Tensile
     class ContractionProblemGroupedGemm;
     struct ContractionInputs;
     struct ContractionGroupedInputs;
-} // namespace Tensile
+} // namespace TensileLite

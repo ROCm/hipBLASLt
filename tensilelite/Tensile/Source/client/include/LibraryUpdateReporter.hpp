@@ -33,7 +33,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -89,4 +89,4 @@ namespace Tensile
             double      m_fastestSolutionSpeed = -1.0;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

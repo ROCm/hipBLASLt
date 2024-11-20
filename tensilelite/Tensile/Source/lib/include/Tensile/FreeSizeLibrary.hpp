@@ -29,7 +29,7 @@
 #include <set>
 #include <vector>
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename Value>
     struct FreeSizeEntry
@@ -153,4 +153,4 @@ namespace Tensile
             return solutions;
         }
     };
-} // namespace Tensile
+} // namespace TensileLite

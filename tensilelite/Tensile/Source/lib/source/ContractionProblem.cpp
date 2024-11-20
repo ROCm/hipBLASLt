@@ -34,7 +34,7 @@
 #include <cstddef>
 #include <set>
 
-namespace Tensile
+namespace TensileLite
 {
     ContractionProblem::ContractionProblem(size_t size, size_t workspaceSize)
         : m_workspaceSize(workspaceSize)
@@ -64,9 +64,9 @@ namespace Tensile
                                                                 size_t   dStride,
                                                                 double   beta)
     {
-        Tensile::ContractionProblemGemm::FreeIndices  free(2);
-        Tensile::ContractionProblemGemm::BoundIndices bound(1);
-        Tensile::ContractionProblemGemm::BatchIndices batch(1);
+        TensileLite::ContractionProblemGemm::FreeIndices  free(2);
+        TensileLite::ContractionProblemGemm::BoundIndices bound(1);
+        TensileLite::ContractionProblemGemm::BatchIndices batch(1);
 
         free[0].isA = true;
         free[0].i = free[0].c = free[0].d = 0;
@@ -177,7 +177,7 @@ namespace Tensile
                                                         TensorDescriptor const& d,
                                                         double                  beta)
     {
-        Tensile::ContractionProblemGemm::FreeIndices free(2);
+        TensileLite::ContractionProblemGemm::FreeIndices free(2);
         BoundIndex                                   bound;
 
         free[0].isA = true;
@@ -1399,21 +1399,21 @@ namespace Tensile
         // clang-format on
 
         // Descriptor for input matrix C
-        Tensile::TensorDescriptor c{"c", typeC, {m, n, batch_count}, {1, m, m * n}};
+        TensileLite::TensorDescriptor c{"c", typeC, {m, n, batch_count}, {1, m, m * n}};
 
         // Descriptor for output matrix D
-        Tensile::TensorDescriptor d{"d", typeD, {m, n, batch_count}, {1, m, m * n}};
+        TensileLite::TensorDescriptor d{"d", typeD, {m, n, batch_count}, {1, m, m * n}};
 
-        Tensile::TensorDescriptor e{"e"};
-        Tensile::TensorDescriptor bias{"bias"};
-        Tensile::TensorDescriptor scaleA("scaleA");
-        Tensile::TensorDescriptor scaleB("scaleB");
-        Tensile::TensorDescriptor scaleC("scaleC");
-        Tensile::TensorDescriptor scaleD("scaleD");
-        Tensile::TensorDescriptor scaleAlpha{"scaleAlpha"};
+        TensileLite::TensorDescriptor e{"e"};
+        TensileLite::TensorDescriptor bias{"bias"};
+        TensileLite::TensorDescriptor scaleA("scaleA");
+        TensileLite::TensorDescriptor scaleB("scaleB");
+        TensileLite::TensorDescriptor scaleC("scaleC");
+        TensileLite::TensorDescriptor scaleD("scaleD");
+        TensileLite::TensorDescriptor scaleAlpha{"scaleAlpha"};
 
         // The ContractionProblemGemm
-        Tensile::ContractionProblemGemm problem{a,
+        TensileLite::ContractionProblemGemm problem{a,
                                                 b,
                                                 c,
                                                 d,
@@ -1449,10 +1449,10 @@ namespace Tensile
         if(useBias)
         {
             DataType                                biasType = biasDataTypeWhiteList[0];
-            Tensile::ContractionProblemGemm::TENSOR biasSrc
-                = static_cast<Tensile::ContractionProblemGemm::TENSOR>(biasSrcWhiteList[0]);
+            TensileLite::ContractionProblemGemm::TENSOR biasSrc
+                = static_cast<TensileLite::ContractionProblemGemm::TENSOR>(biasSrcWhiteList[0]);
             problem.setBias(biasType, 1, 0, useGradient, biasSrc);
-            problem.setParams().setBiasEnum(Tensile::DataType::None);
+            problem.setParams().setBiasEnum(TensileLite::DataType::None);
         }
 
         // Add problem predicates for CEqualsD
@@ -1545,4 +1545,4 @@ namespace Tensile
         , metadata(_metadata)
     {
     }
-} // namespace Tensile
+} // namespace TensileLite

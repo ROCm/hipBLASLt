@@ -34,7 +34,7 @@
 
 #include <algorithm>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -391,7 +391,7 @@ namespace Tensile
                 cpuCompressed, cpuMeta, srcBuffer, tensor, tensorC, tensorMeta, dim);
 
             //copy compressed sparse matrix and metadata matrix to GPU
-            Tensile::hip::CopyTensor(dstCompressed, cpuCompressed, tensorC, hipMemcpyHostToDevice);
+            TensileLite::hip::CopyTensor(dstCompressed, cpuCompressed, tensorC, hipMemcpyHostToDevice);
             HIP_CHECK_EXC(hipMemcpy(
                 dstMeta, cpuMeta, tensorMeta.totalLogicalElements(), hipMemcpyHostToDevice));
 
@@ -509,7 +509,7 @@ namespace Tensile
             ptrdiff_t dPadding = totalElements - descriptor.totalAllocatedElements();
             dPadding *= descriptor.elementBytes();
             void* dstOffset = (void*)((uint8_t*)dst + dPadding / 2);
-            Tensile::hip::CopyTensorVoid(dstOffset, src, descriptor, kind);
+            TensileLite::hip::CopyTensorVoid(dstOffset, src, descriptor, kind);
             return dstOffset;
         }
 
@@ -2199,4 +2199,4 @@ namespace Tensile
 
         DataInitialization::~DataInitialization() {}
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

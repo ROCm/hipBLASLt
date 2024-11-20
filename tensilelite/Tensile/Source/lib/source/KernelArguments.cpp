@@ -29,7 +29,7 @@
 #include <cstddef>
 #include <iomanip>
 
-namespace Tensile
+namespace TensileLite
 {
     std::ostream& operator<<(std::ostream& stream, const KernelArguments& t)
     {
@@ -262,4 +262,4 @@ namespace Tensile
         m_data.setPointer(pointer, size);
     }
 
-} // namespace Tensile
+} // namespace TensileLite

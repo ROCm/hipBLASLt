@@ -33,7 +33,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -86,4 +86,4 @@ namespace Tensile
             std::vector<std::unordered_map<std::string, std::string>> m_stack;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

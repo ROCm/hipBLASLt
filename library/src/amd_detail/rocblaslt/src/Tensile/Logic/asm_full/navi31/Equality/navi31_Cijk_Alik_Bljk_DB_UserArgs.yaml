@@ -162,8 +162,6 @@
     MagicDivAlg: 2
     MatrixInstruction: []
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -407,8 +405,6 @@
     MagicDivAlg: 2
     MatrixInstruction: []
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -652,8 +648,6 @@
     MagicDivAlg: 2
     MatrixInstruction: []
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -897,8 +891,6 @@
     MagicDivAlg: 2
     MatrixInstruction: []
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false

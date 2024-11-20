@@ -37,7 +37,7 @@
 #include <Tensile/SingleSolutionLibrary.hpp>
 #include <Tensile/SolutionLibrary.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     using ContractionLibrary = SolutionLibrary<ContractionProblemGemm>;
     using MasterContractionLibrary
@@ -57,4 +57,4 @@ namespace Tensile
     using ContractionProblemPredicate = ProblemPredicate<ContractionProblemGemm>;
     using ContractionGranularitySelectionLibrary
         = GranularitySelectionLibrary<ContractionProblemGemm, ContractionSolution>;
-} // namespace Tensile
+} // namespace TensileLite

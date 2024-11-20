@@ -31,7 +31,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -50,4 +50,4 @@ namespace Tensile
             std::vector<std::vector<hipEvent_t>> m_events;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

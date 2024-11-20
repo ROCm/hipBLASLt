@@ -30,7 +30,7 @@
 #include <Tensile/GranularitySelectionLibrary.hpp>
 #include <Tensile/MasterSolutionLibrary.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -124,4 +124,4 @@ namespace Tensile
             }
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

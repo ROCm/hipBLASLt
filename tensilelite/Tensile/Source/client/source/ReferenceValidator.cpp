@@ -35,7 +35,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -112,7 +112,11 @@ namespace Tensile
 
         void ReferenceValidator::preWarmup() {}
 
-        void ReferenceValidator::postWarmup() {}
+        void ReferenceValidator::postWarmup(TimingEvents const& startEvents,
+                                            TimingEvents const& stopEvents,
+                                            hipStream_t const&  stream)
+        {
+        }
 
         bool ReferenceValidator::validateSolution(std::shared_ptr<ProblemInputs> inputs)
         {
@@ -744,4 +748,4 @@ namespace Tensile
             return m_errorsReported;
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

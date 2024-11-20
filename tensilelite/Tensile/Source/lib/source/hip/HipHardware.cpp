@@ -28,7 +28,7 @@
 #include <Tensile/hip/HipHardware.hpp>
 #include <Tensile/hip/HipUtils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace hip
     {
@@ -75,4 +75,4 @@ namespace Tensile
             return std::make_shared<HipAMDGPU>(prop);
         }
     } // namespace hip
-} // namespace Tensile
+} // namespace TensileLite

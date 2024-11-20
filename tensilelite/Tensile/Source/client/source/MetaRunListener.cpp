@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -139,10 +139,12 @@ namespace Tensile
                 (*iter)->preWarmup();
         }
 
-        void MetaRunListener::postWarmup()
+        void MetaRunListener::postWarmup(TimingEvents const& startEvents,
+                                         TimingEvents const& stopEvents,
+                                         hipStream_t const&  stream)
         {
             for(auto iter = m_listeners.rbegin(); iter != m_listeners.rend(); iter++)
-                (*iter)->postWarmup();
+                (*iter)->postWarmup(startEvents, stopEvents, stream);
         }
 
         void MetaRunListener::validateWarmups(std::shared_ptr<ProblemInputs> inputs,
@@ -239,4 +241,4 @@ namespace Tensile
             return 0;
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

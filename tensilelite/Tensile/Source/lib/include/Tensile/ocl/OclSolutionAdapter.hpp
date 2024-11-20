@@ -32,11 +32,11 @@
 
 #include <mutex>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace ocl
     {
-        class SolutionAdapter final : public Tensile::SolutionAdapter
+        class SolutionAdapter final : public TensileLite::SolutionAdapter
         {
         public:
             SolutionAdapter();
@@ -96,6 +96,6 @@ namespace Tensile
         std::ostream& operator<<(std::ostream& stream, std::shared_ptr<SolutionAdapter> const& ptr);
 
     } // namespace ocl
-} // namespace Tensile
+} // namespace TensileLite
 
 #endif //OCL_SOLUTION_ADAPTER_HPP

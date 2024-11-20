@@ -39,14 +39,16 @@
 #include <stdexcept>
 #include <string>
 
+namespace hipblaslt_ext {
+
 class SoftmaxProblem;
 class SoftmaxSolution;
 
-class SoftmaxSolution : public Tensile::Solution
+class SoftmaxSolution : public TensileLite::Solution
 {
 public:
-    friend struct Tensile::Serialization::MappingTraits<SoftmaxSolution,
-                                                        Tensile::Serialization::MessagePackInput>;
+    friend struct TensileLite::Serialization::MappingTraits<SoftmaxSolution,
+                                                        TensileLite::Serialization::MessagePackInput>;
 
     using Problem = SoftmaxProblem;
     std::string name() const override
@@ -58,7 +60,7 @@ public:
     {
         std::stringstream ss;
         ss << "Softmax, (Datatype, tileM, tileN) = "
-           << "(" << Tensile::ToString(datatype) << ", " << tileM << ", " << tileN << ")";
+           << "(" << TensileLite::ToString(datatype) << ", " << tileM << ", " << tileN << ")";
         return ss.str();
     }
 
@@ -82,7 +84,7 @@ public:
         return coPath;
     }
 
-    Tensile::DataType getDatatype() const
+    TensileLite::DataType getDatatype() const
     {
         return datatype;
     }
@@ -93,14 +95,15 @@ private:
     std::size_t       numWorkitems{};
     std::string       coPath;
     std::string       kernelName;
-    Tensile::DataType datatype;
+    TensileLite::DataType datatype;
 };
 
+} // namespace hipblaslt
 template <typename IO>
-struct Tensile::Serialization::MappingTraits<SoftmaxSolution, IO>
+struct TensileLite::Serialization::MappingTraits<hipblaslt_ext::SoftmaxSolution, IO>
 {
     using iot = IOTraits<IO>;
-    static void mapping(IO& io, SoftmaxSolution& s)
+    static void mapping(IO& io, hipblaslt_ext::SoftmaxSolution& s)
     {
         iot::mapRequired(io, "func_name", s.kernelName);
         std::string datatypeStr;
@@ -108,7 +111,7 @@ struct Tensile::Serialization::MappingTraits<SoftmaxSolution, IO>
 
         if(datatypeStr == "S")
         {
-            s.datatype = Tensile::DataType::Float;
+            s.datatype = TensileLite::DataType::Float;
         }
         else
         {
@@ -124,11 +127,13 @@ struct Tensile::Serialization::MappingTraits<SoftmaxSolution, IO>
     const static bool flow = false;
 };
 
-class SoftmaxProblem : public Tensile::Problem
+namespace hipblaslt_ext {
+
+class SoftmaxProblem : public TensileLite::Problem
 {
 public:
     using Solution = SoftmaxSolution;
-    SoftmaxProblem(uint32_t m, uint32_t n, Tensile::DataType datatype)
+    SoftmaxProblem(uint32_t m, uint32_t n, TensileLite::DataType datatype)
         : m(m)
         , n(n)
         , datatype(datatype)
@@ -157,7 +162,7 @@ public:
 private:
     std::uint32_t     m{};
     std::uint32_t     n{};
-    Tensile::DataType datatype{Tensile::DataType::Float};
+    TensileLite::DataType datatype{TensileLite::DataType::Float};
 };
 
 struct ExtOpLibrary
@@ -201,7 +206,7 @@ public:
     }
 
     std::shared_ptr<SoftmaxSolution> findBestSolution(const SoftmaxProblem&    problem,
-                                                      const Tensile::Hardware& hardware,
+                                                      const TensileLite::Hardware& hardware,
                                                       double* fitness = nullptr) const
     {
         auto bestSolIter = std::lower_bound(
@@ -220,17 +225,17 @@ public:
     }
 
 private:
-    Tensile::SolutionVector<SoftmaxSolution> solutions;
+    TensileLite::SolutionVector<SoftmaxSolution> solutions;
 };
 
 class LayerNormProblem;
 class LayerNormSolution;
 
-class LayerNormSolution : public Tensile::Solution
+class LayerNormSolution : public TensileLite::Solution
 {
 public:
-    friend struct Tensile::Serialization::MappingTraits<LayerNormSolution,
-                                                        Tensile::Serialization::MessagePackInput>;
+    friend struct TensileLite::Serialization::MappingTraits<LayerNormSolution,
+                                                        TensileLite::Serialization::MessagePackInput>;
 
     using Problem = LayerNormProblem;
     std::string name() const override
@@ -242,7 +247,7 @@ public:
     {
         std::stringstream ss;
         ss << "LayerNorm, (Datatype) = "
-           << "(" << Tensile::ToString(datatype) << ")";
+           << "(" << TensileLite::ToString(datatype) << ")";
         return ss.str();
     }
 
@@ -261,7 +266,7 @@ public:
         return coPath;
     }
 
-    Tensile::DataType getDatatype() const
+    TensileLite::DataType getDatatype() const
     {
         return datatype;
     }
@@ -271,14 +276,16 @@ private:
     std::size_t       limit;
     std::string       coPath;
     std::string       kernelName;
-    Tensile::DataType datatype;
+    TensileLite::DataType datatype;
 };
 
+} //namespace hipblaslt_ext
+
 template <typename IO>
-struct Tensile::Serialization::MappingTraits<LayerNormSolution, IO>
+struct TensileLite::Serialization::MappingTraits<hipblaslt_ext::LayerNormSolution, IO>
 {
     using iot = IOTraits<IO>;
-    static void mapping(IO& io, LayerNormSolution& s)
+    static void mapping(IO& io, hipblaslt_ext::LayerNormSolution& s)
     {
         std::string datatypeStr;
 
@@ -291,7 +298,7 @@ struct Tensile::Serialization::MappingTraits<LayerNormSolution, IO>
 
         if(datatypeStr == "S")
         {
-            s.datatype = Tensile::DataType::Float;
+            s.datatype = TensileLite::DataType::Float;
         }
         else
         {
@@ -302,11 +309,13 @@ struct Tensile::Serialization::MappingTraits<LayerNormSolution, IO>
     const static bool flow = false;
 };
 
-class LayerNormProblem : public Tensile::Problem
+namespace hipblaslt_ext {
+
+class LayerNormProblem : public TensileLite::Problem
 {
 public:
     using Solution = LayerNormSolution;
-    LayerNormProblem(uint32_t m, uint32_t n, Tensile::DataType datatype)
+    LayerNormProblem(uint32_t m, uint32_t n, TensileLite::DataType datatype)
         : m(m)
         , n(n)
         , datatype(datatype)
@@ -335,7 +344,7 @@ public:
 private:
     std::uint32_t     m{};
     std::uint32_t     n{};
-    Tensile::DataType datatype{Tensile::DataType::Float};
+    TensileLite::DataType datatype{TensileLite::DataType::Float};
 };
 
 class LayerNormSolutionLibrary : public ExtOpLibrary
@@ -360,7 +369,7 @@ public:
     }
 
     std::shared_ptr<LayerNormSolution> findBestSolution(const LayerNormProblem&  problem,
-                                                        const Tensile::Hardware& hardware,
+                                                        const TensileLite::Hardware& hardware,
                                                         double* fitness = nullptr) const
     {
         auto bestSolIter = std::lower_bound(
@@ -379,17 +388,17 @@ public:
     }
 
 private:
-    Tensile::SolutionVector<LayerNormSolution> solutions;
+    TensileLite::SolutionVector<LayerNormSolution> solutions;
 };
 
 class AMaxProblem;
 class AMaxSolution;
 
-class AMaxSolution : public Tensile::Solution
+class AMaxSolution : public TensileLite::Solution
 {
 public:
-    friend struct Tensile::Serialization::MappingTraits<AMaxSolution,
-                                                        Tensile::Serialization::MessagePackInput>;
+    friend struct TensileLite::Serialization::MappingTraits<AMaxSolution,
+                                                        TensileLite::Serialization::MessagePackInput>;
 
     using Problem = AMaxProblem;
     std::string name() const override
@@ -401,7 +410,7 @@ public:
     {
         std::stringstream ss;
         ss << "AMax, (Datatype, outDatatype) = "
-           << "(" << Tensile::ToString(datatype) << ", " << Tensile::ToString(outDatatype) << ")";
+           << "(" << TensileLite::ToString(datatype) << ", " << TensileLite::ToString(outDatatype) << ")";
         return ss.str();
     }
 
@@ -415,17 +424,17 @@ public:
         return coPath;
     }
 
-    Tensile::DataType getDatatype() const
+    TensileLite::DataType getDatatype() const
     {
         return datatype;
     }
 
-    Tensile::DataType getOutDatatype() const
+    TensileLite::DataType getOutDatatype() const
     {
         return outDatatype;
     }
 
-    Tensile::DataType getScaleDatatype() const
+    TensileLite::DataType getScaleDatatype() const
     {
         return scaleDatatype;
     }
@@ -439,17 +448,19 @@ private:
     std::size_t       numWorkitems{};
     std::string       coPath;
     std::string       kernelName;
-    Tensile::DataType datatype;
-    Tensile::DataType outDatatype;
-    Tensile::DataType scaleDatatype;
+    TensileLite::DataType datatype;
+    TensileLite::DataType outDatatype;
+    TensileLite::DataType scaleDatatype;
     bool              isScale;
 };
 
+} // namespace hipblaslt_ext
+
 template <typename IO>
-struct Tensile::Serialization::MappingTraits<AMaxSolution, IO>
+struct TensileLite::Serialization::MappingTraits<hipblaslt_ext::AMaxSolution, IO>
 {
     using iot = IOTraits<IO>;
-    static void mapping(IO& io, AMaxSolution& s)
+    static void mapping(IO& io, hipblaslt_ext::AMaxSolution& s)
     {
         std::string datatypeStr;
         std::string outDatatypeStr;
@@ -466,11 +477,11 @@ struct Tensile::Serialization::MappingTraits<AMaxSolution, IO>
 
         if(datatypeStr == "S")
         {
-            s.datatype = Tensile::DataType::Float;
+            s.datatype = TensileLite::DataType::Float;
         }
         else if(datatypeStr == "H")
         {
-            s.datatype = Tensile::DataType::Half;
+            s.datatype = TensileLite::DataType::Half;
         }
         else
         {
@@ -479,11 +490,11 @@ struct Tensile::Serialization::MappingTraits<AMaxSolution, IO>
 
         if(outDatatypeStr == "S")
         {
-            s.outDatatype = Tensile::DataType::Float;
+            s.outDatatype = TensileLite::DataType::Float;
         }
         else if(outDatatypeStr == "H")
         {
-            s.outDatatype = Tensile::DataType::Half;
+            s.outDatatype = TensileLite::DataType::Half;
         }
         else
         {
@@ -492,11 +503,11 @@ struct Tensile::Serialization::MappingTraits<AMaxSolution, IO>
 
         if(scaleDatatypeStr == "F8")
         {
-            s.scaleDatatype = Tensile::DataType::Float8;
+            s.scaleDatatype = TensileLite::DataType::Float8;
         }
         else if(scaleDatatypeStr == "B8")
         {
-            s.scaleDatatype = Tensile::DataType::BFloat8;
+            s.scaleDatatype = TensileLite::DataType::BFloat8;
         }
         else
         {
@@ -507,20 +518,22 @@ struct Tensile::Serialization::MappingTraits<AMaxSolution, IO>
     const static bool flow = false;
 };
 
-class AMaxProblem : public Tensile::Problem
+namespace hipblaslt_ext {
+
+class AMaxProblem : public TensileLite::Problem
 {
 public:
     using Solution = AMaxSolution;
-    AMaxProblem(uint32_t length, Tensile::DataType datatype, Tensile::DataType outDatatype)
+    AMaxProblem(uint32_t length, TensileLite::DataType datatype, TensileLite::DataType outDatatype)
         : length(length)
         , datatype(datatype)
         , outDatatype(outDatatype)
     {
     }
     AMaxProblem(uint32_t          length,
-                Tensile::DataType datatype,
-                Tensile::DataType outDatatype,
-                Tensile::DataType scaleDatatype,
+                TensileLite::DataType datatype,
+                TensileLite::DataType outDatatype,
+                TensileLite::DataType scaleDatatype,
                 bool              isScale)
         : length(length)
         , datatype(datatype)
@@ -545,17 +558,17 @@ public:
         return length;
     }
 
-    Tensile::DataType getDatatype() const
+    TensileLite::DataType getDatatype() const
     {
         return datatype;
     }
 
-    Tensile::DataType getOutDatatype() const
+    TensileLite::DataType getOutDatatype() const
     {
         return outDatatype;
     }
 
-    Tensile::DataType getScaleDatatype() const
+    TensileLite::DataType getScaleDatatype() const
     {
         return scaleDatatype;
     }
@@ -567,9 +580,9 @@ public:
 
 private:
     std::uint32_t     length{};
-    Tensile::DataType datatype{Tensile::DataType::Float};
-    Tensile::DataType outDatatype{Tensile::DataType::Float};
-    Tensile::DataType scaleDatatype{Tensile::DataType::Float8};
+    TensileLite::DataType datatype{TensileLite::DataType::Float};
+    TensileLite::DataType outDatatype{TensileLite::DataType::Float};
+    TensileLite::DataType scaleDatatype{TensileLite::DataType::Float8};
     bool              isScale = false;
 };
 
@@ -595,7 +608,7 @@ public:
     }
 
     std::shared_ptr<AMaxSolution> findBestSolution(const AMaxProblem&       prob,
-                                                   const Tensile::Hardware& hardware,
+                                                   const TensileLite::Hardware& hardware,
                                                    double*                  fitness = nullptr) const
     {
         if(prob.getIsScale())
@@ -622,7 +635,7 @@ public:
     }
 
 private:
-    Tensile::SolutionVector<AMaxSolution> solutions;
+    TensileLite::SolutionVector<AMaxSolution> solutions;
 };
 
 class ExtOpMasterLibrary
@@ -684,7 +697,7 @@ private:
 
         msgpack::object                                  root = handle.get();
         std::unordered_map<std::string, msgpack::object> objMap;
-        Tensile::Serialization::objectToMap(root, objMap);
+        TensileLite::Serialization::objectToMap(root, objMap);
 
         for(auto& archObj : objMap)
         {
@@ -692,7 +705,7 @@ private:
                               std::map<std::string, std::map<std::string, ExtOpLibraryPtr>>());
 
             std::unordered_map<std::string, msgpack::object> opMap;
-            Tensile::Serialization::objectToMap(archObj.second, opMap);
+            TensileLite::Serialization::objectToMap(archObj.second, opMap);
 
             for(auto& opObj : opMap)
             {
@@ -700,7 +713,7 @@ private:
                     .emplace(opObj.first, std::map<std::string, ExtOpLibraryPtr>());
 
                 std::unordered_map<std::string, msgpack::object> typeMap;
-                Tensile::Serialization::objectToMap(opObj.second, typeMap);
+                TensileLite::Serialization::objectToMap(opObj.second, typeMap);
 
                 for(auto& typeLib : typeMap)
                 {
@@ -727,10 +740,10 @@ private:
                         {
                             auto&           rawKernel = rawKernels.via.array.ptr[i];
                             SoftmaxSolution solution;
-                            Tensile::Serialization::MessagePackInput msgInput(rawKernel);
-                            Tensile::Serialization::MappingTraits<
+                            TensileLite::Serialization::MessagePackInput msgInput(rawKernel);
+                            TensileLite::Serialization::MappingTraits<
                                 SoftmaxSolution,
-                                Tensile::Serialization::MessagePackInput>::mapping(msgInput,
+                                TensileLite::Serialization::MessagePackInput>::mapping(msgInput,
                                                                                    solution);
 
                             lib.addSolution(solution);
@@ -752,10 +765,10 @@ private:
                         {
                             auto&             rawKernel = rawKernels.via.array.ptr[i];
                             LayerNormSolution solution;
-                            Tensile::Serialization::MessagePackInput msgInput(rawKernel);
-                            Tensile::Serialization::MappingTraits<
+                            TensileLite::Serialization::MessagePackInput msgInput(rawKernel);
+                            TensileLite::Serialization::MappingTraits<
                                 LayerNormSolution,
-                                Tensile::Serialization::MessagePackInput>::mapping(msgInput,
+                                TensileLite::Serialization::MessagePackInput>::mapping(msgInput,
                                                                                    solution);
 
                             lib.addSolution(solution);
@@ -777,10 +790,10 @@ private:
                         {
                             auto&        rawKernel = rawKernels.via.array.ptr[i];
                             AMaxSolution solution;
-                            Tensile::Serialization::MessagePackInput msgInput(rawKernel);
-                            Tensile::Serialization::MappingTraits<
+                            TensileLite::Serialization::MessagePackInput msgInput(rawKernel);
+                            TensileLite::Serialization::MappingTraits<
                                 AMaxSolution,
-                                Tensile::Serialization::MessagePackInput>::mapping(msgInput,
+                                TensileLite::Serialization::MessagePackInput>::mapping(msgInput,
                                                                                    solution);
 
                             lib.addSolution(solution);
@@ -800,3 +813,5 @@ private:
     std::string                                                                          libPath;
     std::string                                                                          libDir;
 };
+
+} // namespace hipblaslt_ext

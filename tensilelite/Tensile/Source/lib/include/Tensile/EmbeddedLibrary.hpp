@@ -31,7 +31,7 @@
 #include <Tensile/Singleton.hpp>
 #include <Tensile/Tensile.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Tensile
@@ -97,6 +97,6 @@ namespace Tensile
             m_libraries;
     };
 
-} // namespace Tensile
+} // namespace TensileLite
 
 #endif

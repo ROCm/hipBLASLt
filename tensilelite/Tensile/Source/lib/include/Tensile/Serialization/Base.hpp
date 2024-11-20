@@ -39,7 +39,7 @@
 #include <Tensile/ScalarValueTypes.hpp>
 #include <Tensile/geom.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -376,7 +376,7 @@ namespace Tensile
                 for(int i = 0; i < static_cast<int>(ActivationType::Count); i++)
                 {
                     auto const& info = static_cast<ActivationType>(i);
-                    iot::enumCase(io, value, Tensile::ToString(info).c_str(), info);
+                    iot::enumCase(io, value, TensileLite::ToString(info).c_str(), info);
                 }
             }
         };
@@ -411,4 +411,4 @@ namespace Tensile
             }
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

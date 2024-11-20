@@ -33,7 +33,7 @@
 
 #include <algorithm>
 
-namespace Tensile
+namespace TensileLite
 {
     // Which placeholder libraries should be initialized at start
     // To be extended in the future
@@ -303,4 +303,4 @@ namespace Tensile
         }
     };
 
-} // namespace Tensile
+} // namespace TensileLite

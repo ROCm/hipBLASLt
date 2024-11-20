@@ -26,9 +26,9 @@
 
 #include <Tensile/llvm/YAML.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
     }
-} // namespace Tensile
+} // namespace TensileLite

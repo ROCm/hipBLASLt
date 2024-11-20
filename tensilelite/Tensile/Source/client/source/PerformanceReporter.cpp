@@ -33,7 +33,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -201,4 +201,4 @@ namespace Tensile
         void PerformanceReporter::finalizeReport() {}
 
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite
