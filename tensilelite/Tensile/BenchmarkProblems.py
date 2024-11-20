@@ -111,9 +111,6 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
 def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
         biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes):
     """Write all the files needed for a given benchmarking step"""
-    if not globalParameters["MergeFiles"]:
-        ensurePath(os.path.join(globalParameters["WorkingPath"], "Solutions"))
-        ensurePath(os.path.join(globalParameters["WorkingPath"], "Kernels"))
 
     copyStaticFiles()
 

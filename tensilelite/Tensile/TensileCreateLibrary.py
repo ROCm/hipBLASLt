@@ -556,6 +556,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
     kernelName = ko.getKernelName()
 
     (err, src) = ko.getSourceFileString()
+    
     kernelSourceFile.write(src)
     if err:
       print("*** warning: invalid kernel#%u"%kernelName)

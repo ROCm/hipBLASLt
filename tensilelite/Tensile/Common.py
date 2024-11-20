@@ -280,8 +280,6 @@ globalParameters["CustomKernelDirectory"] = os.path.join(os.path.dirname(os.path
 
 globalParameters["PristineOnGPU"] = True # use Pristine memory on Tensile trainning verification or not
 
-globalParameters["SeparateArchitectures"] = False # write Tensile library metadata to separate files for each architecture
-
 globalParameters["LazyLibraryLoading"] = False # Load library and code object files when needed instead of at startup
 
 globalParameters["EnableMarker"] = False # Enable Tensile markers
@@ -1727,11 +1725,6 @@ def assignGlobalParameters( config ):
   globalParameters["SupportedISA"] = list([i for i in globalParameters["SupportedISA"] if globalParameters["AsmCaps"][i]["SupportedISA"]])
 
   validParameters["ISA"] = [(0,0,0), *globalParameters["SupportedISA"]]
-
-  if "MergeFiles" in config and "NumMergedFiles" in config:
-    if not config["MergeFiles"] and config["NumMergedFiles"] > 1:
-      config["NumMergedFiles"] = 1
-      printWarning("--num-merged-files and --no-merge-files specified, ignoring --num-merged-files")
 
   # For ubuntu platforms, call dpkg to grep the version of hip-clang.  This check is platform specific, and in the future
   # additional support for yum, dnf zypper may need to be added.  On these other platforms, the default version of

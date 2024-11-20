@@ -301,11 +301,6 @@ class KernelWriterBetaOnly(KernelWriterBase):
   def getSourceFileString(self):
     fileString = ""
 
-    if not globalParameters["MergeFiles"]:
-      fileString += "\n"
-      fileString += "#include \"%s.h\"\n" % self.kernelName
-      fileString += "\n"
-
     for toggle in [True, False]:
       self.state["ProblemType"]["GroupedGemm"] = toggle
       self.kernelName = self.getKernelName()
@@ -316,14 +311,6 @@ class KernelWriterBetaOnly(KernelWriterBase):
 
   def getHeaderFileString(self):
     fileString = "" # CHeader
-    if not globalParameters["MergeFiles"]:
-      fileString += CHeader
-      fileString += "#pragma once\n\n"
-      fileString += "\n"
-      fileString += "#include <KernelHeader.h>\n\n"
-      fileString += "#include <hip/hip_runtime.h>\n"
-      fileString += "#include <hip/hip_fp16.h>\n"
-      fileString += "\n"
 
     for toggle in [True, False]:
       self.state["ProblemType"]["GroupedGemm"] = toggle
