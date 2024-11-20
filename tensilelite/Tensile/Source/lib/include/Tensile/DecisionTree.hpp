@@ -33,7 +33,7 @@
 #include <Tensile/MLFeatures.hpp>
 #include <Tensile/ProblemKey.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
      * \ingroup Tensile
@@ -476,4 +476,4 @@ namespace Tensile
             Value             nullValue;
         };
     } // namespace DecisionTree
-} // namespace Tensile
+} // namespace TensileLite

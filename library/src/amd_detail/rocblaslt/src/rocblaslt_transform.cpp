@@ -63,10 +63,10 @@ namespace
         return DEFAULT_CO_PATH;
     }
 
-    Tensile::hip::SolutionAdapter& transformAdapter()
+    TensileLite::hip::SolutionAdapter& transformAdapter()
     {
-        static auto& adapter = []() -> Tensile::hip::SolutionAdapter& {
-            static Tensile::hip::SolutionAdapter adp;
+        static auto& adapter = []() -> TensileLite::hip::SolutionAdapter& {
+            static TensileLite::hip::SolutionAdapter adp;
             auto                                 coPath   = transformCodeObjectPath();
             const std::string                    coFolder = dirname(&coPath[0]);
             try
@@ -127,7 +127,7 @@ namespace
         constexpr auto           TileN = RowMajC ? NumThreadsN * VectorWidth : NumThreadsN;
         const auto               numWg = (m / TileM + !!(m % TileM)) * (n / TileN + !!(n % TileN));
         constexpr auto           numWorkitems = NumThreadsM * NumThreadsN;
-        Tensile::KernelArguments kArgs(false);
+        TensileLite::KernelArguments kArgs(false);
 
         if(scalarInDevice)
         {
@@ -179,7 +179,7 @@ namespace
         }
 
         constexpr auto            NUM_WORKITEMS{NumThreadsM * NumThreadsN};
-        Tensile::KernelInvocation invocation{kernelName,
+        TensileLite::KernelInvocation invocation{kernelName,
                                              "hipblasltTransform.hsaco",
                                              false,
                                              {NUM_WORKITEMS, 1, 1},

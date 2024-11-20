@@ -35,7 +35,7 @@
 #include <Tensile/DataTypes.hpp>
 #include <Tensile/Macros.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename T>
     class KernelArgumentsContainer
@@ -489,4 +489,4 @@ namespace Tensile
     private:
         size_t counter = 0;
     };
-} // namespace Tensile
+} // namespace TensileLite

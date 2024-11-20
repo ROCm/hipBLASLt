@@ -35,7 +35,7 @@
 #include "HardwareMonitorListener.hpp"
 #include "ResultReporter.hpp"
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -71,8 +71,7 @@ namespace Tensile
 
             if(m_useGPUTimer)
             {
-                m_monitor->runBetweenEvents(startEvents->front().front(),
-                                            stopEvents->back().back());
+                m_monitor->runBetweenEvents(startEvents->front().front(), stopEvents->back().back());
             }
             else
             {
@@ -92,15 +91,14 @@ namespace Tensile
             m_reporter->report(ResultKey::DeviceIndex, m_monitor->getDeviceIndex());
             m_reporter->report(ResultKey::TempEdge, m_monitor->getAverageTemp(0));
 
-            m_reporter->report(ResultKey::ClockRateSys,
-                               m_monitor->getAverageClock(RSMI_CLK_TYPE_SYS));
-            m_reporter->report(ResultKey::ClockRateSOC,
-                               m_monitor->getAverageClock(RSMI_CLK_TYPE_SOC));
-            m_reporter->report(ResultKey::ClockRateMem,
-                               m_monitor->getAverageClock(RSMI_CLK_TYPE_MEM));
+            m_reporter->report(ResultKey::ClockRateSys, m_monitor->getAverageClock(RSMI_CLK_TYPE_SYS));
+            m_reporter->report(ResultKey::ClockRateSOC, m_monitor->getAverageClock(RSMI_CLK_TYPE_SOC));
+            m_reporter->report(ResultKey::ClockRateMem, m_monitor->getAverageClock(RSMI_CLK_TYPE_MEM));
 
             m_reporter->report(ResultKey::FanSpeedRPMs, m_monitor->getAverageFanSpeed());
             m_reporter->report(ResultKey::HardwareSampleCount, m_monitor->getSamples());
+            m_reporter->report(ResultKey::GfxFrequency,
+                               m_monitor->getMaxGfxFreqValues()); // Report the maximum frequency values
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

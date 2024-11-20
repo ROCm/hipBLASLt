@@ -258,7 +258,7 @@ std::vector<void*> benchmark_allocation()
     if(doAllocation)
     {
         std::stringstream ss;
-        ptrs = Tensile::Client::benchmarkAllocation(ss);
+        ptrs = TensileLite::Client::benchmarkAllocation(ss);
         hipblaslt_cout << ss.str();
     }
     return ptrs;

@@ -86,7 +86,7 @@ class StoreState:
                 self.numTempSgprPerBatch   = 2 * kernelWriter.states.laneSGPRCount
 
             if self.numMaskSgprPerElement:
-                numSgprAvailable = kernelWriter.consts.maxSgprs - kernelWriter.sgprPool.size() + kernelWriter.sgprPool.availableBlockAtEnd()
+                numSgprAvailable = kernelWriter.states.regCaps["MaxSgpr"] - kernelWriter.sgprPool.size() + kernelWriter.sgprPool.availableBlockAtEnd()
                 numSgprAvailable = numSgprAvailable & ~0x1 # make sure it's aligned
                 #print("numSgprAvailable=", numSgprAvailable)
                 self.numElementsPerBatchLimitedBySgprs = (numSgprAvailable - self.numTempSgprPerBatch - self.numMaskSgprPerBatch) // self.numMaskSgprPerElement
@@ -498,6 +498,122 @@ class StoreState:
 
             (d1,d0,vc1,vc0) = element
 
+            # if numVgprsPerDataPerVI == 0.5, then two consecutive elements
+            # should have same data pointer, next should move.
+            if self.cfg.numVgprsPerDataPerVI > 0:
+                if self.cfg.halfDataRegPerVI:
+                    # TODO- check (H,H,H,H,S,S)
+                    if kernel["ProblemType"]["HighPrecisionAccumulate"] and \
+                       (dataType.isBFloat16() or dataType.isHalf()):
+                        data = kw.vgprPool.checkOutAligned(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw), \
+                              int(ceil(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw))), "writeBatch-data for ei=%u and ei=%u"%(elementIdx,elementIdx+1), preventOverflow=not isOptNLL)
+                    else:
+                        if elementIdx%2 == 0:
+                            # allocate for two elements:
+                            data = kw.vgprPool.checkOutAligned(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw), \
+                                   int(ceil(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw))), "writeBatch-data for ei=%u and ei=%u"%(elementIdx,elementIdx+1), preventOverflow=not isOptNLL)
+                            lastData = data
+                        else:
+                            data = lastData
+                            del lastData
+                else:
+                    if self.cfg.numVgprsPerDataPerVI == 0.5 or self.cfg.numVgprsPerDataPerVI == 0.25:
+                        data = kw.vgprPool.checkOutAligned(int(ceil(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw)), \
+                              int(ceil(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw)), "writeBatch-data for ei=%u"%elementIdx, preventOverflow=False)
+                    else:
+                        data = kw.vgprPool.checkOutAligned(int(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw), \
+                              int(ceil(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw)), "writeBatch-data for ei=%u"%elementIdx, preventOverflow=False)
+                    #data = kw.vgprPool.checkOut(int(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw), \
+                    #      "writeBatch-data for ei=%u"%elementIdx, preventOverflow=False)
+            else:
+                data = 0
+            self.elementData.append(data)
+
+            if self.useBias == DataDirection.READ:
+                coordOffset = coordOffset0 if factorDim == 0 else coordOffset1
+                if coordOffset in biasVgprMap:
+                    dataBias = biasVgprMap[coordOffset]
+                else:
+                    gwvw = self.cfg.gwvw if factorDim == 0 else min(self.cfg.gwvw, 2)
+                    numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                    dataBias = kw.vgprPool.checkOutAligned(int(numVgprs*gwvw), \
+                                int(ceil(numVgprs*gwvw)), "bias data for ei=%u"%elementIdx, preventOverflow=False)
+                    biasVgprMap[coordOffset] = dataBias
+            else:
+                dataBias = 0
+            self.elementDataBias.append(dataBias)
+            # Only needed in gradient activation
+            if (kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["ActivationType"] != 'none' and kernel["ProblemType"]["UseE"]) and (kernel["GlobalSplitU"] == 1):
+                numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                dataE = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
+                              int(ceil(numVgprs*self.cfg.gwvw)), "e data for ei=%u"%elementIdx, preventOverflow=False)
+            else:
+                dataE = 0
+            self.elementDataE.append(dataE)
+
+            if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+                if coordOffset0 in scaleAVecVgprMap:
+                    dataScaleAVec = scaleAVecVgprMap[coordOffset0]
+                else:
+                    numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                    dataScaleAVec = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
+                                  int(ceil(numVgprs*self.cfg.gwvw)), "scaleAVec data for ei=%u"%elementIdx, preventOverflow=False)
+                    scaleAVecVgprMap[coordOffset0] = dataScaleAVec
+                if coordOffset1 in scaleBVecVgprMap:
+                    dataScaleBVec = scaleBVecVgprMap[coordOffset1]
+                else:
+                    gwvw = min(self.cfg.gwvw, 2)
+                    numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                    dataScaleBVec = kw.vgprPool.checkOutAligned(int(numVgprs*gwvw), \
+                                  int(ceil(numVgprs*gwvw)), "scaleBVec data for ei=%u"%elementIdx, preventOverflow=False)
+                    scaleBVecVgprMap[coordOffset1] = dataScaleBVec
+            else:
+                dataScaleAVec = 0
+                dataScaleBVec = 0
+            self.elementDataScaleAVec.append(dataScaleAVec)
+            self.elementDataScaleBVec.append(dataScaleBVec)
+            if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+                coordOffset = coordOffset0 if factorDim == 0 else coordOffset1
+                gwvw = self.cfg.gwvw if factorDim == 0 else min(self.cfg.gwvw, 2)
+                if coordOffset in scaleAlphaVecVgprMap:
+                    dataScaleAlphaVec = scaleAlphaVecVgprMap[coordOffset]
+                else:
+                    numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                    dataScaleAlphaVec = kw.vgprPool.checkOutAligned(int(numVgprs*gwvw), \
+                                  int(ceil(numVgprs*gwvw)), "scaleAlphaVec data for ei=%u"%elementIdx, preventOverflow=False)
+                    scaleAlphaVecVgprMap[coordOffset] = dataScaleAlphaVec
+            else:
+                dataScaleAlphaVec = 0
+            self.elementDataScaleAlphaVec.append(dataScaleAlphaVec)
+            if batchElementSgprs != None:
+                if self.optSGPRUsage:
+                    mask = batchElementSgprs
+                else:
+                    mask = batchElementSgprs + self.cfg.numMaskSgprPerBatch + elementIdx * self.cfg.numMaskSgprPerElement
+                self.elementMask.append(mask)
+
+            #print "Edge=", edge, element
+            sumIdx = 0
+            if kernel["LocalSplitU"] > 1:
+                if len(self.elementSumIdx) == 0:
+                    sumIdx = kw.states.c.startVgprValu
+                else:
+                    sumIdx = self.elementSumIdx[-1] + self.cfg.numVgprPerValuC * self.cfg.gwvw
+            else:
+                bestVw                  = kernel["VectorWidthA"]
+                elementsLoadedPerVw     = kernel["NumThreads"] * bestVw
+                elementsLoadedPerbestVw = kernel["NumThreads"] * kernel["StoreVectorWidth"]
+
+                if elementsLoadedPerVw < elementsLoadedPerbestVw:
+                    bestVw = kernel["StoreVectorWidth"]
+
+                if kernel["EnableMatrixInstruction"]:
+                    alignment = self.cfg.numVgprPerValuC * self.cfg.gwvw
+                    sumIdx    = kw.vgprPool.checkOutAligned(self.cfg.numVgprPerValuC*self.cfg.gwvw, alignment, "vgprValuC") // self.cfg.numVgprPerValuC
+                else:
+                    sumIdx = kw.states.c.startVgprValu + vc0 + d0*kernel["VectorWidthA"] + vc1*kernel["ThreadTile0"] + d1*kernel["VectorWidthA"]*kernel["ThreadTile0"]
+            self.elementSumIdx.append(sumIdx) # sumIdx is an element idx, need to div/2 for half
+
             if self.optSingleColVgpr:
                 # use same address vgpr for all
                 addrEVgpr    = self.sharedColEVgprs
@@ -602,127 +718,8 @@ class StoreState:
                     addrScaleBVecVgpr = None
             self.elementAddr.append(AddrCalculation(kw, self, addrCVgpr, addrDVgpr, addrGSUSyncVgprs, addrEVgpr, addrBiasVgpr, addrScaleAVecVgpr, addrScaleBVecVgpr, addrScaleAlphaVecVgpr, element, coordOffset0, \
               self.kernelWriter.vgprs.coord1, coordOffset1, coordOffset1 - self.lastCoordOffset1, newCoord1, self.vectorDataTypes))
-            # if numVgprsPerDataPerVI == 0.5, then two consecutive elements
-            # should have same data pointer, next should move.
-
-            if self.cfg.numVgprsPerDataPerVI > 0:
-                if self.cfg.halfDataRegPerVI:
-                    # TODO- check (H,H,H,H,S,S)
-                    if kernel["ProblemType"]["HighPrecisionAccumulate"] and \
-                       (dataType.isBFloat16() or dataType.isHalf()):
-                        data = kw.vgprPool.checkOutAligned(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw), \
-                              int(ceil(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw))), "writeBatch-data for ei=%u and ei=%u"%(elementIdx,elementIdx+1), preventOverflow=not isOptNLL)
-                    else:
-                        if elementIdx%2 == 0:
-                            # allocate for two elements:
-                            data = kw.vgprPool.checkOutAligned(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw), \
-                                   int(ceil(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw))), "writeBatch-data for ei=%u and ei=%u"%(elementIdx,elementIdx+1), preventOverflow=not isOptNLL)
-                            lastData = data
-                        else:
-                            data = lastData
-                            del lastData
-                else:
-                    if self.cfg.numVgprsPerDataPerVI == 0.5 or self.cfg.numVgprsPerDataPerVI == 0.25:
-                        data = kw.vgprPool.checkOutAligned(int(ceil(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw)), \
-                              int(ceil(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw)), "writeBatch-data for ei=%u"%elementIdx, preventOverflow=False)
-                    else:
-                        data = kw.vgprPool.checkOutAligned(int(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw), \
-                              int(ceil(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw)), "writeBatch-data for ei=%u"%elementIdx, preventOverflow=False)
-                    #data = kw.vgprPool.checkOut(int(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw), \
-                    #      "writeBatch-data for ei=%u"%elementIdx, preventOverflow=False)
-            else:
-                data = 0
-
-            self.elementData.append(data)
-
-            if self.useBias == DataDirection.READ:
-                coordOffset = coordOffset0 if factorDim == 0 else coordOffset1
-                if coordOffset in biasVgprMap:
-                    dataBias = biasVgprMap[coordOffset]
-                else:
-                    gwvw = self.cfg.gwvw if factorDim == 0 else min(self.cfg.gwvw, 2)
-                    numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-                    dataBias = kw.vgprPool.checkOutAligned(int(numVgprs*gwvw), \
-                                int(ceil(numVgprs*gwvw)), "bias data for ei=%u"%elementIdx, preventOverflow=False)
-                    biasVgprMap[coordOffset] = dataBias
-            else:
-                dataBias = 0
-            self.elementDataBias.append(dataBias)
-
-            # Only needed in gradient activation
-            if (kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["ActivationType"] != 'none' and kernel["ProblemType"]["UseE"]) and (kernel["GlobalSplitU"] == 1):
-                numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-                dataE = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
-                              int(ceil(numVgprs*self.cfg.gwvw)), "e data for ei=%u"%elementIdx, preventOverflow=False)
-            else:
-                dataE = 0
-            self.elementDataE.append(dataE)
-
-            if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
-                if coordOffset0 in scaleAVecVgprMap:
-                    dataScaleAVec = scaleAVecVgprMap[coordOffset0]
-                else:
-                    numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-                    dataScaleAVec = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
-                                  int(ceil(numVgprs*self.cfg.gwvw)), "scaleAVec data for ei=%u"%elementIdx, preventOverflow=False)
-                    scaleAVecVgprMap[coordOffset0] = dataScaleAVec
-                if coordOffset1 in scaleBVecVgprMap:
-                    dataScaleBVec = scaleBVecVgprMap[coordOffset1]
-                else:
-                    gwvw = min(self.cfg.gwvw, 2)
-                    numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-                    dataScaleBVec = kw.vgprPool.checkOutAligned(int(numVgprs*gwvw), \
-                                  int(ceil(numVgprs*gwvw)), "scaleBVec data for ei=%u"%elementIdx, preventOverflow=False)
-                    scaleBVecVgprMap[coordOffset1] = dataScaleBVec
-            else:
-                dataScaleAVec = 0
-                dataScaleBVec = 0
-            self.elementDataScaleAVec.append(dataScaleAVec)
-            self.elementDataScaleBVec.append(dataScaleBVec)
-
-            if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
-                coordOffset = coordOffset0 if factorDim == 0 else coordOffset1
-                gwvw = self.cfg.gwvw if factorDim == 0 else min(self.cfg.gwvw, 2)
-                if coordOffset in scaleAlphaVecVgprMap:
-                    dataScaleAlphaVec = scaleAlphaVecVgprMap[coordOffset]
-                else:
-                    numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-                    dataScaleAlphaVec = kw.vgprPool.checkOutAligned(int(numVgprs*gwvw), \
-                                  int(ceil(numVgprs*gwvw)), "scaleAlphaVec data for ei=%u"%elementIdx, preventOverflow=False)
-                    scaleAlphaVecVgprMap[coordOffset] = dataScaleAlphaVec
-            else:
-                dataScaleAlphaVec = 0
-            self.elementDataScaleAlphaVec.append(dataScaleAlphaVec)
-
-            if batchElementSgprs != None:
-                if self.optSGPRUsage:
-                    mask = batchElementSgprs
-                else:
-                    mask = batchElementSgprs + self.cfg.numMaskSgprPerBatch + elementIdx * self.cfg.numMaskSgprPerElement
-                self.elementMask.append(mask)
-
-            #print "Edge=", edge, element
-            sumIdx = 0
-            if kernel["LocalSplitU"] > 1:
-                if len(self.elementSumIdx) == 0:
-                    sumIdx = kw.states.c.startVgprValu
-                else:
-                    sumIdx = self.elementSumIdx[-1] + self.cfg.numVgprPerValuC * self.cfg.gwvw
-            else:
-                bestVw                  = kernel["VectorWidthA"]
-                elementsLoadedPerVw     = kernel["NumThreads"] * bestVw
-                elementsLoadedPerbestVw = kernel["NumThreads"] * kernel["StoreVectorWidth"]
-
-                if elementsLoadedPerVw < elementsLoadedPerbestVw:
-                    bestVw = kernel["StoreVectorWidth"]
-
-                if kernel["EnableMatrixInstruction"]:
-                    alignment = self.cfg.numVgprPerValuC * self.cfg.gwvw
-                    sumIdx    = kw.vgprPool.checkOutAligned(self.cfg.numVgprPerValuC*self.cfg.gwvw, alignment, "vgprValuC") // self.cfg.numVgprPerValuC
-                else:
-                    sumIdx = kw.states.c.startVgprValu + vc0 + d0*kernel["VectorWidthA"] + vc1*kernel["ThreadTile0"] + d1*kernel["VectorWidthA"]*kernel["ThreadTile0"]
-            self.elementSumIdx.append(sumIdx) # sumIdx is an element idx, need to div/2 for half
             self.lastCoordOffset1 = coordOffset1
+            
         # reset flag
         self.isReset = False
 

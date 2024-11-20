@@ -30,7 +30,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -76,4 +76,4 @@ namespace Tensile
             return &m_events;
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

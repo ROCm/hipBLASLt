@@ -28,7 +28,7 @@
 
 #include <Tensile/Debug.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup SolutionLibrary
@@ -274,4 +274,4 @@ namespace Tensile
             return SolutionSet<MySolution>();
         }
     };
-} // namespace Tensile
+} // namespace TensileLite

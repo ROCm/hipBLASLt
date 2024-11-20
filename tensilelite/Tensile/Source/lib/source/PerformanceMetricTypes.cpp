@@ -29,7 +29,7 @@
 
 #include <algorithm>
 
-namespace Tensile
+namespace TensileLite
 {
     std::string ToString(PerformanceMetric d)
     {
@@ -181,4 +181,4 @@ namespace Tensile
 
         return stream;
     }
-} // namespace Tensile
+} // namespace TensileLite

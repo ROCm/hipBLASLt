@@ -32,7 +32,7 @@
 
 #include <Tensile/SolutionLibrary.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename MyProblem, typename MySolution>
     std::shared_ptr<SolutionLibrary<MyProblem, MySolution>>

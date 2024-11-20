@@ -31,7 +31,7 @@
 
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Tensile
@@ -39,9 +39,9 @@ namespace Tensile
  *
  * @brief Abstract expression evaluation
  *
- * Property: \copydoc Tensile::Property
+ * Property: \copydoc TensileLite::Property
  *
- * Predicate: \copydoc Tensile::Predicates::Predicate
+ * Predicate: \copydoc TensileLite::Predicates::Predicate
  */
 
     /**
@@ -246,4 +246,4 @@ namespace Tensile
  *
  * @brief Individual Property classes
  */
-} // namespace Tensile
+} // namespace TensileLite

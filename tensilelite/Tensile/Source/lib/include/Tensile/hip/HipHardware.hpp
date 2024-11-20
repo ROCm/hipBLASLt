@@ -31,7 +31,7 @@
 
 #include <hip/hip_runtime.h>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace hip
     {
@@ -49,4 +49,4 @@ namespace Tensile
         std::shared_ptr<Hardware> GetDevice(int deviceId);
         std::shared_ptr<Hardware> GetDevice(hipDeviceProp_t const& prop);
     } // namespace hip
-} // namespace Tensile
+} // namespace TensileLite

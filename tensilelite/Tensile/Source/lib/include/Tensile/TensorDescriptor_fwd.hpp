@@ -26,10 +26,10 @@
 
 #pragma once
 
-namespace Tensile
+namespace TensileLite
 {
     enum class DataType : int;
 
     class TensorDescriptor;
 
-} // namespace Tensile
+} // namespace TensileLite

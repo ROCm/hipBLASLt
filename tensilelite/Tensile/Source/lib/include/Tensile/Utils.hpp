@@ -35,7 +35,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace Tensile
+namespace TensileLite
 {
 
     // Type wrapper that can be copied or assigned to in a threadsafe manner. Value cannot be modified
@@ -260,7 +260,7 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite
 
 /**
  * \addtogroup Utilities

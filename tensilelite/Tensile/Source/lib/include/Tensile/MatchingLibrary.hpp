@@ -31,7 +31,7 @@
 
 #include <Tensile/PropertyMatching.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
      * \ingroup SolutionLibrary
@@ -204,4 +204,4 @@ namespace Tensile
             return solutions;
         }
     };
-} // namespace Tensile
+} // namespace TensileLite

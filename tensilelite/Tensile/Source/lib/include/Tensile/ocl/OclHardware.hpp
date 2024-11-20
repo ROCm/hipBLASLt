@@ -30,7 +30,7 @@
 #include <Tensile/AMDGPU.hpp>
 #include <Tensile/Tensile.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace ocl
     {
@@ -64,6 +64,6 @@ namespace Tensile
         std::shared_ptr<Hardware> GetDevice(oclDeviceProp_t const& prop);
 
     } // namespace ocl
-} // namespace Tensile
+} // namespace TensileLite
 
 #endif // OCL_HARDWARE_HPP

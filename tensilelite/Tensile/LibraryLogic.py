@@ -35,6 +35,7 @@ import array
 import csv
 import os
 import time
+import math
 
 ################################################################################
 # Analyze Problem Type
@@ -446,11 +447,7 @@ class LogicAnalyzer:
 
     # need to take care if the loaded csv is the export-winner-version
     csvHasWinner = "_CSVWinner" in dataFileName
-    if csvHasWinner:
-      # the column of the two are fixed (GFlops, SizeI/J/K/L, LDD/C/A/B, TotalFlops, WinnerGFlops, WinnerTimeUs, WinnerIdx, WinnerName)
-      # the order are implemented in ResultFileReporter.cpp (NewClient) and Client.h (OldClient)
-      columnOfWinnerGFlops = 12
-      columnOfWinnerIdx = 14
+    csvHasWinnerColumn = True
 
     # iterate over rows
     rowIdx = 0
@@ -466,7 +463,23 @@ class LogicAnalyzer:
         else:
           printWarning("Performance unit %s in %s is unrecognized: assuming GFlops (device efficiency)" % (perfUnit, dataFileName))
           self.perfMetric = "DeviceEfficiency"
-
+        
+        if csvHasWinner:
+          try:
+            # These two columns only appear when using WinnerCSV
+            columnOfWinnerGFlops = row.index(" WinnerGFlops")
+            columnOfWinnerIdx = row.index(" WinnerIdx")
+          except ValueError as e:
+            csvHasWinnerColumn = False
+            print1(f"Error: Could not find WinnerGFlops or WinnerIdx column in CSV file: {e}")
+        
+        # get the column index of Frequency(MHz)
+        try:
+          columnOfFreqIdx = row.index(" DeviceMaxFreq")
+        except ValueError as e:
+          columnOfFreqIdx = None
+          print1(f"Error: Could not find DeviceMaxFreq column in the CSV file: {e}")
+          
         # get the length of each row, and derive the first column of the solution instead of using wrong "solutionStartIdx = totalSizeIdx + 1"
         rowLength = len(row)
         solutionStartIdx = rowLength - numSolutions
@@ -482,11 +495,10 @@ class LogicAnalyzer:
         for i in range(problemSizeStartIdx, totalSizeIdx):
           problemSize.append(int(row[i]))
         problemSize = tuple(problemSize)
-
         # Exact Problem Size
         if problemSize in self.exactProblemSizes:
 
-          if csvHasWinner:
+          if csvHasWinner and csvHasWinnerColumn:
             # Faster. Get the winner info from csv directly, avoid an extra loop
             winnerGFlops = float(row[columnOfWinnerGFlops])
             winnerIdx = int(row[columnOfWinnerIdx])
@@ -502,16 +514,32 @@ class LogicAnalyzer:
                 winnerIdx = solutionIdx
                 winnerGFlops = gflops
               solutionIdx += 1
-
+          
+          if globalParameters["UseEffLike"]:
+            try:
+              frequency = float(row[columnOfFreqIdx])
+              if frequency != 0 and not math.isnan(frequency):
+                # calculate effLike
+                # effLike = winnerGFlops / Frequency(MHz)
+                performance_metric = round(float(winnerGFlops) / frequency, 2)
+              else:
+                handle_frequency_issue("Warning: Frequency is NaN or 0.")
+                performance_metric = float(winnerGFlops)
+            except(ValueError, TypeError):
+              handle_frequency_issue("Warning: Error when reading frequency.")
+              performance_metric = float(winnerGFlops)
+          else:
+            performance_metric = float(winnerGFlops)
+            
           if winnerIdx != -1:
             if problemSize in self.exactWinners:
               if winnerGFlops > self.exactWinners[problemSize][1]:
                 #print "update exact", problemSize, "CSV index=", winnerIdx, self.exactWinners[problemSize], "->", solutionMap[winnerIdx], winnerGFlops
-                self.exactWinners[problemSize] = [solutionMap[winnerIdx], winnerGFlops]
+                self.exactWinners[problemSize] = [solutionMap[winnerIdx], performance_metric]
             else:
-              self.exactWinners[problemSize] = [solutionMap[winnerIdx], winnerGFlops]
+              self.exactWinners[problemSize] = [solutionMap[winnerIdx], performance_metric]
               #print "new exact", problemSize, "CSV index=", winnerIdx, self.exactWinners[problemSize]
-
+            
         # Range Problem Size
         elif problemSize in self.rangeProblemSizes:
           problemIndices = []
@@ -1495,7 +1523,26 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
   print1("%s\n# Finish Analysing data to %s in %.3fs\n%s" % (HR, os.path.split(libraryLogicPath)[0], elapsedTime, HR) )
   popWorkingPath()
 
+##############################################################################
+# Error handling for frequency issues 
+##############################################################################
+def handle_frequency_issue(message):
+    print1(message)
+    print1("  - Type 'yes(y)' to abort the operation.")
+    print1("  - Type 'no(n)' to continue and use GFlops as the efficiency metric.")
 
+    while True:
+        user_choice = input("Do you want to abort (yes(y)/no(n))? ").strip().lower()
+        if user_choice in ['yes', 'no', 'y', 'n']:
+            break
+        else:
+            print1("Invalid input. Please type 'yes(y)' or 'no(n)'.")
+    if user_choice == "yes" or user_choice == 'y':
+        print1("Operation aborted by the user.")
+        raise Exception("User chose to abort due to frequency issue.")
+    else:
+        globalParameters["UseEffLike"] = False
+        print1("Proceeding with GFlops as the efficiency metric.")        
 ################################################################################
 ################################################################################
 ###

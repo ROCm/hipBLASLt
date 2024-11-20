@@ -38,7 +38,7 @@
 #include <fnmatch.h>
 #endif
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -90,4 +90,4 @@ namespace Tensile
         };
 
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

@@ -43,7 +43,7 @@
 #include <Tensile/DataTypes_Int8x4.hpp>
 #include <Tensile/DataTypes_XFloat32.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Tensile
@@ -206,7 +206,7 @@ namespace Tensile
     {
     };
 
-    // Enum DataType::Int8 maps to int8_t, struct Tensile::Int8 is only used for LogTensor now
+    // Enum DataType::Int8 maps to int8_t, struct TensileLite::Int8 is only used for LogTensor now
     template <>
     struct TypeInfo<int8_t> : public BaseTypeInfo<int8_t, DataType::Int8, 1, false, true>
     {
@@ -315,4 +315,4 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite

@@ -29,7 +29,7 @@
 
 #include <algorithm>
 
-namespace Tensile
+namespace TensileLite
 {
     std::string ToString(DataType d)
     {
@@ -333,4 +333,4 @@ namespace Tensile
             throw std::runtime_error("Unsupported variant cast type.");
         }
     }
-} // namespace Tensile
+} // namespace TensileLite

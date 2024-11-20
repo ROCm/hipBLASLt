@@ -30,7 +30,7 @@
 #include <Tensile/TensorDescriptor_fwd.hpp>
 #include <Tensile/TensorOps_fwd.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \addtogroup Problem
@@ -116,4 +116,4 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite

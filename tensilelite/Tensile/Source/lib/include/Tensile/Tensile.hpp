@@ -74,7 +74,7 @@
 /**
  * @brief Primary namespace for Tensile host code.
  */
-namespace Tensile
+namespace TensileLite
 {
     /**
      * \ingroup Tensile
@@ -199,6 +199,6 @@ namespace Tensile
     std::shared_ptr<SolutionLibrary<MyProblem, MySolution>>
         LoadLibraryData(std::vector<uint8_t> const& data);
 #endif
-} // namespace Tensile
+} // namespace TensileLite
 
 /** @} */

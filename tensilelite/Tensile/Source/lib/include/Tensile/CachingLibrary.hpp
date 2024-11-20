@@ -37,7 +37,7 @@
 #include <Tensile/ContractionProblem_Detail.hpp>
 #include <Tensile/TensorDescriptor_Detail.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename Value, typename Key, typename... Keys>
     struct MultiLevelMap
@@ -322,4 +322,4 @@ namespace Tensile
     };
 #endif
 
-} // namespace Tensile
+} // namespace TensileLite

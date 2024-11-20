@@ -38,7 +38,7 @@
 
 #define XFloat32_Q_NAN_VALUE 0x7FC00000
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup DataTypes
@@ -199,19 +199,19 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
-    inline bool isinf(const Tensile::XFloat32& a)
+    inline bool isinf(const TensileLite::XFloat32& a)
     {
         return std::isinf(static_cast<float>(a));
     }
-    inline bool isnan(const Tensile::XFloat32& a)
+    inline bool isnan(const TensileLite::XFloat32& a)
     {
         return std::isnan(static_cast<float>(a));
     }
-    inline bool iszero(const Tensile::XFloat32& a)
+    inline bool iszero(const TensileLite::XFloat32& a)
     {
         union
         {
@@ -221,16 +221,16 @@ namespace std
         return !(u.p & 0x7FFFE000);
     }
 
-    inline Tensile::XFloat32 abs(const Tensile::XFloat32& a)
+    inline TensileLite::XFloat32 abs(const TensileLite::XFloat32& a)
     {
-        return static_cast<Tensile::XFloat32>(std::abs(static_cast<float>(a)));
+        return static_cast<TensileLite::XFloat32>(std::abs(static_cast<float>(a)));
     }
-    inline Tensile::XFloat32 sin(const Tensile::XFloat32& a)
+    inline TensileLite::XFloat32 sin(const TensileLite::XFloat32& a)
     {
-        return static_cast<Tensile::XFloat32>(std::sin(static_cast<float>(a)));
+        return static_cast<TensileLite::XFloat32>(std::sin(static_cast<float>(a)));
     }
-    inline Tensile::XFloat32 cos(const Tensile::XFloat32& a)
+    inline TensileLite::XFloat32 cos(const TensileLite::XFloat32& a)
     {
-        return static_cast<Tensile::XFloat32>(std::cos(static_cast<float>(a)));
+        return static_cast<TensileLite::XFloat32>(std::cos(static_cast<float>(a)));
     }
 } // namespace std

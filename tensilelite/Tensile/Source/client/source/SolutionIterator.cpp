@@ -29,7 +29,7 @@
 #include "ResultReporter.hpp"
 #include <Tensile/Debug.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -379,4 +379,4 @@ namespace Tensile
             return m_solutions[m_currentSolutionIdx];
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

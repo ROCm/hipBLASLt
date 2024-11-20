@@ -37,7 +37,7 @@
 #include <rocm_smi/rocm_smi.h>
 #include <rocm_smi/rocm_smi64Config.h>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -82,6 +82,13 @@ namespace Tensile
             size_t getSamples()
             {
                 return m_dataPoints;
+            }
+
+            double getMaxGfxFreqValues()
+            {
+                if(m_hasInvalidGpuFreqStatus || !has_maxFreqValues)
+                    return std::numeric_limits<double>::quiet_NaN();
+                return static_cast<double>(m_maxFreqValues);
             }
 
             /// Begins monitoring until stop() is called.
@@ -138,9 +145,8 @@ namespace Tensile
 
             uint16_t m_XCDCount;
 
-            std::vector<std::tuple<rsmi_temperature_type_t, rsmi_temperature_metric_t>>
-                                 m_tempMetrics;
-            std::vector<int64_t> m_tempValues;
+            std::vector<std::tuple<rsmi_temperature_type_t, rsmi_temperature_metric_t>> m_tempMetrics;
+            std::vector<int64_t>                                                        m_tempValues;
 
             std::vector<rsmi_clk_type_t> m_clockMetrics;
             std::vector<uint64_t>        m_clockValues;
@@ -148,9 +154,13 @@ namespace Tensile
             std::vector<uint32_t> m_fanMetrics;
             std::vector<int64_t>  m_fanValues;
 
+            uint64_t m_maxFreqValues; // The frequency is in Mhz
+            bool     has_maxFreqValues         = false;
+            bool     m_hasInvalidGpuFreqStatus = false;
+
             // Reserved for further performance check.
             std::vector<uint64_t>              m_SYSCLK_sum;
             std::vector<std::vector<uint64_t>> m_SYSCLK_array;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

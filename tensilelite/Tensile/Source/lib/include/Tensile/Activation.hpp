@@ -33,7 +33,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Tensile

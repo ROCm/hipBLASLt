@@ -28,7 +28,7 @@
 
 #include <cmath>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Matching
     {
@@ -403,4 +403,4 @@ namespace Tensile
  */
 
     } // namespace Matching
-} // namespace Tensile
+} // namespace TensileLite

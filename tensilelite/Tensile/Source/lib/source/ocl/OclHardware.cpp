@@ -31,7 +31,7 @@
 #include <Tensile/ocl/OclHardware.hpp>
 #include <Tensile/ocl/OclUtils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace ocl
     {
@@ -63,4 +63,4 @@ namespace Tensile
             return std::make_shared<OclAMDGPU>(prop);
         }
     } // namespace hip
-} // namespace Tensile
+} // namespace TensileLite

@@ -30,7 +30,7 @@
 #include <hip/hip_version.h>
 #if HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR > 2 \
     && HIP_VERSION_PATCH > 42130 //tmp before gfx94 use hip f8 header
-#define HIP_FP8_TYPE_OCP 1
+#define USE_HIP_FP8_DEF 1
 #endif
 #include <hip/hip_fp8.h>
 

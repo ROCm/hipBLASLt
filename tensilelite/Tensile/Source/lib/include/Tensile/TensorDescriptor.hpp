@@ -40,7 +40,7 @@
 #include <Tensile/Macros.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename SizeIter>
     inline size_t CoordCount(SizeIter sizeBegin, SizeIter sizeEnd)
@@ -527,4 +527,4 @@ namespace Tensile
         }
     }
 
-} // namespace Tensile
+} // namespace TensileLite

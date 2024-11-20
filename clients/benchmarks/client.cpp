@@ -255,6 +255,43 @@ void fix_batch(int argc, char* argv[])
         }
 }
 
+bool tuning_path_compare_git_version(const char* tuningEnv)
+{
+    char                   git_version[128];
+    hipblaslt_local_handle handle;
+    hipblasLtGetGitRevision(handle, &git_version[0]);
+    std::string   tuningPath = tuningEnv;
+    std::ifstream file_read(tuningPath);
+
+    if(file_read.peek() == std::ifstream::traits_type::eof())
+    {
+        std::ofstream file_write(tuningPath, std::ios::app);
+        file_write << "Git Version: " << (std::string)git_version << std::endl;
+        hipblaslt_cout << "Initialize tuning file." << std::endl;
+        return true;
+    }
+    else
+    {
+        std::string firstline;
+        std::string prefix = "Git Version: ";
+        std::getline(file_read, firstline);
+        size_t pos = firstline.find(prefix);
+        if(pos != std::string::npos)
+        {
+            std::string file_version = firstline.substr(pos + prefix.length());
+            hipblaslt_cout << "tuning file git version: " << file_version << std::endl;
+            if(file_version == git_version)
+            {
+                return true;
+            }
+        }
+    }
+
+    hipblaslt_cout << "The hipBLASLt git version and the tuning file git version are not the same."
+                   << std::endl;
+    return false;
+}
+
 void hipblaslt_print_version(void)
 {
     int                    version;
@@ -283,11 +320,11 @@ try
     std::string scale_type;
     std::string bias_type;
     std::string bias_source;
-    std::string scaleAFormat;
-    std::string scaleBFormat;
     std::string initialization;
     std::string filter;
     std::string activation_type;
+    int         scaleAFormat;
+    int         scaleBFormat;
     int         device_id;
     int         flags             = 0;
     bool        datafile          = hipblaslt_parse_data(argc, argv);
@@ -306,6 +343,17 @@ try
     std::vector<int64_t>  stride_a, stride_b, stride_c, stride_d, stride_e;
     std::vector<uint32_t> gsu_vector, wgm_vector;
     arg.init(); // set all defaults
+    const char* tuningEnv = getenv("HIPBLASLT_TUNING_FILE");
+    if(tuningEnv)
+    {
+        bool tuning_success = tuning_path_compare_git_version(tuningEnv);
+        if(tuning_success)
+        {
+            hipblaslt_cout << "HIPBLASLT_TUNING_FILE is the correct setting." << std::endl;
+        }
+        else
+            return 1;
+    }
 
     options_description desc("hipblaslt-bench command line options");
     desc.add_options()
@@ -438,15 +486,15 @@ try
          "Validate GPU results with CPU?")
 
         ("iters,i",
-         value<int32_t>(&arg.iters)->default_value(10),
+         value<int32_t>(&arg.iters)->default_value(tuningEnv? 1000 : 10),
          "Iterations to run inside timing loop")
 
         ("cold_iters,j",
-         value<int32_t>(&arg.cold_iters)->default_value(2),
+         value<int32_t>(&arg.cold_iters)->default_value(tuningEnv? 1000 : 2),
          "Cold Iterations to run before entering the timing loop")
 
         ("algo_method",
-         value<std::string>(&algo_method_str)->default_value("heuristic"),
+         value<std::string>(&algo_method_str)->default_value(tuningEnv? "all" : "heuristic"),
          "Use different algorithm search API. Options: heuristic, all, index.")
 
         ("solution_index",
@@ -454,7 +502,7 @@ try
          "Used with --algo_method 2.  Specify solution index to use in benchmark.")
 
         ("requested_solution",
-         value<int32_t>(&arg.requested_solution_num)->default_value(1),
+         value<int32_t>(&arg.requested_solution_num)->default_value(tuningEnv? -1 : 1),
          "Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to heuristic.")
 
         ("activation_type",
@@ -482,12 +530,12 @@ try
          "Apply bias vector")
 
         ("scaleA",
-         value<std::string>(&scaleAFormat)->default_value(""),
-         "Apply scale for A buffer. s = scalar, v = vector.")
+         value<int>(&scaleAFormat)->default_value(0),
+         "Apply scale for A buffer. 0 = None, 1 = scalar, 2 = vector.")
 
         ("scaleB",
-         value<std::string>(&scaleBFormat)->default_value(""),
-         "Apply scale for B buffer. s = scalar, v = vector.")
+         value<int>(&scaleBFormat)->default_value(0),
+         "Apply scale for B buffer. 0 = None, 1 = scalar, 2 = vector.")
 
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
@@ -551,7 +599,7 @@ try
          "Print solution, kernel name and solution index.")
 
         ("rotating",
-         value<int32_t>(&arg.rotating)->default_value(0),
+         value<int32_t>(&arg.rotating)->default_value(tuningEnv ? 512 : 0),
          "Use rotating memory blocks for each iteration, size in MB.")
 
         ("use_gpu_timer",
@@ -573,7 +621,7 @@ try
          "[Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
 
         ("flush",
-        value<bool>(&arg.flush)->default_value(false),
+        value<bool>(&arg.flush)->default_value(tuningEnv ? true : false),
         "Flush icache, only works for gemm.")
 
         ("help,h", "produces this help message")
@@ -593,6 +641,7 @@ try
     }
 
     hipblaslt_print_version();
+
     if(vm.find("version") != vm.end())
     {
         return 0;
@@ -626,7 +675,7 @@ try
     }
     else if(algo_method_str.compare("index") == 0)
     {
-        arg.algo_method = 2;
+        arg.algo_method = tuningEnv ? 1 : 2;
     }
     else
     {
@@ -829,15 +878,18 @@ try
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
 
-    auto scaleString2Enum = [](std::string& s) {
-        if(s == "s")
-            return Arguments::ScalingFormat::Scalar;
-        if(s == "v")
-            return Arguments::ScalingFormat::Vector;
-        return Arguments::ScalingFormat::None;
+    auto scaleInt2Enum = [](int s) {
+        if(s == 0)
+            return hipblaslt_scaling_format::none;
+        if(s == 1)
+            return hipblaslt_scaling_format::Scalar;
+        if(s == 2)
+            return hipblaslt_scaling_format::Vector;
+
+        return hipblaslt_scaling_format::none;
     };
-    arg.scaleA = scaleString2Enum(scaleAFormat);
-    arg.scaleB = scaleString2Enum(scaleBFormat);
+    arg.scaleA = scaleInt2Enum(scaleAFormat);
+    arg.scaleB = scaleInt2Enum(scaleBFormat);
 
     if(arg.M[0] < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M[0]));

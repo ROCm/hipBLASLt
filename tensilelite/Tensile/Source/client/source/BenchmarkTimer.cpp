@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@
 #include <csignal>
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -57,7 +57,11 @@ namespace Tensile
             , m_sleepPercent(args["sleep-percent"].as<int>())
             , m_timeInSolution(0)
             , m_totalGPUTime(0)
+            , m_currentBestWarmUpTime(std::numeric_limits<double>::max())
             , m_flushTimeUs(flushTimeUs)
+            , m_skip_slow_solution_ratio(args["skip-slow-solution-ratio"].as<float>())
+            , m_skip_slow_solution(0)
+            , m_numSolutionSkip(0)
         {
         }
 
@@ -75,15 +79,25 @@ namespace Tensile
 
         void BenchmarkTimer::preProblem(ContractionProblem* const problem)
         {
-            m_problem = problem;
+            m_problem               = problem;
+            m_currentBestWarmUpTime = double_millis(std::numeric_limits<double>::max());
+            m_numSolutionSkip       = 0;
         }
 
-        void BenchmarkTimer::postProblem() {}
+        void BenchmarkTimer::postProblem()
+        {
+            if(m_numSolutionSkip)
+                std::cout << "########################## " << m_numSolutionSkip
+                          << " solutions were skipped in total. (Skip Ratio: "
+                          << m_skip_slow_solution_ratio << ")##########################"
+                          << std::endl;
+        }
 
         void BenchmarkTimer::preSolution(ContractionSolution const& solution)
         {
             m_numEnqueuesInSolution = 0;
             m_timeInSolution        = double_millis::zero();
+            m_skip_slow_solution    = false;
 
             ContractionSolution::ProjectedPerformance pp;
 
@@ -118,7 +132,10 @@ namespace Tensile
         void BenchmarkTimer::postSolution()
         {
             double timePerEnqueue_us
-                = double_micros(m_timeInSolution).count() / m_numEnqueuesInSolution - m_flushTimeUs;
+                = !m_skip_slow_solution
+                      ? double_micros(m_timeInSolution).count() / m_numEnqueuesInSolution
+                            - m_flushTimeUs
+                      : std::numeric_limits<double>::quiet_NaN();
 
             ContractionSolution::ProjectedPerformance pp;
             double                                    flopCount = 0;
@@ -138,9 +155,9 @@ namespace Tensile
                     "[BenchmarkTimer] Failed to cast problem to any ContractionProblem.");
             }
 
-            double gflops      = flopCount / (timePerEnqueue_us) / 1000.0;
-            int    tiles       = pp.granularities.tilesPerCu * perf.CUs;
-            int    usedCus     = std::min(tiles, perf.CUs);
+            double gflops  = !m_skip_slow_solution ? flopCount / (timePerEnqueue_us) / 1000.0 : 0;
+            int    tiles   = pp.granularities.tilesPerCu * perf.CUs;
+            int    usedCus = std::min(tiles, perf.CUs);
             double gflopsPerCu = gflops / usedCus;
 
             m_reporter->report(ResultKey::TimeUS, timePerEnqueue_us);
@@ -153,7 +170,7 @@ namespace Tensile
 
         bool BenchmarkTimer::needMoreRunsInSolution() const
         {
-            return m_numEnqueuesInSolution < m_numEnqueuesPerSolution;
+            return m_numEnqueuesInSolution < m_numEnqueuesPerSolution && !m_skip_slow_solution;
         }
 
         size_t BenchmarkTimer::numWarmupRuns()
@@ -170,7 +187,34 @@ namespace Tensile
 
         void BenchmarkTimer::preWarmup() {}
 
-        void BenchmarkTimer::postWarmup() {}
+        void BenchmarkTimer::postWarmup(TimingEvents const& startEvents,
+                                        TimingEvents const& stopEvents,
+                                        hipStream_t const&  stream)
+        {
+            if(!m_skip_slow_solution_ratio)
+                return;
+
+            double_millis totalTime(0.0);
+
+            float enqTime = 0.0f;
+            HIP_CHECK_EXC(hipEventSynchronize(stopEvents->back().back()));
+            for(size_t i = 0; i < startEvents->size(); i++)
+            {
+                HIP_CHECK_EXC(hipEventElapsedTime(
+                    &enqTime, startEvents->at(i).front(), stopEvents->at(i).back()));
+
+                totalTime += double_millis(enqTime);
+            }
+            if(totalTime < m_currentBestWarmUpTime)
+                m_currentBestWarmUpTime = totalTime;
+            else if(totalTime * m_skip_slow_solution_ratio > m_currentBestWarmUpTime)
+            {
+                //std::cout << "current fast time " << double_micros(m_currentBestWarmUpTime).count()/m_numWarmups \
+                //  << " us, warm up time " << double_micros(totalTime).count()/m_numWarmups << " us"<< std::endl;
+                m_skip_slow_solution = true;
+                m_numSolutionSkip++;
+            }
+        }
 
         void BenchmarkTimer::validateWarmups(std::shared_ptr<ProblemInputs> inputs,
                                              TimingEvents const&            startEvents,
@@ -196,6 +240,8 @@ namespace Tensile
 
         size_t BenchmarkTimer::numEnqueuesPerSync()
         {
+            if(m_skip_slow_solution)
+                return 0;
             size_t enqueuesByFlops = 0;
             if(m_minFlopsPerSync > 0)
             {
@@ -311,4 +357,4 @@ namespace Tensile
             return 0;
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

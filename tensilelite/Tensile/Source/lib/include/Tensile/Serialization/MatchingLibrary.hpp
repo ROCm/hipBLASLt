@@ -35,7 +35,7 @@
 #include <tuple>
 #include <unordered_set>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -355,4 +355,4 @@ namespace Tensile
         {
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

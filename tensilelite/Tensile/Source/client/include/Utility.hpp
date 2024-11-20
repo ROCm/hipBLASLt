@@ -30,7 +30,7 @@
 #include <sstream>
 #include <vector>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -67,4 +67,4 @@ namespace Tensile
             return ptrs;
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

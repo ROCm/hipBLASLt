@@ -15,6 +15,7 @@ subtrees:
   - caption: How to
     entries:
     - file: how-to-use-hipblaslt-tuning-utility
+    - file: how-to-use-hipblaslt-offline-tuning
   - caption: Contribution
     entries:
     - file: source-org

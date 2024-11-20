@@ -84,7 +84,7 @@
             std::cout << "Error code " << e << std::endl; \
     }
 
-namespace Tensile
+namespace TensileLite
 {
     namespace hip
     {
@@ -201,4 +201,4 @@ namespace Tensile
             HIP_CHECK_EXC(hipMemcpyAsync(dst, src, copyBytes, direction, stream));
         }
     } // namespace hip
-} // namespace Tensile
+} // namespace TensileLite
