@@ -2304,7 +2304,7 @@ class Solution(collections.abc.Mapping):
           Solution.checkAndAssignWaveSeparateGlobalRead(state, 'Metadata')
           state["DirectToLdsMetadata"] = False
           state["LocalWriteUseSgprMetadat"] = False
-          state["ProblemType"]["MirrorDimsMetadata"]  = state["ProblemType"]["MirrorDimsB"]
+          state["ProblemType"]["MirrorDimsMetadata"]  = list(state["ProblemType"]["MirrorDimsB"])
           state["VectorWidthMetadata"] = state["VectorWidthB"]
         if state["EnableMatrixInstruction"]:
           state["MIWaveTileMetadata"] = state["MIWaveTileB"]
@@ -2317,7 +2317,7 @@ class Solution(collections.abc.Mapping):
           Solution.checkAndAssignWaveSeparateGlobalRead(state, 'Metadata')
           state["DirectToLdsMetadata"] = False
           state["LocalWriteUseSgprMetadat"] = False
-          state["ProblemType"]["MirrorDimsMetadata"]  = state["ProblemType"]["MirrorDimsA"]
+          state["ProblemType"]["MirrorDimsMetadata"]  = list(state["ProblemType"]["MirrorDimsA"])
           state["VectorWidthMetadata"] = state["VectorWidthA"]
         if state["EnableMatrixInstruction"]:
           state["MIWaveTileMetadata"] = state["MIWaveTileA"]
