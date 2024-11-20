@@ -471,6 +471,7 @@ def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelF
 
   return (solutionPaths, sourceKernelPaths, asmKernelPaths, sourceLibPaths, asmLibPaths, libMetadataPaths)
 
+<<<<<<< HEAD
 ################################################################################
 # Write CMake
 ################################################################################
@@ -505,7 +506,6 @@ def writeCMake(outputPath, solutionFiles, kernelFiles, libraryStaticFiles, maste
   generatedFile.write("  )\n\n")
 
   generatedFile.close()
->>>>>>> Remove merge-files option
 
 ################################################################################
 # Generate Kernel Objects From Solutions
