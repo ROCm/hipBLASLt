@@ -1277,6 +1277,9 @@ namespace
 
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
             tensileProblem.setF32XdlMathOp(TensileLite::DataType::XFloat32);
+
+        tensileProblem.setSwizzleTensorA(prob.swizzleA);
+        tensileProblem.setSwizzleTensorB(prob.swizzleB);
     }
 
     /***************************************************************
