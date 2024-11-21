@@ -59,6 +59,7 @@ add_executable( sample_hipblaslt_gemm_ext_deprecated deprecated/sample_hipblaslt
 add_executable( sample_hipblaslt_ext_op_amax 23_amax_ext/sample_hipblaslt_ext_op_amax.cpp)
 add_executable( sample_hipblaslt_ext_op_amax_with_scale 24_amax_with_scale_ext/sample_hipblaslt_ext_op_amax_with_scale.cpp)
 add_executable( sample_hipblaslt_gemm_with_TF32 25_gemm_with_TF32/sample_hipblaslt_gemm_with_TF32.cpp)
+add_executable( sample_hipblaslt_gemm_swizzle_a 26_gemm_swizzle_a/sample_hipblaslt_gemm_swizzle_a.cpp)
 
 
 set(samples sample_hipblaslt_gemm
@@ -97,7 +98,8 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext_deprecated
             sample_hipblaslt_ext_op_amax
             sample_hipblaslt_ext_op_amax_with_scale
-            sample_hipblaslt_gemm_with_TF32)
+            sample_hipblaslt_gemm_with_TF32
+            sample_hipblaslt_gemm_swizzle_a)
 
 set( sample_list_all ${samples})
 
