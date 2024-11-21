@@ -1,3 +1,8 @@
+if(NOT DEFINED ENV{Python_ROOT} AND NOT Python_ROOT)
+    message(STATUS "Python_ROOT is unset. Setting Python_ROOT to /usr.")
+    message(STATUS "Configure Python_ROOT variable if a different installation is preferred.")
+    set(Python_ROOT /usr)
+endif()
 
 find_package(Python REQUIRED COMPONENTS Interpreter)
 
