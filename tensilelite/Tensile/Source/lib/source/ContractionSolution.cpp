@@ -57,7 +57,7 @@ namespace TensileLite
             __device__ __host__ inline constexpr N safe_ceil_div(N n, D d)
             {
                 // Static cast to undo integral promotion.
-                return static_cast<N>(n / d + (n % d != 0 ? 1 : 0));
+                return static_cast<N>(d == 0 ? 0 : (n / d + (n % d != 0 ? 1 : 0)));
             }
         } // namespace math
 
