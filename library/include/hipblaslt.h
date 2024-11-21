@@ -196,6 +196,7 @@ typedef enum {
    * Leading dimension is the stride (in elements) to the beginning of next row in memory.
    */
   HIPBLASLT_ORDER_ROW = 1,
+  HIPBLASLT_ORDER_ROW16_32C_8 = 2
 } hipblasLtOrder_t;
 
 /** Matrix transform descriptor attributes to define details of the operation.
