@@ -56,7 +56,7 @@ import subprocess
 import sys
 from timeit import default_timer as timer
 from pathlib import Path
-from typing import Sequence, List
+from typing import Sequence, List, Union
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -90,87 +90,142 @@ def processKernelSource(kernel, kernelWriterAssembly, ti):
 
     return (err, src, header, kernelName, filename)
 
-def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
-    destDir = ensurePath(os.path.join(outputPath, 'library'))
-    asmDir = kernelWriterAssembly.getAssemblyDirectory()
-    archs = collections.defaultdict(list)
+def linkIntoCodeObject(
+    objFiles: List[str], coPathDest: Union[Path, str], kernelWriterAssembly: KernelWriterAssembly
+):
+    """Links object files into a code object file.
 
-    for k in filter(lambda k: k['KernelLanguage'] == 'Assembly', kernels):
-      archs[tuple(k['ISA'])].append(k)
+    Args:
+        objectFiles: A list of object files to be linked.
+        coPathDest: The destination path for the code object file.
+        kernelWriterAssembly: An instance of KernelWriterAssembly to get link arguments.
+
+    Raises:
+        RuntimeError: If linker invocation fails.
+    """
+    if os.name == "nt":
+      # On Windows, the objectFiles list command line (including spaces)
+      # exceeds the limit of 8191 characters, so using response file
+
+      responseFile = os.path.join('/tmp', 'clangArgs.txt')
+      with open(responseFile, 'wt') as file:
+        file.write(" ".join(objFiles))
+        file.flush()
+
+      args = [globalParameters['AssemblerPath'], '-target', 'amdgcn-amd-amdhsa', '-o', coFileRaw, '@clangArgs.txt']
+      subprocess.check_call(args, cwd=asmDir)
+    else:
+      numObjFiles = len(objFiles)
+      maxObjFiles = 10000
+      
+      if numObjFiles > maxObjFiles:
+        batchedObjFiles = [objFiles[i:i+maxObjFiles] for i in range(0, numObjFiles, maxObjFiles)]
+        batchSize = int(math.ceil(numObjFiles / maxObjFiles))
+
+        newObjFiles = [str(coPathDest) + "." + str(i) for i in range(0, batchSize)]
+        newObjFilesOutput = []
+
+        for batch, filename in zip(batchedObjFiles, newObjFiles):
+          if len(batch) > 1:
+            args = [globalParameters["ROCmLdPath"], "-r"] + batch + [ "-o", filename]
+            print2(f"Linking object files into fewer object files: {' '.join(args)}")
+            subprocess.check_call(args)
+            newObjFilesOutput.append(filename)
+          else:
+            newObjFilesOutput.append(batchedObjFiles[0])
+
+        args = kernelWriterAssembly.getLinkCodeObjectArgs(newObjFilesOutput, str(coPathDest))
+        print2(f"Linking object files into code object: {' '.join(args)}")
+        subprocess.check_call(args)
+      else:
+        args = kernelWriterAssembly.getLinkCodeObjectArgs(objFiles, str(coPathDest))
+        print2(f"Linking object files into code object: {' '.join(args)}")
+        subprocess.check_call(args)
+
+
+def compressCodeObject(
+    coPathSrc: Union[Path, str], coPathDest: Union[Path, str], gfx: str, bundler: str
+):
+    """Compresses a code object file using the provided bundler.
+
+    Args:
+        coPathSrc: The source path of the code object file to be compressed.
+        coPathDest: The destination path for the compressed code object file.
+        gfx: The target GPU architecture.
+        bundler: The path to the Clang Offload Bundler executable.
+
+    Raises:
+        RuntimeError: If compressing the code object file fails.
+    """
+    args = [
+        bundler,
+        "--compress",
+        "--type=o",
+        "--bundle-align=4096",
+        f"--targets=host-x86_64-unknown-linux,hipv4-amdgcn-amd-amdhsa--{gfx}",
+        "--input=/dev/null",
+        f"--input={str(coPathSrc)}",
+        f"--output={str(coPathDest)}",
+    ]
+
+    print2(f"Bundling/compressing code objects: {' '.join(args)}")
+    try:
+        out = subprocess.check_output(args, stderr=subprocess.STDOUT)
+        print2(f"Output: {out}")
+    except subprocess.CalledProcessError as err:
+        raise RuntimeError(
+            f"Error compressing code object via bundling: {err.output}\nFailed command: {' '.join(args)}"
+        )
+
+def buildAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
+    
+    isAsm = lambda k: k["KernelLanguage"] == "Assembly"
+
+    extObj = ".o"
+    extCo = ".co"
+    extCoRaw = ".co.raw"
+
+    destDir = Path(ensurePath(os.path.join(outputPath, 'library')))
+    asmDir = Path(kernelWriterAssembly.getAssemblyDirectory())
+
+    archKernelMap = collections.defaultdict(list)
+    for k in filter(isAsm, kernels):
+      archKernelMap[tuple(k['ISA'])].append(k)
 
     coFiles = []
-
-    for arch, archKernels in archs.items():
+    for arch, archKernels in archKernelMap.items():
       if len(archKernels) == 0:
         continue
 
-      archName = getGfxName(arch)
+      gfx = getGfxName(arch)
 
       if globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
-        objectFiles = [kernelWriterAssembly.getKernelFileBase(k) + '.o' for k in archKernels if 'codeObjectFile' not in k]
+        objectFiles = [str(asmDir / (kernelWriterAssembly.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
 
-        #Group kernels from placeholder libraries
         coFileMap = collections.defaultdict(list)
+
         if len(objectFiles):
-          coFileMap[os.path.join(destDir, "TensileLibrary_"+archName+".co")] = objectFiles
+          coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
 
         for kernel in archKernels:
           coName = kernel.get("codeObjectFile", None)
           if coName:
-            coFileMap[os.path.join(destDir, coName+".co")] += [kernelWriterAssembly.getKernelFileBase(kernel) + '.o']
+            coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (kernelWriterAssembly.getKernelFileBase(kernel) + extObj)))
 
-        for coFile, objectFiles in coFileMap.items():
-          if os.name == "nt":
-            # On Windows, the objectFiles list command line (including spaces)
-            # exceeds the limit of 8191 characters, so using response file
+        for coFileRaw, objFiles in coFileMap.items():
 
-            responseArgs = objectFiles
-            responseFile = os.path.join(asmDir, 'clangArgs.txt')
-            with open(responseFile, 'wt') as file:
-              file.write( " ".join(responseArgs) )
-              file.flush()
-
-            args = [globalParameters['AssemblerPath'], '-target', 'amdgcn-amd-amdhsa', '-o', coFile, '@clangArgs.txt']
-            subprocess.check_call(args, cwd=asmDir)
-          else:
-            numOfObjectFiles = len(objectFiles)
-            splitFiles = 10000
-            if numOfObjectFiles > splitFiles:
-              slicedObjectFilesList = [objectFiles[x:x+splitFiles] for x in range(0, numOfObjectFiles, splitFiles)]
-              objectFileBasename = os.path.split(coFile)[-1].split('.')[0]
-              numOfOneSliceOfObjectFiles = int(math.ceil(numOfObjectFiles / splitFiles))
-              newObjectFiles = [ objectFileBasename + "_" + str(i) + ".o" for i in range(0, numOfOneSliceOfObjectFiles)]
-              newObjectFilesOutput = []
-              for slicedObjectFiles, objectFile in zip(slicedObjectFilesList, newObjectFiles):
-                if len(slicedObjectFiles) > 1:
-                  args = [globalParameters["ROCmLdPath"], "-r"] + slicedObjectFiles + [ "-o", objectFile ]
-                  if globalParameters["PrintCodeCommands"]:
-                    print(asmDir)
-                    print(' '.join(args))
-                  subprocess.check_call(args, cwd=asmDir)
-                  newObjectFilesOutput.append(objectFile)
-                else:
-                  newObjectFilesOutput.append(slicedObjectFiles[0])
-              args = kernelWriterAssembly.getLinkCodeObjectArgs(newObjectFilesOutput, coFile)
-              if globalParameters["PrintCodeCommands"]:
-                print(asmDir)
-                print(' '.join(args))
-              subprocess.check_call(args, cwd=asmDir)
-            else:
-              args = kernelWriterAssembly.getLinkCodeObjectArgs(objectFiles, coFile)
-              if globalParameters["PrintCodeCommands"]:
-                print(asmDir)
-                print(' '.join(args))
-              subprocess.check_call(args, cwd=asmDir)
+          linkIntoCodeObject(objFiles, coFileRaw, kernelWriterAssembly)
+          coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
+          compressCodeObject(coFileRaw, coFile, gfx, globalParameters["ClangOffloadBundlerPath"])
 
           coFiles.append(coFile)
       else:
         # no mergefiles
         def newCoFileName(kName):
           if globalParameters["PackageLibrary"]:
-            return os.path.join(destDir, archName, kName + '.co')
+            return os.path.join(destDir, gfx, kName + '.co')
           else:
-            return os.path.join(destDir, kName + '_' + archName + '.co')
+            return os.path.join(destDir, kName + '_' + gfx + '.co')
 
         def orgCoFileName(kName):
           return os.path.join(asmDir, kName + '.co')
@@ -179,6 +234,8 @@ def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
                                     map(lambda k: kernelWriterAssembly.getKernelFileBase(k), archKernels)), "Copying code objects"):
           shutil.copyfile(src, dst)
           coFiles.append(dst)
+        printWarning("Code object files are not compressed in `--no-merge-files` build mode.")
+
     return coFiles
 
 def which(p):
@@ -645,7 +702,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
 
   if not globalParameters["GenerateSourcesAndExit"]:
     codeObjectFiles += buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath)
-    codeObjectFiles += getAssemblyCodeObjectFiles(kernelsToBuild, kernelWriterAssembly, outputPath)
+    codeObjectFiles += buildAssemblyCodeObjectFiles(kernelsToBuild, kernelWriterAssembly, outputPath)
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
