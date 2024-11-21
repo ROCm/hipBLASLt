@@ -266,6 +266,7 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *e = nullptr;
     bool                   gradient = false;
+    bool                   swizzleA = matA->order == HIPBLASLT_ORDER_ROW16_32C_8;
     rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            dummy_ptr,
                                                            dummy_ptr,
@@ -299,7 +300,10 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
                                                            scaleAlphaVec,
                                                            e,
                                                            gradient,
-                                                           compute_type);
+                                                           compute_type,
+                                                           swizzleA,
+                                                           /*TODO: Currently we don't support swizzle B */
+                                                           false);
     if(isValid != rocblaslt_status_continue)
     {
         m = 0;
@@ -380,7 +384,10 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
                                         nullptr,
                                         maxWorkSpaceBytes,
                                         nullptr,
-                                        handle->Synchronizer};
+                                        handle->Synchronizer,
+                                        swizzleA,
+                                        /*TODO: Currently we don't support swizzle B */
+                                        false};
 
     return problem;
 }
