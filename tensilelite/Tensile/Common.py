@@ -245,6 +245,7 @@ globalParameters["IndexChars"] =  "IJKLMNOPQRSTUVWXYZ"  # which characters to us
 globalParameters["ScriptPath"] = os.path.dirname(os.path.realpath(__file__))            # path to Tensile/Tensile.py
 globalParameters["SourcePath"] = os.path.join(globalParameters["ScriptPath"], "Source") # path to Tensile/Source/
 globalParameters["HipClangVersion"] = "0.0.0"
+globalParameters["AMDClangVersion"] = "0.0.0"
 
 # default runtime is selected based on operating system, user can override
 if os.name == "nt":
@@ -1125,12 +1126,6 @@ validParameters = {
     # Intended for use with custom kernels which have confirmed to be correct
     "NoReject":                    [False, True],
 
-    "MinVgprNumber":                list(range(0,256)),
-
-    "MaxVgprNumber":                list(range(0,257)),
-
-    "TotalVgprNumber":              list(range(0,513)),
-
     # Debug use only.
     "ActivationFused":             [False, True],
 
@@ -1241,9 +1236,6 @@ defaultBenchmarkCommonParameters = [
     {"PreloadKernArgs":           [ True ] },
     {"CustomKernelName":          [ "" ] },
     {"NoReject":                  [ False ]},
-    {"MinVgprNumber":             [0]},
-    {"MaxVgprNumber":             [256]},
-    {"TotalVgprNumber":           [512]},
     {"StoreRemapVectorWidth":     [ 0 ] },
     {"SourceSwap":                [ False ] },
     {"StorePriorityOpt":          [ False ] },
@@ -1763,6 +1755,9 @@ def assignGlobalParameters( config ):
       if 'HIP version' in line:
         globalParameters['HipClangVersion'] = line.split()[2]
         print1("# Found  hipcc version " + globalParameters['HipClangVersion'])
+      if 'AMD clang version' in line:
+        globalParameters['AMDClangVersion'] = line.split()[3]
+        print1("# Found  clang version " + globalParameters['AMDClangVersion'])
 
   except (subprocess.CalledProcessError, OSError) as e:
       printWarning("Error: {} running {} {} ".format('hipcc', '--version',  e))

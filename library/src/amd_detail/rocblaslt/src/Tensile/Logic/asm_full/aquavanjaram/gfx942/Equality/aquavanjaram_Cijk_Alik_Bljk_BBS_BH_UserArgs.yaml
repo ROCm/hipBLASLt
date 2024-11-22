@@ -176,8 +176,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -435,8 +433,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -694,8 +690,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -952,8 +946,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -1209,8 +1201,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -1467,8 +1457,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -1725,8 +1713,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -1983,8 +1969,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -2240,8 +2224,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -2497,8 +2479,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -2754,8 +2734,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -3015,8 +2993,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -3276,8 +3252,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -3537,8 +3511,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -3799,8 +3771,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -4061,8 +4031,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -4323,8 +4291,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -4585,8 +4551,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -4847,8 +4811,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -5109,8 +5071,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -5371,8 +5331,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -5633,8 +5591,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -5895,8 +5851,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -6157,8 +6111,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -6419,8 +6371,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -6681,8 +6631,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -6943,8 +6891,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -7205,8 +7151,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -7467,8 +7411,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -7729,8 +7671,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -7991,8 +7931,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -8253,8 +8191,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -8515,8 +8451,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -8777,8 +8711,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -9039,8 +8971,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -9301,8 +9231,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -9563,8 +9491,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -9825,8 +9751,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -10087,8 +10011,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -10349,8 +10271,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -10611,8 +10531,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -10873,8 +10791,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -11135,8 +11051,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -11397,8 +11311,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -11659,8 +11571,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -11921,8 +11831,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -12183,8 +12091,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -12445,8 +12351,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -12707,8 +12611,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -12969,8 +12871,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -13231,8 +13131,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -13493,8 +13391,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -13755,8 +13651,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -14017,8 +13911,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -14279,8 +14171,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -14541,8 +14431,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -14803,8 +14691,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -15065,8 +14951,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -15327,8 +15211,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -15589,8 +15471,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -15851,8 +15731,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -16113,8 +15991,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -16375,8 +16251,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -16637,8 +16511,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -16899,8 +16771,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -17161,8 +17031,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -17423,8 +17291,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -17685,8 +17551,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -17947,8 +17811,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -18209,8 +18071,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -18471,8 +18331,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -18733,8 +18591,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -18995,8 +18851,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -19257,8 +19111,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -19519,8 +19371,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -19782,8 +19632,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -20044,8 +19892,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -20306,8 +20152,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -20568,8 +20412,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -20830,8 +20672,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -21092,8 +20932,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -21354,8 +21192,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -21616,8 +21452,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -21878,8 +21712,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -22140,8 +21972,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -22402,8 +22232,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -22664,8 +22492,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -22926,8 +22752,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -23188,8 +23012,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -23450,8 +23272,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -23715,8 +23535,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -23985,8 +23803,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -24255,8 +24071,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -24525,8 +24339,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -24795,8 +24607,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -25065,8 +24875,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -25341,8 +25149,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -25621,8 +25427,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -25901,8 +25705,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -26181,8 +25983,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -26461,8 +26261,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -26741,8 +26539,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -27021,8 +26817,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -27301,8 +27095,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -27581,8 +27373,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -27856,8 +27646,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -28127,8 +27915,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -28398,8 +28184,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -28669,8 +28453,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -28940,8 +28722,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -29211,8 +28991,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -29482,8 +29260,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -29753,8 +29529,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -30030,8 +29804,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -30162,7 +29934,6 @@
     ThreadTile1: 4
     ThreadTileA: 16
     ThreadTileB: 4
-    TotalVgprNumber: 512
     TransposeLDS: 1
     TransposeLDSMetadata: true
     ULSGRODoubleG2L: 0
@@ -30312,8 +30083,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -30444,7 +30213,6 @@
     ThreadTile1: 4
     ThreadTileA: 16
     ThreadTileB: 4
-    TotalVgprNumber: 512
     TransposeLDS: 1
     TransposeLDSMetadata: true
     ULSGRODoubleG2L: 0
@@ -30594,8 +30362,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -30726,7 +30492,6 @@
     ThreadTile1: 2
     ThreadTileA: 16
     ThreadTileB: 2
-    TotalVgprNumber: 512
     TransposeLDS: 1
     TransposeLDSMetadata: true
     ULSGRODoubleG2L: 0
@@ -30876,8 +30641,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -31008,7 +30771,6 @@
     ThreadTile1: 8
     ThreadTileA: 16
     ThreadTileB: 8
-    TotalVgprNumber: 512
     TransposeLDS: 1
     TransposeLDSMetadata: true
     ULSGRODoubleG2L: 0
@@ -31158,8 +30920,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -31290,7 +31050,6 @@
     ThreadTile1: 4
     ThreadTileA: 32
     ThreadTileB: 4
-    TotalVgprNumber: 512
     TransposeLDS: 1
     TransposeLDSMetadata: true
     ULSGRODoubleG2L: 0
@@ -31440,8 +31199,6 @@
     MatrixInstN: 16
     MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
-    MaxVgprNumber: 256
-    MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
@@ -31572,7 +31329,6 @@
     ThreadTile1: 2
     ThreadTileA: 8
     ThreadTileB: 2
-    TotalVgprNumber: 512
     TransposeLDS: 1
     TransposeLDSMetadata: true
     ULSGRODoubleG2L: 0
