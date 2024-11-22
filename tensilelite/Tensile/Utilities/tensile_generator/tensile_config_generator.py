@@ -129,7 +129,7 @@ else:
     bf16_instructions = [[16,16,16,1],[32,32,8,1]]
     tf32_instructions = [[16,16,8,1]]
     fp32_instructions = [[16,16,4,1]]
-    fp8_instructions = [[32,32,16,1], [16,16,32,1]]
+    fp8_instructions = [[16,16,32,1]]
 
 HIPBLASLT_BENCH_BASE = (
     r"(?P<CMD>\w+) --api_method c "
@@ -296,7 +296,7 @@ def find_matmul_instruction(mfma_instruction, size):
                         matmul_instruction[-4] = wave_tile_m // (2**k)
                         matmul_instruction[-2] = 2**k
 
-                        for l in reversed(range(3)):
+                        for l in reversed(range(3-k)):
                             if wave_tile_n // (2**l) >= 1 and wave_tile_n // (2**l) <= 32:
                                 matmul_instruction[-3] = wave_tile_n // (2**l)
                                 matmul_instruction[-1] = 2**l
