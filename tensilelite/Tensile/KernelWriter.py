@@ -1294,7 +1294,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             packBIdx = packBIdx if tPB["bpe"] < 4 and (not kernel["UnrollMajorLDSB"] or kernel["ConvertAfterDS"]) else 0
           else:
             packAIdx = packAIdx if tPA["localReadInstruction"].blockWidth == 0.25 else 0
-            packBIdx = packAIdx if tPB["localReadInstruction"].blockWidth == 0.25 else 0
+            packBIdx = packBIdx if tPB["localReadInstruction"].blockWidth == 0.25 else 0
           numPack = (packAIdx + packBIdx)
           if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             packMIdx = packMIdx if not kernel["UnrollMajorLDSMetadata"] else 0
