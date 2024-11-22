@@ -106,8 +106,8 @@ namespace TensileLite
                                      size_t m,
                                      size_t n,
                                      size_t k,
-                                     int    grid_start = 1,
-                                     int    grid_end   = 304)
+                                     int    grid_start,
+                                     int    grid_end)
         {
             static const bool debug = Debug::Instance().printStreamKGridInfo();
 
