@@ -38,7 +38,6 @@
 #include "rocblaslt_mat_utils.hpp"
 #include "tensile_host.hpp"
 
-#include <hipblaslt/hipblaslt-ext.hpp>
 #include <Tensile/Contractions.hpp>
 #include <Tensile/EmbeddedLibrary.hpp>
 #include <Tensile/MasterSolutionLibrary.hpp>
@@ -52,6 +51,7 @@
 #include <atomic>
 #include <complex>
 #include <exception>
+#include <hipblaslt/hipblaslt-ext.hpp>
 #include <iomanip>
 #include <memory>
 #include <mutex>
@@ -495,10 +495,10 @@ namespace
 
     inline void logBenchFromTensileDataGemm(const TensileLite::ContractionProblemGemm& problem,
                                             const TensileLite::ContractionInputs&      inputs,
-                                            const int& solutionIndex,
-                                              bool                                       flush,
-                                              const int32_t&                           rotating_memory_size,                                             
-                                            bool       isCpp)
+                                            const int&     solutionIndex,
+                                            bool           flush,
+                                            const int32_t& rotating_memory_size,
+                                            bool           isCpp)
     {
         log_bench(
             __func__,
@@ -595,8 +595,8 @@ namespace
     inline void logProfileFromTensileDataGemm(const TensileLite::ContractionProblemGemm& problem,
                                               const TensileLite::ContractionInputs&      inputs,
                                               bool                                       flush,
-                                              const int32_t&                                 rotating_memory_size,                                              
-                                              bool                                       isCpp)
+                                              const int32_t& rotating_memory_size,
+                                              bool           isCpp)
     {
         log_profile("matmul",
                     "M",
@@ -667,14 +667,15 @@ namespace
                     tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
     }
 
-    inline void logExtendedProfileFromTensileDataGemm(const TensileLite::ContractionProblemGemm& problem,
-                                                      const TensileLite::ContractionInputs&      inputs,
-                                                      const int&                             solutionIndex,
-                                                      const std::string&                     kernelName,
-                                                      const std::string&                     solutionName,
-                                                      bool                                   flush,
-                                                      const int32_t&                         rotating_memory_size,
-                                                      bool                                   isCpp)
+    inline void
+        logExtendedProfileFromTensileDataGemm(const TensileLite::ContractionProblemGemm& problem,
+                                              const TensileLite::ContractionInputs&      inputs,
+                                              const int&         solutionIndex,
+                                              const std::string& kernelName,
+                                              const std::string& solutionName,
+                                              bool               flush,
+                                              const int32_t&     rotating_memory_size,
+                                              bool               isCpp)
     {
         log_profile("matmul",
                     "M",
@@ -756,8 +757,8 @@ namespace
                                     const TensileLite::ContractionGroupedInputs&      inputs,
                                     const int&                                        solutionIndex,
                                     bool                                              flush,
-                                    const int32_t&                                    rotating_memory_size,                                    
-                                    bool                                              isCpp)
+                                    const int32_t& rotating_memory_size,
+                                    bool           isCpp)
     {
         size_t            gemmCount = problem.gemms.size();
         std::stringstream grouped_gemm_bench_string;
@@ -864,8 +865,8 @@ namespace
         logProfileFromTensileDataGemm(const TensileLite::ContractionProblemGroupedGemm& problem,
                                       const TensileLite::ContractionGroupedInputs&      inputs,
                                       bool                                              flush,
-                                      const int32_t&                                    rotating_memory_size, 
-                                      bool                                              isCpp)
+                                      const int32_t& rotating_memory_size,
+                                      bool           isCpp)
     {
         size_t            gemmCount = problem.gemms.size();
         std::stringstream grouped_gemm_profile_string;
@@ -2062,9 +2063,10 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
         updateTensileProblem(prob, data->problem);
 
-        hipblaslt_ext::SingletonUserClientArguments& singletonClientArguments = hipblaslt_ext::SingletonUserClientArguments::getInstance();
-        bool flush = singletonClientArguments.getFlushValue();
-        int32_t rotating_memory_size =  singletonClientArguments.getrotatingMemorySizeValue();
+        hipblaslt_ext::SingletonUserClientArguments& singletonClientArguments
+            = hipblaslt_ext::SingletonUserClientArguments::getInstance();
+        bool    flush                = singletonClientArguments.getFlushValue();
+        int32_t rotating_memory_size = singletonClientArguments.getrotatingMemorySizeValue();
 
         int* solutionIndex = (int*)algo->data;
         data->algoIndex    = *solutionIndex;
@@ -2072,20 +2074,29 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
 
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
         {
-            logBenchFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, flush, rotating_memory_size, false);
+            logBenchFromTensileDataGemm(
+                data->problem, data->inputs, data->algoIndex, flush, rotating_memory_size, false);
         }
 
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
         {
-            logProfileFromTensileDataGemm(data->problem, data->inputs, flush, rotating_memory_size, false);
+            logProfileFromTensileDataGemm(
+                data->problem, data->inputs, flush, rotating_memory_size, false);
         }
 
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_extended_profile)
         {
-            std::string kernel_name = getKernelNameFromAlgoIndex(handle, *algo);
+            std::string kernel_name   = getKernelNameFromAlgoIndex(handle, *algo);
             std::string Solution_name = getSolutionNameFromAlgoIndex(handle, *algo);
 
-            logExtendedProfileFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, kernel_name, Solution_name, flush, rotating_memory_size, false);
+            logExtendedProfileFromTensileDataGemm(data->problem,
+                                                  data->inputs,
+                                                  data->algoIndex,
+                                                  kernel_name,
+                                                  Solution_name,
+                                                  flush,
+                                                  rotating_memory_size,
+                                                  false);
         }
 
         auto solution = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
@@ -2477,9 +2488,10 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
             return rocblaslt_status_invalid_pointer;
         }
 
-        hipblaslt_ext::SingletonUserClientArguments& singletonClientArguments = hipblaslt_ext::SingletonUserClientArguments::getInstance();
-        bool flush = singletonClientArguments.getFlushValue();
-        int32_t rotating_memory_size =  singletonClientArguments.getrotatingMemorySizeValue();
+        hipblaslt_ext::SingletonUserClientArguments& singletonClientArguments
+            = hipblaslt_ext::SingletonUserClientArguments::getInstance();
+        bool    flush                = singletonClientArguments.getFlushValue();
+        int32_t rotating_memory_size = singletonClientArguments.getrotatingMemorySizeValue();
 
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
         {
@@ -2487,11 +2499,17 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             {
-                logBenchFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, flush, rotating_memory_size, true);
+                logBenchFromTensileDataGemm(data->problem,
+                                            data->inputs,
+                                            data->algoIndex,
+                                            flush,
+                                            rotating_memory_size,
+                                            true);
             }
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
             {
-                logProfileFromTensileDataGemm(data->problem, data->inputs, flush, rotating_memory_size, true);
+                logProfileFromTensileDataGemm(
+                    data->problem, data->inputs, flush, rotating_memory_size, true);
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
         }
@@ -2507,7 +2525,12 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
             }
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             {
-                logBenchFromTensileDataGemm(data->problem, data->inputs, data->algoIndex, flush, rotating_memory_size, true);
+                logBenchFromTensileDataGemm(data->problem,
+                                            data->inputs,
+                                            data->algoIndex,
+                                            flush,
+                                            rotating_memory_size,
+                                            true);
             }
             //TODO: add profile logging for grouped gemm
             /*if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)

@@ -635,7 +635,8 @@ try
     notify(vm);
 
     // Access the singleton instance and set values
-    hipblaslt_ext::SingletonUserClientArguments& singletonClientArguments = hipblaslt_ext::SingletonUserClientArguments::getInstance();
+    hipblaslt_ext::SingletonUserClientArguments& singletonClientArguments
+        = hipblaslt_ext::SingletonUserClientArguments::getInstance();
     singletonClientArguments.setFlushValue(arg.flush);
     singletonClientArguments.setrotatingMemorySizeValue(arg.rotating);
 

@@ -91,10 +91,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmPreferenceV2();
         HIPBLASLT_EXPORT ~GemmPreferenceV2();
 
-        HIPBLASLT_EXPORT                   GemmPreferenceV2(const GemmPreferenceV2& pref);
+        HIPBLASLT_EXPORT GemmPreferenceV2(const GemmPreferenceV2& pref);
         HIPBLASLT_EXPORT GemmPreferenceV2& operator=(const GemmPreferenceV2& pref);
 
-        HIPBLASLT_EXPORT                   GemmPreferenceV2(GemmPreferenceV2&& pref);
+        HIPBLASLT_EXPORT GemmPreferenceV2(GemmPreferenceV2&& pref);
         HIPBLASLT_EXPORT GemmPreferenceV2& operator=(GemmPreferenceV2&& pref);
 
         /*! \ingroup library_module
@@ -152,10 +152,10 @@ namespace hipblaslt_ext
                                            hipblasComputeType_t typeCompute);
         HIPBLASLT_EXPORT ~GemmProblemTypeV2();
 
-        HIPBLASLT_EXPORT                    GemmProblemTypeV2(const GemmProblemTypeV2& type);
+        HIPBLASLT_EXPORT GemmProblemTypeV2(const GemmProblemTypeV2& type);
         HIPBLASLT_EXPORT GemmProblemTypeV2& operator=(const GemmProblemTypeV2& type);
 
-        HIPBLASLT_EXPORT                    GemmProblemTypeV2(GemmProblemTypeV2&& type);
+        HIPBLASLT_EXPORT GemmProblemTypeV2(GemmProblemTypeV2&& type);
         HIPBLASLT_EXPORT GemmProblemTypeV2& operator=(GemmProblemTypeV2&& type);
 
         HIPBLASLT_EXPORT void setOpA(hipblasOperation_t op); //!< Set the A martix transpose.
@@ -209,10 +209,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmEpilogueV2();
         HIPBLASLT_EXPORT ~GemmEpilogueV2();
 
-        HIPBLASLT_EXPORT                 GemmEpilogueV2(const GemmEpilogueV2& epilogue);
+        HIPBLASLT_EXPORT GemmEpilogueV2(const GemmEpilogueV2& epilogue);
         HIPBLASLT_EXPORT GemmEpilogueV2& operator=(const GemmEpilogueV2& epilogue);
 
-        HIPBLASLT_EXPORT                 GemmEpilogueV2(GemmEpilogueV2&& epilogue);
+        HIPBLASLT_EXPORT GemmEpilogueV2(GemmEpilogueV2&& epilogue);
         HIPBLASLT_EXPORT GemmEpilogueV2& operator=(GemmEpilogueV2&& epilogue);
 
         HIPBLASLT_EXPORT void
@@ -261,10 +261,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmTuningV2();
         HIPBLASLT_EXPORT ~GemmTuningV2();
 
-        HIPBLASLT_EXPORT               GemmTuningV2(const GemmTuningV2& tuning);
+        HIPBLASLT_EXPORT GemmTuningV2(const GemmTuningV2& tuning);
         HIPBLASLT_EXPORT GemmTuningV2& operator=(const GemmTuningV2& tuning);
 
-        HIPBLASLT_EXPORT               GemmTuningV2(GemmTuningV2&& tuning);
+        HIPBLASLT_EXPORT GemmTuningV2(GemmTuningV2&& tuning);
         HIPBLASLT_EXPORT GemmTuningV2& operator=(GemmTuningV2&& tuning);
 
         HIPBLASLT_EXPORT void setSplitK(
@@ -317,10 +317,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmInputsV2();
         HIPBLASLT_EXPORT ~GemmInputsV2();
 
-        HIPBLASLT_EXPORT               GemmInputsV2(const GemmInputsV2& input);
+        HIPBLASLT_EXPORT GemmInputsV2(const GemmInputsV2& input);
         HIPBLASLT_EXPORT GemmInputsV2& operator=(const GemmInputsV2& input);
 
-        HIPBLASLT_EXPORT               GemmInputsV2(GemmInputsV2&& input);
+        HIPBLASLT_EXPORT GemmInputsV2(GemmInputsV2&& input);
         HIPBLASLT_EXPORT GemmInputsV2& operator=(GemmInputsV2&& input);
 
         HIPBLASLT_EXPORT void setA(const void* a); //!< Set the a matrix input pointer.
@@ -416,41 +416,51 @@ namespace hipblaslt_ext
      * \details This Singleton class sets the value of flush and rotating size used in the client which could be further used in the logging
      */
 
-class SingletonUserClientArguments {
-private:
-    bool flush;               // First member variable
-    int  rotatingMemorySize;  // Second member variable
+    class SingletonUserClientArguments
+    {
+    private:
+        bool flush; // First member variable
+        int  rotatingMemorySize; // Second member variable
 
-    // Private constructor to prevent instantiation
-    SingletonUserClientArguments() : flush(false), rotatingMemorySize(0) {}
+        // Private constructor to prevent instantiation
+        SingletonUserClientArguments()
+            : flush(false)
+            , rotatingMemorySize(0)
+        {
+        }
 
-public:
-    // Static method to get the single instance of the class
-    static SingletonUserClientArguments& getInstance() {
-        static SingletonUserClientArguments instance; // Guaranteed to be thread-safe
-        return instance;
-    }
+    public:
+        // Static method to get the single instance of the class
+        static SingletonUserClientArguments& getInstance()
+        {
+            static SingletonUserClientArguments instance; // Guaranteed to be thread-safe
+            return instance;
+        }
 
-    // Delete copy constructor and assignment operator
-    SingletonUserClientArguments(const SingletonUserClientArguments&) = delete;
-    SingletonUserClientArguments& operator=(const SingletonUserClientArguments&) = delete;
+        // Delete copy constructor and assignment operator
+        SingletonUserClientArguments(const SingletonUserClientArguments&) = delete;
+        SingletonUserClientArguments& operator=(const SingletonUserClientArguments&) = delete;
 
-    // Getter and setter for the first member variable
-    bool getFlushValue() const {
-        return flush;
-    }
-    void setFlushValue(bool newFlush) {
-        flush = newFlush;
-    }
+        // Getter and setter for the first member variable
+        bool getFlushValue() const
+        {
+            return flush;
+        }
+        void setFlushValue(bool newFlush)
+        {
+            flush = newFlush;
+        }
 
-    // Getter and setter for the second member variable
-    int getrotatingMemorySizeValue() const {
-        return rotatingMemorySize;
-    }
-    void setrotatingMemorySizeValue(int newrotatingMemorySize) {
-        rotatingMemorySize = newrotatingMemorySize;
-    }
-};
+        // Getter and setter for the second member variable
+        int getrotatingMemorySizeValue() const
+        {
+            return rotatingMemorySize;
+        }
+        void setrotatingMemorySizeValue(int newrotatingMemorySize)
+        {
+            rotatingMemorySize = newrotatingMemorySize;
+        }
+    };
 
     /*! \ingroup types_module
      *  \brief hipblasLt extension instance for gemm problems.
@@ -459,8 +469,8 @@ public:
     {
     public:
         HIPBLASLT_EXPORT virtual ~GemmInstance(){};
-        HIPBLASLT_EXPORT               GemmInstance(const GemmInstance& rhs) = delete;
-        HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs)    = delete;
+        HIPBLASLT_EXPORT GemmInstance(const GemmInstance& rhs) = delete;
+        HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs) = delete;
         HIPBLASLT_EXPORT               GemmInstance(GemmInstance&& rhs) noexcept;
         HIPBLASLT_EXPORT GemmInstance& operator=(GemmInstance&& rhs) noexcept;
 
@@ -805,10 +815,10 @@ public:
                                        void*                   D,
                                        hipblasLtMatrixLayout_t matD);
 
-        HIPBLASLT_EXPORT       Gemm(const Gemm&) = delete;
-        HIPBLASLT_EXPORT       Gemm(Gemm&&) noexcept;
+        HIPBLASLT_EXPORT Gemm(const Gemm&) = delete;
+        HIPBLASLT_EXPORT Gemm(Gemm&&) noexcept;
         HIPBLASLT_EXPORT Gemm& operator=(const Gemm&) = delete;
-        HIPBLASLT_EXPORT Gemm& operator=(Gemm&&) noexcept;
+        HIPBLASLT_EXPORT Gemm& operator               =(Gemm&&) noexcept;
 
         /*! \ingroup library_module
         *  \brief Sets the problem for a gemm problem. (Deprecated)
@@ -1061,10 +1071,10 @@ public:
                                               hipDataType          typeC,
                                               hipDataType          typeD,
                                               hipblasComputeType_t typeCompute);
-        HIPBLASLT_EXPORT              GroupedGemm(const GroupedGemm&) = delete;
-        HIPBLASLT_EXPORT              GroupedGemm(GroupedGemm&&) noexcept;
+        HIPBLASLT_EXPORT GroupedGemm(const GroupedGemm&) = delete;
+        HIPBLASLT_EXPORT GroupedGemm(GroupedGemm&&) noexcept;
         HIPBLASLT_EXPORT GroupedGemm& operator=(const GroupedGemm&) = delete;
-        HIPBLASLT_EXPORT GroupedGemm& operator=(GroupedGemm&&) noexcept;
+        HIPBLASLT_EXPORT GroupedGemm& operator                      =(GroupedGemm&&) noexcept;
 
         /*! \ingroup library_module
         *  \brief Constructor that sets the grouped gemm problem from hipblasLt structures
