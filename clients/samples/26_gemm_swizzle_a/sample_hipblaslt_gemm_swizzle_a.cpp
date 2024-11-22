@@ -39,19 +39,19 @@ void swizzleTensor(T *dst, const T *src, size_t m, size_t k, bool colMaj)
     constexpr size_t MiK = 16;
     constexpr size_t MiKv = 4;
     constexpr size_t PackK = 2;
-    auto tmpTensor = Tensor::create<hipblasLtHalf>({m, k});
-    memcpy(tmpTensor.as<void>(), src, m * k * sizeof(T));
+    auto tmpTensor = Tensor::create<T>({m, k});
+    memcpy(tmpTensor. template as<void>(), src, m * k * sizeof(T));
 
     if(colMaj)
     {
-        auto orgTensor = Tensor::create<hipblasLtHalf>({k, m});
-        memcpy(orgTensor.as<void>(), src, m * k * sizeof(T));
+        auto orgTensor = Tensor::create<T>({k, m});
+        memcpy(orgTensor. template as<void>(), src, m * k * sizeof(T));
         tmpTensor = permute(orgTensor, {1, 0});
     }
 
     tmpTensor.reshape({m / MiM, MiM, k / (MiK * PackK), MiK / MiKv , MiKv * PackK});
     Tensor permuted = permute(tmpTensor, {0, 2, 3, 1, 4});
-    memcpy(dst, permuted.as<void>(), m * k * sizeof(T));
+    memcpy(dst, permuted. template as<void>(), m * k * sizeof(T));
 }
 
 void simpleGemm(hipblasLtHandle_t  handle,
@@ -68,7 +68,6 @@ void simpleGemm(hipblasLtHandle_t  handle,
                 void*              d_c,
                 void*              d_d,
                 void*              d_workspace,
-                void*              h_d,
                 int64_t            max_workspace_size,
                 bool               swizzleA,
                 hipStream_t        stream);
@@ -78,12 +77,10 @@ int main()
     constexpr int64_t m{5280};
     constexpr int64_t n{2048};
     constexpr int64_t k{1024};
-    std::vector<hipblasLtHalf> regularCpuD(m * n, 0);
-    std::vector<hipblasLtHalf> swizzledCpuD(m * n, 0);
     Runner<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, float> runner(
         m, n, k, 1, 1.f, 1.f, 32 * 128 * 128);
 
-    runner.run([&runner, &regularCpuD, &swizzledCpuD] {
+    runner.run([&runner] {
         simpleGemm(runner.handle,
                    HIPBLAS_OP_N,
                    HIPBLAS_OP_N,
@@ -98,38 +95,48 @@ int main()
                    runner.d_c,
                    runner.d_d,
                    runner.d_workspace,
-                   regularCpuD.data(),
                    runner.max_workspace_size,
                    false,
                    runner.stream);
+    });
 
+    Runner<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, float> swizzleRunner(
+        m, n, k, 1, 1.f, 1.f, 32 * 128 * 128);
+
+    swizzleRunner.run([&swizzleRunner, &runner, m, n, k] {
+        // copy inputs from first runner for comparison and validation
+        hipMemcpy(swizzleRunner.d_a, runner.d_a, m * k * sizeof(hipblasLtHalf), hipMemcpyDeviceToDevice);
+        hipMemcpy(swizzleRunner.d_b, runner.d_b, n * k * sizeof(hipblasLtHalf), hipMemcpyDeviceToDevice);
+        hipMemcpy(swizzleRunner.d_c, runner.d_c, m * n * sizeof(hipblasLtHalf), hipMemcpyDeviceToDevice);
         /** This is an example with swizzle-A
-         *  a = (m, k). lda = m
+         *  a = (k, m). lda = k
          *  b = (k, n). ldb = k
          *  c = d = (m, n). ldc = ldd = m
          */
-        simpleGemm(runner.handle,
+        simpleGemm(swizzleRunner.handle,
                    /*For swizzle-A, it forces to use TN*/
                    HIPBLAS_OP_T,
                    HIPBLAS_OP_N,
-                   runner.m,
-                   runner.n,
-                   runner.k,
-                   runner.batch_count,
-                   runner.alpha,
-                   runner.beta,
-                   runner.d_a,
-                   runner.d_b,
-                   runner.d_c,
-                   runner.d_d,
-                   runner.d_workspace,
-                   swizzledCpuD.data(),
-                   runner.max_workspace_size,
+                   swizzleRunner.m,
+                   swizzleRunner.n,
+                   swizzleRunner.k,
+                   swizzleRunner.batch_count,
+                   swizzleRunner.alpha,
+                   swizzleRunner.beta,
+                   swizzleRunner.d_a,
+                   swizzleRunner.d_b,
+                   swizzleRunner.d_c,
+                   swizzleRunner.d_d,
+                   swizzleRunner.d_workspace,
+                   swizzleRunner.max_workspace_size,
                    true,
-                   runner.stream);
+                   swizzleRunner.stream);
     });
 
-    for(size_t i = 0; i < swizzledCpuD.size(); ++i)
+    const hipblasLtHalf *regularCpuD = static_cast<hipblasLtHalf *>(runner.d);
+    const hipblasLtHalf *swizzledCpuD = static_cast<hipblasLtHalf *>(swizzleRunner.d);
+
+    for(size_t i = 0; i < m * n; ++i)
     {
         const auto diff = std::abs(float(regularCpuD[i] - float(swizzledCpuD[i])));
         if (diff > 1e-5)
@@ -156,7 +163,6 @@ void simpleGemm(hipblasLtHandle_t  handle,
                 void*              d_c,
                 void*              d_d,
                 void*              d_workspace,
-                void*              h_d,
                 int64_t            max_workspace_size,
                 bool               swizzleA,
                 hipStream_t        stream)
@@ -166,16 +172,20 @@ void simpleGemm(hipblasLtHandle_t  handle,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_16F, m, n, m));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_16F, m, n, m));
 
-    if(swizzleA)
+    if(trans_a == HIPBLAS_OP_T)
     {
         CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIP_R_16F, k, m, k));
-        hipblasLtOrder_t orderA = HIPBLASLT_ORDER_ROW16_32C_8;
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(matA, HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA)));
-        std::vector<hipblasLtHalf> src(m * k, 0);
-        std::vector<hipblasLtHalf> dst(m * k, 0);
-        hipMemcpy(src.data(), d_a, m * k * sizeof(hipblasLtHalf), hipMemcpyDeviceToHost);
-        swizzleTensor(dst.data(), src.data(), m, k, true);
-        hipMemcpy(d_a, dst.data(), m * k * sizeof(hipblasLtHalf), hipMemcpyHostToDevice);
+
+        if(swizzleA)
+        {
+            hipblasLtOrder_t orderA = HIPBLASLT_ORDER_ROW16_32C_8;
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(matA, HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA)));
+            std::vector<hipblasLtHalf> src(m * k, 0);
+            std::vector<hipblasLtHalf> dst(m * k, 0);
+            hipMemcpy(src.data(), d_a, m * k * sizeof(hipblasLtHalf), hipMemcpyDeviceToHost);
+            swizzleTensor(dst.data(), src.data(), m, k, true);
+            hipMemcpy(d_a, dst.data(), m * k * sizeof(hipblasLtHalf), hipMemcpyHostToDevice);
+        }
     }
     else
     {
@@ -226,7 +236,7 @@ void simpleGemm(hipblasLtHandle_t  handle,
                                               &max_workspace_size,
                                               sizeof(max_workspace_size)));
 
-    const int                        request_solutions = 10;
+    const int                        request_solutions = 100;
     hipblasLtMatmulHeuristicResult_t heuristicResult[request_solutions];
     int                              returnedAlgoCount = 0;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(handle,
@@ -259,12 +269,12 @@ void simpleGemm(hipblasLtHandle_t  handle,
     // If not, allocate d_workspace here
     // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
     float bestTimeMs = std::numeric_limits<float>::max();
+    constexpr int numWarmupRuns{100};
     constexpr int numRuns{1000};
 
     for(int j = 0; j < returnedAlgoCount; ++j)
     {
-        // Warmup runs
-        for(int i = 0; i < numRuns; ++i)
+        for(int i = 0; i < numWarmupRuns; ++i)
         {
             CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                                 matmul,
@@ -278,7 +288,7 @@ void simpleGemm(hipblasLtHandle_t  handle,
                                                 matC,
                                                 d_d,
                                                 matD,
-                                                &heuristicResult[0].algo,
+                                                &heuristicResult[j].algo,
                                                 d_workspace,
                                                 workspace_size,
                                                 stream));
@@ -303,7 +313,7 @@ void simpleGemm(hipblasLtHandle_t  handle,
                                                 matC,
                                                 d_d,
                                                 matD,
-                                                &heuristicResult[0].algo,
+                                                &heuristicResult[j].algo,
                                                 d_workspace,
                                                 workspace_size,
                                                 stream));
@@ -319,13 +329,12 @@ void simpleGemm(hipblasLtHandle_t  handle,
         bestTimeMs = std::min(timeMs, bestTimeMs);
     }
 
-    std::cout << "Best time: " << bestTimeMs / numRuns * 1000 << " us (swizzleA == " << int(swizzleA) << ")\n";
+    std::cout << "Best solution time: " << bestTimeMs / numRuns * 1000 << " us (swizzleA == " << int(swizzleA) << ")\n";
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
-    CHECK_HIP_ERROR(hipMemcpy(h_d, d_d, m * n * sizeof(hipblasLtHalf), hipMemcpyDeviceToHost));
     return;
 }
