@@ -352,13 +352,14 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
 {
     // Internal assign
     hipblasOperation_t opA = matmul_descr->op_A;
+    hipblasOperation_t opB = matmul_descr->op_B;
 
     if(swizzleA && opA != HIPBLAS_OP_T)
     {
         return rocblaslt_status_invalid_value;
     }
 
-    if(swizzleB && opA != HIPBLAS_OP_N)
+    if(swizzleB && opB != HIPBLAS_OP_N)
     {
         return rocblaslt_status_invalid_value;
     }
