@@ -240,6 +240,8 @@ const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode)
         return "Bench";
     case rocblaslt_layer_mode_log_profile:
         return "Profile";
+    case rocblaslt_layer_mode_log_extended_profile:
+        return "ExtendedProfile";
     default:
         return "Invalid";
     }

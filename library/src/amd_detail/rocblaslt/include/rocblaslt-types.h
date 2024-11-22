@@ -204,6 +204,7 @@ typedef enum rocblaslt_layer_mode
     rocblaslt_layer_mode_log_api     = 16, /**< layer is in api mode. */
     rocblaslt_layer_mode_log_bench   = 32, /**< layer is in bench mode. */
     rocblaslt_layer_mode_log_profile = 64, /**< layer is in profile mode. */
+    rocblaslt_layer_mode_log_extended_profile = 128, /**< layer is in Extended profile mode. */
 } rocblaslt_layer_mode;
 
 /*! \ingroup types_module

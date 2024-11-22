@@ -2926,6 +2926,7 @@ void testing_matmul_with_bias(const Arguments& arg,
 
         int    flush_iter      = 100000;
         double flush_time_used = 0;
+
         if(arg.flush)
         {
             for(int i = 0; i < flush_iter; i++)

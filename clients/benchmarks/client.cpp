@@ -634,6 +634,11 @@ try
     store(parse_command_line(argc, argv, desc), vm);
     notify(vm);
 
+    // Access the singleton instance and set values
+    hipblaslt_ext::SingletonUserClientArguments& singletonClientArguments = hipblaslt_ext::SingletonUserClientArguments::getInstance();
+    singletonClientArguments.setFlushValue(arg.flush);
+    singletonClientArguments.setrotatingMemorySizeValue(arg.rotating);
+
     if((argc <= 1 && !datafile) || vm.count("help"))
     {
         hipblaslt_cout << desc << std::endl;
