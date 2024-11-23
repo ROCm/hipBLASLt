@@ -504,7 +504,7 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
 @timing
 def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False):
-
+  full_start = timer()
   codeObjectFiles = []
 
   # Push working path into build_tmp folder because there may be more than
@@ -542,8 +542,16 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
       else:
         objFilenames.add(base)
         kernel.duplicate = False
+  
+  total = len(kernels)
+  total_asm = len([k for k in kernels if k["KernelLanguage"] == "Assembly"])
+  
+  print1(f"Total kernels: {total}")
+  print1(f"Assembly kernels: {total_asm}")    
+  print1(f"Source kernels: {total - total_asm}")
 
   kIter   = zip(kernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
+  start = timer()
   results = Common.ParallelMap2(processKernelSource, kIter, "Generating kernels")
 
   removeKernels = []
@@ -576,6 +584,10 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
       solutions.remove(solut)
   for rel in removeResults:
       results.remove(rel)
+  
+  stop = timer()
+  
+  print1(f"Time write/compile assembly kernels and write source kernels (s): {stop-start}")
 
   kernelFiles += buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs)
 
@@ -644,13 +656,20 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
       kernelHeaderFile.close()
 
   if not globalParameters["GenerateSourcesAndExit"]:
+    start = timer()
     codeObjectFiles += buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath)
+    stop = timer()
+    print1(f"Time to compile source kernels (s): {stop-start}")
     codeObjectFiles += getAssemblyCodeObjectFiles(kernelsToBuild, kernelWriterAssembly, outputPath)
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
+  
+  stop = timer()
 
-  return codeObjectFiles
+  print1(f"Time to WriteSolutionsAndKernels kernels (s): {stop-full_start}")
+
+  return codeObjectFiles, total, total_asm
 
 def writeSolutionAndExactTable(scheduleName, deviceNames, schedProbName, problemType, \
                                solutionsForSchedule, solutionNames, exactLogic):
@@ -1236,6 +1255,7 @@ def validateLibrary(masterLibraries: MasterSolutionLibrary,
 ################################################################################
 @profile
 def TensileCreateLibrary():
+  start = timer()
   print1("")
   print1(HR)
   print1("# Tensile Create Library")
@@ -1470,7 +1490,7 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles = writeSolutionsAndKernels(outputPath, CxxCompiler, None, solutions,
+  codeObjectFiles, total, total_asm = writeSolutionsAndKernels(outputPath, CxxCompiler, None, solutions,
                                              kernels, kernelHelperObjs, kernelWriterAssembly)
 
   bothLibSet = set(sourceLibPaths + asmLibPaths)
@@ -1576,3 +1596,8 @@ def TensileCreateLibrary():
   print1("# Tensile Library Writer DONE")
   print1(HR)
   print1("")
+
+  stop = timer()
+  
+  print1(f"Total time (s): {stop-start}")
+  print1(f"Kernels processed per second: {total/(stop-start)}")
