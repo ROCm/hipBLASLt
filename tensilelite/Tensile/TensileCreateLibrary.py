@@ -1316,6 +1316,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--logic-filter", dest="LogicFilter", action="store", default="*", type=str,
                         help="Cutomsized logic filter, default is *, i.e. all logics."
                         " Example: gfx942/Equality/* for building equality of gfx942 only")
+  argParser.add_argument("--print-solution-rejection-reason", dest="PrintSolutionRejectionReason", action="store_true", default=False)
 
   args = argParser.parse_args()
 
@@ -1363,6 +1364,7 @@ def TensileCreateLibrary():
   arguments["KeepBuildTmp"] = args.KeepBuildTmp
   arguments["AsanBuild"] = args.AsanBuild
   arguments["ValidateLibrary"] = args.ValidateLibrary
+  arguments["PrintSolutionRejectionReason"] = args.PrintSolutionRejectionReason
 
   for key, value in args.global_parameters:
     arguments[key] = value

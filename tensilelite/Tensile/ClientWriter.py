@@ -239,6 +239,9 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
 
   if globalParameters.get("AsmDebug", False):
     callCreateLibraryCmd += " --asm-debug"
+    
+  if globalParameters["PrintSolutionRejectionReason"]:
+    callCreateLibraryCmd += " --print-solution-rejection-reason"
 
   if globalParameters["KeepBuildTmp"]:
     callCreateLibraryCmd += " --keep-build-tmp"
