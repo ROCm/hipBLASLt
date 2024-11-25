@@ -1808,7 +1808,7 @@ BenchmarkProblems:
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
         - ConvertAfterDS: [1]
-        - StreamK: [0,3]
+        # - StreamK: [0,3]
         - Groups:
           -
             - MatrixInstruction: [16, 16, 16, 1,  1,   2, 1,  4,1 ]

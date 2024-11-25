@@ -497,6 +497,12 @@ class ProblemType(Mapping):
       name += self["F32XdlMathOp"].toChar()
       name += "_"
 
+    if self["SwizzleTensorA"]:
+      name += "STA_"
+
+    if self["SwizzleTensorB"]:
+      name += "STB_"
+
     # Other
     if self["UseBeta"]: name += "B"
     if self["HighPrecisionAccumulate"] and not self["SilentHighPrecisionAccumulate"]: name += "H"
@@ -2143,6 +2149,14 @@ class Solution(collections.abc.Mapping):
     if state["StreamK"] != 0:
       state["GlobalSplitU"] = 0 # Cannot enable both Stream-K and GSU
       state["GlobalSplitUAlgorithm"] = "MultipleBuffer" # Set default Algorithm
+      if not (state["ProblemType"]["DataType"].isSingle() or state["ProblemType"]["DataType"].isHalf() or state["ProblemType"]["DataType"].isBFloat16()):
+        reject(state, "Type {} for DataType not yet supported with StreamK".format(state["ProblemType"]["DataType"].toChar()))
+      if not (state["ProblemType"]["DataTypeA"].isSingle() or state["ProblemType"]["DataTypeA"].isHalf() or state["ProblemType"]["DataTypeA"].isBFloat16()):
+        reject(state, "Type {} for DataTypeA not yet supported with StreamK".format(state["ProblemType"]["DataTypeA"].toChar()))
+      if not (state["ProblemType"]["DataTypeB"].isSingle() or state["ProblemType"]["DataTypeB"].isHalf() or state["ProblemType"]["DataTypeB"].isBFloat16()):
+        reject(state, "Type {} for DataTypeB not yet supported with StreamK".format(state["ProblemType"]["DataTypeB"].toChar()))
+      if not (state["ProblemType"]["DestDataType"].isSingle() or state["ProblemType"]["DestDataType"].isHalf() or state["ProblemType"]["DestDataType"].isBFloat16()):
+        reject(state, "Type {} for DestDataType not yet supported with StreamK".format(state["ProblemType"]["DestDataType"].toChar()))
       if state["MIWaveGroup"][0] * state["MIWaveGroup"][1] != 4:
         reject(state, "Stream-K requries MIWaveGroup0*MIWaveGroup1=4")
       if not state["EnableMatrixInstruction"]:
@@ -2733,6 +2747,33 @@ class Solution(collections.abc.Mapping):
         if (state["ProblemType"]["DataTypeA"].isFloat8() == False) and (state["ProblemType"]["DataTypeB"].isFloat8() == False):
             reject(state, "one of DataTypeA or DataTypeB need to be float8")
             return
+
+    #for tensor swizzling, we force pack-k == 2
+    for tc in ("A", "B",):
+      if state["ProblemType"][f"SwizzleTensor{tc}"]:
+        if not state["EnableMatrixInstruction"]:
+          reject(state, f"Tensor {tc} swizzling supports MI only")
+        # Print rejection reason instead of force set
+        if state[f"GlobalReadVectorWidth{tc}"] != state[f"MIInputPerThread{tc}"] * 2:
+          GRVW_TC = state[f"GlobalReadVectorWidth{tc}"]
+          MIInPerThread = state[f"MIInputPerThread{tc}"]
+          reject(state, f"SwizzleTensor{tc} doesn't support GRVW{tc} ({GRVW_TC}) != MIInputPerThread{tc} ({MIInPerThread}) * 2")
+        # TODO- increasing VW might have better perf. But it'll change the swizzling pattern.
+        if state[f"VectorWidth{tc}"] != 1:
+          VW_TC = state[f"VectorWidth{tc}"]
+          reject(state, f"SwizzleTensor{tc} requires VectorWidth{tc} ({VW_TC}) == 1")
+
+    if state["ProblemType"]["SwizzleTensorA"]:
+      if state["ProblemType"]["TransposeA"] is False:
+        reject(state, f"Tensor A swizzling supports TN or TT only")
+      if state["DirectToVgprA"] is False:
+        reject(state, f"Tensor A swizzling requires DirectToVgprA")
+
+    if state["ProblemType"]["SwizzleTensorB"]:
+      if state["ProblemType"]["TransposeB"] is True:
+        reject(state, f"Tensor B swizzling supports NN or TN only")
+      if state["DirectToVgprB"] is False:
+        reject(state, f"Tensor B swizzling requires DirectToVgprB")
 
     def calcOptGRVW(lrvw: int, unrollMajorLDS: bool, datatype: DataType) -> int:
       # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.

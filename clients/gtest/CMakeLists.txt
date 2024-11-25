@@ -23,6 +23,7 @@
 
 #enable_testing()
 find_package( GTest REQUIRED )
+find_package (Python3 REQUIRED COMPONENTS Interpreter)
 
 
 set(hipblaslt_test_source
@@ -118,7 +119,7 @@ set_target_properties( hipblaslt-test PROPERTIES
 
 set( HIPBLASLT_TEST_DATA "${PROJECT_BINARY_DIR}/staging/hipblaslt_gtest.data")
 add_custom_command( OUTPUT "${HIPBLASLT_TEST_DATA}"
-                    COMMAND ${python} ../common/hipblaslt_gentest.py -I ../include hipblaslt_gtest.yaml -o "${HIPBLASLT_TEST_DATA}"
+                    COMMAND "${Python3_EXECUTABLE}" ../common/hipblaslt_gentest.py -I ../include hipblaslt_gtest.yaml -o "${HIPBLASLT_TEST_DATA}"
                     DEPENDS ../common/hipblaslt_gentest.py ../include/hipblaslt_common.yaml
                             matmul_common.yaml
                             matmul_gtest.yaml
