@@ -89,6 +89,7 @@ function(TensileCreateLibraryFiles
        LAZY_LIBRARY_LOADING
        ASAN_BUILD
        KEEP_BUILD_TMP
+       EXPERIMENTAL 
        )
 
   # Single value settings
@@ -152,6 +153,10 @@ function(TensileCreateLibraryFiles
 
   if(Tensile_KEEP_BUILD_TMP)
     set(Options ${Options} "--keep-build-tmp")
+  endif()
+
+  if(Tensile_EXPERIMENTAL)
+    set(Options ${Options} "--experimental")
   endif()
 
   if(Tensile_ASAN_BUILD)
