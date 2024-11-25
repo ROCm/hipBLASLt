@@ -51,6 +51,7 @@
 #include <atomic>
 #include <complex>
 #include <exception>
+#include <hipblaslt/hipblaslt-ext-op.h>
 #include <hipblaslt/hipblaslt-ext.hpp>
 #include <iomanip>
 #include <memory>
@@ -589,7 +590,10 @@ namespace
             "--solution_index",
             solutionIndex,
             "--activation_type",
-            tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
+            tensileActivationtType_to_bench_string(problem.getParams().activationEnum()),
+            flush ? "--flush" : "",
+            "--rotating",
+            rotating_memory_size);
     }
 
     inline void logProfileFromTensileDataGemm(const TensileLite::ContractionProblemGemm& problem,
@@ -664,7 +668,11 @@ namespace
                                                               problem.a().dataType(),
                                                               problem.b().dataType()),
                     "activation_type",
-                    tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
+                    tensileActivationtType_to_bench_string(problem.getParams().activationEnum()),
+                    "flush",
+                    flush ? "true" : "false",
+                    "rotating",
+                    rotating_memory_size);
     }
 
     inline void
@@ -749,7 +757,11 @@ namespace
                     "solution_Name",
                     solutionName,
                     "kernel_name",
-                    kernelName);
+                    kernelName,
+                    "flush",
+                    flush ? "true" : "false",
+                    "rotating",
+                    rotating_memory_size);
     }
 
     inline void
@@ -858,7 +870,10 @@ namespace
             "--solution_index",
             solutionIndex,
             "--activation_type",
-            tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()));
+            tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()),
+            flush ? "--flush" : "",
+            "--rotating",
+            rotating_memory_size);
     }
 
     inline void
@@ -979,7 +994,11 @@ namespace
                                                       problem.gemms[0].a().dataType(),
                                                       problem.gemms[0].b().dataType()),
             "activation_type",
-            tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()));
+            tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()),
+            "flush",
+            flush ? "true" : "false",
+            "rotating",
+            rotating_memory_size);
     }
 #undef GEN_BENCH_ARG
 
@@ -2063,10 +2082,11 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
         updateTensileProblem(prob, data->problem);
 
-        hipblaslt_ext::SingletonUserClientArguments& singletonClientArguments
-            = hipblaslt_ext::SingletonUserClientArguments::getInstance();
-        bool    flush                = singletonClientArguments.getFlushValue();
-        int32_t rotating_memory_size = singletonClientArguments.getrotatingMemorySizeValue();
+        SingletonUserClientArguments& singletonClientArguments
+            = SingletonUserClientArguments::getInstance();
+        bool    flush = singletonClientArguments.hipblasltInternalGetFlushValue();
+        int32_t rotating_memory_size
+            = singletonClientArguments.hipblasltInternalGetRotatingMemorySizeValue();
 
         int* solutionIndex = (int*)algo->data;
         data->algoIndex    = *solutionIndex;
@@ -2488,10 +2508,11 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
             return rocblaslt_status_invalid_pointer;
         }
 
-        hipblaslt_ext::SingletonUserClientArguments& singletonClientArguments
-            = hipblaslt_ext::SingletonUserClientArguments::getInstance();
-        bool    flush                = singletonClientArguments.getFlushValue();
-        int32_t rotating_memory_size = singletonClientArguments.getrotatingMemorySizeValue();
+        SingletonUserClientArguments& singletonClientArguments
+            = SingletonUserClientArguments::getInstance();
+        bool    flush = singletonClientArguments.hipblasltInternalGetFlushValue();
+        int32_t rotating_memory_size
+            = singletonClientArguments.hipblasltInternalGetRotatingMemorySizeValue();
 
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
         {

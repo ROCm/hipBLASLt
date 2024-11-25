@@ -411,57 +411,6 @@ namespace hipblaslt_ext
         int   activationType; //!< The activation type.  Only works if mode is set to activation related epilogues.
     } __attribute__((packed));
 
-    /*! \brief User defined client arguments.
-     *
-     * \details This Singleton class sets the value of flush and rotating size used in the client which could be further used in the logging
-     */
-
-    class SingletonUserClientArguments
-    {
-    private:
-        bool flush; // First member variable
-        int  rotatingMemorySize; // Second member variable
-
-        // Private constructor to prevent instantiation
-        SingletonUserClientArguments()
-            : flush(false)
-            , rotatingMemorySize(0)
-        {
-        }
-
-    public:
-        // Static method to get the single instance of the class
-        static SingletonUserClientArguments& getInstance()
-        {
-            static SingletonUserClientArguments instance; // Guaranteed to be thread-safe
-            return instance;
-        }
-
-        // Delete copy constructor and assignment operator
-        SingletonUserClientArguments(const SingletonUserClientArguments&) = delete;
-        SingletonUserClientArguments& operator=(const SingletonUserClientArguments&) = delete;
-
-        // Getter and setter for the first member variable
-        bool getFlushValue() const
-        {
-            return flush;
-        }
-        void setFlushValue(bool newFlush)
-        {
-            flush = newFlush;
-        }
-
-        // Getter and setter for the second member variable
-        int getrotatingMemorySizeValue() const
-        {
-            return rotatingMemorySize;
-        }
-        void setrotatingMemorySizeValue(int newrotatingMemorySize)
-        {
-            rotatingMemorySize = newrotatingMemorySize;
-        }
-    };
-
     /*! \ingroup types_module
      *  \brief hipblasLt extension instance for gemm problems.
      */

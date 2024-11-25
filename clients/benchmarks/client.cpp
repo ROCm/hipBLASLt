@@ -634,11 +634,11 @@ try
     store(parse_command_line(argc, argv, desc), vm);
     notify(vm);
 
-    // Access the singleton instance and set values
-    hipblaslt_ext::SingletonUserClientArguments& singletonClientArguments
-        = hipblaslt_ext::SingletonUserClientArguments::getInstance();
-    singletonClientArguments.setFlushValue(arg.flush);
-    singletonClientArguments.setrotatingMemorySizeValue(arg.rotating);
+    // Access the singleton instance to set the values of flush and rotating size, only for internal use
+    SingletonUserClientArguments& singletonClientArguments
+        = SingletonUserClientArguments::getInstance();
+    singletonClientArguments.hipblasltInternalSetFlushValue(arg.flush);
+    singletonClientArguments.hipblasltInternalSetRotatingMemorySizeValue(arg.rotating);
 
     if((argc <= 1 && !datafile) || vm.count("help"))
     {
