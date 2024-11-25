@@ -74,7 +74,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--full_stage", type=bool, default=False,
-    help="If enabled, will search for all mi instructions")
+    help="If enabled, will search for all stages instructions")
 
 parser.add_argument(
     "--num_stages", type=int, default=8,

@@ -35,6 +35,9 @@ To use the `tensile_config_generator.py` script, follow these steps:
    | `--iters ITERS` | Max tuning iterations |
    | `--fast BOOL` | If enabled, only tune the matrix instruction with min tile sizes, else, tune full matrix instructions |
    | `--gridbase_config GRIDBASE_CONFIG` | Path to gridbase config file |
+   | `--full_mfma BOOL` | If enabled, will search for all mfma instructions |
+   | `--full_stage BOOL` | If enabled, will search for all stages instructions |
+   | `--num_stages STAGES` | How many times to divide matrix |
 
    Equality tuning example:
    ```
