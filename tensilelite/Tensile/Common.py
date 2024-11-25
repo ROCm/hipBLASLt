@@ -34,6 +34,7 @@ import os.path
 import subprocess
 import sys
 import time
+import re
 
 startTime = time.time()
 
@@ -1620,6 +1621,40 @@ def which(p):
             if os.path.isfile(candidate):
                 return candidate
     return None
+
+def splitArchs():
+  # Helper for architecture
+  def isSupported(arch):
+    return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
+           globalParameters["AsmCaps"][arch]["SupportedSource"]
+
+  if ";" in globalParameters["Architecture"]:
+    wantedArchs = globalParameters["Architecture"].split(";")
+  else:
+    wantedArchs = globalParameters["Architecture"].split("_")
+  archs = []
+  cmdlineArchs = []
+  if "all" in wantedArchs:
+    for arch in globalParameters['SupportedISA']:
+      if isSupported(arch):
+        if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
+          if (arch == (9,0,10)):
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          if globalParameters["AsanBuild"]:
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          else:
+            archs += [getGfxName(arch) + '-xnack-']
+            cmdlineArchs += [getGfxName(arch) + ':xnack-']
+        else:
+          archs += [getGfxName(arch)]
+          cmdlineArchs += [getGfxName(arch)]
+  else:
+    for arch in wantedArchs:
+      archs += [re.sub(":", "-", arch)]
+      cmdlineArchs += [arch]
+  return archs, cmdlineArchs
 
 ################################################################################
 ################################################################################

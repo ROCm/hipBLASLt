@@ -36,23 +36,22 @@ from . import Utils
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, CMakeHeader, assignGlobalParameters, \
-                    architectureMap, supportedCompiler, printWarning
+                    architectureMap, supportedCompiler, printWarning, \
+                    splitArchs
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
 from .Utilities.Profile import profile
+from .BuildCommands import SourceCommands, AssemblyCommands
 
 import argparse
 import collections
 import glob
 import itertools
-import math
 import os
 import re
-import shlex
 import shutil
-import subprocess
 import sys
 from timeit import default_timer as timer
 from pathlib import Path
@@ -90,333 +89,6 @@ def processKernelSource(kernel, kernelWriterAssembly, ti):
 
     return (err, src, header, kernelName, filename)
 
-def linkIntoCodeObject(
-    objFiles: List[str], coPathDest: Union[Path, str], kernelWriterAssembly: KernelWriterAssembly
-):
-    """Links object files into a code object file.
-
-    Args:
-        objectFiles: A list of object files to be linked.
-        coPathDest: The destination path for the code object file.
-        kernelWriterAssembly: An instance of KernelWriterAssembly to get link arguments.
-
-    Raises:
-        RuntimeError: If linker invocation fails.
-    """
-    if os.name == "nt":
-      # On Windows, the objectFiles list command line (including spaces)
-      # exceeds the limit of 8191 characters, so using response file
-
-      responseFile = os.path.join('/tmp', 'clangArgs.txt')
-      with open(responseFile, 'wt') as file:
-        file.write(" ".join(objFiles))
-        file.flush()
-
-      args = [globalParameters['AssemblerPath'], '-target', 'amdgcn-amd-amdhsa', '-o', coFileRaw, '@clangArgs.txt']
-      subprocess.check_call(args, cwd=asmDir)
-    else:
-      numObjFiles = len(objFiles)
-      maxObjFiles = 10000
-      
-      if numObjFiles > maxObjFiles:
-        batchedObjFiles = [objFiles[i:i+maxObjFiles] for i in range(0, numObjFiles, maxObjFiles)]
-        batchSize = int(math.ceil(numObjFiles / maxObjFiles))
-
-        newObjFiles = [str(coPathDest) + "." + str(i) for i in range(0, batchSize)]
-        newObjFilesOutput = []
-
-        for batch, filename in zip(batchedObjFiles, newObjFiles):
-          if len(batch) > 1:
-            args = [globalParameters["ROCmLdPath"], "-r"] + batch + [ "-o", filename]
-            print2(f"Linking object files into fewer object files: {' '.join(args)}")
-            subprocess.check_call(args)
-            newObjFilesOutput.append(filename)
-          else:
-            newObjFilesOutput.append(batchedObjFiles[0])
-
-        args = kernelWriterAssembly.getLinkCodeObjectArgs(newObjFilesOutput, str(coPathDest))
-        print2(f"Linking object files into code object: {' '.join(args)}")
-        subprocess.check_call(args)
-      else:
-        args = kernelWriterAssembly.getLinkCodeObjectArgs(objFiles, str(coPathDest))
-        print2(f"Linking object files into code object: {' '.join(args)}")
-        subprocess.check_call(args)
-
-
-def compressCodeObject(
-    coPathSrc: Union[Path, str], coPathDest: Union[Path, str], gfx: str, bundler: str
-):
-    """Compresses a code object file using the provided bundler.
-
-    Args:
-        coPathSrc: The source path of the code object file to be compressed.
-        coPathDest: The destination path for the compressed code object file.
-        gfx: The target GPU architecture.
-        bundler: The path to the Clang Offload Bundler executable.
-
-    Raises:
-        RuntimeError: If compressing the code object file fails.
-    """
-    args = [
-        bundler,
-        "--compress",
-        "--type=o",
-        "--bundle-align=4096",
-        f"--targets=host-x86_64-unknown-linux,hipv4-amdgcn-amd-amdhsa--{gfx}",
-        "--input=/dev/null",
-        f"--input={str(coPathSrc)}",
-        f"--output={str(coPathDest)}",
-    ]
-
-    print2(f"Bundling/compressing code objects: {' '.join(args)}")
-    try:
-        out = subprocess.check_output(args, stderr=subprocess.STDOUT)
-        print2(f"Output: {out}")
-    except subprocess.CalledProcessError as err:
-        raise RuntimeError(
-            f"Error compressing code object via bundling: {err.output}\nFailed command: {' '.join(args)}"
-        )
-
-def buildAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
-    
-    isAsm = lambda k: k["KernelLanguage"] == "Assembly"
-
-    extObj = ".o"
-    extCo = ".co"
-    extCoRaw = ".co.raw"
-
-    destDir = Path(ensurePath(os.path.join(outputPath, 'library')))
-    asmDir = Path(kernelWriterAssembly.getAssemblyDirectory())
-
-    archKernelMap = collections.defaultdict(list)
-    for k in filter(isAsm, kernels):
-      archKernelMap[tuple(k['ISA'])].append(k)
-
-    coFiles = []
-    for arch, archKernels in archKernelMap.items():
-      if len(archKernels) == 0:
-        continue
-
-      gfx = getGfxName(arch)
-
-      if globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
-        objectFiles = [str(asmDir / (kernelWriterAssembly.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
-
-        coFileMap = collections.defaultdict(list)
-
-        if len(objectFiles):
-          coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
-
-        for kernel in archKernels:
-          coName = kernel.get("codeObjectFile", None)
-          if coName:
-            coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (kernelWriterAssembly.getKernelFileBase(kernel) + extObj)))
-
-        for coFileRaw, objFiles in coFileMap.items():
-
-          linkIntoCodeObject(objFiles, coFileRaw, kernelWriterAssembly)
-          coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
-          compressCodeObject(coFileRaw, coFile, gfx, globalParameters["ClangOffloadBundlerPath"])
-
-          coFiles.append(coFile)
-      else:
-        # no mergefiles
-        def newCoFileName(kName):
-          if globalParameters["PackageLibrary"]:
-            return os.path.join(destDir, gfx, kName + '.co')
-          else:
-            return os.path.join(destDir, kName + '_' + gfx + '.co')
-
-        def orgCoFileName(kName):
-          return os.path.join(asmDir, kName + '.co')
-
-        for src, dst in Utils.tqdm(((orgCoFileName(kName), newCoFileName(kName)) for kName in \
-                                    map(lambda k: kernelWriterAssembly.getKernelFileBase(k), archKernels)), "Copying code objects"):
-          shutil.copyfile(src, dst)
-          coFiles.append(dst)
-        printWarning("Code object files are not compressed in `--no-merge-files` build mode.")
-
-    return coFiles
-
-def which(p):
-    if supportedCompiler(p) and 'CMAKE_CXX_COMPILER' in os.environ and os.path.isfile(os.environ['CMAKE_CXX_COMPILER']):
-        return os.environ['CMAKE_CXX_COMPILER']
-    if os.name == "nt":
-      exes = [p+x for x in ['.exe', '', '.bat']]  # bat may be front end for file with no extension
-    else:
-      exes = [p+x for x in ['', '.exe', '.bat']]
-    system_path = os.environ['PATH'].split(os.pathsep)
-    for dirname in system_path+[globalParameters["ROCmBinPath"]]:
-        for exe in exes:
-            candidate = os.path.join(os.path.expanduser(dirname), exe)
-            if os.path.isfile(candidate):
-                return candidate
-    return None
-
-def splitArchs():
-  # Helper for architecture
-  def isSupported(arch):
-    return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
-           globalParameters["AsmCaps"][arch]["SupportedSource"]
-
-  if ";" in globalParameters["Architecture"]:
-    wantedArchs = globalParameters["Architecture"].split(";")
-  else:
-    wantedArchs = globalParameters["Architecture"].split("_")
-  archs = []
-  cmdlineArchs = []
-  if "all" in wantedArchs:
-    for arch in globalParameters['SupportedISA']:
-      if isSupported(arch):
-        if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
-          if (arch == (9,0,10)):
-            archs += [getGfxName(arch) + '-xnack+']
-            cmdlineArchs += [getGfxName(arch) + ':xnack+']
-          if globalParameters["AsanBuild"]:
-            archs += [getGfxName(arch) + '-xnack+']
-            cmdlineArchs += [getGfxName(arch) + ':xnack+']
-          else:
-            archs += [getGfxName(arch) + '-xnack-']
-            cmdlineArchs += [getGfxName(arch) + ':xnack-']
-        else:
-          archs += [getGfxName(arch)]
-          cmdlineArchs += [getGfxName(arch)]
-  else:
-    for arch in wantedArchs:
-      archs += [re.sub(":", "-", arch)]
-      cmdlineArchs += [arch]
-  return archs, cmdlineArchs
-
-def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
-    buildPath = ensurePath(os.path.join(globalParameters['WorkingPath'], 'code_object_tmp'))
-    destDir = ensurePath(os.path.join(outputPath, 'library'))
-    (_, filename) = os.path.split(kernelFile)
-    (base, _) = os.path.splitext(filename)
-
-    if "CmakeCxxCompiler" in globalParameters and globalParameters["CmakeCxxCompiler"] is not None:
-      os.environ["CMAKE_CXX_COMPILER"] = globalParameters["CmakeCxxCompiler"]
-
-    objectFilename = base + '.o'
-    soFilename = base + '.so'
-
-    coFilenames = []
-
-    if supportedCompiler(CxxCompiler):
-      archs, cmdlineArchs = splitArchs()
-
-      archFlags = ['--offload-arch=' + arch for arch in cmdlineArchs]
-
-      # needs to be fixed when Maneesh's change is made available
-      hipFlags = ["-D__HIP_HCC_COMPAT_MODE__=1"]
-      hipFlags += (
-          ["--genco"] if CxxCompiler == "hipcc" else ["--cuda-device-only", "-x", "hip", "-O3"]
-      )
-      # if CxxCompiler == "amdclang++":
-      # hipFlags += ["-mllvm", "-amdgpu-early-inline-all=true", "-mllvm", "-amdgpu-function-calls=false"]
-
-      hipFlags += ['-I', outputPath]
-      hipFlags += ["-Xoffload-linker", "--build-id=%s"%globalParameters["BuildIdKind"]]
-      hipFlags += ['-std=c++17']
-      if globalParameters["AsanBuild"]:
-        hipFlags += ["-fsanitize=address", "-shared-libasan", "-fuse-ld=lld"]
-      if globalParameters["SaveTemps"]:
-        hipFlags += ['--save-temps']
-
-      launcher = shlex.split(os.environ.get('Tensile_CXX_COMPILER_LAUNCHER', ''))
-
-      if os.name == "nt":
-        hipFlags += ['-fms-extensions', '-fms-compatibility', '-fPIC', '-Wno-deprecated-declarations']
-        compileArgs = launcher + [which(CxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
-      else:
-        compileArgs = launcher + [which(CxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
-
-      if globalParameters["PrintCodeCommands"]:
-        print(CxxCompiler + ':' + ' '.join(compileArgs))
-      subprocess.check_call(compileArgs)
-
-      # If we aren't using hipcc what happens?
-      # get hipcc version due to compatiblity reasons
-      hipccver = globalParameters['HipClangVersion'].split(".")
-      hipccMaj = int(hipccver[0])
-      hipccMin = int(hipccver[1])
-      # for hipclang 5.2 and above, clang offload bundler changes the way input/output files are specified
-      inflag = "-inputs"
-      outflag = "-outputs"
-      if (hipccMaj == 5 and hipccMin >= 2) or hipccMaj >= 6:
-        inflag = "-input"
-        outflag = "-output"
-
-      infile = os.path.join(buildPath, objectFilename)
-      try:
-        bundlerArgs = [globalParameters["ClangOffloadBundlerPath"], "-type=o", "%s=%s" % (inflag, infile), "-list"]
-        listing = subprocess.check_output(bundlerArgs, stderr=subprocess.STDOUT).decode().split("\n")
-        for target in listing:
-          matched = re.search("gfx.*$", target)
-          if matched:
-            arch = re.sub(":", "-", matched.group())
-            if "TensileLibrary" in base and "fallback" in base:
-              outfile = os.path.join(buildPath, "{0}_{1}.hsaco".format(base, arch))
-            elif "TensileLibrary" in base:
-              variant = [t for t in ["", "xnack-", "xnack+"] if t in target][-1]
-              baseVariant = base+"-"+variant if variant else base
-              if arch in baseVariant:
-                outfile = os.path.join(buildPath, baseVariant+".hsaco")
-              else:
-                outfile = None
-            else:
-              outfile = os.path.join(buildPath, "{0}-000-{1}.hsaco".format(soFilename, arch))
-
-            #Compilation
-            if outfile:
-              coFilenames.append(os.path.split(outfile)[1])
-              #bundlerArgs = [globalParameters["ClangOffloadBundlerPath"], "-type=o", "-targets=%s" % target, "-inputs=%s" % infile, "-outputs=%s" % outfile, "-unbundle"]
-              bundlerArgs = [globalParameters["ClangOffloadBundlerPath"], "-type=o", "-targets=%s" % target,
-                           "%s=%s" % (inflag, infile), "%s=%s" % (outflag, outfile), "-unbundle"]
-              if globalParameters["PrintCodeCommands"]:
-                print(' '.join(bundlerArgs))
-              subprocess.check_call(bundlerArgs)
-
-      except subprocess.CalledProcessError:
-        for i in range(len(archs)):
-          outfile = os.path.join(buildPath, "{0}-000-{1}.hsaco".format(soFilename, archs[i]))
-          coFilenames.append(os.path.split(outfile)[1])
-          #bundlerArgs = [globalParameters["ClangOffloadBundlerPath"], "-type=o", "-targets=hip-amdgcn-amd-amdhsa--%s" % cmdlineArchs[i], "-inputs=%s" % infile, "-outputs=%s" % outfile, "-unbundle"]
-          bundlerArgs = [globalParameters["ClangOffloadBundlerPath"], "-type=o", "-targets=hip-amdgcn-amd-amdhsa--%s" % cmdlineArchs[i],
-                         "%s=%s" % (inflag, infile), "%s=%s" % (outflag, outfile), "-unbundle"]
-          if globalParameters["PrintCodeCommands"]:
-            print(' '.join(bundlerArgs))
-          subprocess.check_call(bundlerArgs)
-    else:
-      raise RuntimeError("Unknown compiler {}".format(CxxCompiler))
-
-    destCosList = []
-    if "PackageLibrary" in globalParameters and globalParameters["PackageLibrary"]:
-      for arch in archs:
-        ensurePath(os.path.join(destDir, arch))
-        archCoFilenames = [name for name in coFilenames if arch in name]
-        extractedCOs = [os.path.join(buildPath, name) for name in archCoFilenames]
-        destCOs = [os.path.join(destDir, arch, name) for name in archCoFilenames]
-        destCosList += destCOs
-        if globalParameters["PrintCodeCommands"]:
-          print ("# copy source code objects    : ", extractedCOs)
-          print ("# to dest source code objects : ", destCOs)
-        for (src, dst) in zip(extractedCOs, destCOs):
-          shutil.copyfile(src, dst)
-    else:
-      coFilenames = [name for name in coFilenames]
-      extractedCOs = [os.path.join(buildPath, name) for name in coFilenames]
-      destCOs = [os.path.join(destDir, name) for name in coFilenames]
-      destCosList += destCOs
-      for (src, dst) in zip(extractedCOs, destCOs):
-        shutil.copyfile(src, dst)
-
-    return destCosList
-
-def buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath):
-    args    = zip(itertools.repeat(CxxCompiler), itertools.repeat(outputPath), kernelFiles)
-    coFiles = Common.ParallelMap2(buildSourceCodeObjectFile, args, "Compiling source kernels")
-
-    return itertools.chain.from_iterable(coFiles)
 
 ################################################################################
 def prepAsm(kernelWriterAssembly):
@@ -701,8 +373,8 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
       kernelHeaderFile.close()
 
   if not globalParameters["GenerateSourcesAndExit"]:
-    codeObjectFiles += buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath)
-    codeObjectFiles += buildAssemblyCodeObjectFiles(kernelsToBuild, kernelWriterAssembly, outputPath)
+    codeObjectFiles += SourceCommands.buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath)
+    codeObjectFiles += AssemblyCommands.buildAssemblyCodeObjectFiles(kernelsToBuild, kernelWriterAssembly, outputPath)
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
@@ -1626,7 +1298,7 @@ def TensileCreateLibrary():
   def checkFileExistence(files):
     for filePath in files:
       if not os.path.exists(filePath):
-        printExit("File %s is missing.", filePath)
+        printExit(f"File {filePath} is missing.")
 
   checkFileExistence(itertools.chain(libMetadataPaths, sourceLibPaths, asmLibPaths))
 
