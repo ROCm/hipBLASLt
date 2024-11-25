@@ -536,9 +536,9 @@ if args.hipblaslt_log and args.gridbase_config is None:
                             matmul_instruction_found = True
                             if not args.full_stage:
                                 break
-                        else:
-                            max_dim = int(np.argmax(size[:2]))
-                            size[max_dim] = size[max_dim] // 2
+
+                        max_dim = int(np.argmax(size[:2]))
+                        size[max_dim] = size[max_dim] // 2
 
                 if not matmul_instruction_found:
                     print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
