@@ -238,6 +238,7 @@ globalParameters["LibraryUpdateComment"] = False                  # Include solu
 # internal, i.e., gets set during startup
 globalParameters["CurrentISA"] = (0,0,0)
 globalParameters["AMDGPUArchPath"] = None      # /opt/rocm/llvm/bin/amdgpu-arch
+globalParameters["ROCmAgentEnumeratorPath"] = None      # /opt/rocm/bin/rocm_agent_enumerator
 globalParameters["ROCmSMIPath"] = None                  # /opt/rocm/bin/rocm-smi
 globalParameters["AssemblerPath"] = None                # /opt/rocm/llvm/bin/clang++
 globalParameters["WorkingPath"] = os.getcwd()           # path where tensile called from
@@ -1498,14 +1499,15 @@ def gfxArch(name):
 
     return rv
 
-def detectGlobalCurrentISA():
+
+def detectGlobalCurrentISA_(detectionTool):
   """
   Returns returncode if detection failure
   """
   global globalParameters
 
-  if globalParameters["CurrentISA"] == (0,0,0) and globalParameters["AMDGPUArchPath"]:
-    process = subprocess.run([globalParameters["AMDGPUArchPath"]], stdout=subprocess.PIPE)
+  if globalParameters["CurrentISA"] == (0,0,0) and detectionTool:
+    process = subprocess.run([detectionTool], stdout=subprocess.PIPE)
     if os.name == "nt":
       line = ""
       for line_in in process.stdout.decode().splitlines():
@@ -1528,9 +1530,20 @@ def detectGlobalCurrentISA():
       if len(archList) > 0:
         globalParameters["CurrentISA"] = archList[globalParameters["Device"]]
     if (process.returncode):
-      printWarning("%s exited with code %u" % (globalParameters["AMDGPUArchPath"], process.returncode))
+      printWarning("%s exited with code %u" % (detectionTool, process.returncode))
     return process.returncode
   return 0
+
+
+def detectGlobalCurrentISA():
+  """
+  Returns returncode if detection failure
+  """
+  errorCode = detectGlobalCurrentISA_(globalParameters["AMDGPUArchPath"])
+  if errorCode:
+    printWarning("Attempting to detect ISA with rocm_agent_enumerator")
+    return detectGlobalCurrentISA_(globalParameters["ROCmAgentEnumeratorPath"])
+  return errorCode
 
 def restoreDefaultGlobalParameters():
   """
@@ -1654,10 +1667,13 @@ def assignGlobalParameters( config ):
   globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
 
   # ROCm AMD GPU Arch Path
+  # ROCm Agent Enumerator Path
   if os.name == "nt":
     globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
+    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")    
   else:
     globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
+    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm_agent_enumerator")
 
   if "CxxCompiler" in config:
     globalParameters["CxxCompiler"] = config["CxxCompiler"]

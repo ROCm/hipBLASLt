@@ -27,13 +27,10 @@ endfunction()
 
 function(virtualenv_install)
     virtualenv_create()
-
     execute_process(
       COMMAND ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install --upgrade pip
       COMMAND_ECHO STDOUT
     )
-
-
     execute_process(
       COMMAND ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install --upgrade setuptools
       COMMAND_ECHO STDOUT
