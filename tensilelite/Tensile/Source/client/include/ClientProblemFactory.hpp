@@ -100,6 +100,8 @@ namespace TensileLite
             DataType                         m_activationComputeType;
             std::vector<std::vector<size_t>> m_problemSizes;
             bool                             m_useUserArgs;
+            bool                             m_swizzleTensorA;
+            bool                             m_swizzleTensorB;
         };
 
     } // namespace Client
