@@ -52,7 +52,6 @@
 #include <complex>
 #include <exception>
 #include <hipblaslt/hipblaslt-ext-op.h>
-#include <hipblaslt/hipblaslt-ext.hpp>
 #include <iomanip>
 #include <memory>
 #include <mutex>
@@ -1180,7 +1179,6 @@ namespace
         tensileProblem.setUseScaleAB((prob.scaleA == nullptr && prob.scaleB == nullptr)
                                          ? ""
                                          : (prob.isScaleAVec ? "Vector" : "Scalar"));
-
         tensileProblem.setUseScaleCD(prob.scaleC != nullptr || prob.scaleD != nullptr);
         tensileProblem.setUseScaleAlphaVec(prob.scaleAlphaVec != nullptr);
         tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
@@ -2082,6 +2080,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
         updateTensileProblem(prob, data->problem);
 
+        // Static method to get the single instance of the SingletonUserClientArguments class and get the values of flush and rotating size
         SingletonUserClientArguments& singletonClientArguments
             = SingletonUserClientArguments::getInstance();
         bool    flush = singletonClientArguments.hipblasltInternalGetFlushValue();
@@ -2508,6 +2507,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
             return rocblaslt_status_invalid_pointer;
         }
 
+        // Static method to get the single instance of the SingletonUserClientArguments class and get the values of flush and rotating size
         SingletonUserClientArguments& singletonClientArguments
             = SingletonUserClientArguments::getInstance();
         bool    flush = singletonClientArguments.hipblasltInternalGetFlushValue();

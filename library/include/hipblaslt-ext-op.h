@@ -246,11 +246,11 @@ public:
     HIPBLASLT_EXPORT SingletonUserClientArguments& operator=(const SingletonUserClientArguments&)
         = delete;
 
-    // Getter and setter for the first member variable
+    // Getter and setter for the flush member variable, only for internal usage purpose.
     HIPBLASLT_EXPORT bool hipblasltInternalGetFlushValue() const;
     HIPBLASLT_EXPORT void hipblasltInternalSetFlushValue(bool newFlush);
 
-    // Getter and setter for the second member variable
+    // Getter and setter for the rotatingMemorySize member variable, only for internal usage purpose.
     HIPBLASLT_EXPORT int  hipblasltInternalGetRotatingMemorySizeValue() const;
     HIPBLASLT_EXPORT void hipblasltInternalSetRotatingMemorySizeValue(int newrotatingMemorySize);
 };
