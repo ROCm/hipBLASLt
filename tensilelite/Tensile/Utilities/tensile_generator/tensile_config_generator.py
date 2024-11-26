@@ -246,6 +246,8 @@ def extract_dtype(match):
     TransposeB = trans_map(gdict.get('TRANS_B', '').strip())
     scaleA = gdict.get("SCALE_A").strip()
     scaleB = gdict.get("SCALE_B").strip()
+    activation_type = gdict.get("ACTIVATION_TYPE").strip()
+    bias_source = gdict.get('BIAS_SOURCE', '').strip().upper()
     if DataType in ["H", "B", "F8"]:
         HighPrecisionAccumulate = True
     else:
@@ -256,11 +258,11 @@ def extract_dtype(match):
         F32XdlMathOp = 'x'
     res = {"Batched": True, "DataType": DataType, "DestDataType": DestDataType, "ComputeDataType": ComputeDataType, "TransposeA": TransposeA, "TransposeB": TransposeB, "HighPrecisionAccumulate": HighPrecisionAccumulate, "F32XdlMathOp": F32XdlMathOp, "OperationType": "GEMM", "UseBeta": True}
 
-    if gdict.get("BIAS_SOURCE"):
+    if bias_source:
         res["UseBias"] = 1
-        res["BiasSrc"] = gdict.get('BIAS_SOURCE', '').strip().upper()
+        res["BiasSrc"] = bias_source
         res["BiasDataTypeList"] = list(bias_datatype_map(gdict.get("BIAS_TYPE", '').strip()))
-    if gdict.get("ACTIVATION_TYPE"):
+    if activation_type != "none":
         res["Activation"] = True
         res["ActivationType"] = "hipblaslt_all"
     if scaleA == "1" and scaleB == "1" is not None:
