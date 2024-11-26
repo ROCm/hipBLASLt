@@ -636,7 +636,7 @@ try
 
     // Set the values of flush and rotating size, only for internal use
     hipblasltSetFlushValue(arg.flush);
-    hipblasltSetRotatingMemorySizeValue(arg.rotating);
+    hipblasltSetRotatingBufferSizeValue(arg.rotating);
 
     if((argc <= 1 && !datafile) || vm.count("help"))
     {

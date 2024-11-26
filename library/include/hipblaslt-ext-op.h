@@ -223,9 +223,9 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType dat
                                                            uint32_t          n,
                                                            hipStream_t       stream);
 
-// Exporting the setters of flush and rotating size.
+// Exporting the setters of flush and rotating buffer size.
 HIPBLASLT_EXPORT void hipblasltSetFlushValue(bool newFlush);
-HIPBLASLT_EXPORT void hipblasltSetRotatingMemorySizeValue(int newrotatingMemorySize);
+HIPBLASLT_EXPORT void hipblasltSetRotatingBufferSizeValue(int newrotatingBufferSize);
 
 #ifdef __cplusplus
 }

@@ -33,23 +33,25 @@ You can enable the hipBLASLt logging mechanism by setting the following environm
 
 ``HIPBLASLT_LOG_MASK=<mask>`` - where ``mask`` is a combination of the following:
 
-+-----------------+
-|"0" - Off        |
-+-----------------+
-|"1" - Error      |
-+-----------------+
-|"2" - Trace      |
-+-----------------+
-|"4" - Hints      |
-+-----------------+
-|"8" - Info       |
-+-----------------+
-|"16" - API Trace |
-+-----------------+
-|"32" - Bench     |
-+-----------------+
-|"64" - Profile   |
-+-----------------+
++---------------------------+
+|"0" - Off                  |
++---------------------------+
+|"1" - Error                |
++---------------------------+
+|"2" - Trace                |
++---------------------------+
+|"4" - Hints                |
++---------------------------+
+|"8" - Info                 |
++---------------------------+
+|"16" - API Trace           |
++---------------------------+
+|"32" - Bench               |
++---------------------------+
+|"64" - Profile             |
++---------------------------+
+|"128" - Extended Profile   |
++---------------------------+
 
 ``HIPBLASLT_LOG_FILE=<file_name>`` - where ``file_name`` is a path to a logging file. The file name can contain ``%i``, which is replaced with the process ID, for example, ``<file_name>_%i.log``.
 If ``HIPBLASLT_LOG_FILE`` is not defined, the log messages are printed to stdout.

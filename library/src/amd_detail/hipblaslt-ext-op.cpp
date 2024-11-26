@@ -558,8 +558,8 @@ void hipblasltSetFlushValue(bool newFlush)
     UserClientArguments clientArguments;
     clientArguments.SetFlushValue(newFlush);
 }
-void hipblasltSetRotatingMemorySizeValue(int newrotatingMemorySize)
+void hipblasltSetRotatingBufferSizeValue(int newrotatingBufferSize)
 {
     UserClientArguments clientArguments;
-    clientArguments.SetRotatingMemorySizeValue(newrotatingMemorySize);
+    clientArguments.SetRotatingBufferSizeValue(newrotatingBufferSize);
 }

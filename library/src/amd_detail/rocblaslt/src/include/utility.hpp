@@ -486,7 +486,7 @@ class UserClientArguments
 {
 private:
     static bool    flush;
-    static int32_t rotatingMemorySize;
+    static int32_t rotatingBufferSize;
 
 public:
     // Getter and setter for the flush member variable.
@@ -499,14 +499,14 @@ public:
         flush = newFlush;
     }
 
-    // Getter and setter for the rotatingMemorySize member variable.
-    int GetRotatingMemorySizeValue() const
+    // Getter and setter for the rotatingBufferSize member variable.
+    int GetRotatingBufferSizeValue() const
     {
-        return rotatingMemorySize;
+        return rotatingBufferSize;
     }
-    void SetRotatingMemorySizeValue(int newrotatingMemorySize)
+    void SetRotatingBufferSizeValue(int newrotatingBufferSize)
     {
-        rotatingMemorySize = newrotatingMemorySize;
+        rotatingBufferSize = newrotatingBufferSize;
     }
 };
 
