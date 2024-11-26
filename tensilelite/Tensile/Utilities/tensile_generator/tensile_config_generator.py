@@ -131,6 +131,7 @@ else:
     fp32_instructions = [[16,16,4,1]]
     fp8_instructions = [[16,16,32,1]]
 
+
 HIPBLASLT_BENCH_BASE = (
     r"(?P<CMD>\w+) --api_method c "
     r"-m (?P<M>[\d ]+)"
@@ -149,12 +150,12 @@ HIPBLASLT_BENCH_BASE = (
     r"--transA (?P<TRANS_A>[\w ]+)"
     r"--transB (?P<TRANS_B>[\w ]+)"
     r"--batch_count (?P<BATCH_COUNT>[\d ]+)"
+    r"--scaleA (?P<SCALE_A>[\d ]+)"
+    r"--scaleB (?P<SCALE_B>[\d ]+)"
 )
 
 # Optional patterns for scale and bias
-SCALE_PATTERN = r"--scaleA (?P<SCALE_A>[\w ]+)--scaleB (?P<SCALE_B>[\w ]+)"
 BIAS_PATTERN = r"--bias_vector --bias_source (?P<BIAS_SOURCE>[\w ]+)"
-ACTIVATION_PATTERN = r"--activation_type (?P<ACTIVATION_TYPE>[\w ]+)"
 
 # Common ending pattern
 TYPE_PATTERN = (
@@ -165,30 +166,22 @@ TYPE_PATTERN = (
     r"--scale_type (?P<SCALE_TYPE>[\w ]+)"
     r"--bias_type (?P<BIAS_TYPE>[\w ]+)"
     r"--compute_type (?P<COMPUTE_TYPE>[\w ]+)"
+    r"--algo_method (?P<ALGO_METHOD>[\w ]+)"
+    r"--solution_index (?P<SOLUTION_INDEX>[\d ]+)"
+    r"--activation_type (?P<ACTIVATION_TYPE>[\w ]+)"
 )
 
 # Build the combined pattern with optional parts
-def build_pattern(has_scale=False, has_bias=False, has_activation=False):
+def build_pattern(has_bias=False):
     pattern = HIPBLASLT_BENCH_BASE
-    if has_scale:
-        pattern += SCALE_PATTERN
     if has_bias:
         pattern += BIAS_PATTERN
     pattern += TYPE_PATTERN
-    if has_activation:
-        pattern += ACTIVATION_PATTERN
     return pattern
 
 # Create the four variations
 HIPBLASLT_BENCH_RE = build_pattern()
-HIPBLASLT_BENCH_RE_SAB = build_pattern(has_scale=True)
 HIPBLASLT_BENCH_RE_BIAS = build_pattern(has_bias=True)
-HIPBLASLT_BENCH_RE_ACT = build_pattern(has_activation=True)
-HIPBLASLT_BENCH_RE_SAB_ACT = build_pattern(has_scale=True, has_activation=True)
-HIPBLASLT_BENCH_RE_BIAS_ACT = build_pattern(has_bias=True, has_activation=True)
-HIPBLASLT_BENCH_RE_SAB_BIAS = build_pattern(has_scale=True, has_bias=True)
-HIPBLASLT_BENCH_RE_SAB_BIAS_ACT = build_pattern(has_scale=True, has_bias=True, has_activation=True)
-
 
 # Function to extract problem sizes from a line
 def extract_problem_size(match):
@@ -251,6 +244,8 @@ def extract_dtype(match):
     ComputeDataType = datatype_map(gdict.get('COMPUTE_TYPE', '').strip())
     TransposeA = trans_map(gdict.get('TRANS_A', '').strip())
     TransposeB = trans_map(gdict.get('TRANS_B', '').strip())
+    scaleA = gdict.get("SCALE_A").strip()
+    scaleB = gdict.get("SCALE_B").strip()
     if DataType in ["H", "B", "F8"]:
         HighPrecisionAccumulate = True
     else:
@@ -268,8 +263,11 @@ def extract_dtype(match):
     if gdict.get("ACTIVATION_TYPE"):
         res["Activation"] = True
         res["ActivationType"] = "hipblaslt_all"
-    if gdict.get("SCALE_A") is not None and gdict.get("SCALE_B") is not None:
+    if scaleA == "1" and scaleB == "1" is not None:
         res["UseScaleAB"] = "Scalar"
+        res["UseScaleAlphaVec"] = 1
+    elif scaleA == "2" and scaleB == "2" is not None:
+        res["UseScaleAB"] = "Vector"
         res["UseScaleAlphaVec"] = 1
     return res
 
@@ -320,29 +318,9 @@ def get_groups(matmul_instruction_gen):
     return mi_groups0, mi_groups1, mi_left
 
 def match_pattern(line):
-    if 'activation_type' in line and 'bias_vector' in line and 'scaleA' in line and 'scaleB' in line:
-        match = re.search(
-            HIPBLASLT_BENCH_RE_SAB_BIAS_ACT, line
-        )
-    elif 'bias_vector' in line and 'scaleA' in line and 'scaleB' in line:
-        match = re.search(
-            HIPBLASLT_BENCH_RE_SAB_BIAS, line
-        )
-    elif 'activation_type' in line and 'scaleA' in line and 'scaleB' in line:
-        match = re.search(
-            HIPBLASLT_BENCH_RE_SAB_ACT, line
-        )
-    elif 'bias_vector' in line and 'activation_type' in line:
-        match = re.search(
-            HIPBLASLT_BENCH_RE_BIAS_ACT, line
-        )
-    elif 'bias_vector' in line:
+    if 'bias_vector' in line:
         match = re.search(
             HIPBLASLT_BENCH_RE_BIAS, line
-        )
-    elif 'scaleA' in line and 'scaleB' in line:
-        match = re.search(
-            HIPBLASLT_BENCH_RE_SAB, line
         )
     else:
         match = re.search(
