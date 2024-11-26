@@ -95,6 +95,7 @@ inline void cblas_gemm(hipblasOperation_t       transA,
 {
     switch(tc)
     {
+    case HIP_R_16F: // setting compute_type to f16_r will fallback to f32_r
     case HIP_R_32F:
         cblas_gemm<float>(transA,
                           transB,
@@ -118,7 +119,7 @@ inline void cblas_gemm(hipblasOperation_t       transA,
                           tiA,
                           tiB,
                           to,
-                          tc,
+                          HIP_R_32F,
                           tciA,
                           tciB,
                           alt);

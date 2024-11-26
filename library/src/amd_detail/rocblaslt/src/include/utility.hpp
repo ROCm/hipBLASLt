@@ -68,6 +68,8 @@ constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
 {
     switch(type)
     {
+    case rocblaslt_compute_f16:
+        return "f16_r";
     case rocblaslt_compute_f32:
         return "f32_r";
     case rocblaslt_compute_f32_fast_xf32:
