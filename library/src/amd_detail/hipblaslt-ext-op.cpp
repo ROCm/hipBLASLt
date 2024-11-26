@@ -551,37 +551,15 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     return HIPBLAS_STATUS_SUCCESS;
 }
 
-// Private constructor of SingletonUserClientArguments
-SingletonUserClientArguments::SingletonUserClientArguments()
-    : flush(false)
-    , rotatingMemorySize(0)
+// Setter for the members of class UserClientArguments, only for internal use.
+// The class UserClientArguments is declared and defined in utility.hpp and utility.cpp respectively
+void hipblasltSetFlushValue(bool newFlush)
 {
+    UserClientArguments clientArguments;
+    clientArguments.SetFlushValue(newFlush);
 }
-
-// Static method to get the single instance of the class
-SingletonUserClientArguments& SingletonUserClientArguments::getInstance()
+void hipblasltSetRotatingMemorySizeValue(int newrotatingMemorySize)
 {
-    static SingletonUserClientArguments instance; // Guaranteed to be thread-safe
-    return instance;
-}
-
-// Getter and setter for the flush member variable, only for internal usage purpose.
-bool SingletonUserClientArguments::hipblasltInternalGetFlushValue() const
-{
-    return flush;
-}
-void SingletonUserClientArguments::hipblasltInternalSetFlushValue(bool newFlush)
-{
-    flush = newFlush;
-}
-
-// Getter and setter for the rotatingMemorySize member variable, only for internal usage purpose.
-int SingletonUserClientArguments::hipblasltInternalGetRotatingMemorySizeValue() const
-{
-    return rotatingMemorySize;
-}
-void SingletonUserClientArguments::hipblasltInternalSetRotatingMemorySizeValue(
-    int newrotatingMemorySize)
-{
-    rotatingMemorySize = newrotatingMemorySize;
+    UserClientArguments clientArguments;
+    clientArguments.SetRotatingMemorySizeValue(newrotatingMemorySize);
 }

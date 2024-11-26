@@ -2080,12 +2080,10 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
         updateTensileProblem(prob, data->problem);
 
-        // Static method to get the single instance of the SingletonUserClientArguments class and get the values of flush and rotating size
-        SingletonUserClientArguments& singletonClientArguments
-            = SingletonUserClientArguments::getInstance();
-        bool    flush = singletonClientArguments.hipblasltInternalGetFlushValue();
-        int32_t rotating_memory_size
-            = singletonClientArguments.hipblasltInternalGetRotatingMemorySizeValue();
+        // Get the values of static member variables flush and rotating size from UserClientArguments
+        UserClientArguments ClientArguments;
+        bool                flush                = ClientArguments.GetFlushValue();
+        int32_t             rotating_memory_size = ClientArguments.GetRotatingMemorySizeValue();
 
         int* solutionIndex = (int*)algo->data;
         data->algoIndex    = *solutionIndex;
@@ -2507,12 +2505,10 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
             return rocblaslt_status_invalid_pointer;
         }
 
-        // Static method to get the single instance of the SingletonUserClientArguments class and get the values of flush and rotating size
-        SingletonUserClientArguments& singletonClientArguments
-            = SingletonUserClientArguments::getInstance();
-        bool    flush = singletonClientArguments.hipblasltInternalGetFlushValue();
-        int32_t rotating_memory_size
-            = singletonClientArguments.hipblasltInternalGetRotatingMemorySizeValue();
+        // Get the values of static member variables flush and rotating size from UserClientArguments
+        UserClientArguments ClientArguments;
+        bool                flush                = ClientArguments.GetFlushValue();
+        int32_t             rotating_memory_size = ClientArguments.GetRotatingMemorySizeValue();
 
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
         {

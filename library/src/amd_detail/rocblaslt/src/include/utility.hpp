@@ -200,7 +200,7 @@ void log_base(rocblaslt_layer_mode layer_mode, const char* func, H head, Ts&&...
     if(get_logger_layer_mode() & layer_mode)
     {
         std::lock_guard<std::mutex> lock(log_mutex);
-        std::string comma_separator = " ";
+        std::string                 comma_separator = " ";
 
         std::ostream* os = get_logger_os();
 
@@ -269,7 +269,7 @@ template <typename... Ts>
 void log_bench(const char* func, Ts&&... xs)
 {
     std::lock_guard<std::mutex> lock(log_mutex);
-    std::ostream* os = get_logger_os();
+    std::ostream*               os = get_logger_os();
     *os << "hipblaslt-bench ";
     log_arguments_bench(*os, std::forward<Ts>(xs)...);
     *os << std::endl;
@@ -476,5 +476,38 @@ bool rocblaslt_internal_tensile_supports_ldc_ne_ldd(rocblaslt_handle handle);
 
 // for internal use during testing, fetch arch name
 //std::string rocblaslt_internal_get_arch_name();
+
+/*! \brief User defined client arguments.
+ *
+ * \details This class sets the value of flush and rotating size used in the client which could be further used in the logging, only for internal use.
+ */
+
+class UserClientArguments
+{
+private:
+    static bool    flush;
+    static int32_t rotatingMemorySize;
+
+public:
+    // Getter and setter for the flush member variable.
+    bool GetFlushValue() const
+    {
+        return flush;
+    }
+    void SetFlushValue(bool newFlush)
+    {
+        flush = newFlush;
+    }
+
+    // Getter and setter for the rotatingMemorySize member variable.
+    int GetRotatingMemorySizeValue() const
+    {
+        return rotatingMemorySize;
+    }
+    void SetRotatingMemorySizeValue(int newrotatingMemorySize)
+    {
+        rotatingMemorySize = newrotatingMemorySize;
+    }
+};
 
 #endif // UTILITY_H

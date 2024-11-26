@@ -223,37 +223,9 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType dat
                                                            uint32_t          n,
                                                            hipStream_t       stream);
 
-/*! \brief User defined client arguments.
- *
- * \details This Singleton class sets the value of flush and rotating size used in the client which could be further used in the logging, only for internal usage purpose.
- */
-
-class SingletonUserClientArguments
-{
-private:
-    bool flush; // First member variable
-    int  rotatingMemorySize; // Second member variable
-
-    // Private constructor to prevent instantiation
-    SingletonUserClientArguments();
-
-public:
-    // Static method to get the single instance of the class
-    HIPBLASLT_EXPORT static SingletonUserClientArguments& getInstance();
-
-    // Delete copy constructor and assignment operator
-    HIPBLASLT_EXPORT SingletonUserClientArguments(const SingletonUserClientArguments&) = delete;
-    HIPBLASLT_EXPORT SingletonUserClientArguments& operator=(const SingletonUserClientArguments&)
-        = delete;
-
-    // Getter and setter for the flush member variable, only for internal usage purpose.
-    HIPBLASLT_EXPORT bool hipblasltInternalGetFlushValue() const;
-    HIPBLASLT_EXPORT void hipblasltInternalSetFlushValue(bool newFlush);
-
-    // Getter and setter for the rotatingMemorySize member variable, only for internal usage purpose.
-    HIPBLASLT_EXPORT int  hipblasltInternalGetRotatingMemorySizeValue() const;
-    HIPBLASLT_EXPORT void hipblasltInternalSetRotatingMemorySizeValue(int newrotatingMemorySize);
-};
+// Exporting the setters of flush and rotating size.
+HIPBLASLT_EXPORT void hipblasltSetFlushValue(bool newFlush);
+HIPBLASLT_EXPORT void hipblasltSetRotatingMemorySizeValue(int newrotatingMemorySize);
 
 #ifdef __cplusplus
 }
