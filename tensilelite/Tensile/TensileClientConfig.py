@@ -183,7 +183,7 @@ def TensileClientConfig(userArgs):
         Common.globalParameters[key] = value
 
     # write output
-    ClientWriter.writeClientConfigIni(sizes, "", "", "", "", conProblemType, "", [], "", args.OutputConfig, None)
+    ClientWriter.writeClientConfigIni(True, sizes, "", "", "", "", conProblemType, "", [], "", args.OutputConfig, None)
 
 
 def main():
