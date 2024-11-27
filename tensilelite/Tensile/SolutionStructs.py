@@ -3881,8 +3881,20 @@ class Solution(collections.abc.Mapping):
 
     state["ULSGRODoubleG2L"] = 0
     if state["UnrollLoopSwapGlobalReadOrder"] == 1:
+      bpeAB       = state["ProblemType"]["DataType"].numBytes()
+      bpr         = 4
+      numVgprG2LA = roundUp((state["NumLoadsCoalescedA"] * state["NumLoadsPerpendicularA"] * \
+        state["GlobalReadVectorWidthA"] * bpeAB) / (float)(bpr))
+      numVgprG2LB = roundUp((state["NumLoadsCoalescedB"] * state["NumLoadsPerpendicularB"] * \
+        state["GlobalReadVectorWidthB"] * bpeAB) / (float)(bpr))
+      if numVgprG2LA % 2 == 1 or numVgprG2LB % 2 == 1:
+        reject(state, "G2LA/B vgpr has bubble inside. Cannot use UnrollLoopSwapGlobalReadOrder=1.")
       if state["GlobalReadVectorWidthA"] != state["GlobalReadVectorWidthB"]:
         # TODO: Add a configuration to schedule better.
+        state["ULSGRODoubleG2L"] = 1
+      minGRVW = min(state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"])
+      if minGRVW * bpeAB < 4:
+        # G2LA/B vgpr index will jump.
         state["ULSGRODoubleG2L"] = 1
       if state["ExpandPointerSwap"] == 1:
         reject(state, "ExpandPointerSwap need to be 0 if UnrollLoopSwapGlobalReadOrder")
