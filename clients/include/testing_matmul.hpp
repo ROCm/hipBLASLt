@@ -41,6 +41,7 @@
 #include "norm.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
+#include "TensorDataManipulation.hpp"
 #include <cstddef>
 #include <functional>
 #include <hipblaslt/hipblaslt-ext-op.h>
@@ -70,6 +71,30 @@ extern "C" __global__ void flush_icache()
                      "s_nop 0 \n\t"
                      "s_nop 0 \n\t" ::
                          :);
+}
+
+template<typename T>
+void swizzle_tensor(T *dst, const T *src, size_t b, size_t m, size_t k, bool colMaj)
+{
+    using Tensor = Tensor::Manipulation::Tensor;
+    constexpr size_t MiM = 16;
+    constexpr size_t MiK = 16;
+    constexpr size_t MiKv = 4;
+    constexpr size_t PackK = 2;
+    const size_t numElements = b * m * k;
+    auto tmpTensor = Tensor::create<T>({b, m, k});
+    memcpy(tmpTensor. template as<void>(), src, numElements * sizeof(T));
+
+    if(colMaj)
+    {
+        auto orgTensor = Tensor::create<T>({b, k, m});
+        memcpy(orgTensor. template as<void>(), src, numElements * sizeof(T));
+        tmpTensor = permute(orgTensor, {0, 2, 1});
+    }
+
+    tmpTensor.reshape({b, m / MiM, MiM, k / (MiK * PackK), MiK / MiKv , MiKv * PackK});
+    Tensor permuted = permute(tmpTensor, {0, 1, 3, 4, 2, 5});
+    memcpy(dst, permuted. template as<void>(), numElements * sizeof(T));
 }
 
 inline void pre_gpu_time(bool         use_gpu_timer,
@@ -1192,6 +1217,12 @@ void testing_matmul_with_bias(const Arguments& arg,
         CHECK_HIPBLASLT_ERROR(
             hipblasLtMatrixLayoutCreate(&(matD[i]), arg.d_type, M[i], N[i], ldc[i]));
 
+        if(arg.swizzle_a && TiA == HIP_R_16F)
+        {
+            hipblasLtOrder_t orderA = HIPBLASLT_ORDER_ROW16_32C_8;
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(matA[i], HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA)));
+        }
+
         if(do_batched[i])
         {
             EXPECT_HIPBLAS_STATUS(
@@ -1481,6 +1512,13 @@ void testing_matmul_with_bias(const Arguments& arg,
             CHECK_HIP_ERROR(synchronize(hA[i], dA[i]));
             CHECK_HIP_ERROR(synchronize(hB[i], dB[i]));
             CHECK_HIP_ERROR(synchronize(hC[i], dC[i]));
+        }
+
+        if(arg.swizzle_a && TiA == HIP_R_16F)
+        {
+            HipHostBuffer tmp(TiA, num_batches[i] * M[i] * K[i]);
+            swizzle_tensor(tmp.as<hipblasLtHalf>(), hA[i].as<hipblasLtHalf>(), num_batches[i], M[i], K[i], false);
+            CHECK_HIP_ERROR(synchronize(dA[i], tmp, block_count));
         }
 
         if(arg.gradient && arg.use_e)
