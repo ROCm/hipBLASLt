@@ -413,6 +413,10 @@ try
          value<char>(&arg.transB)->default_value('N'),
          "N = no transpose, T = transpose")
 
+        ("swizzleA",
+         value<bool>(&arg.swizzle_a)->default_value(false),
+         "Enable tensor swizzling for A")
+
         ("batch_count",
          value<int32_t>(&arg.batch_count)->default_value(1),
          "Number of matrices. Only applicable to batched and strided_batched routines")
@@ -667,6 +671,12 @@ try
     {
         hipblaslt_cerr << "Currently workgroup mapping only supports api_method mix or cpp."
                        << std::endl;
+        return 1;
+    }
+
+    if(arg.swizzle_a && (arg.transA != 'T' || arg.transB != 'N' || a_type != "f16_r"))
+    {
+        hipblaslt_cerr << "For swizzle-A, problem type must be FP16 TN" << std::endl;
         return 1;
     }
 
