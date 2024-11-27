@@ -115,7 +115,8 @@ option(Tensile_MERGE_FILES "Tensile to merge kernels and solutions files?" ON)
 option(Tensile_SEPARATE_ARCHITECTURES "Tensile to use GPU architecture specific files?" ON)
 option(Tensile_LAZY_LIBRARY_LOADING "Tensile to load kernels on demand?" ON)
 # For roctx
-option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt" ON)
+include(CMakeDependentOption)
+cmake_dependent_option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt" ON "BUILD_SHARED_LIBS" OFF)
 
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)

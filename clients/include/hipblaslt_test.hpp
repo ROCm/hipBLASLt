@@ -143,7 +143,7 @@ inline void hipblaslt_expect_status(hipblasStatus_t status, hipblasStatus_t expe
         {                                                                              \
             hipblaslt_cerr << "error: NO solution found! at " __FILE__ ":" << __LINE__ \
                            << std::endl;                                               \
-            exit(EXIT_FAILURE);                                                        \
+            return;                                                                    \
         }                                                                              \
     } while(0)
 #endif // GOOGLE_TEST
@@ -351,13 +351,12 @@ bool hipblaslt_client_global_filters(const Arguments& args);
 // It defines a type_filter_functor() and a PrintToStringParamName class
 // which calls name_suffix() in the derived class to form the test name suffix.
 // ----------------------------------------------------------------------------
-template <typename TEST, template <typename...> class FILTER>
+template <typename TEST, class FILTER>
 class RocBlasLt_Test : public testing::TestWithParam<Arguments>
 {
 protected:
     // This template functor returns true if the type arguments are valid.
     // It converts a FILTER specialization to bool to test type matching.
-    template <typename... T>
     struct type_filter_functor
     {
         bool operator()(const Arguments& args)
@@ -366,7 +365,7 @@ protected:
             if(!hipblaslt_client_global_filters(args))
                 return false;
 
-            return static_cast<bool>(FILTER<T...>{});
+            return static_cast<bool>(FILTER{});
         }
     };
 

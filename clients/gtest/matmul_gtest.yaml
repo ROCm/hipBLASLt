@@ -457,6 +457,15 @@ Tests:
   bias_type: [default, f32_r]
   unit_check: 1
 
+- name: matmul_fallback_compute_fp16
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precisions_compute_fp16
+  matrix_size:
+    - { M:  128, N:  128, K:  128 }
+  transA: N
+  transB: N
+
 - name: matmul_fallback_equality_NN
   category: pre_checkin
   function:

@@ -42,6 +42,7 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [16, 16,16, 1,  1,   4, 4,  2,2 ] # 128x128
+          - [16, 16,16, 1,  1,   4, 2,  2,2 ] # 128x128
           - [16, 16,16, 1,  1,   2, 2,  2,2 ] # 64x64
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
@@ -119,6 +120,7 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [16, 16,16, 1,  1,   4, 4,  2,2 ] # 128x128
+          - [16, 16,16, 1,  1,   2, 4,  2,2 ] # 64x128
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
         - DepthU: [128]
@@ -170,4 +172,134 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
 
+  ########################################
+  # TT BBS - standard
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: b
+      DestDataType: b
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 1
+      TransposeB: 1
+      UseBeta: True
+      Batched: True
+      UseBias: 1
+      Activation: True
+      ActivationType: all
+      UseScaleAlphaVec: 1
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16, 16,16, 1,  1,   4, 2,  2, 2 ]
+        - AssertFree0ElementMultiple: [1]
+        - AssertFree1ElementMultiple: [1]
+        - AssertSummationElementMultiple: [1]
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - DepthU: [32]
+        - VectorWidthA: [-1]
+        - VectorWidthB: [-1]
+        - GlobalReadVectorWidthA: [1]
+        - GlobalReadVectorWidthB: [1]
+        - LocalReadVectorWidth: [-1]
+        - TransposeLDS: [1]
+        - LdsBlockSizePerPadA: [-1]
+        - LdsBlockSizePerPadB: [-1]
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - StaggerU: [16]
+        - StaggerUStride: [256]
+        - StaggerUMapping: [1]
+        - WorkGroupMapping: [1]
+        - WorkGroupMappingXCC: [8]
+        - WorkGroupMappingXCCGroup: [304]
+        - 1LDSBuffer: [-1]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [0.5]
+        - StoreRemapVectorWidth: [0]
+        - StoreVectorWidth: [-1]
+        - SourceSwap: [1]
+        - NumElementsPerBatchStore: [8]
+        - ClusterLocalRead: [1]
+        - NonTemporalD: [0]
+        - UnrollLoopSwapGlobalReadOrder: [1]
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [128,  128, 1, 1024  ]  
+          - Exact: [128,  128, 1, 2048  ]
+        - BiasTypeArgs: ['s']
+        - ActivationArgs:
+          - [Enum: none]
+
+  ########################################
+  # NT BBS - standard
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: b
+      DestDataType: b
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 0
+      TransposeB: 1
+      UseBeta: True
+      Batched: True
+      UseBias: 1
+      Activation: True
+      ActivationType: all
+      UseScaleAlphaVec: 1
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16, 16,16, 1,  1,   3, 4,  1, 4 ]
+          - [16, 16,16, 1,  1,   4, 2,  2, 2 ]
+        - PrefetchGlobalRead: [2]
+        - PrefetchLocalRead: [1]
+        - DepthU: [32]
+        - VectorWidthA: [-1]
+        - VectorWidthB: [-1]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
+        - LocalReadVectorWidth: [-1]
+        - TransposeLDS: [0]
+        - LdsBlockSizePerPadA: [-1]
+        - LdsBlockSizePerPadB: [-1]
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - StaggerU: [0]
+        - StaggerUStride: [-1]
+        - StaggerUMapping: [0]
+        - WorkGroupMapping: [1]
+        - WorkGroupMappingXCC: [1]
+        - WorkGroupMappingXCCGroup: [304]
+        - 1LDSBuffer: [-1]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [0.5]
+        - StoreRemapVectorWidth: [0]
+        - StoreVectorWidth: [-1]
+        - SourceSwap: [1]
+        - NumElementsPerBatchStore: [16]
+        - ClusterLocalRead: [1]
+        - NonTemporalD: [0]
+        - NonTemporalB: [4]
+        - UnrollLoopSwapGlobalReadOrder: [1]
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [128,  128, 1, 1024  ]  
+          - Exact: [128,  128, 1, 2048  ]
+        - BiasTypeArgs: ['s']
+        - ActivationArgs:
+          - [Enum: none]
 
