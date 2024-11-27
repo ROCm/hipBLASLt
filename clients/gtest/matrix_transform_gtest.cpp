@@ -1154,7 +1154,10 @@ TEST(MatrixTransformTest, ScalarsOnDevice)
 TEST(MatrixTransformTest, MultipleDevices)
 {
     int numDevices{};
+    int curDevice{};
     auto hipErr = hipGetDeviceCount(&numDevices);
+    EXPECT_EQ(hipErr, hipSuccess);
+    hipErr = hipGetDevice(&curDevice);
     EXPECT_EQ(hipErr, hipSuccess);
     // acquire at most 2 devices
     numDevices = std::min<int>(numDevices, 2);
@@ -1381,6 +1384,9 @@ TEST(MatrixTransformTest, MultipleDevices)
         hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutB);
         hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutC);
     }
+
+    hipErr = hipSetDevice(curDevice);
+    EXPECT_EQ(hipErr, hipSuccess);
 }
 
 INSTANTIATE_TEST_SUITE_P(
