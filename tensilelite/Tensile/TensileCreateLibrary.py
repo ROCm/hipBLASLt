@@ -736,6 +736,10 @@ def TensileCreateLibrary():
   arguments["LibraryFormat"] = args.LibraryFormat
   if args.no_enumerate:
     arguments["AMDGPUArchPath"] = False
+<<<<<<< HEAD
+=======
+  arguments["PackageLibrary"] = args.PackageLibrary
+>>>>>>> Remove manifest functionality
 
   arguments["GenerateSourcesAndExit"] = args.GenerateSourcesAndExit
   if arguments["GenerateSourcesAndExit"]:
