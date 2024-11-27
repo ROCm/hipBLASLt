@@ -1214,21 +1214,6 @@ def TensileCreateLibrary():
 
   staticFiles = copyStaticFiles(outputPath)
 
-  # Build a list of files to be expected
-  #(solutionFiles,
-  # sourceKernelFiles,
-  # asmKernelFiles,
-  # sourceLibFiles,
-  # asmLibFiles) = buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs)
-#
-  #(_,
-  # _,
-  # _,
-  # sourceLibPaths,
-  # asmLibPaths,
-  # libMetadataPaths) = buildObjectFilePaths(outputPath, solutionFiles, sourceKernelFiles, \
-  #  asmKernelFiles, sourceLibFiles, asmLibFiles, masterLibraries)
-
   # Make sure to copy the library static files.
   for fileName in staticFiles:
     shutil.copy( os.path.join(globalParameters["SourcePath"], fileName), \
