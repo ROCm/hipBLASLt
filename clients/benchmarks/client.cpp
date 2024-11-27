@@ -178,11 +178,18 @@ int hipblaslt_bench_datafile(const std::string& filter, bool any_stride)
     return ret;
 }
 
-// Replace --batch with --batch_count for backward compatibility
-void fix_batch(int argc, char* argv[])
+// Replace 
+// --batch with --batch_count
+// --requested_solution with --requested_solution_num
+// --workspace with --user_allocated_workspace
+// for backward compatibility
+void fix_deprecated(int argc, char* argv[])
 {
     static char b_c[] = "--batch_count";
+    static char s[] = "--requested_solution_num";
+    static char w[] = "--user_allocated_workspace";
     for(int i = 1; i < argc; ++i)
+    {
         if(!strcmp(argv[i], "--batch"))
         {
             static int once
@@ -193,6 +200,27 @@ void fix_batch(int argc, char* argv[])
                    0);
             argv[i] = b_c;
         }
+        if(!strcmp(argv[i], "--requested_solution"))
+        {
+            static int once
+                = (hipblaslt_cerr << argv[0]
+                                  << " warning: --requested_solution is deprecated, and --requested_solution_num "
+                                     "should be used instead."
+                                  << std::endl,
+                   0);
+            argv[i] = s;
+        }
+        if(!strcmp(argv[i], "--workspace"))
+        {
+            static int once
+                = (hipblaslt_cerr << argv[0]
+                                  << " warning: --workspace is deprecated, and --user_allocated_workspace "
+                                     "should be used instead."
+                                  << std::endl,
+                   0);
+            argv[i] = w;
+        }
+    }
 }
 
 bool tuning_path_compare_git_version(const char* tuningEnv)
@@ -246,7 +274,7 @@ void hipblaslt_print_version(void)
 int main(int argc, char* argv[])
 try
 {
-    fix_batch(argc, argv);
+    fix_deprecated(argc, argv);
     Arguments   arg;
     std::string function;
     std::string precision;
@@ -296,22 +324,26 @@ try
     }
 
     std::string supported_types{
-        "Options: s,f32_r, h,f16_r, bf16_r, d,f64_r, i,i32_r, i8,i8_r, f8_r, bf8_r."};
+        //"Options: s,f32_r, h,f16_r, bf16_r, d,f64_r, i,i32_r, i8,i8_r, f8_r, bf8_r."};
+        "Options: f32_r, f16_r, bf16_r, f64_r, i32_r, i8_r, f8_r, bf8_r."};
 
     options_description desc("hipblaslt-bench command line options");
     desc.add_options()
         // clang-format off
         ("sizem,m",
          valueVec<int64_t>(&m)->default_value(128),
-         "Specific matrix size: the number of rows or columns in matrix.")
+         "Specific matrix size: the number of rows in matrix C. "
+         "For yaml file input use M.")
 
         ("sizen,n",
          valueVec<int64_t>(&n)->default_value(128),
-         "Specific matrix the number of rows or columns in matrix")
+         "Specific matrix size: the number of columns in matrix C. "
+         "For yaml file input use N.")
 
         ("sizek,k",
          valueVec<int64_t>(&k)->default_value(128),
-         "Specific matrix size: the number of columns in A and rows in B.")
+         "Specific matrix size: if transA == N, the number of columns in matrix A. "
+         "For yaml file input use K.")
 
         ("lda",
          valueVec<int64_t>(&lda),
@@ -335,7 +367,8 @@ try
 
         ("any_stride",
          value<bool>(&any_stride)->default_value(false),
-         "Do not modify input strides based on leading dimensions")
+         "Do not modify input strides based on leading dimensions. "
+         "Not supported in yaml input.")
 
         ("stride_a",
          valueVec<int64_t>(&stride_a),
@@ -358,18 +391,18 @@ try
          "Specific stride of strided_batched matrix E, second dimension * leading dimension.")
 
         ("alpha",
-          value<float>(&arg.alpha)->default_value(1.0), "specifies the scalar alpha")
+          value<float>(&arg.alpha)->default_value(1.0), "specifies the scalar alpha.")
 
         ("beta",
-         value<float>(&arg.beta)->default_value(0.0), "specifies the scalar beta")
+         value<float>(&arg.beta)->default_value(0.0), "specifies the scalar beta.")
 
         ("function,f",
          value<std::string>(&function)->default_value("matmul"), "BLASLt function to test. "
-         "Options: matmul")
+         "Options: matmul. Short form 'f' is not supported in yaml file input.")
 
         ("precision,r",
          value<std::string>(&precision)->default_value("f16_r"), "Precision of matrix A,B,C,D  " +
-         supported_types)
+         supported_types + " Not supported in yaml input file.")
 
         ("a_type",
          value<std::string>(&a_type), "Precision of matrix A. " + supported_types)
@@ -385,7 +418,7 @@ try
 
         ("compute_type",
          value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
-         "Options: s,f32_r, x,xf32_r, d,f64_r, i,i32_r, f32_f16_r, f32_bf16_r")
+         "Options: s,f32_r, x,xf32_r, d,f64_r, i,i32_r, f32_f16_r, f32_bf16_r.")
 
         ("compute_input_typeA",
          value<std::string>(&compute_input_typeA), "Precision of computation input A. " +
@@ -397,76 +430,77 @@ try
 
         ("scale_type",
          value<std::string>(&scale_type), "Precision of scalar. "
-        "Options: f16_r,bf16_r")
+        "Options: f16_r,bf16_r.")
 
         ("initialization",
          value<std::string>(&initialization)->default_value("hpl"),
-         "Initialize matrix data."
-         "Options: rand_int, trig_float, hpl(floating), special, zero")
+         "Initialize matrix data. "
+         "Options: rand_int, trig_float, hpl(floating), special, zero.")
 
         ("transA",
          value<char>(&arg.transA)->default_value('N'),
-         "N = no transpose, T = transpose")
+         "N = no transpose, T = transpose.")
 
         ("transB",
          value<char>(&arg.transB)->default_value('N'),
-         "N = no transpose, T = transpose")
+         "N = no transpose, T = transpose.")
 
         ("batch_count",
          value<int32_t>(&arg.batch_count)->default_value(1),
-         "Number of matrices. Only applicable to batched and strided_batched routines")
+         "Number of matrices. Only applicable to batched and strided_batched routines.")
 
         ("HMM",
          value<bool>(&arg.HMM)->default_value(false),
-         "Parameter requesting the use of HipManagedMemory")
+         "Parameter requesting the use of HipManagedMemory.")
 
         ("verify,v",
          value<bool>(&verify)->default_value(false),
-         "Validate GPU results with CPU?")
+         "Validate GPU results with CPU. For yaml file input, set norm_check and allclose_check.")
 
         ("iters,i",
          value<int32_t>(&arg.iters)->default_value(tuningEnv? 1000 : 10),
-         "Iterations to run inside timing loop")
+         "Iterations to run inside timing loop. Short form 'i' is not supported in yaml input.")
 
         ("cold_iters,j",
          value<int32_t>(&arg.cold_iters)->default_value(tuningEnv? 1000 : 2),
-         "Cold Iterations to run before entering the timing loop")
+         "Cold Iterations to run before entering the timing loop. Short form 'j' is not supported in yaml input.")
 
         ("algo_method",
          value<std::string>(&algo_method_str)->default_value(tuningEnv? "all" : "heuristic"),
-         "Use different algorithm search API. Options: heuristic, all, index.")
+         "Use different algorithm search API. Options: heuristic, all, index. "
+         "For yaml file input use: 0 (heuristic), 1 (all), 2 (algo index).")
 
         ("solution_index",
          value<int32_t>(&arg.solution_index)->default_value(-1),
-         "Used with --algo_method 2.  Specify solution index to use in benchmark.")
+         "Used with --algo_method 2 (index).  Specify solution index to use in benchmark.")
 
-        ("requested_solution",
+        ("requested_solution_num",
          value<int32_t>(&arg.requested_solution_num)->default_value(tuningEnv? -1 : 1),
-         "Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to heuristic.")
+         "Requested number of solutions. Set to -1 to get all solutions. Only valid when algo_method is set to 0 (heuristic).")
 
         ("activation_type",
          value<std::string>(&activation_type)->default_value("none"),
-         "Options: none, gelu, relu")
+         "Options: none, relu, gelu.")
 
         ("activation_arg1",
          value<float>(&arg.activation_arg1)->default_value(0),
-         "Reserved.")
+         "Threshold when activation type is relu.")
 
         ("activation_arg2",
          value<float>(&arg.activation_arg2)->default_value(std::numeric_limits<float>::infinity()),
-         "Reserved.")
+         "Upperbound when activation type is relu.")
 
         ("bias_type",
-         value<std::string>(&bias_type), "Precision of bias vector."
-        "Options: f16_r,bf16_r,f32_r,default(same with D type)")
+         value<std::string>(&bias_type), "Precision of bias vector. "
+        "Options: f16_r,bf16_r,f32_r,default(same with D type).")
 
         ("bias_source",
          value<std::string>(&bias_source)->default_value("d"),
-         "Choose bias source: a, b, d")
+         "Choose bias source: a, b, d.")
 
         ("bias_vector",
          bool_switch(&arg.bias_vector)->default_value(false),
-         "Apply bias vector")
+         "Apply bias vector.")
 
         ("scaleA",
          value<int>(&scaleAFormat)->default_value(0),
@@ -478,27 +512,27 @@ try
 
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
-         "Apply scaleAlpha vector")
+         "Apply scaleAlpha vector.")
 
         ("amaxScaleA",
          bool_switch(&arg.amaxScaleA)->default_value(false),
-         "Apply scale for A buffer by abs max of A buffer")
+         "Apply scale for A buffer by abs max of A buffer.")
 
         ("amaxScaleB",
          bool_switch(&arg.amaxScaleB)->default_value(false),
-         "Apply scale for B buffer by abs max of B buffer")
+         "Apply scale for B buffer by abs max of B buffer.")
 
         ("amaxD",
          bool_switch(&arg.amaxD)->default_value(false),
-         "Output Amax of intermediate D matrix")
+         "Output Amax of intermediate D matrix.")
 
         ("use_e",
          bool_switch(&arg.use_e)->default_value(false),
-         "Apply AUX output/ gradient input")
+         "Apply AUX output/ gradient input.")
 
         ("gradient",
          bool_switch(&arg.gradient)->default_value(false),
-         "Enable gradient")
+         "Enable gradient.")
 
         ("grouped_gemm",
          value<bool>(&grouped_gemm)->default_value(false),
@@ -510,28 +544,28 @@ try
 
         ("device",
          value<int>(&device_id)->default_value(0),
-         "Set default device to be used for subsequent program runs")
+         "Set default device to be used for subsequent program runs. Not supported in yaml input.")
 
         ("c_equal_d",
          bool_switch(&arg.c_equal_d)->default_value(false),
-         "C and D are stored in same memory")
+         "C and D are stored in same memory.")
 
-        ("workspace",
+        ("user_allocated_workspace",
          value<size_t>(&arg.user_allocated_workspace)->default_value(128 * 1024 * 1024),
-         "Set fixed workspace memory size (bytes) instead of using hipblaslt managed memory")
+         "Set fixed workspace memory size (bytes) instead of using hipblaslt managed memory.")
 
         ("log_function_name",
          bool_switch(&log_function_name)->default_value(false),
-         "Function name precedes other items.")
+         "Function name precedes other items. Not supported in yaml input file.")
 
         ("function_filter",
          value<std::string>(&filter),
-         "Simple strstr filter on function name only without wildcards")
+         "Simple strstr filter on function name only without wildcards. Not supported in yaml input file.")
 
         ("api_method",
          value<std::string>(&api_method_str)->default_value("c"),
          "Use extension API. c: C style API. mix: declaration with C hipblasLtMatmul Layout/Desc but set, initialize, and run the problem with C++ extension API. cpp: Using C++ extension API only. "
-         "Options: c, mix, cpp.")
+         "Options: c, mix, cpp. For yaml file input use: 0 (c), 1 (mix), 2 (cpp).")
 
         ("print_kernel_info",
          value<bool>(&arg.print_kernel_info)->default_value(false),
@@ -553,19 +587,21 @@ try
 
         ("splitk",
          valueVec<uint32_t>(&gsu_vector),
-         "[Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
+         "[Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp). "
+         "For yaml input file use 'gsu_vector'.")
 
         ("wgm",
          valueVec<uint32_t>(&wgm_vector),
-         "[Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
+         "[Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp). "
+         "For yaml input file use 'wgm_vector'.")
 
         ("flush",
         value<bool>(&arg.flush)->default_value(tuningEnv ? true : false),
         "Flush icache, only works for gemm.")
 
-        ("help,h", "produces this help message")
+        ("help,h", "Produces this help message.")
 
-        ("version", "Prints the version number");
+        ("version", "Prints the version number.");
     // clang-format on
 
     // parse command line into arg structure and stack variables using desc
@@ -586,15 +622,15 @@ try
         return 0;
     }
 
-    if(api_method_str.compare("c") == 0)
+    if(api_method_str.compare("c") == 0 || std::stoi(api_method_str) == 0)
     {
         api_method = 0;
     }
-    else if(api_method_str.compare("mix") == 0)
+    else if(api_method_str.compare("mix") == 0 || std::stoi(api_method_str) == 1)
     {
         api_method = 1;
     }
-    else if(api_method_str.compare("cpp") == 0)
+    else if(api_method_str.compare("cpp") == 0 || std::stoi(api_method_str) == 2)
     {
         api_method = 2;
     }
@@ -604,15 +640,15 @@ try
         return 1;
     }
 
-    if(algo_method_str.compare("heuristic") == 0)
+    if(algo_method_str.compare("heuristic") == 0 || std::stoi(algo_method_str) == 0)
     {
         arg.algo_method = 0;
     }
-    else if(algo_method_str.compare("all") == 0)
+    else if(algo_method_str.compare("all") == 0 || std::stoi(algo_method_str) == 1)
     {
         arg.algo_method = 1;
     }
-    else if(algo_method_str.compare("index") == 0)
+    else if(algo_method_str.compare("index") == 0 || std::stoi(algo_method_str) == 2)
     {
         arg.algo_method = tuningEnv ? 1 : 2;
     }
