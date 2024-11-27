@@ -145,6 +145,7 @@ struct Arguments
     bool                     use_e;
     bool                     gradient;
     bool                     norm_check_assert;
+    bool                     swizzle_a;
 
     // API related
     bool    use_ext;
@@ -244,6 +245,7 @@ struct Arguments
     OPER(use_e) SEP                  \
     OPER(gradient) SEP               \
     OPER(norm_check_assert) SEP      \
+    OPER(swizzle_a) SEP              \
     OPER(use_ext) SEP                \
     OPER(use_ext_setproblem) SEP     \
     OPER(algo_method) SEP            \
