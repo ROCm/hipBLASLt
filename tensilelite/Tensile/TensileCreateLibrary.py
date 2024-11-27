@@ -1300,10 +1300,6 @@ def TensileCreateLibrary():
                          default=False, help="Loads Tensile libraries when needed instead of upfront.")
   argParser.add_argument("--enable-marker", dest="EnableMarker", action="store_true",
                          default=False, help="Enable marker in Tensile.")
-  argParser.add_argument("--build-client", dest="BuildClient", action="store_true",
-                         help="Build Tensile client")
-  argParser.add_argument("--client-config", dest="ClientConfig", action="store_true",
-                         help="Create client config for setting the library and code object files")
   argParser.add_argument("--global-parameters", nargs="+", type=splitExtraParameters, default=[])
   argParser.add_argument("--no-generate-solution-table", dest="GenSolTable", action="store_false", default=True,
                          help="Skip generating solution-yaml matching table")
@@ -1543,26 +1539,6 @@ def TensileCreateLibrary():
           for co in Utils.tqdm(codeObjectFiles):
               embedFile.embed_file("SolutionAdapter", co, nullTerminated=False,
                                    key=args.EmbedLibraryKey)
-
-  if args.BuildClient:
-    print1("# Building Tensile Client")
-    ClientExecutable.getClientExecutable(outputPath)
-
-  if args.ClientConfig:
-    # write simple ini for best solution mode linked to library we just made
-    iniFile = os.path.join(outputPath, "best-solution.ini")
-    with open(iniFile, "w") as f:
-      def param(key, value):
-        f.write("{}={}\n".format(key, value))
-
-      libraryFile = masterFile + ".yaml" \
-        if globalParameters["LibraryFormat"] == "yaml" else masterFile + ".dat"
-
-      param("library-file", libraryFile)
-      for coFile in codeObjectFiles:
-        param("code-object", os.path.join(outputPath,coFile))
-
-      param("best-solution", True)
 
   print1("# Check if generated files exists.")
 
