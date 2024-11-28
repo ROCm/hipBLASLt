@@ -244,6 +244,8 @@ def extract_dtype(match):
     ComputeDataType = datatype_map(gdict.get('COMPUTE_TYPE', '').strip())
     TransposeA = trans_map(gdict.get('TRANS_A', '').strip())
     TransposeB = trans_map(gdict.get('TRANS_B', '').strip())
+    if None in [DataType, DestDataType, ComputeDataType, TransposeA, TransposeB]:
+        return None
     scaleA = gdict.get("SCALE_A").strip()
     scaleB = gdict.get("SCALE_B").strip()
     activation_type = gdict.get("ACTIVATION_TYPE").strip()
@@ -265,10 +267,10 @@ def extract_dtype(match):
     if activation_type != "none":
         res["Activation"] = True
         res["ActivationType"] = "hipblaslt_all"
-    if scaleA == "1" and scaleB == "1" is not None:
+    if scaleA == "1" and scaleB == "1":
         res["UseScaleAB"] = "Scalar"
         res["UseScaleAlphaVec"] = 1
-    elif scaleA == "2" and scaleB == "2" is not None:
+    elif scaleA == "2" and scaleB == "2":
         res["UseScaleAB"] = "Vector"
         res["UseScaleAlphaVec"] = 1
     return res
@@ -444,6 +446,9 @@ if args.hipblaslt_log and args.gridbase_config is None:
             if match:
                 size = extract_problem_size(match)
                 dtype = extract_dtype(match)
+                if dtype is None:
+                    print(f"Can't find dtype for {line}, please contact hipblaslt expert")
+                    continue
                 size_str = json.dumps(size)
                 dtype_str = json.dumps(dtype)
                 if (size_str, dtype_str) in unique_gemms:
