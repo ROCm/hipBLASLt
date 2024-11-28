@@ -149,12 +149,6 @@ class KernelWriterActivationFunction(KernelWriterBase):
     activation = ActivationInline(activationCDataType, not self.state["ProblemType"]["ActivationNoGuard"])
 
     fileString = "" # CHeader
-    if not globalParameters["MergeFiles"]:
-      fileString += CHeader
-      fileString += "#pragma once\n\n"
-      fileString += "#include \"Tensile%sActivationEnum_%s.h\"\n"%(self.actGradientPrefix, activationCDataType.toChar())
-      fileString += "\n"
-
     fileString += "#pragma clang diagnostic push\n"
     fileString += "#pragma clang diagnostic ignored \"-Winline-asm\"\n"
     fileString += self.functionSignature()

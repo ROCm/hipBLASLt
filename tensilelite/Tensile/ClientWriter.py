@@ -215,12 +215,6 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
 
   callCreateLibraryCmd = globalParameters["ScriptPath"] + "/bin/TensileCreateLibrary"
 
-
-  if globalParameters["MergeFiles"]:
-    callCreateLibraryCmd += " --merge-files"
-  else:
-    callCreateLibraryCmd += " --no-merge-files"
-
   if globalParameters["ShortNames"]:
     callCreateLibraryCmd += " --short-file-names"
   else:
@@ -727,13 +721,7 @@ def writeClientParameters(forBenchmark, solutions, problemSizes, stepName, \
   """
 
   if forBenchmark:
-    if globalParameters["MergeFiles"]:
-      h += "#include \"Solutions.h\"\n"
-    else:
-      for solution in solutions:
-        solutionName = solutionWriter.getSolutionName(solution)
-        h += "#include \"" + solutionName + ".h\"\n"
-        h += "#include \"Solutions.h\"\n"
+    h += "#include \"Solutions.h\"\n"
     h += "#include \"ReferenceCPU.h\"\n"
     h += "\n"
   else:

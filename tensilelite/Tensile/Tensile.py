@@ -119,8 +119,6 @@ def addCommonArguments(argParser):
         help="set PrintLevel=2 and CMakeBuildType=Debug")
     argParser.add_argument("--short-names", dest="shortNames", action="store_true", \
         help="use serial kernel and solution names")
-    argParser.add_argument("--no-merge-files", dest="noMergeFiles", action="store_true", \
-        help="kernels and solutions written to individual files")
     argParser.add_argument("--cxx-compiler", dest="CxxCompiler", choices=[ToolchainDefaults.CXX_COMPILER], \
         action="store", default=ToolchainDefaults.CXX_COMPILER, help="select which C++/HIP compiler to use")
     argParser.add_argument("--c-compiler", dest="CCompiler", choices=[ToolchainDefaults.C_COMPILER], \
@@ -167,8 +165,6 @@ def argUpdatedGlobalParameters(args):
         rv["CMakeBuildType"] = "Debug"
     if args.shortNames:
         rv["ShortNames"] = True
-    if args.noMergeFiles:
-        rv["MergeFiles"] = False
     if args.client_build_path:
         rv["ClientBuildPath"] = args.client_build_path
     if args.client_lock:
