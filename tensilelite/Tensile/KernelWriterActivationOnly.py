@@ -229,11 +229,6 @@ class KernelWriterActivationOnly(KernelWriterBase):
 
   def getSourceFileString(self):
     fileString = ""
-    if not globalParameters["MergeFiles"]:
-      fileString += "\n"
-      fileString += "#include \"%s.h\"\n" % self.kernelName
-      fileString += "\n"
-
     fileString += self.functionSignature()
     fileString += self.kernelBody()
 
@@ -241,22 +236,6 @@ class KernelWriterActivationOnly(KernelWriterBase):
 
   def getHeaderFileString(self):
     fileString = "" # CHeader
-    if not globalParameters["MergeFiles"]:
-      fileString += CHeader
-      fileString += "#pragma once\n\n"
-      fileString += "\n"
-      fileString += "#include <KernelHeader.h>\n\n"
-      fileString += "#include <hip/hip_runtime.h>\n"
-      fileString += "#include <hip/hip_fp16.h>\n"
-      fileString += "\n"
-      activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
-      if self.state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
-        fileString += "#include \"Tensile%sActivation%s_%s_%s.h\"\n"%(self.actGradientPrefix, \
-                                                                      self.gaurdStr, \
-                                                                      activationCDataType.toChar(), \
-                                                                      self.state["ProblemType"]["ActivationType"])
-      fileString += "\n"
-
     fileString += self.functionSignature()
     fileString += ";\n"
 
