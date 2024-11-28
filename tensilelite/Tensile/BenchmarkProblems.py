@@ -44,7 +44,7 @@ from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
 from .CustomKernels import getCustomKernelConfig
 
 
-def generateForkedSolutions(problemType, constantParams, forkPermutations):
+def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCompiler):
     """Creates a list with a Solution object for each parameter combination in forkPermutations"""
     print1("# Enumerating Solutions")
 
@@ -56,7 +56,7 @@ def generateForkedSolutions(problemType, constantParams, forkPermutations):
         solution.update(perm)
 
         # TODO check if solution matches problem size for exact tile kernels
-        solutionObject = Solution(solution)
+        solutionObject = Solution(solution, cxxCompiler)
         if solutionObject["Valid"]:
             if solutionObject not in solutionSet:
                 solutionSet.add(solutionObject)
@@ -109,7 +109,7 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
     return solutions
 
 def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
-        biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes):
+        biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes, cxxCompiler, offloadBundler):
     """Write all the files needed for a given benchmarking step"""
     if not globalParameters["MergeFiles"]:
         ensurePath(os.path.join(globalParameters["WorkingPath"], "Solutions"))
@@ -140,19 +140,19 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
 
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     kernelMinNaming = Solution.getMinNaming(kernels)
-    kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming)
+    kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, cxxCompiler)
 
     # write solution, kernels and CMake
     problemType = solutions[0]["ProblemType"]
     codeObjectFiles = writeSolutionsAndKernels( \
-            globalParameters["WorkingPath"], globalParameters["CxxCompiler"], \
-            [problemType], solutions, kernels, kernelHelperOjbs, \
+            globalParameters["WorkingPath"], cxxCompiler, offloadBundler, \
+            solutions, kernels, kernelHelperOjbs, \
             kernelWriterAssembly, errorTolerant=True )
     # ^ this is where solutions is mutated
 
     newLibraryDir = ensurePath(os.path.join(globalParameters["WorkingPath"], 'library'))
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")
-    newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions)
+    newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, cxxCompiler)
     newLibrary.applyNaming(kernelMinNaming)
     LibraryIO.write(newLibraryFile, Utils.state(newLibrary), globalParameters["LibraryFormat"])
 
@@ -193,7 +193,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     return codeObjectFiles
 
 
-def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeGroupIdx, useCache):
+def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeGroupIdx, useCache, cxxCompiler: str, cCompiler: str, offloadBundler: str):
     """Run the benchmarking for a single entry in the BenchmarkProblems of a Tensile config"""
     benchmarkTestFails = 0
 
@@ -275,7 +275,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             maxPossibleSolutions = len(forkPermutations)
 
             regSolutions = generateForkedSolutions(benchmarkProcess.problemType, \
-                    benchmarkStep.constantParams, forkPermutations)
+                    benchmarkStep.constantParams, forkPermutations, cxxCompiler)
             kcSolutions = generateCustomKernelSolutions(benchmarkProcess.problemType, \
                     benchmarkStep.customKernels, benchmarkStep.internalSupportParams, \
                     not benchmarkStep.customKernelWildcard)
@@ -307,7 +307,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             codeObjectFiles = writeBenchmarkFiles(stepBaseDir, solutions,      \
                     benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,    \
                     benchmarkStep.factorDimArgs, benchmarkStep.activationArgs, \
-                    benchmarkStep.icacheFlushArgs, shortName, [])
+                    benchmarkStep.icacheFlushArgs, shortName, [], cxxCompiler, offloadBundler)
             # ^ this mutates solutions
 
             # write cache data
@@ -356,7 +356,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         if not os.path.exists(resultsFileName) or globalParameters["ForceRedoBenchmarkProblems"]:
             libraryLogicPath = None
             forBenchmark = True
-            returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection)
+            returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler)
 
             if returncode:
                 benchmarkTestFails += 1
@@ -376,9 +376,9 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
     return (resultsFileBaseFinal, benchmarkTestFails)
 
 
-def main(config, useCache):
+def main(config, useCache, cxxCompiler: str, cCompiler: str, offloadBundler: str):
     """Entry point for the "BenchmarkProblems" section of a Tensile config yaml"""
-    ClientExecutable.getClientExecutable()
+    ClientExecutable.getClientExecutable(cxxCompiler, cCompiler)
 
     if config is None:
         print(f'No config specified in {globalParameters["ConfigPath"]}, built client only')
@@ -417,7 +417,7 @@ def main(config, useCache):
 
                 # benchmark problem size group
                 (resultsFileBaseFinal, benchmarkErrors) = \
-                        benchmarkProblemType(problemTypeConfig, sizeGroupConfig, idx, useCache)
+                        benchmarkProblemType(problemTypeConfig, sizeGroupConfig, idx, useCache, cxxCompiler, cCompiler, offloadBundler)
                 totalTestFails += benchmarkErrors
 
                 print("clientExit={} {} for {}" \

@@ -65,9 +65,8 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__( self, kernelMinNaming, kernelSerialNaming ):
-    super(KernelWriterAssembly, self).__init__( \
-        kernelMinNaming, kernelSerialNaming)
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
+    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler)
 
   def getSgprOccupancy(self, sgprs):
     return self.states.regCaps["PhysicalMaxSgpr"]//sgprs
