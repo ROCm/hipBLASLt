@@ -109,7 +109,7 @@ __device__ int8_t random_hpl(size_t idx)
 }
 
 template <typename T>
-void hipblaslt_init_device(ABC                      abc,
+void hipblaslt_init_device(ABC_dims                      abc,
                            hipblaslt_initialization init,
                            bool                     is_nan,
                            T*                       A,
@@ -133,11 +133,11 @@ void hipblaslt_init_device(ABC                      abc,
         switch(init)
         {
         case hipblaslt_initialization::rand_int:
-            if(abc == ABC::A || abc == ABC::C)
+            if(abc == ABC_dims::A || abc == ABC_dims::C)
                 fill_batch(A, M, N, lda, stride, batch_count, [](size_t idx) -> T {
                     return random_int<T>(idx);
                 });
-            else if(abc == ABC::B)
+            else if(abc == ABC_dims::B)
             {
                 stride = std::max(lda * N, stride);
                 fill_batch(A, M, N, lda, stride, batch_count, [stride, lda](size_t idx) -> T {
@@ -150,11 +150,11 @@ void hipblaslt_init_device(ABC                      abc,
             }
             break;
         case hipblaslt_initialization::trig_float:
-            if(abc == ABC::A || abc == ABC::C)
+            if(abc == ABC_dims::A || abc == ABC_dims::C)
                 fill_batch(A, M, N, lda, stride, batch_count, [](size_t idx) -> T {
                     return T(sin(double(idx)));
                 });
-            else if(abc == ABC::B)
+            else if(abc == ABC_dims::B)
                 fill_batch(A, M, N, lda, stride, batch_count, [](size_t idx) -> T {
                     return T(cos(double(idx)));
                 });
@@ -165,15 +165,15 @@ void hipblaslt_init_device(ABC                      abc,
             });
             break;
         case hipblaslt_initialization::special:
-            if(abc == ABC::A)
+            if(abc == ABC_dims::A)
                 fill_batch(A, M, N, lda, stride, batch_count, [](size_t idx) -> T {
                     return T(hipblasLtHalf(65280.0));
                 });
-            else if(abc == ABC::B)
+            else if(abc == ABC_dims::B)
                 fill_batch(A, M, N, lda, stride, batch_count, [](size_t idx) -> T {
                     return T(hipblasLtHalf(0.0000607967376708984375));
                 });
-            else if(abc == ABC::C)
+            else if(abc == ABC_dims::C)
                 fill_batch(A, M, N, lda, stride, batch_count, [](size_t idx) -> T {
                     return T(pseudo_random_device(idx) % 10 + 1.f);
                 });
@@ -188,7 +188,7 @@ void hipblaslt_init_device(ABC                      abc,
     }
 }
 
-void hipblaslt_init_device(ABC                      abc,
+void hipblaslt_init_device(ABC_dims                      abc,
                            hipblaslt_initialization init,
                            bool                     is_nan,
                            void*                    A,

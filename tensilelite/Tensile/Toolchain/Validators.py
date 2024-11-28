@@ -50,8 +50,8 @@ if os.name == "nt":
         latest = max(versions, key=lambda d: tuple(map(int, d.name.split("."))))
         return latest / "bin"
     # LLVM binaries are in the same directory as ROCm binaries on Windows
-    ROCM_BIN_PATH = _windowsLatestRocmBin("C:/Program Files/AMD/ROCm")
-    ROCM_LLVM_BIN_PATH = _windowsLatestRocmBin("C:/Program Files/AMD/ROCm")
+    ROCM_BIN_PATH = Path("C:\\opt\\rocm\\bin")
+    ROCM_LLVM_BIN_PATH = Path("C:\\opt\\rocm\\bin")
 
 
 osSelect = lambda linux, windows: linux if os.name != "nt" else windows

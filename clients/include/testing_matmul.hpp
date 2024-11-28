@@ -49,6 +49,10 @@
 #include <map>
 #include <omp.h>
 #include <set>
+#ifdef _WIN32
+#include <cstdlib>
+#include <numeric>
+#endif
 
 extern "C" __global__ void flush_icache()
 {
@@ -1440,7 +1444,7 @@ void testing_matmul_with_bias(const Arguments& arg,
 
         hipblaslt_seedrand();
 
-        hipblaslt_init_device(ABC::A,
+        hipblaslt_init_device(ABC_dims::A,
                               arg.initialization,
                               alpha_isnan_type(arg, Talpha),
                               dA[i].buf(),
@@ -1450,7 +1454,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                               TiA,
                               stride_a[i],
                               num_batches[i]);
-        hipblaslt_init_device(ABC::B,
+        hipblaslt_init_device(ABC_dims::B,
                               arg.initialization,
                               alpha_isnan_type(arg, Talpha),
                               dB[i].buf(),
@@ -1460,7 +1464,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                               TiB,
                               stride_b[i],
                               num_batches[i]);
-        hipblaslt_init_device(ABC::C,
+        hipblaslt_init_device(ABC_dims::C,
                               arg.initialization,
                               beta_isnan_type(arg, Talpha),
                               dC[i].buf(),

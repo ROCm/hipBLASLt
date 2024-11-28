@@ -26,6 +26,8 @@ build_type=$3
 build_id_kind=$4
 dest=$5
 additional_options="-O3"
+rocm=$6
+clang_path=$7
 
 if [ "$build_type" = "RelWithDebInfo" ]; then
     additional_options="-O3 -g"
@@ -33,6 +35,6 @@ elif [ "$build_type" = "Debug" ]; then
     additional_options="-O0 -g"
 fi
 
-rocm_path="${ROCM_PATH:-/opt/rocm}"
-clang_path="${rocm_path}/bin/amdclang++"
+rocm_path="${ROCM_PATH:-rocm}"
+clang_path="${clang_path}"
 $clang_path -x hip "$sources" --offload-arch="${archs}" -c --offload-device-only -Xoffload-linker --build-id=$build_id_kind $additional_options -o "$dest"

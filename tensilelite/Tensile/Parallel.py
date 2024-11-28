@@ -47,6 +47,9 @@ def CPUThreadCount(enable=True):
       cpu_count = len(os.sched_getaffinity(0))
     cpuThreads = globalParameters["CpuThreads"]
     if cpuThreads == -1:
+      if os.name == "nt":
+        return min(cpu_count, 61) #jobs > 61 may fail on windows python multiprocessing
+      else:
         return min(cpu_count, 64)  # Temporarily hack to fix oom issue, remove this after jenkin is fixed.
     return min(cpu_count, cpuThreads)
 

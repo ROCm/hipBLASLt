@@ -32,13 +32,17 @@
 #include "tensile_host.hpp"
 #include "utility.hpp"
 
-#ifndef WIN32
+#if _WIN32
+#include <Windows.h>
+#include <libloaderapi.h>
+#include <io.h>
+#else
 #include <link.h>
+#include <unistd.h>
 #endif
 
 #include <hip/hip_runtime_api.h>
 #include <map>
-#include <unistd.h>
 #include <utility>
 
 #define TO_STR2(x) #x
@@ -1911,14 +1915,15 @@ std::string rocblaslt_internal_get_arch_name()
 
 bool rocblaslt_internal_test_path(const std::string& path)
 {
-#ifdef WIN32
+#ifdef _WIN32
     return ((_access(path.c_str(), 4) != -1) || (_access(path.c_str(), 6) != -1));
 #else
     return access(path.c_str(), R_OK) == 0;
 #endif
 }
 
-#ifndef WIN32
+#ifdef _WIN32
+#else
 int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info* hdr_info, size_t size, void* data)
 {
     // uncomment to see all dependent .so files
@@ -1936,9 +1941,16 @@ int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info* hdr_info, size_t siz
 
 std::string rocblaslt_internal_get_so_path(const std::string& keyword)
 {
+#ifdef _WIN32
+    HMODULE mod = GetModuleHandle("hipblaslt.dll");
+    CHAR path[_MAX_PATH] = {};
+    GetModuleFileNameA(mod, path, _MAX_PATH);
+    return std::string(path);
+#else
     std::pair<std::string, std::string> result{"", keyword};
     dl_iterate_phdr(hipblaslt_dl_iterate_phdr_callback, &result);
     return result.first;
+#endif
 }
 
 void rocblaslt_log_error(const char* func, const char* var, const char* msg)

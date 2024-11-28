@@ -296,6 +296,7 @@ globalParameters["ValidateLibrary"] = False
 globalParameters["AsmDebug"] = False # Set to True to keep debug information for compiled code objects
 
 globalParameters["UseEffLike"] = True # Set to False to use winnerGFlops as the performance metric
+globalParameters["MakeProgram"] = None
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
@@ -1669,8 +1670,13 @@ def assignGlobalParameters(config, cxxCompiler=None):
     globalParameters["ROCmPath"] = os.environ.get("ROCM_PATH")
   if "TENSILE_ROCM_PATH" in os.environ:
     globalParameters["ROCmPath"] = os.environ.get("TENSILE_ROCM_PATH")
-  if os.name == "nt" and "HIP_DIR" in os.environ:
-    globalParameters["ROCmPath"] = os.environ.get("HIP_DIR") # windows has no ROCM
+  if os.name == "nt":
+    possibleHipPaths = ('HIP_DIR', 'HIP_PATH',)
+
+    for p in possibleHipPaths:
+      if p in os.environ:
+        globalParameters["ROCmPath"] = os.environ.get(p) # windows has no ROCM
+        break # use the first non-null one
   globalParameters["CmakeCxxCompiler"] = None
   if "CMAKE_CXX_COMPILER" in os.environ:
     globalParameters["CmakeCxxCompiler"] = os.environ.get("CMAKE_CXX_COMPILER")
@@ -1743,6 +1749,7 @@ def assignGlobalParameters(config, cxxCompiler=None):
   # The following try except block computes the hipcc version
   try:
     if os.name == "nt":
+      os.environ['HIP_USE_PERL_SCRIPTS'] = '1'
       compileArgs = ['perl'] + [which('hipcc')] + ['--version']
       output = subprocess.run(compileArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
     else:

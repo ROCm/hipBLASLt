@@ -103,7 +103,7 @@ class AssemblyToolchain:
         if os.name == "nt":
             # Use args file on Windows b/c the command may exceed the limit of 8191 characters
             with open(Path.cwd() / "clang_args.txt", "wt") as file:
-                file.write(" ".join(objFiles))
+                file.write(" ".join(srcPaths).replace('\\', '\\\\'))
                 file.flush()
             args = [
                 self.assembler,
@@ -130,13 +130,14 @@ class AssemblyToolchain:
         Raises:
             RuntimeError: If compressing the code object file fails.
         """
+        input = "/dev/null" if os.name != "nt" else "NUL"
         args = [
             self.bundler,
             "--compress",
             "--type=o",
             "--bundle-align=4096",
             f"--targets=host-x86_64-unknown-linux,hipv4-amdgcn-amd-amdhsa--{gfx}",
-            "--input=/dev/null",
+            f"--input={input}",
             f"--input={srcPath}",
             f"--output={destPath}",
         ]

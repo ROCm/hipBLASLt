@@ -35,7 +35,6 @@
 #include <fstream>
 #include <hip/hip_ext.h>
 #include <hip/hip_runtime_api.h>
-#include <libgen.h>
 #include <memory>
 #include <rocblaslt-auxiliary.h>
 #include <sstream>
