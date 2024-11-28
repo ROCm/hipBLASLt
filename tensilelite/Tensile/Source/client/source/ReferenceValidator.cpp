@@ -90,6 +90,7 @@ namespace TensileLite
         {
             m_validatedSolution = false;
             m_errorInSolution   = false;
+            m_executedSolution  = false;
         }
 
         bool ReferenceValidator::needMoreRunsInSolution() const
@@ -116,6 +117,7 @@ namespace TensileLite
                                             TimingEvents const& stopEvents,
                                             hipStream_t const&  stream)
         {
+            m_executedSolution = true;
         }
 
         bool ReferenceValidator::validateSolution(std::shared_ptr<ProblemInputs> inputs)
@@ -718,6 +720,9 @@ namespace TensileLite
 
         void ReferenceValidator::postSolution()
         {
+            if(!m_executedSolution)
+                return;
+
             if(m_enabled && !m_validatedSolution)
                 return;
 

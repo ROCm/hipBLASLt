@@ -154,6 +154,7 @@ namespace TensileLite
             bool   m_validatedSolution = false;
             bool   m_errorInSolution   = false;
             bool   m_error             = false;
+            bool   m_executedSolution  = false;
             size_t m_errorsReported    = 0;
 
             bool validateSolution(std::shared_ptr<ProblemInputs> inputs);

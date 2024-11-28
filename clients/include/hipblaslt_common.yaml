@@ -268,13 +268,19 @@ Real precisions i8: &integer_precisions_i8
   - &i8_precision_dst_i8
     { a_type: i8_r, b_type: i8_r, c_type: i8_r, d_type: i8_r, compute_type: c_i32_r , scale_type: i32_r}
 
-Real precisions dstf32: &hpa_half_precisions_fp_16_32_dst
+Real precisions compute fp16: &hpa_half_precisions_compute_fp16
+  - &hpa_half_fp16dst_compute_fp16_precision
+    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f16_r, scale_type: f32_r}
+  - &hpa_half_fp32dst_compute_fp16_precision
+    { a_type: f16_r, b_type: f16_r, c_type: f32_r, d_type: f32_r, compute_type: c_f16_r, scale_type: f32_r}
+
+Real precisions fp16 dstf32: &hpa_half_precisions_fp_16_32_dst
   - &hpa_half_fp16dst_precision
     { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
   - &hpa_half_fp32dst_precision
     { a_type: f16_r, b_type: f16_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
 
-Real precisions dstf32: &hpa_half_precisions_bf_16_32_dst
+Real precisions bf16 dstf32: &hpa_half_precisions_bf_16_32_dst
   - &hpa_half_bf16_bf16dst_precision
     { a_type: bf16_r, b_type: bf16_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
   - &hpa_half_bf16_fp32dst_precision

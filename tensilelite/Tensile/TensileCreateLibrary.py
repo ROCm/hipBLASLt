@@ -1270,6 +1270,8 @@ def TensileCreateLibrary():
   argParser.add_argument("--no-short-file-names",    dest="ShortNames",        action="store_false")
   argParser.add_argument("--library-print-debug",    dest="LibraryPrintDebug", action="store_true")
   argParser.add_argument("--no-library-print-debug", dest="LibraryPrintDebug", action="store_false")
+  argParser.add_argument("--experimental",           dest="Experimental",      action="store_true", 
+                         help="Include logic files in directories named 'Experimental'.")
   argParser.add_argument("--no-enumerate",           action="store_true", help="Do not run rocm_agent_enumerator.")
   argParser.add_argument("--package-library",        dest="PackageLibrary",    action="store_true", default=False)
   argParser.add_argument("--embed-library",          dest="EmbedLibrary",
@@ -1369,10 +1371,10 @@ def TensileCreateLibrary():
 
   assignGlobalParameters(arguments)
 
-  print1("# CodeObjectVersion from TensileCreateLibrary: %s" % arguments["CodeObjectVersion"])
-  print1("# CxxCompiler       from TensileCreateLibrary: %s" % CxxCompiler)
-  print1("# Architecture      from TensileCreateLibrary: %s" % arguments["Architecture"])
-  print1("# LibraryFormat     from TensileCreateLibrary: %s" % libraryFormat)
+  print1("# CodeObjectVersion: %s" % arguments["CodeObjectVersion"])
+  print1("# CxxCompiler:       %s" % CxxCompiler)
+  print1("# Architecture:      %s" % arguments["Architecture"])
+  print1("# LibraryFormat:     %s" % libraryFormat)
 
   if not os.path.exists(logicPath):
     printExit("LogicPath %s doesn't exist" % logicPath)
@@ -1407,13 +1409,18 @@ def TensileCreateLibrary():
     return p.suffix == logicExtFormat and ("all" in archs or archMatch(load_logic_gfx_arch(p), archs))
 
   globPattern = os.path.join(logicPath, f"**/{args.LogicFilter}{logicExtFormat}")
-  print1(f"# LogicFilter: {globPattern}")
+  print1(f"# LogicFilter:       {globPattern}")
   logicFiles = (os.path.join(logicPath, file) for file in glob.iglob(globPattern, recursive=True))
   logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
+  
+  print1(f"# Experimental:      {args.Experimental}")
+  if not args.Experimental:
+    logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
 
-  print1(f"# LibraryLogicFiles({len(logicFiles)}):")
+  print1(f"# LibraryLogicFiles: {len(logicFiles)}")
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
+  
 
   ##############################################################################
   # Parse config files

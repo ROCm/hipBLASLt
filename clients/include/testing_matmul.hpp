@@ -39,7 +39,6 @@
 #include "hipblaslt_vector.hpp"
 #include "near.hpp"
 #include "norm.hpp"
-#include "type_dispatch.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
 #include <cstddef>
@@ -537,12 +536,6 @@ auto _dgelu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
     return static_cast<decltype(in)>(0.5f * tanh(xx) + x1 * x2 + 0.5f);
 };
 
-template <typename TiA,
-          typename TiB,
-          typename To,
-          typename Tc,
-          typename TciA = TiA,
-          typename TciB = TiB>
 void testing_matmul_bad_arg(const Arguments& arg)
 {
     const int64_t M = 128;
@@ -559,10 +552,10 @@ void testing_matmul_bad_arg(const Arguments& arg)
     const hipblasOperation_t transB = HIPBLAS_OP_N;
 
     // allocate memory on device
-    device_vector<TiA> dA(safe_size / 2);
-    device_vector<TiB> dB(safe_size);
-    device_vector<To>  dC(safe_size);
-    device_vector<To>  dD(safe_size);
+    HipDeviceBuffer dA(arg.a_type, safe_size / 2, arg.HMM);
+    HipDeviceBuffer dB(arg.b_type, safe_size, arg.HMM);
+    HipDeviceBuffer dC(arg.c_type, safe_size, arg.HMM);
+    HipDeviceBuffer dD(arg.d_type, safe_size, arg.HMM);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
     CHECK_DEVICE_ALLOCATION(dB.memcheck());
     CHECK_DEVICE_ALLOCATION(dC.memcheck());
@@ -845,7 +838,7 @@ void check(hipStream_t                   stream,
     }
 }
 
-// A function to determing the default bias_type
+// A function to determine the default bias_type
 hipDataType derive_unset_bias_type(const Arguments& arg)
 {
     // TODO: confirm if HIP_R_64F, HIP_R_32I are neccessary for biastype
@@ -854,7 +847,7 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
 
     hipDataType real_bias_type = arg.bias_type;
 
-    // when bias type is unset.
+    // when bias type is unset
     if(arg.bias_type == HIPBLASLT_DATATYPE_INVALID)
     {
         if(arg.compute_type == HIPBLAS_COMPUTE_32I)
@@ -900,6 +893,50 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
     return real_bias_type;
 }
 
+// A function to determine the default compute_input_type
+std::tuple<hipDataType, hipDataType> derive_unset_compute_input_type(const Arguments& arg)
+{
+    static const std::set<hipDataType> supported_compute_input_types = {
+        HIP_R_32F,
+        HIP_R_16BF,
+        HIP_R_16F,
+#ifdef ROCM_USE_FLOAT8
+        HIP_R_8F_E4M3,
+        HIP_R_8F_E5M2,
+#endif
+        HIP_R_8F_E4M3_FNUZ,
+        HIP_R_8F_E5M2_FNUZ,
+    };
+
+    hipDataType real_compute_input_typeA = arg.compute_input_typeA;
+    hipDataType real_compute_input_typeB = arg.compute_input_typeB;
+
+    if(real_compute_input_typeA != HIPBLASLT_DATATYPE_INVALID
+       && !supported_compute_input_types.count(real_compute_input_typeA))
+        throw std::invalid_argument(
+            "Invalid compute_input_typeA "
+            + std::string(hip_datatype_to_string(real_compute_input_typeA)));
+
+    if(real_compute_input_typeA != HIPBLASLT_DATATYPE_INVALID
+       && !supported_compute_input_types.count(real_compute_input_typeB))
+        throw std::invalid_argument(
+            "Invalid compute_input_typeB "
+            + std::string(hip_datatype_to_string(real_compute_input_typeB)));
+
+    // when compute_input_type type is unset
+    if(real_compute_input_typeA == HIPBLASLT_DATATYPE_INVALID)
+    {
+        real_compute_input_typeA = computeTypeToRealDataType(arg.compute_type);
+    }
+
+    if(real_compute_input_typeB == HIPBLASLT_DATATYPE_INVALID)
+    {
+        real_compute_input_typeB = computeTypeToRealDataType(arg.compute_type);
+    }
+
+    return {real_compute_input_typeA, real_compute_input_typeB};
+}
+
 void testing_matmul_with_bias(const Arguments& arg,
                               hipDataType      TiA,
                               hipDataType      TiB,
@@ -909,20 +946,16 @@ void testing_matmul_with_bias(const Arguments& arg,
                               hipDataType      TciB,
                               hipDataType      Tbias);
 
-template <typename TiA,
-          typename TiB,
-          typename To,
-          typename Tc,
-          typename TciA = TiA,
-          typename TciB = TiB>
 void testing_matmul(const Arguments& arg)
 {
-    hipDataType tiA  = hipblaslt_type2datatype<TiA>();
-    hipDataType tiB  = hipblaslt_type2datatype<TiB>();
-    hipDataType to   = hipblaslt_type2datatype<To>();
-    hipDataType tc   = hipblaslt_type2datatype<Tc>();
-    hipDataType tciA = hipblaslt_type2datatype<TciA>();
-    hipDataType tciB = hipblaslt_type2datatype<TciB>();
+    hipDataType tiA = arg.a_type;
+    hipDataType tiB = arg.b_type;
+    hipDataType to  = arg.c_type;
+    hipDataType tc  = computeTypeToRealDataType(arg.compute_type);
+    hipDataType tciA, tciB;
+
+    // after this, tciA and tciB should not be invalid
+    std::tie(tciA, tciB) = derive_unset_compute_input_type(arg);
 
     // after this, real bias type should not be invalid
     hipDataType real_bias_type = derive_unset_bias_type(arg);
@@ -930,8 +963,7 @@ void testing_matmul(const Arguments& arg)
     arg_revised.bias_type      = real_bias_type;
 
     // for all f8/bf8 cases including mix mode
-    if((realDataTypeSize(tiA) == 1 || realDataTypeSize(tiB) == 1)
-       && !std::is_same<Tc, int32_t>::value) //Tc!=HIPBLAS_COMPUTE_32I
+    if((realDataTypeSize(tiA) == 1 || realDataTypeSize(tiB) == 1) && tc != HIP_R_32I)
     {
         if(to == HIP_R_16BF || to == HIP_R_32F)
         {
@@ -988,7 +1020,7 @@ void testing_matmul(const Arguments& arg)
         return testing_matmul_with_bias(arg_revised, tiA, tiB, to, tc, tciA, tciB, to);
     }
     // shouldn't arrive here
-    CHECK_SUCCESS(false);
+    hipblaslt_test_invalid{}(arg);
     return;
 }
 
@@ -1015,7 +1047,7 @@ void testing_matmul_with_bias(const Arguments& arg,
     hipblasOperation_t transA(char_to_hipblas_operation(arg.transA));
     hipblasOperation_t transB(char_to_hipblas_operation(arg.transB));
 
-    hipDataType Talpha = Tc;
+    hipDataType Talpha = (Tc == HIP_R_16F ? HIP_R_32F : Tc);
 
     bool    do_grouped_gemm = arg.grouped_gemm > 0;
     int32_t gemm_count      = std::max(1, arg.grouped_gemm);

@@ -29,14 +29,12 @@
 #include "hipblaslt_data.hpp"
 #include "hipblaslt_datatype2string.hpp"
 #include "hipblaslt_parse_data.hpp"
-#include "type_dispatch.hpp"
 #include "utility.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <map>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -45,7 +43,6 @@
 
 #include "testing_matmul.hpp"
 
-#include "type_dispatch.hpp"
 #include "utility.hpp"
 #include <algorithm>
 #undef I
@@ -53,72 +50,15 @@
 using namespace roc; // For emulated program_options
 using namespace std::literals; // For std::string literals of form "str"s
 
-struct str_less
-{
-    bool operator()(const char* a, const char* b) const
-    {
-        return strcmp(a, b) < 0;
-    }
-};
-
-// Map from const char* to function taking const Arguments& using comparison above
-using func_map = std::map<const char*, void (*)(const Arguments&), str_less>;
-
-// Run a function by using map to map arg.function to function
-void run_function(const func_map& map, const Arguments& arg, const std::string& msg = "")
-{
-    auto match = map.find(arg.function);
-    if(match == map.end())
-        throw std::invalid_argument("Invalid combination --function "s + arg.function
-                                    + " --a_type "s + hip_datatype_to_string(arg.a_type) + msg);
-    match->second(arg);
-}
-
-// Template to dispatch testing_matmul for performance tests
-// the test is marked invalid when (TiA, TiB, To, Tc) not in (H/H/S, B/B/S)
-template <typename TiA,
-          typename TiB  = TiA,
-          typename To   = TiB,
-          typename Tc   = To,
-          typename TciA = TiA,
-          typename TciB = TiB,
-          typename      = void>
-struct perf_matmul : hipblaslt_test_invalid
-{
-};
-
-template <typename TiA, typename TiB, typename To, typename Tc, typename TciA, typename TciB>
-struct perf_matmul<
-    TiA,
-    TiB,
-    To,
-    Tc,
-    TciA,
-    TciB,
-    std::enable_if_t<
-        (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
-        || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
-        || (std::is_same<TiA, float>{} && std::is_same<TiB, float>{})
-        || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
-        || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_bf8_fnuz>{})
-        || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
-        || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_bf8_fnuz>{})
-#ifdef ROCM_USE_FLOAT8
-        || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_f8>{})
-        || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_bf8>{})
-        || (std::is_same<TiA, hipblaslt_bf8>{} && std::is_same<TiB, hipblaslt_f8>{})
-        || (std::is_same<TiA, hipblaslt_bf8>{} && std::is_same<TiB, hipblaslt_bf8>{})
-#endif
-        || (std::is_same<TiA, double>{} && std::is_same<TiB, double>{})
-        || (std::is_same<TiA, hipblasLtInt8>{} && std::is_same<TiB, hipblasLtInt8>{})
-        || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblasLtHalf>{})
-        || (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})>>
-    : hipblaslt_test_valid
+struct perf_matmul: hipblaslt_test_valid
 {
     void operator()(const Arguments& arg)
     {
-        static const func_map map = {{"matmul", testing_matmul<TiA, TiB, To, Tc, TciA, TciB>}};
-        run_function(map, arg);
+        if(strcmp(arg.function, "matmul"))
+            throw std::invalid_argument("Invalid combination --function "s + arg.function
+                                        + " --a_type "s + hip_datatype_to_string(arg.a_type));
+
+        testing_matmul(arg);
     }
 };
 
@@ -225,7 +165,7 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
         }
     }
 
-    hipblaslt_matmul_dispatch<perf_matmul>(arg);
+    perf_matmul{}(arg);
     return 0;
 }
 
@@ -847,7 +787,7 @@ try
     if(arg.compute_type == HIPBLASLT_COMPUTE_TYPE_INVALID)
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
-    //The value HIPBLASLT_DATATYPE_INVALID indicates that the compute_input_typeA has no effect.
+    // The value HIPBLASLT_DATATYPE_INVALID indicates that the compute_input_typeA has no effect.
     arg.compute_input_typeA = (compute_input_typeA != "")
                                   ? string_to_hip_datatype(compute_input_typeA)
                                   : HIPBLASLT_DATATYPE_INVALID;
