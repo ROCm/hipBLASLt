@@ -2852,9 +2852,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.addComment1("not-LocalSplitU: global write")
       module.add(self.notLocalSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
 
-    # function suffix
     module.add(self.functionEnd(kernel, addLabel=True))
-    module.add(self.functionSuffix(kernel))
 
     # Tensile pass
     tpo = TensilePassOptions()
@@ -4926,13 +4924,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   @abc.abstractmethod
   def isSwapGlobalReadOrderForDtvOrDtl(self, kernel, prefetch1=False):
-    return ""
-
-  ##############################################################################
-  # Function Suffix
-  ##############################################################################
-  @abc.abstractmethod
-  def functionSuffix(self, kernel):
     return ""
 
   ##############################################################################

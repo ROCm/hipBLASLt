@@ -1106,7 +1106,26 @@ class KernelWriterAssembly(KernelWriter):
     mkb.setGprs(totalVgprs=totalVgprs, totalAgprs=totalAgprs, totalSgprs=totalSgprs)
     module = mkb.body
 
+    if self.vgprPool.size() > self.states.regCaps["MaxVgpr"]:
+      self.states.overflowedResources = 1
+    elif self.sgprPool.size() > self.states.regCaps["MaxSgpr"]:
+      self.states.overflowedResources = 2
+
+    # TODO: Add target occupancy or kept the occupancy settings from globalWriteBatch
+    if kernel["ScheduleIterAlg"] == 2 and \
+        self.getOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
+        self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr) < 2:
+      self.states.overflowedResources = 6
+
+    vgprPerThreadPerOccupancy = self.states.regCaps["PhysicalMaxVgprCU"] // kernel["NumThreads"]
+    numWorkGroupsPerCU = vgprPerThreadPerOccupancy // mkb.getNextFreeVgpr()
+    if numWorkGroupsPerCU < 1:
+      self.states.overflowedResources = 4
+
+    self.vgprPool.checkFinalState()
+
     if self.states.overflowedResources:
+      module.add(ValueEndif("overflowed resources"))
       if self.states.overflowedResources == 1:
         msg = "too many vgprs"
       elif self.states.overflowedResources == 2:
@@ -11554,53 +11573,6 @@ class KernelWriterAssembly(KernelWriter):
 
     imod.add(SEndpgm(comment="Kernel End"))
     return imod
-
-  ##############################################################################
-  # Function Suffix
-  ##############################################################################
-  def functionSuffix(self, kernel):
-    if self.vgprPool.size() > self.states.regCaps["MaxVgpr"]:
-      self.states.overflowedResources = 1
-    elif self.sgprPool.size() > self.states.regCaps["MaxSgpr"]:
-      self.states.overflowedResources = 2
-
-    # TODO: Add target occupancy or kept the occupancy settings from globalWriteBatch
-    if kernel["ScheduleIterAlg"] == 2 and \
-        self.getOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
-        self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr) < 2:
-      self.states.overflowedResources = 6
-
-    if self.states.version[0] == 10:
-      vgprPerCU = 1024 * 32
-    elif self.states.version[0] == 11:
-      if self.states.version[2] == 2:
-        vgprPerCU = 1024 * 32
-      else:
-        vgprPerCU = 1536 * 32
-    elif self.states.version[0] == 12:
-      vgprPerCU = 1536 * 32
-    elif self.states.version[0] == 9:
-      if self.states.archCaps["ArchAccUnifiedRegs"]:
-        vgprPerCU = 2048 * 64
-      else:
-        vgprPerCU = 1024 * 64
-    else:
-      assert 0, "No valid VGPR value for this platform"
-    if self.states.archCaps["ArchAccUnifiedRegs"]:
-      totalVgprUsed = self.vgprPool.size() + self.agprPool.size()
-    else:
-      totalVgprUsed = max(self.vgprPool.size(), self.agprPool.size())
-    vgprPerThreadPerOccupancy = vgprPerCU // kernel["NumThreads"]
-    numWorkGroupsPerCU = vgprPerThreadPerOccupancy // totalVgprUsed
-    if numWorkGroupsPerCU < 1:
-      self.states.overflowedResources = 4
-
-    module = Module("functionSuffix")
-    if self.states.overflowedResources:
-      module.add(ValueEndif("overflowed resources"))
-
-    self.vgprPool.checkFinalState()
-    return module
 
   ##############################################################################
   # waitcnt code for DirectToVgpr
