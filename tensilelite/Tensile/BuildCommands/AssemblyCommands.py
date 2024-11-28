@@ -61,7 +61,7 @@ def _linkIntoCodeObject(
 
 
 
-def buildAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath, compress: bool=True):
+def buildAssemblyCodeObjectFiles(cxxCompiler: str, offloadBundler: str, kernels, kernelWriterAssembly, outputPath, compress: bool=True):
     
     isAsm = lambda k: k["KernelLanguage"] == "Assembly"
 
@@ -101,7 +101,7 @@ def buildAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath, comp
           _linkIntoCodeObject(objFiles, coFileRaw, kernelWriterAssembly)
           coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
           if compress:
-            compressCodeObject(coFileRaw, coFile, gfx, globalParameters["ClangOffloadBundlerPath"])
+            compressCodeObject(coFileRaw, coFile, gfx, offloadBundler)
           else:
             shutil.move(coFileRaw, coFile)
 

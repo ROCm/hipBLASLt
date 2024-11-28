@@ -1449,7 +1449,7 @@ class LogicAnalyzer:
 
 
 
-def generateLogic(config, benchmarkDataPath, libraryLogicPath):
+def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str):
 
   print2("# LibraryLogic config: %s" % config)
   print2("# DefaultAnalysisParameters: " % defaultAnalysisParameters)
@@ -1492,7 +1492,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
         printExit("%s doesn't exist for %s" % (dataFileName, fileBase) )
       if not os.path.exists(solutionsFileName):
         printExit("%s doesn't exist for %s" % (solutionsFileName, fileBase) )
-      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName)
+      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler)
       if len(solutions) == 0:
         printExit("%s doesn't contains any solutions." % (solutionsFileName) )
       problemType = solutions[0]["ProblemType"]
@@ -1550,7 +1550,7 @@ def handle_frequency_issue(message):
 ###
 ################################################################################
 ################################################################################
-def main(  config ):
+def main(config, cxxCompiler: str):
 
   benchmarkDataPath = os.path.join(globalParameters["WorkingPath"], \
       globalParameters["BenchmarkDataPath"])
@@ -1558,4 +1558,4 @@ def main(  config ):
   libraryLogicPath = os.path.join(globalParameters["WorkingPath"], \
       globalParameters["LibraryLogicPath"])
 
-  generateLogic(config, benchmarkDataPath, libraryLogicPath)
+  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler)
