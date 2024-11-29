@@ -42,7 +42,7 @@ from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
 from .Utilities.Profile import profile
-from .Utilities.Toolchain import getVersion, validateToolchain, supportedCxxCompiler as supportedCompiler, ToolchainDefaults
+from .Utilities.Toolchain import getVersion, validateToolchain, ToolchainDefaults
 import argparse
 import collections
 import glob
@@ -230,86 +230,83 @@ def buildSourceCodeObjectFile(cxxCompiler: str, offloadBundler: str, outputPath,
 
     coFilenames = []
 
-    if supportedCompiler(cxxCompiler):
-      archs, cmdlineArchs = splitArchs()
+    archs, cmdlineArchs = splitArchs()
 
-      archFlags = ['--offload-arch=' + arch for arch in cmdlineArchs]
+    archFlags = ['--offload-arch=' + arch for arch in cmdlineArchs]
 
-      # needs to be fixed when Maneesh's change is made available
-      hipFlags = ["-D__HIP_HCC_COMPAT_MODE__=1"]
-      hipFlags += ["--cuda-device-only", "-x", "hip", "-O3"]
-      hipFlags += ['-I', outputPath]
-      hipFlags += ["-Xoffload-linker", "--build-id=%s"%globalParameters["BuildIdKind"]]
-      hipFlags += ['-std=c++17']
-      if globalParameters["AsanBuild"]:
-        hipFlags += ["-fsanitize=address", "-shared-libasan", "-fuse-ld=lld"]
-      if globalParameters["SaveTemps"]:
-        hipFlags += ['--save-temps']
+    # needs to be fixed when Maneesh's change is made available
+    hipFlags = ["-D__HIP_HCC_COMPAT_MODE__=1"]
+    hipFlags += ["--cuda-device-only", "-x", "hip", "-O3"]
+    hipFlags += ['-I', outputPath]
+    hipFlags += ["-Xoffload-linker", "--build-id=%s"%globalParameters["BuildIdKind"]]
+    hipFlags += ['-std=c++17']
+    if globalParameters["AsanBuild"]:
+      hipFlags += ["-fsanitize=address", "-shared-libasan", "-fuse-ld=lld"]
+    if globalParameters["SaveTemps"]:
+      hipFlags += ['--save-temps']
 
-      launcher = shlex.split(os.environ.get('Tensile_CXX_COMPILER_LAUNCHER', ''))
+    launcher = shlex.split(os.environ.get('Tensile_CXX_COMPILER_LAUNCHER', ''))
 
-      if os.name == "nt":
-        hipFlags += ['-fms-extensions', '-fms-compatibility', '-fPIC', '-Wno-deprecated-declarations']
-        compileArgs = launcher + [which(CxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
-      else:
-        compileArgs = launcher + [which(cxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
-
-      if globalParameters["PrintCodeCommands"]:
-        print(cxxCompiler + ':' + ' '.join(compileArgs))
-      subprocess.check_call(compileArgs)
-
-      # If we aren't using hipcc what happens?
-      # get hipcc version due to compatiblity reasons
-      hipccver = globalParameters['HipClangVersion'].split(".")
-      hipccMaj = int(hipccver[0])
-      hipccMin = int(hipccver[1])
-      # for hipclang 5.2 and above, clang offload bundler changes the way input/output files are specified
-      inflag = "-inputs"
-      outflag = "-outputs"
-      if (hipccMaj == 5 and hipccMin >= 2) or hipccMaj >= 6:
-        inflag = "-input"
-        outflag = "-output"
-
-      infile = os.path.join(buildPath, objectFilename)
-      try:
-        bundlerArgs = [offloadBundler, "-type=o", "%s=%s" % (inflag, infile), "-list"]
-        listing = subprocess.check_output(bundlerArgs, stderr=subprocess.STDOUT).decode().split("\n")
-        for target in listing:
-          matched = re.search("gfx.*$", target)
-          if matched:
-            arch = re.sub(":", "-", matched.group())
-            if "TensileLibrary" in base and "fallback" in base:
-              outfile = os.path.join(buildPath, "{0}_{1}.hsaco".format(base, arch))
-            elif "TensileLibrary" in base:
-              variant = [t for t in ["", "xnack-", "xnack+"] if t in target][-1]
-              baseVariant = base+"-"+variant if variant else base
-              if arch in baseVariant:
-                outfile = os.path.join(buildPath, baseVariant+".hsaco")
-              else:
-                outfile = None
-            else:
-              outfile = os.path.join(buildPath, "{0}-000-{1}.hsaco".format(soFilename, arch))
-
-            #Compilation
-            if outfile:
-              coFilenames.append(os.path.split(outfile)[1])
-              bundlerArgs = [offloadBundler, "-type=o", "-targets=%s" % target,
-                           "%s=%s" % (inflag, infile), "%s=%s" % (outflag, outfile), "-unbundle"]
-              if globalParameters["PrintCodeCommands"]:
-                print(' '.join(bundlerArgs))
-              subprocess.check_call(bundlerArgs)
-
-      except subprocess.CalledProcessError:
-        for i in range(len(archs)):
-          outfile = os.path.join(buildPath, "{0}-000-{1}.hsaco".format(soFilename, archs[i]))
-          coFilenames.append(os.path.split(outfile)[1])
-          bundlerArgs = [offloadBundler, "-type=o", "-targets=hip-amdgcn-amd-amdhsa--%s" % cmdlineArchs[i],
-                         "%s=%s" % (inflag, infile), "%s=%s" % (outflag, outfile), "-unbundle"]
-          if globalParameters["PrintCodeCommands"]:
-            print(' '.join(bundlerArgs))
-          subprocess.check_call(bundlerArgs)
+    if os.name == "nt":
+      hipFlags += ['-fms-extensions', '-fms-compatibility', '-fPIC', '-Wno-deprecated-declarations']
+      compileArgs = launcher + [which(CxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
     else:
-      raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
+      compileArgs = launcher + [which(cxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
+
+    if globalParameters["PrintCodeCommands"]:
+      print(cxxCompiler + ':' + ' '.join(compileArgs))
+    subprocess.check_call(compileArgs)
+
+    # If we aren't using hipcc what happens?
+    # get hipcc version due to compatiblity reasons
+    hipccver = globalParameters['HipClangVersion'].split(".")
+    hipccMaj = int(hipccver[0])
+    hipccMin = int(hipccver[1])
+    # for hipclang 5.2 and above, clang offload bundler changes the way input/output files are specified
+    inflag = "-inputs"
+    outflag = "-outputs"
+    if (hipccMaj == 5 and hipccMin >= 2) or hipccMaj >= 6:
+      inflag = "-input"
+      outflag = "-output"
+
+    infile = os.path.join(buildPath, objectFilename)
+    try:
+      bundlerArgs = [offloadBundler, "-type=o", "%s=%s" % (inflag, infile), "-list"]
+      listing = subprocess.check_output(bundlerArgs, stderr=subprocess.STDOUT).decode().split("\n")
+      for target in listing:
+        matched = re.search("gfx.*$", target)
+        if matched:
+          arch = re.sub(":", "-", matched.group())
+          if "TensileLibrary" in base and "fallback" in base:
+            outfile = os.path.join(buildPath, "{0}_{1}.hsaco".format(base, arch))
+          elif "TensileLibrary" in base:
+            variant = [t for t in ["", "xnack-", "xnack+"] if t in target][-1]
+            baseVariant = base+"-"+variant if variant else base
+            if arch in baseVariant:
+              outfile = os.path.join(buildPath, baseVariant+".hsaco")
+            else:
+              outfile = None
+          else:
+            outfile = os.path.join(buildPath, "{0}-000-{1}.hsaco".format(soFilename, arch))
+
+          #Compilation
+          if outfile:
+            coFilenames.append(os.path.split(outfile)[1])
+            bundlerArgs = [offloadBundler, "-type=o", "-targets=%s" % target,
+                          "%s=%s" % (inflag, infile), "%s=%s" % (outflag, outfile), "-unbundle"]
+            if globalParameters["PrintCodeCommands"]:
+              print(' '.join(bundlerArgs))
+            subprocess.check_call(bundlerArgs)
+
+    except subprocess.CalledProcessError:
+      for i in range(len(archs)):
+        outfile = os.path.join(buildPath, "{0}-000-{1}.hsaco".format(soFilename, archs[i]))
+        coFilenames.append(os.path.split(outfile)[1])
+        bundlerArgs = [offloadBundler, "-type=o", "-targets=hip-amdgcn-amd-amdhsa--%s" % cmdlineArchs[i],
+                        "%s=%s" % (inflag, infile), "%s=%s" % (outflag, outfile), "-unbundle"]
+        if globalParameters["PrintCodeCommands"]:
+          print(' '.join(bundlerArgs))
+        subprocess.check_call(bundlerArgs)
 
     destCosList = []
     if "PackageLibrary" in globalParameters and globalParameters["PackageLibrary"]:
@@ -864,26 +861,16 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs, cxxCom
     allSources = sourceKernelNames + kernelHelperObjNames
 
     for kernelName in (allSources):
-      if supportedCompiler(cxxCompiler):
-        sourceLibFiles += ["%s.so-000-%s.hsaco" % (kernelName, arch) for arch in sourceArchs]
-      else:
-        raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
+      sourceLibFiles += ["%s.so-000-%s.hsaco" % (kernelName, arch) for arch in sourceArchs]
   elif globalParameters["NumMergedFiles"] > 1:
-    if supportedCompiler(cxxCompiler):
-      for kernelIndex in range(0, globalParameters["NumMergedFiles"]):
-        sourceLibFiles += ["Kernels%d.so-000-%s.hsaco" % (kernelIndex, arch) for arch in sourceArchs]
-    else:
-      raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
+    for kernelIndex in range(0, globalParameters["NumMergedFiles"]):
+      sourceLibFiles += ["Kernels%d.so-000-%s.hsaco" % (kernelIndex, arch) for arch in sourceArchs]
   elif globalParameters["LazyLibraryLoading"]:
     fallbackLibs = list(set([kernel._state["codeObjectFile"] for kernel in kernels if "fallback" in kernel._state.get('codeObjectFile', "")]))
     sourceLibFiles += ["{0}_{1}.hsaco".format(name, arch) for name, arch in itertools.product(fallbackLibs, sourceArchs)]
-    if supportedCompiler(cxxCompiler):
-      sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
+    sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
   else: # Merge
-    if supportedCompiler(cxxCompiler):
-      sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
-    else:
-      raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
+    sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
 
   # Returns names for all xnack versions
   def addxnack(name, ext):
@@ -1160,8 +1147,8 @@ def TensileCreateLibrary():
   argParser.add_argument("LogicPath",       help="Path to LibraryLogic.yaml files.")
   argParser.add_argument("OutputPath",      help="Where to write library files?")
   argParser.add_argument("RuntimeLanguage", help="Which runtime language?", choices=["OCL", "HIP", "HSA"])
-  argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       choices=[ToolchainDefaults.CXX_COMPILER], action="store", default=ToolchainDefaults.CXX_COMPILER)
-  argParser.add_argument("--c-compiler",             dest="CCompiler",         choices=[ToolchainDefaults.C_COMPILER], action="store", default=ToolchainDefaults.C_COMPILER)
+  argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       action="store", default=ToolchainDefaults.CXX_COMPILER)
+  argParser.add_argument("--c-compiler",             dest="CCompiler",         action="store", default=ToolchainDefaults.C_COMPILER)
   argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
   argParser.add_argument("--offload-bundler",        dest="OffloadBundler",    action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER)
   argParser.add_argument("--assembler",              dest="Assembler",         action="store", default=ToolchainDefaults.ASSEMBLER)
@@ -1275,6 +1262,10 @@ def TensileCreateLibrary():
   for key, value in args.global_parameters:
     arguments[key] = value
 
+  # cxxCompiler = args.CxxCompiler
+  # cCompiler = args.CCompiler
+  # offloadBundler = args.OffloadBundler
+  # assembler = args.Assembler
   cxxCompiler, cCompiler, offloadBundler, assembler, amdSmi = validateToolchain(
       args.CxxCompiler, args.CCompiler, args.OffloadBundler, args.Assembler, ToolchainDefaults.AMD_SMI
   )
