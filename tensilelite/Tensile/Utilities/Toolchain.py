@@ -1,7 +1,9 @@
 import os
+import re
 from pathlib import Path
 from typing import List, NamedTuple
 from warnings import warn
+from subprocess import run, PIPE
 
 ROCM_BIN_PATH = Path("/opt/rocm/bin")
 ROCM_LLVM_BIN_PATH = Path("/opt/rocm/lib/llvm/bin")
@@ -9,11 +11,18 @@ ROCM_LLVM_BIN_PATH = Path("/opt/rocm/lib/llvm/bin")
 def osSelect(linux: str, windows: str) -> str:
     return windows if os.name == "nt" else linux
 
+
 class ToolchainDefaults(NamedTuple):
     CXX_COMPILER= osSelect(linux="amdclang++", windows="clang++.exe") #+ "__deleteme__"
     C_COMPILER= osSelect(linux="amdclang", windows="clang.exe") #+ "__deleteme__"
     OFFLOAD_BUNDLER= osSelect(linux="clang-offload-bundler", windows="clang-offload-bundler.exe") #+ "__deleteme__"
     ASSEMBLER = osSelect(linux="amdclang++", windows="clang++.exe") #+ "__deleteme__"
+    AMD_SMI = osSelect(linux="amd-smi", windows="amd-smi.exe") #+ "__deleteme__"
+
+
+def _supportedComponent(component: str, targets: List[str]) -> bool:
+    isSupported = any([component == t for t in targets]) or any([Path(component).name == t for t in targets])
+    return isSupported
 
 
 def supportedCCompiler(compiler: str) -> bool:
@@ -25,9 +34,7 @@ def supportedCCompiler(compiler: str) -> bool:
     Return:
         If supported True; otherwise, False.
     """
-    target = ToolchainDefaults.C_COMPILER
-    isSupported = compiler == target or Path(compiler).name == target
-    return isSupported
+    return _supportedComponent(compiler, [ToolchainDefaults.C_COMPILER])
 
 
 def supportedCxxCompiler(compiler: str) -> bool:
@@ -39,9 +46,7 @@ def supportedCxxCompiler(compiler: str) -> bool:
     Return:
         If supported True; otherwise, False.
     """
-    target = ToolchainDefaults.CXX_COMPILER
-    isSupported = compiler == target or Path(compiler).name == target
-    return isSupported
+    return _supportedComponent(compiler, [ToolchainDefaults.CXX_COMPILER])
 
 
 def supportedOffloadBundler(bundler: str) -> bool:
@@ -53,9 +58,19 @@ def supportedOffloadBundler(bundler: str) -> bool:
     Return:
         If supported True; otherwise, False.
     """
-    target = ToolchainDefaults.OFFLOAD_BUNDLER
-    isSupported = bundler == target or Path(bundler).name == target
-    return isSupported
+    return _supportedComponent(bundler, [ToolchainDefaults.OFFLOAD_BUNDLER])
+
+
+def supportedSmi(smi: str) -> bool:
+    """Determine if an offload bundler is supported by Tensile.
+
+    Args:
+        bundler: The name of an offload bundler to test for support.
+
+    Return:
+        If supported True; otherwise, False.
+    """
+    return _supportedComponent(smi, [ToolchainDefaults.AMD_SMI])
 
 
 def _exeExists(file: Path) -> bool:
@@ -83,7 +98,9 @@ def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
     Returns:
         The validated executable with an absolute path.
     """
-    if not any((supportedCxxCompiler(file), supportedCCompiler(file), supportedOffloadBundler(file))):
+    if not any((
+        supportedCxxCompiler(file), supportedCCompiler(file), supportedOffloadBundler(file), supportedSmi(file)
+    )):
         raise ValueError(f"{file} is not a supported toolchain component for OS: {os.name}")
 
     if _exeExists(Path(file)): return file
@@ -111,3 +128,18 @@ def validateToolchain(*args: str):
     ] + [Path(p) for p in os.environ["PATH"].split(os.pathsep)]
 
     return (_validateExecutable(x, searchPaths) for x in args)
+
+
+def getVersion(executable: str, versionFlag: str="--version", regex: str=r'version\s+([\d.]+)') -> str:
+    """Print the version of a toolchain component.
+
+    Args:
+        executable: The toolchain component to check the version of.
+        versionFlag: The flag to pass to the executable to get the version.
+    """
+    try:
+        output = run([executable, versionFlag], stdout=PIPE, stderr=PIPE, check=True).stdout.decode().strip()
+        match = re.search(regex, output, re.IGNORECASE)
+        return match.group(1) if match else "<unknown>"
+    except Exception as e:
+        raise RuntimeError(f"Failed to get version of {executable}: {e}")

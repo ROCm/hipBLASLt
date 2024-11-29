@@ -42,7 +42,7 @@ from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
 from .Utilities.Profile import profile
-from .Utilities.Toolchain import validateToolchain, supportedCxxCompiler as supportedCompiler, ToolchainDefaults
+from .Utilities.Toolchain import getVersion, validateToolchain, supportedCxxCompiler as supportedCompiler, ToolchainDefaults
 import argparse
 import collections
 import glob
@@ -1275,17 +1275,20 @@ def TensileCreateLibrary():
   for key, value in args.global_parameters:
     arguments[key] = value
 
-  cxxCompiler, cCompiler, offloadBundler, assembler = validateToolchain(args.CxxCompiler, args.CCompiler, args.OffloadBundler, args.Assembler)
+  cxxCompiler, cCompiler, offloadBundler, assembler, amdSmi = validateToolchain(
+      args.CxxCompiler, args.CCompiler, args.OffloadBundler, args.Assembler, ToolchainDefaults.AMD_SMI
+  )
+  print1(f"# ROCm Version:        " + getVersion(amdSmi, 'version', r'ROCm version:\s*([\d.]+)'))
+  print1(f"# Cxx Compiler:        {cxxCompiler} (version {getVersion(cxxCompiler)})")
+  print1(f"# C Compiler:          {cCompiler} (version {getVersion(cCompiler)})")
+  print1(f"# Assembler:           {assembler} (version {getVersion(assembler)})")
+  print1(f"# Offload Bundler:     {offloadBundler} (version {getVersion(offloadBundler)})")
+  print1(f"# Code Object Version: {arguments['CodeObjectVersion']}")
+  print1(f"# Architecture(s):     {arguments['Architecture']}")
+  print1(f"# Library Format:      {libraryFormat}")
 
+  arguments["AMDClangVersion"] = getVersion(cxxCompiler)
   assignGlobalParameters(arguments, cxxCompiler)
-
-  print1("# Code Object Version: %s" % arguments["CodeObjectVersion"])
-  print1("# Architecture:        %s" % arguments["Architecture"])
-  print1("# Library Format:      %s" % libraryFormat)
-  print1("# Cxx Compiler:        %s" % cxxCompiler)
-  print1("# C Compiler:          %s" % cCompiler)
-  print1("# Offload Bundler:     %s" % offloadBundler)
-  print1("# Assembler:           %s" % assembler)
 
   if not os.path.exists(logicPath):
     printExit("LogicPath %s doesn't exist" % logicPath)

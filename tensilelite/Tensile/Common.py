@@ -1723,10 +1723,7 @@ def assignGlobalParameters(config, cxxCompiler=None):
     for line in output.split('\n'):
       if 'HIP version' in line:
         globalParameters['HipClangVersion'] = line.split()[2]
-        print1("# Found  hipcc version " + globalParameters['HipClangVersion'])
-      if 'AMD clang version' in line:
-        globalParameters['AMDClangVersion'] = line.split()[3]
-        print1("# Found  clang version " + globalParameters['AMDClangVersion'])
+        print1("# Found hipcc version " + globalParameters['HipClangVersion'])
 
   except (subprocess.CalledProcessError, OSError) as e:
       printWarning("Error: {} running {} {} ".format('hipcc', '--version',  e))
