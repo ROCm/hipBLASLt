@@ -1224,7 +1224,6 @@ def TensileCreateLibrary():
   arguments = {}
   arguments["RuntimeLanguage"] = args.RuntimeLanguage
   arguments["CodeObjectVersion"] = args.CodeObjectVersion
-  arguments["CxxCompiler"] = args.CxxCompiler
   arguments["Architecture"] = args.Architecture
   arguments["SeparateArchitectures"] = args.SeparateArchitectures
   arguments["LazyLibraryLoading"] = args.LazyLibraryLoading

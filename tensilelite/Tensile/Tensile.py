@@ -236,9 +236,6 @@ def Tensile(userArgs):
     print1("# Restoring default globalParameters")
     restoreDefaultGlobalParameters()
 
-    # CxxCompiler and LibraryFormat needs to be updated before assignGlobalParameters.
-    # if args.CxxCompiler:
-    #     globalParameters["CxxCompiler"] = args.CxxCompiler
     if args.LogicFormat:
         globalParameters['LogicFormat'] = args.LogicFormat
     if args.LibraryFormat:

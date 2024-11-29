@@ -240,7 +240,6 @@ globalParameters["CurrentISA"] = (0,0,0)
 globalParameters["AMDGPUArchPath"] = None      # /opt/rocm/llvm/bin/amdgpu-arch
 globalParameters["ROCmAgentEnumeratorPath"] = None      # /opt/rocm/bin/rocm_agent_enumerator
 globalParameters["ROCmSMIPath"] = None                  # /opt/rocm/bin/rocm-smi
-globalParameters["AssemblerPath"] = None                # /opt/rocm/llvm/bin/clang++
 globalParameters["WorkingPath"] = os.getcwd()           # path where tensile called from
 globalParameters["IndexChars"] =  "IJKLMNOPQRSTUVWXYZ"  # which characters to use for C[ij]=Sum[k] A[ik]*B[jk]
 globalParameters["ScriptPath"] = os.path.dirname(os.path.realpath(__file__))            # path to Tensile/Tensile.py
@@ -255,8 +254,6 @@ else:
   globalParameters["RuntimeLanguage"] = "HIP"
 
 globalParameters["CodeObjectVersion"] = "default"
-globalParameters["CxxCompiler"] = None
-globalParameters["CCompiler"] = None
 globalParameters["Architecture"] = "all"
 
 # might be deprecated
@@ -1734,9 +1731,6 @@ def assignGlobalParameters(config, cxxCompiler=None):
       printWarning("Global parameter %s = %s unrecognised." % ( key, value ))
     globalParameters[key] = value
 
-  del globalParameters["CCompiler"]
-  del globalParameters["CxxCompiler"]
-  del globalParameters["AssemblerPath"]
 
 def setupRestoreClocks():
   import atexit

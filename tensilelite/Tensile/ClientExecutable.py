@@ -61,9 +61,6 @@ def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cComp
         builddir = os.path.join(globalParameters["OutputPath"], globalParameters["ClientBuildPath"])
     builddir = Common.ensurePath(builddir)
 
-    # CxxCompiler = "clang++.exe" if ((os.name == "nt") and globalParameters["CxxCompiler"]) else globalParameters["CxxCompiler"]
-    # CCompiler   = "clang.exe"   if ((os.name == "nt") and globalParameters["CxxCompiler"]) else globalParameters['CCompiler']
-
     options = {'CMAKE_BUILD_TYPE': globalParameters["CMakeBuildType"],
                'TENSILE_USE_MSGPACK': 'ON',
                'TENSILE_USE_LLVM': 'OFF' if (os.name == "nt") else 'ON',
