@@ -431,7 +431,7 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
             if "WorkGroupMappingXCC" in item:
                 item["WorkGroupMappingXCC"] = [XCC]
             if "GlobalSplitU" in item:
-                item["GlobalSplitU"] = gsu_group[dtype_str]
+                item["GlobalSplitU"] = list(gsu_group[dtype_str])
         data["BenchmarkProblems"][i][0] = dtype
     data["LibraryLogic"]["DeviceNames"] = DeviceNames
     data["LibraryLogic"]["ScheduleName"] = ScheduleName
@@ -492,7 +492,9 @@ if args.hipblaslt_log and args.gridbase_config is None:
             if mfma_instructions is None:
                 continue
 
-            gsu = set()
+            if dtype_str not in gsu_group:
+                gsu_group[dtype_str] = set()
+
             matmul_instruction_found = False
             for mfma_instruction in mfma_instructions:
                 size = copy.deepcopy(original_size)
@@ -507,7 +509,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                     total_inst = min(len(matmul_instruction_gen) // DIV_MI, MIN_MI)  # At least 5 insts and max of 33.3% of insts.
                     for index, matmul_instruction in enumerate(matmul_instruction_gen):
                         if matmul_instruction is not None:
-                            gsu.add(calculate_gsu(matmul_instruction, size))
+                            gsu_group[dtype_str].add(calculate_gsu(matmul_instruction, size))
                             if dtype_str not in matmul_instructions:
                                 matmul_instructions[dtype_str] = dict()
                             matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
@@ -516,7 +518,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                     total_inst = min(len(mi_groups0) // DIV_MI, MIN_MI)
                     for index, mi_0 in enumerate(mi_groups0):
                         if mi_0 is not None:
-                            gsu.add(calculate_gsu(mi_0, size))
+                            gsu_group[dtype_str].add(calculate_gsu(mi_0, size))
                             if dtype_str not in groups:
                                 groups[dtype_str] = [{},{}]
                                 groups[dtype_str][0]["MatrixInstruction"] = {}
@@ -527,7 +529,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                     total_inst = min(len(mi_groups1) // DIV_MI, MIN_MI)
                     for index, mi_1 in enumerate(mi_groups1):
                         if mi_1 is not None:
-                            gsu.add(calculate_gsu(mi_1, size))
+                            gsu_group[dtype_str].add(calculate_gsu(mi_1, size))
                             if dtype_str not in groups:
                                 groups[dtype_str] = [{},{}]
                                 groups[dtype_str][0]["MatrixInstruction"] = {}
@@ -550,7 +552,6 @@ if args.hipblaslt_log and args.gridbase_config is None:
                     gemm_group[dtype_str].append({'Exact': list(original_size)})
                 else:
                     gemm_group[dtype_str] = [{'Exact': list(original_size)}]
-                gsu_group[dtype_str] = list(gsu)
                 m_sum += original_size[0]
                 n_sum += original_size[1]
                 batch_sum += original_size[2]
@@ -603,7 +604,8 @@ elif args.gridbase_config and args.hipblaslt_log is None:
             if mfma_instructions is None:
                 continue
 
-            gsu = set()
+            if dtype_str not in gsu_group:
+                gsu_group[dtype_str] = set()
             matmul_instruction_found = False
             for mfma_instruction in mfma_instructions:
                 size = copy.deepcopy(original_size)
@@ -612,7 +614,7 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                     total_inst = min(len(matmul_instruction_gen) // 3, 5)  # At least 5 insts and max of 33.3% of insts.
                     for index, matmul_instruction in enumerate(matmul_instruction_gen):
                         if matmul_instruction is not None:
-                            gsu.add(calculate_gsu(matmul_instruction, size))
+                            gsu_group[dtype_str].add(calculate_gsu(matmul_instruction, size))
                             if dtype_str not in matmul_instructions:
                                 matmul_instructions[dtype_str] = dict()
                             matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
@@ -634,7 +636,7 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                     gemm_group[dtype_str].append({'Exact': list(original_size)})
                 else:
                     gemm_group[dtype_str] = [{'Exact': list(original_size)}]
-                gsu_group[dtype_str] = list(gsu)
+
                 m_sum += original_size[0]
                 n_sum += original_size[1]
                 batch_sum += original_size[2]
