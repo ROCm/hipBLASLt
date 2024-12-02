@@ -29,12 +29,12 @@
   Index01A: 0
   Index01B: 1
   Index1: 1
-  IndexAssignmentsA: [3, 0, 2]
+  IndexAssignmentsA: [0, 3, 2]
   IndexAssignmentsB: [3, 1, 2]
   IndexAssignmentsLD: [4, 5, 6, 7]
   IndexAssignmentsMetadata: [3, 0, 2]
   IndexUnroll: 3
-  IndexUnrollA: 0
+  IndexUnrollA: 1
   IndexUnrollB: 0
   IndexUnrollM: 0
   IndicesBatch: [2]
@@ -60,7 +60,7 @@
   SupportUserArgs: true
   SwizzleTensorA: false
   SwizzleTensorB: false
-  TLUA: false
+  TLUA: true
   TLUB: false
   Tensor0: 0
   Tensor1: 1
@@ -68,7 +68,7 @@
   TileAwareSelection: false
   TileB: 1
   TotalIndices: 4
-  TransposeA: true
+  TransposeA: false
   TransposeB: false
   UseBeta: true
   UseBias: 0
@@ -128,14 +128,14 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT32x64x16_SN_K1_TT8_8
-    LSCA: 16
+    KernelNameMin: Cijk_Ailk_Bljk_SB_UserArgs_MT32x64x16_SN_K1_TT8_8
+    LSCA: 32
     LSCB: 16
-    LSPA: 8
+    LSPA: 4
     LSPB: 8
-    LVCA: 4
+    LVCA: 8
     LVCB: 4
-    LVPA: 2
+    LVPA: 1
     LVPB: 2
     LdsBlockSizePerPadA: 0
     LdsBlockSizePerPadB: 0
@@ -231,12 +231,12 @@
       Index01A: 0
       Index01B: 1
       Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
+      IndexAssignmentsA: [0, 3, 2]
       IndexAssignmentsB: [3, 1, 2]
       IndexAssignmentsLD: [4, 5, 6, 7]
       IndexAssignmentsMetadata: [3, 0, 2]
       IndexUnroll: 3
-      IndexUnrollA: 0
+      IndexUnrollA: 1
       IndexUnrollB: 0
       IndexUnrollM: 0
       IndicesBatch: [2]
@@ -262,7 +262,7 @@
       SupportUserArgs: true
       SwizzleTensorA: false
       SwizzleTensorB: false
-      TLUA: false
+      TLUA: true
       TLUB: false
       Tensor0: 0
       Tensor1: 1
@@ -270,7 +270,7 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: true
+      TransposeA: false
       TransposeB: false
       UseBeta: true
       UseBias: 0
@@ -284,7 +284,7 @@
     ScheduleIterAlg: 1
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT32x64x16_SN_GSU1_GSUC0_GSUWGMRR0_K1_SU32_SUM0_SUS256_TT8_8_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Ailk_Bljk_SB_UserArgs_MT32x64x16_SN_GSU1_GSUC0_GSUWGMRR0_K1_SU32_SUM0_SUS256_TT8_8_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -342,13 +342,13 @@
     _staggerStrideShift: 2
 - [2, 3, 0, 1]
 - - - [1024, 1024, 1, 1024, 1024, 1024, 1024, 1024]
-    - [0, 4998.37]
+    - [0, 5543.21]
   - - [2048, 2048, 1, 2048, 2048, 2048, 2048, 2048]
-    - [0, 6721.24]
+    - [0, 6504.32]
   - - [3072, 3072, 1, 3072, 3072, 3072, 3072, 3072]
-    - [0, 6717.34]
+    - [0, 7329.81]
   - - [4096, 4096, 1, 4096, 4096, 4096, 4096, 4096]
-    - [0, 6718.76]
+    - [0, 7380.49]
 - null
 - null
 - DeviceEfficiency
