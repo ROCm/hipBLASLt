@@ -367,7 +367,7 @@ def calculate_gsu(matmul_instruction, size):
     mt1 = matmul_instruction[1] * matmul_instruction[6] * matmul_instruction[8]
     return max(1, CU // (math.ceil(size[0] / mt0) * math.ceil(size[1] / mt1)))
 
-def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, iters, groups, gsu):
+def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, iters, groups, gsu_group):
     MinFlopsPerSync = calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters)
     # Read the YAML file
     with open(yaml_file, 'r') as f:
@@ -431,7 +431,7 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
             if "WorkGroupMappingXCC" in item:
                 item["WorkGroupMappingXCC"] = [XCC]
             if "GlobalSplitU" in item:
-                item["GlobalSplitU"] = list(gsu)
+                item["GlobalSplitU"] = gsu_group[dtype_str]
         data["BenchmarkProblems"][i][0] = dtype
     data["LibraryLogic"]["DeviceNames"] = DeviceNames
     data["LibraryLogic"]["ScheduleName"] = ScheduleName
@@ -472,6 +472,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
 
     for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
         gemm_group = {}
+        gsu_group = {}
         matmul_instructions = {}
         groups = {}
         if unique_gemms_subgroup is None:
@@ -484,9 +485,8 @@ if args.hipblaslt_log and args.gridbase_config is None:
 
         for k, v in unique_gemms_subgroup:
             size_str, dtype_str = k
-            size = json.loads(size_str)
+            original_size = json.loads(size_str)
             dtype = json.loads(dtype_str)
-            original_size = copy.deepcopy(size)
             mfma_instructions = instruction_map(dtype)
 
             if mfma_instructions is None:
@@ -550,12 +550,13 @@ if args.hipblaslt_log and args.gridbase_config is None:
                     gemm_group[dtype_str].append({'Exact': list(original_size)})
                 else:
                     gemm_group[dtype_str] = [{'Exact': list(original_size)}]
+                gsu_group[dtype_str] = list(gsu)
                 m_sum += original_size[0]
                 n_sum += original_size[1]
                 batch_sum += original_size[2]
                 k_sum += original_size[3]
 
-        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, groups, gsu)
+        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, groups, gsu_group)
 
 elif args.gridbase_config and args.hipblaslt_log is None:
     LibraryType = "GridBased"
@@ -589,20 +590,20 @@ elif args.gridbase_config and args.hipblaslt_log is None:
     for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
         gemm_group = {}
         matmul_instructions = {}
+        gsu_group = {}
         m_sum = 0
         n_sum = 0
         batch_sum = 0
         k_sum = 0
         for k, size in unique_gemms_subgroup:
-            size = list(size)
-            original_size = copy.deepcopy(size)
+            original_size = list(size)
             dtype_str = k[0]
-            gsu = set()
-
             dtype = json.loads(dtype_str)
             mfma_instructions = instruction_map(dtype)
             if mfma_instructions is None:
                 continue
+
+            gsu = set()
             matmul_instruction_found = False
             for mfma_instruction in mfma_instructions:
                 size = copy.deepcopy(original_size)
@@ -633,9 +634,10 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                     gemm_group[dtype_str].append({'Exact': list(original_size)})
                 else:
                     gemm_group[dtype_str] = [{'Exact': list(original_size)}]
+                gsu_group[dtype_str] = list(gsu)
                 m_sum += original_size[0]
                 n_sum += original_size[1]
                 batch_sum += original_size[2]
                 k_sum += original_size[3]
 
-        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, {}, gsu)
+        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, {}, gsu_group)
