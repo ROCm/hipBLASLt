@@ -379,6 +379,8 @@ def prepAsm(kernelWriterAssembly):
     assemblerFile.write("# usage: asm-new.sh kernelName(no extension) [--wave32]\n")
 
     assemblerFile.write("f=$1\n")
+    assemblerFile.write("filename=${1##*/}\n")
+    assemblerFile.write("dirname=${1%/*}\n")
     assemblerFile.write("shift\n")
     assemblerFile.write('if [ ! -z "$1" ] && [ "$1" = "--wave32" ]; then\n')
     assemblerFile.write("    wave=32\n")
@@ -412,9 +414,9 @@ def prepAsm(kernelWriterAssembly):
     assemblerFile.write("    exit $ERR\n")
     assemblerFile.write("fi\n")
 
-    assemblerFile.write("cp $f.co ../../../library/${f}_$h.co\n")
-    assemblerFile.write("mkdir -p ../../../asm_backup && ")
-    assemblerFile.write("cp $f.s ../../../asm_backup/$f.s\n")
+    assemblerFile.write("cp $f.co ${dirname}/../../../library/${filename}_$h.co\n")
+    assemblerFile.write("mkdir -p ${dirname}/../../../asm_backup && ")
+    assemblerFile.write("cp $f.s ${dirname}/../../../asm_backup/${filename}.s\n")
 
   assemblerFile.close()
   os.chmod(assemblerFileName, 0o777)
@@ -1270,7 +1272,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--no-short-file-names",    dest="ShortNames",        action="store_false")
   argParser.add_argument("--library-print-debug",    dest="LibraryPrintDebug", action="store_true")
   argParser.add_argument("--no-library-print-debug", dest="LibraryPrintDebug", action="store_false")
-  argParser.add_argument("--experimental",           dest="Experimental",      action="store_true", 
+  argParser.add_argument("--experimental",           dest="Experimental",      action="store_true",
                          help="Include logic files in directories named 'Experimental'.")
   argParser.add_argument("--no-enumerate",           action="store_true", help="Do not run rocm_agent_enumerator.")
   argParser.add_argument("--package-library",        dest="PackageLibrary",    action="store_true", default=False)
@@ -1412,7 +1414,7 @@ def TensileCreateLibrary():
   print1(f"# LogicFilter:       {globPattern}")
   logicFiles = (os.path.join(logicPath, file) for file in glob.iglob(globPattern, recursive=True))
   logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
-  
+
   print1(f"# Experimental:      {args.Experimental}")
   if not args.Experimental:
     logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
@@ -1420,7 +1422,7 @@ def TensileCreateLibrary():
   print1(f"# LibraryLogicFiles: {len(logicFiles)}")
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
-  
+
 
   ##############################################################################
   # Parse config files
