@@ -106,15 +106,12 @@ if ArchitectureName == 'gfx942':
     res = subprocess.run(["cat", "/sys/class/drm/card1/device/current_compute_partition"], stdout=subprocess.PIPE)
     if res.stdout.decode("utf-8").strip() == "CPX":
         XCC = 1
-        GSU = [1,2,3,4,5,6,7,8]
     else:
         XCC = 4
-        GSU = [1,2,3,4]
     DeviceNames = ["Device 0049", "Device 0050"]
     ScheduleName = "aquavanjaram"
 elif ArchitectureName == 'gfx90a':
     XCC = 1
-    GSU = [1,2,3,4]
     DeviceNames = ["Device 0050", "Device 0051", "Device 0052", "Device 0054", "Device 0062", "Device 7400", "Device 740c"]
     ScheduleName = "aldebaran"
 
@@ -237,6 +234,18 @@ def bias_datatype_map(dtype):
     else:
         return []
 
+def get_high_precision_accumulate(DataType):
+    if DataType in ["H", "B", "F8"]:
+        return True
+    else:
+        return False
+
+def adapt_xf32(ComputeDataType):
+    if ComputeDataType == "XS":
+        return 'S', 'x'
+    else:
+        return ComputeDataType, 0
+
 def extract_dtype(match):
     gdict = match.groupdict()
     DataType = datatype_map(gdict.get('A_TYPE', '').strip())
@@ -250,14 +259,8 @@ def extract_dtype(match):
     scaleB = gdict.get("SCALE_B").strip()
     activation_type = gdict.get("ACTIVATION_TYPE").strip()
     bias_source = gdict.get('BIAS_SOURCE', '').strip().upper()
-    if DataType in ["H", "B", "F8"]:
-        HighPrecisionAccumulate = True
-    else:
-        HighPrecisionAccumulate = False
-    F32XdlMathOp = 0
-    if ComputeDataType == "XS":
-        ComputeDataType = "S"
-        F32XdlMathOp = 'x'
+    HighPrecisionAccumulate = get_high_precision_accumulate(DataType)
+    ComputeDataType, F32XdlMathOp = adapt_xf32(ComputeDataType)
     res = {"Batched": True, "DataType": DataType, "DestDataType": DestDataType, "ComputeDataType": ComputeDataType, "TransposeA": TransposeA, "TransposeB": TransposeB, "HighPrecisionAccumulate": HighPrecisionAccumulate, "F32XdlMathOp": F32XdlMathOp, "OperationType": "GEMM", "UseBeta": True}
 
     if bias_source:
@@ -359,7 +362,12 @@ def calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters):
 
     return (ENQUEUES_PER_SYNC + iters) * m_avg * n_avg * batch_avg * k_avg / 2
 
-def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, iters, groups):
+def calculate_gsu(matmul_instruction, size):
+    mt0 = matmul_instruction[0] * matmul_instruction[5] * matmul_instruction[7]
+    mt1 = matmul_instruction[1] * matmul_instruction[6] * matmul_instruction[8]
+    return max(1, CU // (math.ceil(size[0] / mt0) * math.ceil(size[1] / mt1)))
+
+def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, iters, groups, gsu):
     MinFlopsPerSync = calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters)
     # Read the YAML file
     with open(yaml_file, 'r') as f:
@@ -423,7 +431,7 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
             if "WorkGroupMappingXCC" in item:
                 item["WorkGroupMappingXCC"] = [XCC]
             if "GlobalSplitU" in item:
-                item["GlobalSplitU"] = list(GSU)
+                item["GlobalSplitU"] = list(gsu)
         data["BenchmarkProblems"][i][0] = dtype
     data["LibraryLogic"]["DeviceNames"] = DeviceNames
     data["LibraryLogic"]["ScheduleName"] = ScheduleName
@@ -484,8 +492,10 @@ if args.hipblaslt_log and args.gridbase_config is None:
             if mfma_instructions is None:
                 continue
 
+            gsu = set()
             matmul_instruction_found = False
             for mfma_instruction in mfma_instructions:
+                size = copy.deepcopy(original_size)
                 for _ in range(NUM_STAGES):
                     matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
                     if args.groups:
@@ -497,6 +507,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                     total_inst = min(len(matmul_instruction_gen) // DIV_MI, MIN_MI)  # At least 5 insts and max of 33.3% of insts.
                     for index, matmul_instruction in enumerate(matmul_instruction_gen):
                         if matmul_instruction is not None:
+                            gsu.add(calculate_gsu(matmul_instruction, size))
                             if dtype_str not in matmul_instructions:
                                 matmul_instructions[dtype_str] = dict()
                             matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
@@ -504,22 +515,26 @@ if args.hipblaslt_log and args.gridbase_config is None:
                                 break
                     total_inst = min(len(mi_groups0) // DIV_MI, MIN_MI)
                     for index, mi_0 in enumerate(mi_groups0):
-                        if dtype_str not in groups:
-                            groups[dtype_str] = [{},{}]
-                            groups[dtype_str][0]["MatrixInstruction"] = {}
-                            groups[dtype_str][1]["MatrixInstruction"] = {}
-                        groups[dtype_str][0]["MatrixInstruction"][str(mi_0)] = mi_0
-                        if args.fast and (index > total_inst):
-                            break
+                        if mi_0 is not None:
+                            gsu.add(calculate_gsu(mi_0, size))
+                            if dtype_str not in groups:
+                                groups[dtype_str] = [{},{}]
+                                groups[dtype_str][0]["MatrixInstruction"] = {}
+                                groups[dtype_str][1]["MatrixInstruction"] = {}
+                            groups[dtype_str][0]["MatrixInstruction"][str(mi_0)] = mi_0
+                            if args.fast and (index > total_inst):
+                                break
                     total_inst = min(len(mi_groups1) // DIV_MI, MIN_MI)
                     for index, mi_1 in enumerate(mi_groups1):
-                        if dtype_str not in groups:
-                            groups[dtype_str] = [{},{}]
-                            groups[dtype_str][0]["MatrixInstruction"] = {}
-                            groups[dtype_str][1]["MatrixInstruction"] = {}
-                        groups[dtype_str][1]["MatrixInstruction"][str(mi_1)] = mi_1
-                        if args.fast and (index > total_inst):
-                            break
+                        if mi_1 is not None:
+                            gsu.add(calculate_gsu(mi_1, size))
+                            if dtype_str not in groups:
+                                groups[dtype_str] = [{},{}]
+                                groups[dtype_str][0]["MatrixInstruction"] = {}
+                                groups[dtype_str][1]["MatrixInstruction"] = {}
+                            groups[dtype_str][1]["MatrixInstruction"][str(mi_1)] = mi_1
+                            if args.fast and (index > total_inst):
+                                break
                     if len(matmul_instruction_gen) > 0 or len(mi_groups0) > 0 or len(mi_groups1) > 0:
                         matmul_instruction_found = True
                         if not args.full_stage:
@@ -540,7 +555,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 batch_sum += original_size[2]
                 k_sum += original_size[3]
 
-        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, groups)
+        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, groups, gsu)
 
 elif args.gridbase_config and args.hipblaslt_log is None:
     LibraryType = "GridBased"
@@ -559,14 +574,8 @@ elif args.gridbase_config and args.hipblaslt_log is None:
             ComputeDataType = datatype_map(data['ComputeDataType'].strip())
             TransposeA = trans_map(data['TransposeA'])
             TransposeB = trans_map(data['TransposeB'])
-            if DataType in ["H", "B"]:
-                HighPrecisionAccumulate = True
-            else:
-                HighPrecisionAccumulate = False
-            F32XdlMathOp = 0
-            if ComputeDataType == "XS":
-                ComputeDataType = "S"
-                F32XdlMathOp = 'x'
+            HighPrecisionAccumulate = get_high_precision_accumulate(DataType)
+            ComputeDataType, F32XdlMathOp = adapt_xf32(ComputeDataType)
             dtype = {"Batched": True, "DataType": DataType, "DestDataType": DestDataType, "ComputeDataType": ComputeDataType, "TransposeA": TransposeA, "TransposeB": TransposeB, "HighPrecisionAccumulate": HighPrecisionAccumulate, "F32XdlMathOp": F32XdlMathOp, "OperationType": "GEMM", "UseBeta": True, "UseBias": 1, "Activation": True, "ActivationType": "hipblaslt_all", "UseScaleAlphaVec": 1}
             dtype_str = json.dumps(dtype)
             for m in m_shapes:
@@ -588,6 +597,7 @@ elif args.gridbase_config and args.hipblaslt_log is None:
             size = list(size)
             original_size = copy.deepcopy(size)
             dtype_str = k[0]
+            gsu = set()
 
             dtype = json.loads(dtype_str)
             mfma_instructions = instruction_map(dtype)
@@ -595,11 +605,13 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                 continue
             matmul_instruction_found = False
             for mfma_instruction in mfma_instructions:
+                size = copy.deepcopy(original_size)
                 for _ in range(NUM_STAGES):
                     matmul_instruction_gen = list(find_matmul_instruction(mfma_instruction, size))
                     total_inst = min(len(matmul_instruction_gen) // 3, 5)  # At least 5 insts and max of 33.3% of insts.
                     for index, matmul_instruction in enumerate(matmul_instruction_gen):
                         if matmul_instruction is not None:
+                            gsu.add(calculate_gsu(matmul_instruction, size))
                             if dtype_str not in matmul_instructions:
                                 matmul_instructions[dtype_str] = dict()
                             matmul_instructions[dtype_str][str(matmul_instruction)] = matmul_instruction
@@ -626,4 +638,4 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                 batch_sum += original_size[2]
                 k_sum += original_size[3]
 
-        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, {})
+        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, {}, gsu)
