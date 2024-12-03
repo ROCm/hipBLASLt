@@ -31,6 +31,7 @@ import os
 import subprocess
 import math
 import numpy as np
+import concurrent.futures
 
 # Paths to the input and output files
 parser = argparse.ArgumentParser(description="""Generate Tensile config file""")
@@ -354,11 +355,11 @@ def split_gemms_by_gpus(unique_gemms, gpus):
             unique_gemms_subgroups[i%gpus] = [(k, v)]
     return unique_gemms_subgroups
 
-def calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters):
-    m_avg = m_sum / len(unique_gemms_subgroup)
-    n_avg = n_sum / len(unique_gemms_subgroup)
-    batch_avg = batch_sum / len(unique_gemms_subgroup)
-    k_avg = k_sum / len(unique_gemms_subgroup)
+def calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, samples_num, iters):
+    m_avg = m_sum / samples_num
+    n_avg = n_sum / samples_num
+    batch_avg = batch_sum / samples_num
+    k_avg = k_sum / samples_num
 
     return (ENQUEUES_PER_SYNC + iters) * m_avg * n_avg * batch_avg * k_avg / 2
 
@@ -367,8 +368,8 @@ def calculate_gsu(matmul_instruction, size):
     mt1 = matmul_instruction[1] * matmul_instruction[6] * matmul_instruction[8]
     return max(1, CU // (math.ceil(size[0] / mt0) * math.ceil(size[1] / mt1)))
 
-def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, iters, groups, gsu_group):
-    MinFlopsPerSync = calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters)
+def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, samples_num, iters, groups, gsu_group, matmul_instructions):
+    MinFlopsPerSync = calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, samples_num, iters)
     # Read the YAML file
     with open(yaml_file, 'r') as f:
         data = yaml.safe_load(f)
@@ -440,8 +441,10 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
     # Write the updated YAML file
     yaml_file = os.path.basename(yaml_file)
     slices = yaml_file.split('.')
-    with open(slices[0]+'.'+str(gpu_idx)+'.'+slices[1], 'w') as f:
+    fname = slices[0]+'.'+str(gpu_idx)+'.'+slices[1]
+    with open(fname, 'w') as f:
         yaml.dump(data, f, default_flow_style=None)
+    print(f"Dumped yaml to {fname}")
 
 
 if args.hipblaslt_log and args.gridbase_config is None:
@@ -449,16 +452,25 @@ if args.hipblaslt_log and args.gridbase_config is None:
     unique_gemms = {}
     # Read problem sizes from the input file
     with open(args.hipblaslt_log, 'r') as f:
-        for line in f:
+        lines = f.readlines()
+        def _extract_gemms(line):
             match = match_pattern(line)
             if match:
                 size = extract_problem_size(match)
                 dtype = extract_dtype(match)
                 if dtype is None:
                     print(f"Can't find dtype for {line}, please contact hipblaslt expert")
-                    continue
+                    return
                 size_str = json.dumps(size)
                 dtype_str = json.dumps(dtype)
+                return (size_str, dtype_str)
+            return None
+
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            results = executor.map(_extract_gemms, list(lines))
+        for res in results:
+            if res is not None:
+                (size_str, dtype_str) = res
                 if (size_str, dtype_str) in unique_gemms:
                     unique_gemms[(size_str, dtype_str)] += 1
                 else:
@@ -470,13 +482,15 @@ if args.hipblaslt_log and args.gridbase_config is None:
 
     unique_gemms_subgroups = split_gemms_by_gpus(unique_gemms, args.gpus)
 
-    for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
+    # for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
+    def _process_gemms(item):
+        gpu_idx, unique_gemms_subgroup = item
         gemm_group = {}
         gsu_group = {}
         matmul_instructions = {}
         groups = {}
         if unique_gemms_subgroup is None:
-            continue
+            return
 
         m_sum = 0
         n_sum = 0
@@ -556,8 +570,9 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 n_sum += original_size[1]
                 batch_sum += original_size[2]
                 k_sum += original_size[3]
+        samples_num = len(unique_gemms_subgroup)
+        return dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, samples_num, args.iters, groups, gsu_group, matmul_instructions)
 
-        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, groups, gsu_group)
 
 elif args.gridbase_config and args.hipblaslt_log is None:
     LibraryType = "GridBased"
@@ -588,7 +603,9 @@ elif args.gridbase_config and args.hipblaslt_log is None:
 
     unique_gemms_subgroups = split_gemms_by_gpus(unique_gemms, args.gpus)
 
-    for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
+    # for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
+    def _process_gemms(item):
+        gpu_idx, unique_gemms_subgroup = item
         gemm_group = {}
         matmul_instructions = {}
         gsu_group = {}
@@ -641,5 +658,8 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                 n_sum += original_size[1]
                 batch_sum += original_size[2]
                 k_sum += original_size[3]
+        samples_num = len(unique_gemms_subgroup)
+        return dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, samples_num, args.iters, {}, gsu_group, matmul_instructions)
 
-        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, {}, gsu_group)
+with concurrent.futures.ProcessPoolExecutor() as executor:
+    results = executor.map(_process_gemms, list(enumerate(unique_gemms_subgroups)))
