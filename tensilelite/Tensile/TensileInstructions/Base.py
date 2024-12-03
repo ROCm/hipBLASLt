@@ -213,7 +213,7 @@ def _tryAssembler(isaVersion: Tuple[int, int, int], assemblerPath: str, asmStrin
     if isaVersion[0] >= 10:
         options += ['-mwavefrontsize64']
 
-    args = [assemblerPath, '-x', 'assembler',
+    args = [str(assemblerPath), '-x', 'assembler',
             '-target', 'amdgcn-amdhsa',
             '-mcpu='+ getGfxName(isaVersion),
             *options,

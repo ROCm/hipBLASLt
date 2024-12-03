@@ -118,16 +118,24 @@ def validateToolchain(*args: str):
      
     Returns:
         List of validated executables with absolute paths.
+    
+    Raises:
+        ValueError: If no toolchain components are provided.
+        FileNotFoundError: If a toolchain component is not found in the PATH.
     """
+    if not args:
+        raise ValueError("No toolchain components to validate, at least one argument is required")
+
     if os.name == "nt":
-      raise NotImplementedError("Toolchain verification is not support on Windows yet.")
+        raise NotImplementedError("Toolchain verification is not support on Windows yet.")
 
     searchPaths = [
         ROCM_BIN_PATH,
         ROCM_LLVM_BIN_PATH,
     ] + [Path(p) for p in os.environ["PATH"].split(os.pathsep)]
 
-    return (_validateExecutable(x, searchPaths) for x in args)
+    out = [_validateExecutable(x, searchPaths) for x in args]
+    return out if len(out) == 1 else tuple(out) 
 
 
 def getVersion(executable: str, versionFlag: str="--version", regex: str=r'version\s+([\d.]+)') -> str:
