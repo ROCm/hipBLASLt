@@ -33,6 +33,7 @@ import math
 import numpy as np
 import concurrent.futures
 
+
 # Paths to the input and output files
 parser = argparse.ArgumentParser(description="""Generate Tensile config file""")
 
@@ -460,7 +461,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 dtype = extract_dtype(match)
                 if dtype is None:
                     print(f"Can't find dtype for {line}, please contact hipblaslt expert")
-                    return
+                    return None
                 size_str = json.dumps(size)
                 dtype_str = json.dumps(dtype)
                 return (size_str, dtype_str)
@@ -482,7 +483,6 @@ if args.hipblaslt_log and args.gridbase_config is None:
 
     unique_gemms_subgroups = split_gemms_by_gpus(unique_gemms, args.gpus)
 
-    # for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
     def _process_gemms(item):
         gpu_idx, unique_gemms_subgroup = item
         gemm_group = {}
@@ -490,7 +490,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
         matmul_instructions = {}
         groups = {}
         if unique_gemms_subgroup is None:
-            return
+            return None
 
         m_sum = 0
         n_sum = 0
@@ -603,7 +603,6 @@ elif args.gridbase_config and args.hipblaslt_log is None:
 
     unique_gemms_subgroups = split_gemms_by_gpus(unique_gemms, args.gpus)
 
-    # for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
     def _process_gemms(item):
         gpu_idx, unique_gemms_subgroup = item
         gemm_group = {}
