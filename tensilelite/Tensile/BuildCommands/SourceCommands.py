@@ -73,7 +73,7 @@ def _listTargetTriples(bundler: str, objFile: str) -> List[str]:
     return listing
 
 
-def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Path, str], arch: str) -> Path:
+def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Path, str], arch: str) -> Union[Path, None]:
     """Generates a code object file path using the target, base, and build path.
 
     Args:
@@ -93,11 +93,6 @@ def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Pa
         baseVariant = base + "-" + variant if variant else base
         if arch in baseVariant:
             coPath = buildPath / (baseVariant + ".hsaco.raw")
-        else:
-            raise RuntimeError(
-               "Failed to compute code object name:"
-               f"Could not find variant {variant} in base {baseVariant}"
-            )
     else:
         coPath= buildPath / "{0}.so-000-{1}.hsaco.raw".format(base, arch)
 
@@ -171,6 +166,7 @@ def _buildSourceCodeObjectFile(cxxCompiler: str, outputPath: Union[Path, str], k
       if match := re.search("gfx.*$", target):
         arch = re.sub(":", "-", match.group())
         coPathRaw = _computeSourceCodeObjectFilename(target, kernelPath.stem, buildPath, arch)
+        if not coPathRaw: continue
         _unbundleSourceCodeObjects(bundler, target, objPath, str(coPathRaw))
 
         coPath = str(destPath / coPathRaw.stem)
