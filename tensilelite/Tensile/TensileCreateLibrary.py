@@ -1599,5 +1599,6 @@ def TensileCreateLibrary():
 
   stop = timer()
   
-  print1(f"Total time (s): {stop-start}")
-  print1(f"Kernels processed per second: {total/(stop-start)}")
+  print1(f"Total time (s): {(stop-start):3.2f}")
+  print1(f"Total kernels processed: {total}")
+  print1(f"Kernels processed per second: {(total/(stop-start)):3.2f}")
