@@ -84,6 +84,7 @@ globalParameters["SkipSlowSolutionRatio"] = 0.0   # Skip slow solution during wa
 globalParameters["Profiler"] = 0                  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
 # validation
 globalParameters["NumElementsToValidate"] = 128   # number of elements to validate, 128 will be evenly spaced out (with prime number stride) across C tensor
+globalParameters["NumElementsToValidateWinner"] = 0   # number of elements to validate in LibraryClient stage, the exact number to be validated is max(NumElementsToValidate,NumElementsToValidateWinner)
 globalParameters["BoundsCheck"] = 0   # Bounds check
 #1: Perform bounds check to find out of bounds reads/writes.  NumElementsToValidate must be -1.
 #2: Perform bounds check by front side guard page
@@ -102,7 +103,6 @@ globalParameters["SolutionSelectionAlg"] = 1          # algorithm to determine w
 globalParameters["ExpandRanges"] = True          # expand ranges into exact configs before writing logic file.  False ignores ranges.
 globalParameters["ExitAfterKernelGen"] = False     # Exit after generating kernels
 globalParameters["GenerateSourcesAndExit"] = False # Exit after kernel source generation.
-globalParameters["ShowProgressBar"] = True     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["WavefrontWidth"] = 64     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["ExitOnFails"] = 1     # 1: Exit after benchmark run if failures detected.  2: Exit during benchmark run.
 globalParameters["CpuThreads"] = -1  # How many CPU threads to use for kernel generation.  0=no threading, -1 == nproc, N=min(nproc,N).  TODO - 0 sometimes fails with a kernel name error?  0 does not check error codes correctly

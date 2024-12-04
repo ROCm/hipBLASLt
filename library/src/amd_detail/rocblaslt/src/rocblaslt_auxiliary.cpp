@@ -728,6 +728,7 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
         {
             switch(computeType)
             {
+            case rocblaslt_compute_f16:
             case rocblaslt_compute_f32:
             case rocblaslt_compute_f32_fast_xf32:
             case rocblaslt_compute_f64:
