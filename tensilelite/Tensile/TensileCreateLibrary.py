@@ -504,6 +504,7 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
 @timing
 def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False):
+
   full_start = timer()
   codeObjectFiles = []
 
@@ -542,12 +543,12 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
       else:
         objFilenames.add(base)
         kernel.duplicate = False
-  
+
   total = len(kernels)
   total_asm = len([k for k in kernels if k["KernelLanguage"] == "Assembly"])
-  
+
   print1(f"Total kernels: {total}")
-  print1(f"Assembly kernels: {total_asm}")    
+  print1(f"Assembly kernels: {total_asm}")
   print1(f"Source kernels: {total - total_asm}")
 
   kIter   = zip(kernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
@@ -584,9 +585,9 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
       solutions.remove(solut)
   for rel in removeResults:
       results.remove(rel)
-  
+
   stop = timer()
-  
+
   print1(f"Time write/compile assembly kernels and write source kernels (s): {stop-start}")
 
   kernelFiles += buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs)
@@ -664,7 +665,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
-  
+
   stop = timer()
 
   print1(f"Time to WriteSolutionsAndKernels kernels (s): {stop-full_start}")
@@ -1605,7 +1606,7 @@ def TensileCreateLibrary():
   print1("")
 
   stop = timer()
-  
+
   print1(f"Total time (s): {(stop-start):3.2f}")
   print1(f"Total kernels processed: {total}")
   print1(f"Kernels processed per second: {(total/(stop-start)):3.2f}")
