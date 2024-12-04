@@ -35,6 +35,9 @@ To use the `tensile_config_generator.py` script, follow these steps:
    | `--iters ITERS` | Max tuning iterations |
    | `--fast BOOL` | If enabled, only tune the matrix instruction with min tile sizes, else, tune full matrix instructions |
    | `--gridbase_config GRIDBASE_CONFIG` | Path to gridbase config file |
+   | `--full_mfma BOOL` | If enabled, will search for all mfma instructions |
+   | `--full_stage BOOL` | If enabled, will search for all stages instructions |
+   | `--num_stages STAGES` | How many times to divide matrix |
 
    Equality tuning example:
    ```
@@ -48,7 +51,7 @@ To use the `tensile_config_generator.py` script, follow these steps:
 
 3. Install hipBLASLt and Tensile (change the path to the hipBLASLt repo):
    ```
-   bash ./install.sh -idc -a $(/opt/rocm/llvm/bin/offload-arch) --keep-build-tmp
+   bash ./install.sh -idc -a $(/opt/rocm/llvm/bin/offload-arch) --cpu_ref_lib=lapack
    ```
 
 4. Tune GEMM kernels using the generated YAML files:
@@ -60,22 +63,19 @@ To use the `tensile_config_generator.py` script, follow these steps:
 
    MI308:
 
-   Modify yamls under ```<tune result directory>/3_LibraryLogic/```. ```- gfx942 -> - {Architecture: gfx942, CUCount: {20|80}}```
-
    For cpx, use the gfx942_20cu folder; for spx, use the gfx942_80cu folder.
    ```
    python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aquavanjaram/{gfx942_20cu|gfx942_80cu}/{Equality|GridBased}/ <tune result directory>/3_LibraryLogic/ library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aquavanjaram/{gfx942_20cu|gfx942_80cu}/{Equality|GridBased}/
    ```
    MI210:
 
-   Modify yamls under ```<tune result directory>/3_LibraryLogic/```. ```- gfx90a -> - {Architecture: gfx90a, CUCount: 104}```
    ```
    python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|GridBased}/ <tune result directory>/3_LibraryLogic/ library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|GridBased}/
    ```
 
 6. Rebuild hipBLASLt with the merged results:
    ```
-   bash ./install.sh -idc -a $(/opt/rocm/llvm/bin/offload-arch) --keep-build-tmp
+   bash ./install.sh -idc -a $(/opt/rocm/llvm/bin/offload-arch) --cpu_ref_lib=lapack
    ```
 
 For more detailed information on the script's functionality and advanced usage, please refer to the comments within the `tensile_config_generator.py` file.
