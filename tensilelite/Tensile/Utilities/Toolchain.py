@@ -173,11 +173,3 @@ def getVersion(executable: str, versionFlag: str="--version", regex: str=r'versi
     except Exception as e:
         raise RuntimeError(f"Failed to get version when calling {args}: {e}")
 
-
-
-
-
-
-
-
-
