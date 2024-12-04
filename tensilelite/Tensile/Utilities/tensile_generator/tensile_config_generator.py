@@ -105,11 +105,8 @@ else:
     raise RuntimeError("Failed to get compute unit from rocminfo")
 
 if ArchitectureName == 'gfx942':
-    res = subprocess.run(["cat", "/sys/class/drm/card1/device/current_compute_partition"], stdout=subprocess.PIPE)
-    if res.stdout.decode("utf-8").strip() == "CPX":
-        XCC = 1
-    else:
-        XCC = 4
+    res = subprocess.run(["cat", "/sys/class/drm/card0/device/compute_partition_config/xcc/num_inst"], stdout=subprocess.PIPE)
+    XCC = int(res.stdout.decode("utf-8").strip())
     DeviceNames = ["Device 0049", "Device 0050"]
     ScheduleName = "aquavanjaram"
 elif ArchitectureName == 'gfx90a':
@@ -467,7 +464,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 return (size_str, dtype_str)
             return None
 
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(8) as executor:
             results = executor.map(_extract_gemms, list(lines))
         for res in results:
             if res is not None:
@@ -660,5 +657,5 @@ elif args.gridbase_config and args.hipblaslt_log is None:
         samples_num = len(unique_gemms_subgroup)
         return dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, samples_num, args.iters, {}, gsu_group, matmul_instructions)
 
-with concurrent.futures.ProcessPoolExecutor() as executor:
+with concurrent.futures.ProcessPoolExecutor(args.gpus) as executor:
     results = executor.map(_process_gemms, list(enumerate(unique_gemms_subgroups)))
