@@ -160,6 +160,8 @@ constexpr const char* hipblas_computetype_to_string(hipblasComputeType_t type)
 {
     switch(type)
     {
+    case HIPBLAS_COMPUTE_16F:
+        return "f16_r";
     case HIPBLAS_COMPUTE_32F:
         return "f32_r";
     case HIPBLAS_COMPUTE_32F_FAST_TF32:

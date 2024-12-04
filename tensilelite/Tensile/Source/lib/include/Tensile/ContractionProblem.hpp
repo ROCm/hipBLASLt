@@ -980,6 +980,22 @@ namespace TensileLite
             return m_maxProblemSize;
         }
 
+        bool swizzleTensorA() const {
+            return m_swizzleTensorA;
+        }
+
+        bool swizzleTensorB() const {
+            return m_swizzleTensorB;
+        }
+
+        void setSwizzleTensorA(bool swizzle) {
+            m_swizzleTensorA = swizzle;
+        }
+
+        void setSwizzleTensorB(bool swizzle) {
+            m_swizzleTensorB = swizzle;
+        }
+
         /// Allocated elements excluding batch dimensions
         /// Used in assembly kernels to determine buffer limits, if batch dimes not
         /// packed
@@ -1185,6 +1201,8 @@ namespace TensileLite
         bool           m_useGradient             = false;
         bool           m_useE                    = false;
         bool           m_outputAmaxD             = false;
+        bool           m_swizzleTensorA          = false;
+        bool           m_swizzleTensorB          = false;
         int            m_useBias                 = 0;
         std::string    m_useScaleAB              = "";
         bool           m_useScaleCD              = false;

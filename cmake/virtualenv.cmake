@@ -1,4 +1,4 @@
-if(NOT DEFINED ENV{Python_ROOT} AND NOT Python_ROOT)
+if("$ENV{Python_ROOT}" STREQUAL "" AND NOT Python_ROOT)
     message(STATUS "Python_ROOT is unset. Setting Python_ROOT to /usr.")
     message(STATUS "Configure Python_ROOT variable if a different installation is preferred.")
     set(Python_ROOT /usr)
@@ -27,13 +27,10 @@ endfunction()
 
 function(virtualenv_install)
     virtualenv_create()
-
     execute_process(
       COMMAND ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install --upgrade pip
       COMMAND_ECHO STDOUT
     )
-
-
     execute_process(
       COMMAND ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -m pip install --upgrade setuptools
       COMMAND_ECHO STDOUT

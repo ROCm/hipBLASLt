@@ -271,7 +271,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         if not cacheValid:
             # enumerate benchmark permutations and create resulting solution objects
             forkPermutations = constructForkPermutations(benchmarkStep.forkParams, \
-                    benchmarkStep.paramGroups)
+                    benchmarkStep.paramGroups) if problemSizeGroupConfig["ForkParameters"] else []
             maxPossibleSolutions = len(forkPermutations)
 
             regSolutions = generateForkedSolutions(benchmarkProcess.problemType, \
@@ -339,7 +339,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             conProblemType = ContractionsProblemType.FromOriginalState(ssProblemType)
             outFile = os.path.join(globalParameters["WorkingPath"], "ClientParameters.ini")
 
-            writeClientConfigIni(benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
+            writeClientConfigIni(True, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
                                  benchmarkStep.factorDimArgs, benchmarkStep.activationArgs,
                                  benchmakrStep.icacheFlushArgs, conProblemType,
                                  globalParameters["WorkingPath"], codeObjectFiles, resultsFileName,
