@@ -309,6 +309,7 @@ def mergeLogic(oriData, incData, forceMerge, trimSize=True, addSolutionTags=Fals
     origNumSizes = len(oriData[7])
     origNumSolutions = len(oriData[5])
 
+    incData[7] = incData[7] or []
     incNumSizes = len(incData[7])
     incNumSolutions = len(incData[5])
 
@@ -320,7 +321,7 @@ def mergeLogic(oriData, incData, forceMerge, trimSize=True, addSolutionTags=Fals
     incTaggedSizes  = addSolutionTagToKeys(incData[7],  incData[5])
     if addSolutionTags:
         oriData[7] = origTaggedSizes
-        incData[7]  = incTaggedSizes
+        incData[7] = incTaggedSizes
     # Print warning if addSolutionTags=False results in removed sizes
     else:
         origSet       = {tuple(size) for size, [_, _] in oriData[7]}
