@@ -506,7 +506,6 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
 @timing
 def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False):
-
   codeObjectFiles = []
 
   # Push working path into build_tmp folder because there may be more than
@@ -517,7 +516,6 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
   Common.pushWorkingPath('build_tmp')
   Common.pushWorkingPath(os.path.basename(outputPath).upper())
 
-  print1("# Writing Kernels...")
   kernelFiles = []
   kernelSourceFile = None
   kernelHeaderFile = None
@@ -545,6 +543,8 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
         objFilenames.add(base)
         kernel.duplicate = False
 
+  total = len(kernels)
+
   kIter   = zip(kernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
   results = Common.ParallelMap2(processKernelSource, kIter, "Generating kernels")
 
@@ -552,7 +552,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
   removeKernelNames = []
   removeSolutions = []
   removeResults = []
-  for kernIdx, res in Utils.tqdm(enumerate(results)):
+  for kernIdx, res in Utils.tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
     (err,src,header,kernelName, filename) = res
     if(err == -2):
       if not errorTolerant:
@@ -567,7 +567,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
     printExit("** kernel generation failure **")
   for kern in removeKernels:
       kernels.remove(kern)
-  for solution in Utils.tqdm(solutions, "Finding invalid solutions"):
+  for solution in Utils.tqdm(solutions, "Finding invalid solutions") if globalParameters["PrintLevel"] > 1 else solutions:
     solutionKernels = solution.getKernels()
     for kernel in solutionKernels:
         kName = Solution.getKeyNoInternalArgs(kernel)
@@ -652,7 +652,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
 
-  return codeObjectFiles
+  return codeObjectFiles, total
 
 def writeSolutionAndExactTable(scheduleName, deviceNames, schedProbName, problemType, \
                                solutionsForSchedule, solutionNames, exactLogic):
@@ -1020,7 +1020,6 @@ def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelF
 ################################################################################
 @timing
 def writeCMake(outputPath, solutionFiles, kernelFiles, libraryStaticFiles, masterLibraries):
-  print1("# Writing Custom CMake")
 
   # Build output file paths, using relative CMake symbol
   cmakeSrcDir = "${CMAKE_SOURCE_DIR}"
@@ -1238,6 +1237,7 @@ def validateLibrary(masterLibraries: MasterSolutionLibrary,
 ################################################################################
 @profile
 def TensileCreateLibrary():
+  start = timer()
   print1("")
   print1(HR)
   print1("# Tensile Create Library")
@@ -1419,9 +1419,9 @@ def TensileCreateLibrary():
   if not args.Experimental:
     logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
 
-  print1(f"# LibraryLogicFiles: {len(logicFiles)}")
+  print2(f"# LibraryLogicFiles: {len(logicFiles)}")
   for logicFile in logicFiles:
-    print1("#   %s" % logicFile)
+    print2("#   %s" % logicFile)
 
 
   ##############################################################################
@@ -1479,7 +1479,7 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles = writeSolutionsAndKernels(outputPath, CxxCompiler, None, solutions,
+  codeObjectFiles, total = writeSolutionsAndKernels(outputPath, CxxCompiler, None, solutions,
                                              kernels, kernelHelperObjs, kernelWriterAssembly)
 
   bothLibSet = set(sourceLibPaths + asmLibPaths)
@@ -1542,7 +1542,7 @@ def TensileCreateLibrary():
           embedFile.embed_file(theMasterLibrary.cpp_base_class, masterFile + ext, nullTerminated=True,
                                key=args.EmbedLibraryKey)
 
-          for co in Utils.tqdm(codeObjectFiles):
+          for co in Utils.tqdm(codeObjectFiles) if globalParameters["PrintLevel"] > 1 else codeObjectFiles:
               embedFile.embed_file("SolutionAdapter", co, nullTerminated=False,
                                    key=args.EmbedLibraryKey)
 
@@ -1566,8 +1566,6 @@ def TensileCreateLibrary():
 
       param("best-solution", True)
 
-  print1("# Check if generated files exists.")
-
   def checkFileExistence(files):
     for filePath in files:
       if not os.path.exists(filePath):
@@ -1579,9 +1577,19 @@ def TensileCreateLibrary():
     buildTmp = Path(outputPath).parent / "library" / "build_tmp"
     if buildTmp.exists() and buildTmp.is_dir():
       shutil.rmtree(buildTmp)
+    buildTmp = Path(outputPath) / "build_tmp"
+    if buildTmp.exists() and buildTmp.is_dir():
+      shutil.rmtree(buildTmp)
     else:
-      printWarning(f"Cannot remove {str(buildTmp)}")
+      printWarning(f"Cannot remove build_tmp")
+
 
   print1("# Tensile Library Writer DONE")
   print1(HR)
   print1("")
+
+  stop = timer()
+
+  print1(f"Total time (s): {(stop-start):3.2f}")
+  print1(f"Total kernels processed: {total}")
+  print1(f"Kernels processed per second: {(total/(stop-start)):3.2f}")
