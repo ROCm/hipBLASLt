@@ -1147,7 +1147,8 @@ def TensileCreateLibrary():
   argParser.add_argument("LogicPath",       help="Path to LibraryLogic.yaml files.")
   argParser.add_argument("OutputPath",      help="Where to write library files?")
   argParser.add_argument("RuntimeLanguage", help="Which runtime language?", choices=["OCL", "HIP", "HSA"])
-  argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       action="store", default=ToolchainDefaults.CXX_COMPILER)
+  argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       action="store", default=ToolchainDefaults.CXX_COMPILER, 
+                         help=f"Default: {ToolchainDefaults.CXX_COMPILER}")
   argParser.add_argument("--c-compiler",             dest="CCompiler",         action="store", default=ToolchainDefaults.C_COMPILER)
   argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
   argParser.add_argument("--offload-bundler",        dest="OffloadBundler",    action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER)
@@ -1261,14 +1262,10 @@ def TensileCreateLibrary():
   for key, value in args.global_parameters:
     arguments[key] = value
 
-  # cxxCompiler = args.CxxCompiler
-  # cCompiler = args.CCompiler
-  # offloadBundler = args.OffloadBundler
-  # assembler = args.Assembler
-  cxxCompiler, cCompiler, offloadBundler, assembler, amdSmi = validateToolchain(
-      args.CxxCompiler, args.CCompiler, args.OffloadBundler, args.Assembler, ToolchainDefaults.AMD_SMI
+  cxxCompiler, cCompiler, offloadBundler, assembler, hipconfig = validateToolchain(
+      args.CxxCompiler, args.CCompiler, args.OffloadBundler, args.Assembler, ToolchainDefaults.HIP_CONFIG
   )
-  print1(f"# ROCm Version:        " + getVersion(amdSmi, 'version', r'ROCm version:\s*([\d.]+)'))
+  print1(f"# HIP Version:         {getVersion(hipconfig, regex=r'(.+)')}")
   print1(f"# Cxx Compiler:        {cxxCompiler} (version {getVersion(cxxCompiler)})")
   print1(f"# C Compiler:          {cCompiler} (version {getVersion(cCompiler)})")
   print1(f"# Assembler:           {assembler} (version {getVersion(assembler)})")

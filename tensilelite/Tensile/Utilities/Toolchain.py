@@ -1,23 +1,31 @@
 import os
 import re
 from pathlib import Path
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Union
 from warnings import warn
 from subprocess import run, PIPE
 
-ROCM_BIN_PATH = Path("/opt/rocm/bin")
-ROCM_LLVM_BIN_PATH = Path("/opt/rocm/lib/llvm/bin")
 
 def osSelect(linux: str, windows: str) -> str:
-    return windows if os.name == "nt" else linux
+    return linux if os.name != "nt" else windows
 
+def _latestRocmBin(path: Union[Path, str]) -> Path:
+    path = Path(path)
+    versions = [d for d in path.iterdir() if d.is_dir() and re.match(r'^\d+\.\d+$', d.name)]
+    latest = str(max(versions, key=lambda x: tuple(map(int, x.name.split('.')))))
+    return path / latest / "bin"
+
+ROCM_BIN_PATH = Path(osSelect(linux="/opt/rocm/bin", windows=_latestRocmBin("C:/Program Files/AMD/ROCm")))
+# LLVM binaries are in the same directory as ROCm binaries on Windows
+ROCM_LLVM_BIN_PATH = Path(osSelect(linux="/opt/rocm/lib/llvm/bin", windows=_latestRocmBin("C:/Program Files/AMD/ROCm")))
 
 class ToolchainDefaults(NamedTuple):
-    CXX_COMPILER= osSelect(linux="amdclang++", windows="clang++.exe") #+ "__deleteme__"
-    C_COMPILER= osSelect(linux="amdclang", windows="clang.exe") #+ "__deleteme__"
-    OFFLOAD_BUNDLER= osSelect(linux="clang-offload-bundler", windows="clang-offload-bundler.exe") #+ "__deleteme__"
-    ASSEMBLER = osSelect(linux="amdclang++", windows="clang++.exe") #+ "__deleteme__"
-    AMD_SMI = osSelect(linux="amd-smi", windows="amd-smi.exe") #+ "__deleteme__"
+    CXX_COMPILER= osSelect(linux="amdclang++", windows="clang++.exe")
+    C_COMPILER= osSelect(linux="amdclang", windows="clang.exe")
+    OFFLOAD_BUNDLER= osSelect(linux="clang-offload-bundler", windows="clang-offload-bundler.exe")
+    ASSEMBLER = osSelect(linux="amdclang++", windows="clang++.exe")
+    HIP_CONFIG = osSelect(linux="hipconfig", windows="hipconfig")
+
 
 
 def _supportedComponent(component: str, targets: List[str]) -> bool:
@@ -61,7 +69,7 @@ def supportedOffloadBundler(bundler: str) -> bool:
     return _supportedComponent(bundler, [ToolchainDefaults.OFFLOAD_BUNDLER])
 
 
-def supportedSmi(smi: str) -> bool:
+def supportedHip(smi: str) -> bool:
     """Determine if an offload bundler is supported by Tensile.
 
     Args:
@@ -70,7 +78,7 @@ def supportedSmi(smi: str) -> bool:
     Return:
         If supported True; otherwise, False.
     """
-    return _supportedComponent(smi, [ToolchainDefaults.AMD_SMI])
+    return _supportedComponent(smi, [ToolchainDefaults.HIP_CONFIG])
 
 
 def _exeExists(file: Path) -> bool:
@@ -83,7 +91,8 @@ def _exeExists(file: Path) -> bool:
         If the file exists and is executable, True; otherwise, False
     """
     if os.access(file, os.X_OK):
-        if "rocm" not in file.parts: warn(f"Found non-ROCm install of `{file.name}`: {file}")
+        if "rocm" not in map(str.lower, file.parts):
+            warn(f"Found non-ROCm install of `{file.name}`: {file}")
         return True
     return False
 
@@ -99,7 +108,7 @@ def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
         The validated executable with an absolute path.
     """
     if not any((
-        supportedCxxCompiler(file), supportedCCompiler(file), supportedOffloadBundler(file), supportedSmi(file)
+        supportedCxxCompiler(file), supportedCCompiler(file), supportedOffloadBundler(file), supportedHip(file)
     )):
         raise ValueError(f"{file} is not a supported toolchain component for OS: {os.name}")
 
@@ -126,9 +135,6 @@ def validateToolchain(*args: str):
     if not args:
         raise ValueError("No toolchain components to validate, at least one argument is required")
 
-    if os.name == "nt":
-        raise NotImplementedError("Toolchain verification is not support on Windows yet.")
-
     searchPaths = [
         ROCM_BIN_PATH,
         ROCM_LLVM_BIN_PATH,
@@ -145,9 +151,19 @@ def getVersion(executable: str, versionFlag: str="--version", regex: str=r'versi
         executable: The toolchain component to check the version of.
         versionFlag: The flag to pass to the executable to get the version.
     """
+    args = f'"{executable}" "{versionFlag}"'
     try:
-        output = run([executable, versionFlag], stdout=PIPE, stderr=PIPE, check=True).stdout.decode().strip()
+        output = run(args, stdout=PIPE, shell=True).stdout.decode().strip()
         match = re.search(regex, output, re.IGNORECASE)
         return match.group(1) if match else "<unknown>"
     except Exception as e:
-        raise RuntimeError(f"Failed to get version of {executable}: {e}")
+        raise RuntimeError(f"Failed to get version when calling {args}: {e}")
+
+
+
+
+
+
+
+
+
