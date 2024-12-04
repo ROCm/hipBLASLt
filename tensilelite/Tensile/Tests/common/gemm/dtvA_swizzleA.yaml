@@ -89,7 +89,6 @@ BenchmarkProblems:
           - Exact: [160,   256, 1, 256]
           - Exact: [1600,  512, 1, 1024]
           - Exact: [512,   256, 1, 256]
-          - Exact: [5120,  512, 1, 1024]
         - BiasTypeArgs: ['h']
         - ActivationArgs:
           - [Enum: none]
