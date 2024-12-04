@@ -5,19 +5,33 @@ from typing import List, NamedTuple, Union
 from warnings import warn
 from subprocess import run, PIPE
 
+ROCM_BIN_PATH = Path("/opt/rocm/bin")
+ROCM_LLVM_BIN_PATH = Path("/opt/rocm/lib/llvm/bin")
 
-def osSelect(linux: str, windows: str) -> str:
-    return linux if os.name != "nt" else windows
+if os.name == "nt":
+    def _windowsLatestRocmBin(path: Union[Path, str]) -> Path:
+        """Get the path to the latest ROCm bin directory, on Windows.
+        
+        This function assumes that ROCm versions are differentiated with the form ``X.Y``.
+        
+        Args:
+            path: The path to the ROCm root directory, typically ``C:/Program Files/AMD/ROCm``.
 
-def _latestRocmBin(path: Union[Path, str]) -> Path:
-    path = Path(path)
-    versions = [d for d in path.iterdir() if d.is_dir() and re.match(r'^\d+\.\d+$', d.name)]
-    latest = str(max(versions, key=lambda x: tuple(map(int, x.name.split('.')))))
-    return path / latest / "bin"
+        Returns:
+            The path to the ROCm bin directory for the latest ROCm version.
+            Typically of the form ``C:/Program Files/AMD/ROCm/X.Y/bin``.
+        """
+        path = Path(path)
+        pattern = re.compile(r'^\d+\.\d+$')
+        versions = filter(lambda d: d.is_dir() and pattern.match(d.name), path.iterdir())
+        latest = max(versions, key=lambda d: tuple(map(int, d.name.split('.'))))
+        return latest / "bin"
+    # LLVM binaries are in the same directory as ROCm binaries on Windows
+    ROCM_BIN_PATH = _windowslatestRocmBin("C:/Program Files/AMD/ROCm")
+    ROCM_LLVM_BIN_PATH = _windowslatestRocmBin("C:/Program Files/AMD/ROCm")
 
-ROCM_BIN_PATH = Path(osSelect(linux="/opt/rocm/bin", windows=_latestRocmBin("C:/Program Files/AMD/ROCm")))
-# LLVM binaries are in the same directory as ROCm binaries on Windows
-ROCM_LLVM_BIN_PATH = Path(osSelect(linux="/opt/rocm/lib/llvm/bin", windows=_latestRocmBin("C:/Program Files/AMD/ROCm")))
+
+osSelect = lambda linux, windows: linux if os.name != "nt" else windows
 
 class ToolchainDefaults(NamedTuple):
     CXX_COMPILER= osSelect(linux="amdclang++", windows="clang++.exe")
@@ -25,7 +39,6 @@ class ToolchainDefaults(NamedTuple):
     OFFLOAD_BUNDLER= osSelect(linux="clang-offload-bundler", windows="clang-offload-bundler.exe")
     ASSEMBLER = osSelect(linux="amdclang++", windows="clang++.exe")
     HIP_CONFIG = osSelect(linux="hipconfig", windows="hipconfig")
-
 
 
 def _supportedComponent(component: str, targets: List[str]) -> bool:
