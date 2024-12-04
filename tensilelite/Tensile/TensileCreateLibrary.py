@@ -249,7 +249,7 @@ def buildSourceCodeObjectFile(cxxCompiler: str, offloadBundler: str, outputPath,
 
     if os.name == "nt":
       hipFlags += ['-fms-extensions', '-fms-compatibility', '-fPIC', '-Wno-deprecated-declarations']
-      compileArgs = launcher + [which(CxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
+      compileArgs = launcher + [which(cxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
     else:
       compileArgs = launcher + [which(cxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
 
