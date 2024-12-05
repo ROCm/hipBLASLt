@@ -154,8 +154,8 @@ def validateToolchain(*args: str):
         ROCM_LLVM_BIN_PATH,
     ] + [Path(p) for p in os.environ["PATH"].split(os.pathsep)]
 
-    out = [_validateExecutable(x, searchPaths) for x in args]
-    return out if len(out) == 1 else tuple(out) 
+    out = (_validateExecutable(x, searchPaths) for x in args)
+    return next(out) if len(args) == 1 else tuple(out) 
 
 
 def getVersion(executable: str, versionFlag: str="--version", regex: str=r'version\s+([\d.]+)') -> str:
