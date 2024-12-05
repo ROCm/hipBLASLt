@@ -1,9 +1,13 @@
 import os
 import re
+import shlex
 from pathlib import Path
 from typing import List, NamedTuple, Union
 from warnings import warn
 from subprocess import run, PIPE
+from attr import dataclass
+
+from ..Common import print2
 
 ROCM_BIN_PATH = Path("/opt/rocm/bin")
 ROCM_LLVM_BIN_PATH = Path("/opt/rocm/lib/llvm/bin")
@@ -22,9 +26,9 @@ if os.name == "nt":
             Typically of the form ``C:/Program Files/AMD/ROCm/X.Y/bin``.
         """
         path = Path(path)
-        pattern = re.compile(r'^\d+\.\d+$')
+        pattern = re.compile(r"^\d+\.\d+$")
         versions = filter(lambda d: d.is_dir() and pattern.match(d.name), path.iterdir())
-        latest = max(versions, key=lambda d: tuple(map(int, d.name.split('.'))))
+        latest = max(versions, key=lambda d: tuple(map(int, d.name.split("."))))
         return latest / "bin"
     # LLVM binaries are in the same directory as ROCm binaries on Windows
     ROCM_BIN_PATH = _windowsLatestRocmBin("C:/Program Files/AMD/ROCm")
@@ -158,7 +162,7 @@ def validateToolchain(*args: str):
     return next(out) if len(args) == 1 else tuple(out) 
 
 
-def getVersion(executable: str, versionFlag: str="--version", regex: str=r'version\s+([\d.]+)') -> str:
+def getVersion(executable: str, versionFlag: str="--version", regex: str=r"version\s+([\d.]+)") -> str:
     """Print the version of a toolchain component.
 
     Args:
@@ -172,4 +176,3 @@ def getVersion(executable: str, versionFlag: str="--version", regex: str=r'versi
         return match.group(1) if match else "<unknown>"
     except Exception as e:
         raise RuntimeError(f"Failed to get version when calling {args}: {e}")
-

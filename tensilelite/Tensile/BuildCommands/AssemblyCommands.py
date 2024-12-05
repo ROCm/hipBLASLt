@@ -8,60 +8,100 @@ from pathlib import Path
 from typing import List, Union
 
 from .. import Utils
-from ..TensileInstructions import getGfxName, getAsmLinkCodeObjectArgs
+from ..TensileInstructions import getGfxName
 from ..Common import globalParameters, print2, ensurePath, printWarning
-from ..KernelWriterAssembly import KernelWriterAssembly
-from .SharedCommands import compressCodeObject
 
-def _linkIntoCodeObject(
-    objFiles: List[str], coPathDest: Union[Path, str], writer: KernelWriterAssembly
-):
-    """Links object files into a code object file.
+class ToolchainAssembly:
+    def __init__(self, assembler: str, bundler: str, buildIdKind: str):
+        self.assembler = assembler
+        self.bundler = bundler
+        self.buildIdKind = buildIdKind
 
-    Args:
-        objectFiles: A list of object files to be linked.
-        coPathDest: The destination path for the code object file.
-        kernelWriterAssembly: An instance of KernelWriterAssembly to get link arguments.
+    def link(self, srcPaths: List[str], destPath: str):
+        """Links object files into a code object file.
 
-    Raises:
-        RuntimeError: If linker invocation fails.
-    """
-    if os.name == "nt":
-      # Use args file on Windows b/c the command may exceed the limit of 8191 characters
-      with open(Path.cwd() / "clangArgs.txt", 'wt') as file:
-        file.write(" ".join(objFiles))
-        file.flush()
-      args = [writer.assembler, '-target', 'amdgcn-amd-amdhsa', '-o', coFileRaw, '@clangArgs.txt']
-      subprocess.check_call(args, cwd=asmDir)
-    else:
-      numObjFiles = len(objFiles)
-      maxObjFiles = 10000
-      
-      if numObjFiles > maxObjFiles:
-        batchedObjFiles = [objFiles[i:i+maxObjFiles] for i in range(0, numObjFiles, maxObjFiles)]
-        numBatches = int(math.ceil(numObjFiles / maxObjFiles))
+        Args:
+            srcPaths: A list of paths to object files.
+            destPath: A destination path for the generated code object file.
 
-        newObjFiles = [str(coPathDest) + "." + str(i) for i in range(0, numBatches)]
-        newObjFilesOutput = []
+        Raises:
+            RuntimeError: If linker invocation fails.
+        """
+        if os.name == "nt":
+            # Use args file on Windows b/c the command may exceed the limit of 8191 characters
+            with open(Path.cwd() / "clang_args.txt", "wt") as file:
+                file.write(" ".join(objFiles))
+                file.flush()
+            args = [
+                self.assembler,
+                "--target=amdgcn-amd-amdhsa",
+                "-o", destPath, "@clang_args.txt"]
+        else:
+            args = [
+                self.assembler,
+                "--target=amdgcn-amd-amdhsa",
+                "-Xlinker", f"--build-id={self.buildIdKind}",
+                "-o", destPath, *srcPaths
+            ]
+        print2(f"Linking assembly object files into code object: {' '.join(args)}")
+        subprocess.check_call(args)
 
-        for batch, filename in zip(batchedObjFiles, newObjFiles):
-          if len(batch) > 1:
-            args = [globalParameters["ROCmLdPath"], "-r"] + batch + [ "-o", filename]
-            print2(f"Linking object files into fewer object files: {' '.join(args)}")
-            subprocess.check_call(args)
-            newObjFilesOutput.append(filename)
-          else:
-            newObjFilesOutput.append(batchedObjFiles[0])
+    def compress(self, srcPath: str, destPath: str, gfx: str):
+        """Compresses a code object file using the provided bundler.
 
-        objFiles = newObjFilesOutput
+        Args:
+            srcPath: The source path of the code object file to be compressed.
+            destPath: The destination path for the compressed code object file.
+            gfx: The target GPU architecture.
 
-      args = getAsmLinkCodeObjectArgs(writer.assembler, objFiles, str(coPathDest), globalParameters['BuildIdKind'])
-      print2(f"Linking object files into code object: {' '.join(args)}")
-      subprocess.check_call(args)
+        Raises:
+            RuntimeError: If compressing the code object file fails.
+        """
+        args = [
+            self.bundler,
+            "--compress",
+            "--type=o",
+            "--bundle-align=4096",
+            f"--targets=host-x86_64-unknown-linux,hipv4-amdgcn-amd-amdhsa--{gfx}",
+            "--input=/dev/null",
+            f"--input={srcPath}",
+            f"--output={destPath}",
+        ]
+
+        print2(f"Bundling/compressing assembly code object: {' '.join(args)}")
+        try:
+            out = subprocess.check_output(args, stderr=subprocess.STDOUT)
+            print2(f"Output: {out}")
+        except subprocess.CalledProcessError as err:
+            raise RuntimeError(
+                f"Error compressing code object via bundling: {err.output}\nFailed command: {' '.join(args)}"
+            )
 
 
+def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjFiles: int=10000) -> List[str]:
+    numObjFiles = len(objFiles)
+    
+    if numObjFiles <= maxObjFiles:
+      return objFiles
 
-def buildAssemblyCodeObjectFiles(cxxCompiler: str, offloadBundler: str, kernels, kernelWriterAssembly, outputPath, compress: bool=True):
+    batchedObjFiles = [objFiles[i:i+maxObjFiles] for i in range(0, numObjFiles, maxObjFiles)]
+    numBatches = int(math.ceil(numObjFiles / maxObjFiles))
+
+    newObjFiles = [str(coPathDest) + "." + str(i) for i in range(0, numBatches)]
+    newObjFilesOutput = []
+
+    for batch, filename in zip(batchedObjFiles, newObjFiles):
+      if len(batch) > 1:
+        args = [globalParameters["ROCmLdPath"], "-r"] + batch + [ "-o", filename]
+        print2(f"Linking object files into fewer object files: {' '.join(args)}")
+        subprocess.check_call(args)
+        newObjFilesOutput.append(filename)
+      else:
+        newObjFilesOutput.append(batchedObjFiles[0])
+
+    return newObjFilesOutput
+
+def buildAssemblyCodeObjectFiles(toolchainAsm: ToolchainAssembly, kernels, kernelWriterAssembly, outputPath, compress: bool=True):
     
     isAsm = lambda k: k["KernelLanguage"] == "Assembly"
 
@@ -98,10 +138,12 @@ def buildAssemblyCodeObjectFiles(cxxCompiler: str, offloadBundler: str, kernels,
 
         for coFileRaw, objFiles in coFileMap.items():
 
-          _linkIntoCodeObject(objFiles, coFileRaw, kernelWriterAssembly)
+          objFiles = _batchObjectFiles(objFiles, coFileRaw)
+          toolchainAsm.link(objFiles, str(coFileRaw))
+
           coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
           if compress:
-            compressCodeObject(coFileRaw, coFile, gfx, offloadBundler)
+            toolchainAsm.compress(str(coFileRaw), str(coFile), gfx)
           else:
             shutil.move(coFileRaw, coFile)
 

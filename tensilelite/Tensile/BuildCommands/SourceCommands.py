@@ -7,71 +7,101 @@ import subprocess
 from pathlib import Path
 from typing import Iterable, List, Union
 
-from ..Common import globalParameters, print2,  ensurePath, supportedCompiler, ParallelMap2, splitArchs, which
-from .SharedCommands import compressCodeObject
+from ..Common import globalParameters, print2,  ensurePath, ParallelMap2, splitArchs
 
-def _compileSourceObjectFile(cmdlineArchs: List[str], cxxCompiler: str, cxxSrcPath: str, objDestPath: str, outputPath: str):
-    """Compiles a source file into an object file.
+class ToolchainSource:
+    def __init__(self, compiler: str, bundler: str, buildIdKind: str, asanBuild: bool=False, saveTemps: bool=False):
+        self.compiler = compiler
+        self.bundler = bundler
+        self.buildIdKind = buildIdKind
+        self.asanBuild = asanBuild
+        self.saveTemps = saveTemps
 
-    Args:
-        cmdlineArchs: List of architectures for offloading.
-        cxxCompiler: The C++ compiler to use.
-        kernelFile: The path to the kernel source file.
-        buildPath: The build directory path.
-        objectFilename: The name of the output object file.
-        outputPath: The output directory path.
-        globalParameters: A dictionary of global parameters.
+    def compile(self, srcPath: str, destPath: str, includePath: str, gfxs: List[str]):
+        """Compiles a source file into an object file.
 
-    Raises:
-        RuntimeError: If the compilation command fails.
-    """
-    archFlags = ['--offload-arch=' + arch for arch in cmdlineArchs]
+        Args:
+            cmdlineArchs: List of architectures for offloading.
+            kernelFile: The path to the kernel source file.
+            buildPath: The build directory path.
+            objectFilename: The name of the output object file.
+            outputPath: The output directory path.
+            globalParameters: A dictionary of global parameters.
 
-    #TODO(@jichangjichang) Needs to be fixed when Maneesh's change is made available
-    hipFlags = ["-D__HIP_HCC_COMPAT_MODE__=1"]
-    hipFlags.extend(
-        ["--genco"] if cxxCompiler == "hipcc" else ["--cuda-device-only", "-x", "hip", "-O3"]
-    )
+        Raises:
+            RuntimeError: If the compilation command fails.
+        """
+        launcher = shlex.split(os.environ.get("Tensile_CXX_COMPILER_LAUNCHER", ""))
 
-    hipFlags.extend(['-I', outputPath])
-    hipFlags.extend(["-Xoffload-linker", "--build-id=%s"%globalParameters["BuildIdKind"]])
-    hipFlags.append('-std=c++17')
-    if globalParameters["AsanBuild"]:
-      hipFlags.extend(["-fsanitize=address", "-shared-libasan", "-fuse-ld=lld"])
-    if globalParameters["SaveTemps"]:
-      hipFlags.append('--save-temps')
+        hipFlags = [
+            "-D__HIP_HCC_COMPAT_MODE__=1",
+            "--cuda-device-only",
+            "-x", "hip", "-O3",    
+            "-I", includePath,
+            "-Xoffload-linker", f"--build-id={self.buildIdKind}",
+            "-std=c++17",
+        ]
+        if self.asanBuild:
+            hipFlags.extend(["-fsanitize=address", "-shared-libasan", "-fuse-ld=lld"])
+        if self.saveTemps:
+            hipFlags.append("--save-temps")
+        if os.name == "nt":
+            hipFlags.extend(["-fms-extensions", "-fms-compatibility", "-fPIC", "-Wno-deprecated-declarations"])
 
-    launcher = shlex.split(os.environ.get('Tensile_CXX_COMPILER_LAUNCHER', ''))
+        archFlags = [f"--offload-arch={gfx}" for gfx in gfxs]
 
-    if os.name == "nt":
-      hipFlags.extend(['-fms-extensions', '-fms-compatibility', '-fPIC', '-Wno-deprecated-declarations'])
+        args = [
+            *launcher, self.compiler, *hipFlags, *archFlags, srcPath, "-c", "-o", destPath
+        ]
+        try:
+            out = subprocess.check_output(args, stderr=subprocess.STDOUT)
+            print2(f"Output: {out}" if out else "")
+        except subprocess.CalledProcessError as err:
+            raise RuntimeError(f"Error compiling source object file: {err.output}\nFailed command: {' '.join(args)}")
 
-    args = launcher + [which(cxxCompiler)] + hipFlags + archFlags + [cxxSrcPath, '-c', '-o', objDestPath]
+    def targets(self, objFile: str):
+        """Lists the target triples in an object file.
 
-    try:
-      out = subprocess.check_output(args, stderr=subprocess.STDOUT)
-      print2(f"Output: {out}" if out else "")
-    except subprocess.CalledProcessError as err:
-      raise RuntimeError(f"Error compiling source object file: {err.output}\nFailed command: {' '.join(args)}")
+        Args:
+            objFile: The object file path.
 
+        Returns:
+            List of target triples in the object file.
+        """
+        args = [self.bundler, "--type=o", f"--input={objFile}", "-list"]
+        try:
+            listing = subprocess.check_output(args, stderr=subprocess.STDOUT).decode().split("\n")
+        except subprocess.CalledProcessError as err:
+            raise RuntimeError(f"Error listing target triples in object files: {err.output}\nFailed command: {' '.join(args)}")
+        return listing
 
-def _listTargetTriples(bundler: str, objFile: str) -> List[str]:
-    """Lists the target triples in an object file.
+    def unbundle(self, target: str, srcPath: str, destPath: str):
+        """Unbundles source code object files using the Clang Offload Bundler.
 
-    Args:
-        bundler: The path to the bundler, typically ``clang-offload-bundler``.
-        objFile: The object file path.
+        Args:
+            target: The target triple, see https://llvm.org/docs/AMDGPUUsage.html#target-triples.
+            infile: The path to the input object file.
+            outfileRaw: The path to the unbundled code object.
 
-    Returns:
-        List of target triples in the object file.
-    """
-    args = [bundler, "--type=o", f"--input={objFile}", "-list"]
-    try:
-        listing = subprocess.check_output(args, stderr=subprocess.STDOUT).decode().split("\n")
-    except subprocess.CalledProcessError as err:
-        raise RuntimeError(f"Error listing target triples in object files: {err.output}\nFailed command: {' '.join(args)}")
-    return listing
+        Raises:
+            RuntimeError: If unbundling the source code object file fails.
+        """
+        args = [
+            self.bundler,
+            "--type=o",
+            f"--targets={target}",
+            f"--input={srcPath}",
+            f"--output={destPath}",
+            "--unbundle",
+        ]
 
+        print2("Unbundling source code object file: " + " ".join(args))
+        try:
+            out = subprocess.check_output(args, stderr=subprocess.STDOUT)
+            print2(f"Output: {out}" if out else "")
+        except subprocess.CalledProcessError as err:
+            raise RuntimeError(f"Error unbundling source code object file: {err.output}\nFailed command: {' '.join(args)}")
+            
 
 def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Path, str], arch: str) -> Union[Path, None]:
     """Generates a code object file path using the target, base, and build path.
@@ -99,36 +129,7 @@ def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Pa
     return coPath
 
 
-def _unbundleSourceCodeObjects(bundler: str, target: str, infile: str, outfileRaw: str):
-    """Unbundles source code object files using the Clang Offload Bundler.
-
-    Args:
-        bundler: The path to the bundler, typically ``clang-offload-bundler``.
-        target: The target architecture string.
-        infile: The input file path.
-        outfileRaw: The output raw file path.
-
-    Raises:
-        RuntimeError: If unbundling the source code object file fails.
-    """
-    args = [
-        bundler,
-        "--type=o",
-        f"--targets={target}",
-        f"--input={infile}",
-        f"--output={outfileRaw}",
-        "--unbundle",
-    ]
-
-    print2("Unbundling source code object file: " + " ".join(args))
-    try:
-        out = subprocess.check_output(args, stderr=subprocess.STDOUT)
-        print2(f"Output: {out}" if out else "")
-    except subprocess.CalledProcessError as err:
-        raise RuntimeError(f"Error unbundling source code object file: {err.output}\nFailed command: {' '.join(args)}")
-
-
-def _buildSourceCodeObjectFile(cxxCompiler: str, offloadBundler: str, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
+def _buildSourceCodeObjectFile(toolchainSrc: ToolchainSource, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
     Args:
@@ -151,20 +152,17 @@ def _buildSourceCodeObjectFile(cxxCompiler: str, offloadBundler: str, outputPath
     coPathsRaw = []
     coPaths= []
 
-    if not supportedCompiler(cxxCompiler):
-      raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
-
     _, cmdlineArchs = splitArchs()
 
     objPath = str(buildPath / objFilename)
-    _compileSourceObjectFile(cmdlineArchs, cxxCompiler, str(kernelPath), objPath, str(outputPath))
+    toolchainSrc.compile(str(kernelPath), objPath, str(outputPath), cmdlineArchs)
 
-    for target in _listTargetTriples(offloadBundler, objPath):
+    for target in toolchainSrc.targets(objPath):
       if match := re.search("gfx.*$", target):
         arch = re.sub(":", "-", match.group())
         coPathRaw = _computeSourceCodeObjectFilename(target, kernelPath.stem, buildPath, arch)
         if not coPathRaw: continue
-        _unbundleSourceCodeObjects(offloadBundler, target, objPath, str(coPathRaw))
+        toolchainSrc.unbundle(target, objPath, str(coPathRaw))
 
         coPath = str(destPath / coPathRaw.stem)
         coPathsRaw.append(coPathRaw)
@@ -175,7 +173,7 @@ def _buildSourceCodeObjectFile(cxxCompiler: str, offloadBundler: str, outputPath
 
     return coPaths
 
-def buildSourceCodeObjectFiles(cxxCompiler: str, offloadBundler: str, kernelFiles: List[Path], outputPath: Path) -> Iterable[str]:
+def buildSourceCodeObjectFiles(toolchainSrc: ToolchainSource, kernelFiles: List[Path], outputPath: Path) -> Iterable[str]:
     """Compiles HIP source code files into code object files.
 
     Args:
@@ -187,6 +185,6 @@ def buildSourceCodeObjectFiles(cxxCompiler: str, offloadBundler: str, kernelFile
     Returns:
         List of paths to the created code objects.
     """
-    args    = zip(itertools.repeat(cxxCompiler), itertools.repeat(offloadBundler), itertools.repeat(outputPath), kernelFiles)
+    args    = zip(itertools.repeat(toolchainSrc), itertools.repeat(outputPath), kernelFiles)
     coFiles = ParallelMap2(_buildSourceCodeObjectFile, args, "Compiling source kernels")
     return itertools.chain.from_iterable(coFiles)

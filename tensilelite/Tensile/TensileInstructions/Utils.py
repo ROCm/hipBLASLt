@@ -20,6 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+import warnings
 from .Base import getGfxName, getCOVFromParam
 from .Code import Module
 from .Containers import HolderContainer, RegisterContainer, RegName
@@ -260,6 +261,7 @@ def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, \
 
 def getAsmLinkCodeObjectArgs(assemblerPath: str, objectFileNames: List[str], \
     coFileName: str, buildIdKind: str, *moreArgs):
+    warnings.warn(f"{__name__}: THIS FUNCTION IS DEPRECATED.")
     rv = [assemblerPath, '-target', 'amdgcn-amd-amdhsa']
     rv += ["-Xlinker", "--build-id=%s"%(buildIdKind)]
     rv += moreArgs
