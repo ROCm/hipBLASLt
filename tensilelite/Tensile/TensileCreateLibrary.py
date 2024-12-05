@@ -108,6 +108,8 @@ def prepAsm(kernelWriterAssembly):
     assemblerFile.write("# usage: asm-new.sh kernelName(no extension) [--wave32]\n")
 
     assemblerFile.write("f=$1\n")
+    assemblerFile.write("filename=${1##*/}\n")
+    assemblerFile.write("dirname=${1%/*}\n")
     assemblerFile.write("shift\n")
     assemblerFile.write('if [ ! -z "$1" ] && [ "$1" = "--wave32" ]; then\n')
     assemblerFile.write("    wave=32\n")
@@ -141,9 +143,9 @@ def prepAsm(kernelWriterAssembly):
     assemblerFile.write("    exit $ERR\n")
     assemblerFile.write("fi\n")
 
-    assemblerFile.write("cp $f.co ../../../library/${f}_$h.co\n")
-    assemblerFile.write("mkdir -p ../../../asm_backup && ")
-    assemblerFile.write("cp $f.s ../../../asm_backup/$f.s\n")
+    assemblerFile.write("cp $f.co ${dirname}/../../../library/${filename}_$h.co\n")
+    assemblerFile.write("mkdir -p ${dirname}/../../../asm_backup && ")
+    assemblerFile.write("cp $f.s ${dirname}/../../../asm_backup/${filename}.s\n")
 
   assemblerFile.close()
   os.chmod(assemblerFileName, 0o777)
@@ -742,40 +744,6 @@ def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelF
 
   return (solutionPaths, sourceKernelPaths, asmKernelPaths, sourceLibPaths, asmLibPaths, libMetadataPaths)
 
-################################################################################
-# Write CMake
-################################################################################
-@timing
-def writeCMake(outputPath, solutionFiles, kernelFiles, libraryStaticFiles, masterLibraries):
-  print1("# Writing Custom CMake")
-
-  # Build output file paths, using relative CMake symbol
-  cmakeSrcDir = "${CMAKE_SOURCE_DIR}"
-  (solutionPaths, sourceKernelPaths, asmKernelPaths, sourceLibPaths, asmLibPaths, _) = \
-    buildObjectFilePaths(cmakeSrcDir, solutionFiles, kernelFiles, [], [], [], masterLibraries)
-
-  # Build full paths the static library files
-  staticFilePaths = []
-  for staticFile in libraryStaticFiles:
-    staticFilePaths += [ os.path.join(cmakeSrcDir, staticFile) ]
-
-  # Proceed to generate cmake file
-  generatedFile = open(os.path.join(os.path.normcase(outputPath), "Generated.cmake"), "w")
-  generatedFile.write(CMakeHeader)
-
-  # write TensileClient_KERNELS symbol
-  generatedFile.write("set( TensileClient_KERNELS\n")
-  for kernelFile in sourceKernelPaths:
-    generatedFile.write("  %s\n" % (kernelFile))
-  generatedFile.write("  )\n")
-
-  # write TensileClient_SOURCE symbol
-  generatedFile.write("set( TensileClient_SOURCE\n")
-  for fileName in libraryStaticFiles:
-    generatedFile.write("  ${CMAKE_SOURCE_DIR}/%s\n" % fileName)
-  generatedFile.write("  )\n\n")
-
-  generatedFile.close()
 
 ################################################################################
 # Generate Kernel Objects From Solutions
@@ -1144,7 +1112,7 @@ def TensileCreateLibrary():
   print1(f"# LogicFilter:       {globPattern}")
   logicFiles = (os.path.join(logicPath, file) for file in glob.iglob(globPattern, recursive=True))
   logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
-  
+
   print1(f"# Experimental:      {args.Experimental}")
   if not args.Experimental:
     logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
@@ -1152,7 +1120,7 @@ def TensileCreateLibrary():
   print1(f"# LibraryLogicFiles: {len(logicFiles)}")
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
-  
+
 
   ##############################################################################
   # Parse config files
@@ -1198,10 +1166,6 @@ def TensileCreateLibrary():
 
   if globalParameters["GenerateManifestAndExit"] == True:
     return
-
-  # generate cmake for the source kernels,
-  if not arguments["GenerateSourcesAndExit"]:
-    writeCMake(outputPath, solutionFiles, sourceKernelFiles, staticFiles, masterLibraries)
 
   # Make sure to copy the library static files.
   for fileName in staticFiles:
