@@ -924,7 +924,6 @@ def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelF
 
   return (solutionPaths, sourceKernelPaths, asmKernelPaths, sourceLibPaths, asmLibPaths, libMetadataPaths)
 
->>>>>>> develop
 
 ################################################################################
 # Generate Kernel Objects From Solutions
