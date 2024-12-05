@@ -42,9 +42,9 @@ enum class hipblaslt_initialization
 
 typedef enum class _hipblaslt_activation_type
 {
-    none = 1,
-    relu = 2,
-    gelu = 3,
+    none = 0,
+    relu = 1,
+    gelu = 2,
 } hipblaslt_activation_type;
 
 typedef enum class _hipblaslt_bias_source
