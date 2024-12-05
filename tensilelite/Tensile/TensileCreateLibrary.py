@@ -33,7 +33,7 @@ from . import ClientExecutable
 from . import EmbeddedData
 from . import LibraryIO
 from . import Utils
-from .TensileInstructions import getGfxName, TensileInstructions
+from .TensileInstructions import getGfxName, TensileInstructions, getAsmCompileArgs, getAsmLinkCodeObjectArgs
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, assignGlobalParameters, \
                     architectureMap, printWarning, \
@@ -91,7 +91,7 @@ def processKernelSource(kernel, kernelWriterAssembly, ti):
     return (err, src, header, kernelName, filename)
 
 
-def prepAsm(kernelWriterAssembly):
+def prepAsm(writer: KernelWriterAssembly):
   """
   Create and prepare the assembly directory  - called ONCE per output dir:
   """
@@ -123,9 +123,11 @@ def prepAsm(kernelWriterAssembly):
     assemblerFile.write("h={gfxName}\n".format(gfxName = getGfxName(isa)))
 
     debug = globalParameters.get("AsmDebug", False)
-    cArgs32 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=32, debug=debug)
-    cArgs64 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=64, debug=debug)
-    lArgs = kernelWriterAssembly.getLinkCodeObjectArgs(["$f.o"], "$f.co")
+    cArgs32 = getAsmCompileArgs(writer.assembler, globalParameters["CodeObjectVersion"], writer.isa, 32, "$f.s", "f.o", debug=debug)
+    cArgs64 = getAsmCompileArgs(writer.assembler, globalParameters["CodeObjectVersion"], writer.isa, 64, "$f.s", "f.o", debug=debug) 
+    lArgs = getAsmLinkCodeObjectArgs(writer.assembler, ["$f.o"], "$f.co", globalParameters['BuildIdKind'])
+
+    print("cArgs32: ", cArgs32)
 
     assemblerFile.write("if [ $wave -eq 32 ]; then\n")
     assemblerFile.write(" ".join(cArgs32) + "\n")

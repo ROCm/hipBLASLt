@@ -8,13 +8,13 @@ from pathlib import Path
 from typing import List, Union
 
 from .. import Utils
-from ..TensileInstructions import getGfxName
+from ..TensileInstructions import getGfxName, getAsmLinkCodeObjectArgs
 from ..Common import globalParameters, print2, ensurePath, printWarning
 from ..KernelWriterAssembly import KernelWriterAssembly
 from .SharedCommands import compressCodeObject
 
 def _linkIntoCodeObject(
-    objFiles: List[str], coPathDest: Union[Path, str], kernelWriterAssembly: KernelWriterAssembly
+    objFiles: List[str], coPathDest: Union[Path, str], writer: KernelWriterAssembly
 ):
     """Links object files into a code object file.
 
@@ -31,7 +31,7 @@ def _linkIntoCodeObject(
       with open(Path.cwd() / "clangArgs.txt", 'wt') as file:
         file.write(" ".join(objFiles))
         file.flush()
-      args = [globalParameters['AssemblerPath'], '-target', 'amdgcn-amd-amdhsa', '-o', coFileRaw, '@clangArgs.txt']
+      args = [writer.assembler, '-target', 'amdgcn-amd-amdhsa', '-o', coFileRaw, '@clangArgs.txt']
       subprocess.check_call(args, cwd=asmDir)
     else:
       numObjFiles = len(objFiles)
@@ -55,7 +55,7 @@ def _linkIntoCodeObject(
 
         objFiles = newObjFilesOutput
 
-      args = kernelWriterAssembly.getLinkCodeObjectArgs(objFiles, str(coPathDest))
+      args = getAsmLinkCodeObjectArgs(writer.assembler, objFiles, str(coPathDest), globalParameters['BuildIdKind'])
       print2(f"Linking object files into code object: {' '.join(args)}")
       subprocess.check_call(args)
 

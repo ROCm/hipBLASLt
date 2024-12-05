@@ -5131,7 +5131,9 @@ for codeObjectFileName in codeObjectFileNames:
     objectFileName = base + '.o'
 
     debug = globalParameters.get("AsmDebug", False)
-    args = self.getCompileArgs(assemblyFileName, objectFileName, debug=debug)
+
+    args = getAsmCompileArgs(self.assembler, globalParameters["CodeObjectVersion"], self.isa, self.wavefrontSize, assemblyFileName, objectFileName, debug=debug)
+
     if globalParameters["PrintCodeCommands"]:
       print (' '.join(args), " && ")
 
@@ -5148,7 +5150,9 @@ for codeObjectFileName in codeObjectFileNames:
     base, ext = os.path.splitext(objectFileName)
     coFileName = base + '.co'
 
-    args = self.getLinkCodeObjectArgs([objectFileName], coFileName)
+    args = getAsmLinkCodeObjectArgs(self.assembler, \
+      [objectFileName], coFileName, globalParameters['BuildIdKind'])
+
     if globalParameters["PrintCodeCommands"]:
       print (' '.join(args))
 
@@ -5243,18 +5247,6 @@ for codeObjectFileName in codeObjectFileNames:
   ##############################################################################
   # Compile Args
   ##############################################################################
-  def getCompileArgs(self, sourceFileName, objectFileName, *moreArgs, isa=None, wavefrontSize=None, debug=False):
-    if isa is None:
-      isa = self.states.version
-    if wavefrontSize is None:
-      wavefrontSize = self.states.kernel["WavefrontSize"]
-    return getAsmCompileArgs(self.assembler, \
-      globalParameters["CodeObjectVersion"], \
-      isa, wavefrontSize, sourceFileName, objectFileName, *moreArgs, debug=debug)
-
-  def getLinkCodeObjectArgs(self, objectFileNames, coFileName, *moreArgs):
-    return getAsmLinkCodeObjectArgs(self.assembler, \
-      objectFileNames, coFileName, globalParameters['BuildIdKind'], *moreArgs)
 
   def setTensileInstructions(self, ti):
     self.ti = ti
@@ -5307,3 +5299,11 @@ for codeObjectFileName in codeObjectFileNames:
         else:
           _placeholder.add(SBranch(labelName=_target.getLabelName()))
       currentInstLength += _placeholder.countType(Instruction)
+
+  @property
+  def isa(self):
+    return self.states.version
+
+  @property
+  def wavefrontSize(self):
+    return self.states.kernel["WavefrontSize"]
