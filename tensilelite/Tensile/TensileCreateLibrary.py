@@ -828,6 +828,103 @@ def copyStaticFiles(outputPath=None):
   return libraryStaticFiles
 
 
+<<<<<<< HEAD
+=======
+  # Build a list of asm lib names
+  if globalParameters["LazyLibraryLoading"]:
+
+    # If assembly kernel with codeObjectFile specified
+    cond = lambda k : "codeObjectFile" in k._state                      \
+                       and "fallback" not in k._state["codeObjectFile"] \
+                       and k._state['KernelLanguage'] == "Assembly"
+
+
+    asmLibFiles += list(set([kernel._state["codeObjectFile"]+".co" for kernel in kernels if cond(kernel)]))
+
+    # If architecture specific source kernel with codeObjectFile specified
+    cond = lambda k : "codeObjectFile" in k._state                     \
+                      and "fallback" not in k._state["codeObjectFile"] \
+                      and k._state['KernelLanguage'] == "Source"
+
+    sourceLibFiles += list(set(itertools.chain.from_iterable(
+                          [addxnack(kernel._state["codeObjectFile"], ".hsaco") for kernel in kernels if cond(kernel)]
+                      )))
+
+  elif globalParameters["MergeFiles"]:
+    # Find all unique arch values for current asm kernels
+    uniqueArchs = set(itertools.chain(*asmArchs.values()))
+    asmLibFiles += ["TensileLibrary_%s.co" % (arch) for arch in uniqueArchs]
+
+  else:
+    for asmKernelName, archs in asmArchs.items():
+      asmLibFiles += ["%s_%s.co" % (asmKernelName, str(arch)) for arch in archs]
+
+  return (solutionFiles, sourceKernelFiles, asmKernelFiles, sourceLibFiles, asmLibFiles)
+
+@timing
+def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelFiles, sourceLibFiles, asmLibFiles, masterLibraries):
+  solutionPaths = []
+  sourceKernelPaths = []
+  asmKernelPaths = []
+  sourceLibPaths = []
+  asmLibPaths = []
+  libMetadataPaths = []
+
+  # Build full paths for source kernel files
+  sourceKernelDir = ""
+  if not globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1:
+    sourceKernelDir = os.path.join(prefixDir, "Kernels")
+  else:
+    sourceKernelDir = prefixDir
+
+  for sourceKernelFile in sourceKernelFiles:
+    sourceKernelPaths += [ os.path.join(sourceKernelDir, sourceKernelFile) ]
+
+  # Build full paths for asm kernel files
+  asmKernelDir = os.path.join(prefixDir, "assembly")
+
+  for asmKernelFile in asmKernelFiles:
+    asmKernelPaths += [ os.path.join(asmKernelDir, asmKernelFile) ]
+
+  # Build full paths for source and asm library files
+  libDir = os.path.join(prefixDir, "library")
+
+  libraryExt = ".yaml" if globalParameters["LibraryFormat"] == "yaml" else ".dat"
+  if not globalParameters["SeparateArchitectures"] and not globalParameters["LazyLibraryLoading"]:
+    libMetadataPaths = [ os.path.join(libDir, "TensileLibrary"+libraryExt) ]
+
+  for sourceLibFile in sourceLibFiles:
+    sourceLibPaths += [ os.path.join(libDir, sourceLibFile) ]
+
+  #Use set because of duplicate fallback libraries
+  newMetadataPaths = set()
+  for arch, lib in masterLibraries.items():
+    if globalParameters["LazyLibraryLoading"]:
+      newMetadataPaths.add(os.path.join(libDir, "TensileLibrary_lazy_"+arch+libraryExt))
+    else:
+      newMetadataPaths.add(os.path.join(libDir, "TensileLibrary_"+arch+libraryExt))
+    for name, placeholder in lib.lazyLibraries.items():
+      newMetadataPaths.add(os.path.join(libDir, name+libraryExt))
+
+  libMetadataPaths += list(newMetadataPaths)
+
+  for asmLibFile in asmLibFiles:
+    # Asm lib files are enumerated in the form of
+    # KernelName_gfxXXXXX.co
+    # Strip the gfxXXXX portion and use that as a subdirectory
+    asmLibFileNoExt = str(os.path.splitext(asmLibFile)[0])
+    asmArch = asmLibFileNoExt[asmLibFileNoExt.find("_gfx"):]
+    if globalParameters["PackageLibrary"]:
+
+      # asmArch contains _gfxXXXX. Don't use the underscore in new path
+      asmLibPaths += [ os.path.join(
+        libDir, asmArch[1:], asmLibFile.replace(asmArch, ''))]
+    else:
+      asmLibPaths += [ os.path.join(libDir, asmLibFile) ]
+
+  return (solutionPaths, sourceKernelPaths, asmKernelPaths, sourceLibPaths, asmLibPaths, libMetadataPaths)
+
+>>>>>>> develop
 
 ################################################################################
 # Generate Kernel Objects From Solutions
