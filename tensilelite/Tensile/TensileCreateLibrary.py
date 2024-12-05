@@ -1015,40 +1015,6 @@ def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelF
 
   return (solutionPaths, sourceKernelPaths, asmKernelPaths, sourceLibPaths, asmLibPaths, libMetadataPaths)
 
-################################################################################
-# Write CMake
-################################################################################
-@timing
-def writeCMake(outputPath, solutionFiles, kernelFiles, libraryStaticFiles, masterLibraries):
-  print1("# Writing Custom CMake")
-
-  # Build output file paths, using relative CMake symbol
-  cmakeSrcDir = "${CMAKE_SOURCE_DIR}"
-  (solutionPaths, sourceKernelPaths, asmKernelPaths, sourceLibPaths, asmLibPaths, _) = \
-    buildObjectFilePaths(cmakeSrcDir, solutionFiles, kernelFiles, [], [], [], masterLibraries)
-
-  # Build full paths the static library files
-  staticFilePaths = []
-  for staticFile in libraryStaticFiles:
-    staticFilePaths += [ os.path.join(cmakeSrcDir, staticFile) ]
-
-  # Proceed to generate cmake file
-  generatedFile = open(os.path.join(os.path.normcase(outputPath), "Generated.cmake"), "w")
-  generatedFile.write(CMakeHeader)
-
-  # write TensileClient_KERNELS symbol
-  generatedFile.write("set( TensileClient_KERNELS\n")
-  for kernelFile in sourceKernelPaths:
-    generatedFile.write("  %s\n" % (kernelFile))
-  generatedFile.write("  )\n")
-
-  # write TensileClient_SOURCE symbol
-  generatedFile.write("set( TensileClient_SOURCE\n")
-  for fileName in libraryStaticFiles:
-    generatedFile.write("  ${CMAKE_SOURCE_DIR}/%s\n" % fileName)
-  generatedFile.write("  )\n\n")
-
-  generatedFile.close()
 
 ################################################################################
 # Generate Kernel Objects From Solutions
@@ -1468,10 +1434,6 @@ def TensileCreateLibrary():
 
   if globalParameters["GenerateManifestAndExit"] == True:
     return
-
-  # generate cmake for the source kernels,
-  if not arguments["GenerateSourcesAndExit"]:
-    writeCMake(outputPath, solutionFiles, sourceKernelFiles, staticFiles, masterLibraries)
 
   # Make sure to copy the library static files.
   for fileName in staticFiles:
