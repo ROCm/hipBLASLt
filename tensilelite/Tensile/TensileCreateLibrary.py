@@ -1163,7 +1163,6 @@ def WriteClientLibraryFromSolutions(solutionList, libraryWorkingPath, tensileSou
   problemType["DataTypeA"] = problemType["DataTypeA"].value
   problemType["DataTypeB"] = problemType["DataTypeB"].value
   problemType["DataTypeE"] = problemType["DataTypeE"].value
-  problemType["DataTypeAmaxD"] = problemType["DataTypeAmaxD"].value
   problemType["DestDataType"] = problemType["DestDataType"].value
   problemType["ComputeDataType"] = problemType["ComputeDataType"].value
   problemType["F32XdlMathOp"] = problemType["F32XdlMathOp"].value
