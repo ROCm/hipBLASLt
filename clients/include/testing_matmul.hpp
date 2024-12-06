@@ -1507,7 +1507,7 @@ void testing_matmul_with_bias(const Arguments& arg,
         CHECK_HIP_ERROR(broadcast(dB[i], block_count));
         CHECK_HIP_ERROR(broadcast(dC[i], block_count));
 
-        if(arg.unit_check || arg.norm_check || arg.allclose_check)
+        if(arg.unit_check || arg.norm_check || arg.allclose_check || arg.swizzle_a)
         {
             CHECK_HIP_ERROR(synchronize(hA[i], dA[i]));
             CHECK_HIP_ERROR(synchronize(hB[i], dB[i]));
