@@ -1126,61 +1126,6 @@ def generateLogicDataAndSolutions(logicFiles, args):
 
   return solutions, masterLibraries, fullMasterLibrary
 
-################################################################################
-# Write Benchmark Client Files
-################################################################################
-def writeBenchmarkClientFiles(libraryWorkingPath, tensileSourcePath, solutions, cxxCompiler):
-
-  if not globalParameters["GenerateSourcesAndExit"]:
-      copyStaticFiles(libraryWorkingPath)
-
-  kernels, kernelsBetaOnly, _ = generateKernelObjectsFromSolutions(solutions)
-  kernelWriterAssembly, \
-    kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels)
-
-  # write solution, kernels and CMake
-  problemType = solutions[0]["ProblemType"]
-  codeObjectFiles = writeSolutionsAndKernels( \
-    libraryWorkingPath, cxxCompiler, [problemType], solutions, kernels, kernelsBetaOnly, \
-    kernelWriterAssembly, errorTolerant=True )
-
-  newLibraryDir = ensurePath(os.path.join(libraryWorkingPath, 'library'))
-  newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary.yaml")
-  newLibrary = MasterSolutionLibrary.BenchmarkingLibrary(solutions)
-  newLibrary.applyNaming(kernelMinNaming)
-
-  LibraryIO.writeYAML(newLibraryFile, Utils.state(newLibrary))
-
-  return (codeObjectFiles, newLibrary)
-
-def WriteClientLibraryFromSolutions(solutionList, libraryWorkingPath, tensileSourcePath = None):
-
-  if tensileSourcePath == None:
-    tensileSourcePath = os.path.dirname(os.path.realpath(__file__))
-  firstSolution = solutionList[0]
-  problemType = firstSolution["ProblemType"].state
-  problemType["DataType"] = problemType["DataType"].value
-  problemType["DataTypeA"] = problemType["DataTypeA"].value
-  problemType["DataTypeB"] = problemType["DataTypeB"].value
-  problemType["DataTypeE"] = problemType["DataTypeE"].value
-  problemType["DataTypeAmaxD"] = problemType["DataTypeAmaxD"].value
-  problemType["DestDataType"] = problemType["DestDataType"].value
-  problemType["ComputeDataType"] = problemType["ComputeDataType"].value
-  problemType["F32XdlMathOp"] = problemType["F32XdlMathOp"].value
-  if "DataTypeMetadata" in problemType:
-    problemType["DataTypeMetadata"] = problemType["DataTypeMetadata"].value
-  cxxCompiler = globalParameters["CxxCompiler"]
-
-  effectiveWorkingPath = os.path.join(libraryWorkingPath, "library")
-  ensurePath(effectiveWorkingPath)
-  mataDataFilePath = os.path.join(effectiveWorkingPath, 'metadata.yaml')
-
-  metaData = {"ProblemType":problemType}
-  LibraryIO.writeYAML(mataDataFilePath, metaData)
-
-  codeObjectFiles, newLibrary = writeBenchmarkClientFiles(libraryWorkingPath, tensileSourcePath, solutionList, cxxCompiler )
-
-  return (codeObjectFiles, newLibrary)
 
 def validateLibrary(masterLibraries: MasterSolutionLibrary,
                     kernels: Sequence[Solution],
@@ -1242,11 +1187,6 @@ def TensileCreateLibrary():
                          help="Include logic files in directories named 'Experimental'.")
   argParser.add_argument("--no-enumerate",           action="store_true", help="Do not run rocm_agent_enumerator.")
   argParser.add_argument("--package-library",        dest="PackageLibrary",    action="store_true", default=False)
-  argParser.add_argument("--embed-library",          dest="EmbedLibrary",
-                         help="Embed (new) library files into static variables.  Specify the name of the library.")
-
-  argParser.add_argument("--embed-library-key",      dest="EmbedLibraryKey", default=None,
-                         help="Access key for embedding library files.")
   argParser.add_argument("--version", help="Version string to embed into library file.")
   argParser.add_argument("--generate-manifest-and-exit",   dest="GenerateManifestAndExit", action="store_true",
                           default=False, help="Output manifest file with list of expected library objects and exit.")
@@ -1307,7 +1247,6 @@ def TensileCreateLibrary():
   arguments["ShortNames"] = args.ShortNames
   arguments["LibraryPrintDebug"] = args.LibraryPrintDebug
   arguments["CodeFromFiles"] = False
-  arguments["EmbedLibrary"] = args.EmbedLibrary
   arguments["LogicFormat"]  = args.LogicFormat
   arguments["LibraryFormat"] = args.LibraryFormat
   if args.no_enumerate:
@@ -1491,18 +1430,6 @@ def TensileCreateLibrary():
   theMasterLibrary = fullMasterLibrary
   if globalParameters["PackageLibrary"] or globalParameters["SeparateArchitectures"]:
     theMasterLibrary = list(masterLibraries.values())[0]
-
-  if args.EmbedLibrary is not None:
-      embedFileName = os.path.join(outputPath, "library/{}.cpp".format(args.EmbedLibrary))
-      with EmbeddedData.EmbeddedDataFile(embedFileName) as embedFile:
-
-          ext = ".yaml" if globalParameters["LibraryFormat"] == "yaml" else ".dat"
-          embedFile.embed_file(theMasterLibrary.cpp_base_class, masterFile + ext, nullTerminated=True,
-                               key=args.EmbedLibraryKey)
-
-          for co in Utils.tqdm(codeObjectFiles):
-              embedFile.embed_file("SolutionAdapter", co, nullTerminated=False,
-                                   key=args.EmbedLibraryKey)
 
   print1("# Check if generated files exists.")
 
