@@ -1126,61 +1126,6 @@ def generateLogicDataAndSolutions(logicFiles, args):
 
   return solutions, masterLibraries, fullMasterLibrary
 
-################################################################################
-# Write Benchmark Client Files
-################################################################################
-def writeBenchmarkClientFiles(libraryWorkingPath, tensileSourcePath, solutions, cxxCompiler):
-
-  if not globalParameters["GenerateSourcesAndExit"]:
-      copyStaticFiles(libraryWorkingPath)
-
-  kernels, kernelsBetaOnly, _ = generateKernelObjectsFromSolutions(solutions)
-  kernelWriterAssembly, \
-    kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels)
-
-  # write solution, kernels and CMake
-  problemType = solutions[0]["ProblemType"]
-  codeObjectFiles = writeSolutionsAndKernels( \
-    libraryWorkingPath, cxxCompiler, [problemType], solutions, kernels, kernelsBetaOnly, \
-    kernelWriterAssembly, errorTolerant=True )
-
-  newLibraryDir = ensurePath(os.path.join(libraryWorkingPath, 'library'))
-  newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary.yaml")
-  newLibrary = MasterSolutionLibrary.BenchmarkingLibrary(solutions)
-  newLibrary.applyNaming(kernelMinNaming)
-
-  LibraryIO.writeYAML(newLibraryFile, Utils.state(newLibrary))
-
-  return (codeObjectFiles, newLibrary)
-
-def WriteClientLibraryFromSolutions(solutionList, libraryWorkingPath, tensileSourcePath = None):
-
-  if tensileSourcePath == None:
-    tensileSourcePath = os.path.dirname(os.path.realpath(__file__))
-  firstSolution = solutionList[0]
-  problemType = firstSolution["ProblemType"].state
-  problemType["DataType"] = problemType["DataType"].value
-  problemType["DataTypeA"] = problemType["DataTypeA"].value
-  problemType["DataTypeB"] = problemType["DataTypeB"].value
-  problemType["DataTypeE"] = problemType["DataTypeE"].value
-  problemType["DataTypeAmaxD"] = problemType["DataTypeAmaxD"].value
-  problemType["DestDataType"] = problemType["DestDataType"].value
-  problemType["ComputeDataType"] = problemType["ComputeDataType"].value
-  problemType["F32XdlMathOp"] = problemType["F32XdlMathOp"].value
-  if "DataTypeMetadata" in problemType:
-    problemType["DataTypeMetadata"] = problemType["DataTypeMetadata"].value
-  cxxCompiler = globalParameters["CxxCompiler"]
-
-  effectiveWorkingPath = os.path.join(libraryWorkingPath, "library")
-  ensurePath(effectiveWorkingPath)
-  mataDataFilePath = os.path.join(effectiveWorkingPath, 'metadata.yaml')
-
-  metaData = {"ProblemType":problemType}
-  LibraryIO.writeYAML(mataDataFilePath, metaData)
-
-  codeObjectFiles, newLibrary = writeBenchmarkClientFiles(libraryWorkingPath, tensileSourcePath, solutionList, cxxCompiler )
-
-  return (codeObjectFiles, newLibrary)
 
 def validateLibrary(masterLibraries: MasterSolutionLibrary,
                     kernels: Sequence[Solution],
