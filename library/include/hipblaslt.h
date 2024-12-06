@@ -32,6 +32,7 @@
 #pragma once
 #ifndef _HIPBLASLT_H_
 #define _HIPBLASLT_H_
+#define LEGACY_HIPBLAS_DIRECT 1
 
 #include "hipblaslt/hipblaslt-export.h"
 #include "hipblaslt/hipblaslt-version.h"
