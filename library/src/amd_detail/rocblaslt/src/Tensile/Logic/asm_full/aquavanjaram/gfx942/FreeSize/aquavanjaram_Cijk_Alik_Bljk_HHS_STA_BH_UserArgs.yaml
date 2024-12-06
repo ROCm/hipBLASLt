@@ -10,7 +10,7 @@
   AssignedDerivedParameters: true
   Batched: true
   BetaOnlyUseBias: false
-  BiasDataTypeList: [0, 4]
+  BiasDataTypeList: [ ]
   BiasSrc: D
   ComplexConjugateA: false
   ComplexConjugateB: false
@@ -230,7 +230,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -510,7 +510,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -790,7 +790,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -1070,7 +1070,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -1350,7 +1350,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -1630,7 +1630,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -1910,7 +1910,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -2190,7 +2190,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -2470,7 +2470,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -2750,7 +2750,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -3030,7 +3030,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -3310,7 +3310,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -3590,7 +3590,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -3870,7 +3870,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -4150,7 +4150,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -4430,7 +4430,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -4710,7 +4710,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -4990,7 +4990,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -5270,7 +5270,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -5550,7 +5550,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -5830,7 +5830,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -6110,7 +6110,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -6390,7 +6390,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -6670,7 +6670,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -6950,7 +6950,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -7230,7 +7230,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -7510,7 +7510,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -7790,7 +7790,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -8070,7 +8070,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -8350,7 +8350,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -8630,7 +8630,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -8910,7 +8910,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -9190,7 +9190,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -9470,7 +9470,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -9750,7 +9750,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -10030,7 +10030,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -10310,7 +10310,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -10590,7 +10590,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -10870,7 +10870,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -11150,7 +11150,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -11430,7 +11430,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -11710,7 +11710,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -11990,7 +11990,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -12270,7 +12270,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -12550,7 +12550,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -12830,7 +12830,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -13110,7 +13110,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -13390,7 +13390,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -13670,7 +13670,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -13950,7 +13950,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -14230,7 +14230,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -14510,7 +14510,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -14790,7 +14790,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -15070,7 +15070,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -15350,7 +15350,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -15630,7 +15630,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -15910,7 +15910,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -16190,7 +16190,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -16470,7 +16470,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -16750,7 +16750,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -17030,7 +17030,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -17310,7 +17310,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -17590,7 +17590,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -17870,7 +17870,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -18150,7 +18150,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -18430,7 +18430,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -18710,7 +18710,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -18990,7 +18990,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -19270,7 +19270,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -19550,7 +19550,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -19830,7 +19830,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -20110,7 +20110,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -20390,7 +20390,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -20670,7 +20670,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -20950,7 +20950,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -21230,7 +21230,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -21510,7 +21510,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -21790,7 +21790,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -22070,7 +22070,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -22350,7 +22350,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -22630,7 +22630,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -22910,7 +22910,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -23190,7 +23190,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -23470,7 +23470,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -23750,7 +23750,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -24030,7 +24030,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -24310,7 +24310,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -24590,7 +24590,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -24870,7 +24870,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -25150,7 +25150,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -25430,7 +25430,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -25710,7 +25710,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -25990,7 +25990,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -26270,7 +26270,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -26550,7 +26550,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -26830,7 +26830,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -27110,7 +27110,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -27390,7 +27390,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -27670,7 +27670,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -27950,7 +27950,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -28230,7 +28230,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -28510,7 +28510,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -28790,7 +28790,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -29070,7 +29070,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -29350,7 +29350,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -29630,7 +29630,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -29910,7 +29910,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -30190,7 +30190,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -30470,7 +30470,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -30750,7 +30750,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -31030,7 +31030,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -31310,7 +31310,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -31590,7 +31590,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -31870,7 +31870,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -32150,7 +32150,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -32430,7 +32430,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -32710,7 +32710,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -32990,7 +32990,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -33270,7 +33270,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -33550,7 +33550,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -33830,7 +33830,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -34110,7 +34110,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -34390,7 +34390,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -34670,7 +34670,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -34950,7 +34950,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -35230,7 +35230,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -35510,7 +35510,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -35790,7 +35790,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -36070,7 +36070,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -36350,7 +36350,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -36630,7 +36630,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -36910,7 +36910,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -37190,7 +37190,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -37470,7 +37470,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -37750,7 +37750,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -38030,7 +38030,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -38310,7 +38310,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -38590,7 +38590,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -38870,7 +38870,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -39150,7 +39150,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -39430,7 +39430,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -39710,7 +39710,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -39990,7 +39990,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -40270,7 +40270,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -40550,7 +40550,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -40830,7 +40830,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
@@ -41110,7 +41110,7 @@
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
-      BiasDataTypeList: [0, 4]
+      BiasDataTypeList: [ ]
       BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
