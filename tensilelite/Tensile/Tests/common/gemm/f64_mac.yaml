@@ -1,5 +1,5 @@
 TestParameters:
-  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx940, skip-gfx941, skip-gfx942, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030] # not supported by arch
+  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx940, skip-gfx941, skip-gfx942] # not supported by arch
 
 GlobalParameters:
   MinimumRequiredVersion: 4.14.0
@@ -20,15 +20,14 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: s
-      ComputeDataType: s
+      DataType: d
       TransposeA: false
       TransposeB: false
-      UseScaleAlphaVec: 1
-      UseBeta: true
-      UseBias: 1
+      # UseScaleAlphaVec: 1
+      # UseBeta: true
+      # UseBias: 1
       Batched: true
-      Activation: true
+      # Activation: true
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -40,11 +39,19 @@ BenchmarkProblems:
         - ThreadTile:
           - [1, 1]
           - [2, 2]
+          - [4, 4]
+          - [8, 8]
         - WorkGroup:
-          - [8, 8, 1]
-        - DepthU: [8, 16]
+          - [4, 8, 1]
+          - [8, 4, 1]
+          - [2, 16, 1]
+          - [16, 2, 1]
+        - DepthU: [8, 16, 32]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
+        - LocalReadVectorWidth: [1]
+        - GlobalReadVectorWidthA: [1]
+        - GlobalReadVectorWidthB: [1]
         - ScheduleIterAlg: [1]
         - WorkGroupMapping: [1]
         - GlobalSplitU: [1]
@@ -54,12 +61,6 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Range: [ [64, 64, 1024], [64, 64, 1024], [1], [32] ]
-        - BiasTypeArgs: ['s']
-        - ActivationArgs:
-          - [Enum: none]
-          - [Enum: gelu]
-          - [Enum: geluscaling]
-          - [Enum: relu]
 
   ########################################
   # NT - standard
@@ -67,15 +68,14 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: s
-      ComputeDataType: s
+      DataType: d
       TransposeA: false
       TransposeB: true
-      UseScaleAlphaVec: 1
-      UseBeta: true
-      UseBias: 1
+      # UseScaleAlphaVec: 1
+      # UseBeta: true
+      # UseBias: 1
       Batched: true
-      Activation: true
+      # Activation: true
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -87,11 +87,19 @@ BenchmarkProblems:
         - ThreadTile:
           - [1, 1]
           - [2, 2]
+          - [4, 4]
+          - [8, 8]
         - WorkGroup:
-          - [8, 8, 1]
-        - DepthU: [8, 16]
+          - [4, 8, 1]
+          - [8, 4, 1]
+          - [2, 16, 1]
+          - [16, 2, 1]
+        - DepthU: [8, 16, 32]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
+        - LocalReadVectorWidth: [1]
+        - GlobalReadVectorWidthA: [1]
+        - GlobalReadVectorWidthB: [1]
         - ScheduleIterAlg: [1]
         - WorkGroupMapping: [1]
         - GlobalSplitU: [1]
@@ -101,12 +109,6 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Range: [ [64, 64, 1024], [64, 64, 1024], [1], [32] ]
-        - BiasTypeArgs: ['s']
-        - ActivationArgs:
-          - [Enum: none]
-          - [Enum: gelu]
-          - [Enum: geluscaling]
-          - [Enum: relu]
 
   ########################################
   # TN - standard
@@ -114,15 +116,14 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: s
-      ComputeDataType: s
+      DataType: d
       TransposeA: true
       TransposeB: false
-      UseScaleAlphaVec: 1
-      UseBeta: true
-      UseBias: 1
+      # UseScaleAlphaVec: 1
+      # UseBeta: true
+      # UseBias: 1
       Batched: true
-      Activation: true
+      # Activation: true
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -134,11 +135,19 @@ BenchmarkProblems:
         - ThreadTile:
           - [1, 1]
           - [2, 2]
+          - [4, 4]
+          - [8, 8]
         - WorkGroup:
-          - [8, 8, 1]
-        - DepthU: [8, 16]
+          - [4, 8, 1]
+          - [8, 4, 1]
+          - [2, 16, 1]
+          - [16, 2, 1]
+        - DepthU: [8, 16, 32]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
+        - LocalReadVectorWidth: [1]
+        - GlobalReadVectorWidthA: [1]
+        - GlobalReadVectorWidthB: [1]
         - ScheduleIterAlg: [1]
         - WorkGroupMapping: [1]
         - GlobalSplitU: [1]
@@ -148,12 +157,6 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Range: [ [64, 64, 1024], [64, 64, 1024], [1], [32] ]
-        - BiasTypeArgs: ['s']
-        - ActivationArgs:
-          - [Enum: none]
-          - [Enum: gelu]
-          - [Enum: geluscaling]
-          - [Enum: relu]
 
   ########################################
   # TT - standard
@@ -161,15 +164,14 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: s
-      ComputeDataType: s
+      DataType: d
       TransposeA: true
       TransposeB: true
-      UseScaleAlphaVec: 1
-      UseBeta: true
-      UseBias: 1
+      # UseScaleAlphaVec: 1
+      # UseBeta: true
+      # UseBias: 1
       Batched: true
-      Activation: true
+      # Activation: true
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -181,11 +183,19 @@ BenchmarkProblems:
         - ThreadTile:
           - [1, 1]
           - [2, 2]
+          - [4, 4]
+          - [8, 8]
         - WorkGroup:
-          - [8, 8, 1]
-        - DepthU: [8, 16]
+          - [4, 8, 1]
+          - [8, 4, 1]
+          - [2, 16, 1]
+          - [16, 2, 1]
+        - DepthU: [8, 16, 32]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
+        - LocalReadVectorWidth: [1]
+        - GlobalReadVectorWidthA: [1]
+        - GlobalReadVectorWidthB: [1]
         - ScheduleIterAlg: [1]
         - WorkGroupMapping: [1]
         - GlobalSplitU: [1]
@@ -195,9 +205,3 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Range: [ [64, 64, 1024], [64, 64, 1024], [1], [32] ]
-        - BiasTypeArgs: ['s']
-        - ActivationArgs:
-          - [Enum: none]
-          - [Enum: gelu]
-          - [Enum: geluscaling]
-          - [Enum: relu]
