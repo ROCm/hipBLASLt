@@ -87,6 +87,7 @@ function(TensileCreateLibraryFiles
        LAZY_LIBRARY_LOADING
        ASAN_BUILD
        KEEP_BUILD_TMP
+       NO_COMPRESS
        EXPERIMENTAL 
        )
 
@@ -140,6 +141,10 @@ function(TensileCreateLibraryFiles
 
   if(Tensile_KEEP_BUILD_TMP)
     set(Options ${Options} "--keep-build-tmp")
+  endif()
+
+  if(Tensile_NO_COMPRESS)
+    set(Options ${Options} "--no-compress")
   endif()
 
   if(Tensile_EXPERIMENTAL)
