@@ -16,7 +16,6 @@ GlobalParameters:
   DataInitTypeBeta: 0
   # DataInitTypeBias: 0
   # DataInitTypeScaleD: 0
-  # MergeFiles: False
   # NumMergedFiles: 4
   # ShortNames: True
   PrintSolutionRejectionReason: True
