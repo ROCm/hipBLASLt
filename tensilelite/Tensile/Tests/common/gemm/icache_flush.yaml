@@ -8,7 +8,6 @@ GlobalParameters:
   CSVExportWinner: 1
   CSVMergeSameProblemID: 1
   Device: 0
-  MergeFiles: False
   SyncsPerBenchmark: 1
   NumBenchmarks : 1
   NumWarmups: 1000
