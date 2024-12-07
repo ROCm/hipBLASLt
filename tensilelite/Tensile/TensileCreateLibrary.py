@@ -1114,8 +1114,8 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles = writeSolutionsAndKernels(outputPath, CxxCompiler, None, solutions,
-                                             kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
+  codeObjectFiles, total = writeSolutionsAndKernels(outputPath, CxxCompiler, None, solutions,
+                                                    kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
   bothLibSet = set(sourceLibPaths + asmLibPaths)
   setA = set( map( os.path.normcase, set(codeObjectFiles) ) )
