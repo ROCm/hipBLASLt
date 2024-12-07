@@ -82,8 +82,7 @@ def buildAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath, asse
         continue
 
       gfx = getGfxName(arch)
-
-      if globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
+      if globalParameters["LazyLibraryLoading"]:
         objectFiles = [str(asmDir / (kernelWriterAssembly.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
 
         coFileMap = collections.defaultdict(list)
