@@ -471,8 +471,6 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
   ##############################################################################
   kernelsWithBuildErrs = {}
 
-  prepAsm(kernelWriterAssembly)
-
   # Kernels may be intended for different co files, but generate the same .o file
   # Mark duplicate kernels to avoid race condition
   # @TODO improve organization so this problem doesn't appear
