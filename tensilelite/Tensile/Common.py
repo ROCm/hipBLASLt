@@ -129,7 +129,6 @@ globalParameters["CMakeBuildType"] = "Release"            # whether benchmark cl
 globalParameters["PrintSolutionRejectionReason"] = False  # when a solution is marked as invalid, print why
 globalParameters["LogicFormat"] = "yaml"                  # set library backend (yaml, or json)
 globalParameters["LibraryFormat"] = "yaml"                # set library backend (yaml, or msgpack)
-globalParameters["EmbedLibrary"] = None                   # whether library should be embedded or not
 
 # True/False: CSV will/won't export WinnerGFlops, WinnerTimeUS, WinnerIdx, WinnerName.
 # TODO - if no side-effect, we can set default to True. This can make analyzing "LibraryLogic" (AddFromCSV) faster
