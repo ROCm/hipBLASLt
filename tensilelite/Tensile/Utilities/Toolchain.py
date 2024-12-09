@@ -5,9 +5,6 @@ from pathlib import Path
 from typing import List, NamedTuple, Union
 from warnings import warn
 from subprocess import run, PIPE
-from attr import dataclass
-
-from ..Common import print2
 
 ROCM_BIN_PATH = Path("/opt/rocm/bin")
 ROCM_LLVM_BIN_PATH = Path("/opt/rocm/lib/llvm/bin")
