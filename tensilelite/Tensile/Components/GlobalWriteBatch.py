@@ -387,10 +387,7 @@ class GlobalWriteBatchWriter:
 
       addr0 = vgpr(addrCalc.addrDVgpr)
 
-      GSUtotal = 16
-      if (self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1]) > 8:
-        GSUtotal = int(GSUtotal/int((self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1])/8))
-      GSUtotal = max(2,GSUtotal)
+      GSUtotal = self.parentWriter.getMBSKGSUTotal(self.kernel)
       SynchronizerAddEndlabel = [""] * GSUtotal
 
       for idx in range(0, GSUtotal):

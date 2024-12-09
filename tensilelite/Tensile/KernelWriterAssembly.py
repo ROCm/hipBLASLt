@@ -9725,6 +9725,13 @@ class KernelWriterAssembly(KernelWriter):
     self.states.bpeCexternal = bpeCexternalBackup
     return module
 
+  def getMBSKGSUTotal(self, kernel):
+    GSUtotal = 16
+    if (kernel["MIWaveTile"][0] * kernel["MIWaveTile"][1]) * (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) > 8:
+      GSUtotal = int(GSUtotal/int((kernel["MIWaveTile"][0] * kernel["MIWaveTile"][1]) * (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1])/8))
+    GSUtotal = max(2,GSUtotal)
+    return GSUtotal
+
   ##############################################################################
   # globalWriteElementBatch :
   ##############################################################################
