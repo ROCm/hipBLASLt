@@ -384,140 +384,6 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
 
   return codeObjectFiles, total
 
-def writeSolutionAndExactTable(scheduleName, deviceNames, schedProbName, problemType, \
-                               solutionsForSchedule, solutionNames, exactLogic):
-  s = ""
-  s += "namespace { // Start schedule '%s'\n" % scheduleName
-
-  s += "// solution table - function, name, assertion requirements\n"
-  s += "static const SolutionInfo solutionTable_%s[] = {\n" % (schedProbName)
-  for i in range(0, len(solutionsForSchedule)):
-    solution = solutionsForSchedule[i]
-    solutionName = solutionNames[i]
-    s += "  {(void*)%s, \"%s\", {%d, %d, %d, %d, %d} }%s // %d" % \
-      (solutionName, solutionName, \
-        solution["AssertSummationElementMultiple"], \
-        solution["AssertFree0ElementMultiple"], \
-        solution["AssertFree1ElementMultiple"], \
-        False, \
-        "," if i < len(solutionsForSchedule)-1 else "", \
-        i)
-    s += "\n"
-
-  s += "};\n\n"
-
-  # Write the exact problems here
-  s += "// table of exact problem dims and selected solutionIdx\n"
-  s += "static const std::pair<const ProblemKey_%s, int> embeddedExactTable_%s[] = {\n" % (problemType,schedProbName)
-  numSizes = problemType["TotalIndices"]
-  for ruleIdx in range(0, len(exactLogic)):
-    rule = exactLogic[ruleIdx]
-    problemSize = rule[0][:numSizes]
-    solutionIdx = rule[1][0]
-    solutionGFlops = rule[1][1]
-    s += " { {"
-    for i in range(0, len(problemSize)):
-      if i == 0:
-        s += "%u" % problemSize[i]
-      else:
-        s += ", %u" % problemSize[i]
-    s += "}, %u}" % (solutionIdx)
-    s += "," if ruleIdx != len(exactLogic)-1 else " "
-    s += " // %.0f GFlop/s" % (solutionGFlops)
-    s += "\n"
-  s += "};\n\n"
-
-  # Create a solution mapper and init with the table above:
-  s += "// The solution master constructor here adds device to the master solution mapper\n"
-  s += "// The entrypoint to find a solution for this problem is through the master solution master\n"
-  s += "static SolutionMapper_%s solutionMapper_%s(\n" % (problemType, schedProbName)
-  s += "  \"%s\", // schedule+problem name\n" % (schedProbName)
-  s += "  solutionTable_%s, %u,\n" % (schedProbName, len(solutionsForSchedule))
-  s += "  embeddedExactTable_%s, %u,\n" % (schedProbName, len(exactLogic))
-  s += "  &problemType_%s);\n" % (problemType)
-
-  s += "} // end anonymous namespace\n"
-  return s
-
-
-################################################################################
-# Write Range Logic Recursive
-# ptr :
-#   True : write logic to return the function pointer
-#   False : write logic to return the function name
-################################################################################
-def writeExactLogic(problemType, indexOrder,
-                    solutionsForSchedule, exactLogic, \
-                    solutionNames, ptr):
-  s = ""
-  s += "  ProblemDims_%s pdims(" % problemType
-  indexChars = globalParameters["IndexChars"]
-  firstStrideAB = 0 if problemType["UseInitialStridesAB"] else 1
-  firstStrideCD = 0 if problemType["UseInitialStridesCD"] else 1
-  lastStrideD = problemType["NumIndicesC"]
-  lastStrideC = problemType["NumIndicesC"]
-  lastStrideA = len(problemType["IndexAssignmentsA"])
-  lastStrideB = len(problemType["IndexAssignmentsB"])
-  for i in range(firstStrideCD,lastStrideD):
-    if i != firstStrideCD: s += ", "
-    s += "strideD%u%s" % (i, indexChars[i])
-  for i in range(firstStrideCD,lastStrideC):
-    s += ", strideC%u%s" % (i, indexChars[i])
-  for i in range(firstStrideAB,lastStrideA):
-    s += ", strideA%u%s" % (i, \
-        indexChars[problemType["IndexAssignmentsA"][i]])
-  for i in range(firstStrideAB,lastStrideB):
-    s += ", strideB%u%s" % (i, \
-        indexChars[problemType["IndexAssignmentsB"][i]])
-  for i in range(0,len(indexOrder)):
-    s += ", size%s" % indexChars[i]
-  s += ");\n"
-
-  s += "  auto solutionMapper = reinterpret_cast<SolutionMapper_%s *> (masterSolutionMapper_%s.mapper());\n"  \
-      % (problemType, problemType)
-  if ptr:
-    s += "  return solutionMapper->getSolutionWithFallback(pdims,&masterSolutionMapper_%s);\n" % problemType
-  else:
-    s += "  return solutionMapper->getSolutionWithFallback(pdims,&masterSolutionMapper_%s)->_info->_name;\n" % problemType
-
-  return s
-
-
-################################################################################
-# Write Solution Call
-################################################################################
-def writeSolutionCall(solutionName, problemType):
-  indexChars = globalParameters["IndexChars"]
-  s = ""
-  s += "%s(" % solutionName
-  # solution parameters
-  s += " dataD, dataC, dataA, dataB, alpha"
-  if problemType["UseBeta"]:
-    s += ", beta"
-  s += ", offsetC, offsetA, offsetB"
-  firstStrideAB = firstStrideCD = 1
-  if problemType["UseInitialStridesAB"]:
-    firstStrideAB = 0
-  if problemType["UseInitialStridesCD"]:
-    firstStrideCD = 0
-  lastStrideD = problemType["NumIndicesC"]
-  lastStrideC = problemType["NumIndicesC"]
-  lastStrideA = len(problemType["IndexAssignmentsA"])
-  lastStrideB = len(problemType["IndexAssignmentsB"])
-  for i in range(firstStrideCD,lastStrideD):
-    s += ", strideD%u%s" % (i, indexChars[i])
-  for i in range(firstStrideCD,lastStrideC):
-    s += ", strideC%u%s" % (i, indexChars[i])
-  for i in range(firstStrideAB,lastStrideA):
-    s += ", strideA%u%s" % (i, \
-        indexChars[problemType["IndexAssignmentsA"][i]])
-  for i in range(firstStrideAB,lastStrideB):
-    s += ", strideB%u%s" % (i, \
-        indexChars[problemType["IndexAssignmentsB"][i]])
-  for i in range(0, problemType["TotalIndices"]):
-    s += ", size%s" % indexChars[i]
-  s += ", stream, numInputEvents, inputEvents, outputEvent )"
-  return s
 
 ##############################################################################
 # Min Naming / Solution and Kernel Writers
@@ -733,15 +599,7 @@ def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelF
     # Asm lib files are enumerated in the form of
     # KernelName_gfxXXXXX.co
     # Strip the gfxXXXX portion and use that as a subdirectory
-    asmLibFileNoExt = str(os.path.splitext(asmLibFile)[0])
-    asmArch = asmLibFileNoExt[asmLibFileNoExt.find("_gfx"):]
-    if globalParameters["PackageLibrary"]:
-
-      # asmArch contains _gfxXXXX. Don't use the underscore in new path
-      asmLibPaths += [ os.path.join(
-        libDir, asmArch[1:], asmLibFile.replace(asmArch, ''))]
-    else:
-      asmLibPaths += [ os.path.join(libDir, asmLibFile) ]
+    asmLibPaths += [ os.path.join(libDir, asmLibFile) ]
 
   return (solutionPaths, sourceKernelPaths, asmKernelPaths, sourceLibPaths, asmLibPaths, libMetadataPaths)
 
@@ -806,13 +664,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
     if architectureName == "":
       continue
 
-    if globalParameters["PackageLibrary"]:
-      if architectureName in masterLibraries:
-        masterLibraries[architectureName].merge(newLibrary)
-      else:
-        masterLibraries[architectureName] = newLibrary
-        masterLibraries[architectureName].version = args.version
-    elif globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
+    if globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
       if architectureName in masterLibraries:
         nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
       else:
@@ -918,7 +770,6 @@ def TensileCreateLibrary():
   argParser.add_argument("--experimental",           dest="Experimental",      action="store_true", 
                          help="Include logic files in directories named 'Experimental'.")
   argParser.add_argument("--no-enumerate",           action="store_true", help="Do not run rocm_agent_enumerator.")
-  argParser.add_argument("--package-library",        dest="PackageLibrary",    action="store_true", default=False)
   argParser.add_argument("--version", help="Version string to embed into library file.")
   argParser.add_argument("--generate-manifest-and-exit",   dest="GenerateManifestAndExit", action="store_true",
                           default=False, help="Output manifest file with list of expected library objects and exit.")
@@ -940,10 +791,6 @@ def TensileCreateLibrary():
                          default=False, help="Loads Tensile libraries when needed instead of upfront.")
   argParser.add_argument("--enable-marker", dest="EnableMarker", action="store_true",
                          default=False, help="Enable marker in Tensile.")
-  argParser.add_argument("--build-client", dest="BuildClient", action="store_true",
-                         help="Build Tensile client")
-  argParser.add_argument("--client-config", dest="ClientConfig", action="store_true",
-                         help="Create client config for setting the library and code object files")
   argParser.add_argument("--global-parameters", nargs="+", type=splitExtraParameters, default=[])
   argParser.add_argument("--no-generate-solution-table", dest="GenSolTable", action="store_false", default=True,
                          help="Skip generating solution-yaml matching table")
@@ -988,7 +835,6 @@ def TensileCreateLibrary():
   arguments["LibraryFormat"] = args.LibraryFormat
   if args.no_enumerate:
     arguments["AMDGPUArchPath"] = False
-  arguments["PackageLibrary"] = args.PackageLibrary
 
   arguments["GenerateManifestAndExit"] = args.GenerateManifestAndExit
 
@@ -1136,14 +982,7 @@ def TensileCreateLibrary():
              if globalParameters["AsmCaps"][arch]["SupportedISA"]]
   newLibraryDir = ensurePath(os.path.join(outputPath, 'library'))
 
-  if globalParameters["PackageLibrary"]:
-    for archName, newMasterLibrary in masterLibraries.items():
-      if (archName in archs):
-        archPath = ensurePath(os.path.join(newLibraryDir, archName))
-        masterFile = os.path.join(archPath, "TensileLibrary")
-        newMasterLibrary.applyNaming(kernelMinNaming)
-        LibraryIO.write(masterFile, Utils.state(newMasterLibrary), args.LibraryFormat)
-  elif globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
+  if globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
     for archName, newMasterLibrary in masterLibraries.items():
       if archName in archs:
         if globalParameters["LazyLibraryLoading"]:
@@ -1166,28 +1005,8 @@ def TensileCreateLibrary():
     LibraryIO.write(masterFile, Utils.state(fullMasterLibrary), args.LibraryFormat)
 
   theMasterLibrary = fullMasterLibrary
-  if globalParameters["PackageLibrary"] or globalParameters["SeparateArchitectures"]:
+  if globalParameters["SeparateArchitectures"]:
     theMasterLibrary = list(masterLibraries.values())[0]
-
-  if args.BuildClient:
-    print1("# Building Tensile Client")
-    ClientExecutable.getClientExecutable(outputPath)
-
-  if args.ClientConfig:
-    # write simple ini for best solution mode linked to library we just made
-    iniFile = os.path.join(outputPath, "best-solution.ini")
-    with open(iniFile, "w") as f:
-      def param(key, value):
-        f.write("{}={}\n".format(key, value))
-
-      libraryFile = masterFile + ".yaml" \
-        if globalParameters["LibraryFormat"] == "yaml" else masterFile + ".dat"
-
-      param("library-file", libraryFile)
-      for coFile in codeObjectFiles:
-        param("code-object", os.path.join(outputPath,coFile))
-
-      param("best-solution", True)
 
   def checkFileExistence(files):
     for filePath in files:
