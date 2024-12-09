@@ -539,13 +539,14 @@ class MUBUFReadInstruction(GlobalReadInstruction):
         return [self.dst, self.vaddr, self.saddr, self.soffset]
 
     def getArgStr(self) -> str:
+        dstStr = "" if self.dst == None else str(self.dst) + ", "
         if self.asmCaps["HasMUBUFConst"]:
-          return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
+          return dstStr + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
         else:
           if str(self.soffset)=="0":
-            return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + "null"
+            return dstStr + str(self.vaddr) + ", " + str(self.saddr) + ", " + "null"
           else:
-            return str(self.dst) + ", " + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
+            return dstStr + str(self.vaddr) + ", " + str(self.saddr) + ", " + str(self.soffset)
 
     def toList(self) -> list:
         self.preStr()
@@ -774,7 +775,7 @@ class DSStoreInstruction(LocalWriteInstruction):
         self.ds             = ds
 
     def getParams(self) -> list:
-        return [self.dstAddr, self.src0, self.src1]
+        return [self.dstAddr, self.src0, self.src1, self.ds]
 
     def preStr(self):
         if self.kernel.isa[0] < 11:
@@ -1335,6 +1336,12 @@ class SCmpGtU32(CommonInstruction):
         super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
         self.setInst("s_cmp_gt_u32")
 
+# S bitcmp
+class SBitcmp1B32(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_B32, None, [src0, src1], None, None, comment)
+        self.setInst("s_bitcmp1_b32")
+
 # S Cmp K
 # SCC = (S0.u == SIMM16)
 class _SCmpKEQU32(CommonInstruction):
@@ -1542,11 +1549,28 @@ class SCMovB64(CommonInstruction):
         super().__init__(InstType.INST_B64, dst, [src], None, None, comment)
         self.setInst("s_cmov_b64")
 
+# Find first bit
+class SFf1B32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
+        self.setInst("s_ff1_i32_b32")
+
+# Bit field mask
+class SBfmB32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_bfm_b32")
+
 # Sign ext
 class SMovkI32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__(InstType.INST_I32, dst, [src], None, None, comment)
         self.setInst("s_movk_i32")
+
+class SSExtI16toI32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, [src], None, None, comment)
+        self.setInst("s_sext_i32_i16")
 
 # S exec
 class SAndSaveExecB32(CommonInstruction):
@@ -1719,6 +1743,21 @@ class _SWaitCntVscnt(Instruction):
     def __str__(self) -> str:
         return self.formatWithComment("s_waitcnt_vscnt null %u"%(self.vscnt))
 
+class _SWaitStorecnt(Instruction):
+    def __init__(self, storecnt: int=-1, comment="") -> None:
+        super().__init__(InstType.INST_NOTYPE, comment)
+        self.storecnt = storecnt
+
+    def getParams(self) -> list:
+        return [self.storecnt]
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def __str__(self) -> str:
+        return self.formatWithComment("s_wait_storecnt %u"%(self.storecnt))
+
 class _SWaitLoadcnt(Instruction):
     def __init__(self, loadcnt: int=-1, comment="") -> None:
         super().__init__(InstType.INST_NOTYPE, comment)
@@ -1773,11 +1812,15 @@ class SWaitCnt(CompositeInstruction):
     If lgkmcnt=vmcnt=vscnt=-1 then the waitcnt is a nop and
     an instruction with a comment is returned.
     """
-    def __init__(self, lgkmcnt: int=-1, vmcnt: int=-1, vscnt: int=-1, comment="", waitAll=False):
+    def __init__(self, lgkmcnt: int=-1, vmcnt: int=-1, vscnt: int=-1, dscnt: int=-1, kmcnt: int=-1, loadcnt: int=-1, storecnt: int=-1, comment="", waitAll=False):
         super().__init__(InstType.INST_NOTYPE, None, None, comment=comment)
-        self.lgkmcnt = lgkmcnt
-        self.vmcnt   = vmcnt
-        self.vscnt   = vscnt
+        self.lgkmcnt = lgkmcnt #LDS, GDS, Constant and Message count, deprecated in gfx12, splits into DScnt and KMcnt
+        self.vmcnt   = vmcnt #Vector memory load count, deprecated in gfx12
+        self.vscnt   = vscnt #Vector memory store, deprecated in gfx12
+        self.dscnt   = dscnt #LDS instruction count, new in gfx12
+        self.kmcnt   = kmcnt #Constant and Message count, new in gfx12
+        self.loadcnt = loadcnt #Vector memory load, new in gfx12
+        self.storecnt= storecnt #Vector memory store, new in gfx12
         self.waitAll = waitAll
 
     def getParams(self) -> list:
@@ -1789,11 +1832,19 @@ class SWaitCnt(CompositeInstruction):
             lgkmcnt = 0
             vmcnt   = 0
             vscnt   = 0
+            dscnt   = 0
+            kmcnt   = 0
+            loadcnt = 0
+            storecnt= 0
             comment = "(Wait all)"
         else:
             lgkmcnt = self.lgkmcnt
             vmcnt   = self.vmcnt
             vscnt   = self.vscnt
+            kmcnt   = self.kmcnt
+            dscnt   = -1 if kmcnt != -1 else self.lgkmcnt
+            loadcnt = self.vmcnt
+            storecnt= self.vscnt
             comment = self.comment
 
         maxVmcnt = self.asmCaps["MaxVmcnt"]
@@ -1802,10 +1853,15 @@ class SWaitCnt(CompositeInstruction):
             self.instructions = [_SWaitCnt(lgkmcnt, vmcnt, comment)]
             if (lgkmcnt != -1 and vmcnt != -1) or vscnt != -1 :
               self.instructions.append(_SWaitCntVscnt(vmcnt, comment))
-        elif self.archCaps["SeparateVMcnt"] or self.archCaps["SeparateLGKMcnt"]: #short-term, will separate them
-            self.instructions = [_SWaitDscnt(0, comment)]
-            self.instructions.append(_SWaitLoadcnt(0, comment))
-            self.instructions.append(_SWaitKMcnt(0, comment))
+        elif self.archCaps["SeparateVMcnt"] or self.archCaps["SeparateLGKMcnt"]:
+            if (dscnt != -1):
+                self.instructions = [_SWaitDscnt(dscnt, comment)]
+            if (kmcnt != -1):
+                self.instructions.append(_SWaitKMcnt(kmcnt, comment))
+            if (loadcnt != -1):
+                self.instructions.append(_SWaitLoadcnt(loadcnt, comment))
+            if (storecnt != -1):
+                self.instructions.append(_SWaitStorecnt(storecnt, comment))
         else:
             vmvscnt = -1
             if vscnt != -1:
@@ -2532,8 +2588,8 @@ class VCvtFP8toF32(VCvtInstruction):
         self.setInst("v_cvt_f32_fp8")
 
 class VCvtBF8toF32(VCvtInstruction):
-    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_BF8_to_F32, dst, src, sdwa, None, comment)
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_BF8_to_F32, dst, src, sdwa, vop3, comment)
         self.setInst("v_cvt_f32_bf8")
 
 class VCvtPkFP8toF32(VCvtInstruction):
@@ -2542,8 +2598,8 @@ class VCvtPkFP8toF32(VCvtInstruction):
         self.setInst("v_cvt_pk_f32_fp8")
 
 class VCvtPkBF8toF32(VCvtInstruction):
-    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_PK_BF8_to_F32, dst, src, sdwa, None, comment)
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_PK_BF8_to_F32, dst, src, sdwa, vop3, comment)
         self.setInst("v_cvt_pk_f32_bf8")
 
 class VCvtPkF32toFP8(VCvtInstruction):

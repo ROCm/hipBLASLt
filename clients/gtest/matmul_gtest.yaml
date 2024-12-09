@@ -457,6 +457,15 @@ Tests:
   bias_type: [default, f32_r]
   unit_check: 1
 
+- name: matmul_fallback_compute_fp16
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precisions_compute_fp16
+  matrix_size:
+    - { M:  128, N:  128, K:  128 }
+  transA: N
+  transB: N
+
 - name: matmul_fallback_equality_NN
   category: pre_checkin
   function:
@@ -773,6 +782,26 @@ Tests:
   unit_check: 1
   gpu_arch: '120[0-1]'
 
+- name: matmul_one_real_precisions_1b_gfx12
+  category: quick
+  function:
+    matmul: *real_precisions_1b_ocp
+  matrix_size: *one_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha: [ 0.0, 1.0 ]
+  beta: [ 0.0, 2.0 ]
+  gpu_arch: '120[0-1]'
+
+- name: matmul_one_integer_precisions_i8_gfx12
+  category: quick
+  function:
+    matmul: *integer_precisions_i8
+  matrix_size: *one_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha: [ 0.0, 1.0 ]
+  beta: [ 0.0, 2.0 ]
+  gpu_arch: '120[0-1]'
+
 ### END
 - name: matmul_real_1b_dst_f8_SCDInt1
   category: pre_checkin
@@ -1013,6 +1042,22 @@ Tests:
   beta: [ 0.0, 2.0 ]
   unit_check: 1
   algo_method: [0, 2]
+
+- name: matmul_groupedgemm_f8
+  category: pre_checkin
+  function:
+    matmul: *f8_precision_dst_fp16
+  M: [127, 129]
+  N: [127, 129]
+  K: [127, 129]
+  transA_transB:
+    - { transA: T, transB: N }
+  grouped_gemm: [2]
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  unit_check: 1
+  algo_method: [2]
+  gpu_arch: '942'
 
 - name: matmul_groupedgemm_bf16
   category: pre_checkin
@@ -1593,9 +1638,10 @@ Tests:
   algo_method: [0,1]
   transA_transB: *transA_transB_range
   alpha: 1
-  beta: 0
+  beta: [0,1]
   requested_solution_num: -1
   unit_check: 1
+  c_equal_d: [0, 1]
 
 - name: matmul_heuristic_all_solutions_real_1byte
   category: nightly
@@ -1607,8 +1653,9 @@ Tests:
   algo_method: [0,1]
   transA_transB: *transA_transB_range
   alpha: 1
-  beta: 0
+  beta: [0,1]
   requested_solution_num: -1
   unit_check: 1
   gpu_arch: '94[0-2]'
+  c_equal_d: [0, 1]
 ...

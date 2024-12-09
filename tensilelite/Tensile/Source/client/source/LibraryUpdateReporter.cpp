@@ -28,7 +28,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -188,4 +188,4 @@ namespace Tensile
             m_ownedStream.reset();
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

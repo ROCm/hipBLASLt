@@ -51,7 +51,7 @@ void Arguments::init()
     memset(stride_d, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
     memset(stride_e, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
 
-    user_allocated_workspace = 0;
+    user_allocated_workspace = 128 * 1024 * 1024;
 
     M[0] = 128;
     N[0] = 128;
@@ -107,8 +107,8 @@ void Arguments::init()
     bias_type         = HIPBLASLT_DATATYPE_INVALID;
     bias_source       = hipblaslt_bias_source::d;
     bias_vector       = false;
-    scaleA            = ScalingFormat::None;
-    scaleB            = ScalingFormat::None;
+    scaleA            = hipblaslt_scaling_format::none;
+    scaleB            = hipblaslt_scaling_format::none;
     scaleC            = false;
     scaleD            = false;
     scaleE            = false;
@@ -120,13 +120,13 @@ void Arguments::init()
     gradient          = false;
     norm_check_assert = true;
 
-    use_ext            = false;
-    use_ext_setproblem = false;
-    algo_method        = 0;
-    use_user_args      = false;
-    rotating           = 0;
-    use_gpu_timer      = false;
-
+    use_ext                  = false;
+    use_ext_setproblem       = false;
+    algo_method              = 0;
+    use_user_args            = false;
+    rotating                 = 0;
+    use_gpu_timer            = false;
+    skip_slow_solution_ratio = 0.0;
     // tuning
     gsu_vector[0] = 0;
     for(int32_t i = 1; i < MAX_SUPPORTED_NUM_PROBLEMS; i++)

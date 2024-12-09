@@ -31,6 +31,7 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
+      ActivationType: all
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -95,6 +96,7 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
+      ActivationType: all
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -159,6 +161,7 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
+      ActivationType: all
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -223,6 +226,7 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
+      ActivationType: all
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:

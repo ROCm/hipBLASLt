@@ -32,9 +32,9 @@ from joblib import Parallel, delayed
 
 def joblibParallelSupportsGenerator():
   import joblib
-  from distutils.version import StrictVersion
+  from packaging.version import Version
   joblibVer = joblib.__version__
-  return StrictVersion(joblibVer) >= StrictVersion("1.4.0")
+  return Version(joblibVer) >= Version("1.4.0")
 
 def CPUThreadCount(enable=True):
   from .Common import globalParameters
@@ -46,7 +46,7 @@ def CPUThreadCount(enable=True):
     else:
       cpu_count = len(os.sched_getaffinity(0))
     cpuThreads = globalParameters["CpuThreads"]
-    if cpuThreads < 1:
+    if cpuThreads == -1:
         return min(cpu_count, 64)  # Temporarily hack to fix oom issue, remove this after jenkin is fixed.
     return min(cpu_count, cpuThreads)
 

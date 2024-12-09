@@ -402,8 +402,17 @@ class MasterSolutionLibrary:
                 if problemType.activationType != 'none':
                     if str(problemType.activationType).upper() == 'ALL':
                         placeholderName += "_A"
+                    elif str(problemType.activationType).upper() == 'HIPBLASLT_ALL':
+                        placeholderName += "_HA"
                     else:
                         placeholderName += "_%s"%str(problemType.activationType).upper()
+
+                if problemType.swizzleTensorA:
+                    placeholderName += '_STA'
+
+                if problemType.swizzleTensorB:
+                    placeholderName += '_STB'
+
                 if problemType.useBias:
                     placeholderName += '_Bias'
                 if problemType.useE:

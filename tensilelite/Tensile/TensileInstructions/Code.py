@@ -680,10 +680,16 @@ class _SignatureKernelDescriptor(Item):
             self.totalVgprs = self.accumOffset + totalAgprs
         else:
             self.accumOffset = None
-            self.totalVgprs = totalVgprs
+            self.totalVgprs = max(totalAgprs, totalVgprs)
         self.originalTotalVgprs = totalVgprs
         self.totalAgprs         = totalAgprs
         self.totalSgprs         = totalSgprs
+
+    def getNextFreeVgpr(self) -> int:
+        return self.totalVgprs
+    
+    def getNextFreeSgpr(self) -> int:
+        return self.totalSgprs
 
     def __str__(self):
         kdIndent = " " * 2
@@ -842,6 +848,12 @@ class SignatureBase(Item):
     def addDescription(self, text: str):
         self.descriptionList.append(TextBlock(slash(text)))
 
+    def getNextFreeVgpr(self) -> int:
+        return self.kernelDescriptor.getNextFreeVgpr()
+
+    def getNextFreeSgpr(self) -> int:
+        return self.kernelDescriptor.getNextFreeSgpr()
+
     def clearDescription(self, text: str):
         self.descriptionList = []
 
@@ -880,6 +892,12 @@ class KernelBody(Item):
         self.totalSgprs = totalSgprs
         self.signature.setGprs(totalVgprs=totalVgprs, totalAgprs=totalAgprs, \
             totalSgprs=totalSgprs)
+        
+    def getNextFreeVgpr(self) -> int:
+        return self.signature.getNextFreeVgpr()
+
+    def getNextFreeSgpr(self) -> int:
+        return self.signature.getNextFreeSgpr()
 
     def __str__(self) -> str:
         kStr = str(TextBlock(block3Line("Begin Kernel")))

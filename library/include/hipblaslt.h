@@ -29,17 +29,6 @@
  *  flexible API to let user set attributes for solution selection.
  */
 
-//! HIP = Heterogeneous-compute Interface for Portability
-//!
-//! Define a extremely thin runtime layer that allows source code to be compiled
-//! unmodified through either AMD HCC or NVCC. Key features tend to be in the
-//! spirit and terminology of CUDA, but with a portable path to other
-//! accelerators as well.
-//!
-//! This is the master include file for hipBLASLt, wrapping around rocBLASLt and
-//! cuBLASLt.
-//
-
 #pragma once
 #ifndef _HIPBLASLT_H_
 #define _HIPBLASLT_H_
@@ -81,6 +70,10 @@
 // clang-format off
 
 #define HIPBLASLT_DATATYPE_INVALID static_cast<hipDataType>(255)
+// TODO: Replace static_cast<hipblasComputeType_t>(0) with the appropriate value since 0 represents f16_r
+#define HIPBLASLT_COMPUTE_TYPE_INVALID static_cast<hipblasComputeType_t>(0)
+#define HIPBLASLT_OPERATION_INVALID static_cast<hipblasOperation_t>(0)
+#define ROCBLASLT_COMPUTE_TYPE_INVALID static_cast<rocblaslt_compute_type>(255)
 
 /*! \ingroup types_module
  *  \brief Specify the enum type to set the postprocessing options for the epilogue.

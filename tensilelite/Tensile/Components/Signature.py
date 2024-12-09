@@ -251,7 +251,7 @@ class SignatureDefault(Signature):
                 actValueType = 'pkf16'
             for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
                 signature.addArg(                   name, SVK.SIG_VALUE,        actValueType)
-            if kernel["ProblemType"]["ActivationType"] == 'all':
+            if kernel["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all'] :
                 signature.addArg(       "activationType", SVK.SIG_VALUE,               "u32")
 
         # TODO- combine one workspace

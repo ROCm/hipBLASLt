@@ -30,7 +30,7 @@
 
 #include <Tensile/DataTypes.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -146,4 +146,4 @@ namespace Tensile
                       size_t                    elementsToValidate);
 
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

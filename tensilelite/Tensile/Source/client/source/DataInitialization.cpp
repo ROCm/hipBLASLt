@@ -26,6 +26,7 @@
 
 #include "DataInitialization.hpp"
 #include "Utility.hpp"
+#include "TensorDataManipulation.hpp"
 // #include "DataInitializationTyped.hpp"
 
 #include <Tensile/Utils.hpp>
@@ -34,7 +35,7 @@
 
 #include <algorithm>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -88,6 +89,14 @@ namespace Tensile
                 return "RandomNegPosLimited";
             case InitMode::Free:
                 return "Free";
+            case InitMode::TrigIndSin:
+                return "TrigIndSin";
+            case InitMode::TrigIndCos:
+                return "TrigIndCos";
+            case InitMode::TrigIndAbsSin:
+                return "TrigIndAbsSin";
+            case InitMode::TrigIndAbsCos:
+                return "TrigIndAbsCos";
 
             case InitMode::Count:
                 break;
@@ -151,6 +160,14 @@ namespace Tensile
                 mode = InitMode::DenormMax;
             else if(strValue == ToString(InitMode::RandomNegPosLimited))
                 mode = InitMode::RandomNegPosLimited;
+            else if(strValue == ToString(InitMode::TrigIndSin))
+                mode = InitMode::TrigIndSin;
+            else if(strValue == ToString(InitMode::TrigIndCos))
+                mode = InitMode::TrigIndCos;
+            else if(strValue == ToString(InitMode::TrigIndAbsSin))
+                mode = InitMode::TrigIndAbsSin;
+            else if(strValue == ToString(InitMode::TrigIndAbsCos))
+                mode = InitMode::TrigIndAbsCos;
             else if(std::all_of(strValue.begin(), strValue.end(), isdigit))
             {
                 int value = atoi(strValue.c_str());
@@ -375,7 +392,7 @@ namespace Tensile
                 cpuCompressed, cpuMeta, srcBuffer, tensor, tensorC, tensorMeta, dim);
 
             //copy compressed sparse matrix and metadata matrix to GPU
-            Tensile::hip::CopyTensor(dstCompressed, cpuCompressed, tensorC, hipMemcpyHostToDevice);
+            TensileLite::hip::CopyTensor(dstCompressed, cpuCompressed, tensorC, hipMemcpyHostToDevice);
             HIP_CHECK_EXC(hipMemcpy(
                 dstMeta, cpuMeta, tensorMeta.totalLogicalElements(), hipMemcpyHostToDevice));
 
@@ -493,7 +510,7 @@ namespace Tensile
             ptrdiff_t dPadding = totalElements - descriptor.totalAllocatedElements();
             dPadding *= descriptor.elementBytes();
             void* dstOffset = (void*)((uint8_t*)dst + dPadding / 2);
-            Tensile::hip::CopyTensorVoid(dstOffset, src, descriptor, kind);
+            TensileLite::hip::CopyTensorVoid(dstOffset, src, descriptor, kind);
             return dstOffset;
         }
 
@@ -1698,6 +1715,55 @@ namespace Tensile
             }
         }
 
+        void DataInitialization::copySwizzledToGPUBuffer(ContractionProblemGemm const& problem)
+        {
+            for(size_t i = 0; i < m_vdata.size(); i++)
+            {
+                auto& desc = problem.tensors()[i];
+                auto  it   = m_vdata[i].pristine.find(desc.dataType());
+                if(it == m_vdata[i].pristine.end())
+                    continue;
+                auto& p = m_vdata[i].pristine[desc.dataType()];
+                if(p.gpuInput.valid.get() == nullptr || p.cpuInput.valid.get() == nullptr)
+                    continue;
+
+                bool needSwizzle = (problem.swizzleTensorA() && i == ContractionProblemGemm::TENSOR::A)
+                    || (problem.swizzleTensorB() && i == ContractionProblemGemm::TENSOR::B);
+
+                void *ptr{};
+                //FIXME: Not good, need to use format to specify the way for swizzling.
+                //TODO: Support more swizzling type, such as 32x32x8, currently we have 16x16x8 only.
+                if(needSwizzle)
+                {
+                    using Tensor = Tensor::Manipulation::Tensor;
+                    constexpr size_t MiM = 16;
+                    constexpr size_t MiK = 16;
+                    constexpr size_t MiKv = 4;
+                    constexpr size_t PackK = 2;
+                    auto unrolledSize = desc.sizes()[0];
+                    auto tiledSize = desc.sizes()[1];
+                    auto tmpTensor = Tensor::create<Half>({tiledSize, unrolledSize});
+                    memcpy(tmpTensor.as<void>(), p.cpuInput.valid.get(), tmpTensor.getNumBytes());
+                    tmpTensor.reshape({tiledSize / MiM, MiM, unrolledSize / (MiK * PackK), MiK / MiKv , MiKv * PackK});
+                    Tensor permuted = permute(tmpTensor, {0, 2, 3, 1, 4});
+                    ptr = copyInputBuffers(desc,
+                                           p.gpuInput.valid.get(),
+                                           permuted.as<void>(),
+                                           permuted.getDesc().flattenSize(),
+                                           hipMemcpyHostToDevice);
+                } else {
+                    ptr = copyInputBuffers(desc,
+                                            p.gpuInput.valid.get(),
+                                            p.cpuInput.valid.get(),
+                                            p.maxElements,
+                                            hipMemcpyHostToDevice);
+                }
+
+                if(ptr == nullptr)
+                    std::__throw_runtime_error("error");
+            }
+        }
+
         template <typename T>
         void DataInitialization::setContractionInputs(std::vector<T*>&     ptrs,
                                                       std::vector<void**>& batchPtrs,
@@ -2183,4 +2249,4 @@ namespace Tensile
 
         DataInitialization::~DataInitialization() {}
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

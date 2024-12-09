@@ -31,6 +31,7 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 3
       UseScaleAlphaVec: 3
 
@@ -109,6 +110,7 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 3
       UseScaleAlphaVec: 3
 
@@ -187,6 +189,7 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 3
       UseScaleAlphaVec: 3
 
@@ -265,6 +268,7 @@ BenchmarkProblems:
       Sparse: 1
       Batched: True
       Activation: True
+      ActivationType: all
       UseBias: 3
       UseScaleAlphaVec: 3
 

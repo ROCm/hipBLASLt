@@ -28,7 +28,7 @@
 #include <memory>
 #include <vector>
 
-namespace Tensile
+namespace TensileLite
 {
     struct RotatingUnitInfo
     {

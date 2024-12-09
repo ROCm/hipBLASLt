@@ -35,7 +35,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -90,6 +90,7 @@ namespace Tensile
         {
             m_validatedSolution = false;
             m_errorInSolution   = false;
+            m_executedSolution  = false;
         }
 
         bool ReferenceValidator::needMoreRunsInSolution() const
@@ -112,7 +113,12 @@ namespace Tensile
 
         void ReferenceValidator::preWarmup() {}
 
-        void ReferenceValidator::postWarmup() {}
+        void ReferenceValidator::postWarmup(TimingEvents const& startEvents,
+                                            TimingEvents const& stopEvents,
+                                            hipStream_t const&  stream)
+        {
+            m_executedSolution = true;
+        }
 
         bool ReferenceValidator::validateSolution(std::shared_ptr<ProblemInputs> inputs)
         {
@@ -714,6 +720,9 @@ namespace Tensile
 
         void ReferenceValidator::postSolution()
         {
+            if(!m_executedSolution)
+                return;
+
             if(m_enabled && !m_validatedSolution)
                 return;
 
@@ -744,4 +753,4 @@ namespace Tensile
             return m_errorsReported;
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

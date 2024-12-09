@@ -39,7 +39,7 @@
 #endif
 #endif
 
-namespace Tensile
+namespace TensileLite
 {
 
     TENSILE_API Problem::~Problem()                 = default;
@@ -112,4 +112,4 @@ namespace Tensile
         LoadLibraryData<ContractionProblemGemm, ContractionSolution>(
             std::vector<uint8_t> const& data);
 #endif
-} // namespace Tensile
+} // namespace TensileLite

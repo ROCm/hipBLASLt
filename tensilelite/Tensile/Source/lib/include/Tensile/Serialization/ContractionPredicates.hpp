@@ -32,7 +32,7 @@
 #include <Tensile/ContractionProblemPredicates.hpp>
 #include <Tensile/Predicates.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -97,7 +97,8 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::StridedBatchedEqual>(),
                     Base::template Pair<Predicates::Contraction::GroupedGemmEqual>(),
                     Base::template Pair<Predicates::Contraction::CUEfficiency>(),
-                    Base::template Pair<Predicates::Contraction::Experimental>(),
+                    Base::template Pair<Predicates::Contraction::ExperimentalDTree>(),
+                    Base::template Pair<Predicates::Contraction::ExperimentalStreamK>(),
                     Base::template Pair<Predicates::Contraction::EqualityMatching>(),
                     Base::template Pair<Predicates::Contraction::FreeSizeMatching>(),
                     Base::template Pair<Predicates::Contraction::UseGradientEqual>(),
@@ -116,6 +117,9 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::Sparse>(),
                     Base::template Pair<Predicates::Contraction::F32XdlMathOpEqual>(),
                     Base::template Pair<Predicates::Contraction::SupportDeviceUserArguments>(),
+                    Base::template Pair<Predicates::Contraction::WorkgroupMappingXCCCheck>(),
+                    Base::template Pair<Predicates::Contraction::SwizzleTensorA>(),
+                    Base::template Pair<Predicates::Contraction::SwizzleTensorB>()
                 });
 
                 auto gmap = Generic::GetSubclasses();
@@ -381,8 +385,14 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::Experimental, IO>
-            : public AutoMappingTraits<Predicates::Contraction::Experimental, IO>
+        struct MappingTraits<Predicates::Contraction::ExperimentalDTree, IO>
+            : public AutoMappingTraits<Predicates::Contraction::ExperimentalDTree, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::ExperimentalStreamK, IO>
+            : public AutoMappingTraits<Predicates::Contraction::ExperimentalStreamK, IO>
         {
         };
 
@@ -502,9 +512,27 @@ namespace Tensile
         };
 
         template <typename IO>
+        struct MappingTraits<Predicates::Contraction::SwizzleTensorA, IO>
+            : public AutoMappingTraits<Predicates::Contraction::SwizzleTensorA, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::SwizzleTensorB, IO>
+            : public AutoMappingTraits<Predicates::Contraction::SwizzleTensorB, IO>
+        {
+        };
+
+        template <typename IO>
         struct MappingTraits<Predicates::Contraction::SupportDeviceUserArguments, IO>
             : public AutoMappingTraits<Predicates::Contraction::SupportDeviceUserArguments, IO>
         {
         };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::WorkgroupMappingXCCCheck, IO>
+            : public AutoMappingTraits<Predicates::Contraction::WorkgroupMappingXCCCheck, IO>
+        {
+        };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

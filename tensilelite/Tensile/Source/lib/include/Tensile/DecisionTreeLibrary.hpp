@@ -35,7 +35,7 @@
 #include <Tensile/SolutionLibrary.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
      * \ingroup SolutionLibrary
@@ -173,4 +173,4 @@ namespace Tensile
         }
     };
 
-} // namespace Tensile
+} // namespace TensileLite

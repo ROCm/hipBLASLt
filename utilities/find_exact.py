@@ -71,7 +71,7 @@ defaultBenchOptions = {"ProblemType": {
     "RequestedSolutions": 2, # Only works in AlgoMethod heuristic
     "SolutionIndex": None, # Only works in AlgoMethod index
     "ApiMethod": "cpp",
-    "RotatingBuffer": 0,
+    "RotatingBuffer": 512,
 }, "TuningParameters": {
     "SplitK": [0]
 }, "ProblemSizes": []}
@@ -206,12 +206,13 @@ def findExact(config):
     execBenchPath = globalParameters["BuildDir"] + "/clients/staging/hipblaslt-bench"
 
     for size in config["ProblemSizes"]:
-        filename = "result_%s%s_%s_%dx%dx%d.txt"%(config["ProblemType"]["TransposeA"],
-                                                  config["ProblemType"]["TransposeB"],
-                                                  gemm_type,
-                                                  size[0],
-                                                  size[1],
-                                                  size[2])
+        filename = "result_%s%s_%s_%dx%dx%dx%d.txt"%(config["ProblemType"]["TransposeA"],
+                                                     config["ProblemType"]["TransposeB"],
+                                                     gemm_type,
+                                                     size[0],
+                                                     size[1],
+                                                     size[2],
+                                                     size[3])
         print("--Running size: %s"%(filename))
         command = [execBenchPath,
                 "--print_kernel_info",
@@ -227,7 +228,7 @@ def findExact(config):
                 "--requested_solution", str(config["TestConfig"]["RequestedSolutions"]),
                 "--solution_index", str(config["TestConfig"]["SolutionIndex"]),
                 "-j", str(config["TestConfig"]["ColdIter"]), "-i", str(config["TestConfig"]["Iter"]),
-                "-m", str(size[0]), "-n", str(size[1]), "-k", str(size[2])]
+                "-m", str(size[0]), "-n", str(size[1]), "-k", str(size[3]), "--batch_count", str(size[2])]
 
         if config["ProblemType"]["UseBias"]:
             command.append("--bias_vector")
@@ -315,7 +316,7 @@ def CreateExact(config):
     print("--Reading matching table: %s"%tableFile)
     tableData = readYaml(tableFile)
     print("--Reading bench files")
-    benchList = glob.glob(globalParameters["WorkingDir"]["Bench"] + "/result_*_*_*x*x*.txt")
+    benchList = glob.glob(globalParameters["WorkingDir"]["Bench"] + "/result_*_*_*x*x*x*.txt")
     yamlList = defaultdict(list)
     for benchFile in benchList:
         print(" --Found file %s"%benchFile)

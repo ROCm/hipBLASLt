@@ -33,7 +33,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Tensile
@@ -64,6 +64,7 @@ namespace Tensile
         Geluscaling,
         Silu,
         All,
+        Hipblaslt_all,
         Exp, // Verification use only.
         Count
     };

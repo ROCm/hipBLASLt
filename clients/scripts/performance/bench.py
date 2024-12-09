@@ -90,6 +90,7 @@ def run_bench(benchExecutable,
                     capturingValues = False
                 elif line.startswith(startingToken):
                     line = line.replace('hipblaslt-Gflops', 'gflops')
+                    line = line.replace('hipblaslt-GB/s', 'GB/s')
                     line = line.split(':')[1]
                     print(f'\n{line}')
                     csvKeys = line.split(',')

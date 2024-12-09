@@ -50,12 +50,6 @@ enum hipblaslt_argument : int;
 constexpr std::size_t MAX_SUPPORTED_NUM_PROBLEMS{32};
 struct Arguments
 {
-    enum ScalingFormat
-    {
-        None = 0,
-        Scalar,
-        Vector
-    };
     /*************************************************************************
      *                    Beginning Of Arguments                             *
      *************************************************************************/
@@ -134,23 +128,23 @@ struct Arguments
     float                     activation_arg1; // threshold when activation type is relu
     float                     activation_arg2; // upperbound when activation type is relu
 
-    hipDataType           bias_type;
-    hipblaslt_bias_source bias_source;
-    bool                  bias_vector;
-    ScalingFormat         scaleA;
-    ScalingFormat         scaleB;
-    bool                  scaleC;
-    bool                  scaleD;
-    bool                  scaleE;
-    bool                  scaleAlpha_vector;
-    bool                  amaxScaleA;
-    bool                  amaxScaleB;
-    bool                  amaxD;
-    bool                  c_equal_d;
-    bool                  HMM;
-    bool                  use_e;
-    bool                  gradient;
-    bool                  norm_check_assert;
+    hipDataType              bias_type;
+    hipblaslt_bias_source    bias_source;
+    bool                     bias_vector;
+    hipblaslt_scaling_format scaleA;
+    hipblaslt_scaling_format scaleB;
+    bool                     scaleC;
+    bool                     scaleD;
+    bool                     scaleE;
+    bool                     scaleAlpha_vector;
+    bool                     amaxScaleA;
+    bool                     amaxScaleB;
+    bool                     amaxD;
+    bool                     c_equal_d;
+    bool                     HMM;
+    bool                     use_e;
+    bool                     gradient;
+    bool                     norm_check_assert;
 
     // API related
     bool    use_ext;
@@ -160,7 +154,7 @@ struct Arguments
     bool    use_user_args;
     int32_t rotating;
     bool    use_gpu_timer;
-
+    float   skip_slow_solution_ratio;
     // tuning
     int32_t gsu_vector[MAX_SUPPORTED_NUM_PROBLEMS]; // This is for client
     int32_t wgm_vector[MAX_SUPPORTED_NUM_PROBLEMS]; // This is for client
@@ -257,6 +251,7 @@ struct Arguments
     OPER(use_user_args) SEP          \
     OPER(rotating) SEP               \
     OPER(use_gpu_timer) SEP          \
+    OPER(skip_slow_solution_ratio) SEP\
     OPER(gsu_vector) SEP             \
     OPER(wgm_vector) SEP             \
     OPER(print_solution_found) SEP   \
@@ -853,7 +848,7 @@ namespace ArgumentsHelper
                 func("rotating_buffer", arg.rotating);
         };
 };
-    // clang-format on
+// clang-format on
 
 #else
 #error "Unsupported C++ version"

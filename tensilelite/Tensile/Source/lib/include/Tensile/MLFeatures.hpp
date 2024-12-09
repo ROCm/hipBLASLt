@@ -32,7 +32,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
      * \addtogroup Properties
@@ -70,7 +70,7 @@ namespace Tensile
         using MLFeature = Property<Object, float>;
 
         /**
-         * \copydoc Tensile::Property_CRTP
+         * \copydoc TensileLite::Property_CRTP
          */
         template <typename Class, typename Object>
         using MLFeature_CRTP = Property_CRTP<Class, Object, float>;
@@ -234,4 +234,4 @@ namespace Tensile
          * @}
          */
     } // namespace MLFeatures
-} // namespace Tensile
+} // namespace TensileLite

@@ -28,7 +28,7 @@
 
 #include <Tensile/Tensile.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup Hardware
@@ -198,11 +198,11 @@ namespace Tensile
         int         wavefrontSize    = 64;
         int         simdPerCu        = 4;
         int         computeUnitCount = 0;
-        int         skDynamicGrid    = 0;
+        int         skDynamicGrid    = 3;
         int         skMaxCUs         = 0;
         int         skGridMultiplier = 1;
         int         skFixedGrid      = 0;
-        int         skFullTiles      = 0;
+        int         skFullTiles      = 1;
         std::string deviceName;
 
         virtual bool   runsKernelTargeting(Processor p) const;
@@ -221,7 +221,7 @@ namespace Tensile
         const int getSKDynamicGrid() const
         {
             static const char* envStr = std::getenv("TENSILE_STREAMK_DYNAMIC_GRID");
-            static const int   value  = (envStr == NULL ? 0 : std::atoi(envStr));
+            static const int   value  = (envStr == NULL ? 3 : std::atoi(envStr));
             return value;
         }
 
@@ -249,7 +249,7 @@ namespace Tensile
         const int getSKFullTiles() const
         {
             static const char* envStr = std::getenv("TENSILE_STREAMK_FULL_TILES");
-            static const int   value  = (envStr == NULL ? 0 : std::atoi(envStr));
+            static const int   value  = (envStr == NULL ? 1 : std::atoi(envStr));
             return value;
         }
 
@@ -281,4 +281,4 @@ namespace Tensile
 
     TENSILE_API std::ostream& operator<<(std::ostream& stream, AMDGPU::Processor p);
     TENSILE_API std::ostream& operator<<(std::ostream& stream, AMDGPU g);
-} // namespace Tensile
+} // namespace TensileLite

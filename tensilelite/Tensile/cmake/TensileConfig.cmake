@@ -87,7 +87,10 @@ function(TensileCreateLibraryFiles
        GENERATE_PACKAGE
        SEPARATE_ARCHITECTURES
        LAZY_LIBRARY_LOADING
+       ASAN_BUILD
        KEEP_BUILD_TMP
+       NO_COMPRESS
+       EXPERIMENTAL 
        )
 
   # Single value settings
@@ -153,6 +156,18 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--keep-build-tmp")
   endif()
 
+  if(Tensile_NO_COMPRESS)
+    set(Options ${Options} "--no-compress")
+  endif()
+
+  if(Tensile_EXPERIMENTAL)
+    set(Options ${Options} "--experimental")
+  endif()
+
+  if(Tensile_ASAN_BUILD)
+    set(Options ${Options} "--address-sanitizer")
+  endif()
+
   if(Tensile_GENERATE_PACKAGE)
     set(Options ${Options} "--package-library")
   endif()
@@ -195,6 +210,10 @@ function(TensileCreateLibraryFiles
 
   if(Tensile_ASM_DEBUG)
     set(Options ${Options} "--asm-debug")
+  endif()
+
+  if(Tensile_LOGIC_FILTER)
+    set(Options ${Options} "--logic-filter=${Tensile_LOGIC_FILTER}")
   endif()
 
   if(Tensile_LIBRARY_FORMAT)

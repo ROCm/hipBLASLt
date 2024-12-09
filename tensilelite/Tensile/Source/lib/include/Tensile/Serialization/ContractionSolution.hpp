@@ -31,7 +31,7 @@
 #include <Tensile/ContractionSolution.hpp>
 #include <Tensile/Serialization/Base.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -115,8 +115,12 @@ namespace Tensile
                 iot::mapOptional(io, "CustomKernelName", s.customKernelName);
 
                 iot::mapRequired(io, "workGroupMappingXCC", s.workGroupMappingXCC);
+                iot::mapRequired(io, "workGroupMappingXCCGroup", s.workGroupMappingXCCGroup);
+
                 iot::mapRequired(io, "globalSplitUCoalesced", s.globalSplitUCoalesced);
-                iot::mapRequired(io, "globalSplitUWorkGroupMappingRoundRobin", s.globalSplitUWorkGroupMappingRoundRobin);
+                iot::mapRequired(io,
+                                 "globalSplitUWorkGroupMappingRoundRobin",
+                                 s.globalSplitUWorkGroupMappingRoundRobin);
             }
 
             const static bool flow = false;
@@ -177,6 +181,8 @@ namespace Tensile
                 iot::mapOptional(io, "sparse", s.sparse);
                 iot::mapOptional(io, "f32XdlMathOp", s.f32XdlMathOp);
                 iot::mapOptional(io, "supportDeviceUserArguments", s.supportDeviceUserArguments);
+                iot::mapOptional(io, "swizzleTensorA", s.swizzleTensorA);
+                iot::mapOptional(io, "swizzleTensorB", s.swizzleTensorB);
             }
 
             const static bool flow = false;
@@ -211,4 +217,4 @@ namespace Tensile
             const static bool flow = false;
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

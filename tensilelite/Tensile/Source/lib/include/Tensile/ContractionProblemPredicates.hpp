@@ -31,13 +31,16 @@
 #include <Tensile/KernelLanguageTypes.hpp>
 #include <Tensile/Predicates.hpp>
 
+#include <Tensile/AMDGPU.hpp>
+#include <Tensile/hip/HipHardware.hpp>
+
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <limits>
 #include <vector>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Predicates
     {
@@ -1100,7 +1103,7 @@ namespace Tensile
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
-                                       std::ostream&             stream) const override
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -1138,7 +1141,7 @@ namespace Tensile
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
-                                       std::ostream&             stream) const override
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -1390,14 +1393,12 @@ namespace Tensile
                 {
                     bool rv = (*this)(problem);
 
-                    stream << rv << ": " << *this << ": ("
-                           << " (" << problem.a().strides()[1] << " * " << value.depthUorMT0
-                           << " + " << value.shiftPtrElemA << ") * " << problem.a().elementBytes()
-                           << " < 4294967296 && "
-                           << " (" << problem.b().strides()[1] << " * " << value.depthUorMT1
-                           << " + " << value.shiftPtrElemB << ") * " << problem.b().elementBytes()
-                           << " < 4294967296"
-                           << ")" << std::endl;
+                    stream << rv << ": " << *this << ": (" << " (" << problem.a().strides()[1]
+                           << " * " << value.depthUorMT0 << " + " << value.shiftPtrElemA << ") * "
+                           << problem.a().elementBytes() << " < 4294967296 && " << " ("
+                           << problem.b().strides()[1] << " * " << value.depthUorMT1 << " + "
+                           << value.shiftPtrElemB << ") * " << problem.b().elementBytes()
+                           << " < 4294967296" << ")" << std::endl;
 
                     return rv;
                 }
@@ -1449,8 +1450,8 @@ namespace Tensile
                     bool rv = (*this)(problem);
 
                     stream << rv << ": " << *this << ": (" << problem.c().strides()[1] << " * "
-                           << problem.c().elementBytes() << " * " << value << " < 4294967296"
-                           << ")" << std::endl;
+                           << problem.c().elementBytes() << " * " << value << " < 4294967296" << ")"
+                           << std::endl;
 
                     return rv;
                 }
@@ -1494,8 +1495,8 @@ namespace Tensile
                 {
                     bool rv = (*this)(problem);
                     stream << rv << ": " << *this << ": (" << problem.d().strides()[1] << " * "
-                           << problem.d().elementBytes() << " * " << value << " < 4294967296"
-                           << ")" << std::endl;
+                           << problem.d().elementBytes() << " * " << value << " < 4294967296" << ")"
+                           << std::endl;
                     return rv;
                 }
             };
@@ -1831,7 +1832,8 @@ namespace Tensile
                 }
             };
 
-            struct Experimental : public Predicate_CRTP<Experimental, ContractionProblemGemm>
+            struct ExperimentalDTree
+                : public Predicate_CRTP<ExperimentalDTree, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1839,16 +1841,16 @@ namespace Tensile
                     HasValue = false
                 };
 
-                Experimental() = default;
+                ExperimentalDTree() = default;
 
                 static std::string Type()
                 {
-                    return "Experimental";
+                    return "ExperimentalDTree";
                 }
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return (problem.performanceMetric() == PerformanceMetric::Experimental);
+                    return (problem.performanceMetric() == PerformanceMetric::ExperimentalDTree);
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
@@ -1859,8 +1861,42 @@ namespace Tensile
                                         "prob",
                                         problem.performanceMetric(),
                                         "==",
-                                        "sol: PerformanceMetric::Experimental",
-                                        PerformanceMetric::Experimental);
+                                        "sol: PerformanceMetric::ExperimentalDTree",
+                                        PerformanceMetric::ExperimentalDTree);
+                }
+            };
+
+            struct ExperimentalStreamK
+                : public Predicate_CRTP<ExperimentalStreamK, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = false
+                };
+
+                ExperimentalStreamK() = default;
+
+                static std::string Type()
+                {
+                    return "ExperimentalStreamK";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return (problem.performanceMetric() == PerformanceMetric::ExperimentalStreamK);
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(problem,
+                                        stream,
+                                        "prob",
+                                        problem.performanceMetric(),
+                                        "==",
+                                        "sol: PerformanceMetric::ExperimentalStreamK",
+                                        PerformanceMetric::ExperimentalStreamK);
                 }
             };
 
@@ -1981,7 +2017,18 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.activationType() == value || value == ActivationType::All;
+                    if(value == ActivationType::All)
+                        return true;
+                    if(problem.activationType() == value
+                       || problem.activationType() == ActivationType::None)
+                        return true;
+                    if(value == ActivationType::Hipblaslt_all
+                       && (problem.activationType() == ActivationType::DGelu
+                           || problem.activationType() == ActivationType::Gelu
+                           || problem.activationType() == ActivationType::Relu))
+                        return true;
+
+                    return false;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
@@ -2011,7 +2058,8 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    if(problem.activationType() == ActivationType::All)
+                    if(problem.activationType() == ActivationType::All
+                       || problem.activationType() == ActivationType::Hipblaslt_all)
                     {
                         for(size_t i = 0; i < value.size(); i++)
                         {
@@ -2473,6 +2521,72 @@ namespace Tensile
                 }
             };
 
+            struct SwizzleTensorA : public Predicate_CRTP<SwizzleTensorA, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                SwizzleTensorA() = default;
+                SwizzleTensorA(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "SwizzleTensorA";
+                }
+
+                bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.swizzleTensorA() == value;
+                }
+
+                bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(
+                        problem, stream, "prob", problem.swizzleTensorA(), "==", "sol", value);
+                }
+            };
+
+            struct SwizzleTensorB : public Predicate_CRTP<SwizzleTensorB, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                SwizzleTensorB() = default;
+                SwizzleTensorB(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "SwizzleTensorB";
+                }
+
+                bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.swizzleTensorB() == value;
+                }
+
+                bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(
+                        problem, stream, "prob", problem.swizzleTensorB(), "==", "sol", value);
+                }
+            };
+
             struct F32XdlMathOpEqual
                 : public Predicate_CRTP<F32XdlMathOpEqual, ContractionProblemGemm>
             {
@@ -2551,10 +2665,65 @@ namespace Tensile
                     return rv;
                 }
             };
+
+            struct WorkgroupMappingXCCCheck
+                : public Predicate_CRTP<WorkgroupMappingXCCCheck, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                std::array<int, 2> value;
+                size_t             cuCount;
+
+                WorkgroupMappingXCCCheck()
+                {
+                    auto pHardware = hip::GetCurrentDevice();
+                    assert(pHardware != nullptr);
+                    Hardware const& hardware = *pHardware;
+                    AMDGPU const*   pAMDGPU  = dynamic_cast<AMDGPU const*>(&hardware);
+                    cuCount                  = pAMDGPU->computeUnitCount;
+                }
+                WorkgroupMappingXCCCheck(std::array<int, 2> value)
+                    : value(value)
+                {
+                    auto pHardware = hip::GetCurrentDevice();
+                    assert(pHardware != nullptr);
+                    Hardware const& hardware = *pHardware;
+                    AMDGPU const*   pAMDGPU  = dynamic_cast<AMDGPU const*>(&hardware);
+                    cuCount                  = pAMDGPU->computeUnitCount;
+                }
+
+                static std::string Type()
+                {
+                    return "WorkgroupMappingXCCCheck";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    size_t WGMXCCG = (value[1] == -1) ? cuCount : value[1];
+                    return ((value[0] & (value[0] - 1)) == 0) && WGMXCCG % value[0] == 0;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(problem,
+                                        stream,
+                                        "cuCount",
+                                        (value[1] == -1) ? cuCount : value[1],
+                                        "%",
+                                        "WGMXCC",
+                                        value[0],
+                                        "==",
+                                        0);
+                }
+            };
         } // namespace Contraction
 
         /**
  * @}
  */
     } // namespace Predicates
-} // namespace Tensile
+} // namespace TensileLite

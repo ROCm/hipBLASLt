@@ -27,7 +27,7 @@
 #include <Tensile/TensorOps.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     std::map<std::string, TensorOp::Type> TensorOp::typeNames;
 
@@ -125,4 +125,4 @@ namespace Tensile
 
         return stream;
     }
-} // namespace Tensile
+} // namespace TensileLite

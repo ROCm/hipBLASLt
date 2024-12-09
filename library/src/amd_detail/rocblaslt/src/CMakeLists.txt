@@ -57,8 +57,17 @@ if( BUILD_WITH_TENSILE )
   if(Tensile_LAZY_LIBRARY_LOADING)
     set(Tensile_Options ${Tensile_Options} LAZY_LIBRARY_LOADING)
   endif()
+  if(Tensile_ASAN_BUILD)
+    set(Tensile_Options ${Tensile_Options} ASAN_BUILD)
+  endif()
   if(Tensile_KEEP_BUILD_TMP)
     set(Tensile_Options ${Tensile_Options} KEEP_BUILD_TMP)
+  endif()
+  if(Tensile_NO_COMPRESS)
+    set(Tensile_Options ${Tensile_Options} NO_COMPRESS)
+  endif()
+  if(Tensile_EXPERIMENTAL)
+    set(Tensile_Options ${Tensile_Options} EXPERIMENTAL)
   endif()
 
   # Add a build target for Tensile kernel library
@@ -130,5 +139,6 @@ set(rocblaslt_source
   src/amd_detail/rocblaslt/src/rocblaslt_mat.cpp
   src/amd_detail/rocblaslt/src/utility.cpp
   src/amd_detail/rocblaslt/src/rocblaslt_transform.cpp
+  src/amd_detail/rocblaslt/src/UserDrivenTuningParser.cpp
   ${Tensile_SRC}
 )

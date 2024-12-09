@@ -125,12 +125,12 @@ void sat_cast_mul(void* dst, hipDataType typeD, customVector<TcCast>& src, Tc sc
         break;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        sat_cast_mul<hipblaslt_f8_ocp, TcCast, Tc>(
-            static_cast<hipblaslt_f8_ocp*>(dst), src, scale, size);
+        sat_cast_mul<hipblaslt_f8, TcCast, Tc>(
+            static_cast<hipblaslt_f8*>(dst), src, scale, size);
         break;
     case HIP_R_8F_E5M2:
-        sat_cast_mul<hipblaslt_bf8_ocp, TcCast, Tc>(
-            static_cast<hipblaslt_bf8_ocp*>(dst), src, scale, size);
+        sat_cast_mul<hipblaslt_bf8, TcCast, Tc>(
+            static_cast<hipblaslt_bf8*>(dst), src, scale, size);
         break;
 #endif
     case HIP_R_32I:
@@ -154,8 +154,8 @@ void cast_mul(customVector<TcCast>& dst, const TiA* src, size_t size)
     {
 #ifdef ROCM_USE_FLOAT8
         if constexpr(std::is_same<TcCast, float>::value
-                     || !(std::is_same<TiA, hipblaslt_bf8_ocp>::value
-                          || std::is_same<TiA, hipblaslt_f8_ocp>::value))
+                     || !(std::is_same<TiA, hipblaslt_bf8>::value
+                          || std::is_same<TiA, hipblaslt_f8>::value))
 #endif
             for(size_t i = 0; i < size; i++)
             {
@@ -190,10 +190,10 @@ void cast_mul(customVector<TcCast>& dst, const void* src, hipDataType TiA, size_
         break;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        cast_mul<TcCast, hipblaslt_f8_ocp>(dst, static_cast<const hipblaslt_f8_ocp*>(src), size);
+        cast_mul<TcCast, hipblaslt_f8>(dst, static_cast<const hipblaslt_f8*>(src), size);
         break;
     case HIP_R_8F_E5M2:
-        cast_mul<TcCast, hipblaslt_bf8_ocp>(dst, static_cast<const hipblaslt_bf8_ocp*>(src), size);
+        cast_mul<TcCast, hipblaslt_bf8>(dst, static_cast<const hipblaslt_bf8*>(src), size);
         break;
 #endif
     case HIP_R_32I:
@@ -225,8 +225,8 @@ void cast_mul(customVector<TcCast>& dst,
     {
 #ifdef ROCM_USE_FLOAT8
         if constexpr(std::is_same<TcCast, float>::value
-                     || !(std::is_same<TiA, hipblaslt_bf8_ocp>::value
-                          || std::is_same<TiA, hipblaslt_f8_ocp>::value))
+                     || !(std::is_same<TiA, hipblaslt_bf8>::value
+                          || std::is_same<TiA, hipblaslt_f8>::value))
         {
 #endif
             if(AlphaVec != nullptr)
@@ -359,8 +359,8 @@ void cast_mul(customVector<TcCast>& dst,
         break;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        cast_mul<TcCast, Tc, hipblaslt_f8_ocp>(dst,
-                                               static_cast<const hipblaslt_f8_ocp*>(src),
+        cast_mul<TcCast, Tc, hipblaslt_f8>(dst,
+                                               static_cast<const hipblaslt_f8*>(src),
                                                isScaleAVec,
                                                scaleAVec,
                                                AlphaVec,
@@ -370,8 +370,8 @@ void cast_mul(customVector<TcCast>& dst,
                                                size);
         break;
     case HIP_R_8F_E5M2:
-        cast_mul<TcCast, Tc, hipblaslt_bf8_ocp>(dst,
-                                                static_cast<const hipblaslt_bf8_ocp*>(src),
+        cast_mul<TcCast, Tc, hipblaslt_bf8>(dst,
+                                                static_cast<const hipblaslt_bf8*>(src),
                                                 isScaleAVec,
                                                 scaleAVec,
                                                 AlphaVec,
@@ -428,10 +428,10 @@ void cast_mul_with_Tci(customVector<TcCast>& dst,
     {
 #ifdef ROCM_USE_FLOAT8
         if constexpr(std::is_same<TcCast, float>::value
-                     || (!std::is_same<TciACast, hipblaslt_bf8_ocp>::value
-                         && !std::is_same<TciACast, hipblaslt_f8_ocp>::value)
-                            && (!std::is_same<TiA, hipblaslt_bf8_ocp>::value
-                                && !std::is_same<TiA, hipblaslt_f8_ocp>::value))
+                     || (!std::is_same<TciACast, hipblaslt_bf8>::value
+                         && !std::is_same<TciACast, hipblaslt_f8>::value)
+                            && (!std::is_same<TiA, hipblaslt_bf8>::value
+                                && !std::is_same<TiA, hipblaslt_f8>::value))
         {
 #endif
             if(AlphaVec != nullptr)
@@ -569,9 +569,9 @@ void cast_mul_with_Tci(customVector<TcCast>& dst,
         break;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        cast_mul_with_Tci<TcCast, Tc, TciACast, hipblaslt_f8_ocp>(
+        cast_mul_with_Tci<TcCast, Tc, TciACast, hipblaslt_f8>(
             dst,
-            static_cast<const hipblaslt_f8_ocp*>(src),
+            static_cast<const hipblaslt_f8*>(src),
             isScaleAVec,
             scaleAVec,
             AlphaVec,
@@ -581,9 +581,9 @@ void cast_mul_with_Tci(customVector<TcCast>& dst,
             size);
         break;
     case HIP_R_8F_E5M2:
-        cast_mul_with_Tci<TcCast, Tc, TciACast, hipblaslt_bf8_ocp>(
+        cast_mul_with_Tci<TcCast, Tc, TciACast, hipblaslt_bf8>(
             dst,
-            static_cast<const hipblaslt_bf8_ocp*>(src),
+            static_cast<const hipblaslt_bf8*>(src),
             isScaleAVec,
             scaleAVec,
             AlphaVec,
@@ -663,11 +663,11 @@ void cast_mul_with_Tci(customVector<TcCast>& dst,
         break;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        cast_mul_with_Tci<TcCast, Tc, hipblaslt_f8_ocp>(
+        cast_mul_with_Tci<TcCast, Tc, hipblaslt_f8>(
             dst, src, TiA, isScaleAVec, scaleAVec, AlphaVec, transA, m, k, size);
         break;
     case HIP_R_8F_E5M2:
-        cast_mul_with_Tci<TcCast, Tc, hipblaslt_bf8_ocp>(
+        cast_mul_with_Tci<TcCast, Tc, hipblaslt_bf8>(
             dst, src, TiA, isScaleAVec, scaleAVec, AlphaVec, transA, m, k, size);
         break;
 #endif
@@ -682,6 +682,187 @@ void cast_mul_with_Tci(customVector<TcCast>& dst,
     default:
         hipblaslt_cerr << "Error type in cast_mul_with_Tci" << std::endl;
         break;
+    }
+}
+
+// legacy BLAS implementation
+// gemm for dim and leading dims <= 600 so no int64 multiplies
+template <typename T>
+void small_gemm(hipblasOperation_t transA,
+                hipblasOperation_t transB,
+                int               m,
+                int               n,
+                int               k,
+                T                 alpha,
+                const T*          A,
+                int               lda,
+                const T*          B,
+                int               ldb,
+                T                 beta,
+                T*                C,
+                int               ldc)
+{
+    bool notTA = (transA == HIPBLAS_OP_N);
+    bool notTB = (transB == HIPBLAS_OP_N);
+
+    if(!m or !n or (alpha == 0.0 or !k) && (beta == 1.0))
+        return;
+
+    if(alpha == 0.0)
+    {
+        if(beta == 0.0)
+        {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                for(int i = 0; i < m; ++i)
+                {
+                    C[j * ldc + i] = 0.0;
+                }
+            }
+        }
+        else
+        {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                for(int i = 0; i < m; ++i)
+                {
+                    C[j * ldc + i] *= beta;
+                }
+            }
+        }
+        return;
+    }
+
+    if(notTB)
+    {
+        if(notTA)
+        {
+            // C = alpha*A*B + beta*C.
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                if(beta == 0.0)
+                {
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] = 0.0;
+                    }
+                }
+                else if(beta != 1.0)
+                {
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] *= beta;
+                    }
+                }
+
+                for(int l = 0; l < k; ++l)
+                {
+                    float temp = alpha * B[j * ldb + l];
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] += temp * A[l * lda + i];
+                    }
+                }
+            }
+        }
+        else
+        {
+            // C = alpha*A**T*B + beta*C
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                for(int i = 0; i < m; ++i)
+                {
+                    float temp = 0.0f;
+                    for(int l = 0; l < k; ++l)
+                    {
+                        temp += A[i * lda + l] * B[j * ldb + l];
+                    }
+                    if(beta == 0.0f)
+                    {
+                        C[j * ldc + i] = alpha * temp;
+                    }
+                    else
+                    {
+                        C[j * ldc + i] = alpha * temp + beta * C[j * ldc + i];
+                    }
+                }
+            }
+        }
+    }
+    else // TB
+    {
+        if(notTA)
+        {
+            //  C = alpha*A*B**T + beta*C
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                if(beta == 0.0)
+                {
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] = 0.0;
+                    }
+                }
+                else if(beta != 1.0)
+                {
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] = beta * C[j * ldc + i];
+                    }
+                }
+
+                for(int l = 0; l < k; ++l)
+                {
+                    float temp = alpha * B[l * ldb + j];
+                    for(int i = 0; i < m; ++i)
+                    {
+                        C[j * ldc + i] += temp * A[l * lda + i];
+                    }
+                }
+            }
+        }
+        else
+        {
+            // C = alpha*A**T*B**T + beta*C
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for(int j = 0; j < n; ++j)
+            {
+                for(int i = 0; i < m; ++i)
+                {
+                    float temp = 0.0;
+                    for(int l = 0; l < k; ++l)
+                    {
+                        temp += A[i * lda + l] * B[l * ldb + j];
+                    }
+
+                    if(beta == 0.0)
+                    {
+                        C[j * ldc + i] = alpha * temp;
+                    }
+                    else
+                    {
+                        C[j * ldc + i] = alpha * temp + beta * C[j * ldc + i];
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -785,7 +966,10 @@ void cblas_gemm(hipblasOperation_t       transA,
     //printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
     if constexpr(std::is_same<TcCast, float>::value)
     {
-        cblas_sgemm(CblasColMajor,
+        static constexpr int64_t small = 600; // seeing random NaNs with blis on some small sizes
+        if(m > small || n > small || k > small || lda > small || ldb > small || ldc > small)
+        {
+            cblas_sgemm(CblasColMajor,
                     HIPOperationToCBLASTanspose(transA),
                     HIPOperationToCBLASTanspose(transB),
                     m,
@@ -799,10 +983,18 @@ void cblas_gemm(hipblasOperation_t       transA,
                     betaCast,
                     C_Tc,
                     ldc);
+        }
+        else
+        {
+            small_gemm<float>(transA, transB, m, n, k, alphaCast, A_Tc, lda, B_Tc, ldb, betaCast, C_Tc, ldc);
+        }
     }
     else if constexpr(std::is_same<TcCast, double>::value)
     {
-        cblas_dgemm(CblasColMajor,
+        static constexpr int64_t small = 600; // seeing random NaNs with blis on some small sizes
+        if(m > small || n > small || k > small || lda > small || ldb > small || ldc > small)
+        {        
+            cblas_dgemm(CblasColMajor,
                     HIPOperationToCBLASTanspose(transA),
                     HIPOperationToCBLASTanspose(transB),
                     m,
@@ -816,6 +1008,11 @@ void cblas_gemm(hipblasOperation_t       transA,
                     betaCast,
                     C_Tc,
                     ldc);
+        }
+        else
+        {
+            small_gemm<double>(transA, transB, m, n, k, alphaCast, A_Tc, lda, B_Tc, ldb, betaCast, C_Tc, ldc);
+        }
     }
 
     if(scaleD != 1)

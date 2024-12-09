@@ -68,7 +68,7 @@ class ProblemType:
                  'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleAB', 'useScaleCD', 'useScaleAlphaVec', 'biasDataTypeWhiteList',
                  'highPrecisionAccumulate', 'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'useGradient', 'activationType', 'activationArgLength', 'activationComputeDataType', 'activationNoGuard',
-                 'sparse', 'f32XdlMathOp', 'supportDeviceUserArguments', 'outputAmaxD']
+                 'sparse', 'f32XdlMathOp', 'supportDeviceUserArguments', 'outputAmaxD', 'swizzleTensorA', 'swizzleTensorB']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -257,6 +257,9 @@ class ProblemType:
         rv.supportDeviceUserArguments = False
         if 'SupportUserArgs' in d:
             rv.supportDeviceUserArguments = d['SupportUserArgs']
+
+        rv.swizzleTensorA = d.get('SwizzleTensorA', False)
+        rv.swizzleTensorB = d.get('SwizzleTensorB', False)
         return rv
 
     def __init__(self, freeIndices=None, batchIndices=None, boundIndices=None, aDims=None, bDims=None, cDims=None, dDims=None):
@@ -349,9 +352,10 @@ class ProblemType:
             predicates.append(ProblemPredicate("BiasDataTypeWhiteList", value=self.biasDataTypeWhiteList))
             predicates.append(ProblemPredicate("BiasSrcWhiteList", value=self.biasSrcWhiteList))
             predicates.append(ProblemPredicate("AmaxDCheck", value=self.outputAmaxD))
-            if self.activationType == 'all':
+            if self.activationType in ['all', 'hipblaslt_all']:
                 exportType = ActivationType.Export.GRADONLY if self.useGradient else ActivationType.Export.NORMAL
-                enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, exportType=exportType)]
+                supportedBy = ActivationType.SupportedBy.ALL if self.activationType == 'all' else ActivationType.SupportedBy.HIPBLASLT
+                enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, supportedBy, exportType=exportType)]
                 predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=enumList))
             # predicates.append(ProblemPredicate("UseScaleAlphaVec", value=self.useScaleAlphaVec))
             # predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
@@ -373,6 +377,8 @@ class ProblemType:
             predicates.append(ProblemPredicate("Sparse", value=self.sparse))
             predicates.append(ProblemPredicate("F32XdlMathOp", value=self.f32XdlMathOp))
             predicates.append(ProblemPredicate("SupportDeviceUserArguments", value=self.supportDeviceUserArguments))
+            predicates.append(ProblemPredicate("SwizzleTensorA", value=self.swizzleTensorA))
+            predicates.append(ProblemPredicate("SwizzleTensorB", value=self.swizzleTensorB))
 
         return predicates
 
@@ -432,7 +438,7 @@ class ProblemPredicate(Properties.Predicate):
             rv += [cls('BatchSizeEqual', index=0, value=state["BatchSizeEqual"])]
 
         if "SynchronizerSizeCheck" in state:
-            valuepredicates = [];
+            valuepredicates = []
             valuepredicates.append(state["MacroTile0"])
             valuepredicates.append(state["MacroTile1"])
             valuepredicates.append(state["MIWaveTile"][0]*state["MIWaveTile"][1])
@@ -461,7 +467,7 @@ class ProblemPredicate(Properties.Predicate):
         if ('GlobalSplitU' in state) and (state['GlobalSplitU'] > 1):
             if ('_GlobalAccumulation' not in state) or (state['_GlobalAccumulation'] != 'MultipleBuffer'):
                 rv += [cls("DeterministicMode", value = False)]
-        
+
         if ('StreamK' in state) and (state['StreamK'] > 0) and ('StreamKAtomic' in state) and (state['StreamKAtomic'] == 1):
             # StreamKAtomic = 1 uses atomic for partial tiles
             rv += [cls("DeterministicMode", value = False)]
@@ -497,6 +503,20 @@ class ProblemPredicate(Properties.Predicate):
         if '_GlobalAccumulation' in state and state['_GlobalAccumulation'] != None and not state["StreamK"]:
             value = globalParameters['MinKForGSU']
             rv += [cls('GlobalSplitUCheckMinK', value=[value, state["GlobalSplitU"]])]
+
+        if ('WorkGroupMappingXCC' in state) and ('WorkGroupMappingXCCGroup' in state):
+            rv += [cls("WorkgroupMappingXCCCheck", value=[state['WorkGroupMappingXCC'], state['WorkGroupMappingXCCGroup']])]
+
+        # TODO- To improve the perf of these non-multiples cases
+        if state['ProblemType']['SwizzleTensorA']:
+            rv += [cls('SwizzleTensorA', value=state['ProblemType']['SwizzleTensorA'])]
+            rv += [cls("Free0SizeMultiple", index=0, value=state['MacroTile0'])]
+            rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
+
+        if state['ProblemType']['SwizzleTensorB']:
+            rv += [cls('SwizzleTensorB', value=state['ProblemType']['SwizzleTensorB'])]
+            rv += [cls("Free1SizeMultiple", index=0, value=state['MacroTile1'])]
+            rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
 
         return rv
 
@@ -537,6 +557,7 @@ class SizeMapping:
                  'activationFused',
                  'CustomKernelName',
                  'workGroupMappingXCC',
+                 'workGroupMappingXCCGroup',
                  'globalSplitUCoalesced',
                  'globalSplitUWorkGroupMappingRoundRobin'
                  ]
@@ -579,6 +600,7 @@ class SizeMapping:
                    activationFused          = d['ActivationFused'],
                    CustomKernelName         = d['CustomKernelName'],
                    workGroupMappingXCC      = d['WorkGroupMappingXCC'],
+                   workGroupMappingXCCGroup = d['WorkGroupMappingXCCGroup'],
                    globalSplitUCoalesced    = d['GlobalSplitUCoalesced'],
                    globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin']
                    )

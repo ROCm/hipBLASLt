@@ -29,14 +29,12 @@
 #include "hipblaslt_data.hpp"
 #include "hipblaslt_datatype2string.hpp"
 #include "hipblaslt_parse_data.hpp"
-#include "type_dispatch.hpp"
 #include "utility.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <map>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -45,7 +43,6 @@
 
 #include "testing_matmul.hpp"
 
-#include "type_dispatch.hpp"
 #include "utility.hpp"
 #include <algorithm>
 #undef I
@@ -53,72 +50,15 @@
 using namespace roc; // For emulated program_options
 using namespace std::literals; // For std::string literals of form "str"s
 
-struct str_less
-{
-    bool operator()(const char* a, const char* b) const
-    {
-        return strcmp(a, b) < 0;
-    }
-};
-
-// Map from const char* to function taking const Arguments& using comparison above
-using func_map = std::map<const char*, void (*)(const Arguments&), str_less>;
-
-// Run a function by using map to map arg.function to function
-void run_function(const func_map& map, const Arguments& arg, const std::string& msg = "")
-{
-    auto match = map.find(arg.function);
-    if(match == map.end())
-        throw std::invalid_argument("Invalid combination --function "s + arg.function
-                                    + " --a_type "s + hip_datatype_to_string(arg.a_type) + msg);
-    match->second(arg);
-}
-
-// Template to dispatch testing_matmul for performance tests
-// the test is marked invalid when (TiA, TiB, To, Tc) not in (H/H/S, B/B/S)
-template <typename TiA,
-          typename TiB  = TiA,
-          typename To   = TiB,
-          typename Tc   = To,
-          typename TciA = TiA,
-          typename TciB = TiB,
-          typename      = void>
-struct perf_matmul : hipblaslt_test_invalid
-{
-};
-
-template <typename TiA, typename TiB, typename To, typename Tc, typename TciA, typename TciB>
-struct perf_matmul<
-    TiA,
-    TiB,
-    To,
-    Tc,
-    TciA,
-    TciB,
-    std::enable_if_t<
-        (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
-        || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
-        || (std::is_same<TiA, float>{} && std::is_same<TiB, float>{})
-        || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
-        || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_bf8_fnuz>{})
-        || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
-        || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_bf8_fnuz>{})
-#ifdef ROCM_USE_FLOAT8
-        || (std::is_same<TiA, hipblaslt_f8_ocp>{} && std::is_same<TiB, hipblaslt_f8_ocp>{})
-        || (std::is_same<TiA, hipblaslt_f8_ocp>{} && std::is_same<TiB, hipblaslt_bf8_ocp>{})
-        || (std::is_same<TiA, hipblaslt_bf8_ocp>{} && std::is_same<TiB, hipblaslt_f8_ocp>{})
-        || (std::is_same<TiA, hipblaslt_bf8_ocp>{} && std::is_same<TiB, hipblaslt_bf8_ocp>{})
-#endif
-        || (std::is_same<TiA, double>{} && std::is_same<TiB, double>{})
-        || (std::is_same<TiA, hipblasLtInt8>{} && std::is_same<TiB, hipblasLtInt8>{})
-        || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblasLtHalf>{})
-        || (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})>>
-    : hipblaslt_test_valid
+struct perf_matmul: hipblaslt_test_valid
 {
     void operator()(const Arguments& arg)
     {
-        static const func_map map = {{"matmul", testing_matmul<TiA, TiB, To, Tc, TciA, TciB>}};
-        run_function(map, arg);
+        if(strcmp(arg.function, "matmul"))
+            throw std::invalid_argument("Invalid combination --function "s + arg.function
+                                        + " --a_type "s + hip_datatype_to_string(arg.a_type));
+
+        testing_matmul(arg);
     }
 };
 
@@ -225,7 +165,7 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
         }
     }
 
-    hipblaslt_matmul_dispatch<perf_matmul>(arg);
+    perf_matmul{}(arg);
     return 0;
 }
 
@@ -253,6 +193,43 @@ void fix_batch(int argc, char* argv[])
                    0);
             argv[i] = b_c;
         }
+}
+
+bool tuning_path_compare_git_version(const char* tuningEnv)
+{
+    char                   git_version[128];
+    hipblaslt_local_handle handle;
+    hipblasLtGetGitRevision(handle, &git_version[0]);
+    std::string   tuningPath = tuningEnv;
+    std::ifstream file_read(tuningPath);
+
+    if(file_read.peek() == std::ifstream::traits_type::eof())
+    {
+        std::ofstream file_write(tuningPath, std::ios::app);
+        file_write << "Git Version: " << (std::string)git_version << std::endl;
+        hipblaslt_cout << "Initialize tuning file." << std::endl;
+        return true;
+    }
+    else
+    {
+        std::string firstline;
+        std::string prefix = "Git Version: ";
+        std::getline(file_read, firstline);
+        size_t pos = firstline.find(prefix);
+        if(pos != std::string::npos)
+        {
+            std::string file_version = firstline.substr(pos + prefix.length());
+            hipblaslt_cout << "tuning file git version: " << file_version << std::endl;
+            if(file_version == git_version)
+            {
+                return true;
+            }
+        }
+    }
+
+    hipblaslt_cout << "The hipBLASLt git version and the tuning file git version are not the same."
+                   << std::endl;
+    return false;
 }
 
 void hipblaslt_print_version(void)
@@ -283,11 +260,11 @@ try
     std::string scale_type;
     std::string bias_type;
     std::string bias_source;
-    std::string scaleAFormat;
-    std::string scaleBFormat;
     std::string initialization;
     std::string filter;
     std::string activation_type;
+    int         scaleAFormat;
+    int         scaleBFormat;
     int         device_id;
     int         flags             = 0;
     bool        datafile          = hipblaslt_parse_data(argc, argv);
@@ -306,6 +283,17 @@ try
     std::vector<int64_t>  stride_a, stride_b, stride_c, stride_d, stride_e;
     std::vector<uint32_t> gsu_vector, wgm_vector;
     arg.init(); // set all defaults
+    const char* tuningEnv = getenv("HIPBLASLT_TUNING_FILE");
+    if(tuningEnv)
+    {
+        bool tuning_success = tuning_path_compare_git_version(tuningEnv);
+        if(tuning_success)
+        {
+            hipblaslt_cout << "HIPBLASLT_TUNING_FILE is the correct setting." << std::endl;
+        }
+        else
+            return 1;
+    }
 
     options_description desc("hipblaslt-bench command line options");
     desc.add_options()
@@ -419,11 +407,11 @@ try
 
         ("transA",
          value<char>(&arg.transA)->default_value('N'),
-         "N = no transpose, T = transpose, C = conjugate transpose")
+         "N = no transpose, T = transpose")
 
         ("transB",
          value<char>(&arg.transB)->default_value('N'),
-         "N = no transpose, T = transpose, C = conjugate transpose")
+         "N = no transpose, T = transpose")
 
         ("batch_count",
          value<int32_t>(&arg.batch_count)->default_value(1),
@@ -438,15 +426,15 @@ try
          "Validate GPU results with CPU?")
 
         ("iters,i",
-         value<int32_t>(&arg.iters)->default_value(10),
+         value<int32_t>(&arg.iters)->default_value(tuningEnv? 1000 : 10),
          "Iterations to run inside timing loop")
 
         ("cold_iters,j",
-         value<int32_t>(&arg.cold_iters)->default_value(2),
+         value<int32_t>(&arg.cold_iters)->default_value(tuningEnv? 1000 : 2),
          "Cold Iterations to run before entering the timing loop")
 
         ("algo_method",
-         value<std::string>(&algo_method_str)->default_value("heuristic"),
+         value<std::string>(&algo_method_str)->default_value(tuningEnv? "all" : "heuristic"),
          "Use different algorithm search API. Options: heuristic, all, index.")
 
         ("solution_index",
@@ -454,7 +442,7 @@ try
          "Used with --algo_method 2.  Specify solution index to use in benchmark.")
 
         ("requested_solution",
-         value<int32_t>(&arg.requested_solution_num)->default_value(1),
+         value<int32_t>(&arg.requested_solution_num)->default_value(tuningEnv? -1 : 1),
          "Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to heuristic.")
 
         ("activation_type",
@@ -482,12 +470,12 @@ try
          "Apply bias vector")
 
         ("scaleA",
-         value<std::string>(&scaleAFormat)->default_value(""),
-         "Apply scale for A buffer. s = scalar, v = vector.")
+         value<int>(&scaleAFormat)->default_value(0),
+         "Apply scale for A buffer. 0 = None, 1 = scalar, 2 = vector.")
 
         ("scaleB",
-         value<std::string>(&scaleBFormat)->default_value(""),
-         "Apply scale for B buffer. s = scalar, v = vector.")
+         value<int>(&scaleBFormat)->default_value(0),
+         "Apply scale for B buffer. 0 = None, 1 = scalar, 2 = vector.")
 
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
@@ -530,8 +518,8 @@ try
          "C and D are stored in same memory")
 
         ("workspace",
-         value<size_t>(&arg.user_allocated_workspace)->default_value(0),
-         "Set fixed workspace memory size instead of using hipblaslt managed memory")
+         value<size_t>(&arg.user_allocated_workspace)->default_value(128 * 1024 * 1024),
+         "Set fixed workspace memory size (bytes) instead of using hipblaslt managed memory")
 
         ("log_function_name",
          bool_switch(&log_function_name)->default_value(false),
@@ -551,12 +539,18 @@ try
          "Print solution, kernel name and solution index.")
 
         ("rotating",
-         value<int32_t>(&arg.rotating)->default_value(0),
+         value<int32_t>(&arg.rotating)->default_value(tuningEnv ? 512 : 0),
          "Use rotating memory blocks for each iteration, size in MB.")
 
         ("use_gpu_timer",
          value<bool>(&arg.use_gpu_timer)->default_value(false),
          "Use hipEventElapsedTime to profile elapsed time.")
+
+        ("skip_slow_solution_ratio",
+          value<float>(&arg.skip_slow_solution_ratio)->default_value(0.0),
+          "Specifies a ratio to skip slow solution when warm up stage. "
+          "Skip condition: (current solution's warm up time * ratio) > best solution's warm up time. "
+          "Ratio range: 0 ~ 1. 0 means no skip.")
 
         ("splitk",
          valueVec<uint32_t>(&gsu_vector),
@@ -567,7 +561,7 @@ try
          "[Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
 
         ("flush",
-        value<bool>(&arg.flush)->default_value(false),
+        value<bool>(&arg.flush)->default_value(tuningEnv ? true : false),
         "Flush icache, only works for gemm.")
 
         ("help,h", "produces this help message")
@@ -587,6 +581,7 @@ try
     }
 
     hipblaslt_print_version();
+
     if(vm.find("version") != vm.end())
     {
         return 0;
@@ -620,7 +615,7 @@ try
     }
     else if(algo_method_str.compare("index") == 0)
     {
-        arg.algo_method = 2;
+        arg.algo_method = tuningEnv ? 1 : 2;
     }
     else
     {
@@ -789,10 +784,10 @@ try
     bool is_f32 = arg.a_type == HIP_R_32F;
     arg.compute_type
         = compute_type == "" ? (HIPBLAS_COMPUTE_32F) : string_to_hipblas_computetype(compute_type);
-    if(arg.compute_type == static_cast<hipblasComputeType_t>(0))
+    if(arg.compute_type == HIPBLASLT_COMPUTE_TYPE_INVALID)
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
-    //The value HIPBLASLT_DATATYPE_INVALID indicates that the compute_input_typeA has no effect.
+    // The value HIPBLASLT_DATATYPE_INVALID indicates that the compute_input_typeA has no effect.
     arg.compute_input_typeA = (compute_input_typeA != "")
                                   ? string_to_hip_datatype(compute_input_typeA)
                                   : HIPBLASLT_DATATYPE_INVALID;
@@ -823,15 +818,18 @@ try
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
 
-    auto scaleString2Enum = [](std::string &s) {
-        if(s == "s")
-            return Arguments::ScalingFormat::Scalar;
-        if(s == "v")
-            return Arguments::ScalingFormat::Vector;
-        return Arguments::ScalingFormat::None;
+    auto scaleInt2Enum = [](int s) {
+        if(s == 0)
+            return hipblaslt_scaling_format::none;
+        if(s == 1)
+            return hipblaslt_scaling_format::Scalar;
+        if(s == 2)
+            return hipblaslt_scaling_format::Vector;
+
+        return hipblaslt_scaling_format::none;
     };
-    arg.scaleA = scaleString2Enum(scaleAFormat);
-    arg.scaleB = scaleString2Enum(scaleBFormat);
+    arg.scaleA = scaleInt2Enum(scaleAFormat);
+    arg.scaleB = scaleInt2Enum(scaleBFormat);
 
     if(arg.M[0] < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M[0]));
@@ -843,6 +841,10 @@ try
     int copied = snprintf(arg.function, sizeof(arg.function), "%s", function.c_str());
     if(copied <= 0 || copied >= sizeof(arg.function))
         throw std::invalid_argument("Invalid value for --function");
+
+    if(arg.skip_slow_solution_ratio < 0 || arg.skip_slow_solution_ratio > 1)
+        throw std::invalid_argument(
+            "Valid value for --skip_slow_solution_ratio is in range (0.0 ~ 1.0).");
 
     if(verify)
     {

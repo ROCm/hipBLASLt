@@ -34,6 +34,7 @@ import os.path
 import subprocess
 import sys
 import time
+import re
 
 startTime = time.time()
 
@@ -72,10 +73,19 @@ globalParameters["SyncsPerBenchmark"] = 1         # how iterations of the stream
 globalParameters["EnqueuesPerSync"] = 1           # how many solution enqueues to perform per synchronization
 globalParameters["MaxEnqueuesPerSync"] = -1       # max solution enqueues to perform per synchronization
 globalParameters["SleepPercent"] = 300            # how long to sleep after every data point: 25 means 25% of solution time. Sleeping lets gpu cool down more.
+globalParameters["SkipSlowSolutionRatio"] = 0.0   # Skip slow solution during warm-up stage.
+# The valid range of this ratio is (0.0 ~ 1.0), and 0.0 means no skipping.
+# Skip condition:  warm-up time * ratio > current best sol's warm-up time
+# Suggestion:
+#     Small size :  0.5
+#     Medium size: 0.75
+#     Large size :  0.9
+
 # cProfile
 globalParameters["Profiler"] = 0                  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
 # validation
 globalParameters["NumElementsToValidate"] = 128   # number of elements to validate, 128 will be evenly spaced out (with prime number stride) across C tensor
+globalParameters["NumElementsToValidateWinner"] = 0   # number of elements to validate in LibraryClient stage, the exact number to be validated is max(NumElementsToValidate,NumElementsToValidateWinner)
 globalParameters["BoundsCheck"] = 0   # Bounds check
 #1: Perform bounds check to find out of bounds reads/writes.  NumElementsToValidate must be -1.
 #2: Perform bounds check by front side guard page
@@ -94,7 +104,6 @@ globalParameters["SolutionSelectionAlg"] = 1          # algorithm to determine w
 globalParameters["ExpandRanges"] = True          # expand ranges into exact configs before writing logic file.  False ignores ranges.
 globalParameters["ExitAfterKernelGen"] = False     # Exit after generating kernels
 globalParameters["GenerateSourcesAndExit"] = False # Exit after kernel source generation.
-globalParameters["ShowProgressBar"] = True     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["WavefrontWidth"] = 64     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["ExitOnFails"] = 1     # 1: Exit after benchmark run if failures detected.  2: Exit during benchmark run.
 globalParameters["CpuThreads"] = -1  # How many CPU threads to use for kernel generation.  0=no threading, -1 == nproc, N=min(nproc,N).  TODO - 0 sometimes fails with a kernel name error?  0 does not check error codes correctly
@@ -120,7 +129,6 @@ globalParameters["CMakeBuildType"] = "Release"            # whether benchmark cl
 globalParameters["PrintSolutionRejectionReason"] = False  # when a solution is marked as invalid, print why
 globalParameters["LogicFormat"] = "yaml"                  # set library backend (yaml, or json)
 globalParameters["LibraryFormat"] = "yaml"                # set library backend (yaml, or msgpack)
-globalParameters["EmbedLibrary"] = None                   # whether library should be embedded or not
 
 # True/False: CSV will/won't export WinnerGFlops, WinnerTimeUS, WinnerIdx, WinnerName.
 # TODO - if no side-effect, we can set default to True. This can make analyzing "LibraryLogic" (AddFromCSV) faster
@@ -141,10 +149,11 @@ globalParameters["CSVMergeSameProblemID"] = False
 # and exponent. It cannot be used for int8 or int32. Need to use tensileAlmostEqual
 # not tensileEqual for checking the result.
 # See ClientWriter.py, the DataInitName(Enum) for a list of initialization patterns
-#       - Problem-Independent: 0=0, 1=1, 2=2, 3=rand, 4=Nan, 5=Infinity, 6=BadInput(Nan), 7=BadOutput(Inf), 16=RandomNarrow
+#       - Problem-Independent: 0=0, 1=1, 2=2, 3=rand, 4=Nan, 5=Infinity, 6=BadInput(Nan), 7=BadOutput(Inf), 16=RandomNarrow,
+#                              21=RandomNegPosLimited(-128~128 or -1~1), 23~26=Ind Cos/Sin Abs or Not
 #       - Problem-dependent: 8=SerialID, 9=SerialDim0, 10=SerialDim1, 11=Identity, 12~15= Cos/Sin, Abs or Not
 #       For A, B, C, D: All the InitMode (0~16) can be used
-#       For Alpha/Beta: Only problem-independent init (0~7, 16) can be used,
+#       For Alpha/Beta: Only problem-independent init (0~7, 16, 23~26) can be used,
 #                       problem-dependent init (8~15) would cause a exception (Invalid InitMode) in New Client
 globalParameters["DataInitTypeAB"] = 3
 globalParameters["DataInitTypeA"]  = -1
@@ -172,6 +181,7 @@ globalParameters["CMakeCXXFlags"] = ""            # pass flags to cmake
 globalParameters["CMakeCFlags"] = ""              # pass flags to cmake
 globalParameters["DebugKernel"] = False           # assembly only, kernel gets buffer for debug "printing"; kernel writes data to memory, gets coppied to host and printed
 globalParameters["LibraryPrintDebug"] = False     # solutions will print enqueue info when enqueueing a kernel
+globalParameters["AsanBuild"] = False             # build with asan
 globalParameters["SaveTemps"] = False             # Generate intermediate results of hip kernels
 globalParameters["KeepBuildTmp"] = False          # If true, do not remove artifacts in build_tmp
 
@@ -227,6 +237,7 @@ globalParameters["LibraryUpdateComment"] = False                  # Include solu
 
 # internal, i.e., gets set during startup
 globalParameters["CurrentISA"] = (0,0,0)
+globalParameters["AMDGPUArchPath"] = None      # /opt/rocm/llvm/bin/amdgpu-arch
 globalParameters["ROCmAgentEnumeratorPath"] = None      # /opt/rocm/bin/rocm_agent_enumerator
 globalParameters["ROCmSMIPath"] = None                  # /opt/rocm/bin/rocm-smi
 globalParameters["AssemblerPath"] = None                # /opt/rocm/llvm/bin/clang++
@@ -235,6 +246,7 @@ globalParameters["IndexChars"] =  "IJKLMNOPQRSTUVWXYZ"  # which characters to us
 globalParameters["ScriptPath"] = os.path.dirname(os.path.realpath(__file__))            # path to Tensile/Tensile.py
 globalParameters["SourcePath"] = os.path.join(globalParameters["ScriptPath"], "Source") # path to Tensile/Source/
 globalParameters["HipClangVersion"] = "0.0.0"
+globalParameters["AMDClangVersion"] = "0.0.0"
 
 # default runtime is selected based on operating system, user can override
 if os.name == "nt":
@@ -250,7 +262,6 @@ globalParameters["Architecture"] = "all"
 # might be deprecated
 globalParameters["EnableHalf"] = False
 globalParameters["ClientArgs"] = ""
-globalParameters["PackageLibrary"] = False
 
 # perf model
 globalParameters["PerfModelL2ReadHits"] = 0.0
@@ -259,7 +270,7 @@ globalParameters["PerfModelL2ReadBwMul"] = 2
 globalParameters["PerfModelReadEfficiency"] = 0.85
 
 # limitation for training
-globalParameters["MaxWorkspaceSize"] = 128 * 1024 * 1024 # max workspace for training (128M)
+globalParameters["MaxWorkspaceSize"] = 128 * 1024 * 1024 # max workspace for training (128MB)
 globalParameters["MinKForGSU"] = 32 # min K size to use GlobalSplitU algorithm (only for HPA now)
 
 # control if a solution is run for a given problem
@@ -284,6 +295,9 @@ globalParameters["RotatingMode"] = 0 # Default is 0, allocated in order A0B0C0D0
 
 globalParameters["BuildIdKind"] = "sha1"
 globalParameters["ValidateLibrary"] = False
+globalParameters["AsmDebug"] = False # Set to True to keep debug information for compiled code objects
+
+globalParameters["UseEffLike"] = True # Set to False to use winnerGFlops as the performance metric
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
@@ -616,6 +630,8 @@ validParameters = {
 
     # Attempt to load directly from global memory into Vgpr.
     # Assembly only
+    "DirectToVgprA":              [ False, True ],
+    "DirectToVgprB":              [ False, True ],
     "DirectToVgprSparseMetadata": [ False, True ],
 
     # Attempt to load directly from global memory into LDS.
@@ -628,9 +644,9 @@ validParameters = {
     # local write offset with an SGPR.
     # For an 8x8 TT with PrefetchGlobalRead=1 this can save 33 VGPRs.
     #    - Requirements for DirectToLds=1:
-    #      GlobalReadVectorWidth = 1/2/4
+    #      GlobalReadVectorWidth = 1/2/4 (GRVW * bpe must be 4 for now)
     #      TransposeLDS = 1 for TLU=0 case
-    # DirectToLds support for x2/x4 (1st part of async_copy() support)
+    # DirectToLds support for x1 only for now
     "DirectToLds":                [ False, True ],
 
     # Load options:
@@ -825,9 +841,10 @@ validParameters = {
     #
     # Formula for wgSerial:
     # wgSerial = wg0 + (wg1 % WorkGroupMapping) * nwg0
-    "WorkGroupMapping":           list(range(-1024,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
-    "WorkGroupMappingXCC":        list(range(1,1024+1)),  # change a workgroup's id so that contiguous workgroup can map on same XCC
-    "WorkGroupMappingXCCGroup":   list(range(0,1024+1)),  # change a workgroup's id so that contiguous workgroup can map on same XCC, remap workgroup in a group of WGMXCCG.
+    "WorkGroupMapping":           list(range(-1024, 1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
+    "WorkGroupMappingXCC":        [1,2,4,8,16,32],  # change a workgroup's id so that contiguous workgroup can map on same XCC
+    # -1 : WorkGroupMappingXCCGroup will be set to CU_count at runtime. Please ensure that (CU_count % WGMXCC == 0).
+    "WorkGroupMappingXCCGroup":   list(range(-1, 1024)),  # change a workgroup's id so that contiguous workgroup can map on same XCC, remap workgroup in a group of WGMXCCG.
 
     "MaxOccupancy":               list(range(1, 40+1)),       # wg / CU; if cache thrashing is hurting performance, this allocates extra lds to artificially limit occupancy
     "WorkGroup":                  validWorkGroups,      # ( wg0 x wg1 x LocalSplitU ) dimensions of the workgroup which will operate on a tile and share lds
@@ -937,14 +954,15 @@ validParameters = {
     # TENSILE_STREAMK_FIXED_GRID lets you override the default grid size with a specific number
     #   0 = override disabled (default)
     # TENSILE_STREAMK_FULL_TILES sets the number of full tiles to be included in stream-k work
-    #   -1 = use prediction model for best performance (default)
+    #   -1 = use prediction model for best performance (not yet implemented)
     #   0 = only remainder tiles run in stream-k
-    #   1+ = remainder + 1 (or more) full grids of tiles run in stream-k
-    # TENSILE_STREAMK_DYNAMIC_GRID enables dynamic grid mode, which automatically limits the number of CUs used:
-    #   0 = Off, use all CUs (default)
+    #   1+ = remainder + 1 (or more) full grids of tiles run in stream-k (default=1)
+    # TENSILE_STREAMK_DYNAMIC_GRID selects dynamic grid mode, which automatically limits the number of CUs used:
+    #   0 = Off, always use all CUs.
     #   1 = Only reduce CUs for small problems to number of output tiles when num_tiles < CU count.
     #   2 = Also reduce CUs used for large sizes to improve data-parallel portion and reduce power.
-    #   3 = Analytically predict the best grid-size by weighing the cost of the fix-up step and the cost of processing MACs.
+    #   3 = Analytically predict the best grid-size by weighing the cost of the fix-up step and the cost of processing MACs (default).
+    #       Note: dynamic grid coefficients currently apply to gfx942 variants
     # TENSILE_STREAMK_MAX_CUS allows the user to manually set maximum number of CUs used, which could free up some CUs for
     #   other operations to run in parallel with gemm.
     # TENSILE_STREAMK_GRID_MULTIPLIER lets you set how many workgroups are created per CU being used.
@@ -1109,10 +1127,6 @@ validParameters = {
     # Intended for use with custom kernels which have confirmed to be correct
     "NoReject":                    [False, True],
 
-    "MinVgprNumber":                list(range(0,256)),
-
-    "MaxVgprNumber":                list(range(0,257)),
-
     # Debug use only.
     "ActivationFused":             [False, True],
 
@@ -1179,6 +1193,8 @@ defaultBenchmarkCommonParameters = [
 
     {"BufferLoad":                [ True ] },
     {"BufferStore":               [ True ] },
+    {"DirectToVgprA":             [ False ] },
+    {"DirectToVgprB":             [ False ] },
     {"DirectToVgprSparseMetadata":[ False ] },
     {"DirectToLds":               [ False ] },
     {"UseSgprForGRO":             [ -1 ] },
@@ -1204,7 +1220,7 @@ defaultBenchmarkCommonParameters = [
     {"WorkGroup":                 [ [16,16,1]] },
     {"WorkGroupMapping":          [ 8 ] },
     {"WorkGroupMappingXCC":       [ 1 ] },
-    {"WorkGroupMappingXCCGroup":  [ 0 ] },
+    {"WorkGroupMappingXCCGroup":  [ -1 ] },
     {"ThreadTile":                [ [4,4] ] },
     {"WavefrontSize":             [ 64 ]},
     {"MatrixInstruction":         [ [] ] },
@@ -1221,8 +1237,6 @@ defaultBenchmarkCommonParameters = [
     {"PreloadKernArgs":           [ True ] },
     {"CustomKernelName":          [ "" ] },
     {"NoReject":                  [ False ]},
-    {"MinVgprNumber":             [0]},
-    {"MaxVgprNumber":             [256]},
     {"StoreRemapVectorWidth":     [ 0 ] },
     {"SourceSwap":                [ False ] },
     {"StorePriorityOpt":          [ False ] },
@@ -1350,7 +1364,9 @@ defaultProblemType = {
     # AmaxD
     "OutputAmaxD":              False,
     # For kernels putting arguments in workspaces instead of kernel arguments, they can choose to support user arguments input instead.
-    "SupportUserArgs":          True
+    "SupportUserArgs":          True,
+    "SwizzleTensorA":           False,
+    "SwizzleTensorB":           False,
     }
 
 defaultProblemSizes = [{"Range": [ [2880], 0, 0 ]}]
@@ -1482,14 +1498,15 @@ def gfxArch(name):
 
     return rv
 
-def detectGlobalCurrentISA():
+
+def detectGlobalCurrentISA_(detectionTool):
   """
   Returns returncode if detection failure
   """
   global globalParameters
 
-  if globalParameters["CurrentISA"] == (0,0,0) and globalParameters["ROCmAgentEnumeratorPath"]:
-    process = subprocess.run([globalParameters["ROCmAgentEnumeratorPath"]], stdout=subprocess.PIPE)
+  if globalParameters["CurrentISA"] == (0,0,0) and detectionTool:
+    process = subprocess.run([detectionTool], stdout=subprocess.PIPE)
     if os.name == "nt":
       line = ""
       for line_in in process.stdout.decode().splitlines():
@@ -1512,9 +1529,20 @@ def detectGlobalCurrentISA():
       if len(archList) > 0:
         globalParameters["CurrentISA"] = archList[globalParameters["Device"]]
     if (process.returncode):
-      printWarning("%s exited with code %u" % (globalParameters["ROCmAgentEnumeratorPath"], process.returncode))
+      printWarning("%s exited with code %u" % (detectionTool, process.returncode))
     return process.returncode
   return 0
+
+
+def detectGlobalCurrentISA():
+  """
+  Returns returncode if detection failure
+  """
+  errorCode = detectGlobalCurrentISA_(globalParameters["AMDGPUArchPath"])
+  if errorCode:
+    printWarning("Attempting to detect ISA with rocm_agent_enumerator")
+    return detectGlobalCurrentISA_(globalParameters["ROCmAgentEnumeratorPath"])
+  return errorCode
 
 def restoreDefaultGlobalParameters():
   """
@@ -1592,6 +1620,40 @@ def which(p):
                 return candidate
     return None
 
+def splitArchs():
+  # Helper for architecture
+  def isSupported(arch):
+    return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
+           globalParameters["AsmCaps"][arch]["SupportedSource"]
+
+  if ";" in globalParameters["Architecture"]:
+    wantedArchs = globalParameters["Architecture"].split(";")
+  else:
+    wantedArchs = globalParameters["Architecture"].split("_")
+  archs = []
+  cmdlineArchs = []
+  if "all" in wantedArchs:
+    for arch in globalParameters['SupportedISA']:
+      if isSupported(arch):
+        if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
+          if (arch == (9,0,10)):
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          if globalParameters["AsanBuild"]:
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          else:
+            archs += [getGfxName(arch) + '-xnack-']
+            cmdlineArchs += [getGfxName(arch) + ':xnack-']
+        else:
+          archs += [getGfxName(arch)]
+          cmdlineArchs += [getGfxName(arch)]
+  else:
+    for arch in wantedArchs:
+      archs += [re.sub(":", "-", arch)]
+      cmdlineArchs += [arch]
+  return archs, cmdlineArchs
+
 ################################################################################
 ################################################################################
 def assignGlobalParameters( config ):
@@ -1637,10 +1699,13 @@ def assignGlobalParameters( config ):
 
   globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
 
+  # ROCm AMD GPU Arch Path
   # ROCm Agent Enumerator Path
   if os.name == "nt":
-    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
+    globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
+    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")    
   else:
+    globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
     globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm_agent_enumerator")
 
   if "CxxCompiler" in config:
@@ -1680,8 +1745,11 @@ def assignGlobalParameters( config ):
     else:
       globalParameters["ClangOffloadBundlerPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "clang-offload-bundler")
 
-  if "ROCmAgentEnumeratorPath" in config:
-    globalParameters["ROCmAgentEnumeratorPath"] = config["ROCmAgentEnumeratorPath"]
+  if "AMDGPUArchPath" in config:
+    globalParameters["AMDGPUArchPath"] = config["AMDGPUArchPath"]
+
+  if "AsanBuild" in config:
+    globalParameters["AsanBuild"] = config["AsanBuild"]
 
   if "KeepBuildTmp" in config:
       globalParameters["KeepBuildTmp"] = config["KeepBuildTmp"]
@@ -1739,6 +1807,9 @@ def assignGlobalParameters( config ):
       if 'HIP version' in line:
         globalParameters['HipClangVersion'] = line.split()[2]
         print1("# Found  hipcc version " + globalParameters['HipClangVersion'])
+      if 'AMD clang version' in line:
+        globalParameters['AMDClangVersion'] = line.split()[3]
+        print1("# Found  clang version " + globalParameters['AMDClangVersion'])
 
   except (subprocess.CalledProcessError, OSError) as e:
       printWarning("Error: {} running {} {} ".format('hipcc', '--version',  e))

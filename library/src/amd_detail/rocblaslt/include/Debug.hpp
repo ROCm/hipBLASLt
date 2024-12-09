@@ -74,12 +74,15 @@ namespace rocblaslt
 #endif
         }
 
+        bool preload() const;
+
     private:
         friend LazySingleton<Debug>;
 
         int         m_value;
         int         m_value2;
-        bool        m_printMarker = false;
+        bool        m_printMarker       = false;
+        bool        m_preloadAllKernels = false;
 
         Debug();
     };

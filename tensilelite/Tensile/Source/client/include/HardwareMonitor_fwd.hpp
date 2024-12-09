@@ -26,10 +26,10 @@
 
 #pragma once
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
         class HardwareMonitor;
     }
-} // namespace Tensile
+} // namespace TensileLite

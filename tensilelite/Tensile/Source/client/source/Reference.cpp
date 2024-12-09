@@ -35,7 +35,7 @@
 
 #define MAX_OMP_THREADS 64
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -374,8 +374,9 @@ namespace Tensile
             // Only cast to float in BFloat16
             constexpr bool needCast = std::is_same<BFloat16, T>();
             using castT             = std::conditional_t<needCast, float, T>;
-            auto new_type
-                = activationType == ActivationType::All ? activationType2 : activationType;
+            const auto isForAll = activationType == ActivationType::All
+                                  || activationType == ActivationType::Hipblaslt_all;
+            auto new_type = isForAll ? activationType2 : activationType;
             if(new_type == ActivationType::Abs)
             {
                 return static_cast<T>(std::max(static_cast<castT>(val), -static_cast<castT>(val)));
@@ -464,8 +465,9 @@ namespace Tensile
                        ActivationType activationType2,
                        std::vector<T> args)
         {
-            auto new_type
-                = activationType == ActivationType::All ? activationType2 : activationType;
+            const auto isForAll = activationType == ActivationType::All ||
+                                  activationType == ActivationType::Hipblaslt_all;
+            auto new_type = isForAll ? activationType2 : activationType;
             if(new_type == ActivationType::Abs)
             {
                 return static_cast<T>(std::abs(val));
@@ -779,15 +781,15 @@ omp_set_num_threads(MAX_OMP_THREADS);
                                 if(std::is_same<Float8BFloat8,
                                                 typename Inputs::ComputeInputType>::value)
                                 {
-                                    auto aValCast = static_cast<Tensile::Float8>(aVal);
-                                    auto bValCast = static_cast<Tensile::BFloat8>(bVal);
+                                    auto aValCast = static_cast<TensileLite::Float8>(aVal);
+                                    auto bValCast = static_cast<TensileLite::BFloat8>(bVal);
                                     value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                                 }
                                 else if(std::is_same<BFloat8Float8,
                                                      typename Inputs::ComputeInputType>::value)
                                 {
-                                    auto aValCast = static_cast<Tensile::BFloat8>(aVal);
-                                    auto bValCast = static_cast<Tensile::Float8>(bVal);
+                                    auto aValCast = static_cast<TensileLite::BFloat8>(aVal);
+                                    auto bValCast = static_cast<TensileLite::Float8>(bVal);
                                     value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                                 }
                                 else
@@ -1100,7 +1102,7 @@ omp_set_num_threads(MAX_OMP_THREADS);
                 }
             }
 
-            return Tensile::GemmTypeId(problem.a().dataType(),
+            return TensileLite::GemmTypeId(problem.a().dataType(),
                                        problem.b().dataType(),
                                        problem.c().dataType(),
                                        problem.d().dataType(),
@@ -1484,4 +1486,4 @@ omp_set_num_threads(MAX_OMP_THREADS);
             }
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

@@ -42,7 +42,7 @@
 
 #define TENSILE_COMMON_KERNEL_ARGS_SIZE 16
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename TAct>
     struct DeviceUserArguments
@@ -145,8 +145,9 @@ namespace Tensile
 
         std::string customKernelName;
 
-        int workGroupMappingXCC = 1;
-        bool globalSplitUCoalesced = false;
+        int  workGroupMappingXCC                    = 0;
+        int  workGroupMappingXCCGroup               = 0;
+        bool globalSplitUCoalesced                  = false;
         bool globalSplitUWorkGroupMappingRoundRobin = false;
     };
 
@@ -186,6 +187,7 @@ namespace Tensile
         {
             return kernelName;
         }
+
         virtual std::string name() const
         {
             return solutionName;
@@ -374,13 +376,14 @@ namespace Tensile
                         uint32_t                            argType,
                         KA&                                 args,
                         uint32_t                            numWorkGroups,
+                        Hardware const*                     hardware,
                         const ContractionProblemParameters& param) const;
 
         template <typename KA>
         inline void calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,
-                                                      const Tensile::dim3&        workGroupSize,
-                                                      Tensile::dim3&              numWorkGroups,
-                                                      Tensile::dim3&              numWorkItems,
+                                                      const TensileLite::dim3&        workGroupSize,
+                                                      TensileLite::dim3&              numWorkGroups,
+                                                      TensileLite::dim3&              numWorkItems,
                                                       KA&                         h_args) const;
 
         template <bool T_Debug>
@@ -415,9 +418,9 @@ namespace Tensile
         inline void calculateConversionCallWorkGroupItems(
             std::vector<ContractionSolution::Problem> const& problems,
             size_t&                                          vw,
-            const Tensile::dim3&                             workGroupSize,
-            Tensile::dim3&                                   numWorkGroups,
-            Tensile::dim3&                                   numWorkItems,
+            const TensileLite::dim3&                             workGroupSize,
+            TensileLite::dim3&                                   numWorkGroups,
+            TensileLite::dim3&                                   numWorkItems,
             KA&                                              args) const;
 
         template <bool T_Debug>
@@ -501,6 +504,8 @@ namespace Tensile
             int                   sparse                     = 0;
             bool                  stochasticRounding         = false;
             bool                  supportDeviceUserArguments = false;
+            bool                  swizzleTensorA             = false;
+            bool                  swizzleTensorB             = false;
         };
 
         struct LinearModel
@@ -554,4 +559,4 @@ namespace Tensile
     std::ostream& operator<<(std::ostream&                                    stream,
                              ContractionSolution::ProjectedPerformance const& spm);
     std::ostream& operator<<(std::ostream& stream, BufferLoadCheckPacket const& st);
-} // namespace Tensile
+} // namespace TensileLite

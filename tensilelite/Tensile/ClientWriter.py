@@ -61,6 +61,10 @@ class DataInitName(Enum):
   DenormMin = 19
   DenormMax = 20
   RandomNegPosLimited = 21
+  TrigIndSin = 23
+  TrigIndCos = 24
+  TrigIndAbsSin = 25
+  TrigIndAbsCos = 26
 
 class ClientLogLevel(Enum):
   Error = 0
@@ -134,7 +138,8 @@ def main( config ):
           factorDimEnums = lc["FactorDimArgs"]
         if "ICacheFlush" in lc:
           icacheFlushArgs = lc["ICacheFlush"]
-    activationArgs = ActivationArgs(problemType, activationEnums) if problemType["ActivationType"] == 'all' else ""
+    isForAll = True if problemType["ActivationType"] in ['all', 'hipblaslt_all'] else False
+    activationArgs = ActivationArgs(problemType, activationEnums) if isForAll else ""
     factorDimArgs = FactorDimArgs(problemType, factorDimEnums)
     clientParametersPaths.append(writeClientConfig(
                                   forBenchmark=False,
@@ -234,6 +239,9 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
 
   if globalParameters.get("AsmDebug", False):
     callCreateLibraryCmd += " --asm-debug"
+
+  if globalParameters["KeepBuildTmp"]:
+    callCreateLibraryCmd += " --keep-build-tmp"
 
   callCreateLibraryCmd += " --architecture=" + globalParameters["Architecture"]
   callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
@@ -516,7 +524,7 @@ def pruneModeName(mode):
     if mode == 5: return 'Prune0X0X'
     if mode == 6: return 'Prune00XX'
 
-def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
+def writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
 
     with open(parametersFilePath, "w") as f:
         def param(key, value):
@@ -556,6 +564,8 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationAr
         param('use-scaleAB',   problemType.useScaleAB)
         param('use-scaleCD',   problemType.useScaleCD)
         param('use-scaleAlphaVec',   problemType.useScaleAlphaVec)
+        param('swizzle-tensor-a', problemType.swizzleTensorA)
+        param('swizzle-tensor-b', problemType.swizzleTensorB)
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
             param('bias-type-args',  btype.toEnum())
@@ -618,10 +628,18 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationAr
         param("print-valids",             globalParameters["ValidationPrintValids"])
         param("print-max",                globalParameters["ValidationMaxToPrint"])
         param("num-benchmarks",           globalParameters["NumBenchmarks"])
-        param("num-elements-to-validate", globalParameters["NumElementsToValidate"])
+
+        numElementsToValidate = globalParameters["NumElementsToValidate"]
+        if not forBenchmark:
+         if globalParameters["NumElementsToValidateWinner"] == -1 or numElementsToValidate == -1:
+           numElementsToValidate = -1
+         else:
+           numElementsToValidate = max(globalParameters["NumElementsToValidateWinner"], globalParameters["NumElementsToValidate"])
+        param("num-elements-to-validate", numElementsToValidate)
         param("num-enqueues-per-sync",    globalParameters["EnqueuesPerSync"])
         param("max-enqueues-per-sync",    globalParameters["MaxEnqueuesPerSync"])
         param("num-syncs-per-benchmark",  globalParameters["SyncsPerBenchmark"])
+        param("skip-slow-solution-ratio", globalParameters["SkipSlowSolutionRatio"])
         param("use-gpu-timer",            globalParameters["KernelTime"])
         param("hardware-monitor",         globalParameters["HardwareMonitor"])
         param("num-warmups",              globalParameters["NumWarmups"])
@@ -665,7 +683,7 @@ def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, facto
 
     newSolution = next(iter(newLibrary.solutions.values()))
     sourceDir = os.path.join(stepBaseDir, "source")
-    writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
+    writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
 
     return filename
 
@@ -686,7 +704,7 @@ def CreateBenchmarkClientParametersForSizes(libraryRootPath, problemSizes, dataF
       problemTypeDict = metaData["ProblemType"]
       problemType = ContractionsProblemType.FromOriginalState(problemTypeDict)
 
-    writeClientConfigIni(problemSizes, "", "", "", "", problemType, libraryRootPath, codeObjectFiles, dataFilePath, configFile)
+    writeClientConfigIni(True, problemSizes, "", "", "", "", problemType, libraryRootPath, codeObjectFiles, dataFilePath, configFile)
 
 
 ################################################################################

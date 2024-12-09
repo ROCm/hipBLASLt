@@ -32,11 +32,11 @@
 namespace std
 {
     template <>
-    struct hash<Tensile::AMDGPU>
+    struct hash<TensileLite::AMDGPU>
     {
-        inline size_t operator()(Tensile::AMDGPU const& gpu) const
+        inline size_t operator()(TensileLite::AMDGPU const& gpu) const
         {
-            return Tensile::hash_combine(static_cast<size_t>(gpu.processor), gpu.computeUnitCount);
+            return TensileLite::hash_combine(static_cast<size_t>(gpu.processor), gpu.computeUnitCount);
         }
     };
 } // namespace std

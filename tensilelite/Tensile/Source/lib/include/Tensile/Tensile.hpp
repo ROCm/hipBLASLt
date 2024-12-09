@@ -74,7 +74,7 @@
 /**
  * @brief Primary namespace for Tensile host code.
  */
-namespace Tensile
+namespace TensileLite
 {
     /**
      * \ingroup Tensile
@@ -122,6 +122,8 @@ namespace Tensile
     public:
         std::string kernelName;
         std::string codeObjectFile; //Code object file kernel is located in
+
+        bool isSingleCall = false;
 
         dim3   workGroupSize;
         dim3   numWorkGroups;
@@ -197,6 +199,6 @@ namespace Tensile
     std::shared_ptr<SolutionLibrary<MyProblem, MySolution>>
         LoadLibraryData(std::vector<uint8_t> const& data);
 #endif
-} // namespace Tensile
+} // namespace TensileLite
 
 /** @} */

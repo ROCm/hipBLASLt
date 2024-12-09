@@ -290,6 +290,9 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
             customConfig = getCustomKernelConfig(solutionState["CustomKernelName"], isp)
             for key, value in customConfig.items():
                 solutionState[key] = value
+            # The ActivationType setting in YAML is meaningless in customKernel case.
+            # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
+            solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
         solutionObject = Solution(solutionState)
         solutionProblemType = solutionObject["ProblemType"]
         if problemType != solutionProblemType:

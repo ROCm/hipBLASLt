@@ -41,11 +41,11 @@
 
 namespace po = boost::program_options;
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
-        // Problem-indept. from 0~7, and 16 (fixed values for every problem)
+        // Problem-indept. from 0~7, and 16, and 23~26 (fixed values for every problem)
         // And problem-dept. from 8~15 (values depend on problem)
         // RandomNegPosLimited: integer -128~128. fp -1.0~1.0
         enum class InitMode
@@ -73,6 +73,10 @@ namespace Tensile
             DenormMax, // 20
             RandomNegPosLimited, // 21
             Free, // 22
+            TrigIndSin, // 23
+            TrigIndCos, // 24
+            TrigIndAbsSin, // 25
+            TrigIndAbsCos, // 26
             Count
         };
 
@@ -300,6 +304,8 @@ namespace Tensile
 
                 hipMemcpyKind kind;
 
+                bool needSwizzle = problem.swizzleTensorA() || problem.swizzleTensorB();
+
                 if(m_keepPristineCopyOnGPU && !m_problemDependentData)
                 {
                     // use gpu pristine
@@ -312,7 +318,7 @@ namespace Tensile
                 }
 
                 if(m_gpuInit && m_curBoundsCheck == BoundsCheckMode::Disable
-                   && !m_problemDependentData)
+                   && !m_problemDependentData && !needSwizzle)
                 {
                     if(m_elementsToValidate)
                     {
@@ -331,6 +337,8 @@ namespace Tensile
                         initializeCPUInputs(problem);
                     if(m_problemDependentData)
                         copyValidToGPUBuffer(problem);
+                    if(needSwizzle)
+                        copySwizzledToGPUBuffer(problem);
 
                     // gpu to gpu
                     copyInputs(m_gpuPtrs,
@@ -352,7 +360,10 @@ namespace Tensile
                                 {
                                     auto& p = it->second;
                                     if(i <= ContractionProblemGemm::TENSOR::METADATA)
-                                        HIP_CHECK_EXC(hipMemcpy(mem[j][i].data.get(), p.gpuInput.current.get(), mem[j][i].size, hipMemcpyDeviceToDevice));
+                                        HIP_CHECK_EXC(hipMemcpy(mem[j][i].data.get(),
+                                                                p.gpuInput.current.get(),
+                                                                mem[j][i].size,
+                                                                hipMemcpyDeviceToDevice));
                                 }
                             }
                     }
@@ -457,6 +468,10 @@ namespace Tensile
                 case InitMode::TrigCos:
                 case InitMode::TrigAbsSin:
                 case InitMode::TrigAbsCos:
+                case InitMode::TrigIndSin:
+                case InitMode::TrigIndCos:
+                case InitMode::TrigIndAbsSin:
+                case InitMode::TrigIndAbsCos:
                 case InitMode::Count:
                     throw std::runtime_error("Invalid InitMode.");
                 }
@@ -535,6 +550,18 @@ namespace Tensile
                 case InitMode::TrigCos:
                 case InitMode::TrigAbsSin:
                 case InitMode::TrigAbsCos:
+                case InitMode::TrigIndSin:
+                    initArrayTrig<T, false, false>(array, elements);
+                    break;
+                case InitMode::TrigIndCos:
+                    initArrayTrig<T, true, false>(array, elements);
+                    break;
+                case InitMode::TrigIndAbsSin:
+                    initArrayTrig<T, false, true>(array, elements);
+                    break;
+                case InitMode::TrigIndAbsCos:
+                    initArrayTrig<T, true, true>(array, elements);
+                    break;
                 case InitMode::Count:
                     throw std::runtime_error("Invalid InitMode.");
                 }
@@ -607,6 +634,18 @@ namespace Tensile
                     initArrayTrig<T, false, true>(array, tensor);
                     break;
                 case InitMode::TrigAbsCos:
+                    initArrayTrig<T, true, true>(array, tensor);
+                    break;
+                case InitMode::TrigIndSin:
+                    initArrayTrig<T, false, false>(array, tensor);
+                    break;
+                case InitMode::TrigIndCos:
+                    initArrayTrig<T, true, false>(array, tensor);
+                    break;
+                case InitMode::TrigIndAbsSin:
+                    initArrayTrig<T, false, true>(array, tensor);
+                    break;
+                case InitMode::TrigIndAbsCos:
                     initArrayTrig<T, true, true>(array, tensor);
                     break;
                 case InitMode::RandomNegPosLimited:
@@ -722,6 +761,16 @@ namespace Tensile
                 }
             }
 
+            template <typename T, bool useCos, bool useAbs>
+            void initArrayTrig(T* array, size_t elements)
+            {
+#pragma omp parallel for
+                for(size_t i = 0; i < elements; i++)
+                {
+                    array[i] = getTrigValue<T>(i, useCos, useAbs);
+                }
+            }
+
             template <typename T>
             void pruneSparseArray(T* array, TensorDescriptor const& tensor, size_t pruneDim)
             {
@@ -802,13 +851,15 @@ namespace Tensile
             virtual bool needMoreBenchmarkRuns() const override
             {
                 return false;
-            };
-            virtual void preBenchmarkRun() override{};
-            virtual void postBenchmarkRun() override{};
-            virtual void preProblem(ContractionProblem* const problem) override{};
-            virtual void postProblem() override{};
-            virtual void preSolution(ContractionSolution const& solution) override{};
-            virtual void postSolution() override{};
+            }
+            virtual void preBenchmarkRun() override{}
+            virtual void postBenchmarkRun() override{}
+            virtual void preProblem(ContractionProblem* const problem) override{}
+            virtual void postProblem() override{}
+            virtual void preSolution(ContractionSolution const& solution) override{
+
+            }
+            virtual void postSolution() override{}
             virtual bool needMoreRunsInSolution() const override
             {
                 return m_numRunsInSolution < m_numRunsPerSolution;
@@ -818,43 +869,45 @@ namespace Tensile
             {
                 return 0;
             };
-            virtual void setNumWarmupRuns(size_t count) override{};
-            virtual void preWarmup() override{};
-            virtual void postWarmup() override{};
+            virtual void setNumWarmupRuns(size_t count) override{}
+            virtual void preWarmup() override{}
+            virtual void postWarmup(TimingEvents const& startEvents,
+                                    TimingEvents const& stopEvents,
+                                    hipStream_t const&  stream) override{}
             virtual void validateWarmups(std::shared_ptr<ProblemInputs> inputs,
                                          TimingEvents const&            startEvents,
                                          TimingEvents const&            stopEvents) override
             {
                 m_numRunsInSolution++;
-            };
+            }
 
             virtual size_t numSyncs() override
             {
                 return 0;
-            };
-            virtual void setNumSyncs(size_t count) override{};
-            virtual void preSyncs() override{};
-            virtual void postSyncs() override{};
+            }
+            virtual void setNumSyncs(size_t count) override{}
+            virtual void preSyncs() override{}
+            virtual void postSyncs() override{}
 
             virtual size_t numEnqueuesPerSync() override
             {
                 return 0;
-            };
-            virtual void setNumEnqueuesPerSync(size_t count) override{};
-            virtual void preEnqueues(hipStream_t const& stream) override{};
+            }
+            virtual void setNumEnqueuesPerSync(size_t count) override{}
+            virtual void preEnqueues(hipStream_t const& stream) override{}
             virtual void postEnqueues(TimingEvents const& startEvents,
                                       TimingEvents const& stopEvents,
-                                      hipStream_t const&  stream) override{};
+                                      hipStream_t const&  stream) override{}
             virtual void validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
                                           TimingEvents const&            startEvents,
-                                          TimingEvents const&            stopEvents) override{};
+                                          TimingEvents const&            stopEvents) override{}
 
-            virtual void finalizeReport() override{};
+            virtual void finalizeReport() override{}
 
             virtual int error() const override
             {
                 return 0;
-            };
+            }
 
         protected:
             // Memory input for class DataInitialization
@@ -906,6 +959,8 @@ namespace Tensile
             void allocNewGPUInputs();
 
             void copyValidToGPUBuffer(ContractionProblemGemm const& problem);
+
+            void copySwizzledToGPUBuffer(ContractionProblemGemm const& problem);
 
             void initializeGPUBatchedInputs(ContractionProblemGemm const& problem);
 
@@ -1002,7 +1057,7 @@ namespace Tensile
             /// cannot be used with problem dependent data.
             bool m_problemDependentData = false;
 
-            int64_t               m_rotatingBuffer          = 0;
+            int64_t                         m_rotatingBuffer = 0;
             std::shared_ptr<RotatingMemory> m_rm;
             int32_t                         m_rotatingMode = 0;
         };
@@ -2546,4 +2601,4 @@ namespace Tensile
             return static_cast<BFloat8>(value);
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

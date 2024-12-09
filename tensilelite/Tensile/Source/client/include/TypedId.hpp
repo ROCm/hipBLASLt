@@ -28,7 +28,7 @@
 #include <Tensile/DataTypes.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     constexpr uint32_t GemmTypeId(DataType aType,
                                   DataType bType,
@@ -161,4 +161,4 @@ namespace Tensile
     using TypedGemm_F8H_FP8_FP8_S = TypedGemm<Float8, Half, Float8, Float8, float, float, Float8>;
 #endif // TENSILE_USE_HALF
 #endif // TENSILE_USE_FP8_BF8
-} // namespace Tensile
+} // namespace TensileLite

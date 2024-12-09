@@ -2,9 +2,11 @@
 Bench:
   ProblemType:
     ComputeDataType: s
-    ComputeInputDataType: h
-    DataTypeC: h
-    DataTypeD: h
+    ComputeInputDataType: s
+    DataTypeA: s
+    DataTypeB: s
+    DataTypeC: s
+    DataTypeD: s
     TransposeA: 0
     TransposeB: 0
     UseBias: False
@@ -12,11 +14,11 @@ Bench:
     ColdIter: 20
     Iter: 100
     AlgoMethod: "all"
-    RotatingBuffer: 0
+    RotatingBuffer: 512
   TuningParameters:
     # SplitK list control parameter example
     # SplitK: [0, 4, 8]
   ProblemSizes:
-  - [128, 128, 128]
-  - [128, 128, 128]
+  - [128, 128, 1, 128]
+  - [128, 128, 1, 128]
 CreateLogic: {}

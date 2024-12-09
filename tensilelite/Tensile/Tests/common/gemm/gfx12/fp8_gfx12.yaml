@@ -244,6 +244,7 @@ BenchmarkProblems:
       UseBias: 1
       UseE: False
       Activation: True
+      ActivationType: all
       UseScaleAB: "Vector"
       UseScaleAlphaVec: 1
       # SupportUserArgs: True

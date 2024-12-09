@@ -24,11 +24,11 @@ from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, 
     SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SCBranchSCC1, SCmpLeU32, VMovB32, vgpr, \
     SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
     log2, SBarrier, SStoreB32, SLongBranchPositive, SBranch, ceilDivide, replaceHolder, SNop, staticMultiply, SSleep, \
-    VAddF32, VAddF64, SAndB32, SLShiftRightB32, VReadfirstlaneB32
+    VAddF32, VAddF64, SAndB32, SLShiftRightB32, VReadfirstlaneB32, SBranchIfNotZero
 from ..Common import print2
 # from ..TensileInstructions.Containers import SMEMModifiers
 from ..Component import Component
-from ..AsmStoreState import StoreState
+from ..AsmStoreState import StoreState, VectorDataTypes
 import abc
 from copy import deepcopy
 
@@ -64,11 +64,11 @@ class XCCMappingOn(XCCMapping):
             sqTmp = writer.sgprPool.checkOut(1, "sqTmp", preventOverflow=False)
             divisor = kernel["StreamKXCCMapping"]
             if ((divisor & (divisor - 1)) != 0): # Need temp registers if not power of 2
-                sTmp = writer.sgprPool.checkOut(2, "sTmp", preventOverflow=False)
+                sTmp = writer.sgprPool.checkOutAligned(2, 2, "sTmp", preventOverflow=False)
                 sTmpRes  = RegisterPoolResource(idx=sTmp, size=2)
 
             # sGridC = ceil(grid / xccm)
-            module.add(SAddU32(dst=sgpr(sXCC), src0=sgpr("skGrid"), src1=hex(kernel["StreamKXCCMapping"] - 1), comment="ceil(grid/xccm)"))
+            module.add(SAddU32(dst=sgpr(sGridC), src0=sgpr("skGrid"), src1=hex(kernel["StreamKXCCMapping"] - 1), comment="ceil(grid/xccm)"))
             module.add(scalarStaticDivideAndRemainder(qReg=sGridC, rReg=None, dReg=sGridC, divisor=kernel["StreamKXCCMapping"], tmpSgprRes=sTmpRes, doRemainder=0))
             # sGridF = floor(grid / xccm)
             # sGridM = grid % xccm
@@ -233,6 +233,12 @@ class StreamK(Component):
 
         # Use StreamK params for loop count
         module.add(SSubU32(dst=sgpr(loopCounterName), src0=sgpr("StreamKLocalEnd"), src1=sgpr("StreamKLocalStart"), comment="StreamK loop counter = localEnd - localStart"))
+        # Short circuit if alpha==0 (set loopCounter to 0 to skip main loop)
+        alphaLabel2 = Label("SKAlphaCheck2", "")
+        module.add(SBranchIfNotZero("Alpha", kernel["ProblemType"]["ComputeDataType"], alphaLabel2))
+        module.add(SMovB32(dst=sgpr(loopCounterName), src=0, comment="Skip iterations"))
+        module.add(alphaLabel2)
+
         # Adjust loop count for tail loop
         if not kernel["NoTailLoop"]:
             tmpSgpr = tmpSgprInfo.idx
@@ -240,7 +246,11 @@ class StreamK(Component):
             loopChar = writer.states.indexChars[kernel["ProblemType"]["IndicesSummation"][unrollIdx]]
 
             assert kernel["DepthU"] % 2 == 0 # Assuming DepthU is power of 2, if odd DepthU were supported this divide would need 2 more temp registers for divide
-            module.add(scalarStaticDivideAndRemainder(qReg=tmpSgpr, rReg=tmpSgpr+1, dReg=("SizesSum+%u" % unrollIdx), divisor=kernel["DepthU"], tmpSgprRes=None, doRemainder=2))
+            if ((kernel["DepthU"] & (kernel["DepthU"] - 1)) == 0):
+                module.add(scalarStaticDivideAndRemainder(qReg=tmpSgpr, rReg=tmpSgpr+1, dReg=("SizesSum+%u" % unrollIdx), divisor=kernel["DepthU"], tmpSgprRes=None, doRemainder=2))
+            else:
+                with writer.allocTmpSgpr(4) as tmpSgpr1:
+                    module.add(scalarStaticDivideAndRemainder(qReg=tmpSgpr, rReg=tmpSgpr+1, dReg=("SizesSum+%u" % unrollIdx), divisor=kernel["DepthU"], tmpSgprRes=tmpSgpr1, doRemainder=2))
             module.add(SCmpEQU32(src0=sgpr(tmpSgpr+1), src1=hex(0), comment="numIter%s == 0"%loopChar ))
             module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=0, src1=1, comment="check if size uses tail loop"))
             module.add(SCmpEQU32(src0=sgpr("StreamKLocalEnd"), src1=sgpr("ItersPerTile"), comment="Check if WG processes final iteration of tile"))
@@ -418,11 +428,12 @@ class StreamK(Component):
         # Calculate Vgprs for Write Batching
         ########################################
 
-        ss = StoreState(writer, kernel, gwvw, edge, beta, False, elements[edgeI], dim=0, isWorkspace=True)
+        vectorDataTypes = VectorDataTypes()
+        ss = StoreState(writer, kernel, gwvw, edge, beta, False, elements[edgeI], vectorDataTypes, dim=0, isWorkspace=True)
 
         #print self.vgprPool.state()
         # Use VGPR up to next occupancy threshold:
-        maxVgprs = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), \
+        maxVgprs, _ = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), writer.sgprPool.size(), \
             writer.getLdsSize(kernel), writer.agprPool.size(), writer.states.doubleVgpr)
         if writer.states.serializedStore: # get aggressive when serializedStore is on; not necessarily exclusive to this parameter
             # len(elements[edgeI])
@@ -467,9 +478,9 @@ class StreamK(Component):
         if numVgprAvailable < minNeeded:
             gwvwOrig = gwvw
             currentOccupancy = writer.getOccupancy(kernel["NumThreads"], writer.getLdsSize(kernel), \
-                writer.vgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
+                writer.vgprPool.size(), writer.sgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
             futureOccupancy = writer.getOccupancy(kernel["NumThreads"], writer.getLdsSize(kernel), \
-                writer.vgprPool.size() - numVgprAvailable + minNeeded, writer.agprPool.size(), writer.states.doubleVgpr)
+                writer.vgprPool.size() - numVgprAvailable + minNeeded, writer.sgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
 
             if shrinkDb:
                 print("currentOccupancy=%u futureOccupancy=%u VGPRs=%u numVgprAvail=%u vgprPerElem=%u" \
@@ -875,7 +886,8 @@ class StreamK(Component):
             # Calculate Vgprs for Write Batching
             ########################################
 
-            ss = StoreState(writer, kernel, gwvw, edge, True, False, elements[edgeI], dim=0, isWorkspace=True)
+            vectorDataTypes = VectorDataTypes()
+            ss = StoreState(writer, kernel, gwvw, edge, True, False, elements[edgeI], vectorDataTypes, dim=0, isWorkspace=True)
 
             # how many vgprs are needed for zero elements
             # 2 for addressC in vgpr for addition - already checked out
@@ -896,7 +908,7 @@ class StreamK(Component):
 
             #print self.vgprPool.state()
             # Use VGPR up to next occupancy threshold:
-            maxVgprs = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), \
+            maxVgprs, _ = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), writer.sgprPool.size(), \
                 writer.getLdsSize(kernel), writer.agprPool.size(), writer.states.doubleVgpr)
             if writer.states.serializedStore: # get aggressive when serializedStore is on; not necessarily exclusive to this parameter
                 # len(elements[edgeI])
@@ -940,9 +952,9 @@ class StreamK(Component):
             if numVgprAvailable < minNeeded:
                 gwvwOrig = gwvw
                 currentOccupancy = writer.getOccupancy(kernel["NumThreads"], writer.getLdsSize(kernel), \
-                        writer.vgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
+                        writer.vgprPool.size(), writer.sgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
                 futureOccupancy = writer.getOccupancy(kernel["NumThreads"], writer.getLdsSize(kernel), \
-                        writer.vgprPool.size() - numVgprAvailable + minNeeded, writer.agprPool.size(), writer.states.doubleVgpr)
+                        writer.vgprPool.size() - numVgprAvailable + minNeeded, writer.sgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
 
                 if shrinkDb:
                     print("currentOccupancy=%u futureOccupancy=%u VGPRs=%u numVgprAvail=%u vgprPerElem=%u" \
@@ -958,13 +970,13 @@ class StreamK(Component):
                 elif gwvw != gwvwOrig:
                     ss.gwvw = gwvw # make both representations consistent
                     if shrinkDb:
-                        print2(3, "info: %s shrank gwvw from %u to %u but kept occupancy same=%u." \
+                        print2("info: %s shrank gwvw from %u to %u but kept occupancy same=%u." \
                             % (writer.states.kernelName, gwvwOrig, gwvw, currentOccupancy))
 
                 if numVgprAvailable < minElements*ss.numVgprsPerElement:
-                    print2(3, "info: growing pool += %d * %d for GlobalWrite\n" \
+                    print2("info: growing pool += %d * %d for GlobalWrite\n" \
                         % (minElements,ss.numVgprsPerElement))
-                    print2(3, writer.vgprPool.state())
+                    print2(writer.vgprPool.state())
                     # tl = []
                     # for i in range(0,minElements):
                     #     tl.append(self.vgprPool.checkOut(numVgprsPerElement, "grow-pool for GlobalWrite"))
@@ -973,7 +985,7 @@ class StreamK(Component):
                     writer.vgprPool.growPool(0, minElements, ss.numVgprsPerElement, \
                         "grow-pool for GlobalWrite")
                     numVgprAvailable = writer.vgprPool.available()
-                    print2(3, writer.vgprPool.state())
+                    print2(writer.vgprPool.state())
 
             # print("NumVgprAvailable", numVgprAvailable)
             if ss.numVgprsPerElement:
@@ -1910,7 +1922,21 @@ class StreamKTwoTileDPFirst(StreamK):
         module.add(skUpdateDone)
         module.add(SMovB32(dst=sgpr("StreamKIter"), src=sgpr(sTmp+1), comment="Store current iteration"))
 
+        # Map SK index to WG
         module.add(self.skIndexToWG(writer, kernel, sTmp))
+
+        # Short circuit if alpha==0 (skip main loop and reading A/B, only do beta * C)
+        # To skip main loop in stream-k, we check if this WG is responsible for writing results (ie: WG starts tile)
+        # If WG starts tile then set LocalEnd=ItersPerTile to skip fixup step, and set loopCounter to 0 to skip main loop
+        # If WG does not start tile, skip to end of persistent loop to check for other SK tile
+        alphaLabel = Label("SKAlphaCheck", "")
+        module.add(SBranchIfNotZero("Alpha", kernel["ProblemType"]["ComputeDataType"], alphaLabel))
+        # Skip to end if not doing the global write
+        module.add(SCmpEQU32(src0=sgpr("StreamKLocalStart"), src1=0, comment="does wg start tile?"))
+        endLabel = Label("GW_End", "")
+        module.add(writer.longBranchScc0(endLabel, posNeg=1))
+        module.add(SMovB32(dst=sgpr("StreamKLocalEnd"), src=sgpr("ItersPerTile"), comment="Skip iterations"))
+        module.add(alphaLabel)
 
         writer.sgprPool.checkIn(sTmp)
 

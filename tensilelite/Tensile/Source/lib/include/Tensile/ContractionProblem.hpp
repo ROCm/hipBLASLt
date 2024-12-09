@@ -38,7 +38,7 @@
 #include <Tensile/TensorDescriptor.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \addtogroup User defined parameters
@@ -88,6 +88,26 @@ namespace Tensile
             return m_wgm;
         }
 
+        void setWGMXCC(uint16_t wgmxcc)
+        {
+            m_wgmxcc = wgmxcc;
+        }
+
+        uint16_t wgmxcc() const
+        {
+            return m_wgmxcc;
+        }
+
+        void setWGMXCCG(int16_t wgmxccg)
+        {
+            m_wgmxccg = wgmxccg;
+        }
+
+        int16_t wgmxccg() const
+        {
+            return m_wgmxccg;
+        }
+
         void setBiasEnum(DataType dataType)
         {
             m_biasType = dataType;
@@ -128,6 +148,8 @@ namespace Tensile
         bool           m_gsuc           = false; // default value
         bool           m_gsuwgmrr       = false; // default value
         int16_t        m_wgm            = 0; // default value
+        uint16_t       m_wgmxcc         = 0; // default value
+        int16_t        m_wgmxccg        = 0; // default value
         DataType       m_biasType       = DataType::None;
         int            m_factorDim      = 0;
         ActivationType m_activationType = ActivationType::None;
@@ -872,8 +894,24 @@ namespace Tensile
 
         PerformanceMetric performanceMetric() const
         {
-            const bool experimental = Debug::Instance().useExperimentalSelection();
-            return experimental ? PerformanceMetric::Experimental : m_performanceMetric;
+            const int experimental = Debug::Instance().useExperimentalSelection();
+            auto      option       = static_cast<ExperimentalOption>(experimental);
+
+            switch(option)
+            {
+            case ExperimentalOption::None:
+                return m_performanceMetric;
+
+            case ExperimentalOption::DTree:
+                return PerformanceMetric::ExperimentalDTree;
+
+            case ExperimentalOption::StreamK:
+                return PerformanceMetric::ExperimentalStreamK;
+
+            default:
+                // warning?
+                return m_performanceMetric;
+            }
         }
 
         void setDeterministicMode(bool value)
@@ -940,6 +978,22 @@ namespace Tensile
         size_t maxProblemSize() const
         {
             return m_maxProblemSize;
+        }
+
+        bool swizzleTensorA() const {
+            return m_swizzleTensorA;
+        }
+
+        bool swizzleTensorB() const {
+            return m_swizzleTensorB;
+        }
+
+        void setSwizzleTensorA(bool swizzle) {
+            m_swizzleTensorA = swizzle;
+        }
+
+        void setSwizzleTensorB(bool swizzle) {
+            m_swizzleTensorB = swizzle;
         }
 
         /// Allocated elements excluding batch dimensions
@@ -1075,7 +1129,7 @@ namespace Tensile
             return m_eligibleForPK;
         }
 
-        double  arithmeticIntensity() const
+        double arithmeticIntensity() const
         {
             return m_arithmeticIntensity;
         }
@@ -1147,6 +1201,8 @@ namespace Tensile
         bool           m_useGradient             = false;
         bool           m_useE                    = false;
         bool           m_outputAmaxD             = false;
+        bool           m_swizzleTensorA          = false;
+        bool           m_swizzleTensorB          = false;
         int            m_useBias                 = 0;
         std::string    m_useScaleAB              = "";
         bool           m_useScaleCD              = false;
@@ -1157,14 +1213,14 @@ namespace Tensile
 
         KernelLanguage    m_kernelLanguage    = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric = PerformanceMetric::DeviceEfficiency;
-        double m_arithmeticIntensity;
-        DataType m_alphaType         = DataType::None; // if not assigned, will follow d-type
-        DataType m_betaType          = DataType::None; // for bwd-compatible
-        DataType m_scaleAType        = DataType::None; // if not assigned, will follow alpha-type
-        DataType m_scaleBType        = DataType::None; // if not assigned, will follow alpha-type
-        DataType m_scaleCType        = DataType::None; // if not assigned, will follow beta-type
-        DataType m_scaleDType        = DataType::None; // if not assigned, will follow beta-type
-        DataType m_scaleAlphaVecType = DataType::None; // if not assigned, will follow alpha-type
+        double            m_arithmeticIntensity;
+        DataType          m_alphaType  = DataType::None; // if not assigned, will follow d-type
+        DataType          m_betaType   = DataType::None; // for bwd-compatible
+        DataType          m_scaleAType = DataType::None; // if not assigned, will follow alpha-type
+        DataType          m_scaleBType = DataType::None; // if not assigned, will follow alpha-type
+        DataType          m_scaleCType = DataType::None; // if not assigned, will follow beta-type
+        DataType          m_scaleDType = DataType::None; // if not assigned, will follow beta-type
+        DataType m_scaleAlphaVecType   = DataType::None; // if not assigned, will follow alpha-type
         DataType m_activationComputeType = DataType::None;
 
         ContractionProblemGemm::TENSOR m_biasSrc = ContractionProblemGemm::TENSOR::D;
@@ -1326,4 +1382,4 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite

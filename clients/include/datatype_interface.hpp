@@ -52,9 +52,9 @@ constexpr auto hipblaslt_type2datatype()
     if(std::is_same<T, hipblaslt_bf8_fnuz>{})
         return HIP_R_8F_E5M2_FNUZ;
 #ifdef ROCM_USE_FLOAT8
-    if(std::is_same<T, hipblaslt_f8_ocp>{})
+    if(std::is_same<T, hipblaslt_f8>{})
         return HIP_R_8F_E4M3;
-    if(std::is_same<T, hipblaslt_bf8_ocp>{})
+    if(std::is_same<T, hipblaslt_bf8>{})
         return HIP_R_8F_E5M2;
 #endif
     if(std::is_same<T, int32_t>{})

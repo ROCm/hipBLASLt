@@ -36,29 +36,29 @@ public:
     HipDeviceBuffer(hipDataType dtype, std::size_t numElements, bool HMM = false)
         : d_vector_type(dtype, numElements, HMM)
         , numBytes(realDataTypeSize(dtype) * numElements)
-        , buffer{this->device_vector_setup(), &hipFree}
+        , buffer(this->device_vector_setup())
     {
     }
 
     ~HipDeviceBuffer()
     {
-        this->device_vector_teardown(static_cast<char*>(buffer.get()));
+        this->device_vector_teardown(static_cast<char*>(buffer));
         buffer = nullptr;
     }
 
-    HipDeviceBuffer(const HipDeviceBuffer&)            = delete;
-    HipDeviceBuffer(HipDeviceBuffer&&)                 = default;
+    HipDeviceBuffer(const HipDeviceBuffer&) = delete;
+    HipDeviceBuffer(HipDeviceBuffer&&)      = default;
     HipDeviceBuffer& operator=(const HipDeviceBuffer&) = delete;
-    HipDeviceBuffer& operator=(HipDeviceBuffer&&)      = default;
+    HipDeviceBuffer& operator=(HipDeviceBuffer&&) = default;
 
     void* buf()
     {
-        return buffer.get();
+        return buffer;
     }
 
     const void* buf() const
     {
-        return buffer.get();
+        return buffer;
     }
 
     std::size_t getNumBytes() const
@@ -78,26 +78,34 @@ public:
         return reinterpret_cast<const T*>(buf());
     }
 
+    hipError_t memcheck() const
+    {
+        return !this->nmemb() || buf() ? hipSuccess : hipErrorOutOfMemory;
+    }
+
 private:
-    std::size_t                               numBytes;
-    std::unique_ptr<void, decltype(&hipFree)> buffer;
+    std::size_t numBytes;
+    void*       buffer;
 };
 
 class HipHostBuffer
 {
 public:
     HipHostBuffer(hipDataType dtype, std::size_t numElements)
-        : numBytes(realDataTypeSize(dtype) * numElements ? realDataTypeSize(dtype) * numElements
-                                                         : realDataTypeSize(dtype))
-        , buffer(createBuffer(numBytes))
+        : buffer(memory_pool<h_memory>::Get(realDataTypeSize(dtype) * numElements
+                                                ? realDataTypeSize(dtype) * numElements
+                                                : realDataTypeSize(dtype)))
     {
     }
 
-    ~HipHostBuffer()                               = default;
-    HipHostBuffer(const HipHostBuffer&)            = delete;
-    HipHostBuffer(HipHostBuffer&&)                 = default;
+    ~HipHostBuffer()
+    {
+        memory_pool<h_memory>::Restore(buffer);
+    }
+    HipHostBuffer(const HipHostBuffer&) = delete;
+    HipHostBuffer(HipHostBuffer&&)      = default;
     HipHostBuffer& operator=(const HipHostBuffer&) = delete;
-    HipHostBuffer& operator=(HipHostBuffer&&)      = default;
+    HipHostBuffer& operator=(HipHostBuffer&&) = default;
 
     void* end()
     {
@@ -121,7 +129,7 @@ public:
 
     std::size_t getNumBytes() const
     {
-        return numBytes;
+        return buffer.bytes();
     }
 
     template <typename T>
@@ -137,30 +145,37 @@ public:
     }
 
 private:
-    std::size_t                                      numBytes;
-    std::unique_ptr<void, decltype(&hipFree)>        buffer;
-    static std::unique_ptr<void, decltype(&hipFree)> createBuffer(std::size_t numBytes)
-    {
-        void* rawBuf{};
-        (void)hipHostMalloc(&rawBuf, numBytes);
-        if(!rawBuf)
-        {
-            hipblaslt_cerr << "Error to allocate memory in HipHostBuffer" << std::endl;
-        }
-        return std::unique_ptr<void, decltype(&hipFree)>(rawBuf, &hipFree);
-    }
+    h_memory buffer;
 };
 
 inline hipError_t
-    synchronize(HipDeviceBuffer& dBuf, const HipHostBuffer& hBuf, std::size_t repeats = 1)
+    synchronize(HipDeviceBuffer& dBuf, const HipHostBuffer& hBuf, std::size_t block_count = 1)
 {
     hipError_t hip_err;
-    for(size_t i = 0; i < repeats; ++i)
+    for(size_t i_block = 0; i_block < block_count; i_block++)
+    {
+        hip_err = hipMemcpy(dBuf.as<char>() + i_block * dBuf.getNumBytes() / block_count,
+                            hBuf.as<char>(),
+                            dBuf.getNumBytes() / block_count,
+                            dBuf.use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
+
+        if(hip_err != hipSuccess)
+        {
+            return hip_err;
+        }
+    }
+    return hip_err;
+}
+
+inline hipError_t broadcast(HipDeviceBuffer& dBuf, std::size_t repeats)
+{
+    hipError_t hip_err = hipSuccess;
+    for(size_t i = 1; i < repeats; ++i)
     {
         hip_err = hipMemcpy(dBuf.as<char>() + i * dBuf.getNumBytes() / repeats,
-                            hBuf.as<char>(),
+                            dBuf.as<char>(),
                             dBuf.getNumBytes() / repeats,
-                            dBuf.use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
+                            dBuf.use_HMM ? hipMemcpyHostToHost : hipMemcpyDeviceToDevice);
 
         if(hip_err != hipSuccess)
         {
@@ -210,10 +225,10 @@ inline void copy_buf(HipHostBuffer& src, HipHostBuffer& dst, hipDataType type)
         break;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        copy_buf<hipblaslt_f8_ocp>(src, dst);
+        copy_buf<hipblaslt_f8>(src, dst);
         break;
     case HIP_R_8F_E5M2:
-        copy_buf<hipblaslt_bf8_ocp>(src, dst);
+        copy_buf<hipblaslt_bf8>(src, dst);
         break;
 #endif
     case HIP_R_32I:
@@ -237,8 +252,8 @@ inline void transform_buf(HipHostBuffer& src, HipHostBuffer& dst)
     {
 #ifdef ROCM_USE_FLOAT8
         if constexpr(std::is_same<Tc, float>::value
-                     || !(std::is_same<T1, hipblaslt_bf8_ocp>::value
-                          || std::is_same<T1, hipblaslt_f8_ocp>::value))
+                     || !(std::is_same<T1, hipblaslt_bf8>::value
+                          || std::is_same<T1, hipblaslt_f8>::value))
 #endif
             std::transform(static_cast<T1*>(src.buf()),
                            static_cast<T1*>(src.end()),
@@ -295,10 +310,10 @@ inline void
         break;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        _transform_buf<hipblaslt_f8_ocp>(src, dst, typeTc);
+        _transform_buf<hipblaslt_f8>(src, dst, typeTc);
         break;
     case HIP_R_8F_E5M2:
-        _transform_buf<hipblaslt_bf8_ocp>(src, dst, typeTc);
+        _transform_buf<hipblaslt_bf8>(src, dst, typeTc);
         break;
 #endif
     case HIP_R_32I:

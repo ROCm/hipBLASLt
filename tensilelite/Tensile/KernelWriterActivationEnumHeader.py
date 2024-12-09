@@ -60,11 +60,12 @@ class KernelWriterActivationEnumHeader(KernelWriterBase):
       fileString += "#pragma once\n\n"
 
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
+    supportedBy = ActivationType.SupportedBy.ALL if self.state["ProblemType"]["ActivationType"] == 'all' else ActivationType.SupportedBy.HIPBLASLT
     enumName = "%sActivationType_%s"%(self.actGradientPrefix, activationCDataType.toChar())
     fileString += "namespace Tensile {\n"
     fileString += "enum class %s : uint32_t\n"%enumName
     fileString += "{\n"
-    enumList = ActivationType.getEnumStrList(activationCDataType, exportType=self.actExportType)
+    enumList = ActivationType.getEnumStrList(activationCDataType, supportedBy, exportType=self.actExportType)
     for idx, enumStr in enumerate(enumList):
       fileString += "  %s = %s,\n"%(ActivationType(enumStr).toEnum(), ActivationType.getEnumIndex(enumStr))
     fileString += "};\n"

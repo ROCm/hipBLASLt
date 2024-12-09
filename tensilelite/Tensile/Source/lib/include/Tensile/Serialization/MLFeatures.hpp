@@ -33,7 +33,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -151,4 +151,4 @@ namespace Tensile
         {
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

@@ -28,6 +28,11 @@ Our documentation is structured as follows:
     * :ref:`ext-reference`
     * :ref:`ext-ops`
     * :ref:`Logging and heuristics <logging-heuristics>`
+
+  .. grid-item-card:: How to
+
+    * :ref:`how-to-use-hipblaslt-tuning-utility`
+    * :ref:`how-to-use-hipblaslt-offline-tuning`
         
   .. grid-item-card:: Contribution
 

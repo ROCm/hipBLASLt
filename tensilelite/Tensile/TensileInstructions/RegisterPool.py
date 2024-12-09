@@ -69,6 +69,18 @@ class RegisterPool:
     self.pool = [self.Register(RegisterPool.Status.Unavailable, "init") for i in range(0,size)]
     self.checkOutSize = {}
     self.checkOutSizeTemp = {}
+    self.occupancyLimitSize    = 0
+    self.occupancyLimitMaxSize = 0
+
+  #######################################
+  # Set occupancy limit
+  def setOccupancyLimit(self, maxSize, size):
+    self.occupancyLimitSize    = size
+    self.occupancyLimitMaxSize = maxSize
+
+  def resetOccupancyLimit(self):
+    self.occupancyLimitSize    = 0
+    self.occupancyLimitMaxSize = 0
 
   ########################################
   # Adds registers to the pool so they can be used as temps
@@ -221,6 +233,10 @@ class RegisterPool:
       # new checkout can begin at start
       newSize = start + size
       oldSize = len(self.pool)
+      if self.occupancyLimitSize > 0:
+        if newSize > self.occupancyLimitSize and newSize <= self.occupancyLimitMaxSize:
+          print("newSize", newSize, "OldSIze", oldSize, "Limit", self.occupancyLimitSize)
+          assert self.occupancyLimitSize >= newSize
       overflow = newSize - oldSize
       #print "Overflow: ", overflow
       for i in range(start, len(self.pool)):
@@ -320,6 +336,31 @@ class RegisterPool:
       else:
         blocksAvail += consecAvailable // blockSize
         consecAvailable = 0
+    blocksAvail += consecAvailable // blockSize
+    #print self.state()
+    #print "available()=", self.available(), "availableBlock()=",maxAvailable
+    return blocksAvail * blockSize
+
+  # Size of registers of at least specified blockSize
+  def availableBlockMaxVgpr(self, maxVgpr, blockSize, align):
+    if blockSize ==0:
+      blockSize = 1
+    blocksAvail = 0
+    consecAvailable = 0
+    #for s in self.pool:
+    for i in range(0, maxVgpr):
+      if i >= len(self.pool) :
+        if not (consecAvailable == 0 and i % align != 0):
+          consecAvailable += 1
+      else:
+        s = self.pool[i]
+        if s.status == RegisterPool.Status.Available:
+          if not (consecAvailable == 0 and i % align != 0):
+            # do not increment if the first item is not aligned
+            consecAvailable += 1
+        else:
+          blocksAvail += consecAvailable // blockSize
+          consecAvailable = 0
     blocksAvail += consecAvailable // blockSize
     #print self.state()
     #print "available()=", self.available(), "availableBlock()=",maxAvailable

@@ -57,7 +57,7 @@ namespace tensile_hip_f8_impl
 //      bfloat8: bf8
 //      f8 is used to consider both float8 and bfloat8
 
-namespace Tensile
+namespace TensileLite
 {
     enum class hip_f8_type
     {
@@ -295,7 +295,7 @@ namespace Tensile
             // NOTE: made clipping default again
             if(T == hip_f8_type::bf8)
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     data = internal::cast_to_f8<float, false /*is_funz*/>(
                         v, 2, 5, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
@@ -318,7 +318,7 @@ namespace Tensile
             }
             else /* fp8*/
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     data = internal::cast_to_f8<float, false /*is_funz*/>(
                         v, 3, 4, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
@@ -404,7 +404,7 @@ namespace Tensile
             // NOTE: made clipping default again
             if(T == hip_f8_type::bf8)
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     data = internal::cast_to_f8<float, false /*is_funz*/>(
                         v, 2, 5, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
@@ -427,7 +427,7 @@ namespace Tensile
             }
             else /* fp8*/
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     data = internal::cast_to_f8<float, false /*is_funz*/>(
                         v, 3, 4, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
@@ -513,7 +513,7 @@ namespace Tensile
             assert(T == hip_f8_type::fp8 || T == hip_f8_type::bf8);
             if(T == hip_f8_type::bf8)
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
                 else
@@ -533,7 +533,7 @@ namespace Tensile
             }
             else /* fp8*/
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 3, 4, false);
                 else
@@ -594,7 +594,7 @@ namespace Tensile
             assert(T == hip_f8_type::fp8 || T == hip_f8_type::bf8);
             if(T == hip_f8_type::bf8)
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
                 else
@@ -614,7 +614,7 @@ namespace Tensile
             }
             else /* fp8*/
             {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                 if(IsOCPSupported())
                     return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
                 else
@@ -642,7 +642,7 @@ namespace Tensile
         inline HIP_HOST_DEVICE bool is_zero() const
         {
             if(get_hip_f8_bias_mode()
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
                || IsOCPSupported()
 #endif
             )
@@ -658,7 +658,7 @@ namespace Tensile
         // check for nan
         inline HIP_HOST_DEVICE bool is_nan() const
         {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
             if(IsOCPSupported())
             {
                 return (T == hip_f8_type::fp8)   ? ((data & 0x7f) == 0x7f)
@@ -694,7 +694,7 @@ namespace Tensile
         // check for inf
         inline HIP_HOST_DEVICE bool is_inf() const
         {
-#if defined(HIP_FP8_TYPE_OCP)
+#if defined(USE_HIP_FP8_DEF)
             if(IsOCPSupported())
             {
                 return (T == hip_f8_type::bf8) ? (data & 0x7f) == 0x7c : false;
@@ -911,68 +911,68 @@ namespace Tensile
     {
         return BFloat8(a, rm, rng);
     }
-} // end of namespace Tensile
+} // end of namespace TensileLite
 
 namespace std
 {
-    inline bool isinf(const Tensile::Float8& a)
+    inline bool isinf(const TensileLite::Float8& a)
     {
         return a.is_inf();
     }
-    inline bool isinf(const Tensile::BFloat8& a)
+    inline bool isinf(const TensileLite::BFloat8& a)
     {
         return a.is_inf();
     }
 
-    inline bool isnan(const Tensile::Float8& a)
+    inline bool isnan(const TensileLite::Float8& a)
     {
         return a.is_nan();
     }
-    inline bool isnan(const Tensile::BFloat8& a)
+    inline bool isnan(const TensileLite::BFloat8& a)
     {
         return a.is_nan();
     }
-    inline bool iszero(const Tensile::Float8& a)
+    inline bool iszero(const TensileLite::Float8& a)
     {
         return a.is_zero();
     }
-    inline bool iszero(const Tensile::BFloat8& a)
+    inline bool iszero(const TensileLite::BFloat8& a)
     {
         return a.is_zero();
     }
 
-    inline Tensile::Float8 abs(const Tensile::Float8& a)
+    inline TensileLite::Float8 abs(const TensileLite::Float8& a)
     {
-        return Tensile::Float8(std::abs(float(a)));
+        return TensileLite::Float8(std::abs(float(a)));
     }
-    inline Tensile::BFloat8 abs(const Tensile::BFloat8& a)
+    inline TensileLite::BFloat8 abs(const TensileLite::BFloat8& a)
     {
-        return Tensile::BFloat8(std::abs(float(a)));
-    }
-
-    inline Tensile::Float8 sin(const Tensile::Float8& a)
-    {
-        return Tensile::Float8(std::sin(float(a)));
-    }
-    inline Tensile::BFloat8 sin(const Tensile::BFloat8& a)
-    {
-        return Tensile::BFloat8(std::sin(float(a)));
+        return TensileLite::BFloat8(std::abs(float(a)));
     }
 
-    inline Tensile::Float8 cos(const Tensile::Float8& a)
+    inline TensileLite::Float8 sin(const TensileLite::Float8& a)
     {
-        return Tensile::Float8(std::cos(float(a)));
+        return TensileLite::Float8(std::sin(float(a)));
     }
-    inline Tensile::BFloat8 cos(const Tensile::BFloat8& a)
+    inline TensileLite::BFloat8 sin(const TensileLite::BFloat8& a)
     {
-        return Tensile::BFloat8(std::cos(float(a)));
+        return TensileLite::BFloat8(std::sin(float(a)));
     }
 
-    inline std::string to_string(const Tensile::Float8& a)
+    inline TensileLite::Float8 cos(const TensileLite::Float8& a)
+    {
+        return TensileLite::Float8(std::cos(float(a)));
+    }
+    inline TensileLite::BFloat8 cos(const TensileLite::BFloat8& a)
+    {
+        return TensileLite::BFloat8(std::cos(float(a)));
+    }
+
+    inline std::string to_string(const TensileLite::Float8& a)
     {
         return std::to_string(static_cast<float>(a));
     }
-    inline std::string to_string(const Tensile::BFloat8& a)
+    inline std::string to_string(const TensileLite::BFloat8& a)
     {
         return std::to_string(static_cast<float>(a));
     }
