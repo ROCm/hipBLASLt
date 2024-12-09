@@ -45,9 +45,10 @@
 # points for the assemble and link step respectively.
 # ------------------------------------------------------------------------
 
-AS := /opt/rocm/bin/amdclang++
-LDD := /opt/rocm/bin/amdclang++
-WAVEFRONTSIZE := -mwavefrontsize64
+ROCM_PATH ?= /opt/rocm
+AS := $(ROCM_PATH)/bin/amdclang++
+LDD := $(ROCM_PATH)/bin/amdclang++
+WAVEFRONTSIZE ?= -mwavefrontsize64
 
 .SECONDEXPANSION:
 co: COFILES = $(shell find ${TENSILE_OUT}/1_BenchmarkProblems/*/00_Final/source/library -name '*.co')
@@ -61,10 +62,9 @@ ${TENSILE_OUT}/1_BenchmarkProblems%.co: $$(OBJFILES)
 	@echo relinking $(PROBLEM) $(lastword $(subst /, ,$@))
 	@$(LDD) -target amdgcn-amd-amdhsa -Xlinker --build-id=sha1 ${LINK_ARGS} -o $@ $^
 
-.SECONDEXPANSION:
-#.o: PROBLEM = $(word 3 $(subst /, ,$@))
-#     COFILE = $(shell find ${TENSILE_OUT}/1_BenchmarkProblems/$$(PROBLEM)/00_Final/source/library -name '*.co')
-#     ARCH = $(subst .co,,$(subst TensileLibrary_,,$(lastword $(subst /, ,$$(COFILE)))))
+%.o: PROBLEM = $(word 3, $(subst /, ,$*))
+     COFILE = $(shell find ${TENSILE_OUT}/1_BenchmarkProblems/$(PROBLEM)/00_Final/source/library -name '*.co')
+     ARCH ?= $(subst .co,,$(subst TensileLibrary_,,$(lastword $(subst /, ,$(COFILE)))))
 %.o: %.s
 	@echo rebuilding $(lastword $(subst /, ,$@)) for $(ARCH)
-	@$(AS) -x assembler -target amdgcn-amd-amdhsa -mcode-object-version=4 -mcpu=${ARCH} ${WAVEFRONTSIZE} ${ASM_ARGS} -c -o $@ $^
+	@$(AS) -x assembler -target amdgcn-amd-amdhsa -mcode-object-version=4 -mcpu=$(ARCH) ${WAVEFRONTSIZE} ${ASM_ARGS} -c -o $@ $^
