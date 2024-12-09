@@ -34,6 +34,7 @@ import os.path
 import subprocess
 import sys
 import time
+import re
 
 startTime = time.time()
 
@@ -84,6 +85,7 @@ globalParameters["SkipSlowSolutionRatio"] = 0.0   # Skip slow solution during wa
 globalParameters["Profiler"] = 0                  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
 # validation
 globalParameters["NumElementsToValidate"] = 128   # number of elements to validate, 128 will be evenly spaced out (with prime number stride) across C tensor
+globalParameters["NumElementsToValidateWinner"] = 0   # number of elements to validate in LibraryClient stage, the exact number to be validated is max(NumElementsToValidate,NumElementsToValidateWinner)
 globalParameters["BoundsCheck"] = 0   # Bounds check
 #1: Perform bounds check to find out of bounds reads/writes.  NumElementsToValidate must be -1.
 #2: Perform bounds check by front side guard page
@@ -102,7 +104,6 @@ globalParameters["SolutionSelectionAlg"] = 1          # algorithm to determine w
 globalParameters["ExpandRanges"] = True          # expand ranges into exact configs before writing logic file.  False ignores ranges.
 globalParameters["ExitAfterKernelGen"] = False     # Exit after generating kernels
 globalParameters["GenerateSourcesAndExit"] = False # Exit after kernel source generation.
-globalParameters["ShowProgressBar"] = True     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["WavefrontWidth"] = 64     # if False and library client already built, then building library client will be skipped when tensile is re-run
 globalParameters["ExitOnFails"] = 1     # 1: Exit after benchmark run if failures detected.  2: Exit during benchmark run.
 globalParameters["CpuThreads"] = -1  # How many CPU threads to use for kernel generation.  0=no threading, -1 == nproc, N=min(nproc,N).  TODO - 0 sometimes fails with a kernel name error?  0 does not check error codes correctly
@@ -128,7 +129,6 @@ globalParameters["CMakeBuildType"] = "Release"            # whether benchmark cl
 globalParameters["PrintSolutionRejectionReason"] = False  # when a solution is marked as invalid, print why
 globalParameters["LogicFormat"] = "yaml"                  # set library backend (yaml, or json)
 globalParameters["LibraryFormat"] = "yaml"                # set library backend (yaml, or msgpack)
-globalParameters["EmbedLibrary"] = None                   # whether library should be embedded or not
 
 # True/False: CSV will/won't export WinnerGFlops, WinnerTimeUS, WinnerIdx, WinnerName.
 # TODO - if no side-effect, we can set default to True. This can make analyzing "LibraryLogic" (AddFromCSV) faster
@@ -259,7 +259,6 @@ globalParameters["Architecture"] = "all"
 # might be deprecated
 globalParameters["EnableHalf"] = False
 globalParameters["ClientArgs"] = ""
-globalParameters["PackageLibrary"] = False
 
 # perf model
 globalParameters["PerfModelL2ReadHits"] = 0.0
@@ -1599,6 +1598,40 @@ def which(p):
             if os.path.isfile(candidate):
                 return candidate
     return None
+
+def splitArchs():
+  # Helper for architecture
+  def isSupported(arch):
+    return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
+           globalParameters["AsmCaps"][arch]["SupportedSource"]
+
+  if ";" in globalParameters["Architecture"]:
+    wantedArchs = globalParameters["Architecture"].split(";")
+  else:
+    wantedArchs = globalParameters["Architecture"].split("_")
+  archs = []
+  cmdlineArchs = []
+  if "all" in wantedArchs:
+    for arch in globalParameters['SupportedISA']:
+      if isSupported(arch):
+        if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
+          if (arch == (9,0,10)):
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          if globalParameters["AsanBuild"]:
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          else:
+            archs += [getGfxName(arch) + '-xnack-']
+            cmdlineArchs += [getGfxName(arch) + ':xnack-']
+        else:
+          archs += [getGfxName(arch)]
+          cmdlineArchs += [getGfxName(arch)]
+  else:
+    for arch in wantedArchs:
+      archs += [re.sub(":", "-", arch)]
+      cmdlineArchs += [arch]
+  return archs, cmdlineArchs
 
 ################################################################################
 ################################################################################

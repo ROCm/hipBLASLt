@@ -67,17 +67,18 @@ def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCo
     return solutions
 
 
-def getCustomKernelSolutionObj(kernelName, internalSupportParams, directory=globalParameters["CustomKernelDirectory"]):
+def getCustomKernelSolutionObj(kernelName, internalSupportParams, cxxCompiler: str, directory=globalParameters["CustomKernelDirectory"]):
     """Creates the Solution object for a custom kernel"""
-    return Solution(getCustomKernelConfig(kernelName, internalSupportParams, directory))
+    config = getCustomKernelConfig(kernelName, internalSupportParams, directory)
+    return Solution(config, cxxCompiler)
 
 
-def generateCustomKernelSolutions(problemType, customKernels, internalSupportParams, failOnMismatch):
+def generateCustomKernelSolutions(problemType, customKernels, internalSupportParams, failOnMismatch, cxxCompiler: str):
     """Creates a list with a Solution object for each name in customKernel"""
     solutions = []
     for kernelName in customKernels:
         print1("# Processing custom kernel {}".format(kernelName))
-        solution = getCustomKernelSolutionObj(kernelName, internalSupportParams)
+        solution = getCustomKernelSolutionObj(kernelName, internalSupportParams, cxxCompiler)
         # The ActivationType setting in YAML is meaningless in customKernel case.
         # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
         solution["ProblemType"]["ActivationType"] = problemType["ActivationType"]
@@ -278,7 +279,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                     benchmarkStep.constantParams, forkPermutations, cxxCompiler)
             kcSolutions = generateCustomKernelSolutions(benchmarkProcess.problemType, \
                     benchmarkStep.customKernels, benchmarkStep.internalSupportParams, \
-                    not benchmarkStep.customKernelWildcard)
+                    not benchmarkStep.customKernelWildcard, cxxCompiler)
 
             maxPossibleSolutions += len(kcSolutions)
             solutions = regSolutions + kcSolutions
@@ -339,7 +340,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             conProblemType = ContractionsProblemType.FromOriginalState(ssProblemType)
             outFile = os.path.join(globalParameters["WorkingPath"], "ClientParameters.ini")
 
-            writeClientConfigIni(benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
+            writeClientConfigIni(True, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
                                  benchmarkStep.factorDimArgs, benchmarkStep.activationArgs,
                                  benchmakrStep.icacheFlushArgs, conProblemType,
                                  globalParameters["WorkingPath"], codeObjectFiles, resultsFileName,

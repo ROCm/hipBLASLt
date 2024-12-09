@@ -69,7 +69,7 @@ class TensileInstructions:
             if isaVersion not in self._isaInfo: # type: ignore
                 asmCaps  = _initAsmCaps(isaVersion, assemblerPath, debug)
                 archCaps = _initArchCaps(isaVersion)
-                regCaps  = _initRegisterCaps()
+                regCaps  = _initRegisterCaps(isaVersion, archCaps)
                 asmBugs  = _initAsmBugs(asmCaps)
                 self._isaInfo[isaVersion] = TensileInstructions.IsaInfo(assemblerPath, # type: ignore
                     asmCaps, archCaps, regCaps, asmBugs)
@@ -347,7 +347,7 @@ def _initArchCaps(isaVersion) -> dict:
     rv["HasFP8_OCP"]         = isaVersion[0] == (12)
     return rv
 
-def _initRegisterCaps() -> dict:
+def _initRegisterCaps(isaVersion, archCaps) -> dict:
     rv = {}
     rv["MaxVgpr"] = 256
     # max allowed is 112 out of 112 , 6 is used by hardware 4 SGPRs are wasted
@@ -355,6 +355,27 @@ def _initRegisterCaps() -> dict:
 
     rv["PhysicalMaxVgpr"] = 512
     rv["PhysicalMaxSgpr"] = 800
+
+    if isaVersion[0] == 10:
+        rv["PhysicalMaxVgprCU"] = 1024 * 32
+    elif isaVersion[0] == 11:
+        if isaVersion[2] == 2:
+            rv["PhysicalMaxVgprCU"] = 1024 * 32
+        else:
+            rv["PhysicalMaxVgprCU"] = 1536 * 32
+    elif isaVersion[0] == 12:
+        rv["PhysicalMaxVgprCU"] = 1536 * 32
+    elif isaVersion[0] == 9:
+        if archCaps["ArchAccUnifiedRegs"]:
+            rv["PhysicalMaxVgprCU"] = 2048 * 64
+        else:
+            rv["PhysicalMaxVgprCU"] = 1024 * 64
+    elif isaVersion[0] == 8:
+        rv["PhysicalMaxVgprCU"] = 1024 * 64
+    elif isaVersion[0] == 0:
+        rv["PhysicalMaxVgprCU"] = 0
+    else:
+        assert 0, "No valid VGPR value for this platform"
 
     return rv
 

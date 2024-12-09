@@ -1386,6 +1386,17 @@ class Solution(collections.abc.Mapping):
           or state["MacroTile1"] != state["MacroTile"][1]:
         reject(state, "MacroTile mismatch")
 
+    # tail loop optimization
+    if (tuple(state["ISA"]) != (9, 4, 2)) or \
+       (state["ProblemType"]["Sparse"]) or \
+       (state["LocalSplitU"] > 1) or \
+       (state["WaveSeparateGlobalReadA"] != 0) or \
+       (state["WaveSeparateGlobalReadB"] != 0) or \
+       (state["DirectToVgprA"] or state["DirectToVgprB"]):
+       state["tailLoopOpt"] = False
+    else:
+       state["tailLoopOpt"] = True
+
     # done
     state["AssignedProblemIndependentDerivedParameters"] = True
 
@@ -2802,8 +2813,6 @@ class Solution(collections.abc.Mapping):
             if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
               state["GlobalReadVectorWidthA"] = int(curGRVW)
             curGRVW *= 2
-    else:
-      state["GlobalReadVectorWidthA"] = 1
 
     # Default GlobalReadVectorWidthB
     if state["EnableMatrixInstruction"]:
@@ -2822,8 +2831,6 @@ class Solution(collections.abc.Mapping):
             if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:
               state["GlobalReadVectorWidthB"] = int(curGRVW)
             curGRVW *= 2
-    else:
-      state["GlobalReadVectorWidthB"] = 1
 
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
     if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
@@ -3831,7 +3838,6 @@ class Solution(collections.abc.Mapping):
       state["PrefetchLocalRead"] = 0
     if not state["EnableMatrixInstruction"]:
       state["ClusterLocalRead"] = 0
-      state["PrefetchLocalRead"] = 0
 
     # reject iterations are not enough to use wider local read
     if state["EnableMatrixInstruction"] and state["PrefetchLocalRead"] > 0:
@@ -3882,8 +3888,20 @@ class Solution(collections.abc.Mapping):
 
     state["ULSGRODoubleG2L"] = 0
     if state["UnrollLoopSwapGlobalReadOrder"] == 1:
+      bpeAB       = state["ProblemType"]["DataType"].numBytes()
+      bpr         = 4
+      numVgprG2LA = roundUp((state["NumLoadsCoalescedA"] * state["NumLoadsPerpendicularA"] * \
+        state["GlobalReadVectorWidthA"] * bpeAB) / (float)(bpr))
+      numVgprG2LB = roundUp((state["NumLoadsCoalescedB"] * state["NumLoadsPerpendicularB"] * \
+        state["GlobalReadVectorWidthB"] * bpeAB) / (float)(bpr))
+      if numVgprG2LA % 2 == 1 or numVgprG2LB % 2 == 1:
+        reject(state, "G2LA/B vgpr has bubble inside. Cannot use UnrollLoopSwapGlobalReadOrder=1.")
       if state["GlobalReadVectorWidthA"] != state["GlobalReadVectorWidthB"]:
         # TODO: Add a configuration to schedule better.
+        state["ULSGRODoubleG2L"] = 1
+      minGRVW = min(state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"])
+      if minGRVW * bpeAB < 4:
+        # G2LA/B vgpr index will jump.
         state["ULSGRODoubleG2L"] = 1
       if state["ExpandPointerSwap"] == 1:
         reject(state, "ExpandPointerSwap need to be 0 if UnrollLoopSwapGlobalReadOrder")
