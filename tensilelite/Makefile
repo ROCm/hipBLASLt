@@ -21,7 +21,6 @@
 #
 # ########################################################################
 
-
 # ------------------------------------------------------------------------
 #
 # Usage:
@@ -30,47 +29,39 @@
 #
 #   Tensile/bin/Tensile <yaml> tensile-out
 #
-# where tensile-out has the following directory structure:
+# One can invoke make from the directory containing this Makefile as follows:
 #
-# tensile-out
-# ├── 0_Build
-# ├── 1_BenchmarkProblems
-# │   ├── Cijk_Ailk_Bjlk_1
-# |   ├── Cijk_Ailk_Bjlk_2
-# |   ...
-# |   ├── Cijk_Ailk_Bjlk_N
+# make co TENSILE_OUT=tensile-out
 #
-# One can invoke make with this Makefile as follows:
+# where TENSILE_OUT is the relative path to the tensile output directory.
 #
-# make co PROBLEM_DIR=tensile-out/1_BenchmarkProblems/Cijk_Ailk_Bjlk_1
+# The Makefile will set the target based on the name of the co files in 
+# the library directory and sets a default wavefront flag but each of 
+# these can be customized as follows:
 #
-# where PROBLEM_DIR is the relative path to one problem directory.
+# make co TENSILE_OUT=tensile-out ARCH="gfx942:xnack-" WAVEFRONTSIZE="-mno-wavefrontsize64"
 #
-# The Makefile will set the target based on the name of the co file and sets
-# a default wavefront flag but each of these can be customized as follows:
-#
-# make co PROBLEM_DIR=tensile-out/1_BenchmarkProblems/Cijk_Ailk_Bjlk_DB_UserArgs_00 \
-#         ARCH="gfx942:xnack-"\
-#         WAVEFRONTSIZE="-mno-wavefrontsize64"
-#
-# In addition, we provide `ASM_ARGS` and `LINK_ARGS` as additional customization
+# In addition, we provide AS and ASM_ARGS, and LD LINK_ARGS as customization
 # points for the assemble and link step respectively.
 # ------------------------------------------------------------------------
 
 AS := /opt/rocm/bin/amdclang++
 LDD := /opt/rocm/bin/amdclang++
-SRCFILES := $(shell find ${PROBLEM_DIR}/00_Final/source/build_tmp/SOURCE/assembly -name '*.s')
-OBJFILES := $(patsubst %.s,%.o,$(SRCFILES))
-COFILE := $(shell find ${PROBLEM_DIR}/00_Final/source/library -name '*.co')
+
 ARCH := $(subst .co,,$(subst TensileLibrary_,,$(lastword $(subst /, ,$(COFILE)))))
 WAVEFRONTSIZE := -mwavefrontsize64
 
-co: $(COFILE)
+.SECONDEXPANSION:
+co: COFILES = $(shell find ${TENSILE_OUT}/1_BenchmarkProblems/*/00_Final/source/library -name '*.co')
+co: $$(COFILES)
 
-$(COFILE): $(OBJFILES)
-	@echo relinking $(lastword $(subst /, ,$@))
+.SECONDEXPANSION:
+${TENSILE_OUT}/1_BenchmarkProblems%.co: PROBLEM  = $(firstword $(subst /, ,$*))
+                                        OBJFILES = $(shell find ${TENSILE_OUT}/1_BenchmarkProblems/$(PROBLEM)/00_Final/source/build_tmp/SOURCE/assembly -name '*.o')
+${TENSILE_OUT}/1_BenchmarkProblems%.co: $$(OBJFILES)
+	@echo relinking $(PROBLEM) $(lastword $(subst /, ,$@))
 	@$(LDD) -target amdgcn-amd-amdhsa -Xlinker --build-id=sha1 ${LINK_ARGS} -o $@ $^
 
 %.o: %.s
 	@echo rebuilding $(lastword $(subst /, ,$@))
-	@$(AS) -x assembler -target amdgcn-amd-amdhsa -mcode-object-version=4 -mcpu=${ARCH} ${WAVEFRONTSIZE} ${ASM_ARGS} -c -o $@ $^
+	@$(AS) -x assembler -target amdgcn-amd-amdhsa -mcode-object-version=4 -mcpu=gfx90a ${WAVEFRONTSIZE} ${ASM_ARGS} -c -o $@ $^
