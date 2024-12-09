@@ -109,10 +109,7 @@ def buildAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath, comp
       else:
         # no mergefiles
         def newCoFileName(kName):
-          if globalParameters["PackageLibrary"]:
-            return os.path.join(destDir, gfx, kName + '.co')
-          else:
-            return os.path.join(destDir, kName + '_' + gfx + '.co')
+          return os.path.join(destDir, kName + '_' + gfx + '.co')
 
         def orgCoFileName(kName):
           return os.path.join(asmDir, kName + '.co')
