@@ -42,6 +42,7 @@ from .Common import globalParameters, HR, print1, print2, printExit, ensurePath,
                     architectureMap, printWarning, \
                     splitArchs
 from .KernelWriterAssembly import KernelWriterAssembly
+from .KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
@@ -81,13 +82,13 @@ def processKernelSource(kernel, kernelWriterAssembly, ti):
         # get kernel name
         kernelWriter.setTensileInstructions(ti)
         kernelName = kernelWriter.getKernelFileBase(kernel)
-        (err, src) = kernelWriter.getSourceFileString(kernel)
+        (err, src, filenameThatWasWritten) = kernelWriter.getSourceFileString(kernel)
         header = kernelWriter.getHeaderFileString(kernel)
         # will be put in Kernels.h/cpp if None
         filename = kernel._state.get("codeObjectFile", None)
 
     except RuntimeError:
-        return (1, "", "", kernelName, None)
+        return (-1, "", "", kernelName, None)
 
     return (err, src, header, kernelName, filename)
 
@@ -170,6 +171,71 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
 
   return sourceFilenames
 
+def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant, globalParameters):
+    removeKernels = []
+    removeKernelNames = []
+    removeSolutions = []
+    removeResults = []
+
+    for kernIdx, res in Utils.tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
+        (err, src, header, kernelName, filename) = res
+        if err != 0:
+            if not errorTolerant:
+                print("\nKernel generation failed for kernel: {}".format(kernels[kernIdx]["SolutionIndex"]))
+                print(kernels[kernIdx]["SolutionNameMin"])
+            removeKernels.append(kernels[kernIdx])
+            kName = Solution.getKeyNoInternalArgs(kernels[kernIdx])
+            if kName not in removeKernelNames:
+                removeKernelNames.append(kName)
+            removeResults.append(results[kernIdx])
+
+    if len(removeKernels) > 0 and not errorTolerant:
+        printExit("** kernel generation failure **")
+
+    for kern in removeKernels:
+        kernels.remove(kern)
+
+    for solution in Utils.tqdm(solutions, "Finding invalid solutions") if globalParameters["PrintLevel"] > 1 else solutions:
+        solutionKernels = solution.getKernels()
+        for kernel in solutionKernels:
+            kName = Solution.getKeyNoInternalArgs(kernel)
+            if kName in removeKernelNames:
+                removeSolutions.append(solution)
+                break
+
+    for solut in removeSolutions:
+        solutions.remove(solut)
+
+    for rel in removeResults:
+        results.remove(rel)
+
+def writeKernelHelperFiles(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H):
+    kernelSourceFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_CPP)
+    kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_H)
+    kernelSourceFile = open(kernelSourceFilename, "a", encoding="utf-8")
+    kernelHeaderFile = open(kernelHeaderFilename, "a", encoding="utf-8")
+
+    HeaderText = ""
+    # handle helper kernel function
+    for ko in kernelHelperObjs:
+        kernelName = ko.getKernelName()
+
+        (err, src) = ko.getSourceFileString()
+        kernelSourceFile.write(src)
+        if err:
+            print("*** warning: invalid kernel#%u" % kernelName)
+
+        HeaderText += ko.getHeaderFileString()
+
+    # write kernel.h in one shot
+    kernelHeaderFile.write(HeaderText)
+
+    if kernelSourceFile:
+        kernelSourceFile.close()
+    if kernelHeaderFile:
+        kernelHeaderFile.close()
+
+
 ################################################################################
 # Write Solutions and Kernels for BenchmarkClient or LibraryClient
 ################################################################################
@@ -186,9 +252,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   Common.pushWorkingPath('build_tmp')
   Common.pushWorkingPath(os.path.basename(outputPath).upper())
 
-  kernelFiles = []
-  kernelSourceFile = None
-  kernelHeaderFile = None
+  srcKernelFiles = []
 
   if not globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
     ensurePath(os.path.join(outputPath, "Kernels"))
@@ -212,109 +276,41 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
         kernel.duplicate = False
   numKernels = len(kernels)
 
-  kIter   = zip(kernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
-  results = Common.ParallelMap2(processKernelSource, kIter, "Generating kernels")
+  asmKernels = (k for k in kernels if k['KernelLanguage'] == 'Assembly')
+  srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
+  if srcKernels:
+    raise ValueError(f"Non-helper object HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
 
-  removeKernels = []
-  removeKernelNames = []
-  removeSolutions = []
-  removeResults = []
-  for kernIdx, res in Utils.tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
-    (err,src,header,kernelName, filename) = res
-    if(err == -2):
-      if not errorTolerant:
-        print("\nKernel generation failed for kernel: {}".format(kernels[kernIdx]["SolutionIndex"]))
-        print(kernels[kernIdx]["SolutionNameMin"])
-      removeKernels.append(kernels[kernIdx])
-      kName = Solution.getKeyNoInternalArgs(kernels[kernIdx])
-      if kName not in removeKernelNames:
-        removeKernelNames.append(kName)
-      removeResults.append(results[kernIdx])
-  if len(removeKernels) > 0 and not errorTolerant:
-    printExit("** kernel generation failure **")
-  for kern in removeKernels:
-      kernels.remove(kern)
-  for solution in Utils.tqdm(solutions, "Finding invalid solutions") if globalParameters["PrintLevel"] > 1 else solutions:
-    solutionKernels = solution.getKernels()
-    for kernel in solutionKernels:
-        kName = Solution.getKeyNoInternalArgs(kernel)
-        if kName in removeKernelNames:
-          removeSolutions.append(solution)
-          break
-  for solut in removeSolutions:
-      solutions.remove(solut)
-  for rel in removeResults:
-      results.remove(rel)
+  asmIter   = zip(asmKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
+  srcIter   = zip(asmKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
+  # Results conatins the source code for 
+  asmResults = Common.ParallelMap2(processKernelSource, asmIter, "Generating kernels")
+  srcResults = Common.ParallelMap2(processKernelSource, srcIter, "Generating kernels")
 
-  kernelFiles += buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs)
+  printWarning(f"FOUND {len(list(asmResults))} ASSEMBLY RESULTS")
+  printWarning(f"FOUND {len(list(srcResults))} SOURCE   RESULTS")
 
-  kernelsToBuild = kernels
+  removeInvalidSolutionsAndKernels(asmResults, kernels, solutions, errorTolerant, globalParameters)
+
+  srcKernelFiles += buildKernelSourceAndHeaderFiles(srcResults, outputPath, kernelsWithBuildErrs)
+  printWarning(f"THERE ARE {len(srcKernelFiles)} SOURCE   KERNEL FILES TO BUILD")
+
+  asmKernelsToBuild = kernels
   if errorTolerant:
       def success(kernel):
           writer = kernelWriterAssembly
           kernelName = writer.getKernelName(kernel)
           return kernelName not in kernelsWithBuildErrs
-      kernelsToBuild = filter(success, kernelsToBuild)
+      asmKernelsToBuild = filter(success, asmKernelsToBuild)
   elif len(kernelsWithBuildErrs) > 0:
     print("\nKernel compilation failed in one or more subprocesses. May want to set CpuThreads=0 and re-run to make debug easier")
     printExit("** kernel compilation failure **")
 
-  # Put all kernel helper objects into the first merged kernel file
-  if globalParameters["NumMergedFiles"] > 1 and len(kernelFiles) > 0:
-    kernelFilename = kernelFiles[0].replace(".cpp", "")
-    kernelSourceFile = open(kernelFilename + ".cpp", 'a', encoding="utf-8")
-    kernelHeaderFile = open(kernelFilename + ".h", 'a', encoding="utf-8")
-  elif globalParameters["MergeFiles"] or globalParameters["LazyLibraryLoading"]:
-    kernelSourceFilename = os.path.join(os.path.normcase(outputPath), "Kernels.cpp")
-    kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), "Kernels.h")
-    kernelSourceFile = open(kernelSourceFilename, "a", encoding="utf-8")
-    kernelHeaderFile = open(kernelHeaderFilename, "a", encoding="utf-8")
-
-  HeaderText = ""
-  # handle helper kernel function
-  for ko in kernelHelperObjs:
-    kernelName = ko.getKernelName()
-
-    # write kernel.cpp
-    if not globalParameters["MergeFiles"]:
-      kernelSourceFilename = os.path.join(outputPath, "Kernels", kernelName+".cpp")
-      kernelSourceFile = open(kernelSourceFilename, "w")
-      kernelSourceFile.write(CHeader)
-      kernelFiles.append(kernelSourceFilename)
-
-    (err, src) = ko.getSourceFileString()
-    kernelSourceFile.write(src)
-    if err:
-      print("*** warning: invalid kernel#%u"%kernelName)
-
-    if not globalParameters["MergeFiles"]:
-      kernelSourceFile.close()
-
-    # write kernel.h
-    if not globalParameters["MergeFiles"]:
-      kernelHeaderFile = open(os.path.join(os.path.normcase(outputPath), "Kernels", kernelName + ".h"), "w")
-      kernelHeaderFile.write(CHeader)
-      kernelHeaderFile.write(ko.getHeaderFileString())
-    else:
-      HeaderText += ko.getHeaderFileString()
-
-    if not globalParameters["MergeFiles"]:
-      kernelHeaderFile.close()
-
-  # write kernel.h in one shot
-  if globalParameters["MergeFiles"]:
-    kernelHeaderFile.write(HeaderText)
-
-  # close merged
-  if globalParameters["MergeFiles"]:
-    if kernelSourceFile:
-      kernelSourceFile.close()
-    if kernelHeaderFile:
-      kernelHeaderFile.close()
+  writeKernelHelperFiles(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
 
   if not globalParameters["GenerateSourcesAndExit"]:
-    codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, kernelFiles, outputPath)
-    codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, kernelsToBuild, kernelWriterAssembly, outputPath, compress)
+    codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, outputPath)
+    codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernelsToBuild, kernelWriterAssembly, outputPath, compress)
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir

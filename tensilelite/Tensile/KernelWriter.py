@@ -5057,7 +5057,7 @@ for codeObjectFileName in codeObjectFileNames:
     else: # Replacement kernel
       return ReplacementKernels.Get(kernelName)
 
-  def _getKernelSource(self, kernel):
+  def _getKernelSource(self, kernel: Solution):
     """
     Returns the source of the kernel, either C++ or assembly.
     """
@@ -5078,61 +5078,61 @@ for codeObjectFileName in codeObjectFileNames:
         raise RuntimeError("Generating kernel source resulted in error {}".format(error))
     return fileString
 
-  def _getKernelObjectAssemblyFile(self, kernel, asmPath):
-    # write assembly file to assembly directory
-    kernelName = self.getKernelFileBase(kernel)
-    fileBase = os.path.join(asmPath, kernelName )
-    assemblyFileName = "%s.s" % fileBase
+  # def _getKernelObjectAssemblyFile(self, kernel, asmPath):
+  #   # write assembly file to assembly directory
+  #   kernelName = self.getKernelFileBase(kernel)
+  #   fileBase = os.path.join(asmPath, kernelName )
+  #   assemblyFileName = "%s.s" % fileBase
 
-    #-------------------
-    # TODO(@bstefanuk): Replacement kernels is deprecated, remove this code
-    replacementKernel = self.getReplacementKernelPath(kernel)
+  #   #-------------------
+  #   # TODO(@bstefanuk): Replacement kernels is deprecated, remove this code
+  #   replacementKernel = self.getReplacementKernelPath(kernel)
 
-    if replacementKernel is not None:
-      self.tPA = tensorParametersA = {}
-      self.tPB = tensorParametersB = {}
-      if isCustomKernelConfig(kernel):
-        kernelFoundMessage = "Custom kernel filename "
-        # ISA version, such as 803
-        self.states.kernel = kernel
-        self.states.language = "ASM"
-        self.states.version = globalParameters["CurrentISA"]
-        if "ISA" in kernel:
-          self.states.version = tuple(kernel["ISA"])
-        if not globalParameters["AsmCaps"][self.states.version]["SupportedISA"]:
-          defaultIsa = (9,0,0)
-          print("warning: ISA:", self.isa, " is not supported; overriding with ", defaultIsa)
-          self.states.version = defaultIsa
-      else:
-        kernelFoundMessage = "replacement_assemblyFilename "
-        self.initKernel(kernel, tensorParametersA, tensorParametersB )
+  #   if replacementKernel is not None:
+  #     self.tPA = tensorParametersA = {}
+  #     self.tPB = tensorParametersB = {}
+  #     if isCustomKernelConfig(kernel):
+  #       kernelFoundMessage = "Custom kernel filename "
+  #       # ISA version, such as 803
+  #       self.states.kernel = kernel
+  #       self.states.language = "ASM"
+  #       self.states.version = globalParameters["CurrentISA"]
+  #       if "ISA" in kernel:
+  #         self.states.version = tuple(kernel["ISA"])
+  #       if not globalParameters["AsmCaps"][self.states.version]["SupportedISA"]:
+  #         defaultIsa = (9,0,0)
+  #         print("warning: ISA:", self.isa, " is not supported; overriding with ", defaultIsa)
+  #         self.states.version = defaultIsa
+  #     else:
+  #       kernelFoundMessage = "replacement_assemblyFilename "
+  #       self.initKernel(kernel, tensorParametersA, tensorParametersB )
 
-      shutil.copyfile(replacementKernel, assemblyFileName)
+  #     shutil.copyfile(replacementKernel, assemblyFileName)
 
-      # Temporary remove preload kernel argument for rpk
-      hipccver = globalParameters['HipClangVersion'].split(".")
-      hipccMaj = int(hipccver[0])
-      hipccPatch = int(hipccver[2].split("-")[0])
-      if not (hipccMaj >= 6 and hipccPatch >= 32650):
-        os.system("sed -i '/amdhsa_user_sgpr_kernarg_preload_length/d' %s"%assemblyFileName)
-        os.system("sed -i '/amdhsa_user_sgpr_kernarg_preload_offset/d' %s"%assemblyFileName)
+  #     # Temporary remove preload kernel argument for rpk
+  #     hipccver = globalParameters['HipClangVersion'].split(".")
+  #     hipccMaj = int(hipccver[0])
+  #     hipccPatch = int(hipccver[2].split("-")[0])
+  #     if not (hipccMaj >= 6 and hipccPatch >= 32650):
+  #       os.system("sed -i '/amdhsa_user_sgpr_kernarg_preload_length/d' %s"%assemblyFileName)
+  #       os.system("sed -i '/amdhsa_user_sgpr_kernarg_preload_offset/d' %s"%assemblyFileName)
 
-      if globalParameters["PrintLevel"] >= 2:
-        print(kernelFoundMessage + assemblyFileName)
-        print(self.states.kernel)
-    #--------------------
+  #     if globalParameters["PrintLevel"] >= 2:
+  #       print(kernelFoundMessage + assemblyFileName)
+  #       print(self.states.kernel)
+  #   #--------------------
     
-    else:
-      kernelSource = self._getKernelSource(kernel)
+  #   else:
+  #     kernelSource = self._getKernelSource(kernel)
 
-      if globalParameters["PrintLevel"] >= 2:
-        print("write_assemblyFilename %s" % assemblyFileName)
-        print(self.states.kernel)
+  #     if globalParameters["PrintLevel"] >= 2:
+  #       print("write_assemblyFilename %s" % assemblyFileName)
+  #       print(self.states.kernel)
 
-      with open(assemblyFileName, 'w') as assemblyFile:
-        assemblyFile.write(kernelSource)
+  #     with open(assemblyFileName, 'w') as assemblyFile:
+  #       assemblyFile.write(kernelSource)
 
-    return assemblyFileName
+  #   return assemblyFileName
 
   # ##############################################################################
   #
@@ -5160,7 +5160,7 @@ for codeObjectFileName in codeObjectFileNames:
   #     return Common.ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
 
   @abc.abstractmethod
-  def getSourceFileString(self, kernel) -> Tuple[int, str]:
+  def getSourceFileString(self, kernel) -> Tuple[int, str, str]:
     """
     Returns a string suitable for placing in Kernels.cpp.  This means the actual kernel source in the case
     of a source kernel, or an assembled code object byte array definition in the case of an assembly kernel,

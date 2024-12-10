@@ -70,37 +70,21 @@ class KernelWriterAssembly(KernelWriter):
   def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
     super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler)
 
-  def getSourceFileString(self, kernel) -> Tuple[int, str]:
+  def getSourceFileString(self, kernel) -> Tuple[int, str, str]:
     assert kernel["KernelLanguage"] == "Assembly"
     asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
-    try:
-      # asmPath = self.getAssemblyDirectory()
-      # kernelName = self.getKernelName(kernel)
+    # Skip if .o files will have already been built for this file
+    # @TODO remove need for this with better code organization
+    if kernel.duplicate:
+      self.language = "ASM"
+      return (-1, "", "")
 
-      # Skip if .o files will have already been built for this file
-      # @TODO remove need for this with better code organization
-      if kernel.duplicate:
-        self.language = "ASM"
-        return (0, "")
-      if globalParameters["GenerateSourcesAndExit"]:
-        # only create the assembly file.
-        self._getKernelObjectAssemblyFile(kernel, asmPath)
-        return (0, "")
-      else:
-        self._writeByteArrayScript(asmPath)
-        getSingleCodeObjectFile(self, self.assembler, asmPath, kernel)
-
-        # I guess in this case we are making sure that the code object file exists by executing the code
-        # above but we aren't placing it into the source.
-        return (0, "")
-
-    except subprocess.CalledProcessError as exc:
-      print(exc)
-      return (-1, "")
-    except RuntimeError as exc:
-      if globalParameters["PrintSolutionRejectionReason"]:
-        print(exc)
-      return (-2, "")
+    self._writeByteArrayScript(asmPath)
+    kernelName = self.getKernelFileBase(kernel)
+    fileBase = os.path.join(asmPath, kernelName)
+    asmFilename = "%s.s" % fileBase
+    code = self._getKernelSource(kernel)
+    return (0, code, asmFilename)
 
   def getSgprOccupancy(self, sgprs):
     return self.states.regCaps["PhysicalMaxSgpr"]//sgprs
