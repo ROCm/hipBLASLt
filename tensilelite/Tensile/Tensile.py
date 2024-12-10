@@ -48,13 +48,13 @@ from datetime import datetime
 #   LibraryLogic.main() to analyse final benchmark data and produce logic/yaml
 #   ClientWriter.main() to create client which calls library based on above yaml
 ################################################################################
-def executeStepsInConfig(config, cxxCompiler: str, cCompiler: str, offloadBundler: str):
+def executeStepsInConfig(config, cxxCompiler: str, cCompiler: str, assembler: str, offloadBundler: str):
 
     ##############################################################################
     # Benchmark Problems
     ##############################################################################
     if "BenchmarkProblems" in config:
-        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], cxxCompiler, cCompiler, offloadBundler)
+        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], cxxCompiler, cCompiler, assembler, offloadBundler)
         print1("")
 
     ##############################################################################
@@ -125,6 +125,8 @@ def addCommonArguments(argParser):
         action="store", default=ToolchainDefaults.CXX_COMPILER, help="select which C++/HIP compiler to use")
     argParser.add_argument("--c-compiler", dest="CCompiler", choices=[ToolchainDefaults.C_COMPILER], \
         action="store", default=ToolchainDefaults.C_COMPILER, help="select which C compiler to use")
+    argParser.add_argument("--assembler", dest="Assembler", choices=[ToolchainDefaults.ASSEMBLER], \
+        action="store", default=ToolchainDefaults.ASSEMBLER, help="select which assembler to use")
     argParser.add_argument("--offload-bundler", dest="OffloadBundler", choices=[ToolchainDefaults.OFFLOAD_BUNDLER], \
         action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER, help="select which offload bundler to use")
     argParser.add_argument("--logic-format", dest="LogicFormat", choices=["yaml", "json"], \
@@ -270,7 +272,7 @@ def Tensile(userArgs):
     config["UseCache"] = useCache
     globalParameters["ConfigPath"] = configPaths
 
-    cxxCompiler, cCompiler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.OffloadBundler)
+    cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
 
     globalParameters["OutputPath"] = ensurePath(os.path.abspath(args.output_path))
@@ -291,7 +293,7 @@ def Tensile(userArgs):
         profiler = cProfile.Profile()
         profiler.enable()
 
-    executeStepsInConfig(config, cxxCompiler, cCompiler, offloadBundler)
+    executeStepsInConfig(config, cxxCompiler, cCompiler, assembler, offloadBundler)
 
     if profiler:
         profiler.disable()

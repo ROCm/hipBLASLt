@@ -70,7 +70,7 @@ def parseCurrentLibrary(libPath, sizePath):
     return (libYaml, solutions, problemSizes)
 
 
-def runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler: str, cCompiler: str):
+def runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler: str, cCompiler: str, assembler: str, offloadBundler: str):
     # TODO some copy-pasting from BenchmarkProblems.benchmarkProblemType
     # could use a refactor to elimate duplicated code
     ClientExecutable.getClientExecutable(cxxCompiler, cCompiler)
@@ -89,7 +89,7 @@ def runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler: str, 
 
     pushWorkingPath(shortName)
     pushWorkingPath("source")
-    BenchmarkProblems.writeBenchmarkFiles(benchmarkDir, solutions, problemSizes , "", "", "", "", shortName, [])
+    BenchmarkProblems.writeBenchmarkFiles(benchmarkDir, solutions, problemSizes , "", "", "", "", shortName, [], cxxCompiler, assembler, offloadBundler)
     popWorkingPath() # source
 
     libraryLogicPath = None
@@ -154,7 +154,7 @@ def TensileRetuneLibrary(userArgs):
         update = True
         remake = True
 
-    cxxCompiler, cCompiler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.OffloadBundler)
+    cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
 
     ##############################################
     # Retuning
@@ -172,7 +172,7 @@ def TensileRetuneLibrary(userArgs):
 
     # parse library logic then setup and run benchmarks
     (rawYaml, solutions, problemSizes) = parseCurrentLibrary(libPath, sizePath)
-    runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler, cCompiler)
+    runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler, cCompiler, assembler, offloadBundler)
 
     if remake:
         # write library logic file

@@ -91,65 +91,6 @@ def processKernelSource(kernel, kernelWriterAssembly, ti):
     return (err, src, header, kernelName, filename)
 
 
-################################################################################
-def prepAsm(kernelWriterAssembly):
-  """
-  Create and prepare the assembly directory  - called ONCE per output dir:
-  """
-  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly") )
-  assemblerFileName = os.path.join(asmPath, \
-      "asm-new.%s"%("bat" if os.name=="nt" else "sh"))
-  assemblerFile = open(assemblerFileName, "w")
-  if os.name == "nt":
-    assemblerFile.write("echo Windows: Copying instead of Assembling\n")
-    assemblerFile.write("copy %1.s %1.o\n")
-    assemblerFile.write("copy %1.o %1.co\n")
-  else:
-    assemblerFile.write("#!/bin/sh {log}\n".format(log = "-x" if globalParameters["PrintLevel"] >=2  else ""))
-    assemblerFile.write("# usage: asm-new.sh kernelName(no extension) [--wave32]\n")
-
-    assemblerFile.write("f=$1\n")
-    assemblerFile.write("filename=${1##*/}\n")
-    assemblerFile.write("dirname=${1%/*}\n")
-    assemblerFile.write("shift\n")
-    assemblerFile.write('if [ ! -z "$1" ] && [ "$1" = "--wave32" ]; then\n')
-    assemblerFile.write("    wave=32\n")
-    assemblerFile.write("    shift\n")
-    assemblerFile.write("else\n")
-    assemblerFile.write("    wave=64\n")
-    assemblerFile.write("fi\n")
-
-
-    isa = globalParameters["CurrentISA"]
-    assemblerFile.write("h={gfxName}\n".format(gfxName = getGfxName(isa)))
-
-    debug = globalParameters.get("AsmDebug", False)
-    cArgs32 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=32, debug=debug)
-    cArgs64 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=64, debug=debug)
-    lArgs = kernelWriterAssembly.getLinkCodeObjectArgs(["$f.o"], "$f.co")
-
-    assemblerFile.write("if [ $wave -eq 32 ]; then\n")
-    assemblerFile.write(" ".join(cArgs32) + "\n")
-    assemblerFile.write("else\n")
-    assemblerFile.write(" ".join(cArgs64) + "\n")
-    assemblerFile.write("fi\n")
-
-
-    assemblerFile.write(" ".join(lArgs) + "\n")
-
-    assemblerFile.write("ERR=$?\n")
-    assemblerFile.write("if [ $ERR -ne 0 ]\n")
-    assemblerFile.write("then\n")
-    assemblerFile.write("    echo one\n")
-    assemblerFile.write("    exit $ERR\n")
-    assemblerFile.write("fi\n")
-
-    assemblerFile.write("cp $f.co ${dirname}/../../../library/${filename}_$h.co\n")
-    assemblerFile.write("mkdir -p ${dirname}/../../../asm_backup && ")
-    assemblerFile.write("cp $f.s ${dirname}/../../../asm_backup/${filename}.s\n")
-
-  assemblerFile.close()
-  os.chmod(assemblerFileName, 0o777)
 
 ################################################################################
 def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
@@ -247,7 +188,6 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   Common.pushWorkingPath('build_tmp')
   Common.pushWorkingPath(os.path.basename(outputPath).upper())
 
-  print1("# Writing Kernels...")
   kernelFiles = []
   kernelSourceFile = None
   kernelHeaderFile = None
@@ -259,8 +199,6 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   # Write Kernels
   ##############################################################################
   kernelsWithBuildErrs = {}
-
-  prepAsm(kernelWriterAssembly)
 
   # Kernels may be intended for different co files, but generate the same .o file
   # Mark duplicate kernels to avoid race condition
@@ -275,6 +213,8 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
         objFilenames.add(base)
         kernel.duplicate = False
 
+  total = len(kernels)
+
   kIter   = zip(kernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
   results = Common.ParallelMap2(processKernelSource, kIter, "Generating kernels")
 
@@ -282,7 +222,7 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   removeKernelNames = []
   removeSolutions = []
   removeResults = []
-  for kernIdx, res in Utils.tqdm(enumerate(results)):
+  for kernIdx, res in Utils.tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
     (err,src,header,kernelName, filename) = res
     if(err == -2):
       if not errorTolerant:
@@ -297,7 +237,7 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
     printExit("** kernel generation failure **")
   for kern in removeKernels:
       kernels.remove(kern)
-  for solution in Utils.tqdm(solutions, "Finding invalid solutions"):
+  for solution in Utils.tqdm(solutions, "Finding invalid solutions") if globalParameters["PrintLevel"] > 1 else solutions:
     solutionKernels = solution.getKernels()
     for kernel in solutionKernels:
         kName = Solution.getKeyNoInternalArgs(kernel)
@@ -382,7 +322,7 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
 
-  return codeObjectFiles
+  return codeObjectFiles, total
 
 
 ##############################################################################
@@ -716,6 +656,7 @@ def validateLibrary(masterLibraries: MasterSolutionLibrary,
 ################################################################################
 @profile
 def TensileCreateLibrary():
+  start = timer()
   print1("")
   print1(HR)
   print1("# Tensile Create Library")
@@ -900,9 +841,9 @@ def TensileCreateLibrary():
   if not args.Experimental:
     logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
 
-  print1(f"# LibraryLogicFiles: {len(logicFiles)}")
+  print2(f"# LibraryLogicFiles: {len(logicFiles)}")
   for logicFile in logicFiles:
-    print1("#   %s" % logicFile)
+    print2("#   %s" % logicFile)
 
 
   ##############################################################################
@@ -1004,8 +945,6 @@ def TensileCreateLibrary():
   if globalParameters["SeparateArchitectures"]:
     theMasterLibrary = list(masterLibraries.values())[0]
 
-  print1("# Check if generated files exists.")
-
   def checkFileExistence(files):
     for filePath in files:
       if not os.path.exists(filePath):
@@ -1017,9 +956,19 @@ def TensileCreateLibrary():
     buildTmp = Path(outputPath).parent / "library" / "build_tmp"
     if buildTmp.exists() and buildTmp.is_dir():
       shutil.rmtree(buildTmp)
+    buildTmp = Path(outputPath) / "build_tmp"
+    if buildTmp.exists() and buildTmp.is_dir():
+      shutil.rmtree(buildTmp)
     else:
-      printWarning(f"Cannot remove {str(buildTmp)}")
+      printWarning(f"Cannot remove build_tmp")
+
 
   print1("# Tensile Library Writer DONE")
   print1(HR)
   print1("")
+
+  stop = timer()
+
+  print1(f"Total time (s): {(stop-start):3.2f}")
+  print1(f"Total kernels processed: {total}")
+  print1(f"Kernels processed per second: {(total/(stop-start)):3.2f}")

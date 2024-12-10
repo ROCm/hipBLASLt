@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from .Common import printExit, printWarning, versionIsCompatible
+from .Common import printExit, printWarning, print2, versionIsCompatible
 from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
 from . import __version__
@@ -39,14 +39,14 @@ try:
 except ImportError:
     try:
         import ujson as json
-        printWarning("orjson not installed. Fallback to ujson.")
+        print2("orjson not installed. Fallback to ujson.")
     except ImportError:
         try:
             import simplejson as json
-            printWarning("orjson, ujson not installed. Fallback to simplejson.")
+            print2("orjson, ujson not installed. Fallback to simplejson.")
         except ImportError:
             import json
-            printWarning("orjson, ujson, simplejson not installed. Fallback to json.")
+            print2("orjson, ujson, simplejson not installed. Fallback to json.")
 
 try:
     import yaml
