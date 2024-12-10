@@ -100,11 +100,7 @@ def main( config ):
   subprocess.run(shlex.split(createLibraryScript), cwd=stepBaseDir)
   coList = []
   yamlList = []
-  with open(os.path.join(stepBaseDir,"library","TensileManifest.txt"), "r") as f:
-    lines = f.read().split("\n")
-    coList = [line for line in lines if "co" in line]
-    yamlList = [line for line in lines if "yaml" in line]
-
+  
   clientParametersPaths = []
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary, _) \
