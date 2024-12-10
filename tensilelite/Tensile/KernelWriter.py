@@ -26,7 +26,7 @@ from . import Common
 from .TensileInstructions import Item, TensileInstructions, slash50, replaceHolder, \
                           KernelBody, Module, StructuredModule, TextBlock, Dump, LabelManager, \
                           RegisterPool, Assert, fastdeepcopy, TensileInstructionsPassOptions, \
-                          TensileInstructionsPass, getAsmCompileArgs, getAsmLinkCodeObjectArgs, \
+                          TensileInstructionsPass, \
                           SLongBranchPositive, SBranch, SCBranchSCC0, SCBranchSCC1
 from .TensileInstructions.Instructions import *
 from .KernelWriterModules import *
@@ -44,7 +44,6 @@ from .Activation import ActivationModule
 import abc
 import os
 import shutil
-import subprocess
 import sys
 import collections
 from dataclasses import dataclass, field
@@ -5038,8 +5037,7 @@ for codeObjectFileName in codeObjectFileNames:
   text_file.close()
 """
 
-  def _writeByteArrayScript(self):
-    asmPath = self.getAssemblyDirectory()
+  def _writeByteArrayScript(self, asmPath):
 
     bytearrayFileName = os.path.join(asmPath,"insert_byte_array.py")
     if not os.path.isfile(bytearrayFileName):
@@ -5080,13 +5078,14 @@ for codeObjectFileName in codeObjectFileNames:
         raise RuntimeError("Generating kernel source resulted in error {}".format(error))
     return fileString
 
-  def _getKernelObjectAssemblyFile(self, kernel):
-    asmPath = self.getAssemblyDirectory()
+  def _getKernelObjectAssemblyFile(self, kernel, asmPath):
     # write assembly file to assembly directory
     kernelName = self.getKernelFileBase(kernel)
     fileBase = os.path.join(asmPath, kernelName )
     assemblyFileName = "%s.s" % fileBase
 
+    #-------------------
+    # TODO(@bstefanuk): Replacement kernels is deprecated, remove this code
     replacementKernel = self.getReplacementKernelPath(kernel)
 
     if replacementKernel is not None:
@@ -5102,7 +5101,7 @@ for codeObjectFileName in codeObjectFileNames:
           self.states.version = tuple(kernel["ISA"])
         if not globalParameters["AsmCaps"][self.states.version]["SupportedISA"]:
           defaultIsa = (9,0,0)
-          print("warning: ISA:", self.version, " is not supported; overriding with ", defaultIsa)
+          print("warning: ISA:", self.isa, " is not supported; overriding with ", defaultIsa)
           self.states.version = defaultIsa
       else:
         kernelFoundMessage = "replacement_assemblyFilename "
@@ -5121,6 +5120,8 @@ for codeObjectFileName in codeObjectFileNames:
       if globalParameters["PrintLevel"] >= 2:
         print(kernelFoundMessage + assemblyFileName)
         print(self.states.kernel)
+    #--------------------
+    
     else:
       kernelSource = self._getKernelSource(kernel)
 
@@ -5133,43 +5134,7 @@ for codeObjectFileName in codeObjectFileNames:
 
     return assemblyFileName
 
-  def _getAssembledKernelObjectFile(self, kernel):
-    assemblyFileName = self._getKernelObjectAssemblyFile(kernel)
-
-    base, ext = os.path.splitext(assemblyFileName)
-    objectFileName = base + '.o'
-
-    debug = globalParameters.get("AsmDebug", False)
-
-    args = getAsmCompileArgs(self.assembler, globalParameters["CodeObjectVersion"], self.isa, self.wavefrontSize, assemblyFileName, objectFileName, debug=debug)
-
-    if globalParameters["PrintCodeCommands"]:
-      print (' '.join(args), " && ")
-
-    subprocess.check_call(args, cwd=self.getAssemblyDirectory())
-
-    if not globalParameters["KeepBuildTmp"]:
-        os.remove(assemblyFileName)
-
-    return objectFileName
-
-  def _getSingleCodeObjectFile(self, kernel):
-    objectFileName = self._getAssembledKernelObjectFile(kernel)
-
-    base, ext = os.path.splitext(objectFileName)
-    coFileName = base + '.co'
-
-    args = getAsmLinkCodeObjectArgs(self.assembler, \
-      [objectFileName], coFileName, globalParameters['BuildIdKind'])
-
-    if globalParameters["PrintCodeCommands"]:
-      print (' '.join(args))
-
-    subprocess.check_call(args, cwd=self.getAssemblyDirectory())
-
-    return coFileName
-
-  ##############################################################################
+  # ##############################################################################
   #
   #   Entry Functions
   #
@@ -5191,10 +5156,11 @@ for codeObjectFileName in codeObjectFileNames:
     kernelName = Solution.getNameMin(kernel, self.kernelMinNaming, True)
     return kernelName
 
-  def getAssemblyDirectory(self):
-      return Common.ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+  # def getAssemblyDirectory(self):
+  #     return Common.ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
 
-  def getSourceFileString(self, kernel):
+  @abc.abstractmethod
+  def getSourceFileString(self, kernel) -> Tuple[int, str]:
     """
     Returns a string suitable for placing in Kernels.cpp.  This means the actual kernel source in the case
     of a source kernel, or an assembled code object byte array definition in the case of an assembly kernel,
@@ -5206,39 +5172,40 @@ for codeObjectFileName in codeObjectFileNames:
      * A code object file
      * A Python script which can create byte array variable definitions.
     """
+    pass
 
-    try:
-      if kernel["KernelLanguage"] == "Assembly":
-        # asmPath = self.getAssemblyDirectory()
-        # kernelName = self.getKernelName(kernel)
+    # try:
+    #   if kernel["KernelLanguage"] == "Assembly":
+    #     # asmPath = self.getAssemblyDirectory()
+    #     # kernelName = self.getKernelName(kernel)
 
-        # Skip if .o files will have already been built for this file
-        # @TODO remove need for this with better code organization
-        if kernel.duplicate:
-          self.language = "ASM"
-          return (0, "")
-        if globalParameters["GenerateSourcesAndExit"]:
-          # only create the assembly file.
-          self._getKernelObjectAssemblyFile(kernel)
-          return (0, "")
-        else:
-          self._writeByteArrayScript()
-          self._getSingleCodeObjectFile(kernel)
+    #     # Skip if .o files will have already been built for this file
+    #     # @TODO remove need for this with better code organization
+    #     if kernel.duplicate:
+    #       self.language = "ASM"
+    #       return (0, "")
+    #     if globalParameters["GenerateSourcesAndExit"]:
+    #       # only create the assembly file.
+    #       self._getKernelObjectAssemblyFile(kernel)
+    #       return (0, "")
+    #     else:
+    #       self._writeByteArrayScript()
+    #       self._getSingleCodeObjectFile(kernel)
 
-          # I guess in this case we are making sure that the code object file exists by executing the code
-          # above but we aren't placing it into the source.
-          return (0, "")
+    #       # I guess in this case we are making sure that the code object file exists by executing the code
+    #       # above but we aren't placing it into the source.
+    #       return (0, "")
 
-      else:
-        return (0, self._getKernelSource(kernel))
+    #   else:
+    #     return (0, self._getKernelSource(kernel))
 
-    except subprocess.CalledProcessError as exc:
-      print(exc)
-      return (-1, "")
-    except RuntimeError as exc:
-      if globalParameters["PrintSolutionRejectionReason"]:
-        print(exc)
-      return (-2, "")
+    # except subprocess.CalledProcessError as exc:
+    #   print(exc)
+    #   return (-1, "")
+    # except RuntimeError as exc:
+    #   if globalParameters["PrintSolutionRejectionReason"]:
+    #     print(exc)
+    #   return (-2, "")
 
   ##############################################################################
   # header file string

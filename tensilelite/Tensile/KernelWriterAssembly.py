@@ -38,7 +38,7 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           LabelManager, Assert
 from .TensileInstructions.Instructions import *
 from .TensilePass import getActivationFunctionModuleName, getActivationBranchModuleName
-from .Common import globalParameters, print2, printExit, printWarning, roundUp
+from .Common import globalParameters, print2, printExit, printWarning, roundUp, ensurePath
 from .TensileInstructions.Containers import HWRegContainer
 from .Component import Component
 from .KernelWriter import KernelWriter, ConstValues, StateValues, StateVgprs, CodeModules
@@ -48,13 +48,15 @@ from .AsmStoreState import StoreState, VectorDataTypes
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationType
 from .Utils import DataDirection
+from .Toolchain.Assembly import getSingleCodeObjectFile
 
 from math import ceil, log, floor
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import NamedTuple
+from typing import NamedTuple, Tuple
 
-import collections
+import os
+import subprocess
 
 ################################################################################
 # Assembly Kernel
@@ -67,6 +69,38 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
     super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler)
+
+  def getSourceFileString(self, kernel) -> Tuple[int, str]:
+    assert kernel["KernelLanguage"] == "Assembly"
+    asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+    try:
+      # asmPath = self.getAssemblyDirectory()
+      # kernelName = self.getKernelName(kernel)
+
+      # Skip if .o files will have already been built for this file
+      # @TODO remove need for this with better code organization
+      if kernel.duplicate:
+        self.language = "ASM"
+        return (0, "")
+      if globalParameters["GenerateSourcesAndExit"]:
+        # only create the assembly file.
+        self._getKernelObjectAssemblyFile(kernel, asmPath)
+        return (0, "")
+      else:
+        self._writeByteArrayScript(asmPath)
+        getSingleCodeObjectFile(self, self.assembler, asmPath, kernel)
+
+        # I guess in this case we are making sure that the code object file exists by executing the code
+        # above but we aren't placing it into the source.
+        return (0, "")
+
+    except subprocess.CalledProcessError as exc:
+      print(exc)
+      return (-1, "")
+    except RuntimeError as exc:
+      if globalParameters["PrintSolutionRejectionReason"]:
+        print(exc)
+      return (-2, "")
 
   def getSgprOccupancy(self, sgprs):
     return self.states.regCaps["PhysicalMaxSgpr"]//sgprs

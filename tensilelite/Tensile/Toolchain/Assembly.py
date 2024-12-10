@@ -1,14 +1,17 @@
 import collections
 import math
 import os
+import shlex
 import shutil
 import subprocess
+import warnings
 
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Tuple
+
 
 from .. import Utils
-from ..TensileInstructions import getGfxName
+from ..TensileInstructions import getGfxName, getCOVFromParam
 from ..Common import globalParameters, print2, ensurePath, printWarning
 
 class AssemblyToolchain:
@@ -110,7 +113,7 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, kernelWr
     extCoRaw = ".co.raw"
 
     destDir = Path(ensurePath(os.path.join(outputPath, 'library')))
-    asmDir = Path(kernelWriterAssembly.getAssemblyDirectory())
+    asmDir = Path(ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly")))
 
     archKernelMap = collections.defaultdict(list)
     for k in filter(isAsm, kernels):
@@ -166,3 +169,79 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, kernelWr
         printWarning("Code object files are not compressed in `--no-merge-files` build mode.")
 
     return coFiles
+
+########################
+# @bstefanuk Fix the below so they only use the toolchain functions
+def _getAssembledKernelObjectFile(assembler, isa, wavefrontSize, asmFilename, kernel, asmDir):
+
+  base, ext = os.path.splitext(asmFilename)
+  objectFileName = base + '.o'
+
+  debug = globalParameters.get("AsmDebug", False)
+
+  args = getAsmCompileArgs(assembler, globalParameters["CodeObjectVersion"], isa, wavefrontSize, asmFilename, objectFileName, debug=debug)
+
+  if globalParameters["PrintCodeCommands"]:
+    print (' '.join(args), " && ")
+
+  subprocess.check_call(args, cwd=asmDir)
+
+  if not globalParameters["KeepBuildTmp"]:
+      os.remove(asmFilename)
+
+  return objectFileName
+
+def getSingleCodeObjectFile(writerAsm, assembler, asmPath, kernel):
+  asmFilename = writerAsm._getKernelObjectAssemblyFile(kernel, asmPath)
+  objectFileName = _getAssembledKernelObjectFile(assembler, writerAsm.isa, writerAsm.wavefrontSize, asmFilename, kernel, asmPath)
+
+  base, ext = os.path.splitext(objectFileName)
+  coFileName = base + '.co'
+
+  args = getAsmLinkCodeObjectArgs(assembler, \
+    [objectFileName], coFileName, globalParameters['BuildIdKind'])
+
+  if globalParameters["PrintCodeCommands"]:
+    print (' '.join(args))
+
+  subprocess.check_call(args, cwd=asmPath)
+  return coFileName
+
+
+def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, \
+    isa: Tuple[int, int, int], wavefrontSize: int, \
+    sourceFileName: str, objectFileName: str, *moreArgs, debug: bool=False):
+    import inspect
+    caller_frame = inspect.stack()[1]
+    warnings.warn(f"{__name__}: THIS FUNCTION IS DEPRECATED. Called from {caller_frame.filename}, line {caller_frame.lineno}.")
+    
+    launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
+    rv = launcher + [assemblerPath, '-x', 'assembler', '-target', 'amdgcn-amd-amdhsa']
+
+    rv += ['-mcode-object-version=%s'% getCOVFromParam(codeObjectVersion)]
+
+    rv += ['-mcpu=' + getGfxName(isa)]
+
+    if wavefrontSize == 64:
+        rv += ['-mwavefrontsize64']
+    else:
+        rv += ['-mno-wavefrontsize64']
+
+    rv += moreArgs
+
+    if debug:
+        rv += ['-g',]
+
+    rv += ['-c', '-o', objectFileName, sourceFileName]
+    return rv
+
+def getAsmLinkCodeObjectArgs(assemblerPath: str, objectFileNames: List[str], \
+    coFileName: str, buildIdKind: str, *moreArgs):
+    import inspect
+    caller_frame = inspect.stack()[1]
+    warnings.warn(f"{__name__}: THIS FUNCTION IS DEPRECATED. Called from {caller_frame.filename}, line {caller_frame.lineno}.")
+    rv = [assemblerPath, '-target', 'amdgcn-amd-amdhsa']
+    rv += ["-Xlinker", "--build-id=%s"%(buildIdKind)]
+    rv += moreArgs
+    rv += ['-o', coFileName] + objectFileNames
+    return rv

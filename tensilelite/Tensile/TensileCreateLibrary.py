@@ -36,7 +36,7 @@ from . import Utils
 from .Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
 from .Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
 from .Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
-from .TensileInstructions import getGfxName, TensileInstructions, getAsmCompileArgs, getAsmLinkCodeObjectArgs
+from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, assignGlobalParameters, \
                     architectureMap, printWarning, \
@@ -897,7 +897,7 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles = writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions,
+  codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions,
                                              kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
   bothLibSet = set(sourceLibPaths + asmLibPaths)
