@@ -248,9 +248,6 @@ function(TensileCreateLibraryFiles
           set(Tensile_VAR_PREFIX TENSILE)
       endif()
 
-      set(Tensile_MANIFEST_FILE_PATH "${Tensile_OUTPUT_PATH}/library/TensileManifest.txt")
-      message(STATUS "Tensile_MANIFEST_FILE_PATH: ${Tensile_MANIFEST_FILE_PATH}")
-
       if($ENV{ENABLE_ADDRESS_SANITIZER})
         # Must populate LD_PRELOAD with ASAN runtime if ASAN is being used.
         # Find the ASAN RT with compiler and update env for Tensile call.
@@ -264,7 +261,7 @@ function(TensileCreateLibraryFiles
 
       add_custom_command(
         COMMENT "Generating Tensile Libraries"
-        OUTPUT ${Tensile_EMBED_LIBRARY_SOURCE};${Tensile_MANIFEST_FILE_PATH}
+        OUTPUT ${Tensile_OUTPUT_PATH}/library
         COMMAND ${CommandLine}
       )
 
