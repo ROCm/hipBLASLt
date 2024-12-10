@@ -79,6 +79,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -156,6 +157,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -224,6 +226,7 @@ BenchmarkProblems:
         - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -296,6 +299,7 @@ BenchmarkProblems:
         - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
