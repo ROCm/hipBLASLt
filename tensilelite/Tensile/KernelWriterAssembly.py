@@ -2549,8 +2549,31 @@ class KernelWriterAssembly(KernelWriter):
       tP["swizzledBlockSize"] = self.sgprPool.checkOut(1)
       module.add(SMovB32(dst=sgpr(tP["swizzledBlockSize"]), src=hex(16*32), comment="SWZ: swizzled block = MI_M(%u) * MI_K(%u) * 2" %(16, 16)))
 
+    # both UseSgprForGRO and DTVA/B are enabled
+    if ((tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]) and kernel["_UseSgprForGRO"]:
+      if tP["tlu"]:
+        sizeOfaPart = kernel["LocalReadVectorWidth"]
+        numOfVW = tP["nrp"]//sizeOfaPart
+        for sPerp in range(0, tP["nrpv"]*numOfVW):
+          for perp in range(0, sizeOfaPart):
+            for para in range(0, tP["nrc"]):
+              for sPara in range(0, tP["nrcv"]//tP["nrcvpi"]):
+                # single loop
+                singleModule, graIdx = self.graFinalOffsetsSingleLoop(kernel, tP, tc, tmp, graIdx, perp, sPerp, para, sPara)
+                module.add(singleModule)
+      else:
+        numOfVW = kernel["MIWaveTile%c"%tc]//kernel["VectorWidth%s"%tc] if kernel["VectorWidth%c"%tc]>1 else 1
+        sizeOfaPart = tP["nrp"]//numOfVW
+        # swap para and perp
+        for para in range(0, tP["nrc"]):
+          for sPara in range(0, int(tP["nrcv"]/tP["nrcvpi"])):
+            for sPerp in range(0, tP["nrpv"]*numOfVW):
+              for perp in range(0, sizeOfaPart):
+                # single loop
+                singleModule, graIdx = self.graFinalOffsetsSingleLoop(kernel, tP, tc, tmp, graIdx, perp, sPerp, para, sPara)
+                module.add(singleModule)
     # DTVA/B always go this way, including swizzled
-    if not swapPerpPara:
+    elif (not swapPerpPara):
       for perp in range(0, tP["nrp"]):
         for sPerp in range(0, tP["nrpv"]):
           for para in range(0, tP["nrc"]):
@@ -2711,7 +2734,13 @@ class KernelWriterAssembly(KernelWriter):
       stride1 = "Stride%s%s"%(tc,self.states.indexChars[tP["idx"]])
       if tP["tlu"]:
         tileStride   = kernel[tP["lsc"]] * (para*tVW + sPara*tVS)
-        unrollStride = kernel[tP["lsp"]] * (perp*uVW + sPerp*uVS)
+        unrollStride = 0
+
+        if (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]:
+          unrollStride = perp*uVW + (kernel[tP["lsp"]] * sPerp * kernel["LocalReadVectorWidth"])
+        else:
+          unrollStride = kernel[tP["lsp"]] * (perp*uVW + sPerp*uVS)
+
         unrollSummation = [ i for i in tP["ia"] if i in problemType["IndicesSummation"] ]
         strideU = "Stride%s%s"%(tc,self.states.indexChars[unrollSummation[-1]])
         module.add(SMulI32(dst=sgpr(scalarGro), src0=sgpr(strideU), src1=unrollStride, \
@@ -2720,7 +2749,12 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SAddU32(dst=sgpr(scalarGro), src0=sgpr(scalarGro), src1=tileStride, \
                     comment="compute offset diff (tileDim)"))
       else:
-        tileStride   = kernel[tP["lsp"]] * (perp*tVW + sPara*tVS)
+        tileStride = 0
+        if (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc] and kernel["VectorWidth%s"%tc] > 1:
+          tileStride = perp*tVW + (kernel[tP["lsp"]] * sPerp * kernel["VectorWidth%s"%tc])
+        else:
+          tileStride = kernel[tP["lsp"]] * (perp*tVW + sPara*tVS)
+
         unrollStride = kernel[tP["lsc"]] * (para*uVW + sPerp*uVS)
         strideF = "Stride%s%s"%(tc,self.states.indexChars[tP['tileIdx']])
         module.add(SMulI32(dst=sgpr(scalarGro), src0=sgpr(strideF), src1=tileStride, \
@@ -4214,7 +4248,7 @@ class KernelWriterAssembly(KernelWriter):
     self.sgprPool.checkIn(tmpSgprKA)
     self.sgprPool.checkIn(tmpSgprKB)
     return imod
-  
+
   ##############################################################################
   # Emit code to compute loop iterations for GSU.
   # See same function in KernelWriterSource.py for background explanation
