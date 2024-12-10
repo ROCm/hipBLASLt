@@ -41,14 +41,15 @@
 #
 # make co TENSILE_OUT=tensile-out ARCH="gfx942:xnack-" WAVEFRONTSIZE="-mno-wavefrontsize64"
 #
-# In addition, we provide AS and ASM_ARGS, and LD LINK_ARGS as customization
+# In addition, we provide AS and ASM_ARGS, and LD and LINK_ARGS as customization
 # points for the assemble and link step respectively.
 # ------------------------------------------------------------------------
 
 ROCM_PATH ?= /opt/rocm
 AS := $(ROCM_PATH)/bin/amdclang++
 LDD := $(ROCM_PATH)/bin/amdclang++
-WAVEFRONTSIZE ?= -mwavefrontsize64
+WAVE ?= 64
+WAVEFRONTSIZE ?= $(if $(WAVE:32=),-mwavefrontsize64, -mno-wavefrontsize64)
 
 .SECONDEXPANSION:
 co: COFILES = $(shell find ${TENSILE_OUT}/1_BenchmarkProblems/*/00_Final/source/library -name '*.co')
@@ -67,4 +68,4 @@ ${TENSILE_OUT}/1_BenchmarkProblems%.co: $$(OBJFILES)
      ARCH ?= $(subst .co,,$(subst TensileLibrary_,,$(lastword $(subst /, ,$(COFILE)))))
 %.o: %.s
 	@echo rebuilding $(lastword $(subst /, ,$@)) for $(ARCH)
-	@$(AS) -x assembler -target amdgcn-amd-amdhsa -mcode-object-version=4 -mcpu=$(ARCH) ${WAVEFRONTSIZE} ${ASM_ARGS} -c -o $@ $^
+	$(AS) -x assembler -target amdgcn-amd-amdhsa -mcode-object-version=4 -mcpu=$(ARCH) ${WAVEFRONTSIZE} ${ASM_ARGS} -c -o $@ $^
