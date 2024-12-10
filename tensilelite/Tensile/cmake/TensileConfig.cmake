@@ -268,7 +268,7 @@ function(TensileCreateLibraryFiles
       add_custom_target(
         "${Tensile_VAR_PREFIX}_LIBRARY_TARGET" ALL
         COMMENT "${Tensile_VAR_PREFIX}_LIBRARY_TARGET"
-        DEPENDS ${Tensile_MANIFEST_FILE_PATH}
+        DEPENDS ${Tensile_OUTPUT_PATH}/library
       )
 
   endif()
