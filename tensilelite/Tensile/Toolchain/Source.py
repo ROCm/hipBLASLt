@@ -9,7 +9,7 @@ from typing import Iterable, List, Union
 
 from ..Common import globalParameters, print2,  ensurePath, ParallelMap2, splitArchs
 
-class ToolchainSource:
+class SourceToolchain:
     def __init__(self, compiler: str, bundler: str, buildIdKind: str, asanBuild: bool=False, saveTemps: bool=False):
         self.compiler = compiler
         self.bundler = bundler
@@ -129,7 +129,7 @@ def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Pa
     return coPath
 
 
-def _buildSourceCodeObjectFile(toolchainSrc: ToolchainSource, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
+def _buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
     Args:
@@ -155,14 +155,14 @@ def _buildSourceCodeObjectFile(toolchainSrc: ToolchainSource, outputPath: Union[
     _, cmdlineArchs = splitArchs()
 
     objPath = str(buildPath / objFilename)
-    toolchainSrc.compile(str(kernelPath), objPath, str(outputPath), cmdlineArchs)
+    toolchain.compile(str(kernelPath), objPath, str(outputPath), cmdlineArchs)
 
-    for target in toolchainSrc.targets(objPath):
+    for target in toolchain.targets(objPath):
       if match := re.search("gfx.*$", target):
         arch = re.sub(":", "-", match.group())
         coPathRaw = _computeSourceCodeObjectFilename(target, kernelPath.stem, buildPath, arch)
         if not coPathRaw: continue
-        toolchainSrc.unbundle(target, objPath, str(coPathRaw))
+        toolchain.unbundle(target, objPath, str(coPathRaw))
 
         coPath = str(destPath / coPathRaw.stem)
         coPathsRaw.append(coPathRaw)
@@ -173,7 +173,7 @@ def _buildSourceCodeObjectFile(toolchainSrc: ToolchainSource, outputPath: Union[
 
     return coPaths
 
-def buildSourceCodeObjectFiles(toolchainSrc: ToolchainSource, kernelFiles: List[Path], outputPath: Path) -> Iterable[str]:
+def buildSourceCodeObjectFiles(toolchain: SourceToolchain, kernelFiles: List[Path], outputPath: Path) -> Iterable[str]:
     """Compiles HIP source code files into code object files.
 
     Args:
@@ -185,6 +185,6 @@ def buildSourceCodeObjectFiles(toolchainSrc: ToolchainSource, kernelFiles: List[
     Returns:
         List of paths to the created code objects.
     """
-    args    = zip(itertools.repeat(toolchainSrc), itertools.repeat(outputPath), kernelFiles)
+    args    = zip(itertools.repeat(toolchain), itertools.repeat(outputPath), kernelFiles)
     coFiles = ParallelMap2(_buildSourceCodeObjectFile, args, "Compiling source kernels")
     return itertools.chain.from_iterable(coFiles)

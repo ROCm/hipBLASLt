@@ -33,6 +33,9 @@ from . import ClientExecutable
 from . import EmbeddedData
 from . import LibraryIO
 from . import Utils
+from .Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
+from .Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
+from .Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
 from .TensileInstructions import getGfxName, TensileInstructions, getAsmCompileArgs, getAsmLinkCodeObjectArgs
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, assignGlobalParameters, \
@@ -43,10 +46,6 @@ from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
 from .Utilities.Profile import profile
-from .BuildCommands import SourceCommands, AssemblyCommands
-from .BuildCommands.AssemblyCommands import ToolchainAssembly
-from .BuildCommands.SourceCommands import ToolchainSource
-from .Utilities.Toolchain import getVersion, validateToolchain, ToolchainDefaults
 import argparse
 import collections
 import glob
@@ -237,7 +236,7 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
 # Write Solutions and Kernels for BenchmarkClient or LibraryClient
 ################################################################################
 @timing
-def writeSolutionsAndKernels(outputPath, toolchainAsm, toolchainSrc, cxxCompiler, offloadBundler, solutions, kernels, kernelHelperObjs, \
+def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False, compress=True):
   codeObjectFiles = []
 
@@ -378,8 +377,8 @@ def writeSolutionsAndKernels(outputPath, toolchainAsm, toolchainSrc, cxxCompiler
       kernelHeaderFile.close()
 
   if not globalParameters["GenerateSourcesAndExit"]:
-    codeObjectFiles += SourceCommands.buildSourceCodeObjectFiles(toolchainSrc, kernelFiles, outputPath)
-    codeObjectFiles += AssemblyCommands.buildAssemblyCodeObjectFiles(toolchainAsm, kernelsToBuild, kernelWriterAssembly, outputPath, compress)
+    codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, kernelFiles, outputPath)
+    codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, kernelsToBuild, kernelWriterAssembly, outputPath, compress)
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
@@ -858,11 +857,11 @@ def TensileCreateLibrary():
   print1(f"# Architecture(s):     {arguments['Architecture']}")
   print1(f"# Library Format:      {libraryFormat}")
 
-  toolchainAsm = ToolchainAssembly(assembler, offloadBundler, globalParameters["BuildIdKind"])
-  toolchainSrc = ToolchainSource(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
-
   arguments["AMDClangVersion"] = getVersion(cxxCompiler)
   assignGlobalParameters(arguments, cxxCompiler)
+
+  asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"])
+  srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
   if not os.path.exists(logicPath):
     printExit("LogicPath %s doesn't exist" % logicPath)
@@ -961,7 +960,7 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles = writeSolutionsAndKernels(outputPath, toolchainAsm, toolchainSrc, cxxCompiler, offloadBundler, solutions,
+  codeObjectFiles = writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions,
                                              kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
   bothLibSet = set(sourceLibPaths + asmLibPaths)

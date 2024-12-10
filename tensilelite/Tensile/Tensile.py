@@ -31,7 +31,9 @@ import sys
 import argparse
 from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR
-from .Utilities.Toolchain import ToolchainDefaults, validateToolchain
+from .Toolchain.Assembly import AssemblyToolchain
+from .Toolchain.Source import SourceToolchain
+from .Toolchain.Validators import validateToolchain, ToolchainDefaults
 from . import BenchmarkProblems
 from . import ClientWriter
 from . import LibraryIO
@@ -272,6 +274,9 @@ def Tensile(userArgs):
 
     cxxCompiler, cCompiler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.OffloadBundler)
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
+
+    asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"])
+    srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
     globalParameters["OutputPath"] = ensurePath(os.path.abspath(args.output_path))
     globalParameters["WorkingPath"] = globalParameters["OutputPath"]

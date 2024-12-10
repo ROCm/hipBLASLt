@@ -11,7 +11,7 @@ from .. import Utils
 from ..TensileInstructions import getGfxName
 from ..Common import globalParameters, print2, ensurePath, printWarning
 
-class ToolchainAssembly:
+class AssemblyToolchain:
     def __init__(self, assembler: str, bundler: str, buildIdKind: str):
         self.assembler = assembler
         self.bundler = bundler
@@ -101,7 +101,7 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 
     return newObjFilesOutput
 
-def buildAssemblyCodeObjectFiles(toolchainAsm: ToolchainAssembly, kernels, kernelWriterAssembly, outputPath, compress: bool=True):
+def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, kernelWriterAssembly, outputPath, compress: bool=True):
     
     isAsm = lambda k: k["KernelLanguage"] == "Assembly"
 
@@ -139,11 +139,11 @@ def buildAssemblyCodeObjectFiles(toolchainAsm: ToolchainAssembly, kernels, kerne
         for coFileRaw, objFiles in coFileMap.items():
 
           objFiles = _batchObjectFiles(objFiles, coFileRaw)
-          toolchainAsm.link(objFiles, str(coFileRaw))
+          toolchain.link(objFiles, str(coFileRaw))
 
           coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
           if compress:
-            toolchainAsm.compress(str(coFileRaw), str(coFile), gfx)
+            toolchain.compress(str(coFileRaw), str(coFile), gfx)
           else:
             shutil.move(coFileRaw, coFile)
 
