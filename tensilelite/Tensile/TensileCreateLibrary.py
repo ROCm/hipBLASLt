@@ -212,8 +212,7 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
       else:
         objFilenames.add(base)
         kernel.duplicate = False
-
-  total = len(kernels)
+  numKernels = len(kernels)
 
   kIter   = zip(kernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
   results = Common.ParallelMap2(processKernelSource, kIter, "Generating kernels")
@@ -322,7 +321,7 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
 
-  return codeObjectFiles, total
+  return codeObjectFiles, numKernels 
 
 
 ##############################################################################
@@ -897,7 +896,7 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles = writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler, solutions,
+  codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler, solutions,
                                              kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
   bothLibSet = set(sourceLibPaths + asmLibPaths)
@@ -970,5 +969,5 @@ def TensileCreateLibrary():
   stop = timer()
 
   print1(f"Total time (s): {(stop-start):3.2f}")
-  print1(f"Total kernels processed: {total}")
-  print1(f"Kernels processed per second: {(total/(stop-start)):3.2f}")
+  print1(f"Total kernels processed: {numKernels}")
+  print1(f"Kernels processed per second: {(numKernels/(stop-start)):3.2f}")
