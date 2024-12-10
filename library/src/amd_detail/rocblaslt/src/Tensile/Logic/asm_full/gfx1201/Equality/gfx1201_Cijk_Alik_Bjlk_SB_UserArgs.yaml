@@ -1,6 +1,6 @@
 - {MinimumRequiredVersion: 4.33.0}
-- gfx1200
-- gfx1200
+- gfx1201
+- gfx1201
 - [Device 73f0]
 - Activation: false
   ActivationComputeDataType: 0
@@ -30,12 +30,12 @@
   Index01B: 1
   Index1: 1
   IndexAssignmentsA: [3, 0, 2]
-  IndexAssignmentsB: [3, 1, 2]
+  IndexAssignmentsB: [1, 3, 2]
   IndexAssignmentsLD: [4, 5, 6, 7]
   IndexAssignmentsMetadata: [3, 0, 2]
   IndexUnroll: 3
   IndexUnrollA: 0
-  IndexUnrollB: 0
+  IndexUnrollB: 1
   IndexUnrollM: 0
   IndicesBatch: [2]
   IndicesFree: [0, 1]
@@ -61,7 +61,7 @@
   SwizzleTensorA: false
   SwizzleTensorB: false
   TLUA: false
-  TLUB: false
+  TLUB: true
   Tensor0: 0
   Tensor1: 1
   TileA: 0
@@ -69,7 +69,7 @@
   TileB: 1
   TotalIndices: 4
   TransposeA: true
-  TransposeB: false
+  TransposeB: true
   UseBeta: true
   UseBias: 0
   UseE: false
@@ -121,22 +121,22 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [12, 0, 0]
+    ISA: [12, 0, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {KernArgsVersion: 2, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT32x64x16_SN_K1_TT8_8
+    KernelNameMin: Cijk_Alik_Bjlk_SB_UserArgs_MT32x64x16_SN_K1_TT8_8
     LSCA: 16
-    LSCB: 16
+    LSCB: 64
     LSPA: 8
-    LSPB: 8
+    LSPB: 2
     LVCA: 4
-    LVCB: 4
+    LVCB: 16
     LVPA: 2
-    LVPB: 2
+    LVPB: 1
     LdsBlockSizePerPadA: 0
     LdsBlockSizePerPadB: 0
     LdsBlockSizePerPadMetadata: 0
@@ -232,12 +232,12 @@
       Index01B: 1
       Index1: 1
       IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
+      IndexAssignmentsB: [1, 3, 2]
       IndexAssignmentsLD: [4, 5, 6, 7]
       IndexAssignmentsMetadata: [3, 0, 2]
       IndexUnroll: 3
       IndexUnrollA: 0
-      IndexUnrollB: 0
+      IndexUnrollB: 1
       IndexUnrollM: 0
       IndicesBatch: [2]
       IndicesFree: [0, 1]
@@ -263,7 +263,7 @@
       SwizzleTensorA: false
       SwizzleTensorB: false
       TLUA: false
-      TLUB: false
+      TLUB: true
       Tensor0: 0
       Tensor1: 1
       TileA: 0
@@ -271,7 +271,7 @@
       TileB: 1
       TotalIndices: 4
       TransposeA: true
-      TransposeB: false
+      TransposeB: true
       UseBeta: true
       UseBias: 0
       UseE: false
@@ -284,7 +284,7 @@
     ScheduleIterAlg: 1
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT32x64x16_SN_GSU1_GSUC0_GSUWGMRR0_K1_SU32_SUM0_SUS256_TT8_8_WGM1_WGMXCC1_WGMXCCGn1
+    SolutionNameMin: Cijk_Alik_Bjlk_SB_UserArgs_MT32x64x16_SN_GSU1_GSUC0_GSUWGMRR0_K1_SU32_SUM0_SUS256_TT8_8_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -342,13 +342,13 @@
     _staggerStrideShift: 2
 - [2, 3, 0, 1]
 - - - [1024, 1024, 1, 1024, 1024, 1024, 1024, 1024]
-    - [0, 4998.37]
+    - [0, 5832.51]
   - - [2048, 2048, 1, 2048, 2048, 2048, 2048, 2048]
-    - [0, 6721.24]
+    - [0, 8426.41]
   - - [3072, 3072, 1, 3072, 3072, 3072, 3072, 3072]
-    - [0, 6717.34]
+    - [0, 7739.76]
   - - [4096, 4096, 1, 4096, 4096, 4096, 4096, 4096]
-    - [0, 6718.76]
+    - [0, 2124.71]
 - null
 - null
 - DeviceEfficiency

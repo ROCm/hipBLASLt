@@ -2630,17 +2630,26 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if self.isSwapGlobalReadOrderForDtvOrDtl(kernel):
         tensorParameters1st, tensorParameters2nd = tensorParameters2nd, tensorParameters1st
         tc1, tc2 = tc2, tc1
+
+      globalReadMode1st = 2 if (((tensorParameters1st["glvw"] * tensorParameters1st["bpeGR"]) < 4) or \
+                               kernel["tailLoopOpt"] == False) else 0
+      globalReadMode2nd = 2 if (((tensorParameters2nd["glvw"] * tensorParameters2nd["bpeGR"]) < 4) or \
+                               kernel["tailLoopOpt"] == False) else 0
       module.addComment1("Update M0 for DTLDS")
       moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters1st)
       module.add(replaceHolder(moduleTmp, 0))
       module.addComment1("global read %s"%tc1)
-      module.add(self.globalReadDo(kernel, 2, tensorParameters1st))
+      module.add(self.globalReadDo(kernel, globalReadMode1st, tensorParameters1st))
       module.addComment1("Update M0 for DTLDS")
       moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters2nd)
       module.add(replaceHolder(moduleTmp, 0))
       module.addComment1("global read %s"%tc2)
-      module.add(self.globalReadDo(kernel, 2, tensorParameters2nd))
-      module.add(self._wait(kernel, tensorParametersA, tensorParametersB, 0, -1, -1, "2wait for global read"))
+      module.add(self.globalReadDo(kernel, globalReadMode2nd, tensorParameters2nd))
+      if kernel["tailLoopOpt"] and \
+         (((tensorParameters1st["glvw"] * tensorParameters1st["bpeGR"]) >= 4) or \
+          ((tensorParameters2nd["glvw"] * tensorParameters2nd["bpeGR"]) >= 4)):
+        module.add(self.tailLoopGlobalRead(kernel, tensorParameters1st, tensorParameters2nd))
+      module.add(self._wait(kernel, tensorParameters1st, tensorParameters2nd, 0, -1, -1, "2wait for global read"))
       module.add(self._syncThreads(kernel))
 
       # the following read/write addresses could be modified in recalcLocal(Read|Write)Addresses due to policy change
