@@ -9763,6 +9763,33 @@ class KernelWriterAssembly(KernelWriter):
     ########################################
     # Calculate Vgprs for Write Batching
     ########################################
+    self.vgprPool.resetOccupancyLimit()
+    self.sgprPool.resetOccupancyLimit()
+
+    # Temporarily grow pool for sgpr
+    sgprList = []
+    if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
+      sgprList.append(self.sgprPool.checkOut(1, preventOverflow=False))
+      sgprList.append(self.sgprPool.checkOut(1, preventOverflow=False))
+      sgprList.append(self.sgprPool.checkOut(1, preventOverflow=False))
+      sgprList.append(self.sgprPool.checkOutAligned(2, 2, preventOverflow=False))
+      sgprList.append(self.sgprPool.checkOutAligned(2, 2, preventOverflow=False))
+      sgprList.append(self.sgprPool.checkOutAligned(4, 4, preventOverflow=False))
+      for s in sgprList:
+        self.sgprPool.checkIn(s)
+    if actPCMaxTempSgpr > 0:
+      self.sgprPool.checkIn(self.sgprPool.checkOutAligned(actPCMaxTempSgpr, 2 if actPCMaxTempSgpr > 1 else 1, preventOverflow=False))
+
+    tmpVgprDynamic = None
+    tmpVgprDynamicSize  = 0
+    tmpVgprDynamicAlign = 0
+    if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
+      GSUTotal = self.getMBSKGSUTotal(kernel)
+      vgprMbsk = (GSUTotal-1) * gwvw * max(1, kernel["ProblemType"]["DestDataType"].numRegisters())
+      tmpVgprDynamicSize  = vgprMbsk
+      tmpVgprDynamicAlign = 4
+    if tmpVgprDynamicSize > 0:
+      tmpVgprDynamic = RegisterPoolResource(idx=self.vgprPool.checkOutAligned(tmpVgprDynamicSize, tmpVgprDynamicAlign), size=tmpVgprDynamicSize)
 
     ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], vectorDataTypes, dim=factorDim)
 
@@ -9771,9 +9798,8 @@ class KernelWriterAssembly(KernelWriter):
       maxVgprs, occupancy = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
                                                         self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
       # Set occupancy limit for register pools
-      # TODO: Support GSUMBSK
-      # TODO: Support gfx120X
-      if (kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel') and (kernel["ISA"][0] != 12):
+      # TODO: Support gfx12
+      if kernel["ISA"][0] != 12:
         self.vgprPool.setOccupancyLimit(self.states.regCaps["MaxVgpr"], self.states.regCaps["PhysicalMaxVgpr"] // occupancy)
         self.sgprPool.setOccupancyLimit(self.states.regCaps["MaxSgpr"], self.states.regCaps["PhysicalMaxSgpr"] // occupancy)
       return maxVgprs, occupancy
@@ -9782,7 +9808,7 @@ class KernelWriterAssembly(KernelWriter):
     # Get estimated numVgprAvailable
     # print("Max vgprs =", maxVgprs, self.vgprPool.size(), self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align))
     numVgprAvailable = self.vgprPool.availableBlockMaxVgpr(maxVgprs, ss.numVgprsPerElement, ss.align)
-    
+
     # Grow the register pool if needed - we need enough regs for at least one element
     # Unfortunate since this means the write logic is setting the VGPR requirement
     # for the entire kernel but at least we have a functional kernel.
@@ -9950,13 +9976,18 @@ class KernelWriterAssembly(KernelWriter):
               applyAlpha, beta, edge, atomic, gwvw, atomicW, \
               elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, \
               self.vgprs.addrScaleAVec, self.vgprs.addrScaleBVec, self.vgprs.addrScaleAlphaVec, \
-              biasLocalBarrierInit, tmpVgpr, cvtVgprStruct, activationSetPCStruct, \
+              biasLocalBarrierInit, tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, \
               activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, factorDim))
           biasLocalBarrierInit = True
 
         ss.resetState()
         actLoopModuleList.append(actLoopModule)
         actLoopModuleCodeLength.append(actLoopModule.countType(Instruction))
+
+    #################
+    # Free after final vgpr vcalculation
+    if tmpVgprDynamic:
+      self.vgprPool.checkIn(tmpVgprDynamic.idx)
 
     if len(actLoopLabelModules) > 1:
       actInstCounter = 0
@@ -10502,7 +10533,7 @@ class KernelWriterAssembly(KernelWriter):
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrE, addrD, addrC, addrBias, \
       addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
-      tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
+      tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
       batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, factorDim) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
@@ -10510,7 +10541,7 @@ class KernelWriterAssembly(KernelWriter):
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
         batchElements, addrE, addrD, addrC, addrBias, \
         addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, biasLocalBarrierInit, \
-        tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
+        tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
         batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, factorDim)
 
   ##############################################################################
@@ -11706,11 +11737,12 @@ class KernelWriterAssembly(KernelWriter):
     self.vgprPool.checkIn(tmpVgpr)
     return module
 
-  def s_mul_u64_u32 (self, dst0, dst1,  src0, src1, comment):
-    vtmp0 = self.vgprPool.checkOut(2)
+  def s_mul_u64_u32 (self, dst0, dst1,  src0, src1, tmpVgpr=None, comment=""):
+    vtmp0 = self.vgprPool.checkOut(2) if tmpVgpr == None else tmpVgpr
     module = SMulInt64to32(self.states.asmCaps["HasSMulHi"], \
                            dst0, dst1, src0, src1, False, vtmp0, comment)
-    self.vgprPool.checkIn(vtmp0)
+    if tmpVgpr == None:
+      self.vgprPool.checkIn(vtmp0)
     return module
 
   def s_mul_i64_i32 (self, dst0, dst1,  src0, src1, comment):
