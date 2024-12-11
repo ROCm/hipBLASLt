@@ -163,7 +163,8 @@ def _buildSourceCodeObjectFile(cxxCompiler: str, outputPath: Union[Path, str], k
       raise RuntimeError("No bundler found; set TENSILE_ROCM_OFFLOAD_BUNDLER_PATH to point to clang-offload-bundler")
 
     for target in _listTargetTriples(bundler, objPath):
-      if match := re.search("gfx.*$", target):
+      match = re.search("gfx.*$", target)
+      if match:
         arch = re.sub(":", "-", match.group())
         coPathRaw = _computeSourceCodeObjectFilename(target, kernelPath.stem, buildPath, arch)
         if not coPathRaw: continue

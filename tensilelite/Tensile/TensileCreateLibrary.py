@@ -90,65 +90,6 @@ def processKernelSource(kernel, kernelWriterAssembly, ti):
     return (err, src, header, kernelName, filename)
 
 
-################################################################################
-def prepAsm(kernelWriterAssembly):
-  """
-  Create and prepare the assembly directory  - called ONCE per output dir:
-  """
-  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly") )
-  assemblerFileName = os.path.join(asmPath, \
-      "asm-new.%s"%("bat" if os.name=="nt" else "sh"))
-  assemblerFile = open(assemblerFileName, "w")
-  if os.name == "nt":
-    assemblerFile.write("echo Windows: Copying instead of Assembling\n")
-    assemblerFile.write("copy %1.s %1.o\n")
-    assemblerFile.write("copy %1.o %1.co\n")
-  else:
-    assemblerFile.write("#!/bin/sh {log}\n".format(log = "-x" if globalParameters["PrintLevel"] >=2  else ""))
-    assemblerFile.write("# usage: asm-new.sh kernelName(no extension) [--wave32]\n")
-
-    assemblerFile.write("f=$1\n")
-    assemblerFile.write("filename=${1##*/}\n")
-    assemblerFile.write("dirname=${1%/*}\n")
-    assemblerFile.write("shift\n")
-    assemblerFile.write('if [ ! -z "$1" ] && [ "$1" = "--wave32" ]; then\n')
-    assemblerFile.write("    wave=32\n")
-    assemblerFile.write("    shift\n")
-    assemblerFile.write("else\n")
-    assemblerFile.write("    wave=64\n")
-    assemblerFile.write("fi\n")
-
-
-    isa = globalParameters["CurrentISA"]
-    assemblerFile.write("h={gfxName}\n".format(gfxName = getGfxName(isa)))
-
-    debug = globalParameters.get("AsmDebug", False)
-    cArgs32 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=32, debug=debug)
-    cArgs64 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=64, debug=debug)
-    lArgs = kernelWriterAssembly.getLinkCodeObjectArgs(["$f.o"], "$f.co")
-
-    assemblerFile.write("if [ $wave -eq 32 ]; then\n")
-    assemblerFile.write(" ".join(cArgs32) + "\n")
-    assemblerFile.write("else\n")
-    assemblerFile.write(" ".join(cArgs64) + "\n")
-    assemblerFile.write("fi\n")
-
-
-    assemblerFile.write(" ".join(lArgs) + "\n")
-
-    assemblerFile.write("ERR=$?\n")
-    assemblerFile.write("if [ $ERR -ne 0 ]\n")
-    assemblerFile.write("then\n")
-    assemblerFile.write("    echo one\n")
-    assemblerFile.write("    exit $ERR\n")
-    assemblerFile.write("fi\n")
-
-    assemblerFile.write("cp $f.co ${dirname}/../../../library/${filename}_$h.co\n")
-    assemblerFile.write("mkdir -p ${dirname}/../../../asm_backup && ")
-    assemblerFile.write("cp $f.s ${dirname}/../../../asm_backup/${filename}.s\n")
-
-  assemblerFile.close()
-  os.chmod(assemblerFileName, 0o777)
 
 ################################################################################
 def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
@@ -257,8 +198,6 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
   # Write Kernels
   ##############################################################################
   kernelsWithBuildErrs = {}
-
-  prepAsm(kernelWriterAssembly)
 
   # Kernels may be intended for different co files, but generate the same .o file
   # Mark duplicate kernels to avoid race condition
