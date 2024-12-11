@@ -98,7 +98,7 @@ class KernelWriterAssembly(KernelWriter):
       vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, vgprs,          doubleVgpr)
       accvgprLimitedOccupancy = self.getVgprOccupancy(numThreads, accvgprs,       doubleVgpr)
     else:
-      vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, vgprs+accvgprs, doubleVgpr)
+      vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, ceil(vgprs//8)*8+accvgprs, doubleVgpr)
       accvgprLimitedOccupancy = vgprLimitedOccupancy
     sgprLimitedOccupancy = self.getSgprOccupancy(sgprs)
 
@@ -113,9 +113,11 @@ class KernelWriterAssembly(KernelWriter):
     initOccupancy = self.getOccupancy(numThreads, vgprs, sgprs, ldsSize, accvgprs, doubleVgpr)
     if initOccupancy == 0: return lastVgprs, 1
 
-    while (vgprs + considerAccVgprs) < totalVgprs and vgprs < self.states.regCaps["MaxVgpr"]:
+    def getVgpr(vgpr, doubleVgpr):
+      return vgpr if not doubleVgpr else ceil(vgpr/8)*8
+    while (getVgpr(vgprs, doubleVgpr) + considerAccVgprs) < totalVgprs and vgprs < self.states.regCaps["MaxVgpr"]:
       vgprs += 1
-      if self.getVgprOccupancy(numThreads, vgprs + considerAccVgprs, doubleVgpr) >= initOccupancy:
+      if self.getVgprOccupancy(numThreads, getVgpr(vgprs, doubleVgpr) + considerAccVgprs, doubleVgpr) >= initOccupancy:
         lastVgprs = vgprs
         next
       else:
