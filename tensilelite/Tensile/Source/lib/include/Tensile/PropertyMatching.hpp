@@ -979,6 +979,7 @@ namespace TensileLite
                     auto compK = [](KBEntry<Value> const& e, int const N) { return e.k < N; };
                     auto lowerB = [](KBEntry<Value> const& e, int const N) { return e.b < N; };
                     auto upperB = [](int const N, KBEntry<Value> const& e) { return N < e.b; };
+kd_tree_batch_1_again:
                     auto k     = key.size() > 3 ? key[3] : key[2];
                     auto                b     = key.size() > 3 ? key[2] : 1;
                     PointND<int32_t, 2> target;
@@ -1020,6 +1021,15 @@ namespace TensileLite
                             std::make_tuple(result.node->pt.coord[0], result.node->pt.coord[1]));
                         if(iter != this->kSolutionMap.end())
                         {
+                            if(b > 1 && iter->second.size() == 1)
+                            {
+                                if(key[0] > key[1])
+                                    key[0] = key[0] * key[2];
+                                else
+                                    key[1] = key[1] * key[2];
+                                key[2] = 1;
+                                goto kd_tree_batch_1_again;
+                            }
                             auto bEnd = std::lower_bound(
                                 iter->second.begin(), iter->second.end(), b, lowerB);
                             auto bStart = iter->second.begin();
