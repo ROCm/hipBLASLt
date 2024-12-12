@@ -732,19 +732,6 @@ def TensileCreateLibrary():
   if globalParameters["SeparateArchitectures"]:
     theMasterLibrary = list(masterLibraries.values())[0]
 
-  print1("# Check if generated files exists.")
-
-  if not globalParameters["KeepBuildTmp"]:
-    buildTmp = Path(outputPath).parent / "library" / "build_tmp"
-    if buildTmp.exists() and buildTmp.is_dir():
-      shutil.rmtree(buildTmp)
-    buildTmp = Path(outputPath) / "build_tmp"
-    if buildTmp.exists() and buildTmp.is_dir():
-      shutil.rmtree(buildTmp)
-    else:
-      printWarning(f"Cannot remove build_tmp")
-
-
   print1("# Tensile Library Writer DONE")
   print1(HR)
   print1("")
