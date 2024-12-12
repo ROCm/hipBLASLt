@@ -31,6 +31,7 @@ import sys
 import argparse
 from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR
+from .Utilities.Toolchain import ToolchainDefaults, validateToolchain
 from . import BenchmarkProblems
 from . import ClientWriter
 from . import LibraryIO
@@ -47,13 +48,13 @@ from datetime import datetime
 #   LibraryLogic.main() to analyse final benchmark data and produce logic/yaml
 #   ClientWriter.main() to create client which calls library based on above yaml
 ################################################################################
-def executeStepsInConfig(config):
+def executeStepsInConfig(config, cxxCompiler: str, cCompiler: str, assembler: str, offloadBundler: str):
 
     ##############################################################################
     # Benchmark Problems
     ##############################################################################
     if "BenchmarkProblems" in config:
-        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"])
+        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], cxxCompiler, cCompiler, assembler, offloadBundler)
         print1("")
 
     ##############################################################################
@@ -71,7 +72,7 @@ def executeStepsInConfig(config):
                 libraryLogicConfig = config["LibraryLogic"]
             else:
                 libraryLogicConfig = {}
-            LibraryLogic.main(libraryLogicConfig)
+            LibraryLogic.main(libraryLogicConfig, cxxCompiler)
             print1("")
         else:
             print1("# LibraryLogic already done.")
@@ -85,7 +86,7 @@ def executeStepsInConfig(config):
             libraryClientConfig = config["LibraryClient"]
         else:
             libraryClientConfig = {}
-        ClientWriter.main(libraryClientConfig)
+        ClientWriter.main(libraryClientConfig, cxxCompiler, cCompiler)
         print1("")
 
 
@@ -118,8 +119,14 @@ def addCommonArguments(argParser):
         help="set PrintLevel=2 and CMakeBuildType=Debug")
     argParser.add_argument("--short-names", dest="shortNames", action="store_true", \
         help="use serial kernel and solution names")
-    argParser.add_argument("--cxx-compiler", dest="CxxCompiler", choices=["hipcc", 'amdclang++'], \
-        action="store", default="amdclang++", help="select which compiler to use")
+    argParser.add_argument("--cxx-compiler", dest="CxxCompiler", choices=[ToolchainDefaults.CXX_COMPILER], \
+        action="store", default=ToolchainDefaults.CXX_COMPILER, help="select which C++/HIP compiler to use")
+    argParser.add_argument("--c-compiler", dest="CCompiler", choices=[ToolchainDefaults.C_COMPILER], \
+        action="store", default=ToolchainDefaults.C_COMPILER, help="select which C compiler to use")
+    argParser.add_argument("--assembler", dest="Assembler", choices=[ToolchainDefaults.ASSEMBLER], \
+        action="store", default=ToolchainDefaults.ASSEMBLER, help="select which assembler to use")
+    argParser.add_argument("--offload-bundler", dest="OffloadBundler", choices=[ToolchainDefaults.OFFLOAD_BUNDLER], \
+        action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER, help="select which offload bundler to use")
     argParser.add_argument("--logic-format", dest="LogicFormat", choices=["yaml", "json"], \
         action="store", default="yaml", help="select which logic format to use")
     argParser.add_argument("--library-format", dest="LibraryFormat", choices=["yaml", "msgpack"], \
@@ -158,9 +165,6 @@ def argUpdatedGlobalParameters(args):
         rv["CMakeBuildType"] = "Debug"
     if args.shortNames:
         rv["ShortNames"] = True
-    if args.CxxCompiler:
-        rv['CxxCompiler'] = args.CxxCompiler
-    print1("")
     if args.client_build_path:
         rv["ClientBuildPath"] = args.client_build_path
     if args.client_lock:
@@ -185,14 +189,11 @@ def argUpdatedGlobalParameters(args):
 def Tensile(userArgs):
     global globalParameters
 
-    # 1st half of splash
     print1("")
     print1(HR)
     print1("#")
     print1("#  Tensile v%s" % (__version__))
 
-    # setup argument parser
-    # yapf: disable
     argParser = argparse.ArgumentParser()
     argParser.add_argument("config_file", type=os.path.realpath, nargs="+",
             help="Benchmark config.yaml file")
@@ -205,7 +206,6 @@ def Tensile(userArgs):
             "and optional second file is size list")
     argParser.add_argument("--use-cache", dest="useCache", action="store_true",
             help="Ignore cache; redo parameter forking and solution generation")
-    # yapf: enable
 
     addCommonArguments(argParser)
     args = argParser.parse_args(userArgs)
@@ -234,9 +234,6 @@ def Tensile(userArgs):
     print1("# Restoring default globalParameters")
     restoreDefaultGlobalParameters()
 
-    # CxxCompiler and LibraryFormat needs to be updated before assignGlobalParameters.
-    if args.CxxCompiler:
-        globalParameters['CxxCompiler'] = args.CxxCompiler
     if args.LogicFormat:
         globalParameters['LogicFormat'] = args.LogicFormat
     if args.LibraryFormat:
@@ -271,11 +268,8 @@ def Tensile(userArgs):
     config["UseCache"] = useCache
     globalParameters["ConfigPath"] = configPaths
 
-    # assign global parameters
-    if "GlobalParameters" in config:
-        assignGlobalParameters(config["GlobalParameters"])
-    else:
-        assignGlobalParameters({})
+    cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
+    assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
 
     globalParameters["OutputPath"] = ensurePath(os.path.abspath(args.output_path))
     globalParameters["WorkingPath"] = globalParameters["OutputPath"]
@@ -295,8 +289,7 @@ def Tensile(userArgs):
         profiler = cProfile.Profile()
         profiler.enable()
 
-    # Execute Steps in the config script
-    executeStepsInConfig(config)
+    executeStepsInConfig(config, cxxCompiler, cCompiler, assembler, offloadBundler)
 
     if profiler:
         profiler.disable()

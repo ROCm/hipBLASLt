@@ -1055,8 +1055,9 @@ def isExtractableIndex(ks, index, tc='x'):
 class Solution(collections.abc.Mapping):
 
   ########################################
-  def __init__(self, config):
+  def __init__(self, config, cxxCompiler: str):
     self._name = None
+    self.cxxCompiler = cxxCompiler
     config = config
 
     self._state = {}
@@ -1233,7 +1234,7 @@ class Solution(collections.abc.Mapping):
       state["ProblemType"]["GroupedGemm"] = False
       state["KernelLanguage"] = "Source"
       state["Kernel"] = {"WavefrontSize": self["WavefrontSize"], "ISA": tuple(self["ISA"])}
-      self.activationFunctionObjects.append(KernelWriterActivationFunction(state))
+      self.activationFunctionObjects.append(KernelWriterActivationFunction(state, self.cxxCompiler))
 
   def initActivationOnlyKernelObjects(self):
     self.activationOnlyKernelObjects = []
@@ -3494,7 +3495,13 @@ class Solution(collections.abc.Mapping):
       ldsNumBytesAB = state["LdsOffsetB"] + ldsNumBytesB
 
     # lds buffer size for reduction
+    # if User want to control the LDS usage, we may open this para in the future
     ldsNumBytesReduction = state["LocalSplitU"] * state["MacroTile0"] * state["MacroTile1"] * state["ProblemType"]["ComputeDataType"].numBytes() if state["LocalSplitU"] > 1 else 0
+    state["LocalSplitUReuseLDS"] = 1
+    if ldsNumBytesReduction > globalParameters["MaxLDS"]:
+      state["LocalSplitUReuseLDS"] = math.ceil(ldsNumBytesReduction / globalParameters["MaxLDS"])
+      # reserve all the LDS to LSU.
+      ldsNumBytesReduction = globalParameters["MaxLDS"]
 
     # lds max occupancy
     ldsSizeOccupancy = globalParameters["DeviceLDS"] // state["MaxOccupancy"]

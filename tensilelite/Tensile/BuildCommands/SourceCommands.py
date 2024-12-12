@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Iterable, List, Union
 
 from ..Common import globalParameters, print2,  ensurePath, supportedCompiler, ParallelMap2, splitArchs, which
-from .SharedCommands import compressCodeObject
 
 def _compileSourceObjectFile(cmdlineArchs: List[str], cxxCompiler: str, cxxSrcPath: str, objDestPath: str, outputPath: str):
     """Compiles a source file into an object file.
@@ -128,7 +127,7 @@ def _unbundleSourceCodeObjects(bundler: str, target: str, infile: str, outfileRa
         raise RuntimeError(f"Error unbundling source code object file: {err.output}\nFailed command: {' '.join(args)}")
 
 
-def _buildSourceCodeObjectFile(cxxCompiler: str, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
+def _buildSourceCodeObjectFile(cxxCompiler: str, offloadBundler: str, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
     Args:
@@ -158,17 +157,15 @@ def _buildSourceCodeObjectFile(cxxCompiler: str, outputPath: Union[Path, str], k
     objPath = str(buildPath / objFilename)
     _compileSourceObjectFile(cmdlineArchs, cxxCompiler, str(kernelPath), objPath, str(outputPath))
 
-    bundler = globalParameters["ClangOffloadBundlerPath"]
-    if not bundler:
+    if not offloadBundler:
       raise RuntimeError("No bundler found; set TENSILE_ROCM_OFFLOAD_BUNDLER_PATH to point to clang-offload-bundler")
 
-    for target in _listTargetTriples(bundler, objPath):
-      match = re.search("gfx.*$", target)
-      if match:
+    for target in _listTargetTriples(offloadBundler, objPath):
+      if match := re.search("gfx.*$", target):
         arch = re.sub(":", "-", match.group())
         coPathRaw = _computeSourceCodeObjectFilename(target, kernelPath.stem, buildPath, arch)
         if not coPathRaw: continue
-        _unbundleSourceCodeObjects(bundler, target, objPath, str(coPathRaw))
+        _unbundleSourceCodeObjects(offloadBundler, target, objPath, str(coPathRaw))
 
         coPath = str(destPath / coPathRaw.stem)
         coPathsRaw.append(coPathRaw)
@@ -179,7 +176,7 @@ def _buildSourceCodeObjectFile(cxxCompiler: str, outputPath: Union[Path, str], k
 
     return coPaths
 
-def buildSourceCodeObjectFiles(cxxCompiler: str, kernelFiles: List[Path], outputPath: Path) -> Iterable[str]:
+def buildSourceCodeObjectFiles(cxxCompiler: str, offloadBundler: str, kernelFiles: List[Path], outputPath: Path) -> Iterable[str]:
     """Compiles HIP source code files into code object files.
 
     Args:
@@ -191,6 +188,6 @@ def buildSourceCodeObjectFiles(cxxCompiler: str, kernelFiles: List[Path], output
     Returns:
         List of paths to the created code objects.
     """
-    args    = zip(itertools.repeat(cxxCompiler), itertools.repeat(outputPath), kernelFiles)
+    args    = zip(itertools.repeat(cxxCompiler), itertools.repeat(offloadBundler), itertools.repeat(outputPath), kernelFiles)
     coFiles = ParallelMap2(_buildSourceCodeObjectFile, args, "Compiling source kernels")
     return itertools.chain.from_iterable(coFiles)
