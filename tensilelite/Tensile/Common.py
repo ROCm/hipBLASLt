@@ -34,6 +34,7 @@ import os.path
 import subprocess
 import sys
 import time
+import re
 
 startTime = time.time()
 
@@ -128,7 +129,6 @@ globalParameters["CMakeBuildType"] = "Release"            # whether benchmark cl
 globalParameters["PrintSolutionRejectionReason"] = False  # when a solution is marked as invalid, print why
 globalParameters["LogicFormat"] = "yaml"                  # set library backend (yaml, or json)
 globalParameters["LibraryFormat"] = "yaml"                # set library backend (yaml, or msgpack)
-globalParameters["EmbedLibrary"] = None                   # whether library should be embedded or not
 
 # True/False: CSV will/won't export WinnerGFlops, WinnerTimeUS, WinnerIdx, WinnerName.
 # TODO - if no side-effect, we can set default to True. This can make analyzing "LibraryLogic" (AddFromCSV) faster
@@ -224,7 +224,6 @@ globalParameters["NumMergedFiles"] = 1            # The number of files that ker
 globalParameters["MaxFileName"] = 64              # If a file name would be longer than this, shorten it with a hash.
 globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2), (12,0,0), (12,0,1)] # assembly kernels writer supports these architectures
 
-globalParameters["GenerateManifestAndExit"] = False               # Output manifest file with list of expected library objects and exit
 globalParameters["NewClient"] = 2                                 # Old client deprecated: NewClient must be set to 2.
 globalParameters["ClientBuildPath"] = "0_Build"                   # subdirectory for host code build directory
 globalParameters["BenchmarkProblemsPath"] = "1_BenchmarkProblems" # subdirectory for benchmarking phases
@@ -262,7 +261,6 @@ globalParameters["Architecture"] = "all"
 # might be deprecated
 globalParameters["EnableHalf"] = False
 globalParameters["ClientArgs"] = ""
-globalParameters["PackageLibrary"] = False
 
 # perf model
 globalParameters["PerfModelL2ReadHits"] = 0.0
@@ -1620,6 +1618,40 @@ def which(p):
             if os.path.isfile(candidate):
                 return candidate
     return None
+
+def splitArchs():
+  # Helper for architecture
+  def isSupported(arch):
+    return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
+           globalParameters["AsmCaps"][arch]["SupportedSource"]
+
+  if ";" in globalParameters["Architecture"]:
+    wantedArchs = globalParameters["Architecture"].split(";")
+  else:
+    wantedArchs = globalParameters["Architecture"].split("_")
+  archs = []
+  cmdlineArchs = []
+  if "all" in wantedArchs:
+    for arch in globalParameters['SupportedISA']:
+      if isSupported(arch):
+        if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
+          if (arch == (9,0,10)):
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          if globalParameters["AsanBuild"]:
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          else:
+            archs += [getGfxName(arch) + '-xnack-']
+            cmdlineArchs += [getGfxName(arch) + ':xnack-']
+        else:
+          archs += [getGfxName(arch)]
+          cmdlineArchs += [getGfxName(arch)]
+  else:
+    for arch in wantedArchs:
+      archs += [re.sub(":", "-", arch)]
+      cmdlineArchs += [arch]
+  return archs, cmdlineArchs
 
 ################################################################################
 ################################################################################

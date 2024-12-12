@@ -144,7 +144,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
 
     # write solution, kernels and CMake
     problemType = solutions[0]["ProblemType"]
-    codeObjectFiles = writeSolutionsAndKernels( \
+    codeObjectFiles, _ = writeSolutionsAndKernels( \
             globalParameters["WorkingPath"], globalParameters["CxxCompiler"], \
             [problemType], solutions, kernels, kernelHelperOjbs, \
             kernelWriterAssembly, errorTolerant=True )
