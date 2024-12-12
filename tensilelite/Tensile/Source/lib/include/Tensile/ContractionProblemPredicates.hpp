@@ -234,7 +234,7 @@ namespace TensileLite
                     bool ret = (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
                                 * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
                                    * (value[2]) * (value[4] / 64) * value[3]
-                               <= 40960;
+                               <= 409600;
                     if(problem.groupedGemm())
                         ret = ret && (problem.groupedGemmCount() <= 16);
 

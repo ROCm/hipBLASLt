@@ -2824,29 +2824,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     ####################################
     #if kernel["NumThreads"]%kernel["MacroTile0"] == 0:
     if kernel["LocalSplitU"] > 1:
-      module.addComment2("LocalSplitU Reduction")
-      module.add(self._syncThreads(kernel))
-
-      # LocalSplitU: local write
-      module.addComment1("LocalSplitU: local write")
-      module.add(self.localSplitULocalWrite(kernel))
-
-      # LocalSplitU: local read
-      module.addComment1("LocalSplitU: local read")
-      module.add(self.localSplitULocalRead(kernel))
+      module.addComment1("LocalSplitU: local write and read")
+      lsuComponent = Component.LSU.find(self)
+      module.add(lsuComponent.writeReadReduction(self, kernel))
 
       # LocalSplitU: global write indices
-      # Hide instructions in local read latency
       module.addComment1("LocalSplitU: global write indices")
-      module.add(self.localSplitUGlobalWriteIndices(kernel))
-
-      # LocalSplitU: Reduction
-      module.addComment1("LocalSplitU: reduction")
-      module.add(self.localSplitUReduction(kernel))
+      module.add(lsuComponent.globalWriteIndices(self, kernel))
 
       # LocalSplitU: global write
       module.addComment1("LocalSplitU: global write")
-      module.add(self.localSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
+      module.add(lsuComponent.globalWrite(self, kernel, tensorParametersA, tensorParametersB))
 
     else:
       ####################################
@@ -4840,27 +4828,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return ""
 
   ##############################################################################
-  # LocalSplitU: Local Write
-  ##############################################################################
-  @abc.abstractmethod
-  def localSplitULocalWrite(self, kernel):
-    return ""
-
-  ##############################################################################
-  # LocalSplitU: Local Read
-  ##############################################################################
-  @abc.abstractmethod
-  def localSplitULocalRead(self, kernel):
-    return ""
-
-  ##############################################################################
-  # LocalSplitU: Reduction
-  ##############################################################################
-  @abc.abstractmethod
-  def localSplitUReduction(self, kernel):
-    return ""
-
-  ##############################################################################
   # globalWriteWorkGroupInit:
   # Perform work-group granularity init
   ##############################################################################
@@ -5156,9 +5123,6 @@ for codeObjectFileName in codeObjectFileNames:
     kernelName = Solution.getNameMin(kernel, self.kernelMinNaming, True)
     return kernelName
 
-  # def getAssemblyDirectory(self):
-  #     return Common.ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
-
   @abc.abstractmethod
   def getSourceFileString(self, kernel) -> Tuple[int, str, str]:
     """
@@ -5173,39 +5137,6 @@ for codeObjectFileName in codeObjectFileNames:
      * A Python script which can create byte array variable definitions.
     """
     pass
-
-    # try:
-    #   if kernel["KernelLanguage"] == "Assembly":
-    #     # asmPath = self.getAssemblyDirectory()
-    #     # kernelName = self.getKernelName(kernel)
-
-    #     # Skip if .o files will have already been built for this file
-    #     # @TODO remove need for this with better code organization
-    #     if kernel.duplicate:
-    #       self.language = "ASM"
-    #       return (0, "")
-    #     if globalParameters["GenerateSourcesAndExit"]:
-    #       # only create the assembly file.
-    #       self._getKernelObjectAssemblyFile(kernel)
-    #       return (0, "")
-    #     else:
-    #       self._writeByteArrayScript()
-    #       self._getSingleCodeObjectFile(kernel)
-
-    #       # I guess in this case we are making sure that the code object file exists by executing the code
-    #       # above but we aren't placing it into the source.
-    #       return (0, "")
-
-    #   else:
-    #     return (0, self._getKernelSource(kernel))
-
-    # except subprocess.CalledProcessError as exc:
-    #   print(exc)
-    #   return (-1, "")
-    # except RuntimeError as exc:
-    #   if globalParameters["PrintSolutionRejectionReason"]:
-    #     print(exc)
-    #   return (-2, "")
 
   ##############################################################################
   # header file string

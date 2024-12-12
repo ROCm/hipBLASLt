@@ -48,5 +48,6 @@ __all__ = [
     "SumUnroll",
     "GSU",
     "StreamK",
-    "PersistentLoop"
+    "PersistentLoop",
+    "LSU",
     ]
