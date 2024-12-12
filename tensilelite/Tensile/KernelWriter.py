@@ -358,9 +358,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__( self, kernelMinNaming, kernelSerialNaming ):
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
+    self.assembler = assembler
     self.ti = None
 
     self.do = {}
@@ -2883,7 +2884,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     version = tuple(kernel["ISA"])
     if self.ti == None:
       self.ti = TensileInstructions()
-    self.ti.init(version, globalParameters["AssemblerPath"])
+    self.ti.init(version, self.assembler)
     self.ti.setKernelInfo(version, kernel["WavefrontSize"])
 
     self.consts = ConstValues()
@@ -5223,12 +5224,12 @@ for codeObjectFileName in codeObjectFileNames:
       isa = self.states.version
     if wavefrontSize is None:
       wavefrontSize = self.states.kernel["WavefrontSize"]
-    return getAsmCompileArgs(globalParameters['AssemblerPath'], \
+    return getAsmCompileArgs(self.assembler, \
       globalParameters["CodeObjectVersion"], \
       isa, wavefrontSize, sourceFileName, objectFileName, *moreArgs, debug=debug)
 
   def getLinkCodeObjectArgs(self, objectFileNames, coFileName, *moreArgs):
-    return getAsmLinkCodeObjectArgs(globalParameters['AssemblerPath'], \
+    return getAsmLinkCodeObjectArgs(self.assembler, \
       objectFileNames, coFileName, globalParameters['BuildIdKind'], *moreArgs)
 
   def setTensileInstructions(self, ti):

@@ -651,11 +651,11 @@ class Solution:
     HiddenKeys = ['originalSolution']
 
     @classmethod
-    def FromSolutionStruct(cls, solution):
-        return cls.FromOriginalState(solution._state)
+    def FromSolutionStruct(cls, solution, cxxCompiler: str):
+        return cls.FromOriginalState(solution._state, cxxCompiler)
 
     @classmethod
-    def FromOriginalState(cls, d, deviceInfo=None):
+    def FromOriginalState(cls, d, cxxCompiler, deviceInfo=None):
         rv = cls()
 
 
@@ -702,7 +702,7 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d)
+        rv.originalSolution = OriginalSolution(d, cxxCompiler)
 
         return rv
 

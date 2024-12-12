@@ -1055,8 +1055,9 @@ def isExtractableIndex(ks, index, tc='x'):
 class Solution(collections.abc.Mapping):
 
   ########################################
-  def __init__(self, config):
+  def __init__(self, config, cxxCompiler: str):
     self._name = None
+    self.cxxCompiler = cxxCompiler
     config = config
 
     self._state = {}
@@ -1233,7 +1234,7 @@ class Solution(collections.abc.Mapping):
       state["ProblemType"]["GroupedGemm"] = False
       state["KernelLanguage"] = "Source"
       state["Kernel"] = {"WavefrontSize": self["WavefrontSize"], "ISA": tuple(self["ISA"])}
-      self.activationFunctionObjects.append(KernelWriterActivationFunction(state))
+      self.activationFunctionObjects.append(KernelWriterActivationFunction(state, self.cxxCompiler))
 
   def initActivationOnlyKernelObjects(self):
     self.activationOnlyKernelObjects = []

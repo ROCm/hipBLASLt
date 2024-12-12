@@ -40,6 +40,7 @@ from .TensileInstructions import getGfxName
 from .Common import assignGlobalParameters, ensurePath, globalParameters, \
     gfxArch, printExit, getArchitectureName
 from .SolutionStructs import ProblemSizes
+from .Utilities.Toolchain import ToolchainDefaults, validateToolchain
 
 
 def getArchitecture(isaName):
@@ -63,7 +64,7 @@ def createLibraryForBenchmark(logicPath, libraryPath, currentPath):
     pythonExePath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin", "TensileCreateLibrary")
     args = [pythonExePath, \
         "--merge-files", "--new-client-only", "--no-short-file-names", "--no-library-print-debug", \
-        "--architecture=all", "--code-object-version=default", "--cxx-compiler="+globalParameters["CxxCompiler"], "--library-format=yaml", \
+        "--architecture=all", "--code-object-version=default", "--library-format=yaml", \
         logicPath, libraryPath, "HIP"]
 
     try:
@@ -76,6 +77,7 @@ def GenerateSummations(userArgs):
     inputLogicPath = userArgs[0]
     outputPath = userArgs[1]
     assignGlobalParameters({})
+    cxxCompiler, cCompiler = validateToolchain(ToolchainDefaults.CXX_COMPILER, ToolchainDefaults.C_COMPILER)
 
     currentISA = globalParameters["CurrentISA"]
     currentArchitecture = getArchitecture(currentISA)
@@ -102,7 +104,7 @@ def GenerateSummations(userArgs):
         # same as the initial logic with the summation model added. To preseve the original
         # logic we also read in the raw unaltered version of the logic and stage the content
         # to write the final logic.
-        logic    = LibraryIO.parseLibraryLogicFile(logicFileName)
+        logic    = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler)
         rawLogic = LibraryIO.rawLibraryLogic(logicFileName)
 
         # If we cannot read the logic file then skip it
@@ -136,7 +138,7 @@ def GenerateSummations(userArgs):
         scriptPath = ensurePath(os.path.join(outputPath, logicFileStem, "script"))
 
         ClientWriter.CreateBenchmarkClientParametersForSizes(libraryPath, problemSizes, dataFilePath, configFile, problemTypeObj)
-        ClientWriter.runNewClient(scriptPath, configFile, clientBuildDir)
+        ClientWriter.runNewClient(scriptPath, configFile, clientBuildDir, cxxCompiler, cCompiler)
 
         tensileLibraryFile = os.path.join(libPath, "library", "TensileLibrary.yaml")
 

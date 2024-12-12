@@ -14,7 +14,7 @@ from ..KernelWriterAssembly import KernelWriterAssembly
 from .SharedCommands import compressCodeObject
 
 def _linkIntoCodeObject(
-    objFiles: List[str], coPathDest: Union[Path, str], kernelWriterAssembly: KernelWriterAssembly
+    objFiles: List[str], coPathDest: Union[Path, str], kernelWriterAssembly: KernelWriterAssembly, assembler: str
 ):
     """Links object files into a code object file.
 
@@ -31,7 +31,7 @@ def _linkIntoCodeObject(
       with open(Path.cwd() / "clangArgs.txt", 'wt') as file:
         file.write(" ".join(objFiles))
         file.flush()
-      args = [globalParameters['AssemblerPath'], '-target', 'amdgcn-amd-amdhsa', '-o', coFileRaw, '@clangArgs.txt']
+      args = [assembler, '-target', 'amdgcn-amd-amdhsa', '-o', coFileRaw, '@clangArgs.txt']
       subprocess.check_call(args, cwd=asmDir)
     else:
       numObjFiles = len(objFiles)
@@ -61,7 +61,7 @@ def _linkIntoCodeObject(
 
 
 
-def buildAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath, compress: bool=True):
+def buildAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath, assembler: str, offloadBundler: str, compress: bool=True):
     
     isAsm = lambda k: k["KernelLanguage"] == "Assembly"
 
@@ -98,10 +98,10 @@ def buildAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath, comp
 
         for coFileRaw, objFiles in coFileMap.items():
 
-          _linkIntoCodeObject(objFiles, coFileRaw, kernelWriterAssembly)
+          _linkIntoCodeObject(objFiles, coFileRaw, kernelWriterAssembly, assembler)
           coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
           if compress:
-            compressCodeObject(coFileRaw, coFile, gfx, globalParameters["ClangOffloadBundlerPath"])
+            compressCodeObject(coFileRaw, coFile, gfx, offloadBundler)
           else:
             shutil.move(coFileRaw, coFile)
 
