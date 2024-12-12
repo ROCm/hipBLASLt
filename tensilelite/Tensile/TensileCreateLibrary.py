@@ -29,15 +29,11 @@ if __name__ == "__main__":
     exit(1)
 
 from . import Common
-from . import ClientExecutable
-from . import EmbeddedData
 from . import LibraryIO
 from . import Utils
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
-                    CHeader, CMakeHeader, assignGlobalParameters, \
-                    architectureMap, printWarning, \
-                    splitArchs
+                    CHeader, assignGlobalParameters, architectureMap
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
@@ -69,7 +65,8 @@ def timing(func):
 
     return res
   return wrapper
-################################################################################
+
+
 def processKernelSource(kernel, kernelWriterAssembly, ti):
     """
     Generate source for a single kernel.
@@ -91,8 +88,6 @@ def processKernelSource(kernel, kernelWriterAssembly, ti):
     return (err, src, header, kernelName, filename)
 
 
-
-################################################################################
 def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
   """
   Logs errors and writes appropriate info to kernelSourceFile and kernelHeaderFile.
@@ -108,23 +103,19 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
     sourceFilenames:      Array containing source kernel filenames
   """
 
-  # Find kernels to write
   kernelsToWrite = []
   filesToWrite = collections.defaultdict(list)
   validKernelCount = 0
   for (err,src,header,kernelName, filename) in results:
 
-    # Keep track of kernels with errors
     if err:
       kernelsWithBuildErrs[kernelName] = err
 
-    # Don't create a file for empty kernels
     if len(src.strip()) == 0:
       continue
 
     kernelsToWrite.append((err, src, header, kernelName))
 
-    # Create list of files
     if filename:
       filesToWrite[os.path.join(os.path.normcase(outputPath),filename)].append((err, src, header, kernelName))
     else:
@@ -139,9 +130,8 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
     kernelSuffix = ""
     filesToWrite[os.path.join(os.path.normcase(outputPath), "Kernels"+kernelSuffix)] = []
 
-
   # Write kernel data to files
-  #Parse list of files and write kernels
+  # Parse list of files and write kernels
   for filename, kernelList in filesToWrite.items():
     with open(filename+".h", "w", encoding="utf-8") as kernelHeaderFile, \
           open(filename+".cpp", "w", encoding="utf-8") as kernelSourceFile:
@@ -184,14 +174,8 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   kernelSourceFile = None
   kernelHeaderFile = None
 
-  ##############################################################################
-  # Write Kernels
-  ##############################################################################
   kernelsWithBuildErrs = {}
 
-  # Kernels may be intended for different co files, but generate the same .o file
-  # Mark duplicate kernels to avoid race condition
-  # @TODO improve organization so this problem doesn't appear
   objFilenames = set()
   for kernel in kernels:
     if kernel["KernelLanguage"] == "Assembly":
@@ -256,7 +240,6 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   kernelHeaderFile = open(kernelHeaderFilename, "a", encoding="utf-8")
 
   HeaderText = ""
-  # handle helper kernel function
   for ko in kernelHelperObjs:
     kernelName = ko.getKernelName()
 
@@ -267,7 +250,6 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
 
     HeaderText += ko.getHeaderFileString()
 
-  # write kernel.h in one shot
   kernelHeaderFile.write(HeaderText)
 
   if kernelSourceFile:
@@ -282,12 +264,9 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
 
-  return codeObjectFiles, numKernels 
+  return numKernels 
 
 
-##############################################################################
-# Min Naming / Solution and Kernel Writers
-##############################################################################
 @timing
 def getSolutionAndKernelWriters(solutions, kernels, assembler):
 
@@ -300,9 +279,7 @@ def getSolutionAndKernelWriters(solutions, kernels, assembler):
 
   return (kernelWriterAssembly, kernelMinNaming, solutionMinNaming)
 
-################################################################################
-# copy static cpp files and headers
-################################################################################
+
 @timing
 def copyStaticFiles(outputPath=None):
   if outputPath is None:
@@ -324,9 +301,6 @@ def copyStaticFiles(outputPath=None):
   return libraryStaticFiles
 
 
-################################################################################
-# Generate Kernel Objects From Solutions
-################################################################################
 @timing
 def generateKernelObjectsFromSolutions(solutions):
   # create solution writer and kernel writer
@@ -351,13 +325,10 @@ def generateKernelObjectsFromSolutions(solutions):
   kernelHelperObjs = list(dict.fromkeys(kernelHelperObjs))
   return (kernels, kernelHelperObjs, kernelHelperNames)
 
-################################################################################
-# Generate Logic Data and Solutions
-################################################################################
+
 @timing
 def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
 
-  # skip the logic which architectureName is not in the build target.
   if ";" in args.Architecture:
     archs = args.Architecture.split(";") # user arg list format
   else:
@@ -398,7 +369,6 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
         fullMasterLibrary.merge(newLibrary)
 
     if args.GenSolTable:
-      # Match yaml file solutions to solution index
       for localIdx, _, s in libraryIter(newLibrary):
         matchTable[s.index] = [srcFile, localIdx]
 
@@ -446,9 +416,7 @@ def validateLibrary(masterLibraries: MasterSolutionLibrary,
 
   assert ok and "Inconsistent kernel sizes detected!"
 
-################################################################################
-# Tensile Create Library
-################################################################################
+
 @profile
 def TensileCreateLibrary():
   start = timer()
@@ -458,9 +426,6 @@ def TensileCreateLibrary():
   print2(HR)
   print2("")
 
-  ##############################################################################
-  # Parse Command Line Arguments
-  ##############################################################################
   def splitExtraParameters(par):
     """
     Allows the --global-parameters option to specify any parameters from the command line.
@@ -534,7 +499,6 @@ def TensileCreateLibrary():
   assembler = args.Assembler
   libraryFormat = args.LibraryFormat
   useCompression = not args.NoCompress
-  print2("OutputPath: %s" % outputPath)
   ensurePath(outputPath)
   outputPath = os.path.abspath(outputPath)
   arguments = {}
@@ -553,12 +517,6 @@ def TensileCreateLibrary():
   arguments["LibraryFormat"] = args.LibraryFormat
   if args.no_enumerate:
     arguments["AMDGPUArchPath"] = False
-
-  arguments["GenerateSourcesAndExit"] = args.GenerateSourcesAndExit
-  if arguments["GenerateSourcesAndExit"]:
-    # Generated sources are preserved and go into output dir
-    arguments["WorkingPath"] = outputPath
-
   arguments["CpuThreads"] = args.CpuThreads
   arguments["PrintLevel"] = args.PrintLevel
   arguments["PrintTiming"] = args.PrintTiming
@@ -600,7 +558,6 @@ def TensileCreateLibrary():
     else:
       printExit("Architecture %s not supported" % arch)
 
-  # Recursive directory search
   logicExtFormat = ".yaml"
   if args.LogicFormat == "yaml":
     pass
@@ -628,17 +585,8 @@ def TensileCreateLibrary():
   for logicFile in logicFiles:
     print2("#   %s" % logicFile)
 
-
-  ##############################################################################
-  # Parse config files
-  ##############################################################################
-
-  # Parse logicData, solutions, and masterLibraries from logic files
   solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args, cxxCompiler)
-
   kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
-
-  # if any kernels are assembly, append every ISA supported
   kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels, assembler)
 
   if globalParameters["ValidateLibrary"]:
@@ -646,14 +594,12 @@ def TensileCreateLibrary():
 
   staticFiles = copyStaticFiles(outputPath)
 
-  # Make sure to copy the library static files.
   for fileName in staticFiles:
     shutil.copy( os.path.join(globalParameters["SourcePath"], fileName), \
       outputPath )
 
-  # write solutions and kernels
-  codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler, solutions,
-                                             kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
+  numKernels = writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler, solutions,
+                                        kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
              if globalParameters["AsmCaps"][arch]["SupportedISA"]]
@@ -669,21 +615,15 @@ def TensileCreateLibrary():
         newMasterLibrary.applyNaming(kernelMinNaming)
         LibraryIO.write(masterFile, Utils.state(newMasterLibrary), args.LibraryFormat)
 
-        #Write placeholder libraries
         for name, lib in newMasterLibrary.lazyLibraries.items():
           filename = os.path.join(newLibraryDir, name)
           lib.applyNaming(kernelMinNaming) #@TODO Check to see if kernelMinNaming is correct
           LibraryIO.write(filename, Utils.state(lib), args.LibraryFormat)
-
   else:
     masterFile = os.path.join(newLibraryDir, "TensileLibrary")
     fullMasterLibrary.applyNaming = timing(fullMasterLibrary.applyNaming)
     fullMasterLibrary.applyNaming(kernelMinNaming)
     LibraryIO.write(masterFile, Utils.state(fullMasterLibrary), args.LibraryFormat)
-
-  theMasterLibrary = fullMasterLibrary
-  if globalParameters["SeparateArchitectures"]:
-    theMasterLibrary = list(masterLibraries.values())[0]
 
   print1("# Tensile Library Writer DONE")
   print1(HR)
