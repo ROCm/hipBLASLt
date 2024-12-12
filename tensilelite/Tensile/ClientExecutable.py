@@ -25,9 +25,10 @@
 import itertools
 import os
 import subprocess
+from typing import Optional
 
 from . import Common
-from .Common import globalParameters, supportedCompiler
+from .Common import globalParameters
 
 class CMakeEnvironment:
     def __init__(self, sourceDir, buildDir, **options):
@@ -54,36 +55,33 @@ class CMakeEnvironment:
     def builtPath(self, path, *paths):
         return os.path.join(self.buildDir, path, *paths)
 
-def clientExecutableEnvironment(builddir=None):
+def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cCompiler: str):
     sourcedir = globalParameters["SourcePath"]
     if builddir is None:
         builddir = os.path.join(globalParameters["OutputPath"], globalParameters["ClientBuildPath"])
     builddir = Common.ensurePath(builddir)
-
-    CxxCompiler = "clang++.exe" if ((os.name == "nt") and supportedCompiler(globalParameters['CxxCompiler'])) else globalParameters['CxxCompiler']
-    CCompiler   = "clang.exe"   if ((os.name == "nt") and supportedCompiler(globalParameters['CxxCompiler'])) else globalParameters['CCompiler']
 
     options = {'CMAKE_BUILD_TYPE': globalParameters["CMakeBuildType"],
                'TENSILE_USE_MSGPACK': 'ON',
                'TENSILE_USE_LLVM': 'OFF' if (os.name == "nt") else 'ON',
                'Tensile_LIBRARY_FORMAT': globalParameters["LibraryFormat"],
                'Tensile_ENABLE_MARKER' : globalParameters["EnableMarker"],
-               'CMAKE_CXX_COMPILER': os.path.join(globalParameters["ROCmBinPath"], CxxCompiler),
-               'CMAKE_C_COMPILER': os.path.join(globalParameters["ROCmBinPath"], CCompiler)}
+               'CMAKE_CXX_COMPILER': os.path.join(globalParameters["ROCmBinPath"], cxxCompiler),
+               'CMAKE_C_COMPILER': os.path.join(globalParameters["ROCmBinPath"], cCompiler)}
 
     return CMakeEnvironment(sourcedir, builddir, **options)
 
 
 buildEnv = None
 
-def getClientExecutable(builddir=None):
+def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir=None):
     if "PrebuiltClient" in globalParameters:
         return globalParameters["PrebuiltClient"]
 
     global buildEnv
 
     if buildEnv is None:
-        buildEnv = clientExecutableEnvironment(builddir)
+        buildEnv = clientExecutableEnvironment(builddir, cxxCompiler, cCompiler)
         buildEnv.generate()
         buildEnv.build()
 

@@ -34,6 +34,7 @@ from contextlib import contextmanager
 import Tensile.TensileInstructions as ti
 from Tensile.Common import detectGlobalCurrentISA, restoreDefaultGlobalParameters, \
     assignGlobalParameters, getGfxName, gfxArch, globalParameters
+from Tensile.Utilities.Toolchain import ToolchainDefaults, validateToolchain
 
 def kernel_header(name: str, gfx_arch: str, vgpr: int, sgpr: int, lds: int):
     vgpr = ((vgpr+7)//8)*8
@@ -821,7 +822,7 @@ if __name__ == '__main__':
     ap.add_argument('-s', type=str, default="F8", help='scale data type')
     ap.add_argument('-w', type=int, default=256, help='workitem')
     ap.add_argument('-c', type=int, default=4, help='load conut per iteration')
-    ap.add_argument('--toolchain', type=str, default='/opt/rocm/llvm/bin/clang++', help='Path to ROCm compiler')
+    ap.add_argument('--toolchain', type=str, default=ToolchainDefaults.CXX_COMPILER, help='Path to ROCm compiler')
     ap.add_argument('--debug-build', action='store_true', dest='debug_build', help='Build with debug information')
     ap.add_argument('--is-scale', action='store_true', dest='is_scale', help='Enable scaled output or not')
     ap.add_argument('--arch', type=str, default='gfx90a', help='Target architecture for assembler, e.g. gfx908. Default is gfx90a')
@@ -834,7 +835,7 @@ if __name__ == '__main__':
     s: str = args.s
     w: int = args.w
     c: int = args.c
-    toolchain_path: str = args.toolchain
+    toolchain_path: str = validateToolchain(args.toolchain)
     debug_build: bool = args.debug_build
     arch: str = args.arch
     is_scale: bool = args.is_scale
@@ -846,7 +847,7 @@ if __name__ == '__main__':
         detectGlobalCurrentISA()
         isa = globalParameters['CurrentISA']
         arch = getGfxName(isa)
-        toolchain_path = globalParameters['AssemblerPath']
+        toolchain_path = validateToolchain(ToolchainDefaults.CXX_COMPILER)
 
     ti.Base._global_ti.init(isa, toolchain_path, False)
     amax = AMaxKernelGenerator(ti.DataType(t), ti.DataType(d), ti.DataType(s), w, c, 4, arch, is_scale)

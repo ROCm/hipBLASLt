@@ -76,7 +76,7 @@ class ClientLogLevel(Enum):
 ################################################################################
 # Main
 ################################################################################
-def main( config ):
+def main(config, cxxCompiler: str, cCompiler: str):
   libraryLogicPath = os.path.join(globalParameters["WorkingPath"], \
       globalParameters["LibraryLogicPath"])
   stepBaseDir = pushWorkingPath(globalParameters["LibraryClientPath"])
@@ -96,7 +96,7 @@ def main( config ):
   functionNames = []
   enableHalf = False
 
-  createLibraryScript = getBuildClientLibraryScript(stepBaseDir, libraryLogicPath)
+  createLibraryScript = getBuildClientLibraryScript(stepBaseDir, libraryLogicPath, cxxCompiler)
   subprocess.run(shlex.split(createLibraryScript), cwd=stepBaseDir)
   coList = []
   yamlList = []
@@ -104,7 +104,7 @@ def main( config ):
   clientParametersPaths = []
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary, _) \
-        = LibraryIO.parseLibraryLogicFile(logicFileName)
+        = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler)
     if problemType["DataType"].isHalf():
         enableHalf = True
     functions.append((scheduleName, problemType))
@@ -171,7 +171,7 @@ def main( config ):
 
   forBenchmark = False
   enableTileSelection = False
-  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, clientParametersPaths)
+  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, clientParametersPaths)
 
   popWorkingPath() # LibraryClient
 
@@ -180,9 +180,9 @@ def main( config ):
 ################################################################################
 # Write Run Script
 ################################################################################
-def runNewClient(scriptPath, clientParametersPath, clientBuildDir=None):
+def runNewClient(scriptPath, clientParametersPath, cxxCompiler: str, cCompiler: str, clientBuildDir=None):
 
-  clientExe = ClientExecutable.getClientExecutable(clientBuildDir)
+  clientExe = ClientExecutable.getClientExecutable(cxxCompiler, cCompiler, clientBuildDir)
   iniFile = "--config-file={}".format(clientParametersPath)
   args = [clientExe, iniFile]
 
@@ -192,12 +192,12 @@ def runNewClient(scriptPath, clientParametersPath, clientBuildDir=None):
     printWarning("ClientWriter Benchmark Process exited with error: {}".format(e))
 
 
-def runClient(libraryLogicPath, forBenchmark, enableTileSelection, configPaths=None):
+def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, configPaths=None):
   # write runScript
   pushWorkingPath("build")
   path = globalParameters["WorkingPath"]
 
-  runScriptName = writeRunScript(path, forBenchmark, enableTileSelection, configPaths)
+  runScriptName = writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, configPaths)
   with ClientExecutionLock():
     process = subprocess.Popen(runScriptName, cwd=path)
     process.communicate()
@@ -208,7 +208,7 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, configPaths=N
 
   return process.returncode
 
-def getBuildClientLibraryScript(buildPath, libraryLogicPath):
+def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
   import io
   runScriptFile = io.StringIO()
 
@@ -241,7 +241,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
 
   callCreateLibraryCmd += " --architecture=" + globalParameters["Architecture"]
   callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
-  callCreateLibraryCmd += " --cxx-compiler=" + globalParameters["CxxCompiler"]
+  callCreateLibraryCmd += " --cxx-compiler=" + cxxCompiler
   callCreateLibraryCmd += " --library-format=" + globalParameters["LibraryFormat"]
 
   callCreateLibraryCmd += " %s" % libraryLogicPath
@@ -252,19 +252,19 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
 
   return runScriptFile.getvalue()
 
-def writeBuildClientLibraryScript(path, libraryLogicPath):
+def writeBuildClientLibraryScript(path, libraryLogicPath, cxxCompiler):
   filename = os.path.join(path, \
     "build.%s" % ("bat" if os.name == "nt" else "sh") )
   with open(filename, "w") as file:
     file.write("#!/bin/bash\n\n")
     file.write("set -ex\n")
-    file.write(getBuildClientLibraryScript(path, libraryLogicPath))
+    file.write(getBuildClientLibraryScript(path, libraryLogicPath, cxxCompiler))
 
   if os.name != "nt":
     os.chmod(filename, 0o777)
   return filename
 
-def writeRunScript(path, forBenchmark, enableTileSelection, configPaths=None):
+def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, configPaths=None):
   if configPaths is None:
     configPaths = []
     configPaths.append(os.path.join(globalParameters["WorkingPath"], "../source/ClientParameters.ini"))
@@ -301,7 +301,7 @@ def writeRunScript(path, forBenchmark, enableTileSelection, configPaths=None):
 
     runScriptFile.write("ERR1=0\n")
 
-    clientExe = ClientExecutable.getClientExecutable()
+    clientExe = ClientExecutable.getClientExecutable(cxxCompiler, cCompiler)
     for configFile in configPaths:
       runScriptFile.write("{} --config-file {} {}\n".format(clientExe, configFile, globalParameters["ClientArgs"]))
     runScriptFile.write("ERR2=$?\n\n")
