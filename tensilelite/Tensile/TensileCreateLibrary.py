@@ -366,13 +366,9 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs, cxxCom
   if globalParameters["LazyLibraryLoading"]:
     fallbackLibs = list(set([kernel._state["codeObjectFile"] for kernel in kernels if "fallback" in kernel._state.get('codeObjectFile', "")]))
     sourceLibFiles += ["{0}_{1}.hsaco".format(name, arch) for name, arch in itertools.product(fallbackLibs, sourceArchs)]
-    if supportedCompiler(CxxCompiler):
-      sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
+    sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
   else:
-    if supportedCompiler(CxxCompiler):
-      sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
-    else:
-      raise RuntimeError("Unknown compiler {}".format(CxxCompiler))
+    sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
 
   # Returns names for all xnack versions
   def addxnack(name, ext):
