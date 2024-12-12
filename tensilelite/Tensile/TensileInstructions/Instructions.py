@@ -2721,7 +2721,7 @@ class VAddLShiftLeftU32(CompositeInstruction):
 
 class _VLShiftLeftAddU32(CommonInstruction):
     def __init__(self, dst, shiftHex, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_U32, dst, [src0, src1, shiftHex], None, vop3, comment)
+        super().__init__(InstType.INST_U32, dst, [src0, shiftHex, src1], None, vop3, comment)
         self.setInst("v_lshl_add_u32")
 
 class VLShiftLeftAddU32(CompositeInstruction):

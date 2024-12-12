@@ -2824,29 +2824,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     ####################################
     #if kernel["NumThreads"]%kernel["MacroTile0"] == 0:
     if kernel["LocalSplitU"] > 1:
-      module.addComment2("LocalSplitU Reduction")
-      module.add(self._syncThreads(kernel))
-
-      # LocalSplitU: local write
-      module.addComment1("LocalSplitU: local write")
-      module.add(self.localSplitULocalWrite(kernel))
-
-      # LocalSplitU: local read
-      module.addComment1("LocalSplitU: local read")
-      module.add(self.localSplitULocalRead(kernel))
+      module.addComment1("LocalSplitU: local write and read")
+      lsuComponent = Component.LSU.find(self)
+      module.add(lsuComponent.writeReadReduction(self, kernel))
 
       # LocalSplitU: global write indices
-      # Hide instructions in local read latency
       module.addComment1("LocalSplitU: global write indices")
-      module.add(self.localSplitUGlobalWriteIndices(kernel))
-
-      # LocalSplitU: Reduction
-      module.addComment1("LocalSplitU: reduction")
-      module.add(self.localSplitUReduction(kernel))
+      module.add(lsuComponent.globalWriteIndices(self, kernel))
 
       # LocalSplitU: global write
       module.addComment1("LocalSplitU: global write")
-      module.add(self.localSplitUGlobalWrite(kernel, tensorParametersA, tensorParametersB))
+      module.add(lsuComponent.globalWrite(self, kernel, tensorParametersA, tensorParametersB))
 
     else:
       ####################################
@@ -4837,27 +4825,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   @abc.abstractmethod
   def shiftVectorComponents(self, kernel, tP):
-    return ""
-
-  ##############################################################################
-  # LocalSplitU: Local Write
-  ##############################################################################
-  @abc.abstractmethod
-  def localSplitULocalWrite(self, kernel):
-    return ""
-
-  ##############################################################################
-  # LocalSplitU: Local Read
-  ##############################################################################
-  @abc.abstractmethod
-  def localSplitULocalRead(self, kernel):
-    return ""
-
-  ##############################################################################
-  # LocalSplitU: Reduction
-  ##############################################################################
-  @abc.abstractmethod
-  def localSplitUReduction(self, kernel):
     return ""
 
   ##############################################################################
