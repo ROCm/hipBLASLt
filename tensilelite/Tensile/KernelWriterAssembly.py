@@ -72,19 +72,14 @@ class KernelWriterAssembly(KernelWriter):
 
   def getSourceFileString(self, kernel) -> Tuple[int, str, str]:
     assert kernel["KernelLanguage"] == "Assembly"
-    asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
     # Skip if .o files will have already been built for this file
     # @TODO remove need for this with better code organization
     if kernel.duplicate:
       self.language = "ASM"
       return (-1, "", "")
 
-    self._writeByteArrayScript(asmPath)
-    kernelName = self.getKernelFileBase(kernel)
-    fileBase = os.path.join(asmPath, kernelName)
-    asmFilename = "%s.s" % fileBase
     code = self._getKernelSource(kernel)
-    return (0, code, asmFilename)
+    return (0, code)
 
   def getSgprOccupancy(self, sgprs):
     return self.states.regCaps["PhysicalMaxSgpr"]//sgprs

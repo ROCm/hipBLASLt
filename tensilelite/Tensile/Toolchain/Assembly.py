@@ -12,13 +12,43 @@ from typing import List, Union, Tuple
 
 from .. import Utils
 from ..TensileInstructions import getGfxName, getCOVFromParam
-from ..Common import globalParameters, print2, ensurePath, printWarning
+from ..Common import globalParameters, print2, ensurePath, printWarning, IsaVersion
 
 class AssemblyToolchain:
     def __init__(self, assembler: str, bundler: str, buildIdKind: str):
         self.assembler = assembler
         self.bundler = bundler
         self.buildIdKind = buildIdKind
+
+    def assemble(self, srcPath: str, destPath: str, coVersion: str, isa: IsaVersion, wavefrontSize: int, debug: bool=False):
+      """Assembles an assembly source file into an object file.
+
+      Args:
+          coVersion: The code object version to use.
+          isa: The target GPU architecture in ISA format.
+          wavefrontSize: The wavefront size to use.
+
+
+      """
+      coVersion = getCOVFromParam(coVersion)
+      cpu = getGfxName(isa)
+      wavefrontFlag = "-mwavefrontsize64" if wavefrontSize == 64 else "-mno-wavefrontsize64" 
+    
+      launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
+      args = [
+          *launcher, 
+          self.assembler, 
+          "-x", "assembler", 
+          "--target=amdgcn-amd-amdhsa", 
+          f"-mcode-object-version={coVersion}", 
+          f"-mcpu={cpu}",  
+          wavefrontFlag, 
+          "-g" if debug else "",
+          "-c", 
+          "-o", destPath, srcPath
+      ]
+      print2(f"Assembling object files: {' '.join(args)}")
+      subprocess.check_call(args)
 
     def link(self, srcPaths: List[str], destPath: str):
         """Links object files into a code object file.
@@ -104,7 +134,7 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 
     return newObjFilesOutput
 
-def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, kernelWriterAssembly, outputPath, compress: bool=True):
+def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAsm, outputPath, compress: bool=True):
     
     isAsm = lambda k: k["KernelLanguage"] == "Assembly"
 
@@ -114,6 +144,7 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, kernelWr
 
     destDir = Path(ensurePath(os.path.join(outputPath, 'library')))
     asmDir = Path(ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly")))
+
 
     archKernelMap = collections.defaultdict(list)
     for k in filter(isAsm, kernels):
@@ -175,11 +206,11 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, kernelWr
 def _getAssembledKernelObjectFile(assembler, isa, wavefrontSize, asmFilename, kernel, asmDir):
 
   base, ext = os.path.splitext(asmFilename)
-  objectFileName = base + '.o'
+  destPath = base + '.o'
 
   debug = globalParameters.get("AsmDebug", False)
 
-  args = getAsmCompileArgs(assembler, globalParameters["CodeObjectVersion"], isa, wavefrontSize, asmFilename, objectFileName, debug=debug)
+  args = getAsmCompileArgs(assembler, globalParameters["CodeObjectVersion"], isa, wavefrontSize, asmFilename, destPath, debug=debug)
 
   if globalParameters["PrintCodeCommands"]:
     print (' '.join(args), " && ")
@@ -189,17 +220,17 @@ def _getAssembledKernelObjectFile(assembler, isa, wavefrontSize, asmFilename, ke
   if not globalParameters["KeepBuildTmp"]:
       os.remove(asmFilename)
 
-  return objectFileName
+  return destPath
 
 def getSingleCodeObjectFile(writerAsm, assembler, asmPath, kernel):
   asmFilename = writerAsm._getKernelObjectAssemblyFile(kernel, asmPath)
-  objectFileName = _getAssembledKernelObjectFile(assembler, writerAsm.isa, writerAsm.wavefrontSize, asmFilename, kernel, asmPath)
+  destPath = _getAssembledKernelObjectFile(assembler, writerAsm.isa, writerAsm.wavefrontSize, asmFilename, kernel, asmPath)
 
-  base, ext = os.path.splitext(objectFileName)
+  base, ext = os.path.splitext(destPath)
   coFileName = base + '.co'
 
   args = getAsmLinkCodeObjectArgs(assembler, \
-    [objectFileName], coFileName, globalParameters['BuildIdKind'])
+    [destPath], coFileName, globalParameters['BuildIdKind'])
 
   if globalParameters["PrintCodeCommands"]:
     print (' '.join(args))
@@ -210,7 +241,7 @@ def getSingleCodeObjectFile(writerAsm, assembler, asmPath, kernel):
 
 def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, \
     isa: Tuple[int, int, int], wavefrontSize: int, \
-    sourceFileName: str, objectFileName: str, *moreArgs, debug: bool=False):
+    srcPath: str, destPath: str, *moreArgs, debug: bool=False):
     import inspect
     caller_frame = inspect.stack()[1]
     warnings.warn(f"{__name__}: THIS FUNCTION IS DEPRECATED. Called from {caller_frame.filename}, line {caller_frame.lineno}.")
@@ -232,10 +263,10 @@ def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, \
     if debug:
         rv += ['-g',]
 
-    rv += ['-c', '-o', objectFileName, sourceFileName]
+    rv += ['-c', '-o', destPath, srcPath]
     return rv
 
-def getAsmLinkCodeObjectArgs(assemblerPath: str, objectFileNames: List[str], \
+def getAsmLinkCodeObjectArgs(assemblerPath: str, destPaths: List[str], \
     coFileName: str, buildIdKind: str, *moreArgs):
     import inspect
     caller_frame = inspect.stack()[1]
@@ -243,5 +274,5 @@ def getAsmLinkCodeObjectArgs(assemblerPath: str, objectFileNames: List[str], \
     rv = [assemblerPath, '-target', 'amdgcn-amd-amdhsa']
     rv += ["-Xlinker", "--build-id=%s"%(buildIdKind)]
     rv += moreArgs
-    rv += ['-o', coFileName] + objectFileNames
+    rv += ['-o', coFileName] + destPaths
     return rv

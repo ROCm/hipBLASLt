@@ -28,6 +28,7 @@ from .TensileInstructions import getGfxName, TensileInstructions
 from .Utilities.Toolchain import supportedCxxCompiler as supportedCompiler
 from collections import OrderedDict
 from copy import deepcopy
+from typing import Tuple
 
 import math
 import os.path
@@ -35,6 +36,10 @@ import subprocess
 import sys
 import time
 import re
+    
+
+IsaVersion = Tuple[int, int, int]
+
 
 startTime = time.time()
 

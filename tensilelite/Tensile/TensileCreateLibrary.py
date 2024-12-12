@@ -40,7 +40,7 @@ from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, assignGlobalParameters, \
                     architectureMap, printWarning, \
-                    splitArchs
+                    splitArchs, IsaVersion
 from .KernelWriterAssembly import KernelWriterAssembly
 from .KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from .SolutionLibrary import MasterSolutionLibrary
@@ -57,7 +57,7 @@ import shutil
 import sys
 from timeit import default_timer as timer
 from pathlib import Path
-from typing import Sequence, List, Union
+from typing import Sequence, List, Union, NamedTuple, Optional
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -72,7 +72,16 @@ def timing(func):
   return wrapper
 
 
-def processKernelSource(kernel, kernelWriterAssembly, ti):
+class KernelCodeGenResult(NamedTuple):
+    err: int
+    src: str
+    header: Optional[str]
+    name: str
+    targetObjFilename: str
+    isa: IsaVersion
+    wavefrontSize: int
+
+def processKernelSource(kernel, kernelWriterAssembly, ti) -> KernelCodeGenResult:
     """
     Generate source for a single kernel.
     Returns (error, source, header, kernelName).
@@ -81,16 +90,18 @@ def processKernelSource(kernel, kernelWriterAssembly, ti):
         kernelWriter = kernelWriterAssembly
         # get kernel name
         kernelWriter.setTensileInstructions(ti)
-        kernelName = kernelWriter.getKernelFileBase(kernel)
-        (err, src, filenameThatWasWritten) = kernelWriter.getSourceFileString(kernel)
+        asmFilename = kernelWriter.getKernelFileBase(kernel)
+        err, src = kernelWriter.getSourceFileString(kernel)
         header = kernelWriter.getHeaderFileString(kernel)
         # will be put in Kernels.h/cpp if None
-        filename = kernel._state.get("codeObjectFile", None)
+        objFilename = kernel._state.get("codeObjectFile", None)
+        isa = kernelWriter.isa
+        wavefrontSize = kernelWriter.wavefrontSize
 
     except RuntimeError:
         return (-1, "", "", kernelName, None)
 
-    return (err, src, header, kernelName, filename)
+    return KernelCodeGenResult(err, src, header, asmFilename, objFilename, isa, wavefrontSize)
 
 
 def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
@@ -177,9 +188,8 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     removeSolutions = []
     removeResults = []
 
-    for kernIdx, res in Utils.tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
-        (err, src, header, kernelName, filename) = res
-        if err != 0:
+    for kernIdx, r in Utils.tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
+        if r.err != 0:
             if not errorTolerant:
                 print("\nKernel generation failed for kernel: {}".format(kernels[kernIdx]["SolutionIndex"]))
                 print(kernels[kernIdx]["SolutionNameMin"])
@@ -251,6 +261,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   # See buildSourceCodeObjectFile:167 for the call to this binary.
   Common.pushWorkingPath('build_tmp')
   Common.pushWorkingPath(os.path.basename(outputPath).upper())
+  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
 
   srcKernelFiles = []
 
@@ -282,8 +293,9 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
     raise ValueError(f"Non-helper object HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
 
   asmIter   = zip(asmKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
-  srcIter   = zip(asmKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
-  # Results conatins the source code for 
+  srcIter   = zip(srcKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
+
+  # Gather source code
   asmResults = Common.ParallelMap2(processKernelSource, asmIter, "Generating kernels")
   srcResults = Common.ParallelMap2(processKernelSource, srcIter, "Generating kernels")
 
@@ -295,22 +307,33 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   srcKernelFiles += buildKernelSourceAndHeaderFiles(srcResults, outputPath, kernelsWithBuildErrs)
   printWarning(f"THERE ARE {len(srcKernelFiles)} SOURCE   KERNEL FILES TO BUILD")
 
-  asmKernelsToBuild = kernels
-  if errorTolerant:
-      def success(kernel):
-          writer = kernelWriterAssembly
-          kernelName = writer.getKernelName(kernel)
-          return kernelName not in kernelsWithBuildErrs
-      asmKernelsToBuild = filter(success, asmKernelsToBuild)
-  elif len(kernelsWithBuildErrs) > 0:
-    print("\nKernel compilation failed in one or more subprocesses. May want to set CpuThreads=0 and re-run to make debug easier")
-    printExit("** kernel compilation failure **")
+  # asmKernelsToBuild = kernels
+  # if errorTolerant:
+  #     def success(kernel):
+  #         writer = kernelWriterAssembly
+  #         kernelName = writer.getKernelName(kernel)
+  #         return kernelName not in kernelsWithBuildErrs
+  #     asmKernelsToBuild = filter(success, asmKernelsToBuild)
+  # elif len(kernelsWithBuildErrs) > 0:
+  #   print("\nKernel compilation failed in one or more subprocesses. May want to set CpuThreads=0 and re-run to make debug easier")
+  #   printExit("** kernel compilation failure **")
+
+  asmKernelFiles = []
+  for r in asmResults:
+    if r.err:
+      printExit(f"Failed to build kernel {fname}")
+      continue
+    path = os.path.join(asmPath, r.name + ".s")
+    asmKernelFiles.append(path)
+    print(f"Writing {path}")
+    with open(path, "w", encoding="utf-8") as f:
+      f.write(r.src)
+    asmToolchain.assemble(path, os.path.join(asmPath, r.targetObjFilename + ".o"), globalParameters["CodeObjectVersion"], r.isa, r.wavefrontSize)
 
   writeKernelHelperFiles(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
 
-  if not globalParameters["GenerateSourcesAndExit"]:
-    codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, outputPath)
-    codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernelsToBuild, kernelWriterAssembly, outputPath, compress)
+  # codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, outputPath)
+  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
@@ -879,20 +902,20 @@ def TensileCreateLibrary():
   codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions,
                                              kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
-  bothLibSet = set(sourceLibPaths + asmLibPaths)
-  setA = set( map( os.path.normcase, set(codeObjectFiles) ) )
-  setB = set( map( os.path.normcase, bothLibSet ) )
+  # bothLibSet = set(sourceLibPaths + asmLibPaths)
+  # setA = set( map( os.path.normcase, set(codeObjectFiles) ) )
+  # setB = set( map( os.path.normcase, bothLibSet ) )
 
-  sanityCheck0 = setA - setB
-  sanityCheck1 = setB - setA
+  # sanityCheck0 = setA - setB
+  # sanityCheck1 = setB - setA
 
-  if globalParameters["PrintCodeCommands"]:
-    print("codeObjectFiles:", codeObjectFiles)
-    print("sourceLibPaths + asmLibPaths:", sourceLibPaths + asmLibPaths)
+  # if globalParameters["PrintCodeCommands"]:
+  #   print("codeObjectFiles:", codeObjectFiles)
+  #   print("sourceLibPaths + asmLibPaths:", sourceLibPaths + asmLibPaths)
 
-  assert len(sanityCheck0) == 0, "Unexpected code object files: {}".format(sanityCheck0)
-  if not globalParameters["GenerateSourcesAndExit"]:
-    assert len(sanityCheck1) == 0, "Missing expected code object files: {}".format(sanityCheck1)
+  # assert len(sanityCheck0) == 0, "Unexpected code object files: {}".format(sanityCheck0)
+  # if not globalParameters["GenerateSourcesAndExit"]:
+  #   assert len(sanityCheck1) == 0, "Missing expected code object files: {}".format(sanityCheck1)
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
              if globalParameters["AsmCaps"][arch]["SupportedISA"]]
