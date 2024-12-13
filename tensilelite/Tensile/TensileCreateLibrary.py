@@ -362,171 +362,6 @@ def copyStaticFiles(outputPath=None):
 
   return libraryStaticFiles
 
-@timing
-def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs, cxxCompiler: str):
-
-  # Build lists of output object names
-  sourceKernelNames = []
-  asmKernelNames = []
-  kernelHelperObjNames = []
-
-  solutionFiles = []
-  sourceKernelFiles = []
-  asmKernelFiles = []
-  sourceLibFiles = []
-  asmLibFiles = []
-
-  asmKernels = (k for k in kernels if k['KernelLanguage'] == 'Assembly')
-
-  # Build a list of kernel object names.
-  # Asm based kernels target the configured ISA
-  asmArchs = collections.defaultdict(list)
-  for kernel in asmKernels:
-    kernelName = kernelWriterAssembly.getKernelFileBase(kernel)
-    asmKernelNames.append(kernelName)
-    asmArchs[kernelName].append(getGfxName(kernel['ISA']))
-
-  kernelHelperObjNames = [ko.getKernelName() for ko in kernelHelperObjs]
-
-  # Source based kernels are built for all supported architectures
-  sourceArchs, _ = splitArchs()
-
-  # Build a list of source files
-  if not globalParameters["MergeFiles"]:
-    for kernelName in (sourceKernelNames + asmKernelNames + kernelHelperObjNames):
-      sourceKernelFiles += [
-        "%s.h"   % (kernelName),
-        "%s.cpp" % (kernelName)]
-  elif globalParameters["NumMergedFiles"] > 1:
-    for kernelIndex in range(0, globalParameters["NumMergedFiles"]):
-      sourceKernelFiles += [
-        "Kernels%s.h"   % str(kernelIndex),
-        "Kernels%s.cpp" % str(kernelIndex)]
-    for kernelName in (kernelHelperObjNames):
-      sourceKernelFiles += [
-        "%s.h"   % (kernelName),
-        "%s.cpp" % (kernelName)]
-  else:
-    sourceKernelFiles += ["Kernels.h", "Kernels.cpp"]
-
-  # Build a list of assembly files
-  for asmKernelName in asmKernelNames:
-      asmKernelFiles += [
-        "%s.s"  % (asmKernelName),
-        "%s.o"  % (asmKernelName),
-        "%s.co" % (asmKernelName)]
-
-  # Build a list of lib names from source
-  if not globalParameters["MergeFiles"]:
-
-    allSources = sourceKernelNames + kernelHelperObjNames
-
-    for kernelName in (allSources):
-      sourceLibFiles += ["%s.so-000-%s.hsaco" % (kernelName, arch) for arch in sourceArchs]
-  elif globalParameters["NumMergedFiles"] > 1:
-    for kernelIndex in range(0, globalParameters["NumMergedFiles"]):
-      sourceLibFiles += ["Kernels%d.so-000-%s.hsaco" % (kernelIndex, arch) for arch in sourceArchs]
-  elif globalParameters["LazyLibraryLoading"]:
-    fallbackLibs = list(set([kernel._state["codeObjectFile"] for kernel in kernels if "fallback" in kernel._state.get('codeObjectFile', "")]))
-    sourceLibFiles += ["{0}_{1}.hsaco".format(name, arch) for name, arch in itertools.product(fallbackLibs, sourceArchs)]
-    sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
-  else: # Merge
-    sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
-
-  # Returns names for all xnack versions
-  def addxnack(name, ext):
-    arch = re.search(r"gfx.*$", name).group()
-    if arch in sourceArchs:
-      return [name+ext]
-    else:
-      return [name+xnack[len(arch):]+ext for xnack in sourceArchs if arch in xnack]
-
-  # Build a list of asm lib names
-  if globalParameters["LazyLibraryLoading"]:
-
-    # If assembly kernel with codeObjectFile specified
-    cond = lambda k : "codeObjectFile" in k._state                      \
-                       and "fallback" not in k._state["codeObjectFile"] \
-                       and k._state['KernelLanguage'] == "Assembly"
-
-
-    asmLibFiles += list(set([kernel._state["codeObjectFile"]+".co" for kernel in kernels if cond(kernel)]))
-
-    # If architecture specific source kernel with codeObjectFile specified
-    cond = lambda k : "codeObjectFile" in k._state                     \
-                      and "fallback" not in k._state["codeObjectFile"] \
-                      and k._state['KernelLanguage'] == "Source"
-
-    sourceLibFiles += list(set(itertools.chain.from_iterable(
-                          [addxnack(kernel._state["codeObjectFile"], ".hsaco") for kernel in kernels if cond(kernel)]
-                      )))
-
-  elif globalParameters["MergeFiles"]:
-    # Find all unique arch values for current asm kernels
-    uniqueArchs = set(itertools.chain(*asmArchs.values()))
-    asmLibFiles += ["TensileLibrary_%s.co" % (arch) for arch in uniqueArchs]
-
-  else:
-    for asmKernelName, archs in asmArchs.items():
-      asmLibFiles += ["%s_%s.co" % (asmKernelName, str(arch)) for arch in archs]
-
-  return (solutionFiles, sourceKernelFiles, asmKernelFiles, sourceLibFiles, asmLibFiles)
-
-@timing
-def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelFiles, sourceLibFiles, asmLibFiles, masterLibraries):
-  solutionPaths = []
-  sourceKernelPaths = []
-  asmKernelPaths = []
-  sourceLibPaths = []
-  asmLibPaths = []
-  libMetadataPaths = []
-
-  # Build full paths for source kernel files
-  sourceKernelDir = ""
-  if not globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1:
-    sourceKernelDir = os.path.join(prefixDir, "Kernels")
-  else:
-    sourceKernelDir = prefixDir
-
-  for sourceKernelFile in sourceKernelFiles:
-    sourceKernelPaths += [ os.path.join(sourceKernelDir, sourceKernelFile) ]
-
-  # Build full paths for asm kernel files
-  asmKernelDir = os.path.join(prefixDir, "assembly")
-
-  for asmKernelFile in asmKernelFiles:
-    asmKernelPaths += [ os.path.join(asmKernelDir, asmKernelFile) ]
-
-  # Build full paths for source and asm library files
-  libDir = os.path.join(prefixDir, "library")
-
-  libraryExt = ".yaml" if globalParameters["LibraryFormat"] == "yaml" else ".dat"
-  if not globalParameters["SeparateArchitectures"] and not globalParameters["LazyLibraryLoading"]:
-    libMetadataPaths = [ os.path.join(libDir, "TensileLibrary"+libraryExt) ]
-
-  for sourceLibFile in sourceLibFiles:
-    sourceLibPaths += [ os.path.join(libDir, sourceLibFile) ]
-
-  #Use set because of duplicate fallback libraries
-  newMetadataPaths = set()
-  for arch, lib in masterLibraries.items():
-    if globalParameters["LazyLibraryLoading"]:
-      newMetadataPaths.add(os.path.join(libDir, "TensileLibrary_lazy_"+arch+libraryExt))
-    else:
-      newMetadataPaths.add(os.path.join(libDir, "TensileLibrary_"+arch+libraryExt))
-    for name, placeholder in lib.lazyLibraries.items():
-      newMetadataPaths.add(os.path.join(libDir, name+libraryExt))
-
-  libMetadataPaths += list(newMetadataPaths)
-
-  for asmLibFile in asmLibFiles:
-    # Asm lib files are enumerated in the form of
-    # KernelName_gfxXXXXX.co
-    # Strip the gfxXXXX portion and use that as a subdirectory
-    asmLibPaths += [ os.path.join(libDir, asmLibFile) ]
-
-  return (solutionPaths, sourceKernelPaths, asmKernelPaths, sourceLibPaths, asmLibPaths, libMetadataPaths)
-
 
 ################################################################################
 # Generate Kernel Objects From Solutions
@@ -858,21 +693,6 @@ def TensileCreateLibrary():
 
   staticFiles = copyStaticFiles(outputPath)
 
-  # Build a list of files to be expected
-  (solutionFiles,
-   sourceKernelFiles,
-   asmKernelFiles,
-   sourceLibFiles,
-   asmLibFiles) = buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs, cxxCompiler)
-
-  (_,
-   _,
-   _,
-   sourceLibPaths,
-   asmLibPaths,
-   libMetadataPaths) = buildObjectFilePaths(outputPath, solutionFiles, sourceKernelFiles, \
-    asmKernelFiles, sourceLibFiles, asmLibFiles, masterLibraries)
-
   # Make sure to copy the library static files.
   for fileName in staticFiles:
     shutil.copy( os.path.join(globalParameters["SourcePath"], fileName), \
@@ -881,21 +701,6 @@ def TensileCreateLibrary():
   # write solutions and kernels
   codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler, solutions,
                                              kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
-
-  bothLibSet = set(sourceLibPaths + asmLibPaths)
-  setA = set( map( os.path.normcase, set(codeObjectFiles) ) )
-  setB = set( map( os.path.normcase, bothLibSet ) )
-
-  sanityCheck0 = setA - setB
-  sanityCheck1 = setB - setA
-
-  if globalParameters["PrintCodeCommands"]:
-    print("codeObjectFiles:", codeObjectFiles)
-    print("sourceLibPaths + asmLibPaths:", sourceLibPaths + asmLibPaths)
-
-  assert len(sanityCheck0) == 0, "Unexpected code object files: {}".format(sanityCheck0)
-  if not globalParameters["GenerateSourcesAndExit"]:
-    assert len(sanityCheck1) == 0, "Missing expected code object files: {}".format(sanityCheck1)
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
              if globalParameters["AsmCaps"][arch]["SupportedISA"]]
@@ -926,24 +731,6 @@ def TensileCreateLibrary():
   theMasterLibrary = fullMasterLibrary
   if globalParameters["SeparateArchitectures"]:
     theMasterLibrary = list(masterLibraries.values())[0]
-
-  def checkFileExistence(files):
-    for filePath in files:
-      if not os.path.exists(filePath):
-        printExit(f"File {filePath} is missing.")
-
-  checkFileExistence(itertools.chain(libMetadataPaths, sourceLibPaths, asmLibPaths))
-
-  if not globalParameters["KeepBuildTmp"]:
-    buildTmp = Path(outputPath).parent / "library" / "build_tmp"
-    if buildTmp.exists() and buildTmp.is_dir():
-      shutil.rmtree(buildTmp)
-    buildTmp = Path(outputPath) / "build_tmp"
-    if buildTmp.exists() and buildTmp.is_dir():
-      shutil.rmtree(buildTmp)
-    else:
-      printWarning(f"Cannot remove build_tmp")
-
 
   print1("# Tensile Library Writer DONE")
   print1(HR)
