@@ -22,11 +22,9 @@
 #
 ################################################################################
 if(WIN32)
-    SET(rocm_path C:\\opt\\rocm )
-    SET(clang_path ${rocm_path}\\bin\\clang++.exe)
+    SET(clang_path ${ROCM_PATH}\\bin\\clang++.exe)
 else()
-    SET(rocm_path /opt/rocm)
-    SET(clang_path ${rocm_path}/bin/amdclang++)
+    SET(clang_path ${ROCM_PATH}/bin/amdclang++)
 endif()
 function(CompileSourceKernel source archs buildIdKind outputFolder)
     message("Setup source kernel targets")
@@ -38,6 +36,6 @@ function(CompileSourceKernel source archs buildIdKind outputFolder)
                       DEPENDS ${outputFolder}/hipblasltTransform.hsaco
                       VERBATIM)
     add_custom_command(OUTPUT ${outputFolder}/hipblasltTransform.hsaco
-                       COMMAND bash  ${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/compile_code_object.sh ${source} ${archs} ${CMAKE_BUILD_TYPE} ${buildIdKind} ${outputFolder}/hipblasltTransform.hsaco ${rocm_path} ${clang_path}
+                       COMMAND bash  ${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/compile_code_object.sh ${source} ${archs} ${CMAKE_BUILD_TYPE} ${buildIdKind} ${outputFolder}/hipblasltTransform.hsaco ${ROCM_PATH} ${clang_path}
                        COMMENT "Compiling source kernels")
 endfunction()
