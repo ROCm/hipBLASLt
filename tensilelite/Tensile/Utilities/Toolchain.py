@@ -105,8 +105,6 @@ def _exeExists(file: Path) -> bool:
         If the file exists and is executable, True; otherwise, False
     """
     if os.access(file, os.X_OK):
-        if "rocm" not in map(str.lower, file.parts):
-            warn(f"Found non-ROCm install of `{file.name}`: {file}")
         return True
     return False
 
