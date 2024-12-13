@@ -158,7 +158,8 @@ def _buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Pat
     toolchain.compile(str(kernelPath), objPath, str(outputPath), cmdlineArchs)
 
     for target in toolchain.targets(objPath):
-      if match := re.search("gfx.*$", target):
+      match = re.search("gfx.*$", target):
+      if match:
         arch = re.sub(":", "-", match.group())
         coPathRaw = _computeSourceCodeObjectFilename(target, kernelPath.stem, buildPath, arch)
         if not coPathRaw: continue

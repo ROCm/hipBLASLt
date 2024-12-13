@@ -230,9 +230,6 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
   else:
     callCreateLibraryCmd += " --no-library-print-debug"
 
-  if globalParameters["GenerateManifestAndExit"]:
-    callCreateLibraryCmd += " --generate-manifest-and-exit"
-
   if globalParameters.get("AsmDebug", False):
     callCreateLibraryCmd += " --asm-debug"
 
@@ -326,7 +323,7 @@ fi
         runScriptFile.write("%s -d 0 --setfan 50\n" % globalParameters["ROCmSMIPath"])
   else:
     for configFile in configPaths:
-      runScriptFile.write("{} --config-file {} {} --best-solution 1\n".format(ClientExecutable.getClientExecutable(), configFile, globalParameters["ClientArgs"]))
+      runScriptFile.write("{} --config-file {} {} --best-solution 1\n".format(ClientExecutable.getClientExecutable(cxxCompiler, cCompiler), configFile, globalParameters["ClientArgs"]))
   if os.name != "nt":
     runScriptFile.write("exit $ERR\n")
   runScriptFile.close()
