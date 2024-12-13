@@ -41,20 +41,20 @@ class GlobalWriteBatchComponent(GlobalWriteComponents):
   def __call__(self, kernel: Solution, tPA, tPB, activation: ActivationModule, ss: StoreState, \
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
     batchElements, addrE, addrD, addrC, addrBias, addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, isLocalBarrierInit: bool, \
-    tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
-    packdata, parentWriter, factorDim) -> Module:
+    tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, \
+    codeMulAlpha, packdata, parentWriter, factorDim) -> Module:
     return GlobalWriteBatchWriter(kernel, tPA, tPB, activation, ss, batchIdx, applyAlpha, \
       beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrE, addrD, addrC, addrBias, addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, isLocalBarrierInit, \
-      tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
-      packdata, parentWriter, factorDim).emit()
+      tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, \
+      codeAccVgprRead, codeMulAlpha, packdata, parentWriter, factorDim).emit()
 
 class GlobalWriteBatchWriter:
   def __init__(self, kernel: Solution, tPA, tPB, activation: ActivationModule, ss: StoreState, \
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
     batchElements, addrE, addrD, addrC, addrBias, addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, isLocalBarrierInit: bool, \
-    tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
-      packdata, parentWriter, factorDim):
+    tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, \
+    codeMulAlpha, packdata, parentWriter, factorDim):
     self.kernel = kernel
     self.tPA    = tPA
     self.tPB    = tPB
@@ -80,6 +80,9 @@ class GlobalWriteBatchWriter:
     self.activationTypeStr     = activationTypeStr
     self.tmpVgpr = tmpVgpr.idx
     self.tmpVgprSize = tmpVgpr.size
+    if tmpVgprDynamic:
+      self.tmpVgprDynamic = tmpVgprDynamic.idx
+      self.tmpVgprDynamicSize = tmpVgprDynamic.size
     self.cvtVgprStruct = cvtVgprStruct
     self.batchElementSgprs = batchElementSgprs
     self.tmpSgpr = tmpSgpr
@@ -339,11 +342,11 @@ class GlobalWriteBatchWriter:
     numDim = len(indices)
     with self.parentWriter.allocTmpSgpr(5) as tmpSgprInfo:
       tmpSgpr = tmpSgprInfo.idx
-      module.addModuleAsFlatItems(self.parentWriter.s_mul_u64_u32(sgpr(tmpSgpr+0), sgpr(tmpSgpr+1), sgpr("SizesFree+0"), 1, "Free0"))
+      module.addModuleAsFlatItems(self.parentWriter.s_mul_u64_u32(sgpr(tmpSgpr+0), sgpr(tmpSgpr+1), sgpr("SizesFree+0"), 1, self.tmpVgpr, "Free0"))
       for i in range(1, numDim):
         module.add(SSubU32(dst=sgpr(tmpSgpr+4), src0=sgpr("SizesFree+%u"%i), src1=1, comment="Free%u" % i))
         module.add(SMulI32(dst=sgpr(tmpSgpr+4), src0=sgpr(tmpSgpr+4), src1=1, comment="Free%u" % i))
-        module.addModuleAsFlatItems(self.parentWriter.s_mul_u64_u32(sgpr(tmpSgpr+2), sgpr(tmpSgpr+3), sgpr(tmpSgpr+4), sgpr("StrideC%s"%self.parentWriter.states.indexChars[i]), "Free%u" % i))
+        module.addModuleAsFlatItems(self.parentWriter.s_mul_u64_u32(sgpr(tmpSgpr+2), sgpr(tmpSgpr+3), sgpr(tmpSgpr+4), sgpr("StrideC%s"%self.parentWriter.states.indexChars[i]), self.tmpVgpr, "Free%u" % i))
         module.add(SAddU32(dst=sgpr(tmpSgpr+0), src0=sgpr(tmpSgpr+0), src1=sgpr(tmpSgpr+2), comment="Free%u" % i))
         module.add(SAddCU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr+1), src1=sgpr(tmpSgpr+3), comment="Free%u" % i))
 
@@ -387,10 +390,7 @@ class GlobalWriteBatchWriter:
 
       addr0 = vgpr(addrCalc.addrDVgpr)
 
-      GSUtotal = 16
-      if (self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1]) > 8:
-        GSUtotal = int(GSUtotal/int((self.kernel["MIWaveTile"][0]*self.kernel["MIWaveTile"][1])*(self.kernel["MIWaveGroup"][0]*self.kernel["MIWaveGroup"][1])/8))
-      GSUtotal = max(2,GSUtotal)
+      GSUtotal = self.parentWriter.getMBSKGSUTotal(self.kernel)
       SynchronizerAddEndlabel = [""] * GSUtotal
 
       for idx in range(0, GSUtotal):
@@ -432,17 +432,14 @@ class GlobalWriteBatchWriter:
                       comment="load GSU D 0 "+str(vgprstart)))
       SyncloadedData += 1
 
-      GSUMvgpr = self.parentWriter.vgprPool.checkOut(1, "GSUMvgpr")
       module.add(SAndB32(dst=sgpr("GSUSync"), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
 
       SynchronizerlabelString = "Synchronizer_read_add"
       SynchronizerComment = "Synchronizer read add"
       Synchronizerlabel = Label(self.parentWriter.labels.getNameInc(SynchronizerlabelString), SynchronizerComment)
 
-      if(self.kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
-        tmpVAdd = self.parentWriter.vgprPool.checkOutAligned((GSUtotal-1)*self.gwvw*self.kernel["ProblemType"]["DestDataType"].numRegisters(), 4)
-      else:
-        tmpVAdd = self.parentWriter.vgprPool.checkOutAligned((GSUtotal-1)*self.gwvw, 4)
+      tmpVAdd = self.tmpVgprDynamic
+      GSUMvgpr = self.tmpVgpr
 
       GSUP1 = GSUtotal-1
 
@@ -560,10 +557,8 @@ class GlobalWriteBatchWriter:
 
       module.add(SynchronizerAddSkiplabel)
 
-      self.parentWriter.vgprPool.checkIn(GSUMvgpr)
       module.addComment("buffer add end2\n")
 
-      self.parentWriter.vgprPool.checkIn(tmpVAdd)
     self.parentWriter.sgprPool.checkIn(tmpS06)
     self.parentWriter.sgprPool.checkIn(tmpS05)
     self.parentWriter.sgprPool.checkIn(tmpS04)
