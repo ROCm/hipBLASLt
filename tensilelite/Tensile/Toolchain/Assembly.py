@@ -158,7 +158,7 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
       gfx = getGfxName(arch)
 
       if globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
-        objectFiles = [str(asmDir / (kernelWriterAssembly.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
+        objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
 
         coFileMap = collections.defaultdict(list)
 
@@ -168,7 +168,7 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
         for kernel in archKernels:
           coName = kernel.get("codeObjectFile", None)
           if coName:
-            coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (kernelWriterAssembly.getKernelFileBase(kernel) + extObj)))
+            coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
 
         for coFileRaw, objFiles in coFileMap.items():
 
@@ -194,85 +194,9 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
           return os.path.join(asmDir, kName + '.co')
 
         for src, dst in Utils.tqdm(((orgCoFileName(kName), newCoFileName(kName)) for kName in \
-                                    map(lambda k: kernelWriterAssembly.getKernelFileBase(k), archKernels)), "Copying code objects"):
+                                    map(lambda k: writerAsm.getKernelFileBase(k), archKernels)), "Copying code objects"):
           shutil.copyfile(src, dst)
           coFiles.append(dst)
         printWarning("Code object files are not compressed in `--no-merge-files` build mode.")
 
     return coFiles
-
-########################
-# @bstefanuk Fix the below so they only use the toolchain functions
-def _getAssembledKernelObjectFile(assembler, isa, wavefrontSize, asmFilename, kernel, asmDir):
-
-  base, ext = os.path.splitext(asmFilename)
-  destPath = base + '.o'
-
-  debug = globalParameters.get("AsmDebug", False)
-
-  args = getAsmCompileArgs(assembler, globalParameters["CodeObjectVersion"], isa, wavefrontSize, asmFilename, destPath, debug=debug)
-
-  if globalParameters["PrintCodeCommands"]:
-    print (' '.join(args), " && ")
-
-  subprocess.check_call(args, cwd=asmDir)
-
-  if not globalParameters["KeepBuildTmp"]:
-      os.remove(asmFilename)
-
-  return destPath
-
-def getSingleCodeObjectFile(writerAsm, assembler, asmPath, kernel):
-  asmFilename = writerAsm._getKernelObjectAssemblyFile(kernel, asmPath)
-  destPath = _getAssembledKernelObjectFile(assembler, writerAsm.isa, writerAsm.wavefrontSize, asmFilename, kernel, asmPath)
-
-  base, ext = os.path.splitext(destPath)
-  coFileName = base + '.co'
-
-  args = getAsmLinkCodeObjectArgs(assembler, \
-    [destPath], coFileName, globalParameters['BuildIdKind'])
-
-  if globalParameters["PrintCodeCommands"]:
-    print (' '.join(args))
-
-  subprocess.check_call(args, cwd=asmPath)
-  return coFileName
-
-
-def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, \
-    isa: Tuple[int, int, int], wavefrontSize: int, \
-    srcPath: str, destPath: str, *moreArgs, debug: bool=False):
-    import inspect
-    caller_frame = inspect.stack()[1]
-    warnings.warn(f"{__name__}: THIS FUNCTION IS DEPRECATED. Called from {caller_frame.filename}, line {caller_frame.lineno}.")
-    
-    launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
-    rv = launcher + [assemblerPath, '-x', 'assembler', '-target', 'amdgcn-amd-amdhsa']
-
-    rv += ['-mcode-object-version=%s'% getCOVFromParam(codeObjectVersion)]
-
-    rv += ['-mcpu=' + getGfxName(isa)]
-
-    if wavefrontSize == 64:
-        rv += ['-mwavefrontsize64']
-    else:
-        rv += ['-mno-wavefrontsize64']
-
-    rv += moreArgs
-
-    if debug:
-        rv += ['-g',]
-
-    rv += ['-c', '-o', destPath, srcPath]
-    return rv
-
-def getAsmLinkCodeObjectArgs(assemblerPath: str, destPaths: List[str], \
-    coFileName: str, buildIdKind: str, *moreArgs):
-    import inspect
-    caller_frame = inspect.stack()[1]
-    warnings.warn(f"{__name__}: THIS FUNCTION IS DEPRECATED. Called from {caller_frame.filename}, line {caller_frame.lineno}.")
-    rv = [assemblerPath, '-target', 'amdgcn-amd-amdhsa']
-    rv += ["-Xlinker", "--build-id=%s"%(buildIdKind)]
-    rv += moreArgs
-    rv += ['-o', coFileName] + destPaths
-    return rv

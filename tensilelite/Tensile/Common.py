@@ -25,7 +25,6 @@
 from . import __version__
 from . import Parallel
 from .TensileInstructions import getGfxName, TensileInstructions
-from .Utilities.Toolchain import supportedCxxCompiler as supportedCompiler
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Tuple

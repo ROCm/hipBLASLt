@@ -48,7 +48,6 @@ from .AsmStoreState import StoreState, VectorDataTypes
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationType
 from .Utils import DataDirection
-from .Toolchain.Assembly import getSingleCodeObjectFile
 
 from math import ceil, log, floor
 from copy import deepcopy
@@ -70,13 +69,13 @@ class KernelWriterAssembly(KernelWriter):
   def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
     super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler)
 
-  def getSourceFileString(self, kernel) -> Tuple[int, str, str]:
+  def getSourceFileString(self, kernel) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"
     # Skip if .o files will have already been built for this file
     # @TODO remove need for this with better code organization
     if kernel.duplicate:
       self.language = "ASM"
-      return (-1, "", "")
+      return (-1, "")
 
     code = self._getKernelSource(kernel)
     return (0, code)

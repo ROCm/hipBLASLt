@@ -81,25 +81,25 @@ class KernelCodeGenResult(NamedTuple):
     isa: IsaVersion
     wavefrontSize: int
 
+
 def processKernelSource(kernel, kernelWriterAssembly, ti) -> KernelCodeGenResult:
     """
     Generate source for a single kernel.
     Returns (error, source, header, kernelName).
     """
-    try:
-        kernelWriter = kernelWriterAssembly
-        # get kernel name
-        kernelWriter.setTensileInstructions(ti)
-        asmFilename = kernelWriter.getKernelFileBase(kernel)
-        err, src = kernelWriter.getSourceFileString(kernel)
-        header = kernelWriter.getHeaderFileString(kernel)
-        # will be put in Kernels.h/cpp if None
-        objFilename = kernel._state.get("codeObjectFile", None)
-        isa = kernelWriter.isa
-        wavefrontSize = kernelWriter.wavefrontSize
+    kernelWriter = kernelWriterAssembly
+    # get kernel name
+    kernelWriter.setTensileInstructions(ti)
+    asmFilename = kernelWriter.getKernelFileBase(kernel)
+    err, src = kernelWriter.getSourceFileString(kernel)
+    header = kernelWriter.getHeaderFileString(kernel)
+    # will be put in Kernels.h/cpp if None
+    objFilename = kernel._state.get("codeObjectFile", None)
+    isa = kernelWriter.isa
+    wavefrontSize = kernelWriter.wavefrontSize
 
-    except RuntimeError:
-        return (-1, "", "", kernelName, None)
+    if err:
+        raise ValueError("Invalid kernel#%u" % kernel["SolutionIndex"])
 
     return KernelCodeGenResult(err, src, header, asmFilename, objFilename, isa, wavefrontSize)
 
@@ -287,7 +287,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
         kernel.duplicate = False
   numKernels = len(kernels)
 
-  asmKernels = (k for k in kernels if k['KernelLanguage'] == 'Assembly')
+  asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
   srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
   if srcKernels:
     raise ValueError(f"Non-helper object HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
@@ -307,32 +307,24 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   srcKernelFiles += buildKernelSourceAndHeaderFiles(srcResults, outputPath, kernelsWithBuildErrs)
   printWarning(f"THERE ARE {len(srcKernelFiles)} SOURCE   KERNEL FILES TO BUILD")
 
-  # asmKernelsToBuild = kernels
-  # if errorTolerant:
-  #     def success(kernel):
-  #         writer = kernelWriterAssembly
-  #         kernelName = writer.getKernelName(kernel)
-  #         return kernelName not in kernelsWithBuildErrs
-  #     asmKernelsToBuild = filter(success, asmKernelsToBuild)
-  # elif len(kernelsWithBuildErrs) > 0:
-  #   print("\nKernel compilation failed in one or more subprocesses. May want to set CpuThreads=0 and re-run to make debug easier")
-  #   printExit("** kernel compilation failure **")
-
-  asmKernelFiles = []
-  for r in asmResults:
+  def writeAsmToDisk(r: KernelCodeGenResult, toolchain: AssemblyToolchain, outputPath, compress):
+    # asmKernelFiles = []
+    # for r in asmResults:
     if r.err:
-      printExit(f"Failed to build kernel {fname}")
-      continue
+      printExit(f"Failed to build kernel {r.name}")
     path = os.path.join(asmPath, r.name + ".s")
-    asmKernelFiles.append(path)
-    print(f"Writing {path}")
+    # asmKernelFiles.append(path)
+    print1(f"Writing {path}")
     with open(path, "w", encoding="utf-8") as f:
       f.write(r.src)
-    asmToolchain.assemble(path, os.path.join(asmPath, r.targetObjFilename + ".o"), globalParameters["CodeObjectVersion"], r.isa, r.wavefrontSize)
+    toolchain.assemble(path, os.path.join(asmPath, r.name + ".o"), globalParameters["CodeObjectVersion"], r.isa, r.wavefrontSize)
+  asmIter2 = zip(asmResults, itertools.repeat(asmToolchain), itertools.repeat(asmPath), itertools.repeat(compress))
+
+  Common.ParallelMap2(writeAsmToDisk, asmIter2, "Assembling kernels", return_as="list")
 
   writeKernelHelperFiles(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
 
-  # codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, outputPath)
+  codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, outputPath)
   codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
   Common.popWorkingPath() # build_tmp

@@ -5059,7 +5059,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return kernelName
 
   @abc.abstractmethod
-  def getSourceFileString(self, kernel) -> Tuple[int, str, str]:
+  def getSourceFileString(self, kernel) -> Tuple[int, str]:
     """
     Returns a string suitable for placing in Kernels.cpp.  This means the actual kernel source in the case
     of a source kernel, or an assembled code object byte array definition in the case of an assembly kernel,
