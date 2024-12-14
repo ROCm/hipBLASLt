@@ -43,20 +43,17 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 32, 1,  1,  1, 1,  1, 1 ]
-          - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
-          - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
-          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
-          - [32, 32, 32, 1,  1,  4, 2,  2, 4 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthB: [8,16]
-        - VectorWidthA: [1,2,4]
-        - VectorWidthB: [1,2,4]
-        - DepthU: [32,64,128]
+          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
+        - GlobalReadVectorWidthA: [-1]
+        - VectorWidthA: [-1]
+        - VectorWidthB: [-1]
+        - DepthU: [32,64]
         - TransposeLDS: [-1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
-        - StaggerU: [0,4]
+        - StaggerU: [0, 4]
         - ScheduleIterAlg: [3]
         - PrefetchLocalRead: [1,2,3]
         - ClusterLocalRead: [1]
@@ -65,10 +62,11 @@ BenchmarkProblems:
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
-        - DirectToVgprSparseMetadata: [0]
+        - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
-        - AssertFree0ElementMultiple: [1,8]
+        - AssertFree0ElementMultiple: [8]
+        - AssertFree1ElementMultiple: [8]
         - SourceSwap: [1]
       BenchmarkForkParameters:
       JoinParameters:
@@ -78,20 +76,13 @@ BenchmarkProblems:
           - Exact: [16, 16, 1, 16] # classic format
           - Exact: [16, 16, 1, 32] # classic format
           - Exact: [16, 16, 1, 64] # classic format
-          - Exact: [16, 16, 1, 96] # classic format
           - Exact: [16, 16, 1, 128] # classic format
           - Exact: [256, 256, 1, 16] # classic format
           - Exact: [256, 256, 1, 32] # classic format
           - Exact: [256, 256, 1, 64] # classic format
-          - Exact: [256, 256, 1, 96] # classic format
-          - Exact: [256, 256, 1, 128] # classic format
-          - Exact: [384, 384, 1, 16] # classic format
-          - Exact: [384, 384, 1, 32] # classic format
-          - Exact: [384, 384, 1, 64] # classic format
-          - Exact: [384, 384, 1, 96] # classic format
-          - Exact: [384, 384, 1, 128] # classic format
+          - Exact: [256, 256, 1, 128] # classic formatt
         - BiasTypeArgs: ['s']
-        - FactorDimArgs: [0, 1]
+        - FactorDimArgs: [0,1]
         - ActivationArgs:
           - [Enum: none]
 
@@ -123,32 +114,30 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 32, 1,  1,  1, 1,  1, 1 ]
-          - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
-          - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
-          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
-          - [32, 32, 32, 1,  1,  4, 2,  2, 4 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthB: [8,16]
-        - VectorWidthA: [1,2,4]
-        - VectorWidthB: [1,2,4]
-        - DepthU: [32,64,128]
+          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
+        - GlobalReadVectorWidthA: [-1]
+        - VectorWidthA: [-1]
+        - VectorWidthB: [-1]
+        - DepthU: [32,64]
         - TransposeLDS: [-1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
-        - StaggerU: [0,4]
+        - StaggerU: [4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [1,2,3]
+        - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
-        - DirectToVgprSparseMetadata: [0]
+        - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
-        - AssertFree0ElementMultiple: [1,8]
+        - AssertFree0ElementMultiple: [8]
+        - AssertFree1ElementMultiple: [8]
         - SourceSwap: [1]
       BenchmarkForkParameters:
       JoinParameters:
@@ -158,20 +147,13 @@ BenchmarkProblems:
           - Exact: [16, 16, 1, 16] # classic format
           - Exact: [16, 16, 1, 32] # classic format
           - Exact: [16, 16, 1, 64] # classic format
-          - Exact: [16, 16, 1, 96] # classic format
           - Exact: [16, 16, 1, 128] # classic format
           - Exact: [256, 256, 1, 16] # classic format
           - Exact: [256, 256, 1, 32] # classic format
           - Exact: [256, 256, 1, 64] # classic format
-          - Exact: [256, 256, 1, 96] # classic format
-          - Exact: [256, 256, 1, 128] # classic format
-          - Exact: [384, 384, 1, 16] # classic format
-          - Exact: [384, 384, 1, 32] # classic format
-          - Exact: [384, 384, 1, 64] # classic format
-          - Exact: [384, 384, 1, 96] # classic format
-          - Exact: [384, 384, 1, 128] # classic format
+          - Exact: [256, 256, 1, 128] # classic formatt
         - BiasTypeArgs: ['s']
-        - FactorDimArgs: [0, 1]
+        - FactorDimArgs: [0]
         - ActivationArgs:
           - [Enum: none]
 
@@ -203,22 +185,19 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 32, 1,  1,  1, 1,  1, 1 ]
-          - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
-          - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
-          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
-          - [32, 32, 32, 1,  1,  4, 2,  2, 4 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthB: [8,16]
-        - VectorWidthA: [1,2,4]
-        - VectorWidthB: [1,2,4]
-        - DepthU: [32,64,128]
+          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
+        - GlobalReadVectorWidthA: [-1]
+        - VectorWidthA: [-1]
+        - VectorWidthB: [-1]
+        - DepthU: [32,64]
         - TransposeLDS: [-1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
-        - StaggerU: [0,4]
+        - StaggerU: [4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [1,2,3]
+        - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
@@ -228,7 +207,8 @@ BenchmarkProblems:
         - DirectToVgprSparseMetadata: [0]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
-        - AssertFree0ElementMultiple: [1,8]
+        - AssertFree0ElementMultiple: [8]
+        - AssertFree1ElementMultiple: [8]
         - SourceSwap: [1]
       BenchmarkForkParameters:
       JoinParameters:
@@ -238,22 +218,16 @@ BenchmarkProblems:
           - Exact: [16, 16, 1, 16] # classic format
           - Exact: [16, 16, 1, 32] # classic format
           - Exact: [16, 16, 1, 64] # classic format
-          - Exact: [16, 16, 1, 96] # classic format
           - Exact: [16, 16, 1, 128] # classic format
           - Exact: [256, 256, 1, 16] # classic format
           - Exact: [256, 256, 1, 32] # classic format
           - Exact: [256, 256, 1, 64] # classic format
-          - Exact: [256, 256, 1, 96] # classic format
-          - Exact: [256, 256, 1, 128] # classic format
-          - Exact: [384, 384, 1, 16] # classic format
-          - Exact: [384, 384, 1, 32] # classic format
-          - Exact: [384, 384, 1, 64] # classic format
-          - Exact: [384, 384, 1, 96] # classic format
-          - Exact: [384, 384, 1, 128] # classic format
+          - Exact: [256, 256, 1, 128] # classic formatt
         - BiasTypeArgs: ['s']
-        - FactorDimArgs: [0, 1]
+        - FactorDimArgs: [0]
         - ActivationArgs:
           - [Enum: none]
+
 
   #######################################
   # TT - standard
@@ -283,22 +257,19 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 32, 1,  1,  1, 1,  1, 1 ]
-          - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
-          - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
-          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
-          - [32, 32, 32, 1,  1,  4, 2,  2, 4 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthB: [8,16]
-        - VectorWidthA: [1,2,4]
-        - VectorWidthB: [1,2,4]
-        - DepthU: [32,64,128]
+          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
+        - GlobalReadVectorWidthA: [-1]
+        - VectorWidthA: [-1]
+        - VectorWidthB: [-1]
+        - DepthU: [32,64]
         - TransposeLDS: [-1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
-        - StaggerU: [0,4]
+        - StaggerU: [4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [1,2,3]
+        - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
@@ -308,7 +279,8 @@ BenchmarkProblems:
         - DirectToVgprSparseMetadata: [0]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
-        - AssertFree0ElementMultiple: [1,8]
+        - AssertFree0ElementMultiple: [8]
+        - AssertFree1ElementMultiple: [8]
         - SourceSwap: [1]
       BenchmarkForkParameters:
       JoinParameters:
@@ -318,19 +290,12 @@ BenchmarkProblems:
           - Exact: [16, 16, 1, 16] # classic format
           - Exact: [16, 16, 1, 32] # classic format
           - Exact: [16, 16, 1, 64] # classic format
-          - Exact: [16, 16, 1, 96] # classic format
           - Exact: [16, 16, 1, 128] # classic format
           - Exact: [256, 256, 1, 16] # classic format
           - Exact: [256, 256, 1, 32] # classic format
           - Exact: [256, 256, 1, 64] # classic format
-          - Exact: [256, 256, 1, 96] # classic format
-          - Exact: [256, 256, 1, 128] # classic format
-          - Exact: [384, 384, 1, 16] # classic format
-          - Exact: [384, 384, 1, 32] # classic format
-          - Exact: [384, 384, 1, 64] # classic format
-          - Exact: [384, 384, 1, 96] # classic format
-          - Exact: [384, 384, 1, 128] # classic format
+          - Exact: [256, 256, 1, 128] # classic formatt
         - BiasTypeArgs: ['s']
-        - FactorDimArgs: [0, 1]
+        - FactorDimArgs: [0]
         - ActivationArgs:
           - [Enum: none]
