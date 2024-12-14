@@ -34,6 +34,7 @@ import subprocess
 import shlex
 import shutil
 from enum import Enum
+from glob import glob
 
 from .Contractions import FreeIndex, BatchIndex
 from .Contractions import ProblemType as ContractionsProblemType
@@ -98,9 +99,9 @@ def main(config, cxxCompiler: str, cCompiler: str):
 
   createLibraryScript = getBuildClientLibraryScript(stepBaseDir, libraryLogicPath, cxxCompiler)
   subprocess.run(shlex.split(createLibraryScript), cwd=stepBaseDir)
-  coList = []
-  yamlList = []
-  
+  coList = glob(os.path.join(stepBaseDir,"library/*.co"))
+  yamlList = glob(os.path.join(stepBaseDir,"library/*.yaml"))
+    
   clientParametersPaths = []
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary, _) \
