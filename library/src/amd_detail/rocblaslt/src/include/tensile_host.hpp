@@ -483,7 +483,7 @@ inline TensileLite::DataType hipDataType_to_tensile_type(hipDataType type)
 
 namespace
 {
-    TensileLite::DataType roc2TensileType(rocblaslt_compute_type);
+    TensileLite::DataType roc2TensileType(rocblaslt_compute_type, bool);
 }
 
 namespace TensileLite
