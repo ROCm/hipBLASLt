@@ -167,6 +167,7 @@ class LSUOn(LSU):
         numTotalAccVgprLdsReduction = numTotalAccVgprLdsReduction // kernel["LocalSplitU"]
         self.accVgprLdsReduction    = writer.vgprPool.checkOutAligned(numTotalAccVgprLdsReduction, 4, "LsuReduction")
         module.add(RegSet("v", "vgprLsuReduction", self.accVgprLdsReduction))
+        module.addComment0("Size of vgprLsuReduction is %u"%(numTotalAccVgprLdsReduction))
         writer.states.c.startVgprValu = self.accVgprLdsReduction
 
         # Local Read VGPR idx
@@ -211,16 +212,12 @@ class LSUOn(LSU):
             destIdx = 0
             for lsu in range(kernel["LocalSplitU"]):
                 for i in range(numVgprPerLSU):
-                    srcIdx = neededAccVGPRIdx[lsu][i]
-                    if not kernel["MIArchVgpr"]:
-                        accStr = accvgpr(srcIdx)
-                        module.add(VAccvgprReadB32(dst=vgpr(accVgprRes+destIdx),
-                                                src=accStr,
-                                                comment="copy acc[%u] to vreg[%u], LSU%u will process" % (srcIdx,destIdx,lsu)))
-                    else:
-                        module.add(VMovB32(dst=vgpr(accVgprRes+destIdx),
-                                        src=vgpr("ValuC+%u"%srcIdx),
-                                        comment="copy MI out reg to vreg[%u], LSU%u will process" % (destIdx,lsu)))
+                    srcIdx   = neededAccVGPRIdx[lsu][i]
+                    readInst = writer.accVgprReadWriteFunction(kernel, srcIdx, True)
+                    srcVgpr  = writer.accVgprReadWriteIndex(kernel, srcIdx)
+                    module.add(readInst(dst=vgpr(accVgprRes+destIdx),
+                                        src=srcVgpr,
+                                        comment="copy acc[%u] to vreg[%u], LSU%u will process" % (srcIdx,destIdx,lsu)))
                     destIdx += 1
 
             dataPerWave = numAccVgpr * kernel["WavefrontSize"] * 4
