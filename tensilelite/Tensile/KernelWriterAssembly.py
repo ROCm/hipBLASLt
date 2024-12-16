@@ -97,7 +97,7 @@ class KernelWriterAssembly(KernelWriter):
       vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, vgprs,          doubleVgpr)
       accvgprLimitedOccupancy = self.getVgprOccupancy(numThreads, accvgprs,       doubleVgpr)
     else:
-      vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, ceil(vgprs//8)*8+accvgprs, doubleVgpr)
+      vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, ceil(vgprs/8)*8+accvgprs, doubleVgpr)
       accvgprLimitedOccupancy = vgprLimitedOccupancy
     sgprLimitedOccupancy = self.getSgprOccupancy(sgprs)
 
