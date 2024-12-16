@@ -50,13 +50,13 @@ from datetime import datetime
 #   LibraryLogic.main() to analyse final benchmark data and produce logic/yaml
 #   ClientWriter.main() to create client which calls library based on above yaml
 ################################################################################
-def executeStepsInConfig(config, cxxCompiler: str, cCompiler: str, assembler: str, offloadBundler: str):
+def executeStepsInConfig(config, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str):
 
     ##############################################################################
     # Benchmark Problems
     ##############################################################################
     if "BenchmarkProblems" in config:
-        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], cxxCompiler, cCompiler, assembler, offloadBundler)
+        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, cCompiler)
         print1("")
 
     ##############################################################################
@@ -74,7 +74,7 @@ def executeStepsInConfig(config, cxxCompiler: str, cCompiler: str, assembler: st
                 libraryLogicConfig = config["LibraryLogic"]
             else:
                 libraryLogicConfig = {}
-            LibraryLogic.main(libraryLogicConfig, cxxCompiler)
+            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler)
             print1("")
         else:
             print1("# LibraryLogic already done.")
@@ -88,7 +88,7 @@ def executeStepsInConfig(config, cxxCompiler: str, cCompiler: str, assembler: st
             libraryClientConfig = config["LibraryClient"]
         else:
             libraryClientConfig = {}
-        ClientWriter.main(libraryClientConfig, cxxCompiler, cCompiler)
+        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler)
         print1("")
 
 
@@ -277,6 +277,7 @@ def Tensile(userArgs):
     cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
 
+
     asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"])
     srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
@@ -298,7 +299,7 @@ def Tensile(userArgs):
         profiler = cProfile.Profile()
         profiler.enable()
 
-    executeStepsInConfig(config, cxxCompiler, cCompiler, assembler, offloadBundler)
+    executeStepsInConfig(config, asmToolchain, srcToolchain, cCompiler)
 
     if profiler:
         profiler.disable()

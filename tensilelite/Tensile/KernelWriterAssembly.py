@@ -72,13 +72,18 @@ class KernelWriterAssembly(KernelWriter):
   def getSourceFileString(self, kernel) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"
     # Skip if .o files will have already been built for this file
-    # @TODO remove need for this with better code organization
     if kernel.duplicate:
       self.language = "ASM"
       return (-1, "")
 
-    code = self._getKernelSource(kernel)
-    return (0, code)
+    try:
+      code = self._getKernelSource(kernel)
+      errcode = 0
+    except RuntimeError as e:
+      printWarning(f"Failed to generate assembly source code for {kernel}: {e}")
+      code = ""
+      errcode = -2
+    return (errcode, code)
 
   def getSgprOccupancy(self, sgprs):
     return self.states.regCaps["PhysicalMaxSgpr"]//sgprs

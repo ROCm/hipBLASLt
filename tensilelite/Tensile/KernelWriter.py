@@ -31,7 +31,7 @@ from .TensileInstructions import Item, TensileInstructions, slash50, replaceHold
 from .TensileInstructions.Instructions import *
 from .KernelWriterModules import *
 from .TensilePass import TensilePass, TensilePassOptions
-from .Common import globalParameters, CHeader, roundUp, Backup, print2, printExit
+from .Common import globalParameters, CHeader, print1, printWarning, roundUp, Backup, print2, printExit
 from .Component import Component, LraTileProperties
 from .Components.Signature import UserArgumentsInfo
 from .CustomKernels import isCustomKernelConfig
@@ -2870,6 +2870,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     TensileInstructionsPass(moduleKernelBody, tipo)
 
     error = self.states.overflowedResources
+    print1(f"  found error code {error} with overflowed resources set to {self.states.overflowedResources}")
 
     return (error, str(moduleKernelBody))
 
@@ -4964,83 +4965,21 @@ class KernelWriter(metaclass=abc.ABCMeta):
     Returns the source of the kernel, either C++ or assembly.
     """
 
-
     fileString = ""
     tensorParametersA = {}
     tensorParametersB = {}
-    self.initKernel(kernel, tensorParametersA, tensorParametersB )
+    self.initKernel(kernel, tensorParametersA, tensorParametersB)
     self.stringIdx = 0
-    (error, kb) = self.kernelBody( kernel, tensorParametersA, tensorParametersB)
+    (error, kb) = self.kernelBody(kernel, tensorParametersA, tensorParametersB)
     fileString += str(kb)
 
     if error != 0:
       if globalParameters["ForceGenerateKernel"]:
-        print ("warning: Generating kernel source resulted in error {}, but ForceGenerateKernel=1 so saving source".format(error))
+        printWarning("Generating kernel source resulted in error {}, but ForceGenerateKernel=1 so saving source".format(error))
       else:
         raise RuntimeError("Generating kernel source resulted in error {}".format(error))
     return fileString
 
-  # def _getKernelObjectAssemblyFile(self, kernel, asmPath):
-  #   # write assembly file to assembly directory
-  #   kernelName = self.getKernelFileBase(kernel)
-  #   fileBase = os.path.join(asmPath, kernelName )
-  #   assemblyFileName = "%s.s" % fileBase
-
-  #   #-------------------
-  #   # TODO(@bstefanuk): Replacement kernels is deprecated, remove this code
-  #   replacementKernel = self.getReplacementKernelPath(kernel)
-
-  #   if replacementKernel is not None:
-  #     self.tPA = tensorParametersA = {}
-  #     self.tPB = tensorParametersB = {}
-  #     if isCustomKernelConfig(kernel):
-  #       kernelFoundMessage = "Custom kernel filename "
-  #       # ISA version, such as 803
-  #       self.states.kernel = kernel
-  #       self.states.language = "ASM"
-  #       self.states.version = globalParameters["CurrentISA"]
-  #       if "ISA" in kernel:
-  #         self.states.version = tuple(kernel["ISA"])
-  #       if not globalParameters["AsmCaps"][self.states.version]["SupportedISA"]:
-  #         defaultIsa = (9,0,0)
-  #         print("warning: ISA:", self.isa, " is not supported; overriding with ", defaultIsa)
-  #         self.states.version = defaultIsa
-  #     else:
-  #       kernelFoundMessage = "replacement_assemblyFilename "
-  #       self.initKernel(kernel, tensorParametersA, tensorParametersB )
-
-  #     shutil.copyfile(replacementKernel, assemblyFileName)
-
-  #     # Temporary remove preload kernel argument for rpk
-  #     hipccver = globalParameters['HipClangVersion'].split(".")
-  #     hipccMaj = int(hipccver[0])
-  #     hipccPatch = int(hipccver[2].split("-")[0])
-  #     if not (hipccMaj >= 6 and hipccPatch >= 32650):
-  #       os.system("sed -i '/amdhsa_user_sgpr_kernarg_preload_length/d' %s"%assemblyFileName)
-  #       os.system("sed -i '/amdhsa_user_sgpr_kernarg_preload_offset/d' %s"%assemblyFileName)
-
-  #     if globalParameters["PrintLevel"] >= 2:
-  #       print(kernelFoundMessage + assemblyFileName)
-  #       print(self.states.kernel)
-  #   #--------------------
-    
-  #   else:
-  #     kernelSource = self._getKernelSource(kernel)
-
-  #     if globalParameters["PrintLevel"] >= 2:
-  #       print("write_assemblyFilename %s" % assemblyFileName)
-  #       print(self.states.kernel)
-
-  #     with open(assemblyFileName, 'w') as assemblyFile:
-  #       assemblyFile.write(kernelSource)
-
-  #   return assemblyFileName
-
-  # ##############################################################################
-  #
-  #   Entry Functions
-  #
-  ##############################################################################
 
   ##############################################################################
   # get kernel name
@@ -5073,9 +5012,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     """
     pass
 
-  ##############################################################################
-  # header file string
-  ##############################################################################
   def getHeaderFileString(self, kernel):
     kernelName = self.getKernelName(kernel)
     fileString = "" # CHeader
@@ -5086,9 +5022,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     return fileString
 
-  ##############################################################################
-  # Compile Args
-  ##############################################################################
 
   def setTensileInstructions(self, ti):
     self.ti = ti
