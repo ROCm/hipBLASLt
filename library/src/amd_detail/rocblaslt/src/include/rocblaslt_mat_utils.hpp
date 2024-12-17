@@ -385,57 +385,62 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
     n = num_cols_d;
     k = (opA == HIPBLAS_OP_N) ? num_cols_a : num_rows_a;
 
-    auto status = validateMatmulArgs(m,
-                                     n,
-                                     k,
-                                     alpha,
-                                     A,
-                                     B,
-                                     beta,
-                                     C,
-                                     D,
-                                     matA->type,
-                                     matB->type,
-                                     matC->type,
-                                     matD->type,
-                                     compute_type,
-                                     matmul_descr->op_A,
-                                     matmul_descr->op_B,
-                                     num_batches_a,
-                                     num_batches_b,
-                                     num_batches_c,
-                                     num_batches_d,
-                                     batch_stride_a,
-                                     batch_stride_b,
-                                     batch_stride_c,
-                                     batch_stride_d,
-                                     matmul_descr->pointermode);
+    auto matmul_status = validateMatmulArgs(m,
+                                            n,
+                                            k,
+                                            alpha,
+                                            A,
+                                            B,
+                                            beta,
+                                            C,
+                                            D,
+                                            matA->type,
+                                            matB->type,
+                                            matC->type,
+                                            matD->type,
+                                            compute_type,
+                                            matmul_descr->op_A,
+                                            matmul_descr->op_B,
+                                            num_batches_a,
+                                            num_batches_b,
+                                            num_batches_c,
+                                            num_batches_d,
+                                            batch_stride_a,
+                                            batch_stride_b,
+                                            batch_stride_c,
+                                            batch_stride_d,
+                                            matmul_descr->pointermode);
 
-    if(status != rocblaslt_status_continue)
-        return status;
+    const void* alphaVecPtr     = matmul_descr->pointermode ? alpha : nullptr;
+    auto        epilogue_status = rocblaslt_epilogue_valid_args(matmul_descr->epilogue,
+                                                         num_rows_d,
+                                                         num_cols_d,
+                                                         matD->type,
+                                                         matmul_descr->bias_type,
+                                                         matmul_descr->e,
+                                                         matmul_descr->lde,
+                                                         matmul_descr->stride_e,
+                                                         matmul_descr->bias,
+                                                         alphaVecPtr,
+                                                         alpha,
+                                                         matmul_descr->isScaleAVec,
+                                                         matmul_descr->isScaleBVec,
+                                                         E,
+                                                         lde,
+                                                         batch_stride_e,
+                                                         bias,
+                                                         bias_type,
+                                                         scaleAlphaVec,
+                                                         gradient);
 
-    const void* alphaVecPtr = matmul_descr->pointermode ? alpha : nullptr;
-    status                  = rocblaslt_epilogue_valid_args(matmul_descr->epilogue,
-                                           num_rows_d,
-                                           num_cols_d,
-                                           matD->type,
-                                           matmul_descr->bias_type,
-                                           matmul_descr->e,
-                                           matmul_descr->lde,
-                                           matmul_descr->stride_e,
-                                           matmul_descr->bias,
-                                           alphaVecPtr,
-                                           alpha,
-                                           matmul_descr->isScaleAVec,
-                                           matmul_descr->isScaleBVec,
-                                           E,
-                                           lde,
-                                           batch_stride_e,
-                                           bias,
-                                           bias_type,
-                                           scaleAlphaVec,
-                                           gradient);
-    return status;
+    // rocblaslt_epilogue_valid_args must to be called otherwise bias_type will be garbage value
+    if(matmul_status != rocblaslt_status_continue)
+        return matmul_status;
+
+    if(epilogue_status != rocblaslt_status_continue)
+        return epilogue_status;
+
+    return rocblaslt_status_continue;
 }
 
 // Assign 1 to onePtr then set set the address to dst.
