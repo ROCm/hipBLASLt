@@ -77,6 +77,7 @@ class SourceToolchain:
         args = [
             *launcher, self.compiler, *hipFlags, *archFlags, srcPath, "-c", "-o", destPath
         ]
+        print2(f"Compiling HIP source kernels into object files: {' '.join(args)}")
         try:
             out = subprocess.check_output(args, stderr=subprocess.STDOUT)
             print2(f"Output: {out}" if out else "")
@@ -93,6 +94,7 @@ class SourceToolchain:
             List of target triples in the object file.
         """
         args = [self.bundler, "--type=o", f"--input={objFile}", "-list"]
+        print2(f"Listing target triples in object file: {' '.join(args)}")
         try:
             listing = subprocess.check_output(args, stderr=subprocess.STDOUT).decode().split("\n")
         except subprocess.CalledProcessError as err:
