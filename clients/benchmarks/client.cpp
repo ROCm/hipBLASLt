@@ -447,7 +447,7 @@ try
 
         ("activation_type",
          value<std::string>(&activation_type)->default_value("none"),
-         "Options: None, gelu, relu")
+         "Options: none, gelu, relu")
 
         ("activation_arg1",
          value<float>(&arg.activation_arg1)->default_value(0),
@@ -813,7 +813,7 @@ try
         throw std::invalid_argument("Invalid value for --initialization " + initialization);
 
     arg.activation_type = string_to_hipblaslt_activation_type(activation_type);
-    if(arg.activation_type == static_cast<hipblaslt_activation_type>(0))
+    if(arg.activation_type == static_cast<hipblaslt_activation_type>(-1))
         throw std::invalid_argument("Invalid value for --activation_type " + activation_type);
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
