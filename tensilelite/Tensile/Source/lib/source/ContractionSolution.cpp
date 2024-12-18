@@ -1191,7 +1191,9 @@ namespace TensileLite
 
         if(sizeMapping.streamK != 0)
         {
-            auto     itersPerTile = problem.getItersPerTile(sizeMapping);
+            // Clamp minimum iters per tile to 1 to allow stream-k index calculation to work in case K==0
+            // In this case no actual iterations will be run, but workgroups will be mapped correctly for beta*C
+            auto     itersPerTile = max(1, problem.getItersPerTile(sizeMapping));
             auto     totalIters   = tiles * itersPerTile;
             uint32_t magicNumberItersPerTile;
             uint32_t magicShiftItersPerTile;
@@ -3041,6 +3043,15 @@ namespace TensileLite
                                           Hardware const& hardware,
                                           size_t          tiles) const
     {
+        // If K==0, run kernel as DP with Alpha=0 to skip main loop and apply beta*c
+        size_t z = 1;
+        for(size_t i = 0; i < problem.boundIndices().size(); ++i)
+        {
+            z *= problem.boundSize(i);
+        }
+        if(z == 0)
+            return tiles;
+
         AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(&hardware);
 
         assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
@@ -3090,7 +3101,6 @@ namespace TensileLite
         {
             size_t x = 1;
             size_t y = 1;
-            size_t z = 1;
             size_t batch = 1;
             for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
             {
@@ -3099,10 +3109,6 @@ namespace TensileLite
             for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
             {
                 y *= problem.freeSizeB(i);
-            }
-            for(size_t i = 0; i < problem.boundIndices().size(); ++i)
-            {
-                z *= problem.boundSize(i);
             }
             for(size_t i = 0; i < problem.batchIndices().size(); ++i)
             {

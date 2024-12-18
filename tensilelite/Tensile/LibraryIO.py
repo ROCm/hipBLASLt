@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from .Common import printExit, printWarning, versionIsCompatible
+from .Common import printExit, printWarning, print2, versionIsCompatible
 from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
 from . import __version__
@@ -39,14 +39,14 @@ try:
 except ImportError:
     try:
         import ujson as json
-        printWarning("orjson not installed. Fallback to ujson.")
+        print2("orjson not installed. Fallback to ujson.")
     except ImportError:
         try:
             import simplejson as json
-            printWarning("orjson, ujson not installed. Fallback to simplejson.")
+            print2("orjson, ujson not installed. Fallback to simplejson.")
         except ImportError:
             import json
-            printWarning("orjson, ujson, simplejson not installed. Fallback to json.")
+            print2("orjson, ujson, simplejson not installed. Fallback to json.")
 
 try:
     import yaml
@@ -193,12 +193,12 @@ def readJson(filename):
         data = json.loads(f.read())
     return data
 
-def parseSolutionsFile(filename):
+def parseSolutionsFile(filename, cxxCompiler):
     """Wrapper function to read and parse a solutions file."""
-    return parseSolutionsData(read(filename), filename)
+    return parseSolutionsData(read(filename), filename, cxxCompiler)
 
 
-def parseSolutionsData(data, srcFile="?"):
+def parseSolutionsData(data, srcFile, cxxCompiler):
     """Parses problem sizes and solutions from the data of a solutions file."""
     if len(data) < 3:
         printExit("Solution file {} is missing required fields (len = {} < 3" \
@@ -225,7 +225,7 @@ def parseSolutionsData(data, srcFile="?"):
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
-        solutionObject = Solution(solutionState)
+        solutionObject = Solution(solutionState, cxxCompiler)
         solutions.append(solutionObject)
     problemType = solutions[0]["ProblemType"]
     problemSizes = ProblemSizes(problemType, problemSizesConfig)
@@ -243,12 +243,12 @@ class LibraryLogic(NamedTuple):
     srcFile: str
 
 
-def parseLibraryLogicFile(filename, archs=None):
+def parseLibraryLogicFile(filename, cxxCompiler, archs=None):
     """Wrapper function to read and parse a library logic file."""
-    return parseLibraryLogicData(read(filename, True), filename, archs)
+    return parseLibraryLogicData(read(filename, True), filename, cxxCompiler, archs)
 
 
-def parseLibraryLogicData(data, srcFile="?", archs=None):
+def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
     """Parses the data of a library logic file."""
     if isinstance(data, List):
         data = parseLibraryLogicList(data, srcFile)
@@ -274,7 +274,7 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
     problemType = ProblemType(data["ProblemType"])
 
     # unpack solution
-    def solutionStateToSolution(solutionState) -> Solution:
+    def solutionStateToSolution(solutionState, cxxCompiler) -> Solution:
         if solutionState["KernelLanguage"] == "Assembly":
             solutionState["ISA"] = Common.gfxArch(data["ArchitectureName"])
         else:
@@ -293,7 +293,7 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
             # The ActivationType setting in YAML is meaningless in customKernel case.
             # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
             solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
-        solutionObject = Solution(solutionState)
+        solutionObject = Solution(solutionState, cxxCompiler)
         solutionProblemType = solutionObject["ProblemType"]
         if problemType != solutionProblemType:
             # find the mismatched items in ProblemType
@@ -305,9 +305,9 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
             printExit(f"ProblemType in library logic file {srcFile} doesn't match solution(idx={solIdx}): \n{results}")
         return solutionObject
 
-    solutions = [solutionStateToSolution(solutionState) for solutionState in data["Solutions"]]
+    solutions = [solutionStateToSolution(solutionState, cxxCompiler) for solutionState in data["Solutions"]]
 
-    newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions)
+    newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions, cxxCompiler)
 
     return LibraryLogic(data["ScheduleName"], data["ArchitectureName"], problemType, solutions, \
             data.get("ExactLogic"), newLibrary, srcFile)

@@ -32,6 +32,7 @@ from .Common import globalParameters, print1, printWarning, ensurePath, assignGl
                     pushWorkingPath, popWorkingPath, restoreDefaultGlobalParameters, HR
 from .Tensile import addCommonArguments, argUpdatedGlobalParameters
 from .SolutionStructs import ProblemSizes
+from .Utilities.Toolchain import validateToolchain
 from . import __version__
 
 import argparse
@@ -69,10 +70,10 @@ def parseCurrentLibrary(libPath, sizePath):
     return (libYaml, solutions, problemSizes)
 
 
-def runBenchmarking(solutions, problemSizes, outPath, update):
+def runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler: str, cCompiler: str, assembler: str, offloadBundler: str):
     # TODO some copy-pasting from BenchmarkProblems.benchmarkProblemType
     # could use a refactor to elimate duplicated code
-    ClientExecutable.getClientExecutable()
+    ClientExecutable.getClientExecutable(cxxCompiler, cCompiler)
 
     shortName = "benchmark"
     benchmarkDir = os.path.join(outPath, shortName)
@@ -88,13 +89,13 @@ def runBenchmarking(solutions, problemSizes, outPath, update):
 
     pushWorkingPath(shortName)
     pushWorkingPath("source")
-    BenchmarkProblems.writeBenchmarkFiles(benchmarkDir, solutions, problemSizes , "", "", "", "", shortName, [])
+    BenchmarkProblems.writeBenchmarkFiles(benchmarkDir, solutions, problemSizes , "", "", "", "", shortName, [], cxxCompiler, assembler, offloadBundler)
     popWorkingPath() # source
 
     libraryLogicPath = None
     forBenchmark = True
     # TODO make this work with TileAware selection
-    returncode = ClientWriter.runClient(libraryLogicPath, forBenchmark, False)
+    returncode = ClientWriter.runClient(libraryLogicPath, forBenchmark, False, cxxCompiler, cCompiler)
     if returncode:
         printWarning("Benchmarking Client exited with code {}. Trying to continue".format(returncode))
 
@@ -153,6 +154,8 @@ def TensileRetuneLibrary(userArgs):
         update = True
         remake = True
 
+    cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
+
     ##############################################
     # Retuning
     ##############################################
@@ -169,7 +172,7 @@ def TensileRetuneLibrary(userArgs):
 
     # parse library logic then setup and run benchmarks
     (rawYaml, solutions, problemSizes) = parseCurrentLibrary(libPath, sizePath)
-    runBenchmarking(solutions, problemSizes, outPath, update)
+    runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler, cCompiler, assembler, offloadBundler)
 
     if remake:
         # write library logic file

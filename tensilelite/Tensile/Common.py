@@ -25,15 +25,16 @@
 from . import __version__
 from . import Parallel
 from .TensileInstructions import getGfxName, TensileInstructions
+from .Utilities.Toolchain import supportedCxxCompiler as supportedCompiler
 from collections import OrderedDict
 from copy import deepcopy
-
 
 import math
 import os.path
 import subprocess
 import sys
 import time
+import re
 
 startTime = time.time()
 
@@ -128,7 +129,6 @@ globalParameters["CMakeBuildType"] = "Release"            # whether benchmark cl
 globalParameters["PrintSolutionRejectionReason"] = False  # when a solution is marked as invalid, print why
 globalParameters["LogicFormat"] = "yaml"                  # set library backend (yaml, or json)
 globalParameters["LibraryFormat"] = "yaml"                # set library backend (yaml, or msgpack)
-globalParameters["EmbedLibrary"] = None                   # whether library should be embedded or not
 
 # True/False: CSV will/won't export WinnerGFlops, WinnerTimeUS, WinnerIdx, WinnerName.
 # TODO - if no side-effect, we can set default to True. This can make analyzing "LibraryLogic" (AddFromCSV) faster
@@ -224,7 +224,6 @@ globalParameters["NumMergedFiles"] = 1            # The number of files that ker
 globalParameters["MaxFileName"] = 64              # If a file name would be longer than this, shorten it with a hash.
 globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2), (12,0,0), (12,0,1)] # assembly kernels writer supports these architectures
 
-globalParameters["GenerateManifestAndExit"] = False               # Output manifest file with list of expected library objects and exit
 globalParameters["NewClient"] = 2                                 # Old client deprecated: NewClient must be set to 2.
 globalParameters["ClientBuildPath"] = "0_Build"                   # subdirectory for host code build directory
 globalParameters["BenchmarkProblemsPath"] = "1_BenchmarkProblems" # subdirectory for benchmarking phases
@@ -240,7 +239,6 @@ globalParameters["CurrentISA"] = (0,0,0)
 globalParameters["AMDGPUArchPath"] = None      # /opt/rocm/llvm/bin/amdgpu-arch
 globalParameters["ROCmAgentEnumeratorPath"] = None      # /opt/rocm/bin/rocm_agent_enumerator
 globalParameters["ROCmSMIPath"] = None                  # /opt/rocm/bin/rocm-smi
-globalParameters["AssemblerPath"] = None                # /opt/rocm/llvm/bin/clang++
 globalParameters["WorkingPath"] = os.getcwd()           # path where tensile called from
 globalParameters["IndexChars"] =  "IJKLMNOPQRSTUVWXYZ"  # which characters to use for C[ij]=Sum[k] A[ik]*B[jk]
 globalParameters["ScriptPath"] = os.path.dirname(os.path.realpath(__file__))            # path to Tensile/Tensile.py
@@ -255,14 +253,11 @@ else:
   globalParameters["RuntimeLanguage"] = "HIP"
 
 globalParameters["CodeObjectVersion"] = "default"
-globalParameters["CxxCompiler"] = "amdclang++" if os.name != "nt" else "clang++"
-globalParameters["CCompiler"] = "amdclang" if os.name != "nt" else "clang"
 globalParameters["Architecture"] = "all"
 
 # might be deprecated
 globalParameters["EnableHalf"] = False
 globalParameters["ClientArgs"] = ""
-globalParameters["PackageLibrary"] = False
 
 # perf model
 globalParameters["PerfModelL2ReadHits"] = 0.0
@@ -350,24 +345,6 @@ defaultInternalSupportParams = {
   "UseUniversalArgs": True
 }
 
-def supportedCompiler(compiler: str) -> bool:
-  """ Determines if compiler is supported by Tensile.
-
-      Args:
-          The name of a compiler to test for support.
-
-      Return:
-          If supported True; otherwise, False.
-  """
-  isSupported = (compiler == "hipcc")
-  if os.name == "nt":
-    isSupported = (isSupported or compiler == "clang++")
-  else:
-    isSupported = (isSupported or compiler == "amdclang++")
-
-  if not isSupported: printWarning(f"{compiler} is unsupported for os {os.name}")
-
-  return isSupported
 
 
 
@@ -1621,9 +1598,43 @@ def which(p):
                 return candidate
     return None
 
+def splitArchs():
+  # Helper for architecture
+  def isSupported(arch):
+    return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
+           globalParameters["AsmCaps"][arch]["SupportedSource"]
+
+  if ";" in globalParameters["Architecture"]:
+    wantedArchs = globalParameters["Architecture"].split(";")
+  else:
+    wantedArchs = globalParameters["Architecture"].split("_")
+  archs = []
+  cmdlineArchs = []
+  if "all" in wantedArchs:
+    for arch in globalParameters['SupportedISA']:
+      if isSupported(arch):
+        if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
+          if (arch == (9,0,10)):
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          if globalParameters["AsanBuild"]:
+            archs += [getGfxName(arch) + '-xnack+']
+            cmdlineArchs += [getGfxName(arch) + ':xnack+']
+          else:
+            archs += [getGfxName(arch) + '-xnack-']
+            cmdlineArchs += [getGfxName(arch) + ':xnack-']
+        else:
+          archs += [getGfxName(arch)]
+          cmdlineArchs += [getGfxName(arch)]
+  else:
+    for arch in wantedArchs:
+      archs += [re.sub(":", "-", arch)]
+      cmdlineArchs += [arch]
+  return archs, cmdlineArchs
+
 ################################################################################
 ################################################################################
-def assignGlobalParameters( config ):
+def assignGlobalParameters(config, cxxCompiler=None):
   """
   Assign Global Parameters
   Each global parameter has a default parameter, and the user
@@ -1675,42 +1686,10 @@ def assignGlobalParameters( config ):
     globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
     globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm_agent_enumerator")
 
-  if "CxxCompiler" in config:
-    globalParameters["CxxCompiler"] = config["CxxCompiler"]
-    # Pair the CCompiler with CxxCompiler
-    if globalParameters["CxxCompiler"] == "hipcc":
-       globalParameters["CCompiler"] = "hipcc"
-    else:
-        if supportedCompiler(globalParameters["CxxCompiler"]):
-          globalParameters["CCompiler"] = "clang" if os.name == "nt" else "amdclang"
-        else: # unkown c++ compiler so set c compile rto be the same
-          globalParameters["CCompiler"] = globalParameters["CxxCompiler"]
-
-  if "CCompiler" in config:
-    globalParameters["CCompiler"] = config["CCompiler"]
-
-  if "TENSILE_ROCM_ASSEMBLER_PATH" in os.environ:
-    globalParameters["AssemblerPath"] = os.environ.get("TENSILE_ROCM_ASSEMBLER_PATH")
-  elif globalParameters["AssemblerPath"] is None and supportedCompiler(globalParameters["CxxCompiler"]):
-    if os.name == "nt":
-      globalParameters["AssemblerPath"] = locateExe(globalParameters["ROCmBinPath"], "clang++.exe")
-    else:
-      bin_path = "llvm/bin" if globalParameters["CxxCompiler"] == "hipcc" else "bin"
-      compiler = "clang++" if globalParameters["CxxCompiler"] == "hipcc" else "amdclang++"
-      globalParameters["AssemblerPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], bin_path), compiler)
-
   globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
   globalParameters["ROCmLdPath"]  = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld")
 
   globalParameters["ExtractKernelPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "hip/bin"), "extractkernel")
-
-  if "TENSILE_ROCM_OFFLOAD_BUNDLER_PATH" in os.environ:
-    globalParameters["ClangOffloadBundlerPath"] = os.environ.get("TENSILE_ROCM_OFFLOAD_BUNDLER_PATH")
-  else:
-    if os.name == "nt":
-      globalParameters["ClangOffloadBundlerPath"] = locateExe(globalParameters["ROCmBinPath"], "clang-offload-bundler.exe")
-    else:
-      globalParameters["ClangOffloadBundlerPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "clang-offload-bundler")
 
   if "AMDGPUArchPath" in config:
     globalParameters["AMDGPUArchPath"] = config["AMDGPUArchPath"]
@@ -1736,7 +1715,7 @@ def assignGlobalParameters( config ):
 
   for v in globalParameters["SupportedISA"] + [(0,0,0)]:
     ti = TensileInstructions()
-    ti.init(v, globalParameters["AssemblerPath"], (globalParameters["PrintLevel"] >= 2))
+    ti.init(v, cxxCompiler, (globalParameters["PrintLevel"] >= 2))
     globalParameters["AsmCaps"][v] = ti.getAsmCaps()
     globalParameters["ArchCaps"][v] = ti.getArchCaps()
     globalParameters["AsmBugs"][v] = ti.getAsmBugs()
@@ -1773,10 +1752,7 @@ def assignGlobalParameters( config ):
     for line in output.split('\n'):
       if 'HIP version' in line:
         globalParameters['HipClangVersion'] = line.split()[2]
-        print1("# Found  hipcc version " + globalParameters['HipClangVersion'])
-      if 'AMD clang version' in line:
-        globalParameters['AMDClangVersion'] = line.split()[3]
-        print1("# Found  clang version " + globalParameters['AMDClangVersion'])
+        print1("# Found hipcc version " + globalParameters['HipClangVersion'])
 
   except (subprocess.CalledProcessError, OSError) as e:
       printWarning("Error: {} running {} {} ".format('hipcc', '--version',  e))
@@ -1786,6 +1762,7 @@ def assignGlobalParameters( config ):
     if key not in globalParameters:
       printWarning("Global parameter %s = %s unrecognised." % ( key, value ))
     globalParameters[key] = value
+
 
 def setupRestoreClocks():
   import atexit

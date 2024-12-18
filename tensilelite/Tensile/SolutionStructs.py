@@ -1055,8 +1055,9 @@ def isExtractableIndex(ks, index, tc='x'):
 class Solution(collections.abc.Mapping):
 
   ########################################
-  def __init__(self, config):
+  def __init__(self, config, cxxCompiler: str):
     self._name = None
+    self.cxxCompiler = cxxCompiler
     config = config
 
     self._state = {}
@@ -1233,7 +1234,7 @@ class Solution(collections.abc.Mapping):
       state["ProblemType"]["GroupedGemm"] = False
       state["KernelLanguage"] = "Source"
       state["Kernel"] = {"WavefrontSize": self["WavefrontSize"], "ISA": tuple(self["ISA"])}
-      self.activationFunctionObjects.append(KernelWriterActivationFunction(state))
+      self.activationFunctionObjects.append(KernelWriterActivationFunction(state, self.cxxCompiler))
 
   def initActivationOnlyKernelObjects(self):
     self.activationOnlyKernelObjects = []
@@ -1384,6 +1385,17 @@ class Solution(collections.abc.Mapping):
       if state["MacroTile0"] != state["MacroTile"][0] \
           or state["MacroTile1"] != state["MacroTile"][1]:
         reject(state, "MacroTile mismatch")
+
+    # tail loop optimization
+    if (tuple(state["ISA"]) != (9, 4, 2)) or \
+       (state["ProblemType"]["Sparse"]) or \
+       (state["LocalSplitU"] > 1) or \
+       (state["WaveSeparateGlobalReadA"] != 0) or \
+       (state["WaveSeparateGlobalReadB"] != 0) or \
+       (state["DirectToVgprA"] or state["DirectToVgprB"]):
+       state["tailLoopOpt"] = False
+    else:
+       state["tailLoopOpt"] = True
 
     # done
     state["AssignedProblemIndependentDerivedParameters"] = True
@@ -2807,8 +2819,6 @@ class Solution(collections.abc.Mapping):
             if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
               state["GlobalReadVectorWidthA"] = int(curGRVW)
             curGRVW *= 2
-    else:
-      state["GlobalReadVectorWidthA"] = 1
 
     # Default GlobalReadVectorWidthB
     if state["EnableMatrixInstruction"]:
@@ -2827,8 +2837,6 @@ class Solution(collections.abc.Mapping):
             if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:
               state["GlobalReadVectorWidthB"] = int(curGRVW)
             curGRVW *= 2
-    else:
-      state["GlobalReadVectorWidthB"] = 1
 
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
     if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
@@ -3493,7 +3501,13 @@ class Solution(collections.abc.Mapping):
       ldsNumBytesAB = state["LdsOffsetB"] + ldsNumBytesB
 
     # lds buffer size for reduction
+    # if User want to control the LDS usage, we may open this para in the future
     ldsNumBytesReduction = state["LocalSplitU"] * state["MacroTile0"] * state["MacroTile1"] * state["ProblemType"]["ComputeDataType"].numBytes() if state["LocalSplitU"] > 1 else 0
+    state["LocalSplitUReuseLDS"] = 1
+    if ldsNumBytesReduction > globalParameters["MaxLDS"]:
+      state["LocalSplitUReuseLDS"] = math.ceil(ldsNumBytesReduction / globalParameters["MaxLDS"])
+      # reserve all the LDS to LSU.
+      ldsNumBytesReduction = globalParameters["MaxLDS"]
 
     # lds max occupancy
     ldsSizeOccupancy = globalParameters["DeviceLDS"] // state["MaxOccupancy"]
@@ -3836,7 +3850,6 @@ class Solution(collections.abc.Mapping):
       state["PrefetchLocalRead"] = 0
     if not state["EnableMatrixInstruction"]:
       state["ClusterLocalRead"] = 0
-      state["PrefetchLocalRead"] = 0
 
     # reject iterations are not enough to use wider local read
     if state["EnableMatrixInstruction"] and state["PrefetchLocalRead"] > 0:
