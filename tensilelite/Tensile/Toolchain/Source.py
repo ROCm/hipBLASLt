@@ -22,6 +22,7 @@
 #
 ################################################################################
 
+import functools
 import itertools
 import os
 import re
@@ -163,7 +164,7 @@ def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Pa
     return coPath
 
 
-def _buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
+def _buildSourceCodeObjectFile(toolchain: SourceToolchain, destPath: Union[Path, str], hipCoPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
     Args:
@@ -175,8 +176,8 @@ def _buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Pat
     Returns:
         List of paths to the created code objects.
     """
-    buildPath = Path(ensurePath(os.path.join(globalParameters['WorkingPath'], 'code_object_tmp')))
-    destPath = Path(ensurePath(os.path.join(outputPath, 'library')))
+    buildPath = Path(ensurePath(hipCoPath))
+    destPath = Path(ensurePath(destPath))
     kernelPath = Path(kernelPath)
 
     if "CmakeCxxCompiler" in globalParameters and globalParameters["CmakeCxxCompiler"] is not None:
@@ -189,7 +190,7 @@ def _buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Pat
     _, cmdlineArchs = splitArchs()
 
     objPath = str(buildPath / objFilename)
-    toolchain.compile(str(kernelPath), objPath, str(outputPath), cmdlineArchs)
+    toolchain.compile(str(kernelPath), objPath, str(destPath), cmdlineArchs)
 
     for target in toolchain.targets(objPath):
       match = re.search("gfx.*$", target)
@@ -208,7 +209,7 @@ def _buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Pat
 
     return coPaths
 
-def buildSourceCodeObjectFiles(toolchain: SourceToolchain, kernelFiles: List[Path], outputPath: Path) -> Iterable[str]:
+def buildSourceCodeObjectFiles(toolchain: SourceToolchain, kernelFiles: List[Path], destPath: Path, hipCoPath: Path) -> Iterable[str]:
     """Compiles HIP source code files into code object files.
 
     Args:
@@ -220,6 +221,6 @@ def buildSourceCodeObjectFiles(toolchain: SourceToolchain, kernelFiles: List[Pat
     Returns:
         List of paths to the created code objects.
     """
-    args    = zip(itertools.repeat(toolchain), itertools.repeat(outputPath), kernelFiles)
-    coFiles = ParallelMap2(_buildSourceCodeObjectFile, args, "Compiling source kernels")
+    fn = functools.partial(_buildSourceCodeObjectFile, toolchain, destPath, hipCoPath)
+    coFiles = ParallelMap2(fn, kernelFiles, "Compiling source kernels", multiArg=False)
     return itertools.chain.from_iterable(coFiles)

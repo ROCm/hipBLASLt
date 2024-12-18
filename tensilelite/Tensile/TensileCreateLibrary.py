@@ -256,18 +256,15 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
 # Write Solutions and Kernels for BenchmarkClient or LibraryClient
 ################################################################################
 @timing
-def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
+def writeSolutionsAndKernels(outputPath, buildTmpPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False, compress=True):
-  codeObjectFiles = []
 
-  # Push working path into build_tmp folder because there may be more than
-  # one process running this script. This is to avoid build directory clashing.
-  # NOTE: file paths must not contain the lower case word 'kernel' or the
-  # /opt/rocm/bin/extractkernel will fail.
-  # See buildSourceCodeObjectFile:167 for the call to this binary.
-  Common.pushWorkingPath('build_tmp')
-  Common.pushWorkingPath(os.path.basename(outputPath).upper())
-  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+  outputPath = Path(outputPath)
+  destLibPath = ensurePath(outputPath / "library")
+
+  buildTmpPath = Path(buildTmpPath) / outputPath.stem.upper()
+  tmpAsmPath = ensurePath(buildTmpPath / "assembly")
+  tmpHipCoPath = ensurePath(buildTmpPath / "code_object_tmp")
 
   if not globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
     ensurePath(os.path.join(outputPath, "Kernels"))
@@ -304,16 +301,15 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   srcKernelFiles = buildKernelSourceAndHeaderFiles(srcResults, outputPath)
   printWarning(f"THERE ARE {len(srcKernelFiles)} SOURCE   KERNEL FILES TO BUILD")
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
-  codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, outputPath)
 
-  fn = functools.partial(writeAssembly, asmPath)
+  codeObjectFiles = []
+  codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, destLibPath, tmpHipCoPath)
+
+  fn = functools.partial(writeAssembly, tmpAsmPath)
   ret = Common.ParallelMap2(fn, asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
   for p, isa, wfsize in ret:
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wfsize)
-  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
-
-  Common.popWorkingPath() # build_tmp
-  Common.popWorkingPath() # workingDir
+  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, tmpAsmPath, compress)
 
   return codeObjectFiles, numKernels 
 
@@ -337,9 +333,7 @@ def getSolutionAndKernelWriters(solutions, kernels, assembler):
 # copy static cpp files and headers
 ################################################################################
 @timing
-def copyStaticFiles(outputPath=None):
-  if outputPath is None:
-    outputPath = globalParameters["WorkingPath"]
+def copyStaticFiles(outputPath):
   libraryStaticFiles = [
     "TensileTypes.h",
     "tensile_bfloat16.h",
@@ -350,9 +344,7 @@ def copyStaticFiles(outputPath=None):
     "memory_gfx.h" ]
 
   for fileName in libraryStaticFiles:
-    # copy file
-    shutil.copy( os.path.join(globalParameters["SourcePath"], fileName), \
-        outputPath )
+    shutil.copy(os.path.join(globalParameters["SourcePath"], fileName), outputPath)
 
   return libraryStaticFiles
 
@@ -563,18 +555,17 @@ def TensileCreateLibrary():
 
   args = argParser.parse_args()
 
-  logicPath = args.LogicPath
-  outputPath = args.OutputPath
-  cxxCompiler = args.CxxCompiler
-  offloadBundler   = args.OffloadBundler
-  assembler = args.Assembler
   libraryFormat = args.LibraryFormat
   useCompression = not args.NoCompress
   coVersion = getCOVFromParam(args.CodeObjectVersion)
 
-  print2("OutputPath: %s" % outputPath)
+  # Use build_tmp directory to avoid clashing for intermediate files
+  buildTmpPath = Path.cwd() / "build_tmp"
+  logicPath = args.LogicPath
+  outputPath = os.path.abspath(args.OutputPath)
   ensurePath(outputPath)
-  outputPath = os.path.abspath(outputPath)
+  print2("OutputPath: %s" % outputPath)
+
   arguments = {}
   arguments["RuntimeLanguage"] = args.RuntimeLanguage
   arguments["CodeObjectVersion"] = args.CodeObjectVersion
@@ -593,12 +584,7 @@ def TensileCreateLibrary():
   arguments["LibraryFormat"] = args.LibraryFormat
   if args.no_enumerate:
     arguments["AMDGPUArchPath"] = False
-
   arguments["GenerateSourcesAndExit"] = args.GenerateSourcesAndExit
-  if arguments["GenerateSourcesAndExit"]:
-    # Generated sources are preserved and go into output dir
-    arguments["WorkingPath"] = outputPath
-
   arguments["CpuThreads"] = args.CpuThreads
   arguments["PrintLevel"] = args.PrintLevel
   arguments["PrintTiming"] = args.PrintTiming
@@ -698,7 +684,7 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions,
+  codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, buildTmpPath, asmToolchain, srcToolchain, solutions,
                                              kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \

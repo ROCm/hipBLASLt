@@ -169,7 +169,7 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 
     return newObjFilesOutput
 
-def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAsm, outputPath, compress: bool=True):
+def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAsm, destPath, asmDir, compress: bool=True):
     
     isAsm = lambda k: k["KernelLanguage"] == "Assembly"
 
@@ -177,9 +177,7 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
     extCo = ".co"
     extCoRaw = ".co.raw"
 
-    destDir = Path(ensurePath(os.path.join(outputPath, 'library')))
-    asmDir = Path(ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly")))
-
+    destDir = Path(ensurePath(destPath))
 
     archKernelMap = collections.defaultdict(list)
     for k in filter(isAsm, kernels):

@@ -119,7 +119,8 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
         ensurePath(os.path.join(globalParameters["WorkingPath"], "Solutions"))
         ensurePath(os.path.join(globalParameters["WorkingPath"], "Kernels"))
 
-    copyStaticFiles()
+    print("DELETEME", globalParameters["WorkingPath"])
+    copyStaticFiles(globalParameters["WorkingPath"])
 
     kernels = []
     kernelHelperOjbs = []

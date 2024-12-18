@@ -83,7 +83,8 @@ def main(config, cxxCompiler: str, cCompiler: str):
   stepBaseDir = pushWorkingPath(globalParameters["LibraryClientPath"])
 
   pushWorkingPath("source")
-  copyStaticFiles()
+  print("DELETEME", globalParameters["WorkingPath"])
+  copyStaticFiles(globalParameters["WorkingPath"])
 
   ##############################################################################
   # Read Logic Files

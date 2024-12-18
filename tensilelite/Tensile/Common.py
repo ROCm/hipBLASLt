@@ -1693,8 +1693,6 @@ def assignGlobalParameters(config, cxxCompiler=None):
   globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
   globalParameters["ROCmLdPath"]  = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld")
 
-  globalParameters["ExtractKernelPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "hip/bin"), "extractkernel")
-
   if "AMDGPUArchPath" in config:
     globalParameters["AMDGPUArchPath"] = config["AMDGPUArchPath"]
 
