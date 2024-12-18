@@ -212,8 +212,8 @@ template <typename TcCast, typename Tc, typename TiA>
 void cast_mul(customVector<TcCast>& dst,
               const TiA*            A,
               bool                  isScaleAVec,
-              const TcCast*         scaleAVec,
-              const TcCast*         AlphaVec,
+              const Tc*             scaleAVec,
+              const Tc*             AlphaVec,
               bool                  transA,
               int64_t               m,
               int64_t               k,
@@ -282,8 +282,8 @@ void cast_mul(customVector<TcCast>& dst,
               const void*           src,
               hipDataType           TiA,
               bool                  isScaleAVec,
-              const TcCast*         scaleAVec,
-              const TcCast*         AlphaVec,
+              const Tc*             scaleAVec,
+              const Tc*             AlphaVec,
               bool                  transA,
               int64_t               m,
               int64_t               k,
@@ -413,8 +413,8 @@ template <typename TcCast, typename Tc, typename TciACast, typename TiA>
 void cast_mul_with_Tci(customVector<TcCast>& dst,
                        const TiA*            A,
                        bool                  isScaleAVec,
-                       const TcCast*         scaleAVec,
-                       const TcCast*         AlphaVec,
+                       const Tc*             scaleAVec,
+                       const Tc*             AlphaVec,
                        bool                  transA,
                        int64_t               m,
                        int64_t               k,
@@ -489,8 +489,8 @@ void cast_mul_with_Tci(customVector<TcCast>& dst,
                        const void*           src,
                        hipDataType           TiA,
                        bool                  isScaleAVec,
-                       const TcCast*         scaleAVec,
-                       const TcCast*         AlphaVec,
+                       const Tc*             scaleAVec,
+                       const Tc*             AlphaVec,
                        bool                  transA,
                        int64_t               m,
                        int64_t               k,
@@ -627,8 +627,8 @@ void cast_mul_with_Tci(customVector<TcCast>& dst,
                        const void*           src,
                        hipDataType           TiA,
                        bool                  isScaleAVec,
-                       const TcCast*         scaleAVec,
-                       const TcCast*         AlphaVec,
+                       const Tc*             scaleAVec,
+                       const Tc*             AlphaVec,
                        bool                  transA,
                        int64_t               m,
                        int64_t               k,
@@ -880,9 +880,9 @@ void cblas_gemm(hipblasOperation_t       transA,
                 Tc                       beta,
                 std::add_pointer_t<void> C,
                 int64_t                  ldc,
-                const void*              AlphaVec,
-                const void*              scaleAVec,
-                const void*              scaleBVec,
+                const Tc*                AlphaVec,
+                const Tc*                scaleAVec,
+                const Tc*                scaleBVec,
                 Tc                       scaleD,
                 bool                     isScaleAVec,
                 bool                     isScaleBVec,
@@ -894,16 +894,8 @@ void cblas_gemm(hipblasOperation_t       transA,
                 hipDataType              TciB,
                 bool                     alt)
 {
-    using IntTcCast = std::conditional_t<std::is_same<Tc, int32_t>::value, double, Tc>;
-    using HalfTcCast = std::conditional_t<std::is_same<Tc, hipblasLtHalf>::value, float, Tc>;
-    using TcCast = std::conditional_t<std::is_same<Tc, int32_t>::value, IntTcCast, HalfTcCast>;
-
-    if (Tc_enum == HIP_R_32I) {
-        Tc_enum = HIP_R_64F;
-    } else if (Tc_enum == HIP_R_16F) {
-        Tc_enum = HIP_R_32F;
-    }
-
+    using TcCast         = std::conditional_t<std::is_same<Tc, int32_t>::value, double, Tc>;
+    Tc_enum              = (Tc_enum == HIP_R_32I) ? HIP_R_64F : Tc_enum;
     hipDataType TciACast = (TciA == HIP_R_32I) ? HIP_R_64F : TciA;
     hipDataType TciBCast = (TciB == HIP_R_32I) ? HIP_R_64F : TciB;
 
@@ -912,28 +904,8 @@ void cblas_gemm(hipblasOperation_t       transA,
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
-    size_t scaleAVec_size = isScaleAVec ? (transA == HIPBLAS_OP_N ? k : m) : 1;
-    size_t scaleBVec_size = isScaleBVec ? (transB != HIPBLAS_OP_N ? n : k) : 1;
 
-    customVector<TcCast> A_Tc, B_Tc, C_Tc, AlphaVec_Tc, scaleA_Tc, scaleB_Tc;
-
-    if(AlphaVec)
-    {
-        AlphaVec_Tc.initialize(m);
-        cast_mul(AlphaVec_Tc, (Tc*)AlphaVec, m);
-    }
-
-    if(scaleAVec)
-    {
-        scaleA_Tc.initialize(scaleAVec_size);
-        cast_mul(scaleA_Tc, (Tc*)scaleAVec, scaleAVec_size);
-    }
-
-    if(scaleBVec)
-    {
-        scaleB_Tc.initialize(scaleBVec_size);
-        cast_mul(scaleB_Tc, (Tc*)scaleBVec, scaleBVec_size);
-    }
+    customVector<TcCast> A_Tc, B_Tc, C_Tc;
 
     A_Tc.initialize(sizeA);
     if(realDataTypeSize(TiA) > realDataTypeSize(TciACast))
@@ -942,8 +914,8 @@ void cblas_gemm(hipblasOperation_t       transA,
                                       A,
                                       TiA,
                                       isScaleAVec,
-                                      scaleA_Tc,
-                                      AlphaVec_Tc,
+                                      scaleAVec,
+                                      AlphaVec,
                                       transA == HIPBLAS_OP_N,
                                       m,
                                       k,
@@ -953,7 +925,7 @@ void cblas_gemm(hipblasOperation_t       transA,
     else
     {
         cast_mul<TcCast, Tc>(
-            A_Tc, A, TiA, isScaleAVec, scaleA_Tc, AlphaVec_Tc, transA == HIPBLAS_OP_N, m, k, sizeA);
+            A_Tc, A, TiA, isScaleAVec, scaleAVec, AlphaVec, transA == HIPBLAS_OP_N, m, k, sizeA);
     }
 
     B_Tc.initialize(sizeB);
@@ -963,7 +935,7 @@ void cblas_gemm(hipblasOperation_t       transA,
                                       B,
                                       TiB,
                                       isScaleBVec,
-                                      scaleB_Tc,
+                                      scaleBVec,
                                       nullptr,
                                       transB != HIPBLAS_OP_N,
                                       n,
@@ -974,7 +946,7 @@ void cblas_gemm(hipblasOperation_t       transA,
     else
     {
         cast_mul<TcCast, Tc>(
-            B_Tc, B, TiB, isScaleBVec, scaleB_Tc, nullptr, transB != HIPBLAS_OP_N, n, k, sizeB);
+            B_Tc, B, TiB, isScaleBVec, scaleBVec, nullptr, transB != HIPBLAS_OP_N, n, k, sizeB);
     }
 
     if(To == Tc_enum)
@@ -1021,7 +993,7 @@ void cblas_gemm(hipblasOperation_t       transA,
     {
         static constexpr int64_t small = 600; // seeing random NaNs with blis on some small sizes
         if(m > small || n > small || k > small || lda > small || ldb > small || ldc > small)
-        {
+        {        
             cblas_dgemm(CblasColMajor,
                     HIPOperationToCBLASTanspose(transA),
                     HIPOperationToCBLASTanspose(transB),
@@ -1070,9 +1042,9 @@ void cblas_gemm(hipblasOperation_t       transA,
                                  Tc                       beta,        \
                                  std::add_pointer_t<void> C,           \
                                  int64_t                  ldc,         \
-                                 const void*              AlphaVec,    \
-                                 const void*              scaleAVec,   \
-                                 const void*              scaleBVec,   \
+                                 const Tc*                AlphaVec,    \
+                                 const Tc*                scaleAVec,   \
+                                 const Tc*                scaleBVec,   \
                                  Tc                       scaleD,      \
                                  bool                     isScaleAVec, \
                                  bool                     isScaleBVec, \
@@ -1084,7 +1056,6 @@ void cblas_gemm(hipblasOperation_t       transA,
                                  hipDataType              TciB,        \
                                  bool                     alt);
 
-CREATEFUNCTION(hipblasLtHalf)
 CREATEFUNCTION(float)
 CREATEFUNCTION(double)
 CREATEFUNCTION(int32_t)

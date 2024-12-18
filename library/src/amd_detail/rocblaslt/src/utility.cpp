@@ -203,10 +203,6 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_A_SCALE_POINTER_VEC";
     case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT:
         return "MATMUL_DESC_B_SCALE_POINTER_VEC";
-    case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT:
-        return "MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT";
-    case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT:
-        return "MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT";
     default:
         return "Invalid";
     }
