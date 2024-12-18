@@ -91,9 +91,6 @@ namespace
         switch(type)
         {
         case TensileLite::DataType::Half:
-            *alpha = *(hipblasLtHalf*)alphaPtr;
-            *beta  = *(hipblasLtHalf*)betaPtr;
-            break;
         case TensileLite::DataType::Float:
         case TensileLite::DataType::XFloat32:
             *alpha = *(float*)alphaPtr;
@@ -265,12 +262,11 @@ namespace
         return HIP_R_32F;
     }
 
-    TensileLite::DataType roc2TensileType(rocblaslt_compute_type type, bool fallback = true)
+    TensileLite::DataType roc2TensileType(rocblaslt_compute_type type)
     {
         switch(type)
         {
         case rocblaslt_compute_f16: // setting compute_type to f16_r will fallback to f32_r
-            return fallback ? TensileLite::DataType::Float : TensileLite::DataType::Half;
         case rocblaslt_compute_f32:
         case rocblaslt_compute_f32_fast_xf32:
         case rocblaslt_compute_f32_fast_f16:
@@ -902,7 +898,7 @@ namespace
         auto b_type       = hipDataType_to_tensile_type(prob.b_type);
         auto c_type       = hipDataType_to_tensile_type(prob.c_type);
         auto d_type       = hipDataType_to_tensile_type(prob.d_type);
-        auto compute_type = roc2TensileType(prob.compute_type, false);
+        auto compute_type = roc2TensileType(prob.compute_type);
 
         // Tensor descriptors for a, b
         TensileLite::TensorDescriptor a, b;
@@ -925,11 +921,6 @@ namespace
         double alpha = 0, beta = 0;
         assignAlphaBeta(compute_type, prob.alpha, prob.beta, &alpha, &beta);
         auto k = prob.k && alpha ? prob.k : 0;
-
-        // fallback to f32 for f16 compute type after alpha/beta assignment
-        if (prob.compute_type == rocblaslt_compute_f16) {
-            compute_type = roc2TensileType(prob.compute_type);
-        }
 
         // clang-format off
 
@@ -1110,7 +1101,7 @@ namespace
         auto b_type       = hipDataType_to_tensile_type(prob.b_type);
         auto c_type       = hipDataType_to_tensile_type(prob.c_type);
         auto d_type       = hipDataType_to_tensile_type(prob.d_type);
-        auto compute_type = roc2TensileType(prob.compute_type, false);
+        auto compute_type = roc2TensileType(prob.compute_type);
 
         // Tensile Indices for contraction problem
         TensileLite::ContractionProblemGemm::FreeIndices  freeIndex(2);
@@ -1187,11 +1178,6 @@ namespace
 
         double alpha = 0, beta = 0;
         assignAlphaBeta(compute_type, prob.alpha, prob.beta, &alpha, &beta);
-
-        // fallback to f32 for f16 compute type after alpha/beta assignment
-        if (prob.compute_type == rocblaslt_compute_f16) {
-            compute_type = roc2TensileType(prob.compute_type);
-        }
 
         tensileProblem.updateProblem(freeIndex, batchIndex, boundIndex, beta, prob.workspaceSize);
 
@@ -1284,7 +1270,7 @@ namespace
  ***************************************************************/
     auto GetTensileInputs(const RocblasltContractionProblem& prob)
     {
-        auto compute_type = roc2TensileType(prob.compute_type, false);
+        auto compute_type = roc2TensileType(prob.compute_type);
 
         // Structure describing the inputs (A, B, C, D, alpha, beta)
         TensileLite::ContractionInputs inputs;
@@ -1321,7 +1307,7 @@ namespace
         static const std::map<TensileLite::DataType, TensileLite::ConstantVariant> argument_vals = {
             {TensileLite::DataType::Float, 0.0f},
             {TensileLite::DataType::XFloat32, 0.0f},
-            {TensileLite::DataType::Half, (hipblasLtHalf)0.0},
+            {TensileLite::DataType::Half, 0.0f},
             {TensileLite::DataType::Int32, (int32_t)0},
             {TensileLite::DataType::Double, (double)0.0},
         };
@@ -1332,7 +1318,7 @@ namespace
         }
 
         // push 2 activation arguments
-        std::visit([&inputs, &prob](auto val) {
+        std::visit([&inputs, &prob](auto val) { 
             inputs.activationArgs.push_back(val);
             inputs.activationArgs.push_back(val);
             if(prob.k)
@@ -1341,13 +1327,6 @@ namespace
                 inputs.alpha = val;
             inputs.beta = *(decltype(val)*)(prob.beta);
         }, argument_vals.at(compute_type));
-
-        // convert alpha and beta to float if compute type is half
-        if (prob.compute_type == rocblaslt_compute_f16) {
-            inputs.activationArgs = {0.0f, 0.0f};
-            inputs.alpha = static_cast<float>(std::get<hipblasLtHalf>(inputs.alpha));
-            inputs.beta = static_cast<float>(std::get<hipblasLtHalf>(inputs.beta));
-        }
 
         return inputs;
     }
