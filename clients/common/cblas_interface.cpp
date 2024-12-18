@@ -895,6 +895,8 @@ void cblas_gemm(hipblasOperation_t       transA,
                 bool                     alt)
 {
     using IntTcCast = std::conditional_t<std::is_same<Tc, int32_t>::value, double, Tc>;
+    // cblas does not support hipblasLtHalf, so convert to higher precision float
+    // This will give more precise result which is acceptable for testing
     using HalfTcCast = std::conditional_t<std::is_same<Tc, hipblasLtHalf>::value, float, Tc>;
     using TcCast = std::conditional_t<std::is_same<Tc, int32_t>::value, IntTcCast, HalfTcCast>;
 
@@ -907,13 +909,11 @@ void cblas_gemm(hipblasOperation_t       transA,
     hipDataType TciACast = (TciA == HIP_R_32I) ? HIP_R_64F : TciA;
     hipDataType TciBCast = (TciB == HIP_R_32I) ? HIP_R_64F : TciB;
 
-    // cblas does not support hipblasLtHalf, so convert to higher precision float
-    // This will give more precise result which is acceptable for testing
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
-    size_t scaleAVec_size = isScaleAVec ? (transA == HIPBLAS_OP_N ? k : m) : 1;
-    size_t scaleBVec_size = isScaleBVec ? (transB != HIPBLAS_OP_N ? n : k) : 1;
+    size_t scaleAVec_size = isScaleAVec ? m : 1;
+    size_t scaleBVec_size = isScaleBVec ? n : 1;
 
     customVector<TcCast> A_Tc, B_Tc, C_Tc, AlphaVec_Tc, scaleA_Tc, scaleB_Tc;
 
