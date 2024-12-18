@@ -31,7 +31,7 @@ import subprocess
 import warnings
 
 from pathlib import Path
-from typing import List, Union, Tuple
+from typing import List, Literal, Union, Tuple
 
 
 from .. import Utils
@@ -39,12 +39,34 @@ from ..TensileInstructions import getGfxName, getCOVFromParam
 from ..Common import globalParameters, print2, ensurePath, printWarning, IsaVersion
 
 class AssemblyToolchain:
-    def __init__(self, assembler: str, bundler: str, buildIdKind: str):
+    def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: Literal[4, 5]):
         self.assembler = assembler
         self.bundler = bundler
         self.buildIdKind = buildIdKind
+        self.coVersion = coVersion
 
-    def assemble(self, srcPath: str, destPath: str, coVersion: str, isa: IsaVersion, wavefrontSize: int, debug: bool=False):
+    def invoke(self, args: List[str], desc: str=""):
+      """Invokes a subprocess with the provided arguments.
+
+      Args:
+          args: A list of arguments to pass to the subprocess.
+          desc: A description of the subprocess invocation.
+
+      Raises:
+          RuntimeError: If the subprocess invocation fails.
+      """
+      print2(f"{desc}: {' '.join(args)}")
+      try:
+          out = subprocess.check_output(args, stderr=subprocess.STDOUT)
+      except subprocess.CalledProcessError as err:
+          raise RuntimeError(
+              f"Error with {desc}: {err.output}\n"
+              f"Failed command: {' '.join(args)}"
+          )
+      print2(f"Output: {out}")
+      return out
+
+    def assemble(self, srcPath: str, destPath: str, gfx: str, wavefrontSize: int, debug: bool=False):
       """Assemble an assembly source file into an object file.
 
       Args:
@@ -54,25 +76,21 @@ class AssemblyToolchain:
           isa: The target GPU architecture in ISA format.
           wavefrontSize: The wavefront size to use.
       """
-      coVersion = getCOVFromParam(coVersion)
-      cpu = getGfxName(isa)
-      wavefrontFlag = "-mwavefrontsize64" if wavefrontSize == 64 else "-mno-wavefrontsize64" 
-    
       launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
       args = [
           *launcher, 
           self.assembler, 
           "-x", "assembler", 
           "--target=amdgcn-amd-amdhsa", 
-          f"-mcode-object-version={coVersion}", 
-          f"-mcpu={cpu}",  
-          wavefrontFlag, 
+          f"-mcode-object-version={self.coVersion}", 
+          f"-mcpu={gfx}",  
+          "-mwavefrontsize64" if wavefrontSize == 64 else "-mno-wavefrontsize64"
           "-g" if debug else "",
           "-c", 
           "-o", destPath, srcPath
       ]
-      print2(f"Assembling object files: {' '.join(args)}")
-      subprocess.check_call(args)
+
+      return self.invoke(args, "Assembling assembly source code into object file (.s -> .o)")
 
     def link(self, srcPaths: List[str], destPath: str):
         """Links object files into a code object file.
@@ -100,8 +118,8 @@ class AssemblyToolchain:
                 "-Xlinker", f"--build-id={self.buildIdKind}",
                 "-o", destPath, *srcPaths
             ]
-        print2(f"Linking assembly object files into code object: {' '.join(args)}")
-        subprocess.check_call(args)
+        
+        return self.invoke(args, "Linking assembly object files into code object (*.o -> .co)")
 
     def compress(self, srcPath: str, destPath: str, gfx: str):
         """Compresses a code object file using the provided bundler.
@@ -125,14 +143,7 @@ class AssemblyToolchain:
             f"--output={destPath}",
         ]
 
-        print2(f"Bundling/compressing assembly code object: {' '.join(args)}")
-        try:
-            out = subprocess.check_output(args, stderr=subprocess.STDOUT)
-            print2(f"Output: {out}")
-        except subprocess.CalledProcessError as err:
-            raise RuntimeError(
-                f"Error compressing code object via bundling: {err.output}\nFailed command: {' '.join(args)}"
-            )
+        return self.invoke(args, "Bundling/compressing code object file (.co -> .co)")
 
 
 def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjFiles: int=10000) -> List[str]:
@@ -207,20 +218,13 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
 
           coFiles.append(coFile)
       else:
-        # no mergefiles
-        def newCoFileName(kName):
-          if globalParameters["PackageLibrary"]:
-            return os.path.join(destDir, gfx, kName + '.co')
-          else:
-            return os.path.join(destDir, kName + '_' + gfx + '.co')
-
-        def orgCoFileName(kName):
-          return os.path.join(asmDir, kName + '.co')
-
-        for src, dst in Utils.tqdm(((orgCoFileName(kName), newCoFileName(kName)) for kName in \
-                                    map(lambda k: writerAsm.getKernelFileBase(k), archKernels)), "Copying code objects"):
+        # Build mode: no merge files AND no lazy library loading
+        printWarning("Code object files are not compressed in `--no-merge-files` build mode.")
+        for kernel in archKernels:
+          base = writerAsm.getKernelFileBase(kernel)
+          src = str(asmDir / base + extCo)
+          dst = str(destDir / base + "_" + gfx + extCo)
           shutil.copyfile(src, dst)
           coFiles.append(dst)
-        printWarning("Code object files are not compressed in `--no-merge-files` build mode.")
 
     return coFiles

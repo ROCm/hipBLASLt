@@ -29,6 +29,7 @@ if __name__ == "__main__":
     exit(1)
 
 import functools
+
 from . import Common
 from . import ClientExecutable
 from . import EmbeddedData
@@ -41,19 +42,19 @@ from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, assignGlobalParameters, \
                     architectureMap, printWarning, \
-                    splitArchs, IsaVersion
+                    IsaVersion
 from .KernelWriterAssembly import KernelWriterAssembly
 from .KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
 from .Utilities.Profile import profile
+from .TensileInstructions.Utils import getCOVFromParam
 import argparse
 import collections
 import glob
 import itertools
 import os
-import re
 import shutil
 import sys
 from timeit import default_timer as timer
@@ -308,7 +309,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   fn = functools.partial(writeAssembly, asmPath)
   ret = Common.ParallelMap2(fn, asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
   for p, isa, wfsize in ret:
-    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), globalParameters["CodeObjectVersion"], isa, wfsize)
+    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wfsize)
   codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
   Common.popWorkingPath() # build_tmp
@@ -569,6 +570,8 @@ def TensileCreateLibrary():
   assembler = args.Assembler
   libraryFormat = args.LibraryFormat
   useCompression = not args.NoCompress
+  coVersion = getCOVFromParam(args.CodeObjectVersion)
+
   print2("OutputPath: %s" % outputPath)
   ensurePath(outputPath)
   outputPath = os.path.abspath(outputPath)
@@ -616,15 +619,15 @@ def TensileCreateLibrary():
   print1(f"# C Compiler:          {cCompiler} (version {getVersion(cCompiler)})")
   print1(f"# Assembler:           {assembler} (version {getVersion(assembler)})")
   print1(f"# Offload Bundler:     {offloadBundler} (version {getVersion(offloadBundler)})")
-  print1(f"# Code Object Version: {arguments['CodeObjectVersion']}")
+  print1(f"# Code Object Version: {coVersion}")
   print1(f"# Architecture(s):     {arguments['Architecture']}")
   print1(f"# Library Format:      {libraryFormat}")
 
   arguments["AMDClangVersion"] = getVersion(cxxCompiler)
   assignGlobalParameters(arguments, cxxCompiler)
 
-  asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"])
-  srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
+  asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], coVersion)
+  srcToolchain = SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
   if not os.path.exists(logicPath):
     printExit("LogicPath %s doesn't exist" % logicPath)

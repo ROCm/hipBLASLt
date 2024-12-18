@@ -41,6 +41,27 @@ class SourceToolchain:
         self.asanBuild = asanBuild
         self.saveTemps = saveTemps
 
+    def invoke(self, args: List[str], desc: str=""):
+      """Invokes a subprocess with the provided arguments.
+
+      Args:
+          args: A list of arguments to pass to the subprocess.
+          desc: A description of the subprocess invocation.
+
+      Raises:
+          RuntimeError: If the subprocess invocation fails.
+      """
+      print2(f"{desc}: {' '.join(args)}")
+      try:
+          out = subprocess.check_output(args, stderr=subprocess.STDOUT)
+      except subprocess.CalledProcessError as err:
+          raise RuntimeError(
+              f"Error with {desc}: {err.output}\n"
+              f"Failed command: {' '.join(args)}"
+          )
+      print2(f"Output: {out}")
+      return out
+
     def compile(self, srcPath: str, destPath: str, includePath: str, gfxs: List[str]):
         """Compiles a source file into an object file.
 
@@ -59,7 +80,7 @@ class SourceToolchain:
 
         hipFlags = [
             "-D__HIP_HCC_COMPAT_MODE__=1",
-            "--cuda-device-only",
+            "--offload-device-only",
             "-x", "hip", "-O3",    
             "-I", includePath,
             "-Xoffload-linker", f"--build-id={self.buildIdKind}",
@@ -77,12 +98,9 @@ class SourceToolchain:
         args = [
             *launcher, self.compiler, *hipFlags, *archFlags, srcPath, "-c", "-o", destPath
         ]
-        print2(f"Compiling HIP source kernels into object files: {' '.join(args)}")
-        try:
-            out = subprocess.check_output(args, stderr=subprocess.STDOUT)
-            print2(f"Output: {out}" if out else "")
-        except subprocess.CalledProcessError as err:
-            raise RuntimeError(f"Error compiling source object file: {err.output}\nFailed command: {' '.join(args)}")
+
+        return self.invoke(args, f"Compiling HIP source kernels into objects (.cpp -> .o)")
+
 
     def targets(self, objFile: str):
         """Lists the target triples in an object file.
@@ -94,12 +112,7 @@ class SourceToolchain:
             List of target triples in the object file.
         """
         args = [self.bundler, "--type=o", f"--input={objFile}", "-list"]
-        print2(f"Listing target triples in object file: {' '.join(args)}")
-        try:
-            listing = subprocess.check_output(args, stderr=subprocess.STDOUT).decode().split("\n")
-        except subprocess.CalledProcessError as err:
-            raise RuntimeError(f"Error listing target triples in object files: {err.output}\nFailed command: {' '.join(args)}")
-        return listing
+        return self.invoke(args, f"Listing target triples in object file").decode().split("\n")
 
     def unbundle(self, target: str, srcPath: str, destPath: str):
         """Unbundles source code object files using the Clang Offload Bundler.
@@ -121,12 +134,7 @@ class SourceToolchain:
             "--unbundle",
         ]
 
-        print2("Unbundling source code object file: " + " ".join(args))
-        try:
-            out = subprocess.check_output(args, stderr=subprocess.STDOUT)
-            print2(f"Output: {out}" if out else "")
-        except subprocess.CalledProcessError as err:
-            raise RuntimeError(f"Error unbundling source code object file: {err.output}\nFailed command: {' '.join(args)}")
+        return self.invoke(args, f"Unbundling source code object file")
             
 
 def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Path, str], arch: str) -> Union[Path, None]:

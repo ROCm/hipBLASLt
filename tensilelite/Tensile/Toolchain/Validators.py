@@ -24,10 +24,8 @@
 
 import os
 import re
-import shlex
 from pathlib import Path
 from typing import List, NamedTuple, Union
-from warnings import warn
 from subprocess import run, PIPE
 
 ROCM_BIN_PATH = Path("/opt/rocm/bin")
