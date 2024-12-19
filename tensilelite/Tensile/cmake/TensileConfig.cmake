@@ -89,6 +89,8 @@ function(TensileCreateLibraryFiles
        LAZY_LIBRARY_LOADING
        ASAN_BUILD
        KEEP_BUILD_TMP
+       NO_COMPRESS
+       EXPERIMENTAL 
        )
 
   # Single value settings
@@ -152,6 +154,14 @@ function(TensileCreateLibraryFiles
 
   if(Tensile_KEEP_BUILD_TMP)
     set(Options ${Options} "--keep-build-tmp")
+  endif()
+
+  if(Tensile_NO_COMPRESS)
+    set(Options ${Options} "--no-compress")
+  endif()
+
+  if(Tensile_EXPERIMENTAL)
+    set(Options ${Options} "--experimental")
   endif()
 
   if(Tensile_ASAN_BUILD)
@@ -238,9 +248,6 @@ function(TensileCreateLibraryFiles
           set(Tensile_VAR_PREFIX TENSILE)
       endif()
 
-      set(Tensile_MANIFEST_FILE_PATH "${Tensile_OUTPUT_PATH}/library/TensileManifest.txt")
-      message(STATUS "Tensile_MANIFEST_FILE_PATH: ${Tensile_MANIFEST_FILE_PATH}")
-
       if($ENV{ENABLE_ADDRESS_SANITIZER})
         # Must populate LD_PRELOAD with ASAN runtime if ASAN is being used.
         # Find the ASAN RT with compiler and update env for Tensile call.
@@ -254,14 +261,14 @@ function(TensileCreateLibraryFiles
 
       add_custom_command(
         COMMENT "Generating Tensile Libraries"
-        OUTPUT ${Tensile_EMBED_LIBRARY_SOURCE};${Tensile_MANIFEST_FILE_PATH}
+        OUTPUT ${Tensile_OUTPUT_PATH}/library
         COMMAND ${CommandLine}
       )
 
       add_custom_target(
         "${Tensile_VAR_PREFIX}_LIBRARY_TARGET" ALL
         COMMENT "${Tensile_VAR_PREFIX}_LIBRARY_TARGET"
-        DEPENDS ${Tensile_MANIFEST_FILE_PATH}
+        DEPENDS ${Tensile_OUTPUT_PATH}/library
       )
 
   endif()

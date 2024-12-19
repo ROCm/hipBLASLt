@@ -67,7 +67,7 @@
 #include <string_view>
 #include <unistd.h>
 
-#define HIPBLASLT_LIB_PATH "/opt/rocm/hipblaslt/lib"
+#define HIPBLASLT_LIB_PATH "/opt/rocm/lib"
 
 #ifdef ENABLE_ROCTX
 #include <roctracer/roctx.h>
@@ -90,6 +90,7 @@ namespace
     {
         switch(type)
         {
+        case TensileLite::DataType::Half:
         case TensileLite::DataType::Float:
         case TensileLite::DataType::XFloat32:
             *alpha = *(float*)alphaPtr;
@@ -265,6 +266,7 @@ namespace
     {
         switch(type)
         {
+        case rocblaslt_compute_f16: // setting compute_type to f16_r will fallback to f32_r
         case rocblaslt_compute_f32:
         case rocblaslt_compute_f32_fast_xf32:
         case rocblaslt_compute_f32_fast_f16:
@@ -284,8 +286,6 @@ namespace
             return TensileLite::DataType::Double;
         case rocblaslt_compute_i32:
             return TensileLite::DataType::Int32;
-        case rocblaslt_compute_f16:
-            return TensileLite::DataType::Half;
         default:
             throw std::runtime_error("Unsupported type.");
         }
@@ -299,7 +299,6 @@ namespace
     {
         switch(typeCompute)
         {
-        case rocblaslt_compute_f16:
         case rocblaslt_compute_f32_fast_f16:
             return TensileLite::DataType::Half;
         case rocblaslt_compute_f32_fast_bf16:
@@ -1305,43 +1304,29 @@ namespace
         inputs.scaleAlphaVec = reinterpret_cast<const void*>(prob.scaleAlphaVec);
         inputs.amaxD         = reinterpret_cast<void*>(prob.amaxD);
 
-        // push 2 activation arguments
-        if(compute_type == TensileLite::DataType::Float
-           || compute_type == TensileLite::DataType::XFloat32)
-        {
-            inputs.activationArgs.push_back(0.0f);
-            inputs.activationArgs.push_back(0.0f);
-            if(prob.k)
-                inputs.alpha = *(float*)(prob.alpha);
-            else
-                inputs.alpha = 0.f;
-            inputs.beta = *(float*)(prob.beta);
-        }
-        else if(compute_type == TensileLite::DataType::Int32)
-        {
-            inputs.activationArgs.push_back((int32_t)0);
-            inputs.activationArgs.push_back((int32_t)0);
-            if(prob.k)
-                inputs.alpha = *(int32_t*)(prob.alpha);
-            else
-                inputs.alpha = (int32_t)0;
-            inputs.beta = *(int32_t*)(prob.beta);
-        }
-        else if(compute_type == TensileLite::DataType::Double)
-        {
-            inputs.activationArgs.push_back((double)0.0);
-            inputs.activationArgs.push_back((double)0.0);
-            if(prob.k)
-                inputs.alpha = *(double*)(prob.alpha);
-            else
-                inputs.alpha = (double)0;
-            inputs.beta = *(double*)(prob.beta);
-        }
-        else
-        {
+        static const std::map<TensileLite::DataType, TensileLite::ConstantVariant> argument_vals = {
+            {TensileLite::DataType::Float, 0.0f},
+            {TensileLite::DataType::XFloat32, 0.0f},
+            {TensileLite::DataType::Half, 0.0f},
+            {TensileLite::DataType::Int32, (int32_t)0},
+            {TensileLite::DataType::Double, (double)0.0},
+        };
+
+        if (argument_vals.find(compute_type) == argument_vals.end()) {
             log_error(__func__, "Unsupported compute type");
             throw std::runtime_error("[GetTensileInputs] unsupported compute type.");
         }
+
+        // push 2 activation arguments
+        std::visit([&inputs, &prob](auto val) { 
+            inputs.activationArgs.push_back(val);
+            inputs.activationArgs.push_back(val);
+            if(prob.k)
+                inputs.alpha = *(decltype(val)*)(prob.alpha);
+            else
+                inputs.alpha = val;
+            inputs.beta = *(decltype(val)*)(prob.beta);
+        }, argument_vals.at(compute_type));
 
         return inputs;
     }

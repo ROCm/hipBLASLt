@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,11 @@
 
 #pragma once
 
-#include <type_traits>
+#include <Tensile/ContractionProblemPredicates.hpp>
 #include <Tensile/Debug.hpp>
 #include <Tensile/Predicates.hpp>
-#include <Tensile/ContractionProblemPredicates.hpp>
 #include <Tensile/SolutionLibrary.hpp>
+#include <type_traits>
 
 namespace TensileLite
 {
@@ -100,7 +100,9 @@ namespace TensileLite
                 {
                     rv = row.second->findBestSolution(problem, hardware, fitness);
 
-                    if (rv && dynamic_cast<Predicates::Contraction::EqualityMatching *>(row.first.value.get()))
+                    if(rv
+                       && dynamic_cast<Predicates::Contraction::EqualityMatching*>(
+                           row.first.value.get()))
                         rv->tag = MySolution::MatchingTag::Equal;
 
                     if(rv)
@@ -118,9 +120,13 @@ namespace TensileLite
                              = SolutionLibrarySearchType::DEFAULT) const override
         {
             SolutionSet<MySolution> rv;
+            const bool              streamK = Debug::Instance().useExperimentalSelection() == 2;
 
             for(auto const& row : rows)
             {
+                if(row.first.value->type() == "ExperimentalStreamK" && !streamK)
+                    continue;
+
                 if(row.first.value->type() == "AMDGPU" && !row.first(problem, hardware))
                     continue;
 
@@ -162,16 +168,21 @@ namespace TensileLite
                                                             int numSolutions) const override
         {
             SolutionVector<MySolution> rv, solutions;
+            const bool                 streamK = Debug::Instance().useExperimentalSelection() == 2;
 
             for(auto const& row : rows)
             {
+                if(row.first.value->type() == "ExperimentalStreamK" && !streamK)
+                    continue;
+
                 if(row.first(problem, hardware))
                 {
                     solutions
                         = row.second->findTopSolutions(problem, hardware, numSolutions - rv.size());
-                    
-                    if (dynamic_cast<Predicates::Contraction::EqualityMatching *>(row.first.value.get()))
-                        for (auto &sol : solutions)
+
+                    if(dynamic_cast<Predicates::Contraction::EqualityMatching*>(
+                           row.first.value.get()))
+                        for(auto& sol : solutions)
                             sol->tag = MySolution::MatchingTag::Equal;
 
                     rv.insert(std::end(rv), std::begin(solutions), std::end(solutions));

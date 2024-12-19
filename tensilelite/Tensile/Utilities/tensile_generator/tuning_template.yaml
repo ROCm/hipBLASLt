@@ -272,6 +272,7 @@ BenchmarkProblems:
     InitialSolutionParameters: null
     JoinParameters: null
 GlobalParameters:
+  SkipSlowSolutionRatio: 0.5
   BoundsCheck: false
   DataInitTypeAB: 12
   DataInitTypeAlpha: 1

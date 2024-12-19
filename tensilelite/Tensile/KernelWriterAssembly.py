@@ -49,7 +49,7 @@ from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationType
 from .Utils import DataDirection
 
-from math import ceil, log
+from math import ceil, log, floor
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import NamedTuple
@@ -65,9 +65,8 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__( self, kernelMinNaming, kernelSerialNaming ):
-    super(KernelWriterAssembly, self).__init__( \
-        kernelMinNaming, kernelSerialNaming)
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
+    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler)
 
   def getSgprOccupancy(self, sgprs):
     return self.states.regCaps["PhysicalMaxSgpr"]//sgprs
@@ -98,7 +97,7 @@ class KernelWriterAssembly(KernelWriter):
       vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, vgprs,          doubleVgpr)
       accvgprLimitedOccupancy = self.getVgprOccupancy(numThreads, accvgprs,       doubleVgpr)
     else:
-      vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, vgprs+accvgprs, doubleVgpr)
+      vgprLimitedOccupancy    = self.getVgprOccupancy(numThreads, ceil(vgprs/8)*8+accvgprs, doubleVgpr)
       accvgprLimitedOccupancy = vgprLimitedOccupancy
     sgprLimitedOccupancy = self.getSgprOccupancy(sgprs)
 
@@ -113,9 +112,11 @@ class KernelWriterAssembly(KernelWriter):
     initOccupancy = self.getOccupancy(numThreads, vgprs, sgprs, ldsSize, accvgprs, doubleVgpr)
     if initOccupancy == 0: return lastVgprs, 1
 
-    while (vgprs + considerAccVgprs) < totalVgprs and vgprs < self.states.regCaps["MaxVgpr"]:
+    def getVgpr(vgpr, doubleVgpr):
+      return vgpr if not doubleVgpr else ceil(vgpr/8)*8
+    while (getVgpr(vgprs, doubleVgpr) + considerAccVgprs) < totalVgprs and vgprs < self.states.regCaps["MaxVgpr"]:
       vgprs += 1
-      if self.getVgprOccupancy(numThreads, vgprs + considerAccVgprs, doubleVgpr) >= initOccupancy:
+      if self.getVgprOccupancy(numThreads, getVgpr(vgprs, doubleVgpr) + considerAccVgprs, doubleVgpr) >= initOccupancy:
         lastVgprs = vgprs
         next
       else:
@@ -566,7 +567,7 @@ class KernelWriterAssembly(KernelWriter):
                 ri += self.states.a.numVgprValuPerBlock
 
     ri = 0
-    if self.states.b.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
+    if self.states.b.numVgprValu > 0: # Do not generate vgprValuB if numVgprValuB is 0
       numBiFactor = numBi
       if kernel["DirectToVgprB"] and (self.states.packDTVB or self.states.convDTVB):
         # DirectToVgpr case, we need LoopIters * 2 buffers
@@ -613,7 +614,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(RegSet("v", "vgprValuMetadata", self.states.m.startVgprValu))
       else:
         ri = 0
-        if self.states.m.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
+        if self.states.m.numVgprValu > 0: # Do not generate vgprValu if numVgprValu is 0
           if self.states.lrvwTileMetadata > 1:
             for bi in range(0,PLR): # buffer indices
               for iui in range(0, kernel["InnerUnroll"]):
@@ -795,6 +796,10 @@ class KernelWriterAssembly(KernelWriter):
     module.add(ValueSet("BpeAGRLog2", log2(tPA["bpeGR"])))
     module.add(ValueSet("BpeBGR", tPB["bpeGR"]))
     module.add(ValueSet("BpeBGRLog2", log2(tPB["bpeGR"])))
+    # TODO- get real value from MI-InstM
+    if kernel["ProblemType"]["SwizzleTensorA"]:
+      module.add(ValueSet("MI_M", 16))
+    #
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
       module.add(ValueSet("BpeMetadata", tPM["bpe"]))
       module.add(ValueSet("BpeMetadataLog2", log2(tPM["bpe"])))
@@ -823,19 +828,23 @@ class KernelWriterAssembly(KernelWriter):
     # Flat addressing modes expect the GLOBAL_OFFSET to initialize a full 64-bit address
 
     GOList =  [ \
-        ("C", list(range(0, kernel["ProblemType"]["NumIndicesC"])), kernel["BufferStore"], None), \
-        ("A", kernel["ProblemType"]["IndexAssignmentsA"], kernel["BufferLoad"], tPA), \
-        ("B", kernel["ProblemType"]["IndexAssignmentsB"], kernel["BufferLoad"], tPB) ]
+        ("C", list(range(0, kernel["ProblemType"]["NumIndicesC"])), kernel["BufferStore"], None, False), \
+        ("A", kernel["ProblemType"]["IndexAssignmentsA"], kernel["BufferLoad"], tPA, False), \
+        ("B", kernel["ProblemType"]["IndexAssignmentsB"], kernel["BufferLoad"], tPB, False) ]
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-      GOList.append(("Metadata", kernel["ProblemType"]["IndexAssignmentsMetadata"], kernel["BufferLoad"], tPM))
+      GOList.append(("Metadata", kernel["ProblemType"]["IndexAssignmentsMetadata"], kernel["BufferLoad"], tPM, False))
+    if kernel["ProblemType"]["SwizzleTensorA"]:
+      GOList.append(("A", kernel["ProblemType"]["IndexAssignmentsA"], kernel["BufferLoad"], tPA, True))
 
-    for (tc, indices, justOffset32, tP) in GOList:
+    for (tc, indices, justOffset32, tP, isSwizzled) in GOList:
 
       # BufferStore does not use this macro so don't generate it:
       if tc == "C" and kernel["BufferStore"]:
         continue
 
-      module.addComment1("Global Offset %s"%tc)
+      # function name and comment
+      suffix_tc = tc + "_SWIZZLED" if isSwizzled else tc
+      module.addComment1("Global Offset %s"%suffix_tc)
       numDim = len(indices)
       idxChars = []
       for i in indices:
@@ -873,7 +882,11 @@ class KernelWriterAssembly(KernelWriter):
           elif not justOffset32: # buffer/justOffset32 scalars are included in SRD not the offset, so skip here
             calcDims.append(i)
             macroArgs.append("sgprOffset%s:req" % idxChars[i])
-      macro = Macro("GLOBAL_OFFSET_%s" % tc, "vgprAddr:req", *macroArgs, "vgprTmp:req")
+
+      # swizzle: passing fake stride (swizzled stride)
+      if isSwizzled:
+        macroArgs.append("sgprStrideSW%s:req" % tc)
+      macro = Macro("GLOBAL_OFFSET_%s" % suffix_tc, "vgprAddr:req", *macroArgs, "vgprTmp:req")
 
       # Each index may be skipped, scaled by stride, or unscaled
       # If destLo is unset, no accumulation is necessary.
@@ -981,7 +994,13 @@ class KernelWriterAssembly(KernelWriter):
               offset = "v[\\vgprTmp+0]"
 
             # offset * stride
-            macro.add(VMulLOU32(dst=destLo,
+            if isSwizzled:
+              macro.add(VMulLOU32(dst=destLo,
+                src0="s[\\sgprStrideSW%s]" % tc, \
+                src1=offset, \
+                comment="SWZ: mul d%u lower"%i))
+            else:
+              macro.add(VMulLOU32(dst=destLo,
                 src0=self.strideRef(tc, indices[i]), \
                 src1=offset, \
                 comment="mul d%u lower"%i))
@@ -1067,14 +1086,14 @@ class KernelWriterAssembly(KernelWriter):
         if kernel["PrefetchLocalRead"] < kernel["LoopIters"] \
         else kernel["LoopIters"] - 1
       for m in range(0, 1+PLR):
-          macro = Macro("MAC_%ux%u_X%u" % (kernel["ThreadTile0"], kernel["ThreadTile1"], m), "")
-          component = Component.MAC.find(self)
-          if not component:
-            printExit("Assembly doesn't support datatype %s" % kernel["ProblemType"]["DataType"])
-          innerModule = component(self, tPA, tPB, m, kernel["InnerUnroll"])
-          for item in innerModule.items():
-              macro.add(item)
-          module.add(macro)
+        macro = Macro("MAC_%ux%u_X%u" % (kernel["ThreadTile0"], kernel["ThreadTile1"], m), "")
+        component = Component.MAC.find(self)
+        if not component:
+          printExit("Assembly doesn't support datatype %s" % kernel["ProblemType"]["DataType"])
+        innerModule = component(self, tPA, tPB, m, kernel["InnerUnroll"])
+        for item in innerModule.items():
+            macro.add(item)
+        module.add(macro)
 
     module.setNoOpt(True)
     return module
@@ -1088,7 +1107,26 @@ class KernelWriterAssembly(KernelWriter):
     mkb.setGprs(totalVgprs=totalVgprs, totalAgprs=totalAgprs, totalSgprs=totalSgprs)
     module = mkb.body
 
+    if self.vgprPool.size() > self.states.regCaps["MaxVgpr"]:
+      self.states.overflowedResources = 1
+    elif self.sgprPool.size() > self.states.regCaps["MaxSgpr"]:
+      self.states.overflowedResources = 2
+
+    # TODO: Add target occupancy or kept the occupancy settings from globalWriteBatch
+    if kernel["ScheduleIterAlg"] == 2 and \
+        self.getOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
+        self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr) < 2:
+      self.states.overflowedResources = 6
+
+    vgprPerThreadPerOccupancy = self.states.regCaps["PhysicalMaxVgprCU"] // kernel["NumThreads"]
+    numWorkGroupsPerCU = vgprPerThreadPerOccupancy // mkb.getNextFreeVgpr()
+    if numWorkGroupsPerCU < 1:
+      self.states.overflowedResources = 4
+
+    self.vgprPool.checkFinalState()
+
     if self.states.overflowedResources:
+      module.add(ValueEndif("overflowed resources"))
       if self.states.overflowedResources == 1:
         msg = "too many vgprs"
       elif self.states.overflowedResources == 2:
@@ -1715,7 +1753,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr0), src=sgpr(tmpSgpr0), shiftHex=(2)))
           module.add(SAddU32(dst=sgpr("AddressTD"), src0=sgpr("AddressTD"), src1=sgpr(tmpSgpr0)))
           module.add(SAddCU32(dst=sgpr("AddressTD+1"), src0=sgpr("AddressTD+1"), src1=hex(0)))
-          module.add(SAddU32(dst=sgpr("Synchronizer"), src0=sgpr("Synchronizer"), src1=hex(163840)))
+          module.add(SAddU32(dst=sgpr("Synchronizer"), src0=sgpr("Synchronizer"), src1=hex(1638400)))
           module.add(SAddCU32(dst=sgpr("Synchronizer+1"), src0=sgpr("Synchronizer+1"), src1=hex(0)))
           module.add(extReadEpilogueLabeltmp)
         module.add(SAddU32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprAddrM), src1=sgpr(tmpSgprArgOffsett)))
@@ -2243,13 +2281,29 @@ class KernelWriterAssembly(KernelWriter):
         module.add(VLShiftLeftB32(dst=vgpr(v), shiftHex=hex(log2(margin)), src=vgpr(v), comment="gro%s%s_%u *= %d"%(tP["tensorChar"], tP["tileChar"], 0, margin)))
       else:
         module.add(VMovB32(dst=vgpr(v), src=vgpr(tP["gpr"]["tReg"]), comment="gro%s%s_%u"%(tP["tensorChar"], tP["tileChar"], 0) ))
+        # TODO- current for A only
+        if tP["isSwizzled"]:
+          swizzleStridePerWave = self.sgprPool.checkOut(1)
+          WvG_M = kernel["MIWaveGroup"][0]
+          # Calc stride = numKr * WaveG[0], TODO- 32 should be MI_K * 2
+          module.add(SLShiftRightB32(dst=sgpr(swizzleStridePerWave), shiftHex=hex(log2(32)), src=sgpr("SizesSum"),  comment="SWZ: numKr = DimK / 32"))
+          module.add(SMulI32(dst=sgpr(swizzleStridePerWave), src0=hex(WvG_M), src1=sgpr(swizzleStridePerWave), comment="SWZ: numKr *= MI_WvG[0] (%u), how many wave-M per WG" % WvG_M))
 
       for l in range(1, tP["nrt"]):
         strideValue = stride
         if strideInterleave and (l & strideMask) != 0:
           strideValue = 1
-        module.add(VAddCOU32(dst=vgpr(v+l), dst1=VCC(), src0=strideValue, \
+        if not tP["isSwizzled"]:
+          module.add(VAddCOU32(dst=vgpr(v+l), dst1=VCC(), src0=strideValue, \
             src1=vgpr(v+l-1), comment="gro%s%s_%u += %s"%(tP["tensorChar"], tP["tileChar"], l, strideIdx) ))
+        # swizzle
+        else:
+          module.add(VAddCOU32(dst=vgpr(v+l), dst1=VCC(), src0=sgpr(swizzleStridePerWave), \
+            src1=vgpr(v+l-1), comment="SWZ: gro%s%s_%u += (numKr * WaveG[0])"%(tP["tensorChar"], tP["tileChar"], l) ))
+      if tP["isSwizzled"]:
+        self.sgprPool.checkIn(swizzleStridePerWave)
+
+      # TODO- check for swizzle
       if numExtraPackedOffsetsPerTile:
         tmpV = self.vgprPool.checkOutAligned(2,2,"packTmp", self.states.preventVgprOverflowDuringNewTile)
 
@@ -2287,6 +2341,13 @@ class KernelWriterAssembly(KernelWriter):
     tc = tP["tensorChar"]
     if kernel["_UseSgprForGRO"]:
       tP["gpr"]["unrollOffsets"] = tP["gpr"]["uReg"]
+    # TODO- so far only A, check B
+    elif tP["isSwizzled"]:
+      numUnrollOffsets = 1
+      tP["gpr"]["unrollOffsets"] = self.vgprPool.checkOut(numUnrollOffsets, "unrollOffsets", self.states.preventVgprOverflowDuringNewTile)
+      v = tP["gpr"]["unrollOffsets"]
+      module.addComment0("SWZ: Unroll increament is calculated in I-Offset since tile-memory is flattened")
+      module.add(VMovB32(dst=vgpr(v), src=vgpr(tP["gpr"]["uReg"]), comment="SWZ: only one gro%s%s_%u Base"%(tP["tensorChar"], self.states.unrollChar, 0)))
     else:
       numUnrollOffsets = tP["nru"]
       tP["gpr"]["unrollOffsets"] = self.vgprPool.checkOut(numUnrollOffsets, "unrollOffsets", self.states.preventVgprOverflowDuringNewTile)
@@ -2484,6 +2545,11 @@ class KernelWriterAssembly(KernelWriter):
     graIdx = 0
     swapPerpPara = (((tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]) and (not tP["tlu"]) and tP["nrp"] > 1)
 
+    if tP["isSwizzled"]:
+      tP["swizzledBlockSize"] = self.sgprPool.checkOut(1)
+      module.add(SMovB32(dst=sgpr(tP["swizzledBlockSize"]), src=hex(16*32), comment="SWZ: swizzled block = MI_M(%u) * MI_K(%u) * 2" %(16, 16)))
+
+    # DTVA/B always go this way, including swizzled
     if not swapPerpPara:
       for perp in range(0, tP["nrp"]):
         for sPerp in range(0, tP["nrpv"]):
@@ -2501,6 +2567,9 @@ class KernelWriterAssembly(KernelWriter):
               # single loop
               singleModule, graIdx = self.graFinalOffsetsSingleLoop(kernel, tP, tc, tmp, graIdx, perp, sPerp, para, sPara)
               module.add(singleModule)
+
+    if tP["isSwizzled"]:
+      self.sgprPool.checkIn(tP["swizzledBlockSize"])
 
     self.vgprPool.checkIn(tP["gpr"]["lwoT"])
     tP["gpr"]["lwoT"] = None
@@ -2550,7 +2619,10 @@ class KernelWriterAssembly(KernelWriter):
     # single loop start
 
     # vgpr assignments
-    if tP["tlu"]:
+    if tP["isSwizzled"]:
+      vgprTile   = tP["vgprTileOffsets"]   + perp*tVW + sPara*tVS
+      vgprUnroll = tP["gpr"]["unrollOffsets"] # unroll: always use base unroll
+    elif tP["tlu"]:
       vgprTile   = tP["vgprTileOffsets"]   + para*tVW + sPara*tVS
       vgprUnroll = tP["gpr"]["unrollOffsets"] + perp*uVW + sPerp*uVS
     else:
@@ -2561,7 +2633,10 @@ class KernelWriterAssembly(KernelWriter):
       # emit global offset macro
       # TODO -refactor this and macro def to pass all indices, use the ones we need
       if kernel["BufferLoad"]:
-        bfName = "GLOBAL_OFFSET_%s" % tP["tensorChar"]
+        if tP["isSwizzled"]:
+          bfName = "GLOBAL_OFFSET_%s_SWIZZLED" % tP["tensorChar"]
+        else:
+          bfName = "GLOBAL_OFFSET_%s" % tP["tensorChar"]
         bfArgs = ["vgprGlobalReadOffset%s+%u"%(tP["tensorChar"], graIdx)]
       else:
         bfName = "GLOBAL_OFFSET_%s" % tP["tensorChar"]
@@ -2589,6 +2664,15 @@ class KernelWriterAssembly(KernelWriter):
             iaToGpr[i] = vgprUnroll
             bfArgs.append( "%2u" % iaToGpr[i] )
           # other summation indices are ignored
+
+      # Swizzled version:
+      #   1. passing swizzled block size as stride to macro
+      #   2. If moving unroll = advance I-Offset for one swizzled block
+      if tP["isSwizzled"]:
+        bfArgs.append(tP["swizzledBlockSize"])
+        if para > 0:
+          module.add(VAddCOU32(dst=vgpr(vgprTile), dst1=VCC(), src0=hex(1), src1=vgpr(vgprTile), \
+                               comment="SWZ: groAL = groA0I + 1 Block of flattened mem"))
 
       bfArgs.append( "%u" % tmp )
       bfComment = "gRO%s_%u_%u_%u_%u" % (tP["tensorChar"], para, sPara, perp, sPerp)
@@ -3174,7 +3258,8 @@ class KernelWriterAssembly(KernelWriter):
 
     # DTV case, use tlu path
     isDTVAB = (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]
-    if tP["tlu"] or isDTVAB:
+    # swizzled goes to else
+    if (tP["tlu"] or isDTVAB) and (not tP["isSwizzled"]):
       rReg = self.vgprPool.checkOut(1, "lwaTA rReg0", self.states.preventVgprOverflowDuringNewTile) # tile = serial%divisor
       qReg = self.vgprPool.checkOut(1, "lwaTA qReg0", self.states.preventVgprOverflowDuringNewTile) # unroll = serial/divisor
       tReg = rReg
@@ -3207,7 +3292,15 @@ class KernelWriterAssembly(KernelWriter):
     # store DirectToVgpr K interval for later use
     dtvKInterval = 1
 
-    if isDTVAB:
+    if tP["isSwizzled"]:
+      module.addComment0("TileAssignment for DirectToVgpr%s and SwizzleTensor%s" % (tc, tc))
+      module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, kernel["WavefrontSize"], tmpVgprRes))
+      with self.allocTmpSgpr(1) as tmpSgprInfo:
+        tmpSgpr = tmpSgprInfo.idx
+        # Calc numKr, TODO- 32 should be MI_K * 2
+        module.add(SLShiftRightB32(dst=sgpr(tmpSgpr), shiftHex=hex(log2(32)), src=sgpr("SizesSum"),  comment="SWZ: numKr = DimK / 32"))
+        module.add(VMulU32U24(dst=vgpr(qReg), src0=sgpr(tmpSgpr), src1=vgpr(qReg), comment="SWZ: wave-id *= numKr"))
+    elif isDTVAB:
       # offset calculation for DirectToVgpr
       # call function from LraTileAssignmentMFMA for DirectToVgpr
       module.addComment0("TileAssignment for DirectToVgpr%s" % tc)
@@ -3938,6 +4031,190 @@ class KernelWriterAssembly(KernelWriter):
 
     return imod
 
+  def tailLoopGlobalRead(self, kernel, tPA, tPB):
+    imod = Module("tailLoopGlobalRead")
+    doA = True if ((tPA["glvw"] * tPA["bpeGR"] >= 4) and (tPA["bpeGR"] % 4 != 0)) else False
+    doB = True if ((tPB["glvw"] * tPB["bpeGR"] >= 4) and (tPB["bpeGR"] % 4 != 0)) else False
+    loadALabel  = Label(label="LOAD_A", comment="")
+    loadBLabel  = Label(label="LOAD_B", comment="")
+    mergeALabel = Label(label="MERGE_A", comment="")
+    mergeBLabel = Label(label="MERGE_B", comment="")
+    skipLabel   = Label(label="SKIP_LOAD_SINGLE_ELEMENT", comment="")
+    lspA = kernel[tPA["lsp"]]
+    lscA = kernel[tPA["lsc"]]
+    lspB = kernel[tPB["lsp"]]
+    lscB = kernel[tPB["lsc"]]
+    nlpA = kernel["NumLoadsPerpendicularA"]
+    nlpB = kernel["NumLoadsPerpendicularB"]
+    numElementsPer4BytesA = int(4 / tPA["bpeGR"])
+    numElementsPer4BytesB = int(4 / tPB["bpeGR"])
+    maxNumOOBElementsA = numElementsPer4BytesA - 1
+    maxNumOOBElementsB = numElementsPer4BytesB - 1
+
+    def LOAD_FUNC(tP, tmpVgpr, behavior, jumpLabel, tileSgpr, kSgpr):
+      tc = tP["tensorChar"]
+      bpe = tP["bpeGR"]
+      numThreadsPerp = kernel[tP["lsp"]]
+      numThreadsCoal = int(kernel["NumThreads"] / numThreadsPerp)
+      nlp = kernel["NumLoadsPerpendicular%c"%(tc)]
+      nlc = kernel["NumLoadsCoalesced%c"%(tc)]
+      numTiles = nlp * nlc
+      numElementsPer4Bytes = int(4 / bpe)
+      def func(idx, bevavior, jumpLabel, tileSgpr, kSgpr):
+        tileLabelsList = []
+        kLabelsList = []
+        if (idx >= 0):
+          labelStr = bevavior + "_"+tc+str(idx)
+          labelTmp = Label(label=labelStr, comment="")
+          tileLabelsList.append(labelTmp)
+          if (idx != 0):
+            imod.add(SCmpEQU32(src0=sgpr(tileSgpr), src1=idx, comment=""))
+            imod.add(SCBranchSCC1(labelName=labelTmp.getLabelName(), comment=""))
+          func(idx-1, bevavior, jumpLabel, tileSgpr, kSgpr)
+          imod.add(labelTmp)
+          for i in range(tP["glvw"], 0, -1):
+            if i % numElementsPer4Bytes != 0:
+              labelStr2 = labelStr+"_K"+str(i)
+              labelTmp = Label(label=labelStr2, comment="")
+              kLabelsList.append(labelTmp)
+          imod.add(self.globalReadGuardK(kernel, tP, True, idx, jumpLabel, tmpVgpr, kLabelsList, behavior, kSgpr))
+
+      func(numTiles - 1, behavior, jumpLabel, tileSgpr, kSgpr)
+
+    tmpSgprA1 = self.sgprPool.checkOut(1, preventOverflow=False)
+    tmpSgprB1 = self.sgprPool.checkOut(1, preventOverflow=False)
+#    tmpSgprA2 = self.sgprPool.checkOut(1, preventOverflow=False)
+#    tmpSgprB2 = self.sgprPool.checkOut(1, preventOverflow=False)
+    tmpSgpr = self.sgprPool.checkOutAligned(2, 2, preventOverflow=False)
+    tmpSgprQregA = self.sgprPool.checkOut(1, preventOverflow=False)
+    tmpSgprQregB = self.sgprPool.checkOut(1, preventOverflow=False)
+    tmpSgprKA = self.sgprPool.checkOut(1, preventOverflow=False)
+    tmpSgprKB = self.sgprPool.checkOut(1, preventOverflow=False)
+
+    # for A
+    if doA:
+      if (kernel["WaveSeparateGlobalReadA"] == 0):
+        tmpSgprA = tmpSgprQregA
+#      else:
+#        tmpSgprA = tmpSgprA2
+      imod.add(SSubU32(dst=sgpr(tmpSgprA1), src0=sgpr("SizeI"), src1=1))
+      imod.add(scalarStaticDivideAndRemainder(tmpSgprA, tmpSgprA, tmpSgprA1, \
+                                              kernel["MacroTile0"], \
+                                              RegisterPoolResource(tmpSgpr, 2), 1))
+#      if (kernel["WaveSeparateGlobalReadA"] == 1):
+#        imod.add(scalarStaticDivideAndRemainder(tmpSgprQregA, tmpSgprQregA, tmpSgprA, \
+#                                                (nlpA * lspA), \
+#                                                RegisterPoolResource(tmpSgpr, 2), 1))
+      imod.add(SLShiftRightB32(dst=sgpr(tmpSgprQregA), shiftHex=hex(log2(lspA)), \
+                               src=sgpr(tmpSgprQregA), comment="divide lsp"))
+    # for B
+    if doB:
+      if (kernel["WaveSeparateGlobalReadB"] == 0):
+        tmpSgprB = tmpSgprQregB
+#      else:
+#        tmpSgprB = tmpSgprA2
+      imod.add(SSubU32(dst=sgpr(tmpSgprB1), src0=sgpr("SizeJ"), src1=1))
+      imod.add(scalarStaticDivideAndRemainder(tmpSgprB, tmpSgprB, tmpSgprB1, \
+                                              kernel["MacroTile1"], \
+                                              RegisterPoolResource(tmpSgpr, 2), 1))
+#      if (kernel["WaveSeparateGlobalReadB"] == 1):
+#        imod.add(scalarStaticDivideAndRemainder(tmpSgprQregB, tmpSgprQregB, tmpSgprB, \
+#                                                (nlpB * lspB), \
+#                                                RegisterPoolResource(tmpSgpr, 2), 1))
+      imod.add(SLShiftRightB32(dst=sgpr(tmpSgprQregB), shiftHex=hex(log2(lspB)), \
+                               src=sgpr(tmpSgprQregB), comment="divide lsp"))
+
+    # A
+    if doA:
+      imod.add(SAndB32(dst=sgpr(tmpSgprA1), src0=sgpr("LoopCounterL"), src1=(tPA["glvw"] - 1), \
+                       comment="s[sgprLoopCounterL] % glvw"))
+      imod.add(SAndB32(dst=sgpr(tmpSgprKA), src0=sgpr(tmpSgprA1), src1=hex(maxNumOOBElementsA), \
+                       comment=" % numElementsPer4Bytes"))
+      imod.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgprA1), src1=maxNumOOBElementsA, \
+                       comment="LoopCounterL + maxNumOOBElementsA"))
+      imod.add(SLShiftRightB32(dst=sgpr(tmpSgpr), shiftHex=hex(log2(numElementsPer4BytesA)), \
+                               src=sgpr(tmpSgpr), comment="divide numElementsPer4BytesA"))
+    # B
+    if doB:
+      imod.add(SAndB32(dst=sgpr(tmpSgprB1), src0=sgpr("LoopCounterL"), src1=(tPB["glvw"] - 1), \
+                       comment="s[sgprLoopCounterL] % glvw"))
+      imod.add(SAndB32(dst=sgpr(tmpSgprKB), src0=sgpr(tmpSgprB1), src1=hex(maxNumOOBElementsB), \
+                       comment=" % numElementsPer4Bytes"))
+      imod.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgprB1), src1=maxNumOOBElementsB, \
+                       comment="LoopCounterL + maxNumOOBElementsB"))
+      imod.add(SLShiftRightB32(dst=sgpr(tmpSgpr), shiftHex=hex(log2(numElementsPer4BytesB)), \
+                               src=sgpr(tmpSgpr), \
+                               comment="divide numElementsPer4BytesB"))
+    #########################################################################################################
+    numDwordA = (tPA["glvw"] * tPA["bpeGR"]) >> 2
+    numDwordB = (tPB["glvw"] * tPB["bpeGR"]) >> 2
+    numDwordA = 1 if numDwordA == 0 else numDwordA
+    numDwordB = 1 if numDwordB == 0 else numDwordB
+    numTmpVgpr = maxNumOOBElementsA * numDwordA + maxNumOOBElementsB * numDwordB # 2 fo 16b
+
+    if doA or doB:
+      tmpVgpr = self.vgprPool.checkOut(numTmpVgpr)
+
+    # A
+    imod.add(loadALabel)
+    if doA:
+      imod.add(SCmpEQU32(src0=sgpr(tmpSgprKA), src1=0, \
+                         comment="Valid loading size per thread is multiples of 4 bytes"))
+      if doB:
+        imod.add(SCBranchSCC1(labelName=loadBLabel.getLabelName(), comment="Skip loading A"))
+        LOAD_FUNC(tPA, tmpVgpr, "LOAD", loadBLabel, tmpSgprQregA, tmpSgprA1)
+      else:
+        imod.add(SCBranchSCC1(labelName=mergeALabel.getLabelName(), comment="Skip loading A"))
+        LOAD_FUNC(tPA, tmpVgpr, "LOAD", mergeALabel, tmpSgprQregA, tmpSgprA1)
+
+    # B
+    imod.add(loadBLabel)
+    if doB:
+      imod.add(SCmpEQU32(src0=sgpr(tmpSgprKB), src1=0, \
+                         comment="Valid loading size per thread is multiples of 4 bytes"))
+      if doA:
+        imod.add(SCBranchSCC1(labelName=mergeALabel.getLabelName(), comment="Skip loading B"))
+        LOAD_FUNC(tPB, tmpVgpr + (maxNumOOBElementsA * numDwordA), "LOAD", mergeALabel, \
+                  tmpSgprQregB, tmpSgprB1)
+      else:
+        imod.add(SCBranchSCC1(labelName=mergeBLabel.getLabelName(), comment="Skip loading B"))
+        LOAD_FUNC(tPB, tmpVgpr + (maxNumOOBElementsA * numDwordA), "LOAD", mergeBLabel, \
+                  tmpSgprQregB, tmpSgprB1)
+
+    # A
+    imod.add(mergeALabel)
+    if doA:
+      imod.add(SCmpEQU32(src0=sgpr(tmpSgprKA), src1=0, \
+                         comment="Valid loading size per thread is multiples of 4 bytes"))
+      if doB:
+        imod.add(SCBranchSCC1(labelName=mergeBLabel.getLabelName(), comment="Skip mergeing A"))
+        LOAD_FUNC(tPA, tmpVgpr, "MERGE", mergeBLabel, tmpSgprQregA, tmpSgprA1)
+      else:
+        imod.add(SCBranchSCC1(labelName=skipLabel.getLabelName(), comment="Skip mergeing A"))
+        LOAD_FUNC(tPA, tmpVgpr, "MERGE", skipLabel, tmpSgprQregA, tmpSgprA1)
+    # B
+    imod.add(mergeBLabel)
+    if doB:
+      imod.add(SCmpEQU32(src0=sgpr(tmpSgprKB), src1=0, \
+                         comment="Valid loading size per thread is multiples of 4 bytes"))
+      imod.add(SCBranchSCC1(labelName=skipLabel.getLabelName(), comment="Skip mergeing B"))
+      LOAD_FUNC(tPB, tmpVgpr + (maxNumOOBElementsA * numDwordA), "MERGE", skipLabel, \
+                tmpSgprQregB, tmpSgprB1)
+
+    imod.add(skipLabel)
+    if doA or doB:
+      self.vgprPool.checkIn(tmpVgpr)
+    self.sgprPool.checkIn(tmpSgprA1)
+    self.sgprPool.checkIn(tmpSgprB1)
+#    self.sgprPool.checkIn(tmpSgprA2)
+#    self.sgprPool.checkIn(tmpSgprB2)
+    self.sgprPool.checkIn(tmpSgpr)
+    self.sgprPool.checkIn(tmpSgprQregA)
+    self.sgprPool.checkIn(tmpSgprQregB)
+    self.sgprPool.checkIn(tmpSgprKA)
+    self.sgprPool.checkIn(tmpSgprKB)
+    return imod
+  
   ##############################################################################
   # Emit code to compute loop iterations for GSU.
   # See same function in KernelWriterSource.py for background explanation
@@ -5891,10 +6168,12 @@ class KernelWriterAssembly(KernelWriter):
   # Must ensure each load is in bounds - either using buffer bounds
   # or exec-mask checks.
   ##############################################################################
-  def globalReadGuardK(self, kernel, tP):
+  def globalReadGuardK(self, kernel, tP, doTailOpt = False, \
+                       idx = 0, jumpLabel = None, tmpVgpr = None, kLabelsList = [], behavior = "", kSgpr = None):
     module = Module("globalReadGuardK")
     tc = tP["tensorChar"]
     problemType = self.states.kernel["ProblemType"]
+    numElementsPer4Bytes = int(4 / tP["bpeGR"])
 
     ########################################
     # Calculate Max Addr
@@ -5949,7 +6228,8 @@ class KernelWriterAssembly(KernelWriter):
         zeroVgpr = self.vgprPool.checkOut(1,"zeroVgpr")
         module.add(VMovB32(dst=vgpr(zeroVgpr), src=hex(0), comment="zero"))
 
-    def globalReadGuardKBody(tP):
+    def globalReadGuardKBody(tP, tmpVgpr = None, kLabelsList = [], behavior = "", jumpLabel = None, \
+                             numElementsPer4Bytes = 0, kSgpr = None, doTailOpt = False):
       tc = tP["tensorChar"]
       self.vgprs.globalReadRegisters[tc] = []
       tcDataType = "" if tc == "Metadata" else tc
@@ -5964,11 +6244,9 @@ class KernelWriterAssembly(KernelWriter):
 
       directToLdsLoads = 0
       prevLdsOffset    = 0
-      # print("tc={}, nrp={}, nrpv={}, nrc={}, nrcv/nrcvpi={}, sgprforGRO={}".format(tc, tP["nrp"], tP["nrpv"], tP["nrc"], tP["nrcv"]//tP["nrcvpi"], problemType["ZeroPad%s"%tc], kernel["UseSgprForGRO"]))
 
       instOffset = 0
       loopCnt = -1
-
       for perp in range(0, tP["nrp"]):
         for sPerp in range(0, tP["nrpv"]):
           for para in range(0, tP["nrc"]):
@@ -5983,6 +6261,8 @@ class KernelWriterAssembly(KernelWriter):
                   g2lIdx *= tP["bpe"] // tP["bpeGR"]
 
               destVgprHi = None
+              destVgprHitmp = None  # Fix
+              tmpVgprIdx = tmpVgpr
               dataIsByte = False
               packInt8Code = None
               eccOffset = 0
@@ -5997,7 +6277,6 @@ class KernelWriterAssembly(KernelWriter):
                 # this is mandatory for DirectToLds case. Also, it improves tail loop performance.
                 # so far, limit to double only
                 numLoadVectorComp = numLoadVectorComp // kernel["GlobalReadVectorWidth%c"%tc]
-
               int8TempVgpr = numLoadVectorComp - 1
               # for each component in vector
               while r < numLoadVectorComp:
@@ -6022,9 +6301,14 @@ class KernelWriterAssembly(KernelWriter):
                     dataIsByte = True
 
                   # Check out 3 regs once , for component 1,2,3 (r = 1,2,3)
-                  if r == 1:
-                    packInt8Code = Module()
-                    destVgprHi = self.vgprPool.checkOut( int8TempVgpr , 'destVgprHi')
+                  if doTailOpt:
+                    if r == 1:
+                      packInt8Code = Module()
+                    destVgprHi = tmpVgprIdx
+                  else:
+                    if r == 1:
+                      packInt8Code = Module()
+                      destVgprHi = self.vgprPool.checkOut( int8TempVgpr , 'destVgprHi')
                   regIdx = r // 4
                   if (tP["localWriteInstruction"].blockWidth <= 0.5) and (r%2 == 0) and not tP["isM"]:
                       numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
@@ -6039,13 +6323,16 @@ class KernelWriterAssembly(KernelWriter):
                     # In some cards, loading half types into register will zero out
                     # the other half. Therefore we need to load into a separate register
                     # then pack 2 registers into one
-                    if (tP["localWriteInstruction"].blockWidth == 0.5) and (r%2 == 0):
-                      numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
-                      eccBpe = tP["bpeDS"] if kernel["ConvertAfterDS"] else max(tP["bpeGR"], tP["bpe"])
-                      eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=eccBpe, \
-                        glvw=tP["glvw"], idx=loopCnt, numVgprG2L=numVgprG2L)
+                    if doTailOpt:
+                      destVgprHi = tmpVgprIdx
                     else:
-                      destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
+                      if (tP["localWriteInstruction"].blockWidth == 0.5) and (r%2 == 0):
+                        numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
+                        eccBpe = tP["bpeDS"] if kernel["ConvertAfterDS"] else max(tP["bpeGR"], tP["bpe"])
+                        eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=eccBpe, \
+                        glvw=tP["glvw"], idx=loopCnt, numVgprG2L=numVgprG2L)
+                      else:
+                        destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
 
                   regIdx = r // 2
                 elif dataType.isInt8x4() or dataType.isSingle():
@@ -6059,7 +6346,8 @@ class KernelWriterAssembly(KernelWriter):
                   regIdx = r*4
                 else:
                   printWarning("DataType unsupported")
-                module.addComment0("g2l=%u, load component %u"%(g2lIdx, r))
+                if not doTailOpt:
+                  module.addComment0("g2l=%u, load component %u"%(g2lIdx, r))
 
                 offset = 0
                 hi8 = 0
@@ -6107,9 +6395,6 @@ class KernelWriterAssembly(KernelWriter):
                     else:
                       padInterval = (self.states.kernel["WavefrontSize"] if kernel["WaveSeparateGlobalRead%c"%tc] else kernel["NumThreads"]) * self.states.bpr
                       ldsInc += (ldsInc // padInterval) * kernel["LdsPad%s"%tc] * tP["bpeGR"]
-                    #print("ldsInc", ldsInc)
-                    #print("GlobalReadVectorWidth", kernel["GlobalReadVectorWidth%c"%tc])
-                    #print("bpr", self.states.bpr)
                     if kernel["UseInstOffsetForGRO"]:
                       # buffer_load only support 12 bit instruction offset
                       # we have to increase m0 if offset is larger thant 12 bits
@@ -6137,6 +6422,7 @@ class KernelWriterAssembly(KernelWriter):
 
                   offset = r * tP["bpeGR"] + instOffset
                   comment = "load one buffer value"
+
                   if (dataType.isHalf() or dataType.isBFloat16()) and not tP["isM"]:
                     if numElementsPerLoad==2:
                       # Pack two FP16 values into a single load dword x2
@@ -6162,18 +6448,40 @@ class KernelWriterAssembly(KernelWriter):
 
                   # if hi8=1 or hi16=1 (component 1,2,3 for int8) or (component 1 for half), use the temp destVgprHi
                   # but only when hi16=1 we use the _d16_hi version instruction, see the below visualized int8 comment
-                  loadVgpr = destVgprHi if ((hi16 or hi8) and destVgprHi != None) else destVgpr
+                  if doTailOpt:
+                    loadVgpr = destVgprHi
+                  else:
+                    loadVgpr = destVgprHi if ((hi16 or hi8) and destVgprHi != None) else destVgpr
                   self.vgprs.globalReadRegisters[tc][-1] = destVgprHi if ((hi16 or hi8) and destVgprHi != None) else self.vgprs.globalReadRegisters[tc][-1]
                   if (kernel["ProblemType"]["DataType%s"%tcDataType].isInt8() or kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat() or tP["isM"]) and (not self.states.archCaps["HasEccHalf"]):
                     module.add(VMovB32(dst=vgpr(loadVgpr), src=0, comment="set to zero to avoid unexpected value"))
-                  module.add(self.chooseGlobalRead(True, \
-                            bpl, destVgpr=loadVgpr, \
-                            addr0=vgpr(offsetVgpr), addr1=sgpr("Srd%s"%tc, 4), \
-                            soffset=soffset, offset=offset, \
-                            glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
-                            hi16=hi16, \
-                            comment=comment))
 
+                  if doTailOpt:
+                    if behavior == "LOAD" and i == idx and ((r + 1) % numElementsPer4Bytes != 0):
+                      #hi16 = False
+                      if kLabelsList != None:
+                        module.add(kLabelsList.pop())
+                        module.add(SCmpGeU32(src0=sgpr(kSgpr), src1=(r + 1), comment=""))
+                        module.add(SCBranchSCC0(labelName=jumpLabel.getLabelName(), comment=""))
+                      module.addComment0("g2l=%u, load component %u"%(g2lIdx, r))
+                      module.add(self.chooseGlobalRead(True, \
+                                bpl, destVgpr=loadVgpr, \
+                                addr0=vgpr(offsetVgpr), addr1=sgpr("Srd%s"%tc, 4), \
+                                soffset=soffset, offset=offset, \
+                                glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
+                                hi16=hi16, \
+                                comment=comment))
+                      tmpVgprIdx += 1
+                      if (r + 1) == (numLoadVectorComp - 1):
+                        module.add(SBranch(labelName=jumpLabel.getLabelName(), comment=""))
+                  else:
+                    module.add(self.chooseGlobalRead(True, \
+                              bpl, destVgpr=loadVgpr, \
+                              addr0=vgpr(offsetVgpr), addr1=sgpr("Srd%s"%tc, 4), \
+                              soffset=soffset, offset=offset, \
+                              glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
+                              hi16=hi16, \
+                              comment=comment))
                   if unrollMirrorWithSoffset:
                     codeMod = Module("mirrorIdx%u"%loopCnt)
                     codeMod.add(VAddU32(dst=vgpr(offsetVgpr), src0=vgpr(offsetVgpr), src1=soffset_prev, comment="mirror unroll: restore GRO=GRO+SGRO"))
@@ -6181,7 +6489,6 @@ class KernelWriterAssembly(KernelWriter):
 
                   if kernel["DirectToLds%s"%tc] and kernel["UseInstOffsetForGRO"]:
                     instOffsetInc += ldsInc
-                  # print("  bpl={}, destVgpr={}, soffset={}, offset={}, hi16={}".format(bpl, destVgpr, soffset, offset, hi16))
 
                 else: # Not buffer load, ie 'flat' load
                   # mask if current address if in bounds
@@ -6226,30 +6533,64 @@ class KernelWriterAssembly(KernelWriter):
                 # DestV0|=(V1 << 8), DestV0|= V2, DestV0|=(V3 << 8)
                 # Int8 (byte)
                 if dataIsByte and (destVgprHi != None):
-                  # hi8  -> r = 1,3
-                  # hi16 -> r = 2,3
-                  if hi8 or hi16:
-                    # r = 1,2,3, vmcnt needed for one packing
-                    packInt8Code.add(SWaitCnt(vmcnt=(int8TempVgpr-r), comment=""))
-                  if hi8:
-                    # r = 1,3,   shift needed
-                    packInt8Code.add(VLShiftLeftB32(dst=vgpr(destVgprHi), shiftHex=hex(0x8), src=vgpr(destVgprHi), comment="shift left to higher 8 bits"))
-                  if hi8 or hi16:
-                    # r = 1,2,3, packing
-                    packInt8Code.add(VOrB32(dst=vgpr(destVgpr), src0=vgpr(destVgpr), src1=vgpr(destVgprHi), comment="pack a sub 8-bit with dest"))
-                  destVgprHi += 1
+                  if doTailOpt:
+                    if behavior == "MERGE" and i == idx and ((r + 1) % numElementsPer4Bytes != 0):
+                      if kLabelsList != None:
+                        module.add(kLabelsList.pop())
+                        module.add(SCmpGeU32(src0=sgpr(kSgpr), src1=(r + 1), comment=""))
+                        module.add(SCBranchSCC0(labelName=jumpLabel.getLabelName(), comment=""))
+                      # hi8  -> r = 1,3
+                      # hi16 -> r = 2,3
+                      module.add(SWaitCnt(vmcnt=0, comment=""))
+                      if hi8:
+                        module.add(VLShiftLeftB32(dst=vgpr(destVgprHi), shiftHex=hex(0x8), src=vgpr(destVgprHi), comment="shift left to higher 8 bits"))
+                      module.add(VOrB32(dst=vgpr(destVgpr), src0=vgpr(destVgpr), src1=vgpr(destVgprHi), comment="pack a sub 8-bit with dest"))
+                      tmpVgprIdx += 1
+                      if (r + 1) == (numLoadVectorComp - 1):
+                        module.add(SBranch(labelName=jumpLabel.getLabelName(), comment=""))
+                  else:
+                    # hi8  -> r = 1,3
+                    # hi16 -> r = 2,3
+                    if hi8 or hi16:
+                      # r = 1,2,3, vmcnt needed for one packing
+                      packInt8Code.add(SWaitCnt(vmcnt=(int8TempVgpr-r), comment=""))
+                    if hi8:
+                      # r = 1,3,   shift needed
+                      packInt8Code.add(VLShiftLeftB32(dst=vgpr(destVgprHi), shiftHex=hex(0x8), src=vgpr(destVgprHi), comment="shift left to higher 8 bits"))
+                    if hi8 or hi16:
+                      # r = 1,2,3, packing
+                      packInt8Code.add(VOrB32(dst=vgpr(destVgpr), src0=vgpr(destVgpr), src1=vgpr(destVgprHi), comment="pack a sub 8-bit with dest"))
+                    destVgprHi += 1
 
                 # Half
-                elif destVgprHi != None and r % 2 == 1:
-                  module.add(SWaitCnt(vmcnt=0, comment=""))
-                  if kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat():
-                    module.add(VLShiftRightB32(dst=vgpr(destVgprHi), shiftHex=hex(8), src=vgpr(destVgprHi), comment="shift right to lower 8 bits"))
-                  module.add(VOrB32(dst=vgpr(destVgpr), src0=vgpr(destVgpr), src1=vgpr(destVgprHi), comment="HasEccHalf: pack"))
-                  if kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat() and (g2lIdx % 2 == 1):
-                    module.add(VLShiftLeftB32(dst=vgpr(destVgpr), shiftHex=hex(16), src=vgpr(destVgpr), comment="shift left to higher 16 bits"))
+                elif destVgprHi != None:
+                  if doTailOpt:
+                    if behavior == "MERGE" and i == idx and ((r + 1) % numElementsPer4Bytes != 0):
+                      if kLabelsList != None:
+                        module.add(kLabelsList.pop())
+                        module.add(SCmpGeU32(src0=sgpr(kSgpr), src1=(r + 1), comment=""))
+                        module.add(SCBranchSCC0(labelName=jumpLabel.getLabelName(), comment=""))
+                      module.add(SWaitCnt(vmcnt=0, comment=""))
+                      if kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat():
+                        module.add(VLShiftRightB32(dst=vgpr(destVgprHi), shiftHex=hex(8), src=vgpr(destVgprHi), comment="shift right to lower 8 bits"))
+                      module.add(VOrB32(dst=vgpr(destVgpr), src0=vgpr(destVgpr), src1=vgpr(destVgprHi), comment="HasEccHalf: pack"))
+                      if kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat() and (g2lIdx % 2 == 1):
+                        module.add(VLShiftLeftB32(dst=vgpr(destVgpr), shiftHex=hex(16), src=vgpr(destVgpr), comment="shift left to higher 16 bits"))
+                      tmpVgprIdx += 1
+                      if (r + 1) == (numLoadVectorComp - 1):
+                        module.add(SBranch(labelName=jumpLabel.getLabelName(), comment=""))
+                  else:
+                    if r % 2 == 1:
+                      module.add(SWaitCnt(vmcnt=0, comment=""))
+                      if kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat():
+                        module.add(VLShiftRightB32(dst=vgpr(destVgprHi), shiftHex=hex(8), src=vgpr(destVgprHi), comment="shift right to lower 8 bits"))
+                      module.add(VOrB32(dst=vgpr(destVgpr), src0=vgpr(destVgpr), src1=vgpr(destVgprHi), comment="HasEccHalf: pack"))
+                      if kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat() and (g2lIdx % 2 == 1):
+                        module.add(VLShiftLeftB32(dst=vgpr(destVgpr), shiftHex=hex(16), src=vgpr(destVgpr), comment="shift left to higher 16 bits"))
                 # For half (bf16). Note: for int8, we will checkin after loading all components
                 if (destVgprHi != None) and (not dataIsByte):
-                  self.vgprPool.checkIn(destVgprHi)
+                  if not doTailOpt:
+                    self.vgprPool.checkIn(destVgprHi)
                   destVgprHi = None
 
                 r += 1 # next component (for half, byte)
@@ -6265,7 +6606,8 @@ class KernelWriterAssembly(KernelWriter):
               if dataIsByte and int8TempVgpr:
                 assert packInt8Code != None and destVgprHi != None
                 module.add(packInt8Code)
-                self.vgprPool.checkIn(destVgprHi - int8TempVgpr)
+                if not doTailOpt:
+                  self.vgprPool.checkIn(destVgprHi - int8TempVgpr)
                 destVgprHi = None
 
       if kernel["ProblemType"]["Sparse"]:
@@ -6304,7 +6646,7 @@ class KernelWriterAssembly(KernelWriter):
                 self.vgprPool.checkIn(destVgprHi)
                 destVgprHi = None
 
-    globalReadGuardKBody(tP)
+    globalReadGuardKBody(tP, tmpVgpr, kLabelsList, behavior, jumpLabel, numElementsPer4Bytes, kSgpr, doTailOpt)
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
       if tP["is_sparse"]:
           globalReadGuardKBody(tP["tpsMetadata"])
@@ -6417,7 +6759,6 @@ class KernelWriterAssembly(KernelWriter):
       loadWidth = tP["globalReadInstruction"].totalWidth # load width in elements?
       bpe = tP["bpeGR"] if not tP["isM"] else tP["bpe"]
       bpl = bpe * tP["glvw"]  # bytes per load
-
       isGlc = tP["NonTemporal"] & 0x1
       isSlc = tP["NonTemporal"] & 0x2
       isNT  = tP["NonTemporal"] & 0x4
@@ -6473,7 +6814,6 @@ class KernelWriterAssembly(KernelWriter):
                 # Sgpr for GRO
                 else:
                   soffset = "0" if graIdx == 0 else sgpr("ScalarGlobalReadOffset%s+%u"%(tc, graIdx-1))
-
                 unrollMirrorWithSoffset = kernel["ProblemType"]["IndicesSummation"][self.states.unrollIdx] in problemType["MirrorDims%s"%tc] and soffset != "0"
                 # ScalarGlobalReadOffset should be negative value with unroll mirroring.
                 # However, buffer_load uses soffset as uint value, so GRO - SGRO, SGRO = 0
@@ -7584,281 +7924,6 @@ class KernelWriterAssembly(KernelWriter):
     component = Component.ShiftVectorComponents.find(self)
     if component:
       return component(self, kernel, tP)
-
-  ##############################################################################
-  # LocalSplitU: Local Write
-  ##############################################################################
-  def localSplitULocalWrite(self, kernel):
-    module = Module("localSplitULocalWrite")
-    # wait for summation to be done with lds before writing reduction values
-    module.add(self._syncThreads(kernel, "pre-lsu local write"))
-    module.add(Label("localSplitULocalWrite", ""))
-
-    tmpVgpr = self.vgprPool.checkOutAligned(2, 2, "tmpVgpr")
-    tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
-    lsu_id = self.vgprPool.checkOut(1,"lsu_id")
-    addr = self.vgprPool.checkOut(1,"addr")
-    self.lsuCoordOffset = self.vgprPool.checkOut(1,"lsuCoordOffset")
-    lr1 = self.vgprPool.checkOut(1,"lr1")
-    acc2arch, _ = accToArchMapper(kernel)
-    NumAccVgprRes = len(acc2arch)*kernel["MIRegPerOut"]
-    accVgprRes = self.vgprPool.checkOutAligned(NumAccVgprRes, 4, "accLSUVgprRes")
-    for i in range(len(acc2arch)):
-      for r in range(kernel["MIRegPerOut"]):
-        destIdx = (acc2arch[i]) * kernel["MIRegPerOut"] + r
-        srcIdx = ((i * kernel["MIRegPerOut"] + r))
-        if not kernel["MIArchVgpr"]:
-          accStr = accvgpr(srcIdx)
-          module.add(VAccvgprReadB32(dst=vgpr(accVgprRes+destIdx),
-                                     src=accStr,
-                                     comment="copy acc to vreg[%u]" % destIdx))
-        else:
-          module.add(VMovB32(dst=vgpr(accVgprRes+destIdx),
-                             src=vgpr("ValuC+%u"%srcIdx),
-                            comment="copy MI out reg to vreg[%u]" % destIdx))
-
-    ldsStride  = kernel["MacroTile0"]*kernel["MacroTile1"]
-    numWaves   = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-    waveOffset = ldsStride // numWaves
-
-    # new method. output self.vgprs.coord0InMT/coord1InMT
-    if kernel["EnableMatrixInstruction"]:
-      module.add(self.computeStoreVgprs(kernel))
-    else:
-      # new method. output self.vgprs.coord0InMT/coord1InMT
-      # lr0 = serial % SG0
-      module.add(self.computeStoreVgprs(kernel, \
-                                        divisor = kernel["MacroTile0"] // kernel["GlobalWriteVectorWidth"], \
-                                        tid0Scale = kernel["GlobalWriteVectorWidth"], \
-                                        tid1Scale = 1))
-
-    self.LSUelemCoord0 = []
-    self.LSUelemCoord1 = []
-    self.LSUelements   = []
-    self.LSUfullVw     = []
-    (vwdummy, eledummy, self.LSUfullVw, self.LSUelements) = self.notLocalFullTileElements(kernel, False)
-    storevw = self.LSUfullVw
-    atomic = False # atomic is for GSU > 1
-    beta = True
-    vectorDataTypes = VectorDataTypes()
-    ss = StoreState(self, kernel, storevw, False, beta, atomic, self.LSUelements, vectorDataTypes, dim=0)
-    self.LSUelemCoord0, self.LSUelemCoord1 = ss.getStoreElementsInfoForBatch(kernel, self.LSUelements)
-
-    with self.allocTmpSgpr(1) as tmpSgprInfo:
-      tmpSgpr = tmpSgprInfo.idx
-
-      # lr1 = serial / kernel["WavefrontSize"]
-      module.add(vectorStaticDivide(lr1, "Serial", \
-          kernel["WavefrontSize"], tmpVgprRes))
-
-      module.add(vectorStaticDivide(lsu_id, lr1, \
-          numWaves, tmpVgprRes, comment="Get LSU wave ID"))
-
-      module.add(SMovB32(dst=sgpr(tmpSgpr), \
-          src=hex(ldsStride), comment="MT0*MT1"))
-      module.add(VMulLOU32(dst=vgpr(addr), src0=sgpr(tmpSgpr), src1=vgpr(lsu_id), \
-          comment="lsu_id *= MT0*MT1"))
-
-      module.add(SMovB32(dst=sgpr(tmpSgpr), \
-          src=hex(kernel["MacroTile0"]), comment="MT0"))
-      module.add(VMulLOU32(dst=vgpr(self.lsuCoordOffset), src0=sgpr(tmpSgpr), src1=vgpr(self.vgprs.coord1InMT), \
-          comment="MT0*coord1InMT"))
-      module.add(VAddU32(dst=vgpr(self.lsuCoordOffset), src0=vgpr(self.vgprs.coord0InMT), src1=vgpr(self.lsuCoordOffset), comment="coord0InMT"))
-
-    #thread offset
-    module.add(VAddLShiftLeftU32(dst=vgpr(addr), src0=vgpr(self.lsuCoordOffset), src1=vgpr(addr), shiftHex=hex(log2(self.states.bpeCinternal)), comment="local write LDS address"))
-
-    self.vgprPool.checkIn(lr1)
-    self.vgprPool.checkIn(lsu_id)
-    self.vgprPool.checkIn(tmpVgpr)
-
-    bytesPerElem   = kernel["ProblemType"]["ComputeDataType"].numBytes()
-    regsPerElem    = kernel["ProblemType"]["ComputeDataType"].numRegisters()
-    bytesPerVector = storevw * bytesPerElem
-    for i in range(0, len(self.LSUelements)):
-      (tt1, tt0, vc1, vc0) = self.LSUelements[i]
-      writeOffset = self.LSUelemCoord0[i] + self.LSUelemCoord1[i] * kernel["MacroTile0"]
-      regIdx = int(i * regsPerElem * storevw)
-      regIdxStep  = 0
-      resedualBPV = bytesPerVector
-      while resedualBPV > 0:
-        bps = min(resedualBPV, 16)
-        regsPerStep    = int((bps+3)//4)
-        DSStoreBX = {128: DSStoreB128,
-                          64:  DSStoreB64,
-                          32:  DSStoreB32,
-                          16:  DSStoreB16,
-                          8:   DSStoreB8}[bps*8]
-        module.add(DSStoreBX(dstAddr=vgpr(addr), src=vgpr(accVgprRes+regIdx+regIdxStep, regsPerStep), \
-            ds=DSModifiers(offset=(writeOffset*self.states.bpeCinternal+(regIdxStep*4))),
-            comment="tt1=%u tt0=%u vc1=%u vc0=%u"%(tt1, tt0, vc1, vc0)))
-        regIdxStep += regsPerStep
-        resedualBPV -= bps
-
-    self.vgprPool.checkIn(accVgprRes)
-    self.vgprPool.checkIn(addr)
-    return module
-
-  ##############################################################################
-  # LocalSplitU: Local Read
-  ##############################################################################
-  def localSplitULocalRead(self, kernel):
-    # search for valid lsu wave offset
-    maxtt1 = 0
-    maxtt0 = 0
-    maxvc1 = 0
-    maxvc0 = 0
-    validOffset  = -1
-    validOffset0 = -1
-    validOffset1 = -1
-    self.LSUelementsPerLSUWave = []
-    self.LSUelemCoord0PerLSUWave = []
-    self.LSUelemCoord1PerLSUWave = []
-    # Check valid LSU/VW combination
-    if len(self.LSUelements) >= kernel["LocalSplitU"]:
-      if kernel["LocalSplitU"] == 4:
-        idxGrp = 1
-        for idxGrp in range(1, len(self.LSUelements)//4 + 1):
-          for i in range(idxGrp):
-            i0 = i
-            i1 = i + 1 * idxGrp
-            i2 = i + 2 * idxGrp
-            i3 = i + 3 * idxGrp
-            offset0 = self.LSUelemCoord0[i0] + self.LSUelemCoord1[i0] * kernel["MacroTile0"]
-            offset1 = self.LSUelemCoord0[i1] + self.LSUelemCoord1[i1] * kernel["MacroTile0"]
-            offset2 = self.LSUelemCoord0[i2] + self.LSUelemCoord1[i2] * kernel["MacroTile0"]
-            offset3 = self.LSUelemCoord0[i3] + self.LSUelemCoord1[i3] * kernel["MacroTile0"]
-            if (offset3 - offset2 == offset2 - offset1) and (offset2 - offset1 == offset1 - offset0):
-              validOffset0 = self.LSUelemCoord0[i1] - self.LSUelemCoord0[i0]
-              validOffset1 = self.LSUelemCoord1[i1] - self.LSUelemCoord1[i0]
-              if self.LSUelemCoord0[i2] - self.LSUelemCoord0[i1] == validOffset0 \
-                  and self.LSUelemCoord0[i3] - self.LSUelemCoord0[i2] == validOffset0 \
-                  and self.LSUelemCoord1[i2] - self.LSUelemCoord1[i1] == validOffset1 \
-                  and self.LSUelemCoord1[i3] - self.LSUelemCoord1[i2] == validOffset1:
-                validOffset  = offset1 - offset0
-                break
-          if validOffset != -1:
-            break
-        for idx in range(0, len(self.LSUelements), 4*idxGrp):
-          for idx2 in range(idxGrp):
-            self.LSUelementsPerLSUWave.append(self.LSUelements[idx + idx2])
-            self.LSUelemCoord0PerLSUWave.append(self.LSUelemCoord0[idx + idx2])
-            self.LSUelemCoord1PerLSUWave.append(self.LSUelemCoord1[idx + idx2])
-      elif kernel["LocalSplitU"] == 2:
-        i = 0
-        offset0      = self.LSUelemCoord0[i] + self.LSUelemCoord1[i] * kernel["MacroTile0"]
-        offset1      = self.LSUelemCoord0[i + 1] + self.LSUelemCoord1[i + 1] * kernel["MacroTile0"]
-        validOffset  = offset1 - offset0
-        validOffset0 = self.LSUelemCoord0[i + 1] - self.LSUelemCoord0[i]
-        validOffset1 = self.LSUelemCoord1[i + 1] - self.LSUelemCoord1[i]
-        for idx in range(0, len(self.LSUelements), 2):
-          self.LSUelementsPerLSUWave.append(self.LSUelements[idx])
-          self.LSUelemCoord0PerLSUWave.append(self.LSUelemCoord0[idx])
-          self.LSUelemCoord1PerLSUWave.append(self.LSUelemCoord1[idx])
-      else:
-        assert 0, "No valid LSU offset found."
-
-    if validOffset == -1:
-      assert 0, "No valid LSU offset found."
-    self.LSUValidOffset0 = validOffset0
-    self.LSUValidOffset1 = validOffset1
-    bytesPerElem   = kernel["ProblemType"]["ComputeDataType"].numBytes()
-    bytesPerVector = self.LSUfullVw * bytesPerElem
-    regsPerElem    = kernel["ProblemType"]["ComputeDataType"].numRegisters()
-    numWaves       = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-    regsPerStep = int((bytesPerVector+3)//4)
-    elementStep = bytesPerVector // bytesPerElem
-    lsuStep   = kernel["MacroTile0"] * kernel["MacroTile1"]
-    # alloc resource
-    baseAddr                    = self.vgprPool.checkOut(1,"baseAddr")
-    offsetSgpr                  = self.sgprPool.checkOut(1)
-    numTotalAccVgprLdsReduction = len(self.LSUelements)*regsPerStep*(self.LSUfullVw//elementStep)
-    self.accVgprLdsReduction    = self.vgprPool.checkOutAligned(numTotalAccVgprLdsReduction, 4, "LsuReduction")
-    module = Module("localSplitULocalRead")
-    module.add(Label("localSplitULocalRead", ""))
-    module.add(RegSet("v", "vgprLsuReduction", self.accVgprLdsReduction))
-    # reset vgprValuC register
-    module.add(RegSet("v", "vgprValuC", self.accVgprLdsReduction))
-    self.states.c.startVgprValu = self.accVgprLdsReduction
-
-    # Calculate offset for wave id and lsu id
-    # re-use the vgpr from numTotalAccVgprLdsReduction
-    tmpVgpr0 = self.accVgprLdsReduction
-    lsu_id   = self.accVgprLdsReduction + 1
-
-    with self.allocTmpSgpr(1) as tmpSgprInfo:
-      tmpSgpr = tmpSgprInfo.idx
-      module.add(vectorStaticDivide(lsu_id, "Serial", \
-        kernel["WavefrontSize"], tmpVgpr0))
-
-      module.add(vectorStaticDivide(lsu_id, lsu_id, \
-        numWaves, tmpVgpr0, comment="Get LSU wave ID"))
-      module.add(SMovB32(dst=sgpr(tmpSgpr), \
-          src=hex(validOffset), comment="a valid offset"))
-      module.add(VMulLOU32(dst=vgpr(baseAddr), src0=sgpr(tmpSgpr), src1=vgpr(lsu_id), \
-          comment="Addr = lsu_id * a valid offset"))
-
-    # reuse lsuCoordOffset from local write
-    module.add(VAddLShiftLeftU32(dst=vgpr(baseAddr), src0=vgpr(self.lsuCoordOffset), src1=vgpr(baseAddr), shiftHex=hex(log2(self.states.bpeCinternal)), comment="local read LDS address"))
-
-    module.add(SWaitCnt(lgkmcnt=0, vscnt=0, comment="wait for all writes"))
-    module.add(self._syncThreads(kernel, "post-lsu local write"))
-
-    for r in range(0, kernel["LocalSplitU"]):
-      for i in range(0, len(self.LSUelementsPerLSUWave)):
-        offset   = r * lsuStep
-        offset  += self.LSUelemCoord0PerLSUWave[i] + self.LSUelemCoord1PerLSUWave[i] * kernel["MacroTile0"]
-        regIdx   = int(((i)*self.LSUfullVw + r*kernel["GlobalWriteVectorWidth"]*kernel["NumGlobalWriteVectorsPerThread"]) * regsPerElem)
-        # generate source
-        regIdxStep  = 0
-        resedualBPV = bytesPerVector
-        while resedualBPV > 0:
-          bps = min(resedualBPV, 16)
-          regsPerStep    = int((bps+3)//4)
-          DSLoadBX = {128: DSLoadB128,
-                      64:  DSLoadB64,
-                      32:  DSLoadB32}[bps*8]
-          module.add(DSLoadBX(dst=vgpr("LsuReduction+%u"%(regIdx + regIdxStep),regsPerStep), src=vgpr(baseAddr), \
-              ds=DSModifiers(offset=(offset*self.states.bpeCinternal+(regIdxStep*4))), comment="r=%u i=%u"%(r,i)))
-          regIdxStep += regsPerStep
-          resedualBPV -= bps
-
-    # free resources
-    self.vgprPool.checkIn(baseAddr)
-    self.sgprPool.checkIn(offsetSgpr)
-
-    return module
-
-  ##############################################################################
-  # LocalSplitU: Reduction
-  ##############################################################################
-  def localSplitUReduction(self, kernel):
-    module = Module("localSplitUReduction")
-    module.add(Label("localSplitUReduction", ""))
-    is_non_hpa_fp16 = kernel["ProblemType"]["DataType"].isHalf() and (not kernel["ProblemType"]["HighPrecisionAccumulate"])
-    elementStep = 2 if is_non_hpa_fp16 else 1
-    regsPerElem = kernel["ProblemType"]["ComputeDataType"].numRegisters()
-
-    module.add(SWaitCnt(lgkmcnt=0, vscnt=0, comment="wait for all reads"))
-    if self.states.archCaps["SeparateVscnt"]:
-      module.add(SWaitCnt(vscnt=0))
-
-    for r in range(1, kernel["LocalSplitU"]):
-      for i in range(0, kernel["NumGlobalWriteVectorsPerThread"]):
-        for s in range(0, kernel["GlobalWriteVectorWidth"], elementStep):
-          cIdx = int((s + i * kernel["GlobalWriteVectorWidth"]) * regsPerElem)
-          regIdx = int((s + i * kernel["GlobalWriteVectorWidth"] + r * kernel["GlobalWriteVectorWidth"] * kernel["NumGlobalWriteVectorsPerThread"]) * regsPerElem)
-
-          if kernel["ProblemType"]["ComputeDataType"].isSingle():
-            module.add(VAddF32(dst=vgpr("LsuReduction+%u"%cIdx), src0=vgpr(self.accVgprLdsReduction+ regIdx), src1=vgpr(self.accVgprLdsReduction+cIdx), \
-                        comment="c[%u] += c[%u]"%(cIdx, regIdx)))
-          elif kernel["ProblemType"]["ComputeDataType"].isInt32():
-            module.add(VAddI32(dst=vgpr("LsuReduction+%u"%cIdx), src0=vgpr(self.accVgprLdsReduction+ regIdx), src1=vgpr(self.accVgprLdsReduction+cIdx), \
-                        comment="c[%u] += c[%u]"%(cIdx, regIdx)))
-          else:
-            # TODO: hpa_half, int8
-            assert(0) # unsupported data type, need to modify here and LSU write/read code
-    return module
 
   ##############################################################################
   # computeStoreSrd
@@ -9661,6 +9726,13 @@ class KernelWriterAssembly(KernelWriter):
     self.states.bpeCexternal = bpeCexternalBackup
     return module
 
+  def getMBSKGSUTotal(self, kernel):
+    GSUtotal = 16
+    if (kernel["MIWaveTile"][0] * kernel["MIWaveTile"][1]) * (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) > 8:
+      GSUtotal = int(GSUtotal/int((kernel["MIWaveTile"][0] * kernel["MIWaveTile"][1]) * (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1])/8))
+    GSUtotal = max(2,GSUtotal)
+    return GSUtotal
+
   ##############################################################################
   # globalWriteElementBatch :
   ##############################################################################
@@ -9690,6 +9762,33 @@ class KernelWriterAssembly(KernelWriter):
     ########################################
     # Calculate Vgprs for Write Batching
     ########################################
+    self.vgprPool.resetOccupancyLimit()
+    self.sgprPool.resetOccupancyLimit()
+
+    # Temporarily grow pool for sgpr
+    sgprList = []
+    if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
+      sgprList.append(self.sgprPool.checkOut(1, preventOverflow=False))
+      sgprList.append(self.sgprPool.checkOut(1, preventOverflow=False))
+      sgprList.append(self.sgprPool.checkOut(1, preventOverflow=False))
+      sgprList.append(self.sgprPool.checkOutAligned(2, 2, preventOverflow=False))
+      sgprList.append(self.sgprPool.checkOutAligned(2, 2, preventOverflow=False))
+      sgprList.append(self.sgprPool.checkOutAligned(4, 4, preventOverflow=False))
+      for s in sgprList:
+        self.sgprPool.checkIn(s)
+    if actPCMaxTempSgpr > 0:
+      self.sgprPool.checkIn(self.sgprPool.checkOutAligned(actPCMaxTempSgpr, 2 if actPCMaxTempSgpr > 1 else 1, preventOverflow=False))
+
+    tmpVgprDynamic = None
+    tmpVgprDynamicSize  = 0
+    tmpVgprDynamicAlign = 0
+    if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
+      GSUTotal = self.getMBSKGSUTotal(kernel)
+      vgprMbsk = (GSUTotal-1) * gwvw * max(1, kernel["ProblemType"]["DestDataType"].numRegisters())
+      tmpVgprDynamicSize  = vgprMbsk
+      tmpVgprDynamicAlign = 4
+    if tmpVgprDynamicSize > 0:
+      tmpVgprDynamic = RegisterPoolResource(idx=self.vgprPool.checkOutAligned(tmpVgprDynamicSize, tmpVgprDynamicAlign), size=tmpVgprDynamicSize)
 
     ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], vectorDataTypes, dim=factorDim)
 
@@ -9698,9 +9797,8 @@ class KernelWriterAssembly(KernelWriter):
       maxVgprs, occupancy = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
                                                         self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
       # Set occupancy limit for register pools
-      # TODO: Support GSUMBSK
-      # TODO: Support gfx120X
-      if (kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel') and (kernel["ISA"][0] != 12):
+      # TODO: Support gfx12
+      if kernel["ISA"][0] != 12:
         self.vgprPool.setOccupancyLimit(self.states.regCaps["MaxVgpr"], self.states.regCaps["PhysicalMaxVgpr"] // occupancy)
         self.sgprPool.setOccupancyLimit(self.states.regCaps["MaxSgpr"], self.states.regCaps["PhysicalMaxSgpr"] // occupancy)
       return maxVgprs, occupancy
@@ -9709,7 +9807,7 @@ class KernelWriterAssembly(KernelWriter):
     # Get estimated numVgprAvailable
     # print("Max vgprs =", maxVgprs, self.vgprPool.size(), self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align))
     numVgprAvailable = self.vgprPool.availableBlockMaxVgpr(maxVgprs, ss.numVgprsPerElement, ss.align)
-    
+
     # Grow the register pool if needed - we need enough regs for at least one element
     # Unfortunate since this means the write logic is setting the VGPR requirement
     # for the entire kernel but at least we have a functional kernel.
@@ -9877,13 +9975,18 @@ class KernelWriterAssembly(KernelWriter):
               applyAlpha, beta, edge, atomic, gwvw, atomicW, \
               elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, \
               self.vgprs.addrScaleAVec, self.vgprs.addrScaleBVec, self.vgprs.addrScaleAlphaVec, \
-              biasLocalBarrierInit, tmpVgpr, cvtVgprStruct, activationSetPCStruct, \
+              biasLocalBarrierInit, tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, \
               activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, factorDim))
           biasLocalBarrierInit = True
 
         ss.resetState()
         actLoopModuleList.append(actLoopModule)
         actLoopModuleCodeLength.append(actLoopModule.countType(Instruction))
+
+    #################
+    # Free after final vgpr vcalculation
+    if tmpVgprDynamic:
+      self.vgprPool.checkIn(tmpVgprDynamic.idx)
 
     if len(actLoopLabelModules) > 1:
       actInstCounter = 0
@@ -10429,7 +10532,7 @@ class KernelWriterAssembly(KernelWriter):
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrE, addrD, addrC, addrBias, \
       addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
-      tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
+      tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
       batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, factorDim) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
@@ -10437,7 +10540,7 @@ class KernelWriterAssembly(KernelWriter):
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
         batchElements, addrE, addrD, addrC, addrBias, \
         addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, biasLocalBarrierInit, \
-        tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
+        tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
         batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, factorDim)
 
   ##############################################################################
@@ -11483,53 +11586,6 @@ class KernelWriterAssembly(KernelWriter):
     return imod
 
   ##############################################################################
-  # Function Suffix
-  ##############################################################################
-  def functionSuffix(self, kernel):
-    if self.vgprPool.size() > self.states.regCaps["MaxVgpr"]:
-      self.states.overflowedResources = 1
-    elif self.sgprPool.size() > self.states.regCaps["MaxSgpr"]:
-      self.states.overflowedResources = 2
-
-    # TODO: Add target occupancy or kept the occupancy settings from globalWriteBatch
-    if kernel["ScheduleIterAlg"] == 2 and \
-        self.getOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
-        self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr) < 2:
-      self.states.overflowedResources = 6
-
-    if self.states.version[0] == 10:
-      vgprPerCU = 1024 * 32
-    elif self.states.version[0] == 11:
-      if self.states.version[2] == 2:
-        vgprPerCU = 1024 * 32
-      else:
-        vgprPerCU = 1536 * 32
-    elif self.states.version[0] == 12:
-      vgprPerCU = 1536 * 32
-    elif self.states.version[0] == 9:
-      if self.states.archCaps["ArchAccUnifiedRegs"]:
-        vgprPerCU = 2048 * 64
-      else:
-        vgprPerCU = 1024 * 64
-    else:
-      assert 0, "No valid VGPR value for this platform"
-    if self.states.archCaps["ArchAccUnifiedRegs"]:
-      totalVgprUsed = self.vgprPool.size() + self.agprPool.size()
-    else:
-      totalVgprUsed = max(self.vgprPool.size(), self.agprPool.size())
-    vgprPerThreadPerOccupancy = vgprPerCU // kernel["NumThreads"]
-    numWorkGroupsPerCU = vgprPerThreadPerOccupancy // totalVgprUsed
-    if numWorkGroupsPerCU < 1:
-      self.states.overflowedResources = 4
-
-    module = Module("functionSuffix")
-    if self.states.overflowedResources:
-      module.add(ValueEndif("overflowed resources"))
-
-    self.vgprPool.checkFinalState()
-    return module
-
-  ##############################################################################
   # waitcnt code for DirectToVgpr
   ##############################################################################
   def getWaitcntCodeForDirectToVgpr(self, kernel, tensorParametersA, tensorParametersB, localWriteEndIter, u, isNLL=False, beforeBarrier=False, NLLlast=False, oddLast=False):
@@ -11680,11 +11736,12 @@ class KernelWriterAssembly(KernelWriter):
     self.vgprPool.checkIn(tmpVgpr)
     return module
 
-  def s_mul_u64_u32 (self, dst0, dst1,  src0, src1, comment):
-    vtmp0 = self.vgprPool.checkOut(2)
+  def s_mul_u64_u32 (self, dst0, dst1,  src0, src1, tmpVgpr=None, comment=""):
+    vtmp0 = self.vgprPool.checkOut(2) if tmpVgpr == None else tmpVgpr
     module = SMulInt64to32(self.states.asmCaps["HasSMulHi"], \
                            dst0, dst1, src0, src1, False, vtmp0, comment)
-    self.vgprPool.checkIn(vtmp0)
+    if tmpVgpr == None:
+      self.vgprPool.checkIn(vtmp0)
     return module
 
   def s_mul_i64_i32 (self, dst0, dst1,  src0, src1, comment):

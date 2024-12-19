@@ -234,7 +234,7 @@ namespace TensileLite
                     bool ret = (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
                                 * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
                                    * (value[2]) * (value[4] / 64) * value[3]
-                               <= 40960;
+                               <= 409600;
                     if(problem.groupedGemm())
                         ret = ret && (problem.groupedGemmCount() <= 16);
 
@@ -2518,6 +2518,72 @@ namespace TensileLite
                 {
                     return debugEvalCmp(
                         problem, stream, "prob", problem.sparse(), "==", "sol", value);
+                }
+            };
+
+            struct SwizzleTensorA : public Predicate_CRTP<SwizzleTensorA, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                SwizzleTensorA() = default;
+                SwizzleTensorA(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "SwizzleTensorA";
+                }
+
+                bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.swizzleTensorA() == value;
+                }
+
+                bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(
+                        problem, stream, "prob", problem.swizzleTensorA(), "==", "sol", value);
+                }
+            };
+
+            struct SwizzleTensorB : public Predicate_CRTP<SwizzleTensorB, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                SwizzleTensorB() = default;
+                SwizzleTensorB(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "SwizzleTensorB";
+                }
+
+                bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.swizzleTensorB() == value;
+                }
+
+                bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(
+                        problem, stream, "prob", problem.swizzleTensorB(), "==", "sol", value);
                 }
             };
 

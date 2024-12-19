@@ -34,6 +34,7 @@ import subprocess
 import shlex
 import shutil
 from enum import Enum
+from glob import glob
 
 from .Contractions import FreeIndex, BatchIndex
 from .Contractions import ProblemType as ContractionsProblemType
@@ -76,7 +77,7 @@ class ClientLogLevel(Enum):
 ################################################################################
 # Main
 ################################################################################
-def main( config ):
+def main(config, cxxCompiler: str, cCompiler: str):
   libraryLogicPath = os.path.join(globalParameters["WorkingPath"], \
       globalParameters["LibraryLogicPath"])
   stepBaseDir = pushWorkingPath(globalParameters["LibraryClientPath"])
@@ -96,19 +97,15 @@ def main( config ):
   functionNames = []
   enableHalf = False
 
-  createLibraryScript = getBuildClientLibraryScript(stepBaseDir, libraryLogicPath)
+  createLibraryScript = getBuildClientLibraryScript(stepBaseDir, libraryLogicPath, cxxCompiler)
   subprocess.run(shlex.split(createLibraryScript), cwd=stepBaseDir)
-  coList = []
-  yamlList = []
-  with open(os.path.join(stepBaseDir,"library","TensileManifest.txt"), "r") as f:
-    lines = f.read().split("\n")
-    coList = [line for line in lines if "co" in line]
-    yamlList = [line for line in lines if "yaml" in line]
-
+  coList = glob(os.path.join(stepBaseDir,"library/*.co"))
+  yamlList = glob(os.path.join(stepBaseDir,"library/*.yaml"))
+    
   clientParametersPaths = []
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary, _) \
-        = LibraryIO.parseLibraryLogicFile(logicFileName)
+        = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler)
     if problemType["DataType"].isHalf():
         enableHalf = True
     functions.append((scheduleName, problemType))
@@ -175,7 +172,7 @@ def main( config ):
 
   forBenchmark = False
   enableTileSelection = False
-  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, clientParametersPaths)
+  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, clientParametersPaths)
 
   popWorkingPath() # LibraryClient
 
@@ -184,9 +181,9 @@ def main( config ):
 ################################################################################
 # Write Run Script
 ################################################################################
-def runNewClient(scriptPath, clientParametersPath, clientBuildDir=None):
+def runNewClient(scriptPath, clientParametersPath, cxxCompiler: str, cCompiler: str, clientBuildDir=None):
 
-  clientExe = ClientExecutable.getClientExecutable(clientBuildDir)
+  clientExe = ClientExecutable.getClientExecutable(cxxCompiler, cCompiler, clientBuildDir)
   iniFile = "--config-file={}".format(clientParametersPath)
   args = [clientExe, iniFile]
 
@@ -196,12 +193,12 @@ def runNewClient(scriptPath, clientParametersPath, clientBuildDir=None):
     printWarning("ClientWriter Benchmark Process exited with error: {}".format(e))
 
 
-def runClient(libraryLogicPath, forBenchmark, enableTileSelection, configPaths=None):
+def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, configPaths=None):
   # write runScript
   pushWorkingPath("build")
   path = globalParameters["WorkingPath"]
 
-  runScriptName = writeRunScript(path, forBenchmark, enableTileSelection, configPaths)
+  runScriptName = writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, configPaths)
   with ClientExecutionLock():
     process = subprocess.Popen(runScriptName, cwd=path)
     process.communicate()
@@ -212,7 +209,7 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, configPaths=N
 
   return process.returncode
 
-def getBuildClientLibraryScript(buildPath, libraryLogicPath):
+def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
   import io
   runScriptFile = io.StringIO()
 
@@ -234,9 +231,6 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
   else:
     callCreateLibraryCmd += " --no-library-print-debug"
 
-  if globalParameters["GenerateManifestAndExit"]:
-    callCreateLibraryCmd += " --generate-manifest-and-exit"
-
   if globalParameters.get("AsmDebug", False):
     callCreateLibraryCmd += " --asm-debug"
 
@@ -245,7 +239,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
 
   callCreateLibraryCmd += " --architecture=" + globalParameters["Architecture"]
   callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
-  callCreateLibraryCmd += " --cxx-compiler=" + globalParameters["CxxCompiler"]
+  callCreateLibraryCmd += " --cxx-compiler=" + cxxCompiler
   callCreateLibraryCmd += " --library-format=" + globalParameters["LibraryFormat"]
 
   callCreateLibraryCmd += " %s" % libraryLogicPath
@@ -256,19 +250,19 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
 
   return runScriptFile.getvalue()
 
-def writeBuildClientLibraryScript(path, libraryLogicPath):
+def writeBuildClientLibraryScript(path, libraryLogicPath, cxxCompiler):
   filename = os.path.join(path, \
     "build.%s" % ("bat" if os.name == "nt" else "sh") )
   with open(filename, "w") as file:
     file.write("#!/bin/bash\n\n")
     file.write("set -ex\n")
-    file.write(getBuildClientLibraryScript(path, libraryLogicPath))
+    file.write(getBuildClientLibraryScript(path, libraryLogicPath, cxxCompiler))
 
   if os.name != "nt":
     os.chmod(filename, 0o777)
   return filename
 
-def writeRunScript(path, forBenchmark, enableTileSelection, configPaths=None):
+def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, configPaths=None):
   if configPaths is None:
     configPaths = []
     configPaths.append(os.path.join(globalParameters["WorkingPath"], "../source/ClientParameters.ini"))
@@ -305,7 +299,7 @@ def writeRunScript(path, forBenchmark, enableTileSelection, configPaths=None):
 
     runScriptFile.write("ERR1=0\n")
 
-    clientExe = ClientExecutable.getClientExecutable()
+    clientExe = ClientExecutable.getClientExecutable(cxxCompiler, cCompiler)
     for configFile in configPaths:
       runScriptFile.write("{} --config-file {} {}\n".format(clientExe, configFile, globalParameters["ClientArgs"]))
     runScriptFile.write("ERR2=$?\n\n")
@@ -330,7 +324,7 @@ fi
         runScriptFile.write("%s -d 0 --setfan 50\n" % globalParameters["ROCmSMIPath"])
   else:
     for configFile in configPaths:
-      runScriptFile.write("{} --config-file {} {} --best-solution 1\n".format(ClientExecutable.getClientExecutable(), configFile, globalParameters["ClientArgs"]))
+      runScriptFile.write("{} --config-file {} {} --best-solution 1\n".format(ClientExecutable.getClientExecutable(cxxCompiler, cCompiler), configFile, globalParameters["ClientArgs"]))
   if os.name != "nt":
     runScriptFile.write("exit $ERR\n")
   runScriptFile.close()
@@ -524,7 +518,7 @@ def pruneModeName(mode):
     if mode == 5: return 'Prune0X0X'
     if mode == 6: return 'Prune00XX'
 
-def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
+def writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
 
     with open(parametersFilePath, "w") as f:
         def param(key, value):
@@ -564,6 +558,8 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationAr
         param('use-scaleAB',   problemType.useScaleAB)
         param('use-scaleCD',   problemType.useScaleCD)
         param('use-scaleAlphaVec',   problemType.useScaleAlphaVec)
+        param('swizzle-tensor-a', problemType.swizzleTensorA)
+        param('swizzle-tensor-b', problemType.swizzleTensorB)
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
             param('bias-type-args',  btype.toEnum())
@@ -626,7 +622,14 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationAr
         param("print-valids",             globalParameters["ValidationPrintValids"])
         param("print-max",                globalParameters["ValidationMaxToPrint"])
         param("num-benchmarks",           globalParameters["NumBenchmarks"])
-        param("num-elements-to-validate", globalParameters["NumElementsToValidate"])
+
+        numElementsToValidate = globalParameters["NumElementsToValidate"]
+        if not forBenchmark:
+         if globalParameters["NumElementsToValidateWinner"] == -1 or numElementsToValidate == -1:
+           numElementsToValidate = -1
+         else:
+           numElementsToValidate = max(globalParameters["NumElementsToValidateWinner"], globalParameters["NumElementsToValidate"])
+        param("num-elements-to-validate", numElementsToValidate)
         param("num-enqueues-per-sync",    globalParameters["EnqueuesPerSync"])
         param("max-enqueues-per-sync",    globalParameters["MaxEnqueuesPerSync"])
         param("num-syncs-per-benchmark",  globalParameters["SyncsPerBenchmark"])
@@ -674,7 +677,7 @@ def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, facto
 
     newSolution = next(iter(newLibrary.solutions.values()))
     sourceDir = os.path.join(stepBaseDir, "source")
-    writeClientConfigIni(problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
+    writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
 
     return filename
 
@@ -695,7 +698,7 @@ def CreateBenchmarkClientParametersForSizes(libraryRootPath, problemSizes, dataF
       problemTypeDict = metaData["ProblemType"]
       problemType = ContractionsProblemType.FromOriginalState(problemTypeDict)
 
-    writeClientConfigIni(problemSizes, "", "", "", "", problemType, libraryRootPath, codeObjectFiles, dataFilePath, configFile)
+    writeClientConfigIni(True, problemSizes, "", "", "", "", problemType, libraryRootPath, codeObjectFiles, dataFilePath, configFile)
 
 
 ################################################################################

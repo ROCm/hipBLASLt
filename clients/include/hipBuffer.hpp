@@ -78,6 +78,11 @@ public:
         return reinterpret_cast<const T*>(buf());
     }
 
+    hipError_t memcheck() const
+    {
+        return !this->nmemb() || buf() ? hipSuccess : hipErrorOutOfMemory;
+    }
+
 private:
     std::size_t numBytes;
     void*       buffer;

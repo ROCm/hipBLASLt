@@ -34,6 +34,7 @@ from contextlib import contextmanager
 import Tensile.TensileInstructions as ti
 from Tensile.Common import detectGlobalCurrentISA, restoreDefaultGlobalParameters, \
     assignGlobalParameters, getGfxName, gfxArch, globalParameters
+from Tensile.Utilities.Toolchain import ToolchainDefaults, validateToolchain
 
 def kernel_header(name: str, gfx_arch: str, vgpr: int, sgpr: int, lds: int):
     vgpr = ((vgpr+7)//8)*8
@@ -907,7 +908,7 @@ if __name__ == '__main__':
     ap.add_argument('-w', type=int, default=256, help='workitem')
     ap.add_argument('-c', type=int, default=4, help='load conut per iteration')
     ap.add_argument('--sweep-once', type=int, default=0, dest='sweep_once', help='sweep once')
-    ap.add_argument('--toolchain', type=str, default='/opt/rocm/llvm/bin/clang++', help='Path to ROCm compiler')
+    ap.add_argument('--toolchain', type=str, default=ToolchainDefaults.CXX_COMPILER, help='Path to ROCm compiler')
     ap.add_argument('--debug-build', action='store_true', dest='debug_build', help='Build with debug information')
     ap.set_defaults(debug_build=False)
     ap.add_argument('--arch', type=str, default='gfx90a', help='Target architecture for assembler, e.g. gfx908. Default is gfx90a')
@@ -915,8 +916,8 @@ if __name__ == '__main__':
     output_path: str = args.output
     w: int = args.w
     c: int = args.c
-    sweep_once:int = args.sweep_once
-    toolchain_path: str = args.toolchain
+    sweep_once: int = args.sweep_once
+    toolchain_path: str = validateToolchain(args.toolchain)
     debug_build: bool = args.debug_build
     arch: str = args.arch
     isa = gfxArch(arch)
@@ -927,7 +928,7 @@ if __name__ == '__main__':
         detectGlobalCurrentISA()
         isa = globalParameters['CurrentISA']
         arch = getGfxName(isa)
-        toolchain_path = globalParameters['AssemblerPath']
+        toolchain_path = validateToolchain(ToolchainDefaults.CXX_COMPILER)
 
     ti.Base._global_ti.init(isa, toolchain_path, False)
     layernorm = LayerNormKernelGenerator(ti.DataType('S'), w, c, 4, sweep_once, arch)

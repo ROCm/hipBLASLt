@@ -497,6 +497,12 @@ class ProblemType(Mapping):
       name += self["F32XdlMathOp"].toChar()
       name += "_"
 
+    if self["SwizzleTensorA"]:
+      name += "STA_"
+
+    if self["SwizzleTensorB"]:
+      name += "STB_"
+
     # Other
     if self["UseBeta"]: name += "B"
     if self["HighPrecisionAccumulate"] and not self["SilentHighPrecisionAccumulate"]: name += "H"
@@ -1049,8 +1055,9 @@ def isExtractableIndex(ks, index, tc='x'):
 class Solution(collections.abc.Mapping):
 
   ########################################
-  def __init__(self, config):
+  def __init__(self, config, cxxCompiler: str):
     self._name = None
+    self.cxxCompiler = cxxCompiler
     config = config
 
     self._state = {}
@@ -1227,7 +1234,7 @@ class Solution(collections.abc.Mapping):
       state["ProblemType"]["GroupedGemm"] = False
       state["KernelLanguage"] = "Source"
       state["Kernel"] = {"WavefrontSize": self["WavefrontSize"], "ISA": tuple(self["ISA"])}
-      self.activationFunctionObjects.append(KernelWriterActivationFunction(state))
+      self.activationFunctionObjects.append(KernelWriterActivationFunction(state, self.cxxCompiler))
 
   def initActivationOnlyKernelObjects(self):
     self.activationOnlyKernelObjects = []
@@ -1378,6 +1385,17 @@ class Solution(collections.abc.Mapping):
       if state["MacroTile0"] != state["MacroTile"][0] \
           or state["MacroTile1"] != state["MacroTile"][1]:
         reject(state, "MacroTile mismatch")
+
+    # tail loop optimization
+    if (tuple(state["ISA"]) != (9, 4, 2)) or \
+       (state["ProblemType"]["Sparse"]) or \
+       (state["LocalSplitU"] > 1) or \
+       (state["WaveSeparateGlobalReadA"] != 0) or \
+       (state["WaveSeparateGlobalReadB"] != 0) or \
+       (state["DirectToVgprA"] or state["DirectToVgprB"]):
+       state["tailLoopOpt"] = False
+    else:
+       state["tailLoopOpt"] = True
 
     # done
     state["AssignedProblemIndependentDerivedParameters"] = True
@@ -2742,6 +2760,33 @@ class Solution(collections.abc.Mapping):
             reject(state, "one of DataTypeA or DataTypeB need to be float8")
             return
 
+    #for tensor swizzling, we force pack-k == 2
+    for tc in ("A", "B",):
+      if state["ProblemType"][f"SwizzleTensor{tc}"]:
+        if not state["EnableMatrixInstruction"]:
+          reject(state, f"Tensor {tc} swizzling supports MI only")
+        # Print rejection reason instead of force set
+        if state[f"GlobalReadVectorWidth{tc}"] != state[f"MIInputPerThread{tc}"] * 2:
+          GRVW_TC = state[f"GlobalReadVectorWidth{tc}"]
+          MIInPerThread = state[f"MIInputPerThread{tc}"]
+          reject(state, f"SwizzleTensor{tc} doesn't support GRVW{tc} ({GRVW_TC}) != MIInputPerThread{tc} ({MIInPerThread}) * 2")
+        # TODO- increasing VW might have better perf. But it'll change the swizzling pattern.
+        if state[f"VectorWidth{tc}"] != 1:
+          VW_TC = state[f"VectorWidth{tc}"]
+          reject(state, f"SwizzleTensor{tc} requires VectorWidth{tc} ({VW_TC}) == 1")
+
+    if state["ProblemType"]["SwizzleTensorA"]:
+      if state["ProblemType"]["TransposeA"] is False:
+        reject(state, f"Tensor A swizzling supports TN or TT only")
+      if state["DirectToVgprA"] is False:
+        reject(state, f"Tensor A swizzling requires DirectToVgprA")
+
+    if state["ProblemType"]["SwizzleTensorB"]:
+      if state["ProblemType"]["TransposeB"] is True:
+        reject(state, f"Tensor B swizzling supports NN or TN only")
+      if state["DirectToVgprB"] is False:
+        reject(state, f"Tensor B swizzling requires DirectToVgprB")
+
     def calcOptGRVW(lrvw: int, unrollMajorLDS: bool, datatype: DataType) -> int:
       # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
       optGRVW = lrvw if unrollMajorLDS else 4 / datatype.numRegisters()
@@ -2768,8 +2813,6 @@ class Solution(collections.abc.Mapping):
             if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
               state["GlobalReadVectorWidthA"] = int(curGRVW)
             curGRVW *= 2
-    else:
-      state["GlobalReadVectorWidthA"] = 1
 
     # Default GlobalReadVectorWidthB
     if state["EnableMatrixInstruction"]:
@@ -2788,8 +2831,6 @@ class Solution(collections.abc.Mapping):
             if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:
               state["GlobalReadVectorWidthB"] = int(curGRVW)
             curGRVW *= 2
-    else:
-      state["GlobalReadVectorWidthB"] = 1
 
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
     if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
@@ -3454,7 +3495,13 @@ class Solution(collections.abc.Mapping):
       ldsNumBytesAB = state["LdsOffsetB"] + ldsNumBytesB
 
     # lds buffer size for reduction
+    # if User want to control the LDS usage, we may open this para in the future
     ldsNumBytesReduction = state["LocalSplitU"] * state["MacroTile0"] * state["MacroTile1"] * state["ProblemType"]["ComputeDataType"].numBytes() if state["LocalSplitU"] > 1 else 0
+    state["LocalSplitUReuseLDS"] = 1
+    if ldsNumBytesReduction > globalParameters["MaxLDS"]:
+      state["LocalSplitUReuseLDS"] = math.ceil(ldsNumBytesReduction / globalParameters["MaxLDS"])
+      # reserve all the LDS to LSU.
+      ldsNumBytesReduction = globalParameters["MaxLDS"]
 
     # lds max occupancy
     ldsSizeOccupancy = globalParameters["DeviceLDS"] // state["MaxOccupancy"]
@@ -3797,7 +3844,6 @@ class Solution(collections.abc.Mapping):
       state["PrefetchLocalRead"] = 0
     if not state["EnableMatrixInstruction"]:
       state["ClusterLocalRead"] = 0
-      state["PrefetchLocalRead"] = 0
 
     # reject iterations are not enough to use wider local read
     if state["EnableMatrixInstruction"] and state["PrefetchLocalRead"] > 0:
@@ -3848,8 +3894,20 @@ class Solution(collections.abc.Mapping):
 
     state["ULSGRODoubleG2L"] = 0
     if state["UnrollLoopSwapGlobalReadOrder"] == 1:
+      bpeAB       = state["ProblemType"]["DataType"].numBytes()
+      bpr         = 4
+      numVgprG2LA = roundUp((state["NumLoadsCoalescedA"] * state["NumLoadsPerpendicularA"] * \
+        state["GlobalReadVectorWidthA"] * bpeAB) / (float)(bpr))
+      numVgprG2LB = roundUp((state["NumLoadsCoalescedB"] * state["NumLoadsPerpendicularB"] * \
+        state["GlobalReadVectorWidthB"] * bpeAB) / (float)(bpr))
+      if numVgprG2LA % 2 == 1 or numVgprG2LB % 2 == 1:
+        reject(state, "G2LA/B vgpr has bubble inside. Cannot use UnrollLoopSwapGlobalReadOrder=1.")
       if state["GlobalReadVectorWidthA"] != state["GlobalReadVectorWidthB"]:
         # TODO: Add a configuration to schedule better.
+        state["ULSGRODoubleG2L"] = 1
+      minGRVW = min(state["GlobalReadVectorWidthA"], state["GlobalReadVectorWidthB"])
+      if minGRVW * bpeAB < 4:
+        # G2LA/B vgpr index will jump.
         state["ULSGRODoubleG2L"] = 1
       if state["ExpandPointerSwap"] == 1:
         reject(state, "ExpandPointerSwap need to be 0 if UnrollLoopSwapGlobalReadOrder")
