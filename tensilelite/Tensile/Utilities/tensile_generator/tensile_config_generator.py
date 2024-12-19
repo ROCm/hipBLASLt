@@ -105,7 +105,7 @@ else:
     raise RuntimeError("Failed to get compute unit from rocminfo")
 
 if ArchitectureName == 'gfx942':
-    res = subprocess.run(["cat", "/sys/class/drm/card0/device/compute_partition_config/xcc/num_inst"], stdout=subprocess.PIPE)
+    res = subprocess.run(["cat", "/sys/class/drm/card1/device/compute_partition_config/xcc/num_inst"], stdout=subprocess.PIPE)
     XCC = int(res.stdout.decode("utf-8").strip())
     DeviceNames = ["Device 0049", "Device 0050"]
     ScheduleName = "aquavanjaram"
@@ -121,15 +121,15 @@ if args.full_mfma:
     fp32_instructions = [[32,32,1,2], [32,32,2,1], [16,16,1,4], [16,16,4,1], [4,4,1,16]]
     fp8_instructions = [[32,32,16,1], [16,16,32,1]]
 else:
-    fp16_instructions = [[16,16,16,1]]
-    bf16_instructions = [[16,16,16,1],[32,32,8,1]]
-    tf32_instructions = [[16,16,8,1]]
-    fp32_instructions = [[16,16,4,1]]
+    fp16_instructions = [[16,16,16,1], [32,32,8,1]]
+    bf16_instructions = [[16,16,16,1], [32,32,8,1]]
+    tf32_instructions = [[16,16,8,1], [32,32,4,1]]
+    fp32_instructions = [[16,16,4,1], [32,32,2,1]]
     fp8_instructions = [[16,16,32,1]]
 
 
 HIPBLASLT_BENCH_BASE = (
-    r"(?P<CMD>\w+) --api_method c "
+    r"hipblaslt-bench --api_method (?P<API_METHOD>\w+) "
     r"-m (?P<M>[\d ]+)"
     r"-n (?P<N>[\d ]+)"
     r"-k (?P<K>[\d ]+)"
