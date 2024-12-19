@@ -3960,6 +3960,9 @@ class Solution(collections.abc.Mapping):
     # Requires preciseBounds check since we rely on the buffer bounds check, not
     # individual vector registers doing bounds compares.
 
+    if state["_UseSgprForGRO"] == 1 and (state["ProblemType"]["SwizzleTensorA"] or state["ProblemType"]["SwizzleTensorB"]):
+      reject(state, "UseSgprForGRO for Swizzle is not supported")
+
     if state["_UseSgprForGRO"] == -1:
       # Don't use SGPR if it looks like we might not have enough - better to leave PBC enabled even if we have to use VGPR
       # 40 is based on current SGPR usage, this may need to be tuned in the future:
@@ -3968,12 +3971,11 @@ class Solution(collections.abc.Mapping):
       numLoadsM = 0
       if state["ProblemType"]["Sparse"] and not state["DirectToVgprSparseMetadata"]:
         numLoadsM = state["NumLoadsCoalescedMetadata"]*state["NumLoadsPerpendicularMetadata"]
-      if numLoadsA + numLoadsB + numLoadsM > 35 or state["DirectToVgprA"] or state["DirectToVgprB"]: # force _UseSgprForGRO = 0 if DirectToVgpr is enabled
+      if numLoadsA + numLoadsB + numLoadsM > 35 or state["ProblemType"]["SwizzleTensorA"] or state["ProblemType"]["SwizzleTensorB"]:
         #print "info: Disabling UseSgprForGRO since predicting too many SGPR will be used"
         state["_UseSgprForGRO"] = 0
       else:
         state["_UseSgprForGRO"] = 1
-
 
     if packedC0 and not state["GuaranteeNoPartialA"]:
       reject(state, "packedC0 requires GuaranteeNoPartialA")

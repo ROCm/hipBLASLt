@@ -8,7 +8,6 @@ GlobalParameters:
   PrintSolutionRejectionReason: True
   Device: 0
   CMakeBuildType: Release
-  MergeFiles: False
   KernelTime: True
   MaxWorkspaceSize: 13421772800
   DataInitTypeAlpha: 1
@@ -79,6 +78,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -156,6 +156,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -224,6 +225,7 @@ BenchmarkProblems:
         - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -296,6 +298,7 @@ BenchmarkProblems:
         - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:

@@ -192,7 +192,7 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
 
       gfx = getGfxName(arch)
 
-      if globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
+      if globalParameters["LazyLibraryLoading"]:
         objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
 
         coFileMap = collections.defaultdict(list)
@@ -215,7 +215,6 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
             toolchain.compress(str(coFileRaw), str(coFile), gfx)
           else:
             shutil.move(coFileRaw, coFile)
-
           coFiles.append(coFile)
       else:
         # Build mode: no merge files AND no lazy library loading
@@ -224,7 +223,10 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
           base = writerAsm.getKernelFileBase(kernel)
           src = str(asmDir / base + extCo)
           dst = str(destDir / base + "_" + gfx + extCo)
-          shutil.copyfile(src, dst)
+          if compress:
+            toolchain.compress(src, dst, gfx)
+          else:
+            shutil.move(src, dst)
           coFiles.append(dst)
 
     return coFiles

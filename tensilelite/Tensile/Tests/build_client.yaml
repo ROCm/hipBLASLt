@@ -13,7 +13,6 @@ GlobalParameters:
   ValidationMaxToPrint: 4
   ValidationPrintValids: False
   ShortNames: False
-  MergeFiles: True
   Platform: 0
   Device: 0
   KernelTime: True

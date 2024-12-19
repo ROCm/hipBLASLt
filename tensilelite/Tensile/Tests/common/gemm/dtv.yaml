@@ -8,7 +8,6 @@ GlobalParameters:
   #PrintSolutionRejectionReason: True
   Device: 0
   CMakeBuildType: Release
-  MergeFiles: False
   KernelTime: True
   MaxWorkspaceSize: 13421772800
   DataInitTypeAlpha: 1
@@ -78,6 +77,7 @@ BenchmarkProblems:
         #- SourceSwap: [0, 1]
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - StreamK: [0,3]
         - Groups:
           -
@@ -175,6 +175,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - StreamK: [0,2]
         - Groups:
           -
@@ -267,6 +268,7 @@ BenchmarkProblems:
         - GlobalSplitU: [1,2]
         #- SourceSwap: [0, 1]
         - DirectToVgprB: [1]
+        - UseSgprForGRO: [0,1]
         - StreamK: [0,1]
         - Groups:
           -
@@ -363,6 +365,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - StreamK: [0,3]
         - Groups:
           -
@@ -464,6 +467,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [2,4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -537,6 +541,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprB: [1]
+        - UseSgprForGRO: [0,1]
         - Groups:
           -
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 2,  1,4 ]
@@ -637,6 +642,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [2,4,8]
         - DirectToVgprB: [1]
+        - UseSgprForGRO: [0,1]
         - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -706,6 +712,7 @@ BenchmarkProblems:
         - GlobalSplitU: [1,2]
         #- SourceSwap: [0, 1]
         - DirectToVgprB: [1]
+        - UseSgprForGRO: [0,1]
         - StreamK: [0,2]
         - Groups:
           -
@@ -797,6 +804,7 @@ BenchmarkProblems:
         - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         #- SourceSwap: [0, 1]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - StreamK: [0,1]
         - Groups:
           -
@@ -881,6 +889,7 @@ BenchmarkProblems:
         #- GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
         - DirectToVgprB: [1]
+        - UseSgprForGRO: [0,1]
         - StreamK: [0,3]
         - Groups:
           -
@@ -966,6 +975,7 @@ BenchmarkProblems:
         #- GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [1]#[0, 1]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - StreamK: [0,2]
         - Groups:
           -
@@ -1052,6 +1062,7 @@ BenchmarkProblems:
         #- GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - Groups:
           -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  4,1 ]
@@ -1134,6 +1145,7 @@ BenchmarkProblems:
         - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         #- SourceSwap: [0, 1]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         #- StreamK: [0,1]
         - Groups:
           -
@@ -1214,6 +1226,7 @@ BenchmarkProblems:
         #- GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         #- SourceSwap: [0, 1]
         - DirectToVgprB: [1]
+        - UseSgprForGRO: [0,1]
         #- StreamK: [0,3]
         - Groups:
           -
@@ -1294,6 +1307,7 @@ BenchmarkProblems:
         #- GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [1]#[0, 1]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - Groups:
           -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  4,1 ]
@@ -1374,6 +1388,7 @@ BenchmarkProblems:
         - SourceSwap: [1]#[0, 1]
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - Groups:
           -
             - MatrixInstruction: [16, 16, 32, 1,  1,   1, 1,  4,1 ]
@@ -1442,6 +1457,7 @@ BenchmarkProblems:
         #- GlobalSplitU: [1,2]
         - SourceSwap: [0, 1]
         - DirectToVgprB: [1]
+        - UseSgprForGRO: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -1502,6 +1518,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -1562,6 +1579,7 @@ BenchmarkProblems:
         - SourceSwap: [1]#[0, 1]
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprB: [1]
+        - UseSgprForGRO: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -1629,6 +1647,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - ConvertAfterDS: [1]
         #- StreamK: [0,2]
         - Groups:
@@ -1716,6 +1735,7 @@ BenchmarkProblems:
         #- GlobalSplitU: [1,2]
         #- SourceSwap: [0, 1]
         - DirectToVgprB: [1]
+        - UseSgprForGRO: [0,1]
         - ConvertAfterDS: [1]
         #- StreamK: [0,1]
         - Groups:
@@ -1807,6 +1827,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
+        - UseSgprForGRO: [0,1]
         - ConvertAfterDS: [1]
         # - StreamK: [0,3]
         - Groups:
@@ -1898,6 +1919,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprB: [1]
+        - UseSgprForGRO: [0,1]
         - ConvertAfterDS: [1]
         - Groups:
           -
