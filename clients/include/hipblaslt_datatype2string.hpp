@@ -42,9 +42,9 @@ enum class hipblaslt_initialization
 
 typedef enum class _hipblaslt_activation_type
 {
-    none = 1,
-    relu = 2,
-    gelu = 3,
+    none = 0,
+    relu = 1,
+    gelu = 2,
 } hipblaslt_activation_type;
 
 typedef enum class _hipblaslt_bias_source
@@ -137,7 +137,7 @@ inline const hipblaslt_activation_type string_to_hipblaslt_activation_type(const
     return value == "none"   ? hipblaslt_activation_type::none
            : value == "gelu" ? hipblaslt_activation_type::gelu
            : value == "relu" ? hipblaslt_activation_type::relu
-                             : static_cast<hipblaslt_activation_type>(0);
+                             : static_cast<hipblaslt_activation_type>(-1);
 }
 
 inline const hipblaslt_bias_source string_to_hipblaslt_bias_source(const std::string& value)
