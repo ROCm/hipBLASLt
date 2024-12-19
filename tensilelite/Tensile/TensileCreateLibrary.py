@@ -256,13 +256,14 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
 # Write Solutions and Kernels for BenchmarkClient or LibraryClient
 ################################################################################
 @timing
-def writeSolutionsAndKernels(outputPath, buildTmpPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
+def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False, compress=True):
 
   outputPath = Path(outputPath)
+  buildTmpPath = ensurePath(outputPath / "build_tmp" / outputPath.stem.upper())
+
   destLibPath = ensurePath(outputPath / "library")
 
-  buildTmpPath = Path(buildTmpPath) / outputPath.stem.upper()
   tmpAsmPath = ensurePath(buildTmpPath / "assembly")
   tmpHipCoPath = ensurePath(buildTmpPath / "code_object_tmp")
 
@@ -560,11 +561,8 @@ def TensileCreateLibrary():
   coVersion = getCOVFromParam(args.CodeObjectVersion)
 
   # Use build_tmp directory to avoid clashing for intermediate files
-  buildTmpPath = Path.cwd() / "build_tmp"
   logicPath = args.LogicPath
-  outputPath = os.path.abspath(args.OutputPath)
-  ensurePath(outputPath)
-  print2("OutputPath: %s" % outputPath)
+  outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
 
   arguments = {}
   arguments["RuntimeLanguage"] = args.RuntimeLanguage
@@ -608,6 +606,7 @@ def TensileCreateLibrary():
   print1(f"# Code Object Version: {coVersion}")
   print1(f"# Architecture(s):     {arguments['Architecture']}")
   print1(f"# Library Format:      {libraryFormat}")
+  print1(f"OutputPath:            {str(outputPath)}")
 
   arguments["AMDClangVersion"] = getVersion(cxxCompiler)
   assignGlobalParameters(arguments, cxxCompiler)
@@ -684,7 +683,7 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, buildTmpPath, asmToolchain, srcToolchain, solutions,
+  codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions,
                                              kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
