@@ -47,7 +47,7 @@ def CPUThreadCount(enable=True):
       cpu_count = len(os.sched_getaffinity(0))
     cpuThreads = globalParameters["CpuThreads"]
     if cpuThreads == -1:
-        return min(cpu_count, 64)  # Temporarily hack to fix oom issue, remove this after jenkin is fixed.
+        return cpu_count
     return min(cpu_count, cpuThreads)
 
 def OverwriteGlobalParameters(newGlobalParameters):
@@ -64,7 +64,6 @@ def pcallWithGlobalParamsSingleArg(f, arg, newGlobalParameters):
   return f(arg)
 
 def apply_print_exception(item, *args):
-  #print(item, args)
   try:
     if len(args) > 0:
       func = item

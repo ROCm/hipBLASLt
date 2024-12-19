@@ -393,7 +393,7 @@ gpu_architecture=all
 cpu_ref_lib=blis
 tensile_logic=
 tensile_cov=
-tensile_threads=$(nproc)
+tensile_threads=-1
 tensile_fork=
 tensile_merge_files=
 tensile_tag=
@@ -764,9 +764,7 @@ pushd .
       tensile_opt="${tensile_opt} -DTensile_LOGIC=${tensile_logic}"
     fi
     tensile_opt="${tensile_opt} -DTensile_CODE_OBJECT_VERSION=${tensile_cov}"
-    if [[ ${tensile_threads} != $(nproc) ]]; then
-      tensile_opt="${tensile_opt} -DTensile_CPU_THREADS=${tensile_threads}"
-    fi
+    tensile_opt="${tensile_opt} -DTensile_CPU_THREADS=${tensile_threads}"
   fi
 
   if [[ "${tensile_merge_files}" == false ]]; then
