@@ -5328,11 +5328,13 @@ class KernelWriterAssembly(KernelWriter):
               if kernel["LocalSplitU"] > 1:
                 shiftK.add(SMinI32(dst=sgpr(loopCntSgpr), src0=sgpr(loopCounterName), src1=sgpr("LSUTailLoopOffset"), comment="check lsu bound"))
               shiftK.add(VCmpGEI32(dst=sgpr(tmpSgprX2, self.states.laneSGPRCount), src0=vgpr(kReg), src1=sgpr(loopCntSgpr), comment="check K index >= Size L"))
-            for bk in range(0, vgprPerSet0Group):
-              for a in range(0, kernel["MIWaveTileA"]):
-                for iui in range(0, innerUnroll):
-                  aStr = vgpr(self.generateSrcStrForMFMA(kernel, tPA, innerUnroll, vregSetIdx, vgprPerInputA, m, u, iui, a, bk=bk + group * vgprPerSet0Group), 1)
-                  shiftK.add(VCndMaskB32(dst=aStr, src0=aStr, src1=hex(0), src2=sgpr(tmpSgprX2, self.states.laneSGPRCount), comment="set 0 if K_idx >= sizeL"))
+            # if A is swizzled, then no need to do this since MatB will be set to 0
+            if not tPA["isSwizzled"]:
+              for bk in range(0, vgprPerSet0Group):
+                for a in range(0, kernel["MIWaveTileA"]):
+                  for iui in range(0, innerUnroll):
+                    aStr = vgpr(self.generateSrcStrForMFMA(kernel, tPA, innerUnroll, vregSetIdx, vgprPerInputA, m, u, iui, a, bk=bk + group * vgprPerSet0Group), 1)
+                    shiftK.add(VCndMaskB32(dst=aStr, src0=aStr, src1=hex(0), src2=sgpr(tmpSgprX2, self.states.laneSGPRCount), comment="set 0 if K_idx >= sizeL"))
 
           if kernel["ProblemType"]["Sparse"] == 2 and numMIInput//8 >= 1:
             shiftK.add(vectorStaticRemainder(dummy, kReg, "Serial", kernel["WavefrontSize"], tmpVgpr, tmpSgprInfo))

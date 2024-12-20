@@ -11,6 +11,8 @@ GlobalParameters:
   MergeFiles: False
   KernelTime: True
   MaxWorkspaceSize: 13421772800
+  DataInitTypeA: 13
+  DataInitTypeB: 13
   DataInitTypeAlpha: 1
   DataInitTypeBeta: 1
   BoundsCheck: 2
@@ -55,9 +57,11 @@ BenchmarkProblems:
           - [16, 16, 16, 1,  1,   4, 16, 4,1 ] # MT = 256x256
           - [16, 16, 16, 1,  1,   8, 8,  4,1 ] # MT = 512x128
           - [16, 16, 16, 1,  1,   8, 16, 4,1 ] # MT = 512x256
-          - [16, 16, 16, 1,  1,   5, 8,  2, 1 ] # MT = 160x128
+          - [16, 16, 16, 1,  1,   5, 8,  2,1 ] # MT = 160x128
+        - AssertFree0ElementMultiple: [16]
+        - AssertSummationElementMultiple: [32]
         - GlobalReadVectorWidthA: [8]
-        - GlobalReadVectorWidthB: [2,4,8]
+        - GlobalReadVectorWidthB: [-1]
         - PrefetchGlobalRead: [1,2]
         - PrefetchLocalRead: [1,2,4]
         - ClusterLocalRead: [1]
@@ -68,7 +72,7 @@ BenchmarkProblems:
         - LocalWritePerMfma: [-1]
         - StaggerU: [4]
         - StaggerUStride: [256]
-        - StaggerUMapping: [2]
+        - StaggerUMapping: [0]
         - WorkGroupMappingXCC: [8]
         - ScheduleIterAlg: [3]
         - LdsBlockSizePerPadA: [-1]
@@ -87,9 +91,18 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
+          - Exact: [160,   256, 1, 224]
           - Exact: [160,   256, 1, 256]
-          - Exact: [1600,  512, 1, 1024]
+          - Exact: [160,   256, 1, 288]
+
+          # Enable the big sizes when GSU3 + MBSK is ready.
+          # - Exact: [1600,  512, 1, 992]
+          # - Exact: [1600,  512, 1, 1024]
+          # - Exact: [1600,  512, 1, 1056]
+
+          - Exact: [512,   256, 1, 224]
           - Exact: [512,   256, 1, 256]
+          - Exact: [512,   256, 1, 288]
         - BiasTypeArgs: ['h']
         - ActivationArgs:
           - [Enum: none]
