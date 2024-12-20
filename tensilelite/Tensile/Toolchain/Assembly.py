@@ -33,10 +33,9 @@ import warnings
 from pathlib import Path
 from typing import List, Literal, Union, Tuple
 
-
 from .. import Utils
-from ..TensileInstructions import getGfxName, getCOVFromParam
-from ..Common import globalParameters, print2, ensurePath, printWarning, IsaVersion
+from ..TensileInstructions import getGfxName
+from ..Common import globalParameters, print1, print2, ensurePath, printWarning, IsaVersion
 
 class AssemblyToolchain:
     def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: Literal[4, 5]):
@@ -55,7 +54,7 @@ class AssemblyToolchain:
       Raises:
           RuntimeError: If the subprocess invocation fails.
       """
-      print2(f"{desc}: {' '.join(args)}")
+      print1(f"{desc}: {' '.join(args)}")
       try:
           out = subprocess.check_output(args, stderr=subprocess.STDOUT)
       except subprocess.CalledProcessError as err:
@@ -180,7 +179,6 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
     destDir = Path(ensurePath(os.path.join(outputPath, 'library')))
     asmDir = Path(ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly")))
 
-
     archKernelMap = collections.defaultdict(list)
     for k in filter(isAsm, kernels):
       archKernelMap[tuple(k['ISA'])].append(k)
@@ -192,41 +190,22 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
 
       gfx = getGfxName(arch)
 
-      if globalParameters["LazyLibraryLoading"]:
-        objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
-
-        coFileMap = collections.defaultdict(list)
-
-        if len(objectFiles):
-          coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
-
-        for kernel in archKernels:
-          coName = kernel.get("codeObjectFile", None)
-          if coName:
-            coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
-
-        for coFileRaw, objFiles in coFileMap.items():
-
-          objFiles = _batchObjectFiles(objFiles, coFileRaw)
-          toolchain.link(objFiles, str(coFileRaw))
-
-          coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
-          if compress:
-            toolchain.compress(str(coFileRaw), str(coFile), gfx)
-          else:
-            shutil.move(coFileRaw, coFile)
-          coFiles.append(coFile)
-      else:
-        # Build mode: no merge files AND no lazy library loading
-        printWarning("Code object files are not compressed in `--no-merge-files` build mode.")
-        for kernel in archKernels:
-          base = writerAsm.getKernelFileBase(kernel)
-          src = str(asmDir / base + extCo)
-          dst = str(destDir / base + "_" + gfx + extCo)
-          if compress:
-            toolchain.compress(src, dst, gfx)
-          else:
-            shutil.move(src, dst)
-          coFiles.append(dst)
+      objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
+      coFileMap = collections.defaultdict(list)
+      if len(objectFiles):
+        coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
+      for kernel in archKernels:
+        coName = kernel.get("codeObjectFile", None)
+        if coName:
+          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
+      for coFileRaw, objFiles in coFileMap.items():
+        objFiles = _batchObjectFiles(objFiles, coFileRaw)
+        toolchain.link(objFiles, str(coFileRaw))
+        coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
+        if compress:
+          toolchain.compress(str(coFileRaw), str(coFile), gfx)
+        else:
+          shutil.move(coFileRaw, coFile)
+        coFiles.append(coFile)
 
     return coFiles

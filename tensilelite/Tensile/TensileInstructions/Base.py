@@ -190,13 +190,6 @@ def getSlcBitName(hasGLCModifier):
     return "slc"
   return "sc1"
 
-def getCOVFromParam(versionString):
-  if versionString == "default" or versionString == "V4":
-    return 4
-  elif versionString == "V5":
-    return 5
-  printExit("Unknown CodeObjectVersion %s" % (versionString))
-
 def _removeIdent(isaDict) -> list:
     ids = [th.ident for th in threading.enumerate()]
     isaDict = [id for id in isaDict if id in ids]

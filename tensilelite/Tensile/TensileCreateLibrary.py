@@ -49,7 +49,6 @@ from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
 from .Utilities.Profile import profile
-from .TensileInstructions.Utils import getCOVFromParam
 import argparse
 import collections
 import glob
@@ -287,7 +286,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   removeInvalidSolutionsAndKernels(asmResults, asmKernels, solutions, errorTolerant, globalParameters)
 
   srcKernelFiles = buildKernelSourceAndHeaderFiles(srcResults, outputPath)
-  printWarning(f"THERE ARE {len(srcKernelFiles)} SOURCE   KERNEL FILES TO BUILD")
+
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, outputPath)
 
@@ -499,7 +498,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
   argParser.add_argument("--offload-bundler",        dest="OffloadBundler",    action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER)
   argParser.add_argument("--assembler",              dest="Assembler",         action="store", default=ToolchainDefaults.ASSEMBLER)
-  argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["default", "V4", "V5"], action="store")
+  argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["4", "5"], action="store", default="4")
   argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
   argParser.add_argument("--short-file-names",       dest="ShortNames",        action="store_true")
   argParser.add_argument("--no-short-file-names",    dest="ShortNames",        action="store_false")
@@ -552,7 +551,7 @@ def TensileCreateLibrary():
   assembler = args.Assembler
   libraryFormat = args.LibraryFormat
   useCompression = not args.NoCompress
-  coVersion = getCOVFromParam(args.CodeObjectVersion)
+  coVersion = args.CodeObjectVersion
 
   print2("OutputPath: %s" % outputPath)
   ensurePath(outputPath)

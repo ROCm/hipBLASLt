@@ -21,7 +21,7 @@
 ################################################################################
 
 import warnings
-from .Base import getGfxName, getCOVFromParam
+from .Base import getGfxName
 from .Code import Module
 from .Containers import HolderContainer, RegisterContainer, RegName
 from .DataType import DataType

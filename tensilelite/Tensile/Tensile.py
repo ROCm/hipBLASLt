@@ -114,7 +114,7 @@ def addCommonArguments(argParser):
     argParser.add_argument("--runtime-language", dest="RuntimeLanguage", \
         choices=["HIP", "OCL"], help="override which runtime language to use")
     argParser.add_argument("--code-object-version", dest="CodeObjectVersion", \
-        choices=["default", "V4", "V5"], help="HSA code-object version")
+        choices=["4", "5"], action="store", default="4", help="HSA code-object version")
     argParser.add_argument("-v", "--verbose", action="store_true", \
         help="set PrintLevel=2")
     argParser.add_argument("--debug", dest="debug", action="store_true", \
@@ -274,8 +274,8 @@ def Tensile(userArgs):
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
 
 
-    asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"])
-    srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
+    asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
+    srcToolchain = SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
     globalParameters["OutputPath"] = ensurePath(os.path.abspath(args.output_path))
     globalParameters["WorkingPath"] = globalParameters["OutputPath"]

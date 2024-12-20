@@ -254,7 +254,7 @@ if os.name == "nt":
 else:
   globalParameters["RuntimeLanguage"] = "HIP"
 
-globalParameters["CodeObjectVersion"] = "default"
+globalParameters["CodeObjectVersion"] = "4"
 globalParameters["Architecture"] = "all"
 
 # might be deprecated
@@ -1701,6 +1701,9 @@ def assignGlobalParameters(config, cxxCompiler=None):
 
   if "KeepBuildTmp" in config:
       globalParameters["KeepBuildTmp"] = config["KeepBuildTmp"]
+
+  if "CodeObjectVersion" in config:
+      globalParameters["CodeObjectVersion"] = config["CodeObjectVersion"]
 
   # read current gfx version
   returncode = detectGlobalCurrentISA()
