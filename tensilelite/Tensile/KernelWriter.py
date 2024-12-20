@@ -2870,7 +2870,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     TensileInstructionsPass(moduleKernelBody, tipo)
 
     error = self.states.overflowedResources
-    print1(f"  found error code {error} with overflowed resources set to {self.states.overflowedResources}")
+    print2(f"  found error code {error} with overflowed resources set to {self.states.overflowedResources}")
 
     return (error, str(moduleKernelBody))
 

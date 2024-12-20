@@ -210,7 +210,6 @@ def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
       printExit(f"Failed to build kernel {result.name} because it has error code {result.err}")
     path = Path(asmPath) / f"{result.name}.s"
 
-    print1(f"Writing {path}")
     with open(path, "w", encoding="utf-8") as f:
       f.write(result.src)
 
@@ -284,9 +283,6 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   # Gather source code
   asmResults = Common.ParallelMap2(processKernelSource, asmIter, "Generating kernels")
   srcResults = Common.ParallelMap2(processKernelSource, srcIter, "Generating kernels")
-
-  printWarning(f"FOUND {len(list(asmResults))} ASSEMBLY RESULTS")
-  printWarning(f"FOUND {len(list(srcResults))} SOURCE   RESULTS")
 
   removeInvalidSolutionsAndKernels(asmResults, asmKernels, solutions, errorTolerant, globalParameters)
 
