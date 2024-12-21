@@ -35,8 +35,7 @@ from typing import List, Literal, Union, Tuple
 
 from .. import Utils
 from ..TensileInstructions import getGfxName
-from ..Common import globalParameters, print1, print2, ensurePath, printWarning, IsaVersion
-
+from ..Common import globalParameters, print2, ensurePath
 class AssemblyToolchain:
     def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: Literal[4, 5]):
         self.assembler = assembler
@@ -54,7 +53,7 @@ class AssemblyToolchain:
       Raises:
           RuntimeError: If the subprocess invocation fails.
       """
-      print1(f"{desc}: {' '.join(args)}")
+      print2(f"{desc}: {' '.join(args)}")
       try:
           out = subprocess.check_output(args, stderr=subprocess.STDOUT)
       except subprocess.CalledProcessError as err:

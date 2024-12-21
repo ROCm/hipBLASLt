@@ -74,7 +74,7 @@ class KernelWriterAssembly(KernelWriter):
     # Skip if .o files will have already been built for this file
     if kernel.duplicate:
       self.language = "ASM"
-      return (-1, "")
+      return (0, "") # should this be an non zero number
 
     try:
       code = self._getKernelSource(kernel)

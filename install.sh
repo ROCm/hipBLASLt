@@ -392,7 +392,7 @@ matrices_dir_install=
 gpu_architecture=all
 cpu_ref_lib=blis
 tensile_logic=
-tensile_cov=
+tensile_cov="4"
 tensile_threads=$(nproc)
 tensile_fork=
 tensile_tag=
@@ -548,10 +548,6 @@ while true; do
             ;;
     esac
 done
-
-if [[ -z $tensile_cov ]]; then
-    tensile_cov=default
-fi
 
 if [[ "${cpu_ref_lib}" == blis ]]; then
   LINK_BLIS=true

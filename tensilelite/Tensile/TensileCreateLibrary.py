@@ -96,10 +96,8 @@ def processKernelSource(kernel, kernelWriterAssembly, ti) -> KernelCodeGenResult
     header = kernelWriter.getHeaderFileString(kernel)
     # will be put in Kernels.h/cpp if None
     objFilename = kernel._state.get("codeObjectFile", None)
-    isa = kernelWriter.isa
-    wavefrontSize = kernelWriter.wavefrontSize
 
-    return KernelCodeGenResult(err, src, header, asmFilename, objFilename, isa, wavefrontSize)
+    return KernelCodeGenResult(err, src, header, asmFilename, objFilename, tuple(kernel["ISA"]), kernel["WavefrontSize"])
 
 
 def buildKernelSourceAndHeaderFiles(results, outputPath):
@@ -260,9 +258,6 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
 
   asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
-  srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
-  if srcKernels:
-    raise ValueError(f"Non-helper HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
 
   # Kernels may be intended for different co files, but generate the same .o file
   # Mark duplicate kernels to avoid race condition
@@ -272,29 +267,27 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
     base = kernelWriterAssembly.getKernelFileBase(k)
     k.duplicate = True if base in visited else False
     visited.add(base)
+
   numAsmKernels = len(asmKernels)
   numKernels = len(asmKernels)
   assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
-
   asmIter   = zip(asmKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
-  srcIter   = zip(srcKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
-
-  # Gather source code
-  asmResults = Common.ParallelMap2(processKernelSource, asmIter, "Generating kernels")
-  srcResults = Common.ParallelMap2(processKernelSource, srcIter, "Generating kernels")
-
+  asmResults = Common.ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels")
   removeInvalidSolutionsAndKernels(asmResults, asmKernels, solutions, errorTolerant, globalParameters)
-
-  srcKernelFiles = buildKernelSourceAndHeaderFiles(srcResults, outputPath)
-
-  writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
-  codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, outputPath)
-
   fn = functools.partial(writeAssembly, asmPath)
   ret = Common.ParallelMap2(fn, asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
-  for p, isa, wfsize in ret:
-    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wfsize)
+  for p, isa, wavefrontsize in ret:
+    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
   codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
+
+  srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
+  if srcKernels:
+    raise ValueError(f"Non-helper HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
+  srcIter   = zip(srcKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))  
+  srcResults = Common.ParallelMap2(processKernelSource, srcIter, "Generating source kernels")
+  srcKernelFiles = buildKernelSourceAndHeaderFiles(srcResults, outputPath)
+  writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
+  codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, outputPath)
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
@@ -543,6 +536,7 @@ def TensileCreateLibrary():
                         " Example: gfx942/Equality/* for building equality of gfx942 only")
 
   args = argParser.parse_args()
+  args.CodeObjectVersion = "4" if args.CodeObjectVersion == "default" else args.CodeObjectVersion
 
   logicPath = args.LogicPath
   outputPath = args.OutputPath

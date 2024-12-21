@@ -5076,7 +5076,3 @@ class KernelWriter(metaclass=abc.ABCMeta):
   @property
   def isa(self):
     return self.states.version
-
-  @property
-  def wavefrontSize(self):
-    return self.states.kernel["WavefrontSize"]
