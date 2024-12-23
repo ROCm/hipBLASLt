@@ -449,6 +449,14 @@ class ProblemPredicate(Properties.Predicate):
             valuepredicates.append(state["NumThreads"])
             rv += [cls('SynchronizerSizeCheck', index=0, value=valuepredicates)]
 
+        if state["InternalSupportParams"]["KernArgsVersion"] >= 1 and \
+                 not (('StreamK' in state) and (state['StreamK'] > 0)):
+            valuepredicates = []
+            valuepredicates.append(state["MacroTile0"])
+            valuepredicates.append(state["MacroTile1"])
+            valuepredicates.append(state["GlobalSplitU"])
+            rv += [cls('WorkgroupNumberCheck', index=0, value=valuepredicates)]
+
         if not problemType.aType.isInt8x4():
             # calculate the minimum supported free dimension size
             TLUA = state['ProblemType']['TLUA']
