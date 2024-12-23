@@ -198,7 +198,7 @@ def accVgprImagNumOffset(kernel):
 # MapAcctoArch
 # function to map MFMA Acc  Registers to Arch VGPR register
 ##############################################################################
-def mapAcctoArchRegs(kernel, write=False):
+def mapAcctoArchRegs(kernel, maxAgpr=256, write=False):
   acc2arch, _ = accToArchMapper(kernel)
 
   complexMultiplier = 2 if kernel["ProblemType"]["DataType"].isComplex() else 1
@@ -211,15 +211,30 @@ def mapAcctoArchRegs(kernel, write=False):
         destIdx = (acc2arch[i]*complexMultiplier + cm) * kernel["MIRegPerOut"] + r
         srcIdx = ((i * kernel["MIRegPerOut"] + r) + (cm*accImOffset))
         if not kernel["MIArchVgpr"]:
-          accStr = accvgpr(srcIdx)
-          if write:
-            imod.itemList[destIdx] = VAccvgprWriteB32(dst=accStr,
-                                                      src=vgpr(Holder(name="ValuC")),
-                                                      comment="copy vreg[%u] to acc" % destIdx)
+          def gprfunc(idx):
+            if idx >= maxAgpr:
+              return vgpr(idx-maxAgpr)
+            else:
+              return accvgpr(idx)
+          accStr = gprfunc(srcIdx)
+          if srcIdx >= maxAgpr:
+            if write:
+              imod.itemList[destIdx] = VMovB32(dst=vgpr("ValuC+%u"%(srcIdx-maxAgpr)),
+                                             src=vgpr(Holder(name="ValuC")),
+                                             comment="copy vreg[%u] to MI out reg" % destIdx)
+            else:
+              imod.itemList[destIdx] = VMovB32(dst=vgpr(Holder(name="ValuC")),
+                                              src=vgpr("ValuC+%u"%(srcIdx-maxAgpr)),
+                                              comment="copy MI out reg to vreg[%u]" % destIdx)
           else:
-            imod.itemList[destIdx] = VAccvgprReadB32(dst=vgpr(Holder(name="ValuC")),
-                                                     src=accStr,
-                                                     comment="copy acc to vreg[%u]" % destIdx)
+            if write:
+              imod.itemList[destIdx] = VAccvgprWriteB32(dst=accStr,
+                                                        src=vgpr(Holder(name="ValuC")),
+                                                        comment="copy vreg[%u] to acc" % destIdx)
+            else:
+              imod.itemList[destIdx] = VAccvgprReadB32(dst=vgpr(Holder(name="ValuC")),
+                                                      src=accStr,
+                                                      comment="copy acc to vreg[%u]" % destIdx)
         else:
           if write:
             imod.itemList[destIdx] = VMovB32(dst=vgpr("ValuC+%u"%srcIdx),

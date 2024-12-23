@@ -195,6 +195,8 @@ class StateValues:
   bias: MatrixInfo                       = field(default_factory=MatrixInfo)
   m: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)       # For Sparse Metadata
   totalAgprs: int                        = 0
+  maxLimitAgprs: int                     = 0
+  totalMixedAgprs: int                   = 0
   totalVgprs: int                        = 0
   totalSgprs: int                        = 0
   lastValuAB: int                        = 0
@@ -3635,7 +3637,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # VGPR Assignment
     ####################################
     vgprIdx = 0
-    self.states.totalAgprs = 0
+    self.states.totalAgprs      = 0
+    self.states.totalMixedAgprs = 0
+    self.states.maxLimitAgprs   = self.states.regCaps["PhysicalMaxVgpr"] - self.states.regCaps["MaxVgpr"]
     self.states.c.startVgprValu = vgprIdx; vgprIdx += self.states.c.numVgprValu
 
     if kernel["EnableMatrixInstruction"]:
@@ -3653,8 +3657,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
       ########################################
       if not kernel["MIArchVgpr"]:
         self.states.totalAgprs = self.states.c.numVgprValu
-        vgprIdx = 0
-        self.states.c.numVgprValu = 0
+        if self.states.totalAgprs > self.states.maxLimitAgprs:
+          self.states.totalMixedAgprs = self.states.totalAgprs - self.states.maxLimitAgprs
+          self.states.totalAgprs      = self.states.maxLimitAgprs
+        vgprIdx = self.states.totalMixedAgprs
+        self.states.c.numVgprValu = self.states.totalMixedAgprs
 
     # TODO: alignment hack, figure out a better solution
     vgprIdx = ((vgprIdx+1)//2)*2
