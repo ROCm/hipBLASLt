@@ -197,6 +197,11 @@ namespace TensileLite
             return kernelName;
         }
 
+        bool isStreamK() const
+        {
+            return sizeMapping.streamK > 0;
+        }
+
         //! Estimates based on problem size, solution tile, and  machine hardware
         //! charz:
         struct StaticPerformanceModel
@@ -271,8 +276,10 @@ namespace TensileLite
    * Calculate required workspace size.
    */
         size_t requiredWorkspaceSize(Problem const& problem, Hardware const& hardware) const;
-        size_t requiredWorkspaceSizeGroupedGemm(std::vector<Problem> const& problems, Hardware const& hardware) const;
-        size_t requiredHostSizeGroupedGemmSingle(Problem const& problem, Hardware const& hardware) const;
+        size_t requiredWorkspaceSizeGroupedGemm(std::vector<Problem> const& problems,
+                                                Hardware const&             hardware) const;
+        size_t requiredHostSizeGroupedGemmSingle(Problem const&  problem,
+                                                 Hardware const& hardware) const;
 
         size_t getSKGrid(Problem const& problem, Hardware const& hardware, size_t tiles) const;
         size_t partialTileSize(size_t skGrid) const;
@@ -381,9 +388,9 @@ namespace TensileLite
 
         template <typename KA>
         inline void calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,
-                                                      const TensileLite::dim3&        workGroupSize,
-                                                      TensileLite::dim3&              numWorkGroups,
-                                                      TensileLite::dim3&              numWorkItems,
+                                                      const TensileLite::dim3&    workGroupSize,
+                                                      TensileLite::dim3&          numWorkGroups,
+                                                      TensileLite::dim3&          numWorkItems,
                                                       KA&                         h_args) const;
 
         template <bool T_Debug>
@@ -394,7 +401,7 @@ namespace TensileLite
         template <bool T_Debug, typename KA>
         KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const& problems,
                                                        GroupedInputs const&        inputs,
-                                                       Hardware const&          hardware,
+                                                       Hardware const&             hardware,
                                                        KA&                         h_args,
                                                        void const* userArgs = nullptr) const;
 
@@ -418,9 +425,9 @@ namespace TensileLite
         inline void calculateConversionCallWorkGroupItems(
             std::vector<ContractionSolution::Problem> const& problems,
             size_t&                                          vw,
-            const TensileLite::dim3&                             workGroupSize,
-            TensileLite::dim3&                                   numWorkGroups,
-            TensileLite::dim3&                                   numWorkItems,
+            const TensileLite::dim3&                         workGroupSize,
+            TensileLite::dim3&                               numWorkGroups,
+            TensileLite::dim3&                               numWorkItems,
             KA&                                              args) const;
 
         template <bool T_Debug>
@@ -428,9 +435,11 @@ namespace TensileLite
                                                       ContractionInputs const& inputs) const;
 
         template <bool T_Debug, typename KA>
-        KernelInvocation generateOutputConversionCallGroupedGemm(
-            std::vector<Problem> const& problems, GroupedInputs const& inputs,
-                    Hardware const& hardware, KA& h_args) const;
+        KernelInvocation
+            generateOutputConversionCallGroupedGemm(std::vector<Problem> const& problems,
+                                                    GroupedInputs const&        inputs,
+                                                    Hardware const&             hardware,
+                                                    KA&                         h_args) const;
 
         template <bool T_Debug>
         KernelInvocation updateUserArgsOutputConversionCallGroupedGemm(

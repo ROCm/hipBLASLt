@@ -56,6 +56,11 @@ inline void assignAlphaBeta1(const rocblaslt_compute_type& compute_type, void* a
         *((int32_t*)alpha) = 1.f;
         *((int32_t*)beta)  = 1.f;
     }
+    else if(compute_type == rocblaslt_compute_f16)
+    {
+        *((hipblasLtHalf*)alpha) = 1.f;
+        *((hipblasLtHalf*)beta)  = 1.f;
+    }
     else
     {
         *((float*)alpha) = 1.f;

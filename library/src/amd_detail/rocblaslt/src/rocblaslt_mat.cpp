@@ -736,7 +736,7 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                   "workSpaceSizeInBytes",
                   workspaceSizeInBytes,
                   (matmul_descr->pointermode) ? "alphaVector" : "alpha",
-                  *(reinterpret_cast<const float*>(alpha)),
+                  *(reinterpret_cast<const float*>(alpha)), // TODO: Add casts for f16 and int types of alpha.
                   "beta",
                   *(reinterpret_cast<const float*>(beta)),
                   "stream",
