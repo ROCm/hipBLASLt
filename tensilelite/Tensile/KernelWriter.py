@@ -4962,16 +4962,32 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     return firstPart + secondPart
 
-  def getReplacementKernelPath(self, kernel):
-    if not isCustomKernelConfig(kernel):
-      return None
 
-    kernelName = self.getKernelName(kernel)
+  def _getCustomKernelSource(self, kernel, CustomKernelDirectory):
+    kernelName = self.getKernelFileBase(kernel)
+    with open(os.path.join(CustomKernelDirectory, (kernelName + ".s"))) as f:
+      hipccver = globalParameters['HipClangVersion'].split(".")
+      hipccMaj = int(hipccver[0])
+      hipccPatch = int(hipccver[2].split("-")[0])
+      if not (hipccMaj >= 6 and hipccPatch >= 32650):
+        code = []
+        for line in f.readlines():
+          if "amdhsa_user_sgpr_kernarg_preload" not in line:
+            code.append(line)
+        code = "".join(code)
+      else:
+        code = f.read()
 
-    if isCustomKernelConfig(kernel):
-      return os.path.join(globalParameters["CustomKernelDirectory"], (kernelName + ".s"))
-    else: # Replacement kernel
-      return ReplacementKernels.Get(kernelName)
+    self.tPA = tensorParametersA = {}
+    self.tPB = tensorParametersB = {}
+    self.states.kernel = kernel
+    self.states.language = "ASM"
+    self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else globalParameters["CurrentISA"]
+    if not globalParameters["AsmCaps"][self.states.version]["SupportedISA"]:
+      self.states.version = (9,0,0)
+      printWarning(f"ISA: {self.version} is not supported; overriding with {self.states.version}")
+
+    return code
 
   def _getKernelSource(self, kernel: Solution):
     """
