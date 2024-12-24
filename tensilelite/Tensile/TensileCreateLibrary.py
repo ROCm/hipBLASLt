@@ -627,7 +627,6 @@ def TensileCreateLibrary():
   print1(f"# Architecture(s):     {arguments['Architecture']}")
   print1(f"# Library Format:      {libraryFormat}")
 
-  arguments["AMDClangVersion"] = getVersion(cxxCompiler)
   assignGlobalParameters(arguments, cxxCompiler)
 
   if not os.path.exists(logicPath):
