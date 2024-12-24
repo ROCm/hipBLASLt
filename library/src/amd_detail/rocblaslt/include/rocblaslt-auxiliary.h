@@ -368,6 +368,20 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
     rocblaslt_compute_type                          typeCompute,
     std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults);
 
+rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
+    rocblaslt_handle                                handle,
+    rocblaslt::RocGemmType                          typeGemm,
+    hipblasOperation_t                              opA,
+    hipblasOperation_t                              opB,
+    hipblasLtOrder_t                                orderA,
+    hipblasLtOrder_t                                orderB,
+    hipDataType                                     typeA,
+    hipDataType                                     typeB,
+    hipDataType                                     typeC,
+    hipDataType                                     typeD,
+    rocblaslt_compute_type                          typeCompute,
+    std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults);
+
 rocblaslt_status rocblaslt_matmul_get_algos_from_index_cpp(
     rocblaslt_handle                                handle,
     std::vector<int>&                               solutionIndex,

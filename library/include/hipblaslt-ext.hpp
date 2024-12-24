@@ -1359,6 +1359,52 @@ namespace hipblaslt_ext
                                 std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 
     /*! \ingroup library_module
+     *  \brief Retrieve the possible algorithms
+     *
+     *  \details
+     *  This function retrieves the possible algorithms for the matrix multiply
+     * operation hipblasLtMatmul() function with the given data and compute tpye.
+     * The output is placed in heuristicResults in the order of increasing
+     * estimated compute time. It should use matmulIsAlgoSupported() to check if
+     * the algorithm support the problem before execute hipblasLtMatmul().
+     *
+     *  @param[in]
+     *  handle                  Pointer to the allocated hipBLASLt handle for the
+     * hipBLASLt context. See \ref hipblasLtHandle_t .
+     *  @param[in]
+     *  typeGemm Gemm type. ex. GEMM, GROUPED_GEMM.
+     *  @param[in]
+     *  opA, opB Transpose settings of A, B.
+     *  @param[in]
+     *  orderA, orderB Layout settings of A, B.
+     *  @param[in]
+     *  typeA,typeB,typeC,typeD The data type of matrix A, B, C, D.
+     *  @param[in]
+     *  typeCompute             The compute type.
+     *  @param[out]
+     *  heuristicResults The algorithm heuristic vector.
+     *
+     *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. Inspect
+     * returnedAlgoCount > 0.state for the status of the
+     * results. \retval HIPBLAS_STATUS_NOT_SUPPORTED     If no heuristic function
+     * available for current configuration. \retval HIPBLAS_STATUS_INVALID_VALUE If
+     * no solution is found.
+     */
+    HIPBLASLT_EXPORT
+    hipblasStatus_t getAllAlgos(hipblasLtHandle_t                              handle,
+                                GemmType                                       typeGemm,
+                                hipblasOperation_t                             opA,
+                                hipblasOperation_t                             opB,
+                                hipblasLtOrder_t                               orderA,
+                                hipblasLtOrder_t                               orderB,
+                                hipDataType                                    typeA,
+                                hipDataType                                    typeB,
+                                hipDataType                                    typeC,
+                                hipDataType                                    typeD,
+                                hipblasComputeType_t                           typeCompute,
+                                std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
+
+    /*! \ingroup library_module
      *  \brief Retrieve the algorithm index
      *
      *  @param[in]

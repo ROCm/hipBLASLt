@@ -1598,6 +1598,46 @@ namespace hipblaslt_ext
         return exception_to_hipblas_status();
     }
 
+    hipblasStatus_t getAllAlgos(hipblasLtHandle_t                              handle,
+                                GemmType                                       typeGemm,
+                                hipblasOperation_t                             opA,
+                                hipblasOperation_t                             opB,
+                                hipblasLtOrder_t                               orderA,
+                                hipblasLtOrder_t                               orderB,
+                                hipDataType                                    typeA,
+                                hipDataType                                    typeB,
+                                hipDataType                                    typeC,
+                                hipDataType                                    typeD,
+                                hipblasComputeType_t                           typeCompute,
+                                std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults)
+    try
+    {
+        rocblaslt::Debug::Instance().markerStart("hipblasLtGetAllAlgosLayoutCpp");
+        auto results
+            = reinterpret_cast<std::vector<rocblaslt_matmul_heuristic_result>*>(&heuristicResults);
+        results->clear();
+        auto status = RocBlasLtStatusToHIPStatus(
+            rocblaslt_matmul_get_all_algos_cpp((rocblaslt_handle)handle,
+                                               static_cast<rocblaslt::RocGemmType>(typeGemm),
+                                               opA,
+                                               opB,
+                                               orderA,
+                                               orderB,
+                                               typeA,
+                                               typeB,
+                                               typeC,
+                                               typeD,
+                                               (rocblaslt_compute_type)typeCompute,
+                                               *results));
+        rocblaslt::Debug::Instance().markerStop();
+        return status;
+
+    }
+    catch(...)
+    {
+        return exception_to_hipblas_status();
+    }
+
     int getIndexFromAlgo(hipblasLtMatmulAlgo_t& algo)
     {
         int* algo_ptr = (int*)algo.data;
