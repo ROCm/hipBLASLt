@@ -321,7 +321,7 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
 
-  return codeObjectFiles, numKernels 
+  return codeObjectFiles, numKernels
 
 
 ##############################################################################
@@ -514,7 +514,7 @@ def TensileCreateLibrary():
   argParser.add_argument("LogicPath",       help="Path to LibraryLogic.yaml files.")
   argParser.add_argument("OutputPath",      help="Where to write library files?")
   argParser.add_argument("RuntimeLanguage", help="Which runtime language?", choices=["OCL", "HIP", "HSA"])
-  argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       action="store", default=ToolchainDefaults.CXX_COMPILER, 
+  argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       action="store", default=ToolchainDefaults.CXX_COMPILER,
                          help=f"Default: {ToolchainDefaults.CXX_COMPILER}")
   argParser.add_argument("--c-compiler",             dest="CCompiler",         action="store", default=ToolchainDefaults.C_COMPILER)
   argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
@@ -530,7 +530,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--library-print-debug",    dest="LibraryPrintDebug", action="store_true")
   argParser.add_argument("--no-library-print-debug", dest="LibraryPrintDebug", action="store_false")
   argParser.add_argument("--no-compress",            dest="NoCompress",        action="store_true", help="Don't compress assembly code objects.")
-  argParser.add_argument("--experimental",           dest="Experimental",      action="store_true", 
+  argParser.add_argument("--experimental",           dest="Experimental",      action="store_true",
                          help="Include logic files in directories named 'Experimental'.")
   argParser.add_argument("--no-enumerate",           action="store_true", help="Do not run rocm_agent_enumerator.")
   argParser.add_argument("--version", help="Version string to embed into library file.")
@@ -729,7 +729,7 @@ def TensileCreateLibrary():
     LibraryIO.write(masterFile, Utils.state(fullMasterLibrary), args.LibraryFormat)
 
   theMasterLibrary = fullMasterLibrary
-  if globalParameters["SeparateArchitectures"]:
+  if globalParameters["SeparateArchitectures"] and len(masterLibraries) > 0:
     theMasterLibrary = list(masterLibraries.values())[0]
 
   print1("# Tensile Library Writer DONE")
