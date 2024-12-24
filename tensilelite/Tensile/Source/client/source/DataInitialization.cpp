@@ -691,8 +691,30 @@ namespace TensileLite
                         }
                         auto& pristine = m_vdata[i].pristine[dataType];
                         pristine.initDescriptor.resize(1);
+                        
+                        //TODO: support more swizzle types
+                        constexpr size_t MiM = 16;
+                        constexpr size_t MiK = 16;
+                        constexpr size_t PackK = 2;
+                        constexpr size_t SwizzleK = MiK * PackK;
+                        auto numAllocatedElements = problem.tensors()[i].totalAllocatedElements(); 
+                        auto numAllocatedBytes = problem.tensors()[i].totalAllocatedBytes(); 
+
+                        if ((problem.swizzleTensorA() && i == ContractionProblemGemm::TENSOR::A)
+                            || (problem.swizzleTensorB() && i == ContractionProblemGemm::TENSOR::B))
+                        {
+                            auto& desc = problem.tensors()[i];
+                            auto unrolledSize = desc.sizes()[0];
+                            auto tiledSize = desc.sizes()[1];
+                            unrolledSize = (unrolledSize / SwizzleK + !!(unrolledSize % SwizzleK)) * SwizzleK;
+                            tiledSize = (tiledSize / MiM + !!(tiledSize % MiM)) * MiM;
+                            numAllocatedElements = unrolledSize * tiledSize;
+                            numAllocatedBytes = numAllocatedElements * GetElementSize(dataType);
+                        }
+
                         pristine.maxElements = std::max(
-                            pristine.maxElements, problem.tensors()[i].totalAllocatedElements());
+                            pristine.maxElements, numAllocatedElements);
+
                         if(m_rotatingBuffer)
                         {
                             if(i <= ContractionProblemGemm::TENSOR::METADATA)
@@ -703,7 +725,7 @@ namespace TensileLite
                                 }
                                 else
                                 {
-                                    vec_rm.push_back(problem.tensors()[i].totalAllocatedBytes());
+                                    vec_rm.push_back(numAllocatedBytes);
                                 }
                             }
                         }
@@ -1744,8 +1766,13 @@ namespace TensileLite
                     auto tiledSize = desc.sizes()[1];
                     auto tmpTensor = Tensor::create<Half>({tiledSize, unrolledSize});
                     memcpy(tmpTensor.as<void>(), p.cpuInput.valid.get(), tmpTensor.getNumBytes());
-                    tmpTensor.reshape({tiledSize / MiM, MiM, unrolledSize / (MiK * PackK), MiK / MiKv , MiKv * PackK});
-                    Tensor permuted = permute(tmpTensor, {0, 2, 3, 1, 4});
+                    ::Tensor::Manipulation::Shape paddedShape{((tiledSize / MiM) + !!(tiledSize % MiM)) * MiM,
+                        (unrolledSize / (MiK * PackK) + !!(unrolledSize % (MiK * PackK))) * MiK * PackK};
+                    //Temporary hack
+                    uint64_t padVal{};
+                    auto paddedTensor = ::Tensor::Manipulation::pad(tmpTensor, paddedShape, &padVal, tmpTensor.getElementSize());
+                    paddedTensor.reshape({paddedShape[0] / MiM, MiM, paddedShape[1] / (MiK * PackK), MiK / MiKv , MiKv * PackK});
+                    Tensor permuted = permute(paddedTensor, {0, 2, 3, 1, 4});
                     ptr = copyInputBuffers(desc,
                                            p.gpuInput.valid.get(),
                                            permuted.as<void>(),
