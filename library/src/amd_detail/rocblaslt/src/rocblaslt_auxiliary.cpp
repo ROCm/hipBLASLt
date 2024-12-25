@@ -1543,7 +1543,7 @@ rocblaslt_status
             if(override_success)
                 requestedAlgoCount--;
 
-            log_api(__func__, "returnAlogCount", override_success ? 1 : 0);
+            log_api(__func__, "returnAlgoCount", override_success ? 1 : 0);
         }
 
         if(requestedAlgoCount > 0)
@@ -1573,7 +1573,7 @@ rocblaslt_status
 
         if(dummy_bias_address)
             matmul_desc->bias = nullptr;
-        log_api(__func__, "returnAlogCount", *returnAlgoCount);
+        log_api(__func__, "returnAlgoCount", *returnAlgoCount);
 
         //Try to get size independent solutions from getAllSolutions()
         if(requestedAlgoCount > *returnAlgoCount)
@@ -1608,7 +1608,7 @@ rocblaslt_status
                     (*returnAlgoCount)++;
                 }
 
-                log_api(__func__, "final returnAlogCount", *returnAlgoCount);
+                log_api(__func__, "final returnAlgoCount", *returnAlgoCount);
             }
         }
 
@@ -1739,7 +1739,7 @@ rocblaslt_status rocblaslt_matmul_get_algos_from_index_cpp(
         size_t maxWorkspaceSize = std::numeric_limits<size_t>::max();
         status = getSolutionsFromIndex(handle, solutionIndex, heuristicResults, maxWorkspaceSize);
 
-        log_api(__func__, "returnAlogCount", heuristicResults.size());
+        log_api(__func__, "returnAlgoCount", heuristicResults.size());
         return status;
     }
     catch(const rocblaslt_status& status)
@@ -1800,7 +1800,7 @@ rocblaslt_status
             override_success = problem_override_from_file_cpp(
                 handle, gemmType, gemmData, workspaceBytes, override_result, override.file_path);
 
-            log_api(__func__, "returnAlogCount", override_success ? 1 : 0);
+            log_api(__func__, "returnAlgoCount", override_success ? 1 : 0);
         }
 
         if(requestedAlgoCount - override_result.size() > 0)
@@ -1818,7 +1818,7 @@ rocblaslt_status
             results.insert(results.begin(), override_result[0]);
         }
 
-        log_api(__func__, "returnAlogCount", results.size());
+        log_api(__func__, "returnAlgoCount", results.size());
         if(status != rocblaslt_status_success)
         {
             throw status;
@@ -1857,7 +1857,7 @@ rocblaslt_status
                     results.push_back(allSolutionsResults[i]);
                 }
 
-                log_api(__func__, "final returnAlogCount", results.size());
+                log_api(__func__, "final returnAlgoCount", results.size());
             }
         }
     }
