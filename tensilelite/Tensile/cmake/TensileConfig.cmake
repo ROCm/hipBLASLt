@@ -91,6 +91,7 @@ function(TensileCreateLibraryFiles
        KEEP_BUILD_TMP
        NO_COMPRESS
        EXPERIMENTAL 
+       ENABLE_MAKRER
        )
 
   # Single value settings
