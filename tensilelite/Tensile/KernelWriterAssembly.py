@@ -4032,7 +4032,7 @@ class KernelWriterAssembly(KernelWriter):
       # might be able to refactor this to eliminate signed math
       imod.add(SSubI32(dst=sgpr(tmp), src0=3 if kernel["PrefetchGlobalRead"] else 2, \
               src1=sgpr("StaggerUIter")))
-      imod.addModuleAsFlatItems(self.s_mul_i64_i32(sgpr(tmp), sgpr(tmp+1), \
+      imod.addModuleAsFlatItems(self.s_mul_i64_i32_u32(sgpr(tmp), sgpr(tmp+1), \
                   sgpr(tmp), sgpr("GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)), \
                   "start offset S in bytes"))
       imod.add(SSubU32(dst=sgpr(tmp), src0=sgpr(tmp), src1=sgpr("WrapU%s"%tc), comment="S - WrapU"))
@@ -4052,7 +4052,7 @@ class KernelWriterAssembly(KernelWriter):
         # might be able to refactor this to eliminate signed math
         imod.add(SSubI32(dst=sgpr(tmp), src0=3 if kernel["PrefetchGlobalRead"] else 2, \
                 src1=sgpr("StaggerUIter")))
-        imod.addModuleAsFlatItems(self.s_mul_i64_i32(sgpr(tmp), sgpr(tmp+1), \
+        imod.addModuleAsFlatItems(self.s_mul_i64_i32_u32(sgpr(tmp), sgpr(tmp+1), \
                     sgpr(tmp), sgpr(incSparse), \
                      "start offset S in bytes"))
         imod.add(SSubU32(sgpr(tmp), sgpr(tmp), sgpr("WrapU%s"%tc), "S - WrapU"))
@@ -11803,6 +11803,28 @@ class KernelWriterAssembly(KernelWriter):
     vtmp0 = self.vgprPool.checkOut(2)
     module = SMulInt64to32(self.states.asmCaps["HasSMulHi"], \
                            dst0, dst1, src0, src1, True, vtmp0, comment)
+    self.vgprPool.checkIn(vtmp0)
+    return module
+
+  def s_mul_i64_i32_u32 (self, dst0, dst1,  src0, src1, comment):
+    module = Module("S_MUL_I64_I32_U32")
+    vtmp0 = self.vgprPool.checkOut(2)
+    negativeLabel = Label((self.labels.getUniqueNamePrefix("Negative")), comment="")
+    multiplydoneLabel = Label((self.labels.getUniqueNamePrefix("MultiplyDone")), comment="")
+    module.add(SCmpGeI32(src0, 0))
+    module.add(SCBranchSCC0(labelName=negativeLabel.getLabelName(), comment=""))
+    module.add(SMulInt64to32(self.states.asmCaps["HasSMulHi"], \
+                           dst0, dst1, src0, src1, False, vtmp0, comment))
+    module.add(SBranch(labelName=multiplydoneLabel.getLabelName(), comment=""))
+    module.add(negativeLabel)
+    module.add(SAbsI32(src0, src0, comment=""))
+    module.add(SMulInt64to32(self.states.asmCaps["HasSMulHi"], \
+                             dst0, dst1, src0, src1, False, vtmp0, comment))
+    module.add(SXorB32(dst0, dst0, hex(0xFFFFFFFF), comment=""))
+    module.add(SXorB32(dst1, dst1, hex(0xFFFFFFFF), comment=""))
+    module.add(SAddU32(dst0, dst0, hex(0x1), comment=""))
+    module.add(SAddCU32(dst1, dst1, 0, comment=""))
+    module.add(multiplydoneLabel)
     self.vgprPool.checkIn(vtmp0)
     return module
 
