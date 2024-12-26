@@ -84,9 +84,9 @@
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 16
     AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
+    AssertSummationElementMultiple: 32
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
@@ -365,9 +365,9 @@
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 16
     AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
+    AssertSummationElementMultiple: 32
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
@@ -646,9 +646,9 @@
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 16
     AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
+    AssertSummationElementMultiple: 32
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
@@ -927,9 +927,9 @@
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 16
     AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
+    AssertSummationElementMultiple: 32
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
@@ -1208,9 +1208,9 @@
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 16
     AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
+    AssertSummationElementMultiple: 32
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
@@ -1489,9 +1489,9 @@
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 16
     AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
+    AssertSummationElementMultiple: 32
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
@@ -1769,9 +1769,9 @@
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 16
     AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
+    AssertSummationElementMultiple: 32
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
@@ -2049,9 +2049,9 @@
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 16
     AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
+    AssertSummationElementMultiple: 32
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
@@ -2329,9 +2329,9 @@
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 16
     AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
+    AssertSummationElementMultiple: 32
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
@@ -2609,9 +2609,9 @@
     ActivationFused: true
     AssertAIGreaterThanEqual: -1
     AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 16
     AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
+    AssertSummationElementMultiple: 32
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
