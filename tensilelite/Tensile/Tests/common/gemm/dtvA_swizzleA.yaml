@@ -94,12 +94,9 @@ BenchmarkProblems:
           - Exact: [160,   256, 1, 224]
           - Exact: [160,   256, 1, 256]
           - Exact: [160,   256, 1, 288]
-
-          # Enable the big sizes when GSU3 + MBSK is ready.
-          # - Exact: [1600,  512, 1, 992]
-          # - Exact: [1600,  512, 1, 1024]
-          # - Exact: [1600,  512, 1, 1056]
-
+          - Exact: [1600,  512, 1, 992]
+          - Exact: [1600,  512, 1, 1024]
+          - Exact: [1600,  512, 1, 1056]
           - Exact: [512,   256, 1, 224]
           - Exact: [512,   256, 1, 256]
           - Exact: [512,   256, 1, 288]
