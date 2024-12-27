@@ -88,6 +88,15 @@ const char* hipDataType_to_string(hipDataType type)
     }
 }
 
+bool rocblaslt_is_complex_datatype(hipDataType type)
+{
+    return type == HIP_C_32F  || type == HIP_C_64F || type == HIP_C_16F ||
+           type == HIP_C_8I   || type == HIP_C_8U  || type == HIP_C_32I ||
+           type == HIP_C_32U || type == HIP_C_16BF || type == HIP_C_4I  ||
+           type == HIP_C_4U  || type == HIP_C_16I || type == HIP_C_16U  ||
+           type == HIP_C_64I || type == HIP_C_64U;
+}
+
 const char* hipDataType_to_bench_string(hipDataType type)
 {
     switch(type)
@@ -221,6 +230,7 @@ const char* hipblasOperation_to_string(hipblasOperation_t op)
     case HIPBLAS_OP_T:
         return "OP_T";
     case HIPBLAS_OP_C:
+        return "OP_C";
     default:
         return "Invalid";
     }

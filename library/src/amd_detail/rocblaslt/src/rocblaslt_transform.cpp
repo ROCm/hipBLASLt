@@ -773,8 +773,8 @@ rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 han
         return rocblaslt_status_internal_error;
     }
 
-    bool       transA         = desc->opA == HIPBLAS_OP_T;
-    bool       transB         = desc->opB == HIPBLAS_OP_T;
+    bool       transA         = desc->opA != HIPBLAS_OP_N;
+    bool       transB         = desc->opB != HIPBLAS_OP_N;
     bool       scalarInDevice = desc->pointerMode == HIPBLASLT_POINTER_MODE_DEVICE;
     const auto kernelName     = transformKernelNames.at(key);
 

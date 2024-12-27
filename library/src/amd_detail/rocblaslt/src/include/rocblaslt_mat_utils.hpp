@@ -44,12 +44,12 @@ inline rocblaslt_status getOriginalSizes(hipblasOperation_t opA,
     // values of num_* are values after been transposed, redirect to before which
     // been transposed. initialized m,n,k by NN.
     m = num_rows_a, n = num_cols_b, k = num_cols_a;
-    if(opA == HIPBLAS_OP_T)
+    if(opA == HIPBLAS_OP_T || opA == HIPBLAS_OP_C)
     {
         m = num_cols_a;
         k = num_rows_a;
     }
-    if(opB == HIPBLAS_OP_T)
+    if(opB == HIPBLAS_OP_T || opB == HIPBLAS_OP_C)
     {
         n = num_rows_b;
         if(k != num_cols_b)
@@ -202,8 +202,7 @@ inline rocblaslt_status validateMatmulArgs(int64_t                       m,
         return status;
     }
 
-    if(opA == HIPBLASLT_OPERATION_INVALID || opB == HIPBLASLT_OPERATION_INVALID
-       || opA == HIPBLAS_OP_C || opB == HIPBLAS_OP_C)
+    if(opA == HIPBLASLT_OPERATION_INVALID || opB == HIPBLASLT_OPERATION_INVALID)
         status = rocblaslt_status_not_implemented;
 
     if(status != rocblaslt_status_continue)

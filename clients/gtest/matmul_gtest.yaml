@@ -34,6 +34,13 @@ Definitions:
     - { transA: T, transB: N }
     - { transA: T, transB: T }
 
+  - &conjugate_transA_transB_range
+    - { transA: T, transB: C }
+    - { transA: C, transB: T }
+    - { transA: N, transB: C }
+    - { transA: C, transB: N }
+    - { transA: C, transB: C }
+
 
 Tests:
 - name: matmul_bad_arg
@@ -64,6 +71,15 @@ Tests:
   matrix_size: *small_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
+  c_equal_d: [false, true]
+
+- name: matmul_conj_small
+  category: quick
+  function:
+    matmul: *real_precisions
+  matrix_size: *small_matrix_size_range
+  transA_transB: *conjugate_transA_transB_range
+  alpha_beta: *alpha_beta_range_small
   c_equal_d: [false, true]
 
 - name: matmul_medium

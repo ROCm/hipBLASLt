@@ -427,10 +427,10 @@ TEST_P(MatrixTransformTest, Basic)
     int64_t                     batchStride   = m * n;
     std::pair<int64_t, int64_t> shapeA;
     std::pair<int64_t, int64_t> shapeB;
-    shapeA.first  = opA == HIPBLAS_OP_T ? n : m;
-    shapeA.second = opA == HIPBLAS_OP_T ? m : n;
-    shapeB.first  = opB == HIPBLAS_OP_T ? n : m;
-    shapeB.second = opB == HIPBLAS_OP_T ? m : n;
+    shapeA.first  = opA == HIPBLAS_OP_N ? m : n;
+    shapeA.second = opA == HIPBLAS_OP_N ? n : m;
+    shapeB.first  = opB == HIPBLAS_OP_N ? m : n;
+    shapeB.second = opB == HIPBLAS_OP_N ? n : m;
     uint32_t ldA  = (orderA == HIPBLASLT_ORDER_ROW)
                         ? getLeadingDimSize<true>(shapeA.first, shapeA.second)
                         : getLeadingDimSize<false>(shapeA.first, shapeA.second);
@@ -520,8 +520,8 @@ TEST_P(MatrixTransformTest, Basic)
     auto rowMajA = (orderA == HIPBLASLT_ORDER_ROW);
     auto rowMajB = (orderB == HIPBLASLT_ORDER_ROW);
     auto rowMajC = (orderC == HIPBLASLT_ORDER_ROW);
-    auto transA  = (opA == HIPBLAS_OP_T);
-    auto transB  = (opB == HIPBLAS_OP_T);
+    auto transA  = (opA != HIPBLAS_OP_N);
+    auto transB  = (opB != HIPBLAS_OP_N);
 
     if(datatype == HIP_R_32F)
     {
@@ -648,10 +648,10 @@ TEST(MatrixTransformTest, InvalidConfigurations)
     int64_t                     batchStride   = m * n;
     std::pair<int64_t, int64_t> shapeA;
     std::pair<int64_t, int64_t> shapeB;
-    shapeA.first  = opA == HIPBLAS_OP_T ? n : m;
-    shapeA.second = opA == HIPBLAS_OP_T ? m : n;
-    shapeB.first  = opB == HIPBLAS_OP_T ? n : m;
-    shapeB.second = opB == HIPBLAS_OP_T ? m : n;
+    shapeA.first  = opA == HIPBLAS_OP_N ? m : n;
+    shapeA.second = opA == HIPBLAS_OP_N ? n : m;
+    shapeB.first  = opB == HIPBLAS_OP_N ? m : n;
+    shapeB.second = opB == HIPBLAS_OP_N ? n : m;
     uint32_t ldA  = (orderA == HIPBLASLT_ORDER_ROW)
                         ? getLeadingDimSize<true>(shapeA.first, shapeA.second)
                         : getLeadingDimSize<false>(shapeA.first, shapeA.second);
@@ -793,10 +793,10 @@ TEST(MatrixTransformTest, NullA)
     int64_t                     batchStride   = m * n;
     std::pair<int64_t, int64_t> shapeA;
     std::pair<int64_t, int64_t> shapeB;
-    shapeA.first  = opA == HIPBLAS_OP_T ? n : m;
-    shapeA.second = opA == HIPBLAS_OP_T ? m : n;
-    shapeB.first  = opB == HIPBLAS_OP_T ? n : m;
-    shapeB.second = opB == HIPBLAS_OP_T ? m : n;
+    shapeA.first  = opA == HIPBLAS_OP_N ? m : n;
+    shapeA.second = opA == HIPBLAS_OP_N ? n : m;
+    shapeB.first  = opB == HIPBLAS_OP_N ? m : n;
+    shapeB.second = opB == HIPBLAS_OP_N ? n : m;
     uint32_t ldB  = (orderB == HIPBLASLT_ORDER_ROW)
                         ? getLeadingDimSize<true>(shapeB.first, shapeB.second)
                         : getLeadingDimSize<false>(shapeB.first, shapeB.second);
@@ -870,8 +870,8 @@ TEST(MatrixTransformTest, NullA)
     auto rowMajA = (orderA == HIPBLASLT_ORDER_ROW);
     auto rowMajB = (orderB == HIPBLASLT_ORDER_ROW);
     auto rowMajC = (orderC == HIPBLASLT_ORDER_ROW);
-    auto transA  = (opA == HIPBLAS_OP_T);
-    auto transB  = (opB == HIPBLAS_OP_T);
+    auto transA  = (opA != HIPBLAS_OP_N);
+    auto transB  = (opB != HIPBLAS_OP_N);
     validation<float>(dC,
                       nullptr,
                       dB,
@@ -908,10 +908,10 @@ TEST(MatrixTransformTest, NullB)
     int64_t                     batchStride   = m * n;
     std::pair<int64_t, int64_t> shapeA;
     std::pair<int64_t, int64_t> shapeB;
-    shapeA.first  = opA == HIPBLAS_OP_T ? n : m;
-    shapeA.second = opA == HIPBLAS_OP_T ? m : n;
-    shapeB.first  = opB == HIPBLAS_OP_T ? n : m;
-    shapeB.second = opB == HIPBLAS_OP_T ? m : n;
+    shapeA.first  = opA == HIPBLAS_OP_N ? m : n;
+    shapeA.second = opA == HIPBLAS_OP_N ? n : m;
+    shapeB.first  = opB == HIPBLAS_OP_N ? m : n;
+    shapeB.second = opB == HIPBLAS_OP_N ? n : m;
     uint32_t ldA  = (orderA == HIPBLASLT_ORDER_ROW)
                         ? getLeadingDimSize<true>(shapeA.first, shapeA.second)
                         : getLeadingDimSize<false>(shapeA.first, shapeA.second);
@@ -985,8 +985,8 @@ TEST(MatrixTransformTest, NullB)
     auto rowMajA = (orderA == HIPBLASLT_ORDER_ROW);
     auto rowMajB = (orderB == HIPBLASLT_ORDER_ROW);
     auto rowMajC = (orderC == HIPBLASLT_ORDER_ROW);
-    auto transA  = (opA == HIPBLAS_OP_T);
-    auto transB  = (opB == HIPBLAS_OP_T);
+    auto transA  = (opA != HIPBLAS_OP_N);
+    auto transB  = (opB != HIPBLAS_OP_N);
     validation<float>(dC,
                       dA,
                       nullptr,
@@ -1029,10 +1029,10 @@ TEST(MatrixTransformTest, ScalarsOnDevice)
     int64_t                     batchStride = m * n;
     std::pair<int64_t, int64_t> shapeA;
     std::pair<int64_t, int64_t> shapeB;
-    shapeA.first  = opA == HIPBLAS_OP_T ? n : m;
-    shapeA.second = opA == HIPBLAS_OP_T ? m : n;
-    shapeB.first  = opB == HIPBLAS_OP_T ? n : m;
-    shapeB.second = opB == HIPBLAS_OP_T ? m : n;
+    shapeA.first  = opA == HIPBLAS_OP_N ? m : n;
+    shapeA.second = opA == HIPBLAS_OP_N ? n : m;
+    shapeB.first  = opB == HIPBLAS_OP_N ? m : n;
+    shapeB.second = opB == HIPBLAS_OP_N ? n : m;
     uint32_t ldA  = (orderA == HIPBLASLT_ORDER_ROW)
                         ? getLeadingDimSize<true>(shapeA.first, shapeA.second)
                         : getLeadingDimSize<false>(shapeA.first, shapeA.second);
@@ -1130,8 +1130,8 @@ TEST(MatrixTransformTest, ScalarsOnDevice)
     auto rowMajA = (orderA == HIPBLASLT_ORDER_ROW);
     auto rowMajB = (orderB == HIPBLASLT_ORDER_ROW);
     auto rowMajC = (orderC == HIPBLASLT_ORDER_ROW);
-    auto transA  = (opA == HIPBLAS_OP_T);
-    auto transB  = (opB == HIPBLAS_OP_T);
+    auto transA  = (opA != HIPBLAS_OP_N);
+    auto transB  = (opB != HIPBLAS_OP_N);
     validation<float>(dC,
                       dA,
                       dB,
