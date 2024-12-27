@@ -195,6 +195,8 @@ class StateValues:
   bias: MatrixInfo                       = field(default_factory=MatrixInfo)
   m: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)       # For Sparse Metadata
   totalAgprs: int                        = 0
+  maxLimitAgprs: int                     = 0
+  totalMixedAgprs: int                   = 0
   totalVgprs: int                        = 0
   totalSgprs: int                        = 0
   lastValuAB: int                        = 0
@@ -994,7 +996,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         return numToBeIssued
 
       oneBufferScheduling = kernel["1LDSBuffer"] or kernel["DirectToLdsA"] or kernel["DirectToLdsB"]
-      
+
       def hasDependency(lr: DSLoadInstruction, inst: Instruction) -> bool:
         lrDataReg = lr.dst
 
@@ -2569,7 +2571,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             # last NLL or  pack DTV case, no deep copy for pack
             # pack code for local prefetch is generated in noLoadLoopBody and used for DTV even
             deepCopyPack = pack
-          else: 
+          else:
             # deepCopy packCode for OptNLL noLoadLoop
             deepCopyPack = fastdeepcopy(pack)
           module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=False, pack=deepCopyPack, NLLindex=NLLindex, NLLnum=NLLnum))
@@ -2636,15 +2638,21 @@ class KernelWriter(metaclass=abc.ABCMeta):
                                kernel["tailLoopOpt"] == False) else 0
       globalReadMode2nd = 2 if (((tensorParameters2nd["glvw"] * tensorParameters2nd["bpeGR"]) < 4) or \
                                kernel["tailLoopOpt"] == False) else 0
+
+      # if we have swizzled A or B, then size-K is already guarded, we don't have to used guarded-k GR again
+      hasSwizzled = tensorParametersA["isSwizzled"] or tensorParametersB["isSwizzled"]
+      globalReadMode1st = 0 if hasSwizzled else globalReadMode1st
+      globalReadMode2nd = 0 if hasSwizzled else globalReadMode2nd
+
       module.addComment1("Update M0 for DTLDS")
       moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters1st)
       module.add(replaceHolder(moduleTmp, 0))
-      module.addComment1("global read %s"%tc1)
+      module.addComment1("Tail global read %s"%tc1)
       module.add(self.globalReadDo(kernel, globalReadMode1st, tensorParameters1st))
       module.addComment1("Update M0 for DTLDS")
       moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters2nd)
       module.add(replaceHolder(moduleTmp, 0))
-      module.addComment1("global read %s"%tc2)
+      module.addComment1("Tail global read %s"%tc2)
       module.add(self.globalReadDo(kernel, globalReadMode2nd, tensorParameters2nd))
       if kernel["tailLoopOpt"] and \
          (((tensorParameters1st["glvw"] * tensorParameters1st["bpeGR"]) >= 4) or \
@@ -2679,13 +2687,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
       # tail: re-init local read addresses
       if kernel["PrefetchGlobalRead"]:
-        module.addComment1("local read reset offsets a")
+        module.addComment1("Tail: local read reset offsets a")
         module.add(self.localReadResetOffsets(kernel, tensorParametersA))
-        module.addComment1("local read reset offsets b")
+        module.addComment1("Tail: local read reset offsets b")
         module.add(self.localReadResetOffsets(kernel, tensorParametersB))
-        module.addComment1("local read init pointers a")
+        module.addComment1("Tail: local read init pointers a")
         module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersA))
-        module.addComment1("local read init pointers b")
+        module.addComment1("Tail: local read init pointers b")
         module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
           module.addComment1("local read reset offsets metadata")
@@ -2908,7 +2916,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.asmCaps  = self.ti.getAsmCaps()
     self.states.archCaps = self.ti.getArchCaps()
     self.states.regCaps  = self.ti.getRegCaps()
-    
+
     self.asmAssert = Assert(self.states.laneSGPRCount, kernel["WavefrontSize"], self.db["EnableAsserts"])
 
     # Only assembly supports scheduling
@@ -3629,7 +3637,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # VGPR Assignment
     ####################################
     vgprIdx = 0
-    self.states.totalAgprs = 0
+    self.states.totalAgprs      = 0
+    self.states.totalMixedAgprs = 0
+    self.states.maxLimitAgprs   = self.states.regCaps["PhysicalMaxVgpr"] - self.states.regCaps["MaxVgpr"]
     self.states.c.startVgprValu = vgprIdx; vgprIdx += self.states.c.numVgprValu
 
     if kernel["EnableMatrixInstruction"]:
@@ -3647,8 +3657,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
       ########################################
       if not kernel["MIArchVgpr"]:
         self.states.totalAgprs = self.states.c.numVgprValu
-        vgprIdx = 0
-        self.states.c.numVgprValu = 0
+        if self.states.totalAgprs > self.states.maxLimitAgprs:
+          self.states.totalMixedAgprs = self.states.totalAgprs - self.states.maxLimitAgprs
+          self.states.totalAgprs      = self.states.maxLimitAgprs
+        vgprIdx = self.states.totalMixedAgprs
+        self.states.c.numVgprValu = self.states.totalMixedAgprs
 
     # TODO: alignment hack, figure out a better solution
     vgprIdx = ((vgprIdx+1)//2)*2

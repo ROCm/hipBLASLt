@@ -1393,12 +1393,14 @@ namespace TensileLite
                 {
                     bool rv = (*this)(problem);
 
-                    stream << rv << ": " << *this << ": (" << " (" << problem.a().strides()[1]
-                           << " * " << value.depthUorMT0 << " + " << value.shiftPtrElemA << ") * "
-                           << problem.a().elementBytes() << " < 4294967296 && " << " ("
-                           << problem.b().strides()[1] << " * " << value.depthUorMT1 << " + "
-                           << value.shiftPtrElemB << ") * " << problem.b().elementBytes()
-                           << " < 4294967296" << ")" << std::endl;
+                    stream << rv << ": " << *this << ": ("
+                           << " (" << problem.a().strides()[1] << " * " << value.depthUorMT0
+                           << " + " << value.shiftPtrElemA << ") * " << problem.a().elementBytes()
+                           << " < 4294967296 && "
+                           << " (" << problem.b().strides()[1] << " * " << value.depthUorMT1
+                           << " + " << value.shiftPtrElemB << ") * " << problem.b().elementBytes()
+                           << " < 4294967296"
+                           << ")" << std::endl;
 
                     return rv;
                 }
@@ -1450,8 +1452,8 @@ namespace TensileLite
                     bool rv = (*this)(problem);
 
                     stream << rv << ": " << *this << ": (" << problem.c().strides()[1] << " * "
-                           << problem.c().elementBytes() << " * " << value << " < 4294967296" << ")"
-                           << std::endl;
+                           << problem.c().elementBytes() << " * " << value << " < 4294967296"
+                           << ")" << std::endl;
 
                     return rv;
                 }
@@ -1495,8 +1497,8 @@ namespace TensileLite
                 {
                     bool rv = (*this)(problem);
                     stream << rv << ": " << *this << ": (" << problem.d().strides()[1] << " * "
-                           << problem.d().elementBytes() << " * " << value << " < 4294967296" << ")"
-                           << std::endl;
+                           << problem.d().elementBytes() << " * " << value << " < 4294967296"
+                           << ")" << std::endl;
                     return rv;
                 }
             };
@@ -1597,6 +1599,59 @@ namespace TensileLite
                                         "<=",
                                         "max",
                                         problem.workspaceSize());
+                }
+            };
+
+            struct WorkgroupNumberCheck
+                : public Predicate_CRTP<WorkgroupNumberCheck, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = true,
+                    HasValue = true
+                };
+                size_t             index;
+                std::array<int, 3> value;
+
+                WorkgroupNumberCheck() = default;
+                WorkgroupNumberCheck(size_t index, std::array<int, 3> value)
+                    : index(index)
+                    , value(value)
+                {
+                }
+
+// If the number is larger than 2^24, it may lose precision when converted into fp32.
+// TODO: REMOVE custom kernel, then REMOVE the behavior that compressed 3 DIM workgroups into 1 DIM
+#define MAX_WORKGROUP_NUMBER 16777216
+                static std::string Type()
+                {
+                    return "WorkgroupNumberCheck";
+                }
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+                    gsu     = gsu > 1 ? gsu : 1;
+                    return (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
+                            * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]) * gsu
+                            * problem.batchSize(0))
+                           <= MAX_WORKGROUP_NUMBER;
+                }
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+                    gsu     = gsu > 1 ? gsu : 1;
+                    int workgroupNumber
+                        = std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
+                          * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]) * gsu
+                          * problem.batchSize(0);
+                    return debugEvalCmp(problem,
+                                        stream,
+                                        "prob's workgroup number",
+                                        workgroupNumber,
+                                        "<=",
+                                        "max workgroup number",
+                                        MAX_WORKGROUP_NUMBER);
                 }
             };
 
@@ -2547,7 +2602,7 @@ namespace TensileLite
                 }
 
                 bool debugEval(ContractionProblemGemm const& problem,
-                                       std::ostream&                 stream) const override
+                               std::ostream&                 stream) const override
                 {
                     return debugEvalCmp(
                         problem, stream, "prob", problem.swizzleTensorA(), "==", "sol", value);
@@ -2580,7 +2635,7 @@ namespace TensileLite
                 }
 
                 bool debugEval(ContractionProblemGemm const& problem,
-                                       std::ostream&                 stream) const override
+                               std::ostream&                 stream) const override
                 {
                     return debugEvalCmp(
                         problem, stream, "prob", problem.swizzleTensorB(), "==", "sol", value);

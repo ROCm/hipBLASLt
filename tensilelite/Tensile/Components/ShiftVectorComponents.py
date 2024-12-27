@@ -290,13 +290,13 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
                                     for c  in range(complexMultiplier):
                                         for nr in range(regPerElem):
                                             vgprOffsetForSCIU = 0
-                                            copyInst = VAccvgprReadB32 if not kernel["MIArchVgpr"] else VMovB32
                                             for e in range(min(r, allContOutCoal)):
                                                 src = (e+(glvw-r)) % allContOutCoal
                                                 srcVgpr = (src + (vw * glvw) + allContOutCoal * mb) * regStrideCoal
                                                 srcVgpr = srcVgpr + ot * regStridePrep
                                                 srcVgpr = arch2acc[srcVgpr] * regPerElem + nr + c * accImOffset + vgprOffsetForSCIU
-                                                srcVal  = accvgpr(srcVgpr) if not kernel["MIArchVgpr"] else vgpr(srcVgpr)
+                                                srcVal  = writer.accVgprReadWriteIndex(kernel, srcVgpr)
+                                                copyInst = writer.accVgprReadWriteFunction(kernel, srcVgpr, True)
                                                 module.add(copyInst(dst=vgpr(tReg+e), src=srcVal, comment="glvw %u mb %u tt1 %u r %u" % (r, mb, ot, nr)))
 
                                             if not kernel["MIArchVgpr"]:
@@ -313,12 +313,12 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
                                             if needWait:
                                                 module.add(SWaitCnt(waitAll=True, comment="wait for swizzle operation"))
 
-                                            copyInst = VAccvgprWriteB32 if not kernel["MIArchVgpr"] else VMovB32
                                             for e in range(min(r, allContOutCoal)):
                                                 dstVgpr = (e + (vw * glvw) + allContOutCoal * mb) * regStrideCoal
                                                 dstVgpr = dstVgpr + ot * regStridePrep
                                                 dstVgpr = arch2acc[dstVgpr] * regPerElem + nr + c * accImOffset + vgprOffsetForSCIU
-                                                dstStr = accvgpr(dstVgpr) if not kernel["MIArchVgpr"] else vgpr(dstVgpr)
+                                                dstStr = writer.accVgprReadWriteIndex(kernel, dstVgpr)
+                                                copyInst = writer.accVgprReadWriteFunction(kernel, dstVgpr, False)
                                                 module.add(copyInst(dst=dstStr, src=vgpr(tReg+e)))
 
                                 # end shift reset mask and jump out
@@ -495,7 +495,6 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
                         for dstMbblkId in range(glvw//(numContOutCoal*numThreadInCoal)):
                             for dstThreadId in range(numThreadInCoal):
                                 skip = True
-                                copyInst = VAccvgprReadB32 if not kernel["MIArchVgpr"] else VMovB32
                                 for dstContId in range(numContOutCoal):
                                     dst = dstContId + dstThreadId * numContOutCoal + dstMbblkId * numThreadInCoal * numContOutCoal
                                     src = dst + (glvw - shift)
@@ -509,7 +508,8 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
                                             srcGpr      = srcContId + srcMbblkId * numContOutCoal + glvwBlk * numRegInGlvwblkCoal + tt * numRegInMIBCoal
                                             srcGpr      = srcGpr * regStrideCoal + ot * regStridePrep
                                             srcGpr      = arch2acc[srcGpr]
-                                            srcGprStr   = accvgpr(srcGpr) if not kernel["MIArchVgpr"] else vgpr(srcGpr)
+                                            srcGprStr   = writer.accVgprReadWriteIndex(kernel, srcGpr)
+                                            copyInst = copyInst = writer.accVgprReadWriteFunction(kernel, srcGpr, True)
                                             module.add(copyInst(dst=vgpr(movRegId), src=srcGprStr, comment=""))
 
                                 if not skip:
@@ -540,7 +540,6 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
                                     module.add(VCmpXEqU32(dst=sgpr(tmpSgpr, writer.states.laneSGPRCount), src0=vgpr(threadIdInCoalReg), src1=sgpr(tmpSgpr), comment="is thread in edge glvw region"))
                                     module.add(SNop(waitState=3, comment="wait for exec mask"))
 
-                                copyInst = VAccvgprWriteB32 if not kernel["MIArchVgpr"] else VMovB32
                                 for dstContId in range(numContOutCoal):
                                     dst = dstContId + dstThreadId * numContOutCoal + dstMbblkId * numThreadInCoal * numContOutCoal
                                     src = dst + (glvw - shift)
@@ -550,7 +549,8 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
                                             dstGpr      = dstContId + dstMbblkId * numContOutCoal + glvwBlk * numRegInGlvwblkCoal + tt * numRegInMIBCoal
                                             dstGpr      = dstGpr * regStrideCoal + ot * regStridePrep
                                             dstGpr      = arch2acc[dstGpr]
-                                            dstGprStr   = accvgpr(dstGpr) if not kernel["MIArchVgpr"] else vgpr(dstGpr)
+                                            dstGprStr   = writer.accVgprReadWriteIndex(kernel, dstGpr)
+                                            copyInst = writer.accVgprReadWriteFunction(kernel, dstGpr, False)
                                             module.add(copyInst(dst=dstGprStr, src=vgpr(movRegId), comment=""))
 
                                 if not skip:

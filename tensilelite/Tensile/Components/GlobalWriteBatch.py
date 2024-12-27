@@ -367,7 +367,24 @@ class GlobalWriteBatchWriter:
         comment=""))
 
     # checkSyncCode.add(SCBranchSCC0(labelName=labelendname, comment=""))
-    checkSyncCode.add(self.parentWriter.longBranchScc0(label=labelend, posNeg=1, comment="long branch sync"))
+    branch: Module = self.parentWriter.longBranchScc0(label=labelend, posNeg=1, comment="long branch sync")
+    rowIncrement = Module('Skip and row increment')
+    totalNumRows = sum(addrCalc.rowInc for addrCalc in self.ss.elementAddr)
+
+    if totalNumRows > 0 and self.ss.optSrdIncForRow:
+      dstBpe = int(self.parentWriter.states.bpr * self.kernel["ProblemType"]["DestDataType"].numRegisters())
+      wsBpe = int(self.parentWriter.states.bpr * self.kernel["ProblemType"]["ComputeDataType"].numRegisters())
+      packedC1 = self.kernel["PackedC1IndicesX"]
+      pIdx = self.parentWriter.states.indexChars[packedC1[0]]
+      rowIncrement.add(AddrCalculation.incrementSrdMultipleRows("SrdTD", f"StrideD{pIdx}", tmpS01, totalNumRows, dstBpe))
+      rowIncrement.add(AddrCalculation.incrementSrdMultipleRows("WSDstart", f"StrideD{pIdx}", tmpS01, totalNumRows, wsBpe))
+
+    insertIndex = branch.findIndexByType(SCBranchSCC1)
+
+    if insertIndex is not None and rowIncrement.count():
+      branch.add(rowIncrement, insertIndex+1)
+
+    checkSyncCode.add(branch)
 
     checkSyncCode.addComment("check done end")
     checkSyncCode.addSpaceLine()

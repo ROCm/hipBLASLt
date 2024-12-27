@@ -385,8 +385,8 @@ void testing_aux_get_sol_with_null_biasaddr(const Arguments& arg)
 
     hipStream_t        stream;
     hipblasLtHandle_t  handle;
-    hipblasOperation_t trans_a     = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    hipblasOperation_t trans_b     = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    hipblasOperation_t trans_a     = HIPBLAS_OP_N;
+    hipblasOperation_t trans_b     = HIPBLAS_OP_T;
     int64_t            m           = arg.M[0];
     int64_t            n           = arg.N[0];
     int64_t            k           = arg.K[0];
@@ -483,8 +483,8 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b(const Arguments& arg)
 
     hipStream_t        stream;
     hipblasLtHandle_t  handle;
-    hipblasOperation_t trans_a     = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    hipblasOperation_t trans_b     = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    hipblasOperation_t trans_a     = HIPBLAS_OP_N;
+    hipblasOperation_t trans_b     = HIPBLAS_OP_T;
     int64_t            m           = arg.M[0];
     int64_t            n           = arg.N[0];
     int64_t            k           = arg.K[0];
@@ -581,8 +581,8 @@ void testing_aux_get_sol_with_zero_alpha_null_a_b_ext(const Arguments& arg)
 
     hipStream_t        stream;
     hipblasLtHandle_t  handle;
-    hipblasOperation_t trans_a     = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    hipblasOperation_t trans_b     = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    hipblasOperation_t trans_a     = HIPBLAS_OP_N;
+    hipblasOperation_t trans_b     = HIPBLAS_OP_T;
     int64_t            m           = arg.M[0];
     int64_t            n           = arg.N[0];
     int64_t            k           = arg.K[0];
@@ -644,8 +644,8 @@ void testing_aux_matmul_alg_null_matmul(const Arguments& arg)
 
     hipStream_t        stream;
     hipblasLtHandle_t  handle;
-    hipblasOperation_t trans_a     = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
-    hipblasOperation_t trans_b     = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    hipblasOperation_t trans_a     = HIPBLAS_OP_N;
+    hipblasOperation_t trans_b     = HIPBLAS_OP_T;
     int64_t            m           = arg.M[0];
     int64_t            n           = arg.N[0];
     int64_t            k           = arg.K[0];

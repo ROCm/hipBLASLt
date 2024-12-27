@@ -73,9 +73,13 @@ namespace TensileLite
                                                                const int index) const override
         {
             std::shared_ptr<MySolution> rv;
+            const bool                  streamK = Debug::Instance().useExperimentalSelection() == 2;
 
             for(auto const& row : rows)
             {
+                if(row.first.value->type() == "ExperimentalStreamK" && !streamK)
+                    continue;
+
                 if(row.first(problem, hardware))
                 {
                     rv = row.second->getSolutionByIndex(problem, hardware, index);
@@ -93,9 +97,13 @@ namespace TensileLite
                                                              = nullptr) const override
         {
             std::shared_ptr<MySolution> rv;
+            const bool                  streamK = Debug::Instance().useExperimentalSelection() == 2;
 
             for(auto const& row : rows)
             {
+                if(row.first.value->type() == "ExperimentalStreamK" && !streamK)
+                    continue;
+
                 if(row.first(problem, hardware))
                 {
                     rv = row.second->findBestSolution(problem, hardware, fitness);

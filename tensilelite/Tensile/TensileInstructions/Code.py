@@ -203,6 +203,12 @@ class Module(Item):
             return self.itemList.index(targetItem)
         return -1
 
+    def findIndexByType(self, targetType):
+        for i, item in enumerate(self.itemList):
+            if isinstance(item, targetType):
+                return i
+        return None
+
     def addComment(self, comment):
         """
         Convenience function to format arg as a comment and add TextBlock item
