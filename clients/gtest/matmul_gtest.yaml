@@ -461,12 +461,25 @@ Tests:
   category: pre_checkin
   function:
     matmul: *hpa_half_precisions_compute_fp16
-  matrix_size:
-    - { M:  128, N:  128, K:  128 }
+  M: [4096, 129]
+  N: [4096, 129]
+  K: [4096, 129]
+  transA: N
+  transB: N
+  gpu_arch: '[^1]{2}\d{1,2}'
+
+- name: matmul_fallback_compute_fp16_gfx11
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precisions_compute_fp16
+  M: [4096, 129]
+  N: [4096, 129]
+  K: [4096, 129]
   transA: N
   transB: N
   norm_check: 1
   unit_check: 0
+  gpu_arch: '110?'
 
 - name: matmul_fallback_equality_NN
   category: pre_checkin
