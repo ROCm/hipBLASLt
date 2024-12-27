@@ -396,12 +396,6 @@ tensile_logic=
 tensile_cov=
 tensile_threads=$(nproc)
 tensile_fork=
-<<<<<<< HEAD
-=======
-tensile_merge_files=
-tensile_lazy_library_loading=true
-tensile_separate_architectures=true
->>>>>>> develop
 tensile_tag=
 tensile_test_local_path=
 tensile_version=
@@ -429,11 +423,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-<<<<<<< HEAD
   GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,no-compress,experimental,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker,logic-yaml-filter: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
-=======
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,separate-architectures,lazy-library-loading,merge-files,no-separate-architectures,no-lazy-library-loading,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,no-compress,experimental,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker,logic-yaml-filter: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
->>>>>>> develop
 else
   echo "Need a new version of getopt"
   exit 1
@@ -513,27 +503,6 @@ while true; do
         -n|--no_tensile|--no-tensile)
             build_tensile=false
             shift ;;
-<<<<<<< HEAD
-=======
-        --merge-files)
-            tensile_merge_files=true
-            shift ;;
-        --no-merge-files)
-            tensile_merge_files=false
-            shift ;;
-        --lazy-library-loading)
-            tensile_lazy_library_loading=true
-            shift ;;
-        --no-lazy-library-loading)
-            tensile_lazy_library_loading=false
-            shift ;;
-        --separate-architectures)
-            tensile_separate_architectures=true
-            shift ;;
-        --no-separate-architectures)
-            tensile_separate_architectures=false
-            shift ;;
->>>>>>> develop
         -u|--use-custom-version)
             tensile_version=${2}
             shift 2;;
@@ -794,21 +763,6 @@ pushd .
     fi
   fi
 
-<<<<<<< HEAD
-=======
-  if [[ "${tensile_merge_files}" == false ]]; then
-    tensile_opt="${tensile_opt} -DTensile_MERGE_FILES=OFF"
-  fi
-  
-  if [[ "${tensile_lazy_library_loading}" == false ]]; then
-    tensile_opt="${tensile_opt} -DTensile_LAZY_LIBRARY_LOADING=OFF"
-  fi
-
-  if [[ "${tensile_separate_architectures}" == false ]]; then
-    tensile_opt="${tensile_opt} -DTensile_SEPARATE_ARCHITECTURES=OFF"
-  fi
-
->>>>>>> develop
   if [[ "${tensile_msgpack_backend}" == true ]]; then
     tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=msgpack"
   else
