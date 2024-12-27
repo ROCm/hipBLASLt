@@ -826,8 +826,6 @@ class AddrCalculation:
                 if tc == 'Bias' and (not kernel["WorkGroupReduction"]):
                     index = packedC1[0] - 1
                     strideCD1 = "Size%s" % "I" if index == 0 else ("J" if index == 1 else (self.kernelWriter.states.indexChars[index]))
-                elif tc == "WSDstart":
-                    strideCD1 = "StrideD%s"%(self.kernelWriter.states.indexChars[packedC1[0]])
                 else:
                     td = "D" if tc == 'TD' else tc
                     strideCD1 = "Stride%s%s"%(td ,self.kernelWriter.states.indexChars[packedC1[0]])
@@ -850,9 +848,6 @@ class AddrCalculation:
                 if dst == -1:
                     dstLow = "Srd%s+0"%(tc)
                     dstHigh = "Srd%s+1"%(tc)
-                elif isinstance(dst, str):
-                    dstLow = "%s+0"%(tc)
-                    dstHigh = "%s+1"%(tc)
                 else:
                     dstLow = dst+0
                     dstHigh = dst+1
