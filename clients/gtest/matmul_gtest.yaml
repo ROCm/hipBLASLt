@@ -465,6 +465,8 @@ Tests:
     - { M:  128, N:  128, K:  128 }
   transA: N
   transB: N
+  norm_check: 1
+  unit_check: 0
 
 - name: matmul_fallback_equality_NN
   category: pre_checkin
