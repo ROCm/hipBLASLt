@@ -2012,8 +2012,7 @@ BenchmarkProblems:
         - NumElementsPerBatchStore: [0]
         - ClusterLocalRead: [1]
         - WorkGroupMappingXCC: [8]
-        - UseSgprForGRO: [1]
-        # - UseSgprForGRO: [0] # Also failed
+        - UseSgprForGRO: [0]
         - DirectToVgprA: [1]
 
       BenchmarkJoinParameters:
@@ -2078,8 +2077,7 @@ BenchmarkProblems:
         - NumElementsPerBatchStore: [0]
         - ClusterLocalRead: [1]
         - WorkGroupMappingXCC: [8]
-        - UseSgprForGRO: [1]
-        # - UseSgprForGRO: [0] # Also failed
+        - UseSgprForGRO: [0]
         - DirectToVgprB: [1]
 
       BenchmarkJoinParameters:
