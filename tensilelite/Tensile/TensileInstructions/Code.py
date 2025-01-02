@@ -745,7 +745,7 @@ class SignatureCodeMeta(Item):
         self.kernArgsVersion = kernArgsVersion
         self.groupSegSize = groupSegSize
         self.flatWgSize = flatWgSize
-        self.codeObjectVersion = codeObjectVersion
+        self.codeObjectVersion = str(codeObjectVersion)
         self.totalVgprs = totalVgprs
         self.totalSgprs = totalSgprs
         self.offset = 0

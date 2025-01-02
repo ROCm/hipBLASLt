@@ -206,7 +206,6 @@ def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
     if result.err:
       printExit(f"Failed to build kernel {result.name} because it has error code {result.err}")
     path = Path(asmPath) / f"{result.name}.s"
-
     with open(path, "w", encoding="utf-8") as f:
       f.write(result.src)
 
@@ -243,7 +242,6 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
 ################################################################################
 # Write Solutions and Kernels for BenchmarkClient or LibraryClient
 ################################################################################
-@timing
 def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False, compress=True):
   codeObjectFiles = []
@@ -491,7 +489,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
   argParser.add_argument("--offload-bundler",        dest="OffloadBundler",    action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER)
   argParser.add_argument("--assembler",              dest="Assembler",         action="store", default=ToolchainDefaults.ASSEMBLER)
-  argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["4", "5"], action="store", default="4")
+  argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["4", "5"], action="store", default="4", type=str)
   argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
   argParser.add_argument("--short-file-names",       dest="ShortNames",        action="store_true")
   argParser.add_argument("--no-short-file-names",    dest="ShortNames",        action="store_false")
@@ -651,9 +649,7 @@ def TensileCreateLibrary():
 
   # Parse logicData, solutions, and masterLibraries from logic files
   solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args, cxxCompiler)
-
   kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
-
   # if any kernels are assembly, append every ISA supported
   kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels, assembler)
 
