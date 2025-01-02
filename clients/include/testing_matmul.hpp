@@ -929,6 +929,12 @@ void testing_matmul(const Arguments& arg)
     Arguments   arg_revised    = arg;
     arg_revised.bias_type      = real_bias_type;
 
+    // Set the values of flush, rotating size, cold_iters and hot_iters only for internal use
+    hipblasltSetFlushValue(arg.flush);
+    hipblasltSetRotatingBufferSizeValue(arg.rotating);
+    hipblasltSetColdIterationsValue(arg.cold_iters);
+    hipblasltSetHotIterationsValue(arg.iters);
+
     // for all f8/bf8 cases including mix mode
     if((realDataTypeSize(tiA) == 1 || realDataTypeSize(tiB) == 1)
        && !std::is_same<Tc, int32_t>::value) //Tc!=HIPBLAS_COMPUTE_32I

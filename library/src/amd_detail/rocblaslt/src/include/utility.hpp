@@ -485,28 +485,50 @@ bool rocblaslt_internal_tensile_supports_ldc_ne_ldd(rocblaslt_handle handle);
 class UserClientArguments
 {
 private:
-    static bool    flush;
-    static int32_t rotatingBufferSize;
+    static bool    m_flush;
+    static int32_t m_rotatingBufferSize;
+    static int32_t m_coldIterations;
+    static int32_t m_hotIterations;
 
 public:
     // Getter and setter for the flush member variable.
     bool GetFlushValue() const
     {
-        return flush;
+        return m_flush;
     }
     void SetFlushValue(bool newFlush)
     {
-        flush = newFlush;
+        m_flush = newFlush;
     }
 
     // Getter and setter for the rotatingBufferSize member variable.
-    int GetRotatingBufferSizeValue() const
+    int32_t GetRotatingBufferSizeValue() const
     {
-        return rotatingBufferSize;
+        return m_rotatingBufferSize;
     }
-    void SetRotatingBufferSizeValue(int newrotatingBufferSize)
+    void SetRotatingBufferSizeValue(int32_t newrotatingBufferSize)
     {
-        rotatingBufferSize = newrotatingBufferSize;
+        m_rotatingBufferSize = newrotatingBufferSize;
+    }
+
+    // Getter and setter for the coldIterations member variable.
+    int32_t GetColdIterationsValue() const
+    {
+        return m_coldIterations;
+    }
+    void SetColdIterationsValue(int32_t newColdIterations)
+    {
+        m_coldIterations = newColdIterations;
+    }
+
+    // Getter and setter for the hotIterations member variable.
+    int32_t GetHotIterationsValue() const
+    {
+        return m_hotIterations;
+    }
+    void SetHotIterationsValue(int32_t newHotIterations)
+    {
+        m_hotIterations = newHotIterations;
     }
 };
 

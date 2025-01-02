@@ -333,5 +333,7 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
 }
 
 // Define and initialize static member flush and rotatingBufferSize outside the class UserClientArguments
-bool    UserClientArguments::flush              = false;
-int32_t UserClientArguments::rotatingBufferSize = 0;
+bool    UserClientArguments::m_flush              = false;
+int32_t UserClientArguments::m_rotatingBufferSize = 0;
+int32_t UserClientArguments::m_coldIterations     = 0;
+int32_t UserClientArguments::m_hotIterations      = 0;

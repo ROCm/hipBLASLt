@@ -634,10 +634,6 @@ try
     store(parse_command_line(argc, argv, desc), vm);
     notify(vm);
 
-    // Set the values of flush and rotating size, only for internal use
-    hipblasltSetFlushValue(arg.flush);
-    hipblasltSetRotatingBufferSizeValue(arg.rotating);
-
     if((argc <= 1 && !datafile) || vm.count("help"))
     {
         hipblaslt_cout << desc << std::endl;

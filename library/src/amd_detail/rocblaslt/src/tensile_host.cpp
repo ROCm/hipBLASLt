@@ -497,6 +497,8 @@ namespace
                                             const int&     solutionIndex,
                                             bool           flush,
                                             const int32_t& rotatingBufferSize,
+                                            const int32_t& coldIterations,
+                                            const int32_t& hotIterations,
                                             bool           isCpp)
     {
         log_bench(
@@ -591,13 +593,19 @@ namespace
             tensileActivationtType_to_bench_string(problem.getParams().activationEnum()),
             flush ? "--flush" : "",
             "--rotating",
-            rotatingBufferSize);
+            rotatingBufferSize,
+            "--cold_iters",
+            coldIterations,
+            "--iters",
+            hotIterations);
     }
 
     inline void logProfileFromTensileDataGemm(const TensileLite::ContractionProblemGemm& problem,
                                               const TensileLite::ContractionInputs&      inputs,
                                               bool                                       flush,
                                               const int32_t& rotatingBufferSize,
+                                              const int32_t& coldIterations,
+                                              const int32_t& hotIterations,
                                               bool           isCpp)
     {
         log_profile("matmul",
@@ -670,7 +678,11 @@ namespace
                     "flush",
                     flush ? "true" : "false",
                     "rotating",
-                    rotatingBufferSize);
+                    rotatingBufferSize,
+                    "cold_iters",
+                    coldIterations,
+                    "iters",
+                    hotIterations);
     }
 
     inline void
@@ -681,6 +693,8 @@ namespace
                                               const std::string& solutionName,
                                               bool               flush,
                                               const int32_t&     rotatingBufferSize,
+                                              const int32_t&     coldIterations,
+                                              const int32_t&     hotIterations,
                                               bool               isCpp)
     {
         log_profile("matmul",
@@ -750,16 +764,20 @@ namespace
                                                               problem.b().dataType()),
                     "activation_type",
                     tensileActivationtType_to_bench_string(problem.getParams().activationEnum()),
+                    "flush",
+                    flush ? "true" : "false",
+                    "rotating",
+                    rotatingBufferSize,
+                    "cold_iters",
+                    coldIterations,
+                    "iters",
+                    hotIterations,
                     "solution_index",
                     solutionIndex,
                     "solution_Name",
                     solutionName,
                     "kernel_name",
-                    kernelName,
-                    "flush",
-                    flush ? "true" : "false",
-                    "rotating",
-                    rotatingBufferSize);
+                    kernelName);
     }
 
     inline void
@@ -768,6 +786,8 @@ namespace
                                     const int&                                        solutionIndex,
                                     bool                                              flush,
                                     const int32_t& rotatingBufferSize,
+                                    const int32_t& coldIterations,
+                                    const int32_t& hotIterations,
                                     bool           isCpp)
     {
         size_t            gemmCount = problem.gemms.size();
@@ -871,7 +891,11 @@ namespace
             tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()),
             flush ? "--flush" : "",
             "--rotating",
-            rotatingBufferSize);
+            rotatingBufferSize,
+            "--cold_iters",
+            coldIterations,
+            "--iters",
+            hotIterations);
     }
 
     inline void
@@ -879,6 +903,8 @@ namespace
                                       const TensileLite::ContractionGroupedInputs&      inputs,
                                       bool                                              flush,
                                       const int32_t& rotatingBufferSize,
+                                      const int32_t& coldIterations,
+                                      const int32_t& hotIterations,
                                       bool           isCpp)
     {
         size_t            gemmCount = problem.gemms.size();
@@ -996,7 +1022,11 @@ namespace
             "flush",
             flush ? "true" : "false",
             "rotating",
-            rotatingBufferSize);
+            rotatingBufferSize,
+            "cold_iters",
+            coldIterations,
+            "iters",
+            hotIterations);
     }
 #undef GEN_BENCH_ARG
 
@@ -2083,6 +2113,8 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         UserClientArguments ClientArguments;
         bool                flush              = ClientArguments.GetFlushValue();
         int32_t             rotatingBufferSize = ClientArguments.GetRotatingBufferSizeValue();
+        int32_t             hotIterations      = ClientArguments.GetHotIterationsValue();
+        int32_t             coldIterations     = ClientArguments.GetColdIterationsValue();
 
         int* solutionIndex = (int*)algo->data;
         data->algoIndex    = *solutionIndex;
@@ -2090,14 +2122,25 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
 
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
         {
-            logBenchFromTensileDataGemm(
-                data->problem, data->inputs, data->algoIndex, flush, rotatingBufferSize, false);
+            logBenchFromTensileDataGemm(data->problem,
+                                        data->inputs,
+                                        data->algoIndex,
+                                        flush,
+                                        rotatingBufferSize,
+                                        coldIterations,
+                                        hotIterations,
+                                        false);
         }
 
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
         {
-            logProfileFromTensileDataGemm(
-                data->problem, data->inputs, flush, rotatingBufferSize, false);
+            logProfileFromTensileDataGemm(data->problem,
+                                          data->inputs,
+                                          flush,
+                                          rotatingBufferSize,
+                                          coldIterations,
+                                          hotIterations,
+                                          false);
         }
 
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_extended_profile)
@@ -2112,6 +2155,8 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
                                                   Solution_name,
                                                   flush,
                                                   rotatingBufferSize,
+                                                  coldIterations,
+                                                  hotIterations,
                                                   false);
         }
 
@@ -2508,6 +2553,8 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         UserClientArguments ClientArguments;
         bool                flush              = ClientArguments.GetFlushValue();
         int32_t             rotatingBufferSize = ClientArguments.GetRotatingBufferSizeValue();
+        int32_t             hotIterations      = ClientArguments.GetHotIterationsValue();
+        int32_t             coldIterations     = ClientArguments.GetColdIterationsValue();
 
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
         {
@@ -2515,13 +2562,24 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             {
-                logBenchFromTensileDataGemm(
-                    data->problem, data->inputs, data->algoIndex, flush, rotatingBufferSize, true);
+                logBenchFromTensileDataGemm(data->problem,
+                                            data->inputs,
+                                            data->algoIndex,
+                                            flush,
+                                            rotatingBufferSize,
+                                            coldIterations,
+                                            hotIterations,
+                                            true);
             }
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
             {
-                logProfileFromTensileDataGemm(
-                    data->problem, data->inputs, flush, rotatingBufferSize, true);
+                logProfileFromTensileDataGemm(data->problem,
+                                              data->inputs,
+                                              flush,
+                                              rotatingBufferSize,
+                                              coldIterations,
+                                              hotIterations,
+                                              true);
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
         }
@@ -2537,8 +2595,14 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
             }
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             {
-                logBenchFromTensileDataGemm(
-                    data->problem, data->inputs, data->algoIndex, flush, rotatingBufferSize, true);
+                logBenchFromTensileDataGemm(data->problem,
+                                            data->inputs,
+                                            data->algoIndex,
+                                            flush,
+                                            rotatingBufferSize,
+                                            coldIterations,
+                                            hotIterations,
+                                            true);
             }
             //TODO: add profile logging for grouped gemm
             /*if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)

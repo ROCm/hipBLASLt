@@ -563,3 +563,15 @@ void hipblasltSetRotatingBufferSizeValue(int newrotatingBufferSize)
     UserClientArguments clientArguments;
     clientArguments.SetRotatingBufferSizeValue(newrotatingBufferSize);
 }
+
+void hipblasltSetColdIterationsValue(int newColdIterations)
+{
+    UserClientArguments clientArguments;
+    clientArguments.SetColdIterationsValue(newColdIterations);
+}
+
+void hipblasltSetHotIterationsValue(int newHotIterations)
+{
+    UserClientArguments clientArguments;
+    clientArguments.SetHotIterationsValue(newHotIterations);
+}
