@@ -215,6 +215,12 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
 
   callCreateLibraryCmd = globalParameters["ScriptPath"] + "/bin/TensileCreateLibrary"
 
+  if globalParameters["SeparateArchitectures"]:
+    callCreateLibraryCmd += " --separate-architectures"
+
+  if globalParameters["LazyLibraryLoading"]:
+    callCreateLibraryCmd += " --lazy-library-loading"
+
   if globalParameters["ShortNames"]:
     callCreateLibraryCmd += " --short-file-names"
   else:
