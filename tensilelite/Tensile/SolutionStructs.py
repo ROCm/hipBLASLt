@@ -1956,8 +1956,8 @@ class Solution(collections.abc.Mapping):
       reject(state, "DirectToVgpr%c does not supports Sparse"%(tc))
       return False
 
-    # for DTVA, does not work with PGR0
-    if tc == 'A' and state["PrefetchGlobalRead"] == 0:
+    # for DTVA/DTVB, does not work with PGR0
+    if state["PrefetchGlobalRead"] == 0:
       reject(state, "DirectToVgpr%c does not supports PrefetchGlobalRead == 0."%(tc))
       return False
     
@@ -1968,13 +1968,13 @@ class Solution(collections.abc.Mapping):
 
     # for DTVA, does not work with TT and Tail-loop
     if tc == 'A' and (state["ProblemType"]["TransposeA"] and state["ProblemType"]["TransposeB"]):
-        reject(state, "DirectToVgpr%c does not supports TT case with Tail Loop."%(tc))
-        return False
+        # Use AssertSummationElementMultiple (BoundSizeMultiple in predicates) to exclude failed tail-loop cases
+        state["AssertSummationElementMultiple"] = max(state["AssertSummationElementMultiple"], state["DepthU"])
 
     # for DTVB, does not work with NN and Tail-loop
     if  tc == 'B' and (not state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
-        reject(state, "DirectToVgpr%c does not supports NN cases with Tail Loop."%(tc))
-        return False
+        # Use AssertSummationElementMultiple (BoundSizeMultiple in predicates) to exclude failed tail-loop cases
+        state["AssertSummationElementMultiple"] = max(state["AssertSummationElementMultiple"], state["DepthU"])
     
     # Does not work with DirectToLDS
     # -> this will be checked after DirectToLDS doable check is done

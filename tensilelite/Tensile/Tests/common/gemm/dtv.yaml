@@ -1957,3 +1957,135 @@ BenchmarkProblems:
           - Exact: [255,   255, 1, 191]
           - Exact: [255,   255, 1, 255]
           - Exact: [255,   255, 1, 256]
+
+  ########################################
+  # HHS TT DTVA with/wo tail loop
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: h
+      DestDataType: h
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 1
+      TransposeB: 1
+      UseBeta: True
+      Batched: True
+      # UseBias: 1
+      # BiasDataTypeList: [s,h]
+      # Activation: True
+      # ActivationType: hipblaslt_all
+      # UseScaleAlphaVec: 1
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16, 16, 16, 1,  1,  1,8,   4,1 ] # 64x128
+          - [16, 16, 16, 1,  1,  2,8,  4,1 ] # 128x128
+          - [16, 16, 16, 1,  1,  4,16,  4,1 ] # 256x256
+        - AssertFree0ElementMultiple: [16]
+        - AssertFree1ElementMultiple: [16]
+        - AssertSummationElementMultiple: [32]
+        - PrefetchGlobalRead: [1,2]
+        - PrefetchLocalRead: [1,2,4]
+        - DepthU: [128] # Has tail
+        - GlobalReadVectorWidthA: [-1,8] # force testing 8 (prepared for swizzleA)
+        - GlobalReadVectorWidthB: [-1]
+        - VectorWidthA: [-1,1] # force testing 1 (prepared for swizzleA)
+        - VectorWidthB: [-1]
+        - LocalReadVectorWidth: [-1]
+        - LdsBlockSizePerPadA: [-1]
+        - LdsBlockSizePerPadB: [-1]
+        # - StaggerU: [0] #
+        # - StaggerUStride: [-1] #
+        # - WorkGroupMapping: [1] #
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - 1LDSBuffer: [0,1]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [-1]
+        - StoreRemapVectorWidth: [0]
+        - StoreVectorWidth: [-1]
+        - NumElementsPerBatchStore: [0]
+        - ClusterLocalRead: [1]
+        - WorkGroupMappingXCC: [8]
+        - UseSgprForGRO: [1]
+        # - UseSgprForGRO: [0] # Also failed
+        - DirectToVgprA: [1]
+
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [960, 1280, 1, 192]
+          - Exact: [960, 1280, 1, 256] # no tail
+          - Exact: [1280, 1280, 1, 192]
+          - Exact: [1600, 1280, 1, 192]
+
+  ########################################
+  # HHS NN DTVB with/wo tail loop
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: h
+      DestDataType: h
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 0
+      TransposeB: 0
+      UseBeta: True
+      Batched: True
+      # UseBias: 1
+      # BiasDataTypeList: [s,h]
+      # Activation: True
+      # ActivationType: hipblaslt_all
+      # UseScaleAlphaVec: 1
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16, 16, 16, 1,  1,  4,2,   1,4 ] # 64x128
+          - [16, 16, 16, 1,  1,  8,2,  1,4 ] # 128x128
+          - [16, 16, 16, 1,  1,  16,4,  1,4 ] # 256x256
+        - AssertFree0ElementMultiple: [16]
+        - AssertFree1ElementMultiple: [16]
+        - AssertSummationElementMultiple: [32]
+        - PrefetchGlobalRead: [1,2]
+        - PrefetchLocalRead: [1,2,4]
+        - DepthU: [128] # Has tail
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1,8] # force testing 8 (prepared for swizzleB)
+        - VectorWidthA: [-1]
+        - VectorWidthB: [-1,1] # force testing 1 (prepared for swizzleB)
+        - LocalReadVectorWidth: [-1]
+        - LdsBlockSizePerPadA: [-1]
+        - LdsBlockSizePerPadB: [-1]
+        # - StaggerU: [0] #
+        # - StaggerUStride: [-1] #
+        # - WorkGroupMapping: [1] #
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - 1LDSBuffer: [0,1]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [-1]
+        - StoreRemapVectorWidth: [0]
+        - StoreVectorWidth: [-1]
+        - NumElementsPerBatchStore: [0]
+        - ClusterLocalRead: [1]
+        - WorkGroupMappingXCC: [8]
+        - UseSgprForGRO: [1]
+        # - UseSgprForGRO: [0] # Also failed
+        - DirectToVgprB: [1]
+
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [960, 1280, 1, 192]
+          - Exact: [960, 1280, 1, 256]
+          - Exact: [1280, 1280, 1, 192]
+          - Exact: [1600, 1280, 1, 192]
