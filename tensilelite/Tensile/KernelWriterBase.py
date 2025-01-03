@@ -26,6 +26,9 @@ from abc  import ABC
 from abc  import abstractmethod
 from copy import deepcopy
 
+KERNEL_HELPER_FILENAME_CPP: str = "Kernels.cpp"
+KERNEL_HELPER_FILENAME_H: str = "Kernels.h"
+
 class KernelWriterBase(ABC):
 
   def __init__(self):

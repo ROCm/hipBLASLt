@@ -28,35 +28,37 @@ if __name__ == "__main__":
     print("This file can no longer be run as a script.  Run 'Tensile/bin/TensileCreateLibrary' instead.")
     exit(1)
 
+import functools
+
 from . import Common
 from . import ClientExecutable
 from . import EmbeddedData
 from . import LibraryIO
 from . import Utils
+from .Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
+from .Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
+from .Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
-                    CHeader, CMakeHeader, assignGlobalParameters, \
+                    CHeader, assignGlobalParameters, \
                     architectureMap, printWarning, \
-                    splitArchs
+                    IsaVersion
 from .KernelWriterAssembly import KernelWriterAssembly
+from .KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
 from .Utilities.Profile import profile
-from .Utilities.Toolchain import getVersion, validateToolchain, ToolchainDefaults
-from .BuildCommands import SourceCommands, AssemblyCommands
-
 import argparse
 import collections
 import glob
 import itertools
 import os
-import re
 import shutil
 import sys
 from timeit import default_timer as timer
 from pathlib import Path
-from typing import Sequence, List, Union
+from typing import Sequence, List, Union, NamedTuple, Optional
 
 def timing(func):
   def wrapper(*args, **kwargs):
@@ -69,38 +71,42 @@ def timing(func):
 
     return res
   return wrapper
-################################################################################
-def processKernelSource(kernel, kernelWriterAssembly, ti):
+
+
+class KernelCodeGenResult(NamedTuple):
+    err: int
+    src: str
+    header: Optional[str]
+    name: str
+    targetObjFilename: str
+    isa: IsaVersion
+    wavefrontSize: int
+
+
+def processKernelSource(kernel, kernelWriterAssembly, ti) -> KernelCodeGenResult:
     """
     Generate source for a single kernel.
     Returns (error, source, header, kernelName).
     """
-    try:
-        kernelWriter = kernelWriterAssembly
-        # get kernel name
-        kernelWriter.setTensileInstructions(ti)
-        kernelName = kernelWriter.getKernelFileBase(kernel)
-        (err, src) = kernelWriter.getSourceFileString(kernel)
-        header = kernelWriter.getHeaderFileString(kernel)
-        # will be put in Kernels.h/cpp if None
-        filename = kernel._state.get("codeObjectFile", None)
+    kernelWriter = kernelWriterAssembly
+    # get kernel name
+    kernelWriter.setTensileInstructions(ti)
+    asmFilename = kernelWriter.getKernelFileBase(kernel)
+    err, src = kernelWriter.getSourceFileString(kernel)
+    header = kernelWriter.getHeaderFileString(kernel)
+    # will be put in Kernels.h/cpp if None
+    objFilename = kernel._state.get("codeObjectFile", None)
 
-    except RuntimeError:
-        return (1, "", "", kernelName, None)
-
-    return (err, src, header, kernelName, filename)
+    return KernelCodeGenResult(err, src, header, asmFilename, objFilename, tuple(kernel["ISA"]), kernel["WavefrontSize"])
 
 
-
-################################################################################
-def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
+def buildKernelSourceAndHeaderFiles(results, outputPath):
   """
   Logs errors and writes appropriate info to kernelSourceFile and kernelHeaderFile.
 
   Arguments:
     results:              list of (err, src, header, kernelName, filename)
     outputPath:           path to source directory
-    kernelsWithBuildErrs: Dictionary to be updated with kernels that have errors
     kernelSourceFile:     File to write source data to
     kernelHeaderFile:     File to write header data to
 
@@ -113,10 +119,6 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
   filesToWrite = collections.defaultdict(list)
   validKernelCount = 0
   for (err,src,header,kernelName, filename) in results:
-
-    # Keep track of kernels with errors
-    if err:
-      kernelsWithBuildErrs[kernelName] = err
 
     # Don't create a file for empty kernels
     if len(src.strip()) == 0:
@@ -163,13 +165,85 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
 
   return sourceFilenames
 
+def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant, globalParameters):
+    removeKernels = []
+    removeKernelNames = []
+    removeSolutions = []
+    removeResults = []
+
+    for kernIdx, r in Utils.tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
+        if r.err != 0:
+            if not errorTolerant:
+                print("\nKernel generation failed for kernel: {}".format(kernels[kernIdx]["SolutionIndex"]))
+                print(kernels[kernIdx]["SolutionNameMin"])
+            removeKernels.append(kernels[kernIdx])
+            kName = Solution.getKeyNoInternalArgs(kernels[kernIdx])
+            if kName not in removeKernelNames:
+                removeKernelNames.append(kName)
+            removeResults.append(results[kernIdx])
+
+    if len(removeKernels) > 0 and not errorTolerant:
+        printExit("** kernel generation failure **")
+
+    for kern in removeKernels:
+        kernels.remove(kern)
+
+    for solution in Utils.tqdm(solutions, "Finding invalid solutions") if globalParameters["PrintLevel"] > 1 else solutions:
+        solutionKernels = solution.getKernels()
+        for kernel in solutionKernels:
+            kName = Solution.getKeyNoInternalArgs(kernel)
+            if kName in removeKernelNames:
+                removeSolutions.append(solution)
+                break
+
+    for solut in removeSolutions:
+        solutions.remove(solut)
+
+    for rel in removeResults:
+        results.remove(rel)
+
+def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
+    if result.err:
+      printExit(f"Failed to build kernel {result.name} because it has error code {result.err}")
+    path = Path(asmPath) / f"{result.name}.s"
+    with open(path, "w", encoding="utf-8") as f:
+      f.write(result.src)
+
+    return path, result.isa, result.wavefrontSize
+
+
+def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H):
+    kernelSourceFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_CPP)
+    kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_H)
+    kernelSourceFile = open(kernelSourceFilename, "a", encoding="utf-8")
+    kernelHeaderFile = open(kernelHeaderFilename, "a", encoding="utf-8")
+
+    HeaderText = ""
+    # handle helper kernel function
+    for ko in kernelHelperObjs:
+        kernelName = ko.getKernelName()
+
+        (err, src) = ko.getSourceFileString()
+        kernelSourceFile.write(src)
+        if err:
+            print("*** warning: invalid kernel#%u" % kernelName)
+
+        HeaderText += ko.getHeaderFileString()
+
+    # write kernel.h in one shot
+    kernelHeaderFile.write(HeaderText)
+
+    if kernelSourceFile:
+        kernelSourceFile.close()
+    if kernelHeaderFile:
+        kernelHeaderFile.close()
+
+
 ################################################################################
 # Write Solutions and Kernels for BenchmarkClient or LibraryClient
 ################################################################################
-@timing
-def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler, solutions, kernels, kernelHelperObjs, \
+def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False, compress=True):
-
   codeObjectFiles = []
 
   # Push working path into build_tmp folder because there may be more than
@@ -179,105 +253,39 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   # See buildSourceCodeObjectFile:167 for the call to this binary.
   Common.pushWorkingPath('build_tmp')
   Common.pushWorkingPath(os.path.basename(outputPath).upper())
+  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
 
-  kernelFiles = []
-  kernelSourceFile = None
-  kernelHeaderFile = None
-
-  ##############################################################################
-  # Write Kernels
-  ##############################################################################
-  kernelsWithBuildErrs = {}
+  asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
 
   # Kernels may be intended for different co files, but generate the same .o file
   # Mark duplicate kernels to avoid race condition
   # @TODO improve organization so this problem doesn't appear
-  objFilenames = set()
-  for kernel in kernels:
-    if kernel["KernelLanguage"] == "Assembly":
-      base = kernelWriterAssembly.getKernelFileBase(kernel)
-      if base in objFilenames:
-        kernel.duplicate = True
-      else:
-        objFilenames.add(base)
-        kernel.duplicate = False
-  numKernels = len(kernels)
+  visited = set()
+  for k in asmKernels:
+    base = kernelWriterAssembly.getKernelFileBase(k)
+    k.duplicate = True if base in visited else False
+    visited.add(base)
 
-  kIter   = zip(kernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
-  results = Common.ParallelMap2(processKernelSource, kIter, "Generating kernels")
+  numAsmKernels = len(asmKernels)
+  numKernels = len(asmKernels)
+  assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
+  asmIter   = zip(asmKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
+  asmResults = Common.ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels")
+  removeInvalidSolutionsAndKernels(asmResults, asmKernels, solutions, errorTolerant, globalParameters)
+  fn = functools.partial(writeAssembly, asmPath)
+  ret = Common.ParallelMap2(fn, asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
+  for p, isa, wavefrontsize in ret:
+    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
+  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
-  removeKernels = []
-  removeKernelNames = []
-  removeSolutions = []
-  removeResults = []
-  for kernIdx, res in Utils.tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
-    (err,src,header,kernelName, filename) = res
-    if(err == -2):
-      if not errorTolerant:
-        print("\nKernel generation failed for kernel: {}".format(kernels[kernIdx]["SolutionIndex"]))
-        print(kernels[kernIdx]["SolutionNameMin"])
-      removeKernels.append(kernels[kernIdx])
-      kName = Solution.getKeyNoInternalArgs(kernels[kernIdx])
-      if kName not in removeKernelNames:
-        removeKernelNames.append(kName)
-      removeResults.append(results[kernIdx])
-  if len(removeKernels) > 0 and not errorTolerant:
-    printExit("** kernel generation failure **")
-  for kern in removeKernels:
-      kernels.remove(kern)
-  for solution in Utils.tqdm(solutions, "Finding invalid solutions") if globalParameters["PrintLevel"] > 1 else solutions:
-    solutionKernels = solution.getKernels()
-    for kernel in solutionKernels:
-        kName = Solution.getKeyNoInternalArgs(kernel)
-        if kName in removeKernelNames:
-          removeSolutions.append(solution)
-          break
-  for solut in removeSolutions:
-      solutions.remove(solut)
-  for rel in removeResults:
-      results.remove(rel)
-
-  kernelFiles += buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs)
-
-  kernelsToBuild = kernels
-  if errorTolerant:
-      def success(kernel):
-          writer = kernelWriterAssembly
-          kernelName = writer.getKernelName(kernel)
-          return kernelName not in kernelsWithBuildErrs
-      kernelsToBuild = filter(success, kernelsToBuild)
-  elif len(kernelsWithBuildErrs) > 0:
-    print("\nKernel compilation failed in one or more subprocesses. May want to set CpuThreads=0 and re-run to make debug easier")
-    printExit("** kernel compilation failure **")
-
-  kernelSourceFilename = os.path.join(os.path.normcase(outputPath), "Kernels.cpp")
-  kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), "Kernels.h")
-  kernelSourceFile = open(kernelSourceFilename, "a", encoding="utf-8")
-  kernelHeaderFile = open(kernelHeaderFilename, "a", encoding="utf-8")
-
-  HeaderText = ""
-  # handle helper kernel function
-  for ko in kernelHelperObjs:
-    kernelName = ko.getKernelName()
-
-    (err, src) = ko.getSourceFileString()
-    kernelSourceFile.write(src)
-    if err:
-      print("*** warning: invalid kernel#%u"%kernelName)
-
-    HeaderText += ko.getHeaderFileString()
-
-  # write kernel.h in one shot
-  kernelHeaderFile.write(HeaderText)
-
-  if kernelSourceFile:
-    kernelSourceFile.close()
-  if kernelHeaderFile:
-    kernelHeaderFile.close()
-
-  if not globalParameters["GenerateSourcesAndExit"]:
-    codeObjectFiles += SourceCommands.buildSourceCodeObjectFiles(cxxCompiler, offloadBundler, kernelFiles, outputPath)
-    codeObjectFiles += AssemblyCommands.buildAssemblyCodeObjectFiles(kernelsToBuild, kernelWriterAssembly, outputPath, assembler, offloadBundler, compress)
+  srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
+  if srcKernels:
+    raise ValueError(f"Non-helper HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
+  srcIter   = zip(srcKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))  
+  srcResults = Common.ParallelMap2(processKernelSource, srcIter, "Generating source kernels")
+  srcKernelFiles = buildKernelSourceAndHeaderFiles(srcResults, outputPath)
+  writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
+  codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, outputPath)
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
@@ -481,7 +489,7 @@ def TensileCreateLibrary():
   argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
   argParser.add_argument("--offload-bundler",        dest="OffloadBundler",    action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER)
   argParser.add_argument("--assembler",              dest="Assembler",         action="store", default=ToolchainDefaults.ASSEMBLER)
-  argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["default", "V4", "V5"], action="store")
+  argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["4", "5"], action="store", default="4", type=str)
   argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
   argParser.add_argument("--short-file-names",       dest="ShortNames",        action="store_true")
   argParser.add_argument("--no-short-file-names",    dest="ShortNames",        action="store_false")
@@ -526,6 +534,7 @@ def TensileCreateLibrary():
                         " Example: gfx942/Equality/* for building equality of gfx942 only")
 
   args = argParser.parse_args()
+  args.CodeObjectVersion = "4" if args.CodeObjectVersion == "default" else args.CodeObjectVersion
 
   logicPath = args.LogicPath
   outputPath = args.OutputPath
@@ -534,6 +543,8 @@ def TensileCreateLibrary():
   assembler = args.Assembler
   libraryFormat = args.LibraryFormat
   useCompression = not args.NoCompress
+  coVersion = args.CodeObjectVersion
+
   print2("OutputPath: %s" % outputPath)
   ensurePath(outputPath)
   outputPath = os.path.abspath(outputPath)
@@ -579,11 +590,14 @@ def TensileCreateLibrary():
   print1(f"# C Compiler:          {cCompiler} (version {getVersion(cCompiler)})")
   print1(f"# Assembler:           {assembler} (version {getVersion(assembler)})")
   print1(f"# Offload Bundler:     {offloadBundler} (version {getVersion(offloadBundler)})")
-  print1(f"# Code Object Version: {arguments['CodeObjectVersion']}")
+  print1(f"# Code Object Version: {coVersion}")
   print1(f"# Architecture(s):     {arguments['Architecture']}")
   print1(f"# Library Format:      {libraryFormat}")
 
   assignGlobalParameters(arguments, cxxCompiler)
+
+  asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], coVersion)
+  srcToolchain = SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
   if not os.path.exists(logicPath):
     printExit("LogicPath %s doesn't exist" % logicPath)
@@ -634,9 +648,7 @@ def TensileCreateLibrary():
 
   # Parse logicData, solutions, and masterLibraries from logic files
   solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args, cxxCompiler)
-
   kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
-
   # if any kernels are assembly, append every ISA supported
   kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels, assembler)
 
@@ -651,7 +663,7 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler, solutions,
+  codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions,
                                              kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \

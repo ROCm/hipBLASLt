@@ -751,7 +751,7 @@ class SignatureCodeMeta(Item):
         self.kernArgsVersion = kernArgsVersion
         self.groupSegSize = groupSegSize
         self.flatWgSize = flatWgSize
-        self.codeObjectVersion = codeObjectVersion
+        self.codeObjectVersion = str(codeObjectVersion)
         self.totalVgprs = totalVgprs
         self.totalSgprs = totalSgprs
         self.offset = 0
@@ -770,9 +770,9 @@ class SignatureCodeMeta(Item):
         kStr += "    KernArgsVersion: %d\n"%self.kernArgsVersion
         kStr += "amdhsa.version:\n"
         kStr += "  - 1\n"
-        if self.codeObjectVersion == 4:
+        if self.codeObjectVersion == "4" or self.codeObjectVersion == "default":
             kStr += "  - 1\n"
-        elif self.codeObjectVersion == 5:
+        elif self.codeObjectVersion == "5":
             kStr += "  - 2\n"
         kStr += "amdhsa.kernels:\n"
         kStr += "  - .name: %s\n" % self.name

@@ -33,7 +33,7 @@ from contextlib import contextmanager
 import Tensile.TensileInstructions as ti
 from Tensile.Common import detectGlobalCurrentISA, restoreDefaultGlobalParameters, \
     assignGlobalParameters, getGfxName, gfxArch, globalParameters
-from Tensile.Utilities.Toolchain import ToolchainDefaults, validateToolchain
+from Tensile.Toolchain.Validators import ToolchainDefaults, validateToolchain
 
 def record_num_calls(f):
     @wraps(f)
