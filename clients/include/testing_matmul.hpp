@@ -2889,9 +2889,8 @@ void testing_matmul_with_bias(const Arguments& arg,
             double              hipblaslt_atol  = 1;
             double              hipblaslt_rtol  = 1;
             std::vector<double> tol(gemm_count);
-            if(arg.unit_check
-               && (hipblaslt_get_arch_major() == 11 || hipblaslt_get_arch_major() == 12)
-               && realDataTypeSize(TiA) == 2 && realDataTypeSize(TiB) == 2)
+            if(arg.unit_check && (hipblaslt_get_arch_major() == 11) && realDataTypeSize(TiA) == 2
+               && realDataTypeSize(TiB) == 2)
             {
                 for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
                 {
@@ -3288,9 +3287,8 @@ void testing_matmul_with_bias(const Arguments& arg,
             double              hipblaslt_atol  = 1;
             double              hipblaslt_rtol  = 1;
             std::vector<double> tol(gemm_count);
-            if(arg.unit_check
-               && (hipblaslt_get_arch_major() == 11 || hipblaslt_get_arch_major() == 12)
-               && realDataTypeSize(TiA) == 2 && realDataTypeSize(TiB) == 2)
+            if(arg.unit_check && (hipblaslt_get_arch_major() == 11) && realDataTypeSize(TiA) == 2
+               && realDataTypeSize(TiB) == 2)
             {
                 for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
                 {

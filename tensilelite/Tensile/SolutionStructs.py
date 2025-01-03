@@ -1956,6 +1956,26 @@ class Solution(collections.abc.Mapping):
       reject(state, "DirectToVgpr%c does not supports Sparse"%(tc))
       return False
 
+    # for DTVA/DTVB, does not work with PGR0
+    if state["PrefetchGlobalRead"] == 0:
+      reject(state, "DirectToVgpr%c does not supports PrefetchGlobalRead == 0."%(tc))
+      return False
+    
+    # for DTVA, does not work with NN and TLDS0
+    if tc == 'A' and state["TransposeLDS"] == 0 and (not state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
+      reject(state, "DirectToVgpr%c does not supports NN case with TransposeLDS == 0."%(tc))
+      return False
+
+    # for DTVA, does not work with TT and Tail-loop
+    if tc == 'A' and (state["ProblemType"]["TransposeA"] and state["ProblemType"]["TransposeB"]):
+        # Use AssertSummationElementMultiple (BoundSizeMultiple in predicates) to exclude failed tail-loop cases
+        state["AssertSummationElementMultiple"] = max(state["AssertSummationElementMultiple"], state["DepthU"])
+
+    # for DTVB, does not work with NN and Tail-loop
+    if  tc == 'B' and (not state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
+        # Use AssertSummationElementMultiple (BoundSizeMultiple in predicates) to exclude failed tail-loop cases
+        state["AssertSummationElementMultiple"] = max(state["AssertSummationElementMultiple"], state["DepthU"])
+    
     # Does not work with DirectToLDS
     # -> this will be checked after DirectToLDS doable check is done
 
@@ -2181,6 +2201,12 @@ class Solution(collections.abc.Mapping):
         reject(state, "General batch not supported with Stream-K")
       if state["ProblemType"]["GroupedGemm"]:
         reject(state, "Grouped gemm not yet supported with Stream-K")
+      if state["ScheduleGlobalRead"] != 1:
+        reject(state, "ScheduleGlobalRead not supported with Stream-K")
+      if state["ScheduleLocalWrite"] != 1:
+        reject(statue, "ScheduleLocalWrite not supported with Stream-K")
+      if state["ScheduleIterAlg"] != 1 and state["ScheduleIterAlg"] != 3:
+        reject(state, "ScheduleIterAlg not supported with Stream-K")
       if state["StreamKAtomic"] == 1:
         if not state["ProblemType"]["DataType"].isSingle():
           reject(state, "Atomic Stream-K currently only tested for SGEMM")
