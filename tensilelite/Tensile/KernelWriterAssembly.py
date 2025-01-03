@@ -2313,7 +2313,10 @@ class KernelWriterAssembly(KernelWriter):
           swizzleStridePerWave = self.sgprPool.checkOut(1)
           WvG_M = kernel["MIWaveGroup"][0]
           # Calc stride = numKr * WaveG[0], TODO- 32 should be MI_K * 2
-          module.add(SLShiftRightB32(dst=sgpr(swizzleStridePerWave), shiftHex=hex(log2(32)), src=sgpr("SizesSum"),  comment="SWZ: numKr = DimK / 32"))
+          swizzleStrideVal = 32
+          module.addComment(f"Align to {swizzleStrideVal}")
+          module.add(SAddU32(sgpr(swizzleStridePerWave), sgpr("SizesSum"), swizzleStrideVal-1))
+          module.add(SLShiftRightB32(dst=sgpr(swizzleStridePerWave), src=sgpr(swizzleStridePerWave), shiftHex=hex(log2(swizzleStrideVal))))
           module.add(SMulI32(dst=sgpr(swizzleStridePerWave), src0=hex(WvG_M), src1=sgpr(swizzleStridePerWave), comment="SWZ: numKr *= MI_WvG[0] (%u), how many wave-M per WG" % WvG_M))
 
       for l in range(1, tP["nrt"]):
@@ -3026,7 +3029,14 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SLShiftRightB32(dst=sgpr(stmp), src=size, shiftHex=0x1, comment="(size/2)"))
             module.add(SSubU32(dst=sgpr(stmp), src0=sgpr(stmp), src1=0x1, comment="(size/2-1)"))
           else:
-            module.add(SSubU32(dst=sgpr(stmp), src0=size, src1=0x1, comment="(size-1)"))
+            if tP["isA"] and tP["isSwizzled"] and idx == kernel["ProblemType"]["Index0"]:
+              module.addComment("Align M to 16")
+              module.add(SAddU32(sgpr(stmp), sgpr("SizeI"), 15))
+              module.add(SLShiftRightB32(dst=sgpr(stmp), src=sgpr(stmp), shiftHex=4))
+              module.add(SLShiftLeftB32(dst=sgpr(stmp), src=sgpr(stmp), shiftHex=4))
+              module.add(SSubU32(dst=sgpr(stmp), src0=sgpr(stmp), src1=1, comment="(size-1)"))
+            else:
+              module.add(SSubU32(dst=sgpr(stmp), src0=size, src1=0x1, comment="(size-1)"))
           module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp), sgpr(stmp+1), stride, \
                       sgpr(stmp), "stride x (size-1)"))
           module.add(SAddU32(dst=sgpr(tensor2dSize0), src0=sgpr(tensor2dSize0), src1=sgpr(stmp+0), comment="sum tensor size"))
@@ -3124,6 +3134,12 @@ class KernelWriterAssembly(KernelWriter):
     module = Module("graAddresses")
     tc = tP["tensorChar"]
     graIdx = 0
+
+    if tP["isA"] and tP["isSwizzled"]:
+      module.addComment("Align StrideA0I to 32")
+      module.add(SAddU32(sgpr("StrideA0I"), sgpr("StrideA0I"), 31))
+      module.add(SLShiftRightB32(sgpr("StrideA0I"), src=sgpr("StrideA0I"), shiftHex=hex(5)))
+      module.add(SLShiftLeftB32(sgpr("StrideA0I"), src=sgpr("StrideA0I"), shiftHex=hex(5)))
 
     if kernel["BufferLoad"]:
       # maxAddrSgpr = size[n] * stride[n-1]
@@ -3362,7 +3378,10 @@ class KernelWriterAssembly(KernelWriter):
       with self.allocTmpSgpr(1) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
         # Calc numKr, TODO- 32 should be MI_K * 2
-        module.add(SLShiftRightB32(dst=sgpr(tmpSgpr), shiftHex=hex(log2(32)), src=sgpr("SizesSum"),  comment="SWZ: numKr = DimK / 32"))
+        swizzleStrideVal = 32
+        module.addComment(f"Align to {swizzleStrideVal}")
+        module.add(SAddU32(sgpr(tmpSgpr), sgpr("SizesSum"), swizzleStrideVal-1))
+        module.add(SLShiftRightB32(dst=sgpr(tmpSgpr), shiftHex=hex(log2(swizzleStrideVal)), src=sgpr(tmpSgpr),  comment="SWZ: numKr = DimK / 32"))
         WvG_M = kernel["MIWaveGroup"][0]
         module.add(VAndB32(dst=vgpr(qReg), src0=hex(WvG_M-1), src1=vgpr(qReg), comment="SWZ: wave_id (along_M) %= MIWG[0]"))
         module.add(VMulU32U24(dst=vgpr(qReg), src0=sgpr(tmpSgpr), src1=vgpr(qReg), comment="SWZ: wave_id (along_M) *= numKr"))
