@@ -39,9 +39,6 @@ if( BUILD_WITH_TENSILE )
   set( PACKAGE_TENSILE_LIBRARY OFF )
 
   # Build options list
-  if(Tensile_MERGE_FILES)
-    set(Tensile_Options ${Tensile_Options} MERGE_FILES)
-  endif()
   if(Tensile_SHORT_FILENAMES)
     set(Tensile_Options ${Tensile_Options} SHORT_FILE_NAMES)
   endif()
