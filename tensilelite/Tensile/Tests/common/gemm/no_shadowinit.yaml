@@ -3,7 +3,6 @@ TestParameters:
 
 GlobalParameters:
   MinimumRequiredVersion: 4.14.0
-  MergeFiles: False
   NumWarmups: 1
   SleepPercent: 50
   EnqueuesPerSync: 100

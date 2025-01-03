@@ -127,24 +127,16 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
     # Create list of files
     if filename:
       filesToWrite[os.path.join(os.path.normcase(outputPath),filename)].append((err, src, header, kernelName))
-    elif globalParameters["MergeFiles"]:
+    else:
       kernelSuffix = ""
-      if globalParameters["NumMergedFiles"] > 1:
-        kernelSuffix = validKernelCount % globalParameters["NumMergedFiles"]
-
       filesToWrite[os.path.join(os.path.normcase(outputPath), "Kernels"+kernelSuffix)]\
         .append((err, src, header, kernelName))
-    else:
-      filesToWrite[os.path.join(os.path.normcase(outputPath),kernelName)].append((err, src, header, kernelName))
 
     validKernelCount += 1
 
   #Ensure there's at least one kernel file for helper kernels
-  if globalParameters["LazyLibraryLoading"] or (globalParameters["MergeFiles"] and not kernelsToWrite):
+  if globalParameters["LazyLibraryLoading"] or not kernelsToWrite:
     kernelSuffix = ""
-    if globalParameters["NumMergedFiles"] > 1:
-      kernelSuffix = "0"
-
     filesToWrite[os.path.join(os.path.normcase(outputPath), "Kernels"+kernelSuffix)] = []
 
 
@@ -191,9 +183,6 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
   kernelFiles = []
   kernelSourceFile = None
   kernelHeaderFile = None
-
-  if not globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
-    ensurePath(os.path.join(outputPath, "Kernels"))
 
   ##############################################################################
   # Write Kernels
@@ -261,58 +250,30 @@ def writeSolutionsAndKernels(outputPath, cxxCompiler, assembler, offloadBundler,
     print("\nKernel compilation failed in one or more subprocesses. May want to set CpuThreads=0 and re-run to make debug easier")
     printExit("** kernel compilation failure **")
 
-  # Put all kernel helper objects into the first merged kernel file
-  if globalParameters["NumMergedFiles"] > 1 and len(kernelFiles) > 0:
-    kernelFilename = kernelFiles[0].replace(".cpp", "")
-    kernelSourceFile = open(kernelFilename + ".cpp", 'a', encoding="utf-8")
-    kernelHeaderFile = open(kernelFilename + ".h", 'a', encoding="utf-8")
-  elif globalParameters["MergeFiles"] or globalParameters["LazyLibraryLoading"]:
-    kernelSourceFilename = os.path.join(os.path.normcase(outputPath), "Kernels.cpp")
-    kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), "Kernels.h")
-    kernelSourceFile = open(kernelSourceFilename, "a", encoding="utf-8")
-    kernelHeaderFile = open(kernelHeaderFilename, "a", encoding="utf-8")
+  kernelSourceFilename = os.path.join(os.path.normcase(outputPath), "Kernels.cpp")
+  kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), "Kernels.h")
+  kernelSourceFile = open(kernelSourceFilename, "a", encoding="utf-8")
+  kernelHeaderFile = open(kernelHeaderFilename, "a", encoding="utf-8")
 
   HeaderText = ""
   # handle helper kernel function
   for ko in kernelHelperObjs:
     kernelName = ko.getKernelName()
 
-    # write kernel.cpp
-    if not globalParameters["MergeFiles"]:
-      kernelSourceFilename = os.path.join(outputPath, "Kernels", kernelName+".cpp")
-      kernelSourceFile = open(kernelSourceFilename, "w")
-      kernelSourceFile.write(CHeader)
-      kernelFiles.append(kernelSourceFilename)
-
     (err, src) = ko.getSourceFileString()
     kernelSourceFile.write(src)
     if err:
       print("*** warning: invalid kernel#%u"%kernelName)
 
-    if not globalParameters["MergeFiles"]:
-      kernelSourceFile.close()
-
-    # write kernel.h
-    if not globalParameters["MergeFiles"]:
-      kernelHeaderFile = open(os.path.join(os.path.normcase(outputPath), "Kernels", kernelName + ".h"), "w")
-      kernelHeaderFile.write(CHeader)
-      kernelHeaderFile.write(ko.getHeaderFileString())
-    else:
-      HeaderText += ko.getHeaderFileString()
-
-    if not globalParameters["MergeFiles"]:
-      kernelHeaderFile.close()
+    HeaderText += ko.getHeaderFileString()
 
   # write kernel.h in one shot
-  if globalParameters["MergeFiles"]:
-    kernelHeaderFile.write(HeaderText)
+  kernelHeaderFile.write(HeaderText)
 
-  # close merged
-  if globalParameters["MergeFiles"]:
-    if kernelSourceFile:
-      kernelSourceFile.close()
-    if kernelHeaderFile:
-      kernelHeaderFile.close()
+  if kernelSourceFile:
+    kernelSourceFile.close()
+  if kernelHeaderFile:
+    kernelHeaderFile.close()
 
   if not globalParameters["GenerateSourcesAndExit"]:
     codeObjectFiles += SourceCommands.buildSourceCodeObjectFiles(cxxCompiler, offloadBundler, kernelFiles, outputPath)
@@ -522,9 +483,6 @@ def TensileCreateLibrary():
   argParser.add_argument("--assembler",              dest="Assembler",         action="store", default=ToolchainDefaults.ASSEMBLER)
   argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["default", "V4", "V5"], action="store")
   argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
-  argParser.add_argument("--merge-files",            dest="MergeFiles",        action="store_true")
-  argParser.add_argument("--no-merge-files",         dest="MergeFiles",        action="store_false")
-  argParser.add_argument("--num-merged-files",       dest="NumMergedFiles",    type=int, default=1, help="Number of files the kernels should be written into.")
   argParser.add_argument("--short-file-names",       dest="ShortNames",        action="store_true")
   argParser.add_argument("--no-short-file-names",    dest="ShortNames",        action="store_false")
   argParser.add_argument("--library-print-debug",    dest="LibraryPrintDebug", action="store_true")
@@ -588,8 +546,6 @@ def TensileCreateLibrary():
   arguments["EnableMarker"] = args.EnableMarker
   if args.CmakeCxxCompiler:
     os.environ["CMAKE_CXX_COMPILER"] = args.CmakeCxxCompiler
-  arguments["MergeFiles"] = args.MergeFiles
-  arguments["NumMergedFiles"] = args.NumMergedFiles
   arguments["ShortNames"] = args.ShortNames
   arguments["LibraryPrintDebug"] = args.LibraryPrintDebug
   arguments["CodeFromFiles"] = False
@@ -642,9 +598,6 @@ def TensileCreateLibrary():
       logicArchs.add(architectureMap[arch])
     else:
       printExit("Architecture %s not supported" % arch)
-
-  if globalParameters["LazyLibraryLoading"] and not (globalParameters["MergeFiles"] and globalParameters["SeparateArchitectures"]):
-    printExit("--lazy-library-loading requires --merge-files and --separate-architectures enabled")
 
   # Recursive directory search
   logicExtFormat = ".yaml"

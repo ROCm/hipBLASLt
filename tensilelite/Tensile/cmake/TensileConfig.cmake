@@ -80,8 +80,6 @@ function(TensileCreateLibraryFiles
 
   # Boolean options
   set(options
-       MERGE_FILES
-       NO_MERGE_FILES
        SHORT_FILE_NAMES
        PRINT_DEBUG
        GENERATE_PACKAGE
@@ -129,17 +127,6 @@ function(TensileCreateLibraryFiles
   endif()
 
   message(STATUS "Tensile script: ${Script}")
-
-  # Older NO_MERGE_FILES flag overrides MERGE_FILES option.
-  if(Tensile_NO_MERGE_FILES)
-    set(Tensile_MERGE_FILES FALSE)
-  endif()
-
-  if(Tensile_MERGE_FILES)
-    set(Options ${Options} "--merge-files")
-  else()
-    set(Options ${Options} "--no-merge-files")
-  endif()
 
   if(Tensile_SEPARATE_ARCHITECTURES)
     set(Options ${Options} "--separate-architectures")
