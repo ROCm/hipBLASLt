@@ -92,9 +92,15 @@ void swizzle_tensor(T *dst, const T *src, size_t b, size_t m, size_t k, bool col
         tmpTensor = permute(orgTensor, {0, 2, 1});
     }
 
-    tmpTensor.reshape({b, m / MiM, MiM, k / (MiK * PackK), MiK / MiKv , MiKv * PackK});
-    Tensor permuted = permute(tmpTensor, {0, 1, 3, 4, 2, 5});
-    memcpy(dst, permuted. template as<void>(), numElements * sizeof(T));
+    constexpr auto MultipleM = MiM;
+    constexpr auto MultipleK = MiK * PackK;
+    const auto paddedM = (m / MultipleM + !!(m % MultipleM)) * MultipleM;
+    const auto paddedK = (k / MultipleK + !!(k % MultipleK)) * MultipleK;
+    ::Tensor::Manipulation::Shape paddedShape{b, paddedM, paddedK};
+    auto paddedTensor = ::Tensor::Manipulation::pad(tmpTensor, paddedShape, T(0));
+    paddedTensor.reshape({b, paddedM / MiM, MiM, paddedK / (MiK * PackK), MiK / MiKv , MiKv * PackK});
+    Tensor permuted = permute(paddedTensor, {0, 1, 3, 4, 2, 5});
+    memcpy(dst, permuted. template as<void>(), b * paddedM * paddedK * sizeof(T));
 }
 
 inline void pre_gpu_time(bool         use_gpu_timer,
@@ -1136,8 +1142,17 @@ void testing_matmul_with_bias(const Arguments& arg,
         stride_d[i] = do_batched[i] ? arg.stride_c[i] : ldd[i] * N[i];
         stride_e[i] = do_batched[i] ? arg.stride_e[i] : lde[i] * N[i];
 
-        size_A[i]
-            = stride_a[i] == 0 ? lda[i] * A_col[i] * num_batches[i] : stride_a[i] * num_batches[i];
+        if(arg.swizzle_a)
+        {
+            //TODO: support different swizzle type
+            size_A[i] = num_batches[i] * ((M[i] + 15) / 16) * 16 * ((K[i] + 31) / 32) * 32;
+        }
+        else
+        {
+            size_A[i]
+                = stride_a[i] == 0 ? lda[i] * A_col[i] * num_batches[i] : stride_a[i] * num_batches[i];
+        }
+
         size_B[i]
             = stride_b[i] == 0 ? ldb[i] * B_col[i] * num_batches[i] : stride_b[i] * num_batches[i];
         size_C[i]
@@ -1516,7 +1531,7 @@ void testing_matmul_with_bias(const Arguments& arg,
 
         if(arg.swizzle_a && TiA == HIP_R_16F)
         {
-            HipHostBuffer tmp(TiA, num_batches[i] * M[i] * K[i]);
+            HipHostBuffer tmp(TiA, size_A[i]);
             swizzle_tensor(tmp.as<hipblasLtHalf>(), hA[i].as<hipblasLtHalf>(), num_batches[i], M[i], K[i], false);
             CHECK_HIP_ERROR(synchronize(dA[i], tmp, block_count));
         }
