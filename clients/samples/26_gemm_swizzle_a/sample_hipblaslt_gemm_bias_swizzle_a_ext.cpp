@@ -49,10 +49,15 @@ void swizzleTensor(T *dst, const T *src, size_t m, size_t k, bool colMaj)
         memcpy(orgTensor. template as<void>(), src, m * k * sizeof(T));
         tmpTensor = permute(orgTensor, {1, 0});
     }
-
-    tmpTensor.reshape({m / MiM, MiM, k / (MiK * PackK), MiK / MiKv , MiKv * PackK});
-    Tensor permuted = permute(tmpTensor, {0, 2, 3, 1, 4});
-    memcpy(dst, permuted. template as<void>(), m * k * sizeof(T));
+    constexpr auto MultipleM = MiM;
+    constexpr auto MultipleK = MiK * PackK;
+    const auto paddedM = (m / MultipleM + !!(m % MultipleM)) * MultipleM;
+    const auto paddedK = (k / MultipleK + !!(k % MultipleK)) * MultipleK;
+    ::Tensor::Manipulation::Shape paddedShape{paddedM, paddedK};
+    auto paddedTensor = ::Tensor::Manipulation::pad(tmpTensor, paddedShape, T(0));
+    paddedTensor.reshape({paddedM / MiM, MiM, paddedK / (MiK * PackK), MiK / MiKv , MiKv * PackK});
+    Tensor permuted = permute(paddedTensor, {0, 2, 3, 1, 4});
+    memcpy(dst, permuted. template as<void>(), paddedM * paddedK * sizeof(T));
 }
 
 void swizzleGemmEpilogueBiasVecExt(hipblasLtHandle_t  handle,
