@@ -25,13 +25,13 @@ The Makefile will set the target based on the name of the co file and sets a def
 For 64 wavefront size systems,
 
 ```
-make co TENSILE_OUT=tensile-out ARCH="gfx942:xnack-" WAVE=64
+make co TENSILE_OUT=tensile-out ARCH="gfx942" WAVE=64
 ```
 
 For 32 wavefront size systems,
 
 ```
-make co TENSILE_OUT=tensile-out ARCH="gfx1100:xnack-" WAVE=32
+make co TENSILE_OUT=tensile-out ARCH="gfx1100" WAVE=32
 ```
 
 In addition, we provide `ASM_ARGS` and `LINK_ARGS` as additional customization points for the assemble and link step respectively. If the architecture cannot be detect corectly, you may need to manually add ``ARCH="gfx942:xnack-"`` to the ``make`` command.
