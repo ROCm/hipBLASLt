@@ -130,6 +130,9 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     arguments["OffloadBundler"] = args.OffloadBundler
     arguments["Assembler"] = args.Assembler
     arguments["LogicPath"] = args.LogicPath
-    arguments["OutputPath"] = args.OutputPath 
+    arguments["LogicFilter"] = args.LogicFilter
+    arguments["OutputPath"] = args.OutputPath
+    arguments["Experimental"] = args.Experimental
+    arguments["GenSolTable"] = args.GenSolTable
 
     return arguments

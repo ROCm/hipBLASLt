@@ -350,11 +350,11 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
         nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
       else:
         masterLibraries[architectureName] = newLibrary
-        masterLibraries[architectureName].version = args["version"]
+        masterLibraries[architectureName].version = args["CodeObjectVersion"]
     else:
       if fullMasterLibrary is None:
         fullMasterLibrary = newLibrary
-        fullMasterLibrary.version = args["version"]
+        fullMasterLibrary.version = args["CodeObjectVersion"]
       else:
         fullMasterLibrary.merge(newLibrary)
 
@@ -429,7 +429,9 @@ def run():
   libraryFormat = arguments["LibraryFormat"]
   useCompression = arguments["UseCompression"]
 
+  ensurePath(outputPath)
   outputPath = os.path.abspath(outputPath)
+  
   cxxCompiler, cCompiler, offloadBundler, assembler, hipconfig = validateToolchain(
       arguments["CxxCompiler"], arguments["CCompiler"], arguments["OffloadBundler"], arguments["Assembler"], ToolchainDefaults.HIP_CONFIG
   )
