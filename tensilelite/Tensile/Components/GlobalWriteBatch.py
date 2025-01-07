@@ -641,8 +641,15 @@ class GlobalWriteBatchWriter:
     if not self.kernel["InterleaveAlpha"] and self.applyAlpha and self.parentWriter.alphaBeforeLoadC:
       module.addComment1("rC *= alpha batchElements=%s"%self.batchElements)
       if self.codeMulAlpha is None:
-        for elementIdx in range(len(self.batchElements)):
-          module.add(self._applyAlpha(self.kernel, self.gwvw, self.ss.elementSumIdx, elementIdx, self.tmpS01))
+        elementIdx = 0
+        while elementIdx < len(self.batchElements):
+          isEnd = (elementIdx == len(self.batchElements) - 1)
+          if not isEnd and (self.ss.elementSumIdx[elementIdx] + 1 == self.ss.elementSumIdx[elementIdx + 1]) and (self.ss.elementSumIdx[elementIdx] % 2 == 0):
+            module.add(self._applyAlpha(self.kernel, self.gwvw, self.ss.elementSumIdx, elementIdx, self.tmpS01, usePK=True))
+            elementIdx += 2
+          else:
+            module.add(self._applyAlpha(self.kernel, self.gwvw, self.ss.elementSumIdx, elementIdx, self.tmpS01))
+            elementIdx += 1
       else:
           regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
           for elementIdx in range(len(self.batchElements)):
@@ -937,8 +944,15 @@ class GlobalWriteBatchWriter:
     if not self.kernel["InterleaveAlpha"] and self.applyAlpha and not self.parentWriter.alphaBeforeLoadC:
       module.addComment1("rC *= alpha batchElements=%s"%self.batchElements)
       if self.codeMulAlpha is None:
-        for elementIdx in range(len(self.batchElements)):
-          module.add(self._applyAlpha(self.kernel, self.gwvw, self.ss.elementSumIdx, elementIdx, self.tmpS01))
+        elementIdx = 0
+        while elementIdx < len(self.batchElements):
+          isEnd = (elementIdx == len(self.batchElements) - 1)
+          if not isEnd and (self.ss.elementSumIdx[elementIdx] + 1 == self.ss.elementSumIdx[elementIdx + 1]) and (self.ss.elementSumIdx[elementIdx] % 2 == 0):
+            module.add(self._applyAlpha(self.kernel, self.gwvw, self.ss.elementSumIdx, elementIdx, self.tmpS01, usePK=True))
+            elementIdx += 2
+          else:
+            module.add(self._applyAlpha(self.kernel, self.gwvw, self.ss.elementSumIdx, elementIdx, self.tmpS01))
+            elementIdx += 1
       else:
           regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
           for elementIdx in range(len(self.batchElements)):
@@ -1808,7 +1822,7 @@ class GlobalWriteBatchWriter:
     module.add(SSleep(self.kernel["StoreSyncOpt"] - 1, "optimization: sync and wait"))
     module.add(SBarrier())
 
-  def _applyAlpha(self, kernel, gwvw, elementSumIdx, elementIdx, tmpS01):
+  def _applyAlpha(self, kernel, gwvw, elementSumIdx, elementIdx, tmpS01, usePK=False):
     module = Module("applyAlpha")
 
     if kernel["_GlobalAccumulation"] == 'MultipleBuffer':
@@ -1830,6 +1844,8 @@ class GlobalWriteBatchWriter:
           # below assume we use v_mul_lo_u32. Could also use v_mul_i32_i24.
           # module.add(VMulI32I24(dst=vgpr("ValuC+%u"%newSumIdx), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%newSumIdx), comment="*= alpha" )_
           module.add(VMulLOU32(dst=vgpr("ValuC+%u"%newSumIdx), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%newSumIdx), comment="*= alpha" ))
+          if usePK:
+            module.add(VMulLOU32(dst=vgpr("ValuC+%u"%(newSumIdx+1)), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%(newSumIdx+1)), comment="*= alpha" ))
           if self.parentWriter.db["ForceExpectedValue"]:
             module.add(VMovB32(dst=vgpr("ValuC+%u"%newSumIdx), src=self.parentWriter.db["ValueCExpectedValue"], comment="force expected value" ))
           if self.parentWriter.db["CheckValueC"]:
@@ -1841,7 +1857,7 @@ class GlobalWriteBatchWriter:
         elif kernel["ProblemType"]["ComputeDataType"].isSingle() or (kernel["ProblemType"]["ComputeDataType"].isHalf() and kernel["ProblemType"]["HighPrecisionAccumulate"]):
 
           if kernel["ProblemType"]["DataType"].isInt8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
-            if gwvw > 1:
+            if usePK or gwvw > 1:
               if vi % 2 == 0:
                 module.add(VCvtI32toF32(dst=vgpr("ValuC+%u"%sumIdxV), src=vgpr("ValuC+%u"%sumIdxV), comment="convert to fp32" ))
                 module.add(VCvtI32toF32(dst=vgpr("ValuC+%u"%(sumIdxV+1)), src=vgpr("ValuC+%u"%(sumIdxV+1)), comment="convert to fp32" ))
@@ -1850,8 +1866,8 @@ class GlobalWriteBatchWriter:
 
           newSumIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
           # Use pk if possible
-          if gwvw > 1:
-            if vi % 2 == 0:
+          if usePK or gwvw > 1:
+            if newSumIdx % 2 == 0:
               module.add(VMulPKF32(dst=vgpr("ValuC+%u"%newSumIdx, 2), src0=sgpr("Alpha",2), src1=vgpr("ValuC+%u"%newSumIdx,2), vop3=VOP3PModifiers(op_sel_hi=[0,1,1]), comment="*= alpha (pk)"))
           else:  
             module.add(VMulF32(dst=vgpr("ValuC+%u"%newSumIdx), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%newSumIdx), comment="*= alpha" ))
