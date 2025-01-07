@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ########################################################################
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,7 @@ supported_distro( )
     printf "supported_distro(): \$ID must be set\n"
     exit 2
   fi
-  
+
   case "${ID}" in
     ubuntu|centos|almalinux|rhel|fedora|sles|opensuse-leap|mariner|azurelinux)
         true
@@ -323,7 +323,7 @@ install_blis()
         #Download prebuilt AMD multithreaded blis
         if [[ ! -e "./blis/lib/libblis.a" ]]; then
           case "${ID}" in
-              centos|rhel|sles|opensuse-leap)
+              centos|rhel|sles|opensuse-leap|almalinux)
                   wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
                   ;;
               ubuntu)
