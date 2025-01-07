@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -277,9 +277,9 @@ if(HIPBLASLT_ENABLE_MARKER)
 endif()
 
 # Setup version
-set(VERSION_STRING "0.12.0")
+set(VERSION_STRING "0.13.0")
 rocm_setup_version(VERSION ${VERSION_STRING})
-set(hipblaslt_SOVERSION 0.12)
+set(hipblaslt_SOVERSION 0.13)
 
 
 if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
