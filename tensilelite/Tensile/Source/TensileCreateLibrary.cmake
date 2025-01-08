@@ -34,7 +34,6 @@ function(TensileCreateLibraryCmake
     Tensile_CODE_OBJECT_VERSION
     Tensile_ARCHITECTURE
     Tensile_LIBRARY_FORMAT
-    Tensile_MERGE_FILES
     Tensile_SHORT_FILE_NAMES
     Tensile_LIBRARY_PRINT_DEBUG
     Tensile_CPU_THREADS
@@ -72,12 +71,6 @@ function(TensileCreateLibraryCmake
   message(STATUS "Tensile_SOURCE_PATH=${Tensile_SOURCE_PATH}")
 
   # TensileLibraryWriter optional arguments
-  if(${Tensile_MERGE_FILES})
-    set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--merge-files")
-  else()
-    set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--no-merge-files")
-  endif()
-
   if(${Tensile_PACKAGE_LIBRARY})
     set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--package-library")
   endif()

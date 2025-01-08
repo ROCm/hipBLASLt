@@ -2067,8 +2067,9 @@ class _VMulPKF32(CommonInstruction):
         self.setInst("v_pk_mul_f32")
 
 class VMulPKF32(CompositeInstruction):
-    def __init__(self, dst, src0, src1, comment="") -> None:
+    def __init__(self, dst, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, [src0, src1], comment)
+        self.vop3 = vop3
         self.setInst("v_pk_mul_f32")
 
     def toList(self) -> list:
@@ -2079,7 +2080,7 @@ class VMulPKF32(CompositeInstruction):
         super().setupInstructions()
         assert isinstance(self.srcs, List)
         if self.asmCaps["v_pk_mul_f32"]:
-            self.instructions = [_VMulPKF32(self.dst, self.srcs[0], self.srcs[1], None, None, self.comment)]
+            self.instructions = [_VMulPKF32(self.dst, self.srcs[0], self.srcs[1], None, self.vop3, self.comment)]
         else:
             dst1, dst2 = self.dst.splitRegContainer()
             srcs1 = []
@@ -2092,10 +2093,25 @@ class VMulPKF32(CompositeInstruction):
                 else:
                     srcs1.append(s)
                     srcs2.append(s)
-            self.instructions = [VMulF32(dst1, srcs1[0], srcs1[1], None, self.comment),
-                                VMulF32(dst2, srcs2[0], srcs2[1], None, self.comment)]
+            if self.vop3 == None:
+                self.instructions = [VMulF32(dst1, srcs1[0], srcs1[1], None, self.comment),
+                                    VMulF32(dst2, srcs2[0], srcs2[1], None, self.comment)]
+            else:
+                if self.vop3.op_sel:
+                    assert len(self.vop3.op_sel) == 3
+                if self.vop3.op_sel_hi:
+                    assert len(self.vop3.op_sel_hi) == 3
+                if self.vop3.byte_sel:
+                    assert "Byte sel not supported"
+                lowDst   = dst2     if self.vop3.op_sel and self.vop3.op_sel[2] == 1 else dst1
+                lowSrc1  = srcs2[0] if self.vop3.op_sel and self.vop3.op_sel[0] == 1 else srcs1[0]
+                lowSrc2  = srcs2[1] if self.vop3.op_sel and self.vop3.op_sel[1] == 1 else srcs1[1]
+                highDst  = dst1     if self.vop3.op_sel_hi and self.vop3.op_sel_hi[2] == 0 else dst2
+                highSrc1 = srcs1[0] if self.vop3.op_sel_hi and self.vop3.op_sel_hi[0] == 0 else srcs2[0]
+                highSrc2 = srcs1[1] if self.vop3.op_sel_hi and self.vop3.op_sel_hi[1] == 0 else srcs2[1]
+                self.instructions = [VMulF32(lowDst, lowSrc1, lowSrc2, None, self.comment),
+                                    VMulF32(highDst, highSrc1, highSrc2, None, self.comment)]
 
-        assert all(inst.vop3 is None for inst in self.instructions), "Currently does not support with vop3 enabled"
 
 class VMulLOU32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:

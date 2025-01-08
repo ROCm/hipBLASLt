@@ -1151,6 +1151,244 @@ TEST(MatrixTransformTest, ScalarsOnDevice)
                       transB);
 }
 
+TEST(MatrixTransformTest, MultipleDevices)
+{
+    int numDevices{};
+    int curDevice{};
+    auto hipErr = hipGetDeviceCount(&numDevices);
+    EXPECT_EQ(hipErr, hipSuccess);
+    hipErr = hipGetDevice(&curDevice);
+    EXPECT_EQ(hipErr, hipSuccess);
+    // acquire at most 2 devices
+    numDevices = std::min<int>(numDevices, 2);
+
+    for (int deviceId = 0; deviceId < numDevices; ++deviceId)
+    {
+        hipErr = hipSetDevice(deviceId);
+        EXPECT_EQ(hipErr, hipSuccess);
+        int64_t                     m             = 1024;
+        int64_t                     n             = 1024;
+        int32_t                     batchSize     = 1;
+        auto                        datatype      = HIP_R_32F;
+        auto                        scaleDatatype = HIP_R_32F;
+        auto                        opA           = HIPBLAS_OP_N;
+        auto                        opB           = HIPBLAS_OP_N;
+        auto                        orderA        = HIPBLASLT_ORDER_ROW;
+        auto                        orderB        = HIPBLASLT_ORDER_ROW;
+        auto                        orderC        = HIPBLASLT_ORDER_COL;
+        float                       alpha         = 1;
+        float                       beta          = 1;
+        int64_t                     batchStride   = m * n;
+        std::pair<int64_t, int64_t> shapeA;
+        std::pair<int64_t, int64_t> shapeB;
+        shapeA.first  = opA == HIPBLAS_OP_T ? n : m;
+        shapeA.second = opA == HIPBLAS_OP_T ? m : n;
+        shapeB.first  = opB == HIPBLAS_OP_T ? n : m;
+        shapeB.second = opB == HIPBLAS_OP_T ? m : n;
+        uint32_t ldA  = (orderA == HIPBLASLT_ORDER_ROW)
+                            ? getLeadingDimSize<true>(shapeA.first, shapeA.second)
+                            : getLeadingDimSize<false>(shapeA.first, shapeA.second);
+        uint32_t ldB  = (orderB == HIPBLASLT_ORDER_ROW)
+                            ? getLeadingDimSize<true>(shapeB.first, shapeB.second)
+                            : getLeadingDimSize<false>(shapeB.first, shapeB.second);
+        uint32_t ldC  = (orderC == HIPBLASLT_ORDER_ROW) ? getLeadingDimSize<true>(m, n)
+                                                        : getLeadingDimSize<false>(m, n);
+
+        auto  inputs = makeMatrixTransformIOPtr(datatype, m, n, batchSize);
+        void* dA     = inputs->getBuf(0);
+        void* dB     = inputs->getBuf(1);
+        void* dC     = inputs->getBuf(2);
+
+        hipblasLtMatrixTransformDesc_t desc;
+        auto                   hipblasLtErr = hipblasLtMatrixTransformDescCreate(&desc, scaleDatatype);
+        hipblasLtPointerMode_t pMode        = HIPBLASLT_POINTER_MODE_HOST;
+        hipblasLtErr                        = hipblasLtMatrixTransformDescSetAttribute(
+            desc,
+            hipblasLtMatrixTransformDescAttributes_t::HIPBLASLT_MATRIX_TRANSFORM_DESC_POINTER_MODE,
+            &pMode,
+            sizeof(pMode));
+
+        ASSERT_EQ(hipblasLtErr, HIPBLAS_STATUS_SUCCESS);
+
+        hipblasLtErr = hipblasLtMatrixTransformDescSetAttribute(
+            desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA, &opA, sizeof(opA));
+        hipblasLtErr = hipblasLtMatrixTransformDescSetAttribute(
+            desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB, &opB, sizeof(opB));
+        hipblasLtMatrixLayout_t layoutA, layoutB, layoutC;
+        hipblasLtErr
+            = hipblasLtMatrixLayoutCreate(&layoutA, datatype, shapeA.first, shapeA.second, ldA);
+        hipblasLtErr
+            = hipblasLtMatrixLayoutCreate(&layoutB, datatype, shapeB.first, shapeB.second, ldB);
+        hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutC, datatype, m, n, ldC);
+        hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
+            layoutA,
+            hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
+            &orderA,
+            sizeof(orderA));
+        hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
+            layoutB,
+            hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
+            &orderB,
+            sizeof(orderB));
+        hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
+            layoutC,
+            hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
+            &orderC,
+            sizeof(orderC));
+        hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
+            layoutA,
+            hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
+            &batchSize,
+            sizeof(batchSize));
+        hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
+            layoutB,
+            hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
+            &batchSize,
+            sizeof(batchSize));
+        hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
+            layoutC,
+            hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
+            &batchSize,
+            sizeof(batchSize));
+        hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
+            layoutA,
+            hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+            &batchStride,
+            sizeof(batchStride));
+        hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
+            layoutB,
+            hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+            &batchStride,
+            sizeof(batchStride));
+        hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(
+            layoutC,
+            hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+            &batchStride,
+            sizeof(batchStride));
+        hipblasLtHandle_t handle{};
+        hipblasLtErr = hipblasLtCreate(&handle);
+        hipblasLtErr = hipblasLtMatrixTransform(
+            handle, desc, &alpha, dA, layoutA, &beta, dB, layoutB, dC, layoutC, nullptr);
+        ASSERT_EQ(hipblasLtErr, HIPBLAS_STATUS_SUCCESS);
+        ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+        auto rowMajA = (orderA == HIPBLASLT_ORDER_ROW);
+        auto rowMajB = (orderB == HIPBLASLT_ORDER_ROW);
+        auto rowMajC = (orderC == HIPBLASLT_ORDER_ROW);
+        auto transA  = (opA == HIPBLAS_OP_T);
+        auto transB  = (opB == HIPBLAS_OP_T);
+
+        if(datatype == HIP_R_32F)
+        {
+            validation<float>(dC,
+                            dA,
+                            dB,
+                            alpha,
+                            beta,
+                            m,
+                            n,
+                            ldA,
+                            ldB,
+                            ldC,
+                            batchSize,
+                            batchStride,
+                            rowMajA,
+                            rowMajB,
+                            rowMajC,
+                            transA,
+                            transB);
+        }
+        else if(datatype == HIP_R_16F)
+        {
+            validation<hipblasLtHalf>(dC,
+                                    dA,
+                                    dB,
+                                    alpha,
+                                    beta,
+                                    m,
+                                    n,
+                                    ldA,
+                                    ldB,
+                                    ldC,
+                                    batchSize,
+                                    batchStride,
+                                    rowMajA,
+                                    rowMajB,
+                                    rowMajC,
+                                    transA,
+                                    transB);
+        }
+        else if(datatype == HIP_R_16BF)
+        {
+            validation<hipblasLtBfloat16>(dC,
+                                        dA,
+                                        dB,
+                                        alpha,
+                                        beta,
+                                        m,
+                                        n,
+                                        ldA,
+                                        ldB,
+                                        ldC,
+                                        batchSize,
+                                        batchStride,
+                                        rowMajA,
+                                        rowMajB,
+                                        rowMajC,
+                                        transA,
+                                        transB);
+        }
+        else if(datatype == HIP_R_8I)
+        {
+            validation<int8_t>(dC,
+                            dA,
+                            dB,
+                            alpha,
+                            beta,
+                            m,
+                            n,
+                            ldA,
+                            ldB,
+                            ldC,
+                            batchSize,
+                            batchStride,
+                            rowMajA,
+                            rowMajB,
+                            rowMajC,
+                            transA,
+                            transB);
+        }
+        else if(datatype == HIP_R_32I)
+        {
+            validation<int32_t>(dC,
+                                dA,
+                                dB,
+                                alpha,
+                                beta,
+                                m,
+                                n,
+                                ldA,
+                                ldB,
+                                ldC,
+                                batchSize,
+                                batchStride,
+                                rowMajA,
+                                rowMajB,
+                                rowMajC,
+                                transA,
+                                transB);
+        }
+
+        hipblasLtErr = hipblasLtMatrixTransformDescDestroy(desc);
+        hipblasLtErr = hipblasLtDestroy(handle);
+        hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutA);
+        hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutB);
+        hipblasLtErr = hipblasLtMatrixLayoutDestroy(layoutC);
+    }
+
+    hipErr = hipSetDevice(curDevice);
+    EXPECT_EQ(hipErr, hipSuccess);
+}
+
 INSTANTIATE_TEST_SUITE_P(
     AllCombinations,
     MatrixTransformTest,
