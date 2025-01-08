@@ -22,16 +22,17 @@
 #
 ################################################################################
 
-import itertools
 import os
 import re
 import shlex
 import shutil
 import subprocess
-from pathlib import Path
-from typing import Iterable, List, Union
 
-from ..Common import globalParameters, print2,  ensurePath, ParallelMap2, splitArchs
+from pathlib import Path
+from timeit import default_timer as timer
+from typing import List, Union
+
+from ..Common import globalParameters, print1, print2, ensurePath, splitArchs
 
 class SourceToolchain:
     def __init__(self, compiler: str, bundler: str, buildIdKind: str, asanBuild: bool=False, saveTemps: bool=False):
@@ -163,7 +164,7 @@ def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Pa
     return coPath
 
 
-def _buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
+def buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
     Args:
@@ -175,6 +176,8 @@ def _buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Pat
     Returns:
         List of paths to the created code objects.
     """
+    start = timer()
+
     buildPath = Path(ensurePath(os.path.join(globalParameters['WorkingPath'], 'code_object_tmp')))
     destPath = Path(ensurePath(os.path.join(outputPath, 'library')))
     kernelPath = Path(kernelPath)
@@ -206,20 +209,7 @@ def _buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Pat
     for src, dst in zip(coPathsRaw, coPaths):
         shutil.move(src, dst)
 
+    stop = timer()
+    print1(f"buildSourceCodeObjectFile time (s): {(stop-start):3.2f}")
+
     return coPaths
-
-def buildSourceCodeObjectFiles(toolchain: SourceToolchain, kernelFiles: List[Path], outputPath: Path) -> Iterable[str]:
-    """Compiles HIP source code files into code object files.
-
-    Args:
-        cxxCompiler: The C++ compiler to use.
-        kernelFiles: List of paths to the kernel source files.
-        outputPath: The output directory path where code objects will be placed.
-        removeTemporaries: Whether to clean up temporary files.
-
-    Returns:
-        List of paths to the created code objects.
-    """
-    args    = zip(itertools.repeat(toolchain), itertools.repeat(outputPath), kernelFiles)
-    coFiles = ParallelMap2(_buildSourceCodeObjectFile, args, "Compiling source kernels")
-    return itertools.chain.from_iterable(coFiles)
