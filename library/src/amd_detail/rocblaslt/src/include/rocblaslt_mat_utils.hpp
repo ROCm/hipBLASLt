@@ -164,7 +164,7 @@ inline rocblaslt_status validateMatmulArgs(int64_t                       m,
                                            int64_t                       batch_stride_b = 0,
                                            int64_t                       batch_stride_c = 0,
                                            int64_t                       batch_stride_d = 0,
-                                           const rocblaslt_pointer_mode& pointermode
+                                           const rocblaslt_pointer_mode  pointermode
                                            = rocblaslt_pointer_mode_host)
 {
     rocblaslt_status status = rocblaslt_status_continue;
@@ -244,7 +244,7 @@ inline rocblaslt_status validateMatmulArgs(int64_t                       m,
         return rocblaslt_status_invalid_pointer;
 
     // Update for the valid case: ((alpha_in_host && alpha=0) && (A=NULL || B=NULL))
-    bool alpha_A_B_violation = (!alpha || ((pointermode || (*((float*)alpha))) && (!a || !b)));
+    bool alpha_A_B_violation = (!alpha || ((pointermode || ((!a || !b) && *((float*)alpha)))));
     // pointers must be valid
     if(n && ((k && alpha_A_B_violation) || !c || !d))
         return rocblaslt_status_invalid_pointer;
