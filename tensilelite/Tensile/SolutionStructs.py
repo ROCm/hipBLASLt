@@ -2605,8 +2605,11 @@ class Solution(collections.abc.Mapping):
               ldsPadA = ((16 * state["VectorWidthA"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile0"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
             if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadA == 0:
               ldsPadA = 16 // state["ProblemType"]["DataType"].numBytes()
-          else:
-            ldsPadA = 0
+          else: # mac instruction
+            if state["ProblemType"]["TLUA"]:
+              ldsPadA = 0
+            else:
+              ldsPadA = state["VectorWidthA"]
         else:
           ldsPadA = max(state["GlobalReadVectorWidthA"],optPadA)
           ## turn-off padding for directToLds
@@ -2623,7 +2626,10 @@ class Solution(collections.abc.Mapping):
             if state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadB == 0:
               ldsPadB = 16 // state["ProblemType"]["DataType"].numBytes()
           else:
-            ldsPadB = 0
+            if state["ProblemType"]["TLUB"]:
+              ldsPadB = 0
+            else:
+              ldsPadB = state["VectorWidthB"]
         else:
           ldsPadB = max(state["GlobalReadVectorWidthB"],optPadB)
           if state["DirectToLdsB"]:
