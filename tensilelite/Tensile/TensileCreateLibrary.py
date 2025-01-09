@@ -256,6 +256,8 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
 
   print1(f"Number of duplicates: {duplicates}")
 
+  uniqueAsmKernels = [k for k in asmKernels if not k.duplicate]
+
   numAsmKernels = len(asmKernels)
   numKernels = len(kernels)
   assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
@@ -266,8 +268,8 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
   unaryProcessKernelSource = functools.partial(processKernelSource, kernelWriterAssembly, TensileInstructions())
   unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
-  ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly, unaryProcessKernelSource), asmKernels, "Generating assembly kernels", multiArg=False)
-  buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
+  ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly, unaryProcessKernelSource), uniqueAsmKernels, "Generating assembly kernels", multiArg=False)
+  buildAssemblyCodeObjectFiles(asmToolchain, uniqueAsmKernels, kernelWriterAssembly, outputPath, compress)
 
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
