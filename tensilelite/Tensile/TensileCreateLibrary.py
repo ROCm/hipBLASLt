@@ -269,7 +269,7 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
   unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
   ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly, unaryProcessKernelSource), uniqueAsmKernels, "Generating assembly kernels", multiArg=False)
-  buildAssemblyCodeObjectFiles(asmToolchain, uniqueAsmKernels, kernelWriterAssembly, outputPath, compress)
+  buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
