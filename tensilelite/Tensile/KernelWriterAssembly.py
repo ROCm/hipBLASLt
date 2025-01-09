@@ -2272,6 +2272,15 @@ class KernelWriterAssembly(KernelWriter):
       module.add(ValueSet(name="globalReadOffsetB%s" % self.states.indexChars[index], value=0))
     return module
 
+  def alignTo(self, dstBase: Union[int, str], srcBase: Union[int, str], alignment: int) -> Module:
+    assert (alignment & (alignment - 1)) == 0 and f"Alignment must be power of two"
+    module = Module()
+    module.addComment(f"Align to {alignment}")
+    module.add(SAddU32(sgpr(dstBase), sgpr(srcBase), alignment-1))
+    module.add(SLShiftRightB32(dst=sgpr(dstBase), src=sgpr(dstBase), shiftHex=log2(alignment)))
+    module.add(SLShiftLeftB32(dst=sgpr(dstBase), src=sgpr(dstBase), shiftHex=log2(alignment)))
+    return module
+
   ##############################################################################
   # Global Read Addresses: Tile Offsets A/B
   ##############################################################################
@@ -3029,12 +3038,15 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SLShiftRightB32(dst=sgpr(stmp), src=size, shiftHex=0x1, comment="(size/2)"))
             module.add(SSubU32(dst=sgpr(stmp), src0=sgpr(stmp), src1=0x1, comment="(size/2-1)"))
           else:
-            if tP["isA"] and tP["isSwizzled"] and idx == kernel["ProblemType"]["Index0"]:
-              module.addComment("Align M to 16")
-              module.add(SAddU32(sgpr(stmp), sgpr("SizeI"), 15))
-              module.add(SLShiftRightB32(dst=sgpr(stmp), src=sgpr(stmp), shiftHex=4))
-              module.add(SLShiftLeftB32(dst=sgpr(stmp), src=sgpr(stmp), shiftHex=4))
-              module.add(SSubU32(dst=sgpr(stmp), src0=sgpr(stmp), src1=1, comment="(size-1)"))
+            if tP["isA"] and tP["isSwizzled"]:
+              if idx in kernel["ProblemType"]["IndicesSummation"]:
+                module.addModuleAsFlatItems(self.alignTo(stmp, "SizeL", 32))
+                module.add(SSubU32(dst=sgpr(stmp), src0=sgpr(stmp), src1=1, comment="(size-1)"))
+              elif idx == kernel["ProblemType"]["Index0"]:
+                module.addModuleAsFlatItems(self.alignTo(stmp, "SizeI", 16))
+                module.add(SSubU32(dst=sgpr(stmp), src0=sgpr(stmp), src1=1, comment="(size-1)"))
+              else:
+                module.add(SSubU32(dst=sgpr(stmp), src0=size, src1=0x1, comment="(size-1)"))
             else:
               module.add(SSubU32(dst=sgpr(stmp), src0=size, src1=0x1, comment="(size-1)"))
           module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp), sgpr(stmp+1), stride, \
@@ -3136,10 +3148,7 @@ class KernelWriterAssembly(KernelWriter):
     graIdx = 0
 
     if tP["isA"] and tP["isSwizzled"]:
-      module.addComment("Align StrideA0I to 32")
-      module.add(SAddU32(sgpr("StrideA0I"), sgpr("StrideA0I"), 31))
-      module.add(SLShiftRightB32(sgpr("StrideA0I"), src=sgpr("StrideA0I"), shiftHex=hex(5)))
-      module.add(SLShiftLeftB32(sgpr("StrideA0I"), src=sgpr("StrideA0I"), shiftHex=hex(5)))
+      module.addModuleAsFlatItems(self.alignTo("StrideA0I", "StrideA0I", 32))
 
     if kernel["BufferLoad"]:
       # maxAddrSgpr = size[n] * stride[n-1]
@@ -5399,12 +5408,12 @@ class KernelWriterAssembly(KernelWriter):
                 shiftK.add(SMinI32(dst=sgpr(loopCntSgpr), src0=sgpr(loopCounterName), src1=sgpr("LSUTailLoopOffset"), comment="check lsu bound"))
               shiftK.add(VCmpGEI32(dst=sgpr(tmpSgprX2, self.states.laneSGPRCount), src0=vgpr(kReg), src1=sgpr(loopCntSgpr), comment="check K index >= Size L"))
 
-            if not tPA["isSwizzled"]:
-              for bk in range(0, vgprPerSet0Group):
-                for a in range(0, kernel["MIWaveTileA"]):
-                  for iui in range(0, innerUnroll):
-                    aStr = vgpr(self.generateSrcStrForMFMA(kernel, tPA, innerUnroll, vregSetIdx, vgprPerInputA, m, u, iui, a, bk=bk + group * vgprPerSet0Group), 1)
-                    shiftK.add(VCndMaskB32(dst=aStr, src0=aStr, src1=hex(0), src2=sgpr(tmpSgprX2, self.states.laneSGPRCount), comment="set 0 if K_idx >= sizeL"))
+            #if not tPA["isSwizzled"]:
+            for bk in range(0, vgprPerSet0Group):
+              for a in range(0, kernel["MIWaveTileA"]):
+                for iui in range(0, innerUnroll):
+                  aStr = vgpr(self.generateSrcStrForMFMA(kernel, tPA, innerUnroll, vregSetIdx, vgprPerInputA, m, u, iui, a, bk=bk + group * vgprPerSet0Group), 1)
+                  shiftK.add(VCndMaskB32(dst=aStr, src0=aStr, src1=hex(0), src2=sgpr(tmpSgprX2, self.states.laneSGPRCount), comment="set 0 if K_idx >= sizeL"))
 
           if kernel["ProblemType"]["Sparse"] == 2 and numMIInput//8 >= 1:
             shiftK.add(vectorStaticRemainder(dummy, kReg, "Serial", kernel["WavefrontSize"], tmpVgpr, tmpSgprInfo))
