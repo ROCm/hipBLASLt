@@ -83,7 +83,7 @@ def run_test(args):
     elif args.emulation == "regression":
         run_cmd(args, "--gtest_filter=*quick*")
     elif args.emulation == "extended":
-         print("There is no test for extended test cases.")
+        run_cmd(args, "--gtest_filter=*pre_checkin*:*nightly*")
 
     if (os.curdir != cwd):
         os.chdir( cwd )
