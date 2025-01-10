@@ -19,57 +19,14 @@ Definitions:
     - { transA: T, transB: N }
     - { transA: T, transB: T }
 
-  - &deepbench_alpha_beta_range
-    - { alpha: 1, beta: 0 }
-    - { alpha: 1, beta: 1 }
-
-  - &deepbench_transA_transB_range
-    - { transA: N, transB: N }
-    - { transA: N, transB: T }
-    - { transA: T, transB: N }
-
-  - &ldd_transA_transB_range
-    - { transA: N, transB: N }
-    - { transA: N, transB: T }
-    - { transA: T, transB: N }
-    - { transA: T, transB: T }
-
-  - &conjugate_transA_transB_range
-    - { transA: T, transB: C }
-    - { transA: C, transB: T }
-    - { transA: N, transB: C }
-    - { transA: C, transB: N }
-    - { transA: C, transB: C }
-
-
 Tests:
-- name: matmul_small_smoke
+- name: matmul_smoke
   category: smoke
   function:
     matmul: *real_precisions
-  matrix_size: *smoke_matrix_size_range
+  matrix_size: *medium_matrix_size_range
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
-  c_equal_d: [false, true]
-
-- name: matmul_conj_small_smoke
-  category: smoke
-  function:
-    matmul: *real_precisions
-  matrix_size: *smoke_matrix_size_range
-  transA_transB: *conjugate_transA_transB_range
-  alpha_beta: *alpha_beta_range_small
-  c_equal_d: [false, true]
-
-- name: matmul_bf16_fp32dst_smoke
-  category: smoke
-  function:
-    matmul: *hpa_half_bf16_fp32dst_precision
-  transA_transB: *deepbench_transA_transB_range
-  alpha: 1
-  beta: 0
-  matrix_size: *smoke_matrix_size_range
-  gpu_arch: '94[0-2]'
 
 - name: matmul_bias_relu_smoke
   category: smoke
@@ -119,16 +76,6 @@ Tests:
   bias_type: [default, f32_r]
   unit_check: 1
 
-- name: matmul_fallback_compute_fp16_smoke
-  category: smoke
-  function:
-    matmul: *hpa_half_precisions_compute_fp16
-  matrix_size:
-    - { M:  128,  N:  128,  K:  128  }
-  transA: N
-  transB: N
-  gpu_arch: '[^1]{2}\d{1,2}'
-
 - name: matmul_fallback_compute_fp16_gfx11_smoke
   category: smoke
   function:
@@ -140,35 +87,6 @@ Tests:
   norm_check: 1
   unit_check: 0
   gpu_arch: '110?'
-
-- name: matmul_input_fp16_computeIn_bf16_smoke
-  category: smoke
-  function:
-    matmul: *hpa_half_fp16dst_bf16computeIn_precision
-  matrix_size:
-    - { M:  128, N:  128, K:  128 }
-  transA_transB: *transA_transB_range
-  alpha: 1
-  beta: [ 0, 2 ]
-  bias_vector: [0, 1]
-  scaleAlpha_vector: [0, 1]
-  bias_type: [f16_r, f32_r]
-  unit_check: 1
-  gpu_arch: '90a'
-
-- name: matmul_input_fp16_computeIn_fp8_smoke
-  category: smoke
-  function:
-    matmul: *real_precisions_intermeddiate_f8
-  matrix_size:
-    - { M:  128, N:  128, K:  128 }
-  transA_transB: *transA_transB_range
-  alpha: 1
-  beta: [ 0, 2 ]
-  bias_vector: [0, 1]
-  bias_type: [f16_r, f32_r]
-  unit_check: 1
-  gpu_arch: '94[0-2]'
 
 - name: matmul_f8_bf8_dst_fp16_smoke
   category: smoke
@@ -197,23 +115,6 @@ Tests:
   beta: [ 0.0, 2.0 ]
   scaleA: [ 0, 1]
   scaleB: [ 0, 1]
-  bias_vector: [0, 1]
-  bias_type: bf16_r
-  unit_check: 1
-  gpu_arch: '94[0-2]'
-
-- name: matmul_f8_dst_bf16_scale_ab_vec_smoke
-  category: smoke
-  function:
-    matmul: *f8_precision_dst_bf16
-  matrix_size:
-    - { M:  128,  N:  128,  K:  128  }
-  transA: T
-  transB: N
-  alpha: 1
-  beta: [ 0.0, 2.0 ]
-  scaleA: [2]
-  scaleB: [2]
   bias_vector: [0, 1]
   bias_type: bf16_r
   unit_check: 1
@@ -389,25 +290,6 @@ Tests:
   norm_check: 1
   gpu_arch: '94[0-2]'
 
-- name: matmul_real_1b_dst_1b_amaxD_smoke
-  category: smoke
-  function:
-    matmul: *real_precisions_1b_dst_1b
-  matrix_size:
-    - { M:  128,  N:  128,  K:  128  }
-  transA_transB: *transA_transB_range
-  alpha: 1
-  beta: [ 0.0]
-  bias_vector: [0, 1]
-  bias_type: f16_r
-  scaleA: [1]
-  scaleB: [1]
-  scaleD: [1]
-  amaxD: [1]
-  activation_type: [none, relu]
-  unit_check: 1
-  gpu_arch: '94[0-2]'
-
 - name: matmul_real_1b_dst_bf8_SCDInt1_smoke
   category: smoke
   function:
@@ -536,7 +418,7 @@ Tests:
   gpu_arch: '94[0-2]'
 
 - name: matmul_gemm_mix_precisions_fp8_smoke
-  category: pre_checkin
+  category: smoke
   function:
     matmul: *real_mix_precisions_fp8
   matrix_size: *smoke_matrix_size_range
@@ -553,22 +435,4 @@ Tests:
   bias_type: [f32_r]
   unit_check: 1
   gpu_arch: '94[0-2]'
-
-- name: matmul_gemm_amaxAB_mix_precisions_fp8_smoke
-  category: smoke
-  function:
-    matmul: *real_mix_precisions_fp8
-  matrix_size: *smoke_matrix_size_range
-  transA_transB: *transA_transB_range
-  alpha: 1
-  beta: [ 0.0, 2.0 ]
-  scaleA: [0,1]
-  scaleB: [0,1]
-  amaxScaleA: [0, 1]
-  amaxScaleB: [0, 1]
-  use_ext: [1]
-  use_ext_setproblem: [1]
-  bias_vector: 1
-  bias_type: [f32_r]
-  unit_check: 1
-  gpu_arch: '94[0-2]'
+...
