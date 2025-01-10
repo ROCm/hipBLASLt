@@ -498,6 +498,48 @@ class StoreState:
 
             (d1,d0,vc1,vc0) = element
 
+            #print "Edge=", edge, element
+            sumIdx = 0
+            if kernel["LocalSplitU"] > 1:
+                if len(self.elementSumIdx) == 0:
+                    sumIdx = kw.states.c.startVgprValu
+                else:
+                    sumIdx = self.elementSumIdx[-1] + self.cfg.numVgprPerValuC * self.cfg.gwvw
+            else:
+                bestVw                  = kernel["VectorWidthA"]
+                elementsLoadedPerVw     = kernel["NumThreads"] * bestVw
+                elementsLoadedPerbestVw = kernel["NumThreads"] * kernel["StoreVectorWidth"]
+
+                if elementsLoadedPerVw < elementsLoadedPerbestVw:
+                    bestVw = kernel["StoreVectorWidth"]
+
+                if kernel["EnableMatrixInstruction"]:
+                    alignment = self.cfg.numVgprPerValuC * self.cfg.gwvw
+                    sumIdx    = kw.vgprPool.checkOutAligned(self.cfg.numVgprPerValuC*self.cfg.gwvw, alignment, "vgprValuC") // self.cfg.numVgprPerValuC
+                else:
+                    sumIdx = kw.states.c.startVgprValu + vc0 + d0*kernel["VectorWidthA"] + vc1*kernel["ThreadTile0"] + d1*kernel["VectorWidthA"]*kernel["ThreadTile0"]
+            self.elementSumIdx.append(sumIdx) # sumIdx is an element idx, need to div/2 for half
+
+        for elementIdx in range(0, len(batchElements)):
+            # Create the AddrCalc for each memory load/store
+            # This is the control code that sets up the dest, source, offsets, etc and
+            # identifies cases where the AddrCalc is a new row and therefore needs some
+            # additional math.  Each AddrCalc contains isolated state sufficient to
+            # perform any needed range checks and address calculations for the element.
+            #
+            # The AddrCalc creation code here maintains state across elements (including
+            # across write batches) to remove replicated calculations.
+            #
+            # Later the AddrCalc::emitAddressSetupCode will emit the necessary code
+            # Also allocate VGPR resources here, if needed.
+
+            element      = batchElements[elementIdx]
+            coordOffset0 = self.elementCoord0[elementIdx]
+            coordOffset1 = self.elementCoord1[elementIdx]
+            newCoord1    = (self.firstBatch and elementIdx==0) or (coordOffset1 != self.lastCoordOffset1)
+
+            (d1,d0,vc1,vc0) = element
+
             # if numVgprsPerDataPerVI == 0.5, then two consecutive elements
             # should have same data pointer, next should move.
             if self.cfg.numVgprsPerDataPerVI > 0:
@@ -591,28 +633,6 @@ class StoreState:
                 else:
                     mask = batchElementSgprs + self.cfg.numMaskSgprPerBatch + elementIdx * self.cfg.numMaskSgprPerElement
                 self.elementMask.append(mask)
-
-            #print "Edge=", edge, element
-            sumIdx = 0
-            if kernel["LocalSplitU"] > 1:
-                if len(self.elementSumIdx) == 0:
-                    sumIdx = kw.states.c.startVgprValu
-                else:
-                    sumIdx = self.elementSumIdx[-1] + self.cfg.numVgprPerValuC * self.cfg.gwvw
-            else:
-                bestVw                  = kernel["VectorWidthA"]
-                elementsLoadedPerVw     = kernel["NumThreads"] * bestVw
-                elementsLoadedPerbestVw = kernel["NumThreads"] * kernel["StoreVectorWidth"]
-
-                if elementsLoadedPerVw < elementsLoadedPerbestVw:
-                    bestVw = kernel["StoreVectorWidth"]
-
-                if kernel["EnableMatrixInstruction"]:
-                    alignment = self.cfg.numVgprPerValuC * self.cfg.gwvw
-                    sumIdx    = kw.vgprPool.checkOutAligned(self.cfg.numVgprPerValuC*self.cfg.gwvw, alignment, "vgprValuC") // self.cfg.numVgprPerValuC
-                else:
-                    sumIdx = kw.states.c.startVgprValu + vc0 + d0*kernel["VectorWidthA"] + vc1*kernel["ThreadTile0"] + d1*kernel["VectorWidthA"]*kernel["ThreadTile0"]
-            self.elementSumIdx.append(sumIdx) # sumIdx is an element idx, need to div/2 for half
 
             if self.optSingleColVgpr:
                 # use same address vgpr for all
