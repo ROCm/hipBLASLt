@@ -179,6 +179,14 @@ install_packages( )
     library_dependencies_fedora+=("msgpack-devel")
   fi
 
+  if [[ "${use_rocroller}" == true ]]; then
+    library_dependencies_ubuntu+=( "rocm-llvm-dev" "libboost-container1.74-dev" "libzstd-dev" "libfmt-dev" "libopenblas-dev" )
+  fi
+
+  if [[ "${legacy_hipblas_direct}" == false ]]; then
+    library_dependencies_ubuntu+=( "hipblas-common-dev" )
+  fi
+
   # wget is needed for msgpack in this case
   if [[ ("${ID}" == "ubuntu") && ("${VERSION_ID}" == "16.04") && "${tensile_msgpack_backend}" == true ]]; then
     if ! $(dpkg -s "libmsgpackc2" &> /dev/null) || $(dpkg --compare-versions $(dpkg-query -f='${Version}' --show libmsgpackc2) lt 2.1.5-1); then
@@ -410,6 +418,9 @@ no_compress=false
 experimental=false
 disable_hipblaslt_marker=false
 enable_tensile_marker=false
+force_rocroller=false
+use_rocroller=false
+internal_mrisas=
 logic_filter=
 
 
@@ -425,7 +436,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,no-lazy-library-loading,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,no-compress,experimental,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker,logic-yaml-filter: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,no-lazy-library-loading,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,no-compress,experimental,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker,force_rocroller,internal_mrisas:,logic-yaml-filter: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -545,6 +556,12 @@ while true; do
         --enable-tensile-marker)
             enable_tensile_marker=true
             shift;;
+        --force_rocroller)
+            force_rocroller=true
+            shift;;
+        --internal_mrisas)
+            internal_mrisas=${2}
+            shift 2;;
         --logic_yaml_filter|--logic-yaml-filter)
             logic_filter=${2}
             shift 2;;
@@ -611,6 +628,11 @@ if [[ "${build_hip_clang}" == true ]]; then
   export PATH=${rocm_path}/bin:${rocm_path}/hip/bin:${rocm_path}/llvm/bin:${PATH}
 fi
 
+# Use RocRoller
+if [[ "${force_rocroller}" == true || ${gpu_architecture} == *"gfx950"* || ${gpu_architecture} == *"all"* ]]; then
+  use_rocroller=true
+fi
+
 # #################################################
 # dependencies
 # #################################################
@@ -618,7 +640,7 @@ if [[ "${install_dependencies}" == true ]]; then
   install_packages
 
   CMAKE_VERSION=$(cmake --version | grep -oP '(?<=version )[^ ]*' )
-  if [ -z "$CMAKE_VERSION" ] || $(dpkg --compare-versions $CMAKE_VERSION lt 3.25.2); then
+  if [ -z "$CMAKE_VERSION" ] || $(dpkg --compare-versions $CMAKE_VERSION lt 3.22); then
       if $update_cmake == true; then
         pushd
         printf "\033[32mBuilding \033[33mcmake\033[32m from source; installing into \033[33m/usr/local\033[0m\n"
@@ -633,7 +655,7 @@ if [[ "${install_dependencies}" == true ]]; then
         sudo make install
         popd
       else
-          echo "hipBLASLt requires CMake version >= 3.25.2 and CMake version ${CMAKE_VERSION} is installed. Run install.sh again with --cmake_install flag and CMake version 3.16.8 will be installed to /usr/local"
+          echo "hipBLASLt requires CMake version >= 3.22 and CMake version ${CMAKE_VERSION} is installed. Run install.sh again with --cmake_install flag and CMake version 3.25.2 will be installed to /usr/local"
           exit 2
       fi
   fi
@@ -812,6 +834,13 @@ pushd .
 
   if [[ "${enable_tensile_marker}" == true ]]; then
     tensile_opt="${tensile_opt} -DTensile_ENABLE_MARKER=ON"
+  fi
+
+  if [[ "${use_rocroller}" == true ]]; then
+    cmake_common_options="${cmake_common_options} -DUSE_ROCROLLER=ON"
+    if [[ -n "${internal_mrisas}" ]]; then
+      cmake_common_options="${cmake_common_options} -DROCROLLER_USE_PREGENERATED_ARCH_DEF=OFF -DINTERNAL_MRISAS=${internal_mrisas}"
+    fi
   fi
 
   echo $cmake_common_options

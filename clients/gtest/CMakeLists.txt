@@ -39,6 +39,11 @@ add_executable( hipblaslt-test ${hipblaslt_test_source} ${hipblaslt_test_bench_c
 
 target_compile_definitions( hipblaslt-test PRIVATE GOOGLE_TEST )
 
+if( USE_ROCROLLER )
+   set_source_files_properties(${mxDataGen_SRC} PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-std=c++20")
+endif()
+
+
 if( LEGACY_HIPBLAS_DIRECT )
   target_compile_definitions(hipblaslt-test PUBLIC LEGACY_HIPBLAS_DIRECT )
 endif()
@@ -125,6 +130,7 @@ add_custom_command( OUTPUT "${HIPBLASLT_TEST_DATA}"
                             matmul_gtest.yaml
                             auxiliary_gtest.yaml
                             smoke_gtest.yaml
+                            rocroller_gtest.yaml
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
 add_custom_target( hipblaslt-test-data
                    DEPENDS "${HIPBLASLT_TEST_DATA}" )

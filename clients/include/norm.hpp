@@ -109,6 +109,9 @@ template <
 #ifdef ROCM_USE_FLOAT8
                        || std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_bf8>{}
 #endif
+                       || std::is_same<T, hipblaslt_f6>{} 
+                       || std::is_same<T, hipblaslt_bf6>{} 
+                       || std::is_same<T, hipblaslt_f4>{} 
                        ),
                      int>
     = 0>
@@ -145,7 +148,6 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
     double cpu_norm = xlange(&norm_type, &m, &n, hCPU_double.data(), &l, work);
     m_axpy(&size, &alpha, hCPU_double.data(), &incx, hGPU_double.data(), &incx);
     double error = xlange(&norm_type, &m, &n, hGPU_double.data(), &l, work) / cpu_norm;
-
     return error;
 }
 
@@ -190,7 +192,11 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 #ifdef ROCM_USE_FLOAT8
 template <
     typename T,
-    std::enable_if_t<(std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_bf8>{}), int>
+    std::enable_if_t<(std::is_same<T, hipblaslt_f6>{}
+                      || std::is_same<T, hipblaslt_bf6>{}
+                      || std::is_same<T, hipblaslt_f4>{}
+                      || std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_bf8>{} ),
+                     int>
     = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
@@ -521,6 +527,33 @@ double norm_check_general(char        norm_type,
                                                  static_cast<hipblasLtInt8*>(hCPU),
                                                  static_cast<hipblasLtInt8*>(hGPU),
                                                  batch_count);
+    case HIP_R_6F_E2M3:
+        return norm_check_general<hipblaslt_f6>(norm_type,
+                                                    M,
+                                                    N,
+                                                    lda,
+                                                    stride_a,
+                                                    static_cast<hipblaslt_f6*>(hCPU),
+                                                    static_cast<hipblaslt_f6*>(hGPU),
+                                                    batch_count);
+    case HIP_R_6F_E3M2:
+        return norm_check_general<hipblaslt_bf6>(norm_type,
+                                                    M,
+                                                    N,
+                                                    lda,
+                                                    stride_a,
+                                                    static_cast<hipblaslt_bf6*>(hCPU),
+                                                    static_cast<hipblaslt_bf6*>(hGPU),
+                                                    batch_count);
+    case HIP_R_4F_E2M1:
+        return norm_check_general<hipblaslt_f4>(norm_type,
+                                                    M,
+                                                    N,
+                                                    lda,
+                                                    stride_a,
+                                                    static_cast<hipblaslt_f4*>(hCPU),
+                                                    static_cast<hipblaslt_f4*>(hGPU),
+                                                    batch_count);
     default:
         hipblaslt_cerr << "Error type in norm_check_general" << std::endl;
         return 0;
@@ -552,9 +585,20 @@ bool norm_check(double norm_error)
     if(std::is_same<T, hipblaslt_bf8>{})
         return norm_error < 0.25;
 #endif
+    // TODO: find a suitable rnom value for f6 and f4
+    if(std::is_same<T, hipblaslt_f6>{})
+        return norm_error < 0.5;
+    if(std::is_same<T, hipblaslt_bf6>{})
+        return norm_error < 0.5;
+    if(std::is_same<T, hipblaslt_f4>{})
+        return norm_error < 0.5;
     return false;
 }
 
+// TODO: norm_check determines the required norm solely based on
+//       To (type). This might cause tests to fail when the input
+//       matrices are MX types (F4/F8/F6). A better way is
+//       needed to determine the required norm for MX types.
 bool norm_check(double norm_error, hipDataType type)
 {
     switch(type)
@@ -581,6 +625,11 @@ bool norm_check(double norm_error, hipDataType type)
         return norm_error < 0.0001;
     case HIP_R_8I:
         return norm_error < 0.01;
+    // TODO: find a suitable rnom value for f6 and f4
+    case HIP_R_6F_E2M3:
+    case HIP_R_6F_E3M2:
+    case HIP_R_4F_E2M1:
+        return norm_error < 0.5;
     default:
         return false;
     }

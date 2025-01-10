@@ -60,6 +60,7 @@ typedef enum class _hipblaslt_scaling_format
     none   = 0,
     Scalar = 1,
     Vector = 2,
+    Block  = 3,
 } hipblaslt_scaling_format;
 
 inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,

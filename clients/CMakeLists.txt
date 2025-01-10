@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-cmake_minimum_required( VERSION 3.25.2 )
+cmake_minimum_required( VERSION 3.22...3.25.2 )
 
 #add_definitions(-D_HIPBLASLT_INTERNAL_BFLOAT16_)
 
@@ -114,6 +114,17 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
       ../common/hipblaslt_init_device.cpp
       ${BLIS_CPP}
     )
+
+  if(USE_ROCROLLER)
+      add_definitions(-DUSE_ROCROLLER)
+      list( APPEND COMMON_LINK_LIBS mxDataGenerator )
+      set( mxDataGen_SRC
+       ../common/mxDataGen.cpp
+      )
+      list(APPEND hipblaslt_test_bench_common
+       ../common/mxDataGen.cpp
+       )
+  endif()
 
   if( BUILD_CLIENTS_BENCHMARKS )
     add_subdirectory( benchmarks )

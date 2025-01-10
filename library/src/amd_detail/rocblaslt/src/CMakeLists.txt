@@ -130,12 +130,20 @@ endif()
   set( Tensile_SRC
     src/amd_detail/rocblaslt/src/tensile_host.cpp
   )
+  set_source_files_properties(src/amd_detail/rocblaslt/src/tensile_host.cpp PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-std=c++17")
 
   set( Tensile_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/Tensile
   )
 
 endif( ) # BUILD_WITH_TENSILE
+
+if(USE_ROCROLLER)
+  set( RocRoller_SRC
+    src/amd_detail/rocblaslt/src/rocroller_host.cpp
+  )
+  set_source_files_properties(${RocRoller_SRC} PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-std=c++20;-x;c++")
+endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/CompileSourceKernel.cmake)
 

@@ -64,7 +64,9 @@ void cblas_gemm(hipblasOperation_t       transA,
                 hipDataType              tc,
                 hipDataType              tciA,
                 hipDataType              tciB,
-                bool                     alt = false);
+                bool                     alt = false,
+		bool                     isScaleAMXFormat = false,
+		bool                     isScaleBMXFormat = false);
 
 inline void cblas_gemm(hipblasOperation_t       transA,
                        hipblasOperation_t       transB,
@@ -91,7 +93,9 @@ inline void cblas_gemm(hipblasOperation_t       transA,
                        hipDataType              tc,
                        hipDataType              tciA,
                        hipDataType              tciB,
-                       bool                     alt = false)
+                       bool                     alt = false,
+		       bool                     isScaleAMXFormat = false,
+		       bool                     isScaleBMXFormat = false)
 {
     switch(tc)
     {
@@ -149,7 +153,10 @@ inline void cblas_gemm(hipblasOperation_t       transA,
                           tc,
                           tciA,
                           tciB,
-                          alt);
+                          alt,
+			  isScaleAMXFormat,
+                          isScaleBMXFormat);
+			  
         return;
     case HIP_R_64F:
         cblas_gemm<double>(transA,

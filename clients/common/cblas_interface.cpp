@@ -217,7 +217,8 @@ void cast_mul(customVector<TcCast>& dst,
               bool                  transA,
               int64_t               m,
               int64_t               k,
-              size_t                size)
+              size_t                size,
+	      bool                  isMXFormat = false)
 {
     if constexpr((std::is_same<TcCast, float>::value)
                  || (!std::is_same<TiA, hipblaslt_bf8_fnuz>::value
@@ -236,20 +237,34 @@ void cast_mul(customVector<TcCast>& dst,
 #pragma omp for
                     for(size_t i = 0; i < size; i++)
                     {
-                        auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
-                        dst[i]      = static_cast<TcCast>(A[i]) * scaleA * AlphaVec[i % m];
+                        if(isMXFormat)
+                        {
+                            dst[i]      = static_cast<TcCast>(A[i]) * AlphaVec[i % m];
+                        }
+                        else
+                        {
+                            auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
+                            dst[i]      = static_cast<TcCast>(A[i]) * scaleA * AlphaVec[i % m];
+                        }
                     }
-                }
+                }  // transA
                 else
                 {
 #pragma omp for
                     for(size_t i = 0; i < size; i++)
                     {
-                        auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
-                        dst[i]      = static_cast<TcCast>(A[i]) * scaleA * AlphaVec[i / k];
+                        if(isMXFormat)
+                        {
+                            dst[i]      = static_cast<TcCast>(A[i]) * AlphaVec[i / k];
+                        }
+                        else
+                        {
+                            auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
+                            dst[i]      = static_cast<TcCast>(A[i]) * scaleA * AlphaVec[i / k];
+                        }
                     }
                 }
-            }
+            } // AlphaVec != nullptr
             else
             {
                 if(transA)
@@ -257,17 +272,31 @@ void cast_mul(customVector<TcCast>& dst,
 #pragma omp for
                     for(size_t i = 0; i < size; i++)
                     {
-                        auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
-                        dst[i]      = static_cast<TcCast>(A[i] * scaleA);
+                        if(isMXFormat)
+                        {
+                            dst[i]      = static_cast<TcCast>(A[i]);
+                        }
+                        else
+                        {
+                            auto scaleA = isScaleAVec ? scaleAVec[i % m] : scaleAVec[0];
+                            dst[i]      = static_cast<TcCast>(A[i] * scaleA);
+                        }
                     }
                 }
-                else
+                else // not transA
                 {
 #pragma omp for
                     for(size_t i = 0; i < size; i++)
                     {
-                        auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
-                        dst[i]      = static_cast<TcCast>(A[i] * scaleA);
+                        if(isMXFormat)
+                        {
+                            dst[i]      = static_cast<TcCast>(A[i]);
+                        }
+                        else
+                        {
+                            auto scaleA = isScaleAVec ? scaleAVec[i / k] : scaleAVec[0];
+                            dst[i]      = static_cast<TcCast>(A[i] * scaleA);
+                        }
                     }
                 }
             }
@@ -287,7 +316,8 @@ void cast_mul(customVector<TcCast>& dst,
               bool                  transA,
               int64_t               m,
               int64_t               k,
-              size_t                size)
+              size_t                size,
+	      bool                  isMXFormat = false)
 {
     switch(TiA)
     {
@@ -300,7 +330,8 @@ void cast_mul(customVector<TcCast>& dst,
                                     transA,
                                     m,
                                     k,
-                                    size);
+                                    size,
+                                    isMXFormat);
         break;
     case HIP_R_64F:
         cast_mul<TcCast, Tc, double>(dst,
@@ -311,7 +342,8 @@ void cast_mul(customVector<TcCast>& dst,
                                      transA,
                                      m,
                                      k,
-                                     size);
+                                     size,
+                                     isMXFormat);
         break;
     case HIP_R_16F:
         cast_mul<TcCast, Tc, hipblasLtHalf>(dst,
@@ -322,7 +354,8 @@ void cast_mul(customVector<TcCast>& dst,
                                             transA,
                                             m,
                                             k,
-                                            size);
+                                            size,
+                                            isMXFormat);
         break;
     case HIP_R_16BF:
         cast_mul<TcCast, Tc, hip_bfloat16>(dst,
@@ -333,7 +366,8 @@ void cast_mul(customVector<TcCast>& dst,
                                            transA,
                                            m,
                                            k,
-                                           size);
+                                           size,
+                                           isMXFormat);
         break;
     case HIP_R_8F_E4M3_FNUZ:
         cast_mul<TcCast, Tc, hipblaslt_f8_fnuz>(dst,
@@ -344,7 +378,8 @@ void cast_mul(customVector<TcCast>& dst,
                                                 transA,
                                                 m,
                                                 k,
-                                                size);
+                                                size,
+                                                isMXFormat);
         break;
     case HIP_R_8F_E5M2_FNUZ:
         cast_mul<TcCast, Tc, hipblaslt_bf8_fnuz>(dst,
@@ -355,7 +390,8 @@ void cast_mul(customVector<TcCast>& dst,
                                                  transA,
                                                  m,
                                                  k,
-                                                 size);
+                                                 size,
+                                                 isMXFormat);
         break;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
@@ -367,7 +403,8 @@ void cast_mul(customVector<TcCast>& dst,
                                                transA,
                                                m,
                                                k,
-                                               size);
+                                               size,
+					       isMXFormat);
         break;
     case HIP_R_8F_E5M2:
         cast_mul<TcCast, Tc, hipblaslt_bf8>(dst,
@@ -378,7 +415,8 @@ void cast_mul(customVector<TcCast>& dst,
                                                 transA,
                                                 m,
                                                 k,
-                                                size);
+                                                size,
+						isMXFormat);
         break;
 #endif
     case HIP_R_32I:
@@ -892,7 +930,9 @@ void cblas_gemm(hipblasOperation_t       transA,
                 hipDataType              Tc_enum,
                 hipDataType              TciA,
                 hipDataType              TciB,
-                bool                     alt)
+                bool                     alt,
+		bool                     isScaleAMXFormat,
+		bool                     isScaleBMXFormat)
 {
     using IntTcCast = std::conditional_t<std::is_same<Tc, int32_t>::value, double, Tc>;
     // cblas does not support hipblasLtHalf, so convert to higher precision float
@@ -953,7 +993,8 @@ void cblas_gemm(hipblasOperation_t       transA,
     else
     {
         cast_mul<TcCast, Tc>(
-            A_Tc, A, TiA, isScaleAVec, scaleA_Tc, AlphaVec_Tc, transA == HIPBLAS_OP_N, m, k, sizeA);
+            A_Tc, A, TiA, isScaleAVec, scaleA_Tc, AlphaVec_Tc, transA == HIPBLAS_OP_N, m, k, sizeA,
+	        isScaleAMXFormat);
     }
 
     B_Tc.initialize(sizeB);
@@ -974,7 +1015,8 @@ void cblas_gemm(hipblasOperation_t       transA,
     else
     {
         cast_mul<TcCast, Tc>(
-            B_Tc, B, TiB, isScaleBVec, scaleB_Tc, nullptr, transB != HIPBLAS_OP_N, n, k, sizeB);
+            B_Tc, B, TiB, isScaleBVec, scaleB_Tc, nullptr, transB != HIPBLAS_OP_N, n, k, sizeB,
+	        isScaleBMXFormat);
     }
 
     if(To == Tc_enum)
@@ -1016,6 +1058,8 @@ void cblas_gemm(hipblasOperation_t       transA,
         {
             small_gemm<float>(transA, transB, m, n, k, alphaCast, A_Tc, lda, B_Tc, ldb, betaCast, C_Tc, ldc);
         }
+
+
     }
     else if constexpr(std::is_same<TcCast, double>::value)
     {
@@ -1082,7 +1126,9 @@ void cblas_gemm(hipblasOperation_t       transA,
                                  hipDataType              Tc_enum,     \
                                  hipDataType              TciA,        \
                                  hipDataType              TciB,        \
-                                 bool                     alt);
+                                 bool                     alt,         \
+				 bool                     isScaleAMXFormat,  \
+				 bool                     isScaleBMXFormat);
 
 CREATEFUNCTION(hipblasLtHalf)
 CREATEFUNCTION(float)

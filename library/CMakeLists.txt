@@ -70,7 +70,7 @@ set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 include(src/CMakeLists.txt)
 
 # Create hipBLASLt library
-add_library(hipblaslt ${hipblaslt_source} ${hipblaslt_headers_public})
+add_library(hipblaslt ${hipblaslt_source} ${RocRoller_SRC} ${hipblaslt_headers_public})
 add_library(roc::hipblaslt ALIAS hipblaslt)
 
 # Target compile definitions
@@ -164,6 +164,21 @@ endif()
 
 if( NOT BUILD_CUDA AND NOT LEGACY_HIPBLAS_DIRECT )
   target_link_libraries(hipblaslt INTERFACE roc::hipblas-common)
+endif()
+
+# RocRoller integration
+include(FetchContent)
+if(USE_ROCROLLER)
+  set(BUILD_TESTING OFF CACHE BOOL "Disable RocRoller tests")
+  FetchContent_Declare(
+    rocRoller
+    GIT_REPOSITORY https://github.com/ROCm/rocRoller.git
+    GIT_TAG 73af6118ffb05b8264308f04a0b8dd58dbd166a0
+  )
+  FetchContent_MakeAvailable(rocRoller)
+
+  target_link_libraries(hipblaslt PRIVATE rocroller_interface)
+  add_definitions(-DUSE_ROCROLLER)
 endif()
 
 # Target properties

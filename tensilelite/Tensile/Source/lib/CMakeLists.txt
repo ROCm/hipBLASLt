@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-cmake_minimum_required(VERSION 3.25.2)
+cmake_minimum_required(VERSION 3.22...3.25.2)
 
 if(NOT DEFINED TENSILE_ROOT)
     get_filename_component(TENSILE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" DIRECTORY)

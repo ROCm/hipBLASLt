@@ -69,7 +69,10 @@ thread_pool::thread_pool()
 
 thread_pool::~thread_pool()
 {
-    m_done = true;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_done = true;
+    }
     m_cond.notify_all();
     for(auto& thread : m_threads)
         thread.join();

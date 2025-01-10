@@ -276,8 +276,12 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
                                                       const void*               original_bias,
                                                       const void*  original_scaleAlphaVec,
                                                       const void*  alpha,
-                                                      const bool   isScaleAVec,
-                                                      const bool   isScaleBVec,
+                                                      const RocblasltContractionProblem::ScalingFormat scaleAType,
+                                                      const RocblasltContractionProblem::ScalingFormat scaleBType,
+						      const uint32_t scaleABlockRowSize,
+						      const uint32_t scaleABlockColSize,
+						      const uint32_t scaleBBlockRowSize,
+						      const uint32_t scaleBBlockColSize,
                                                       void*&       E,
                                                       int64_t&     lde,
                                                       int64_t&     batch_stride_e,
@@ -317,10 +321,26 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
     batch_stride_e = original_stride_e > 0 ? original_stride_e : original_lde * num_cols_e;
     if(E != nullptr && ((lde < num_rows_e) || (batch_stride_e < (num_cols_e * num_rows_e))))
         status = rocblaslt_status_invalid_value;
-    if(isScaleAVec != isScaleBVec)
+    if(scaleAType != RocblasltContractionProblem::ScalingFormat::None && scaleBType != RocblasltContractionProblem::ScalingFormat::None && scaleAType != scaleBType)
     {
-        log_error(__func__, "Scale A and Scale B must be both scalar or vector.");
+        log_error(__func__, "Scale A and Scale B must be both scalar, vector or block.");
         status = rocblaslt_status_invalid_value;
+    }
+    if(scaleAType == RocblasltContractionProblem::ScalingFormat::Block)
+    {
+	if(scaleABlockRowSize != 32 || scaleABlockColSize != 1)
+	{
+	    log_error(__func__, "ScaleA block row and column sizes currently only support 32x1");
+	    status = rocblaslt_status_invalid_value;
+	}
+    }
+    if(scaleBType == RocblasltContractionProblem::ScalingFormat::Block)
+    {
+	if(scaleBBlockRowSize != 1 || scaleBBlockColSize != 32)
+	{
+	    log_error(__func__, "ScaleB block row and column sizes currently only support 1x32");
+	    status = rocblaslt_status_invalid_value;
+	}
     }
     return status;
 }
@@ -460,8 +480,12 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                          matmul_descr->bias,
                                                          alphaVecPtr,
                                                          alpha,
-                                                         matmul_descr->isScaleAVec,
-                                                         matmul_descr->isScaleBVec,
+                                                         matmul_descr->scaleAType,
+                                                         matmul_descr->scaleBType,
+                                                         matmul_descr->scaleABlockRowSize,
+                                                         matmul_descr->scaleABlockColSize,
+                                                         matmul_descr->scaleBBlockRowSize,
+                                                         matmul_descr->scaleBBlockColSize,
                                                          E,
                                                          lde,
                                                          batch_stride_e,

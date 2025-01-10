@@ -25,7 +25,6 @@
  *******************************************************************************/
 
 #pragma once
-
 #include <hipblaslt/hipblaslt.h>
 
 union computeTypeInterface
@@ -61,6 +60,12 @@ constexpr auto hipblaslt_type2datatype()
         return HIP_R_32I;
     if(std::is_same<T, hipblasLtInt8>{})
         return HIP_R_8I;
+    if(std::is_same<T, hipblaslt_f6>{})
+        return HIP_R_6F_E2M3;
+    if(std::is_same<T, hipblaslt_bf6>{})
+        return HIP_R_6F_E3M2;
+    if(std::is_same<T, hipblaslt_f4>{})
+        return HIP_R_4F_E2M1;
 
     return HIP_R_16F; // testing purposes we default to f32 ex
 }
@@ -106,6 +111,9 @@ inline std::size_t realDataTypeSize(hipDataType dtype)
         {HIP_R_8F_E4M3, 1},
         {HIP_R_8F_E5M2, 1},
 #endif
+        {HIP_R_6F_E2M3, 1},
+        {HIP_R_6F_E3M2, 1},
+        {HIP_R_4F_E2M1, 1},
     };
 
     return dtypeMap.at(dtype);

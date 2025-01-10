@@ -31,4 +31,5 @@ if(NOT BUILD_CUDA)
                        src/amd_detail/hipblaslt-ext-op.cpp
                          ${hipblaslt_source_common}
                          ${rocblaslt_source})
+  set_source_files_properties(${hipblaslt_source} PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-std=c++17")
 endif()
