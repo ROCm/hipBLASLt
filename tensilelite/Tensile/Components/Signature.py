@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 from ..Component import Signature
 from ..Common import globalParameters
 from ..Utils import DataDirection
-from ..TensileInstructions import SignatureBase, getCOVFromParam
+from ..TensileInstructions import SignatureBase
 from ..TensileInstructions import SignatureValueKind as SVK
 from ..Activation import ActivationType
 
@@ -128,7 +128,7 @@ class SignatureDefault(Signature):
         sgprWgZ = 1 if kernel["ProblemType"]["NumIndicesC"] > 2 else 0
         signature = SignatureBase(kernelName=writer.states.kernelName,
                                     kernArgsVersion=kernel["InternalSupportParams"]["KernArgsVersion"],
-                                    codeObjectVersion=getCOVFromParam(kernel["CodeObjectVersion"]),
+                                    codeObjectVersion=kernel["CodeObjectVersion"],
                                     groupSegmentSize=group_segment_size,
                                     sgprWorkGroup=[1, 1, sgprWgZ],
                                     vgprWorkItem=0,

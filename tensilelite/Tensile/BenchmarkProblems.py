@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,6 +42,8 @@ from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionStructs import Solution, ProblemType, ProblemSizes
 from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
 from .CustomKernels import getCustomKernelConfig
+from .Toolchain.Assembly import AssemblyToolchain
+from .Toolchain.Source import SourceToolchain
 
 
 def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCompiler):
@@ -110,7 +112,8 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
     return solutions
 
 def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
-        biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes, cxxCompiler, assembler, offloadBundler):
+        biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes, \
+        asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain):
     """Write all the files needed for a given benchmarking step"""
 
     copyStaticFiles()
@@ -138,19 +141,19 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
 
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     kernelMinNaming = Solution.getMinNaming(kernels)
-    kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, cxxCompiler)
+    kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, srcToolchain.compiler)
 
     # write solution, kernels and CMake
     problemType = solutions[0]["ProblemType"]
-    codeObjectFiles, _ = writeSolutionsAndKernels( \
-            globalParameters["WorkingPath"], cxxCompiler, assembler, offloadBundler, \
+    codeObjectFiles, _= writeSolutionsAndKernels( \
+            globalParameters["WorkingPath"], asmToolchain, srcToolchain, \
             solutions, kernels, kernelHelperOjbs, \
             kernelWriterAssembly, errorTolerant=True )
     # ^ this is where solutions is mutated
 
     newLibraryDir = ensurePath(os.path.join(globalParameters["WorkingPath"], 'library'))
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")
-    newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, cxxCompiler)
+    newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, srcToolchain.compiler)
     newLibrary.applyNaming(kernelMinNaming)
     LibraryIO.write(newLibraryFile, Utils.state(newLibrary), globalParameters["LibraryFormat"])
 
@@ -192,7 +195,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
 
 
 def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeGroupIdx, useCache, 
-                         cxxCompiler: str, cCompiler: str, assembler: str, offloadBundler: str
+                         asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str
     ):
     """Run the benchmarking for a single entry in the BenchmarkProblems of a Tensile config"""
     benchmarkTestFails = 0
@@ -275,10 +278,10 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             maxPossibleSolutions = len(forkPermutations)
 
             regSolutions = generateForkedSolutions(benchmarkProcess.problemType, \
-                    benchmarkStep.constantParams, forkPermutations, cxxCompiler)
+                    benchmarkStep.constantParams, forkPermutations, srcToolchain.compiler)
             kcSolutions = generateCustomKernelSolutions(benchmarkProcess.problemType, \
                     benchmarkStep.customKernels, benchmarkStep.internalSupportParams, \
-                    not benchmarkStep.customKernelWildcard, cxxCompiler)
+                    not benchmarkStep.customKernelWildcard, srcToolchain.compiler)
 
             maxPossibleSolutions += len(kcSolutions)
             solutions = regSolutions + kcSolutions
@@ -307,7 +310,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             codeObjectFiles = writeBenchmarkFiles(stepBaseDir, solutions,      \
                     benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,    \
                     benchmarkStep.factorDimArgs, benchmarkStep.activationArgs, \
-                    benchmarkStep.icacheFlushArgs, shortName, [], cxxCompiler, assembler, offloadBundler)
+                    benchmarkStep.icacheFlushArgs, shortName, [], asmToolchain, srcToolchain)
             # ^ this mutates solutions
 
             # write cache data
@@ -341,7 +344,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
             writeClientConfigIni(True, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
                                  benchmarkStep.factorDimArgs, benchmarkStep.activationArgs,
-                                 benchmakrStep.icacheFlushArgs, conProblemType,
+                                 benchmarkStep.icacheFlushArgs, conProblemType,
                                  globalParameters["WorkingPath"], codeObjectFiles, resultsFileName,
                                  outFile)
 
@@ -356,7 +359,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         if not os.path.exists(resultsFileName) or globalParameters["ForceRedoBenchmarkProblems"]:
             libraryLogicPath = None
             forBenchmark = True
-            returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler)
+            returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, srcToolchain.compiler, cCompiler)
 
             if returncode:
                 benchmarkTestFails += 1
@@ -376,9 +379,9 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
     return (resultsFileBaseFinal, benchmarkTestFails)
 
 
-def main(config, useCache, cxxCompiler: str, cCompiler: str, assembler: str, offloadBundler: str):
+def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str): 
     """Entry point for the "BenchmarkProblems" section of a Tensile config yaml"""
-    ClientExecutable.getClientExecutable(cxxCompiler, cCompiler)
+    ClientExecutable.getClientExecutable(srcToolchain.compiler, cCompiler)
 
     if config is None:
         print(f'No config specified in {globalParameters["ConfigPath"]}, built client only')
@@ -417,7 +420,7 @@ def main(config, useCache, cxxCompiler: str, cCompiler: str, assembler: str, off
 
                 # benchmark problem size group
                 (resultsFileBaseFinal, benchmarkErrors) = \
-                        benchmarkProblemType(problemTypeConfig, sizeGroupConfig, idx, useCache, cxxCompiler, cCompiler, assembler, offloadBundler)
+                        benchmarkProblemType(problemTypeConfig, sizeGroupConfig, idx, useCache, asmToolchain, srcToolchain, cCompiler)
                 totalTestFails += benchmarkErrors
 
                 print("clientExit={} {} for {}" \

@@ -1,8 +1,31 @@
+################################################################################
+#
+# Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+################################################################################
+
 import os
 import re
 from pathlib import Path
 from typing import List, NamedTuple, Union
-from warnings import warn
 from subprocess import run, PIPE
 
 ROCM_BIN_PATH = Path("/opt/rocm/bin")
@@ -22,9 +45,9 @@ if os.name == "nt":
             Typically of the form ``C:/Program Files/AMD/ROCm/X.Y/bin``.
         """
         path = Path(path)
-        pattern = re.compile(r'^\d+\.\d+$')
+        pattern = re.compile(r"^\d+\.\d+$")
         versions = filter(lambda d: d.is_dir() and pattern.match(d.name), path.iterdir())
-        latest = max(versions, key=lambda d: tuple(map(int, d.name.split('.'))))
+        latest = max(versions, key=lambda d: tuple(map(int, d.name.split("."))))
         return latest / "bin"
     # LLVM binaries are in the same directory as ROCm binaries on Windows
     ROCM_BIN_PATH = _windowsLatestRocmBin("C:/Program Files/AMD/ROCm")
@@ -104,9 +127,7 @@ def _exeExists(file: Path) -> bool:
     Returns:
         If the file exists and is executable, True; otherwise, False
     """
-    if os.access(file, os.X_OK):
-        return True
-    return False
+    return True if os.access(file, os.X_OK) else False
 
 
 def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
@@ -156,7 +177,7 @@ def validateToolchain(*args: str):
     return next(out) if len(args) == 1 else tuple(out) 
 
 
-def getVersion(executable: str, versionFlag: str="--version", regex: str=r'version\s+([\d.]+)') -> str:
+def getVersion(executable: str, versionFlag: str="--version", regex: str=r"version\s+([\d.]+)") -> str:
     """Print the version of a toolchain component.
 
     Args:
@@ -170,4 +191,3 @@ def getVersion(executable: str, versionFlag: str="--version", regex: str=r'versi
         return match.group(1) if match else "<unknown>"
     except Exception as e:
         raise RuntimeError(f"Failed to get version when calling {args}: {e}")
-
