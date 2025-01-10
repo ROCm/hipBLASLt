@@ -214,13 +214,14 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   numAsmKernels = len(asmKernels)
   numKernels = len(asmKernels)
   assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
-  asmIter   = zip(asmKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
+  asmIter   = zip(itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()), asmKernels)
   asmResults = Common.ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels")
   removeInvalidSolutionsAndKernels(asmResults, asmKernels, solutions, errorTolerant, globalParameters)
-  fn = functools.partial(writeAssembly, asmPath)
-  ret = Common.ParallelMap2(fn, asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
-  for p, isa, wavefrontsize in ret:
+  def assemble(ret):
+    p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
+  unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
+  ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly), asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
   codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
   srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
