@@ -221,6 +221,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
     p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
   unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
+  compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
   ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly), asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
   codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
