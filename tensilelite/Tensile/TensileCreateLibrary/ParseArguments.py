@@ -67,8 +67,6 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
                            action="store", default="yaml", help="select which logic format to use")
     argParser.add_argument("--library-format", dest="LibraryFormat", choices=["yaml", "msgpack"],
                            action="store", default="msgpack", help="select which library format to use")
-    argParser.add_argument("--generate-sources-and-exit",   dest="GenerateSourcesAndExit", action="store_true",
-                            default=False, help="Output source files only and exit.")
     argParser.add_argument("--jobs", "-j", dest="CpuThreads", type=int,
                             default=-1, help="Number of parallel jobs to launch.")
     argParser.add_argument("--verbose", "-v", dest="PrintLevel", type=int,

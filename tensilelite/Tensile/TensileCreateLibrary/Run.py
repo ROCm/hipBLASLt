@@ -165,7 +165,7 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
 
 
 def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
-    kernelWriterAssembly, errorTolerant=False, compress=True):
+    kernelWriterAssembly, errorTolerant=False, generateSourcesAndExit=False, compress=True):
   codeObjectFiles = []
 
   pushWorkingPath('build_tmp')
@@ -196,11 +196,13 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
   ret = ParallelMap2(compose(assemble, unaryWriteAssembly), asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
-  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
+  
+  if not generateSourcesAndExit:
+      codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
+      buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
 
   popWorkingPath() # build_tmp
   popWorkingPath() # workingDir
