@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           LabelManager, Assert
 from .TensileInstructions.Instructions import *
 from .TensilePass import getActivationFunctionModuleName, getActivationBranchModuleName
-from .Common import globalParameters, print2, printExit, printWarning, roundUp
+from .Common import globalParameters, print2, printExit, printWarning, roundUp, ensurePath
 from .TensileInstructions.Containers import HWRegContainer
 from .Component import Component
 from .KernelWriter import KernelWriter, ConstValues, StateValues, StateVgprs, CodeModules
@@ -48,13 +48,15 @@ from .AsmStoreState import StoreState, VectorDataTypes
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationType
 from .Utils import DataDirection
+from .CustomKernels import isCustomKernelConfig
 
 from math import ceil, log, floor
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import NamedTuple
+from typing import NamedTuple, Tuple
 
-import collections
+import os
+import subprocess
 
 ################################################################################
 # Assembly Kernel
@@ -67,6 +69,23 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
     super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler)
+
+
+  def getSourceFileString(self, kernel) -> Tuple[int, str]:
+    assert kernel["KernelLanguage"] == "Assembly"
+    # Skip if .o files will have already been built for this file
+    if kernel.duplicate:
+      self.language = "ASM"
+      return (0, "") # should this be an non zero number
+
+    try:
+      code = self._getCustomKernelSource(kernel, globalParameters["CustomKernelDirectory"]) if isCustomKernelConfig(kernel) else self._getKernelSource(kernel)
+      errcode = 0
+    except RuntimeError as e:
+      printWarning(f"Failed to generate assembly source code for {kernel}: {e}")
+      code = ""
+      errcode = -2
+    return (errcode, code)
 
   def getSgprOccupancy(self, sgprs):
     return self.states.regCaps["PhysicalMaxSgpr"]//sgprs

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,9 @@ import sys
 import argparse
 from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR
-from .Utilities.Toolchain import ToolchainDefaults, validateToolchain
+from .Toolchain.Assembly import AssemblyToolchain
+from .Toolchain.Source import SourceToolchain
+from .Toolchain.Validators import validateToolchain, ToolchainDefaults
 from . import BenchmarkProblems
 from . import ClientWriter
 from . import LibraryIO
@@ -48,13 +50,13 @@ from datetime import datetime
 #   LibraryLogic.main() to analyse final benchmark data and produce logic/yaml
 #   ClientWriter.main() to create client which calls library based on above yaml
 ################################################################################
-def executeStepsInConfig(config, cxxCompiler: str, cCompiler: str, assembler: str, offloadBundler: str):
+def executeStepsInConfig(config, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str):
 
     ##############################################################################
     # Benchmark Problems
     ##############################################################################
     if "BenchmarkProblems" in config:
-        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], cxxCompiler, cCompiler, assembler, offloadBundler)
+        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, cCompiler)
         print1("")
 
     ##############################################################################
@@ -72,7 +74,7 @@ def executeStepsInConfig(config, cxxCompiler: str, cCompiler: str, assembler: st
                 libraryLogicConfig = config["LibraryLogic"]
             else:
                 libraryLogicConfig = {}
-            LibraryLogic.main(libraryLogicConfig, cxxCompiler)
+            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler)
             print1("")
         else:
             print1("# LibraryLogic already done.")
@@ -86,7 +88,7 @@ def executeStepsInConfig(config, cxxCompiler: str, cCompiler: str, assembler: st
             libraryClientConfig = config["LibraryClient"]
         else:
             libraryClientConfig = {}
-        ClientWriter.main(libraryClientConfig, cxxCompiler, cCompiler)
+        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler)
         print1("")
 
 
@@ -112,7 +114,7 @@ def addCommonArguments(argParser):
     argParser.add_argument("--runtime-language", dest="RuntimeLanguage", \
         choices=["HIP", "OCL"], help="override which runtime language to use")
     argParser.add_argument("--code-object-version", dest="CodeObjectVersion", \
-        choices=["default", "V4", "V5"], help="HSA code-object version")
+        choices=["4", "5"], action="store", default="4", help="HSA code-object version")
     argParser.add_argument("-v", "--verbose", action="store_true", \
         help="set PrintLevel=2")
     argParser.add_argument("--debug", dest="debug", action="store_true", \
@@ -271,6 +273,10 @@ def Tensile(userArgs):
     cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
 
+
+    asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
+    srcToolchain = SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
+
     globalParameters["OutputPath"] = ensurePath(os.path.abspath(args.output_path))
     globalParameters["WorkingPath"] = globalParameters["OutputPath"]
 
@@ -289,7 +295,7 @@ def Tensile(userArgs):
         profiler = cProfile.Profile()
         profiler.enable()
 
-    executeStepsInConfig(config, cxxCompiler, cCompiler, assembler, offloadBundler)
+    executeStepsInConfig(config, asmToolchain, srcToolchain, cCompiler)
 
     if profiler:
         profiler.disable()

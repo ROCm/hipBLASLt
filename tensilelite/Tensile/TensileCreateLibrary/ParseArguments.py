@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from Tensile.Utilities.Toolchain import ToolchainDefaults
+from Tensile.Toolchain.Validators import ToolchainDefaults
 
 import os
 from argparse import ArgumentParser
@@ -55,7 +55,7 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
     argParser.add_argument("--offload-bundler",        dest="OffloadBundler",    action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER)
     argParser.add_argument("--assembler",              dest="Assembler",         action="store", default=ToolchainDefaults.ASSEMBLER)
-    argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["default", "V4", "V5"], action="store")
+    argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["4", "5"], default="4", action="store")
     argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
     argParser.add_argument("--short-file-names",       dest="ShortNames",        action="store_true")
     argParser.add_argument("--no-short-file-names",    dest="ShortNames",        action="store_false")

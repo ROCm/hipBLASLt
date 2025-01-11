@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1095,10 +1095,9 @@ class Solution(collections.abc.Mapping):
 
     if "CodeObjectVersion" not in self._state:
       if "CodeObjectVersion" in config:
-        self._state["CodeObjectVersion"] = config["CodeObjectVersion"]
+        self._state["CodeObjectVersion"] = str(config["CodeObjectVersion"])
       else:
-        self._state["CodeObjectVersion"] = globalParameters["CodeObjectVersion"]
-
+        self._state["CodeObjectVersion"] = str(globalParameters["CodeObjectVersion"])
     # assign parameters without defaults
     for key in config:
       if (key != "ProblemType" or key != "InternalSupportParams") and key not in self._state:
@@ -2605,8 +2604,11 @@ class Solution(collections.abc.Mapping):
               ldsPadA = ((16 * state["VectorWidthA"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile0"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
             if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadA == 0:
               ldsPadA = 16 // state["ProblemType"]["DataType"].numBytes()
-          else:
-            ldsPadA = 0
+          else: # mac instruction
+            if state["ProblemType"]["TLUA"]:
+              ldsPadA = 0
+            else:
+              ldsPadA = state["VectorWidthA"]
         else:
           ldsPadA = max(state["GlobalReadVectorWidthA"],optPadA)
           ## turn-off padding for directToLds
@@ -2623,7 +2625,10 @@ class Solution(collections.abc.Mapping):
             if state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadB == 0:
               ldsPadB = 16 // state["ProblemType"]["DataType"].numBytes()
           else:
-            ldsPadB = 0
+            if state["ProblemType"]["TLUB"]:
+              ldsPadB = 0
+            else:
+              ldsPadB = state["VectorWidthB"]
         else:
           ldsPadB = max(state["GlobalReadVectorWidthB"],optPadB)
           if state["DirectToLdsB"]:

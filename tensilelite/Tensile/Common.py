@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,9 @@
 from . import __version__
 from . import Parallel
 from .TensileInstructions import getGfxName, TensileInstructions
-from .Utilities.Toolchain import supportedCxxCompiler as supportedCompiler
 from collections import OrderedDict
 from copy import deepcopy
+from typing import Tuple
 
 import math
 import os.path
@@ -35,6 +35,10 @@ import subprocess
 import sys
 import time
 import re
+    
+
+IsaVersion = Tuple[int, int, int]
+
 
 startTime = time.time()
 
@@ -250,7 +254,7 @@ if os.name == "nt":
 else:
   globalParameters["RuntimeLanguage"] = "HIP"
 
-globalParameters["CodeObjectVersion"] = "default"
+globalParameters["CodeObjectVersion"] = "4"
 globalParameters["Architecture"] = "all"
 
 # might be deprecated
@@ -1582,7 +1586,7 @@ def printCapTable(parameters):
   printTable([headerRow] + asmCapRows + archCapRows)
 
 def which(p):
-    if supportedCompiler(p) and 'CMAKE_CXX_COMPILER' in os.environ and os.path.isfile(os.environ['CMAKE_CXX_COMPILER']):
+    if 'CMAKE_CXX_COMPILER' in os.environ and os.path.isfile(os.environ['CMAKE_CXX_COMPILER']):
         return os.environ['CMAKE_CXX_COMPILER']
     if os.name == "nt":
         exes = [p+x for x in ['.exe', '', '.bat']]  # bat may be front end for file with no extension
@@ -1697,6 +1701,9 @@ def assignGlobalParameters(config, cxxCompiler=None):
 
   if "KeepBuildTmp" in config:
       globalParameters["KeepBuildTmp"] = config["KeepBuildTmp"]
+
+  if "CodeObjectVersion" in config:
+      globalParameters["CodeObjectVersion"] = config["CodeObjectVersion"]
 
   # read current gfx version
   returncode = detectGlobalCurrentISA()
