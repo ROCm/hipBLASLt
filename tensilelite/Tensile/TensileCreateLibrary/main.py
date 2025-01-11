@@ -33,15 +33,13 @@ from timeit import default_timer as timer
 from typing import NamedTuple, List, Optional, Sequence, Union
 
 from Tensile import Utils
-from Tensile import Common
 from Tensile.Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
 from Tensile.Toolchain.Source import SourceToolchain, buildSourceCodeObjectFile
 from Tensile.Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
 from Tensile.TensileInstructions import getGfxName, TensileInstructions
 from Tensile.Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
-                    CHeader, assignGlobalParameters, \
-                    architectureMap, printWarning, \
-                    IsaVersion
+                    CHeader, assignGlobalParameters, architectureMap, IsaVersion, pushWorkingPath, \
+                    popWorkingPath, ParallelMap2
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from Tensile import LibraryIO
@@ -81,12 +79,10 @@ def processKernelSource(kernelWriterAssembly, ti, kernel) -> KernelCodeGenResult
     Returns (error, source, header, kernelName).
     """
     kernelWriter = kernelWriterAssembly
-    # get kernel name
     kernelWriter.setTensileInstructions(ti)
     asmFilename = kernelWriter.getKernelFileBase(kernel)
     err, src = kernelWriter.getSourceFileString(kernel)
     header = kernelWriter.getHeaderFileString(kernel)
-    # will be put in Kernels.h/cpp if None
     objFilename = kernel._state.get("codeObjectFile", None)
 
     return KernelCodeGenResult(err, src, header, asmFilename, objFilename, tuple(kernel["ISA"]), kernel["WavefrontSize"])
@@ -129,6 +125,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     for rel in removeResults:
         results.remove(rel)
 
+
 def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
     if result.err:
       printExit(f"Failed to build kernel {result.name} because it has error code {result.err}")
@@ -156,18 +153,14 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
           kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
           kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
         kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")  
-
         HeaderText = ""
         for ko in kernelHelperObjs:
             kernelName = ko.getKernelName()
-    
             (err, src) = ko.getSourceFileString()
             kernelSourceFile.write(src)
             if err:
                 print("*** warning: invalid kernel#%u" % kernelName)
-    
             HeaderText += ko.getHeaderFileString()
-    
         kernelHeaderFile.write(HeaderText)
 
 
@@ -175,20 +168,12 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
     kernelWriterAssembly, errorTolerant=False, compress=True):
   codeObjectFiles = []
 
-  # Push working path into build_tmp folder because there may be more than
-  # one process running this script. This is to avoid build directory clashing.
-  # NOTE: file paths must not contain the lower case word 'kernel' or the
-  # /opt/rocm/bin/extractkernel will fail.
-  # See buildSourceCodeObjectFile:167 for the call to this binary.
-  Common.pushWorkingPath('build_tmp')
-  Common.pushWorkingPath(os.path.basename(outputPath).upper())
+  pushWorkingPath('build_tmp')
+  pushWorkingPath(os.path.basename(outputPath).upper())
   asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
 
   asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
 
-  # Kernels may be intended for different co files, but generate the same .o file
-  # Mark duplicate kernels to avoid race condition
-  # @TODO improve organization so this problem doesn't appear
   visited = set()
   duplicates = 0
   for k in asmKernels:
@@ -197,32 +182,28 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
     duplicates += k.duplicate
     print2(f"Duplicate: {base}")
     visited.add(base)
-  
   print1(f"Number of duplicates: {duplicates}")
 
   numAsmKernels = len(asmKernels)
   numKernels = len(asmKernels)
   assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
   asmIter   = zip(itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()), asmKernels)
-  asmResults = Common.ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels")
+  asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels")
   removeInvalidSolutionsAndKernels(asmResults, asmKernels, solutions, errorTolerant, globalParameters)
   def assemble(ret):
     p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
   unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
-  ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly), asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
+  ret = ParallelMap2(compose(assemble, unaryWriteAssembly), asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
   codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
-  srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
-  if srcKernels:
-    raise ValueError(f"Non-helper HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
   buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
 
-  Common.popWorkingPath() # build_tmp
-  Common.popWorkingPath() # workingDir
+  popWorkingPath() # build_tmp
+  popWorkingPath() # workingDir
 
   return codeObjectFiles, numKernels
 
@@ -230,8 +211,8 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
 def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels, kernelHelperObjs, \
     kernelWriterAssembly, compress=True):
 
-  Common.pushWorkingPath('build_tmp')
-  Common.pushWorkingPath(os.path.basename(outputPath).upper())
+  pushWorkingPath('build_tmp')
+  pushWorkingPath(os.path.basename(outputPath).upper())
   asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
 
   asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
@@ -244,30 +225,27 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
     duplicates += k.duplicate
     print2(f"Duplicate: {base}")
     visited.add(base)
-
   print1(f"Number of duplicates: {duplicates}")
 
   uniqueAsmKernels = [k for k in asmKernels if not k.duplicate]
-
   numAsmKernels = len(asmKernels)
   numKernels = len(kernels)
   assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
-
   def assemble(ret):
     p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
   unaryProcessKernelSource = functools.partial(processKernelSource, kernelWriterAssembly, TensileInstructions())
   unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
-  ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly, unaryProcessKernelSource), uniqueAsmKernels, "Generating assembly kernels", multiArg=False)
+  ret = ParallelMap2(compose(assemble, unaryWriteAssembly, unaryProcessKernelSource), uniqueAsmKernels, "Generating assembly kernels", multiArg=False)
   buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
   buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
 
-  Common.popWorkingPath() # build_tmp
-  Common.popWorkingPath() # workingDir
+  popWorkingPath() # build_tmp
+  popWorkingPath() # workingDir
 
   return numKernels
 
@@ -306,7 +284,6 @@ def copyStaticFiles(outputPath=None):
 
 @timing
 def generateKernelObjectsFromSolutions(solutions):
-  # create solution writer and kernel writer
   kernels = []
   kernelHelperObjs = []
   kernelNames = set()
@@ -339,7 +316,6 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
 
   solutions = []
   masterLibraries = {}
-  fullMasterLibrary = None
   nextSolIndex = 0
   matchTable = {}
   fIter = zip(logicFiles, itertools.repeat(cxxCompiler), itertools.repeat(archs))
@@ -352,47 +328,35 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
       for _, lazyLib in lib.lazyLibraries.items():
         yield from libraryIter(lazyLib)
 
-  for library in Common.ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered"):
+  for library in ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered"):
     _, architectureName, _, _, _, newLibrary, srcFile = library
 
     if architectureName == "":
       continue
 
-    if globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
-      if architectureName in masterLibraries:
-        nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
-      else:
-        masterLibraries[architectureName] = newLibrary
-        masterLibraries[architectureName].version = args["CodeObjectVersion"]
+    if architectureName in masterLibraries:
+      nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
     else:
-      if fullMasterLibrary is None:
-        fullMasterLibrary = newLibrary
-        fullMasterLibrary.version = args["CodeObjectVersion"]
-      else:
-        fullMasterLibrary.merge(newLibrary)
-
+      masterLibraries[architectureName] = newLibrary
+      masterLibraries[architectureName].version = args["CodeObjectVersion"]
+    
     if args["GenSolTable"]:
       # Match yaml file solutions to solution index
       for localIdx, _, s in libraryIter(newLibrary):
         matchTable[s.index] = [srcFile, localIdx]
 
-  if globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
-    if "fallback" in masterLibraries.keys():
-      for key, value in masterLibraries.items():
-        if key != "fallback":
-          value.merge(masterLibraries["fallback"])
-
-      masterLibraries.pop("fallback")
-
-    for _, masterLibrary in masterLibraries.items():
-      for _, sol in masterLibrary.solutions.items():
+  if "fallback" in masterLibraries.keys():
+    for key, value in masterLibraries.items():
+      if key != "fallback":
+        value.merge(masterLibraries["fallback"])
+    masterLibraries.pop("fallback")
+  for _, masterLibrary in masterLibraries.items():
+    for _, sol in masterLibrary.solutions.items():
+      solutions.append(sol.originalSolution)
+    for name, lib in masterLibrary.lazyLibraries.items():
+      for _, sol in lib.solutions.items():
+        sol.originalSolution._state["codeObjectFile"] = name
         solutions.append(sol.originalSolution)
-      for name, lib in masterLibrary.lazyLibraries.items():
-        for _, sol in lib.solutions.items():
-          sol.originalSolution._state["codeObjectFile"] = name
-          solutions.append(sol.originalSolution)
-  else:
-    solutions = [sol.originalSolution for _, sol in fullMasterLibrary.solutions.items()]
 
   # remove duplicates while preserving order
   solutions = dict.fromkeys(solutions).keys()
@@ -400,25 +364,7 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
   if args["GenSolTable"]:
     LibraryIO.write("MatchTable", matchTable)
 
-  return solutions, masterLibraries, fullMasterLibrary
-
-
-def validateLibrary(masterLibraries: MasterSolutionLibrary,
-                    kernels: Sequence[Solution],
-                    kernelWriterAssembly: KernelWriterAssembly):
-  kernelsByCodeObjectFiles = {k: list(g) for k, g in itertools.groupby(kernels, lambda k: k["codeObjectFile"])}
-
-  ok: bool = True
-
-  for _, lib in masterLibraries.items():
-    for name, llib in lib.lazyLibraries.items():
-      uniqueKernelsInLib = {kernelWriterAssembly.getKernelName(s.originalSolution) for s in llib.solutions.values()}
-
-      if len(uniqueKernelsInLib) != len(kernelsByCodeObjectFiles[name]):
-        ok = False
-        print(f"{name} library and co has inconsistent kernel size {len(uniqueKernelsInLib)} vs {len(kernelsByCodeObjectFiles[name])}")
-
-  assert ok and "Inconsistent kernel sizes detected!"
+  return solutions, masterLibraries
 
 
 ################################################################################
@@ -434,18 +380,9 @@ def run():
   print2("")
 
   arguments = parseArguments()
-  logicPath = arguments["LogicPath"]
-  outputPath = arguments["OutputPath"]
-  cxxCompiler = arguments["CxxCompiler"]
-  offloadBundler = arguments["OffloadBundler"]
-  assembler = arguments["Assembler"]
-  libraryFormat = arguments["LibraryFormat"]
-  useCompression = arguments["UseCompression"]
-  coVersion = arguments["CodeObjectVersion"]
+  ensurePath(arguments["OutputPath"])
+  arguments["OutputPath"] = os.path.abspath(arguments["OutputPath"])
 
-  ensurePath(outputPath)
-  outputPath = os.path.abspath(outputPath)
-  
   cxxCompiler, cCompiler, offloadBundler, assembler, hipconfig = validateToolchain(
       arguments["CxxCompiler"], arguments["CCompiler"], arguments["OffloadBundler"], arguments["Assembler"], ToolchainDefaults.HIP_CONFIG
   )
@@ -455,17 +392,17 @@ def run():
   print1(f"# C Compiler:          {cCompiler} (version {getVersion(cCompiler)})")
   print1(f"# Assembler:           {assembler} (version {getVersion(assembler)})")
   print1(f"# Offload Bundler:     {offloadBundler} (version {getVersion(offloadBundler)})")
-  print1(f"# Code Object Version: {coVersion}")
+  print1(f"# Code Object Version: {arguments['CodeObjectVersion']}")
   print1(f"# Architecture(s):     {arguments['Architecture']}")
-  print1(f"# Library Format:      {libraryFormat}")
+  print1(f"# Library Format:      {arguments['LibraryFormat']}")
 
   assignGlobalParameters(arguments, cxxCompiler)
 
-  asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], coVersion)
+  asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], arguments["CodeObjectVersion"])
   srcToolchain = SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
-  if not os.path.exists(logicPath):
-    printExit("LogicPath %s doesn't exist" % logicPath)
+  if not os.path.exists(arguments["LogicPath"]):
+    printExit(f"LogicPath {arguments['LogicPath']} doesn't exist")
 
   if ";" in arguments["Architecture"]:
     archs = arguments["Architecture"].split(";")
@@ -492,9 +429,9 @@ def run():
   def validLogicFile(p: Path):
     return p.suffix == logicExtFormat and ("all" in archs or archMatch(load_logic_gfx_arch(p), archs))
 
-  globPattern = os.path.join(logicPath, f"**/{arguments['LogicFilter']}{logicExtFormat}")
+  globPattern = os.path.join(arguments["LogicPath"], f"**/{arguments['LogicFilter']}{logicExtFormat}")
   print1(f"# LogicFilter:       {globPattern}")
-  logicFiles = (os.path.join(logicPath, file) for file in glob.iglob(globPattern, recursive=True))
+  logicFiles = (os.path.join(arguments["LogicPath"], file) for file in glob.iglob(globPattern, recursive=True))
   logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
 
   print1(f"# Experimental:      {arguments['Experimental']}")
@@ -505,25 +442,18 @@ def run():
   for logicFile in logicFiles:
     print2("#   %s" % logicFile)
 
-  solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, arguments, cxxCompiler)
+  solutions, masterLibraries = generateLogicDataAndSolutions(logicFiles, arguments, cxxCompiler)
   kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
   kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels, assembler)
 
-  if globalParameters["ValidateLibrary"]:
-    validateLibrary(masterLibraries, kernels, kernelWriterAssembly)
+  copyStaticFiles(arguments["OutputPath"])
 
-  staticFiles = copyStaticFiles(outputPath)
-
-  for fileName in staticFiles:
-    shutil.copy( os.path.join(globalParameters["SourcePath"], fileName), \
-      outputPath )
-
-  numKernels = writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels, 
-                                           kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
+  numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, kernels, 
+                                           kernelHelperObjs, kernelWriterAssembly, compress=arguments["UseCompression"])
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
              if globalParameters["AsmCaps"][arch]["SupportedISA"]]
-  newLibraryDir = ensurePath(os.path.join(outputPath, 'library'))
+  newLibraryDir = ensurePath(os.path.join(arguments["OutputPath"], 'library'))
 
   for archName, newMasterLibrary in masterLibraries.items():
     if archName in archs:
@@ -532,11 +462,11 @@ def run():
       else:
         masterFile = os.path.join(newLibraryDir, "TensileLibrary_"+archName)
       newMasterLibrary.applyNaming(kernelMinNaming)
-      LibraryIO.write(masterFile, Utils.state(newMasterLibrary), libraryFormat)
+      LibraryIO.write(masterFile, Utils.state(newMasterLibrary), arguments["LibraryFormat"])
       for name, lib in newMasterLibrary.lazyLibraries.items():
         filename = os.path.join(newLibraryDir, name)
         lib.applyNaming(kernelMinNaming)
-        LibraryIO.write(filename, Utils.state(lib), libraryFormat)
+        LibraryIO.write(filename, Utils.state(lib), arguments["LibraryFormat"])
 
   print1("# Tensile Library Writer DONE")
   print1(HR)

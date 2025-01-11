@@ -57,10 +57,7 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     argParser.add_argument("--assembler",              dest="Assembler",         action="store", default=ToolchainDefaults.ASSEMBLER)
     argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["4", "5"], default="4", action="store")
     argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
-    argParser.add_argument("--short-file-names",       dest="ShortNames",        action="store_true")
-    argParser.add_argument("--no-short-file-names",    dest="ShortNames",        action="store_false")
-    argParser.add_argument("--library-print-debug",    dest="LibraryPrintDebug", action="store_true")
-    argParser.add_argument("--no-library-print-debug", dest="LibraryPrintDebug", action="store_false")
+    argParser.add_argument("--short-file-names",    dest="ShortNames",        action="store_true", default=False)
     argParser.add_argument("--no-compress",            dest="NoCompress",        action="store_true", help="Don't compress assembly code objects.")
     argParser.add_argument("--experimental",           dest="Experimental",      action="store_true",
                            help="Include logic files in directories named 'Experimental'.")
@@ -78,10 +75,8 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
                             default=1, help="Set printout verbosity level.")
     argParser.add_argument("--print-timing", dest="PrintTiming",
                             default=False, action="store_true", help="Print duration of each stage.")
-    argParser.add_argument("--separate-architectures", dest="SeparateArchitectures", action="store_true",
-                           default=False, help="Separates TensileLibrary file by architecture")
-    argParser.add_argument("--lazy-library-loading", dest="LazyLibraryLoading", action="store_true",
-                           default=False, help="Loads Tensile libraries when needed instead of upfront.")
+    argParser.add_argument("--no-lazy-library-loading", dest="LazyLibraryLoading", action="store_false",
+                           default=True, help="Loads Tensile libraries when needed instead of upfront.")
     argParser.add_argument("--enable-marker", dest="EnableMarker", action="store_true",
                            default=False, help="Enable marker in Tensile.")
     argParser.add_argument("--no-generate-solution-table", dest="GenSolTable", action="store_false", default=True,
@@ -93,7 +88,6 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
                            default=False, help="Enable ASAN build.")
     argParser.add_argument("--keep-build-tmp", dest="KeepBuildTmp", action="store_true",
                             default=False, help="Do not remove the temporary build directory (may required hundreds of GBs of space)"),
-    argParser.add_argument("--validate-library", dest="ValidateLibrary", action="store_true", default=False)
     argParser.add_argument("--logic-filter", dest="LogicFilter", action="store", default="*", type=str,
                           help="Cutomsized logic filter, default is *, i.e. all logics."
                           " Example: gfx942/Equality/* for building equality of gfx942 only")
@@ -104,13 +98,11 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     arguments["RuntimeLanguage"] = args.RuntimeLanguage
     arguments["CodeObjectVersion"] = args.CodeObjectVersion
     arguments["Architecture"] = args.Architecture
-    arguments["SeparateArchitectures"] = args.SeparateArchitectures
     arguments["LazyLibraryLoading"] = args.LazyLibraryLoading
     arguments["EnableMarker"] = args.EnableMarker
     if args.CmakeCxxCompiler:
       os.environ["CMAKE_CXX_COMPILER"] = args.CmakeCxxCompiler
     arguments["ShortNames"] = args.ShortNames
-    arguments["LibraryPrintDebug"] = args.LibraryPrintDebug
     arguments["CodeFromFiles"] = False
     arguments["LogicFormat"]  = args.LogicFormat
     arguments["LibraryFormat"] = args.LibraryFormat
@@ -123,7 +115,6 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     arguments["BuildIdKind"] = args.BuildIdKind
     arguments["KeepBuildTmp"] = args.KeepBuildTmp
     arguments["AsanBuild"] = args.AsanBuild
-    arguments["ValidateLibrary"] = args.ValidateLibrary
     arguments["UseCompression"] = not args.NoCompress
     arguments["CxxCompiler"] = args.CxxCompiler
     arguments["CCompiler"] = args.CCompiler
