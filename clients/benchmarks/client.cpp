@@ -39,7 +39,7 @@
 #include <string>
 #include <type_traits>
 
-#include "frequency_monitor.hpp"
+#include "performance_monitor.hpp"
 
 #include "testing_matmul.hpp"
 
@@ -777,8 +777,8 @@ try
         throw std::invalid_argument("Invalid Device ID");
     set_device(device_id);
 
-    FrequencyMonitor& freq_monitor = getFrequencyMonitor();
-    freq_monitor.set_device_id(device_id);
+    PerformanceMonitor& perf_monitor = getPerformanceMonitor();
+    perf_monitor.set_device_id(device_id);
 
     if(datafile)
         return hipblaslt_bench_datafile(filter, any_stride, props);
@@ -922,8 +922,13 @@ try
     }
 
     arg.norm_check_assert = false;
+<<<<<<< HEAD
     int status            = run_bench_test(arg, filter, any_stride, props);
     freeFrequencyMonitor();
+=======
+    int status            = run_bench_test(arg, filter, any_stride);
+    freePerformanceMonitor();
+>>>>>>> f32d9622 (Add tensilelite clients to hipblaslt-bench)
     return status;
 }
 catch(const std::invalid_argument& exp)

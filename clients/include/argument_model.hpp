@@ -27,6 +27,7 @@
 #pragma once
 
 #include "hipblaslt_arguments.hpp"
+#include "performance_monitor.hpp"
 #include <fstream>
 #include <string>
 
@@ -38,7 +39,7 @@ namespace ArgumentLogging
 void ArgumentModel_set_log_function_name(bool f);
 bool ArgumentModel_get_log_function_name();
 
-void ArgumentModel_log_frequencies(hipblaslt_internal_ostream& name_line,
+void ArgumentModel_log_performance(hipblaslt_internal_ostream& name_line,
                                    hipblaslt_internal_ostream& val_line);
 
 // ArgumentModel template has a variadic list of argument enums
@@ -69,7 +70,7 @@ public:
                   double                      rtol)
     {
         // requires enablement for frequency logging
-        ArgumentModel_log_frequencies(name_line, val_line);
+        ArgumentModel_log_performance(name_line, val_line);
 
         constexpr bool has_batch_count = has(e_batch_count);
         int64_t        batch_count     = has_batch_count ? arg.batch_count : 1;

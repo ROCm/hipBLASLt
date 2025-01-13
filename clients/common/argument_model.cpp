@@ -25,7 +25,7 @@
  *******************************************************************************/
 
 #include "argument_model.hpp"
-#include "frequency_monitor.hpp"
+#include "performance_monitor.hpp"
 
 // this should have been a member variable but due to the complex variadic template this singleton allows global control
 
@@ -41,31 +41,59 @@ bool ArgumentModel_get_log_function_name()
     return log_function_name;
 }
 
-void ArgumentModel_log_frequencies(hipblaslt_internal_ostream& name_line,
+void ArgumentModel_log_performance(hipblaslt_internal_ostream& name_line,
                                    hipblaslt_internal_ostream& val_line)
 {
 
-    FrequencyMonitor& frequency_monitor = getFrequencyMonitor();
-    if(!frequency_monitor.enabled())
+    PerformanceMonitor& performance_monitor = getPerformanceMonitor();
+    if(!performance_monitor.enabled())
         return;
-    if(!frequency_monitor.detailedReport())
+
+    name_line << ",Total Granularity";
+    val_line << "," << performance_monitor.getTotalGranularityValue();
+
+    name_line << ",Tiles Per-CU";
+    val_line << "," << performance_monitor.getTilesPerCuValue();
+
+    name_line << ",Tile-0 Granularity";
+    val_line << "," << performance_monitor.getTile0Granularity();
+
+    name_line << ",Tile-1 Granularity";
+    val_line << "," << performance_monitor.getTile1Granularity();
+
+    name_line << ",CU granularity";
+    val_line << "," << performance_monitor.getCuGranularity();
+
+    name_line << ",Wave granularity";
+    val_line << "," << performance_monitor.getWaveGranularity();
+
+    name_line << ",#CU's";
+    val_line << "," << performance_monitor.getCUs();
+
+    name_line << ",mem-read-bytes";
+    val_line << "," << performance_monitor.getMemReadBytes();
+
+    name_line << ",mem-write-bytes";
+    val_line << "," << performance_monitor.getMemWriteBytesD();
+
+    if(!performance_monitor.detailedReport())
     {
         name_line << ",lowest-avg-freq";
-        val_line << "," << frequency_monitor.getLowestAverageSYSCLK();
+        val_line << "," << performance_monitor.getLowestAverageSYSCLK();
 
         name_line << ",lowest-median-freq";
-        val_line << "," << frequency_monitor.getLowestMedianSYSCLK();
+        val_line << "," << performance_monitor.getLowestMedianSYSCLK();
     }
     else
     {
-        auto allAvgSYSCLK = frequency_monitor.getAllAverageSYSCLK();
+        auto allAvgSYSCLK = performance_monitor.getAllAverageSYSCLK();
         for(int i = 0; i < allAvgSYSCLK.size(); i++)
         {
             name_line << ",avg-freq_" << i;
             val_line << "," << allAvgSYSCLK[i];
         }
 
-        auto allMedianSYSCLK = frequency_monitor.getAllMedianSYSCLK();
+        auto allMedianSYSCLK = performance_monitor.getAllMedianSYSCLK();
         for(int i = 0; i < allMedianSYSCLK.size(); i++)
         {
             name_line << ",median-freq_" << i;
@@ -74,8 +102,8 @@ void ArgumentModel_log_frequencies(hipblaslt_internal_ostream& name_line,
     }
 
     name_line << ",avg-MCLK";
-    val_line << "," << frequency_monitor.getAverageMEMCLK();
+    val_line << "," << performance_monitor.getAverageMEMCLK();
 
     name_line << ",median-MCLK";
-    val_line << "," << frequency_monitor.getMedianMEMCLK();
+    val_line << "," << performance_monitor.getMedianMEMCLK();
 }

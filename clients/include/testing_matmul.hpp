@@ -30,7 +30,6 @@
 #include "allclose.hpp"
 #include "cblas_interface.hpp"
 #include "flops.hpp"
-#include "frequency_monitor.hpp"
 #include "hipBuffer.hpp"
 #include "hipblaslt_datatype2string.hpp"
 #include "hipblaslt_init.hpp"
@@ -40,6 +39,7 @@
 #include "hipblaslt_vector.hpp"
 #include "near.hpp"
 #include "norm.hpp"
+#include "performance_monitor.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
 #include <cstddef>
@@ -3217,7 +3217,7 @@ void testing_matmul_with_bias(const Arguments& arg,
             }
             if(!do_grouped_gemm)
             {
-                FrequencyMonitor& freq_monitor = getFrequencyMonitor();
+                PerformanceMonitor& perf_monitor = getPerformanceMonitor();
                 if(arg.use_ext)
                 {
                     for(int32_t b = 0; b < block_count; b++)
@@ -3254,7 +3254,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                             continue;
                         }
                     }
-                    freq_monitor.start();
+                    perf_monitor.start();
                     pre_gpu_time(arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
 
                     for(int i = 0; i < number_hot_calls; i++)
@@ -3322,7 +3322,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                             continue;
                         }
                     }
-                    freq_monitor.start();
+                    perf_monitor.start();
                     pre_gpu_time(arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
                     for(int i = 0; i < number_hot_calls; i++)
                     {
@@ -3363,11 +3363,11 @@ void testing_matmul_with_bias(const Arguments& arg,
                               event_gpu_time_end,
                               gpu_time_used,
                               stream);
-                freq_monitor.stop();
+                perf_monitor.stop();
             }
             else
             {
-                FrequencyMonitor& freq_monitor = getFrequencyMonitor();
+                PerformanceMonitor& perf_monitor = getPerformanceMonitor();
                 if(arg.use_user_args)
                 {
                     std::vector<unsigned char*> d_userArgsVec(block_count);
@@ -3417,7 +3417,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                             continue;
                         }
                     }
-                    freq_monitor.start();
+                    perf_monitor.start();
                     pre_gpu_time(arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
 
                     for(int i = 0; i < number_hot_calls; i++)
@@ -3429,7 +3429,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                                   event_gpu_time_end,
                                   gpu_time_used,
                                   stream);
-                    freq_monitor.stop();
+                    perf_monitor.stop();
                 }
                 else
                 {
@@ -3471,7 +3471,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                             continue;
                         }
                     }
-                    freq_monitor.start();
+                    perf_monitor.start();
                     pre_gpu_time(arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
 
                     for(int i = 0; i < number_hot_calls; i++)
@@ -3482,7 +3482,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                                   event_gpu_time_end,
                                   gpu_time_used,
                                   stream);
-                    freq_monitor.stop();
+                    perf_monitor.stop();
                 }
             }
 
