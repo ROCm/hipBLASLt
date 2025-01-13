@@ -1,6 +1,6 @@
 
 /* ************************************************************************
- * Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -139,7 +139,7 @@ public:
 #if rocm_smi_VERSION_MAJOR >= 7
         auto status2 = rsmi_dev_metrics_xcd_counter_get(m_smiDeviceIndex, &m_XCDCount);
 
-        if(status2 != RSMI_STATUS_SUCCESS)
+        if(status2 != RSMI_STATUS_SUCCESS || m_XCDCount == 0)
         {
             m_XCDCount = 1;
         }

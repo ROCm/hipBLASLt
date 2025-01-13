@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -149,12 +149,6 @@ class KernelWriterActivationFunction(KernelWriterBase):
     activation = ActivationInline(activationCDataType, not self.state["ProblemType"]["ActivationNoGuard"])
 
     fileString = "" # CHeader
-    if not globalParameters["MergeFiles"]:
-      fileString += CHeader
-      fileString += "#pragma once\n\n"
-      fileString += "#include \"Tensile%sActivationEnum_%s.h\"\n"%(self.actGradientPrefix, activationCDataType.toChar())
-      fileString += "\n"
-
     fileString += "#pragma clang diagnostic push\n"
     fileString += "#pragma clang diagnostic ignored \"-Winline-asm\"\n"
     fileString += self.functionSignature()

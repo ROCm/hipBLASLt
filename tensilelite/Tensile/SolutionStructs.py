@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1095,10 +1095,9 @@ class Solution(collections.abc.Mapping):
 
     if "CodeObjectVersion" not in self._state:
       if "CodeObjectVersion" in config:
-        self._state["CodeObjectVersion"] = config["CodeObjectVersion"]
+        self._state["CodeObjectVersion"] = str(config["CodeObjectVersion"])
       else:
-        self._state["CodeObjectVersion"] = globalParameters["CodeObjectVersion"]
-
+        self._state["CodeObjectVersion"] = str(globalParameters["CodeObjectVersion"])
     # assign parameters without defaults
     for key in config:
       if (key != "ProblemType" or key != "InternalSupportParams") and key not in self._state:
@@ -1956,6 +1955,26 @@ class Solution(collections.abc.Mapping):
       reject(state, "DirectToVgpr%c does not supports Sparse"%(tc))
       return False
 
+    # for DTVA/DTVB, does not work with PGR0
+    if state["PrefetchGlobalRead"] == 0:
+      reject(state, "DirectToVgpr%c does not supports PrefetchGlobalRead == 0."%(tc))
+      return False
+
+    # for DTVA, does not work with NN and TLDS0
+    if tc == 'A' and state["TransposeLDS"] == 0 and (not state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
+      reject(state, "DirectToVgpr%c does not supports NN case with TransposeLDS == 0."%(tc))
+      return False
+
+    # for DTVA, does not work with TT and Tail-loop
+    if tc == 'A' and (state["ProblemType"]["TransposeA"] and state["ProblemType"]["TransposeB"]):
+        # Use AssertSummationElementMultiple (BoundSizeMultiple in predicates) to exclude failed tail-loop cases
+        state["AssertSummationElementMultiple"] = max(state["AssertSummationElementMultiple"], state["DepthU"])
+
+    # for DTVB, does not work with NN and Tail-loop
+    if  tc == 'B' and (not state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
+        # Use AssertSummationElementMultiple (BoundSizeMultiple in predicates) to exclude failed tail-loop cases
+        state["AssertSummationElementMultiple"] = max(state["AssertSummationElementMultiple"], state["DepthU"])
+
     # Does not work with DirectToLDS
     # -> this will be checked after DirectToLDS doable check is done
 
@@ -2181,6 +2200,12 @@ class Solution(collections.abc.Mapping):
         reject(state, "General batch not supported with Stream-K")
       if state["ProblemType"]["GroupedGemm"]:
         reject(state, "Grouped gemm not yet supported with Stream-K")
+      if state["ScheduleGlobalRead"] != 1:
+        reject(state, "ScheduleGlobalRead not supported with Stream-K")
+      if state["ScheduleLocalWrite"] != 1:
+        reject(statue, "ScheduleLocalWrite not supported with Stream-K")
+      if state["ScheduleIterAlg"] != 1 and state["ScheduleIterAlg"] != 3:
+        reject(state, "ScheduleIterAlg not supported with Stream-K")
       if state["StreamKAtomic"] == 1:
         if not state["ProblemType"]["DataType"].isSingle():
           reject(state, "Atomic Stream-K currently only tested for SGEMM")
@@ -2579,8 +2604,11 @@ class Solution(collections.abc.Mapping):
               ldsPadA = ((16 * state["VectorWidthA"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile0"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
             if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadA == 0:
               ldsPadA = 16 // state["ProblemType"]["DataType"].numBytes()
-          else:
-            ldsPadA = 0
+          else: # mac instruction
+            if state["ProblemType"]["TLUA"]:
+              ldsPadA = 0
+            else:
+              ldsPadA = state["VectorWidthA"]
         else:
           ldsPadA = max(state["GlobalReadVectorWidthA"],optPadA)
           ## turn-off padding for directToLds
@@ -2597,7 +2625,10 @@ class Solution(collections.abc.Mapping):
             if state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadB == 0:
               ldsPadB = 16 // state["ProblemType"]["DataType"].numBytes()
           else:
-            ldsPadB = 0
+            if state["ProblemType"]["TLUB"]:
+              ldsPadB = 0
+            else:
+              ldsPadB = state["VectorWidthB"]
         else:
           ldsPadB = max(state["GlobalReadVectorWidthB"],optPadB)
           if state["DirectToLdsB"]:
@@ -2776,16 +2807,17 @@ class Solution(collections.abc.Mapping):
           reject(state, f"SwizzleTensor{tc} requires VectorWidth{tc} ({VW_TC}) == 1")
 
     if state["ProblemType"]["SwizzleTensorA"]:
-      if state["ProblemType"]["TransposeA"] is False:
-        reject(state, f"Tensor A swizzling supports TN or TT only")
-      if state["DirectToVgprA"] is False:
+      if not state["DirectToVgprA"]:
         reject(state, f"Tensor A swizzling requires DirectToVgprA")
+      if not state["ProblemType"]["TransposeA"]:
+        reject(state, f"Tensor A swizzling supports TN or TT only")
 
     if state["ProblemType"]["SwizzleTensorB"]:
-      if state["ProblemType"]["TransposeB"] is True:
-        reject(state, f"Tensor B swizzling supports NN or TN only")
-      if state["DirectToVgprB"] is False:
+      if not state["DirectToVgprB"]:
         reject(state, f"Tensor B swizzling requires DirectToVgprB")
+      # TODO- NN fails validation due to DTVB + Tail-Loop is not working correctly
+      if not (state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
+        reject(state, f"Tensor B swizzling supports TN only")
 
     def calcOptGRVW(lrvw: int, unrollMajorLDS: bool, datatype: DataType) -> int:
       # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
@@ -2919,9 +2951,6 @@ class Solution(collections.abc.Mapping):
 
     # GlobalSplitU doesn't work with some other things:
     if state["GlobalSplitU"] > 1:
-      if state["ProblemType"]["DestDataType"].isFloat8() or state["ProblemType"]["DestDataType"].isBFloat8():
-        reject(state, "GlobalSplitU currently does not support GSU > 1 for f8 and b8.")
-        return
       # added GSU support for DGEMM
       supported = \
         (state["ProblemType"]["DataType"].isSingle()) or \
@@ -3960,6 +3989,9 @@ class Solution(collections.abc.Mapping):
     # Requires preciseBounds check since we rely on the buffer bounds check, not
     # individual vector registers doing bounds compares.
 
+    if state["_UseSgprForGRO"] == 1 and (state["ProblemType"]["SwizzleTensorA"] or state["ProblemType"]["SwizzleTensorB"]):
+      reject(state, "UseSgprForGRO for Swizzle is not supported")
+
     if state["_UseSgprForGRO"] == -1:
       # Don't use SGPR if it looks like we might not have enough - better to leave PBC enabled even if we have to use VGPR
       # 40 is based on current SGPR usage, this may need to be tuned in the future:
@@ -3968,12 +4000,11 @@ class Solution(collections.abc.Mapping):
       numLoadsM = 0
       if state["ProblemType"]["Sparse"] and not state["DirectToVgprSparseMetadata"]:
         numLoadsM = state["NumLoadsCoalescedMetadata"]*state["NumLoadsPerpendicularMetadata"]
-      if numLoadsA + numLoadsB + numLoadsM > 35 or state["DirectToVgprA"] or state["DirectToVgprB"]: # force _UseSgprForGRO = 0 if DirectToVgpr is enabled
+      if numLoadsA + numLoadsB + numLoadsM > 35 or state["ProblemType"]["SwizzleTensorA"] or state["ProblemType"]["SwizzleTensorB"]:
         #print "info: Disabling UseSgprForGRO since predicting too many SGPR will be used"
         state["_UseSgprForGRO"] = 0
       else:
         state["_UseSgprForGRO"] = 1
-
 
     if packedC0 and not state["GuaranteeNoPartialA"]:
       reject(state, "packedC0 requires GuaranteeNoPartialA")

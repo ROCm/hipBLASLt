@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -202,6 +202,12 @@ class Module(Item):
         if isinstance(targetItem, Item):
             return self.itemList.index(targetItem)
         return -1
+
+    def findIndexByType(self, targetType):
+        for i, item in enumerate(self.itemList):
+            if isinstance(item, targetType):
+                return i
+        return None
 
     def addComment(self, comment):
         """
@@ -687,7 +693,7 @@ class _SignatureKernelDescriptor(Item):
 
     def getNextFreeVgpr(self) -> int:
         return self.totalVgprs
-    
+
     def getNextFreeSgpr(self) -> int:
         return self.totalSgprs
 
@@ -745,7 +751,7 @@ class SignatureCodeMeta(Item):
         self.kernArgsVersion = kernArgsVersion
         self.groupSegSize = groupSegSize
         self.flatWgSize = flatWgSize
-        self.codeObjectVersion = codeObjectVersion
+        self.codeObjectVersion = str(codeObjectVersion)
         self.totalVgprs = totalVgprs
         self.totalSgprs = totalSgprs
         self.offset = 0
@@ -764,9 +770,9 @@ class SignatureCodeMeta(Item):
         kStr += "    KernArgsVersion: %d\n"%self.kernArgsVersion
         kStr += "amdhsa.version:\n"
         kStr += "  - 1\n"
-        if self.codeObjectVersion == 4:
+        if self.codeObjectVersion == "4" or self.codeObjectVersion == "default":
             kStr += "  - 1\n"
-        elif self.codeObjectVersion == 5:
+        elif self.codeObjectVersion == "5":
             kStr += "  - 2\n"
         kStr += "amdhsa.kernels:\n"
         kStr += "  - .name: %s\n" % self.name
@@ -892,7 +898,7 @@ class KernelBody(Item):
         self.totalSgprs = totalSgprs
         self.signature.setGprs(totalVgprs=totalVgprs, totalAgprs=totalAgprs, \
             totalSgprs=totalSgprs)
-        
+
     def getNextFreeVgpr(self) -> int:
         return self.signature.getNextFreeVgpr()
 

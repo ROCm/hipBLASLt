@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -97,6 +97,7 @@ constexpr const char* hipblas_operation_to_string(hipblasOperation_t value)
     case HIPBLAS_OP_T:
         return "T";
     case HIPBLAS_OP_C:
+        return "C";
     default:
         return "invalid";
     }
@@ -115,6 +116,7 @@ constexpr hipblasOperation_t char_to_hipblas_operation(char value)
         return HIPBLAS_OP_T;
     case 'C':
     case 'c':
+        return HIPBLAS_OP_C;
     default:
         return HIPBLASLT_OPERATION_INVALID;
     }

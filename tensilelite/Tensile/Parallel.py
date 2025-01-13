@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2016-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2016-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -182,7 +182,6 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True, retu
     multiArg: True if objects represent multiple arguments
                 (differentiates multi args vs single collection arg)
   """
-
   if return_as in ('generator', 'generator_unordered') and not joblibParallelSupportsGenerator():
     return ParallelMapReturnAsGenerator(function, objects, message, enable, multiArg)
 
@@ -192,8 +191,7 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True, retu
 
   if threadCount <= 1 and globalParameters["ShowProgressBar"]:
     # Provide a progress bar for single-threaded operation.
-    callFunc = lambda args: function(*args) if multiArg else lambda args: function(args)
-    return [callFunc(args) for args in Utils.tqdm(objects, message)]
+    return [function(*args) if multiArg else function(args) for args in Utils.tqdm(objects, message)]
 
   countMessage = ""
   try:

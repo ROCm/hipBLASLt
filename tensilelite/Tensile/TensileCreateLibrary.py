@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ from . import EmbeddedData
 from . import LibraryIO
 from . import Utils
 from .Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
-from .Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
+from .Toolchain.Source import SourceToolchain, buildSourceCodeObjectFile
 from .Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
@@ -49,7 +49,6 @@ from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
 from .CustomYamlLoader import load_logic_gfx_arch
 from .Utilities.Profile import profile
-from .TensileInstructions.Utils import getCOVFromParam
 import argparse
 import collections
 import glob
@@ -84,7 +83,7 @@ class KernelCodeGenResult(NamedTuple):
     wavefrontSize: int
 
 
-def processKernelSource(kernel, kernelWriterAssembly, ti) -> KernelCodeGenResult:
+def processKernelSource(kernelWriterAssembly, ti, kernel) -> KernelCodeGenResult:
     """
     Generate source for a single kernel.
     Returns (error, source, header, kernelName).
@@ -97,84 +96,9 @@ def processKernelSource(kernel, kernelWriterAssembly, ti) -> KernelCodeGenResult
     header = kernelWriter.getHeaderFileString(kernel)
     # will be put in Kernels.h/cpp if None
     objFilename = kernel._state.get("codeObjectFile", None)
-    isa = kernelWriter.isa
-    wavefrontSize = kernelWriter.wavefrontSize
 
-    return KernelCodeGenResult(err, src, header, asmFilename, objFilename, isa, wavefrontSize)
+    return KernelCodeGenResult(err, src, header, asmFilename, objFilename, tuple(kernel["ISA"]), kernel["WavefrontSize"])
 
-
-def buildKernelSourceAndHeaderFiles(results, outputPath):
-  """
-  Logs errors and writes appropriate info to kernelSourceFile and kernelHeaderFile.
-
-  Arguments:
-    results:              list of (err, src, header, kernelName, filename)
-    outputPath:           path to source directory
-    kernelSourceFile:     File to write source data to
-    kernelHeaderFile:     File to write header data to
-
-  Returns:
-    sourceFilenames:      Array containing source kernel filenames
-  """
-
-  # Find kernels to write
-  kernelsToWrite = []
-  filesToWrite = collections.defaultdict(list)
-  validKernelCount = 0
-  for (err,src,header,kernelName, filename) in results:
-
-    # Don't create a file for empty kernels
-    if len(src.strip()) == 0:
-      continue
-
-    kernelsToWrite.append((err, src, header, kernelName))
-
-    # Create list of files
-    if filename:
-      filesToWrite[os.path.join(os.path.normcase(outputPath),filename)].append((err, src, header, kernelName))
-    elif globalParameters["MergeFiles"]:
-      kernelSuffix = ""
-      if globalParameters["NumMergedFiles"] > 1:
-        kernelSuffix = validKernelCount % globalParameters["NumMergedFiles"]
-
-      filesToWrite[os.path.join(os.path.normcase(outputPath), "Kernels"+kernelSuffix)]\
-        .append((err, src, header, kernelName))
-    else:
-      filesToWrite[os.path.join(os.path.normcase(outputPath),kernelName)].append((err, src, header, kernelName))
-
-    validKernelCount += 1
-
-  #Ensure there's at least one kernel file for helper kernels
-  if globalParameters["LazyLibraryLoading"] or (globalParameters["MergeFiles"] and not kernelsToWrite):
-    kernelSuffix = ""
-    if globalParameters["NumMergedFiles"] > 1:
-      kernelSuffix = "0"
-
-    filesToWrite[os.path.join(os.path.normcase(outputPath), "Kernels"+kernelSuffix)] = []
-
-
-  # Write kernel data to files
-  #Parse list of files and write kernels
-  for filename, kernelList in filesToWrite.items():
-    with open(filename+".h", "w", encoding="utf-8") as kernelHeaderFile, \
-          open(filename+".cpp", "w", encoding="utf-8") as kernelSourceFile:
-
-      kernelSourceFile.write(CHeader)
-      kernelHeaderFile.write(CHeader)
-      kernelSourceFile.write("#include \"{}.h\"\n".format(filename))
-      kernelHeaderFile.write("#pragma once\n")
-      if globalParameters["RuntimeLanguage"] == "HIP":
-        kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
-        kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
-      kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")
-
-      for err,src,header,kernelName in kernelList:
-        kernelSourceFile.write(src)
-        kernelHeaderFile.write(header)
-
-  sourceFilenames = [filePrefix+".cpp" for filePrefix in filesToWrite]
-
-  return sourceFilenames
 
 def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant, globalParameters):
     removeKernels = []
@@ -279,32 +203,81 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   # Mark duplicate kernels to avoid race condition
   # @TODO improve organization so this problem doesn't appear
   visited = set()
+  duplicates = 0
   for k in asmKernels:
     base = kernelWriterAssembly.getKernelFileBase(k)
     k.duplicate = True if base in visited else False
+    duplicates += k.duplicate
+    print2(f"Duplicate: {base}")
     visited.add(base)
+
+  print1(f"Number of duplicates: {duplicates}")
+
   numAsmKernels = len(asmKernels)
   numKernels = len(asmKernels)
   assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
-
-  asmIter   = zip(asmKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
-  srcIter   = zip(srcKernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
-
-  # Gather source code
-  asmResults = Common.ParallelMap2(processKernelSource, asmIter, "Generating kernels")
-  srcResults = Common.ParallelMap2(processKernelSource, srcIter, "Generating kernels")
-
-  printWarning(f"FOUND {len(list(asmResults))} ASSEMBLY RESULTS")
-  printWarning(f"FOUND {len(list(srcResults))} SOURCE   RESULTS")
-
+  asmIter   = zip(itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()), asmKernels)
+  asmResults = Common.ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels")
   removeInvalidSolutionsAndKernels(asmResults, asmKernels, solutions, errorTolerant, globalParameters)
+  def assemble(ret):
+    p, isa, wavefrontsize = ret
+    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
+  unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
+  compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
+  ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly), asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
+  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
 
-  srcKernelFiles = buildKernelSourceAndHeaderFiles(srcResults, outputPath)
-  printWarning(f"THERE ARE {len(srcKernelFiles)} SOURCE   KERNEL FILES TO BUILD")
+  srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
+  if srcKernels:
+    raise ValueError(f"Non-helper HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
+  srcKernelFile = Path(outputPath) / "Kernels.cpp"
+  buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
 
-  codeObjectFiles = []
-  codeObjectFiles += buildSourceCodeObjectFiles(srcToolchain, srcKernelFiles, destLibPath, tmpHipCoPath)
+  Common.popWorkingPath() # build_tmp
+  Common.popWorkingPath() # workingDir
+
+  return codeObjectFiles, numKernels
+
+
+def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels, kernelHelperObjs, \
+    kernelWriterAssembly, compress=True):
+
+  Common.pushWorkingPath('build_tmp')
+  Common.pushWorkingPath(os.path.basename(outputPath).upper())
+  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+
+  asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
+
+  visited = set()
+  duplicates = 0
+  for k in asmKernels:
+    base = kernelWriterAssembly.getKernelFileBase(k)
+    k.duplicate = True if base in visited else False
+    duplicates += k.duplicate
+    print2(f"Duplicate: {base}")
+    visited.add(base)
+
+  print1(f"Number of duplicates: {duplicates}")
+
+  uniqueAsmKernels = [k for k in asmKernels if not k.duplicate]
+
+  numAsmKernels = len(asmKernels)
+  numKernels = len(kernels)
+  assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
+
+  def assemble(ret):
+    p, isa, wavefrontsize = ret
+    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
+  unaryProcessKernelSource = functools.partial(processKernelSource, kernelWriterAssembly, TensileInstructions())
+  unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
+  compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
+  ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly, unaryProcessKernelSource), uniqueAsmKernels, "Generating assembly kernels", multiArg=False)
+  buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
+
+  writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
+  srcKernelFile = Path(outputPath) / "Kernels.cpp"
+  buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
 
   fn = functools.partial(writeAssembly, tmpAsmPath)
   ret = Common.ParallelMap2(fn, asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
@@ -312,7 +285,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wfsize)
   codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, tmpAsmPath, compress)
 
-  return codeObjectFiles, numKernels 
+  return numKernels
 
 
 ##############################################################################
@@ -501,23 +474,20 @@ def TensileCreateLibrary():
   argParser.add_argument("LogicPath",       help="Path to LibraryLogic.yaml files.")
   argParser.add_argument("OutputPath",      help="Where to write library files?")
   argParser.add_argument("RuntimeLanguage", help="Which runtime language?", choices=["OCL", "HIP", "HSA"])
-  argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       action="store", default=ToolchainDefaults.CXX_COMPILER, 
+  argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       action="store", default=ToolchainDefaults.CXX_COMPILER,
                          help=f"Default: {ToolchainDefaults.CXX_COMPILER}")
   argParser.add_argument("--c-compiler",             dest="CCompiler",         action="store", default=ToolchainDefaults.C_COMPILER)
   argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
   argParser.add_argument("--offload-bundler",        dest="OffloadBundler",    action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER)
   argParser.add_argument("--assembler",              dest="Assembler",         action="store", default=ToolchainDefaults.ASSEMBLER)
-  argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["default", "V4", "V5"], action="store")
+  argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["4", "5"], action="store", default="4", type=str)
   argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
-  argParser.add_argument("--merge-files",            dest="MergeFiles",        action="store_true")
-  argParser.add_argument("--no-merge-files",         dest="MergeFiles",        action="store_false")
-  argParser.add_argument("--num-merged-files",       dest="NumMergedFiles",    type=int, default=1, help="Number of files the kernels should be written into.")
   argParser.add_argument("--short-file-names",       dest="ShortNames",        action="store_true")
   argParser.add_argument("--no-short-file-names",    dest="ShortNames",        action="store_false")
   argParser.add_argument("--library-print-debug",    dest="LibraryPrintDebug", action="store_true")
   argParser.add_argument("--no-library-print-debug", dest="LibraryPrintDebug", action="store_false")
   argParser.add_argument("--no-compress",            dest="NoCompress",        action="store_true", help="Don't compress assembly code objects.")
-  argParser.add_argument("--experimental",           dest="Experimental",      action="store_true", 
+  argParser.add_argument("--experimental",           dest="Experimental",      action="store_true",
                          help="Include logic files in directories named 'Experimental'.")
   argParser.add_argument("--no-enumerate",           action="store_true", help="Do not run rocm_agent_enumerator.")
   argParser.add_argument("--version", help="Version string to embed into library file.")
@@ -555,14 +525,14 @@ def TensileCreateLibrary():
                         " Example: gfx942/Equality/* for building equality of gfx942 only")
 
   args = argParser.parse_args()
+  args.CodeObjectVersion = "4" if args.CodeObjectVersion == "default" else args.CodeObjectVersion
 
   libraryFormat = args.LibraryFormat
   useCompression = not args.NoCompress
-  coVersion = getCOVFromParam(args.CodeObjectVersion)
+  coVersion = args.CodeObjectVersion
 
-  # Use build_tmp directory to avoid clashing for intermediate files
-  logicPath = args.LogicPath
   outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
+  print2("OutputPath: %s" % outputPath)
 
   arguments = {}
   arguments["RuntimeLanguage"] = args.RuntimeLanguage
@@ -573,8 +543,6 @@ def TensileCreateLibrary():
   arguments["EnableMarker"] = args.EnableMarker
   if args.CmakeCxxCompiler:
     os.environ["CMAKE_CXX_COMPILER"] = args.CmakeCxxCompiler
-  arguments["MergeFiles"] = args.MergeFiles
-  arguments["NumMergedFiles"] = args.NumMergedFiles
   arguments["ShortNames"] = args.ShortNames
   arguments["LibraryPrintDebug"] = args.LibraryPrintDebug
   arguments["CodeFromFiles"] = False
@@ -608,7 +576,6 @@ def TensileCreateLibrary():
   print1(f"# Library Format:      {libraryFormat}")
   print1(f"OutputPath:            {str(outputPath)}")
 
-  arguments["AMDClangVersion"] = getVersion(cxxCompiler)
   assignGlobalParameters(arguments, cxxCompiler)
 
   asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], coVersion)
@@ -627,9 +594,6 @@ def TensileCreateLibrary():
       logicArchs.add(architectureMap[arch])
     else:
       printExit("Architecture %s not supported" % arch)
-
-  if globalParameters["LazyLibraryLoading"] and not (globalParameters["MergeFiles"] and globalParameters["SeparateArchitectures"]):
-    printExit("--lazy-library-loading requires --merge-files and --separate-architectures enabled")
 
   # Recursive directory search
   logicExtFormat = ".yaml"
@@ -666,9 +630,7 @@ def TensileCreateLibrary():
 
   # Parse logicData, solutions, and masterLibraries from logic files
   solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args, cxxCompiler)
-
   kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
-
   # if any kernels are assembly, append every ISA supported
   kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels, assembler)
 
@@ -683,8 +645,8 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles, numKernels = writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions,
-                                             kernels, kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
+  numKernels = writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
+                                           kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
              if globalParameters["AsmCaps"][arch]["SupportedISA"]]
@@ -713,7 +675,7 @@ def TensileCreateLibrary():
     LibraryIO.write(masterFile, Utils.state(fullMasterLibrary), args.LibraryFormat)
 
   theMasterLibrary = fullMasterLibrary
-  if globalParameters["SeparateArchitectures"]:
+  if globalParameters["SeparateArchitectures"] and len(masterLibraries) > 0:
     theMasterLibrary = list(masterLibraries.values())[0]
 
   print1("# Tensile Library Writer DONE")

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -117,9 +117,8 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
         biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes, \
         asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, outputPath: Path, buildTmpPath: Path):
     """Write all the files needed for a given benchmarking step"""
-    if not globalParameters["MergeFiles"]:
-        ensurePath(outputPath / "Solutions")
-        ensurePath(outputPath / "Kernels")
+    ensurePath(outputPath / "Solutions")
+    ensurePath(outputPath / "Kernels")
 
     assert str(outputPath) == globalParameters["WorkingPath"], f"outputPath={outputPath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
     copyStaticFiles(outputPath)
@@ -203,8 +202,8 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     return codeObjectFiles
 
 
-def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeGroupIdx, useCache, 
-                         asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str, 
+def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeGroupIdx, useCache,
+                         asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str,
                          outputPath: Path, buildTmpPath: Path
     ):
     """Run the benchmarking for a single entry in the BenchmarkProblems of a Tensile config"""
@@ -266,7 +265,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                 globalParameters["WorkingPath"], "../Data", shortName))
         resultsFileBase = os.path.normpath(shortNamePath / ".." / "Data" / shortName)
         assert resultsFileBaseOld == resultsFileBase, f"resultsFileBaseOld={resultsFileBaseOld} resultsFileBase={resultsFileBase}"
-        
+
         if benchmarkStep.isFinal():
             resultsFileBaseFinal = resultsFileBase
         resultsFileName = resultsFileBase + ".csv"
@@ -402,7 +401,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
     return (resultsFileBaseFinal, benchmarkTestFails)
 
 
-def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str, outputPath: Path, buildTmpPath: Path): 
+def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str, outputPath: Path, buildTmpPath: Path):
     """Entry point for the "BenchmarkProblems" section of a Tensile config yaml"""
     ClientExecutable.getClientExecutable(srcToolchain.compiler, cCompiler, outputPath)
 

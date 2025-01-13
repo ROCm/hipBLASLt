@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -64,6 +64,8 @@ constexpr const char* rocblaslt_datatype_string(hipDataType type)
     }
 }
 
+bool rocblaslt_is_complex_datatype(hipDataType type);
+
 constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
 {
     switch(type)
@@ -107,6 +109,8 @@ constexpr const char* rocblaslt_transpose_letter(hipblasOperation_t op)
         return "N";
     case HIPBLAS_OP_T:
         return "T";
+    case HIPBLAS_OP_C:
+        return "C";
     default:
         return "invalidTranspose";
     }

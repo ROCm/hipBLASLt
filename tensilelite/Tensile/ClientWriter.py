@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 from matplotlib.pyplot import step
 from . import ClientExecutable
 from . import LibraryIO
-from .TensileInstructions import getGfxName, DataType, getCOVFromParam
+from .TensileInstructions import getGfxName, DataType
 from .Common import globalParameters, pushWorkingPath, popWorkingPath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
 from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
 from .TensileCreateLibrary import copyStaticFiles
@@ -109,7 +109,7 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath):
   subprocess.run(shlex.split(createLibraryScript), cwd=stepBaseDir)
   coList = glob(os.path.join(stepBaseDir,"library/*.co"))
   yamlList = glob(os.path.join(stepBaseDir,"library/*.yaml"))
-    
+
   clientParametersPaths = []
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary, _) \
@@ -225,11 +225,11 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
 
   callCreateLibraryCmd = globalParameters["ScriptPath"] + "/bin/TensileCreateLibrary"
 
+  if globalParameters["SeparateArchitectures"]:
+    callCreateLibraryCmd += " --separate-architectures"
 
-  if globalParameters["MergeFiles"]:
-    callCreateLibraryCmd += " --merge-files"
-  else:
-    callCreateLibraryCmd += " --no-merge-files"
+  if globalParameters["LazyLibraryLoading"]:
+    callCreateLibraryCmd += " --lazy-library-loading"
 
   if globalParameters["ShortNames"]:
     callCreateLibraryCmd += " --short-file-names"
@@ -737,13 +737,7 @@ def writeClientParameters(forBenchmark, solutions, problemSizes, stepName, \
   """
 
   if forBenchmark:
-    if globalParameters["MergeFiles"]:
-      h += "#include \"Solutions.h\"\n"
-    else:
-      for solution in solutions:
-        solutionName = solutionWriter.getSolutionName(solution)
-        h += "#include \"" + solutionName + ".h\"\n"
-        h += "#include \"Solutions.h\"\n"
+    h += "#include \"Solutions.h\"\n"
     h += "#include \"ReferenceCPU.h\"\n"
     h += "\n"
   else:

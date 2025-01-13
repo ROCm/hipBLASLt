@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ########################################################################
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -62,7 +62,7 @@ supported_distro( )
     printf "supported_distro(): \$ID must be set\n"
     exit 2
   fi
-  
+
   case "${ID}" in
     ubuntu|centos|almalinux|rhel|fedora|sles|opensuse-leap|mariner|azurelinux)
         true
@@ -386,16 +386,18 @@ build_codecoverage=false
 install_prefix=hipblaslt-install
 build_relocatable=false
 build_address_sanitizer=false
-build_dir=$(readlink -m ./build)
+root_path=$(readlink -m `dirname $0`)
+build_dir=$(readlink -m ${root_path}/build)
 matrices_dir=
 matrices_dir_install=
 gpu_architecture=all
 cpu_ref_lib=blis
 tensile_logic=
-tensile_cov=
+tensile_cov="4"
 tensile_threads=$(nproc)
 tensile_fork=
-tensile_merge_files=
+tensile_lazy_library_loading=true
+tensile_separate_architectures=true
 tensile_tag=
 tensile_test_local_path=
 tensile_version=
@@ -423,7 +425,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,no-compress,experimental,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker,logic-yaml-filter: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,separate-architectures,lazy-library-loading,no-separate-architectures,no-lazy-library-loading,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,no-compress,experimental,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker,logic-yaml-filter: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -503,12 +505,18 @@ while true; do
         -n|--no_tensile|--no-tensile)
             build_tensile=false
             shift ;;
-        --merge-files)
-            tensile_merge_files=true
+        --lazy-library-loading)
+            tensile_lazy_library_loading=true
             shift ;;
-        -no-merge-files)
-            tensile_merge_files=false
-            shift 2;;
+        --no-lazy-library-loading)
+            tensile_lazy_library_loading=false
+            shift ;;
+        --separate-architectures)
+            tensile_separate_architectures=true
+            shift ;;
+        --no-separate-architectures)
+            tensile_separate_architectures=false
+            shift ;;
         -u|--use-custom-version)
             tensile_version=${2}
             shift 2;;
@@ -556,10 +564,6 @@ while true; do
     esac
 done
 
-if [[ -z $tensile_cov ]]; then
-    tensile_cov=default
-fi
-
 if [[ "${cpu_ref_lib}" == blis ]]; then
   LINK_BLIS=true
 elif [[ "${cpu_ref_lib}" == lapack ]]; then
@@ -573,7 +577,7 @@ fi
 # If matrices_dir_install has been set up then install matrices dir and exit.
 #
 if ! [[ "${matrices_dir_install}" == "" ]];then
-    cmake -DCMAKE_MATRICES_DIR=${matrices_dir_install} -P ./cmake/ClientMatrices.cmake
+    cmake -DCMAKE_MATRICES_DIR=${matrices_dir_install} -P ${root_path}/cmake/ClientMatrices.cmake
     exit 0
 fi
 
@@ -590,7 +594,7 @@ if ! [[ "${matrices_dir}" == "" ]];then
     # Let's 'reinstall' to the specified location to check if all good
     # Will be fast if everything already exists as expected.
     # This is to prevent any empty directory.
-    cmake -DCMAKE_MATRICES_DIR=${matrices_dir} -P ./cmake/ClientMatrices.cmake
+    cmake -DCMAKE_MATRICES_DIR=${matrices_dir} -P ${root_path}/cmake/ClientMatrices.cmake
 fi
 
 printf "\033[32mCreating project build directory in: \033[33m${build_dir}\033[0m\n"
@@ -656,7 +660,7 @@ if [[ "${install_dependencies}" == true ]]; then
   pushd .
     printf "\033[32mBuilding \033[33mgoogletest\033[32m from source; installing into \033[33m/usr/local\033[0m\n"
     mkdir -p ${build_dir}/deps && cd ${build_dir}/deps
-    ${cmake_executable} ../../deps
+    ${cmake_executable} ${root_path}/deps
     make -j$(nproc)
     elevate_if_not_root make install
   popd
@@ -769,8 +773,12 @@ pushd .
     fi
   fi
 
-  if [[ "${tensile_merge_files}" == false ]]; then
-    tensile_opt="${tensile_opt} -DTensile_MERGE_FILES=OFF"
+  if [[ "${tensile_lazy_library_loading}" == false ]]; then
+    tensile_opt="${tensile_opt} -DTensile_LAZY_LIBRARY_LOADING=OFF"
+  fi
+
+  if [[ "${tensile_separate_architectures}" == false ]]; then
+    tensile_opt="${tensile_opt} -DTensile_SEPARATE_ARCHITECTURES=OFF"
   fi
 
   if [[ "${tensile_msgpack_backend}" == true ]]; then
@@ -840,9 +848,9 @@ pushd .
       -DCMAKE_PREFIX_PATH="${rocm_path} ${rocm_path}/hcc ${rocm_path}/hip" \
       -DCMAKE_MODULE_PATH="${rocm_path}/hip/cmake" \
       -DROCM_DISABLE_LDCONFIG=ON \
-      -DROCM_PATH="${rocm_path}" ../..
+      -DROCM_PATH="${rocm_path}" ${root_path}
   else
-    FC=gfortran CXX=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} -DROCM_PATH="${rocm_path}" ../..
+    FC=gfortran CXX=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} -DROCM_PATH="${rocm_path}" ${root_path}
   fi
   check_exit_code "$?"
 

@@ -5,7 +5,6 @@ GlobalParameters:
   NumElementsToValidate: -1
   MinimumRequiredVersion: 4.14.0
   Device: 0
-  MergeFiles: False
   CSVExportWinner: 1
   MaxWorkspaceSize: 13421772800
   SleepPercent: 50

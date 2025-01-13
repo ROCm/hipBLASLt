@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -80,8 +80,6 @@ function(TensileCreateLibraryFiles
 
   # Boolean options
   set(options
-       MERGE_FILES
-       NO_MERGE_FILES
        SHORT_FILE_NAMES
        PRINT_DEBUG
        GENERATE_PACKAGE
@@ -90,7 +88,8 @@ function(TensileCreateLibraryFiles
        ASAN_BUILD
        KEEP_BUILD_TMP
        NO_COMPRESS
-       EXPERIMENTAL 
+       EXPERIMENTAL
+       ENABLE_MAKRER
        )
 
   # Single value settings
@@ -128,17 +127,6 @@ function(TensileCreateLibraryFiles
   endif()
 
   message(STATUS "Tensile script: ${Script}")
-
-  # Older NO_MERGE_FILES flag overrides MERGE_FILES option.
-  if(Tensile_NO_MERGE_FILES)
-    set(Tensile_MERGE_FILES FALSE)
-  endif()
-
-  if(Tensile_MERGE_FILES)
-    set(Options ${Options} "--merge-files")
-  else()
-    set(Options ${Options} "--no-merge-files")
-  endif()
 
   if(Tensile_SEPARATE_ARCHITECTURES)
     set(Options ${Options} "--separate-architectures")

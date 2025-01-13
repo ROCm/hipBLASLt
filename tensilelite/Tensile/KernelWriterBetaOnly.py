@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -301,11 +301,6 @@ class KernelWriterBetaOnly(KernelWriterBase):
   def getSourceFileString(self):
     fileString = ""
 
-    if not globalParameters["MergeFiles"]:
-      fileString += "\n"
-      fileString += "#include \"%s.h\"\n" % self.kernelName
-      fileString += "\n"
-
     for toggle in [True, False]:
       self.state["ProblemType"]["GroupedGemm"] = toggle
       self.kernelName = self.getKernelName()
@@ -316,14 +311,6 @@ class KernelWriterBetaOnly(KernelWriterBase):
 
   def getHeaderFileString(self):
     fileString = "" # CHeader
-    if not globalParameters["MergeFiles"]:
-      fileString += CHeader
-      fileString += "#pragma once\n\n"
-      fileString += "\n"
-      fileString += "#include <KernelHeader.h>\n\n"
-      fileString += "#include <hip/hip_runtime.h>\n"
-      fileString += "#include <hip/hip_fp16.h>\n"
-      fileString += "\n"
 
     for toggle in [True, False]:
       self.state["ProblemType"]["GroupedGemm"] = toggle

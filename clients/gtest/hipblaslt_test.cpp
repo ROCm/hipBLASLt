@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -350,7 +350,7 @@ std::string RocBlasLt_TestName_to_string(std::unordered_map<std::string, size_t>
 }
 
 static const char* const validCategories[]
-    = {"quick", "pre_checkin", "nightly", "multi_gpu", "HMM", "known_bug", NULL};
+    = {"smoke", "quick", "pre_checkin", "nightly", "multi_gpu", "HMM", "known_bug", NULL};
 
 static bool valid_category(const char* category)
 {

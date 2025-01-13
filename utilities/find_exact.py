@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -118,6 +118,8 @@ def writeYAML(filename, data, **kwargs):
 def dataType2Bench(dataType):
     if dataType == "H":
         return "f16_r"
+    elif dataType == "B":
+        return "bf16_r"
     elif dataType == "S":
         return "f32_r"
     elif dataType == "FP8":

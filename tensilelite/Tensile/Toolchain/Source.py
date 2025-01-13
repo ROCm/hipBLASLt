@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,17 @@
 #
 ################################################################################
 
-import functools
-import itertools
 import os
 import re
 import shlex
 import shutil
 import subprocess
-from pathlib import Path
-from typing import Iterable, List, Union
 
-from ..Common import globalParameters, print2,  ensurePath, ParallelMap2, splitArchs
+from pathlib import Path
+from timeit import default_timer as timer
+from typing import List, Union
+
+from ..Common import globalParameters, print1, print2, ensurePath, splitArchs
 
 class SourceToolchain:
     def __init__(self, compiler: str, bundler: str, buildIdKind: str, asanBuild: bool=False, saveTemps: bool=False):
@@ -82,7 +82,7 @@ class SourceToolchain:
         hipFlags = [
             "-D__HIP_HCC_COMPAT_MODE__=1",
             "--offload-device-only",
-            "-x", "hip", "-O3",    
+            "-x", "hip", "-O3",
             "-I", includePath,
             "-Xoffload-linker", f"--build-id={self.buildIdKind}",
             "-std=c++17",
@@ -136,7 +136,7 @@ class SourceToolchain:
         ]
 
         return self.invoke(args, f"Unbundling source code object file")
-            
+
 
 def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Path, str], arch: str) -> Union[Path, None]:
     """Generates a code object file path using the target, base, and build path.
@@ -164,7 +164,7 @@ def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Pa
     return coPath
 
 
-def _buildSourceCodeObjectFile(toolchain: SourceToolchain, destPath: Union[Path, str], hipCoPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
+def buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
     Args:
@@ -176,8 +176,10 @@ def _buildSourceCodeObjectFile(toolchain: SourceToolchain, destPath: Union[Path,
     Returns:
         List of paths to the created code objects.
     """
-    buildPath = Path(ensurePath(hipCoPath))
-    destPath = Path(ensurePath(destPath))
+    start = timer()
+
+    buildPath = Path(ensurePath(os.path.join(globalParameters['WorkingPath'], 'code_object_tmp')))
+    destPath = Path(ensurePath(os.path.join(outputPath, 'library')))
     kernelPath = Path(kernelPath)
 
     if "CmakeCxxCompiler" in globalParameters and globalParameters["CmakeCxxCompiler"] is not None:
@@ -190,7 +192,7 @@ def _buildSourceCodeObjectFile(toolchain: SourceToolchain, destPath: Union[Path,
     _, cmdlineArchs = splitArchs()
 
     objPath = str(buildPath / objFilename)
-    toolchain.compile(str(kernelPath), objPath, str(destPath), cmdlineArchs)
+    toolchain.compile(str(kernelPath), objPath, str(outputPath), cmdlineArchs)
 
     for target in toolchain.targets(objPath):
       match = re.search("gfx.*$", target)
@@ -207,20 +209,7 @@ def _buildSourceCodeObjectFile(toolchain: SourceToolchain, destPath: Union[Path,
     for src, dst in zip(coPathsRaw, coPaths):
         shutil.move(src, dst)
 
+    stop = timer()
+    print1(f"buildSourceCodeObjectFile time (s): {(stop-start):3.2f}")
+
     return coPaths
-
-def buildSourceCodeObjectFiles(toolchain: SourceToolchain, kernelFiles: List[Path], destPath: Path, hipCoPath: Path) -> Iterable[str]:
-    """Compiles HIP source code files into code object files.
-
-    Args:
-        cxxCompiler: The C++ compiler to use.
-        kernelFiles: List of paths to the kernel source files.
-        outputPath: The output directory path where code objects will be placed.
-        removeTemporaries: Whether to clean up temporary files.
-
-    Returns:
-        List of paths to the created code objects.
-    """
-    fn = functools.partial(_buildSourceCodeObjectFile, toolchain, destPath, hipCoPath)
-    coFiles = ParallelMap2(fn, kernelFiles, "Compiling source kernels", multiArg=False)
-    return itertools.chain.from_iterable(coFiles)

@@ -4,7 +4,6 @@ TestParameters:
 
 GlobalParameters:
   MinimumRequiredVersion: 4.14.0
-  MergeFiles: False
   SleepPercent: 50
   NumElementsToValidate: -1
   DataInitTypeBias: 0

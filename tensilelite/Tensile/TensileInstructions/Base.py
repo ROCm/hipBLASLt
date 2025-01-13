@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -153,7 +153,7 @@ class Item:
     @property
     def archCaps(self) -> dict:
         return _global_ti.getArchCaps()
-    
+
     @property
     def regCaps(self) -> dict:
         return _global_ti.getRegCaps()
@@ -189,13 +189,6 @@ def getSlcBitName(hasGLCModifier):
   if hasGLCModifier:
     return "slc"
   return "sc1"
-
-def getCOVFromParam(versionString):
-  if versionString == "default" or versionString == "V4":
-    return 4
-  elif versionString == "V5":
-    return 5
-  printExit("Unknown CodeObjectVersion %s" % (versionString))
 
 def _removeIdent(isaDict) -> list:
     ids = [th.ident for th in threading.enumerate()]

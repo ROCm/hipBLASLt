@@ -8,7 +8,6 @@ GlobalParameters:
   PrintSolutionRejectionReason: True
   Device: 0
   CMakeBuildType: Release
-  MergeFiles: False
   KernelTime: True
   MaxWorkspaceSize: 13421772800
   DataInitTypeA: 21
@@ -225,7 +224,7 @@ BenchmarkProblems:
 # FP8HS + Bias S + ScaleAlphaVec + SVW=16 for bpl 64
 #####################################################
 
-  - 
+  -
     - # ProblemType
       OperationType: GEMM
       DataType: F8
@@ -241,7 +240,7 @@ BenchmarkProblems:
       Batched: True
       #Activation: True
       #ActivationHPA: True
-    - InitialSolutionParameters: 
+    - InitialSolutionParameters:
       BenchmarkCommonParameters:
         - KernelLanguage: [Assembly]
       ForkParameters:
@@ -266,12 +265,12 @@ BenchmarkProblems:
         - Groups:
           - - NonTemporalC: 4
               NonTemporalD: 4
-          - 
-            
+          -
+
             - MatrixInstruction: [16, 16, 32,  1,  1, 16,  3,  1,  4] # MT 256x192 - TT 16x48  - WG 16x16  - MIBlockM:  1 -- sizes [[(57344, 8192, 1, 8192)]]
               MIArchVgpr: 0
-       
-      BenchmarkJoinParameters: 
+
+      BenchmarkJoinParameters:
       BenchmarkFinalParameters:
       - ProblemSizes:
         - Exact: [ 1024, 1024, 1, 1024 ]

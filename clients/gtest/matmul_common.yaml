@@ -48,6 +48,11 @@ Definitions:
     - { M: 16, N: 16, K: 16, lda: 16, ldb: 16, ldc: 16, ldd: 16 }
     - { M: 128, N: 128, K: 64, lda: 128, ldb: 128, ldc: 128, ldd: 128 }
 
+  - &smoke_matrix_size_range
+    - { M: 8, N: 8, K: 8, lda: 8, ldb: 8, ldc: 8, ldd: 8 }
+    - { M: 16, N: 16, K: 16, lda: 16, ldb: 16, ldc: 16, ldd: 16 }
+    - { M: 32, N: 32, K: 32, lda: 32, ldb: 32, ldc: 32, ldd: 32 }
+
   - &chunk_matrix_size_range
     - { M: 24000, N: 256, K: 256, lda: 24010, ldb: 256, ldc: 24000, ldd: 24000 }
     - { M: 24000, N: 256, K: 256, lda: 24000, ldb: 256, ldc: 24020, ldd: 24020 }

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,11 +33,9 @@ import warnings
 from pathlib import Path
 from typing import List, Literal, Union, Tuple
 
-
 from .. import Utils
-from ..TensileInstructions import getGfxName, getCOVFromParam
-from ..Common import globalParameters, print2, ensurePath, printWarning, IsaVersion
-
+from ..TensileInstructions import getGfxName
+from ..Common import globalParameters, print2, ensurePath
 class AssemblyToolchain:
     def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: Literal[4, 5]):
         self.assembler = assembler
@@ -78,15 +76,15 @@ class AssemblyToolchain:
       """
       launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
       args = [
-          *launcher, 
-          self.assembler, 
-          "-x", "assembler", 
-          "--target=amdgcn-amd-amdhsa", 
-          f"-mcode-object-version={self.coVersion}", 
-          f"-mcpu={gfx}",  
+          *launcher,
+          self.assembler,
+          "-x", "assembler",
+          "--target=amdgcn-amd-amdhsa",
+          f"-mcode-object-version={self.coVersion}",
+          f"-mcpu={gfx}",
           "-mwavefrontsize64" if wavefrontSize == 64 else "-mno-wavefrontsize64"
           "-g" if debug else "",
-          "-c", 
+          "-c",
           "-o", destPath, srcPath
       ]
 
@@ -118,7 +116,7 @@ class AssemblyToolchain:
                 "-Xlinker", f"--build-id={self.buildIdKind}",
                 "-o", destPath, *srcPaths
             ]
-        
+
         return self.invoke(args, "Linking assembly object files into code object (*.o -> .co)")
 
     def compress(self, srcPath: str, destPath: str, gfx: str):
@@ -148,7 +146,7 @@ class AssemblyToolchain:
 
 def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjFiles: int=10000) -> List[str]:
     numObjFiles = len(objFiles)
-    
+
     if numObjFiles <= maxObjFiles:
       return objFiles
 
@@ -169,15 +167,16 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 
     return newObjFilesOutput
 
-def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAsm, destPath, asmDir, compress: bool=True):
-    
+def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAsm, outputPath, compress: bool=True):
+
     isAsm = lambda k: k["KernelLanguage"] == "Assembly"
 
     extObj = ".o"
     extCo = ".co"
     extCoRaw = ".co.raw"
 
-    destDir = Path(ensurePath(destPath))
+    destDir = Path(ensurePath(os.path.join(outputPath, 'library')))
+    asmDir = Path(ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly")))
 
     archKernelMap = collections.defaultdict(list)
     for k in filter(isAsm, kernels):
@@ -190,39 +189,22 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
 
       gfx = getGfxName(arch)
 
-      if globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
-        objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
-
-        coFileMap = collections.defaultdict(list)
-
-        if len(objectFiles):
-          coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
-
-        for kernel in archKernels:
-          coName = kernel.get("codeObjectFile", None)
-          if coName:
-            coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
-
-        for coFileRaw, objFiles in coFileMap.items():
-
-          objFiles = _batchObjectFiles(objFiles, coFileRaw)
-          toolchain.link(objFiles, str(coFileRaw))
-
-          coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
-          if compress:
-            toolchain.compress(str(coFileRaw), str(coFile), gfx)
-          else:
-            shutil.move(coFileRaw, coFile)
-
-          coFiles.append(coFile)
-      else:
-        # Build mode: no merge files AND no lazy library loading
-        printWarning("Code object files are not compressed in `--no-merge-files` build mode.")
-        for kernel in archKernels:
-          base = writerAsm.getKernelFileBase(kernel)
-          src = str(asmDir / base + extCo)
-          dst = str(destDir / base + "_" + gfx + extCo)
-          shutil.copyfile(src, dst)
-          coFiles.append(dst)
+      objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
+      coFileMap = collections.defaultdict(list)
+      if len(objectFiles):
+        coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
+      for kernel in archKernels:
+        coName = kernel.get("codeObjectFile", None)
+        if coName:
+          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
+      for coFileRaw, objFiles in coFileMap.items():
+        objFiles = _batchObjectFiles(objFiles, coFileRaw)
+        toolchain.link(objFiles, str(coFileRaw))
+        coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
+        if compress:
+          toolchain.compress(str(coFileRaw), str(coFile), gfx)
+        else:
+          shutil.move(coFileRaw, coFile)
+        coFiles.append(coFile)
 
     return coFiles

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -55,10 +55,6 @@ class KernelWriterActivationEnumHeader(KernelWriterBase):
 
   def getHeaderFileString(self):
     fileString = "" # CHeader
-    if not globalParameters["MergeFiles"]:
-      fileString += CHeader
-      fileString += "#pragma once\n\n"
-
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
     supportedBy = ActivationType.SupportedBy.ALL if self.state["ProblemType"]["ActivationType"] == 'all' else ActivationType.SupportedBy.HIPBLASLT
     enumName = "%sActivationType_%s"%(self.actGradientPrefix, activationCDataType.toChar())

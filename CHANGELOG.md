@@ -2,6 +2,31 @@
 
 Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hipBLASLt](https://rocm.docs.amd.com/projects/hipBLASLt/en/latest/index.html).
 
+## hipBLASLt 0.12.0 for ROCm 6.4.0
+
+### Added
+
+* Support roctx if `HIPBLASLT_ENABLE_MARKER=1` is set
+* Output the profile logging if `HIPBLASLT_LOG_MASK=64` is set
+* Support FP16 compute type
+* Add memory bandwidth information in hipblaslt-bench output
+* Support user offline tuning mechanism
+* Add more samples
+
+### Changed
+
+* Output the bench command along with solution index if `HIPBLASLT_LOG_MASK=32` is set
+
+### Optimized
+
+* Improve the overall performance of XF32/FP16/BF16/FP8/BF8 data type
+* Reduce library size
+
+### Resolved issues
+
+* Fix multi-threads bug
+* Fix multi-streams bug
+
 ## hipBLASLt 0.10.0 for ROCm 6.3.0
 
 ### Added

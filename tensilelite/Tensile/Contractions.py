@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -449,6 +449,14 @@ class ProblemPredicate(Properties.Predicate):
             valuepredicates.append(state["NumThreads"])
             rv += [cls('SynchronizerSizeCheck', index=0, value=valuepredicates)]
 
+        if state["InternalSupportParams"]["KernArgsVersion"] >= 1 and \
+                 not (('StreamK' in state) and (state['StreamK'] > 0)):
+            valuepredicates = []
+            valuepredicates.append(state["MacroTile0"])
+            valuepredicates.append(state["MacroTile1"])
+            valuepredicates.append(state["GlobalSplitU"])
+            rv += [cls('WorkgroupNumberCheck', index=0, value=valuepredicates)]
+
         if not problemType.aType.isInt8x4():
             # calculate the minimum supported free dimension size
             TLUA = state['ProblemType']['TLUA']
@@ -507,12 +515,13 @@ class ProblemPredicate(Properties.Predicate):
         if ('WorkGroupMappingXCC' in state) and ('WorkGroupMappingXCCGroup' in state):
             rv += [cls("WorkgroupMappingXCCCheck", value=[state['WorkGroupMappingXCC'], state['WorkGroupMappingXCCGroup']])]
 
-        # TODO- To improve the perf of these non-multiples cases
         if state['ProblemType']['SwizzleTensorA']:
             rv += [cls('SwizzleTensorA', value=state['ProblemType']['SwizzleTensorA'])]
-            rv += [cls("Free0SizeMultiple", index=0, value=state['MacroTile0'])]
-            rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
+            # TODO- (TT + DTVA) tail-loop is not working yet.
+            if state['ProblemType']['TransposeB']:
+                rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
 
+        # TODO- Will remove the size predicate once we have SWZ-B request
         if state['ProblemType']['SwizzleTensorB']:
             rv += [cls('SwizzleTensorB', value=state['ProblemType']['SwizzleTensorB'])]
             rv += [cls("Free1SizeMultiple", index=0, value=state['MacroTile1'])]

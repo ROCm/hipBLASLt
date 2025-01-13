@@ -8,7 +8,6 @@ GlobalParameters:
   PrintSolutionRejectionReason: True
   Device: 0
   CMakeBuildType: Release
-  MergeFiles: False
   KernelTime: True
   MaxWorkspaceSize: 13421772800
   DataInitTypeAlpha: 1
@@ -631,8 +630,8 @@ BenchmarkProblems:
           - [16, 16,16, 1,  1,   4, 5,  2, 1 ]
           - [16, 16,16, 1,  1,   4, 5,  1, 2 ]
           - [16, 16,16, 1,  1,   5, 4,  1, 2 ]
-          - [16, 16,16, 1,  1,   3, 9,  2, 1 ] 
-          - [16, 16,16, 1,  1,   4, 8,  2, 1 ] 
+          - [16, 16,16, 1,  1,   3, 9,  2, 1 ]
+          - [16, 16,16, 1,  1,   4, 8,  2, 1 ]
         - WorkGroup:
           - [4,4,2]
         - GlobalReadVectorWidthA: [-1]
