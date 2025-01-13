@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -145,7 +145,7 @@ double get_time_us_no_sync(void)
 
 /* ============================================================================================ */
 /*  device query and print out their ID and name; return number of compute-capable devices. */
-int64_t query_device_property()
+int64_t query_device_property(int device_id)
 {
     int             device_count;
     hipblasStatus_t status = (hipblasStatus_t)hipGetDeviceCount(&device_count);
@@ -156,50 +156,46 @@ int64_t query_device_property()
     }
     else
     {
-        hipblaslt_cout << "Query device success: there are " << device_count << " devices"
-                       << std::endl;
+        hipblaslt_cout << "Query device success: there are " << device_count << " devices."
+                       << " (Target device ID is " << device_id << ")" << std::endl;
     }
 
-    for(int i = 0;; i++)
+    if(device_id >= device_count)
     {
-        hipblaslt_cout
-            << "-------------------------------------------------------------------------------"
-            << std::endl;
+        hipblaslt_cerr << "Query device error: Target device ID is larger than device counts."
+                       << std::endl;
+        return device_count;
+    }
 
-        if(i >= device_count)
-            break;
-
-        hipDeviceProp_t props;
-        hipblasStatus_t status = (hipblasStatus_t)hipGetDeviceProperties(&props, i);
-        if(status != HIPBLAS_STATUS_SUCCESS)
-        {
-            hipblaslt_cerr << "Query device error: cannot get device ID " << i << "'s property"
-                           << std::endl;
-        }
-        else
-        {
-            char buf[320];
-            snprintf(
-                buf,
-                sizeof(buf),
-                "Device ID %d : %s %s\n"
-                "with %3.1f GB memory, max. SCLK %d MHz, max. MCLK %d MHz, compute capability "
-                "%d.%d\n"
-                "maxGridDimX %d, sharedMemPerBlock %3.1f KB, maxThreadsPerBlock %d, warpSize %d\n",
-                i,
-                props.name,
-                props.gcnArchName,
-                props.totalGlobalMem / 1e9,
-                (int)(props.clockRate / 1000),
-                (int)(props.memoryClockRate / 1000),
-                props.major,
-                props.minor,
-                props.maxGridSize[0],
-                props.sharedMemPerBlock / 1e3,
-                props.maxThreadsPerBlock,
-                props.warpSize);
-            hipblaslt_cout << buf;
-        }
+    hipDeviceProp_t props;
+    status = (hipblasStatus_t)hipGetDeviceProperties(&props, device_id);
+    if(status != HIPBLAS_STATUS_SUCCESS)
+    {
+        hipblaslt_cerr << "Query device error: cannot get device ID " << device_id << "'s property"
+                       << std::endl;
+    }
+    else
+    {
+        char buf[320];
+        snprintf(buf,
+                 sizeof(buf),
+                 "Device ID %d : %s %s\n"
+                 "with %3.1f GB memory, max. SCLK %d MHz, max. MCLK %d MHz, compute capability "
+                 "%d.%d\n"
+                 "maxGridDimX %d, sharedMemPerBlock %3.1f KB, maxThreadsPerBlock %d, warpSize %d\n",
+                 device_id,
+                 props.name,
+                 props.gcnArchName,
+                 props.totalGlobalMem / 1e9,
+                 (int)(props.clockRate / 1000),
+                 (int)(props.memoryClockRate / 1000),
+                 props.major,
+                 props.minor,
+                 props.maxGridSize[0],
+                 props.sharedMemPerBlock / 1e3,
+                 props.maxThreadsPerBlock,
+                 props.warpSize);
+        hipblaslt_cout << buf;
     }
 
     return device_count;
@@ -279,6 +275,6 @@ int32_t hipblaslt_get_arch_major()
 
     static_cast<void>(hipGetDevice(&deviceId));
     static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-    auto        gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
-    return stoi(gpu_arch_no_prefix) /100;
+    auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
+    return stoi(gpu_arch_no_prefix) / 100;
 }

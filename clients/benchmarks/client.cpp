@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,7 +50,7 @@
 using namespace roc; // For emulated program_options
 using namespace std::literals; // For std::string literals of form "str"s
 
-struct perf_matmul: hipblaslt_test_valid
+struct perf_matmul : hipblaslt_test_valid
 {
     void operator()(const Arguments& arg)
     {
@@ -734,7 +734,7 @@ try
     }
 
     // Device Query
-    int64_t device_count = query_device_property();
+    int64_t device_count = query_device_property(device_id);
 
     hipblaslt_cout << std::endl;
     if(device_count <= device_id)
