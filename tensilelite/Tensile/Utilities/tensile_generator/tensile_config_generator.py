@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -90,23 +90,36 @@ LibraryType = "GridBased"
 
 CU_RE = r"Compute Unit:(?P<COMPUTE_UNIT>[\w ]+)"
 
-res = subprocess.run("/opt/rocm/llvm/bin/offload-arch", stdout=subprocess.PIPE)
-ArchitectureName = res.stdout.decode("utf-8").strip()
-res = subprocess.run("rocminfo | grep Compute", stdout=subprocess.PIPE, shell=True, env={"ROCR_VISIBLE_DEVICES":"0"})
-match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
 NUM_STAGES = args.num_stages
 DIV_MI = 3 # 33.3%
 MIN_MI = 5 # min 5 solutions
 NONTEMPORALRATIO = 8
 CU = 0
+
+OFFLOAD_ARCH = "/opt/rocm/llvm/bin/offload-arch"
+NUM_INST = "/sys/class/drm/card1/device/compute_partition_config/xcc/num_inst"
+
+ArchitectureName = None
+if os.path.exists(OFFLOAD_ARCH):
+    res = subprocess.run(OFFLOAD_ARCH, stdout=subprocess.PIPE)
+    ArchitectureName = res.stdout.decode("utf-8").strip()
+else:
+    raise FileNotFoundError(f"{OFFLOAD_ARCH} not found, please specific ArchitectureName in the script.")
+
+res = subprocess.run("rocminfo | grep Compute", stdout=subprocess.PIPE, shell=True, env={"ROCR_VISIBLE_DEVICES":"0"})
+match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
 if match:
     CU = int(match.group('COMPUTE_UNIT').strip())
 else:
     raise RuntimeError("Failed to get compute unit from rocminfo")
 
+XCC = None
 if ArchitectureName == 'gfx942':
-    res = subprocess.run(["cat", "/sys/class/drm/card1/device/compute_partition_config/xcc/num_inst"], stdout=subprocess.PIPE)
-    XCC = int(res.stdout.decode("utf-8").strip())
+    if os.path.exists(OFFLOAD_ARCH):
+        res = subprocess.run(["cat", NUM_INST], stdout=subprocess.PIPE)
+        XCC = int(res.stdout.decode("utf-8").strip())
+    else:
+        raise FileNotFoundError(f"{NUM_INST} not found, please specific XCC in the script.")
     DeviceNames = ["Device 0049", "Device 0050"]
     ScheduleName = "aquavanjaram"
 elif ArchitectureName == 'gfx90a':
