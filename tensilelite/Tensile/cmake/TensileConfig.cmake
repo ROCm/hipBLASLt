@@ -129,7 +129,7 @@ function(TensileCreateLibraryFiles
   message(STATUS "Tensile script: ${Script}")
 
   if(Tensile_NO_LAZY_LIBRARY_LOADING)
-    set(Options ${Options} "---nolazy-library-loading")
+    set(Options ${Options} "---no-lazy-library-loading")
   endif()
 
   if(Tensile_ENABLE_MARKER)
