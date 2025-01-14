@@ -350,7 +350,7 @@ std::string RocBlasLt_TestName_to_string(std::unordered_map<std::string, size_t>
 }
 
 static const char* const validCategories[]
-    = {"quick", "pre_checkin", "nightly", "multi_gpu", "HMM", "known_bug", NULL};
+    = {"smoke", "quick", "pre_checkin", "nightly", "multi_gpu", "HMM", "known_bug", NULL};
 
 static bool valid_category(const char* category)
 {
