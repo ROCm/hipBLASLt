@@ -74,7 +74,7 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     argParser.add_argument("--print-timing", dest="PrintTiming",
                             default=False, action="store_true", help="Print duration of each stage.")
     argParser.add_argument("--no-lazy-library-loading", dest="LazyLibraryLoading", action="store_false",
-                           default=True, help="Loads Tensile libraries when needed instead of upfront.")
+                           default=True, help="Disable building for lazy library loading.")
     argParser.add_argument("--enable-marker", dest="EnableMarker", action="store_true",
                            default=False, help="Enable marker in Tensile.")
     argParser.add_argument("--no-generate-solution-table", dest="GenSolTable", action="store_false", default=True,
