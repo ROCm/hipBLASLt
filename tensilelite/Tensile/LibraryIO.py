@@ -307,7 +307,9 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
 
     solutions = [solutionStateToSolution(solutionState, cxxCompiler) for solutionState in data["Solutions"]]
 
-    newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions, cxxCompiler)
+    newLibrary, codeObjectFile = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions, cxxCompiler)
+    for solution in solutions:
+        solution["codeObjectFile"] = codeObjectFile
 
     return LibraryLogic(data["ScheduleName"], data["ArchitectureName"], problemType, solutions, \
             data.get("ExactLogic"), newLibrary, srcFile)

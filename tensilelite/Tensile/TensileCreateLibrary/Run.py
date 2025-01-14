@@ -210,12 +210,14 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   return codeObjectFiles, numKernels
 
 
-def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels, kernelHelperObjs, \
-    kernelWriterAssembly, compress=True):
+def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, solutions, assembler, compress=True):
 
   pushWorkingPath('build_tmp')
   pushWorkingPath(os.path.basename(outputPath).upper())
   asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+
+  kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
+  kernelWriterAssembly, _, _ = getSolutionAndKernelWriters(solutions, kernels, assembler)
 
   asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
 
@@ -309,64 +311,33 @@ def generateKernelObjectsFromSolutions(solutions):
 
 
 @timing
-def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
+def generateSolutions(args, cxxCompiler, logicFile):
+      if ";" in args["Architecture"]:
+          archs = args["Architecture"].split(";") # user arg list format
+      else:
+          archs = args["Architecture"].split("_") # workaround for cmake list in list issue
+      solutions = LibraryIO.parseLibraryLogicFile(logicFile, cxxCompiler, archs).solutions
+      numSoln = len(solutions)
+      solutions = dict.fromkeys(solutions).keys()
+      print1(f"Number of duplicate solutions: {numSoln - len(solutions)}")
+      return solutions
 
-  if ";" in args["Architecture"]:
-    archs = args["Architecture"].split(";") # user arg list format
-  else:
-    archs = args["Architecture"].split("_") # workaround for cmake list in list issue
 
-  solutions = []
-  masterLibraries = {}
-  nextSolIndex = 0
-  matchTable = {}
-  fIter = zip(logicFiles, itertools.repeat(cxxCompiler), itertools.repeat(archs))
+def generateMatchTable(masterSolutionLibraries):
+    def libraryIter(lib: MasterSolutionLibrary):
+        if len(lib.solutions):
+            for i, s in enumerate(lib.solutions.items()):
+                yield (i, *s)
+        else:
+            for _, lazyLib in lib.lazyLibraries.items():
+                yield from libraryIter(lazyLib)
 
-  def libraryIter(lib: MasterSolutionLibrary):
-    if len(lib.solutions):
-      for i, s in enumerate(lib.solutions.items()):
-        yield (i, *s)
-    else:
-      for _, lazyLib in lib.lazyLibraries.items():
-        yield from libraryIter(lazyLib)
-
-  for library in ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered"):
-    _, architectureName, _, _, _, newLibrary, srcFile = library
-
-    if architectureName == "":
-      continue
-
-    if architectureName in masterLibraries:
-      nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
-    else:
-      masterLibraries[architectureName] = newLibrary
-      masterLibraries[architectureName].version = args["CodeObjectVersion"]
-    
-    if args["GenSolTable"]:
+    matchTable = {}
+    for library in masterSolutionLibraries:
       # Match yaml file solutions to solution index
-      for localIdx, _, s in libraryIter(newLibrary):
+      for localIdx, _, s in libraryIter(library):
         matchTable[s.index] = [srcFile, localIdx]
-
-  if "fallback" in masterLibraries.keys():
-    for key, value in masterLibraries.items():
-      if key != "fallback":
-        value.merge(masterLibraries["fallback"])
-    masterLibraries.pop("fallback")
-  for _, masterLibrary in masterLibraries.items():
-    for _, sol in masterLibrary.solutions.items():
-      solutions.append(sol.originalSolution)
-    for name, lib in masterLibrary.lazyLibraries.items():
-      for _, sol in lib.solutions.items():
-        sol.originalSolution._state["codeObjectFile"] = name
-        solutions.append(sol.originalSolution)
-
-  # remove duplicates while preserving order
-  solutions = dict.fromkeys(solutions).keys()
-
-  if args["GenSolTable"]:
-    LibraryIO.write("MatchTable", matchTable)
-
-  return solutions, masterLibraries
+      LibraryIO.write("MatchTable", matchTable)
 
 
 ################################################################################
@@ -443,32 +414,32 @@ def run():
   print2(f"# LibraryLogicFiles: {len(logicFiles)}")
   for logicFile in logicFiles:
     print2("#   %s" % logicFile)
-
-  solutions, masterLibraries = generateLogicDataAndSolutions(logicFiles, arguments, cxxCompiler)
-  kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
-  kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels, assembler)
-
+  
   copyStaticFiles(arguments["OutputPath"])
 
-  numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, kernels, 
-                                           kernelHelperObjs, kernelWriterAssembly, compress=arguments["UseCompression"])
+  unaryGenerateSolutions = functools.partial(generateSolutions, arguments, cxxCompiler)
+  solutions = ParallelMap2(unaryGenerateSolutions, logicFiles, "Reading logic files and generating solutions", multiArg=False)
+  solutions = (s for solutionList in solutions for s in solutionList)
 
-  archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
-             if globalParameters["AsmCaps"][arch]["SupportedISA"]]
-  newLibraryDir = ensurePath(os.path.join(arguments["OutputPath"], 'library'))
+  numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, solutions, 
+                                           assembler, compress=arguments["UseCompression"])
 
-  for archName, newMasterLibrary in masterLibraries.items():
-    if archName in archs:
-      if globalParameters["LazyLibraryLoading"]:
-        masterFile = os.path.join(newLibraryDir, "TensileLibrary_lazy_"+archName)
-      else:
-        masterFile = os.path.join(newLibraryDir, "TensileLibrary_"+archName)
-      newMasterLibrary.applyNaming(kernelMinNaming)
-      LibraryIO.write(masterFile, Utils.state(newMasterLibrary), arguments["LibraryFormat"])
-      for name, lib in newMasterLibrary.lazyLibraries.items():
-        filename = os.path.join(newLibraryDir, name)
-        lib.applyNaming(kernelMinNaming)
-        LibraryIO.write(filename, Utils.state(lib), arguments["LibraryFormat"])
+  # archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
+  #            if globalParameters["AsmCaps"][arch]["SupportedISA"]]
+  # newLibraryDir = ensurePath(os.path.join(arguments["OutputPath"], 'library'))
+
+  # for archName, newMasterLibrary in masterLibraries.items():
+  #   if archName in archs:
+  #     if globalParameters["LazyLibraryLoading"]:
+  #       masterFile = os.path.join(newLibraryDir, "TensileLibrary_lazy_"+archName)
+  #     else:
+  #       masterFile = os.path.join(newLibraryDir, "TensileLibrary_"+archName)
+  #     newMasterLibrary.applyNaming(kernelMinNaming)
+  #     LibraryIO.write(masterFile, Utils.state(newMasterLibrary), arguments["LibraryFormat"])
+  #     for name, lib in newMasterLibrary.lazyLibraries.items():
+  #       filename = os.path.join(newLibraryDir, name)
+  #       lib.applyNaming(kernelMinNaming)
+  #       LibraryIO.write(filename, Utils.state(lib), arguments["LibraryFormat"])
 
   print1("# Tensile Library Writer DONE")
   print1(HR)
