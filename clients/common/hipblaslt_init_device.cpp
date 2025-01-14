@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2024-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -150,13 +150,20 @@ void hipblaslt_init_device(ABC                      abc,
             }
             break;
         case hipblaslt_initialization::trig_float:
+            stride = std::max(lda * N, stride);
             if(abc == ABC::A || abc == ABC::C)
-                fill_batch(A, M, N, lda, stride, batch_count, [](size_t idx) -> T {
-                    return T(sin(double(idx)));
+                fill_batch(A, M, N, lda, stride, batch_count, [M, N, stride, lda](size_t idx) -> T {
+                    auto b = idx / stride;
+                    auto j = (idx - b * stride) / lda;
+                    auto i = (idx - b * stride) - j * lda;
+                    return T(sin(double(i + j*M + b*M*N)));
                 });
             else if(abc == ABC::B)
-                fill_batch(A, M, N, lda, stride, batch_count, [](size_t idx) -> T {
-                    return T(cos(double(idx)));
+                fill_batch(A, M, N, lda, stride, batch_count, [M, N, stride, lda](size_t idx) -> T {
+                    auto b = idx / stride;
+                    auto j = (idx - b * stride) / lda;
+                    auto i = (idx - b * stride) - j * lda;
+                    return T(cos(double(i + j*M + b*M*N)));
                 });
             break;
         case hipblaslt_initialization::hpl:
