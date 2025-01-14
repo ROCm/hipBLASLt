@@ -216,9 +216,8 @@ def Tensile(userArgs):
     configPaths = args.ConfigFile
     altFormat = args.AlternateFormat
     useCache = args.useCache
-    coVersion = getCOVFromParam(args.CodeObjectVersion)
     outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
-    print1(f"OutputPath:            {str(outputPath)}")
+    print1(f"#  OutputPath: {str(outputPath)}")
 
     if altFormat and len(configPaths) > 2:
         printExit("Only 1 or 2 config_files are accepted for the alternate config format: "
@@ -278,7 +277,7 @@ def Tensile(userArgs):
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
 
 
-    asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], coVersion)
+    asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
     srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
     globalParameters["OutputPath"] = outputPath

@@ -36,7 +36,7 @@ from . import EmbeddedData
 from . import LibraryIO
 from . import Utils
 from .Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
-from .Toolchain.Source import SourceToolchain, buildSourceCodeObjectFile
+from .Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
 from .Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
@@ -137,43 +137,48 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     for rel in removeResults:
         results.remove(rel)
 
+
 def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
     if result.err:
       printExit(f"Failed to build kernel {result.name} because it has error code {result.err}")
     path = Path(asmPath) / f"{result.name}.s"
-
-    print1(f"Writing {path}")
+    isa =  result.isa
+    wfsize = result.wavefrontSize
     with open(path, "w", encoding="utf-8") as f:
       f.write(result.src)
+    # result.src is very large so let garbage collector know to clean up
+    del result
 
-    return path, result.isa, result.wavefrontSize
+    return path, isa, wfsize
 
 
 def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H):
     kernelSourceFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_CPP)
     kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_H)
-    kernelSourceFile = open(kernelSourceFilename, "a", encoding="utf-8")
-    kernelHeaderFile = open(kernelHeaderFilename, "a", encoding="utf-8")
 
-    HeaderText = ""
-    # handle helper kernel function
-    for ko in kernelHelperObjs:
-        kernelName = ko.getKernelName()
+    with open(kernelHeaderFilename, "w", encoding="utf-8") as kernelHeaderFile, \
+          open(kernelSourceFilename, "w", encoding="utf-8") as kernelSourceFile:
+        kernelSourceFile.write(CHeader)
+        kernelHeaderFile.write(CHeader)
+        kernelSourceFile.write("#include \"Kernels.h\"\n")
+        kernelHeaderFile.write("#pragma once\n")
+        if globalParameters["RuntimeLanguage"] == "HIP":
+          kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
+          kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
+        kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")
 
-        (err, src) = ko.getSourceFileString()
-        kernelSourceFile.write(src)
-        if err:
-            print("*** warning: invalid kernel#%u" % kernelName)
+        HeaderText = ""
+        for ko in kernelHelperObjs:
+            kernelName = ko.getKernelName()
 
-        HeaderText += ko.getHeaderFileString()
+            (err, src) = ko.getSourceFileString()
+            kernelSourceFile.write(src)
+            if err:
+                print("*** warning: invalid kernel#%u" % kernelName)
 
-    # write kernel.h in one shot
-    kernelHeaderFile.write(HeaderText)
+            HeaderText += ko.getHeaderFileString()
 
-    if kernelSourceFile:
-        kernelSourceFile.close()
-    if kernelHeaderFile:
-        kernelHeaderFile.close()
+        kernelHeaderFile.write(HeaderText)
 
 
 ################################################################################
@@ -183,21 +188,15 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
 def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False, compress=True):
 
+  codeObjectFiles = []
+
   outputPath = Path(outputPath)
+  destLibPath = ensurePath(outputPath / "library")  # Destination for code object library files (.co)
   buildTmpPath = ensurePath(outputPath / "build_tmp" / outputPath.stem.upper())
-
-  destLibPath = ensurePath(outputPath / "library")
-
-  tmpAsmPath = ensurePath(buildTmpPath / "assembly")
-  tmpHipCoPath = ensurePath(buildTmpPath / "code_object_tmp")
-
-  if not globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
-    ensurePath(os.path.join(outputPath, "Kernels"))
+  tmpAsmPath = ensurePath(buildTmpPath / "assembly")  # Temp path for generated assembly files (.s)
+  tmpHipCoPath = ensurePath(buildTmpPath / "code_object_tmp")  # Temp path for HSA code object files (.hsaco)
 
   asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
-  srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
-  if srcKernels:
-    raise ValueError(f"Non-helper HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
 
   # Kernels may be intended for different co files, but generate the same .o file
   # Mark duplicate kernels to avoid race condition
@@ -222,20 +221,17 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   def assemble(ret):
     p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
-  unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
+  unaryWriteAssembly = functools.partial(writeAssembly, tmpAsmPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
   ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly), asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
-  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
+  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, tmpAsmPath, compress)
 
   srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
   if srcKernels:
     raise ValueError(f"Non-helper HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
-
-  Common.popWorkingPath() # build_tmp
-  Common.popWorkingPath() # workingDir
+  buildSourceCodeObjectFiles(srcToolchain, destLibPath, tmpHipCoPath, outputPath, srcKernelFile)
 
   return codeObjectFiles, numKernels
 
@@ -243,9 +239,11 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
 def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels, kernelHelperObjs, \
     kernelWriterAssembly, compress=True):
 
-  Common.pushWorkingPath('build_tmp')
-  Common.pushWorkingPath(os.path.basename(outputPath).upper())
-  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+  outputPath = Path(outputPath)
+  destLibPath = ensurePath(outputPath / "library")  # Destination for code object library files (.co)
+  buildTmpPath = ensurePath(outputPath / "build_tmp" / outputPath.stem.upper())
+  tmpAsmPath = ensurePath(buildTmpPath / "assembly")  # Temp path for generated assembly files (.s)
+  tmpHipCoPath = ensurePath(buildTmpPath / "code_object_tmp")  # Temp path for HSA code object files (.hsaco)
 
   asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
 
@@ -270,20 +268,14 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
     p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
   unaryProcessKernelSource = functools.partial(processKernelSource, kernelWriterAssembly, TensileInstructions())
-  unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
+  unaryWriteAssembly = functools.partial(writeAssembly, tmpAsmPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
   ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly, unaryProcessKernelSource), uniqueAsmKernels, "Generating assembly kernels", multiArg=False)
-  buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
+  buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, tmpAsmPath, compress)
 
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
-
-  fn = functools.partial(writeAssembly, tmpAsmPath)
-  ret = Common.ParallelMap2(fn, asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
-  for p, isa, wfsize in ret:
-    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wfsize)
-  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, tmpAsmPath, compress)
+  buildSourceCodeObjectFiles(srcToolchain, destLibPath, tmpHipCoPath, outputPath, srcKernelFile)
 
   return numKernels
 
@@ -527,10 +519,14 @@ def TensileCreateLibrary():
   args = argParser.parse_args()
   args.CodeObjectVersion = "4" if args.CodeObjectVersion == "default" else args.CodeObjectVersion
 
+  logicPath = args.LogicPath
+  outputPath = args.OutputPath
+  cxxCompiler = args.CxxCompiler
+  offloadBundler   = args.OffloadBundler
+  assembler = args.Assembler
   libraryFormat = args.LibraryFormat
   useCompression = not args.NoCompress
   coVersion = args.CodeObjectVersion
-
   outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
   print2("OutputPath: %s" % outputPath)
 
@@ -574,7 +570,6 @@ def TensileCreateLibrary():
   print1(f"# Code Object Version: {coVersion}")
   print1(f"# Architecture(s):     {arguments['Architecture']}")
   print1(f"# Library Format:      {libraryFormat}")
-  print1(f"OutputPath:            {str(outputPath)}")
 
   assignGlobalParameters(arguments, cxxCompiler)
 
