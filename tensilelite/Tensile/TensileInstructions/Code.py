@@ -693,7 +693,7 @@ class _SignatureKernelDescriptor(Item):
 
     def getNextFreeVgpr(self) -> int:
         return self.totalVgprs
-
+    
     def getNextFreeSgpr(self) -> int:
         return self.totalSgprs
 
@@ -898,7 +898,7 @@ class KernelBody(Item):
         self.totalSgprs = totalSgprs
         self.signature.setGprs(totalVgprs=totalVgprs, totalAgprs=totalAgprs, \
             totalSgprs=totalSgprs)
-
+        
     def getNextFreeVgpr(self) -> int:
         return self.signature.getNextFreeVgpr()
 
