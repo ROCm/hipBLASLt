@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ from . import EmbeddedData
 from . import LibraryIO
 from . import Utils
 from .Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
-from .Toolchain.Source import SourceToolchain, buildSourceCodeObjectFile
+from .Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
 from .Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
@@ -137,6 +137,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     for rel in removeResults:
         results.remove(rel)
 
+
 def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
     if result.err:
       printExit(f"Failed to build kernel {result.name} because it has error code {result.err}")
@@ -145,8 +146,9 @@ def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
     wfsize = result.wavefrontSize
     with open(path, "w", encoding="utf-8") as f:
       f.write(result.src)
-      del result # result.src is very large so let gc know to clean up asap
- 
+    # result.src is very large so let garbage collector know to clean up
+    del result
+
     return path, isa, wfsize
 
 
@@ -155,7 +157,7 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
     kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_H)
 
     with open(kernelHeaderFilename, "w", encoding="utf-8") as kernelHeaderFile, \
-          open(kernelSourceFilename, "w", encoding="utf-8") as kernelSourceFile:  
+          open(kernelSourceFilename, "w", encoding="utf-8") as kernelSourceFile:
         kernelSourceFile.write(CHeader)
         kernelHeaderFile.write(CHeader)
         kernelSourceFile.write("#include \"Kernels.h\"\n")
@@ -163,37 +165,36 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
         if globalParameters["RuntimeLanguage"] == "HIP":
           kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
           kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
-        kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")  
+        kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")
 
         HeaderText = ""
         for ko in kernelHelperObjs:
             kernelName = ko.getKernelName()
-    
+
             (err, src) = ko.getSourceFileString()
             kernelSourceFile.write(src)
             if err:
                 print("*** warning: invalid kernel#%u" % kernelName)
-    
+
             HeaderText += ko.getHeaderFileString()
-    
+
         kernelHeaderFile.write(HeaderText)
 
 
 ################################################################################
 # Write Solutions and Kernels for BenchmarkClient or LibraryClient
 ################################################################################
+@timing
 def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False, compress=True):
+
   codeObjectFiles = []
 
-  # Push working path into build_tmp folder because there may be more than
-  # one process running this script. This is to avoid build directory clashing.
-  # NOTE: file paths must not contain the lower case word 'kernel' or the
-  # /opt/rocm/bin/extractkernel will fail.
-  # See buildSourceCodeObjectFile:167 for the call to this binary.
-  Common.pushWorkingPath('build_tmp')
-  Common.pushWorkingPath(os.path.basename(outputPath).upper())
-  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+  outputPath = Path(outputPath)
+  destLibPath = ensurePath(outputPath / "library")  # Destination for code object library files (.co)
+  buildTmpPath = ensurePath(outputPath / "build_tmp" / outputPath.stem.upper())
+  tmpAsmPath = ensurePath(buildTmpPath / "assembly")  # Temp path for generated assembly files (.s)
+  tmpHipCoPath = ensurePath(buildTmpPath / "code_object_tmp")  # Temp path for HSA code object files (.hsaco)
 
   asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
 
@@ -208,7 +209,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
     duplicates += k.duplicate
     print2(f"Duplicate: {base}")
     visited.add(base)
-  
+
   print1(f"Number of duplicates: {duplicates}")
 
   numAsmKernels = len(asmKernels)
@@ -220,20 +221,17 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   def assemble(ret):
     p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
-  unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
+  unaryWriteAssembly = functools.partial(writeAssembly, tmpAsmPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
   ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly), asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
-  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
+  codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, tmpAsmPath, compress)
 
   srcKernels = [k for k in kernels if k['KernelLanguage'] != 'Assembly']
   if srcKernels:
     raise ValueError(f"Non-helper HIP source kernels are not supported Tensilelite, found {len(srcKernels)}")
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
-
-  Common.popWorkingPath() # build_tmp
-  Common.popWorkingPath() # workingDir
+  buildSourceCodeObjectFiles(srcToolchain, destLibPath, tmpHipCoPath, outputPath, srcKernelFile)
 
   return codeObjectFiles, numKernels
 
@@ -241,9 +239,11 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
 def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels, kernelHelperObjs, \
     kernelWriterAssembly, compress=True):
 
-  Common.pushWorkingPath('build_tmp')
-  Common.pushWorkingPath(os.path.basename(outputPath).upper())
-  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+  outputPath = Path(outputPath)
+  destLibPath = ensurePath(outputPath / "library")  # Destination for code object library files (.co)
+  buildTmpPath = ensurePath(outputPath / "build_tmp" / outputPath.stem.upper())
+  tmpAsmPath = ensurePath(buildTmpPath / "assembly")  # Temp path for generated assembly files (.s)
+  tmpHipCoPath = ensurePath(buildTmpPath / "code_object_tmp")  # Temp path for HSA code object files (.hsaco)
 
   asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
 
@@ -268,17 +268,14 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
     p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
   unaryProcessKernelSource = functools.partial(processKernelSource, kernelWriterAssembly, TensileInstructions())
-  unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
+  unaryWriteAssembly = functools.partial(writeAssembly, tmpAsmPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
   ret = Common.ParallelMap2(compose(assemble, unaryWriteAssembly, unaryProcessKernelSource), uniqueAsmKernels, "Generating assembly kernels", multiArg=False)
-  buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
+  buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, tmpAsmPath, compress)
 
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
-
-  Common.popWorkingPath() # build_tmp
-  Common.popWorkingPath() # workingDir
+  buildSourceCodeObjectFiles(srcToolchain, destLibPath, tmpHipCoPath, outputPath, srcKernelFile)
 
   return numKernels
 
@@ -302,9 +299,7 @@ def getSolutionAndKernelWriters(solutions, kernels, assembler):
 # copy static cpp files and headers
 ################################################################################
 @timing
-def copyStaticFiles(outputPath=None):
-  if outputPath is None:
-    outputPath = globalParameters["WorkingPath"]
+def copyStaticFiles(outputPath):
   libraryStaticFiles = [
     "TensileTypes.h",
     "tensile_bfloat16.h",
@@ -315,9 +310,7 @@ def copyStaticFiles(outputPath=None):
     "memory_gfx.h" ]
 
   for fileName in libraryStaticFiles:
-    # copy file
-    shutil.copy( os.path.join(globalParameters["SourcePath"], fileName), \
-        outputPath )
+    shutil.copy(os.path.join(globalParameters["SourcePath"], fileName), outputPath)
 
   return libraryStaticFiles
 
@@ -534,10 +527,9 @@ def TensileCreateLibrary():
   libraryFormat = args.LibraryFormat
   useCompression = not args.NoCompress
   coVersion = args.CodeObjectVersion
-
+  outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
   print2("OutputPath: %s" % outputPath)
-  ensurePath(outputPath)
-  outputPath = os.path.abspath(outputPath)
+
   arguments = {}
   arguments["RuntimeLanguage"] = args.RuntimeLanguage
   arguments["CodeObjectVersion"] = args.CodeObjectVersion
@@ -554,12 +546,7 @@ def TensileCreateLibrary():
   arguments["LibraryFormat"] = args.LibraryFormat
   if args.no_enumerate:
     arguments["AMDGPUArchPath"] = False
-
   arguments["GenerateSourcesAndExit"] = args.GenerateSourcesAndExit
-  if arguments["GenerateSourcesAndExit"]:
-    # Generated sources are preserved and go into output dir
-    arguments["WorkingPath"] = outputPath
-
   arguments["CpuThreads"] = args.CpuThreads
   arguments["PrintLevel"] = args.PrintLevel
   arguments["PrintTiming"] = args.PrintTiming
@@ -653,7 +640,7 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  numKernels = writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels, 
+  numKernels = writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
                                            kernelHelperObjs, kernelWriterAssembly, compress=useCompression)
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \

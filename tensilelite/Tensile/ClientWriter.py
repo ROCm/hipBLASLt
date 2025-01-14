@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 #
 ################################################################################
 
+from matplotlib.pyplot import step
 from . import ClientExecutable
 from . import LibraryIO
 from .TensileInstructions import getGfxName, DataType
@@ -77,13 +78,20 @@ class ClientLogLevel(Enum):
 ################################################################################
 # Main
 ################################################################################
-def main(config, cxxCompiler: str, cCompiler: str):
+def main(config, cxxCompiler: str, cCompiler: str, outputPath):
   libraryLogicPath = os.path.join(globalParameters["WorkingPath"], \
       globalParameters["LibraryLogicPath"])
-  stepBaseDir = pushWorkingPath(globalParameters["LibraryClientPath"])
+  assert outputPath == globalParameters["WorkingPath"], f"outputPath={outputPath} != WP={globalParameters['WorkingPath']}"
+
+  stepBaseDirOld = pushWorkingPath(globalParameters["LibraryClientPath"])
+  stepBaseDir = outputPath / globalParameters["LibraryClientPath"]
+  assert stepBaseDir == stepBaseDirOld, f"stepBaseDir={stepBaseDir} != SBD={stepBaseDirOld}"
 
   pushWorkingPath("source")
-  copyStaticFiles()
+  sourcePath = stepBaseDir / "source"
+  assert sourcePath == globalParameters["WorkingPath"], f"sourcePath={sourcePath} != WP={globalParameters['WorkingPath']}"
+
+  copyStaticFiles(sourcePath)
 
   ##############################################################################
   # Read Logic Files
@@ -101,7 +109,7 @@ def main(config, cxxCompiler: str, cCompiler: str):
   subprocess.run(shlex.split(createLibraryScript), cwd=stepBaseDir)
   coList = glob(os.path.join(stepBaseDir,"library/*.co"))
   yamlList = glob(os.path.join(stepBaseDir,"library/*.yaml"))
-    
+
   clientParametersPaths = []
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary, _) \
@@ -172,7 +180,7 @@ def main(config, cxxCompiler: str, cCompiler: str):
 
   forBenchmark = False
   enableTileSelection = False
-  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, clientParametersPaths)
+  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, outputPath, clientParametersPaths)
 
   popWorkingPath() # LibraryClient
 
@@ -193,12 +201,14 @@ def runNewClient(scriptPath, clientParametersPath, cxxCompiler: str, cCompiler: 
     printWarning("ClientWriter Benchmark Process exited with error: {}".format(e))
 
 
-def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, configPaths=None):
+def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, outputPath, configPaths=None):
   # write runScript
   pushWorkingPath("build")
   path = globalParameters["WorkingPath"]
+  buildPath = outputPath / "build"
+  assert path == str(buildPath), f"path={path} != buildPath={buildPath}"
 
-  runScriptName = writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, configPaths)
+  runScriptName = writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, buildPath, configPaths)
   with ClientExecutionLock():
     process = subprocess.Popen(runScriptName, cwd=path)
     process.communicate()
@@ -262,7 +272,7 @@ def writeBuildClientLibraryScript(path, libraryLogicPath, cxxCompiler):
     os.chmod(filename, 0o777)
   return filename
 
-def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, configPaths=None):
+def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, buildDir, configPaths=None):
   if configPaths is None:
     configPaths = []
     configPaths.append(os.path.join(globalParameters["WorkingPath"], "../source/ClientParameters.ini"))
@@ -299,7 +309,7 @@ def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cC
 
     runScriptFile.write("ERR1=0\n")
 
-    clientExe = ClientExecutable.getClientExecutable(cxxCompiler, cCompiler)
+    clientExe = ClientExecutable.getClientExecutable(cxxCompiler, cCompiler, buildDir)
     for configFile in configPaths:
       runScriptFile.write("{} --config-file {} {}\n".format(clientExe, configFile, globalParameters["ClientArgs"]))
     runScriptFile.write("ERR2=$?\n\n")

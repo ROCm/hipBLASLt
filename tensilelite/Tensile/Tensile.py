@@ -40,6 +40,7 @@ from . import LibraryIO
 from . import LibraryLogic
 from . import __version__
 from datetime import datetime
+from pathlib import Path
 
 
 ###############################################################################
@@ -50,20 +51,20 @@ from datetime import datetime
 #   LibraryLogic.main() to analyse final benchmark data and produce logic/yaml
 #   ClientWriter.main() to create client which calls library based on above yaml
 ################################################################################
-def executeStepsInConfig(config, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str):
+def executeStepsInConfig(config, outputPath: Path, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str):
 
+    buildTmpPath = outputPath / "build_tmp"
     ##############################################################################
     # Benchmark Problems
     ##############################################################################
     if "BenchmarkProblems" in config:
-        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, cCompiler)
+        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, cCompiler, outputPath, buildTmpPath)
         print1("")
 
     ##############################################################################
     # Library Logic
     ##############################################################################
-    libraryLogicDataPath = os.path.join(globalParameters["WorkingPath"], \
-      globalParameters["LibraryLogicPath"])
+    libraryLogicDataPath = os.path.join(outputPath, globalParameters["LibraryLogicPath"])
     if "LibraryLogic" in config:
         if os.path.exists(libraryLogicDataPath):
             libraryLogicFiles = os.listdir(libraryLogicDataPath)
@@ -88,7 +89,7 @@ def executeStepsInConfig(config, asmToolchain: AssemblyToolchain, srcToolchain: 
             libraryClientConfig = config["LibraryClient"]
         else:
             libraryClientConfig = {}
-        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler)
+        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler, outputPath)
         print1("")
 
 
@@ -197,9 +198,9 @@ def Tensile(userArgs):
     print1("#  Tensile v%s" % (__version__))
 
     argParser = argparse.ArgumentParser()
-    argParser.add_argument("config_file", type=os.path.realpath, nargs="+",
+    argParser.add_argument("ConfigFile", type=os.path.realpath, nargs="+",
             help="Benchmark config.yaml file")
-    argParser.add_argument("output_path", \
+    argParser.add_argument("OutputPath", \
             help="Path to conduct benchmark and write output files")
     argParser.add_argument("--version", action="version", \
             version="%(prog)s {version}".format(version=__version__))
@@ -212,9 +213,11 @@ def Tensile(userArgs):
     addCommonArguments(argParser)
     args = argParser.parse_args(userArgs)
 
-    configPaths = args.config_file
+    configPaths = args.ConfigFile
     altFormat = args.AlternateFormat
     useCache = args.useCache
+    outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
+    print1(f"#  OutputPath: {str(outputPath)}")
 
     if altFormat and len(configPaths) > 2:
         printExit("Only 1 or 2 config_files are accepted for the alternate config format: "
@@ -274,11 +277,12 @@ def Tensile(userArgs):
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
 
 
-    asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
-    srcToolchain = SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
+    asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
+    srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
-    globalParameters["OutputPath"] = ensurePath(os.path.abspath(args.output_path))
-    globalParameters["WorkingPath"] = globalParameters["OutputPath"]
+    globalParameters["OutputPath"] = outputPath
+    globalParameters["WorkingPath"] = outputPath
+    print("WorkingPath: %s" % globalParameters["WorkingPath"])
 
     overrideParameters = argUpdatedGlobalParameters(args)
 
@@ -295,13 +299,13 @@ def Tensile(userArgs):
         profiler = cProfile.Profile()
         profiler.enable()
 
-    executeStepsInConfig(config, asmToolchain, srcToolchain, cCompiler)
+    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, cCompiler)
 
     if profiler:
         profiler.disable()
-        filename = globalParameters["OutputPath"] + "/tensile.stats"
+        filename = outputPath / "tensile.stats"
         profiler.dump_stats(filename)
-        filename = globalParameters["OutputPath"] + "/tensile.prof"
+        filename = outputPath / "tensile.prof"
         profiler.dump_stats(filename)
 
 def TensileConfigPath(*args):

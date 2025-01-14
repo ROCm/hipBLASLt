@@ -32,7 +32,7 @@ from .Common import globalParameters, print1, printWarning, ensurePath, assignGl
                     pushWorkingPath, popWorkingPath, restoreDefaultGlobalParameters, HR
 from .Tensile import addCommonArguments, argUpdatedGlobalParameters
 from .SolutionStructs import ProblemSizes
-from .Utilities.Toolchain import validateToolchain
+from .Toolchain.Validators import validateToolchain
 from . import __version__
 
 import argparse

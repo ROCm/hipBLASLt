@@ -28,14 +28,13 @@ import os
 import shlex
 import shutil
 import subprocess
-import warnings
 
 from pathlib import Path
-from typing import List, Literal, Union, Tuple
+from typing import List, Literal, Union
 
-from .. import Utils
 from ..TensileInstructions import getGfxName
 from ..Common import globalParameters, print2, ensurePath
+
 class AssemblyToolchain:
     def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: Literal[4, 5]):
         self.assembler = assembler
@@ -76,15 +75,15 @@ class AssemblyToolchain:
       """
       launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
       args = [
-          *launcher, 
-          self.assembler, 
-          "-x", "assembler", 
-          "--target=amdgcn-amd-amdhsa", 
-          f"-mcode-object-version={self.coVersion}", 
-          f"-mcpu={gfx}",  
+          *launcher,
+          self.assembler,
+          "-x", "assembler",
+          "--target=amdgcn-amd-amdhsa",
+          f"-mcode-object-version={self.coVersion}",
+          f"-mcpu={gfx}",
           "-mwavefrontsize64" if wavefrontSize == 64 else "-mno-wavefrontsize64"
           "-g" if debug else "",
-          "-c", 
+          "-c",
           "-o", destPath, srcPath
       ]
 
@@ -116,7 +115,7 @@ class AssemblyToolchain:
                 "-Xlinker", f"--build-id={self.buildIdKind}",
                 "-o", destPath, *srcPaths
             ]
-        
+
         return self.invoke(args, "Linking assembly object files into code object (*.o -> .co)")
 
     def compress(self, srcPath: str, destPath: str, gfx: str):
@@ -146,7 +145,7 @@ class AssemblyToolchain:
 
 def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjFiles: int=10000) -> List[str]:
     numObjFiles = len(objFiles)
-    
+
     if numObjFiles <= maxObjFiles:
       return objFiles
 
@@ -167,16 +166,26 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 
     return newObjFilesOutput
 
-def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAsm, outputPath, compress: bool=True):
-    
+def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAsm, destDir, asmDir, compress: bool=True):
+    """Builds code object files from assembly files
+
+    Args:
+        toolchain: The AssemblyToolchain object to use.
+        kernels: A list of dictionaries representing the kernels to build.
+        writerAsm: The AssemblyWriter object to use.
+        destDir: The destination directory for the code object files.
+        asmDir: The directory containing the assembly files.
+        compress: Whether to compress the code object files.
+    """
+
     isAsm = lambda k: k["KernelLanguage"] == "Assembly"
 
     extObj = ".o"
     extCo = ".co"
     extCoRaw = ".co.raw"
 
-    destDir = Path(ensurePath(os.path.join(outputPath, 'library')))
-    asmDir = Path(ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly")))
+    destDir = Path(ensurePath(destDir))
+    asmDir = Path(ensurePath(asmDir))
 
     archKernelMap = collections.defaultdict(list)
     for k in filter(isAsm, kernels):
