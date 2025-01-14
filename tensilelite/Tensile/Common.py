@@ -35,7 +35,7 @@ import subprocess
 import sys
 import time
 import re
-
+    
 
 IsaVersion = Tuple[int, int, int]
 
@@ -1683,13 +1683,15 @@ def assignGlobalParameters(config, cxxCompiler=None):
   # ROCm Agent Enumerator Path
   if os.name == "nt":
     globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
-    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
+    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")    
   else:
     globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
     globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm_agent_enumerator")
 
   globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
   globalParameters["ROCmLdPath"]  = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld")
+
+  globalParameters["ExtractKernelPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "hip/bin"), "extractkernel")
 
   if "AMDGPUArchPath" in config:
     globalParameters["AMDGPUArchPath"] = config["AMDGPUArchPath"]
