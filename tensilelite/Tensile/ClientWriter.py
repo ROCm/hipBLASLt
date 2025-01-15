@@ -22,7 +22,6 @@
 #
 ################################################################################
 
-from matplotlib.pyplot import step
 from . import ClientExecutable
 from . import LibraryIO
 from .TensileInstructions import getGfxName, DataType
