@@ -2097,23 +2097,32 @@ class GlobalWriteBatchWriter:
 
 def copyData(computeDataType, elementSumIdx, gwvw, vgprStart, direction=0):
   module = Module("Copy Data")
-  for vi in range(0, gwvw):
+  vi = 0
+  while vi < gwvw:
     sumIdxV = elementSumIdx + vi
     if computeDataType.isHalf() or computeDataType.isBFloat16():
       if (sumIdxV % 2 != 0):
+        vi += 1
         continue
       vgprIdx = elementSumIdx + vi // 2
-      module.add(VMovB32(dst=vgpr(vgprStart + (vi // 2)), src=vgpr(vgprIdx)))
-    elif computeDataType.isSingle():
+      if (vi + 1 < gwvw) and ((vgprStart + (vi // 2)) % 2 == 0) and (vgprIdx % 2 == 0):
+        module.add(VMovB64(dst=vgpr(vgprStart + (vi // 2), 2), src=vgpr(vgprIdx, 2)))
+        vi += 2
+      else:
+        module.add(VMovB32(dst=vgpr(vgprStart + (vi // 2)), src=vgpr(vgprIdx)))
+        vi += 1
+    elif computeDataType.isSingle() or computeDataType.isInt32():
       vgprIdx = sumIdxV
-      module.add(VMovB32(dst=vgpr(vgprStart + vi), src=vgpr(vgprIdx)))
+      if (vi + 1 < gwvw) and ((vgprStart + vi) % 2 == 0) and (vgprIdx % 2 == 0):
+        module.add(VMovB64(dst=vgpr(vgprStart + vi, 2), src=vgpr(vgprIdx, 2)))
+        vi += 2
+      else:
+        module.add(VMovB32(dst=vgpr(vgprStart + vi), src=vgpr(vgprIdx)))
+        vi += 1
     elif computeDataType.isDouble():
       vgprIdx = elementSumIdx + vi * 2
-      module.add(VMovB32(dst=vgpr(vgprStart + vi * 2), src=vgpr(vgprIdx)))
-      module.add(VMovB32(dst=vgpr(vgprStart + vi * 2 + 1), src=vgpr(vgprIdx+1)))
-    elif computeDataType.isInt32():
-      vgprIdx = sumIdxV
-      module.add(VMovB32(dst=vgpr(vgprStart + vi), src=vgpr(vgprIdx)))
+      module.add(VMovB64(dst=vgpr(vgprStart + vi * 2, 2), src=vgpr(vgprIdx, 2)))
+      vi += 1
     else:
       assert 0
 
