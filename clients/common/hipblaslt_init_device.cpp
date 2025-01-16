@@ -42,7 +42,7 @@ __global__ void fill_kernel(T* A, size_t size, size_t offset, F f)
 template <typename T, typename F>
 void fill_batch(T* A, size_t M, size_t N, size_t lda, size_t stride, size_t batch_count, const F& f)
 {
-    size_t size_64 = std::max(lda * N, stride) * batch_count;
+    size_t size_64 = lda * N + size_t(batch_count - 1) * stride;
     constexpr size_t c_i32_max = size_t(std::numeric_limits<int32_t>::max());
     for(size_t offset = 0; offset < size_64; offset += c_i32_max)
     {
