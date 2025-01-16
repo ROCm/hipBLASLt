@@ -175,7 +175,7 @@ install_packages( )
 
   if [[ "${tensile_msgpack_backend}" == true ]]; then
     library_dependencies_ubuntu+=("libmsgpack-dev")
-    library_dependencies_centos8=("msgpack-devel")
+    library_dependencies_centos8+=("msgpack-devel")
     library_dependencies_fedora+=("msgpack-devel")
   fi
 
