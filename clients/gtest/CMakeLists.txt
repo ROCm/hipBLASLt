@@ -124,6 +124,7 @@ add_custom_command( OUTPUT "${HIPBLASLT_TEST_DATA}"
                             matmul_common.yaml
                             matmul_gtest.yaml
                             auxiliary_gtest.yaml
+                            smoke_gtest.yaml
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
 add_custom_target( hipblaslt-test-data
                    DEPENDS "${HIPBLASLT_TEST_DATA}" )
