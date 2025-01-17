@@ -5,7 +5,7 @@ GlobalParameters:
   NumElementsToValidate: -1
   MinimumRequiredVersion: 4.14.0
   PrintLevel: 1
-  PrintSolutionRejectionReason: True
+  # PrintSolutionRejectionReason: True
   Device: 0
   CMakeBuildType: Release
   MergeFiles: False
@@ -83,7 +83,7 @@ BenchmarkProblems:
         - DirectToVgprA: [0,1]
         - DirectToVgprB: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   2, 2,  2,2 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 4,  1,4 ]
@@ -105,7 +105,7 @@ BenchmarkProblems:
           - Exact: [255,   255, 1, 126]
           - Exact: [255,   255, 1, 190]
           - Exact: [255,   255, 1, 256]
-  
+
   ########################################
   # HHS NT DTL
   ########################################
@@ -171,7 +171,7 @@ BenchmarkProblems:
         - DirectToVgprA: [0,1]
         - DirectToVgprB: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   2, 2,  2,2 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 4,  1,4 ]
@@ -193,7 +193,7 @@ BenchmarkProblems:
           - Exact: [255,   255, 1, 127]
           - Exact: [255,   255, 1, 191]
           - Exact: [255,   255, 1, 256]
-  
+
   ########################################
   # HHS TN DTL
   ########################################
@@ -259,7 +259,7 @@ BenchmarkProblems:
         - DirectToVgprA: [0,1]
         - DirectToVgprB: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   2, 2,  2,2 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 4,  1,4 ]
@@ -346,7 +346,7 @@ BenchmarkProblems:
         - DirectToVgprA: [0,1]
         - DirectToVgprB: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16, 16, 1,  1,   2, 2,  2,2 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16, 16, 1,  1,   1, 4,  1,4 ]
@@ -368,7 +368,7 @@ BenchmarkProblems:
           - Exact: [255,   255, 1, 126]
           - Exact: [255,   255, 1, 190]
           - Exact: [255,   255, 1, 256]
-  
+
   ########################################
   # SGEMM NT DTL
   ########################################
@@ -427,7 +427,7 @@ BenchmarkProblems:
         - DirectToVgprA: [0,1]
         - DirectToVgprB: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   2, 1,  2,2 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   4, 1,  1,4 ]
@@ -508,7 +508,7 @@ BenchmarkProblems:
         - DirectToVgprA: [0,1]
         - DirectToVgprB: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   2, 1,  2,2 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 4,  1,4 ]
@@ -529,7 +529,7 @@ BenchmarkProblems:
           - Exact: [255,   255, 1, 111]
           - Exact: [255,   255, 1, 127]
           - Exact: [255,   255, 1, 128]
-  
+
   ########################################
   # SGEMM TN DTL
   ########################################
@@ -589,7 +589,7 @@ BenchmarkProblems:
         - DirectToVgprA: [0,1]
         - DirectToVgprB: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   2, 1,  2,2 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [32, 32,  2, 1,  1,   2, 1,  2,2 ]
@@ -609,7 +609,7 @@ BenchmarkProblems:
           - Exact: [255,   255, 1, 111]
           - Exact: [255,   255, 1, 127]
           - Exact: [255,   255, 1, 128]
-  
+
   ########################################
   # SGEMM TT DTL
   ########################################
@@ -669,7 +669,7 @@ BenchmarkProblems:
         - DirectToVgprA: [0,1]
         - DirectToVgprB: [0,1]
         - Groups:
-          - 
+          -
             - MatrixInstruction: [16, 16,  4, 1,  1,   2, 1,  2,2 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   4, 1,  4,1 ]
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 4,  1,4 ]
