@@ -86,7 +86,7 @@ function(TensileCreateLibraryFiles
        PRINT_DEBUG
        GENERATE_PACKAGE
        SEPARATE_ARCHITECTURES
-       LAZY_LIBRARY_LOADING
+       NO_LAZY_LIBRARY_LOADING
        ASAN_BUILD
        KEEP_BUILD_TMP
        NO_COMPRESS
@@ -130,23 +130,8 @@ function(TensileCreateLibraryFiles
 
   message(STATUS "Tensile script: ${Script}")
 
-  # Older NO_MERGE_FILES flag overrides MERGE_FILES option.
-  if(Tensile_NO_MERGE_FILES)
-    set(Tensile_MERGE_FILES FALSE)
-  endif()
-
-  if(Tensile_MERGE_FILES)
-    set(Options ${Options} "--merge-files")
-  else()
-    set(Options ${Options} "--no-merge-files")
-  endif()
-
-  if(Tensile_SEPARATE_ARCHITECTURES)
-    set(Options ${Options} "--separate-architectures")
-  endif()
-
-  if(Tensile_LAZY_LIBRARY_LOADING)
-    set(Options ${Options} "--lazy-library-loading")
+  if(Tensile_NO_LAZY_LIBRARY_LOADING)
+    set(Options ${Options} "--no-lazy-library-loading")
   endif()
 
   if(Tensile_ENABLE_MARKER)
@@ -175,14 +160,6 @@ function(TensileCreateLibraryFiles
 
   if(Tensile_SHORT_FILE_NAMES)
     set(Options ${Options} "--short-file-names")
-  else()
-    set(Options ${Options} "--no-short-file-names")
-  endif()
-
-  if(Tensile_PRINT_DEBUG)
-    set(Options ${Options} "--library-print-debug")
-  else()
-    set(Options ${Options} "--no-library-print-debug")
   endif()
 
   if(Tensile_EMBED_LIBRARY)

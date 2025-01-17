@@ -215,27 +215,11 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
 
   callCreateLibraryCmd = globalParameters["ScriptPath"] + "/bin/TensileCreateLibrary"
 
-
-  if globalParameters["MergeFiles"]:
-    callCreateLibraryCmd += " --merge-files"
-  else:
-    callCreateLibraryCmd += " --no-merge-files"
-
-  if globalParameters["SeparateArchitectures"]:
-    callCreateLibraryCmd += " --separate-architectures"
-
-  if globalParameters["LazyLibraryLoading"]:
-    callCreateLibraryCmd += " --lazy-library-loading"
+  if not globalParameters["LazyLibraryLoading"]:
+    callCreateLibraryCmd += " --no-lazy-library-loading"
 
   if globalParameters["ShortNames"]:
     callCreateLibraryCmd += " --short-file-names"
-  else:
-    callCreateLibraryCmd += " --no-short-file-names"
-
-  if globalParameters["LibraryPrintDebug"]:
-    callCreateLibraryCmd += " --library-print-debug"
-  else:
-    callCreateLibraryCmd += " --no-library-print-debug"
 
   if globalParameters.get("AsmDebug", False):
     callCreateLibraryCmd += " --asm-debug"
