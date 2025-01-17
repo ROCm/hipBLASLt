@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -74,6 +74,8 @@ def runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler: str, 
     # TODO some copy-pasting from BenchmarkProblems.benchmarkProblemType
     # could use a refactor to elimate duplicated code
     ClientExecutable.getClientExecutable(cxxCompiler, cCompiler)
+
+
 
     shortName = "benchmark"
     benchmarkDir = os.path.join(outPath, shortName)
@@ -161,9 +163,12 @@ def TensileRetuneLibrary(userArgs):
     ##############################################
     outPath = ensurePath(os.path.abspath(args.OutputPath))
     restoreDefaultGlobalParameters()
+
+    # deleteme -- "WorkingPath"
     assignGlobalParameters({"LibraryFormat": "msgpack",
                             "OutputPath": outPath,
                             "WorkingPath": outPath})
+    # deleteme
 
     overrideParameters = argUpdatedGlobalParameters(args)
     for key, value in overrideParameters.items():

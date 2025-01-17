@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 #
 ################################################################################
 
+from pathlib import Path
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
   setWorkingPath, popWorkingPath, assignParameterWithDefault, startTime, ProgressBar, printWarning
 from .SolutionStructs import Solution
@@ -40,7 +41,7 @@ import math
 ################################################################################
 # Analyze Problem Type
 ################################################################################
-def analyzeProblemType( problemType, problemSizeGroups, inputParameters ):
+def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryLogicPath):
   print2(HR)
   print1("# Analyzing: %s" % problemType)
 
@@ -190,7 +191,7 @@ def analyzeProblemType( problemType, problemSizeGroups, inputParameters ):
     permutations.append(permutation)
   #print permutations
   for permutation in permutations:
-    logicAnalyzer.print2D(permutation)
+    logicAnalyzer.print2D(permutation, libraryLogicPath)
 
   ######################################
   # Range Logic
@@ -463,7 +464,7 @@ class LogicAnalyzer:
         else:
           printWarning("Performance unit %s in %s is unrecognized: assuming GFlops (device efficiency)" % (perfUnit, dataFileName))
           self.perfMetric = "DeviceEfficiency"
-        
+
         if csvHasWinner:
           try:
             # These two columns only appear when using WinnerCSV
@@ -472,14 +473,14 @@ class LogicAnalyzer:
           except ValueError as e:
             csvHasWinnerColumn = False
             print1(f"Error: Could not find WinnerGFlops or WinnerIdx column in CSV file: {e}")
-        
+
         # get the column index of Frequency(MHz)
         try:
           columnOfFreqIdx = row.index(" DeviceMaxFreq")
         except ValueError as e:
           columnOfFreqIdx = None
           print1(f"Error: Could not find DeviceMaxFreq column in the CSV file: {e}")
-          
+
         # get the length of each row, and derive the first column of the solution instead of using wrong "solutionStartIdx = totalSizeIdx + 1"
         rowLength = len(row)
         solutionStartIdx = rowLength - numSolutions
@@ -514,7 +515,7 @@ class LogicAnalyzer:
                 winnerIdx = solutionIdx
                 winnerGFlops = gflops
               solutionIdx += 1
-          
+
           if globalParameters["UseEffLike"]:
             try:
               frequency = float(row[columnOfFreqIdx])
@@ -530,7 +531,7 @@ class LogicAnalyzer:
               performance_metric = float(winnerGFlops)
           else:
             performance_metric = float(winnerGFlops)
-            
+
           if winnerIdx != -1:
             if problemSize in self.exactWinners:
               if winnerGFlops > self.exactWinners[problemSize][1]:
@@ -539,7 +540,7 @@ class LogicAnalyzer:
             else:
               self.exactWinners[problemSize] = [solutionMap[winnerIdx], performance_metric]
               #print "new exact", problemSize, "CSV index=", winnerIdx, self.exactWinners[problemSize]
-            
+
         # Range Problem Size
         elif problemSize in self.rangeProblemSizes:
           problemIndices = []
@@ -938,7 +939,7 @@ class LogicAnalyzer:
   ##############################################################################
   # Print2D
   ##############################################################################
-  def print2D(self, indices ):
+  def print2D(self, indices, libraryLogicPath):
     indicesIdx = 0
     problemIndices = []
     for i in range(0, self.numIndices):
@@ -1027,7 +1028,7 @@ class LogicAnalyzer:
     for idx in indices:
       printFileName += "_%u" % idx
     printFileName += ".csv"
-    printFile = open(os.path.join(globalParameters["WorkingPath"], printFileName), "w")
+    printFile = open(os.path.join(libraryLogicPath, printFileName), "w")
     printFile.write( w )
     printFile.write( g )
     printFile.write( f )
@@ -1454,7 +1455,10 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
   print2("# LibraryLogic config: %s" % config)
   print2("# DefaultAnalysisParameters: " % defaultAnalysisParameters)
 
+  # deleteme
   setWorkingPath(libraryLogicPath)
+  assert libraryLogicPath == globalParameters["WorkingPath"], f"Lib logic path: {libraryLogicPath} benchmark data path: {benchmarkDataPath}"
+  # deleteme
 
   # Assign Defaults
   analysisParameters = {}
@@ -1502,9 +1506,9 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
           dataFileName, solutionsFileName, selectionFileName, solutions) )
 
   for problemType in problemTypes:
-    logicTuple = analyzeProblemType(problemType, problemTypes[problemType], analysisParameters)
+    logicTuple = analyzeProblemType(problemType, problemTypes[problemType], analysisParameters, libraryLogicPath)
 
-    filename = os.path.join(globalParameters["WorkingPath"], \
+    filename = os.path.join(libraryLogicPath, \
         "{}_{}".format(analysisParameters["ScheduleName"], str(problemType)))
 
     print2("# writing library logic YAML {}".format(filename))
@@ -1521,10 +1525,13 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
   currentTime = time.time()
   elapsedTime = currentTime - startTime
   print1("%s\n# Finish Analysing data to %s in %.3fs\n%s" % (HR, os.path.split(libraryLogicPath)[0], elapsedTime, HR) )
+
+  # deleteme
   popWorkingPath()
+  # deleteme
 
 ##############################################################################
-# Error handling for frequency issues 
+# Error handling for frequency issues
 ##############################################################################
 def handle_frequency_issue(message):
     print1(message)
@@ -1542,7 +1549,7 @@ def handle_frequency_issue(message):
         raise Exception("User chose to abort due to frequency issue.")
     else:
         globalParameters["UseEffLike"] = False
-        print1("Proceeding with GFlops as the efficiency metric.")        
+        print1("Proceeding with GFlops as the efficiency metric.")
 ################################################################################
 ################################################################################
 ###
@@ -1550,12 +1557,26 @@ def handle_frequency_issue(message):
 ###
 ################################################################################
 ################################################################################
-def main(config, cxxCompiler: str):
+def main(config, cxxCompiler: str, outputPath: Path):
 
-  benchmarkDataPath = os.path.join(globalParameters["WorkingPath"], \
+  benchmarkDataPath = outputPath / globalParameters["BenchmarkDataPath"]
+
+  # deleteme
+  benchmarkDataPathOld = os.path.join(globalParameters["WorkingPath"], \
       globalParameters["BenchmarkDataPath"])
+  assert benchmarkDataPathOld == benchmarkDataPath, f"benchmarkDataPathOld: {benchmarkDataPathOld}, benchmarkDataPath: {benchmarkDataPath}"
+  # deleteme
 
-  libraryLogicPath = os.path.join(globalParameters["WorkingPath"], \
+  libraryLogicPath = outputPath / globalParameters["LibraryLogicPath"]
+
+  # deleteme
+  libraryLogicPathOld = os.path.join(globalParameters["WorkingPath"], \
       globalParameters["LibraryLogicPath"])
+  assert libraryLogicPathOld == libraryLogicPath, f"libraryLogicPathOld: {libraryLogicPathOld}, libraryLogicPath: {libraryLogicPath}"
+  # deleteme
 
   generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler)
+
+  # deleteme
+  assert globalParameters["WorkingPath"] == outputPath, f"WorkingPath: {globalParameters['WorkingPath']}, outputPath: {outputPath}"
+  # deleteme

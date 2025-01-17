@@ -51,9 +51,40 @@ from pathlib import Path
 #   LibraryLogic.main() to analyse final benchmark data and produce logic/yaml
 #   ClientWriter.main() to create client which calls library based on above yaml
 ################################################################################
-def executeStepsInConfig(config, outputPath: Path, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str):
+def executeStepsInConfig(
+        config: dict,
+        outputPath: Path,
+        asmToolchain: AssemblyToolchain,
+        srcToolchain: SourceToolchain,
+        cCompiler: str
+   ):
+    """Conducts the steps in the provided ``config`` according to the Tensile workflow.
 
+    The top-level steps are:
+    1. BenchmarkProblems: Runs the benchmarking steps and generates the directories
+        build_tmp, 1_BenchmarkProblems, 2_BenchmarkData
+    2. LibraryLogic: Analyzes the benchmark data, makes logic files, and generates
+        the directory 3_LibraryLogic
+    3. LibraryClient: Makes the client callable libraries and generates the
+        directory 4_LibraryClient
+
+    Args:
+        config (dict): The configuration dictionary.
+        outputPath (Path): The path to the top-level build directory.
+        asmToolchain (AssemblyToolchain): The toolchain for making assembly kernels.
+        srcToolchain (SourceToolchain): The toolchain for making source kernels.
+        cCompiler (str): The C compiler to use.
+    """
+
+    # Goal, define these here and pass them in to the relevant functions to it's clear
+    # what is being built and where
     buildTmpPath = outputPath / "build_tmp"
+    clientBuildPath = outputPath / "0_Build"
+    benchamrkProblemsPath = outputPath / "1_BenchmarkProblems"
+    benchmarkDataPath = outputPath / "2_BenchmarkData"
+    libraryLogicPath = outputPath / "3_LibraryLogic"
+    clientLibraryPath = outputPath / "4_LibraryClient"
+
     ##############################################################################
     # Benchmark Problems
     ##############################################################################
@@ -75,7 +106,7 @@ def executeStepsInConfig(config, outputPath: Path, asmToolchain: AssemblyToolcha
                 libraryLogicConfig = config["LibraryLogic"]
             else:
                 libraryLogicConfig = {}
-            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler)
+            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler, outputPath)
             print1("")
         else:
             print1("# LibraryLogic already done.")
@@ -281,8 +312,11 @@ def Tensile(userArgs):
     srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
     globalParameters["OutputPath"] = outputPath
+
+    # deleteme
     globalParameters["WorkingPath"] = outputPath
     print("WorkingPath: %s" % globalParameters["WorkingPath"])
+    # deleteme
 
     overrideParameters = argUpdatedGlobalParameters(args)
 

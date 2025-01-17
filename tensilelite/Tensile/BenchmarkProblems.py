@@ -115,13 +115,16 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
 
 def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
         biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes, \
-        asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, outputPath: Path, buildTmpPath: Path):
+        asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, sourcePath: Path, buildTmpPath: Path):
     """Write all the files needed for a given benchmarking step"""
-    ensurePath(outputPath / "Solutions")
-    ensurePath(outputPath / "Kernels")
+    ensurePath(sourcePath / "Solutions")
+    ensurePath(sourcePath / "Kernels")
 
-    assert str(outputPath) == globalParameters["WorkingPath"], f"outputPath={outputPath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
-    copyStaticFiles(outputPath)
+    # deleteme
+    assert str(stepBaseDir / "source") == globalParameters["WorkingPath"], f"outputPath={sourcePath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
+    # deleteme
+
+    copyStaticFiles(sourcePath)
 
     kernels = []
     kernelHelperObjs = []
@@ -151,21 +154,24 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     # write solution, kernels and CMake
     problemType = solutions[0]["ProblemType"]
     codeObjectFiles, _= writeSolutionsAndKernels( \
-            outputPath, asmToolchain, srcToolchain, \
+            sourcePath, asmToolchain, srcToolchain, \
             solutions, kernels, kernelHelperObjs, \
             kernelWriterAssembly, errorTolerant=True )
     # ^ this is where solutions is mutated
 
+    newLibraryDir = ensurePath(sourcePath / 'library')
+
+    # deleteme
     newLibraryDirOld = ensurePath(os.path.join(globalParameters["WorkingPath"], 'library'))
-    newLibraryDir = ensurePath(outputPath / 'library')
     assert newLibraryDirOld == str(newLibraryDir), f"newLibraryDirOld={newLibraryDirOld} newLibraryDir={newLibraryDir}"
+    # deleteme
 
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")
     newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, srcToolchain.compiler)
     newLibrary.applyNaming(kernelMinNaming)
     LibraryIO.write(newLibraryFile, Utils.state(newLibrary), globalParameters["LibraryFormat"])
 
-    codeObjectFiles = [os.path.relpath(f, outputPath) \
+    codeObjectFiles = [os.path.relpath(f, sourcePath) \
             for f in codeObjectFiles]
 
     if "TileAwareSelection" in problemType and problemType["TileAwareSelection"]:
@@ -190,11 +196,13 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
                 idealSize = {"Exact": [idealM, idealN, idealK]}
                 idealSizes.append(idealSize)
         idealProblemSizes = ProblemSizes(problemType, idealSizes)
-        writeClientConfig(True, solutions, idealProblemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
-            newLibrary, codeObjectFiles, True)
+        writeClientConfig(True, solutions, idealProblemSizes, biasTypeArgs, \
+                          factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
+                          newLibrary, codeObjectFiles, True)
     else:
-        writeClientConfig(True, solutions, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
-            newLibrary, codeObjectFiles, False)
+        writeClientConfig(True, solutions, problemSizes, biasTypeArgs, \
+                          factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
+                          newLibrary, codeObjectFiles, False)
 
     if len(solutions) == 0:
         printExit("write solutions and kernels results 0 valid soultion.")
@@ -220,10 +228,14 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
     groupName = "{}_{:02d}".format(str(benchmarkProcess.problemType), problemSizeGroupIdx)
 
     groupNamePath = benchmarkProblemsPath / groupName
+
+    # deleteme
     pushWorkingPath(groupName)
     assert str(groupNamePath) == globalParameters["WorkingPath"], f"Group name working path: {globalParameters['WorkingPath']} and the group name path: {groupNamePath}"
 
     ensurePath(os.path.join(globalParameters["WorkingPath"], "Data"))
+    # deleteme
+
     ensurePath(groupNamePath / "Data")
 
     totalBenchmarkSteps = len(benchmarkProcess)
@@ -257,16 +269,21 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             print("# InternalSupportParams: {}".format(benchmarkStep.internalSupportParams))
 
         shortNamePath = groupNamePath / shortName
+    # deleteme
         pushWorkingPath(shortName)
         assert str(shortNamePath) == globalParameters["WorkingPath"], f"shortNamePath={shortNamePath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
+    # deleteme
 
         stepBaseDir = shortNamePath
 
         # file paths
+        resultsFileBase = os.path.normpath(shortNamePath / ".." / "Data" / shortName)
+
+    # deleteme
         resultsFileBaseOld = os.path.normpath(os.path.join( \
                 globalParameters["WorkingPath"], "../Data", shortName))
-        resultsFileBase = os.path.normpath(shortNamePath / ".." / "Data" / shortName)
         assert resultsFileBaseOld == resultsFileBase, f"resultsFileBaseOld={resultsFileBaseOld} resultsFileBase={resultsFileBase}"
+    # deleteme
 
         if benchmarkStep.isFinal():
             resultsFileBaseFinal = resultsFileBase
@@ -276,8 +293,11 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         # check if a solution cache exists and if it matches our solution parameters
         cachePath = os.path.join(stepBaseDir, "cache.yaml")
         sourcePath = ensurePath(shortNamePath / "source")
+
+    # deleteme
         pushWorkingPath("source")
         assert str(sourcePath) == globalParameters["WorkingPath"], f"sourcePath={sourcePath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
+    # deleteme
 
         cacheValid = False
         if useCache and os.path.isfile(cachePath):
@@ -329,10 +349,11 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
             # write benchmarkFiles
             prevCount = len(solutions)
-            codeObjectFiles = writeBenchmarkFiles(stepBaseDir, solutions,      \
+            codeObjectFiles = writeBenchmarkFiles(stepBaseDir, solutions, \
                     benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,    \
                     benchmarkStep.factorDimArgs, benchmarkStep.activationArgs, \
-                    benchmarkStep.icacheFlushArgs, shortName, [], asmToolchain, srcToolchain, sourcePath, buildTmpPath)
+                    benchmarkStep.icacheFlushArgs, shortName, [], asmToolchain, srcToolchain, \
+                    sourcePath, buildTmpPath)
             # ^ this mutates solutions
 
             # write cache data
@@ -364,12 +385,15 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             conProblemType = ContractionsProblemType.FromOriginalState(ssProblemType)
             outFile = os.path.join(sourcePath, "ClientParameters.ini")
 
-            assert sourcePath == globalParameters["WorkingPath"], f"sourcePath={sourcePath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
+    # deleteme
+            assert str(sourcePath) == globalParameters["WorkingPath"], f"sourcePath={sourcePath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
+            assert str(stepBaseDir / "source") == globalParameters["WorkingPath"], f"stepBaseDir={stepBaseDir / 'source'} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
+    # deleteme
 
             writeClientConfigIni(True, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
                                  benchmarkStep.factorDimArgs, benchmarkStep.activationArgs,
                                  benchmarkStep.icacheFlushArgs, conProblemType,
-                                 sourcePath, codeObjectFiles, resultsFileName,
+                                 stepBaseDir, codeObjectFiles, resultsFileName,
                                  outFile)
 
         # I think the size portion of this yaml could be removed,
@@ -377,7 +401,9 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         LibraryIO.writeSolutions(solutionsFileName, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
             benchmarkStep.activationArgs, solutions, cacheValid)
 
+        # deleteme
         popWorkingPath()  # source
+        # deleteme
 
         # run benchmarking client
         if not os.path.exists(resultsFileName) or globalParameters["ForceRedoBenchmarkProblems"]:
@@ -393,13 +419,17 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             print1("# Already benchmarked; skipping.")
 
         # End Iteration
+        # deleteme
         popWorkingPath()  # stepName
+        # deleteme
         currentTime = time.time()
         elapsedTime = currentTime - startTime
         print1("{}\n# {}\n# {}: End - {:.3f}s\n{}\n" \
                 .format(HR, groupName, shortName, elapsedTime, HR))
-
+    # deleteme
     popWorkingPath()  # ProblemType
+    # deleteme
+
     return (resultsFileBaseFinal, benchmarkTestFails)
 
 
@@ -411,11 +441,13 @@ def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: Source
         print(f'No config specified in {globalParameters["ConfigPath"]}, built client only')
         return
 
-    dataPathOld = os.path.join(globalParameters["WorkingPath"], globalParameters["BenchmarkDataPath"])
     benchmarkDataPath = ensurePath(outputPath / globalParameters["BenchmarkDataPath"])
 
+    # deleteme
+    dataPathOld = os.path.join(globalParameters["WorkingPath"], globalParameters["BenchmarkDataPath"])
     pushWorkingPath(globalParameters["BenchmarkProblemsPath"])
     assert dataPathOld == str(benchmarkDataPath), f"dataPathOld={dataPathOld} dataPath={benchmarkDataPath}"
+    # deleteme
 
 
     totalTestFails = 0
@@ -467,6 +499,10 @@ def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: Source
             else:
                 print1("# {}_{:02d} already benchmarked; skipping." \
                         .format(str(problemTypeObj), idx) )
+
+    # deleteme
+    popWorkingPath()  # BenchmarkProblemsPath
+    # deleteme
 
     if globalParameters["ExitOnFails"] and totalTestFails:
         sys.exit(1)
