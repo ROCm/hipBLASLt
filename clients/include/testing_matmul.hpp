@@ -1217,7 +1217,7 @@ void testing_matmul_with_bias(const Arguments& arg,
         CHECK_HIPBLASLT_ERROR(
             hipblasLtMatrixLayoutCreate(&(matD[i]), arg.d_type, M[i], N[i], ldc[i]));
 
-        if(arg.swizzle_a && TiA == HIP_R_16F)
+        if(arg.swizzle_a && (TiA == HIP_R_16F || TiA == HIP_R_16BF))
         {
             hipblasLtOrder_t orderA = HIPBLASLT_ORDER_ROW16_32C_8;
             CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(matA[i], HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA)));
@@ -1514,7 +1514,7 @@ void testing_matmul_with_bias(const Arguments& arg,
             CHECK_HIP_ERROR(synchronize(hC[i], dC[i]));
         }
 
-        if(arg.swizzle_a && TiA == HIP_R_16F)
+        if(arg.swizzle_a && (TiA == HIP_R_16F || TiA == HIP_R_16BF))
         {
             HipHostBuffer tmp(TiA, num_batches[i] * M[i] * K[i]);
             swizzle_tensor(tmp.as<hipblasLtHalf>(), hA[i].as<hipblasLtHalf>(), num_batches[i], M[i], K[i], false);

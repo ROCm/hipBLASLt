@@ -674,12 +674,6 @@ try
         return 1;
     }
 
-    if(arg.swizzle_a && (arg.transA != 'T' || arg.transB != 'N' || a_type != "f16_r"))
-    {
-        hipblaslt_cerr << "For swizzle-A, problem type must be FP16 TN" << std::endl;
-        return 1;
-    }
-
     // transfer local variable state
     ArgumentModel_set_log_function_name(log_function_name);
 
