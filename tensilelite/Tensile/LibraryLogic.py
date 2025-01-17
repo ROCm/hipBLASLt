@@ -1564,7 +1564,7 @@ def main(config, cxxCompiler: str, outputPath: Path):
   # deleteme
   benchmarkDataPathOld = os.path.join(globalParameters["WorkingPath"], \
       globalParameters["BenchmarkDataPath"])
-  assert benchmarkDataPathOld == benchmarkDataPath, f"benchmarkDataPathOld: {benchmarkDataPathOld}, benchmarkDataPath: {benchmarkDataPath}"
+  assert benchmarkDataPathOld == str(benchmarkDataPath), f"benchmarkDataPathOld: {benchmarkDataPathOld}, benchmarkDataPath: {benchmarkDataPath}"
   # deleteme
 
   libraryLogicPath = outputPath / globalParameters["LibraryLogicPath"]
@@ -1572,11 +1572,11 @@ def main(config, cxxCompiler: str, outputPath: Path):
   # deleteme
   libraryLogicPathOld = os.path.join(globalParameters["WorkingPath"], \
       globalParameters["LibraryLogicPath"])
-  assert libraryLogicPathOld == libraryLogicPath, f"libraryLogicPathOld: {libraryLogicPathOld}, libraryLogicPath: {libraryLogicPath}"
+  assert libraryLogicPathOld == str(libraryLogicPath), f"libraryLogicPathOld: {libraryLogicPathOld}, libraryLogicPath: {libraryLogicPath}"
   # deleteme
 
   generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler)
 
   # deleteme
-  assert globalParameters["WorkingPath"] == outputPath, f"WorkingPath: {globalParameters['WorkingPath']}, outputPath: {outputPath}"
+  assert globalParameters["WorkingPath"] == str(outputPath), f"WorkingPath: {globalParameters['WorkingPath']}, outputPath: {outputPath}"
   # deleteme
