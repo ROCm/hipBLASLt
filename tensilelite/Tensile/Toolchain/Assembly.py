@@ -34,6 +34,8 @@ from typing import List, Literal, Union
 
 from ..TensileInstructions import getGfxName
 from ..Common import globalParameters, print2, ensurePath
+from ..KernelWriterAssembly import KernelWriterAssembly
+from ..SolutionStructs import Solution
 
 class AssemblyToolchain:
     def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: Literal[4, 5]):
@@ -166,13 +168,20 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 
     return newObjFilesOutput
 
-def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAsm, destDir, asmDir, compress: bool=True):
+def buildAssemblyCodeObjectFiles(
+      toolchain: AssemblyToolchain,
+      kernels: List[Solution],
+      writer: KernelWriterAssembly,
+      destDir: Union[Path, str],
+      asmDir: Union[Path, str],
+      compress: bool=True
+    ):
     """Builds code object files from assembly files
 
     Args:
-        toolchain: The AssemblyToolchain object to use.
-        kernels: A list of dictionaries representing the kernels to build.
-        writerAsm: The AssemblyWriter object to use.
+        toolchain: The assembly toolchain object to use for building.
+        kernels: A list of the kernel objects to build.
+        writer: The KernelWriterAssembly object to use.
         destDir: The destination directory for the code object files.
         asmDir: The directory containing the assembly files.
         compress: Whether to compress the code object files.
@@ -198,14 +207,14 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
 
       gfx = getGfxName(arch)
 
-      objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
+      objectFiles = [str(asmDir / (writer.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
       coFileMap = collections.defaultdict(list)
       if len(objectFiles):
         coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
       for kernel in archKernels:
         coName = kernel.get("codeObjectFile", None)
         if coName:
-          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
+          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writer.getKernelFileBase(kernel) + extObj)))
       for coFileRaw, objFiles in coFileMap.items():
         objFiles = _batchObjectFiles(objFiles, coFileRaw)
         toolchain.link(objFiles, str(coFileRaw))

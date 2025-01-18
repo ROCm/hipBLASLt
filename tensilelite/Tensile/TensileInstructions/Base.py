@@ -153,7 +153,7 @@ class Item:
     @property
     def archCaps(self) -> dict:
         return _global_ti.getArchCaps()
-    
+
     @property
     def regCaps(self) -> dict:
         return _global_ti.getRegCaps()
@@ -287,6 +287,8 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
     rv["v_fmac_f32"]        = _tryAssembler(isaVersion, assemblerPath, "v_fmac_f32 v20, v21, v22", isDebug)
 
     rv["v_fma_f64"]         = _tryAssembler(isaVersion, assemblerPath, "v_fma_f64 v[20:21], v[22:23], v[24:25], v[20:21]", isDebug)
+
+    rv["v_mov_b64"]         = _tryAssembler(isaVersion, assemblerPath, "v_mov_b64 v[0:1], v[2:3]", isDebug)
 
     rv["HasAtomicAdd"]      = _tryAssembler(isaVersion, assemblerPath, "buffer_atomic_add_f32 v0, v1, s[0:3], 0 offen offset:0", isDebug) \
                                 or _tryAssembler(isaVersion, assemblerPath, "buffer_atomic_add_f32 v0, v1, s[0:3], null offen offset:0", isDebug)

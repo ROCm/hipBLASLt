@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -2768,6 +2768,35 @@ class VMovB32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
         self.setInst("v_mov_b32")
+
+class _VMovB64(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B64, dst, [src], None, None, comment)
+        self.setInst("v_mov_b64")
+
+class VMovB64(CompositeInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B64, dst, [src], comment)
+        self.setInst("v_mov_b64")
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def setupInstructions(self):
+        super().setupInstructions()
+        assert isinstance(self.srcs, List)
+        if self.asmCaps["v_mov_b64"]:
+            self.instructions = [_VMovB64(self.dst, self.srcs[0], self.comment)]
+        else:
+            dst1, dst2 = self.dst.splitRegContainer()
+            if isinstance(self.srcs[0], RegisterContainer) or isinstance(self.srcs[0], HolderContainer):
+                src1, src2 = self.srcs[0].splitRegContainer()
+            else:
+                srcs1 = (self.srcs[0] and 0xFFFFFFFF)
+                srcs2 = self.srcs[0] >> 32
+            self.instructions = [VMovB32(dst1, src1, self.comment),
+                                 VMovB32(dst2, src2, self.comment)]
 
 # V Bfe
 class VBfeI32(CommonInstruction):

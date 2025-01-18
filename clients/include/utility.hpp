@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -317,7 +317,7 @@ public:
 
 /* ============================================================================================ */
 /*  device query and print out their ID and name */
-int64_t query_device_property();
+int64_t query_device_property(int device_id);
 
 /*  set current device to device_id */
 void set_device(int64_t device_id);

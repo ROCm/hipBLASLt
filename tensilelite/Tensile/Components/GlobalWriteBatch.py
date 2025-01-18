@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1869,7 +1869,7 @@ class GlobalWriteBatchWriter:
           if usePK or gwvw > 1:
             if newSumIdx % 2 == 0:
               module.add(VMulPKF32(dst=vgpr("ValuC+%u"%newSumIdx, 2), src0=sgpr("Alpha",2), src1=vgpr("ValuC+%u"%newSumIdx,2), vop3=VOP3PModifiers(op_sel_hi=[0,1,1]), comment="*= alpha (pk)"))
-          else:  
+          else:
             module.add(VMulF32(dst=vgpr("ValuC+%u"%newSumIdx), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%newSumIdx), comment="*= alpha" ))
           if self.parentWriter.db["ForceExpectedValue"]:
             module.add(VMovB32(dst=vgpr("ValuC+%u"%newSumIdx), src=self.parentWriter.db["ValueCExpectedValue"], comment="force expected value" ))
@@ -2097,23 +2097,32 @@ class GlobalWriteBatchWriter:
 
 def copyData(computeDataType, elementSumIdx, gwvw, vgprStart, direction=0):
   module = Module("Copy Data")
-  for vi in range(0, gwvw):
+  vi = 0
+  while vi < gwvw:
     sumIdxV = elementSumIdx + vi
     if computeDataType.isHalf() or computeDataType.isBFloat16():
       if (sumIdxV % 2 != 0):
+        vi += 1
         continue
       vgprIdx = elementSumIdx + vi // 2
-      module.add(VMovB32(dst=vgpr(vgprStart + (vi // 2)), src=vgpr(vgprIdx)))
-    elif computeDataType.isSingle():
+      if (vi + 1 < gwvw) and ((vgprStart + (vi // 2)) % 2 == 0) and (vgprIdx % 2 == 0):
+        module.add(VMovB64(dst=vgpr(vgprStart + (vi // 2), 2), src=vgpr(vgprIdx, 2)))
+        vi += 2
+      else:
+        module.add(VMovB32(dst=vgpr(vgprStart + (vi // 2)), src=vgpr(vgprIdx)))
+        vi += 1
+    elif computeDataType.isSingle() or computeDataType.isInt32():
       vgprIdx = sumIdxV
-      module.add(VMovB32(dst=vgpr(vgprStart + vi), src=vgpr(vgprIdx)))
+      if (vi + 1 < gwvw) and ((vgprStart + vi) % 2 == 0) and (vgprIdx % 2 == 0):
+        module.add(VMovB64(dst=vgpr(vgprStart + vi, 2), src=vgpr(vgprIdx, 2)))
+        vi += 2
+      else:
+        module.add(VMovB32(dst=vgpr(vgprStart + vi), src=vgpr(vgprIdx)))
+        vi += 1
     elif computeDataType.isDouble():
       vgprIdx = elementSumIdx + vi * 2
-      module.add(VMovB32(dst=vgpr(vgprStart + vi * 2), src=vgpr(vgprIdx)))
-      module.add(VMovB32(dst=vgpr(vgprStart + vi * 2 + 1), src=vgpr(vgprIdx+1)))
-    elif computeDataType.isInt32():
-      vgprIdx = sumIdxV
-      module.add(VMovB32(dst=vgpr(vgprStart + vi), src=vgpr(vgprIdx)))
+      module.add(VMovB64(dst=vgpr(vgprStart + vi * 2, 2), src=vgpr(vgprIdx, 2)))
+      vi += 1
     else:
       assert 0
 

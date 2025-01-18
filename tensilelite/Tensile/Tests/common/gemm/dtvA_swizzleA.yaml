@@ -11,15 +11,17 @@ GlobalParameters:
   KernelTime: True
   MaxWorkspaceSize: 13421772800
   DataInitTypeA: 13
-  DataInitTypeB: 13
+  DataInitTypeB: 12
   DataInitTypeAlpha: 1
   DataInitTypeBeta: 1
+  DataInitTypeBias: 13
+  DataInitTypeScaleAlphaVec: 12
   BoundsCheck: 2
   #MaxFileName: 256
 
 BenchmarkProblems:
   ########################################
-  # HHS TN DTVA + SWIZZLED_A + BIAS + Activation
+  # HHS TN DTVA + SWIZZLED_A + BIAS + Activation + SAV
   ########################################
   -
     - # ProblemType
@@ -36,6 +38,7 @@ BenchmarkProblems:
       UseBias: 1
       Activation: True
       BiasDataTypeList: ['h']
+      UseScaleAlphaVec: 1
     - # BenchmarkProblemSizeGroup - Standard - All problem
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -57,6 +60,24 @@ BenchmarkProblems:
           - [16, 16, 16, 1,  1,   8, 8,  4,1 ] # MT = 512x128
           - [16, 16, 16, 1,  1,   8, 16, 4,1 ] # MT = 512x256
           - [16, 16, 16, 1,  1,   5, 8,  2,1 ] # MT = 160x128
+
+          - [16, 16, 16, 1,  1,   2, 4,  2,2 ] # MT = 64x128
+          - [16, 16, 16, 1,  1,   2, 8,  2,2 ] # MT = 64x256
+          - [16, 16, 16, 1,  1,   4, 4,  2,2 ] # MT = 128x128
+          - [16, 16, 16, 1,  1,   4, 8,  2,2 ] # MT = 128x256
+          - [16, 16, 16, 1,  1,   8, 4,  2,2 ] # MT = 256x128
+          - [16, 16, 16, 1,  1,   8, 8,  2,2 ] # MT = 256x256
+          - [16, 16, 16, 1,  1,   16, 4, 2,2 ] # MT = 512x128
+          - [16, 16, 16, 1,  1,   16, 8, 2,2 ] # MT = 512x256
+          - [16, 16, 16, 1,  1,   5, 4,  2,2 ] # MT = 160x128
+
+          - [16, 16, 16, 1,  1,   4, 2,  1,4 ] # MT = 64x128
+          - [16, 16, 16, 1,  1,   4, 4,  1,4 ] # MT = 64x256
+          - [16, 16, 16, 1,  1,   8, 2,  1,4 ] # MT = 128x128
+          - [16, 16, 16, 1,  1,   8, 4,  1,4 ] # MT = 128x256
+          - [16, 16, 16, 1,  1,   16, 2, 1,4 ] # MT = 256x128
+          - [16, 16, 16, 1,  1,   16, 4, 1,4 ] # MT = 256x256
+          - [16, 16, 16, 1,  1,   10, 2, 1,4 ] # MT = 160x128
         - AssertFree0ElementMultiple: [16]
         - AssertSummationElementMultiple: [32]
         - GlobalReadVectorWidthA: [8]

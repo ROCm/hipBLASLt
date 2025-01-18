@@ -1458,8 +1458,10 @@ class Solution(collections.abc.Mapping):
             and totalElementsPerp % nlp == 0:
           state["NumLoadsCoalesced%s"%tc] = nlc
           state["NumLoadsPerpendicular%s"%tc] = nlp
-          #print("NumLoadsCoalesced",state["NumLoadsCoalesced%s"%tc])
-          #print("NumLoadsPerpendicular",state["NumLoadsPerpendicular%s"%tc])
+          # print("NumLoads%s:"%tc,state["NumLoads%s"%tc])
+          # print("NumLoadsCoalesced%s:"%tc,state["NumLoadsCoalesced%s"%tc])
+          # print("NumLoadsPerpendicular%s:"%tc,state["NumLoadsPerpendicular%s"%tc])
+          # print("\n")
           foundValid = True
           break
       if not foundValid:
@@ -1892,15 +1894,15 @@ class Solution(collections.abc.Mapping):
         reject(state, "DirectToVgpr%c does not support TLU%c+ numByte >= 4 + MIInputPerThread > 1"%(tc, tc))
         return False
 
-    # MIWaveGroup, MatrixInstBM,BN check
-    #  for A, MIWaveGroup[1] and MatrixInstBN should be 1
-    #  for B, MIWaveGroup[0] and MatrixInstBM should be 1
+    # MatrixInstBM,BN check
+    #  for A, MatrixInstBN should be 1
+    #  for B, MatrixInstBM should be 1
     # This is to limit the number of Vgpr
-    if tc == 'A' and not (state['MIWaveGroup'][1] == 1 and state['MatrixInstBN'] == 1):
-      reject(state, "MIWaveGroup[1] and MatrixInstBN should be 1 for DirectToVgprA. Current value is [%d, %d]"%(state['MIWaveGroup'][1], state['MatrixInstBN']))
+    if tc == 'A' and not (state['MatrixInstBN'] == 1):
+      reject(state, "MatrixInstBN should be 1 for DirectToVgprA. Current value is %d"%(state['MatrixInstBN']))
       return False
-    if tc == 'B' and not (state['MIWaveGroup'][0] == 1 and state['MatrixInstBM'] == 1):
-      reject(state, "MIWaveGroup[0] and MatrixInstBM should be 1 for DirectToVgprB. Current value is [%d, %d]"%(state['MIWaveGroup'][0], state['MatrixInstBM']))
+    if tc == 'B' and not (state['MatrixInstBM'] == 1):
+      reject(state, "MatrixInstBM should be 1 for DirectToVgprB. Current value is %d"%(state['MatrixInstBM']))
       return False
 
     # Does not work with WaveSeparateGlobalRead
@@ -1959,7 +1961,7 @@ class Solution(collections.abc.Mapping):
     if state["PrefetchGlobalRead"] == 0:
       reject(state, "DirectToVgpr%c does not supports PrefetchGlobalRead == 0."%(tc))
       return False
-    
+
     # for DTVA, does not work with NN and TLDS0
     if tc == 'A' and state["TransposeLDS"] == 0 and (not state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
       reject(state, "DirectToVgpr%c does not supports NN case with TransposeLDS == 0."%(tc))
@@ -1974,7 +1976,7 @@ class Solution(collections.abc.Mapping):
     if  tc == 'B' and (not state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
         # Use AssertSummationElementMultiple (BoundSizeMultiple in predicates) to exclude failed tail-loop cases
         state["AssertSummationElementMultiple"] = max(state["AssertSummationElementMultiple"], state["DepthU"])
-    
+
     # Does not work with DirectToLDS
     # -> this will be checked after DirectToLDS doable check is done
 
@@ -2985,19 +2987,27 @@ class Solution(collections.abc.Mapping):
       validDepthU = True
 
       # how many elements to load
-      if state["ProblemType"]["TLUA"]:
+      if state["ProblemType"]["TLUA"]: # NT/NN
         totalElementsCoalescedA = state["MacroTileA"]
         totalElementsPerpA = depthUA
-      else:
+        if state["DirectToVgprA"]:
+          totalElementsCoalescedA *= state["MIWaveGroup"][1]
+      else: # TN/TT
         totalElementsCoalescedA = depthUA
         totalElementsPerpA = state["MacroTileA"]
+        if state["DirectToVgprA"]:
+          totalElementsPerpA *= state["MIWaveGroup"][1]
 
-      if state["ProblemType"]["TLUB"]:
+      if state["ProblemType"]["TLUB"]: # NT/TT
         totalElementsCoalescedB = state["MacroTileB"]
         totalElementsPerpB = depthUB
-      else:
+        if state["DirectToVgprB"]:
+          totalElementsCoalescedB *= state["MIWaveGroup"][0]
+      else: # TN/NN
         totalElementsCoalescedB = depthUB
         totalElementsPerpB = state["MacroTileB"]
+        if state["DirectToVgprB"]:
+          totalElementsPerpB *= state["MIWaveGroup"][0]
 
       totalElementsA = totalElementsCoalescedA * totalElementsPerpA
       totalElementsB = totalElementsCoalescedB * totalElementsPerpB
@@ -3249,7 +3259,7 @@ class Solution(collections.abc.Mapping):
       if not Solution.isDirectToVgprDoable(state, 'A'):
         return  # rejected
     if state["DirectToVgprB"]:
-      if not  Solution.isDirectToVgprDoable(state, 'B'):
+      if not Solution.isDirectToVgprDoable(state, 'B'):
         return  # rejected
 
     ########################################
@@ -3477,6 +3487,15 @@ class Solution(collections.abc.Mapping):
       if state["1LDSBuffer"] == -1 and state["DirectToLds"]:
         #1LDS buffer must be 0 for DirectToLdsA
         state["1LDSBuffer"] = 0
+
+      # Re-check DTV + WaveGroup after DTL is confirmed
+      if state["DirectToLds"]:
+        if state["DirectToVgprA"] and state['MIWaveGroup'][1] > 1:
+          reject(state, "DirectToLds + (DirectToVgprA + WaveGroups along N-Dim) is not supported yet")
+          return False
+        if state["DirectToVgprB"] and state['MIWaveGroup'][0] > 1:
+          reject(state, "DirectToLds + (DirectToVgprB + WaveGroups along M-Dim) is not supported yet")
+          return False
 
     # set NoLdsWriteCode if (DirectToVgpr or DirectToLds)A+B is enabled
     state["NoLdsWriteCode"] = False
