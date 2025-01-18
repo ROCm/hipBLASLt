@@ -26,7 +26,7 @@ from pathlib import Path
 from . import ClientExecutable
 from . import LibraryIO
 from .TensileInstructions import getGfxName, DataType
-from .Common import globalParameters, pushWorkingPath, popWorkingPath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
+from .Common import globalParameters, ensurePath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
 from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
 from .TensileCreateLibrary import copyStaticFiles
 
@@ -80,25 +80,9 @@ class ClientLogLevel(Enum):
 ################################################################################
 def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
 
-  libraryLogicPath = outputPath / globalParameters["LibraryLogicPath"]
-  # deleteme
-  libraryLogicPath = os.path.join(globalParameters["WorkingPath"], \
-      globalParameters["LibraryLogicPath"])
-  assert str(outputPath) == globalParameters["WorkingPath"], f"outputPath={outputPath} != WP={globalParameters['WorkingPath']}"
-  # deleteme
-
-  clientLibraryPath = outputPath / globalParameters["LibraryClientPath"]
-  # deleteme
-  stepBaseDirOld = pushWorkingPath(globalParameters["LibraryClientPath"])
-  assert str(clientLibraryPath) == stepBaseDirOld, f"stepBaseDir={clientLibraryPath} != SBD={stepBaseDirOld}"
-  # deleteme
-
-  sourcePath = clientLibraryPath / "source"
-  # deleteme
-  pushWorkingPath("source")
-  assert str(sourcePath) == globalParameters["WorkingPath"], f"sourcePath={sourcePath} != WP={globalParameters['WorkingPath']}"
-  # deleteme
-
+  libraryLogicPath = ensurePath(outputPath / globalParameters["LibraryLogicPath"])
+  clientLibraryPath = ensurePath(outputPath / globalParameters["LibraryClientPath"])
+  sourcePath = ensurePath(clientLibraryPath / "source")
   copyStaticFiles(sourcePath)
 
   ##############################################################################
@@ -155,11 +139,6 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
     activationArgs = ActivationArgs(problemType, activationEnums) if isForAll else ""
     factorDimArgs = FactorDimArgs(problemType, factorDimEnums)
 
-    # deleteme
-    assert str(sourcePath) == globalParameters["WorkingPath"], f"sourcePath={sourcePath} != WP={globalParameters['WorkingPath']}"
-    print1(f"sourcePath={sourcePath} == WP={globalParameters['WorkingPath']}")
-    # deleteme
-
     clientParametersPaths.append(writeClientConfig(
                                   forBenchmark=False,
                                   solutions=None,
@@ -177,24 +156,13 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
                                   libraryFile=yamlList[0]))
   globalParameters["EnableHalf"] = enableHalf
 
-  ##############################################################################
-  # Write Generated Header
-  ##############################################################################
   forBenchmark = False
   problemSizes = None
-
-  # deleteme
-  popWorkingPath() # source
-  # deleteme
 
   ##############################################################################
   # Run Build Script
   ##############################################################################
   # if redo=true, clobber the build directory
-
-  # deleteme
-  assert str(clientLibraryPath) == globalParameters["WorkingPath"], f"clientLibraryPath={clientLibraryPath} != WP={globalParameters['WorkingPath']}"
-  # deleteme
 
   if globalParameters["ForceRedoLibraryClient"]:
     shutil.rmtree(os.path.join(clientLibraryPath, "build"), \
@@ -203,11 +171,6 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
   forBenchmark = False
   enableTileSelection = False
   returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, outputPath, clientParametersPaths)
-
-  # deleteme
-  popWorkingPath() # LibraryClient
-  assert str(outputPath) == globalParameters["WorkingPath"], f"outputPath={outputPath} != WP={globalParameters['WorkingPath']}"
-  # deleteme
 
   return returncode
 
@@ -227,14 +190,8 @@ def runNewClient(scriptPath, clientParametersPath, cxxCompiler: str, cCompiler: 
 
 
 def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, outputPath, configPaths=None):
-  # write runScript
 
-  buildPath = outputPath / "build"
-  # deleteme
-  pushWorkingPath("build")
-  wkpath = globalParameters["WorkingPath"]
-  assert wkpath == str(buildPath), f"path={wkpath} != buildPath={buildPath}"
-  # deleteme
+  buildPath = ensurePath(outputPath / "build")
 
   runScriptName = writeRunScript(buildPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, buildPath, configPaths)
   with ClientExecutionLock():
@@ -243,10 +200,6 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: 
 
   if process.returncode:
     printWarning("ClientWriter Benchmark Process exited with code %u" % process.returncode)
-
-  # deleteme
-  popWorkingPath() # build
-  # deleteme
 
   return process.returncode
 
@@ -296,10 +249,6 @@ def writeBuildClientLibraryScript(path, libraryLogicPath, cxxCompiler):
 def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, buildDir, configPaths=None):
   if configPaths is None:
     configPaths = []
-
-    # deleteme
-    assert str(buildDir) == globalParameters["WorkingPath"], f"buildDir={buildDir} != WP={globalParameters['WorkingPath']}"
-    # deleteme
 
     configPaths.append(os.path.join(buildDir, "../source/ClientParameters.ini"))
     if enableTileSelection is True:
@@ -713,10 +662,6 @@ def writeClientConfig(
       configBase = "ClientParameters",
       libraryFile = None
     ):
-
-    # deleteme
-    assert str(stepBaseDir / "source") == globalParameters["WorkingPath"], f"stepBaseDir={stepBaseDir} != WP={globalParameters['WorkingPath']}"
-    # deleteme
 
     sourceDir = os.path.join(stepBaseDir, "source")
 

@@ -53,7 +53,6 @@ ParallelMap2 = Parallel.ParallelMap2
 # Global Parameters
 ################################################################################
 globalParameters = OrderedDict()
-workingDirectoryStack = []
 
 ########################################
 # common
@@ -241,9 +240,6 @@ globalParameters["CurrentISA"] = (0,0,0)
 globalParameters["AMDGPUArchPath"] = None      # /opt/rocm/llvm/bin/amdgpu-arch
 globalParameters["ROCmAgentEnumeratorPath"] = None      # /opt/rocm/bin/rocm_agent_enumerator
 globalParameters["ROCmSMIPath"] = None                  # /opt/rocm/bin/rocm-smi
-# deleteme
-globalParameters["WorkingPath"] = os.getcwd()           # path where tensile called from
-# deleteme
 globalParameters["IndexChars"] =  "IJKLMNOPQRSTUVWXYZ"  # which characters to use for C[ij]=Sum[k] A[ik]*B[jk]
 globalParameters["ScriptPath"] = os.path.dirname(os.path.realpath(__file__))            # path to Tensile/Tensile.py
 globalParameters["SourcePath"] = os.path.join(globalParameters["ScriptPath"], "Source") # path to Tensile/Source/
@@ -1789,29 +1785,6 @@ def assignParameterWithDefault(destinationDictionary, key, sourceDictionary, \
     destinationDictionary[key] = deepcopy(sourceDictionary[key])
   else:
     destinationDictionary[key] = deepcopy(defaultDictionary[key])
-
-# deleteme
-################################################################################
-# Push / Pop Working Path
-# store a WorkingPath where to write files (like benchmark files)
-################################################################################
-def pushWorkingPath( foldername ):
-  # Warning: this is not thread-safe, modifies the global WorkingPath!
-  globalParameters["WorkingPath"] = \
-      os.path.join(globalParameters["WorkingPath"], foldername )
-  return ensurePath( globalParameters["WorkingPath"] )
-def popWorkingPath():
-  # Warning: this is not thread-safe, modifies the global WorkingPath!
-  if len(workingDirectoryStack) == 0:
-    globalParameters["WorkingPath"] = \
-      os.path.split(globalParameters["WorkingPath"])[0]
-  else:
-    globalParameters["WorkingPath"] = workingDirectoryStack.pop()
-def setWorkingPath( fullPathName ):
-  # Warning: this is not thread-safe, modifies the global WorkingPath!
-  workingDirectoryStack.append(globalParameters["WorkingPath"])
-  globalParameters["WorkingPath"] = ensurePath(fullPathName)
-# deleteme
 
 
 def ensurePath(path):

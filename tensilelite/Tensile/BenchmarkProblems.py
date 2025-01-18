@@ -38,7 +38,7 @@ from . import Utils
 from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
 from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
-from .Common import globalParameters, HR, pushWorkingPath, popWorkingPath, print1, print2, \
+from .Common import globalParameters, HR, print1, print2, \
         printExit, printWarning, ensurePath, startTime, validParameters
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionStructs import Solution, ProblemType, ProblemSizes
@@ -120,10 +120,6 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     ensurePath(sourcePath / "Solutions")
     ensurePath(sourcePath / "Kernels")
 
-    # deleteme
-    assert str(stepBaseDir / "source") == globalParameters["WorkingPath"], f"outputPath={sourcePath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
-    # deleteme
-
     copyStaticFiles(sourcePath)
 
     kernels = []
@@ -161,12 +157,6 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     # ^ this is where solutions is mutated
 
     newLibraryDir = ensurePath(sourcePath / 'library')
-
-    # deleteme
-    newLibraryDirOld = ensurePath(os.path.join(globalParameters["WorkingPath"], 'library'))
-    assert newLibraryDirOld == str(newLibraryDir), f"newLibraryDirOld={newLibraryDirOld} newLibraryDir={newLibraryDir}"
-    # deleteme
-
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")
     newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, srcToolchain.compiler)
     newLibrary.applyNaming(kernelMinNaming)
@@ -227,16 +217,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
     enableTileSelection = benchmarkProcess.problemType["TileAwareSelection"]
     groupName = "{}_{:02d}".format(str(benchmarkProcess.problemType), problemSizeGroupIdx)
-
     groupNamePath = benchmarkProblemsPath / groupName
-
-    # deleteme
-    pushWorkingPath(groupName)
-    assert str(groupNamePath) == globalParameters["WorkingPath"], f"Group name working path: {globalParameters['WorkingPath']} and the group name path: {groupNamePath}"
-
-    ensurePath(os.path.join(globalParameters["WorkingPath"], "Data"))
-    # deleteme
-
     ensurePath(groupNamePath / "Data")
 
     totalBenchmarkSteps = len(benchmarkProcess)
@@ -269,22 +250,9 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         if benchmarkStep.internalSupportParams:
             print("# InternalSupportParams: {}".format(benchmarkStep.internalSupportParams))
 
-        shortNamePath = groupNamePath / shortName
-    # deleteme
-        pushWorkingPath(shortName)
-        assert str(shortNamePath) == globalParameters["WorkingPath"], f"shortNamePath={shortNamePath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
-    # deleteme
-
+        shortNamePath = ensurePath(groupNamePath / shortName)
         stepBaseDir = shortNamePath
-
-        # file paths
         resultsFileBase = os.path.normpath(shortNamePath / ".." / "Data" / shortName)
-
-    # deleteme
-        resultsFileBaseOld = os.path.normpath(os.path.join( \
-                globalParameters["WorkingPath"], "../Data", shortName))
-        assert resultsFileBaseOld == resultsFileBase, f"resultsFileBaseOld={resultsFileBaseOld} resultsFileBase={resultsFileBase}"
-    # deleteme
 
         if benchmarkStep.isFinal():
             resultsFileBaseFinal = resultsFileBase
@@ -294,11 +262,6 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         # check if a solution cache exists and if it matches our solution parameters
         cachePath = os.path.join(stepBaseDir, "cache.yaml")
         sourcePath = ensurePath(shortNamePath / "source")
-
-    # deleteme
-        pushWorkingPath("source")
-        assert str(sourcePath) == globalParameters["WorkingPath"], f"sourcePath={sourcePath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
-    # deleteme
 
         cacheValid = False
         if useCache and os.path.isfile(cachePath):
@@ -386,11 +349,6 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             conProblemType = ContractionsProblemType.FromOriginalState(ssProblemType)
             outFile = os.path.join(sourcePath, "ClientParameters.ini")
 
-    # deleteme
-            assert str(sourcePath) == globalParameters["WorkingPath"], f"sourcePath={sourcePath} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
-            assert str(stepBaseDir / "source") == globalParameters["WorkingPath"], f"stepBaseDir={stepBaseDir / 'source'} globalParameters[WorkingPath]={globalParameters['WorkingPath']}"
-    # deleteme
-
             writeClientConfigIni(True, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
                                  benchmarkStep.factorDimArgs, benchmarkStep.activationArgs,
                                  benchmarkStep.icacheFlushArgs, conProblemType,
@@ -401,10 +359,6 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         # but for now it's needed, so we update it even in the cache case
         LibraryIO.writeSolutions(solutionsFileName, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
             benchmarkStep.activationArgs, solutions, cacheValid)
-
-        # deleteme
-        popWorkingPath()  # source
-        # deleteme
 
         # run benchmarking client
         if not os.path.exists(resultsFileName) or globalParameters["ForceRedoBenchmarkProblems"]:
@@ -420,16 +374,10 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             print1("# Already benchmarked; skipping.")
 
         # End Iteration
-        # deleteme
-        popWorkingPath()  # stepName
-        # deleteme
         currentTime = time.time()
         elapsedTime = currentTime - startTime
         print1("{}\n# {}\n# {}: End - {:.3f}s\n{}\n" \
                 .format(HR, groupName, shortName, elapsedTime, HR))
-    # deleteme
-    popWorkingPath()  # ProblemType
-    # deleteme
 
     return (resultsFileBaseFinal, benchmarkTestFails)
 
@@ -443,13 +391,6 @@ def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: Source
         return
 
     benchmarkDataPath = ensurePath(outputPath / globalParameters["BenchmarkDataPath"])
-
-    # deleteme
-    dataPathOld = os.path.join(globalParameters["WorkingPath"], globalParameters["BenchmarkDataPath"])
-    pushWorkingPath(globalParameters["BenchmarkProblemsPath"])
-    assert dataPathOld == str(benchmarkDataPath), f"dataPathOld={dataPathOld} dataPath={benchmarkDataPath}"
-    # deleteme
-
 
     totalTestFails = 0
     for benchmarkProblemTypeConfig in config:
@@ -500,10 +441,6 @@ def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: Source
             else:
                 print1("# {}_{:02d} already benchmarked; skipping." \
                         .format(str(problemTypeObj), idx) )
-
-    # deleteme
-    popWorkingPath()  # BenchmarkProblemsPath
-    # deleteme
 
     if globalParameters["ExitOnFails"] and totalTestFails:
         sys.exit(1)

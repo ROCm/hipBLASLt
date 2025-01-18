@@ -303,6 +303,7 @@ def Tensile(userArgs):
 
     config["UseCache"] = useCache
     globalParameters["ConfigPath"] = configPaths
+    globalParameters["OutputPath"] = outputPath
 
     cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
@@ -310,13 +311,6 @@ def Tensile(userArgs):
 
     asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
     srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
-
-    globalParameters["OutputPath"] = outputPath
-
-    # deleteme
-    globalParameters["WorkingPath"] = outputPath
-    print("WorkingPath: %s" % globalParameters["WorkingPath"])
-    # deleteme
 
     overrideParameters = argUpdatedGlobalParameters(args)
 

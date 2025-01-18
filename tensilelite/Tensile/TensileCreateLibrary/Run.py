@@ -38,8 +38,7 @@ from Tensile.Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
 from Tensile.Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
 from Tensile.TensileInstructions import getGfxName, TensileInstructions
 from Tensile.Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
-                    CHeader, assignGlobalParameters, architectureMap, IsaVersion, pushWorkingPath, \
-                    popWorkingPath, ParallelMap2
+                    CHeader, assignGlobalParameters, architectureMap, IsaVersion, ParallelMap2
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from Tensile import LibraryIO

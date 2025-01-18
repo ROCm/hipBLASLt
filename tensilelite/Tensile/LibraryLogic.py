@@ -24,7 +24,7 @@
 
 from pathlib import Path
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
-  setWorkingPath, popWorkingPath, assignParameterWithDefault, startTime, ProgressBar, printWarning
+  assignParameterWithDefault, startTime, ProgressBar, printWarning
 from .SolutionStructs import Solution
 from . import LibraryIO
 from . import SolutionSelectionLibrary
@@ -1455,11 +1455,6 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
   print2("# LibraryLogic config: %s" % config)
   print2("# DefaultAnalysisParameters: " % defaultAnalysisParameters)
 
-  # deleteme
-  setWorkingPath(libraryLogicPath)
-  assert libraryLogicPath == globalParameters["WorkingPath"], f"Lib logic path: {libraryLogicPath} benchmark data path: {benchmarkDataPath}"
-  # deleteme
-
   # Assign Defaults
   analysisParameters = {}
   for parameter in defaultAnalysisParameters:
@@ -1526,13 +1521,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
   elapsedTime = currentTime - startTime
   print1("%s\n# Finish Analysing data to %s in %.3fs\n%s" % (HR, os.path.split(libraryLogicPath)[0], elapsedTime, HR) )
 
-  # deleteme
-  popWorkingPath()
-  # deleteme
 
-##############################################################################
-# Error handling for frequency issues
-##############################################################################
 def handle_frequency_issue(message):
     print1(message)
     print1("  - Type 'yes(y)' to abort the operation.")
@@ -1558,25 +1547,6 @@ def handle_frequency_issue(message):
 ################################################################################
 ################################################################################
 def main(config, cxxCompiler: str, outputPath: Path):
-
   benchmarkDataPath = outputPath / globalParameters["BenchmarkDataPath"]
-
-  # deleteme
-  benchmarkDataPathOld = os.path.join(globalParameters["WorkingPath"], \
-      globalParameters["BenchmarkDataPath"])
-  assert benchmarkDataPathOld == str(benchmarkDataPath), f"benchmarkDataPathOld: {benchmarkDataPathOld}, benchmarkDataPath: {benchmarkDataPath}"
-  # deleteme
-
   libraryLogicPath = outputPath / globalParameters["LibraryLogicPath"]
-
-  # deleteme
-  libraryLogicPathOld = os.path.join(globalParameters["WorkingPath"], \
-      globalParameters["LibraryLogicPath"])
-  assert libraryLogicPathOld == str(libraryLogicPath), f"libraryLogicPathOld: {libraryLogicPathOld}, libraryLogicPath: {libraryLogicPath}"
-  # deleteme
-
   generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler)
-
-  # deleteme
-  assert globalParameters["WorkingPath"] == str(outputPath), f"WorkingPath: {globalParameters['WorkingPath']}, outputPath: {outputPath}"
-  # deleteme
