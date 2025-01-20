@@ -196,7 +196,12 @@ typedef enum {
    * Leading dimension is the stride (in elements) to the beginning of next row in memory.
    */
   HIPBLASLT_ORDER_ROW = 1,
-  HIPBLASLT_ORDER_ROW16_32C_8 = 2
+  /**
+   * Data is ordered in column-major ordered tiles of composite tiles with total 16 columns ands 32 rows.
+   * A tile is composed of 4 inner tiles in column-major with total 8 rows and 16 columns.
+   * Element offset within the tile is calculated as row%8+8*col+(row/8)*16*8.
+   */
+  HIPBLASLT_ORDER_COL16_4R8 = 2
 } hipblasLtOrder_t;
 
 /** Matrix transform descriptor attributes to define details of the operation.

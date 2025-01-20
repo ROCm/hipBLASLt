@@ -1234,7 +1234,7 @@ void testing_matmul_with_bias(const Arguments& arg,
 
         if(arg.swizzle_a && TiA == HIP_R_16F)
         {
-            hipblasLtOrder_t orderA = HIPBLASLT_ORDER_ROW16_32C_8;
+            hipblasLtOrder_t orderA = HIPBLASLT_ORDER_COL16_4R8;
             CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(matA[i], HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA)));
         }
 

@@ -140,7 +140,7 @@ void swizzleGemmEpilogueBiasVecExt(hipblasLtHandle_t handle,
 
         if(swizzleA)
         {
-            hipblasLtOrder_t orderA = HIPBLASLT_ORDER_ROW16_32C_8;
+            hipblasLtOrder_t orderA = HIPBLASLT_ORDER_COL16_4R8;
             CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(matA, HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA)));
             std::vector<hipblasLtHalf> src(m * k, 0);
             std::vector<hipblasLtHalf> dst(m * k, 0);
