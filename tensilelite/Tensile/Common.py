@@ -1758,7 +1758,22 @@ def assignGlobalParameters(config, cxxCompiler=None):
   except (subprocess.CalledProcessError, OSError) as e:
       printWarning("Error: {} running {} {} ".format('hipcc', '--version',  e))
 
+  # The following keys may be present in the config, but are not (or no longer) global parameters.
+  ignoreKeys = [
+    "UseCompression",
+    "CxxCompiler",
+    "CCompiler",
+    "OffloadBundler",
+    "Assembler",
+    "LogicPath",
+    "LogicFilter",
+    "OutputPath",
+    "Experimental",
+    "GenSolTable"
+  ]
   for key in config:
+    if key in ignoreKeys:
+      continue
     value = config[key]
     if key not in globalParameters:
       printWarning("Global parameter %s = %s unrecognised." % ( key, value ))
