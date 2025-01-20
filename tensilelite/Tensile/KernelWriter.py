@@ -2637,11 +2637,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
                                kernel["tailLoopOpt"] == False) else 0
       globalReadMode2nd = 2 if (((tensorParameters2nd["glvw"] * tensorParameters2nd["bpeGR"]) < 4) or \
                                kernel["tailLoopOpt"] == False) else 0
-
-      # if we have swizzled A or B, then size-K is already guarded, we don't have to used guarded-k GR again
-      hasSwizzled = tensorParametersA["isSwizzled"] or tensorParametersB["isSwizzled"]
-      globalReadMode1st = 0 if hasSwizzled else globalReadMode1st
-      globalReadMode2nd = 0 if hasSwizzled else globalReadMode2nd
+      globalReadMode1st = 0 if tensorParameters1st["isSwizzled"] else globalReadMode1st
+      globalReadMode2nd = 0 if tensorParameters2nd["isSwizzled"] else globalReadMode2nd
 
       module.addComment1("Update M0 for DTLDS")
       moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters1st)
