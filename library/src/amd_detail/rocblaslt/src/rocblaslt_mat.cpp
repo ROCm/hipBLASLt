@@ -63,7 +63,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
-    bool                   swizzleA = matA->order == HIPBLASLT_ORDER_ROW16_32C_8;
+    bool                   swizzleA = matA->order == HIPBLASLT_ORDER_COL16_4R8;
     rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
@@ -235,7 +235,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
-    bool                   swizzleA = matA->order == HIPBLASLT_ORDER_ROW16_32C_8;
+    bool                   swizzleA = matA->order == HIPBLASLT_ORDER_COL16_4R8;
     rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
@@ -586,7 +586,7 @@ rocblaslt_status
     std::vector<RocblasltContractionProblem> problems;
     for(int i = 0; i < m_vec.size(); i++)
     {
-        bool swizzleA = matA[i]->order == HIPBLASLT_ORDER_ROW16_32C_8;
+        bool swizzleA = matA[i]->order == HIPBLASLT_ORDER_COL16_4R8;
         problems.push_back(RocblasltContractionProblem{opA,
                                                        opB,
                                                        m_vec[i],
