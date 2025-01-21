@@ -246,6 +246,26 @@ namespace TensileLite
                                        validationStride);
             }
             break;
+            case DataType::Float8_fnuz:
+            {
+                rv = checkResultsTyped(tensor,
+                                       (Float8_fnuz const*)refPtr,
+                                       (Float8_fnuz const*)resPtr,
+                                       maxElements,
+                                       isgpu,
+                                       validationStride);
+            }
+            break;
+            case DataType::BFloat8_fnuz:
+            {
+                rv = checkResultsTyped(tensor,
+                                       (BFloat8_fnuz const*)refPtr,
+                                       (BFloat8_fnuz const*)resPtr,
+                                       maxElements,
+                                       isgpu,
+                                       validationStride);
+            }
+            break;
             case DataType::Int8x4:
             {
                 throw std::runtime_error("Unsupported validator data type Int8x4 for output.");

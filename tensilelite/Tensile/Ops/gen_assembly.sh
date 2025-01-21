@@ -64,7 +64,7 @@ for arch in "${archs[@]}"; do
         objs+=($o)
     done
     if [[ $arch =~ gfx94[0-9] ]]; then
-        for i in "S S F8 256 4" "S S B8 256 4" "S H F8 256 4" "S H B8 256 4"; do
+        for i in "S S F8N 256 4" "S S B8N 256 4" "S H F8N 256 4" "S H B8N 256 4"; do
             set -- $i
             s=$dst/A_$1_$2_$3_$4_$5_$arch.s
             o=$dst/A_$1_$2_$3_$4_$5_$arch.o

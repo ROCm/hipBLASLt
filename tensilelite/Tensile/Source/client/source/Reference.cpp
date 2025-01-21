@@ -235,6 +235,17 @@ namespace TensileLite
                 auto typedPtr = static_cast<BFloat8 const*>(voidPtr);
                 return cast<Accumulator>(Transform<BFloat8>::Input(typedPtr[pos], aConjugate));
             }
+            case DataType::Float8_fnuz:
+            {
+                auto typedPtr = static_cast<Float8_fnuz const*>(voidPtr);
+                return cast<Accumulator>(Transform<Float8_fnuz>::Input(typedPtr[pos], aConjugate));
+            }
+            break;
+            case DataType::BFloat8_fnuz:
+            {
+                auto typedPtr = static_cast<BFloat8_fnuz const*>(voidPtr);
+                return cast<Accumulator>(Transform<BFloat8_fnuz>::Input(typedPtr[pos], aConjugate));
+            }
             break;
             case DataType::XFloat32:
             case DataType::ComplexFloat:
@@ -242,7 +253,9 @@ namespace TensileLite
             case DataType::Int8x4:
             case DataType::Count:
             case DataType::Float8BFloat8:
-            case DataType::BFloat8Float8:;
+            case DataType::BFloat8Float8:
+            case DataType::Float8BFloat8_fnuz:
+            case DataType::BFloat8Float8_fnuz:;
             }
             return DataInitialization::getValue<Accumulator, InitMode::Zero>();
         }
@@ -255,7 +268,9 @@ namespace TensileLite
                                     && !std::is_same<int32_t, Accumulator>::value
                                     && !std::is_same<int8_t, Accumulator>::value
                                     && !std::is_same<Float8, Accumulator>::value
-                                    && !std::is_same<BFloat8, Accumulator>::value,
+                                    && !std::is_same<BFloat8, Accumulator>::value
+                                    && !std::is_same<Float8_fnuz, Accumulator>::value
+                                    && !std::is_same<BFloat8_fnuz, Accumulator>::value,
                                 Accumulator>::type
             GetValue(DataType biasType, void const* biasptr, int pos, bool aConjugate)
         {
@@ -317,9 +332,13 @@ namespace TensileLite
             case DataType::Int8x4:
             case DataType::Float8:
             case DataType::BFloat8:
+            case DataType::Float8_fnuz:
+            case DataType::BFloat8_fnuz:
             case DataType::Count:
             case DataType::Float8BFloat8:
-            case DataType::BFloat8Float8:;
+            case DataType::BFloat8Float8:
+            case DataType::Float8BFloat8_fnuz:
+            case DataType::BFloat8Float8_fnuz:;
             }
         }
 
@@ -331,7 +350,9 @@ namespace TensileLite
                                        && !std::is_same<int32_t, Accumulator>::value
                                        && !std::is_same<int8_t, Accumulator>::value
                                        && !std::is_same<Float8, Accumulator>::value
-                                       && !std::is_same<BFloat8, Accumulator>::value,
+                                       && !std::is_same<BFloat8, Accumulator>::value
+                                       && !std::is_same<Float8_fnuz, Accumulator>::value
+                                       && !std::is_same<BFloat8_fnuz, Accumulator>::value,
                                    bool>
                   = true>
         void SetValue(DataType dataType, Accumulator& src, void* dstPtr, size_t pos)
@@ -346,6 +367,8 @@ namespace TensileLite
             case DataType::Int8:
             case DataType::Float8:
             case DataType::BFloat8:
+            case DataType::Float8_fnuz:
+            case DataType::BFloat8_fnuz:
             case DataType::XFloat32:
                 break;
             case DataType::ComplexFloat:
@@ -358,7 +381,9 @@ namespace TensileLite
             break;
             case DataType::Count:
             case DataType::Float8BFloat8:
-            case DataType::BFloat8Float8:;
+            case DataType::BFloat8Float8:
+            case DataType::Float8BFloat8_fnuz:
+            case DataType::BFloat8Float8_fnuz:;
             }
         }
 
@@ -516,7 +541,8 @@ namespace TensileLite
                 std::is_same<Half, Input>::value || std::is_same<float, Input>::value
                     || std::is_same<double, Input>::value || std::is_same<BFloat16, Input>::value
                     || std::is_same<int32_t, Input>::value || std::is_same<int8_t, Input>::value
-                    || std::is_same<Float8, Input>::value || std::is_same<BFloat8, Input>::value,
+                    || std::is_same<Float8, Input>::value || std::is_same<BFloat8, Input>::value
+                    || std::is_same<Float8_fnuz, Input>::value || std::is_same<BFloat8_fnuz, Input>::value,
                 bool>
             = true>
         std::string ReductionCPU(TensorDescriptor const&  biasTensor,
@@ -582,7 +608,8 @@ omp_set_num_threads(MAX_OMP_THREADS);
                 !std::is_same<Half, Input>::value && !std::is_same<float, Input>::value
                     && !std::is_same<double, Input>::value && !std::is_same<BFloat16, Input>::value
                     && !std::is_same<int32_t, Input>::value && !std::is_same<int8_t, Input>::value
-                    && !std::is_same<Float8, Input>::value && !std::is_same<BFloat8, Input>::value,
+                    && !std::is_same<Float8, Input>::value && !std::is_same<BFloat8, Input>::value
+                    && !std::is_same<Float8_fnuz, Input>::value && !std::is_same<BFloat8_fnuz, Input>::value,
                 bool>
             = true>
         std::string ReductionCPU(TensorDescriptor const&  biasTensor,
@@ -778,18 +805,32 @@ omp_set_num_threads(MAX_OMP_THREADS);
                                          && sizeof(typename Inputs::BType)
                                                 > sizeof(typename Inputs::ComputeInputType))
                             {
-                                if(std::is_same<Float8BFloat8,
+                                if constexpr (std::is_same<Float8BFloat8,
                                                 typename Inputs::ComputeInputType>::value)
                                 {
                                     auto aValCast = static_cast<TensileLite::Float8>(aVal);
                                     auto bValCast = static_cast<TensileLite::BFloat8>(bVal);
                                     value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                                 }
-                                else if(std::is_same<BFloat8Float8,
+                                else if constexpr (std::is_same<BFloat8Float8,
                                                      typename Inputs::ComputeInputType>::value)
                                 {
                                     auto aValCast = static_cast<TensileLite::BFloat8>(aVal);
                                     auto bValCast = static_cast<TensileLite::Float8>(bVal);
+                                    value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
+                                }
+                                else if constexpr (std::is_same<Float8BFloat8_fnuz,
+                                                typename Inputs::ComputeInputType>::value)
+                                {
+                                    auto aValCast = static_cast<TensileLite::Float8_fnuz>(aVal);
+                                    auto bValCast = static_cast<TensileLite::BFloat8_fnuz>(bVal);
+                                    value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
+                                }
+                                else if constexpr (std::is_same<BFloat8Float8_fnuz,
+                                                     typename Inputs::ComputeInputType>::value)
+                                {
+                                    auto aValCast = static_cast<TensileLite::BFloat8_fnuz>(aVal);
+                                    auto bValCast = static_cast<TensileLite::Float8_fnuz>(bVal);
                                     value += multiply<Accumulator, MathOpAccum>(aValCast, bValCast);
                                 }
                                 else
@@ -1076,7 +1117,7 @@ omp_set_num_threads(MAX_OMP_THREADS);
             }
         }
 
-        uint32_t getInputContractionInputsTypeId(ContractionProblemGemm const& problem)
+        uint64_t getInputContractionInputsTypeId(ContractionProblemGemm const& problem)
         {
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = problem.alphaType();
@@ -1112,7 +1153,7 @@ omp_set_num_threads(MAX_OMP_THREADS);
         }
 
         template <typename Problem, typename Inputs>
-        void SolveCPUTemplates(uint32_t const& contractionInputsTypeId,
+        void SolveCPUTemplates(uint64_t const& contractionInputsTypeId,
                                Problem const&  problem,
                                Inputs const&   inputs,
                                size_t          elementsToValidate)
@@ -1373,6 +1414,119 @@ omp_set_num_threads(MAX_OMP_THREADS);
                 return ReferenceSolution<TypedGemm_H_B8F8_H_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
+
+            // F8 NANOO
+            case TypedGemm_F8N_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8N_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8N_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8N_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8N_B_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8N_B_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8N_F8N_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8N_F8N_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8N_B8N_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8N_B8N_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8N_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8N_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8N_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8N_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8N_B_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8N_B_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8N_F8N_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8N_F8N_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8N_B8N_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8N_B8N_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            // hybrid - NANOO
+            case TypedGemm_F8B8N_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8B8N_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8B8N_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8B8N_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8B8N_B_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8B8N_B_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8B8N_F8N_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8B8N_F8N_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8B8N_B8N_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8B8N_B8N_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8F8N_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8F8N_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8F8N_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8F8N_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8F8N_B_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8F8N_B_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8F8N_F8N_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8F8N_F8N_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8F8N_B8N_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8F8N_B8N_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_H_F8B8N_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_H_F8B8N_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_H_B8F8N_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_H_B8F8N_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
 #ifdef TENSILE_USE_HALF
             case TypedGemm_H_F8_H_S::TypeId():
             {
@@ -1442,6 +1596,79 @@ omp_set_num_threads(MAX_OMP_THREADS);
             case TypedGemm_F8H_FP8_FP8_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_F8H_FP8_FP8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+
+            // F8 NANOO
+            case TypedGemm_H_F8N_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_H_F8N_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_H_B8N_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_H_B8N_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_HF8N_H_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_HF8N_H_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8NH_H_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8NH_H_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_HF8N_H_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_HF8N_H_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8NH_H_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8NH_H_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            // TODO:; why FP8, not F8... need to change it to FP8N???
+            case TypedGemm_HF8N_H_FP8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_HF8N_H_FP8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8NH_H_FP8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8NH_H_FP8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_HF8N_FP8_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_HF8N_FP8_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8NH_FP8_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8NH_FP8_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_HF8N_FP8_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_HF8N_FP8_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8NH_FP8_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8NH_FP8_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_HF8N_FP8_FP8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_HF8N_FP8_FP8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8NH_FP8_FP8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8NH_FP8_FP8_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
 #endif // TENSILE_USE_HALF

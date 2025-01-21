@@ -2789,7 +2789,7 @@ class Solution(collections.abc.Mapping):
         if (state["ProblemType"]["DataType"].isHalf() == False):
             reject(state, "ConvertAfterDS only support DataType half")
             return
-        if (state["ProblemType"]["DataTypeA"].isFloat8() == False) and (state["ProblemType"]["DataTypeB"].isFloat8() == False):
+        if (state["ProblemType"]["DataTypeA"].isAnyFloat8() == False) and (state["ProblemType"]["DataTypeB"].isAnyFloat8() == False):
             reject(state, "one of DataTypeA or DataTypeB need to be float8")
             return
 

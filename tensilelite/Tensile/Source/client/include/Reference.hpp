@@ -79,6 +79,26 @@ namespace TensileLite
         }
 
         template <>
+        inline bool AlmostEqual(Float8_fnuz a, Float8_fnuz b)
+        {
+            Float8_fnuz absA    = (a > static_cast<Float8_fnuz>(0.0f)) ? a : static_cast<Float8_fnuz>(0.0f) - a;
+            Float8_fnuz absB    = (b > static_cast<Float8_fnuz>(0.0f)) ? b : static_cast<Float8_fnuz>(0.0f) - b;
+            Float8_fnuz absDiff = (a - b > static_cast<Float8_fnuz>(0.0f)) ? a - b : b - a;
+            return absDiff / (absA + absB + static_cast<Float8_fnuz>(1.0f)) < static_cast<Float8_fnuz>(
+                       0.125f); // tolerance * eps = 2 * 0.0625; 2*eps needed for SR
+        }
+
+        template <>
+        inline bool AlmostEqual(BFloat8_fnuz a, BFloat8_fnuz b)
+        {
+            BFloat8_fnuz absA    = (a > static_cast<BFloat8_fnuz>(0.0f)) ? a : static_cast<BFloat8_fnuz>(0.0f) - a;
+            BFloat8_fnuz absB    = (b > static_cast<BFloat8_fnuz>(0.0f)) ? b : static_cast<BFloat8_fnuz>(0.0f) - b;
+            BFloat8_fnuz absDiff = (a - b > static_cast<BFloat8_fnuz>(0.0f)) ? a - b : b - a;
+            return absDiff / (absA + absB + static_cast<BFloat8_fnuz>(1.0f)) < static_cast<BFloat8_fnuz>(
+                       0.25f); // tolerance * epsilon = 2 * 0.125; 2*eps needed for SR
+        }
+
+	template <>
         inline bool AlmostEqual(BFloat16 a, BFloat16 b)
         {
             BFloat16 absA = (a > static_cast<BFloat16>(0.0f)) ? a : static_cast<BFloat16>(0.0f) - a;

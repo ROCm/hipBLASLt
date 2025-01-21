@@ -165,7 +165,7 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
 
 
 def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
-    kernelWriterAssembly, errorTolerant=False, generateSourcesAndExit=False, compress=True):
+    kernelWriterAssembly, errorTolerant=False, generateSourcesAndExit=False, compress=True, fromTensile=False):
   codeObjectFiles = []
 
   pushWorkingPath('build_tmp')
@@ -202,7 +202,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   
   if not generateSourcesAndExit:
       codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
-      buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
+      buildSourceCodeObjectFile(srcToolchain, outputPath, fromTensile, srcKernelFile)
 
   popWorkingPath() # build_tmp
   popWorkingPath() # workingDir
@@ -211,7 +211,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
 
 
 def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels, kernelHelperObjs, \
-    kernelWriterAssembly, compress=True):
+    kernelWriterAssembly, compress=True, fromTensile=False):
 
   pushWorkingPath('build_tmp')
   pushWorkingPath(os.path.basename(outputPath).upper())
@@ -244,7 +244,7 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
 
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
+  buildSourceCodeObjectFile(srcToolchain, outputPath, fromTensile, srcKernelFile)
 
   popWorkingPath() # build_tmp
   popWorkingPath() # workingDir
@@ -271,7 +271,7 @@ def copyStaticFiles(outputPath=None):
     "TensileTypes.h",
     "tensile_bfloat16.h",
     "tensile_float8_bfloat8.h",
-    "hip_f8_impl.h",
+    "tensile_float8_bfloat8_bc.h",
     "KernelHeader.h",
     "ReductionTemplate.h",
     "memory_gfx.h" ]

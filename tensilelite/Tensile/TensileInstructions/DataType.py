@@ -200,7 +200,67 @@ class DataType:
             'isComplex': False,
             'packing': 1
         },
-        {
+        {   # NANOO E4M3
+            'char': 'F8N',
+            'name': 'float8_fnuz',
+            'nameAbbrev': 'fp8_fp8',               # to match v_mfma inst
+            'miOutTypeNameAbbrev': 'f32',
+            'enum': 'Float8_fnuz',                 # mapping to new client c++ enum
+            'reg': 0.25,
+            'ocl': 'ERROR',
+            'hip': 'tensile_float8_fnuz',
+            'libType': 'TensileFloat8_fnuz',       # old client
+            'libEnum': 'tensileDataTypeF8_fnuz',   # old client
+            'isIntegral': False,
+            'isComplex': False,
+            'packing': 1,
+        },
+        {   # NANOO E5M2
+            'char': 'B8N',
+            'name': 'bfloat8_fnuz',
+            'nameAbbrev': 'bf8_bf8',               # to match v_mfma inst
+            'miOutTypeNameAbbrev': 'f32',
+            'enum': 'BFloat8_fnuz',                # mapping to new client c++ enum
+            'reg': 0.25,
+            'ocl': 'ERROR',
+            'hip': 'tensile_bfloat8_fnuz',
+            'libType': 'TensileBFloat8_fnuz',      # old client
+            'libEnum': 'tensileDataTypeB8_fnuz',   # old client
+            'isIntegral': False,
+            'isComplex': False,
+            'packing': 1,
+        },
+        {   #NANOO
+            'char': 'F8B8N',
+            'name': 'float8Bfloat8_fnuz',
+            'nameAbbrev': 'fp8_bf8',               # to match v_mfma
+            'miOutTypeNameAbbrev': 'f32',
+            'enum': 'Float8BFloat8_fnuz',               # mapping to new client c++ enum
+            'reg': 0.25,
+            'ocl': 'ERROR',
+            'hip': 'ERROR',
+            'libType': 'ERROR',                    # old client
+            'libEnum': 'tensileDataTypeF8B8_fnuz',      # old client
+            'isIntegral': False,
+            'isComplex': False,
+            'packing': 1,
+        },
+        {   #NANOO
+            'char': 'B8F8N',
+            'name': 'bfloat8Float8_fnuz',
+            'nameAbbrev': 'bf8_fp8',               # to match v_mfma
+            'miOutTypeNameAbbrev': 'f32',
+            'enum': 'BFloat8Float8_fnuz',          # mapping to new client c++ enum
+            'reg': 0.25,
+            'ocl': 'ERROR',
+            'hip': 'ERROR',
+            'libType': 'ERROR',                    # old client
+            'libEnum': 'tensileDataTypeB8F8_fnuz', # old client
+            'isIntegral': False,
+            'isComplex': False,
+            'packing': 1,
+        },
+        {   # OCP E4M3
             'char': 'F8',
             'name': 'float8',
             'nameAbbrev': 'fp8_fp8',               # to match v_mfma inst
@@ -215,7 +275,7 @@ class DataType:
             'isComplex': False,
             'packing': 1,
         },
-        {
+        {   # OCP E5M2
             'char': 'B8',
             'name': 'bfloat8',
             'nameAbbrev': 'bf8_bf8',               # to match v_mfma inst
@@ -230,7 +290,7 @@ class DataType:
             'isComplex': False,
             'packing': 1,
         },
-        {
+        {   #OCP
             'char': 'F8B8',
             'name': 'float8Bfloat8',
             'nameAbbrev': 'fp8_bf8',               # to match v_mfma
@@ -245,7 +305,7 @@ class DataType:
             'isComplex': False,
             'packing': 1,
         },
-        {
+        {   #OCP
             'char': 'B8F8',
             'name': 'bfloat8Float8',
             'nameAbbrev': 'bf8_fp8',               # to match v_mfma
@@ -354,29 +414,85 @@ class DataType:
         return self.value == DataType.xfloat32
     def isFloat8(self):
         return self.value == DataType.float8
+    def isFloat8_fnuz(self):
+        return self.value == DataType.float8_fnuz
+    def isAnyFloat8(self):
+        return (self.value == DataType.float8 \
+                or self.value == DataType.float8_fnuz)
     def isBFloat8(self):
         return self.value == DataType.bfloat8
+    def isBFloat8_fnuz(self):
+        return self.value == DataType.bfloat8_fnuz
+    def isAnyBFloat8(self):
+        return (self.value == DataType.bfloat8 \
+                or self.value == DataType.bfloat8_fnuz)
     def isFloat8BFloat8(self):
         return self.value == DataType.float8Bfloat8
+    def isFloat8BFloat8_fnuz(self):
+        return self.value == DataType.float8Bfloat8_fnuz
+    def isAnyFloat8BFloat8(self):
+        return (self.value == DataType.float8Bfloat8 \
+                or self.value == DataType.float8Bfloat8_fnuz)
     def isBFloat8Float8(self):
         return self.value == DataType.bfloat8Float8
+    def isBFloat8Float8_fnuz(self):
+        return self.value == DataType.bfloat8Float8_fnuz
+    def isAnyBFloat8Float8(self):
+        return (self.value == DataType.bfloat8Float8 \
+                or self.value == DataType.bfloat8Float8_fnuz)
     def is8bitFloat(self):
         return (self.value == DataType.float8 \
                 or self.value == DataType.bfloat8 \
                 or self.value == DataType.float8Bfloat8 \
-                or self.value == DataType.bfloat8Float8)
+                or self.value == DataType.bfloat8Float8 \
+                or self.value == DataType.float8_fnuz \
+                or self.value == DataType.bfloat8_fnuz \
+                or self.value == DataType.float8Bfloat8_fnuz \
+                or self.value == DataType.bfloat8Float8_fnuz)
     def isFloat8A(self):
         return (self.value == DataType.float8 \
                 or self.value == DataType.float8Bfloat8)
+    def isFloat8_fnuzA(self):
+        return (self.value == DataType.float8_fnuz \
+                or self.value == DataType.float8Bfloat8_fnuz)
+    def isAnyFloat8A(self):
+        return (self.value == DataType.float8 \
+                or self.value == DataType.float8Bfloat8 \
+                or self.value == DataType.float8_fnuz \
+                or self.value == DataType.float8Bfloat8_fnuz)
     def isBFloat8A(self):
         return (self.value == DataType.bfloat8 \
                 or self.value == DataType.bfloat8Float8)
+    def isBFloat8_fnuzA(self):
+        return (self.value == DataType.bfloat8_fnuz \
+                or self.value == DataType.bfloat8Float8_fnuz)
+    def isAnyBFloat8A(self):
+        return (self.value == DataType.bfloat8 \
+                or self.value == DataType.bfloat8Float8 \
+                or self.value == DataType.bfloat8_fnuz \
+                or self.value == DataType.bfloat8Float8_fnuz)
     def isFloat8B(self):
         return (self.value == DataType.float8 \
                 or self.value == DataType.bfloat8Float8)
+    def isFloat8_fnuzB(self):
+        return (self.value == DataType.float8_fnuz \
+                or self.value == DataType.bfloat8Float8_fnuz)
+    def isAnyFloat8B(self):
+        return (self.value == DataType.float8 \
+                or self.value == DataType.bfloat8Float8 \
+                or self.value == DataType.float8_fnuz \
+                or self.value == DataType.bfloat8Float8_fnuz)
     def isBFloat8B(self):
         return (self.value == DataType.bfloat8 \
                 or self.value == DataType.float8Bfloat8)
+    def isBFloat8_fnuzB(self):
+        return (self.value == DataType.bfloat8_fnuz \
+                or self.value == DataType.float8Bfloat8_fnuz)
+    def isAnyBFloat8B(self):
+        return (self.value == DataType.bfloat8 \
+                or self.value == DataType.float8Bfloat8 \
+                or self.value == DataType.bfloat8_fnuz \
+                or self.value == DataType.float8Bfloat8_fnuz)
     def isNone(self):
         return self.value == None
 

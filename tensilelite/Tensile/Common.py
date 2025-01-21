@@ -394,11 +394,15 @@ validMFMA["F8"] = [[32,32,16,1], [16,16,32,1]]
 validMFMA["B8"] = validMFMA["F8"]
 validMFMA["F8B8"] = validMFMA["F8"]
 validMFMA["B8F8"] = validMFMA["F8"]
+validMFMA["F8N"] = [[32,32,16,1], [16,16,32,1]]
+validMFMA["B8N"] = validMFMA["F8N"]
+validMFMA["F8B8N"] = validMFMA["F8N"]
+validMFMA["B8F8N"] = validMFMA["F8N"]
 validWMMA = [[16,16,16,1], ]
 validTT = 32
 validMFMA["_format9"] = []
 
-for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"], validMFMA["X"], validMFMA["F8"], validWMMA]:
+for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"], validMFMA["X"], validMFMA["F8N"], validWMMA]:
   for MI in MFMA:
     for bm in range(int(math.log(MI[3],2))+1):
       for tt0 in range(1,validTT+1):
@@ -418,8 +422,12 @@ validSMFMA["F8"] = [[32,32,32,1], [16,16,64,1]]
 validSMFMA["B8"] = validSMFMA["F8"]
 validSMFMA["F8B8"] = validSMFMA["F8"]
 validSMFMA["B8F8"] = validSMFMA["F8"]
+validSMFMA["F8N"] = [[32,32,32,1], [16,16,64,1]]
+validSMFMA["B8N"] = validSMFMA["F8N"]
+validSMFMA["F8B8N"] = validSMFMA["F8N"]
+validSMFMA["B8F8N"] = validSMFMA["F8N"]
 validSMFMA["_format9"] = []
-for SMFMA in [validSMFMA["H"], validSMFMA["B"], validSMFMA["4xi8"], validSMFMA["F8"]]:
+for SMFMA in [validSMFMA["H"], validSMFMA["B"], validSMFMA["4xi8"], validSMFMA["F8N"]]:
   for MI in SMFMA:
     for bm in range(int(math.log(MI[3],2))+1):
       for tt0 in range(1,validTT+1):
@@ -453,7 +461,18 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
                    ('F8','F8','S'), ('B8','B8','S'), \
                    ('F8B8','B8','S'), ('B8F8', 'B8', 'S'), \
                    ('F8','B8','S'), ('B8','F8','S'), \
-                   ('F8B8','F8','S'), ('B8F8', 'F8', 'S') ]
+                   ('F8B8','F8','S'), ('B8F8', 'F8', 'S'), \
+                   # F8 NANOO
+                   ('F8N','S','S'), ('B8N','S','S'), \
+                   ('F8B8N','S','S'), ('B8F8N', 'S', 'S'), \
+                   ('F8N','H','S'), ('B8N','H','S'), \
+                   ('F8B8N','H','S'), ('B8F8N','H','S'), ('B8N','B','S'), \
+                   ('H','F8N','S'), ('F8N','B','S'), ('F8B8N','B','S'), ('B8F8N','B','S'), \
+                   # in/out are both R8
+                   ('F8N','F8N','S'), ('B8N','B8N','S'), \
+                   ('F8B8N','B8N','S'), ('B8F8N', 'B8N', 'S'), \
+                   ('F8N','B8N','S'), ('B8N','F8N','S'), \
+                   ('F8B8N','F8N','S'), ('B8F8N', 'F8N', 'S') ]
 
 # All HPA types are listed here (HPA=T). The name of the library logic files for these types is:
 # *_TiToTc_BH*.yaml where Ti, To, and Tc are the data types of A/B, C/D, and computation, respectively.
@@ -465,7 +484,13 @@ HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('B','H
              ('H','F8','S'), ('F8','B','S'), ('F8B8','B','S'), \
              # in/out are both R8
              ('F8','F8','S'), ('B8','B8','S'), ('F8B8','B8','S'), ('B8F8', 'B8', 'S'), \
-             ('F8','B8','S'), ('B8','F8','S'), ('F8B8','F8','S'), ('B8F8', 'F8', 'S') ]
+             ('F8','B8','S'), ('B8','F8','S'), ('F8B8','F8','S'), ('B8F8', 'F8', 'S'), \
+             ('F8N','S','S'), ('B8N','S','S'), ('F8B8N','S','S'), ('B8F8N', 'S', 'S'), \
+             ('F8N','H','S'), ('B8N','H','S'), ('F8B8N','H','S'), ('B8F8N','H','S'), \
+             ('H','F8N','S'), ('F8N','B','S'), ('F8B8N','B','S'), \
+             # in/out are both R8
+             ('F8N','F8N','S'), ('B8N','B8N','S'), ('F8B8N','B8N','S'), ('B8F8N', 'B8N', 'S'), \
+             ('F8N','B8N','S'), ('B8N','F8N','S'), ('F8B8N','F8N','S'), ('B8F8N', 'F8N', 'S') ]
 
 validParameters = {
     # 0: Global read is along parallel direction in thread level,
@@ -1600,7 +1625,7 @@ def which(p):
                 return candidate
     return None
 
-def splitArchs():
+def splitArchs(fromTensile=False):
   # Helper for architecture
   def isSupported(arch):
     return globalParameters["AsmCaps"][arch]["SupportedISA"] and \
@@ -1632,6 +1657,13 @@ def splitArchs():
     for arch in wantedArchs:
       archs += [re.sub(":", "-", arch)]
       cmdlineArchs += [arch]
+
+  # if calling from the context of Tensile we only want the arch associated with the current ISA
+  if fromTensile:
+    gfx = getGfxName(globalParameters["CurrentISA"])
+    archs = set(a for a in archs if gfx in a)
+    cmdlineArchs = set(a for a in cmdlineArchs if gfx in a)
+
   return archs, cmdlineArchs
 
 ################################################################################
@@ -1683,7 +1715,7 @@ def assignGlobalParameters(config, cxxCompiler=None):
   # ROCm Agent Enumerator Path
   if os.name == "nt":
     globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
-    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")    
+    globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "hipinfo.exe")
   else:
     globalParameters["AMDGPUArchPath"] = locateExe(globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch")
     globalParameters["ROCmAgentEnumeratorPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm_agent_enumerator")
