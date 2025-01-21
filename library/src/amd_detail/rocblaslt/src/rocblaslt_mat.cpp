@@ -64,6 +64,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
     bool                   swizzleA = matA->order == HIPBLASLT_ORDER_COL16_4R8;
+    bool                   swizzleB = matB->order == HIPBLASLT_ORDER_COL16_4R8;
     rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
@@ -99,7 +100,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                                            gradient,
                                                            compute_type,
                                                            swizzleA,
-                                                           false);
+                                                           swizzleB);
     if(isValid != rocblaslt_status_continue)
         return isValid;
 
@@ -205,9 +206,8 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         workspaceSizeInBytes,
                                         stream,
                                         handle->Synchronizer,
-                                        /*TODO: support swizzle B */
                                         swizzleA,
-                                        false};
+                                        swizzleB};
 
     return runContractionProblem(handle, algo, problem, gemmData);
 }
@@ -236,6 +236,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
     bool                   swizzleA = matA->order == HIPBLASLT_ORDER_COL16_4R8;
+    bool                   swizzleB = matB->order == HIPBLASLT_ORDER_COL16_4R8;
     rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
@@ -270,9 +271,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                                            E,
                                                            gradient,
                                                            compute_type,
-                                                           /*support swizzle B*/
                                                            swizzleA,
-                                                           false);
+                                                           swizzleB);
     if(isValid != rocblaslt_status_continue)
         return isValid;
 
@@ -358,9 +358,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                         0,
                                         0,
                                         handle->Synchronizer,
-                                        /*TODO: support swizzle B*/
                                         swizzleA,
-                                        false};
+                                        swizzleB};
     return gemmCreate(problem, gemmData, gemmCount);
 }
 
@@ -587,6 +586,7 @@ rocblaslt_status
     for(int i = 0; i < m_vec.size(); i++)
     {
         bool swizzleA = matA[i]->order == HIPBLASLT_ORDER_COL16_4R8;
+        bool swizzleB = matB[i]->order == HIPBLASLT_ORDER_COL16_4R8;
         problems.push_back(RocblasltContractionProblem{opA,
                                                        opB,
                                                        m_vec[i],
@@ -639,9 +639,8 @@ rocblaslt_status
                                                        0,
                                                        0,
                                                        handle->Synchronizer,
-                                                       /*TODO: support swizzle B */
                                                        swizzleA,
-                                                       false});
+                                                       swizzleB});
     }
     return groupedGemmCreate(problems, gemmData, gemmCount);
 }
