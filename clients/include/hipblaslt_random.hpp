@@ -124,6 +124,7 @@ public:
         return random_nan_data<hip_bfloat16, uint16_t, 7, 8>();
     }
 
+#if HIPBLASLT_FP8_TYPE_FNUZ
     // Single NaN float8...
     explicit operator hipblaslt_f8_fnuz()
     {
@@ -147,8 +148,10 @@ public:
         x.bits = 0x80;
         return x.value;
     }
-#ifdef ROCM_USE_FLOAT8 //todo
-    // Single NaN float8...
+#endif
+
+#if HIPBLASLT_FP8_TYPE_OCP
+    // Positive NaN float8...
     explicit operator hipblaslt_f8()
     {
         union
