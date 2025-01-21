@@ -2793,16 +2793,72 @@ class Solution(collections.abc.Mapping):
             reject(state, "one of DataTypeA or DataTypeB need to be float8")
             return
 
-    #for tensor swizzling, we force pack-k == 2
+    def calcOptGRVW(lrvw: int, unrollMajorLDS: bool, datatype: DataType) -> int:
+      # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
+      optGRVW = lrvw if unrollMajorLDS else 4 / datatype.numRegisters()
+      if optGRVW * datatype.numBytes() > 16:
+        optGRVW = 16 // datatype.numBytes()
+      return optGRVW
+
+    def calSwizzleK(state, tc):
+      return 16 // state[f"MIInputPerThread{tc}"] // state["ProblemType"][f"DataType{tc}"].numBytes()
+
+    genGRVWA = False
+    genGRVWB = False
+    # Default GlobalReadVectorWidthA
+    if state["EnableMatrixInstruction"]:
+      if state["GlobalReadVectorWidthA"] < 0:
+        genGRVWA = True
+        if state["GlobalReadVectorWidthA"] == -2:
+          if state["MatrixInstBM"] == 1 and state["MIWaveTile"][0] == 1 and state["MIWaveGroup"][0] == 1 and state["ProblemType"]["TLUA"]:
+            state["GlobalReadVectorWidthA"] = 1
+          else:
+            reject(state, "GRVWA=-2 is set for skinny MT")
+        elif state["GlobalReadVectorWidthA"] == -1:
+          if state["ProblemType"]["SwizzleTensorA"]:
+            state["GlobalReadVectorWidthA"] = state["MIInputPerThreadA"] * calSwizzleK(state, "A")
+          else:
+            optGRVW = calcOptGRVW(state["LocalReadVectorWidth"], state["UnrollMajorLDSA"], state["ProblemType"]["DataTypeA"])
+            curGRVW = 1
+            state["GlobalReadVectorWidthA"] = int(curGRVW)
+            while (curGRVW <= optGRVW):
+              if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
+                state["GlobalReadVectorWidthA"] = int(curGRVW)
+              curGRVW *= 2
+
+    # Default GlobalReadVectorWidthB
+    if state["EnableMatrixInstruction"]:
+      if state["GlobalReadVectorWidthB"] < 0:
+        genGRVWB = True
+        if state["GlobalReadVectorWidthB"] == -2:
+          if state["MatrixInstBN"] == 1 and state["MIWaveTile"][1] == 1 and state["MIWaveGroup"][1] == 1 and state["ProblemType"]["TLUB"]:
+            state["GlobalReadVectorWidthB"] = 1
+          else:
+            reject(state, "GRVWB=-2 is set for skinny MT")
+        elif state["GlobalReadVectorWidthB"] == -1:
+          if state["ProblemType"]["SwizzleTensorB"]:
+            state["GlobalReadVectorWidthB"] = state["MIInputPerThreadB"] * calSwizzleK(state, "B")
+          else:
+            optGRVW = calcOptGRVW(state["LocalReadVectorWidth"], state["UnrollMajorLDSB"], state["ProblemType"]["DataTypeB"])
+            curGRVW = 1
+            state["GlobalReadVectorWidthB"] = int(curGRVW)
+            while (curGRVW <= optGRVW):
+              if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:
+                state["GlobalReadVectorWidthB"] = int(curGRVW)
+              curGRVW *= 2
+
+    #for tensor swizzling, we calculate pack-k to achieve buffer_load_dwordx4
     for tc in ("A", "B",):
       if state["ProblemType"][f"SwizzleTensor{tc}"]:
         if not state["EnableMatrixInstruction"]:
           reject(state, f"Tensor {tc} swizzling supports MI only")
         # Print rejection reason instead of force set
-        if state[f"GlobalReadVectorWidth{tc}"] != state[f"MIInputPerThread{tc}"] * 2:
+        # 16 means bytes of buffer_load_dwordx4
+        SwizzlePackK = calSwizzleK(state, tc)
+        if state[f"GlobalReadVectorWidth{tc}"] != state[f"MIInputPerThread{tc}"] * SwizzlePackK:
           GRVW_TC = state[f"GlobalReadVectorWidth{tc}"]
           MIInPerThread = state[f"MIInputPerThread{tc}"]
-          reject(state, f"SwizzleTensor{tc} doesn't support GRVW{tc} ({GRVW_TC}) != MIInputPerThread{tc} ({MIInPerThread}) * 2")
+          reject(state, f"SwizzleTensor{tc} doesn't support GRVW{tc} ({GRVW_TC}) != MIInputPerThread{tc} ({MIInPerThread}) * {SwizzlePackK}")
         # TODO- increasing VW might have better perf. But it'll change the swizzling pattern.
         if state[f"VectorWidth{tc}"] != 1:
           VW_TC = state[f"VectorWidth{tc}"]
@@ -2820,51 +2876,6 @@ class Solution(collections.abc.Mapping):
       # TODO- NN fails validation due to DTVB + Tail-Loop is not working correctly
       if not (state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
         reject(state, f"Tensor B swizzling supports TN only")
-
-    def calcOptGRVW(lrvw: int, unrollMajorLDS: bool, datatype: DataType) -> int:
-      # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
-      optGRVW = lrvw if unrollMajorLDS else 4 / datatype.numRegisters()
-      if optGRVW * datatype.numBytes() > 16:
-        optGRVW = 16 // datatype.numBytes()
-      return optGRVW
-
-    genGRVWA = False
-    genGRVWB = False
-    # Default GlobalReadVectorWidthA
-    if state["EnableMatrixInstruction"]:
-      if state["GlobalReadVectorWidthA"] < 0:
-        genGRVWA = True
-        if state["GlobalReadVectorWidthA"] == -2:
-          if state["MatrixInstBM"] == 1 and state["MIWaveTile"][0] == 1 and state["MIWaveGroup"][0] == 1 and state["ProblemType"]["TLUA"]:
-            state["GlobalReadVectorWidthA"] = 1
-          else:
-            reject(state, "GRVWA=-2 is set for skinny MT")
-        elif state["GlobalReadVectorWidthA"] == -1:
-          optGRVW = calcOptGRVW(state["LocalReadVectorWidth"], state["UnrollMajorLDSA"], state["ProblemType"]["DataTypeA"])
-          curGRVW = 1
-          state["GlobalReadVectorWidthA"] = int(curGRVW)
-          while (curGRVW <= optGRVW):
-            if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
-              state["GlobalReadVectorWidthA"] = int(curGRVW)
-            curGRVW *= 2
-
-    # Default GlobalReadVectorWidthB
-    if state["EnableMatrixInstruction"]:
-      if state["GlobalReadVectorWidthB"] < 0:
-        genGRVWB = True
-        if state["GlobalReadVectorWidthB"] == -2:
-          if state["MatrixInstBN"] == 1 and state["MIWaveTile"][1] == 1 and state["MIWaveGroup"][1] == 1 and state["ProblemType"]["TLUB"]:
-            state["GlobalReadVectorWidthB"] = 1
-          else:
-            reject(state, "GRVWB=-2 is set for skinny MT")
-        elif state["GlobalReadVectorWidthB"] == -1:
-          optGRVW = calcOptGRVW(state["LocalReadVectorWidth"], state["UnrollMajorLDSB"], state["ProblemType"]["DataTypeB"])
-          curGRVW = 1
-          state["GlobalReadVectorWidthB"] = int(curGRVW)
-          while (curGRVW <= optGRVW):
-            if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:
-              state["GlobalReadVectorWidthB"] = int(curGRVW)
-            curGRVW *= 2
 
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
     if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
