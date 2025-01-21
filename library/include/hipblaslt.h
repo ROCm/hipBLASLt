@@ -51,17 +51,6 @@
 #include <hip/hip_runtime_api.h>
 #include <hip/hip_version.h>
 
-#if HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR > 2 \
-    && HIP_VERSION_PATCH > 42130 //tmp before gfx94 use hip f8 header
-#define ROCM_USE_FLOAT8 1
-#else
-#undef ROCM_USE_FLOAT8
-#endif
-
-#if defined(__HIPCC__)
-#include <hip/hip_fp8.h>
-#endif
-
 #if defined(__HIP_PLATFORM_AMD__)
 #include "hipblaslt-types.h"
 #endif
