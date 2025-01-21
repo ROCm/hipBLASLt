@@ -21,8 +21,8 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: B8F8
-      DestDataType: F8
+      DataType: F8N
+      DestDataType: F8N
       ComputeDataType: s
       HighPrecisionAccumulate:  True
       TransposeA: True
@@ -35,6 +35,8 @@ BenchmarkProblems:
       UseBias: 3
       UseScaleAlphaVec: 3
       BiasDataTypeList: [s]
+      BiasDataTypeList: [s]
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:

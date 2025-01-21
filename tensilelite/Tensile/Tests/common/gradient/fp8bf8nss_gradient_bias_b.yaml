@@ -3,9 +3,10 @@ TestParameters:
 
 GlobalParameters:
   MinimumRequiredVersion: 4.14.0
+  MergeFiles: False
   SleepPercent: 50
   NumElementsToValidate: -1
-  DataInitTypeBias: 3 # rand
+  DataInitTypeBias: 0
   DataInitTypeBeta: 1
   DataInitTypeAlpha: 1
   DataInitTypeScaleA: 2
@@ -18,25 +19,24 @@ GlobalParameters:
 
 BenchmarkProblems:
   ########################################
-  # TN - FP8BS with ScaleAB
+  # TN - standard (BiasSrc B)
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
-      DestDataType: B
+      DataType: F8B8N
+      DestDataType: S
       ComputeDataType: S
       HighPrecisionAccumulate: True
       TransposeA: 1
       TransposeB: 0
       UseBeta: True
       Batched: True
-      Activation: True
-      ActivationType: all
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 1
+      Gradient: True
       UseBias: 1
-      BiasDataTypeList: ['b']
+      BiasSrc: "B"
+      BiasDataTypeList: [s,b]
+      UseScaleAB: "Scalar"
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -44,18 +44,27 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [16,16,32, 1, 1, 1,1, 1,1]  # 16x16
-        - DepthU: [ 64 ]
-        - AssertFree0ElementMultiple: [1]
+          - [16,16,32, 1, 1, 1,1, 2,2]  # 32x32
+          - [16,16,32, 1, 1, 2,2, 1,1]  # 32x32
+          - [16,16,32, 1, 1, 2,2, 2,2]  # 64x64
+          - [32,32, 16, 1, 1, 1,1, 1,1]  # 32x32
+          - [32,32, 16, 1, 1, 1,1, 2,2]  # 64x64
+          - [32,32, 16, 1, 1, 2,2, 1,1]  # 64x64
+          - [32,32, 16, 1, 1, 2,2, 2,2]  # 128x128
+        - DepthU: [ 32, 64 ]
+        - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
-        - GlobalReadVectorWidthA: [4]
-        - GlobalReadVectorWidthB: [4]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
+        - LocalReadVectorWidth: [8]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
+        - TransposeLDS: [1]
         - LdsBlockSizePerPadA: [0]
         - LdsBlockSizePerPadB: [0]
         - LdsPadA: [0]
@@ -63,43 +72,41 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
         - SourceSwap: [1]
-        - NumElementsPerBatchStore: [0]
-        - StorePriorityOpt: [0]
+        - NumElementsPerBatchStore: [0,2]
+        - StorePriorityOpt: [0,1]
+        - ActivationFuncCall: [1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [127,   128, 1, 640]
-          - Exact: [128,   128, 1, 640]
-          - Exact: [129,   128, 1, 640]
-        - BiasTypeArgs: ['b']
-        - ActivationArgs:
-          - [Enum: none]
+          - Exact: [511, 256, 1,1024]
+          - Exact: [512, 256, 1, 511]
+          - Exact: [512, 256, 1,1023]
+        - BiasTypeArgs: ['s', 'b']
 
   ########################################
-  # TN - FP8BF8,B,S with ScaleAB
+  # NT - standard (BiasSrc B)
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8B8
-      DestDataType: B
+      DataType: F8B8N
+      DestDataType: S
       ComputeDataType: S
       HighPrecisionAccumulate: True
-      TransposeA: 1
-      TransposeB: 0
+      TransposeA: 0
+      TransposeB: 1
       UseBeta: True
       Batched: True
-      Activation: True
-      ActivationType: all
-      UseScaleAB: "Scalar"
-      UseScaleAlphaVec: 1
+      Gradient: True
       UseBias: 1
-      BiasDataTypeList: ['b']
+      BiasSrc: "B"
+      BiasDataTypeList: [s,b]
+      UseScaleAB: "Scalar"
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -107,18 +114,24 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [16,16,32, 1, 1, 1,1, 1,1]  # 16x16
-        - DepthU: [ 64 ]
-        - AssertFree0ElementMultiple: [1]
+          - [16,16,32, 1, 1, 1,1, 2,2]  # 32x32
+          - [16,16,32, 1, 1, 2,2, 1,1]  # 32x32
+          - [16,16,32, 1, 1, 2,2, 2,2]  # 64x64
+          - [32,32, 16, 1, 1, 1,1, 1,1]  # 32x32
+          - [32,32, 16, 1, 1, 1,1, 2,2]  # 64x64
+          - [32,32, 16, 1, 1, 2,2, 1,1]  # 64x64
+          - [32,32, 16, 1, 1, 2,2, 2,2]  # 128x128
+        - DepthU: [ 32, 64 ]
+        - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - VectorWidthA: [1]
         - VectorWidthB: [1]
-        - GlobalReadVectorWidthA: [4]
-        - GlobalReadVectorWidthB: [4]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
+        - TransposeLDS: [0]
         - LdsBlockSizePerPadA: [0]
         - LdsBlockSizePerPadB: [0]
         - LdsPadA: [0]
@@ -126,19 +139,19 @@ BenchmarkProblems:
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
         - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        - GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
         - SourceSwap: [1]
-        - NumElementsPerBatchStore: [0]
-        - StorePriorityOpt: [0]
+        - NumElementsPerBatchStore: [0,2]
+        - StorePriorityOpt: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [127,   128, 1, 640]
-          - Exact: [128,   128, 1, 640]
-          - Exact: [129,   128, 1, 640]
-        - BiasTypeArgs: ['b']
-        - ActivationArgs:
-          - [Enum: none]
+          - Exact: [121, 128, 1, 129]
+          - Exact: [511, 256, 1,1024]
+          - Exact: [512, 256, 1, 511]
+          - Exact: [512, 256, 1,1023]
+          # - Exact: []
+        - BiasTypeArgs: ['s', 'b']

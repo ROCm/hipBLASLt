@@ -19,7 +19,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeA: h
       DestDataType: S
       ComputeDataType: S
@@ -88,7 +88,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeA: h
       DestDataType: S
       ComputeDataType: S
@@ -156,7 +156,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeB: h
       DestDataType: S
       ComputeDataType: S
@@ -225,7 +225,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeB: h
       DestDataType: S
       ComputeDataType: S
@@ -297,7 +297,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeA: h
       DestDataType: S
       ComputeDataType: S
@@ -361,7 +361,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeA: h
       DestDataType: S
       ComputeDataType: S
@@ -417,7 +417,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeA: h
       DestDataType: S
       ComputeDataType: S
@@ -474,7 +474,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeA: h
       DestDataType: S
       ComputeDataType: S
@@ -534,7 +534,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeB: h
       DestDataType: S
       ComputeDataType: S
@@ -598,7 +598,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeB: h
       DestDataType: S
       ComputeDataType: S
@@ -654,7 +654,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeB: h
       DestDataType: S
       ComputeDataType: S
@@ -711,7 +711,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       DataTypeB: h
       DestDataType: S
       ComputeDataType: S

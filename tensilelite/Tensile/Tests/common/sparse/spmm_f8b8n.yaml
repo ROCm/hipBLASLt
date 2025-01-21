@@ -21,20 +21,19 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
-      DestDataType: F8
+      DataType: F8B8N
+      DestDataType: F8N
       ComputeDataType: s
       HighPrecisionAccumulate:  True
       TransposeA: True
       TransposeB: False
       UseBeta: True
-      Sparse: 2
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationType: all
       UseBias: 3
       UseScaleAlphaVec: 3
-      BiasDataTypeList: [s]
       BiasDataTypeList: [s]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -65,7 +64,6 @@ BenchmarkProblems:
         - StoreVectorWidth: [-1]
         - AssertFree0ElementMultiple: [8]
         - AssertFree1ElementMultiple: [8]
-        - SourceSwap: [1]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:

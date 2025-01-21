@@ -23,7 +23,7 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeB: F8
+      DataTypeB: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -98,7 +98,7 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: F8
+      DataTypeA: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -176,7 +176,7 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: F8
+      DataTypeA: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -252,7 +252,7 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: F8
+      DataTypeA: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -328,7 +328,7 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeB: F8
+      DataTypeB: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -531,7 +531,7 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeB: F8
+      DataTypeB: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -607,7 +607,7 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: F8
+      DataTypeA: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True

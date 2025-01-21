@@ -21,13 +21,13 @@ GlobalParameters:
 
 BenchmarkProblems:
   ########################################
-  # NN - F8H
+  # NN - F8NH
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: F8
+      DataTypeA: F8N
       DataTypeB: h
       DestDataType: h
       ComputeDataType: s
@@ -101,13 +101,13 @@ BenchmarkProblems:
 
 
   ########################################
-  # NT - F8H
+  # NT - F8NH
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: F8
+      DataTypeA: F8N
       DataTypeB: h
       DestDataType: h
       ComputeDataType: s
@@ -181,13 +181,13 @@ BenchmarkProblems:
 
 
   ########################################
-  # TT - F8H
+  # TT - F8NH
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: F8
+      DataTypeA: F8N
       DataTypeB: h
       DestDataType: h
       ComputeDataType: s
@@ -261,13 +261,13 @@ BenchmarkProblems:
 
 
   ########################################
-  # TN - F8H
+  # TN - F8NH
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: F8
+      DataTypeA: F8N
       DataTypeB: h
       DestDataType: h
       ComputeDataType: s
@@ -341,14 +341,14 @@ BenchmarkProblems:
 
 
   ########################################
-  # NN - HF8
+  # NN - HF8N
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
       DataType: h
       DataTypeA: h
-      DataTypeB: F8
+      DataTypeB: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -421,14 +421,14 @@ BenchmarkProblems:
 
 
   ########################################
-  # NT - HF8
+  # NT - HF8N
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
       DataType: h
       DataTypeA: h
-      DataTypeB: F8
+      DataTypeB: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -501,14 +501,14 @@ BenchmarkProblems:
 
 
   ########################################
-  # TT - HF8
+  # TT - HF8N
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
       DataType: h
       DataTypeA: h
-      DataTypeB: F8
+      DataTypeB: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -581,14 +581,14 @@ BenchmarkProblems:
 
 
   ########################################
-  # TN - HF8
+  # TN - HF8N
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
       DataType: h
       DataTypeA: h
-      DataTypeB: F8
+      DataTypeB: F8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
