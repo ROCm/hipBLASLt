@@ -415,8 +415,8 @@ namespace tensile_gfx940_f8_impl
 enum class hip_f8_type
 {
     bf8_fnuz = 0, // 1:5:2
-	fp8_fnuz = 1, // 1:4:3
-	bf8      = 2, // Placeholder, not used
+    fp8_fnuz = 1, // 1:4:3
+    bf8      = 2, // Placeholder, not used
     fp8      = 3  // Placeholder, not used
 };
 
@@ -503,33 +503,33 @@ struct Float8_BFloat8
         // NOTE: made clipping default again
         if(T == hip_f8_type::bf8_fnuz)
         {
-			if(get_hip_f8_bias_mode())
-			{
-				__x = tensile_hip_f8_impl::
-					cast_to_f8<2, 5, float, true /*negative_zero_nan*/, downcast_clip_on /*clip*/>(
-						v, (rm == hip_f8_rounding_mode::stochastic), rng);
-			}
-			else
-			{
-				__x = tensile_hip_f8_impl::
-					cast_to_f8<2, 5, float, false /*negative_zero_nan*/, downcast_clip_on /*clip*/>(
-						v, (rm == hip_f8_rounding_mode::stochastic), rng);
-			}
+            if(get_hip_f8_bias_mode())
+            {
+                __x = tensile_hip_f8_impl::
+                    cast_to_f8<2, 5, float, true /*negative_zero_nan*/, downcast_clip_on /*clip*/>(
+                        v, (rm == hip_f8_rounding_mode::stochastic), rng);
+            }
+            else
+            {
+                __x = tensile_hip_f8_impl::
+                    cast_to_f8<2, 5, float, false /*negative_zero_nan*/, downcast_clip_on /*clip*/>(
+                        v, (rm == hip_f8_rounding_mode::stochastic), rng);
+            }
         }
         else /* fp8*/
         {
-			if(get_hip_f8_bias_mode())
-			{
-				__x = tensile_hip_f8_impl::
-					cast_to_f8<3, 4, float, true /*negative_zero_nan*/, downcast_clip_on /*clip*/>(
-						v, (rm == hip_f8_rounding_mode::stochastic), rng);
-			}
-			else
-			{
-				__x = tensile_hip_f8_impl::
-					cast_to_f8<3, 4, float, false /*negative_zero_nan*/, downcast_clip_on /*clip*/>(
-						v, (rm == hip_f8_rounding_mode::stochastic), rng);
-			}
+            if(get_hip_f8_bias_mode())
+            {
+                __x = tensile_hip_f8_impl::
+                    cast_to_f8<3, 4, float, true /*negative_zero_nan*/, downcast_clip_on /*clip*/>(
+                        v, (rm == hip_f8_rounding_mode::stochastic), rng);
+            }
+            else
+            {
+                __x = tensile_hip_f8_impl::
+                    cast_to_f8<3, 4, float, false /*negative_zero_nan*/, downcast_clip_on /*clip*/>(
+                        v, (rm == hip_f8_rounding_mode::stochastic), rng);
+            }
         }
     }
 
@@ -586,29 +586,29 @@ struct Float8_BFloat8
     {
         if(T == hip_f8_type::bf8_fnuz)
         {
-			if(get_hip_f8_bias_mode())
-			{
-				return tensile_hip_f8_impl::
-					cast_from_f8<2, 5, float, true /*negative_zero_nan*/>(__x);
-			}
-			else
-			{
-				return tensile_hip_f8_impl::
-					cast_from_f8<2, 5, float, false /*negative_zero_nan*/>(__x);
-			}
+            if(get_hip_f8_bias_mode())
+            {
+                return tensile_hip_f8_impl::
+                    cast_from_f8<2, 5, float, true /*negative_zero_nan*/>(__x);
+            }
+            else
+            {
+                return tensile_hip_f8_impl::
+                    cast_from_f8<2, 5, float, false /*negative_zero_nan*/>(__x);
+            }
         }
         else /* fp8*/
         {
-			if(get_hip_f8_bias_mode())
-			{
-				return tensile_hip_f8_impl::
-					cast_from_f8<3, 4, float, true /*negative_zero_nan*/>(__x);
-			}
-			else
-			{
-				return tensile_hip_f8_impl::
-					cast_from_f8<3, 4, float, false /*negative_zero_nan*/>(__x);
-			}
+            if(get_hip_f8_bias_mode())
+            {
+                return tensile_hip_f8_impl::
+                    cast_from_f8<3, 4, float, true /*negative_zero_nan*/>(__x);
+            }
+            else
+            {
+                return tensile_hip_f8_impl::
+                    cast_from_f8<3, 4, float, false /*negative_zero_nan*/>(__x);
+            }
         }
     }
 
@@ -662,21 +662,21 @@ struct Float8_BFloat8
     // check for inf
     inline HIP_HOST_DEVICE bool is_inf() const
     {
-		if(get_hip_f8_bias_mode())
-		{
-			return __x == 0x80;
-		}
-		else
-		{
-			if(T == hip_f8_type::bf8_fnuz)
-			{
-				return (__x == 0x7c) || (__x == 0xfc);
-			}
-			else
-			{
-				return (__x == 0x78) || (__x == 0xf8);
-			}
-		}
+        if(get_hip_f8_bias_mode())
+        {
+            return __x == 0x80;
+        }
+        else
+        {
+            if(T == hip_f8_type::bf8_fnuz)
+            {
+                return (__x == 0x7c) || (__x == 0xfc);
+            }
+            else
+            {
+                return (__x == 0x78) || (__x == 0xf8);
+            }
+        }
     }
     //
     //  assignment operator overloading
@@ -728,99 +728,99 @@ typedef Float8_BFloat8<hip_f8_type::bf8> tensile_bfloat8;
 //  Other operator overloading
 inline std::ostream& operator<<(std::ostream& os, const tensile_float8& f8)
 {
-	os << static_cast<float>(f8);
-	return os;
+    os << static_cast<float>(f8);
+    return os;
 }
 inline std::ostream& operator<<(std::ostream& os, const tensile_bfloat8& bf8)
 {
-	os << static_cast<float>(bf8);
-	return os;
+    os << static_cast<float>(bf8);
+    return os;
 }
 inline std::ostream& operator<<(std::ostream& os, const tensile_float8_fnuz& f8)
 {
-	os << static_cast<float>(f8);
-	return os;
+    os << static_cast<float>(f8);
+    return os;
 }
 inline std::ostream& operator<<(std::ostream& os, const tensile_bfloat8_fnuz& bf8)
 {
-	os << static_cast<float>(bf8);
-	return os;
+    os << static_cast<float>(bf8);
+    return os;
 }
 
 //
 inline tensile_float8 operator+(tensile_float8 a, tensile_float8 b)
 {
-	return static_cast<tensile_float8>(static_cast<float>(a) + static_cast<float>(b));
+    return static_cast<tensile_float8>(static_cast<float>(a) + static_cast<float>(b));
 }
 inline tensile_float8 operator+(tensile_float8 a, float b)
 {
-	return static_cast<tensile_float8>(static_cast<float>(a) + b);
+    return static_cast<tensile_float8>(static_cast<float>(a) + b);
 }
 inline tensile_float8 operator+(float a, tensile_float8 b)
 {
-	return static_cast<tensile_float8>(a + static_cast<float>(b));
+    return static_cast<tensile_float8>(a + static_cast<float>(b));
 }
 inline tensile_bfloat8 operator+(tensile_bfloat8 a, tensile_bfloat8 b)
 {
-	return static_cast<tensile_bfloat8>(static_cast<float>(a) + static_cast<float>(b));
+    return static_cast<tensile_bfloat8>(static_cast<float>(a) + static_cast<float>(b));
 }
 inline tensile_float8 operator-(tensile_float8 a, tensile_float8 b)
 {
-	return static_cast<tensile_float8>(static_cast<float>(a) - static_cast<float>(b));
+    return static_cast<tensile_float8>(static_cast<float>(a) - static_cast<float>(b));
 }
 inline tensile_bfloat8 operator-(tensile_bfloat8 a, tensile_bfloat8 b)
 {
-	return static_cast<tensile_bfloat8>(static_cast<float>(a) - static_cast<float>(b));
+    return static_cast<tensile_bfloat8>(static_cast<float>(a) - static_cast<float>(b));
 }
 //  NOTE: It is not used in reference solution directly, we want to return float otherwise
 inline tensile_float8 operator*(tensile_float8 a, tensile_float8 b)
 {
-	return static_cast<tensile_float8>(static_cast<float>(a) * static_cast<float>(b));
+    return static_cast<tensile_float8>(static_cast<float>(a) * static_cast<float>(b));
 }
 inline tensile_float8 operator*(float a, tensile_float8 b)
 {
-	return static_cast<tensile_float8>(a * static_cast<float>(b));
+    return static_cast<tensile_float8>(a * static_cast<float>(b));
 }
 inline tensile_float8 operator*(tensile_float8 a, float b)
 {
-	return static_cast<tensile_float8>(static_cast<float>(a) * b);
+    return static_cast<tensile_float8>(static_cast<float>(a) * b);
 }
 inline tensile_bfloat8 operator*(tensile_bfloat8 a, tensile_bfloat8 b)
 {
-	return static_cast<tensile_bfloat8>(static_cast<float>(a) * static_cast<float>(b));
+    return static_cast<tensile_bfloat8>(static_cast<float>(a) * static_cast<float>(b));
 }
 
 inline tensile_float8 operator/(tensile_float8 a, tensile_float8 b)
 {
-	return static_cast<tensile_float8>(static_cast<float>(a) / static_cast<float>(b));
+    return static_cast<tensile_float8>(static_cast<float>(a) / static_cast<float>(b));
 }
 inline tensile_bfloat8 operator/(tensile_bfloat8 a, tensile_bfloat8 b)
 {
-	return static_cast<tensile_bfloat8>(static_cast<float>(a) / static_cast<float>(b));
+    return static_cast<tensile_bfloat8>(static_cast<float>(a) / static_cast<float>(b));
 }
 inline bool operator<(tensile_float8 a, tensile_float8 b)
 {
-	return static_cast<float>(a) < static_cast<float>(b);
+    return static_cast<float>(a) < static_cast<float>(b);
 }
 inline bool operator<(float a, tensile_float8 b)
 {
-	return a < static_cast<float>(b);
+    return a < static_cast<float>(b);
 }
 inline bool operator<(tensile_float8 a, float b)
 {
-	return static_cast<float>(a) < b;
+    return static_cast<float>(a) < b;
 }
 inline bool operator<(tensile_bfloat8 a, tensile_bfloat8 b)
 {
-	return static_cast<float>(a) < static_cast<float>(b);
+    return static_cast<float>(a) < static_cast<float>(b);
 }
 inline bool operator<=(tensile_float8 a, tensile_float8 b)
 {
-	return static_cast<float>(a) <= static_cast<float>(b);
+    return static_cast<float>(a) <= static_cast<float>(b);
 }
 inline bool operator<=(tensile_bfloat8 a, tensile_bfloat8 b)
 {
-	return static_cast<float>(a) <= static_cast<float>(b);
+    return static_cast<float>(a) <= static_cast<float>(b);
 }
 inline bool operator==(tensile_float8 a, tensile_float8 b)
     {
@@ -832,111 +832,111 @@ inline bool operator==(tensile_bfloat8 a, tensile_bfloat8 b)
     }
 inline bool operator!=(tensile_float8 a, tensile_float8 b)
 {
-	return static_cast<float>(a) != static_cast<float>(b);
+    return static_cast<float>(a) != static_cast<float>(b);
 }
 inline bool operator!=(tensile_bfloat8 a, tensile_bfloat8 b)
 {
-	return static_cast<float>(a) != static_cast<float>(b);
+    return static_cast<float>(a) != static_cast<float>(b);
 }
 inline bool operator>(tensile_float8 a, tensile_float8 b)
 {
-	return static_cast<float>(a) > static_cast<float>(b);
+    return static_cast<float>(a) > static_cast<float>(b);
 }
 inline bool operator>(float a, tensile_float8 b)
 {
-	return a > static_cast<float>(b);
+    return a > static_cast<float>(b);
 }
 inline bool operator>(tensile_float8 a, float b)
 {
-	return static_cast<float>(a) > b;
+    return static_cast<float>(a) > b;
 }
 inline bool operator>(tensile_bfloat8 a, tensile_bfloat8 b)
 {
-	return static_cast<float>(a) > static_cast<float>(b);
+    return static_cast<float>(a) > static_cast<float>(b);
 }
 inline bool operator>=(tensile_float8 a, tensile_float8 b)
 {
-	return static_cast<float>(a) >= static_cast<float>(b);
+    return static_cast<float>(a) >= static_cast<float>(b);
 }
 inline bool operator>=(tensile_bfloat8 a, tensile_bfloat8 b)
 {
-	return static_cast<float>(a) >= static_cast<float>(b);
+    return static_cast<float>(a) >= static_cast<float>(b);
 }
 
 //  FNUZ
 inline tensile_float8_fnuz operator+(tensile_float8_fnuz a, tensile_float8_fnuz b)
 {
-	return static_cast<tensile_float8_fnuz>(static_cast<float>(a) + static_cast<float>(b));
+    return static_cast<tensile_float8_fnuz>(static_cast<float>(a) + static_cast<float>(b));
 }
 inline tensile_float8_fnuz operator+(tensile_float8_fnuz a, float b)
 {
-	return static_cast<tensile_float8_fnuz>(static_cast<float>(a) + b);
+    return static_cast<tensile_float8_fnuz>(static_cast<float>(a) + b);
 }
 inline tensile_float8_fnuz operator+(float a, tensile_float8_fnuz b)
 {
-	return static_cast<tensile_float8_fnuz>(a + static_cast<float>(b));
+    return static_cast<tensile_float8_fnuz>(a + static_cast<float>(b));
 }
 inline tensile_bfloat8_fnuz operator+(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
 {
-	return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) + static_cast<float>(b));
+    return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) + static_cast<float>(b));
 }
 inline tensile_float8_fnuz operator-(tensile_float8_fnuz a, tensile_float8_fnuz b)
 {
-	return static_cast<tensile_float8_fnuz>(static_cast<float>(a) - static_cast<float>(b));
+    return static_cast<tensile_float8_fnuz>(static_cast<float>(a) - static_cast<float>(b));
 }
 inline tensile_bfloat8_fnuz operator-(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
 {
-	return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) - static_cast<float>(b));
+    return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) - static_cast<float>(b));
 }
 //  NOTE: It is not used in reference solution directly, we want to return float otherwise
 inline tensile_float8_fnuz operator*(tensile_float8_fnuz a, tensile_float8_fnuz b)
 {
-	return static_cast<tensile_float8_fnuz>(static_cast<float>(a) * static_cast<float>(b));
+    return static_cast<tensile_float8_fnuz>(static_cast<float>(a) * static_cast<float>(b));
 }
 inline tensile_float8_fnuz operator*(float a, tensile_float8_fnuz b)
 {
-	return static_cast<tensile_float8_fnuz>(a * static_cast<float>(b));
+    return static_cast<tensile_float8_fnuz>(a * static_cast<float>(b));
 }
 inline tensile_float8_fnuz operator*(tensile_float8_fnuz a, float b)
 {
-	return static_cast<tensile_float8_fnuz>(static_cast<float>(a) * b);
+    return static_cast<tensile_float8_fnuz>(static_cast<float>(a) * b);
 }
 inline tensile_bfloat8_fnuz operator*(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
 {
-	return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) * static_cast<float>(b));
+    return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) * static_cast<float>(b));
 }
 
 inline tensile_float8_fnuz operator/(tensile_float8_fnuz a, tensile_float8_fnuz b)
 {
-	return static_cast<tensile_float8_fnuz>(static_cast<float>(a) / static_cast<float>(b));
+    return static_cast<tensile_float8_fnuz>(static_cast<float>(a) / static_cast<float>(b));
 }
 inline tensile_bfloat8_fnuz operator/(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
 {
-	return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) / static_cast<float>(b));
+    return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) / static_cast<float>(b));
 }
 inline bool operator<(tensile_float8_fnuz a, tensile_float8_fnuz b)
 {
-	return static_cast<float>(a) < static_cast<float>(b);
+    return static_cast<float>(a) < static_cast<float>(b);
 }
 inline bool operator<(float a, tensile_float8_fnuz b)
 {
-	return a < static_cast<float>(b);
+    return a < static_cast<float>(b);
 }
 inline bool operator<(tensile_float8_fnuz a, float b)
 {
-	return static_cast<float>(a) < b;
+    return static_cast<float>(a) < b;
 }
 inline bool operator<(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
 {
-	return static_cast<float>(a) < static_cast<float>(b);
+    return static_cast<float>(a) < static_cast<float>(b);
 }
 inline bool operator<=(tensile_float8_fnuz a, tensile_float8_fnuz b)
 {
-	return static_cast<float>(a) <= static_cast<float>(b);
+    return static_cast<float>(a) <= static_cast<float>(b);
 }
 inline bool operator<=(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
 {
-	return static_cast<float>(a) <= static_cast<float>(b);
+    return static_cast<float>(a) <= static_cast<float>(b);
 }
 inline bool operator==(tensile_float8_fnuz a, tensile_float8_fnuz b)
     {
@@ -948,35 +948,35 @@ inline bool operator==(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
     }
 inline bool operator!=(tensile_float8_fnuz a, tensile_float8_fnuz b)
 {
-	return static_cast<float>(a) != static_cast<float>(b);
+    return static_cast<float>(a) != static_cast<float>(b);
 }
 inline bool operator!=(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
 {
-	return static_cast<float>(a) != static_cast<float>(b);
+    return static_cast<float>(a) != static_cast<float>(b);
 }
 inline bool operator>(tensile_float8_fnuz a, tensile_float8_fnuz b)
 {
-	return static_cast<float>(a) > static_cast<float>(b);
+    return static_cast<float>(a) > static_cast<float>(b);
 }
 inline bool operator>(float a, tensile_float8_fnuz b)
 {
-	return a > static_cast<float>(b);
+    return a > static_cast<float>(b);
 }
 inline bool operator>(tensile_float8_fnuz a, float b)
 {
-	return static_cast<float>(a) > b;
+    return static_cast<float>(a) > b;
 }
 inline bool operator>(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
 {
-	return static_cast<float>(a) > static_cast<float>(b);
+    return static_cast<float>(a) > static_cast<float>(b);
 }
 inline bool operator>=(tensile_float8_fnuz a, tensile_float8_fnuz b)
 {
-	return static_cast<float>(a) >= static_cast<float>(b);
+    return static_cast<float>(a) >= static_cast<float>(b);
 }
 inline bool operator>=(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
 {
-	return static_cast<float>(a) >= static_cast<float>(b);
+    return static_cast<float>(a) >= static_cast<float>(b);
 }
 
 // ================ Explicit downcasting to support Stochastic Rounding and clipping ===============

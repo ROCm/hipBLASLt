@@ -509,7 +509,7 @@ struct TensileLite::Serialization::MappingTraits<hipblaslt_ext::AMaxSolution, IO
         {
             s.scaleDatatype = TensileLite::DataType::BFloat8_fnuz;
         }
-		else if(scaleDatatypeStr == "F8")
+        else if(scaleDatatypeStr == "F8")
         {
             s.scaleDatatype = TensileLite::DataType::Float8;
         }

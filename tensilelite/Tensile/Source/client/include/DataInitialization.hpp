@@ -2234,8 +2234,8 @@ namespace TensileLite
         {
             return std::isnan(value);
         }
-        
-	template <>
+
+    template <>
         inline bool DataInitialization::isBadInput<int8_t>(int8_t value)
         {
             return value == DataInitialization::getValue<int8_t, InitMode::BadInput>();
@@ -2307,8 +2307,8 @@ namespace TensileLite
         {
             return std::isinf(static_cast<float>(value));
         }
-        
-	template <>
+
+    template <>
         inline bool DataInitialization::isBadOutput<BFloat16>(BFloat16 value)
         {
             return std::isinf(value);
@@ -2792,8 +2792,8 @@ namespace TensileLite
         {
             return static_cast<BFloat8_fnuz>(i);
         }
-        
-	template <>
+
+    template <>
         inline Half DataInitialization::ConvertTo<Half>(size_t i)
         {
             return static_cast<Half>(i);
@@ -2899,8 +2899,8 @@ namespace TensileLite
         {
             return static_cast<BFloat8>(value);
         }
-        
-	template <>
+
+    template <>
         inline Float8_fnuz DataInitialization::convertDoubleTo<Float8_fnuz>(double value)
         {
             return static_cast<Float8_fnuz>(value);

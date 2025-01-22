@@ -98,7 +98,7 @@ namespace TensileLite
                        0.25f); // tolerance * epsilon = 2 * 0.125; 2*eps needed for SR
         }
 
-	template <>
+    template <>
         inline bool AlmostEqual(BFloat16 a, BFloat16 b)
         {
             BFloat16 absA = (a > static_cast<BFloat16>(0.0f)) ? a : static_cast<BFloat16>(0.0f) - a;

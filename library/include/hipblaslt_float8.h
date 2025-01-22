@@ -250,7 +250,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8: public __hip_fp8_e5m2
     inline HIP_HOST_DEVICE bool is_nan() const
     {
         return (__x == 0x7d) || (__x == 0x7e) || (__x == 0x7f) ||
-		(__x == 0xfd) || (__x == 0xfe) || (__x == 0xff);
+        (__x == 0xfd) || (__x == 0xfe) || (__x == 0xff);
     }
 
     // check for inf
