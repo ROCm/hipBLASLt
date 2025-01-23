@@ -30,7 +30,6 @@
 #include <ctime>
 #include <iomanip>
 
-#//include <sys/time.h>
 #include <iostream>
 #include <sstream>
 
@@ -183,11 +182,6 @@ namespace TensileLite
                                                 TimingEvents const&            startEvents,
                                                 TimingEvents const&            stopEvents)
         {
-            // struct timeval tmnow;
-            // struct tm*     tm;
-            // gettimeofday(&tmnow, NULL); // microsecond resolution
-            // tm = localtime(&tmnow.tv_sec);
-            // std::cout.fill('0');
             std::time_t result = std::time(nullptr);
             std::tm*    tm     = std::localtime(&result);
 
@@ -197,7 +191,6 @@ namespace TensileLite
                 << std::setw(2) << tm->tm_mday << " " << std::setw(2) << tm->tm_hour << ":"
                 << std::setw(2) << tm->tm_min << ":" << std::setw(2) << tm->tm_sec << "."
                 << std::setw(6);
-                //<< std::setw(6) << static_cast<int>(tmnow.tv_usec);
 
             m_reporter->report(ResultKey::EnqueueTime, msg.str());
         }

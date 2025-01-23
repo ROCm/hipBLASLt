@@ -43,7 +43,6 @@ class CMakeEnvironment:
     def generate(self):
 
         args = ['cmake']
-        #args += itertools.chain.from_iterable([ ['-D', '{}={}'.format(key, value)] for key,value in self.options.items()])
         args += ['-G', 'Ninja'] if (os.name == 'nt') else []
         args += itertools.chain.from_iterable([ ['-D{}={}'.format(key, value)] for key,value in self.options.items()])
         args += [self.sourceDir]
@@ -51,8 +50,6 @@ class CMakeEnvironment:
 
         Common.print2(' '.join(args))
         with Common.ClientExecutionLock():
-            #subprocess.check_call(args, cwd=Common.ensurePath(self.buildDir))
-            # change to use  check_output to force windows cmd block util command finish
             try:
                 subprocess.check_output(args, stderr=subprocess.STDOUT, cwd=Common.ensurePath(self.buildDir))
             except subprocess.SubprocessError as e:
@@ -63,8 +60,6 @@ class CMakeEnvironment:
         args = [makeProgram, f'-j{CPUThreadCount()}']
         Common.print2(' '.join(args))
         with Common.ClientExecutionLock():
-            #subprocess.check_call(args, cwd=self.buildDir)
-            # change to use  check_output to force windows cmd block util command finish
             subprocess.check_output(args, stderr=subprocess.STDOUT, cwd=self.buildDir)
     
     @staticmethod

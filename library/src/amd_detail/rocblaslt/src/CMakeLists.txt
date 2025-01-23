@@ -92,7 +92,7 @@ if( BUILD_WITH_TENSILE )
     )
   endif()
 
-  if(!WIN32)
+  if(NOT WIN32)
     TensileCreateExtOpLibraries("${PROJECT_BINARY_DIR}/Tensile/library" "${Tensile_ARCHITECTURE}")
   endif()
 

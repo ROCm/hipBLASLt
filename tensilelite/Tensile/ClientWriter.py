@@ -31,7 +31,6 @@ from .TensileCreateLibrary import copyStaticFiles
 
 import os
 import subprocess
-#import shlex
 import shutil
 from enum import Enum
 from glob import glob
@@ -282,7 +281,6 @@ def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cC
 
       runScriptFile.write("ERR=0\n")
     for configFile in configPaths:
-      #runScriptFile.write("{} --config-file {} {} --best-solution 1\n".format(ClientExecutable.getClientExecutable(), configFile, globalParameters["ClientArgs"]))
       runScriptFile.write("{} --config-file {} {} {}\n".format(clientExe, configFile, globalParameters["ClientArgs"], option))
       runScriptFile.write( "if [[ $? -ne 0 ]]\n")
       runScriptFile.write( "then\n")
@@ -293,7 +291,6 @@ def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cC
     if globalParameters["PinClocks"] and globalParameters["ROCmSMIPath"]:
       runScriptFile.write("%s -d 0 --resetclocks\n" % globalParameters["ROCmSMIPath"])
       runScriptFile.write("%s -d 0 --setfan 50\n" % globalParameters["ROCmSMIPath"])
-  #if os.name != "nt":
     runScriptFile.write("exit $ERR\n")
   runScriptFile.close()
   if os.name != "nt":

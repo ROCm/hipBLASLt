@@ -203,9 +203,6 @@ namespace TensileLite
             m_thread = std::thread([this]() { this->runLoop(); });
         }
 
-        // void HardwareMonitor::addTempMonitor(rsmi_temperature_type_t   sensorType,
-        //                                      rsmi_temperature_metric_t metric)
-        // {
         void HardwareMonitor::addTempMonitor()
         {
             rsmi_temperature_type_t   sensorType = RSMI_TEMP_TYPE_EDGE;
@@ -216,14 +213,12 @@ namespace TensileLite
             m_tempValues.resize(m_tempMetrics.size());
         }
 
-        //void HardwareMonitor::addClockMonitor(rsmi_clk_type_t clockType)
         void HardwareMonitor::addClockMonitor(ClockType clockType)
         {
             rsmi_temperature_type_t   sensorType = RSMI_TEMP_TYPE_EDGE;
             rsmi_temperature_metric_t metric     = RSMI_TEMP_CURRENT;
             assertNotActive();
 
-            //m_clockMetrics.push_back(clockType);
             m_clockMetrics.push_back(toSMIClockType(clockType));
             m_clockValues.resize(m_clockMetrics.size());
         }
@@ -236,8 +231,6 @@ namespace TensileLite
             m_fanValues.resize(m_fanMetrics.size());
         }
 
-        // double HardwareMonitor::getAverageTemp(rsmi_temperature_type_t   sensorType,
-        //                                        rsmi_temperature_metric_t metric)
         double HardwareMonitor::getAverageTemp()
         {
             rsmi_temperature_type_t   sensorType = RSMI_TEMP_TYPE_EDGE;
@@ -263,7 +256,6 @@ namespace TensileLite
                 concatenate("Can't read temp value that wasn't requested: ", sensorType, " - ", metric));
         }
 
-        //double HardwareMonitor::getAverageClock(rsmi_clk_type_t clockType)
         double HardwareMonitor::getAverageClock(ClockType clockType)
         {
             assertNotActive();
@@ -273,7 +265,6 @@ namespace TensileLite
 
             for(size_t i = 0; i < m_clockMetrics.size(); i++)
             {
-                //if(m_clockMetrics[i] == clockType)
                 if(m_clockMetrics[i] == toSMIClockType(clockType))
                 {
                     uint64_t rawValue = m_clockValues[i];

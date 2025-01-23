@@ -95,20 +95,16 @@ if (NOT WIN32)
   else()
     target_link_libraries( hipblaslt-test PRIVATE lapack cblas )
   endif()
+
   list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
 
-  if (NOT BUILD_FORTRAN_CLIENTS)
-    list( APPEND COMMON_LINK_LIBS "-lgfortran -lflang -lflangrti") # for lapack
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    list( APPEND COMMON_LINK_LIBS "-lgfortran") # for lapack
+  else()
+    list( APPEND COMMON_LINK_LIBS "-lflang -lflangrti") # for lapack
   endif()
-  list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
 else()
   list( APPEND COMMON_LINK_LIBS "libomp")
-endif()
-
-if (NOT BUILD_FORTRAN_CLIENTS)
-  if (NOT WIN32)
-    list( APPEND COMMON_LINK_LIBS "-lgfortran -lflang -lflangrti") # for lapack
-  endif()
 endif()
 
 #if (NOT WIN32)
@@ -118,7 +114,7 @@ endif()
 #    list( APPEND COMMON_LINK_LIBS "-lgfortran") # for lapack
 #  endif()
 #else()
-#  list( APPEND COMMON_LINK_LIBS "-lflang -lflangrti") # for lapack
+#  list( APPEND COMMON_LINK_LIBS "libomp")
 #endif()
 
 target_link_libraries( hipblaslt-test PRIVATE ${COMMON_LINK_LIBS} )

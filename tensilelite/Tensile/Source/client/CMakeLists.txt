@@ -27,7 +27,6 @@ set(client_sources
     source/CSVStackFile.cpp
     source/ClientProblemFactory.cpp
     source/DataInitialization.cpp
-    #source/HardwareMonitor.cpp
     source/HardwareMonitorListener.cpp
     source/LibraryUpdateReporter.cpp
     source/MetaRunListener.cpp
@@ -71,7 +70,6 @@ include_directories(${Boost_INCLUDE_DIR})
 
 target_include_directories(TensileClient PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")# "${rocm_smi_root}/include")
 
-#target_link_libraries(TensileClient PRIVATE TensileHost ${Boost_LIBRARIES} rocm_smi)
 target_link_libraries(TensileClient PRIVATE TensileHost ${Boost_LIBRARIES})
 
 if(Tensile_ENABLE_MARKER)

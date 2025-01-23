@@ -30,8 +30,6 @@
 #include "HardwareMonitor.hpp"
 #endif
 
-// #include <unistd.h>
-
 #include <hip/hip_runtime.h>
 
 #include <Tensile/hip/HipUtils.hpp>
@@ -51,12 +49,8 @@ namespace TensileLite
                 return;
 
             m_monitor = std::make_shared<HardwareMonitor>(args["device-idx"].as<int>());
-            //m_monitor->addTempMonitor(0);
             m_monitor->addTempMonitor();
 
-            // m_monitor->addClockMonitor(RSMI_CLK_TYPE_SYS);
-            // m_monitor->addClockMonitor(RSMI_CLK_TYPE_SOC);
-            // m_monitor->addClockMonitor(RSMI_CLK_TYPE_MEM);
             m_monitor->addClockMonitor(CLK_TYPE_SYS);
             m_monitor->addClockMonitor(CLK_TYPE_SOC);
             m_monitor->addClockMonitor(CLK_TYPE_MEM);
@@ -97,15 +91,6 @@ namespace TensileLite
             m_monitor->wait();
 
             m_reporter->report(ResultKey::DeviceIndex, m_monitor->getDeviceIndex());
-            /*m_reporter->report(ResultKey::TempEdge, m_monitor->getAverageTemp(0));
-
-            m_reporter->report(ResultKey::ClockRateSys,
-                               m_monitor->getAverageClock(RSMI_CLK_TYPE_SYS));
-            m_reporter->report(ResultKey::ClockRateSOC,
-                               m_monitor->getAverageClock(RSMI_CLK_TYPE_SOC));
-            m_reporter->report(ResultKey::ClockRateMem,
-                               m_monitor->getAverageClock(RSMI_CLK_TYPE_MEM));
-            */
             m_reporter->report(ResultKey::TempEdge, m_monitor->getAverageTemp());
 
             m_reporter->report(ResultKey::ClockRateSys, m_monitor->getAverageClock(CLK_TYPE_SYS));

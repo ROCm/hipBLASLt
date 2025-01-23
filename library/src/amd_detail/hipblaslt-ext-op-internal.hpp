@@ -34,7 +34,6 @@
 #include <cstdint>
 #include <fstream>
 #include <msgpack.hpp>
-#include <string>
 #include <sstream>
 #include <stdexcept>
 #include <string>

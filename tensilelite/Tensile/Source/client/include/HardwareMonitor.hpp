@@ -55,12 +55,6 @@ namespace TensileLite
         public:
             /** Translates the Hip device index into the corresponding device index for
    * ROCm-SMI. */
-            /*
-            static uint32_t GetROCmSMIIndex(int hipDeviceIndex);
-
-            using rsmi_temperature_type_t = int;
-            using clock                   = std::chrono::steady_clock;
-            */
             using clock = std::chrono::steady_clock;
             // Monitor at the maximum possible rate.
             HardwareMonitor(int hipDeviceIndex);
@@ -68,19 +62,9 @@ namespace TensileLite
             HardwareMonitor(int hipDeviceIndex, clock::duration minPeriod);
 
             ~HardwareMonitor();
-            /*
-            void addTempMonitor(rsmi_temperature_type_t   sensorType = 0,
-                                rsmi_temperature_metric_t metric     = RSMI_TEMP_CURRENT);
-            void addClockMonitor(rsmi_clk_type_t clockType);
-            */
             void addTempMonitor();
             void addClockMonitor(ClockType clockType);
             void addFanSpeedMonitor(uint32_t sensorIndex = 0);
-            /*
-            double getAverageTemp(rsmi_temperature_type_t   sensorIndex = 0,
-                                  rsmi_temperature_metric_t metric      = RSMI_TEMP_CURRENT);
-            double getAverageClock(rsmi_clk_type_t clockType);
-            */
             double getAverageTemp();
             double getAverageClock(ClockType clockType);
             double getAverageFanSpeed(uint32_t sensorIndex = 0);
