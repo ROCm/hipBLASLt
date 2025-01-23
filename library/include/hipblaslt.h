@@ -197,7 +197,7 @@ typedef enum {
    */
   HIPBLASLT_ORDER_ROW = 1,
   /**
-   * Data is ordered in column-major ordered tiles of composite tiles with total 16 columns ands 32 rows.
+   * Data is ordered in column-major ordered tiles of composite tiles with total 16 columns and 32 rows.
    * A tile is composed of 4 inner tiles in column-major with total 8 rows and 16 columns.
    * Element offset within the tile is calculated as row%8+8*col+(row/8)*16*8.
    * Note that for this order, the number of columns(rows) of the tensor has to be multiple of 16(32) or
