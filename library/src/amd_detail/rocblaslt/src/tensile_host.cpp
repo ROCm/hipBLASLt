@@ -1557,6 +1557,8 @@ namespace
                     path += "/../Tensile/library";
                 else if(TestPath(path + "library"))
                     path += "/library";
+                else if(TestPath(path + "/../hipblaslt/library"))
+                    path += "/../hipblaslt/library";
                 else
                     path += "/hipblaslt/library";
 
