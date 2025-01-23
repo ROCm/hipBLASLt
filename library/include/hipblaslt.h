@@ -184,7 +184,9 @@ typedef enum {
   HIPBLASLT_MATMUL_PREF_MAX = 2
 } hipblasLtMatmulPreferenceAttributes_t;
 
-/** Enum for data ordering */
+/*! \ingroup types_module
+ *  \brief Enum for data ordering.
+ */
 typedef enum {
   /** Column-major
    *
