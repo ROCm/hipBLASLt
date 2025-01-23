@@ -170,7 +170,7 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
 
   forBenchmark = False
   enableTileSelection = False
-  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, outputPath, clientParametersPaths)
+  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, clientLibraryPath, clientParametersPaths)
 
   return returncode
 
