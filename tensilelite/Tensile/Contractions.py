@@ -517,15 +517,9 @@ class ProblemPredicate(Properties.Predicate):
 
         if state['ProblemType']['SwizzleTensorA']:
             rv += [cls('SwizzleTensorA', value=state['ProblemType']['SwizzleTensorA'])]
-            # TODO- (TT + DTVA) tail-loop is not working yet.
-            if state['ProblemType']['TransposeB']:
-                rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
 
-        # TODO- Will remove the size predicate once we have SWZ-B request
         if state['ProblemType']['SwizzleTensorB']:
             rv += [cls('SwizzleTensorB', value=state['ProblemType']['SwizzleTensorB'])]
-            rv += [cls("Free1SizeMultiple", index=0, value=state['MacroTile1'])]
-            rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
 
         return rv
 

@@ -780,6 +780,11 @@ try
     if(arg.d_type == HIPBLASLT_DATATYPE_INVALID)
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
 
+    if(arg.c_type != arg.d_type)
+        throw std::invalid_argument(
+            "Invalid: --c_type " + std::string(hip_datatype_to_string(arg.c_type))
+            + " is not equal to --d_type " + std::string(hip_datatype_to_string(arg.d_type)));
+
     bool is_f16 = arg.a_type == HIP_R_16F || arg.a_type == HIP_R_16BF;
     bool is_f32 = arg.a_type == HIP_R_32F;
     arg.compute_type

@@ -463,6 +463,33 @@ def staticMultiply(product, operand, multiplier, tmpSgprRes: Optional[RegisterPo
             module.add(VMulLOU32(dst=product, src0=sgpr(tmpSgpr), src1=operand, comment=comment))
     return module
 
+########################################
+# MultiplyAdd
+# product register, operand register, multiplier, accumulator
+########################################
+
+def staticMultiplyAdd(product, operand, multiplier, accumulator, tmpSgprRes: Optional[RegisterPoolResource], comment=""):
+    if comment == "":
+        comment = "%s = %s * %s" % (product, operand, multiplier)
+
+    module = Module("staticMultiply")
+    if multiplier == 0:
+        module.add(VMovB32(dst=product, src=hex(multiplier), comment=comment))
+    elif ((multiplier & (multiplier - 1)) == 0): # pow of 2
+        multiplier_log2 = log2(multiplier)
+        if multiplier_log2==0 and product == operand:
+            module.addCommentAlign(comment + " (multiplier is 1, do nothing)")
+        else:
+            module.add(VLShiftLeftAddU32(dst=product, shiftHex=hex(multiplier_log2), src0=operand, src1=accumulator, comment=comment))
+    else: # not pow of 2
+        if multiplier <= 64 and multiplier >= -16:
+            module.add(VMadU32U24(dst=product, src0=hex(multiplier), src1=operand, src2=accumulator, comment=comment))
+        else:
+            assert tmpSgprRes and tmpSgprRes.size >= 1
+            tmpSgpr = tmpSgprRes.idx
+            module.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(multiplier), comment=comment))
+            module.add(VMadU32U24(dst=product, src0=sgpr(tmpSgpr), src1=operand, src2=accumulator, comment=comment))
+    return module
 
 ########################################
 # Multiply scalar for 64bit

@@ -1,3 +1,28 @@
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (C) 2024 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 #pragma once
 #include <cassert>
 #include <functional>
@@ -118,6 +143,24 @@ namespace Tensor
                 return flattenSize() == newDesc.flattenSize();
             }
 
+            bool canShapePadTo(const Shape& shape) const
+            {
+                if(this->shape.size() != shape.size())
+                {
+                    return false;
+                }
+
+                for(size_t i = 0; i < this->shape.size(); ++i)
+                {
+                    if(this->shape.at(i) > shape.at(i))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
         private:
             Shape   shape;
             Strides strides;
@@ -196,7 +239,8 @@ namespace Tensor
                 return elementSize;
             }
 
-            size_t getNumBytes() const {
+            size_t getNumBytes() const
+            {
                 return getDesc().flattenSize() * getElementSize();
             }
 
@@ -280,6 +324,46 @@ namespace Tensor
             return permuted;
         }
 
+        template <typename T>
+        Tensor pad(const Tensor& src, const Shape& newShape, T padVal)
+        {
+            assert(src.getDesc().canShapePadTo(newShape) && "Invalid shape for padding");
+            Tensor  dst(newShape, sizeof(T));
+            Indices indices(src.getDesc().numDims(), 0);
+
+            iterate(dst.getDesc().getShape(), 0, indices, [&dst, &padVal](const Indices& indices) {
+                dst.setValue<T>(indices, padVal);
+            });
+
+            iterate(src.getDesc().getShape(), 0, indices, [&dst, &src](const Indices& indices) {
+                auto&& value = src.getValue<T>(indices);
+                dst.setValue<T>(indices, value);
+            });
+            return dst;
+        }
+
+        Tensor pad(const Tensor& tensor,
+                   const Shape&  newShape,
+                   const void*   padValPtr,
+                   size_t        padValSize)
+        {
+            switch(padValSize)
+            {
+            case 1:
+                return pad<uint8_t>(tensor, newShape, *static_cast<const uint8_t*>(padValPtr));
+            case 2:
+                return pad<uint16_t>(tensor, newShape, *static_cast<const uint16_t*>(padValPtr));
+            case 4:
+                return pad<uint32_t>(tensor, newShape, *static_cast<const uint32_t*>(padValPtr));
+            case 8:
+                return pad<uint64_t>(tensor, newShape, *static_cast<const uint64_t*>(padValPtr));
+            default:
+                assert(false && "Unsupported element size");
+            }
+
+            return Tensor({0}, tensor.getElementSize());
+        }
+
         Tensor permute(const Tensor& tensor, const Permutation& perm)
         {
             Shape  newShape = permute(tensor.getDesc().getShape(), perm);
@@ -291,7 +375,6 @@ namespace Tensor
                 break;
             case 2:
                 permute<uint16_t>(permuted, tensor, perm);
-                break;
                 break;
             case 4:
                 permute<uint32_t>(permuted, tensor, perm);
@@ -331,7 +414,9 @@ namespace Tensor
                 tensor.getDesc().getShape(),
                 0,
                 indices,
-                [&os, &tensor](const Indices& idx) { os << float(tensor.getValue<T>(idx)) << ", "; },
+                [&os, &tensor](const Indices& idx) {
+                    os << float(tensor.getValue<T>(idx)) << ", ";
+                },
                 [&os](size_t dim) { os << "["; },
                 [&os, &tensor](size_t dim) {
                     os << "], ";
