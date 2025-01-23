@@ -35,5 +35,4 @@ elif [ "$build_type" = "Debug" ]; then
     additional_options="-O0 -g"
 fi
 
-clang_path="${clang_path}"
 $clang_path -x hip "$sources" --offload-arch="${archs}" -c --offload-device-only -Xoffload-linker --build-id=$build_id_kind $additional_options -o "$dest"
