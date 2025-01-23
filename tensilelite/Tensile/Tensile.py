@@ -153,13 +153,13 @@ def addCommonArguments(argParser):
         help="set PrintLevel=2 and CMakeBuildType=Debug")
     argParser.add_argument("--short-names", dest="shortNames", action="store_true", \
         help="use serial kernel and solution names")
-    argParser.add_argument("--cxx-compiler", dest="CxxCompiler", choices=[ToolchainDefaults.CXX_COMPILER], \
+    argParser.add_argument("--cxx-compiler", dest="CxxCompiler", \
         action="store", default=ToolchainDefaults.CXX_COMPILER, help="select which C++/HIP compiler to use")
-    argParser.add_argument("--c-compiler", dest="CCompiler", choices=[ToolchainDefaults.C_COMPILER], \
+    argParser.add_argument("--c-compiler", dest="CCompiler", \
         action="store", default=ToolchainDefaults.C_COMPILER, help="select which C compiler to use")
-    argParser.add_argument("--assembler", dest="Assembler", choices=[ToolchainDefaults.ASSEMBLER], \
+    argParser.add_argument("--assembler", dest="Assembler", \
         action="store", default=ToolchainDefaults.ASSEMBLER, help="select which assembler to use")
-    argParser.add_argument("--offload-bundler", dest="OffloadBundler", choices=[ToolchainDefaults.OFFLOAD_BUNDLER], \
+    argParser.add_argument("--offload-bundler", dest="OffloadBundler", \
         action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER, help="select which offload bundler to use")
     argParser.add_argument("--logic-format", dest="LogicFormat", choices=["yaml", "json"], \
         action="store", default="yaml", help="select which logic format to use")

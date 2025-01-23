@@ -148,7 +148,7 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
                                   activationArgs=activationArgs,
                                   icacheFlushArgs=icacheFlushArgs,
                                   stepName=str(ProblemType(problemType)),
-                                  stepBaseDir=str(sourcePath),
+                                  stepBaseDir=str(clientLibraryPath),
                                   newLibrary=newLibrary,
                                   configBase="ClientParameters_%s"%str(ProblemType(problemType)),
                                   codeObjectFiles=coList,
@@ -309,7 +309,7 @@ fi
         runScriptFile.write("%s -d 0 --setfan 50\n" % globalParameters["ROCmSMIPath"])
   else:
     for configFile in configPaths:
-      runScriptFile.write("{} --config-file {} {} --best-solution 1\n".format(ClientExecutable.getClientExecutable(cxxCompiler, cCompiler), configFile, globalParameters["ClientArgs"]))
+      runScriptFile.write("{} --config-file {} {} --best-solution 1\n".format(ClientExecutable.getClientExecutable(cxxCompiler, cCompiler, buildDir), configFile, globalParameters["ClientArgs"]))
   if os.name != "nt":
     runScriptFile.write("exit $ERR\n")
   runScriptFile.close()
