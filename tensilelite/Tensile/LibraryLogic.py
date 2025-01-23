@@ -24,7 +24,7 @@
 
 from pathlib import Path
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
-  assignParameterWithDefault, startTime, ProgressBar, printWarning
+  assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath
 from .SolutionStructs import Solution
 from . import LibraryIO
 from . import SolutionSelectionLibrary
@@ -1452,6 +1452,8 @@ class LogicAnalyzer:
 
 def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str):
 
+  libraryLogicPath = ensurePath(libraryLogicPath)
+
   print2("# LibraryLogic config: %s" % config)
   print2("# DefaultAnalysisParameters: " % defaultAnalysisParameters)
 
@@ -1465,7 +1467,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
   print1(HR)
   currentTime = time.time()
   elapsedTime = currentTime - startTime
-  print1("# Analysing data in %s - %.3fs" % (globalParameters["BenchmarkDataPath"], elapsedTime) )
+  print1("# Analysing data in %s - %.3fs" % (benchmarkDataPath, elapsedTime) )
   for parameter in analysisParameters:
     print2("#   %s: %s" % (parameter, analysisParameters[parameter]))
   print1(HR)
