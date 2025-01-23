@@ -30,7 +30,13 @@ function(CompileSourceKernel source archs buildIdKind outputFolder)
     add_custom_target(MatrixTransformKernels ALL
                       DEPENDS ${outputFolder}/hipblasltTransform.hsaco
                       VERBATIM)
-    add_custom_command(OUTPUT ${outputFolder}/hipblasltTransform.hsaco
-                       COMMAND bash  ${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/compile_code_object.sh ${source} ${archs} ${CMAKE_BUILD_TYPE} ${buildIdKind} ${outputFolder}/hipblasltTransform.hsaco
-                       COMMENT "Compiling source kernels")
+    add_custom_command(
+        OUTPUT ${outputFolder}/hipblasltTransform.hsaco
+        COMMAND 
+            # See script for environment variables it uses.
+            ${CMAKE_COMMAND} -E env
+                "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+                "Tensile_TOOLCHAIN_FLAGS=${Tensile_TOOLCHAIN_FLAGS}"
+                bash ${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/compile_code_object.sh ${source} ${archs} ${CMAKE_BUILD_TYPE} ${buildIdKind} ${outputFolder}/hipblasltTransform.hsaco
+        COMMENT "Compiling source kernels")
 endfunction()

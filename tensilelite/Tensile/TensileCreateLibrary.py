@@ -241,6 +241,7 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
     if supportedCompiler(CxxCompiler):
       archs, cmdlineArchs = splitArchs()
 
+      toolchain_flags = shlex.split(os.environ.get('Tensile_TOOLCHAIN_FLAGS', ''))
       archFlags = ['--offload-arch=' + arch for arch in cmdlineArchs]
 
       # needs to be fixed when Maneesh's change is made available
@@ -261,9 +262,9 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
 
       if os.name == "nt":
         hipFlags += ['-fms-extensions', '-fms-compatibility', '-fPIC', '-Wno-deprecated-declarations']
-        compileArgs = launcher + [which(CxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
+        compileArgs = launcher + [which(CxxCompiler)] + toolchain_flags + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
       else:
-        compileArgs = launcher + [which(CxxCompiler)] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
+        compileArgs = launcher + [which(CxxCompiler)] + toolchain_flags + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
 
       if globalParameters["PrintCodeCommands"]:
         print(CxxCompiler + ':' + ' '.join(compileArgs))

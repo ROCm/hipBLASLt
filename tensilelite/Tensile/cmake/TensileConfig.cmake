@@ -72,6 +72,48 @@ endif()
 add_subdirectory("${Tensile_ROOT}/Source" "Tensile")
 include("${Tensile_ROOT}/Source/TensileCreateLibrary.cmake")
 
+# Gets a command line fragment that can be prepended to a command in order to
+# preserve toolchain options and environment variables into a child process.
+function(TensileGetEnvCommand out_var)
+  # Tensile uses a lot of environment variables for invoking the toolchain.
+  # Since any variables we have set here are configure-time, we have to arrange
+  # to include them in any build-time commands.
+  set(CommandEnv ${CMAKE_COMMAND} -E env)
+  list(APPEND CommandEnv "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
+  list(APPEND CommandEnv "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+  if(CMAKE_CXX_COMPILER_LAUNCHER)
+    list(APPEND "Tensile_CMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}")
+  endif()
+
+  # For environment variables that Tensile uses, accept them either as a CMake
+  # cache option (for better ergonomics) or from the configure time environment.
+  # Note that cache options spell "Tensile" in mixed case for consistency whereas
+  # environment vars of a certain age are all caps. New environment variables
+  # try to be consistent.
+  if(NOT Tensile_ROCM_OFFLOAD_BUNDLER_PATH)
+    set(Tensile_ROCM_OFFLOAD_BUNDLER_PATH $ENV{TENSILE_ROCM_OFFLOAD_BUNDLER_PATH})
+  endif()
+  if(Tensile_ROCM_OFFLOAD_BUNDLER_PATH)
+    list(APPEND CommandEnv "TENSILE_ROCM_OFFLOAD_BUNDLER_PATH=${Tensile_ROCM_OFFLOAD_BUNDLER_PATH}")
+  endif()
+
+  if(NOT Tensile_ROCM_ASSEMBLER_PATH)
+    set(Tensile_ROCM_ASSEMBLER_PATH $ENV{TENSILE_ROCM_ASSEMBLER_PATH})
+  endif()
+  if(Tensile_ROCM_ASSEMBLER_PATH)
+    list(APPEND CommandEnv "TENSILE_ROCM_ASSEMBLER_PATH=${Tensile_ROCM_ASSEMBLER_PATH}")
+  endif()
+
+  if(NOT Tensile_TOOLCHAIN_FLAGS)
+    set(Tensile_TOOLCHAIN_FLAGS $ENV{Tensile_TOOLCHAIN_FLAGS})
+  endif()
+  if(Tensile_TOOLCHAIN_FLAGS)
+    list(APPEND CommandEnv "Tensile_TOOLCHAIN_FLAGS=${Tensile_TOOLCHAIN_FLAGS}")
+  endif()
+  list(APPEND CommandEnv "--")
+  set("${out_var}" "${CommandEnv}" PARENT_SCOPE)
+endfunction()
+
 # Output target: ${Tensile_VAR_PREFIX}_LIBRARY_TARGET. Ensures that the libs get built in Tensile_OUTPUT_PATH/library.
 function(TensileCreateLibraryFiles
          Tensile_LOGIC_PATH
@@ -210,7 +252,8 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--build-id=${Tensile_BUILD_ID}")
   endif()
 
-  set(CommandLine ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
+  TensileGetEnvCommand(CommandEnv)
+  set(CommandLine ${CommandEnv} ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
   message(STATUS "Tensile_CREATE_COMMAND: ${CommandLine}")
 
   if(Tensile_EMBED_LIBRARY)
@@ -272,6 +315,7 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr)
   set(ext_op_library_path ${build_tmp_dir}/hipblasltExtOpLibrary.dat)
   file(REMOVE ${ext_op_library_path})
 
+  TensileGetEnvCommand(CommandEnv)
   add_custom_command(
     OUTPUT ${OutputFolder}/hipblasltExtOpLibrary.dat
     WORKING_DIRECTORY "${cwd}"
@@ -279,7 +323,7 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr)
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${OutputFolder}
-    COMMAND bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}" "${Tensile_BUILD_ID}"
+    COMMAND ${CommandEnv} bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}" "${Tensile_BUILD_ID}"
     COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${build_tmp_dir}/extop_*.co ${OutputFolder}
   )
 
