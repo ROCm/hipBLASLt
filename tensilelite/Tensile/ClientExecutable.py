@@ -59,10 +59,6 @@ class CMakeEnvironment:
 def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cCompiler: str):
     sourcedir = globalParameters["SourcePath"]
     
-    builddirOld = os.path.join(globalParameters["OutputPath"], globalParameters["ClientBuildPath"])
-    assert builddir is not None, "builddir must be provided"
-    assert builddirOld == str(builddir), f"builddir must be {builddirOld}, not {builddir}"
-
     builddir = Common.ensurePath(builddir)
 
     options = {'CMAKE_BUILD_TYPE': globalParameters["CMakeBuildType"],
