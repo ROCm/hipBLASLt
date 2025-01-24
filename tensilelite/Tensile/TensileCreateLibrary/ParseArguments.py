@@ -71,8 +71,6 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
                             default=-1, help="Number of parallel jobs to launch.")
     argParser.add_argument("--verbose", "-v", dest="PrintLevel", type=int,
                             default=1, help="Set printout verbosity level.")
-    argParser.add_argument("--print-timing", dest="PrintTiming",
-                            default=False, action="store_true", help="Print duration of each stage.")
     argParser.add_argument("--no-lazy-library-loading", dest="LazyLibraryLoading", action="store_false",
                            default=True, help="Disable building for lazy library loading.")
     argParser.add_argument("--enable-marker", dest="EnableMarker", action="store_true",
@@ -108,7 +106,6 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
       arguments["AMDGPUArchPath"] = False
     arguments["CpuThreads"] = args.CpuThreads
     arguments["PrintLevel"] = args.PrintLevel
-    arguments["PrintTiming"] = args.PrintTiming
     arguments["AsmDebug"] = args.AsmDebug
     arguments["BuildIdKind"] = args.BuildIdKind
     arguments["KeepBuildTmp"] = args.KeepBuildTmp

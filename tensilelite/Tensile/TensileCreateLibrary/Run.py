@@ -45,21 +45,10 @@ from Tensile import LibraryIO
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.SolutionStructs import Solution
 from Tensile.CustomYamlLoader import load_logic_gfx_arch
-from Tensile.Utilities.Profile import profile
+from Tensile.Utilities.Decorators.Profile import profile
+from Tensile.Utilities.Decorators.Timing import timing
 
 from .ParseArguments import parseArguments
-
-def timing(func):
-  def wrapper(*args, **kwargs):
-    start = timer()
-    res = func(*args, **kwargs)
-    end = timer()
-
-    if globalParameters["PrintTiming"]:
-      print(f'{func.__name__} took {end - start} seconds')
-
-    return res
-  return wrapper
 
 
 class KernelCodeGenResult(NamedTuple):

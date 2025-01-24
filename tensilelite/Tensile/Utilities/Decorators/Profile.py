@@ -24,11 +24,12 @@
 
 import cProfile
 import pstats
-import os
 
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Callable, Tuple
+
+from .Shared import envVariableIsSet
 
 PROFILE_ENV_VAR = "TENSILE_PROFILE"
 
@@ -52,15 +53,6 @@ def profile(func: Callable) -> Callable:
         return output
     return wrapper
 
-def envVariableIsSet(varName: str) -> bool:
-    """Checks if the provided environment variable is set to "ON", "TRUE", or "1"
-    Args:
-        varName: Environment variable name.
-    Returns:
-        True if the environment variable is set, otherwise False.
-    """
-    value = os.environ.get(varName, "").upper()
-    return True if value in ["ON", "TRUE", "1"] else False
 
 def initProfileArtifacts(funcName: str) -> Tuple[Path, str]:
     """Initializes filenames and paths for profiling artifacts based on the current datetime
