@@ -176,10 +176,10 @@ inline rocblaslt_status validateMatmulArgs(int64_t                       m,
          || (type_a == HIP_R_8I && type_b == HIP_R_8I && type_c == HIP_R_8I && type_d == HIP_R_8I))
        && compute_type == rocblaslt_compute_i32)
         status = rocblaslt_status_not_implemented;
-    if(string_to_hip_datatype(hip_datatype_to_string(type_a)) == HIPBLASLT_DATATYPE_INVALID
-       || string_to_hip_datatype(hip_datatype_to_string(type_b)) == HIPBLASLT_DATATYPE_INVALID
-       || string_to_hip_datatype(hip_datatype_to_string(type_c)) == HIPBLASLT_DATATYPE_INVALID
-       || string_to_hip_datatype(hip_datatype_to_string(type_d)) == HIPBLASLT_DATATYPE_INVALID
+    if(!strcmp(hip_datatype_to_string(type_a), hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
+       || !strcmp(hip_datatype_to_string(type_b), hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
+       || !strcmp(hip_datatype_to_string(type_c), hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
+       || !strcmp(hip_datatype_to_string(type_d), hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
        || !strcmp(rocblaslt_compute_type_string(compute_type),
                   rocblaslt_compute_type_string(ROCBLASLT_COMPUTE_TYPE_INVALID)))
         status = rocblaslt_status_not_implemented;
