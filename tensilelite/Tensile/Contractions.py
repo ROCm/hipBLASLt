@@ -655,10 +655,10 @@ class Solution:
 
     @classmethod
     def FromSolutionStruct(cls, solution, cxxCompiler: str):
-        return cls.FromOriginalState(solution._state, cxxCompiler)
+        return cls.FromOriginalState(solution._state, cxxCompiler, solution.srcName)
 
     @classmethod
-    def FromOriginalState(cls, d, cxxCompiler, deviceInfo=None):
+    def FromOriginalState(cls, d, cxxCompiler, srcName = "", deviceInfo=None):
         rv = cls()
 
 
@@ -705,7 +705,8 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d, cxxCompiler)
+        rv.originalSolution = OriginalSolution(d, cxxCompiler, srcName)
+        rv.srcName = srcName
 
         return rv
 
@@ -723,6 +724,7 @@ class Solution:
         self.libraryLogicIndex = {}
         self.index = None
         self.ideals = {}
+        self.srcName = ""
 
         for key, value in kwargs:
             if key not in Solution.StateKeys and key not in Solution.HiddenKeys:
