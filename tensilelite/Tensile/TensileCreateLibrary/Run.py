@@ -471,7 +471,7 @@ def run():
         LibraryIO.write(filename, Utils.state(lib), arguments["LibraryFormat"])
 
   if not globalParameters["KeepBuildTmp"]:
-    buildTmp = Path(arguments["outputPath"]).parent / "library" / "build_tmp"
+    buildTmp = Path(arguments["OutputPath"]).parent / "library" / "build_tmp"
     if buildTmp.exists() and buildTmp.is_dir():
       shutil.rmtree(buildTmp)
     buildTmp = Path(arguments["OutputPath"]) / "build_tmp"
