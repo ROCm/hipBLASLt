@@ -258,39 +258,62 @@ def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cC
       configPaths.append(os.path.join(globalParameters["WorkingPath"], "../source/ClientParameters_Granularity.ini"))
 
   # create run.bat or run.sh which builds and runs
-  clientExe = ClientExecutable.getClientExecutable()
-  runScriptName = os.path.join(path, "run.%s" % ("bat" if os.name == "nt" else "sh") )
+  runScriptName = os.path.join(path, \
+    "run.%s" % ("bat" if os.name == "nt" else "sh") )
   runScriptFile = open(runScriptName, "w")
   if os.name != "nt":
     runScriptFile.write("#!/bin/bash\n\n")
 
-    option = "" if forBenchmark else "--best-solution 1"
-    if (os.name == "nt"):
-      runScriptFile.write("@echo off\n")
-      runScriptFile.write("set err=0\n")
-      for configFile in configPaths:
-        runScriptFile.write("{} --config-file {} {} {}\n".format(clientExe, configFile, globalParameters["ClientArgs"], option))
-        runScriptFile.write("IF %errorlevel% NEQ 0 set err=%errorlevel%\n")
-      runScriptFile.write("exit %err%\n")
+  runScriptFile.write("set -ex\n")
+
+
+  if forBenchmark:
+    if os.name == "nt":
+      runScriptFile.write(os.path.join(globalParameters["CMakeBuildType"], \
+          "client.exe") )
     else:
-      runScriptFile.write("set -ex\n")
       if globalParameters["PinClocks"] and globalParameters["ROCmSMIPath"]:
         runScriptFile.write("%s -d 0 --setfan 255 --setsclk 7\n" % globalParameters["ROCmSMIPath"])
         runScriptFile.write("sleep 1\n")
         runScriptFile.write("%s -d 0 -a\n" % globalParameters["ROCmSMIPath"])
 
-      runScriptFile.write("ERR=0\n")
-    for configFile in configPaths:
-      runScriptFile.write("{} --config-file {} {} {}\n".format(clientExe, configFile, globalParameters["ClientArgs"], option))
-      runScriptFile.write( "if [[ $? -ne 0 ]]\n")
-      runScriptFile.write( "then\n")
-      runScriptFile.write(f"    echo error in {configFile}\n")
-      runScriptFile.write( "    ERR=$?\n")
-      runScriptFile.write( "fi\n")
+      runScriptFile.write("set +e\n")
 
-    if globalParameters["PinClocks"] and globalParameters["ROCmSMIPath"]:
-      runScriptFile.write("%s -d 0 --resetclocks\n" % globalParameters["ROCmSMIPath"])
-      runScriptFile.write("%s -d 0 --setfan 50\n" % globalParameters["ROCmSMIPath"])
+
+    if globalParameters["DataInitTypeA"] == -1 :
+        globalParameters["DataInitTypeA"] = globalParameters["DataInitTypeAB"]
+    if globalParameters["DataInitTypeB"] == -1 :
+        globalParameters["DataInitTypeB"] = globalParameters["DataInitTypeAB"]
+
+    runScriptFile.write("ERR1=0\n")
+
+    clientExe = ClientExecutable.getClientExecutable(cxxCompiler, cCompiler)
+    for configFile in configPaths:
+      runScriptFile.write("{} --config-file {} {}\n".format(clientExe, configFile, globalParameters["ClientArgs"]))
+    runScriptFile.write("ERR2=$?\n\n")
+
+    runScriptFile.write("""
+ERR=0
+if [[ $ERR1 -ne 0 ]]
+then
+    echo one
+    ERR=$ERR1
+fi
+if [[ $ERR2 -ne 0 ]]
+then
+    echo two
+    ERR=$ERR2
+fi
+""")
+
+    if os.name != "nt":
+      if globalParameters["PinClocks"] and globalParameters["ROCmSMIPath"]:
+        runScriptFile.write("%s -d 0 --resetclocks\n" % globalParameters["ROCmSMIPath"])
+        runScriptFile.write("%s -d 0 --setfan 50\n" % globalParameters["ROCmSMIPath"])
+  else:
+    for configFile in configPaths:
+      runScriptFile.write("{} --config-file {} {} --best-solution 1\n".format(ClientExecutable.getClientExecutable(cxxCompiler, cCompiler), configFile, globalParameters["ClientArgs"]))
+  if os.name != "nt":
     runScriptFile.write("exit $ERR\n")
   runScriptFile.close()
   if os.name != "nt":

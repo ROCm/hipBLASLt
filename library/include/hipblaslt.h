@@ -45,7 +45,9 @@
 #include <regex>
 #include <vector>
 
+#ifdef _WIN32
 #include <hip/hip_version.h>
+#endif
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_complex.h>
 #include <hip/hip_runtime.h>
@@ -67,6 +69,7 @@
 #include "hipblaslt-types.h"
 #endif
 
+#ifdef _WIN32
 #if (HIP_VERSION_MAJOR < 6)
 typedef hipblasDatatype_t hipblasComputeType_t;
 #define HIPBLAS_COMPUTE_64F HIPBLAS_R_64F
@@ -80,6 +83,7 @@ typedef hipblasDatatype_t hipblasComputeType_t;
 #define HIPBLASLT_DATATYPE_INVALID static_cast<hipDataType>(31)
 #else
 #define HIPBLASLT_DATATYPE_INVALID static_cast<hipDataType>(255)
+#endif
 #endif
 
 /* Opaque structures holding information */

@@ -93,7 +93,7 @@ public:
     {
         return std::uniform_int_distribution<T>{}(t_hipblaslt_rng);
     }
-
+#ifdef _WIN32
     // // Random unsigned char
     explicit operator unsigned char()
     {
@@ -101,13 +101,14 @@ public:
     }
 
     // Random signed char
-    explicit operator signed char()
+    explicit operator char()
     {
         return static_cast<signed char>(std::uniform_int_distribution<int>{}(t_hipblaslt_rng));
     }
+#endif
 
     // Random signed char
-    explicit operator char()
+    explicit operator signed char()
     {
         return static_cast<signed char>(std::uniform_int_distribution<int>{}(t_hipblaslt_rng));
     }

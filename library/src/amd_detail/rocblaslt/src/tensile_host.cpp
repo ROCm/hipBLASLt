@@ -80,6 +80,7 @@
 
 #define INTERNAL_HIPHOSTMEM_SIZE 32768
 
+#ifdef _WIN32
 #if __has_include(<filesystem>)
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -88,6 +89,7 @@ namespace fs = std::filesystem;
 namespace fs = std::experimental::filesystem;
 #else
 #error no filesystem found
+#endif
 #endif
 
 namespace
