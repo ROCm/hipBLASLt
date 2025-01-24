@@ -55,7 +55,7 @@ def timing(func):
     res = func(*args, **kwargs)
     end = timer()
 
-    if globalParameters['PrintTiming']:
+    if globalParameters["PrintTiming"]:
       print(f'{func.__name__} took {end - start} seconds')
 
     return res
