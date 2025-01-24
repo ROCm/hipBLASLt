@@ -294,6 +294,7 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
             # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
             solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
         solutionObject = Solution(solutionState, cxxCompiler)
+        solutionObject["LogicFileName"] = srcFile
         solutionProblemType = solutionObject["ProblemType"]
         if problemType != solutionProblemType:
             # find the mismatched items in ProblemType

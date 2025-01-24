@@ -63,6 +63,26 @@ def timing(func):
   return wrapper
 
 
+def copyStaticFiles(outputPath=None):
+  if outputPath is None:
+    outputPath = globalParameters["WorkingPath"]
+  libraryStaticFiles = [
+    "TensileTypes.h",
+    "tensile_bfloat16.h",
+    "tensile_float8_bfloat8.h",
+    "hip_f8_impl.h",
+    "KernelHeader.h",
+    "ReductionTemplate.h",
+    "memory_gfx.h" ]
+
+  for fileName in libraryStaticFiles:
+    # copy file
+    shutil.copy( os.path.join(globalParameters["SourcePath"], fileName), \
+        outputPath )
+
+  return libraryStaticFiles
+
+
 class KernelCodeGenResult(NamedTuple):
     err: int
     src: str
@@ -129,14 +149,16 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
 def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
     if result.err:
       printExit(f"Failed to build kernel {result.name} because it has error code {result.err}")
-    path = Path(asmPath) / f"{result.name}.s"
+    path = Path(asmPath) / str(os.getpid()) 
+    path.mkdir(exist_ok=True)
+    filepath = path / f"{result.name}.s"
     isa =  result.isa
     wfsize = result.wavefrontSize
-    with open(path, "w", encoding="utf-8") as f:
+    with open(filepath, "w", encoding="utf-8") as f:
       f.write(result.src)
       del result # result.src is very large so let gc know to clean up asap
  
-    return path, isa, wfsize
+    return filepath, isa, wfsize
 
 
 def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H):
@@ -162,6 +184,13 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
                 print("*** warning: invalid kernel#%u" % kernelName)
             HeaderText += ko.getHeaderFileString()
         kernelHeaderFile.write(HeaderText)
+
+
+def getKernelWriterAssembly(solutions, assembler):
+  kernelSerialNaming   = Solution.getSerialNaming(solutions)
+  kernelMinNaming      = Solution.getMinNaming(solutions)
+  kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, assembler)
+  return kernelWriterAssembly
 
 
 def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
@@ -209,135 +238,125 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
 
   return codeObjectFiles, numKernels
 
-
+@timing
 def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, solutions, assembler, compress=True):
-
   pushWorkingPath('build_tmp')
   pushWorkingPath(os.path.basename(outputPath).upper())
   asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
 
-  kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
-  kernelWriterAssembly, _, _ = getSolutionAndKernelWriters(solutions, kernels, assembler)
+  asmKernels = [k.getKernels()[0] for k in solutions if k['KernelLanguage'] == 'Assembly']
+  #kernelHelperObjs = generateKernelHelperObjects(asmKernels)
+  kernelWriterAssembly = getKernelWriterAssembly(asmKernels, assembler)
 
-  asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
+  uniqueAsmKernels = [k for k in asmKernels if "BuildKernel" in k]
+  unique = set()
+  for k in uniqueAsmKernels:
+     name = kernelWriterAssembly.getKernelFileBase(k)
+     if name not in unique:
+        unique.add(name)
+     else:
+        print1(f"{k['SolutionIndex']} {k['LogicFileName']}")
 
-  visited = set()
-  duplicates = 0
-  for k in asmKernels:
-    base = kernelWriterAssembly.getKernelFileBase(k)
-    k.duplicate = True if base in visited else False
-    duplicates += k.duplicate
-    print2(f"Duplicate: {base}")
-    visited.add(base)
-  print1(f"Number of duplicates: {duplicates}")
-
-  uniqueAsmKernels = [k for k in asmKernels if not k.duplicate]
-  numAsmKernels = len(asmKernels)
-  numKernels = len(kernels)
-  assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
-  def assemble(ret):
-    p, isa, wavefrontsize = ret
+  pksResults = [processKernelSource(kernelWriterAssembly, TensileInstructions(), k) for k in uniqueAsmKernels]
+  for p, isa, wavefrontsize in [writeAssembly(asmPath, k) for k in pksResults]:
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
-  unaryProcessKernelSource = functools.partial(processKernelSource, kernelWriterAssembly, TensileInstructions())
-  unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
-  compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
-  ret = ParallelMap2(compose(assemble, unaryWriteAssembly, unaryProcessKernelSource), uniqueAsmKernels, "Generating assembly kernels", multiArg=False)
-  buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
+  buildAssemblyCodeObjectFiles(asmToolchain, uniqueAsmKernels, kernelWriterAssembly, outputPath, compress)
 
-  writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
-  srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
+  #writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
+  #srcKernelFile = Path(outputPath) / "Kernels.cpp"
+  #buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
 
   popWorkingPath() # build_tmp
   popWorkingPath() # workingDir
 
-  return numKernels
+  return len(uniqueAsmKernels), len(asmKernels)
+
+
+def generateKernelHelperObjects(solutions):
+  return list(dict.fromkeys([solution.getHelperKernelObjects() for solution in solutions]))
 
 
 @timing
-def getSolutionAndKernelWriters(solutions, kernels, assembler):
-
-  kernelSerialNaming   = Solution.getSerialNaming(kernels)
-  solutionMinNaming    = Solution.getMinNaming(solutions)
-  kernelMinNaming      = Solution.getMinNaming(kernels)
-  kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, assembler)
-
-  return (kernelWriterAssembly, kernelMinNaming, solutionMinNaming)
-
-
-@timing
-def copyStaticFiles(outputPath=None):
-  if outputPath is None:
-    outputPath = globalParameters["WorkingPath"]
-  libraryStaticFiles = [
-    "TensileTypes.h",
-    "tensile_bfloat16.h",
-    "tensile_float8_bfloat8.h",
-    "hip_f8_impl.h",
-    "KernelHeader.h",
-    "ReductionTemplate.h",
-    "memory_gfx.h" ]
-
-  for fileName in libraryStaticFiles:
-    # copy file
-    shutil.copy( os.path.join(globalParameters["SourcePath"], fileName), \
-        outputPath )
-
-  return libraryStaticFiles
+def generateSolutions(args, cxxCompiler, logicDir):
+    if ";" in args["Architecture"]:
+        archs = args["Architecture"].split(";") # user arg list format
+    else:
+        archs = args["Architecture"].split("_") # workaround for cmake list in list issue
+    solutions = []
+    files = glob.glob(logicDir + "/*.yaml")
+    for f in files:
+        solutions.extend(LibraryIO.parseLibraryLogicFile(f, cxxCompiler, archs).solutions)
+    numSoln = len(solutions)
+    #solutions = list(dict.fromkeys(solutions).keys())
+    return solutions, numSoln, (numSoln-len(solutions))
 
 
-@timing
-def generateKernelObjectsFromSolutions(solutions):
-  kernels = []
-  kernelHelperObjs = []
-  kernelNames = set()
-  kernelHelperNames = set()
-
-  for solution in solutions:
-    solutionKernels = solution.getKernels()
-    for kernel in solutionKernels:
-        kName = Solution.getKeyNoInternalArgs(kernel)
-        if kName not in kernelNames:
-            kernels.append(kernel)
-            kernelNames.add(kName)
-    solutionHelperKernels = solution.getHelperKernelObjects()
-    kernelHelperObjs += solutionHelperKernels
-    for ko in solutionHelperKernels:
-      kernelHelperNames.add(ko.getKernelName())
-
-  # remove duplicates while preserving order
-  kernelHelperObjs = list(dict.fromkeys(kernelHelperObjs))
-  return (kernels, kernelHelperObjs, kernelHelperNames)
+#def generateMatchTable(masterSolutionLibraries):
+#    def libraryIter(lib: MasterSolutionLibrary):
+#        if len(lib.solutions):
+#            for i, s in enumerate(lib.solutions.items()):
+#                yield (i, *s)
+#        else:
+#            for _, lazyLib in lib.lazyLibraries.items():
+#                yield from libraryIter(lazyLib)
+#
+#    matchTable = {}
+#    for library in masterSolutionLibraries:
+#      # Match yaml file solutions to solution index
+#      for localIdx, _, s in libraryIter(library):
+#        matchTable[s.index] = [srcFile, localIdx]
+#      LibraryIO.write("MatchTable", matchTable)
 
 
-@timing
-def generateSolutions(args, cxxCompiler, logicFile):
-      if ";" in args["Architecture"]:
-          archs = args["Architecture"].split(";") # user arg list format
-      else:
-          archs = args["Architecture"].split("_") # workaround for cmake list in list issue
-      solutions = LibraryIO.parseLibraryLogicFile(logicFile, cxxCompiler, archs).solutions
-      numSoln = len(solutions)
-      solutions = dict.fromkeys(solutions).keys()
-      print1(f"Number of duplicate solutions: {numSoln - len(solutions)}")
-      return solutions
-
-
-def generateMatchTable(masterSolutionLibraries):
-    def libraryIter(lib: MasterSolutionLibrary):
-        if len(lib.solutions):
-            for i, s in enumerate(lib.solutions.items()):
-                yield (i, *s)
+def getArchitectures(arguments):
+    if ";" in arguments["Architecture"]:
+        archs = arguments["Architecture"].split(";")
+    else:
+        archs = arguments["Architecture"].split("_")
+      
+    logicArchs = set()
+    for arch in archs:
+        if arch in architectureMap:
+            logicArchs.add(architectureMap[arch])
         else:
-            for _, lazyLib in lib.lazyLibraries.items():
-                yield from libraryIter(lazyLib)
+            printExit("Architecture %s not supported" % arch)
+    return archs, logicArchs
 
-    matchTable = {}
-    for library in masterSolutionLibraries:
-      # Match yaml file solutions to solution index
-      for localIdx, _, s in libraryIter(library):
-        matchTable[s.index] = [srcFile, localIdx]
-      LibraryIO.write("MatchTable", matchTable)
+
+def getLogicFileList(arguments):
+    archs, _ = getArchitectures(arguments)
+    
+    def archMatch(arch: str, archs: List[str]):
+        return (arch in archs) or any(a.startswith(arch) for a in archs)
+    def validLogicFile(p: Path):
+        return p.suffix == ".yaml" and ("all" in archs or archMatch(load_logic_gfx_arch(p), archs))
+  
+    if not os.path.exists(arguments["LogicPath"]):
+        printExit(f"LogicPath {arguments['LogicPath']} doesn't exist")
+
+    globPattern = os.path.join(arguments["LogicPath"], f"**/{arguments['LogicFilter']}.yaml")
+    print1(f"# LogicFilter:       {globPattern}")
+    logicFiles = (os.path.join(arguments["LogicPath"], file) for file in glob.iglob(globPattern, recursive=True))
+    print1(f"# Experimental:      {arguments['Experimental']}")
+
+    if not arguments["Experimental"]:
+        logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
+    
+    logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
+    
+    print2(f"# LibraryLogicFiles: {len(logicFiles)}")
+    for logicFile in logicFiles:
+        print2("#   %s" % logicFile)
+
+    return list(set(str(Path(l).parent) for l in logicFiles))
+
+
+@profile
+def build(arguments, cxxCompiler, assembler, asmToolchain, srcToolchain, logicFiles):
+    solutions, totalSoln, dupSoln = generateSolutions(arguments, cxxCompiler, logicFiles)
+    numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, solutions, 
+                                                      assembler, compress=arguments["UseCompression"])
+    return numKernels, totalSoln, dupSoln
 
 
 ################################################################################
@@ -374,55 +393,45 @@ def run():
   asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], arguments["CodeObjectVersion"])
   srcToolchain = SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
-  if not os.path.exists(arguments["LogicPath"]):
-    printExit(f"LogicPath {arguments['LogicPath']} doesn't exist")
-
-  if ";" in arguments["Architecture"]:
-    archs = arguments["Architecture"].split(";")
-  else:
-    archs = arguments["Architecture"].split("_")
-  logicArchs = set()
-  for arch in archs:
-    if arch in architectureMap:
-      logicArchs.add(architectureMap[arch])
-    else:
-      printExit("Architecture %s not supported" % arch)
-
-  logicExtFormat = ".yaml"
-  if arguments["LogicFormat"] == "yaml":
-    pass
-  elif arguments["LogicFormat"] == "json":
-    logicExtFormat = ".json"
-  else:
-    printExit("Unrecognized LogicFormat", arguments["LogicFormat"])
-
-  def archMatch(arch: str, archs: List[str]):
-    return (arch in archs) or any(a.startswith(arch) for a in archs)
-
-  def validLogicFile(p: Path):
-    return p.suffix == logicExtFormat and ("all" in archs or archMatch(load_logic_gfx_arch(p), archs))
-
-  globPattern = os.path.join(arguments["LogicPath"], f"**/{arguments['LogicFilter']}{logicExtFormat}")
-  print1(f"# LogicFilter:       {globPattern}")
-  logicFiles = (os.path.join(arguments["LogicPath"], file) for file in glob.iglob(globPattern, recursive=True))
-  logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
-
-  print1(f"# Experimental:      {arguments['Experimental']}")
-  if not arguments["Experimental"]:
-    logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
-
-  print2(f"# LibraryLogicFiles: {len(logicFiles)}")
-  for logicFile in logicFiles:
-    print2("#   %s" % logicFile)
-  
+  logicFiles = getLogicFileList(arguments)
   copyStaticFiles(arguments["OutputPath"])
+  unaryBuild = functools.partial(build, arguments, cxxCompiler, assembler, asmToolchain, srcToolchain)
+  result  = ParallelMap2(unaryBuild, logicFiles, "Building Library", multiArg=False, return_as="generator_unordered")
+  totalKernels = 0
+  totalUnique = 0
+  totDup = 0
+  totSoln = 0
+  dupKernels = 0
 
-  unaryGenerateSolutions = functools.partial(generateSolutions, arguments, cxxCompiler)
-  solutions = ParallelMap2(unaryGenerateSolutions, logicFiles, "Reading logic files and generating solutions", multiArg=False)
-  solutions = (s for solutionList in solutions for s in solutionList)
+  for n, total, dup in result:
+      totalKernels += n[1]
+      totalUnique += n[0]
+      totDup += dup
+      totSoln += total
 
-  numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, solutions, 
-                                           assembler, compress=arguments["UseCompression"])
+  print1("# Tensile Library Writer DONE")
+  print1(HR)
+  print1("")
+
+  stop = timer()
+
+  print1(f"Total time (s): {(stop-start):3.2f}")
+  print1(f"Total kernels processed: {totalUnique}")
+  print1(f"Total kernels: {totalKernels}")  
+  print1(f"Kernels processed per second: {(totalKernels/(stop-start)):3.2f}")
+  print1(f"Total solutions processed: {totSoln - totDup}")
+  print1(f"Duplicate solutions removed: {totDup}")
+  print1(f"Duplicate kernels removed: {dupKernels}")
+
+
+
+
+
+
+
+
+
+
 
   # archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
   #            if globalParameters["AsmCaps"][arch]["SupportedISA"]]
@@ -440,13 +449,3 @@ def run():
   #       filename = os.path.join(newLibraryDir, name)
   #       lib.applyNaming(kernelMinNaming)
   #       LibraryIO.write(filename, Utils.state(lib), arguments["LibraryFormat"])
-
-  print1("# Tensile Library Writer DONE")
-  print1(HR)
-  print1("")
-
-  stop = timer()
-
-  print1(f"Total time (s): {(stop-start):3.2f}")
-  print1(f"Total kernels processed: {numKernels}")
-  print1(f"Kernels processed per second: {(numKernels/(stop-start)):3.2f}")
