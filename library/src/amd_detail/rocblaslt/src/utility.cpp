@@ -88,6 +88,15 @@ const char* hipDataType_to_string(hipDataType type)
     }
 }
 
+bool rocblaslt_is_complex_datatype(hipDataType type)
+{
+    return type == HIP_C_32F  || type == HIP_C_64F || type == HIP_C_16F ||
+           type == HIP_C_8I   || type == HIP_C_8U  || type == HIP_C_32I ||
+           type == HIP_C_32U || type == HIP_C_16BF || type == HIP_C_4I  ||
+           type == HIP_C_4U  || type == HIP_C_16I || type == HIP_C_16U  ||
+           type == HIP_C_64I || type == HIP_C_64U;
+}
+
 const char* hipDataType_to_bench_string(hipDataType type)
 {
     switch(type)
@@ -203,6 +212,10 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_A_SCALE_POINTER_VEC";
     case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT:
         return "MATMUL_DESC_B_SCALE_POINTER_VEC";
+    case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT:
+        return "MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT";
+    case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT:
+        return "MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT";
     default:
         return "Invalid";
     }
@@ -217,6 +230,7 @@ const char* hipblasOperation_to_string(hipblasOperation_t op)
     case HIPBLAS_OP_T:
         return "OP_T";
     case HIPBLAS_OP_C:
+        return "OP_C";
     default:
         return "Invalid";
     }

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,9 @@
 from . import __version__
 from . import Parallel
 from .TensileInstructions import getGfxName, TensileInstructions
-from .Utilities.Toolchain import supportedCxxCompiler as supportedCompiler
 from collections import OrderedDict
 from copy import deepcopy
+from typing import Tuple
 
 import math
 import os.path
@@ -35,6 +35,10 @@ import subprocess
 import sys
 import time
 import re
+    
+
+IsaVersion = Tuple[int, int, int]
+
 
 startTime = time.time()
 
@@ -218,8 +222,6 @@ globalParameters["Device"] = 0                    # select hip device or opencl 
 globalParameters["DeviceLDS"] = 65536             # LDS bytes per CU, for computing occupancy
 globalParameters["MaxLDS"] = 65536                # max LDS a kernel should attempt to use
 globalParameters["ShortNames"] = False            # on windows kernel names can get too long; =True will convert solution/kernel names to serial ids
-globalParameters["MergeFiles"] = True             # F=store every solution and kernel in separate file; T=store all solutions in single file
-globalParameters["NumMergedFiles"] = 1            # The number of files that kernels should be split between when merging
 
 globalParameters["MaxFileName"] = 64              # If a file name would be longer than this, shorten it with a hash.
 globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2), (12,0,0), (12,0,1)] # assembly kernels writer supports these architectures
@@ -252,7 +254,7 @@ if os.name == "nt":
 else:
   globalParameters["RuntimeLanguage"] = "HIP"
 
-globalParameters["CodeObjectVersion"] = "default"
+globalParameters["CodeObjectVersion"] = "4"
 globalParameters["Architecture"] = "all"
 
 # might be deprecated
@@ -1584,7 +1586,7 @@ def printCapTable(parameters):
   printTable([headerRow] + asmCapRows + archCapRows)
 
 def which(p):
-    if supportedCompiler(p) and 'CMAKE_CXX_COMPILER' in os.environ and os.path.isfile(os.environ['CMAKE_CXX_COMPILER']):
+    if 'CMAKE_CXX_COMPILER' in os.environ and os.path.isfile(os.environ['CMAKE_CXX_COMPILER']):
         return os.environ['CMAKE_CXX_COMPILER']
     if os.name == "nt":
         exes = [p+x for x in ['.exe', '', '.bat']]  # bat may be front end for file with no extension
@@ -1700,6 +1702,9 @@ def assignGlobalParameters(config, cxxCompiler=None):
   if "KeepBuildTmp" in config:
       globalParameters["KeepBuildTmp"] = config["KeepBuildTmp"]
 
+  if "CodeObjectVersion" in config:
+      globalParameters["CodeObjectVersion"] = config["CodeObjectVersion"]
+
   # read current gfx version
   returncode = detectGlobalCurrentISA()
   if globalParameters["CurrentISA"] == (0,0,0):
@@ -1727,11 +1732,6 @@ def assignGlobalParameters(config, cxxCompiler=None):
 
   validParameters["ISA"] = [(0,0,0), *globalParameters["SupportedISA"]]
 
-  if "MergeFiles" in config and "NumMergedFiles" in config:
-    if not config["MergeFiles"] and config["NumMergedFiles"] > 1:
-      config["NumMergedFiles"] = 1
-      printWarning("--num-merged-files and --no-merge-files specified, ignoring --num-merged-files")
-
   # For ubuntu platforms, call dpkg to grep the version of hip-clang.  This check is platform specific, and in the future
   # additional support for yum, dnf zypper may need to be added.  On these other platforms, the default version of
   # '0.0.0' will persist
@@ -1753,6 +1753,9 @@ def assignGlobalParameters(config, cxxCompiler=None):
       if 'HIP version' in line:
         globalParameters['HipClangVersion'] = line.split()[2]
         print1("# Found hipcc version " + globalParameters['HipClangVersion'])
+      if 'AMD clang version' in line:
+        globalParameters['AMDClangVersion'] = line.split()[3]
+        print1("# Found clang version " + globalParameters['AMDClangVersion'])
 
   except (subprocess.CalledProcessError, OSError) as e:
       printWarning("Error: {} running {} {} ".format('hipcc', '--version',  e))

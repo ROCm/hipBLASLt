@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1095,10 +1095,9 @@ class Solution(collections.abc.Mapping):
 
     if "CodeObjectVersion" not in self._state:
       if "CodeObjectVersion" in config:
-        self._state["CodeObjectVersion"] = config["CodeObjectVersion"]
+        self._state["CodeObjectVersion"] = str(config["CodeObjectVersion"])
       else:
-        self._state["CodeObjectVersion"] = globalParameters["CodeObjectVersion"]
-
+        self._state["CodeObjectVersion"] = str(globalParameters["CodeObjectVersion"])
     # assign parameters without defaults
     for key in config:
       if (key != "ProblemType" or key != "InternalSupportParams") and key not in self._state:
@@ -1459,8 +1458,10 @@ class Solution(collections.abc.Mapping):
             and totalElementsPerp % nlp == 0:
           state["NumLoadsCoalesced%s"%tc] = nlc
           state["NumLoadsPerpendicular%s"%tc] = nlp
-          #print("NumLoadsCoalesced",state["NumLoadsCoalesced%s"%tc])
-          #print("NumLoadsPerpendicular",state["NumLoadsPerpendicular%s"%tc])
+          # print("NumLoads%s:"%tc,state["NumLoads%s"%tc])
+          # print("NumLoadsCoalesced%s:"%tc,state["NumLoadsCoalesced%s"%tc])
+          # print("NumLoadsPerpendicular%s:"%tc,state["NumLoadsPerpendicular%s"%tc])
+          # print("\n")
           foundValid = True
           break
       if not foundValid:
@@ -1893,15 +1894,15 @@ class Solution(collections.abc.Mapping):
         reject(state, "DirectToVgpr%c does not support TLU%c+ numByte >= 4 + MIInputPerThread > 1"%(tc, tc))
         return False
 
-    # MIWaveGroup, MatrixInstBM,BN check
-    #  for A, MIWaveGroup[1] and MatrixInstBN should be 1
-    #  for B, MIWaveGroup[0] and MatrixInstBM should be 1
+    # MatrixInstBM,BN check
+    #  for A, MatrixInstBN should be 1
+    #  for B, MatrixInstBM should be 1
     # This is to limit the number of Vgpr
-    if tc == 'A' and not (state['MIWaveGroup'][1] == 1 and state['MatrixInstBN'] == 1):
-      reject(state, "MIWaveGroup[1] and MatrixInstBN should be 1 for DirectToVgprA. Current value is [%d, %d]"%(state['MIWaveGroup'][1], state['MatrixInstBN']))
+    if tc == 'A' and not (state['MatrixInstBN'] == 1):
+      reject(state, "MatrixInstBN should be 1 for DirectToVgprA. Current value is %d"%(state['MatrixInstBN']))
       return False
-    if tc == 'B' and not (state['MIWaveGroup'][0] == 1 and state['MatrixInstBM'] == 1):
-      reject(state, "MIWaveGroup[0] and MatrixInstBM should be 1 for DirectToVgprB. Current value is [%d, %d]"%(state['MIWaveGroup'][0], state['MatrixInstBM']))
+    if tc == 'B' and not (state['MatrixInstBM'] == 1):
+      reject(state, "MatrixInstBM should be 1 for DirectToVgprB. Current value is %d"%(state['MatrixInstBM']))
       return False
 
     # Does not work with WaveSeparateGlobalRead
@@ -1955,6 +1956,26 @@ class Solution(collections.abc.Mapping):
     if state["ProblemType"]["Sparse"]:
       reject(state, "DirectToVgpr%c does not supports Sparse"%(tc))
       return False
+
+    # for DTVA/DTVB, does not work with PGR0
+    if state["PrefetchGlobalRead"] == 0:
+      reject(state, "DirectToVgpr%c does not supports PrefetchGlobalRead == 0."%(tc))
+      return False
+
+    # for DTVA, does not work with NN and TLDS0
+    if tc == 'A' and state["TransposeLDS"] == 0 and (not state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
+      reject(state, "DirectToVgpr%c does not supports NN case with TransposeLDS == 0."%(tc))
+      return False
+
+    # for DTVA, does not work with TT and Tail-loop
+    if tc == 'A' and (state["ProblemType"]["TransposeA"] and state["ProblemType"]["TransposeB"]):
+        # Use AssertSummationElementMultiple (BoundSizeMultiple in predicates) to exclude failed tail-loop cases
+        state["AssertSummationElementMultiple"] = max(state["AssertSummationElementMultiple"], state["DepthU"])
+
+    # for DTVB, does not work with NN and Tail-loop
+    if  tc == 'B' and (not state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
+        # Use AssertSummationElementMultiple (BoundSizeMultiple in predicates) to exclude failed tail-loop cases
+        state["AssertSummationElementMultiple"] = max(state["AssertSummationElementMultiple"], state["DepthU"])
 
     # Does not work with DirectToLDS
     # -> this will be checked after DirectToLDS doable check is done
@@ -2181,6 +2202,12 @@ class Solution(collections.abc.Mapping):
         reject(state, "General batch not supported with Stream-K")
       if state["ProblemType"]["GroupedGemm"]:
         reject(state, "Grouped gemm not yet supported with Stream-K")
+      if state["ScheduleGlobalRead"] != 1:
+        reject(state, "ScheduleGlobalRead not supported with Stream-K")
+      if state["ScheduleLocalWrite"] != 1:
+        reject(statue, "ScheduleLocalWrite not supported with Stream-K")
+      if state["ScheduleIterAlg"] != 1 and state["ScheduleIterAlg"] != 3:
+        reject(state, "ScheduleIterAlg not supported with Stream-K")
       if state["StreamKAtomic"] == 1:
         if not state["ProblemType"]["DataType"].isSingle():
           reject(state, "Atomic Stream-K currently only tested for SGEMM")
@@ -2579,8 +2606,11 @@ class Solution(collections.abc.Mapping):
               ldsPadA = ((16 * state["VectorWidthA"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile0"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
             if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadA == 0:
               ldsPadA = 16 // state["ProblemType"]["DataType"].numBytes()
-          else:
-            ldsPadA = 0
+          else: # mac instruction
+            if state["ProblemType"]["TLUA"]:
+              ldsPadA = 0
+            else:
+              ldsPadA = state["VectorWidthA"]
         else:
           ldsPadA = max(state["GlobalReadVectorWidthA"],optPadA)
           ## turn-off padding for directToLds
@@ -2597,7 +2627,10 @@ class Solution(collections.abc.Mapping):
             if state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadB == 0:
               ldsPadB = 16 // state["ProblemType"]["DataType"].numBytes()
           else:
-            ldsPadB = 0
+            if state["ProblemType"]["TLUB"]:
+              ldsPadB = 0
+            else:
+              ldsPadB = state["VectorWidthB"]
         else:
           ldsPadB = max(state["GlobalReadVectorWidthB"],optPadB)
           if state["DirectToLdsB"]:
@@ -2760,39 +2793,15 @@ class Solution(collections.abc.Mapping):
             reject(state, "one of DataTypeA or DataTypeB need to be float8")
             return
 
-    #for tensor swizzling, we force pack-k == 2
-    for tc in ("A", "B",):
-      if state["ProblemType"][f"SwizzleTensor{tc}"]:
-        if not state["EnableMatrixInstruction"]:
-          reject(state, f"Tensor {tc} swizzling supports MI only")
-        # Print rejection reason instead of force set
-        if state[f"GlobalReadVectorWidth{tc}"] != state[f"MIInputPerThread{tc}"] * 2:
-          GRVW_TC = state[f"GlobalReadVectorWidth{tc}"]
-          MIInPerThread = state[f"MIInputPerThread{tc}"]
-          reject(state, f"SwizzleTensor{tc} doesn't support GRVW{tc} ({GRVW_TC}) != MIInputPerThread{tc} ({MIInPerThread}) * 2")
-        # TODO- increasing VW might have better perf. But it'll change the swizzling pattern.
-        if state[f"VectorWidth{tc}"] != 1:
-          VW_TC = state[f"VectorWidth{tc}"]
-          reject(state, f"SwizzleTensor{tc} requires VectorWidth{tc} ({VW_TC}) == 1")
-
-    if state["ProblemType"]["SwizzleTensorA"]:
-      if state["ProblemType"]["TransposeA"] is False:
-        reject(state, f"Tensor A swizzling supports TN or TT only")
-      if state["DirectToVgprA"] is False:
-        reject(state, f"Tensor A swizzling requires DirectToVgprA")
-
-    if state["ProblemType"]["SwizzleTensorB"]:
-      if state["ProblemType"]["TransposeB"] is True:
-        reject(state, f"Tensor B swizzling supports NN or TN only")
-      if state["DirectToVgprB"] is False:
-        reject(state, f"Tensor B swizzling requires DirectToVgprB")
-
     def calcOptGRVW(lrvw: int, unrollMajorLDS: bool, datatype: DataType) -> int:
       # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
       optGRVW = lrvw if unrollMajorLDS else 4 / datatype.numRegisters()
       if optGRVW * datatype.numBytes() > 16:
         optGRVW = 16 // datatype.numBytes()
       return optGRVW
+
+    def calSwizzleK(state, tc):
+      return 16 // state[f"MIInputPerThread{tc}"] // state["ProblemType"][f"DataType{tc}"].numBytes()
 
     genGRVWA = False
     genGRVWB = False
@@ -2806,13 +2815,16 @@ class Solution(collections.abc.Mapping):
           else:
             reject(state, "GRVWA=-2 is set for skinny MT")
         elif state["GlobalReadVectorWidthA"] == -1:
-          optGRVW = calcOptGRVW(state["LocalReadVectorWidth"], state["UnrollMajorLDSA"], state["ProblemType"]["DataTypeA"])
-          curGRVW = 1
-          state["GlobalReadVectorWidthA"] = int(curGRVW)
-          while (curGRVW <= optGRVW):
-            if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
-              state["GlobalReadVectorWidthA"] = int(curGRVW)
-            curGRVW *= 2
+          if state["ProblemType"]["SwizzleTensorA"]:
+            state["GlobalReadVectorWidthA"] = state["MIInputPerThreadA"] * calSwizzleK(state, "A")
+          else:
+            optGRVW = calcOptGRVW(state["LocalReadVectorWidth"], state["UnrollMajorLDSA"], state["ProblemType"]["DataTypeA"])
+            curGRVW = 1
+            state["GlobalReadVectorWidthA"] = int(curGRVW)
+            while (curGRVW <= optGRVW):
+              if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
+                state["GlobalReadVectorWidthA"] = int(curGRVW)
+              curGRVW *= 2
 
     # Default GlobalReadVectorWidthB
     if state["EnableMatrixInstruction"]:
@@ -2824,13 +2836,46 @@ class Solution(collections.abc.Mapping):
           else:
             reject(state, "GRVWB=-2 is set for skinny MT")
         elif state["GlobalReadVectorWidthB"] == -1:
-          optGRVW = calcOptGRVW(state["LocalReadVectorWidth"], state["UnrollMajorLDSB"], state["ProblemType"]["DataTypeB"])
-          curGRVW = 1
-          state["GlobalReadVectorWidthB"] = int(curGRVW)
-          while (curGRVW <= optGRVW):
-            if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:
-              state["GlobalReadVectorWidthB"] = int(curGRVW)
-            curGRVW *= 2
+          if state["ProblemType"]["SwizzleTensorB"]:
+            state["GlobalReadVectorWidthB"] = state["MIInputPerThreadB"] * calSwizzleK(state, "B")
+          else:
+            optGRVW = calcOptGRVW(state["LocalReadVectorWidth"], state["UnrollMajorLDSB"], state["ProblemType"]["DataTypeB"])
+            curGRVW = 1
+            state["GlobalReadVectorWidthB"] = int(curGRVW)
+            while (curGRVW <= optGRVW):
+              if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:
+                state["GlobalReadVectorWidthB"] = int(curGRVW)
+              curGRVW *= 2
+
+    #for tensor swizzling, we calculate pack-k to achieve buffer_load_dwordx4
+    for tc in ("A", "B",):
+      if state["ProblemType"][f"SwizzleTensor{tc}"]:
+        if not state["EnableMatrixInstruction"]:
+          reject(state, f"Tensor {tc} swizzling supports MI only")
+        # Print rejection reason instead of force set
+        # 16 means bytes of buffer_load_dwordx4
+        SwizzlePackK = calSwizzleK(state, tc)
+        if state[f"GlobalReadVectorWidth{tc}"] != state[f"MIInputPerThread{tc}"] * SwizzlePackK:
+          GRVW_TC = state[f"GlobalReadVectorWidth{tc}"]
+          MIInPerThread = state[f"MIInputPerThread{tc}"]
+          reject(state, f"SwizzleTensor{tc} doesn't support GRVW{tc} ({GRVW_TC}) != MIInputPerThread{tc} ({MIInPerThread}) * {SwizzlePackK}")
+        # TODO- increasing VW might have better perf. But it'll change the swizzling pattern.
+        if state[f"VectorWidth{tc}"] != 1:
+          VW_TC = state[f"VectorWidth{tc}"]
+          reject(state, f"SwizzleTensor{tc} requires VectorWidth{tc} ({VW_TC}) == 1")
+
+    if state["ProblemType"]["SwizzleTensorA"]:
+      if not state["DirectToVgprA"]:
+        reject(state, f"Tensor A swizzling requires DirectToVgprA")
+      if not state["ProblemType"]["TransposeA"]:
+        reject(state, f"Tensor A swizzling supports TN or TT only")
+
+    if state["ProblemType"]["SwizzleTensorB"]:
+      if not state["DirectToVgprB"]:
+        reject(state, f"Tensor B swizzling requires DirectToVgprB")
+      # TODO- NN fails validation due to DTVB + Tail-Loop is not working correctly
+      if not (state["ProblemType"]["TransposeA"] and not state["ProblemType"]["TransposeB"]):
+        reject(state, f"Tensor B swizzling supports TN only")
 
     # Force GRVW the same when UnrollLoopSwapGlobalReadOrder = 1.
     if genGRVWA and state["UnrollLoopSwapGlobalReadOrder"] == 1:
@@ -2919,9 +2964,6 @@ class Solution(collections.abc.Mapping):
 
     # GlobalSplitU doesn't work with some other things:
     if state["GlobalSplitU"] > 1:
-      if state["ProblemType"]["DestDataType"].isFloat8() or state["ProblemType"]["DestDataType"].isBFloat8():
-        reject(state, "GlobalSplitU currently does not support GSU > 1 for f8 and b8.")
-        return
       # added GSU support for DGEMM
       supported = \
         (state["ProblemType"]["DataType"].isSingle()) or \
@@ -2956,19 +2998,27 @@ class Solution(collections.abc.Mapping):
       validDepthU = True
 
       # how many elements to load
-      if state["ProblemType"]["TLUA"]:
+      if state["ProblemType"]["TLUA"]: # NT/NN
         totalElementsCoalescedA = state["MacroTileA"]
         totalElementsPerpA = depthUA
-      else:
+        if state["DirectToVgprA"]:
+          totalElementsCoalescedA *= state["MIWaveGroup"][1]
+      else: # TN/TT
         totalElementsCoalescedA = depthUA
         totalElementsPerpA = state["MacroTileA"]
+        if state["DirectToVgprA"]:
+          totalElementsPerpA *= state["MIWaveGroup"][1]
 
-      if state["ProblemType"]["TLUB"]:
+      if state["ProblemType"]["TLUB"]: # NT/TT
         totalElementsCoalescedB = state["MacroTileB"]
         totalElementsPerpB = depthUB
-      else:
+        if state["DirectToVgprB"]:
+          totalElementsCoalescedB *= state["MIWaveGroup"][0]
+      else: # TN/NN
         totalElementsCoalescedB = depthUB
         totalElementsPerpB = state["MacroTileB"]
+        if state["DirectToVgprB"]:
+          totalElementsPerpB *= state["MIWaveGroup"][0]
 
       totalElementsA = totalElementsCoalescedA * totalElementsPerpA
       totalElementsB = totalElementsCoalescedB * totalElementsPerpB
@@ -3220,7 +3270,7 @@ class Solution(collections.abc.Mapping):
       if not Solution.isDirectToVgprDoable(state, 'A'):
         return  # rejected
     if state["DirectToVgprB"]:
-      if not  Solution.isDirectToVgprDoable(state, 'B'):
+      if not Solution.isDirectToVgprDoable(state, 'B'):
         return  # rejected
 
     ########################################
@@ -3448,6 +3498,15 @@ class Solution(collections.abc.Mapping):
       if state["1LDSBuffer"] == -1 and state["DirectToLds"]:
         #1LDS buffer must be 0 for DirectToLdsA
         state["1LDSBuffer"] = 0
+
+      # Re-check DTV + WaveGroup after DTL is confirmed
+      if state["DirectToLds"]:
+        if state["DirectToVgprA"] and state['MIWaveGroup'][1] > 1:
+          reject(state, "DirectToLds + (DirectToVgprA + WaveGroups along N-Dim) is not supported yet")
+          return False
+        if state["DirectToVgprB"] and state['MIWaveGroup'][0] > 1:
+          reject(state, "DirectToLds + (DirectToVgprB + WaveGroups along M-Dim) is not supported yet")
+          return False
 
     # set NoLdsWriteCode if (DirectToVgpr or DirectToLds)A+B is enabled
     state["NoLdsWriteCode"] = False

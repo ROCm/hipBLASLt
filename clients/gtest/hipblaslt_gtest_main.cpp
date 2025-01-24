@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -219,7 +219,7 @@ static void hipblaslt_print_args(const std::string& args)
 static void hipblaslt_set_test_device()
 {
     int device_id    = 0;
-    int device_count = query_device_property();
+    int device_count = query_device_property(device_id);
     if(device_count <= device_id)
     {
         hipblaslt_cerr << "Error: invalid device ID. There may not be such device ID." << std::endl;

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,7 +50,7 @@
 using namespace roc; // For emulated program_options
 using namespace std::literals; // For std::string literals of form "str"s
 
-struct perf_matmul: hipblaslt_test_valid
+struct perf_matmul : hipblaslt_test_valid
 {
     void operator()(const Arguments& arg)
     {
@@ -734,7 +734,7 @@ try
     }
 
     // Device Query
-    int64_t device_count = query_device_property();
+    int64_t device_count = query_device_property(device_id);
 
     hipblaslt_cout << std::endl;
     if(device_count <= device_id)
@@ -779,6 +779,11 @@ try
     arg.d_type = d_type == "" ? prec : string_to_hip_datatype(d_type);
     if(arg.d_type == HIPBLASLT_DATATYPE_INVALID)
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
+
+    if(arg.c_type != arg.d_type)
+        throw std::invalid_argument(
+            "Invalid: --c_type " + std::string(hip_datatype_to_string(arg.c_type))
+            + " is not equal to --d_type " + std::string(hip_datatype_to_string(arg.d_type)));
 
     bool is_f16 = arg.a_type == HIP_R_16F || arg.a_type == HIP_R_16BF;
     bool is_f32 = arg.a_type == HIP_R_32F;

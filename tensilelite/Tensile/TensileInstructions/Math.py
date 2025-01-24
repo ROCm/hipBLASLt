@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -349,6 +349,8 @@ def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: Registe
     tmpVgpr0 = tmpVgprRes.idx
     tmpVgpr1 = tmpVgprRes.idx + 1
 
+    SMovBX = SMovB64 if wavewidth == 64 else SMovB32
+
     module = Module("scalarUInt32DivideAndRemainder")
     module.add(VCvtU32toF32(dst=vgpr(tmpVgpr0), src=sgpr(divReg), comment=dComment))
     module.add(VRcpIFlagF32(dst=vgpr(tmpVgpr0), src=vgpr(tmpVgpr0), comment=dComment))
@@ -361,8 +363,13 @@ def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: Registe
     module.add(VAddU32(dst=vgpr(tmpVgpr0), src0=1, src1=vgpr(tmpVgpr0), comment=dComment))
     if doRemainder:
         module.add(VMovB32(dst=vgpr(tmpVgpr1), src=0, comment=rComment))
-    SMovBX = SMovB64 if wavewidth == 64 else SMovB32
-    module.add(SMovBX(dst=EXEC(), src=-1, comment=dComment))
+    module.add(SMovBX(dst=EXEC(), src=-1, comment="Reset exec"))
+    module.add(VCmpXGtU32(dst=EXEC(), src0=vgpr(tmpVgpr1), src1=sgpr(divReg), comment="overflow happened in remainder"))
+    module.add(VSubU32(dst=vgpr(tmpVgpr0), src0=vgpr(tmpVgpr0), src1=1, comment="quotient - 1"))
+    if doRemainder:
+        module.add(VMulU32U24(dst=vgpr(tmpVgpr1), src0=vgpr(tmpVgpr0), src1=sgpr(divReg), comment="re-calculate remainder"))
+        module.add(VSubU32(dst=vgpr(tmpVgpr1), src0=sgpr(dReg), src1=vgpr(tmpVgpr1), comment="re-calculate remainder"))
+    module.add(SMovBX(dst=EXEC(), src=-1, comment="Reset exec"))
     module.add(VReadfirstlaneB32(dst=sgpr(qReg), src=vgpr(tmpVgpr0), comment="quotient"))
     if doRemainder:
         module.add(VReadfirstlaneB32(dst=sgpr(rReg), src=vgpr(tmpVgpr1), comment="remainder"))
@@ -456,6 +463,33 @@ def staticMultiply(product, operand, multiplier, tmpSgprRes: Optional[RegisterPo
             module.add(VMulLOU32(dst=product, src0=sgpr(tmpSgpr), src1=operand, comment=comment))
     return module
 
+########################################
+# MultiplyAdd
+# product register, operand register, multiplier, accumulator
+########################################
+
+def staticMultiplyAdd(product, operand, multiplier, accumulator, tmpSgprRes: Optional[RegisterPoolResource], comment=""):
+    if comment == "":
+        comment = "%s = %s * %s" % (product, operand, multiplier)
+
+    module = Module("staticMultiply")
+    if multiplier == 0:
+        module.add(VMovB32(dst=product, src=hex(multiplier), comment=comment))
+    elif ((multiplier & (multiplier - 1)) == 0): # pow of 2
+        multiplier_log2 = log2(multiplier)
+        if multiplier_log2==0 and product == operand:
+            module.addCommentAlign(comment + " (multiplier is 1, do nothing)")
+        else:
+            module.add(VLShiftLeftAddU32(dst=product, shiftHex=hex(multiplier_log2), src0=operand, src1=accumulator, comment=comment))
+    else: # not pow of 2
+        if multiplier <= 64 and multiplier >= -16:
+            module.add(VMadU32U24(dst=product, src0=hex(multiplier), src1=operand, src2=accumulator, comment=comment))
+        else:
+            assert tmpSgprRes and tmpSgprRes.size >= 1
+            tmpSgpr = tmpSgprRes.idx
+            module.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(multiplier), comment=comment))
+            module.add(VMadU32U24(dst=product, src0=sgpr(tmpSgpr), src1=operand, src2=accumulator, comment=comment))
+    return module
 
 ########################################
 # Multiply scalar for 64bit

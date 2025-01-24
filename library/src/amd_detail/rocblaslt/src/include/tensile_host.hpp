@@ -287,6 +287,17 @@ struct RocblasltContractionProblem
                 this->bias_type = this->d_type;
             }
         }
+
+        if(this->trans_a == HIPBLAS_OP_C)
+        {
+            if(rocblaslt_is_complex_datatype(this->a_type))
+                this->trans_a = HIPBLAS_OP_T;
+        }
+        if(this->trans_b == HIPBLAS_OP_C)
+        {
+            if(rocblaslt_is_complex_datatype(this->b_type))
+                this->trans_b = HIPBLAS_OP_T;
+        }
     }
 };
 
@@ -483,7 +494,7 @@ inline TensileLite::DataType hipDataType_to_tensile_type(hipDataType type)
 
 namespace
 {
-    TensileLite::DataType roc2TensileType(rocblaslt_compute_type);
+    TensileLite::DataType roc2TensileType(rocblaslt_compute_type, bool);
 }
 
 namespace TensileLite

@@ -8,12 +8,14 @@ GlobalParameters:
   #PrintSolutionRejectionReason: True
   Device: 0
   CMakeBuildType: Release
-  MergeFiles: False
   KernelTime: True
   MaxWorkspaceSize: 13421772800
+  DataInitTypeA: 13
+  DataInitTypeB: 12
   DataInitTypeAlpha: 1
   DataInitTypeBeta: 1
-  BoundsCheck: 2
+  DataInitTypeBias: 13
+  DataInitTypeScaleAlphaVec: 12
   #MaxFileName: 256
 
 BenchmarkProblems:
@@ -51,7 +53,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [2,4,8]
         - GlobalReadVectorWidthB: [4,8]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1,2]
         - ClusterLocalRead: [1]
         - NumElementsPerBatchStore: [0]
@@ -79,6 +81,7 @@ BenchmarkProblems:
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - StreamK: [0,3]
         - Groups:
           -
@@ -149,11 +152,11 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [2,4,8]
         - GlobalReadVectorWidthB: [4,8]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - NumElementsPerBatchStore: [0]
-        - DepthU: [16,64]
+        - DepthU: [16,32,64]
         - VectorWidthA: [-1]
         - VectorWidthB: [-1]
         - MIArchVgpr: [0]
@@ -177,6 +180,7 @@ BenchmarkProblems:
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - StreamK: [0,2]
         - Groups:
           -
@@ -196,6 +200,9 @@ BenchmarkProblems:
               WorkGroup: [16,4,4]
             - MatrixInstruction: [32, 32,  8, 1,  1,   2, 2,  1,1 ]
               WorkGroup: [16,4,4]
+            - MatrixInstruction: [16, 16, 16, 1,  1,   2, 8,  4,1 ]
+            - MatrixInstruction: [16, 16, 16, 1,  1,   4, 16,  4,1 ]
+
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -338,7 +345,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [4,8]
         - GlobalReadVectorWidthB: [4,8]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - NumElementsPerBatchStore: [0]
@@ -367,6 +374,7 @@ BenchmarkProblems:
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - StreamK: [0,3]
         - Groups:
           -
@@ -434,11 +442,16 @@ BenchmarkProblems:
           - [16, 16, 16, 1,  1,   5, 1,  2,1 ] # MT = 160x16. Case to check kernel writer works
           - [32, 32,  8, 1,  1,   2, 1,  4,1 ]
           - [32, 32,  8, 1,  1,   4, 1,  4,1 ]
+
+          - [16, 16, 16, 1,  1,  8,1,   1,4 ] # 128x64
+          - [16, 16, 16, 1,  1,  8,1,   2,2 ] # 256x32
+          - [16, 16, 16, 1,  1,  16,1,  2,2 ] # 512x32
+          - [16, 16, 16, 1,  1,  10,1,  2,2 ] # 160x32
         - WorkGroup:
           - [16,16,1]
         - GlobalReadVectorWidthA: [2,4,8]
         - GlobalReadVectorWidthB: [2,4,8]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1,2]
         - ClusterLocalRead: [1]
         - NumElementsPerBatchStore: [0]
@@ -453,7 +466,6 @@ BenchmarkProblems:
         - WorkGroupMapping: [1]
         - ScheduleIterAlg: [3]
         - ExpandPointerSwap: [0]
-        - TransposeLDS: [1]
         - LdsBlockSizePerPadA: [-1]
         - LdsBlockSizePerPadB: [-1]
         - StorePriorityOpt: [0]
@@ -462,13 +474,13 @@ BenchmarkProblems:
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - 1LDSBuffer: [1]
-        - TransposeLDS: [0,1]
         #- GlobalSplitU: [1,2]
         #- GlobalSplitUAlgorithm: ["MultipleBuffer", "MultipleBufferSingleKernel"]
         - SourceSwap: [0, 1]
         - LocalReadVectorWidth: [2,4,8]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - ActivationFuncCall: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
@@ -609,6 +621,11 @@ BenchmarkProblems:
           - [16, 16, 16, 1,  1,   1, 5,  1,2 ] # MT = 16x160. Case to check kernel writer works
           - [32, 32,  8, 1,  1,   1, 2,  1,4 ]
           - [32, 32,  8, 1,  1,   1, 4,  1,4 ]
+
+          - [16, 16, 16, 1,  1,  1,8,   4,1 ] # 64x128
+          - [16, 16, 16, 1,  1,  1,8,   2,2 ] # 32x256
+          - [16, 16, 16, 1,  1,  1,16,  2,2 ] # 32x512
+          - [16, 16, 16, 1,  1,  1,10,  2,2 ] # 32x160
         - WorkGroup:
           - [16,16,1]
         - GlobalReadVectorWidthA: [2,4,8]
@@ -778,7 +795,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [1,2,4]
         - GlobalReadVectorWidthB: [1,2]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1]
         - NumElementsPerBatchStore: [0]
         - DepthU: [16]
@@ -792,7 +809,6 @@ BenchmarkProblems:
         - WorkGroupMapping: [1]
         - ScheduleIterAlg: [3]
         - ExpandPointerSwap: [0,1]
-        - TransposeLDS: [0]
         - LdsBlockSizePerPadA: [-1]
         - LdsBlockSizePerPadB: [-1]
         - StorePriorityOpt: [0]
@@ -806,6 +822,7 @@ BenchmarkProblems:
         #- SourceSwap: [0, 1]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - StreamK: [0,1]
         - Groups:
           -
@@ -949,7 +966,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [1,2,4]
         - GlobalReadVectorWidthB: [1,2]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1,2]
         - NumElementsPerBatchStore: [0]
         - DepthU: [16]
@@ -963,7 +980,6 @@ BenchmarkProblems:
         - WorkGroupMapping: [1]
         - ScheduleIterAlg: [3]
         #- ExpandPointerSwap: [0,1]
-        - TransposeLDS: [0]
         - LdsBlockSizePerPadA: [-1]
         - LdsBlockSizePerPadB: [-1]
         - StorePriorityOpt: [0]
@@ -977,6 +993,7 @@ BenchmarkProblems:
         - SourceSwap: [1]#[0, 1]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - StreamK: [0,2]
         - Groups:
           -
@@ -1036,7 +1053,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [1,2,4]
         - GlobalReadVectorWidthB: [1,2]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1]
         - NumElementsPerBatchStore: [0]
         - DepthU: [16]
@@ -1050,7 +1067,6 @@ BenchmarkProblems:
         - WorkGroupMapping: [1]
         - ScheduleIterAlg: [3]
         #- ExpandPointerSwap: [0,1]
-        - TransposeLDS: [1]
         - LdsBlockSizePerPadA: [-1]
         - LdsBlockSizePerPadB: [-1]
         - StorePriorityOpt: [0]
@@ -1064,6 +1080,7 @@ BenchmarkProblems:
         - SourceSwap: [0, 1]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - Groups:
           -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  4,1 ]
@@ -1119,7 +1136,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [1,2]
         - GlobalReadVectorWidthB: [1,2]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1]
         - NumElementsPerBatchStore: [0]
         - DepthU: [16]
@@ -1133,7 +1150,6 @@ BenchmarkProblems:
         - WorkGroupMapping: [1]
         - ScheduleIterAlg: [3]
         - ExpandPointerSwap: [0,1]
-        - TransposeLDS: [0]
         - LdsBlockSizePerPadA: [-1]
         - LdsBlockSizePerPadB: [-1]
         - StorePriorityOpt: [0]
@@ -1147,6 +1163,7 @@ BenchmarkProblems:
         #- SourceSwap: [0, 1]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         #- StreamK: [0,1]
         - Groups:
           -
@@ -1281,7 +1298,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [1,2]
         - GlobalReadVectorWidthB: [1,2]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1,2]
         - NumElementsPerBatchStore: [0]
         - DepthU: [16]
@@ -1295,7 +1312,6 @@ BenchmarkProblems:
         - WorkGroupMapping: [1]
         - ScheduleIterAlg: [3]
         #- ExpandPointerSwap: [0,1]
-        - TransposeLDS: [0]
         - LdsBlockSizePerPadA: [-1]
         - LdsBlockSizePerPadB: [-1]
         - StorePriorityOpt: [0]
@@ -1309,6 +1325,7 @@ BenchmarkProblems:
         - SourceSwap: [1]#[0, 1]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - Groups:
           -
             - MatrixInstruction: [16, 16,  4, 1,  1,   1, 1,  4,1 ]
@@ -1362,7 +1379,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [4,8]
         - GlobalReadVectorWidthB: [4,8]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - NumElementsPerBatchStore: [0]
@@ -1390,6 +1407,7 @@ BenchmarkProblems:
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - Groups:
           -
             - MatrixInstruction: [16, 16, 32, 1,  1,   1, 1,  4,1 ]
@@ -1491,7 +1509,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [4,8]
         - GlobalReadVectorWidthB: [4,8]
-        - PrefetchGlobalRead: [2]#[1,2]
+        - PrefetchGlobalRead: [0,2] #[1,2]
         - PrefetchLocalRead: [1,2]
         - ClusterLocalRead: [1]
         - NumElementsPerBatchStore: [0]
@@ -1520,6 +1538,7 @@ BenchmarkProblems:
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -1621,7 +1640,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [2,4,8]
         - GlobalReadVectorWidthB: [4,8]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - NumElementsPerBatchStore: [0]
@@ -1649,6 +1668,7 @@ BenchmarkProblems:
         #- LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - ConvertAfterDS: [1]
         #- StreamK: [0,2]
         - Groups:
@@ -1800,7 +1820,7 @@ BenchmarkProblems:
           - [16,16,1]
         - GlobalReadVectorWidthA: [4,8]
         - GlobalReadVectorWidthB: [4,8]
-        - PrefetchGlobalRead: [1,2]
+        - PrefetchGlobalRead: [0,1,2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - NumElementsPerBatchStore: [0]
@@ -1829,6 +1849,7 @@ BenchmarkProblems:
         - LocalReadVectorWidth: [4,8]
         - DirectToVgprA: [1]
         - UseSgprForGRO: [0,1]
+        - TransposeLDS: [0,1]
         - ConvertAfterDS: [1]
         # - StreamK: [0,3]
         - Groups:
@@ -1948,3 +1969,141 @@ BenchmarkProblems:
           - Exact: [255,   255, 1, 191]
           - Exact: [255,   255, 1, 255]
           - Exact: [255,   255, 1, 256]
+
+  ########################################
+  # HHS TT DTVA with/wo tail loop
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: h
+      DestDataType: h
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 1
+      TransposeB: 1
+      UseBeta: True
+      Batched: True
+      # UseBias: 1
+      # BiasDataTypeList: [s,h]
+      # Activation: True
+      # ActivationType: hipblaslt_all
+      # UseScaleAlphaVec: 1
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16, 16, 16, 1,  1,  1,8,   4,1 ] # 64x128
+          - [16, 16, 16, 1,  1,  2,8,  4,1 ] # 128x128
+          - [16, 16, 16, 1,  1,  4,16,  4,1 ] # 256x256
+
+          - [16, 16, 16, 1,  1,  4,2,   1,4 ] # 64x128
+          - [16, 16, 16, 1,  1,  8,2,   1,4 ] # 128x128
+          - [16, 16, 16, 1,  1,  16,4,  1,4 ] # 256x256
+        - AssertFree0ElementMultiple: [16]
+        - AssertFree1ElementMultiple: [16]
+        - AssertSummationElementMultiple: [32]
+        - PrefetchGlobalRead: [1,2]
+        - PrefetchLocalRead: [1,2,4]
+        - DepthU: [128] # Has tail
+        - GlobalReadVectorWidthA: [-1,8] # force testing 8 (prepared for swizzleA)
+        - GlobalReadVectorWidthB: [-1]
+        - VectorWidthA: [-1,1] # force testing 1 (prepared for swizzleA)
+        - VectorWidthB: [-1]
+        - LocalReadVectorWidth: [-1]
+        - LdsBlockSizePerPadA: [-1]
+        - LdsBlockSizePerPadB: [-1]
+        # - StaggerU: [0] #
+        # - StaggerUStride: [-1] #
+        # - WorkGroupMapping: [1] #
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - 1LDSBuffer: [0,1]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [-1]
+        - StoreRemapVectorWidth: [0]
+        - StoreVectorWidth: [-1]
+        - NumElementsPerBatchStore: [0]
+        - ClusterLocalRead: [1]
+        - WorkGroupMappingXCC: [8]
+        - UseSgprForGRO: [0]
+        - DirectToVgprA: [1]
+
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [960, 1280, 1, 192]
+          - Exact: [960, 1280, 1, 256] # no tail
+          - Exact: [1280, 1280, 1, 192]
+          - Exact: [1600, 1280, 1, 192]
+
+  ########################################
+  # HHS NN DTVB with/wo tail loop
+  ########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: h
+      DestDataType: h
+      ComputeDataType: s
+      HighPrecisionAccumulate: True
+      TransposeA: 0
+      TransposeB: 0
+      UseBeta: True
+      Batched: True
+      # UseBias: 1
+      # BiasDataTypeList: [s,h]
+      # Activation: True
+      # ActivationType: hipblaslt_all
+      # UseScaleAlphaVec: 1
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [16, 16, 16, 1,  1,  4,2,   1,4 ] # 64x128
+          - [16, 16, 16, 1,  1,  8,2,  1,4 ] # 128x128
+          - [16, 16, 16, 1,  1,  16,4,  1,4 ] # 256x256
+
+          - [16, 16, 16, 1,  1,  2,4,   4,1 ] # 128x64
+          - [16, 16, 16, 1,  1,  2,8,  4,1 ] # 128x128
+          - [16, 16, 16, 1,  1,  4,16,  4,1 ] # 256x256
+        - AssertFree0ElementMultiple: [16]
+        - AssertFree1ElementMultiple: [16]
+        - AssertSummationElementMultiple: [32]
+        - PrefetchGlobalRead: [1,2]
+        - PrefetchLocalRead: [1,2,4]
+        - DepthU: [128] # Has tail
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1,8] # force testing 8 (prepared for swizzleB)
+        - VectorWidthA: [-1]
+        - VectorWidthB: [-1,1] # force testing 1 (prepared for swizzleB)
+        - LocalReadVectorWidth: [-1]
+        - LdsBlockSizePerPadA: [-1]
+        - LdsBlockSizePerPadB: [-1]
+        # - StaggerU: [0] #
+        # - StaggerUStride: [-1] #
+        # - WorkGroupMapping: [1] #
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - 1LDSBuffer: [0,1]
+        - GlobalReadPerMfma: [1]
+        - LocalWritePerMfma: [-1]
+        - StoreRemapVectorWidth: [0]
+        - StoreVectorWidth: [-1]
+        - NumElementsPerBatchStore: [0]
+        - ClusterLocalRead: [1]
+        - WorkGroupMappingXCC: [8]
+        - UseSgprForGRO: [0]
+        - DirectToVgprB: [1]
+
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [960, 1280, 1, 192]
+          - Exact: [960, 1280, 1, 256]
+          - Exact: [1280, 1280, 1, 192]
+          - Exact: [1600, 1280, 1, 192]

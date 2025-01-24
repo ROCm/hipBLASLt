@@ -21,8 +21,8 @@
 ################################################################################
 
 from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, sgpr, scalarStaticDivideAndRemainder, \
-    SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SCBranchSCC1, SCmpLeU32, VMovB32, vgpr, \
-    SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
+    SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SMovB64, SCBranchSCC1, SCmpLeU32, VMovB32, \
+    vgpr, SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
     log2, SBarrier, SStoreB32, SLongBranchPositive, SBranch, ceilDivide, replaceHolder, SNop, staticMultiply, SSleep, \
     VAddF32, VAddF64, SAndB32, SLShiftRightB32, VReadfirstlaneB32, SBranchIfNotZero
 from ..Common import print2
@@ -379,8 +379,7 @@ class StreamK(Component):
         module = Module("StreamK Common computeWorkspaceSrd")
 
         # Base Address
-        module.add(SMovB32(dst=sgpr("SrdWS+0"), src=sgpr("AddressWS+0"), comment="init SRD base address (lower)"))
-        module.add(SMovB32(dst=sgpr("SrdWS+1"), src=sgpr("AddressWS+1"), comment="init SRD base address (upper) + other fields"))
+        module.add(SMovB64(dst=sgpr("SrdWS+0", 2), src=sgpr("AddressWS+0", 2), comment="init SRD base address"))
         module.add(SMovB32(dst=sgpr("SrdWS+2"), src="BufferOOB", comment=""))
         module.add(SMovB32(dst=sgpr("SrdWS+3"), src="Srd127_96", comment="Set bits 127_96 in post-loop SRD"))
 

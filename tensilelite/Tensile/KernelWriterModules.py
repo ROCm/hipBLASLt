@@ -29,8 +29,7 @@ def allocPostLoopSrdSuppressRaw(ch: str, chAddress: str, labelStr: str, sgprLeng
     label  = Label("%sAddrValid"%labelStr, "")
     label2 = Label("%sAddrValid_End"%labelStr, "")
     # Buffer-load uses one base read pointer stored in the SRD - set it here:
-    module.add(SMovB32(dst=sgpr("Srd%s+0"%ch), src=sgpr("Address%s+0"%chAddress), comment="init SRD base address (lower)" ))
-    module.add(SMovB32(dst=sgpr("Srd%s+1"%ch), src=sgpr("Address%s+1"%chAddress), comment="init SRD base address (upper) + other fields" ))
+    module.add(SMovB64(dst=sgpr("Srd%s+0"%ch, 2), src=sgpr("Address%s+0"%chAddress, 2), comment="init SRD base address" ))
     module.add(SMovB32(dst=sgpr("Srd%s+3"%ch), src="Srd127_96", comment="Set bits 127_96 in post-loop SRD"))
     module.add(SBranchIfNotZero("Address%s"%chAddress, DataType('int64'), label))
     module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=0))
@@ -198,7 +197,7 @@ def accVgprImagNumOffset(kernel):
 # MapAcctoArch
 # function to map MFMA Acc  Registers to Arch VGPR register
 ##############################################################################
-def mapAcctoArchRegs(kernel, write=False):
+def mapAcctoArchRegs(kernel, maxAgpr=256, write=False):
   acc2arch, _ = accToArchMapper(kernel)
 
   complexMultiplier = 2 if kernel["ProblemType"]["DataType"].isComplex() else 1
@@ -211,15 +210,30 @@ def mapAcctoArchRegs(kernel, write=False):
         destIdx = (acc2arch[i]*complexMultiplier + cm) * kernel["MIRegPerOut"] + r
         srcIdx = ((i * kernel["MIRegPerOut"] + r) + (cm*accImOffset))
         if not kernel["MIArchVgpr"]:
-          accStr = accvgpr(srcIdx)
-          if write:
-            imod.itemList[destIdx] = VAccvgprWriteB32(dst=accStr,
-                                                      src=vgpr(Holder(name="ValuC")),
-                                                      comment="copy vreg[%u] to acc" % destIdx)
+          def gprfunc(idx):
+            if idx >= maxAgpr:
+              return vgpr(idx-maxAgpr)
+            else:
+              return accvgpr(idx)
+          accStr = gprfunc(srcIdx)
+          if srcIdx >= maxAgpr:
+            if write:
+              imod.itemList[destIdx] = VMovB32(dst=vgpr("ValuC+%u"%(srcIdx-maxAgpr)),
+                                             src=vgpr(Holder(name="ValuC")),
+                                             comment="copy vreg[%u] to MI out reg" % destIdx)
+            else:
+              imod.itemList[destIdx] = VMovB32(dst=vgpr(Holder(name="ValuC")),
+                                              src=vgpr("ValuC+%u"%(srcIdx-maxAgpr)),
+                                              comment="copy MI out reg to vreg[%u]" % destIdx)
           else:
-            imod.itemList[destIdx] = VAccvgprReadB32(dst=vgpr(Holder(name="ValuC")),
-                                                     src=accStr,
-                                                     comment="copy acc to vreg[%u]" % destIdx)
+            if write:
+              imod.itemList[destIdx] = VAccvgprWriteB32(dst=accStr,
+                                                        src=vgpr(Holder(name="ValuC")),
+                                                        comment="copy vreg[%u] to acc" % destIdx)
+            else:
+              imod.itemList[destIdx] = VAccvgprReadB32(dst=vgpr(Holder(name="ValuC")),
+                                                      src=accStr,
+                                                      comment="copy acc to vreg[%u]" % destIdx)
         else:
           if write:
             imod.itemList[destIdx] = VMovB32(dst=vgpr("ValuC+%u"%srcIdx),

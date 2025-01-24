@@ -138,6 +138,18 @@ def loadData(filename):
     data = yaml.load(stream, yaml.SafeLoader)
     return data
 
+def compareDestFolderToYaml(originalDir, incFile, incData):
+    checkFolders = ["Equality", "GridBased"]
+    # Parsing destination folder and yaml attribute
+    destFolder = originalDir.rstrip('/').split('/')[-1]
+    incAttribute = incData[11] # the last item in yaml file
+    if not incAttribute:
+        sys.exit(f"[Error] Empty YAML attribute. Need to set Equality or GridBased in {incFile}.")
+    # Check Equality and GradBased folders only
+    if destFolder in checkFolders and destFolder != incAttribute:
+        restuls = f"\t{incFile} must be {destFolder} tuning"
+        sys.exit(f"[Error] Destination folder(={destFolder}) failed to match YAML attribute(={incAttribute}): \n{restuls}")
+
 def compareProblemType(oriData, incData):
     # ProblemType defined in originalFiles and incrementalFiles
     oriProblemType = oriData[4] # header
@@ -422,6 +434,10 @@ def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSi
         "| Add solution tags:", addSolutionTags)
         oriData = loadData(origFile)
         incData = loadData(incFile)
+
+        # Terminate when the destination folder doesn't match Incremental logic yaml
+        # For example, merge Gridbased yaml to Equality folder or Equality yaml to GridBased folder
+        compareDestFolderToYaml(originalDir, incFile, incData)
 
         # Terminate when ProblemType of originalFiles and incrementalFiles mismatch
         compareProblemType(oriData, incData)
