@@ -109,8 +109,6 @@ globalParameters["WavefrontWidth"] = 64     # if False and library client alread
 globalParameters["ExitOnFails"] = 1     # 1: Exit after benchmark run if failures detected.  2: Exit during benchmark run.
 globalParameters["CpuThreads"] = -1  # How many CPU threads to use for kernel generation.  0=no threading, -1 == nproc, N=min(nproc,N).  TODO - 0 sometimes fails with a kernel name error?  0 does not check error codes correctly
 globalParameters["NumWarmups"] = 0
-# FROM MERGE
-#globalParameters["CpuThreads"] = -4         # How many CPU threads to use for kernel generation.  0=no threading, <0 == nproc*abs(CpuThreads), N=min(nproc,N)
 
 # even if error occurs in kernel generation (ie due to resource overflow),
 # generate the kernel source anyway.  Tensile will also attempt to run
