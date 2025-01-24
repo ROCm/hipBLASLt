@@ -22,17 +22,16 @@
 #
 ################################################################################
 
-from .Common import printExit, printWarning, print2, versionIsCompatible
 from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
-from . import __version__
-from . import Common
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
+from .Common import Common, printExit, printWarning, print2, versionIsCompatible, __version__
 
 from typing import NamedTuple, List
 import os
 import sys
+
 
 try:
     import orjson as json

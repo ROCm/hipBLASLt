@@ -29,7 +29,7 @@ from . import Hardware
 from . import Common
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Utils import state
+from .Common import state
 
 class SingleSolutionLibrary:
     Tag = "Single"

@@ -30,6 +30,8 @@ import concurrent.futures
 
 from joblib import Parallel, delayed
 
+from .Common import tqdm
+
 def joblibParallelSupportsGenerator():
   import joblib
   from packaging.version import Version
@@ -49,11 +51,6 @@ def CPUThreadCount(enable=True):
     if cpuThreads == -1:
         return min(cpu_count, 64)  # Temporarily hack to fix oom issue, remove this after jenkin is fixed.
     return min(cpu_count, cpuThreads)
-
-def OverwriteGlobalParameters(newGlobalParameters):
-  from . import Common
-  Common.globalParameters.clear()
-  Common.globalParameters.update(newGlobalParameters)
 
 def pcallWithGlobalParamsMultiArg(f, args, newGlobalParameters):
   OverwriteGlobalParameters(newGlobalParameters)
@@ -131,8 +128,7 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
         mapFunc = None
 
     if mapFunc is not None:
-      from . import Utils
-      return list(mapFunc(function, Utils.tqdm(objects, message)))
+      return list(mapFunc(function, tqdm(objects, message)))
 
   mapFunc = pool.map
   if method: mapFunc = method(pool)
@@ -159,14 +155,13 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
 
 def ParallelMapReturnAsGenerator(function, objects, message="", enable=True, multiArg=True):
   from .Common import globalParameters
-  from . import Utils
   threadCount = CPUThreadCount(enable)
   print("{0}Launching {1} threads...".format(message, threadCount))
 
   if threadCount <= 1 and globalParameters["ShowProgressBar"]:
     # Provide a progress bar for single-threaded operation.
     callFunc = lambda args: function(*args) if multiArg else lambda args: function(args)
-    return [callFunc(args) for args in Utils.tqdm(objects, message)]
+    return [callFunc(args) for args in tqdm(objects, message)]
 
   with concurrent.futures.ProcessPoolExecutor(max_workers=threadCount) as executor:
     resultFutures = (executor.submit(function, *arg if multiArg else arg) for arg in objects)
@@ -186,12 +181,11 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True, retu
     return ParallelMapReturnAsGenerator(function, objects, message, enable, multiArg)
 
   from .Common import globalParameters
-  from . import Utils
   threadCount = CPUThreadCount(enable)
 
   if threadCount <= 1 and globalParameters["ShowProgressBar"]:
     # Provide a progress bar for single-threaded operation.
-    return [function(*args) if multiArg else function(args) for args in Utils.tqdm(objects, message)]
+    return [function(*args) if multiArg else function(args) for args in tqdm(objects, message)]
 
   countMessage = ""
   try:

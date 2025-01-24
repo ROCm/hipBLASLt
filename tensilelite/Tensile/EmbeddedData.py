@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from . import Common
+from .Common import Common
 
 import itertools
 import os

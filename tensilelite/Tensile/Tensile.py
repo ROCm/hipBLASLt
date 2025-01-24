@@ -26,11 +26,12 @@ if __name__ == "__main__":
     print("This file can no longer be run as a script.  Run 'Tensile/bin/Tensile' instead.")
     exit(1)
 
+import joblib
 import os
 import sys
 import argparse
 from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
-    assignGlobalParameters, restoreDefaultGlobalParameters, HR
+    assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
 from .Toolchain.Validators import validateToolchain, ToolchainDefaults
@@ -38,7 +39,6 @@ from . import BenchmarkProblems
 from . import ClientWriter
 from . import LibraryIO
 from . import LibraryLogic
-from . import __version__
 from datetime import datetime
 from pathlib import Path
 

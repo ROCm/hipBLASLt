@@ -24,13 +24,16 @@
 
 # Even though we don't support python 2, this is still packaged sometimes with python 2.
 from __future__ import print_function
+from os import path
 
-# hardcoded tensile version; also in Tensile/Source/TensileConfigVersion.cmake
+# Hardcoded tensilelite version
+# Also in Tensile/Source/TensileConfigVersion.cmake
 __version__ = "4.33.0"
 
+ROOT_PATH: str = path.dirname(__file__)
+SOURCE_PATH: str = path.join(ROOT_PATH, "Source")
+
 def PrintTensileRoot():
-    import os.path
+    print(ROOT_PATH, end='')
 
-    print(os.path.dirname(__file__), end='')
-
-
+__all__ = ["__version__", "ROOT_PATH", "SOURCE_PATH"]

@@ -27,21 +27,18 @@ from . import ClientExecutable
 from . import ClientWriter
 from . import LibraryIO
 from . import LibraryLogic
-from . import Common
-from .Common import globalParameters, print1, printWarning, ensurePath, assignGlobalParameters, \
-                    restoreDefaultGlobalParameters, HR
+from .Common import Common, globalParameters, print1, printWarning, ensurePath, assignGlobalParameters, \
+                    restoreDefaultGlobalParameters, HR, __version__
 from .Tensile import addCommonArguments, argUpdatedGlobalParameters
 from .SolutionStructs import ProblemSizes
 from .Toolchain.Validators import validateToolchain
-from . import __version__
-
-from pathlib import Path
 
 import argparse
 import copy
 import os
 import shutil
 import sys
+from pathlib import Path
 
 workingDirectoryStack = []
 def pushWorkingPath( foldername ):

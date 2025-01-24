@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-# hardcoded tensile version; also in Tensile/__init__.py
+# hardcoded tensile version; also in Tensile/Common/Common.py
 set(TENSILE_VERSION_MAJOR  4)
 set(TENSILE_VERSION_MINOR 33)
 set(TENSILE_VERSION_PATCH  0)

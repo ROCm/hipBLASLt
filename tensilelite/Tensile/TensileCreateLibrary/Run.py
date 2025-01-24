@@ -32,16 +32,15 @@ from pathlib import Path
 from timeit import default_timer as timer
 from typing import NamedTuple, List, Optional, Sequence, Union
 
-from Tensile import Utils
+from Tensile import LibraryIO, SOURCE_PATH
 from Tensile.Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
 from Tensile.Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
 from Tensile.Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
 from Tensile.TensileInstructions import getGfxName, TensileInstructions
-from Tensile.Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
-                    CHeader, assignGlobalParameters, architectureMap, IsaVersion, ParallelMap2
+from Tensile.Common import globalParameters, HR, print1, print2, printExit, IsaVersion, ensurePath, state, \
+                    CHeader, assignGlobalParameters, architectureMap, IsaVersion, ParallelMap2, tqdm
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
-from Tensile import LibraryIO
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.SolutionStructs import Solution
 from Tensile.CustomYamlLoader import load_logic_gfx_arch
@@ -82,7 +81,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     removeSolutions = []
     removeResults = []
 
-    for kernIdx, r in Utils.tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
+    for kernIdx, r in tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
         if r.err != 0:
             if not errorTolerant:
                 print("\nKernel generation failed for kernel: {}".format(kernels[kernIdx]["SolutionIndex"]))
@@ -99,7 +98,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     for kern in removeKernels:
         kernels.remove(kern)
 
-    for solution in Utils.tqdm(solutions, "Finding invalid solutions") if globalParameters["PrintLevel"] > 1 else solutions:
+    for solution in tqdm(solutions, "Finding invalid solutions") if globalParameters["PrintLevel"] > 1 else solutions:
         solutionKernels = solution.getKernels()
         for kernel in solutionKernels:
             kName = Solution.getKeyNoInternalArgs(kernel)
@@ -263,7 +262,7 @@ def copyStaticFiles(outputPath):
     "memory_gfx.h" ]
 
   for fileName in libraryStaticFiles:
-    shutil.copy(os.path.join(globalParameters["SourcePath"], fileName), outputPath)
+    shutil.copy(os.path.join(SOURCE_PATH, fileName), outputPath)
 
   return libraryStaticFiles
 
@@ -447,11 +446,11 @@ def run():
       else:
         masterFile = os.path.join(newLibraryDir, "TensileLibrary_"+archName)
       newMasterLibrary.applyNaming(kernelMinNaming)
-      LibraryIO.write(masterFile, Utils.state(newMasterLibrary), arguments["LibraryFormat"])
+      LibraryIO.write(masterFile, state(newMasterLibrary), arguments["LibraryFormat"])
       for name, lib in newMasterLibrary.lazyLibraries.items():
         filename = os.path.join(newLibraryDir, name)
         lib.applyNaming(kernelMinNaming)
-        LibraryIO.write(filename, Utils.state(lib), arguments["LibraryFormat"])
+        LibraryIO.write(filename, state(lib), arguments["LibraryFormat"])
 
   print1("# Tensile Library Writer DONE")
   print1(HR)

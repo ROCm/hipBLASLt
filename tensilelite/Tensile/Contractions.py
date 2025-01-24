@@ -23,16 +23,12 @@
 ################################################################################
 
 from .Activation import ActivationType
-from .Common import internalParameters, printExit
 from .TensileInstructions import DataType
 from . import Hardware
 from . import Properties
 from .SolutionStructs import getBiasDataTypeListDefault
 from .SolutionStructs import Solution as OriginalSolution
-from .Utils import state, state_key_ordering
-
-from . import Common
-from . Common import globalParameters
+from .Common import Common, internalParameters, globalParameters, state, state_key_ordering
 
 @state_key_ordering
 class FreeIndex:

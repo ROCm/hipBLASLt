@@ -22,15 +22,13 @@
 #
 ################################################################################
 
-from . import Common
 from . import ClientWriter
 from . import LibraryIO
 from .Contractions import ProblemType as ContractionsProblemType
 from .SolutionStructs import ProblemSizes, ProblemType
-from .Common import print1, printExit, printWarning, assignGlobalParameters, \
-        restoreDefaultGlobalParameters, HR
+from .Common import Common, print1, printExit, printWarning, assignGlobalParameters, \
+        restoreDefaultGlobalParameters, HR, __version__
 from .Tensile import addCommonArguments, argUpdatedGlobalParameters
-from . import __version__
 
 import argparse
 import os

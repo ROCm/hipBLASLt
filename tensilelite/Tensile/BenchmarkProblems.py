@@ -22,7 +22,6 @@
 #
 ################################################################################
 
-import glob
 import os
 import shutil
 import sys
@@ -34,18 +33,17 @@ from pathlib import Path
 from . import ClientExecutable
 from . import SolutionLibrary
 from . import LibraryIO
-from . import Utils
 from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
 from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
-from .Common import globalParameters, HR, print1, print2, \
-        printExit, printWarning, ensurePath, startTime, validParameters
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionStructs import Solution, ProblemType, ProblemSizes
 from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
 from .CustomKernels import getCustomKernelConfig
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
+from .Common import globalParameters, HR, print1, print2, \
+        printExit, printWarning, ensurePath, startTime, tqdm, state
 
 
 def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCompiler):
@@ -127,7 +125,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     kernelHelperNames = set()
 
     # get unique kernels and kernel helpers
-    for solution in Utils.tqdm(solutions, "Finding unique solutions"):
+    for solution in tqdm(solutions, "Finding unique solutions"):
         solutionKernels = solution.getKernels()
         for kernel in solutionKernels:
             kName = Solution.getKeyNoInternalArgs(kernel)
@@ -159,7 +157,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")
     newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, srcToolchain.compiler)
     newLibrary.applyNaming(kernelMinNaming)
-    LibraryIO.write(newLibraryFile, Utils.state(newLibrary), globalParameters["LibraryFormat"])
+    LibraryIO.write(newLibraryFile, state(newLibrary), globalParameters["LibraryFormat"])
 
     codeObjectFiles = [os.path.relpath(f, sourcePath) \
             for f in codeObjectFiles]

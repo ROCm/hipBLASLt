@@ -22,13 +22,6 @@
 #
 ################################################################################
 
-from .Common import assignParameterWithDefault, \
-                    defaultProblemType, defaultSolution, \
-                    defaultInternalSupportParams, \
-                    globalParameters, internalParameters, \
-                    print2, printExit, printWarning, \
-                    validMFMA, validSMFMA, validParameters, \
-                    validGEMMTypes, HPATypes, roundUp, validWMMA
 from .TensileInstructions import DataType, roundUpToNearestMultiple
 from .TensileInstructions.Base import fastdeepcopy as deepcopy
 
@@ -43,6 +36,14 @@ from .AsmStoreState import VectorDataTypes
 from .Activation import ActivationType
 
 from .CustomKernels import isCustomKernelConfig
+
+from .Common import assignParameterWithDefault, \
+                    defaultProblemType, defaultSolution, \
+                    defaultInternalSupportParams, \
+                    globalParameters, internalParameters, \
+                    print2, printExit, printWarning, \
+                    validMFMA, validSMFMA, validParameters, \
+                    validGEMMTypes, HPATypes, roundUp, validWMMA, INDEX_CHARS
 
 from collections import OrderedDict
 from collections.abc import Mapping
@@ -458,7 +459,7 @@ class ProblemType(Mapping):
 
   ########################################
   def __str__(self):
-    indexChars = globalParameters["IndexChars"]
+    indexChars = INDEX_CHARS
     # C dimensions
     name = "C"
     for i in range(0, self["NumIndicesC"]):
@@ -2409,7 +2410,7 @@ class Solution(collections.abc.Mapping):
     # grid size [0,1]
     state["PackedC0IdxChars"] = []
     state["PackedC0IndicesX"] = []
-    indexChars = globalParameters["IndexChars"]
+    indexChars = INDEX_CHARS
     # Pack all the dimensions (free) of A into grid[0]
 
     if problemType["Index0"] in problemType["IndexAssignmentsA"]:

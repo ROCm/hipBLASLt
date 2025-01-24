@@ -28,8 +28,8 @@ import subprocess
 from typing import Optional
 from pathlib import Path
 
-from . import Common
-from .Common import globalParameters
+from .Common import Common, globalParameters
+from Tensile import SOURCE_PATH
 
 class CMakeEnvironment:
     def __init__(self, sourceDir, buildDir, **options):
@@ -57,7 +57,7 @@ class CMakeEnvironment:
         return os.path.join(self.buildDir, path, *paths)
 
 def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cCompiler: str):
-    sourcedir = globalParameters["SourcePath"]
+    sourcedir = SOURCE_PATH
     
     builddir = Common.ensurePath(builddir)
 

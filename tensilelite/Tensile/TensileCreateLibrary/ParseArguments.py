@@ -22,13 +22,13 @@
 #
 ################################################################################
 
-from Tensile.Toolchain.Validators import ToolchainDefaults
-
 import os
 from argparse import ArgumentParser
 from typing import Any, Dict, List, Optional
 
 from Tensile.Common import architectureMap
+from Tensile.Toolchain.Validators import ToolchainDefaults
+
 
 def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     """Parse command line arguments for TensileCreateLibrary.

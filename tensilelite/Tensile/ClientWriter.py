@@ -22,21 +22,22 @@
 #
 ################################################################################
 
+import os
+import subprocess
+import shlex
+import shutil
+
 from pathlib import Path
+from enum import Enum
+from glob import glob
+
+from . import ROOT_PATH
 from . import ClientExecutable
 from . import LibraryIO
 from .TensileInstructions import getGfxName, DataType
 from .Common import globalParameters, ensurePath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
 from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
 from .TensileCreateLibrary import copyStaticFiles
-
-import os
-import subprocess
-import shlex
-import shutil
-from enum import Enum
-from glob import glob
-
 from .Contractions import FreeIndex, BatchIndex
 from .Contractions import ProblemType as ContractionsProblemType
 
@@ -207,7 +208,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
   import io
   runScriptFile = io.StringIO()
 
-  callCreateLibraryCmd = globalParameters["ScriptPath"] + "/bin/TensileCreateLibrary"
+  callCreateLibraryCmd = ROOT_PATH + "/bin/TensileCreateLibrary"
 
   if not globalParameters["LazyLibraryLoading"]:
     callCreateLibraryCmd += " --no-lazy-library-loading"
