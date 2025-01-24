@@ -182,7 +182,6 @@ globalParameters["PruneSparseMode"] = 0           # Prune mode for Sparse Matrix
 globalParameters["CMakeCXXFlags"] = ""            # pass flags to cmake
 globalParameters["CMakeCFlags"] = ""              # pass flags to cmake
 globalParameters["DebugKernel"] = False           # assembly only, kernel gets buffer for debug "printing"; kernel writes data to memory, gets coppied to host and printed
-globalParameters["LibraryPrintDebug"] = False     # solutions will print enqueue info when enqueueing a kernel
 globalParameters["AsanBuild"] = False             # build with asan
 globalParameters["SaveTemps"] = False             # Generate intermediate results of hip kernels
 globalParameters["KeepBuildTmp"] = False          # If true, do not remove artifacts in build_tmp
