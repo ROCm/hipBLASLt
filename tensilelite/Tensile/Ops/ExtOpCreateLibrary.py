@@ -20,6 +20,14 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+try:
+    from Tensile import Tensile
+except ImportError:
+    import os.path
+    import sys
+    parentdir = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
+    sys.path.append(parentdir)
+    
 from argparse import ArgumentParser
 from collections import defaultdict
 import os

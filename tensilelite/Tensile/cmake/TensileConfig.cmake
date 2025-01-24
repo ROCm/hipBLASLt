@@ -24,31 +24,11 @@
 
 include(CMakeParseArguments)
 
-if(NOT DEFINED Tensile_ROOT)
-    # Compute the installation prefix relative to this file.
-    get_filename_component(Tensile_PREFIX "${CMAKE_CURRENT_LIST_FILE}" PATH)
-    get_filename_component(Tensile_PREFIX "${Tensile_PREFIX}" PATH)
-
-    if (WIN32)
-        execute_process(COMMAND "${Tensile_PREFIX}/bin/TensileGetPath.exe" OUTPUT_VARIABLE Tensile_ROOT)
-    else()
-        execute_process(COMMAND "${Tensile_PREFIX}/bin/TensileGetPath" OUTPUT_VARIABLE Tensile_ROOT)
-    endif()
-endif()
-list(APPEND CMAKE_MODULE_PATH "${Tensile_ROOT}/Source/cmake/")
+set(Tensile_ROOT "${PROJECT_SOURCE_DIR}/tensilelite/Tensile")
 list(APPEND CMAKE_MODULE_PATH "${Tensile_ROOT}/Source/")
 
-if("HIP" IN_LIST Tensile_FIND_COMPONENTS)
-    set(TENSILE_USE_HIP ON CACHE BOOL "Use HIP")
-else()
-    set(TENSILE_USE_HIP OFF CACHE BOOL "Use HIP")
-endif()
-
-if("LLVM" IN_LIST Tensile_FIND_COMPONENTS)
-    set(TENSILE_USE_LLVM ON CACHE BOOL "Use LLVM")
-else()
-    set(TENSILE_USE_LLVM OFF CACHE BOOL "Use LLVM")
-endif()
+set(TENSILE_USE_HIP ON CACHE BOOL "Use HIP")
+set(TENSILE_USE_LLVM ON CACHE BOOL "Use LLVM")
 
 if("Client" IN_LIST Tensile_FIND_COMPONENTS)
     if(TENSILE_USE_HIP AND TENSILE_USE_LLVM)
@@ -69,8 +49,7 @@ else()
     set(TENSILE_STATIC_ONLY OFF CACHE BOOL "Disable exporting symbols from shared library.")
 endif()
 
-add_subdirectory("${Tensile_ROOT}/Source" "Tensile")
-include("${Tensile_ROOT}/Source/TensileCreateLibrary.cmake")
+#include("${Tensile_ROOT}/Source/TensileCreateLibrary.cmake")
 
 # Output target: ${Tensile_VAR_PREFIX}_LIBRARY_TARGET. Ensures that the libs get built in Tensile_OUTPUT_PATH/library.
 function(TensileCreateLibraryFiles
@@ -242,7 +221,7 @@ function(TensileCreateLibraryFiles
       )
 
       add_custom_target(
-        "${Tensile_VAR_PREFIX}_LIBRARY_TARGET" ALL
+        "${Tensile_VAR_PREFIX}_LIBRARY_TARGET"
         COMMENT "${Tensile_VAR_PREFIX}_LIBRARY_TARGET"
         DEPENDS ${Tensile_OUTPUT_PATH}/library
       )

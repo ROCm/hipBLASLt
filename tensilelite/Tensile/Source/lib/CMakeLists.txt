@@ -135,8 +135,6 @@ endif()
 
 if(TENSILE_USE_HIP)
     target_compile_definitions(TensileHost PUBLIC TENSILE_USE_HIP)
-
-    #add_subdirectory(client)
     target_link_libraries( TensileHost PUBLIC ${HSA_LIBRARIES} hip::device )
 
     if(WIN32)
