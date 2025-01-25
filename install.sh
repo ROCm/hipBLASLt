@@ -765,7 +765,7 @@ pushd .
   fi
 
   if [[ "${tensile_no_lazy_library_loading}" == true ]]; then
-    tensile_opt="${tensile_opt} -DTensile_NO_LAZY_LIBRARY_LOADING=OFF"
+    tensile_opt="${tensile_opt} -DTensile_NO_LAZY_LIBRARY_LOADING=ON"
   fi
 
   if [[ "${tensile_msgpack_backend}" == true ]]; then
