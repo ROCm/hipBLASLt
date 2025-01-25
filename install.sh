@@ -506,7 +506,7 @@ while true; do
             build_tensile=false
             shift ;;
         --no-lazy-library-loading)
-            tensile_no_lazy_library_loading=false
+            tensile_no_lazy_library_loading=true
             shift ;;
         -u|--use-custom-version)
             tensile_version=${2}
