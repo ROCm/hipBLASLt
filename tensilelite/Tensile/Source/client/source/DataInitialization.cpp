@@ -261,6 +261,10 @@ namespace TensileLite
                 MiKv = 4;
                 break;
             case DataType::Int8:
+            case DataType::Float8_fnuz:
+            case DataType::BFloat8_fnuz:
+            case DataType::Float8BFloat8_fnuz:
+            case DataType::BFloat8Float8_fnuz:
             case DataType::Float8:
             case DataType::BFloat8:
             case DataType::Float8BFloat8:
