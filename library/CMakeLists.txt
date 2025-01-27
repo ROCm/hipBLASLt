@@ -163,7 +163,7 @@ if(HIPBLASLT_ENABLE_MARKER)
 endif()
 
 if( NOT BUILD_CUDA AND NOT LEGACY_HIPBLAS_DIRECT )
-  target_link_libraries(hipblaslt INTERFACE roc:hipblas-common)
+  target_link_libraries(hipblaslt INTERFACE roc::hipblas-common)
 endif()
 
 # Target properties
