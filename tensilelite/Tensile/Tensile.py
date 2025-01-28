@@ -76,15 +76,7 @@ def executeStepsInConfig(
         cCompiler (str): The C compiler to use.
     """
 
-    # Goal, define these here and pass them in to the relevant functions to it's clear
-    # what is being built and where
     buildTmpPath = outputPath / "build_tmp"
-    clientBuildPath = outputPath / "0_Build"
-    benchamrkProblemsPath = outputPath / "1_BenchmarkProblems"
-    benchmarkDataPath = outputPath / "2_BenchmarkData"
-    libraryLogicPath = outputPath / "3_LibraryLogic"
-    clientLibraryPath = outputPath / "4_LibraryClient"
-
     ##############################################################################
     # Benchmark Problems
     ##############################################################################
@@ -303,7 +295,6 @@ def Tensile(userArgs):
 
     config["UseCache"] = useCache
     globalParameters["ConfigPath"] = configPaths
-    globalParameters["OutputPath"] = outputPath
 
     cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)

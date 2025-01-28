@@ -117,9 +117,8 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
         biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes, \
         asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, sourcePath: Path, buildTmpPath: Path):
     """Write all the files needed for a given benchmarking step"""
-    ensurePath(sourcePath / "Solutions")
-    ensurePath(sourcePath / "Kernels")
 
+    ensurePath(sourcePath)
     copyStaticFiles(sourcePath)
 
     kernels = []
