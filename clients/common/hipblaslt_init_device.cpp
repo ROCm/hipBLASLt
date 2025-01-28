@@ -28,23 +28,30 @@
 #include "hipblaslt_init.hpp"
 #include "hipblaslt_ostream.hpp"
 #include "hipblaslt_random.hpp"
+#include "hipblaslt_test.hpp"
 #include <hipblaslt/hipblaslt.h>
 
 template <typename T, typename F>
-__global__ void fill_kernel(T* A, size_t size, F f)
+__global__ void fill_kernel(T* A, size_t size, size_t offset, F f)
 {
     size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(idx < size)
-        A[idx] = f(idx);
+        A[idx + offset] = f(idx + offset);
 }
 
 template <typename T, typename F>
 void fill_batch(T* A, size_t M, size_t N, size_t lda, size_t stride, size_t batch_count, const F& f)
 {
-    size_t size       = std::max(lda * N, stride) * batch_count;
-    size_t block_size = 256;
-    size_t grid_size  = (size + block_size - 1) / block_size;
-    fill_kernel<<<dim3(grid_size), dim3(block_size), 0, hipStreamDefault>>>(A, size, f);
+    size_t size_64 = lda * N + size_t(batch_count - 1) * stride;
+    constexpr size_t c_i32_max = size_t(std::numeric_limits<int32_t>::max());
+    for(size_t offset = 0; offset < size_64; offset += c_i32_max)
+    {
+        size_t size       = std::min(size_64 - offset, c_i32_max);
+        size_t block_size = 256;
+        size_t grid_size  = (size + block_size - 1) / block_size;
+        fill_kernel<<<dim3(grid_size), dim3(block_size), 0, hipStreamDefault>>>(A, size, offset, f);
+    }
+    CHECK_HIP_ERROR(hipGetLastError());
 }
 
 __device__ uint32_t pseudo_random_device(size_t idx)
