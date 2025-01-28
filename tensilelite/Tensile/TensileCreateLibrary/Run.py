@@ -277,15 +277,16 @@ def generateKernelHelperObjects(solutions):
 
 
 @timing
-def generateSolutions(args, cxxCompiler, logicDir):
+def generateSolutions(args, cxxCompiler, logicDirs):
     if ";" in args["Architecture"]:
         archs = args["Architecture"].split(";") # user arg list format
     else:
         archs = args["Architecture"].split("_") # workaround for cmake list in list issue
     solutions = []
-    files = glob.glob(logicDir + "/*.yaml")
-    for f in files:
-        solutions.extend(LibraryIO.parseLibraryLogicFile(f, cxxCompiler, archs).solutions)
+    for logicDir in logicDirs:
+        files = glob.glob(logicDir + "/*.yaml")
+        for f in files:
+            solutions.extend(LibraryIO.parseLibraryLogicFile(f, cxxCompiler, archs).solutions)
     numSoln = len(solutions)
     #solutions = list(dict.fromkeys(solutions).keys())
     return solutions, numSoln, (numSoln-len(solutions))
@@ -393,10 +394,28 @@ def run():
   asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], arguments["CodeObjectVersion"])
   srcToolchain = SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
-  logicFiles = getLogicFileList(arguments)
+  def distribute(lst, n):
+      import heapq
+      lists = [[] for _ in range(n)]
+      totals = [(0, i) for i in range(n)]
+      heapq.heapify(totals)
+      for value, f in lst:
+          total, index = heapq.heappop(totals)
+          lists[index].append(f)
+          heapq.heappush(totals, (total + value, index))
+      return lists
+
+  def getSize(logicDirs):
+      from os.path import getsize
+      from operator import itemgetter
+      filesizes = [(sum([int(getsize(f)) for f in glob.glob(d + "/*.yaml")]), d) for d in logicDirs]
+      return filesizes
+  
+  logicDirs = distribute(getSize(getLogicFileList(arguments)), 2*arguments["CpuThreads"])
+
   copyStaticFiles(arguments["OutputPath"])
   unaryBuild = functools.partial(build, arguments, cxxCompiler, assembler, asmToolchain, srcToolchain)
-  result  = ParallelMap2(unaryBuild, logicFiles, "Building Library", multiArg=False, return_as="generator_unordered")
+  result  = ParallelMap2(unaryBuild, logicDirs, "Building Library", multiArg=False, return_as="generator_unordered")
   totalKernels = 0
   totalUnique = 0
   totDup = 0
