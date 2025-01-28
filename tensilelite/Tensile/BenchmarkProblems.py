@@ -30,9 +30,7 @@ import time
 from copy import deepcopy
 from pathlib import Path
 
-from . import ClientExecutable
-from . import SolutionLibrary
-from . import LibraryIO
+from . import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
 from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
 from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
@@ -69,7 +67,7 @@ def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCo
     return solutions
 
 
-def getCustomKernelSolutionObj(kernelName, internalSupportParams, cxxCompiler: str, directory=globalParameters["CustomKernelDirectory"]):
+def getCustomKernelSolutionObj(kernelName, internalSupportParams, cxxCompiler: str, directory=CUSTOM_KERNEL_PATH):
     """Creates the Solution object for a custom kernel"""
     config = getCustomKernelConfig(kernelName, internalSupportParams, directory)
     return Solution(config, cxxCompiler)

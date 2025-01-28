@@ -259,9 +259,6 @@ globalParameters["MinKForGSU"] = 32 # min K size to use GlobalSplitU algorithm (
 # control if a solution is run for a given problem
 globalParameters["GranularityThreshold"] = 0.0
 
-# directory where custom kernels are located
-globalParameters["CustomKernelDirectory"] = os.path.join(os.path.dirname(os.path.realpath(__file__)), "CustomKernels")
-
 globalParameters["PristineOnGPU"] = True # use Pristine memory on Tensile trainning verification or not
 
 globalParameters["SeparateArchitectures"] = False # write Tensile library metadata to separate files for each architecture
@@ -1073,7 +1070,7 @@ validParameters = {
     "KernelLanguage":             [ "Assembly" ],
     "ISA":                        validISA,       # arch for assembly kernels
 
-    # Name of the custom kernel located in globalParameters["CustomKernelDirectory"].
+    # Name of the custom kernel located at `CUSTOM_KERNEL_PATH`.
     # a custom kernel is a user written assembly kernel with its associated configuration parameters included in a custom.config section
     # inside the yaml block between the --- and ... markers.  These parameters are only used for information purposes, not kernel generation.
     # Ex:
