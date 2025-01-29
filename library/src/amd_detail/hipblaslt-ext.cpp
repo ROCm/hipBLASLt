@@ -30,7 +30,7 @@
 #include <Debug.hpp>
 #include <algorithm>
 #include <hip/hip_runtime.h>
-#include <hipblaslt/hipblaslt_float8.h>
+#include <hipblaslt/hipblaslt-types.h>
 #include <iostream>
 #include <rocblaslt.h>
 

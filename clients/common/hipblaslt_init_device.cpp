@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2024-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,23 +28,30 @@
 #include "hipblaslt_init.hpp"
 #include "hipblaslt_ostream.hpp"
 #include "hipblaslt_random.hpp"
+#include "hipblaslt_test.hpp"
 #include <hipblaslt/hipblaslt.h>
 
 template <typename T, typename F>
-__global__ void fill_kernel(T* A, size_t size, F f)
+__global__ void fill_kernel(T* A, size_t size, size_t offset, F f)
 {
     size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(idx < size)
-        A[idx] = f(idx);
+        A[idx + offset] = f(idx + offset);
 }
 
 template <typename T, typename F>
 void fill_batch(T* A, size_t M, size_t N, size_t lda, size_t stride, size_t batch_count, const F& f)
 {
-    size_t size       = std::max(lda * N, stride) * batch_count;
-    size_t block_size = 256;
-    size_t grid_size  = (size + block_size - 1) / block_size;
-    fill_kernel<<<dim3(grid_size), dim3(block_size), 0, hipStreamDefault>>>(A, size, f);
+    size_t size_64 = lda * N + size_t(batch_count - 1) * stride;
+    constexpr size_t c_i32_max = size_t(std::numeric_limits<int32_t>::max());
+    for(size_t offset = 0; offset < size_64; offset += c_i32_max)
+    {
+        size_t size       = std::min(size_64 - offset, c_i32_max);
+        size_t block_size = 256;
+        size_t grid_size  = (size + block_size - 1) / block_size;
+        fill_kernel<<<dim3(grid_size), dim3(block_size), 0, hipStreamDefault>>>(A, size, offset, f);
+    }
+    CHECK_HIP_ERROR(hipGetLastError());
 }
 
 __device__ uint32_t pseudo_random_device(size_t idx)
@@ -224,6 +231,7 @@ void hipblaslt_init_device(ABC_dims                      abc,
         hipblaslt_init_device<hip_bfloat16>(
             abc, init, is_nan, static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_device<hipblaslt_f8_fnuz>(
             abc, init, is_nan, static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -232,7 +240,8 @@ void hipblaslt_init_device(ABC_dims                      abc,
         hipblaslt_init_device<hipblaslt_bf8_fnuz>(
             abc, init, is_nan, static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_device<hipblaslt_f8>(
             abc, init, is_nan, static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);

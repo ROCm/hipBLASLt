@@ -71,11 +71,11 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      # DataTypeA: f8
+      # DataTypeA: f8n
       # DataTypeB: h
       UseScaleAB: "Vector"
 
-      DataType: f8
+      DataType: f8n
       DestDataType: b
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -95,10 +95,10 @@ BenchmarkProblems:
     - # BenchmarkProblemSizeGroup - Standard
       CustomKernels:
         [
-          "Custom_Cijk_Alik_Bljk_F8BS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_K1_MIWT4_16_DTVA",
-          "Custom_Cijk_Alik_Bljk_F8BS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA",
-          "Custom_Cijk_Alik_Bljk_F8BS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x224x128_MI16x16x1_SN_K1_MIWT4_14_DTVA",
-          "Custom_Cijk_Alik_Bljk_F8BS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x224x128_MI16x16x1_SN_K1_MIWT4_14_WSGRB2_DTVA"
+          "Custom_Cijk_Alik_Bljk_F8NBS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_K1_MIWT4_16_DTVA",
+          "Custom_Cijk_Alik_Bljk_F8NBS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_K1_MIWT4_16_WSGRB2_DTVA",
+          "Custom_Cijk_Alik_Bljk_F8NBS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x224x128_MI16x16x1_SN_K1_MIWT4_14_DTVA",
+          "Custom_Cijk_Alik_Bljk_F8NBS_BH_BiasSB_AS_SABV_SAV_UserArgs_MT256x224x128_MI16x16x1_SN_K1_MIWT4_14_WSGRB2_DTVA"
         ]
       InitialSolutionParameters:
       BenchmarkCommonParameters:

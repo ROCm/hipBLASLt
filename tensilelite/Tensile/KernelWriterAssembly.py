@@ -70,7 +70,6 @@ class KernelWriterAssembly(KernelWriter):
   def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
     super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler)
 
-
   def getSourceFileString(self, kernel) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"
     # Skip if .o files will have already been built for this file
@@ -2319,8 +2318,8 @@ class KernelWriterAssembly(KernelWriter):
         if tP["isSwizzled"]:
           swizzleStridePerWave = self.sgprPool.checkOut(1)
           WvG_M = kernel["MIWaveGroup"][0]
-          # Calc stride = numKr * WaveG[0], TODO- 32 should be MI_K * 2
-          swizzleStrideVal = 32
+          # Calc stride = numKr * WaveG[0]
+          swizzleStrideVal = tP["swizzleK"]
           module.addComment(f"Align to {swizzleStrideVal}")
           module.add(SAddU32(sgpr(swizzleStridePerWave), sgpr("SizesSum"), swizzleStrideVal-1))
           module.add(SLShiftRightB32(dst=sgpr(swizzleStridePerWave), src=sgpr(swizzleStridePerWave), shiftHex=hex(log2(swizzleStrideVal))))
@@ -2583,8 +2582,9 @@ class KernelWriterAssembly(KernelWriter):
     swapPerpPara = (((tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]) and (not tP["tlu"]) and tP["nrp"] > 1)
 
     if tP["isSwizzled"]:
+      swizzleK = tP["swizzleK"]
       tP["swizzledBlockSize"] = self.sgprPool.checkOut(1)
-      module.add(SMovB32(dst=sgpr(tP["swizzledBlockSize"]), src=hex(16*32), comment="SWZ: swizzled block = MI_M(%u) * MI_K(%u) * 2" %(16, 16)))
+      module.add(SMovB32(dst=sgpr(tP["swizzledBlockSize"]), src=hex(16*swizzleK), comment="SWZ: swizzled block = MI_M(%u) * MI_K(%u) * pack-K(%u)" %(16, kernel["MatrixInstK"], tP["swizzlePackK"])))
 
     # both UseSgprForGRO and DTVA/B are enabled
     if ((tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]) and kernel["_UseSgprForGRO"]:
@@ -3038,7 +3038,7 @@ class KernelWriterAssembly(KernelWriter):
           else:
             if tP["isA"] and tP["isSwizzled"]:
               if idx in kernel["ProblemType"]["IndicesSummation"]:
-                module.addModuleAsFlatItems(self.alignTo(stmp, "SizeL", 32))
+                module.addModuleAsFlatItems(self.alignTo(stmp, "SizeL", tP["swizzleK"]))
                 module.add(SSubU32(dst=sgpr(stmp), src0=sgpr(stmp), src1=1, comment="(size-1)"))
               elif idx == kernel["ProblemType"]["Index0"]:
                 module.addModuleAsFlatItems(self.alignTo(stmp, "SizeI", 16))
@@ -3146,7 +3146,7 @@ class KernelWriterAssembly(KernelWriter):
     graIdx = 0
 
     if tP["isA"] and tP["isSwizzled"]:
-      module.addModuleAsFlatItems(self.alignTo("StrideA0I", "StrideA0I", 32))
+      module.addModuleAsFlatItems(self.alignTo("StrideA0I", "StrideA0I", tP["swizzleK"]))
 
     if kernel["BufferLoad"]:
       # maxAddrSgpr = size[n] * stride[n-1]
@@ -3384,11 +3384,11 @@ class KernelWriterAssembly(KernelWriter):
       module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, kernel["WavefrontSize"], tmpVgprRes))
       with self.allocTmpSgpr(1) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
-        # Calc numKr, TODO- 32 should be MI_K * 2
-        swizzleStrideVal = 32
+        # Calc numKr
+        swizzleStrideVal = tP["swizzleK"]
         module.addComment(f"Align to {swizzleStrideVal}")
         module.add(SAddU32(sgpr(tmpSgpr), sgpr("SizesSum"), swizzleStrideVal-1))
-        module.add(SLShiftRightB32(dst=sgpr(tmpSgpr), shiftHex=hex(log2(swizzleStrideVal)), src=sgpr(tmpSgpr),  comment="SWZ: numKr = DimK / 32"))
+        module.add(SLShiftRightB32(dst=sgpr(tmpSgpr), shiftHex=hex(log2(swizzleStrideVal)), src=sgpr(tmpSgpr),  comment="SWZ: numKr = DimK / %s"%swizzleStrideVal))
         WvG_M = kernel["MIWaveGroup"][0]
         module.add(VAndB32(dst=vgpr(qReg), src0=hex(WvG_M-1), src1=vgpr(qReg), comment="SWZ: wave_id (along_M) %= MIWG[0]"))
         module.add(VMulU32U24(dst=vgpr(qReg), src0=sgpr(tmpSgpr), src1=vgpr(qReg), comment="SWZ: wave_id (along_M) *= numKr"))
@@ -7573,7 +7573,7 @@ class KernelWriterAssembly(KernelWriter):
                 isHigh16Bits = True
               if (blockWidth == 0.5) and (instHi % 2 == 1):
                 isHigh16Bits = True
-              if kernel["ProblemType"]["DataType%s"%tc].isFloat8():
+              if kernel["ProblemType"]["DataType%s"%tc].isAnyFloat8():
                 if g2lIdx%2 == 1:
                   isCvtHighBits = True
 
@@ -7607,9 +7607,9 @@ class KernelWriterAssembly(KernelWriter):
               elif (kernel["ProblemType"]["DataType%s"%tc].isHalf() and kernel["ProblemType"]["DataType"].is8bitFloat()):
                 #HH_F8/B8/F8B8/B8F8_
                 toF8 = False
-                if (kernel["ProblemType"]["DataType"].isFloat8() or
-                  (tc == "A" and kernel["ProblemType"]["DataType"].isFloat8BFloat8()) or
-                  (tc == "B" and kernel["ProblemType"]["DataType"].isBFloat8Float8())):
+                if (kernel["ProblemType"]["DataType"].isAnyFloat8() or
+                  (tc == "A" and kernel["ProblemType"]["DataType"].isAnyFloat8BFloat8()) or
+                  (tc == "B" and kernel["ProblemType"]["DataType"].isAnyBFloat8Float8())):
                   toF8 = True
 
                 newBlockWidth = (tP["bpeGR"] / tP["bpe"]) * blockWidth
@@ -7680,7 +7680,7 @@ class KernelWriterAssembly(KernelWriter):
                         localWriteCVTCode.add(VCvtPkF32toBF8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src0=vgpr(vgprTmp), src1=vgpr(vgprTmp2), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to BF8"))
                   self.vgprPool.checkIn(vgprTmp)
 
-              elif (kernel["ProblemType"]["DataType%s"%tc].isFloat8() and kernel["ProblemType"]["DataType"].isHalf()):
+              elif (kernel["ProblemType"]["DataType%s"%tc].isAnyFloat8() and kernel["ProblemType"]["DataType"].isHalf()):
                 newBlockWidth = tP["globalReadInstruction"].blockWidth
                 if newBlockWidth == 0.25:
                   new_src = fastdeepcopy(paramList[0])
@@ -9655,11 +9655,11 @@ class KernelWriterAssembly(KernelWriter):
         cvtVgpr = self.vgprPool.checkOut(4)
         cvtVgprStruct = self.BF16CVTVgprStruct(vgprBf16Temp=cvtVgpr, vgprBf16Mask=(cvtVgpr+1), \
                                                vgprFp32Nan=(cvtVgpr+2), vgprBf16Inc=(cvtVgpr+3))
-      elif kernel["ProblemType"]["DestDataType"].isFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
+      elif kernel["ProblemType"]["DestDataType"].isAnyFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
         cvtVgpr = self.vgprPool.checkOut(4)
         cvtVgprStruct = self.FP8CVTVgprStruct(vgprFp8Temp=cvtVgpr, vgprFp8NanInf=(cvtVgpr+1), \
                                               vgprFp8Min=(cvtVgpr+2), vgprFp8Max=(cvtVgpr+3))
-      elif kernel["ProblemType"]["DestDataType"].isBFloat8():
+      elif kernel["ProblemType"]["DestDataType"].isAnyBFloat8():
         cvtVgpr = self.vgprPool.checkOut(4)
         cvtVgprStruct = self.BF8CVTVgprStruct(vgprBF8Temp=cvtVgpr, vgprBF8NanInf=(cvtVgpr+1), \
                                               vgprBF8Min=(cvtVgpr+2), vgprBF8Max=(cvtVgpr+3))
@@ -10557,7 +10557,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx*rps, rpv, \
             addr0, addr1, globalOffset, soffset=wsOffset, \
             glc=isGlc, slc=isSlc, nt=isNT, comment=comment))
-      elif dataType.isInt8() or dataType.isFloat8() or dataType.isBFloat8() or dataType.isFloat8BFloat8() or dataType.isBFloat8Float8():
+      elif dataType.isInt8() or dataType.isAnyFloat8() or dataType.isAnyBFloat8() or dataType.isAnyFloat8BFloat8() or dataType.isAnyBFloat8Float8():
         if kernel["ProblemType"]["HighPrecisionAccumulate"]:
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
               addr0, addr1, globalOffset, soffset=wsOffset, \

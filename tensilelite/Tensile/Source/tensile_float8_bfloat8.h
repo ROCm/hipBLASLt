@@ -26,792 +26,529 @@
 
 #pragma once
 
+#ifdef TENSILE_USE_HIP
+#include <hip/hip_runtime.h>
+#endif
+
+// comment out following macro to disable FP8/BF8 types
+#define TENSILE_USE_FP8_BF8
+
 #define HIP_HOST_DEVICE __host__ __device__
 #define HIP_HOST __host__
 #define HIP_DEVICE __device__
 
-// We are clipping in down--conversion by default
-#define DOWNCAST_CLIPPING_ON 1
-
-#include <hip/hip_fp8.h>
-
-namespace tensile_hip_f8_impl
-{
-    template <int wm, int we, typename T, bool negative_zero_nan, bool clip>
-    HIP_HOST_DEVICE uint8_t cast_to_f8(T _x, bool stoch = false, uint32_t rng = 0);
-
-    template <int wm, int we, typename T, bool negative_zero_nan>
-    HIP_HOST_DEVICE T cast_from_f8(uint8_t x);
-
-} // namespace hip_f8_impl
-
-#include "hip_f8_impl.h"
-
-// device specific optimized code
-#if defined(__gfx940__)
-namespace tensile_gfx940_f8_impl
-{
-    template <bool isE2M5, bool stochastic_rounding>
-    inline HIP_DEVICE uint8_t cast_to_f8_from_f32(float v, uint32_t rng = 0)
-    {
-        uint8_t i8data;
-
-        union
-        {
-            float    fval;
-            uint32_t i32val;
-            uint8_t  i8val[4]; // not endian independent
-        } val;
-
-        uint32_t ival = 0;
-        val.fval      = v;
-
-        if(isE2M5)
-        {
-#ifdef DOWNCAST_CLIPPING_ON
-            if((val.i32val & 0x7F800000) != 0x7F800000) // all exp bits  are 1 --> NaN or INF
-                val.fval = __builtin_amdgcn_fmed3f(val.fval, 57344.0, -57344.0);
-#endif
-
-            if(stochastic_rounding)
-            {
-                ival       = __builtin_amdgcn_cvt_sr_bf8_f32(val.fval, rng, ival, 0); // 0 pos
-                val.i32val = ival;
-                i8data     = val.i8val[0]; // little endian
-            }
-            else // RNE CVT
-            {
-                ival = __builtin_amdgcn_cvt_pk_bf8_f32(
-                    val.fval, val.fval, ival, false); // false -> WORD0
-                val.i32val = ival;
-                i8data     = val.i8val[0];
-            }
-        }
-        else // fp8
-        {
-#ifdef DOWNCAST_CLIPPING_ON
-            if((val.i32val & 0x7F800000) != 0x7F800000) // all exp bits  are 1 --> NaN or INF
-                val.fval = __builtin_amdgcn_fmed3f(val.fval, 240.0, -240.0);
-#endif
-
-            if(stochastic_rounding)
-            {
-                ival       = __builtin_amdgcn_cvt_sr_fp8_f32(val.fval, rng, ival, 0); // 0 pos
-                val.i32val = ival;
-                i8data     = val.i8val[0]; // little endian
-            }
-            else // RNE CVT
-            {
-                ival = __builtin_amdgcn_cvt_pk_fp8_f32(
-                    val.fval, val.fval, ival, false); // false -> WORD0
-                val.i32val = ival;
-                i8data     = val.i8val[0];
-            }
-        }
-        return i8data;
-    }
-
-}
-#endif
-
-//  Naming convension of datatype in hip header file
-//      float8: fp8
-//      bfloat8: bf8
-//      f8 is used to consider both float8 and bfloat8
-
-//namespace TensileLite
+//namespace Tensile
 //{
-enum class hip_f8_type
-{
-    bf8 = 0, // 1:5:2
-    fp8 = 1 // 1:4:3
-};
 
-enum class hip_f8_rounding_mode
-{
-    standard,
-    stochastic
-};
+    struct tensile_hip_fp8_e4m3: public __hip_fp8_e4m3
+    {
+        using __hip_fp8_e4m3:: __hip_fp8_e4m3; // list base's constructor in derive's scope
 
-// bias mode bit implementation
-//
-// "bias mode optimial"
-//    => "bias mode bit" = 1
-//    => bias = 16 for 152, 8 for 143
-//    => NAN/INF are represented as negative_zero
-//
-// "bias mode ieee"
-//    => "bias mode bit" = 0
-//    => bias = 15 for 152, 7 for 143
-//    => NAN/INF are represented as per IEEE conventions
-
-// NOTE: made optimal bias mode default assuming that's the case on device
-static __device__ bool hip_f8_bias_mode_bit_device = true;
-static bool            hip_f8_bias_mode_bit_host   = true;
-
-static __global__ void set_hip_f8_bias_mode_bit(bool v)
-{
-    hip_f8_bias_mode_bit_device = v;
-}
-
-static void set_hip_f8_bias_mode_ieee()
-{
-    hipLaunchKernelGGL(set_hip_f8_bias_mode_bit, dim3(1), dim3(1), 0, 0, false);
-    hip_f8_bias_mode_bit_host = false;
-}
-
-static void set_hip_f8_bias_mode_optimal()
-{
-    hipLaunchKernelGGL(set_hip_f8_bias_mode_bit, dim3(1), dim3(1), 0, 0, true);
-    hip_f8_bias_mode_bit_host = true;
-}
-
-static inline HIP_HOST_DEVICE bool get_hip_f8_bias_mode()
-{
-#if defined(__HIP_DEVICE_COMPILE__)
-    return hip_f8_bias_mode_bit_device;
+       // constructor -> down cast
+#if HIP_FP8_TYPE_OCP
+        HIP_HOST_DEVICE tensile_hip_fp8_e4m3(const _Float16 f)
 #else
-    return hip_f8_bias_mode_bit_host;
+        HIP_HOST tensile_hip_fp8_e4m3(const _Float16 f)
 #endif
-}
+        : __hip_fp8_e4m3(reinterpret_cast<const __half &>(f)) {}
 
-static bool isOcpF8;
-inline bool IsOCPSupported()
-{
-    static bool     do_once = false;
-    int             deviceId;
-    hipDeviceProp_t deviceProperties;
-    auto            removePrefix = [](const std::string& s) {
-        size_t pos = s.find("gfx");
-        if(pos != std::string::npos)
+        // operator overloadiing -> upcast
+#if HIP_FP8_TYPE_OCP
+        HIP_HOST_DEVICE operator _Float16() const
+#else
+        HIP_HOST operator _Float16() const
+#endif
         {
-            return s.substr(pos + 3);
+            return _Float16(float(*this));
         }
-        return s;
+
+        // copy constructor
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e4m3& operator=(const float& a)
+        {
+            __x = tensile_hip_fp8_e4m3(a).__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e4m3& operator=(const double& a)
+        {
+            __x = tensile_hip_fp8_e4m3((float)a).__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e4m3& operator=(const tensile_hip_fp8_e4m3& a)
+        {
+            __x = a.__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e4m3& operator=(const _Float16& a)
+        {
+            __x = tensile_hip_fp8_e4m3(a).__x;
+            return *this;
+        }
+
+        //  += operator
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e4m3& operator+=(const tensile_hip_fp8_e4m3& a)
+        {
+            __x = tensile_hip_fp8_e4m3(float(this->__x) + float(a.__x)).__x;
+            return *this;
+        }
     };
-    if(!do_once)
+
+
+    typedef tensile_hip_fp8_e4m3 tensile_float8;
+
+    struct tensile_hip_fp8_e5m2: public __hip_fp8_e5m2
     {
-        static_cast<void>(hipGetDevice(&deviceId));
-        static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
 
-        auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
-        if(stoi(gpu_arch_no_prefix) / 100 == 12)
-            isOcpF8 = true;
-        else
-            isOcpF8 = false;
-        do_once = true;
-    }
-    return isOcpF8;
-}
+        using __hip_fp8_e5m2:: __hip_fp8_e5m2;
 
-// data type
-template <hip_f8_type T>
-struct Float8_BFloat8
-{
-    uint8_t data;
-
-    // default constructor
-    HIP_HOST_DEVICE Float8_BFloat8() = default;
-
-#if defined(__gfx940__)
-    // NOTE: ON-DEVICE... always optimal bias
-    explicit HIP_DEVICE Float8_BFloat8(float                v,
-                                       hip_f8_rounding_mode rm  = hip_f8_rounding_mode::standard,
-                                       uint32_t             rng = 0)
-    {
-        // runtime branch, use default constructor and explicit_cast() if want to avoid it
-
-        if(rm == hip_f8_rounding_mode::stochastic)
-            data = tensile_gfx940_f8_impl::cast_to_f8_from_f32<T == hip_f8_type::bf8, true>(v, rng);
-        else
-            data
-                = tensile_gfx940_f8_impl::cast_to_f8_from_f32<T == hip_f8_type::bf8, false>(v, rng);
-    }
-    // only host code is simulated
-    explicit HIP_HOST
-#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
-    // NOTE: ON-DEVICE... always optimal bias
-    explicit HIP_DEVICE Float8_BFloat8(float                v,
-                                       hip_f8_rounding_mode rm  = hip_f8_rounding_mode::standard,
-                                       uint32_t             rng = 0)
-    {
-        // runtime branch, use default constructor and explicit_cast() if want to avoid it
-        if(rm == hip_f8_rounding_mode::stochastic)
-            data = internal::cast_to_f8_from_f32<true>(v, true /*saturate*/, __HIP_E4M3, rng);
-        else
-            data = internal::cast_to_f8_from_f32<false>(v, true /*saturate*/, __HIP_E4M3, rng);
-    }
-    // only host code is simulated
-    explicit HIP_HOST
-
-#else // gfx940
-    explicit HIP_HOST_DEVICE
-#endif // gfx940
-        Float8_BFloat8(float                v,
-                       hip_f8_rounding_mode rm  = hip_f8_rounding_mode::standard,
-                       uint32_t             rng = 0)
-    {
-        // NOTE: made clipping default again
-        if(T == hip_f8_type::bf8)
-        {
-#if defined(USE_HIP_FP8_DEF) && !defined(__HIP_DEVICE_COMPILE__)
-            if(IsOCPSupported())
-            {
-#ifdef DOWNCAST_CLIPPING_ON
-                data = internal::cast_to_f8<float, false /*is_funz*/>(
-                    v, 2, 5, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
+#if HIP_FP8_TYPE_OCP
+        HIP_HOST_DEVICE tensile_hip_fp8_e5m2(const _Float16 f)
 #else
-                data = internal::cast_to_f8<float, false /*is_funz*/>(
-                    v, 2, 5, false /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
+        HIP_HOST tensile_hip_fp8_e5m2(const _Float16 f)
 #endif
-            }
-            else
-#endif
-            {
-                if(get_hip_f8_bias_mode())
-                {
-                    data = tensile_hip_f8_impl::
-#ifdef DOWNCAST_CLIPPING_ON
-                        cast_to_f8<2, 5, float, true /*negative_zero_nan*/, true /*clip*/>(
+        : __hip_fp8_e5m2(reinterpret_cast<const __half &>(f)) {}
+
+        // operator overloadiing -> upcast
+#if HIP_FP8_TYPE_OCP
+        HIP_HOST_DEVICE operator _Float16() const
 #else
-                        cast_to_f8<2, 5, float, true /*negative_zero_nan*/, false /*clip*/>(
+        HIP_HOST operator _Float16() const
 #endif
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
-                }
-                else
-                {
-                    data = tensile_hip_f8_impl::
-#ifdef DOWNCAST_CLIPPING_ON
-                        cast_to_f8<2, 5, float, false /*negative_zero_nan*/, true /*clip*/>(
+        {
+            return _Float16(float(*this));
+        }
+        // copy constructor
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e5m2& operator=(const float& a)
+        {
+            __x = tensile_hip_fp8_e5m2(a).__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e5m2& operator=(const double& a)
+        {
+            __x = tensile_hip_fp8_e5m2((float)a).__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e5m2& operator=(const tensile_hip_fp8_e5m2& a)
+        {
+            __x = a.__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e5m2& operator=(const _Float16& a)
+        {
+            __x = tensile_hip_fp8_e5m2(a).__x;
+            return *this;
+        }
+
+        //  += operator
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e5m2& operator+=(const tensile_hip_fp8_e5m2& a)
+        {
+            __x = tensile_hip_fp8_e5m2(float(this->__x) + float(a.__x)).__x;
+            return *this;
+        }
+    };
+
+
+    typedef tensile_hip_fp8_e5m2 tensile_bfloat8;
+
+    struct tensile_hip_fp8_e4m3_fnuz: public __hip_fp8_e4m3_fnuz
+    {
+        using __hip_fp8_e4m3_fnuz:: __hip_fp8_e4m3_fnuz;
+
+#if HIP_FP8_TYPE_FNUZ
+        HIP_HOST_DEVICE tensile_hip_fp8_e4m3_fnuz(const _Float16 f)
 #else
-                        cast_to_f8<2, 5, float, false /*negative_zero_nan*/, false /*clip*/>(
+        HIP_HOST tensile_hip_fp8_e4m3_fnuz(const _Float16 f)
 #endif
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
-                }
-            }
-        }
-        else /* fp8*/
-        {
-#if defined(USE_HIP_FP8_DEF) && !defined(__HIP_DEVICE_COMPILE__)
-            if(IsOCPSupported())
-            {
-#ifdef DOWNCAST_CLIPPING_ON
-                data = internal::cast_to_f8<float, false /*is_funz*/>(
-                    v, 3, 4, true /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
+        : __hip_fp8_e4m3_fnuz(reinterpret_cast<const __half &>(f)) {}
+
+        // operator overloadiing -> upcast
+#if HIP_FP8_TYPE_FNUZ
+        HIP_HOST_DEVICE operator _Float16() const
 #else
-                data = internal::cast_to_f8<float, false /*is_funz*/>(
-                    v, 3, 4, false /*clip*/, (rm == hip_f8_rounding_mode::stochastic), rng);
+        HIP_HOST operator _Float16() const
 #endif
-            }
-            else
-#endif
-            {
-                if(get_hip_f8_bias_mode())
-                {
-                    data = tensile_hip_f8_impl::
-#ifdef DOWNCAST_CLIPPING_ON
-                        cast_to_f8<3, 4, float, true /*negative_zero_nan*/, true /*clip*/>(
+        {
+            return _Float16(float(*this));
+        }
+        // copy constructor
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e4m3_fnuz& operator=(const float& a)
+        {
+            __x = tensile_hip_fp8_e4m3_fnuz(a).__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e4m3_fnuz& operator=(const double& a)
+        {
+            __x = tensile_hip_fp8_e4m3_fnuz((float)a).__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e4m3_fnuz& operator=(const tensile_hip_fp8_e4m3_fnuz& a)
+        {
+            __x = a.__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e4m3_fnuz& operator=(const _Float16& a)
+        {
+            __x = tensile_hip_fp8_e4m3_fnuz(a).__x;
+            return *this;
+        }
+
+        //  += operator
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e4m3_fnuz& operator+=(const tensile_hip_fp8_e4m3_fnuz& a)
+        {
+            __x = tensile_hip_fp8_e4m3_fnuz(float(this->__x) + float(a.__x)).__x;
+            return *this;
+        }
+    };
+    typedef tensile_hip_fp8_e4m3_fnuz tensile_float8_fnuz;
+
+
+    struct tensile_hip_fp8_e5m2_fnuz: public __hip_fp8_e5m2_fnuz
+    {
+        using __hip_fp8_e5m2_fnuz:: __hip_fp8_e5m2_fnuz;
+
+#if HIP_FP8_TYPE_FNUZ
+        HIP_HOST_DEVICE tensile_hip_fp8_e5m2_fnuz(const _Float16 f)
 #else
-                        cast_to_f8<3, 4, float, true /*negative_zero_nan*/, true /*clip*/>(
+        HIP_HOST tensile_hip_fp8_e5m2_fnuz(const _Float16 f)
 #endif
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
-                }
-                else
-                {
-                    data = tensile_hip_f8_impl::
-#ifdef DOWNCAST_CLIPPING_ON
-                        cast_to_f8<3, 4, float, false /*negative_zero_nan*/, true /*clip*/>(
+        : __hip_fp8_e5m2_fnuz(reinterpret_cast<const __half &>(f)) {}
+
+        // operator overloadiing -> upcast
+#if HIP_FP8_TYPE_FNUZ
+        HIP_HOST_DEVICE operator _Float16() const
 #else
-                        cast_to_f8<3, 4, float, false /*negative_zero_nan*/, false /*clip*/>(
-#endif
-                            v, (rm == hip_f8_rounding_mode::stochastic), rng);
-                }
-            }
-        }
-    }
-
-    // constructor from half
-    // no h/w inst for cvt from f16, just convert f16 to f32 and call constructor
-    explicit HIP_HOST_DEVICE Float8_BFloat8(_Float16             v,
-                                            hip_f8_rounding_mode rm
-                                            = hip_f8_rounding_mode::standard,
-                                            uint32_t rng = 0)
-        : Float8_BFloat8((float)v, rm, rng)
-    {
-    }
-
-    explicit HIP_HOST_DEVICE Float8_BFloat8(int                  v,
-                                            hip_f8_rounding_mode rm
-                                            = hip_f8_rounding_mode::standard,
-                                            uint32_t rng = 0)
-        : Float8_BFloat8((float)v, rm, rng)
-    {
-    }
-    explicit HIP_HOST_DEVICE Float8_BFloat8(size_t               v,
-                                            hip_f8_rounding_mode rm
-                                            = hip_f8_rounding_mode::standard,
-                                            uint32_t rng = 0)
-        : Float8_BFloat8((float)v, rm, rng)
-    {
-    }
-
-    // constructor from hip_bfloat16
-    // explicit HIP_HOST_DEVICE Float8_BFloat8(hip_bfloat16 v, hip_f8_rounding_mode r=hip_f8_rounding_mode::standard, uint32_t rng=0);
-
-    // convert to float
-#if defined(__gfx940__)
-    // builtin conversion
-    explicit inline HIP_DEVICE operator float() const
-    {
-        float    fval;
-        uint32_t i32val = static_cast<uint32_t>(data);
-        if(T == hip_f8_type::bf8)
-            // workaround: use inline asm instead of builtin function
-            // fval = __builtin_amdgcn_cvt_f32_bf8(i32val, 0);
-            asm volatile("v_cvt_f32_bf8 %0, %1 src0_sel:BYTE_0" : "=v"(fval) : "v"(i32val));
-        else
-            // workaround: use inline asm instead of builtin function
-            // fval = __builtin_amdgcn_cvt_f32_fp8(i32val, 0);
-            asm volatile("v_cvt_f32_fp8 %0, %1 src0_sel:BYTE_0" : "=v"(fval) : "v"(i32val));
-        return fval;
-    }
-    explicit inline HIP_HOST operator float() const
-#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
-    // builtin conversion
-    explicit inline HIP_DEVICE operator float() const
-    {
-        if(T == hip_f8_type::bf8)
-            return internal::cast_to_f32_from_f8(data, __HIP_E5M2 /* E5M2*/);
-        else
-            return internal::cast_to_f32_from_f8(data, __HIP_E4M3 /* E4M3*/);
-    }
-    explicit inline HIP_HOST operator float() const
-#else // non gfx940
-
-    explicit inline HIP_HOST_DEVICE operator float() const
-#endif
-    {
-        if(T == hip_f8_type::bf8)
-        {
-#if defined(USE_HIP_FP8_DEF) && !defined(__HIP_DEVICE_COMPILE__)
-            if(IsOCPSupported())
-            {
-                return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
-            }
-            else
-#endif
-            {
-                if(get_hip_f8_bias_mode())
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<2, 5, float, true /*negative_zero_nan*/>(data);
-                }
-                else
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<2, 5, float, false /*negative_zero_nan*/>(data);
-                }
-            }
-        }
-        else /* fp8*/
-        {
-#if defined(USE_HIP_FP8_DEF) && !defined(__HIP_DEVICE_COMPILE__)
-            if(IsOCPSupported())
-            {
-                return internal::cast_from_f8<float, false /*is_funz*/>(data, 3, 4, false);
-            }
-            else
-#endif
-            {
-                if(get_hip_f8_bias_mode())
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<3, 4, float, true /*negative_zero_nan*/>(data);
-                }
-                else
-                {
-                    return tensile_hip_f8_impl::
-                        cast_from_f8<3, 4, float, false /*negative_zero_nan*/>(data);
-                }
-            }
-        }
-    }
-
-    // convert to half
-    explicit inline HIP_HOST_DEVICE operator _Float16() const
-    {
-        return _Float16(float(*this)); // convert to float, then convert to f16
-    }
-
-    // convert to hip_bfloat16
-    // NOTE: no hardware instruction to convert from and to f8, may want to convert it f32 first
-    // explicit inline HIP_HOST_DEVICE operator hip_bfloat16() const;
-
-    // check for zero
-    inline HIP_HOST_DEVICE bool is_zero() const
-    {
-        if(get_hip_f8_bias_mode()
-#if defined(USE_HIP_FP8_DEF) && !defined(__HIP_DEVICE_COMPILE__)
-           || IsOCPSupported()
-#endif
-        )
-        {
-            return data == 0x00;
-        }
-        else
-        {
-            return (data == 0x00) || (data == 0x80);
-        }
-    }
-
-    // check for nan
-    inline HIP_HOST_DEVICE bool is_nan() const
-    {
-#if defined(USE_HIP_FP8_DEF) && !defined(__HIP_DEVICE_COMPILE__)
-        if(IsOCPSupported())
-        {
-            return (T == hip_f8_type::fp8)   ? ((data & 0x7f) == 0x7f)
-                   : (T == hip_f8_type::bf8) ? ((data & 0x7f) > 0x7c)
-                                             : false;
-        }
-        else
+        HIP_HOST operator _Float16() const
 #endif
         {
-            if(get_hip_f8_bias_mode())
-            {
-                return data == 0x80;
-            }
-            else
-            {
-                if(T == hip_f8_type::bf8)
-                {
-                    return (data == 0x7d) || (data == 0x7e) || (data == 0x7f) || (data == 0xfd)
-                           || (data == 0xfe) || (data == 0xff);
-                }
-                else
-                {
-                    return (data == 0x79) || (data == 0x7a) || (data == 0x7b) || (data == 0x7c)
-                           || (data == 0x7d) || (data == 0x7e) || (data == 0x7f) || (data == 0xf9)
-                           || (data == 0xfa) || (data == 0xfb) || (data == 0xfc) || (data == 0xfd)
-                           || (data == 0xfe) || (data == 0xff);
-                }
-            }
+            return _Float16(float(*this));
         }
+        // copy constructor
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e5m2_fnuz& operator=(const float& a)
+        {
+            __x = tensile_hip_fp8_e5m2_fnuz(a).__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e5m2_fnuz& operator=(const double& a)
+        {
+            __x = tensile_hip_fp8_e5m2_fnuz((float)a).__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e5m2_fnuz& operator=(const tensile_hip_fp8_e5m2_fnuz& a)
+        {
+            __x = a.__x;
+            return *this;
+        }
+
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e5m2_fnuz& operator=(const _Float16& a)
+        {
+            __x = tensile_hip_fp8_e5m2_fnuz(a).__x;
+            return *this;
+        }
+
+        //  += operator
+        inline HIP_HOST_DEVICE tensile_hip_fp8_e5m2_fnuz& operator+=(const tensile_hip_fp8_e5m2_fnuz& a)
+        {
+            __x = tensile_hip_fp8_e5m2_fnuz(float(this->__x) + float(a.__x)).__x;
+            return *this;
+        }
+    };
+    typedef tensile_hip_fp8_e5m2_fnuz tensile_bfloat8_fnuz;
+
+
+    //  Other operator overloading
+    inline std::ostream& operator<<(std::ostream& os, const tensile_float8& f8)
+    {
+        os << static_cast<float>(f8);
+        return os;
+    }
+    inline std::ostream& operator<<(std::ostream& os, const tensile_bfloat8& bf8)
+    {
+        os << static_cast<float>(bf8);
+        return os;
+    }
+    inline std::ostream& operator<<(std::ostream& os, const tensile_float8_fnuz& f8)
+    {
+        os << static_cast<float>(f8);
+        return os;
+    }
+    inline std::ostream& operator<<(std::ostream& os, const tensile_bfloat8_fnuz& bf8)
+    {
+        os << static_cast<float>(bf8);
+        return os;
     }
 
-    // check for inf
-    inline HIP_HOST_DEVICE bool is_inf() const
-    {
-#if defined(USE_HIP_FP8_DEF) && !defined(__HIP_DEVICE_COMPILE__)
-        if(IsOCPSupported())
-        {
-            return (T == hip_f8_type::bf8) ? (data & 0x7f) == 0x7c : false;
-        }
-        else
-#endif
-        {
-            if(get_hip_f8_bias_mode())
-            {
-                return data == 0x80;
-            }
-            else
-            {
-                if(T == hip_f8_type::bf8)
-                {
-                    return (data == 0x7c) || (data == 0xfc);
-                }
-                else
-                {
-                    return (data == 0x78) || (data == 0xf8);
-                }
-            }
-        }
-    }
     //
-    //  assignment operator overloading
-    //
-    // TODO: need to verify whether it produces extra copy, need to investigate the assembly?
-    // use cast_to_f8 function otherwise
-    inline HIP_HOST_DEVICE Float8_BFloat8<T>& operator=(const float& a)
+    inline tensile_float8 operator+(tensile_float8 a, tensile_float8 b)
     {
-        data = Float8_BFloat8<T>(a).data;
-        return *this;
+        return static_cast<tensile_float8>(static_cast<float>(a) + static_cast<float>(b));
+    }
+    inline tensile_float8 operator+(tensile_float8 a, float b)
+    {
+        return static_cast<tensile_float8>(static_cast<float>(a) + b);
+    }
+    inline tensile_float8 operator+(float a, tensile_float8 b)
+    {
+        return static_cast<tensile_float8>(a + static_cast<float>(b));
+    }
+    inline tensile_bfloat8 operator+(tensile_bfloat8 a, tensile_bfloat8 b)
+    {
+        return static_cast<tensile_bfloat8>(static_cast<float>(a) + static_cast<float>(b));
+    }
+    inline tensile_float8 operator-(tensile_float8 a, tensile_float8 b)
+    {
+        return static_cast<tensile_float8>(static_cast<float>(a) - static_cast<float>(b));
+    }
+    inline tensile_bfloat8 operator-(tensile_bfloat8 a, tensile_bfloat8 b)
+    {
+        return static_cast<tensile_bfloat8>(static_cast<float>(a) - static_cast<float>(b));
+    }
+    //  NOTE: It is not used in reference solution directly, we want to return float otherwise
+    inline tensile_float8 operator*(tensile_float8 a, tensile_float8 b)
+    {
+        return static_cast<tensile_float8>(static_cast<float>(a) * static_cast<float>(b));
+    }
+    inline tensile_float8 operator*(float a, tensile_float8 b)
+    {
+        return static_cast<tensile_float8>(a * static_cast<float>(b));
+    }
+    inline tensile_float8 operator*(tensile_float8 a, float b)
+    {
+        return static_cast<tensile_float8>(static_cast<float>(a) * b);
+    }
+    inline tensile_bfloat8 operator*(tensile_bfloat8 a, tensile_bfloat8 b)
+    {
+        return static_cast<tensile_bfloat8>(static_cast<float>(a) * static_cast<float>(b));
     }
 
-    inline HIP_HOST_DEVICE Float8_BFloat8<T>& operator=(const double& a)
+    inline tensile_float8 operator/(tensile_float8 a, tensile_float8 b)
     {
-        data = Float8_BFloat8<T>((float)a).data;
-        return *this;
+        return static_cast<tensile_float8>(static_cast<float>(a) / static_cast<float>(b));
+    }
+    inline tensile_bfloat8 operator/(tensile_bfloat8 a, tensile_bfloat8 b)
+    {
+        return static_cast<tensile_bfloat8>(static_cast<float>(a) / static_cast<float>(b));
+    }
+    inline bool operator<(tensile_float8 a, tensile_float8 b)
+    {
+        return static_cast<float>(a) < static_cast<float>(b);
+    }
+    inline bool operator<(float a, tensile_float8 b)
+    {
+        return a < static_cast<float>(b);
+    }
+    inline bool operator<(tensile_float8 a, float b)
+    {
+        return static_cast<float>(a) < b;
+    }
+    inline bool operator<(tensile_bfloat8 a, tensile_bfloat8 b)
+    {
+        return static_cast<float>(a) < static_cast<float>(b);
+    }
+    inline bool operator<=(tensile_float8 a, tensile_float8 b)
+    {
+        return static_cast<float>(a) <= static_cast<float>(b);
+    }
+    inline bool operator<=(tensile_bfloat8 a, tensile_bfloat8 b)
+    {
+        return static_cast<float>(a) <= static_cast<float>(b);
+    }
+    inline bool operator==(tensile_float8 a, tensile_float8 b)
+    {
+        return static_cast<float>(a) == static_cast<float>(b);
+    }
+    inline bool operator==(tensile_bfloat8 a, tensile_bfloat8 b)
+    {
+        return static_cast<float>(a) == static_cast<float>(b);
+    }
+    inline bool operator!=(tensile_float8 a, tensile_float8 b)
+    {
+        return static_cast<float>(a) != static_cast<float>(b);
+    }
+    inline bool operator!=(tensile_bfloat8 a, tensile_bfloat8 b)
+    {
+        return static_cast<float>(a) != static_cast<float>(b);
+    }
+    inline bool operator>(tensile_float8 a, tensile_float8 b)
+    {
+        return static_cast<float>(a) > static_cast<float>(b);
+    }
+    inline bool operator>(float a, tensile_float8 b)
+    {
+        return a > static_cast<float>(b);
+    }
+    inline bool operator>(tensile_float8 a, float b)
+    {
+        return static_cast<float>(a) > b;
+    }
+    inline bool operator>(tensile_bfloat8 a, tensile_bfloat8 b)
+    {
+        return static_cast<float>(a) > static_cast<float>(b);
+    }
+    inline bool operator>=(tensile_float8 a, tensile_float8 b)
+    {
+        return static_cast<float>(a) >= static_cast<float>(b);
+    }
+    inline bool operator>=(tensile_bfloat8 a, tensile_bfloat8 b)
+    {
+        return static_cast<float>(a) >= static_cast<float>(b);
     }
 
-    inline __host__ __device__ Float8_BFloat8<T>& operator=(const Float8_BFloat8<T>& a)
+//  FNUZ
+    inline tensile_float8_fnuz operator+(tensile_float8_fnuz a, tensile_float8_fnuz b)
     {
-        data = a.data;
-        return *this;
+        return static_cast<tensile_float8_fnuz>(static_cast<float>(a) + static_cast<float>(b));
+    }
+    inline tensile_float8_fnuz operator+(tensile_float8_fnuz a, float b)
+    {
+        return static_cast<tensile_float8_fnuz>(static_cast<float>(a) + b);
+    }
+    inline tensile_float8_fnuz operator+(float a, tensile_float8_fnuz b)
+    {
+        return static_cast<tensile_float8_fnuz>(a + static_cast<float>(b));
+    }
+    inline tensile_bfloat8_fnuz operator+(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
+    {
+        return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) + static_cast<float>(b));
+    }
+    inline tensile_float8_fnuz operator-(tensile_float8_fnuz a, tensile_float8_fnuz b)
+    {
+        return static_cast<tensile_float8_fnuz>(static_cast<float>(a) - static_cast<float>(b));
+    }
+    inline tensile_bfloat8_fnuz operator-(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
+    {
+        return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) - static_cast<float>(b));
+    }
+    //  NOTE: It is not used in reference solution directly, we want to return float otherwise
+    inline tensile_float8_fnuz operator*(tensile_float8_fnuz a, tensile_float8_fnuz b)
+    {
+        return static_cast<tensile_float8_fnuz>(static_cast<float>(a) * static_cast<float>(b));
+    }
+    inline tensile_float8_fnuz operator*(float a, tensile_float8_fnuz b)
+    {
+        return static_cast<tensile_float8_fnuz>(a * static_cast<float>(b));
+    }
+    inline tensile_float8_fnuz operator*(tensile_float8_fnuz a, float b)
+    {
+        return static_cast<tensile_float8_fnuz>(static_cast<float>(a) * b);
+    }
+    inline tensile_bfloat8_fnuz operator*(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
+    {
+        return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) * static_cast<float>(b));
     }
 
-    //inline __host__ __device__ Float8_BFloat8<T>& operator=(const rocblas_half& a)
-    inline __host__ __device__ Float8_BFloat8<T>& operator=(const _Float16& a)
+    inline tensile_float8_fnuz operator/(tensile_float8_fnuz a, tensile_float8_fnuz b)
     {
-        data = Float8_BFloat8<T>(a).data;
-        return *this;
+        return static_cast<tensile_float8_fnuz>(static_cast<float>(a) / static_cast<float>(b));
     }
-
-    //  += operator
-    inline __host__ __device__ Float8_BFloat8<T>& operator+=(const Float8_BFloat8<T>& a)
+    inline tensile_bfloat8_fnuz operator/(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
     {
-        data = Float8_BFloat8<T>(float(this->data) + float(a.data)).data;
-        return *this;
+        return static_cast<tensile_bfloat8_fnuz>(static_cast<float>(a) / static_cast<float>(b));
     }
-};
-
-// TODO: place it in appropriate header
-typedef Float8_BFloat8<hip_f8_type::fp8> tensile_float8;
-typedef Float8_BFloat8<hip_f8_type::bf8> tensile_bfloat8;
-
-//  Other operator overloading
-inline std::ostream& operator<<(std::ostream& os, const tensile_float8& f8)
-{
-    os << static_cast<float>(f8);
-    return os;
-}
-inline std::ostream& operator<<(std::ostream& os, const tensile_bfloat8& bf8)
-{
-    os << static_cast<float>(bf8);
-    return os;
-}
-inline tensile_float8 operator+(tensile_float8 a, tensile_float8 b)
-{
-    return static_cast<tensile_float8>(static_cast<float>(a) + static_cast<float>(b));
-}
-inline tensile_bfloat8 operator+(tensile_bfloat8 a, tensile_bfloat8 b)
-{
-    return static_cast<tensile_bfloat8>(static_cast<float>(a) + static_cast<float>(b));
-}
-inline tensile_float8 operator-(tensile_float8 a, tensile_float8 b)
-{
-    return static_cast<tensile_float8>(static_cast<float>(a) - static_cast<float>(b));
-}
-inline tensile_bfloat8 operator-(tensile_bfloat8 a, tensile_bfloat8 b)
-{
-    return static_cast<tensile_bfloat8>(static_cast<float>(a) - static_cast<float>(b));
-}
-//  NOTE: It is not used in reference solution directly, we want to return float otherwise
-inline tensile_float8 operator*(tensile_float8 a, tensile_float8 b)
-{
-    return static_cast<tensile_float8>(static_cast<float>(a) * static_cast<float>(b));
-}
-inline tensile_bfloat8 operator*(tensile_bfloat8 a, tensile_bfloat8 b)
-{
-    return static_cast<tensile_bfloat8>(static_cast<float>(a) * static_cast<float>(b));
-}
-
-inline tensile_float8 operator/(tensile_float8 a, tensile_float8 b)
-{
-    return static_cast<tensile_float8>(static_cast<float>(a) / static_cast<float>(b));
-}
-inline tensile_bfloat8 operator/(tensile_bfloat8 a, tensile_bfloat8 b)
-{
-    return static_cast<tensile_bfloat8>(static_cast<float>(a) / static_cast<float>(b));
-}
-inline bool operator<(tensile_float8 a, tensile_float8 b)
-{
-    return static_cast<float>(a) < static_cast<float>(b);
-}
-inline bool operator<(tensile_bfloat8 a, tensile_bfloat8 b)
-{
-    return static_cast<float>(a) < static_cast<float>(b);
-}
-inline bool operator<=(tensile_float8 a, tensile_float8 b)
-{
-    return static_cast<float>(a) <= static_cast<float>(b);
-}
-inline bool operator<=(tensile_bfloat8 a, tensile_bfloat8 b)
-{
-    return static_cast<float>(a) <= static_cast<float>(b);
-}
-inline bool operator==(tensile_float8 a, tensile_float8 b)
-{
-    return static_cast<float>(a) == static_cast<float>(b);
-}
-inline bool operator==(tensile_bfloat8 a, tensile_bfloat8 b)
-{
-    return static_cast<float>(a) == static_cast<float>(b);
-}
-inline bool operator!=(tensile_float8 a, tensile_float8 b)
-{
-    return static_cast<float>(a) != static_cast<float>(b);
-}
-inline bool operator!=(tensile_bfloat8 a, tensile_bfloat8 b)
-{
-    return static_cast<float>(a) != static_cast<float>(b);
-}
-inline bool operator>(tensile_float8 a, tensile_float8 b)
-{
-    return static_cast<float>(a) > static_cast<float>(b);
-}
-inline bool operator>(tensile_bfloat8 a, tensile_bfloat8 b)
-{
-    return static_cast<float>(a) > static_cast<float>(b);
-}
-inline bool operator>=(tensile_float8 a, tensile_float8 b)
-{
-    return static_cast<float>(a) >= static_cast<float>(b);
-}
-inline bool operator>=(tensile_bfloat8 a, tensile_bfloat8 b)
-{
-    return static_cast<float>(a) >= static_cast<float>(b);
-}
-
-// ================ Explicit downcasting to support Stochastic Rounding and clipping ===============
-
-#if 0 // enable_if_t supported from C++14 and above, not C++11! enable it when compiler updated
-    template <typename T,
-              typename Ta,
-              bool stochastic_rounding,
-            std::enable_if_t<std::is_same<T, Ta>{}, int> = 0>
-    inline __host__ __device__ T explicit_downcast(Ta a, uint32_t rng = 0, bool clip = true)
+    inline bool operator<(tensile_float8_fnuz a, tensile_float8_fnuz b)
     {
-        // same type, no conversion
-        return a;
+        return static_cast<float>(a) < static_cast<float>(b);
     }
-
-    // Use h/w intrinsic and optimized version when __gfx940__
-    template <typename T,
-              typename Ta,
-              bool stochastic_rounding,
-              std::enable_if_t<!(std::is_same<T, Ta>{}), int> = 0>
-    inline __host__ __device__ T explicit_downcast(Ta a, uint32_t rng = 0, bool clip = true)
+    inline bool operator<(float a, tensile_float8_fnuz b)
     {
-#ifdef __gfx940__
-        T val;
-        if(std::is_same<T, rocblas_f8>::value)
-            val.data
-                = tensile_gfx940_f8_impl::cast_to_f8_from_f32<false, stochastic_rounding>(float(a), rng, clip);
-        else
-            val.data
-                = tensile_gfx940_f8_impl::cast_to_f8_from_f32<true, stochastic_rounding>(float(a), rng, clip);
-        return val;
-#else
-        return T(float(a),
-          stochastic_rounding ? hip_f8_rounding_mode::stochastic : hip_f8_rounding_mode::standard,
-          rng,
-          clip);
-#endif
+        return a < static_cast<float>(b);
     }
-#else // without enable_if_t, we have to use explicit template specialization
-
-template <typename T, typename Ta, bool stochastic_rounding>
-inline __host__ __device__ T explicit_downcast(Ta a, uint32_t rng = 0);
-
-template <typename T, typename Ta = T, bool stochastic_rounding>
-inline __host__ __device__ T explicit_downcast(Ta a, uint32_t rng)
-{
-    // same type, no conversion
-    return a;
-}
-
-// NOTE: using explicit specialization
-template <>
-inline __host__ __device__ tensile_float8
-    explicit_downcast<tensile_float8, float, true>(float a, uint32_t rng)
-{
-    // Use h/w intrinsic and optimized version when __gfx940__
-#ifdef __gfx940__
-    tensile_float8 val;
-    val.data = tensile_gfx940_f8_impl::cast_to_f8_from_f32<false, true>(a, rng);
-    return val;
-#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
-    tensile_float8 val;
-    val.data = internal::cast_to_f8_from_f32<true>(a, true /*saturate*/, __HIP_E4M3, rng);
-    return val;
-#else
-    return tensile_float8(float(a), hip_f8_rounding_mode::stochastic, rng);
-#endif
-}
-
-template <>
-inline __host__ __device__ tensile_float8
-    explicit_downcast<tensile_float8, float, false>(float a, uint32_t rng)
-{
-#ifdef __gfx940__
-    tensile_float8 val;
-    val.data = tensile_gfx940_f8_impl::cast_to_f8_from_f32<false, false>(a, rng);
-    return val;
-#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
-    tensile_float8 val;
-    val.data = internal::cast_to_f8_from_f32<false>(a, true /*saturate*/, __HIP_E4M3, rng);
-    return val;
-#else
-    return tensile_float8(float(a), hip_f8_rounding_mode::standard, rng);
-#endif
-}
-
-template <>
-inline __host__ __device__ tensile_bfloat8
-    explicit_downcast<tensile_bfloat8, float, true>(float a, uint32_t rng)
-{
-#ifdef __gfx940__
-    tensile_bfloat8 val;
-    val.data = tensile_gfx940_f8_impl::cast_to_f8_from_f32<true, true>(a, rng);
-    return val;
-#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
-    tensile_bfloat8 val;
-    val.data = internal::cast_to_f8_from_f32<true>(a, true /*saturate*/, __HIP_E5M2, rng);
-    return val;
-#else
-    return tensile_bfloat8(float(a), hip_f8_rounding_mode::stochastic, rng);
-#endif
-}
-
-template <>
-inline __host__ __device__ tensile_bfloat8
-    explicit_downcast<tensile_bfloat8, float, false>(float a, uint32_t rng)
-{
-#ifdef __gfx940__
-    tensile_bfloat8 val;
-    val.data = tensile_gfx940_f8_impl::cast_to_f8_from_f32<true, false>(a, rng);
-    return val;
-#elif defined(__gfx1200__) && defined(USE_HIP_FP8_DEF)
-    tensile_bfloat8 val;
-    val.data = internal::cast_to_f8_from_f32<false>(a, true /*saturate*/, __HIP_E5M2, rng);
-    return val;
-#else
-    return tensile_bfloat8(float(a), hip_f8_rounding_mode::standard, rng);
-#endif
-}
-
-#endif // end of explicit specialization
-
-//} // end of namespace TensileLite
+    inline bool operator<(tensile_float8_fnuz a, float b)
+    {
+        return static_cast<float>(a) < b;
+    }
+    inline bool operator<(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
+    {
+        return static_cast<float>(a) < static_cast<float>(b);
+    }
+    inline bool operator<=(tensile_float8_fnuz a, tensile_float8_fnuz b)
+    {
+        return static_cast<float>(a) <= static_cast<float>(b);
+    }
+    inline bool operator<=(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
+    {
+        return static_cast<float>(a) <= static_cast<float>(b);
+    }
+    inline bool operator==(tensile_float8_fnuz a, tensile_float8_fnuz b)
+    {
+        return static_cast<float>(a) == static_cast<float>(b);
+    }
+    inline bool operator==(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
+    {
+        return static_cast<float>(a) == static_cast<float>(b);
+    }
+    inline bool operator!=(tensile_float8_fnuz a, tensile_float8_fnuz b)
+    {
+        return static_cast<float>(a) != static_cast<float>(b);
+    }
+    inline bool operator!=(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
+    {
+        return static_cast<float>(a) != static_cast<float>(b);
+    }
+    inline bool operator>(tensile_float8_fnuz a, tensile_float8_fnuz b)
+    {
+        return static_cast<float>(a) > static_cast<float>(b);
+    }
+    inline bool operator>(float a, tensile_float8_fnuz b)
+    {
+        return a > static_cast<float>(b);
+    }
+    inline bool operator>(tensile_float8_fnuz a, float b)
+    {
+        return static_cast<float>(a) > b;
+    }
+    inline bool operator>(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
+    {
+        return static_cast<float>(a) > static_cast<float>(b);
+    }
+    inline bool operator>=(tensile_float8_fnuz a, tensile_float8_fnuz b)
+    {
+        return static_cast<float>(a) >= static_cast<float>(b);
+    }
+    inline bool operator>=(tensile_bfloat8_fnuz a, tensile_bfloat8_fnuz b)
+    {
+        return static_cast<float>(a) >= static_cast<float>(b);
+    }
+//} // end of namespace Tensile
 
 namespace std
 {
     inline bool isinf(const tensile_float8& a)
     {
-        return a.is_inf();
+        return false;
     }
     inline bool isinf(const tensile_bfloat8& a)
     {
-        return a.is_inf();
+        return (static_cast<unsigned char>(a) & 0x7f) == 0x7c;
     }
 
     inline bool isnan(const tensile_float8& a)
     {
-        return a.is_nan();
+        return (static_cast<unsigned char>(a) & 0x7f) == 0x7f;
     }
     inline bool isnan(const tensile_bfloat8& a)
     {
-        return a.is_nan();
+        return (static_cast<unsigned char>(a) & 0x7f) > 0x7c;
     }
     inline bool iszero(const tensile_float8& a)
     {
-        return a.is_zero();
+        return (static_cast<unsigned char>(a) & 0x7F) == 0x0;
     }
     inline bool iszero(const tensile_bfloat8& a)
     {
-        return a.is_zero();
+        return (static_cast<unsigned char>(a) & 0x7F) == 0x0;
     }
+
+    //TODO: better to & 0x7F
     inline tensile_float8 abs(const tensile_float8& a)
     {
         return tensile_float8(std::abs(float(a)));
@@ -837,6 +574,77 @@ namespace std
     inline tensile_bfloat8 cos(const tensile_bfloat8& a)
     {
         return tensile_bfloat8(std::cos(float(a)));
+    }
+
+    inline std::string to_string(const tensile_float8& a)
+    {
+        return std::to_string(static_cast<float>(a));
+    }
+    inline std::string to_string(const tensile_bfloat8& a)
+    {
+        return std::to_string(static_cast<float>(a));
+    }
+    // FNUZ
+    inline bool isinf(const tensile_float8_fnuz& a)
+    {
+        return false;
+    }
+    inline bool isinf(const tensile_bfloat8_fnuz& a)
+    {
+        return false;
+    }
+
+    inline bool isnan(const tensile_float8_fnuz& a)
+    {
+        return static_cast<unsigned char>(a) == 0x80;
+    }
+    inline bool isnan(const tensile_bfloat8_fnuz& a)
+    {
+        return static_cast<unsigned char>(a) == 0x80;
+    }
+    inline bool iszero(const tensile_float8_fnuz& a)
+    {
+        return static_cast<unsigned char>(a) == 0x0;  // NOTE: only +0 exists
+    }
+    inline bool iszero(const tensile_bfloat8_fnuz& a)
+    {
+        return static_cast<unsigned char>(a) == 0x0;  // NOTE: only +0 exists
+    }
+
+    inline tensile_float8_fnuz abs(const tensile_float8_fnuz& a)
+    {
+        return tensile_float8_fnuz(std::abs(float(a)));
+    }
+    inline tensile_bfloat8_fnuz abs(const tensile_bfloat8_fnuz& a)
+    {
+        return tensile_bfloat8_fnuz(std::abs(float(a)));
+    }
+
+    inline tensile_float8_fnuz sin(const tensile_float8_fnuz& a)
+    {
+        return tensile_float8_fnuz(std::sin(float(a)));
+    }
+    inline tensile_bfloat8_fnuz sin(const tensile_bfloat8_fnuz& a)
+    {
+        return tensile_bfloat8_fnuz(std::sin(float(a)));
+    }
+
+    inline tensile_float8_fnuz cos(const tensile_float8_fnuz& a)
+    {
+        return tensile_float8_fnuz(std::cos(float(a)));
+    }
+    inline tensile_bfloat8_fnuz cos(const tensile_bfloat8_fnuz& a)
+    {
+        return tensile_bfloat8_fnuz(std::cos(float(a)));
+    }
+
+    inline std::string to_string(const tensile_float8_fnuz& a)
+    {
+        return std::to_string(static_cast<float>(a));
+    }
+    inline std::string to_string(const tensile_bfloat8_fnuz& a)
+    {
+        return std::to_string(static_cast<float>(a));
     }
 
 } // namespace std
