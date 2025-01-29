@@ -39,7 +39,7 @@ from Tensile.Toolchain.Validators import validateToolchain, getVersion, Toolchai
 from Tensile.TensileInstructions import getGfxName, TensileInstructions
 from Tensile.Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, assignGlobalParameters, architectureMap, IsaVersion, pushWorkingPath, \
-                    popWorkingPath, ParallelMap2
+                    popWorkingPath, ParallelMap2, printWarning
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from Tensile import LibraryIO
@@ -469,6 +469,16 @@ def run():
         filename = os.path.join(newLibraryDir, name)
         lib.applyNaming(kernelMinNaming)
         LibraryIO.write(filename, Utils.state(lib), arguments["LibraryFormat"])
+
+  if not globalParameters["KeepBuildTmp"]:
+    buildTmp = Path(arguments["OutputPath"]).parent / "library" / "build_tmp"
+    if buildTmp.exists() and buildTmp.is_dir():
+      shutil.rmtree(buildTmp)
+    buildTmp = Path(arguments["OutputPath"]) / "build_tmp"
+    if buildTmp.exists() and buildTmp.is_dir():
+      shutil.rmtree(buildTmp)
+    else:
+      printWarning(f"Cannot remove build_tmp")
 
   print1("# Tensile Library Writer DONE")
   print1(HR)
