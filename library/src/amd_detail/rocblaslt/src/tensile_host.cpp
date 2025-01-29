@@ -1636,9 +1636,9 @@ namespace
 #endif
 #else
 #ifdef TENSILE_YAML
-                tensileLibPath = path + "/TensileLibrary.yaml";
+                tensileLibPath = path + "/TensileLibrary_" + processor + ".yaml";
 #else
-                tensileLibPath = path + "/TensileLibrary.dat";
+                tensileLibPath = path + "/TensileLibrary_" + processor + ".dat";
 #endif
 #endif
                 if(!TestPath(tensileLibPath))
