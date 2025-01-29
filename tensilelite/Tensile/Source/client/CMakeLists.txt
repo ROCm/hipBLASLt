@@ -74,6 +74,7 @@ target_link_libraries(TensileClient PRIVATE TensileHost ${Boost_LIBRARIES})
 
 if(Tensile_ENABLE_MARKER)
     target_link_libraries(TensileClient PRIVATE -lroctx64)
+endif()
 
 if (WIN32)
     target_link_libraries(TensileClient PRIVATE TensileHost shlwapi)
