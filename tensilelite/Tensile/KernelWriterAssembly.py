@@ -48,7 +48,7 @@ from .AsmStoreState import StoreState, VectorDataTypes
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationType
 from .CustomKernels import isCustomKernelConfig
-from .Common import globalParameters, print2, printExit, printWarning, roundUp, ensurePath, INDEX_CHARS, DataDirection
+from .Common import globalParameters, print2, printExit, printWarning, roundUp, ensurePath, INDEX_CHARS, DataDirection, SemanticVersion
 
 from math import ceil, log, floor
 from copy import deepcopy
@@ -67,8 +67,8 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
-    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler)
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion):
+    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, amdClangVersion)
 
   def getSourceFileString(self, kernel) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"
@@ -10647,7 +10647,8 @@ class KernelWriterAssembly(KernelWriter):
         batchElements, addrE, addrD, addrC, addrBias, \
         addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, biasLocalBarrierInit, \
         tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
-        batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, factorDim)
+        batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, factorDim, \
+        self.amdClangVersion)
 
   ##############################################################################
   def openPrefetchGlobalRead2(self, kernel):

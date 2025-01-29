@@ -36,7 +36,7 @@ from .CustomKernels import isCustomKernelConfig
 from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
-from .Common import globalParameters, printWarning, roundUp, print2, printExit, INDEX_CHARS, DataDirection
+from .Common import globalParameters, printWarning, roundUp, print2, printExit, INDEX_CHARS, DataDirection, SemanticVersion
 
 import abc
 import os
@@ -356,10 +356,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
+    self.amdClangVersion = amdClangVersion
     self.ti = None
 
     self.do = {}

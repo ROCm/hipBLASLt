@@ -41,7 +41,7 @@ from .CustomKernels import getCustomKernelConfig
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
 from .Common import globalParameters, HR, print1, print2, \
-        printExit, printWarning, ensurePath, startTime, tqdm, state
+        printExit, printWarning, ensurePath, startTime, tqdm, state, SemanticVersion
 
 
 def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCompiler):
@@ -111,7 +111,7 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
 
 def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
         biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes, \
-        asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, sourcePath: Path, buildTmpPath: Path):
+        asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, sourcePath: Path):
     """Write all the files needed for a given benchmarking step"""
 
     ensurePath(sourcePath)
@@ -140,7 +140,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
 
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     kernelMinNaming = Solution.getMinNaming(kernels)
-    kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, srcToolchain.compiler)
+    kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, asmToolchain.assembler, asmToolchain.assemblerVersion)
 
     # write solution, kernels and CMake
     problemType = solutions[0]["ProblemType"]
@@ -153,7 +153,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
 
     newLibraryDir = ensurePath(sourcePath / 'library')
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")
-    newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, srcToolchain.compiler)
+    newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, asmToolchain.assembler)
     newLibrary.applyNaming(kernelMinNaming)
     LibraryIO.write(newLibraryFile, state(newLibrary), globalParameters["LibraryFormat"])
 

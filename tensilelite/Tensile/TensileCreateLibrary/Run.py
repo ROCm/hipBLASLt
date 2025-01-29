@@ -38,7 +38,8 @@ from Tensile.Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
 from Tensile.Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
 from Tensile.TensileInstructions import getGfxName, TensileInstructions
 from Tensile.Common import globalParameters, HR, print1, print2, printExit, IsaVersion, ensurePath, state, \
-                    CHeader, assignGlobalParameters, architectureMap, IsaVersion, ParallelMap2, tqdm
+                    CHeader, assignGlobalParameters, architectureMap, IsaVersion, ParallelMap2, tqdm, \
+                    SemanticVersion
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from Tensile.SolutionLibrary import MasterSolutionLibrary
@@ -240,12 +241,11 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
 
 
 @timing
-def getSolutionAndKernelWriters(solutions, kernels, assembler):
-
+def getSolutionAndKernelWriters(solutions, kernels, assembler: str, assemblerVersion: SemanticVersion):
   kernelSerialNaming   = Solution.getSerialNaming(kernels)
   solutionMinNaming    = Solution.getMinNaming(solutions)
   kernelMinNaming      = Solution.getMinNaming(kernels)
-  kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, assembler)
+  kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, assembler, assemblerVersion)
 
   return (kernelWriterAssembly, kernelMinNaming, solutionMinNaming)
 
@@ -366,10 +366,14 @@ def run():
 
   arguments = parseArguments()
   outputPath = Path(ensurePath(os.path.abspath(arguments["OutputPath"])))
-
   cxxCompiler, cCompiler, offloadBundler, assembler, hipconfig = validateToolchain(
-      arguments["CxxCompiler"], arguments["CCompiler"], arguments["OffloadBundler"], arguments["Assembler"], ToolchainDefaults.HIP_CONFIG
+      arguments["CxxCompiler"],
+      arguments["CCompiler"],
+      arguments["OffloadBundler"],
+      arguments["Assembler"],
+      ToolchainDefaults.HIP_CONFIG,
   )
+  hipVersion = getVersion(hipconfig, regex=r'(.+)')
 
   print1(f"# HIP Version:         {getVersion(hipconfig, regex=r'(.+)')}")
   print1(f"# Cxx Compiler:        {cxxCompiler} (version {getVersion(cxxCompiler)})")
@@ -428,7 +432,7 @@ def run():
 
   solutions, masterLibraries = generateLogicDataAndSolutions(logicFiles, arguments, cxxCompiler)
   kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
-  kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels, assembler)
+  kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion)
 
   copyStaticFiles(outputPath)
 
