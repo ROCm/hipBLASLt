@@ -166,7 +166,7 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
 
 
 def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
-    kernelWriterAssembly, errorTolerant=False, generateSourcesAndExit=False, compress=True):
+    kernelWriterAssembly, errorTolerant=False, generateSourcesAndExit=False, compress=True, fromTensile=False):
   codeObjectFiles = []
 
   outputPath = Path(outputPath)
@@ -205,13 +205,13 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
 
   if not generateSourcesAndExit:
       codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress)
-      buildSourceCodeObjectFiles(srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile)
+      buildSourceCodeObjectFiles(srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile)
 
   return codeObjectFiles, numKernels
 
 
 def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels, kernelHelperObjs, \
-    kernelWriterAssembly, compress=True):
+    kernelWriterAssembly, compress=True, fromTensile=False):
 
   outputPath = Path(outputPath)
   destLibPath = ensurePath(outputPath / "library")  # Destination for code object library files (.co)
@@ -246,7 +246,7 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
 
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  buildSourceCodeObjectFiles(srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile)
+  buildSourceCodeObjectFiles(srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile)
 
   return numKernels
 
@@ -268,7 +268,7 @@ def copyStaticFiles(outputPath):
     "TensileTypes.h",
     "tensile_bfloat16.h",
     "tensile_float8_bfloat8.h",
-    "hip_f8_impl.h",
+    "tensile_float8_bfloat8_bc.h",
     "KernelHeader.h",
     "ReductionTemplate.h",
     "memory_gfx.h" ]
@@ -463,6 +463,16 @@ def run():
         filename = os.path.join(newLibraryDir, name)
         lib.applyNaming(kernelMinNaming)
         LibraryIO.write(filename, Utils.state(lib), arguments["LibraryFormat"])
+
+  if not globalParameters["KeepBuildTmp"]:
+    buildTmp = Path(arguments["OutputPath"]).parent / "library" / "build_tmp"
+    if buildTmp.exists() and buildTmp.is_dir():
+      shutil.rmtree(buildTmp)
+    buildTmp = Path(arguments["OutputPath"]) / "build_tmp"
+    if buildTmp.exists() and buildTmp.is_dir():
+      shutil.rmtree(buildTmp)
+    else:
+      printWarning(f"Cannot remove build_tmp")
 
   print1("# Tensile Library Writer DONE")
   print1(HR)

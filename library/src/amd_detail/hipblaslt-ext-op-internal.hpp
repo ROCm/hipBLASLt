@@ -501,7 +501,15 @@ struct TensileLite::Serialization::MappingTraits<hipblaslt_ext::AMaxSolution, IO
             throw std::runtime_error("Invalid datatype in ext op library");
         }
 
-        if(scaleDatatypeStr == "F8")
+        if(scaleDatatypeStr == "F8N")
+        {
+            s.scaleDatatype = TensileLite::DataType::Float8_fnuz;
+        }
+        else if(scaleDatatypeStr == "B8N")
+        {
+            s.scaleDatatype = TensileLite::DataType::BFloat8_fnuz;
+        }
+        else if(scaleDatatypeStr == "F8")
         {
             s.scaleDatatype = TensileLite::DataType::Float8;
         }
@@ -582,7 +590,7 @@ private:
     std::uint32_t     length{};
     TensileLite::DataType datatype{TensileLite::DataType::Float};
     TensileLite::DataType outDatatype{TensileLite::DataType::Float};
-    TensileLite::DataType scaleDatatype{TensileLite::DataType::Float8};
+    TensileLite::DataType scaleDatatype{TensileLite::DataType::Float8_fnuz};
     bool              isScale = false;
 };
 

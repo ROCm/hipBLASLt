@@ -57,12 +57,20 @@ namespace TensileLite
             return "Float8";
         case DataType::BFloat8:
             return "BFloat8";
+        case DataType::Float8_fnuz:
+            return "Float8_fnuz";
+        case DataType::BFloat8_fnuz:
+            return "BFloat8_fnuz";
         case DataType::XFloat32:
             return "XFloat32";
         case DataType::Float8BFloat8:
             return "Float8BFloat8";
         case DataType::BFloat8Float8:
             return "BFloat8Float8";
+        case DataType::Float8BFloat8_fnuz:
+            return "Float8BFloat8_fnuz";
+        case DataType::BFloat8Float8_fnuz:
+            return "BFloat8Float8_fnuz";
         case DataType::Count:;
         }
         return "Invalid";
@@ -94,12 +102,20 @@ namespace TensileLite
             return "F8";
         case DataType::BFloat8:
             return "B8";
+        case DataType::Float8_fnuz:
+            return "F8N";
+        case DataType::BFloat8_fnuz:
+            return "B8N";
         case DataType::XFloat32:
             return "X";
         case DataType::Float8BFloat8:
             return "F8B8";
         case DataType::BFloat8Float8:
             return "B8F8";
+        case DataType::Float8BFloat8_fnuz:
+            return "F8B8N";
+        case DataType::BFloat8Float8_fnuz:
+            return "B8F8N";
         case DataType::Count:;
         }
         return "Invalid";
@@ -131,12 +147,20 @@ namespace TensileLite
             return TypeInfo<Float8>::ElementSize;
         case DataType::BFloat8:
             return TypeInfo<BFloat8>::ElementSize;
+        case DataType::Float8_fnuz:
+            return TypeInfo<Float8_fnuz>::ElementSize;
+        case DataType::BFloat8_fnuz:
+            return TypeInfo<BFloat8_fnuz>::ElementSize;
         case DataType::XFloat32:
             return TypeInfo<XFloat32>::ElementSize;
         case DataType::Float8BFloat8:
             return TypeInfo<Float8BFloat8>::ElementSize;
         case DataType::BFloat8Float8:
             return TypeInfo<BFloat8Float8>::ElementSize;
+        case DataType::Float8BFloat8_fnuz:
+            return TypeInfo<Float8BFloat8_fnuz>::ElementSize;
+        case DataType::BFloat8Float8_fnuz:
+            return TypeInfo<BFloat8Float8_fnuz>::ElementSize;
         case DataType::Count:;
         }
         return 1;
@@ -188,9 +212,13 @@ namespace TensileLite
         registerTypeInfo<int8_t>();
         registerTypeInfo<Float8>();
         registerTypeInfo<BFloat8>();
+        registerTypeInfo<Float8_fnuz>();
+        registerTypeInfo<BFloat8_fnuz>();
         registerTypeInfo<XFloat32>();
         registerTypeInfo<Float8BFloat8>();
         registerTypeInfo<BFloat8Float8>();
+        registerTypeInfo<Float8BFloat8_fnuz>();
+        registerTypeInfo<BFloat8Float8_fnuz>();
     }
 
     void DataTypeInfo::registerAllTypeInfoOnce()
@@ -329,6 +357,10 @@ namespace TensileLite
             return (*std::get_if<Float8>(&d)) == Float8(static_cast<float>(value));
         case static_cast<int>(DataType::BFloat8):
             return (*std::get_if<BFloat8>(&d)) == BFloat8(static_cast<float>(value));
+        case static_cast<int>(DataType::Float8_fnuz):
+            return (*std::get_if<Float8_fnuz>(&d)) == Float8_fnuz(static_cast<float>(value));
+        case static_cast<int>(DataType::BFloat8_fnuz):
+            return (*std::get_if<BFloat8_fnuz>(&d)) == BFloat8_fnuz(static_cast<float>(value));
         default:
             throw std::runtime_error("Unsupported variant cast type.");
         }

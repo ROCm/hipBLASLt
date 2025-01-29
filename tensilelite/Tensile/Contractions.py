@@ -141,9 +141,15 @@ class ProblemType:
         if rv.aType.isFloat8BFloat8() or rv.bType.isFloat8BFloat8():
             rv.aType = DataType("F8")
             rv.bType = DataType("B8")
+        elif rv.aType.isFloat8BFloat8_fnuz() or rv.bType.isFloat8BFloat8_fnuz():
+            rv.aType = DataType("F8N")
+            rv.bType = DataType("B8N")
         elif rv.aType.isBFloat8Float8() or rv.bType.isBFloat8Float8():
             rv.aType = DataType("B8")
             rv.bType = DataType("F8")
+        elif rv.aType.isBFloat8Float8_fnuz() or rv.bType.isBFloat8Float8_fnuz():
+            rv.aType = DataType("B8N")
+            rv.bType = DataType("F8N")
 
         if 'DataTypeE' in d:
             rv.eType = DataType(d['DataTypeE'])

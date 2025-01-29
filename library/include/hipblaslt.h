@@ -51,17 +51,6 @@
 #include <hip/hip_runtime_api.h>
 #include <hip/hip_version.h>
 
-#if HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR > 2 \
-    && HIP_VERSION_PATCH > 42130 //tmp before gfx94 use hip f8 header
-#define ROCM_USE_FLOAT8 1
-#else
-#undef ROCM_USE_FLOAT8
-#endif
-
-#if defined(__HIPCC__)
-#include <hip/hip_fp8.h>
-#endif
-
 #if defined(__HIP_PLATFORM_AMD__)
 #include "hipblaslt-types.h"
 #endif
@@ -447,7 +436,7 @@ hipblasStatus_t hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t matLa
  *  matLayout  Pointer to the previously created structure holding the matrix
  * mdescriptor queried by this function. See \ref hipblasLtMatrixLayout_t.
  *  @param[in]
- *  attr  	The attribute that will be set by this function. See \ref
+ *  attr    The attribute that will be set by this function. See \ref
  * hipblasLtMatrixLayoutAttribute_t.
  *  @param[in]
  *  buf  The value to which the specified attribute should be set.
@@ -475,7 +464,7 @@ hipblasStatus_t hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t       
  *  matLayout  Pointer to the previously created structure holding the matrix
  * descriptor queried by this function. See \ref hipblasLtMatrixLayout_t.
  *  @param[in]
- *  attr  	    The attribute that will be retrieved by this function. See
+ *  attr        The attribute that will be retrieved by this function. See
  * \ref hipblasLtMatrixLayoutAttribute_t.
  *  @param[out]
  *  buf         Memory address containing the attribute value retrieved by this
@@ -553,7 +542,7 @@ hipblasStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t matmulDes
  *  matmulDesc  Pointer to the previously created structure holding the matrix
  * multiply descriptor queried by this function. See \ref hipblasLtMatmulDesc_t.
  *  @param[in]
- *  attr  	The attribute that will be set by this function. See \ref
+ *  attr    The attribute that will be set by this function. See \ref
  * hipblasLtMatmulDescAttributes_t.
  *  @param[in]
  *  buf  The value to which the specified attribute should be set.
@@ -581,7 +570,7 @@ hipblasStatus_t hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t           
  *  matmulDesc  Pointer to the previously created structure holding the matrix
  * multiply descriptor queried by this function. See \ref hipblasLtMatmulDesc_t.
  *  @param[in]
- *  attr  	    The attribute that will be retrieved by this function. See
+ *  attr        The attribute that will be retrieved by this function. See
  * \ref hipblasLtMatmulDescAttributes_t.
  *  @param[out]
  *  buf         Memory address containing the attribute value retrieved by this
@@ -654,7 +643,7 @@ hipblasStatus_t hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference
  * multiply preferences descriptor queried by this function. See \ref
  * hipblasLtMatmulPreference_t
  *  @param[in]
- *  attr  	    The attribute that will be set by this function. See \ref
+ *  attr        The attribute that will be set by this function. See \ref
  * hipblasLtMatmulPreferenceAttributes_t.
  *  @param[in]
  *  buf         The value to which the specified attribute should be set.
@@ -683,7 +672,7 @@ hipblasStatus_t hipblasLtMatmulPreferenceSetAttribute(hipblasLtMatmulPreference_
  * multiply heuristic search preferences descriptor queried by this function.
  * See \ref hipblasLtMatmulPreference_t.
  *  @param[in]
- *  attr  	    The attribute that will be retrieved by this function. See
+ *  attr        The attribute that will be retrieved by this function. See
  * \ref hipblasLtMatmulPreferenceAttributes_t.
  *  @param[out]
  *  buf         Memory address containing the attribute value retrieved by this

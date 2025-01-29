@@ -164,7 +164,14 @@ def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Pa
     return coPath
 
 
-def buildSourceCodeObjectFiles(toolchain: SourceToolchain, destDir: Union[Path, str], tmpObjDir: Union[Path, str], includeDir: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
+def buildSourceCodeObjectFiles(
+        toolchain: SourceToolchain, 
+        destDir: Union[Path, str], 
+        tmpObjDir: Union[Path, str], 
+        includeDir: Union[Path, str], 
+        kernelPath: Union[Path, str], 
+        fromTensile: bool
+    ) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
     Args:
@@ -190,7 +197,7 @@ def buildSourceCodeObjectFiles(toolchain: SourceToolchain, destDir: Union[Path, 
     coPathsRaw = []
     coPaths= []
 
-    _, cmdlineArchs = splitArchs()
+    _, cmdlineArchs = splitArchs(fromTensile)
 
     objPath = str(tmpObjDir / objFilename)
     toolchain.compile(str(kernelPath), objPath, str(includeDir), cmdlineArchs)

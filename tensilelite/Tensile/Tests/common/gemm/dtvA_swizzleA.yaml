@@ -195,12 +195,12 @@ BenchmarkProblems:
           - Exact: [127, 1, 1, 127]
 
   ########################################
-  # F8B8HS TN DTVA + SWIZZLED_A
+  # F8B8NHS TN DTVA + SWIZZLED_A
   ########################################
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8B8
+      DataType: F8B8N
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
