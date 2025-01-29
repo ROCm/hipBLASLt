@@ -162,6 +162,10 @@ if(HIPBLASLT_ENABLE_MARKER)
   target_link_libraries(hipblaslt PRIVATE -lroctx64)
 endif()
 
+if( NOT BUILD_CUDA AND NOT LEGACY_HIPBLAS_DIRECT )
+  target_link_libraries(hipblaslt INTERFACE roc::hipblas-common)
+endif()
+
 # Target properties
 rocm_set_soversion(hipblaslt ${hipblaslt_SOVERSION})
 set_target_properties(hipblaslt PROPERTIES CXX_EXTENSIONS NO)
