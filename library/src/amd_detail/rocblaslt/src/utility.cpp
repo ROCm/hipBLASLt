@@ -72,9 +72,9 @@ const char* hipDataType_to_string(hipDataType type)
     case HIP_R_64F:
         return "R_64F";
     case HIP_R_8F_E4M3_FNUZ:
-        return "R_8F_E4M3";
+        return "R_8F_E4M3_FNUZ";
     case HIP_R_8F_E5M2_FNUZ:
-        return "R_8F_E5M2";
+        return "R_8F_E5M2_FNUZ";
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
         return "R_8F_E4M3";

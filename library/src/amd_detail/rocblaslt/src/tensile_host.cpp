@@ -126,17 +126,6 @@ namespace
         return std::regex_search(gpu_arch.data(), arch_regex);
     }
 
-    inline bool IsOCPSupported()
-    {
-        int             deviceId;
-        hipDeviceProp_t deviceProperties;
-        static_cast<void>(hipGetDevice(&deviceId));
-        static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-        if(gpu_arch_match(deviceProperties.gcnArchName, "12\\d{2}"))
-            return true;
-        return false;
-    }
-
     inline TensileLite::ActivationType getTensileActivationType(rocblaslt_epilogue epilogue)
     {
         switch(epilogue)
@@ -212,9 +201,9 @@ namespace
         case HIP_R_16BF:
             return TensileLite::DataType::BFloat16;
         case HIP_R_8F_E4M3_FNUZ:
-            return TensileLite::DataType::Float8;
+            return TensileLite::DataType::Float8_fnuz;
         case HIP_R_8F_E5M2_FNUZ:
-            return TensileLite::DataType::BFloat8;
+            return TensileLite::DataType::BFloat8_fnuz;
 #ifdef ROCM_USE_FLOAT8
         case HIP_R_8F_E4M3:
             return TensileLite::DataType::Float8;
@@ -243,18 +232,16 @@ namespace
             return HIP_R_64F;
         case TensileLite::DataType::BFloat16:
             return HIP_R_16BF;
-        case TensileLite::DataType::Float8:
-#ifdef ROCM_USE_FLOAT8
-            if(IsOCPSupported())
-                return HIP_R_8F_E4M3;
-#endif
+        case TensileLite::DataType::Float8_fnuz:
             return HIP_R_8F_E4M3_FNUZ;
-        case TensileLite::DataType::BFloat8:
-#ifdef ROCM_USE_FLOAT8
-            if(IsOCPSupported())
-                return HIP_R_8F_E5M2;
-#endif
+        case TensileLite::DataType::BFloat8_fnuz:
             return HIP_R_8F_E5M2_FNUZ;
+#ifdef ROCM_USE_FLOAT8
+        case TensileLite::DataType::Float8:
+            return HIP_R_8F_E4M3;
+        case TensileLite::DataType::BFloat8:
+            return HIP_R_8F_E5M2;
+#endif
         case TensileLite::DataType::Int8:
             return HIP_R_8I;
         case TensileLite::DataType::Int32:
@@ -280,10 +267,10 @@ namespace
         case rocblaslt_compute_f32_fast_f8bf8_fnuz:
         case rocblaslt_compute_f32_fast_bf8f8_fnuz:
 #ifdef ROCM_USE_FLOAT8
-        case rocblaslt_compute_f32_fast_f8_ocp:
-        case rocblaslt_compute_f32_fast_bf8_ocp:
-        case rocblaslt_compute_f32_fast_f8bf8_ocp:
-        case rocblaslt_compute_f32_fast_bf8f8_ocp:
+        case rocblaslt_compute_f32_fast_f8:
+        case rocblaslt_compute_f32_fast_bf8:
+        case rocblaslt_compute_f32_fast_f8bf8:
+        case rocblaslt_compute_f32_fast_bf8f8:
 #endif
             return TensileLite::DataType::Float;
         case rocblaslt_compute_f64:
@@ -308,26 +295,36 @@ namespace
         case rocblaslt_compute_f32_fast_bf16:
             return TensileLite::DataType::BFloat16;
         case rocblaslt_compute_f32_fast_f8_fnuz:
-            return TensileLite::DataType::Float8;
+            return TensileLite::DataType::Float8_fnuz;
         case rocblaslt_compute_f32_fast_bf8_fnuz:
-            return TensileLite::DataType::BFloat8;
+            return TensileLite::DataType::BFloat8_fnuz;
         case rocblaslt_compute_f32_fast_f8bf8_fnuz:
-            return TensileLite::DataType::Float8BFloat8;
+            return TensileLite::DataType::Float8BFloat8_fnuz;
         case rocblaslt_compute_f32_fast_bf8f8_fnuz:
-            return TensileLite::DataType::BFloat8Float8;
+            return TensileLite::DataType::BFloat8Float8_fnuz;
 #ifdef ROCM_USE_FLOAT8
-        case rocblaslt_compute_f32_fast_f8_ocp:
+        case rocblaslt_compute_f32_fast_f8:
             return TensileLite::DataType::Float8;
-        case rocblaslt_compute_f32_fast_bf8_ocp:
+        case rocblaslt_compute_f32_fast_bf8:
             return TensileLite::DataType::BFloat8;
-        case rocblaslt_compute_f32_fast_f8bf8_ocp:
+        case rocblaslt_compute_f32_fast_f8bf8:
             return TensileLite::DataType::Float8BFloat8;
-        case rocblaslt_compute_f32_fast_bf8f8_ocp:
+        case rocblaslt_compute_f32_fast_bf8f8:
             return TensileLite::DataType::BFloat8Float8;
 #endif
         default:;
         }
 
+        if(typeA == TensileLite::DataType::Float8_fnuz && typeB == TensileLite::DataType::BFloat8_fnuz)
+        {
+            return TensileLite::DataType::Float8BFloat8_fnuz;
+        }
+        else if(typeA == TensileLite::DataType::BFloat8_fnuz && typeB == TensileLite::DataType::Float8_fnuz)
+        {
+            return TensileLite::DataType::BFloat8Float8_fnuz;
+        }
+
+#ifdef ROCM_USE_FLOAT8
         if(typeA == TensileLite::DataType::Float8 && typeB == TensileLite::DataType::BFloat8)
         {
             return TensileLite::DataType::Float8BFloat8;
@@ -336,6 +333,8 @@ namespace
         {
             return TensileLite::DataType::BFloat8Float8;
         }
+#endif
+
         return TensileLite::DataTypeInfo::Get(typeA).elementSize
                        <= TensileLite::DataTypeInfo::Get(typeB).elementSize
                    ? typeA
@@ -424,9 +423,9 @@ namespace
             return "f32_bf16_r";
         }
         else if(typeComputeInput == TensileLite::DataType::Half
-                && (typeA == TensileLite::DataType::Float8 && typeB == TensileLite::DataType::Half
+                && (typeA == TensileLite::DataType::Float8_fnuz && typeB == TensileLite::DataType::Half
                     || typeA == TensileLite::DataType::Half
-                           && typeB == TensileLite::DataType::Float8))
+                           && typeB == TensileLite::DataType::Float8_fnuz))
         {
             return "f32_f16_r";
         }
@@ -466,9 +465,9 @@ namespace
             return "c_f32_fast_bf16_r";
         }
         else if(typeComputeInput == TensileLite::DataType::Half
-                && (typeA == TensileLite::DataType::Float8 && typeB == TensileLite::DataType::Half
+                && (typeA == TensileLite::DataType::Float8_fnuz && typeB == TensileLite::DataType::Half
                     || typeA == TensileLite::DataType::Half
-                           && typeB == TensileLite::DataType::Float8))
+                           && typeB == TensileLite::DataType::Float8_fnuz))
         {
             return "c_f32_fast_f16_r";
         }
@@ -2772,6 +2771,38 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
     return rocblaslt_status_success;
 }
 
+void checkF8Compatiblity(const std::string &deviceString, const TensileLite::ContractionProblemGemm& prob) {
+
+    bool isGFX94X = deviceString.find("gfx940") != std::string::npos ||
+        deviceString.find("gfx941") != std::string::npos ||
+        deviceString.find("gfx942") != std::string::npos;
+
+    auto isFNUZ = [](TensileLite::DataType type) {
+        return type == TensileLite::DataType::Float8_fnuz ||
+            type == TensileLite::DataType::BFloat8_fnuz;
+    };
+
+    auto isOCP = [](TensileLite::DataType type) {
+        return type == TensileLite::DataType::Float8 ||
+            type == TensileLite::DataType::BFloat8;
+    };
+
+    bool hasFNUZ = isFNUZ(prob.a().dataType()) ||
+        isFNUZ(prob.b().dataType()) ||
+        isFNUZ(prob.c().dataType()) ||
+        isFNUZ(prob.d().dataType());
+
+    bool hasOCP = isOCP(prob.a().dataType()) ||
+        isOCP(prob.b().dataType()) ||
+        isOCP(prob.c().dataType()) ||
+        isOCP(prob.d().dataType());
+
+    if((hasFNUZ && !isGFX94X) || (hasOCP && isGFX94X) || (hasFNUZ && hasOCP)) {
+        log_error(__func__, "Requested F8 type not supported");
+        throw std::runtime_error("[checkF8] Requested F8 type not supported.");
+    }
+}
+
 template <typename MyProblem>
 rocblaslt_status getAllSolutions(MyProblem&                                      prob,
                                  rocblaslt_handle                                handle,
@@ -2791,6 +2822,9 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
         return rocblaslt_status_invalid_pointer;
     }
 
+    std::string deviceFullString(deviceProp->gcnArchName);
+    std::string deviceString = deviceFullString.substr(0, deviceFullString.find(":"));
+
     hardware = TensileLite::hip::GetDevice(*deviceProp);
 
     std::set<std::shared_ptr<TensileLite::ContractionSolution>> solutions;
@@ -2798,11 +2832,16 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
 
     if constexpr(std::is_same<MyProblem, TensileLite::ContractionProblemGemm>::value)
     {
+        checkF8Compatiblity(deviceString, prob);
+
         solutions = library->findAllSolutions(
             prob, *hardware, TensileLite::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
     }
     else if constexpr(std::is_same<MyProblem, TensileLite::ContractionProblemGroupedGemm>::value)
     {
+        for (const auto &gemm : prob.gemms)
+            checkF8Compatiblity(deviceString, gemm);
+
         solutions = library->findAllSolutionsGroupedGemm(
             prob.gemms, *hardware, TensileLite::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
     }
@@ -2885,7 +2924,6 @@ rocblaslt_status getAllSolutions(std::shared_ptr<void>                          
                                  std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
                                  size_t                                          maxWorkSpaceBytes)
 {
-
     rocblaslt_status status = rocblaslt_status_success;
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {

@@ -808,7 +808,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       instPerPackA    = 0 if kernel["UnrollMajorLDSA"] else int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
       instPerPackB    = 0 if kernel["UnrollMajorLDSB"] else int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
       if kernel["ConvertAfterDS"]:
-         if kernel["ProblemType"]["DataTypeA"].isFloat8():
+         if kernel["ProblemType"]["DataTypeA"].isAnyFloat8():
              if kernel["UnrollMajorLDSA"]:
                  instPerPackA = 6 * self.states.numReadsIterCoalescedA if(iteration % self.states.numReadsIterCoalescedA == 0) else 0
              elif self.states.lrvwTileA == 1:
@@ -820,7 +820,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
              elif self.states.lrvwTileA == 8:
                  instPerPackA = 76
 
-         if kernel["ProblemType"]["DataTypeB"].isFloat8():
+         if kernel["ProblemType"]["DataTypeB"].isAnyFloat8():
              if kernel["UnrollMajorLDSB"]:
                  instPerPackB = 6 * self.states.numReadsIterCoalescedB if(iteration % self.states.numReadsIterCoalescedB == 0) else 0
              elif self.states.lrvwTileB == 1:
@@ -856,7 +856,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         packMItems = packM.flatitems()
 
         if packAItems:
-          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeA"].isFloat8():
+          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeA"].isAnyFloat8():
             for n in range(instPerPackA):
               packINtems[0].append(packAItems.pop(0))
           else:
@@ -873,7 +873,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
                 break
 
         if packBItems:
-          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeB"].isFloat8():
+          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeB"].isAnyFloat8():
             for n in range(instPerPackB):
               packINtems[0].append(packBItems.pop(0))
           else:
@@ -882,7 +882,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
                 packINtems[j].append(packBItems.pop(0))
 
         while packAItems:
-          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeA"].isFloat8():
+          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeA"].isAnyFloat8():
             for n in range(instPerPackA):
               packINtems[0].append(packAItems.pop(0))
           else:
@@ -900,7 +900,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
                   break
 
         while packBItems:
-          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeB"].isFloat8():
+          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeB"].isAnyFloat8():
             for n in range(instPerPackB):
               packINtems[0].append(packBItems.pop(0))
           else:
@@ -1261,7 +1261,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
               waitDsRead = SWaitCnt(lgkmcnt=numDsInsts, comment="Wait for dependent lr")
               iterCode.add(waitDsRead)
         else:
-          if kernel["UnrollMajorLDSB"] and not (kernel["ProblemType"]["DataTypeB"].isFloat8() and kernel["ConvertAfterDS"]):
+          if kernel["UnrollMajorLDSB"] and not (kernel["ProblemType"]["DataTypeB"].isAnyFloat8() and kernel["ConvertAfterDS"]):
             if iteration == 0 and i == kernel["MIWaveTileA"]:
               # add 1 more waitcnt before using ds read data
               waitCode2 = fastdeepcopy(waitCode)
@@ -1400,7 +1400,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           if ((iteration < numReadsIterB and not dataAtIterB < max(dataAtIterA,dataAtIterB)) or numPrefetchIter) and (not kernel["DirectToVgprB"]):
             localReads -= self.states.numReadsPerIterB
           localReads += localReadsWaitcnt
-          if iteration == 0 and kernel["UnrollMajorLDSB"] and not (kernel["ProblemType"]["DataTypeB"].isFloat8() and kernel["ConvertAfterDS"]):
+          if iteration == 0 and kernel["UnrollMajorLDSB"] and not (kernel["ProblemType"]["DataTypeB"].isAnyFloat8() and kernel["ConvertAfterDS"]):
             # We issued LR with A[0]->B[0]->A[1:]->B[1:] order.
             # We need to calculate how many B[N:] needed by 1st mfma.
             # If not UnrollMajorLDSB, we have packB which will be issued ahead.

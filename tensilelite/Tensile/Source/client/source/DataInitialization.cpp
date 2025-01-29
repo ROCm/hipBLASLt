@@ -261,6 +261,10 @@ namespace TensileLite
                 MiKv = 4;
                 break;
             case DataType::Int8:
+            case DataType::Float8_fnuz:
+            case DataType::BFloat8_fnuz:
+            case DataType::Float8BFloat8_fnuz:
+            case DataType::BFloat8Float8_fnuz:
             case DataType::Float8:
             case DataType::BFloat8:
             case DataType::Float8BFloat8:
@@ -490,6 +494,24 @@ namespace TensileLite
                 initGPUSparseInputTemplate((BFloat8*)(dstCompressed),
                                            (unsigned char*)(dstMeta),
                                            (BFloat8*)srcBuffer,
+                                           tensor,
+                                           tensorC,
+                                           tensorMeta,
+                                           dim);
+                break;
+            case DataType::Float8_fnuz:
+                initGPUSparseInputTemplate((Float8_fnuz*)(dstCompressed),
+                                           (unsigned char*)(dstMeta),
+                                           (Float8_fnuz*)srcBuffer,
+                                           tensor,
+                                           tensorC,
+                                           tensorMeta,
+                                           dim);
+                break;
+            case DataType::BFloat8_fnuz:
+                initGPUSparseInputTemplate((BFloat8_fnuz*)(dstCompressed),
+                                           (unsigned char*)(dstMeta),
+                                           (BFloat8_fnuz*)srcBuffer,
                                            tensor,
                                            tensorC,
                                            tensorMeta,
@@ -1440,6 +1462,18 @@ namespace TensileLite
                                                          t,
                                                          tDim);
                                         break;
+                                    case DataType::Float8_fnuz:
+                                        pruneSparseArray((Float8_fnuz*)p.second.cpuInput.valid.get()
+                                                             + gemmInitOffset,
+                                                         t,
+                                                         tDim);
+                                        break;
+                                    case DataType::BFloat8_fnuz:
+                                        pruneSparseArray((BFloat8_fnuz*)p.second.cpuInput.valid.get()
+                                                             + gemmInitOffset,
+                                                         t,
+                                                         tDim);
+                                        break;
                                     default:
                                         throw std::runtime_error("SparseMatrix doesn't support");
                                     }
@@ -1510,6 +1544,14 @@ namespace TensileLite
                                     pruneSparseArray(
                                         (BFloat8*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
+                                case DataType::Float8_fnuz:
+                                    pruneSparseArray(
+                                        (Float8_fnuz*)p.second.cpuInput.valid.get(), t, tDim);
+                                    break;
+                                case DataType::BFloat8_fnuz:
+                                    pruneSparseArray(
+                                        (BFloat8_fnuz*)p.second.cpuInput.valid.get(), t, tDim);
+                                    break;
                                 default:
                                     throw std::runtime_error("SparseMatrix doesn't support");
                                 }
@@ -1564,10 +1606,18 @@ namespace TensileLite
                     case DataType::BFloat8:
                         prop.value = getValue<BFloat8>(prop.init, prop.freeValue);
                         break;
+                    case DataType::Float8_fnuz:
+                        prop.value = getValue<Float8_fnuz>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::BFloat8_fnuz:
+                        prop.value = getValue<BFloat8_fnuz>(prop.init, prop.freeValue);
+                        break;
                     case DataType::XFloat32:
                     case DataType::Count:
                     case DataType::Float8BFloat8:
-                    case DataType::BFloat8Float8:;
+                    case DataType::BFloat8Float8:
+                    case DataType::Float8BFloat8_fnuz:
+                    case DataType::BFloat8Float8_fnuz:;
                     }
                 }
                 if(Debug::Instance().printTensorInfo() && prop.dataType != DataType::None)
