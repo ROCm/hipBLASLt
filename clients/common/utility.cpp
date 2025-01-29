@@ -70,9 +70,6 @@ std::string hipblaslt_exepath()
         result.resize(result.size() * 2);
     }
 
-    // std::wstring          wspath(result.data());
-    // fs::path exepath(wspath.begin(), wspath.end());
-
     fs::path exepath(result.begin(), result.end());
     exepath = exepath.remove_filename();
     // Add trailing "/" to exepath if required
