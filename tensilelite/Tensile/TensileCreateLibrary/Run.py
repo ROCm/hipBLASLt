@@ -342,14 +342,6 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
       masterLibraries[architectureName] = newLibrary
       masterLibraries[architectureName].version = args["CodeObjectVersion"]
 
-  if args["GenSolTable"]:
-    matchTable = {}
-    # Match yaml file solutions to solution index
-    for _,masterLibrary in masterLibraries.items():
-      for localIdx, _, s in libraryIter(masterLibrary):
-        matchTable[s.index] = [s.srcName, localIdx]
-    LibraryIO.write("MatchTable", matchTable)
-
   # Sort masterLibraries to make global soln index values deterministic
   solnReIndex=0
   masterLibraries = dict(sorted(masterLibraries.items()))
@@ -366,6 +358,14 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
         for _, sol in lib.solutions.items():
           sol.index = solnReIndex
           solnReIndex += 1
+
+  if args["GenSolTable"]:
+    matchTable = {}
+    # Match yaml file solutions to solution index
+    for _,masterLibrary in masterLibraries.items():
+      for localIdx, _, s in libraryIter(masterLibrary):
+        matchTable[s.index] = [s.srcName, localIdx]
+    LibraryIO.write("MatchTable", matchTable)
 
   if "fallback" in masterLibraries.keys():
     for key, value in masterLibraries.items():
