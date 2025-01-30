@@ -314,7 +314,7 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
   solutions = []
   masterLibraries = {}
   nextSolIndex = 0
-  matchTable = {}
+
   fIter = zip(logicFiles, itertools.repeat(cxxCompiler), itertools.repeat(archs))
 
   def libraryIter(lib: MasterSolutionLibrary):
@@ -326,7 +326,7 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
         yield from libraryIter(lazyLib)
 
   for library in ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered"):
-    _, architectureName, _, _, _, newLibrary, srcFile = library
+    _, architectureName, _, _, _, newLibrary = library
 
     if architectureName == "":
       continue
@@ -337,10 +337,30 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
       masterLibraries[architectureName] = newLibrary
       masterLibraries[architectureName].version = args["CodeObjectVersion"]
 
-    if args["GenSolTable"]:
-      # Match yaml file solutions to solution index
-      for localIdx, _, s in libraryIter(newLibrary):
-        matchTable[s.index] = [srcFile, localIdx]
+  # Sort masterLibraries to make global soln index values deterministic
+  solnReIndex=0
+  masterLibraries = dict(sorted(masterLibraries.items()))
+  for k,v in masterLibraries.items():
+    for _, masterLibrary in masterLibraries.items():
+      for _, sol in masterLibrary.solutions.items():
+        sol.index = solnReIndex
+        solnReIndex += 1
+      # Sort masterLibrary to make global soln index values deterministic
+      masterLibrary.lazyLibraries = dict(sorted(masterLibrary.lazyLibraries.items()))
+      for name, lib in masterLibrary.lazyLibraries.items():
+        # Sort solns by the lib logic file they were generated from
+        lib.solutions = {k: lib.solutions[k] for k in sorted(lib.solutions, key = lambda idx: lib.solutions[idx].srcName )}
+        for _, sol in lib.solutions.items():
+          sol.index = solnReIndex
+          solnReIndex += 1
+
+  if args["GenSolTable"]:
+    matchTable = {}
+    # Match yaml file solutions to solution index
+    for _,masterLibrary in masterLibraries.items():
+      for localIdx, _, s in libraryIter(masterLibrary):
+        matchTable[s.index] = [s.srcName, localIdx]
+    LibraryIO.write("MatchTable", matchTable)
 
   if "fallback" in masterLibraries.keys():
     for key, value in masterLibraries.items():
@@ -357,9 +377,6 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
 
   # remove duplicates while preserving order
   solutions = dict.fromkeys(solutions).keys()
-
-  if args["GenSolTable"]:
-    LibraryIO.write("MatchTable", matchTable)
 
   return solutions, masterLibraries
 
