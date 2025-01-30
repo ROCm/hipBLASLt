@@ -21,20 +21,10 @@
 # SOFTWARE.
 #
 ################################################################################
-if (DEFINED ENV{ROCM_PATH})
-    set(path_rocm "$ENV{ROCM_PATH}")
-else()
-    if(WIN32)
-        set(path_rocm "C:\\opt\\rocm")
-    else()
-        set(path_rocm "/opt/rocm")
-    endif()
-endif()
-
 if(WIN32)
-    SET(clang_path "${path_rocm}\\bin\\clang++.exe")
+    SET(clang_path "${ROCM_PATH}\\bin\\clang++.exe")
 else()
-    SET(clang_path "${path_rocm}/bin/amdclang++")
+    SET(clang_path "${ROCM_PATH}/bin/amdclang++")
 endif()
 
 function(CompileSourceKernel source archs buildIdKind outputFolder)
