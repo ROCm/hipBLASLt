@@ -135,7 +135,7 @@ def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
     with open(path, "w", encoding="utf-8") as f:
       f.write(result.src)
       del result # result.src is very large so let gc know to clean up asap
- 
+
     return path, isa, wfsize
 
 
@@ -144,7 +144,7 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
     kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_H)
 
     with open(kernelHeaderFilename, "w", encoding="utf-8") as kernelHeaderFile, \
-          open(kernelSourceFilename, "w", encoding="utf-8") as kernelSourceFile:  
+          open(kernelSourceFilename, "w", encoding="utf-8") as kernelSourceFile:
         kernelSourceFile.write(CHeader)
         kernelHeaderFile.write(CHeader)
         kernelSourceFile.write("#include \"Kernels.h\"\n")
@@ -152,7 +152,7 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
         if globalParameters["RuntimeLanguage"] == "HIP":
           kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
           kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
-        kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")  
+        kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")
         HeaderText = ""
         for ko in kernelHelperObjs:
             kernelName = ko.getKernelName()
@@ -199,7 +199,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
 
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  
+
   if not generateSourcesAndExit:
       codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
       buildSourceCodeObjectFile(srcToolchain, outputPath, fromTensile, srcKernelFile)
@@ -319,7 +319,7 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
   solutions = []
   masterLibraries = {}
   nextSolIndex = 0
-  matchTable = {}
+
   fIter = zip(logicFiles, itertools.repeat(cxxCompiler), itertools.repeat(archs))
 
   def libraryIter(lib: MasterSolutionLibrary):
@@ -331,7 +331,7 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
         yield from libraryIter(lazyLib)
 
   for library in ParallelMap2(LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered"):
-    _, architectureName, _, _, _, newLibrary, srcFile = library
+    _, architectureName, _, _, _, newLibrary = library
 
     if architectureName == "":
       continue
@@ -341,11 +341,31 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
     else:
       masterLibraries[architectureName] = newLibrary
       masterLibraries[architectureName].version = args["CodeObjectVersion"]
-    
-    if args["GenSolTable"]:
-      # Match yaml file solutions to solution index
-      for localIdx, _, s in libraryIter(newLibrary):
-        matchTable[s.index] = [srcFile, localIdx]
+
+  # Sort masterLibraries to make global soln index values deterministic
+  solnReIndex=0
+  masterLibraries = dict(sorted(masterLibraries.items()))
+  for k,v in masterLibraries.items():
+    for _, masterLibrary in masterLibraries.items():
+      for _, sol in masterLibrary.solutions.items():
+        sol.index = solnReIndex
+        solnReIndex += 1
+      # Sort masterLibrary to make global soln index values deterministic
+      masterLibrary.lazyLibraries = dict(sorted(masterLibrary.lazyLibraries.items()))
+      for name, lib in masterLibrary.lazyLibraries.items():
+        # Sort solns by the lib logic file they were generated from
+        lib.solutions = {k: lib.solutions[k] for k in sorted(lib.solutions, key = lambda idx: lib.solutions[idx].srcName )}
+        for _, sol in lib.solutions.items():
+          sol.index = solnReIndex
+          solnReIndex += 1
+
+  if args["GenSolTable"]:
+    matchTable = {}
+    # Match yaml file solutions to solution index
+    for _,masterLibrary in masterLibraries.items():
+      for localIdx, _, s in libraryIter(masterLibrary):
+        matchTable[s.index] = [s.srcName, localIdx]
+    LibraryIO.write("MatchTable", matchTable)
 
   if "fallback" in masterLibraries.keys():
     for key, value in masterLibraries.items():
@@ -362,9 +382,6 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
 
   # remove duplicates while preserving order
   solutions = dict.fromkeys(solutions).keys()
-
-  if args["GenSolTable"]:
-    LibraryIO.write("MatchTable", matchTable)
 
   return solutions, masterLibraries
 
@@ -450,7 +467,7 @@ def run():
 
   copyStaticFiles(arguments["OutputPath"])
 
-  numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, kernels, 
+  numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, kernels,
                                            kernelHelperObjs, kernelWriterAssembly, compress=arguments["UseCompression"])
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
