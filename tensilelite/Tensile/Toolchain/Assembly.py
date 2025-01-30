@@ -31,13 +31,13 @@ import subprocess
 import warnings
 
 from pathlib import Path
-from typing import List, Literal, Union, Tuple
+from typing import List, Union, Tuple
 
 from .. import Utils
 from ..TensileInstructions import getGfxName
 from ..Common import globalParameters, print2, ensurePath
 class AssemblyToolchain:
-    def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: Literal[4, 5]):
+    def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: str):
         self.assembler = assembler
         self.bundler = bundler
         self.buildIdKind = buildIdKind
