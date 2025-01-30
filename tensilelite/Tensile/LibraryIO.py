@@ -225,7 +225,7 @@ def parseSolutionsData(data, srcFile, cxxCompiler):
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
-        solutionObject = Solution(solutionState, cxxCompiler)
+        solutionObject = Solution(solutionState, cxxCompiler, srcFile)
         solutions.append(solutionObject)
     problemType = solutions[0]["ProblemType"]
     problemSizes = ProblemSizes(problemType, problemSizesConfig)
@@ -240,8 +240,6 @@ class LibraryLogic(NamedTuple):
     solutions: list
     exactLogic: list
     library: SolutionLibrary.MasterSolutionLibrary
-    srcFile: str
-
 
 def parseLibraryLogicFile(filename, cxxCompiler, archs=None):
     """Wrapper function to read and parse a library logic file."""
@@ -293,7 +291,7 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
             # The ActivationType setting in YAML is meaningless in customKernel case.
             # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
             solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
-        solutionObject = Solution(solutionState, cxxCompiler)
+        solutionObject = Solution(solutionState, cxxCompiler, srcFile)
         solutionProblemType = solutionObject["ProblemType"]
         if problemType != solutionProblemType:
             # find the mismatched items in ProblemType
@@ -310,7 +308,7 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
     newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions, cxxCompiler)
 
     return LibraryLogic(data["ScheduleName"], data["ArchitectureName"], problemType, solutions, \
-            data.get("ExactLogic"), newLibrary, srcFile)
+            data.get("ExactLogic"), newLibrary)
 
 
 def parseLibraryLogicList(data, srcFile="?"):
