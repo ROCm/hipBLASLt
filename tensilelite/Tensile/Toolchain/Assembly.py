@@ -28,14 +28,15 @@ import os
 import shlex
 import shutil
 import subprocess
-import warnings
 
 from pathlib import Path
-from typing import List, Union, Tuple
+from typing import List, Union
 
-from .. import Utils
 from ..TensileInstructions import getGfxName
 from ..Common import globalParameters, print2, ensurePath
+from ..KernelWriterAssembly import KernelWriterAssembly
+from ..SolutionStructs import Solution
+
 class AssemblyToolchain:
     def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: str):
         self.assembler = assembler
@@ -76,15 +77,15 @@ class AssemblyToolchain:
       """
       launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
       args = [
-          *launcher, 
-          self.assembler, 
-          "-x", "assembler", 
-          "--target=amdgcn-amd-amdhsa", 
-          f"-mcode-object-version={self.coVersion}", 
-          f"-mcpu={gfx}",  
+          *launcher,
+          self.assembler,
+          "-x", "assembler",
+          "--target=amdgcn-amd-amdhsa",
+          f"-mcode-object-version={self.coVersion}",
+          f"-mcpu={gfx}",
           "-mwavefrontsize64" if wavefrontSize == 64 else "-mno-wavefrontsize64"
           "-g" if debug else "",
-          "-c", 
+          "-c",
           "-o", destPath, srcPath
       ]
 
@@ -116,7 +117,7 @@ class AssemblyToolchain:
                 "-Xlinker", f"--build-id={self.buildIdKind}",
                 "-o", destPath, *srcPaths
             ]
-        
+
         return self.invoke(args, "Linking assembly object files into code object (*.o -> .co)")
 
     def compress(self, srcPath: str, destPath: str, gfx: str):
@@ -146,7 +147,7 @@ class AssemblyToolchain:
 
 def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjFiles: int=10000) -> List[str]:
     numObjFiles = len(objFiles)
-    
+
     if numObjFiles <= maxObjFiles:
       return objFiles
 
@@ -167,16 +168,33 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 
     return newObjFilesOutput
 
-def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAsm, outputPath, compress: bool=True):
-    
+def buildAssemblyCodeObjectFiles(
+      toolchain: AssemblyToolchain,
+      kernels: List[Solution],
+      writer: KernelWriterAssembly,
+      destDir: Union[Path, str],
+      asmDir: Union[Path, str],
+      compress: bool=True
+    ):
+    """Builds code object files from assembly files
+
+    Args:
+        toolchain: The assembly toolchain object to use for building.
+        kernels: A list of the kernel objects to build.
+        writer: The KernelWriterAssembly object to use.
+        destDir: The destination directory for the code object files.
+        asmDir: The directory containing the assembly files.
+        compress: Whether to compress the code object files.
+    """
+
     isAsm = lambda k: k["KernelLanguage"] == "Assembly"
 
     extObj = ".o"
     extCo = ".co"
     extCoRaw = ".co.raw"
 
-    destDir = Path(ensurePath(os.path.join(outputPath, 'library')))
-    asmDir = Path(ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly")))
+    destDir = Path(ensurePath(destDir))
+    asmDir = Path(ensurePath(asmDir))
 
     archKernelMap = collections.defaultdict(list)
     for k in filter(isAsm, kernels):
@@ -189,14 +207,14 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
 
       gfx = getGfxName(arch)
 
-      objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
+      objectFiles = [str(asmDir / (writer.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
       coFileMap = collections.defaultdict(list)
       if len(objectFiles):
         coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
       for kernel in archKernels:
         coName = kernel.get("codeObjectFile", None)
         if coName:
-          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
+          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writer.getKernelFileBase(kernel) + extObj)))
       for coFileRaw, objFiles in coFileMap.items():
         objFiles = _batchObjectFiles(objFiles, coFileRaw)
         toolchain.link(objFiles, str(coFileRaw))

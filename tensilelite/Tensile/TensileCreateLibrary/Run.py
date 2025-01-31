@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,12 +34,11 @@ from typing import NamedTuple, List, Optional, Sequence, Union
 
 from Tensile import Utils
 from Tensile.Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
-from Tensile.Toolchain.Source import SourceToolchain, buildSourceCodeObjectFile
+from Tensile.Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
 from Tensile.Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
 from Tensile.TensileInstructions import getGfxName, TensileInstructions
 from Tensile.Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
-                    CHeader, assignGlobalParameters, architectureMap, IsaVersion, pushWorkingPath, \
-                    popWorkingPath, ParallelMap2, printWarning
+                    CHeader, assignGlobalParameters, architectureMap, IsaVersion, ParallelMap2
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from Tensile import LibraryIO
@@ -56,7 +55,7 @@ def timing(func):
     res = func(*args, **kwargs)
     end = timer()
 
-    if globalParameters['PrintTiming']:
+    if globalParameters["PrintTiming"]:
       print(f'{func.__name__} took {end - start} seconds')
 
     return res
@@ -134,7 +133,9 @@ def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
     wfsize = result.wavefrontSize
     with open(path, "w", encoding="utf-8") as f:
       f.write(result.src)
-      del result # result.src is very large so let gc know to clean up asap
+
+    # result.src is very large so let garbage collector know to clean up
+    del result
 
     return path, isa, wfsize
 
@@ -168,9 +169,11 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
     kernelWriterAssembly, errorTolerant=False, generateSourcesAndExit=False, compress=True, fromTensile=False):
   codeObjectFiles = []
 
-  pushWorkingPath('build_tmp')
-  pushWorkingPath(os.path.basename(outputPath).upper())
-  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+  outputPath = Path(outputPath)
+  destLibPath = ensurePath(outputPath / "library")  # Destination for code object library files (.co)
+  buildTmpPath = ensurePath(outputPath / "build_tmp" / outputPath.stem.upper())  #
+  assemblyTmpPath = ensurePath(buildTmpPath / "assembly")  # Temp path for generated assembly files (.s)
+  objectTmpPath = ensurePath(buildTmpPath / "code_object_tmp")  # Temp path for HSA code object files (.hsaco)
 
   asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
 
@@ -193,7 +196,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   def assemble(ret):
     p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
-  unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
+  unaryWriteAssembly = functools.partial(writeAssembly, assemblyTmpPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
   ret = ParallelMap2(compose(assemble, unaryWriteAssembly), asmResults, "Writing assembly kernels", return_as="list", multiArg=False)
 
@@ -201,11 +204,8 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
 
   if not generateSourcesAndExit:
-      codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
-      buildSourceCodeObjectFile(srcToolchain, outputPath, fromTensile, srcKernelFile)
-
-  popWorkingPath() # build_tmp
-  popWorkingPath() # workingDir
+      codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress)
+      buildSourceCodeObjectFiles(srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile)
 
   return codeObjectFiles, numKernels
 
@@ -213,9 +213,11 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
 def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels, kernelHelperObjs, \
     kernelWriterAssembly, compress=True, fromTensile=False):
 
-  pushWorkingPath('build_tmp')
-  pushWorkingPath(os.path.basename(outputPath).upper())
-  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+  outputPath = Path(outputPath)
+  destLibPath = ensurePath(outputPath / "library")  # Destination for code object library files (.co)
+  buildTmpPath = ensurePath(outputPath / "build_tmp" / outputPath.stem.upper())
+  assemblyTmpPath = ensurePath(buildTmpPath / "assembly")  # Temp path for generated assembly files (.s)
+  objectTmpPath = ensurePath(buildTmpPath / "code_object_tmp")  # Temp path for HSA code object files (.hsaco)
 
   asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
 
@@ -237,17 +239,14 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
     p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
   unaryProcessKernelSource = functools.partial(processKernelSource, kernelWriterAssembly, TensileInstructions())
-  unaryWriteAssembly = functools.partial(writeAssembly, asmPath)
+  unaryWriteAssembly = functools.partial(writeAssembly, assemblyTmpPath)
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
   ret = ParallelMap2(compose(assemble, unaryWriteAssembly, unaryProcessKernelSource), uniqueAsmKernels, "Generating assembly kernels", multiArg=False)
-  buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
+  buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress)
 
   writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  buildSourceCodeObjectFile(srcToolchain, outputPath, fromTensile, srcKernelFile)
-
-  popWorkingPath() # build_tmp
-  popWorkingPath() # workingDir
+  buildSourceCodeObjectFiles(srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile)
 
   return numKernels
 
@@ -264,9 +263,7 @@ def getSolutionAndKernelWriters(solutions, kernels, assembler):
 
 
 @timing
-def copyStaticFiles(outputPath=None):
-  if outputPath is None:
-    outputPath = globalParameters["WorkingPath"]
+def copyStaticFiles(outputPath):
   libraryStaticFiles = [
     "TensileTypes.h",
     "tensile_bfloat16.h",
@@ -277,9 +274,7 @@ def copyStaticFiles(outputPath=None):
     "memory_gfx.h" ]
 
   for fileName in libraryStaticFiles:
-    # copy file
-    shutil.copy( os.path.join(globalParameters["SourcePath"], fileName), \
-        outputPath )
+    shutil.copy(os.path.join(globalParameters["SourcePath"], fileName), outputPath)
 
   return libraryStaticFiles
 
@@ -399,8 +394,7 @@ def run():
   print2("")
 
   arguments = parseArguments()
-  ensurePath(arguments["OutputPath"])
-  arguments["OutputPath"] = os.path.abspath(arguments["OutputPath"])
+  outputPath = Path(ensurePath(os.path.abspath(arguments["OutputPath"])))
 
   cxxCompiler, cCompiler, offloadBundler, assembler, hipconfig = validateToolchain(
       arguments["CxxCompiler"], arguments["CCompiler"], arguments["OffloadBundler"], arguments["Assembler"], ToolchainDefaults.HIP_CONFIG
@@ -440,7 +434,7 @@ def run():
   elif arguments["LogicFormat"] == "json":
     logicExtFormat = ".json"
   else:
-    printExit("Unrecognized LogicFormat", arguments["LogicFormat"])
+    printExit(f"Unrecognized LogicFormat: {arguments['LogicFormat']}")
 
   def archMatch(arch: str, archs: List[str]):
     return (arch in archs) or any(a.startswith(arch) for a in archs)
@@ -465,14 +459,14 @@ def run():
   kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
   kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(solutions, kernels, assembler)
 
-  copyStaticFiles(arguments["OutputPath"])
+  copyStaticFiles(outputPath)
 
-  numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, kernels,
+  numKernels = writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
                                            kernelHelperObjs, kernelWriterAssembly, compress=arguments["UseCompression"])
 
   archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
              if globalParameters["AsmCaps"][arch]["SupportedISA"]]
-  newLibraryDir = ensurePath(os.path.join(arguments["OutputPath"], 'library'))
+  newLibraryDir = ensurePath(os.path.join(outputPath, 'library'))
 
   for archName, newMasterLibrary in masterLibraries.items():
     if archName in archs:

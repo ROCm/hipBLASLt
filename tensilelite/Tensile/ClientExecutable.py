@@ -26,6 +26,7 @@ import itertools
 import os
 import subprocess
 from typing import Optional
+from pathlib import Path
 
 from . import Common
 from .Common import globalParameters
@@ -57,8 +58,7 @@ class CMakeEnvironment:
 
 def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cCompiler: str):
     sourcedir = globalParameters["SourcePath"]
-    if builddir is None:
-        builddir = os.path.join(globalParameters["OutputPath"], globalParameters["ClientBuildPath"])
+    
     builddir = Common.ensurePath(builddir)
 
     options = {'CMAKE_BUILD_TYPE': globalParameters["CMakeBuildType"],
@@ -74,14 +74,14 @@ def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cComp
 
 buildEnv = None
 
-def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir=None):
+def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir):
     if "PrebuiltClient" in globalParameters:
         return globalParameters["PrebuiltClient"]
 
     global buildEnv
 
     if buildEnv is None:
-        buildEnv = clientExecutableEnvironment(builddir, cxxCompiler, cCompiler)
+        buildEnv = clientExecutableEnvironment(builddir / globalParameters["ClientBuildPath"], cxxCompiler, cCompiler)
         buildEnv.generate()
         buildEnv.build()
 
