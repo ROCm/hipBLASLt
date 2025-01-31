@@ -2034,7 +2034,7 @@ class GlobalWriteBatchWriter:
               # delete me
               clangver = globalParameters['AMDClangVersion'].split(".")
               clangMaj = int(clangver[0])
-              assert clangMaj == self.cxxCompilerVersion.major
+              assert clangMaj == self.amdClangVersion.major
               # delete me
               if not self.amdClangVersion.major >= 19:
                 module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
@@ -2070,9 +2070,12 @@ class GlobalWriteBatchWriter:
           if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
             if self.parentWriter.states.archCaps["VOP3ByteSel"]:
               sb = 0 if self.gwvw == 1 else 1
+              # delete me
               clangver = globalParameters['AMDClangVersion'].split(".")
               clangMaj = int(clangver[0])
-              if not (clangMaj >= 19):
+              assert clangMaj == self.amdClangVersion.major
+              # delete me
+              if not self.amdClangVersion.major >= 19:
                 module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
               else:
                 module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(byte_sel=sb)))

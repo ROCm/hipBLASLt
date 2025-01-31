@@ -231,7 +231,9 @@ globalParameters["AMDGPUArchPath"] = None      # /opt/rocm/llvm/bin/amdgpu-arch
 globalParameters["ROCmAgentEnumeratorPath"] = None      # /opt/rocm/bin/rocm_agent_enumerator
 globalParameters["ROCmSMIPath"] = None                  # /opt/rocm/bin/rocm-smi
 globalParameters["HipClangVersion"] = "0.0.0"
+# delete me
 globalParameters["AMDClangVersion"] = "0.0.0"
+# delete me
 
 # default runtime is selected based on operating system, user can override
 if os.name == "nt":
@@ -1767,9 +1769,11 @@ def assignGlobalParameters(config, cxxCompiler=None):
       if 'HIP version' in line:
         globalParameters['HipClangVersion'] = line.split()[2]
         print1("# Found hipcc version " + globalParameters['HipClangVersion'])
+      # delete me
       if 'AMD clang version' in line:
         globalParameters['AMDClangVersion'] = line.split()[3]
         print1("# Found clang version " + globalParameters['AMDClangVersion'])
+      # delete me
 
   except (subprocess.CalledProcessError, OSError) as e:
       printWarning("Error: {} running {} {} ".format('hipcc', '--version',  e))
