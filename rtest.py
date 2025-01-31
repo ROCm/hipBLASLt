@@ -55,10 +55,11 @@ def parse_args():
 def run_cmd(args, filter):
 
     test_binary = ""
+    test_file = "hipblaslt-test.exe" if (os.name == 'nt') else "hipblaslt-test"
     if args.install_dir :
-        test_binary = os.path.join(args.install_dir, "hipblaslt-test")
+        test_binary = os.path.join(args.install_dir, test_file)
     else:
-        test_binary = os.path.join(pathlib.os.curdir, "hipblaslt-test")
+        test_binary = os.path.join(os.curdir, test_file)
 
     if not os.path.isfile(test_binary):
         return
