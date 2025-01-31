@@ -137,9 +137,15 @@ class ProblemType:
         if rv.aType.isFloat8BFloat8() or rv.bType.isFloat8BFloat8():
             rv.aType = DataType("F8")
             rv.bType = DataType("B8")
+        elif rv.aType.isFloat8BFloat8_fnuz() or rv.bType.isFloat8BFloat8_fnuz():
+            rv.aType = DataType("F8N")
+            rv.bType = DataType("B8N")
         elif rv.aType.isBFloat8Float8() or rv.bType.isBFloat8Float8():
             rv.aType = DataType("B8")
             rv.bType = DataType("F8")
+        elif rv.aType.isBFloat8Float8_fnuz() or rv.bType.isBFloat8Float8_fnuz():
+            rv.aType = DataType("B8N")
+            rv.bType = DataType("F8N")
 
         if 'DataTypeE' in d:
             rv.eType = DataType(d['DataTypeE'])
@@ -651,10 +657,10 @@ class Solution:
 
     @classmethod
     def FromSolutionStruct(cls, solution, cxxCompiler: str):
-        return cls.FromOriginalState(solution._state, cxxCompiler)
+        return cls.FromOriginalState(solution._state, cxxCompiler, solution.srcName)
 
     @classmethod
-    def FromOriginalState(cls, d, cxxCompiler, deviceInfo=None):
+    def FromOriginalState(cls, d, cxxCompiler, srcName = "", deviceInfo=None):
         rv = cls()
 
 
@@ -701,7 +707,8 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d, cxxCompiler)
+        rv.originalSolution = OriginalSolution(d, cxxCompiler, srcName)
+        rv.srcName = srcName
 
         return rv
 
@@ -719,6 +726,7 @@ class Solution:
         self.libraryLogicIndex = {}
         self.index = None
         self.ideals = {}
+        self.srcName = ""
 
         for key, value in kwargs:
             if key not in Solution.StateKeys and key not in Solution.HiddenKeys:

@@ -274,11 +274,11 @@ typedef enum rocblaslt_compute_type_
     = 102, /**< 32-bit input can use fp8 for A and bf8 for B compute */
     rocblaslt_compute_f32_fast_bf8f8_fnuz
     = 103, /**< 32-bit input can use bf8 for A and fp8 for B compute */
-    rocblaslt_compute_f32_fast_f8_ocp  = 104, /**< 32-bit input can use fp8 compute */
-    rocblaslt_compute_f32_fast_bf8_ocp = 105, /**< 32-bit input can use bf8 compute */
-    rocblaslt_compute_f32_fast_f8bf8_ocp
+    rocblaslt_compute_f32_fast_f8  = 104, /**< 32-bit input can use fp8 compute */
+    rocblaslt_compute_f32_fast_bf8 = 105, /**< 32-bit input can use bf8 compute */
+    rocblaslt_compute_f32_fast_f8bf8
     = 106, /**< 32-bit input can use fp8 for A and bf8 for B compute */
-    rocblaslt_compute_f32_fast_bf8f8_ocp
+    rocblaslt_compute_f32_fast_bf8f8
     = 107, /**< 32-bit input can use bf8 for A and fp8 for B compute */
 } rocblaslt_compute_type;
 

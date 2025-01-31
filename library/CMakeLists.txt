@@ -41,7 +41,7 @@ configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-ext.hpp" "${PROJE
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-types.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-types.h" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_xfloat32.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_xfloat32.h" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_float8.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_float8.h" COPYONLY)
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_hip_f8_impl.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_hip_f8_impl.h" COPYONLY)
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_float8_bc.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_float8_bc.h" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-ext-op.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-ext-op.h" COPYONLY)
 
 # Public hipBLASLt headers
@@ -50,7 +50,7 @@ set(hipblaslt_headers_public
   include/hipblaslt-ext.hpp
   include/hipblaslt_xfloat32.h
   include/hipblaslt_float8.h
-  include/hipblaslt_hip_f8_impl.h
+  include/hipblaslt_float8_bc.h
   include/hipblaslt-ext-op.h
   ${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
 )
@@ -160,6 +160,10 @@ endif()
 
 if(HIPBLASLT_ENABLE_MARKER)
   target_link_libraries(hipblaslt PRIVATE -lroctx64)
+endif()
+
+if( NOT BUILD_CUDA AND NOT LEGACY_HIPBLAS_DIRECT )
+  target_link_libraries(hipblaslt INTERFACE roc::hipblas-common)
 endif()
 
 # Target properties

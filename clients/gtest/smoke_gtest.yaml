@@ -76,10 +76,10 @@ Tests:
   bias_type: [default, f32_r]
   unit_check: 1
 
-- name: matmul_f8_bf8_dst_fp16_smoke
+- name: matmul_f8_bf8_fnuz_dst_fp16_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_dst_f16
+    matmul: *real_precisions_1b_fnuz_dst_f16
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -92,10 +92,10 @@ Tests:
   unit_check: 1
   gpu_arch: '94[0-2]'
 
-- name: matmul_f8_bf8_dst_bf16_smoke
+- name: matmul_f8_bf8_fnuz_dst_bf16_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_dst_bf16
+    matmul: *real_precisions_1b_fnuz_dst_bf16
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -112,7 +112,7 @@ Tests:
 - name: matmul_f8_bf8_dst_fp32_gfx12_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_ocp_dst_f32
+    matmul: *real_precisions_1b_dst_f32
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -129,7 +129,7 @@ Tests:
 - name: matmul_f8_bf8_dst_fp16_gfx12_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_ocp_dst_f16
+    matmul: *real_precisions_1b_dst_f16
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -145,7 +145,7 @@ Tests:
 - name: matmul_f8_bf8_dst_bf16_gfx12_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_ocp_dst_bf16
+    matmul: *real_precisions_1b_dst_bf16
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -161,7 +161,7 @@ Tests:
 - name: matmul_real_1b_dst_f8_SCDInt1_gfx12_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_ocp_dst_f8
+    matmul: *real_precisions_1b_dst_f8
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -179,7 +179,7 @@ Tests:
 - name: matmul_real_1b_dst_f8_SCDNotInt_gfx12_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_ocp_dst_f8
+    matmul: *real_precisions_1b_dst_f8
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -204,10 +204,10 @@ Tests:
   beta: [ 0.0, 2.0 ]
   gpu_arch: '120[0-1]'
 
-- name: matmul_real_1b_dst_f8_SCDInt1_smoke
+- name: matmul_real_1b_fnuz_dst_f8_fnuz_SCDInt1_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_dst_f8
+    matmul: *real_precisions_1b_fnuz_dst_f8_fnuz
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -222,10 +222,10 @@ Tests:
   unit_check: 1
   gpu_arch: '94[0-2]'
 
-- name: matmul_real_1b_dst_1b_smallsize_smoke
+- name: matmul_real_1b_fnuz_dst_1b_fnuz_smallsize_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_dst_1b
+    matmul: *real_precisions_1b_fnuz_dst_1b_fnuz
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -241,10 +241,10 @@ Tests:
   gpu_arch: '942'
 
 #TODO: extend to all f8 transpose and datatype if necessary
-- name: matmul_real_f8_dst_fp32_smoke
+- name: matmul_real_f8_fnuz_dst_fp32_smoke
   category: smoke
   function:
-    matmul: *f8_precision_dst_fp32
+    matmul: *f8_fnuz_precision_dst_fp32
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -259,10 +259,10 @@ Tests:
   unit_check: 1
   gpu_arch: '942'
 
-- name: matmul_real_1b_dst_f8_SCDNotInt_smoke
+- name: matmul_real_1b_fnuz_dst_f8_fnuz_SCDNotInt_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_dst_f8
+    matmul: *real_precisions_1b_fnuz_dst_f8_fnuz
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -278,10 +278,10 @@ Tests:
   norm_check: 1
   gpu_arch: '94[0-2]'
 
-- name: matmul_real_1b_dst_bf8_SCDInt1_smoke
+- name: matmul_real_1b_fnuz_dst_bf8_fnuz_SCDInt1_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_dst_bf8
+    matmul: *real_precisions_1b_fnuz_dst_bf8_fnuz
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range
@@ -296,10 +296,10 @@ Tests:
   unit_check: 1
   gpu_arch: '94[0-2]'
 
-- name: matmul_real_1b_dst_bf8_SCDNotInt_smoke
+- name: matmul_real_1b_fnuz_dst_bf8_fnuz_SCDNotInt_smoke
   category: smoke
   function:
-    matmul: *real_precisions_1b_dst_bf8
+    matmul: *real_precisions_1b_fnuz_dst_bf8_fnuz
   matrix_size:
     - { M:  128,  N:  128,  K:  128  }
   transA_transB: *transA_transB_range

@@ -30,7 +30,7 @@ import shutil
 import subprocess
 
 from pathlib import Path
-from typing import List, Literal, Union
+from typing import List, Union
 
 from ..TensileInstructions import getGfxName
 from ..Common import globalParameters, print2, ensurePath, SemanticVersion
@@ -39,7 +39,7 @@ from ..Toolchain.Validators import getVersion
 from ..SolutionStructs import Solution
 
 class AssemblyToolchain:
-    def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: Literal[4, 5]):
+    def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: str):
         self.assembler = assembler
         self.assemblerVersion = SemanticVersion(*[int(c) for c in getVersion(assembler).split(".")[:3]])
         self.bundler = bundler
