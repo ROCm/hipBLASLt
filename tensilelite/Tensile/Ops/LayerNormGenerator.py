@@ -32,7 +32,7 @@ import subprocess
 import collections
 from contextlib import contextmanager
 import Tensile.TensileInstructions as ti
-from .Common import detectGlobalCurrentISA, restoreDefaultGlobalParameters, \
+from Tensile.Common import detectGlobalCurrentISA, restoreDefaultGlobalParameters, \
     assignGlobalParameters, getGfxName, gfxArch, globalParameters
 from Tensile.Toolchain.Validators import ToolchainDefaults, validateToolchain
 
