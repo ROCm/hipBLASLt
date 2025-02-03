@@ -106,7 +106,7 @@ namespace TensileLite
 
         template <typename IO>
         const typename ContractionProblemFeatureSMT<IO>::SubclassMap
-            ContractionProblemFeatureSMT<IO>::subclasses
+            SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblemGemm>, IO>::subclasses
             = ContractionProblemFeatureSMT<IO>::GetSubclasses();
 
         template <typename IO>

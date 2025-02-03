@@ -22,12 +22,14 @@
 #
 ################################################################################
 
+import glob
 import os
 import shutil
 import sys
 import time
 
 from copy import deepcopy
+from pathlib import Path
 
 from . import ClientExecutable
 from . import SolutionLibrary
@@ -36,7 +38,7 @@ from . import Utils
 from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
 from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
-from .Common import globalParameters, HR, pushWorkingPath, popWorkingPath, print1, print2, \
+from .Common import globalParameters, HR, print1, print2, \
         printExit, printWarning, ensurePath, startTime, validParameters
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionStructs import Solution, ProblemType, ProblemSizes
@@ -113,13 +115,14 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
 
 def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
         biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes, \
-        asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain):
+        asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, sourcePath: Path, buildTmpPath: Path):
     """Write all the files needed for a given benchmarking step"""
 
-    copyStaticFiles()
+    ensurePath(sourcePath)
+    copyStaticFiles(sourcePath)
 
     kernels = []
-    kernelHelperOjbs = []
+    kernelHelperObjs = []
     kernelNames = set()
     kernelHelperNames = set()
 
@@ -136,7 +139,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
         for ko in solutionHelperKernels:
             kname = ko.getKernelName()
             if kname not in kernelHelperNames:
-                kernelHelperOjbs.append(ko)
+                kernelHelperObjs.append(ko)
                 kernelHelperNames.add(kname)
 
     kernelSerialNaming = Solution.getSerialNaming(kernels)
@@ -146,19 +149,19 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     # write solution, kernels and CMake
     problemType = solutions[0]["ProblemType"]
     codeObjectFiles, _= writeSolutionsAndKernels( \
-            globalParameters["WorkingPath"], asmToolchain, srcToolchain, \
-            solutions, kernels, kernelHelperOjbs, \
+            sourcePath, asmToolchain, srcToolchain, \
+            solutions, kernels, kernelHelperObjs, \
             kernelWriterAssembly, errorTolerant=True, fromTensile=True, \
-            generateSourcesAndExit=globalParameters["GenerateSourcesAndExit"] )
+            generateSourcesAndExit=globalParameters["GenerateSourcesAndExit"])
     # ^ this is where solutions is mutated
 
-    newLibraryDir = ensurePath(os.path.join(globalParameters["WorkingPath"], 'library'))
+    newLibraryDir = ensurePath(sourcePath / 'library')
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")
     newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, srcToolchain.compiler)
     newLibrary.applyNaming(kernelMinNaming)
     LibraryIO.write(newLibraryFile, Utils.state(newLibrary), globalParameters["LibraryFormat"])
 
-    codeObjectFiles = [os.path.relpath(f, globalParameters["WorkingPath"]) \
+    codeObjectFiles = [os.path.relpath(f, sourcePath) \
             for f in codeObjectFiles]
 
     if "TileAwareSelection" in problemType and problemType["TileAwareSelection"]:
@@ -183,11 +186,13 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
                 idealSize = {"Exact": [idealM, idealN, idealK]}
                 idealSizes.append(idealSize)
         idealProblemSizes = ProblemSizes(problemType, idealSizes)
-        writeClientConfig(True, solutions, idealProblemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
-            newLibrary, codeObjectFiles, True)
+        writeClientConfig(True, solutions, idealProblemSizes, biasTypeArgs, \
+                          factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
+                          newLibrary, codeObjectFiles, True)
     else:
-        writeClientConfig(True, solutions, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
-            newLibrary, codeObjectFiles, False)
+        writeClientConfig(True, solutions, problemSizes, biasTypeArgs, \
+                          factorDimArgs, activationArgs, icacheFlushArgs, stepName, stepBaseDir, \
+                          newLibrary, codeObjectFiles, False)
 
     if len(solutions) == 0:
         printExit("write solutions and kernels results 0 valid soultion.")
@@ -195,8 +200,9 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     return codeObjectFiles
 
 
-def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeGroupIdx, useCache, 
-                         asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str
+def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeGroupIdx, useCache,
+                         asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str,
+                         buildTmpPath: Path, benchmarkProblemsPath: Path
     ):
     """Run the benchmarking for a single entry in the BenchmarkProblems of a Tensile config"""
     benchmarkTestFails = 0
@@ -210,8 +216,8 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
     enableTileSelection = benchmarkProcess.problemType["TileAwareSelection"]
     groupName = "{}_{:02d}".format(str(benchmarkProcess.problemType), problemSizeGroupIdx)
-    pushWorkingPath(groupName)
-    ensurePath(os.path.join(globalParameters["WorkingPath"], "Data"))
+    groupNamePath = benchmarkProblemsPath / groupName
+    ensurePath(groupNamePath / "Data")
 
     totalBenchmarkSteps = len(benchmarkProcess)
     resultsFileBaseFinal = None
@@ -243,12 +249,10 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         if benchmarkStep.internalSupportParams:
             print("# InternalSupportParams: {}".format(benchmarkStep.internalSupportParams))
 
-        pushWorkingPath(shortName)
-        stepBaseDir = globalParameters["WorkingPath"]
+        shortNamePath = ensurePath(groupNamePath / shortName)
+        stepBaseDir = shortNamePath
+        resultsFileBase = os.path.normpath(shortNamePath / ".." / "Data" / shortName)
 
-        # file paths
-        resultsFileBase = os.path.normpath(os.path.join( \
-                globalParameters["WorkingPath"], "../Data", shortName))
         if benchmarkStep.isFinal():
             resultsFileBaseFinal = resultsFileBase
         resultsFileName = resultsFileBase + ".csv"
@@ -256,7 +260,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
         # check if a solution cache exists and if it matches our solution parameters
         cachePath = os.path.join(stepBaseDir, "cache.yaml")
-        pushWorkingPath("source")
+        sourcePath = ensurePath(shortNamePath / "source")
 
         cacheValid = False
         if useCache and os.path.isfile(cachePath):
@@ -308,10 +312,11 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
             # write benchmarkFiles
             prevCount = len(solutions)
-            codeObjectFiles = writeBenchmarkFiles(stepBaseDir, solutions,      \
+            codeObjectFiles = writeBenchmarkFiles(stepBaseDir, solutions, \
                     benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,    \
                     benchmarkStep.factorDimArgs, benchmarkStep.activationArgs, \
-                    benchmarkStep.icacheFlushArgs, shortName, [], asmToolchain, srcToolchain)
+                    benchmarkStep.icacheFlushArgs, shortName, [], asmToolchain, srcToolchain, \
+                    sourcePath, buildTmpPath)
             # ^ this mutates solutions
 
             # write cache data
@@ -341,12 +346,12 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
             ssProblemType = ProblemType(problemTypeConfig)
             conProblemType = ContractionsProblemType.FromOriginalState(ssProblemType)
-            outFile = os.path.join(globalParameters["WorkingPath"], "ClientParameters.ini")
+            outFile = os.path.join(sourcePath, "ClientParameters.ini")
 
             writeClientConfigIni(True, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
                                  benchmarkStep.factorDimArgs, benchmarkStep.activationArgs,
                                  benchmarkStep.icacheFlushArgs, conProblemType,
-                                 globalParameters["WorkingPath"], codeObjectFiles, resultsFileName,
+                                 stepBaseDir, codeObjectFiles, resultsFileName,
                                  outFile)
 
         # I think the size portion of this yaml could be removed,
@@ -354,13 +359,11 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         LibraryIO.writeSolutions(solutionsFileName, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
             benchmarkStep.activationArgs, solutions, cacheValid)
 
-        popWorkingPath()  # source
-
         # run benchmarking client
         if not os.path.exists(resultsFileName) or globalParameters["ForceRedoBenchmarkProblems"]:
             libraryLogicPath = None
             forBenchmark = True
-            returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, srcToolchain.compiler, cCompiler)
+            returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, srcToolchain.compiler, cCompiler, shortNamePath)
 
             if returncode:
                 benchmarkTestFails += 1
@@ -370,27 +373,23 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             print1("# Already benchmarked; skipping.")
 
         # End Iteration
-        popWorkingPath()  # stepName
         currentTime = time.time()
         elapsedTime = currentTime - startTime
         print1("{}\n# {}\n# {}: End - {:.3f}s\n{}\n" \
                 .format(HR, groupName, shortName, elapsedTime, HR))
 
-    popWorkingPath()  # ProblemType
     return (resultsFileBaseFinal, benchmarkTestFails)
 
 
-def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str): 
+def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str, outputPath: Path, buildTmpPath: Path):
     """Entry point for the "BenchmarkProblems" section of a Tensile config yaml"""
-    ClientExecutable.getClientExecutable(srcToolchain.compiler, cCompiler)
+    ClientExecutable.getClientExecutable(srcToolchain.compiler, cCompiler, outputPath)
 
     if config is None:
         print(f'No config specified in {globalParameters["ConfigPath"]}, built client only')
         return
 
-    dataPath = os.path.join(globalParameters["WorkingPath"], globalParameters["BenchmarkDataPath"])
-    pushWorkingPath(globalParameters["BenchmarkProblemsPath"])
-    ensurePath(dataPath)
+    benchmarkDataPath = ensurePath(outputPath / globalParameters["BenchmarkDataPath"])
 
     totalTestFails = 0
     for benchmarkProblemTypeConfig in config:
@@ -408,11 +407,11 @@ def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: Source
             # using a suffix to check the csv version (for later addFromCSV())
             csvSuffix = "_CSVWinner" if globalParameters["CSVExportWinner"] else ""
             # results files will be named
-            newResultsFileName = os.path.join(dataPath, "{}_{:02d}{}.csv" \
+            newResultsFileName = os.path.join(benchmarkDataPath, "{}_{:02d}{}.csv" \
                     .format(str(problemTypeObj), idx, csvSuffix) )
-            newSolutionsFileName = os.path.join(dataPath, "{}_{:02d}{}.yaml" \
+            newSolutionsFileName = os.path.join(benchmarkDataPath, "{}_{:02d}{}.yaml" \
                     .format(str(problemTypeObj), idx, csvSuffix) )
-            newGranularityFileName = os.path.join(dataPath, "{}_{:02d}{}.gsp" \
+            newGranularityFileName = os.path.join(benchmarkDataPath, "{}_{:02d}{}.gsp" \
                     .format(str(problemTypeObj), idx, csvSuffix) )
 
             # skip if possible
@@ -420,8 +419,9 @@ def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: Source
                     or not os.path.exists(newResultsFileName):
 
                 # benchmark problem size group
+                benchmarkProblemsPath = ensurePath(outputPath / globalParameters["BenchmarkProblemsPath"])
                 (resultsFileBaseFinal, benchmarkErrors) = \
-                        benchmarkProblemType(problemTypeConfig, sizeGroupConfig, idx, useCache, asmToolchain, srcToolchain, cCompiler)
+                        benchmarkProblemType(problemTypeConfig, sizeGroupConfig, idx, useCache, asmToolchain, srcToolchain, cCompiler, buildTmpPath, benchmarkProblemsPath)
                 totalTestFails += benchmarkErrors
 
                 print("clientExit={} {} for {}" \
@@ -440,8 +440,6 @@ def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: Source
             else:
                 print1("# {}_{:02d} already benchmarked; skipping." \
                         .format(str(problemTypeObj), idx) )
-
-    popWorkingPath()
 
     if globalParameters["ExitOnFails"] and totalTestFails:
         sys.exit(1)

@@ -1055,9 +1055,10 @@ def isExtractableIndex(ks, index, tc='x'):
 class Solution(collections.abc.Mapping):
 
   ########################################
-  def __init__(self, config, cxxCompiler: str):
+  def __init__(self, config, cxxCompiler: str, srcName: str = ""):
     self._name = None
     self.cxxCompiler = cxxCompiler
+    self.srcName = srcName
     config = config
 
     self._state = {}

@@ -34,9 +34,9 @@ ROCM_LLVM_BIN_PATH = Path("/opt/rocm/lib/llvm/bin")
 if os.name == "nt":
     def _windowsLatestRocmBin(path: Union[Path, str]) -> Path:
         """Get the path to the latest ROCm bin directory, on Windows.
-        
+
         This function assumes that ROCm versions are differentiated with the form ``X.Y``.
-        
+
         Args:
             path: The path to the ROCm root directory, typically ``C:/Program Files/AMD/ROCm``.
 
@@ -147,7 +147,7 @@ def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
 
     if _exeExists(Path(file)): return file
     for path in searchPaths:
-        path /= file 
+        path /= file
         if _exeExists(path): return str(path)
     raise FileNotFoundError(f"`{file}` either not found or not executable in any search path: {':'.join(map(str, searchPaths))}")
 
@@ -157,10 +157,10 @@ def validateToolchain(*args: str):
 
     Args:
         args: List of executable toolchain components to validate.
-     
+
     Returns:
         List of validated executables with absolute paths.
-    
+
     Raises:
         ValueError: If no toolchain components are provided.
         FileNotFoundError: If a toolchain component is not found in the PATH.
@@ -174,7 +174,7 @@ def validateToolchain(*args: str):
     ] + [Path(p) for p in os.environ["PATH"].split(os.pathsep)]
 
     out = (_validateExecutable(x, searchPaths) for x in args)
-    return next(out) if len(args) == 1 else tuple(out) 
+    return next(out) if len(args) == 1 else tuple(out)
 
 
 def getVersion(executable: str, versionFlag: str="--version", regex: str=r"version\s+([\d.]+)") -> str:

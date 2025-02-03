@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -88,7 +88,7 @@ function(TensileCreateLibraryFiles
        ASAN_BUILD
        KEEP_BUILD_TMP
        NO_COMPRESS
-       EXPERIMENTAL 
+       EXPERIMENTAL
        ENABLE_MAKRER
        )
 
@@ -261,7 +261,7 @@ endfunction()
 function(TensileCreateExtOpLibraries OutputFolder ArchStr)
   string(REGEX MATCHALL "gfx[a-z0-9]+" Archs "${ArchStr}")
   list(REMOVE_DUPLICATES Archs)
-  set(build_tmp_dir ${CMAKE_CURRENT_BINARY_DIR}/build_tmp/ops)
+  set(build_tmp_dir ${OutputFolder}/../build_tmp/ops)
   set(Tensile_PACKAGE_DIR ${Tensile_SOURCE_DIR}/../)
   set(cwd "${Tensile_PACKAGE_DIR}/Ops")
   set(script "${cwd}/gen_assembly.sh")

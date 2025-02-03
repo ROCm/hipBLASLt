@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ########################################################################
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -506,7 +506,7 @@ while true; do
             build_tensile=false
             shift ;;
         --no-lazy-library-loading)
-            tensile_no_lazy_library_loading=false
+            tensile_no_lazy_library_loading=true
             shift ;;
         -u|--use-custom-version)
             tensile_version=${2}
@@ -765,7 +765,7 @@ pushd .
   fi
 
   if [[ "${tensile_no_lazy_library_loading}" == true ]]; then
-    tensile_opt="${tensile_opt} -DTensile_NO_LAZY_LIBRARY_LOADING=OFF"
+    tensile_opt="${tensile_opt} -DTensile_NO_LAZY_LIBRARY_LOADING=ON"
   fi
 
   if [[ "${tensile_msgpack_backend}" == true ]]; then

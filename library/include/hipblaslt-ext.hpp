@@ -91,10 +91,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmPreferenceV2();
         HIPBLASLT_EXPORT ~GemmPreferenceV2();
 
-        HIPBLASLT_EXPORT                   GemmPreferenceV2(const GemmPreferenceV2& pref);
+        HIPBLASLT_EXPORT GemmPreferenceV2(const GemmPreferenceV2& pref);
         HIPBLASLT_EXPORT GemmPreferenceV2& operator=(const GemmPreferenceV2& pref);
 
-        HIPBLASLT_EXPORT                   GemmPreferenceV2(GemmPreferenceV2&& pref);
+        HIPBLASLT_EXPORT GemmPreferenceV2(GemmPreferenceV2&& pref);
         HIPBLASLT_EXPORT GemmPreferenceV2& operator=(GemmPreferenceV2&& pref);
 
         /*! \ingroup library_module
@@ -152,10 +152,10 @@ namespace hipblaslt_ext
                                            hipblasComputeType_t typeCompute);
         HIPBLASLT_EXPORT ~GemmProblemTypeV2();
 
-        HIPBLASLT_EXPORT                    GemmProblemTypeV2(const GemmProblemTypeV2& type);
+        HIPBLASLT_EXPORT GemmProblemTypeV2(const GemmProblemTypeV2& type);
         HIPBLASLT_EXPORT GemmProblemTypeV2& operator=(const GemmProblemTypeV2& type);
 
-        HIPBLASLT_EXPORT                    GemmProblemTypeV2(GemmProblemTypeV2&& type);
+        HIPBLASLT_EXPORT GemmProblemTypeV2(GemmProblemTypeV2&& type);
         HIPBLASLT_EXPORT GemmProblemTypeV2& operator=(GemmProblemTypeV2&& type);
 
         HIPBLASLT_EXPORT void setOpA(hipblasOperation_t op); //!< Set the A martix transpose.
@@ -209,10 +209,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmEpilogueV2();
         HIPBLASLT_EXPORT ~GemmEpilogueV2();
 
-        HIPBLASLT_EXPORT                 GemmEpilogueV2(const GemmEpilogueV2& epilogue);
+        HIPBLASLT_EXPORT GemmEpilogueV2(const GemmEpilogueV2& epilogue);
         HIPBLASLT_EXPORT GemmEpilogueV2& operator=(const GemmEpilogueV2& epilogue);
 
-        HIPBLASLT_EXPORT                 GemmEpilogueV2(GemmEpilogueV2&& epilogue);
+        HIPBLASLT_EXPORT GemmEpilogueV2(GemmEpilogueV2&& epilogue);
         HIPBLASLT_EXPORT GemmEpilogueV2& operator=(GemmEpilogueV2&& epilogue);
 
         HIPBLASLT_EXPORT void
@@ -261,10 +261,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmTuningV2();
         HIPBLASLT_EXPORT ~GemmTuningV2();
 
-        HIPBLASLT_EXPORT               GemmTuningV2(const GemmTuningV2& tuning);
+        HIPBLASLT_EXPORT GemmTuningV2(const GemmTuningV2& tuning);
         HIPBLASLT_EXPORT GemmTuningV2& operator=(const GemmTuningV2& tuning);
 
-        HIPBLASLT_EXPORT               GemmTuningV2(GemmTuningV2&& tuning);
+        HIPBLASLT_EXPORT GemmTuningV2(GemmTuningV2&& tuning);
         HIPBLASLT_EXPORT GemmTuningV2& operator=(GemmTuningV2&& tuning);
 
         HIPBLASLT_EXPORT void setSplitK(
@@ -317,10 +317,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmInputsV2();
         HIPBLASLT_EXPORT ~GemmInputsV2();
 
-        HIPBLASLT_EXPORT               GemmInputsV2(const GemmInputsV2& input);
+        HIPBLASLT_EXPORT GemmInputsV2(const GemmInputsV2& input);
         HIPBLASLT_EXPORT GemmInputsV2& operator=(const GemmInputsV2& input);
 
-        HIPBLASLT_EXPORT               GemmInputsV2(GemmInputsV2&& input);
+        HIPBLASLT_EXPORT GemmInputsV2(GemmInputsV2&& input);
         HIPBLASLT_EXPORT GemmInputsV2& operator=(GemmInputsV2&& input);
 
         HIPBLASLT_EXPORT void setA(const void* a); //!< Set the a matrix input pointer.
@@ -418,8 +418,13 @@ namespace hipblaslt_ext
     {
     public:
         HIPBLASLT_EXPORT virtual ~GemmInstance(){};
+#ifdef _WIN32
         GemmInstance(const GemmInstance& rhs) = delete;
         GemmInstance& operator=(const GemmInstance& rhs) = delete;
+#else
+        HIPBLASLT_EXPORT GemmInstance(const GemmInstance& rhs) = delete;
+        HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs) = delete;
+#endif
         HIPBLASLT_EXPORT               GemmInstance(GemmInstance&& rhs) noexcept;
         HIPBLASLT_EXPORT GemmInstance& operator=(GemmInstance&& rhs) noexcept;
 
@@ -764,9 +769,14 @@ namespace hipblaslt_ext
                                        void*                   D,
                                        hipblasLtMatrixLayout_t matD);
 
+#ifdef _WIN32
         Gemm(const Gemm&) = delete;
-        HIPBLASLT_EXPORT Gemm(Gemm&&) noexcept;
         Gemm& operator=(const Gemm&) = delete;
+#else
+        HIPBLASLT_EXPORT Gemm(const Gemm&) = delete;
+        HIPBLASLT_EXPORT Gemm& operator=(const Gemm&) = delete;
+#endif
+        HIPBLASLT_EXPORT Gemm(Gemm&&) noexcept;
         HIPBLASLT_EXPORT Gemm& operator=(Gemm&&) noexcept;
 
         /*! \ingroup library_module
@@ -1020,9 +1030,14 @@ namespace hipblaslt_ext
                                               hipDataType          typeC,
                                               hipDataType          typeD,
                                               hipblasComputeType_t typeCompute);
+#ifdef _WIN32
         GroupedGemm(const GroupedGemm&) = delete;
-        HIPBLASLT_EXPORT              GroupedGemm(GroupedGemm&&) noexcept;
         GroupedGemm& operator=(const GroupedGemm&) = delete;
+#else
+        HIPBLASLT_EXPORT GroupedGemm(const GroupedGemm&) = delete;
+        HIPBLASLT_EXPORT GroupedGemm& operator=(const GroupedGemm&) = delete;
+#endif
+        HIPBLASLT_EXPORT              GroupedGemm(GroupedGemm&&) noexcept;
         HIPBLASLT_EXPORT GroupedGemm& operator=(GroupedGemm&&) noexcept;
 
         /*! \ingroup library_module
