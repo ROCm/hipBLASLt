@@ -260,9 +260,9 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, solution
         print1(f"{k['SolutionIndex']} {k['LogicFileName']}")
 
   pksResults = [processKernelSource(kernelWriterAssembly, TensileInstructions(), k) for k in uniqueAsmKernels]
-  #for p, isa, wavefrontsize in [writeAssembly(asmPath, k) for k in pksResults]:
-  #  asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
-  #buildAssemblyCodeObjectFiles(asmToolchain, uniqueAsmKernels, kernelWriterAssembly, outputPath, compress)
+  for p, isa, wavefrontsize in [writeAssembly(asmPath, k) for k in pksResults]:
+    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
+  buildAssemblyCodeObjectFiles(asmToolchain, uniqueAsmKernels, kernelWriterAssembly, outputPath, compress)
 
   #writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   #srcKernelFile = Path(outputPath) / "Kernels.cpp"
@@ -401,10 +401,10 @@ def updateParentMasterLibrary(
     nextIdx: Dict[str, int], 
 ) -> None:
         if gfxName in masterLibraries:
-            nextIdx[gfxName] = masterLibraries[gfxName].merge(masterLib, nextIdx[gfxName])
+            nextIdx= masterLibraries[gfxName].merge(masterLib, nextIdx)
         else:
             masterLibraries[gfxName] = masterLib
-            nextIdx[gfxName] = 0
+
 
 def updateMasterLibrary(
     gfxName: str,
@@ -419,15 +419,6 @@ def updateMasterLibrary(
             nextIdx = 0
         return prevMasterLib, nextIdx
 
-#import asyncio
-#import aiofiles
-#import msgpack
-
-#async def write_to_file(filename, data):
-#    # Open the file in asynchronous mode
-#    async with aiofiles.open(filename, 'w') as file:
-#        #await file.write(str(data))
-#        msgpack.pack(data, file)
 
 @profile
 def build(arguments, cxxCompiler, assembler, asmToolchain, srcToolchain, logicFiles):
@@ -435,20 +426,17 @@ def build(arguments, cxxCompiler, assembler, asmToolchain, srcToolchain, logicFi
     start = timer()
     solutions, libraries, totalSoln, dupSoln = generateSolutions(arguments, cxxCompiler, logicFiles)
 
-    #_masterLib = None
-    #_nextSolutionIdx = 0
-    #if len(libraries) > 0:
-    #  for gfxName, lib in libraries:
-    #      _masterLib, _nextSolutionIdx = updateMasterLibrary(gfxName, lib, _masterLib, _nextSolutionIdx)
+    _masterLib = None
+    _nextSolutionIdx = 0
+    if len(libraries) > 0:
+      for gfxName, lib in libraries:
+          _masterLib, _nextSolutionIdx = updateMasterLibrary(gfxName, lib, _masterLib, _nextSolutionIdx)
       # Can we do this asynchronously before the call to writeSolutionsAndKernels?
-      #newLibraryDir = Path(arguments["OutputPath"]) / "library"
-      #for name, lib in list(_masterLib.lazyLibraries.items()):
-          #catalogPath = newLibraryDir / name
-          #parents = catalogPath.parents[:2]
-          #print1(f"# LAZY CATALOG: {parents[1].name}/{parents[0].name}/{catalogPath.name}")
-          #lib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
-          #LibraryIO.write(str(catalogPath), Utils.state(lib), "msgpack")
-          #asyncio.run(write_to_file(str(catalogPath)+".dat", Utils.state(lib)))
+      newLibraryDir = Path(arguments["OutputPath"]) / "library"
+      for name, lib in list(_masterLib.lazyLibraries.items()):
+          catalogPath = newLibraryDir / name
+          lib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
+          LibraryIO.write(str(catalogPath), Utils.state(lib), "dat")
 
     numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, solutions, 
                                                       assembler, compress=arguments["UseCompression"])
@@ -456,6 +444,7 @@ def build(arguments, cxxCompiler, assembler, asmToolchain, srcToolchain, logicFi
     print1(f"Total time (s): {(stop-start):3.2f}")
     print1(f"Kernels per second: {(numKernels[0]/(stop-start)):3.2f}")
     print1(f" {numKernels[0]} {[l[1] for l in logicFiles]}")
+
     return libraries, numKernels, totalSoln, dupSoln
 
 
@@ -507,24 +496,23 @@ def run():
   totSoln = 0
   dupKernels = 0
 
-  #baseName = "TensileLibrary_"
-  #masterLibs = {}
-  #nextIdx = {}
+  baseName = "TensileLibrary_"
+  masterLibs = {}
+  nextIdx = 0
 
   for library, n, total, dup in result:
-    #if len(library) > 0:
-    #  for gfxName, lib in library:
-    #    updateParentMasterLibrary(gfxName, lib, masterLibs, nextIdx)
+    if len(library) > 0:
+      for gfxName, lib in library:
+        updateParentMasterLibrary(gfxName, lib, masterLibs, nextIdx)
     totalKernels += n[1]
     totalUnique += n[0]
     totDup += dup
     totSoln += total
 
-  #for arch, masterLib in masterLibs.items():
-  #  name = baseName + "lazy_" + arch
-  #  print1(f"WRITING PARENT CATALOG: {name}")
-  #  masterLib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
-  #  LibraryIO.write(str(libraryDir / name), Utils.state(masterLib), arguments["LibraryFormat"])
+  for arch, masterLib in masterLibs.items():
+    name = baseName + "lazy_" + arch
+    masterLib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
+    LibraryIO.write(str(libraryDir / name), Utils.state(masterLib), arguments["LibraryFormat"])
 
   print1("# Tensile Library Writer DONE")
   print1(HR)

@@ -569,7 +569,7 @@ class MasterSolutionLibrary:
                 self.lazyLibraries[name] = lib
 
         reIndexMap = {}
-        for k, s in other.solutions.items():
+        for k, s in list(other.solutions.items()):
             reIndexMap[s.index] = curIndex
             s.index = curIndex
             self.solutions[curIndex] = s
