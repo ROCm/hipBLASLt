@@ -436,7 +436,7 @@ def build(arguments, cxxCompiler, assembler, asmToolchain, srcToolchain, logicFi
       for name, lib in list(_masterLib.lazyLibraries.items()):
           catalogPath = newLibraryDir / name
           lib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
-          LibraryIO.write(str(catalogPath), Utils.state(lib), "dat")
+          LibraryIO.write(str(catalogPath), Utils.state(lib), "msgpack")
 
     numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, solutions, 
                                                       assembler, compress=arguments["UseCompression"])
