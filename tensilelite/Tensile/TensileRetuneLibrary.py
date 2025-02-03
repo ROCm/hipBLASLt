@@ -33,12 +33,38 @@ from .Tensile import addCommonArguments, argUpdatedGlobalParameters
 from .SolutionStructs import ProblemSizes
 from .Toolchain.Validators import validateToolchain
 
+from pathlib import Path
+
 import argparse
 import copy
 import os
 import shutil
 import sys
 from pathlib import Path
+
+workingDirectoryStack = []
+def pushWorkingPath( foldername ):
+  # Warning: this is not thread-safe, modifies the global WorkingPath!
+  globalParameters["WorkingPath"] = \
+      os.path.join(globalParameters["WorkingPath"], foldername )
+  return ensurePath( globalParameters["WorkingPath"] )
+def popWorkingPath():
+  # Warning: this is not thread-safe, modifies the global WorkingPath!
+  if len(workingDirectoryStack) == 0:
+    globalParameters["WorkingPath"] = \
+      os.path.split(globalParameters["WorkingPath"])[0]
+  else:
+    globalParameters["WorkingPath"] = workingDirectoryStack.pop()
+def ensurePath(path):
+  try:
+    os.makedirs(path)
+  except FileExistsError:
+    pass
+  return path
+def setWorkingPath( fullPathName ):
+  # Warning: this is not thread-safe, modifies the global WorkingPath!
+  workingDirectoryStack.append(globalParameters["WorkingPath"])
+  globalParameters["WorkingPath"] = ensurePath(fullPathName)
 
 workingDirectoryStack = []
 def pushWorkingPath( foldername ):

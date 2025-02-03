@@ -256,6 +256,8 @@ const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode)
         return "Bench";
     case rocblaslt_layer_mode_log_profile:
         return "Profile";
+    case rocblaslt_layer_mode_log_extended_profile:
+        return "ExtendedProfile";
     default:
         return "Invalid";
     }
@@ -345,3 +347,9 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
                      hipDataType_to_string(matmul_desc->bias_type));
     return std::string(buf.get());
 }
+
+// Define and initialize static member flush and rotatingBufferSize outside the class UserClientArguments
+bool    UserClientArguments::m_flush              = false;
+int32_t UserClientArguments::m_rotatingBufferSize = 0;
+int32_t UserClientArguments::m_coldIterations     = 0;
+int32_t UserClientArguments::m_hotIterations      = 0;

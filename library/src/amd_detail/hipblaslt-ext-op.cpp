@@ -298,12 +298,13 @@ hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
     auto        gpu       = TensileLite::hip::GetCurrentDevice();
     const auto  archName  = trimArchName(gpu->archName());
     auto&       masterLib = getExtOpMasterLibrary();
-    const auto& lib
-        = masterLib
-              .getLibrary(archName, hipblaslt_ext::SoftmaxSolutionLibrary::opName, hipDataTypeo_char(datatype))
-              ->as<hipblaslt_ext::SoftmaxSolutionLibrary>();
-    auto sol
-        = lib.findBestSolution(hipblaslt_ext::SoftmaxProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
+    const auto& lib       = masterLib
+                          .getLibrary(archName,
+                                      hipblaslt_ext::SoftmaxSolutionLibrary::opName,
+                                      hipDataTypeo_char(datatype))
+                          ->as<hipblaslt_ext::SoftmaxSolutionLibrary>();
+    auto sol = lib.findBestSolution(
+        hipblaslt_ext::SoftmaxProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
     TensileLite::KernelArguments kArgs(false);
@@ -311,15 +312,15 @@ hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
     kArgs.append("output", output);
     kArgs.append("m", m);
     kArgs.append("n", n);
-    const auto                numWorkgroups = getSoftmaxNumWorkgroups(m, tileM);
+    const auto                    numWorkgroups = getSoftmaxNumWorkgroups(m, tileM);
     TensileLite::KernelInvocation invocation{kernelName,
-                                         sol->getCodeObjectPath(),
-                                         false,
-                                         {WORKGROUP_SIZE, 1, 1},
-                                         {numWorkgroups, 1, 1},
-                                         {numWorkgroups * WORKGROUP_SIZE, 1, 1},
-                                         getLdsUsageByte(datatype, tileM, tileN),
-                                         kArgs};
+                                             sol->getCodeObjectPath(),
+                                             false,
+                                             {WORKGROUP_SIZE, 1, 1},
+                                             {numWorkgroups, 1, 1},
+                                             {numWorkgroups * WORKGROUP_SIZE, 1, 1},
+                                             getLdsUsageByte(datatype, tileM, tileN),
+                                             kArgs};
 
     err = adapter->launchKernel(invocation, stream, nullptr, nullptr);
 
@@ -358,12 +359,13 @@ hipblasStatus_t hipblasltLayerNormRun(hipDataType datatype,
     auto        gpu       = TensileLite::hip::GetCurrentDevice();
     const auto  archName  = trimArchName(gpu->archName());
     auto&       masterLib = getExtOpMasterLibrary();
-    const auto& lib
-        = masterLib
-              .getLibrary(archName, hipblaslt_ext::LayerNormSolutionLibrary::opName, hipDataTypeo_char(datatype))
-              ->as<hipblaslt_ext::LayerNormSolutionLibrary>();
-    auto sol
-        = lib.findBestSolution(hipblaslt_ext::LayerNormProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
+    const auto& lib       = masterLib
+                          .getLibrary(archName,
+                                      hipblaslt_ext::LayerNormSolutionLibrary::opName,
+                                      hipDataTypeo_char(datatype))
+                          ->as<hipblaslt_ext::LayerNormSolutionLibrary>();
+    auto sol = lib.findBestSolution(
+        hipblaslt_ext::LayerNormProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
     const auto kernelName    = sol->name();
     err                      = adapter->initKernel(kernelName);
     const auto numWorkgroups = m;
@@ -426,13 +428,15 @@ hipblasStatus_t hipblasltAMaxRun(const hipDataType datatype,
     auto        gpu       = TensileLite::hip::GetCurrentDevice();
     const auto  archName  = trimArchName(gpu->archName());
     auto&       masterLib = getExtOpMasterLibrary();
-    const auto& lib
-        = masterLib.getLibrary(archName, hipblaslt_ext::AMaxSolutionLibrary::opName, hipDataTypeo_char(datatype))
-              ->as<hipblaslt_ext::AMaxSolutionLibrary>();
-    auto       sol        = lib.findBestSolution(hipblaslt_ext::AMaxProblem(len,
-                                                hipDataType_to_tensile_type(datatype),
-                                                hipDataType_to_tensile_type(outDatatype)),
-                                    *gpu);
+    const auto& lib       = masterLib
+                          .getLibrary(archName,
+                                      hipblaslt_ext::AMaxSolutionLibrary::opName,
+                                      hipDataTypeo_char(datatype))
+                          ->as<hipblaslt_ext::AMaxSolutionLibrary>();
+    auto sol = lib.findBestSolution(
+        hipblaslt_ext::AMaxProblem(
+            len, hipDataType_to_tensile_type(datatype), hipDataType_to_tensile_type(outDatatype)),
+        *gpu);
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
 
@@ -494,15 +498,18 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     auto        gpu       = TensileLite::hip::GetCurrentDevice();
     const auto  archName  = trimArchName(gpu->archName());
     auto&       masterLib = getExtOpMasterLibrary();
-    const auto& lib
-        = masterLib.getLibrary(archName, hipblaslt_ext::AMaxSolutionLibrary::opName, hipDataTypeo_char(datatype))
-              ->as<hipblaslt_ext::AMaxSolutionLibrary>();
-    auto sol = lib.findBestSolution(hipblaslt_ext::AMaxProblem(len,
-                                                hipDataType_to_tensile_type(datatype),
-                                                hipDataType_to_tensile_type(outDatatype),
-                                                hipDataType_to_tensile_type(scaleDatatype),
-                                                true),
-                                    *gpu);
+    const auto& lib       = masterLib
+                          .getLibrary(archName,
+                                      hipblaslt_ext::AMaxSolutionLibrary::opName,
+                                      hipDataTypeo_char(datatype))
+                          ->as<hipblaslt_ext::AMaxSolutionLibrary>();
+    auto sol = lib.findBestSolution(
+        hipblaslt_ext::AMaxProblem(len,
+                                   hipDataType_to_tensile_type(datatype),
+                                   hipDataType_to_tensile_type(outDatatype),
+                                   hipDataType_to_tensile_type(scaleDatatype),
+                                   true),
+        *gpu);
 
     if(!sol)
     {
@@ -542,4 +549,29 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     }
 
     return HIPBLAS_STATUS_SUCCESS;
+}
+
+// Setter for the members of class UserClientArguments, only for internal use.
+// The class UserClientArguments is declared and defined in utility.hpp and utility.cpp respectively
+void hipblasltSetFlushValue(bool newFlush)
+{
+    UserClientArguments clientArguments;
+    clientArguments.SetFlushValue(newFlush);
+}
+void hipblasltSetRotatingBufferSizeValue(int newrotatingBufferSize)
+{
+    UserClientArguments clientArguments;
+    clientArguments.SetRotatingBufferSizeValue(newrotatingBufferSize);
+}
+
+void hipblasltSetColdIterationsValue(int newColdIterations)
+{
+    UserClientArguments clientArguments;
+    clientArguments.SetColdIterationsValue(newColdIterations);
+}
+
+void hipblasltSetHotIterationsValue(int newHotIterations)
+{
+    UserClientArguments clientArguments;
+    clientArguments.SetHotIterationsValue(newHotIterations);
 }

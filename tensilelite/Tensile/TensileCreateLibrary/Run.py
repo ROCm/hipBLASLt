@@ -174,7 +174,7 @@ def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, 
     duplicates += k.duplicate
     print2(f"Duplicate: {base}")
     visited.add(base)
-  print1(f"Number of duplicates: {duplicates}")
+  print1(f"Number of duplicate kernels: {duplicates}")
 
   numAsmKernels = len(asmKernels)
   numKernels = len(asmKernels)
@@ -218,12 +218,9 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
     duplicates += k.duplicate
     print2(f"Duplicate: {base}")
     visited.add(base)
-  print1(f"Number of duplicates: {duplicates}")
+  print1(f"Number of duplicate kernels: {duplicates}")
 
   uniqueAsmKernels = [k for k in asmKernels if not k.duplicate]
-  numAsmKernels = len(asmKernels)
-  numKernels = len(kernels)
-  assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
   def assemble(ret):
     p, isa, wavefrontsize = ret
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
@@ -237,7 +234,7 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, kernels,
   srcKernelFile = Path(outputPath) / "Kernels.cpp"
   buildSourceCodeObjectFiles(srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile)
 
-  return numKernels
+  return len(uniqueAsmKernels)
 
 
 @timing
@@ -287,7 +284,12 @@ def generateKernelObjectsFromSolutions(solutions):
       kernelHelperNames.add(ko.getKernelName())
 
   # remove duplicates while preserving order
+  numKhos = len(kernelHelperObjs)
   kernelHelperObjs = list(dict.fromkeys(kernelHelperObjs))
+
+  print1(f"Number of kernel helper objects: {numKhos}")
+  print1(f"Number of unique kernel helper objects: {len(kernelHelperObjs)}")
+
   return (kernels, kernelHelperObjs, kernelHelperNames)
 
 
@@ -364,7 +366,11 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
         solutions.append(sol.originalSolution)
 
   # remove duplicates while preserving order
+  numSoln = len(solutions)
   solutions = dict.fromkeys(solutions).keys()
+
+  print1(f"Number of solutions parsed: {numSoln}")
+  print1(f"Number of unique solutions: {len(solutions)}")
 
   return solutions, masterLibraries
 

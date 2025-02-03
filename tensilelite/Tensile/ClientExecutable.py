@@ -28,8 +28,8 @@ import subprocess
 from typing import Optional
 from pathlib import Path
 
+from . import SOURCE_PATH
 from .Common import Common, globalParameters
-from Tensile import SOURCE_PATH
 
 class CMakeEnvironment:
     def __init__(self, sourceDir, buildDir, **options):

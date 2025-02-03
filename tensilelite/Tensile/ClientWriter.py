@@ -34,9 +34,9 @@ from glob import glob
 from . import ROOT_PATH
 from . import ClientExecutable
 from . import LibraryIO
-from .TensileInstructions import getGfxName, DataType
-from .Common import globalParameters, ensurePath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
-from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
+from .TensileInstructions import getGfxName
+from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock
+from .SolutionStructs import ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
 from .TensileCreateLibrary import copyStaticFiles
 from .Contractions import FreeIndex, BatchIndex
 from .Contractions import ProblemType as ContractionsProblemType

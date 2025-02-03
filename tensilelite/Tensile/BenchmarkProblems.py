@@ -22,6 +22,7 @@
 #
 ################################################################################
 
+import glob
 import os
 import shutil
 import sys
@@ -41,7 +42,7 @@ from .CustomKernels import getCustomKernelConfig
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
 from .Common import globalParameters, HR, print1, print2, \
-        printExit, printWarning, ensurePath, startTime, tqdm, state, SemanticVersion
+        printExit, printWarning, ensurePath, startTime, tqdm, state
 
 
 def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCompiler):
@@ -312,7 +313,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                     benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,    \
                     benchmarkStep.factorDimArgs, benchmarkStep.activationArgs, \
                     benchmarkStep.icacheFlushArgs, shortName, [], asmToolchain, srcToolchain, \
-                    sourcePath, buildTmpPath)
+                    sourcePath)
             # ^ this mutates solutions
 
             # write cache data
