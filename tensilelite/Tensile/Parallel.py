@@ -207,7 +207,7 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True, retu
   pargs = zip(objects, itertools.repeat(globalParameters))
 
   if joblibParallelSupportsGenerator():
-    rv = Parallel(verbose=1000, n_jobs=threadCount,timeout=99999, return_as=return_as)(delayed(pcall)(function, a, params) for a, params in pargs)
+    rv = Parallel(n_jobs=threadCount,timeout=99999, return_as=return_as)(delayed(pcall)(function, a, params) for a, params in pargs)
   else:
     rv = Parallel(n_jobs=threadCount,timeout=99999)(delayed(pcall)(function, a, params) for a, params in pargs)
 

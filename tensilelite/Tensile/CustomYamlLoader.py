@@ -139,7 +139,7 @@ def load_yaml_dict_item(yaml_path: Path, loader_type: yaml.Loader, key: str):
 
 def load_logic_gfx_arch(yaml_path: Path, loader_type: yaml.Loader = DEFAULT_YAML_LOADER):
     try:
-        GFX_ARCH_IDX = 2
+        GFX_ARCH_IDX = 3
         arch = load_yaml_sequence_item(yaml_path, loader_type, GFX_ARCH_IDX)
 
         if isinstance(arch, dict):

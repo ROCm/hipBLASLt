@@ -27,10 +27,11 @@ import glob
 import itertools
 import os
 import shutil
+import subprocess
 
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import NamedTuple, List, Optional, Sequence, Union
+from typing import Dict, NamedTuple, List, Optional, Union
 
 from Tensile import Utils
 from Tensile.Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
@@ -43,10 +44,11 @@ from Tensile.Common import globalParameters, HR, print1, print2, printExit, ensu
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from Tensile import LibraryIO
-from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.SolutionStructs import Solution
-from Tensile.CustomYamlLoader import load_logic_gfx_arch
+from Tensile.CustomYamlLoader import load_logic_gfx_arch, load_yaml_sequence_item
 from Tensile.Utilities.Profile import profile
+from Tensile.Utilities.RequiredParameters import getRequiredParametersMin
+from Tensile.SolutionLibrary import MasterSolutionLibrary
 
 from .ParseArguments import parseArguments
 
@@ -258,9 +260,9 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, solution
         print1(f"{k['SolutionIndex']} {k['LogicFileName']}")
 
   pksResults = [processKernelSource(kernelWriterAssembly, TensileInstructions(), k) for k in uniqueAsmKernels]
-  for p, isa, wavefrontsize in [writeAssembly(asmPath, k) for k in pksResults]:
-    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
-  buildAssemblyCodeObjectFiles(asmToolchain, uniqueAsmKernels, kernelWriterAssembly, outputPath, compress)
+  #for p, isa, wavefrontsize in [writeAssembly(asmPath, k) for k in pksResults]:
+  #  asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
+  #buildAssemblyCodeObjectFiles(asmToolchain, uniqueAsmKernels, kernelWriterAssembly, outputPath, compress)
 
   #writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
   #srcKernelFile = Path(outputPath) / "Kernels.cpp"
@@ -277,19 +279,22 @@ def generateKernelHelperObjects(solutions):
 
 
 @timing
-def generateSolutions(args, cxxCompiler, logicDirs):
+def generateSolutions(args, cxxCompiler, logicFiles):
     if ";" in args["Architecture"]:
         archs = args["Architecture"].split(";") # user arg list format
     else:
         archs = args["Architecture"].split("_") # workaround for cmake list in list issue
     solutions = []
-    for logicDir in logicDirs:
-        files = glob.glob(logicDir + "/*.yaml")
-        for f in files:
-            solutions.extend(LibraryIO.parseLibraryLogicFile(f, cxxCompiler, archs).solutions)
+    libraries = []
+    for logicFileGroup in logicFiles:
+        for logicFile in logicFileGroup[1]:
+            libraryLogic = LibraryIO.parseLibraryLogicFile(logicFile, cxxCompiler, archs)
+            solutions.extend(libraryLogic.solutions)
+            libraries.append((libraryLogic.architecture, libraryLogic.library))
+
     numSoln = len(solutions)
     #solutions = list(dict.fromkeys(solutions).keys())
-    return solutions, numSoln, (numSoln-len(solutions))
+    return solutions, libraries, numSoln, (numSoln-len(solutions))
 
 
 #def generateMatchTable(masterSolutionLibraries):
@@ -336,9 +341,9 @@ def getLogicFileList(arguments):
         printExit(f"LogicPath {arguments['LogicPath']} doesn't exist")
 
     globPattern = os.path.join(arguments["LogicPath"], f"**/{arguments['LogicFilter']}.yaml")
-    print1(f"# LogicFilter:       {globPattern}")
+    print1(f"# LogicFilter:         {globPattern}")
     logicFiles = (os.path.join(arguments["LogicPath"], file) for file in glob.iglob(globPattern, recursive=True))
-    print1(f"# Experimental:      {arguments['Experimental']}")
+    print1(f"# Experimental:        {arguments['Experimental']}")
 
     if not arguments["Experimental"]:
         logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
@@ -349,15 +354,109 @@ def getLogicFileList(arguments):
     for logicFile in logicFiles:
         print2("#   %s" % logicFile)
 
-    return list(set(str(Path(l).parent) for l in logicFiles))
+    return logicFiles
 
+
+def numberOfBuildKernerls(logicFile):
+    from operator import itemgetter
+    result = subprocess.run(['/bin/grep', "BuildKernel", logicFile], stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=False)
+    return int(str(result.stdout).count("BuildKernel"))
+
+
+def distribute(lst, n):
+    import heapq
+    list_of_lists = [[] for _ in range(n)]
+    totals = [(0, i) for i in range(n)]
+    heapq.heapify(totals)
+    for value, f in lst:
+        total, index = heapq.heappop(totals)
+        list_of_lists[index].append((value, f))
+        heapq.heappush(totals, (total + value, index))
+    return sorted(list_of_lists, key=lambda x: sum(first for first, _ in x), reverse=True)
+
+
+def schedule(logicFiles: list, numberOfTasks: int):
+    from yaml import Loader
+    problemMap = {}
+    for logicFile in logicFiles:
+        codeObjectFile = load_yaml_sequence_item(logicFile, Loader, 0)
+        codeObjectFile = codeObjectFile["codeObjectFile"]
+        if codeObjectFile in problemMap:
+            problemMap[codeObjectFile].append(logicFile)
+        else:
+            problemMap[codeObjectFile] = [logicFile]
+
+    result = []
+    for codeObjectFile, logicFiles in problemMap.items():
+        count = sum(numberOfBuildKernerls(logicFile) for logicFile in logicFiles)
+        result.append((count, logicFiles))
+
+    return distribute(result, numberOfTasks) # need to convert list of list of tuples to list of list of strings
+
+
+def updateParentMasterLibrary(
+    gfxName: str,
+    masterLib: MasterSolutionLibrary, 
+    masterLibraries: Dict[str, MasterSolutionLibrary], 
+    nextIdx: Dict[str, int], 
+) -> None:
+        if gfxName in masterLibraries:
+            nextIdx[gfxName] = masterLibraries[gfxName].merge(masterLib, nextIdx[gfxName])
+        else:
+            masterLibraries[gfxName] = masterLib
+            nextIdx[gfxName] = 0
+
+def updateMasterLibrary(
+    gfxName: str,
+    currMasterLib: MasterSolutionLibrary, 
+    prevMasterLib: MasterSolutionLibrary, 
+    nextIdx: int, 
+) -> None:
+        if prevMasterLib is not None:
+            nextIdx = prevMasterLib.merge(currMasterLib, nextIdx)
+        else:
+            prevMasterLib = currMasterLib
+            nextIdx = 0
+        return prevMasterLib, nextIdx
+
+#import asyncio
+#import aiofiles
+#import msgpack
+
+#async def write_to_file(filename, data):
+#    # Open the file in asynchronous mode
+#    async with aiofiles.open(filename, 'w') as file:
+#        #await file.write(str(data))
+#        msgpack.pack(data, file)
 
 @profile
 def build(arguments, cxxCompiler, assembler, asmToolchain, srcToolchain, logicFiles):
-    solutions, totalSoln, dupSoln = generateSolutions(arguments, cxxCompiler, logicFiles)
+
+    start = timer()
+    solutions, libraries, totalSoln, dupSoln = generateSolutions(arguments, cxxCompiler, logicFiles)
+
+    #_masterLib = None
+    #_nextSolutionIdx = 0
+    #if len(libraries) > 0:
+    #  for gfxName, lib in libraries:
+    #      _masterLib, _nextSolutionIdx = updateMasterLibrary(gfxName, lib, _masterLib, _nextSolutionIdx)
+      # Can we do this asynchronously before the call to writeSolutionsAndKernels?
+      #newLibraryDir = Path(arguments["OutputPath"]) / "library"
+      #for name, lib in list(_masterLib.lazyLibraries.items()):
+          #catalogPath = newLibraryDir / name
+          #parents = catalogPath.parents[:2]
+          #print1(f"# LAZY CATALOG: {parents[1].name}/{parents[0].name}/{catalogPath.name}")
+          #lib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
+          #LibraryIO.write(str(catalogPath), Utils.state(lib), "msgpack")
+          #asyncio.run(write_to_file(str(catalogPath)+".dat", Utils.state(lib)))
+
     numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, solutions, 
                                                       assembler, compress=arguments["UseCompression"])
-    return numKernels, totalSoln, dupSoln
+    stop = timer()
+    print1(f"Total time (s): {(stop-start):3.2f}")
+    print1(f"Kernels per second: {(numKernels[0]/(stop-start)):3.2f}")
+    print1(f" {numKernels[0]} {[l[1] for l in logicFiles]}")
+    return libraries, numKernels, totalSoln, dupSoln
 
 
 ################################################################################
@@ -389,44 +488,43 @@ def run():
   print1(f"# Architecture(s):     {arguments['Architecture']}")
   print1(f"# Library Format:      {arguments['LibraryFormat']}")
 
-  assignGlobalParameters(arguments, cxxCompiler)
+  libraryDir = Path(arguments["OutputPath"]) / "library"
+  libraryDir.mkdir(exist_ok=True)
 
+  unsortedLogic = getLogicFileList(arguments)
+  logicFiles = list(filter(lambda x: x != [], schedule(unsortedLogic, 2*arguments["CpuThreads"])))
+
+  assignGlobalParameters(arguments, cxxCompiler)
   asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], arguments["CodeObjectVersion"])
   srcToolchain = SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
-
-  def distribute(lst, n):
-      import heapq
-      lists = [[] for _ in range(n)]
-      totals = [(0, i) for i in range(n)]
-      heapq.heapify(totals)
-      for value, f in lst:
-          total, index = heapq.heappop(totals)
-          lists[index].append(f)
-          heapq.heappush(totals, (total + value, index))
-      return lists
-
-  def getSize(logicDirs):
-      from os.path import getsize
-      from operator import itemgetter
-      filesizes = [(sum([int(getsize(f)) for f in glob.glob(d + "/*.yaml")]), d) for d in logicDirs]
-      return filesizes
-  
-  logicDirs = distribute(getSize(getLogicFileList(arguments)), 2*arguments["CpuThreads"])
-
   copyStaticFiles(arguments["OutputPath"])
   unaryBuild = functools.partial(build, arguments, cxxCompiler, assembler, asmToolchain, srcToolchain)
-  result  = ParallelMap2(unaryBuild, logicDirs, "Building Library", multiArg=False, return_as="generator_unordered")
+  result  = ParallelMap2(unaryBuild, logicFiles, "Building Library", multiArg=False, return_as="generator_unordered")
+
   totalKernels = 0
   totalUnique = 0
   totDup = 0
   totSoln = 0
   dupKernels = 0
 
-  for n, total, dup in result:
-      totalKernels += n[1]
-      totalUnique += n[0]
-      totDup += dup
-      totSoln += total
+  #baseName = "TensileLibrary_"
+  #masterLibs = {}
+  #nextIdx = {}
+
+  for library, n, total, dup in result:
+    #if len(library) > 0:
+    #  for gfxName, lib in library:
+    #    updateParentMasterLibrary(gfxName, lib, masterLibs, nextIdx)
+    totalKernels += n[1]
+    totalUnique += n[0]
+    totDup += dup
+    totSoln += total
+
+  #for arch, masterLib in masterLibs.items():
+  #  name = baseName + "lazy_" + arch
+  #  print1(f"WRITING PARENT CATALOG: {name}")
+  #  masterLib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
+  #  LibraryIO.write(str(libraryDir / name), Utils.state(masterLib), arguments["LibraryFormat"])
 
   print1("# Tensile Library Writer DONE")
   print1(HR)
@@ -441,30 +539,3 @@ def run():
   print1(f"Total solutions processed: {totSoln - totDup}")
   print1(f"Duplicate solutions removed: {totDup}")
   print1(f"Duplicate kernels removed: {dupKernels}")
-
-
-
-
-
-
-
-
-
-
-
-  # archs = [getGfxName(arch) for arch in globalParameters['SupportedISA'] \
-  #            if globalParameters["AsmCaps"][arch]["SupportedISA"]]
-  # newLibraryDir = ensurePath(os.path.join(arguments["OutputPath"], 'library'))
-
-  # for archName, newMasterLibrary in masterLibraries.items():
-  #   if archName in archs:
-  #     if globalParameters["LazyLibraryLoading"]:
-  #       masterFile = os.path.join(newLibraryDir, "TensileLibrary_lazy_"+archName)
-  #     else:
-  #       masterFile = os.path.join(newLibraryDir, "TensileLibrary_"+archName)
-  #     newMasterLibrary.applyNaming(kernelMinNaming)
-  #     LibraryIO.write(masterFile, Utils.state(newMasterLibrary), arguments["LibraryFormat"])
-  #     for name, lib in newMasterLibrary.lazyLibraries.items():
-  #       filename = os.path.join(newLibraryDir, name)
-  #       lib.applyNaming(kernelMinNaming)
-  #       LibraryIO.write(filename, Utils.state(lib), arguments["LibraryFormat"])

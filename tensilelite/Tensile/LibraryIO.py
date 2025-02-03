@@ -204,16 +204,16 @@ def parseSolutionsData(data, srcFile, cxxCompiler):
         printExit("Solution file {} is missing required fields (len = {} < 3" \
                 .format(srcFile, len(data)))
 
-    versionString = data[0]["MinimumRequiredVersion"]
+    versionString = data[1]["MinimumRequiredVersion"]
     if not versionIsCompatible(versionString):
         printWarning("Version = {} in solution file {} does not match Tensile version = {}" \
                 .format(srcFile, versionString, __version__) )
 
-    if "ProblemSizes" not in data[1]:
+    if "ProblemSizes" not in data[2]:
         printExit("Solution file {} doesn't begin with ProblemSizes".format(srcFile))
 
-    problemSizesConfig = data[1]["ProblemSizes"]
-    solutionStartIdxInData = 2
+    problemSizesConfig = data[2]["ProblemSizes"]
+    solutionStartIdxInData = 3
     if (len(data) > solutionStartIdxInData) and "BiasTypeArgs" in data[solutionStartIdxInData]:
         solutionStartIdxInData += 1
     if (len(data) > solutionStartIdxInData) and "ActivationArgs" in data[solutionStartIdxInData]:
@@ -323,31 +323,32 @@ def parseLibraryLogicList(data, srcFile="?"):
                 .format(srcFile, len(data)))
 
     rv = {}
-    rv["MinimumRequiredVersion"] = data[0]["MinimumRequiredVersion"]
-    rv["ScheduleName"] = data[1]
-    rv["DeviceNames"] = data[3]
-    rv["ProblemType"] = data[4]
-    rv["Solutions"] = data[5]
+    rv["codeObjectFile"] = data[0]["codeObjectFile"]
+    rv["MinimumRequiredVersion"] = data[1]["MinimumRequiredVersion"]
+    rv["ScheduleName"] = data[2]
+    rv["DeviceNames"] = data[4]
+    rv["ProblemType"] = data[5]
+    rv["Solutions"] = data[6]
 
-    if type(data[2]) is dict:
-        rv["ArchitectureName"] = data[2]["Architecture"]
-        rv["CUCount"] = data[2]["CUCount"]
+    if type(data[3]) is dict:
+        rv["ArchitectureName"] = data[3]["Architecture"]
+        rv["CUCount"] = data[3]["CUCount"]
     else:
-        rv["ArchitectureName"] = data[2]
+        rv["ArchitectureName"] = data[3]
         rv["CUCount"] = None
 
     # TODOBEN: figure out what to do with these...
-    rv["ExactLogic"] = data[7]
-    rv["RangeLogic"] = data[8]
+    rv["ExactLogic"] = data[8]
+    rv["RangeLogic"] = data[9]
 
     # optional fields
-    if len(data) > 10 and data[10]:
-        rv["PerfMetric"] = data[10]
+    if len(data) > 10 and data[11]:
+        rv["PerfMetric"] = data[11]
 
     # library logic fields
     libraryType = None
-    if len(data) > 11 and data[11]:
-        libraryType = data[11]
+    if len(data) > 12 and data[12]:
+        libraryType = data[12]
     else:
         printExit("Library logic file {} is missing required field matching property." \
                 .format(srcFile))
@@ -355,13 +356,13 @@ def parseLibraryLogicList(data, srcFile="?"):
         rv["LibraryType"] = "FreeSize"
         rv["Library"] = {}
         rv["Library"]["indexOrder"] = None
-        rv["Library"]["table"] = [0, len(data[5])]
+        rv["Library"]["table"] = [0, len(data[6])]
         rv["Library"]["distance"] = None
     else:
         rv["LibraryType"] = "Matching"
         rv["Library"] = {}
-        rv["Library"]["indexOrder"] = data[6]
-        rv["Library"]["table"] = data[7]
+        rv["Library"]["indexOrder"] = data[7]
+        rv["Library"]["table"] = data[8]
         rv["Library"]["distance"] = libraryType
 
     return rv
@@ -369,23 +370,24 @@ def parseLibraryLogicList(data, srcFile="?"):
 
 def rawLibraryLogic(data):
     """Returns a tuple of the data in a library logic file."""
-    versionString = data[0]
-    scheduleName = data[1]
-    architectureName = data[2]
-    deviceNames = data[3]
-    problemTypeState = data[4]
-    solutionStates = data[5]
-    indexOrder = data[6]
-    exactLogic = data[7]
-    rangeLogic = data[8]
+    codeObjectFile = data[0]
+    versionString = data[1]
+    scheduleName = data[2]
+    architectureName = data[3]
+    deviceNames = data[5]
+    problemTypeState = data[5]
+    solutionStates = data[6]
+    indexOrder = data[7]
+    exactLogic = data[8]
+    rangeLogic = data[9]
     otherFields = []
 
     dataLength = len(data)
-    if dataLength > 9:
-        for idx in range(9, dataLength):
+    if dataLength > 10:
+        for idx in range(10, dataLength):
             otherFields.append(data[idx])
 
-    return (versionString, scheduleName, architectureName, deviceNames,\
+    return (codeObjectFile, versionString, scheduleName, architectureName, deviceNames,\
             problemTypeState, solutionStates, indexOrder, exactLogic, rangeLogic, otherFields)
 
 
