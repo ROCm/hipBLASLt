@@ -514,6 +514,7 @@ def TensileCreateLibrary():
   argParser.add_argument("LogicPath",       help="Path to LibraryLogic.yaml files.")
   argParser.add_argument("OutputPath",      help="Where to write library files?")
   argParser.add_argument("RuntimeLanguage", help="Which runtime language?", choices=["OCL", "HIP", "HSA"])
+  argParser.add_argument("--hip-config",              dest="HIPConfig",         action="store", default=ToolchainDefaults.HIP_CONFIG)
   argParser.add_argument("--cxx-compiler",           dest="CxxCompiler",       action="store", default=ToolchainDefaults.CXX_COMPILER,
                          help=f"Default: {ToolchainDefaults.CXX_COMPILER}")
   argParser.add_argument("--c-compiler",             dest="CCompiler",         action="store", default=ToolchainDefaults.C_COMPILER)
@@ -616,7 +617,7 @@ def TensileCreateLibrary():
     arguments[key] = value
 
   cxxCompiler, cCompiler, offloadBundler, assembler, hipconfig = validateToolchain(
-      args.CxxCompiler, args.CCompiler, args.OffloadBundler, args.Assembler, ToolchainDefaults.HIP_CONFIG
+      args.CxxCompiler, args.CCompiler, args.OffloadBundler, args.Assembler, args.HIPConfig
   )
   print1(f"# HIP Version:         {getVersion(hipconfig, regex=r'(.+)')}")
   print1(f"# Cxx Compiler:        {cxxCompiler} (version {getVersion(cxxCompiler)})")

@@ -43,6 +43,12 @@ class ToolchainDefaults(NamedTuple):
 
 
 def _supportedComponent(component: str, targets: List[str]) -> bool:
+    # If an absolute path was specified for any component, accept it and assume
+    # the user meant what they said.
+    if Path(component).absolute:
+        return True
+    # Otherwise, validate it against some assumptions about what an unadorned
+    # executable name should be on various platforms.
     isSupported = any([component == t for t in targets]) or any([Path(component).name == t for t in targets])
     return isSupported
 
@@ -123,7 +129,6 @@ def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
         supportedCxxCompiler(file), supportedCCompiler(file), supportedOffloadBundler(file), supportedHip(file)
     )):
         raise ValueError(f"{file} is not a supported toolchain component for OS: {os.name}")
-
     if _exeExists(Path(file)): return file
     for path in searchPaths:
         path /= file 

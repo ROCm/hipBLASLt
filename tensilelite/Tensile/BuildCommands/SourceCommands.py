@@ -24,6 +24,8 @@ def _compileSourceObjectFile(cmdlineArchs: List[str], cxxCompiler: str, cxxSrcPa
     Raises:
         RuntimeError: If the compilation command fails.
     """
+    # TODO: Consider getting this from arguments vs from environment.
+    toolchain_flags = shlex.split(os.environ.get('Tensile_TOOLCHAIN_FLAGS', ''))
     archFlags = ['--offload-arch=' + arch for arch in cmdlineArchs]
 
     #TODO(@jichangjichang) Needs to be fixed when Maneesh's change is made available
@@ -40,12 +42,13 @@ def _compileSourceObjectFile(cmdlineArchs: List[str], cxxCompiler: str, cxxSrcPa
     if globalParameters["SaveTemps"]:
       hipFlags.append('--save-temps')
 
+    # TODO: Consider getting this from arguments vs from environment.
     launcher = shlex.split(os.environ.get('Tensile_CXX_COMPILER_LAUNCHER', ''))
 
     if os.name == "nt":
       hipFlags.extend(['-fms-extensions', '-fms-compatibility', '-fPIC', '-Wno-deprecated-declarations'])
 
-    args = launcher + [which(cxxCompiler)] + hipFlags + archFlags + [cxxSrcPath, '-c', '-o', objDestPath]
+    args = launcher + [which(cxxCompiler)] + toolchain_flags + hipFlags + archFlags + [cxxSrcPath, '-c', '-o', objDestPath]
 
     try:
       out = subprocess.check_output(args, stderr=subprocess.STDOUT)

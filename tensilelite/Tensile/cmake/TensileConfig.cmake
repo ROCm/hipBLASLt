@@ -72,6 +72,31 @@ endif()
 add_subdirectory("${Tensile_ROOT}/Source" "Tensile")
 include("${Tensile_ROOT}/Source/TensileCreateLibrary.cmake")
 
+# Gets a command line fragment that can be prepended to a command in order to
+# setup toolchain environment variables in a child process.
+# Generally, each of these should be promoted to flags at some point, and then
+# they should be removed from here.
+function(TensileGetEnvCommand out_var)
+  set(CommandEnv ${CMAKE_COMMAND} -E env)
+  if(Tensile_CXX_COMPILER)
+    list(APPEND CommandEnv "Tensile_CXX_COMPILER=${Tensile_CXX_COMPILER}")
+  endif()
+  if(Tensile_C_COMPILER)
+    list(APPEND CommandEnv "Tensile_C_COMPILER=${Tensile_C_COMPILER}")
+  endif()
+  if(Tensile_ASSEMBLER)
+    list(APPEND CommandEnv "Tensile_ASSEMBLER=${Tensile_ASSEMBLER}")
+  endif()
+  if(CMAKE_CXX_COMPILER_LAUNCHER)
+    list(APPEND "Tensile_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}")
+  endif()
+  if(Tensile_TOOLCHAIN_FLAGS)
+    list(APPEND CommandEnv "Tensile_TOOLCHAIN_FLAGS=${Tensile_TOOLCHAIN_FLAGS}")
+  endif()
+  list(APPEND CommandEnv "--")
+  set("${out_var}" "${CommandEnv}" PARENT_SCOPE)
+endfunction()
+
 # Output target: ${Tensile_VAR_PREFIX}_LIBRARY_TARGET. Ensures that the libs get built in Tensile_OUTPUT_PATH/library.
 function(TensileCreateLibraryFiles
          Tensile_LOGIC_PATH
@@ -197,12 +222,35 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--code-object-version=${Tensile_CODE_OBJECT_VERSION}")
   endif()
 
-  if(Tensile_COMPILER)
-    set(Options ${Options} "--cxx-compiler=${Tensile_COMPILER}")
+  if(Tensile_CXX_COMPILER)
+    set(Options ${Options} "--cxx-compiler=${Tensile_CXX_COMPILER}")
+    # Legacy: Tensile used to separate the CXX compiler path and called it
+    # "cmake-cxx-compiler".
+    set(Options ${Options} "--cmake-cxx-compiler=${Tensile_CXX_COMPILER}")
+  else()
+    # Old-style, non path based compiler flags.
+    if(Tensile_COMPILER)
+      set(Options ${Options} "--cxx-compiler=${Tensile_COMPILER}")
+    endif()
+    if(Tensile_COMPILER_PATH)
+      set(Options ${Options} "--cmake-cxx-compiler=${Tensile_COMPILER_PATH}")
+    endif()
   endif()
 
-  if(Tensile_COMPILER_PATH)
-    set(Options ${Options} "--cmake-cxx-compiler=${Tensile_COMPILER_PATH}")
+  if(Tensile_C_COMPILER)
+    set(Options ${Options} "--c-compiler=${Tensile_C_COMPILER}")
+  endif()
+
+  if(Tensile_HIP_CONFIG)
+    set(Options ${Options} "--hip-config=${Tensile_HIP_CONFIG}")
+  endif()
+
+  if(Tensile_ASSEMBLER)
+    set(Options ${Options} "--assembler=${Tensile_ASSEMBLER}")
+  endif()
+
+  if(Tensile_OFFLOAD_BUNDLER)
+    set(Options ${Options} "--offload-bundler=${Tensile_OFFLOAD_BUNDLER}")
   endif()
 
   if(Tensile_CPU_THREADS)
@@ -234,7 +282,8 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--build-id=${Tensile_BUILD_ID}")
   endif()
 
-  set(CommandLine ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
+  TensileGetEnvCommand(CommandEnv)
+  set(CommandLine ${CommandEnv} ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
   message(STATUS "Tensile_CREATE_COMMAND: ${CommandLine}")
 
   if(Tensile_EMBED_LIBRARY)
@@ -293,6 +342,7 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr)
   set(ext_op_library_path ${build_tmp_dir}/hipblasltExtOpLibrary.dat)
   file(REMOVE ${ext_op_library_path})
 
+  TensileGetEnvCommand(CommandEnv)
   add_custom_command(
     OUTPUT ${OutputFolder}/hipblasltExtOpLibrary.dat
     WORKING_DIRECTORY "${cwd}"
@@ -300,7 +350,7 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr)
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${OutputFolder}
-    COMMAND bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}" "${Tensile_BUILD_ID}"
+    COMMAND ${CommandEnv} bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}" "${Tensile_BUILD_ID}"
     COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${build_tmp_dir}/extop_*.co ${OutputFolder}
   )
 
