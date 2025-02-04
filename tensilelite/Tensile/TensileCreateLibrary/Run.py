@@ -396,8 +396,6 @@ def run():
       arguments["Assembler"],
       ToolchainDefaults.HIP_CONFIG,
   )
-  hipVersion = getVersion(hipconfig, regex=r'(.+)')
-
   print1(f"# HIP Version:         {getVersion(hipconfig, regex=r'(.+)')}")
   print1(f"# Cxx Compiler:        {cxxCompiler} (version {getVersion(cxxCompiler)})")
   print1(f"# C Compiler:          {cCompiler} (version {getVersion(cCompiler)})")
