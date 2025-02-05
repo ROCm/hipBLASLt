@@ -1884,6 +1884,8 @@ class GlobalWriteBatchWriter:
         elif kernel["ProblemType"]["ComputeDataType"].isDouble():
           newSumIdx = sumIdxV * 2 - self.parentWriter.states.c.startVgprValu
           module.add(VMulF64(dst=vgpr("ValuC+%u"%(newSumIdx),2), src0=sgpr("Alpha",2), src1=vgpr("ValuC+%u"%(newSumIdx),2), comment="*= alpha"))
+          if usePK:
+            module.add(VMulF64(dst=vgpr("ValuC+%u"%(newSumIdx+2),2), src0=sgpr("Alpha",2), src1=vgpr("ValuC+%u"%(newSumIdx+2),2), comment="*= alpha"))
 
         # single precision complex
         elif kernel["ProblemType"]["ComputeDataType"].isSingleComplex():
