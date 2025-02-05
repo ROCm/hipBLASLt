@@ -30,7 +30,7 @@ import concurrent.futures
 
 from joblib import Parallel, delayed
 
-from .Common import tqdm
+from .Utilities import tqdm
 
 def joblibParallelSupportsGenerator():
   import joblib
@@ -39,7 +39,7 @@ def joblibParallelSupportsGenerator():
   return Version(joblibVer) >= Version("1.4.0")
 
 def CPUThreadCount(enable=True):
-  from .Common import globalParameters
+  from .GlobalParameters import globalParameters
   if not enable:
     return 1
   else:
@@ -79,9 +79,9 @@ def apply_print_exception(item, *args):
     sys.stderr.flush()
 
 def OverwriteGlobalParameters(newGlobalParameters):
-  from . import Common
-  Common.globalParameters.clear()
-  Common.globalParameters.update(newGlobalParameters)
+  from . import GlobalParameters
+  GlobalParameters.globalParameters.clear()
+  GlobalParameters.globalParameters.update(newGlobalParameters)
 
 def ProcessingPool(enable=True, maxTasksPerChild=None):
   import multiprocessing
@@ -93,8 +93,8 @@ def ProcessingPool(enable=True, maxTasksPerChild=None):
     return multiprocessing.dummy.Pool(1)
 
   if multiprocessing.get_start_method() == "spawn":
-    from . import Common
-    return multiprocessing.Pool(threadCount, initializer=OverwriteGlobalParameters, maxtasksperchild=maxTasksPerChild, initargs=(Common.globalParameters,))
+    from . import GlobalParameters
+    return multiprocessing.Pool(threadCount, initializer=OverwriteGlobalParameters, maxtasksperchild=maxTasksPerChild, initargs=(GlobalParameters.globalParameters,))
   else:
     return multiprocessing.Pool(threadCount, maxtasksperchild=maxTasksPerChild)
 
@@ -110,7 +110,7 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
            - `lambda x: x.imap` - lazy evaluation
            - `lambda x: x.imap_unordered` - lazy evaluation, does not preserve order of return value.
   """
-  from .Common import globalParameters
+  from .GlobalParameters import globalParameters
   threadCount = CPUThreadCount(enable)
   pool = ProcessingPool(enable, maxTasksPerChild)
 
@@ -154,7 +154,7 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
   return rv
 
 def ParallelMapReturnAsGenerator(function, objects, message="", enable=True, multiArg=True):
-  from .Common import globalParameters
+  from .GlobalParameters import globalParameters
   threadCount = CPUThreadCount(enable)
   print("{0}Launching {1} threads...".format(message, threadCount))
 
@@ -180,7 +180,7 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True, retu
   if return_as in ('generator', 'generator_unordered') and not joblibParallelSupportsGenerator():
     return ParallelMapReturnAsGenerator(function, objects, message, enable, multiArg)
 
-  from .Common import globalParameters
+  from .GlobalParameters import globalParameters
   threadCount = CPUThreadCount(enable)
 
   if threadCount <= 1 and globalParameters["ShowProgressBar"]:

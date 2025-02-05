@@ -23,7 +23,7 @@
 from copy import deepcopy
 
 from .TensileInstructions import TensileInstructions
-from .Common import globalParameters, CHeader, gfxArch, getGfxName
+from .Common import globalParameters, getGfxArch, getGfxName
 from .Activation import ActivationInline, ActivationType
 from .KernelWriterBase import KernelWriterBase
 
@@ -55,7 +55,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
       self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
     else:
       for idx, arch in enumerate(self.supportedArchs):
-        self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
+        self.supportedArchs[idx] = getGfxArch(''.join(map(str, arch)))
 
     # derive parameter
     self.language = "HIP"

@@ -20,7 +20,8 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .Base import Item, getGfxName
+from ..Common import getGfxName
+from .Base import Item
 from .Enums import SignatureValueKind
 from .Formatting import slash, slash50, block, block3Line, blockNewLine, \
                         formatStr, printExit

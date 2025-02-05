@@ -27,7 +27,7 @@ from . import ClientExecutable
 from . import ClientWriter
 from . import LibraryIO
 from . import LibraryLogic
-from .Common import Common, globalParameters, print1, printWarning, ensurePath, assignGlobalParameters, \
+from .Common import globalParameters, print1, printWarning, ensurePath, assignGlobalParameters, \
                     restoreDefaultGlobalParameters, HR, __version__
 from .Tensile import addCommonArguments, argUpdatedGlobalParameters
 from .SolutionStructs import ProblemSizes
@@ -99,7 +99,7 @@ def parseCurrentLibrary(libPath, sizePath):
 
     # get performance metric
     if len(libYaml) > 10:
-        Common.globalParameters["PerformanceMetric"] = libYaml[10]
+        GlobalParameters.globalParameters["PerformanceMetric"] = libYaml[10]
 
     # process exactLogic into ProblemSizes
     sizes = []
@@ -136,7 +136,7 @@ def runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler: str, 
     ensurePath(resultsDir)
 
     if update:
-        Common.globalParameters["LibraryUpdateFile"] = os.path.join(resultsDir, "update.yaml")
+        globalParameters["LibraryUpdateFile"] = os.path.join(resultsDir, "update.yaml")
 
     pushWorkingPath(shortName)
     pushWorkingPath("source")
@@ -220,7 +220,7 @@ def TensileRetuneLibrary(userArgs):
     overrideParameters = argUpdatedGlobalParameters(args)
     for key, value in overrideParameters.items():
         print1("Overriding {0}={1}".format(key, value))
-        Common.globalParameters[key] = value
+        globalParameters[key] = value
 
     # parse library logic then setup and run benchmarks
     (rawYaml, solutions, problemSizes) = parseCurrentLibrary(libPath, sizePath)

@@ -36,10 +36,10 @@ from Tensile import LibraryIO, SOURCE_PATH
 from Tensile.Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
 from Tensile.Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
 from Tensile.Toolchain.Validators import validateToolchain, getVersion, ToolchainDefaults
-from Tensile.TensileInstructions import getGfxName, TensileInstructions
+from Tensile.TensileInstructions import TensileInstructions
 from Tensile.Common import globalParameters, HR, print1, print2, printExit, IsaVersion, ensurePath, state, \
                     CHeader, assignGlobalParameters, architectureMap, IsaVersion, ParallelMap2, tqdm, \
-                    SemanticVersion
+                    SemanticVersion, getGfxName
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from Tensile.SolutionLibrary import MasterSolutionLibrary

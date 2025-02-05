@@ -36,24 +36,12 @@ from copy import deepcopy
 from . import LibraryIO
 
 from . import ClientWriter
-from .TensileInstructions import getGfxName
 from .Common import assignGlobalParameters, ensurePath, globalParameters, \
-    gfxArch, printExit, getArchitectureName
+    printExit, getGfxName, getGfxCommonName
 from .SolutionStructs import ProblemSizes
-from .Utilities.Toolchain import ToolchainDefaults, validateToolchain
+from .Toolchain.Validators import ToolchainDefaults, validateToolchain
 
 
-def getArchitecture(isaName):
-    archid = getGfxName(isaName)
-    return getArchitectureName(archid)
-
-def isValidArch(archName, currentArch):
-    arch = gfxArch(archName)
-    return currentArch == arch
-
-##############################################################################
-# createLibraryForBenchmark
-##############################################################################
 def createLibraryForBenchmark(logicPath, libraryPath, currentPath):
     """
     takes the path of existing logic files as input and adds the summation
@@ -80,9 +68,10 @@ def GenerateSummations(userArgs):
     cxxCompiler, cCompiler = validateToolchain(ToolchainDefaults.CXX_COMPILER, ToolchainDefaults.C_COMPILER)
 
     currentISA = globalParameters["CurrentISA"]
-    currentArchitecture = getArchitecture(currentISA)
+    gfxName = getGfxName(currentISA)
+    commonName = getGfxCommonName(gfxName)
 
-    globPath = os.path.join(inputLogicPath, "{}*".format(currentArchitecture))
+    globPath = os.path.join(inputLogicPath, "{}*".format(commonName))
     logicFileNames = glob.glob(globPath)
 
     for logicFileName in logicFileNames:

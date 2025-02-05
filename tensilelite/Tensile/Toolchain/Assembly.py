@@ -32,8 +32,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Union
 
-from ..TensileInstructions import getGfxName
-from ..Common import globalParameters, print2, ensurePath, SemanticVersion
+from ..Common import globalParameters, print2, ensurePath, SemanticVersion, getGfxName
 from ..KernelWriterAssembly import KernelWriterAssembly
 from ..Toolchain.Validators import getVersion
 from ..SolutionStructs import Solution

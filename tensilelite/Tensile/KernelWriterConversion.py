@@ -27,7 +27,7 @@ from copy import deepcopy
 from .KernelWriterBase import KernelWriterBase
 from .TensileInstructions import DataType
 
-from .Common import globalParameters, gfxArch, getGfxName, INDEX_CHARS
+from .Common import globalParameters, getGfxArch, getGfxName, INDEX_CHARS
 
 class KernelWriterConversion(KernelWriterBase):
 
@@ -88,7 +88,7 @@ class KernelWriterConversion(KernelWriterBase):
       self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
     else:
       for idx, arch in enumerate(self.supportedArchs):
-        self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
+        self.supportedArchs[idx] = getGfxArch(''.join(map(str, arch)))
 
     self.gsuKernels = [self.state["GlobalSplitU"]]
     if self.state["GenPGRPostKernels"]:

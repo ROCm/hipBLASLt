@@ -28,7 +28,7 @@ from . import Hardware
 from . import Properties
 from .SolutionStructs import getBiasDataTypeListDefault
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import Common, internalParameters, globalParameters, state, state_key_ordering
+from .Common import getGfxArch, internalParameters, globalParameters, state, state_key_ordering
 
 @state_key_ordering
 class FreeIndex:
@@ -699,7 +699,7 @@ class Solution:
 
         if 'ISA' not in d:
             if d['KernelLanguage'] == 'Assembly':
-                d['ISA'] = Common.gfxArch(deviceInfo[1])
+                d['ISA'] = getGfxArch(deviceInfo[1])
             else:
                 d['ISA'] = [0,0,0]
 

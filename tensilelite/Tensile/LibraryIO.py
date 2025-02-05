@@ -26,7 +26,7 @@ from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
-from .Common import Common, printExit, printWarning, print2, versionIsCompatible, __version__
+from .Common import getGfxArch, printExit, printWarning, print2, versionIsCompatible, __version__
 
 from typing import NamedTuple, List
 import os
@@ -273,7 +273,7 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
     # unpack solution
     def solutionStateToSolution(solutionState, cxxCompiler) -> Solution:
         if solutionState["KernelLanguage"] == "Assembly":
-            solutionState["ISA"] = Common.gfxArch(data["ArchitectureName"])
+            solutionState["ISA"] = getGfxArch(data["ArchitectureName"])
         else:
             solutionState["ISA"] = (0, 0, 0)
         solutionState["CUCount"] = data["CUCount"]

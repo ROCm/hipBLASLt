@@ -23,7 +23,7 @@
 ################################################################################
 
 from . import Properties
-from .TensileInstructions import getGfxName
+from .Common import getGfxName
 import copy
 
 class HardwarePredicate(Properties.Predicate):

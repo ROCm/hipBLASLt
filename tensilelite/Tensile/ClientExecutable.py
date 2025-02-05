@@ -29,7 +29,7 @@ from typing import Optional
 from pathlib import Path
 
 from . import SOURCE_PATH
-from .Common import Common, globalParameters
+from .Common import globalParameters, print2, ClientExecutionLock, ensurePath
 
 class CMakeEnvironment:
     def __init__(self, sourceDir, buildDir, **options):
@@ -43,14 +43,14 @@ class CMakeEnvironment:
         args += itertools.chain.from_iterable([ ['-D', '{}={}'.format(key, value)] for key,value in self.options.items()])
         args += [self.sourceDir]
 
-        Common.print2(' '.join(args))
-        with Common.ClientExecutionLock():
-            subprocess.check_call(args, cwd=Common.ensurePath(self.buildDir))
+        print2(' '.join(args))
+        with ClientExecutionLock():
+            subprocess.check_call(args, cwd=ensurePath(self.buildDir))
 
     def build(self):
         args = ['make', '-j']
-        Common.print2(' '.join(args))
-        with Common.ClientExecutionLock():
+        print2(' '.join(args))
+        with ClientExecutionLock():
             subprocess.check_call(args, cwd=self.buildDir)
 
     def builtPath(self, path, *paths):
@@ -59,7 +59,7 @@ class CMakeEnvironment:
 def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cCompiler: str):
     sourcedir = SOURCE_PATH
     
-    builddir = Common.ensurePath(builddir)
+    builddir = ensurePath(builddir)
 
     options = {'CMAKE_BUILD_TYPE': globalParameters["CMakeBuildType"],
                'TENSILE_USE_MSGPACK': 'ON',

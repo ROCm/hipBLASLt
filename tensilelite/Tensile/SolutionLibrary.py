@@ -314,7 +314,7 @@ class MasterSolutionLibrary:
             if devicePart == "fallback":
                 pred = Hardware.HardwarePredicate("TruePred")
             else:
-                pred = Hardware.HardwarePredicate.FromHardware(Common.gfxArch(devicePart), cuCount)
+                pred = Hardware.HardwarePredicate.FromHardware(Common.getGfxArch(devicePart), cuCount)
 
             newLib.rows.append({"predicate": pred, "library": library})
 
