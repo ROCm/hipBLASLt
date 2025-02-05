@@ -1228,7 +1228,7 @@ defaultBenchmarkCommonParameters = [
     {"WavefrontSize":             [ 64 ]},
     {"MatrixInstruction":         [ [] ] },
     {"1LDSBuffer":                [ 0 ] },
-    {"DepthU":                    [ 16 ] },
+    {"DepthU":                    [ -1 ] },
     {"NonTemporalE":              [ 0 ] },
     {"NonTemporalD":              [ 0 ] },
     {"NonTemporalC":              [ 0 ] },
