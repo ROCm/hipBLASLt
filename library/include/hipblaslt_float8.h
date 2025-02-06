@@ -30,6 +30,7 @@
 #if __cplusplus < 201103L || (!defined(__HCC__) && !defined(__HIPCC__))
 /*! \brief Struct to represent a 8 bit floating-point number. */
 
+#if !HIPBLASLT_USE_F8_FNUZ_BC
 typedef struct
 {
     uint8_t __x;
@@ -38,17 +39,21 @@ typedef struct
 typedef struct
 {
     uint8_t __x;
+} hipblaslt_bf8_fnuz;
+
+#endif
+
+#if !HIPBLASLT_USE_F8_OCP_BC
+typedef struct
+{
+    uint8_t __x;
 } hipblaslt_f8;
 
 typedef struct
 {
     uint8_t __x;
-} hipblaslt_bf8_fnuz;
-
-typedef struct
-{
-    uint8_t __x;
 } hipblaslt_bf8;
+#endif
 
 #else // __cplusplus < 201103L || (!defined(__HCC__) && !defined(__HIPCC__))
 

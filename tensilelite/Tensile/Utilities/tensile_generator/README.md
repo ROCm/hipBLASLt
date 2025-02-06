@@ -61,16 +61,15 @@ To use the `tensile_config_generator.py` script, follow these steps:
 
 5. Merge tune results:
 
-   MI308:
-
-   For cpx, use the gfx942_20cu folder; for spx, use the gfx942_80cu folder.
-   ```
-   python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aquavanjaram/{gfx942_20cu|gfx942_80cu}/{Equality|GridBased}/ <tune result directory>/3_LibraryLogic/ library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aquavanjaram/{gfx942_20cu|gfx942_80cu}/{Equality|GridBased}/
-   ```
-   MI210:
+   gfx942:
 
    ```
-   python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|GridBased}/ <tune result directory>/3_LibraryLogic/ library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/104CU/{Equality|GridBased}/
+   python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aquavanjaram/gfx942_{cu count}/{Equality|GridBased}/ <tune result directory>/3_LibraryLogic/ library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aquavanjaram/gfx942_{cu count}/{Equality|GridBased}/
+   ```
+   gfx90a:
+
+   ```
+   python3 ./tensilelite/Tensile/Utilities/merge.py --no_eff library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/{cu count}/{Equality|GridBased}/ <tune result directory>/3_LibraryLogic/ library/src/amd_detail/rocblaslt/src/Tensile/Logic/asm_full/aldebaran/{cu count}/{Equality|GridBased}/
    ```
 
 6. Rebuild hipBLASLt with the merged results:

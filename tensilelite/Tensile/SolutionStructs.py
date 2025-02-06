@@ -3708,7 +3708,8 @@ class Solution(collections.abc.Mapping):
       if not state["EnableMatrixInstruction"]:
         reject(state, "storeRemap only support MatrixInstruction kernel")
         return
-      if (state["GlobalSplitU"] > 1) and (state["_GlobalAccumulation"] != 'MultipleBuffer' or state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
+      if ((state["GlobalSplitU"] > 1) and (state["_GlobalAccumulation"] != 'MultipleBuffer' or state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel')) or \
+        (state["GlobalSplitU"] == 1 and state["_GlobalAccumulation"] == 'SingleBuffer'):
         reject(state, "storeRemap doesn't support GlobalSplitU yet, except GSU algorithm 2")
         return
       if packedC0 or packedC1:

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,8 @@ import os
 import subprocess
 import math
 import numpy as np
+import concurrent.futures
+
 
 # Paths to the input and output files
 parser = argparse.ArgumentParser(description="""Generate Tensile config file""")
@@ -88,26 +90,36 @@ LibraryType = "GridBased"
 
 CU_RE = r"Compute Unit:(?P<COMPUTE_UNIT>[\w ]+)"
 
-res = subprocess.run("/opt/rocm/llvm/bin/offload-arch", stdout=subprocess.PIPE)
-ArchitectureName = res.stdout.decode("utf-8").strip()
-res = subprocess.run("rocminfo | grep Compute", stdout=subprocess.PIPE, shell=True, env={"ROCR_VISIBLE_DEVICES":"0"})
-match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
 NUM_STAGES = args.num_stages
 DIV_MI = 3 # 33.3%
 MIN_MI = 5 # min 5 solutions
 NONTEMPORALRATIO = 8
 CU = 0
+
+OFFLOAD_ARCH = "/opt/rocm/llvm/bin/offload-arch"
+NUM_INST = "/sys/class/drm/card1/device/compute_partition_config/xcc/num_inst"
+
+ArchitectureName = None
+if os.path.exists(OFFLOAD_ARCH):
+    res = subprocess.run(OFFLOAD_ARCH, stdout=subprocess.PIPE)
+    ArchitectureName = res.stdout.decode("utf-8").strip()
+else:
+    raise FileNotFoundError(f"{OFFLOAD_ARCH} not found, please specific ArchitectureName in the script.")
+
+res = subprocess.run("rocminfo | grep Compute", stdout=subprocess.PIPE, shell=True, env={"ROCR_VISIBLE_DEVICES":"0"})
+match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
 if match:
     CU = int(match.group('COMPUTE_UNIT').strip())
 else:
     raise RuntimeError("Failed to get compute unit from rocminfo")
 
+XCC = None
 if ArchitectureName == 'gfx942':
-    res = subprocess.run(["cat", "/sys/class/drm/card1/device/current_compute_partition"], stdout=subprocess.PIPE)
-    if res.stdout.decode("utf-8").strip() == "CPX":
-        XCC = 1
+    if os.path.exists(OFFLOAD_ARCH):
+        res = subprocess.run(["cat", NUM_INST], stdout=subprocess.PIPE)
+        XCC = int(res.stdout.decode("utf-8").strip())
     else:
-        XCC = 4
+        raise FileNotFoundError(f"{NUM_INST} not found, please specific XCC in the script.")
     DeviceNames = ["Device 0049", "Device 0050"]
     ScheduleName = "aquavanjaram"
 elif ArchitectureName == 'gfx90a':
@@ -122,15 +134,15 @@ if args.full_mfma:
     fp32_instructions = [[32,32,1,2], [32,32,2,1], [16,16,1,4], [16,16,4,1], [4,4,1,16]]
     fp8_instructions = [[32,32,16,1], [16,16,32,1]]
 else:
-    fp16_instructions = [[16,16,16,1]]
-    bf16_instructions = [[16,16,16,1],[32,32,8,1]]
-    tf32_instructions = [[16,16,8,1]]
-    fp32_instructions = [[16,16,4,1]]
+    fp16_instructions = [[16,16,16,1], [32,32,8,1]]
+    bf16_instructions = [[16,16,16,1], [32,32,8,1]]
+    tf32_instructions = [[16,16,8,1], [32,32,4,1]]
+    fp32_instructions = [[16,16,4,1], [32,32,2,1]]
     fp8_instructions = [[16,16,32,1]]
 
 
 HIPBLASLT_BENCH_BASE = (
-    r"(?P<CMD>\w+) --api_method c "
+    r"hipblaslt-bench --api_method (?P<API_METHOD>\w+) "
     r"-m (?P<M>[\d ]+)"
     r"-n (?P<N>[\d ]+)"
     r"-k (?P<K>[\d ]+)"
@@ -354,11 +366,11 @@ def split_gemms_by_gpus(unique_gemms, gpus):
             unique_gemms_subgroups[i%gpus] = [(k, v)]
     return unique_gemms_subgroups
 
-def calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters):
-    m_avg = m_sum / len(unique_gemms_subgroup)
-    n_avg = n_sum / len(unique_gemms_subgroup)
-    batch_avg = batch_sum / len(unique_gemms_subgroup)
-    k_avg = k_sum / len(unique_gemms_subgroup)
+def calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, samples_num, iters):
+    m_avg = m_sum / samples_num
+    n_avg = n_sum / samples_num
+    batch_avg = batch_sum / samples_num
+    k_avg = k_sum / samples_num
 
     return (ENQUEUES_PER_SYNC + iters) * m_avg * n_avg * batch_avg * k_avg / 2
 
@@ -367,8 +379,8 @@ def calculate_gsu(matmul_instruction, size):
     mt1 = matmul_instruction[1] * matmul_instruction[6] * matmul_instruction[8]
     return max(1, CU // (math.ceil(size[0] / mt0) * math.ceil(size[1] / mt1)))
 
-def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, iters, groups, gsu_group):
-    MinFlopsPerSync = calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, iters)
+def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, samples_num, iters, groups, gsu_group, matmul_instructions):
+    MinFlopsPerSync = calculate_min_flops(m_sum, n_sum, batch_sum, k_sum, samples_num, iters)
     # Read the YAML file
     with open(yaml_file, 'r') as f:
         data = yaml.safe_load(f)
@@ -440,8 +452,10 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, it
     # Write the updated YAML file
     yaml_file = os.path.basename(yaml_file)
     slices = yaml_file.split('.')
-    with open(slices[0]+'.'+str(gpu_idx)+'.'+slices[1], 'w') as f:
+    fname = slices[0]+'.'+str(gpu_idx)+'.'+slices[1]
+    with open(fname, 'w') as f:
         yaml.dump(data, f, default_flow_style=None)
+    print(f"Dumped yaml to {fname}")
 
 
 if args.hipblaslt_log and args.gridbase_config is None:
@@ -449,16 +463,25 @@ if args.hipblaslt_log and args.gridbase_config is None:
     unique_gemms = {}
     # Read problem sizes from the input file
     with open(args.hipblaslt_log, 'r') as f:
-        for line in f:
+        lines = f.readlines()
+        def _extract_gemms(line):
             match = match_pattern(line)
             if match:
                 size = extract_problem_size(match)
                 dtype = extract_dtype(match)
                 if dtype is None:
                     print(f"Can't find dtype for {line}, please contact hipblaslt expert")
-                    continue
+                    return None
                 size_str = json.dumps(size)
                 dtype_str = json.dumps(dtype)
+                return (size_str, dtype_str)
+            return None
+
+        with concurrent.futures.ProcessPoolExecutor(8) as executor:
+            results = executor.map(_extract_gemms, list(lines))
+        for res in results:
+            if res is not None:
+                (size_str, dtype_str) = res
                 if (size_str, dtype_str) in unique_gemms:
                     unique_gemms[(size_str, dtype_str)] += 1
                 else:
@@ -470,13 +493,14 @@ if args.hipblaslt_log and args.gridbase_config is None:
 
     unique_gemms_subgroups = split_gemms_by_gpus(unique_gemms, args.gpus)
 
-    for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
+    def _process_gemms(item):
+        gpu_idx, unique_gemms_subgroup = item
         gemm_group = {}
         gsu_group = {}
         matmul_instructions = {}
         groups = {}
         if unique_gemms_subgroup is None:
-            continue
+            return None
 
         m_sum = 0
         n_sum = 0
@@ -556,8 +580,9 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 n_sum += original_size[1]
                 batch_sum += original_size[2]
                 k_sum += original_size[3]
+        samples_num = len(unique_gemms_subgroup)
+        return dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, samples_num, args.iters, groups, gsu_group, matmul_instructions)
 
-        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, groups, gsu_group)
 
 elif args.gridbase_config and args.hipblaslt_log is None:
     LibraryType = "GridBased"
@@ -588,7 +613,8 @@ elif args.gridbase_config and args.hipblaslt_log is None:
 
     unique_gemms_subgroups = split_gemms_by_gpus(unique_gemms, args.gpus)
 
-    for gpu_idx, unique_gemms_subgroup in enumerate(unique_gemms_subgroups):
+    def _process_gemms(item):
+        gpu_idx, unique_gemms_subgroup = item
         gemm_group = {}
         matmul_instructions = {}
         gsu_group = {}
@@ -641,5 +667,8 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                 n_sum += original_size[1]
                 batch_sum += original_size[2]
                 k_sum += original_size[3]
+        samples_num = len(unique_gemms_subgroup)
+        return dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, samples_num, args.iters, {}, gsu_group, matmul_instructions)
 
-        dump_yaml(gpu_idx, gemm_group, args.tensile_config, m_sum, n_sum, batch_sum, k_sum, args.iters, {}, gsu_group)
+with concurrent.futures.ProcessPoolExecutor(args.gpus) as executor:
+    results = executor.map(_process_gemms, list(enumerate(unique_gemms_subgroups)))

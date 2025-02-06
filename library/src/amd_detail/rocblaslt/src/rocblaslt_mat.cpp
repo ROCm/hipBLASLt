@@ -63,6 +63,8 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
+    bool                   swizzleA = matA->order == HIPBLASLT_ORDER_COL16_4R8;
+    bool                   swizzleB = matB->order == HIPBLASLT_ORDER_COL16_4R8;
     rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
@@ -96,7 +98,9 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                                            scaleAlphaVec,
                                                            E,
                                                            gradient,
-                                                           compute_type);
+                                                           compute_type,
+                                                           swizzleA,
+                                                           swizzleB);
     if(isValid != rocblaslt_status_continue)
         return isValid;
 
@@ -201,7 +205,9 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         workspace,
                                         workspaceSizeInBytes,
                                         stream,
-                                        handle->Synchronizer};
+                                        handle->Synchronizer,
+                                        swizzleA,
+                                        swizzleB};
 
     return runContractionProblem(handle, algo, problem, gemmData);
 }
@@ -229,6 +235,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
+    bool                   swizzleA = matA->order == HIPBLASLT_ORDER_COL16_4R8;
+    bool                   swizzleB = matB->order == HIPBLASLT_ORDER_COL16_4R8;
     rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
@@ -262,7 +270,9 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                                            scaleAlphaVec,
                                                            E,
                                                            gradient,
-                                                           compute_type);
+                                                           compute_type,
+                                                           swizzleA,
+                                                           swizzleB);
     if(isValid != rocblaslt_status_continue)
         return isValid;
 
@@ -347,7 +357,9 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                         nullptr,
                                         0,
                                         0,
-                                        handle->Synchronizer};
+                                        handle->Synchronizer,
+                                        swizzleA,
+                                        swizzleB};
     return gemmCreate(problem, gemmData, gemmCount);
 }
 
@@ -573,6 +585,8 @@ rocblaslt_status
     std::vector<RocblasltContractionProblem> problems;
     for(int i = 0; i < m_vec.size(); i++)
     {
+        bool swizzleA = matA[i]->order == HIPBLASLT_ORDER_COL16_4R8;
+        bool swizzleB = matB[i]->order == HIPBLASLT_ORDER_COL16_4R8;
         problems.push_back(RocblasltContractionProblem{opA,
                                                        opB,
                                                        m_vec[i],
@@ -624,7 +638,9 @@ rocblaslt_status
                                                        nullptr,
                                                        0,
                                                        0,
-                                                       handle->Synchronizer});
+                                                       handle->Synchronizer,
+                                                       swizzleA,
+                                                       swizzleB});
     }
     return groupedGemmCreate(problems, gemmData, gemmCount);
 }
@@ -964,7 +980,10 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
                                             nullptr,
                                             0,
                                             0,
-                                            handle->Synchronizer};
+                                            handle->Synchronizer,
+                                            /*TODO: support C++ API */
+                                            false,
+                                            false};
         return gemmCreate(problem, gemmData, gemmCount);
     }
     else
@@ -1020,7 +1039,10 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
                                             nullptr,
                                             0,
                                             0,
-                                            handle->Synchronizer};
+                                            handle->Synchronizer,
+                                            /*TODO: support C++ API */
+                                            false,
+                                            false};
         return gemmCreate(problem, gemmData, gemmCount);
     }
 }
@@ -1385,7 +1407,10 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
                                                            nullptr,
                                                            0,
                                                            0,
-                                                           handle->Synchronizer});
+                                                           handle->Synchronizer,
+                                                           /*TODO: support grouped gemm */
+                                                           false,
+                                                           false});
         }
         else
         {
@@ -1441,7 +1466,10 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
                                             nullptr,
                                             0,
                                             0,
-                                            handle->Synchronizer});
+                                            handle->Synchronizer,
+                                            /*TODO: support grouped gemm */
+                                            false,
+                                            false});
         }
     }
     return groupedGemmCreate(problems, gemmData, gemmCount);

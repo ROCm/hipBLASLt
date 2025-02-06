@@ -452,6 +452,7 @@ class LogicAnalyzer:
 
     # iterate over rows
     rowIdx = 0
+    deviceMaxFreq = None
     for row in csvFile:
       rowIdx+=1
       if rowIdx == 1:
@@ -473,14 +474,7 @@ class LogicAnalyzer:
           except ValueError as e:
             csvHasWinnerColumn = False
             print1(f"Error: Could not find WinnerGFlops or WinnerIdx column in CSV file: {e}")
-
-        # get the column index of Frequency(MHz)
-        try:
-          columnOfFreqIdx = row.index(" DeviceMaxFreq")
-        except ValueError as e:
-          columnOfFreqIdx = None
-          print1(f"Error: Could not find DeviceMaxFreq column in the CSV file: {e}")
-
+          
         # get the length of each row, and derive the first column of the solution instead of using wrong "solutionStartIdx = totalSizeIdx + 1"
         rowLength = len(row)
         solutionStartIdx = rowLength - numSolutions
@@ -517,21 +511,27 @@ class LogicAnalyzer:
               solutionIdx += 1
 
           if globalParameters["UseEffLike"]:
-            try:
-              frequency = float(row[columnOfFreqIdx])
-              if frequency != 0 and not math.isnan(frequency):
-                # calculate effLike
-                # effLike = winnerGFlops / Frequency(MHz)
-                performance_metric = round(float(winnerGFlops) / frequency, 2)
-              else:
-                handle_frequency_issue("Warning: Frequency is NaN or 0.")
-                performance_metric = float(winnerGFlops)
-            except(ValueError, TypeError):
-              handle_frequency_issue("Warning: Error when reading frequency.")
-              performance_metric = float(winnerGFlops)
-          else:
-            performance_metric = float(winnerGFlops)
+            if not deviceMaxFreq:
+              deviceMaxFreq = read_max_freq()
 
+            # calculate effLike
+            # effLike = winnerGFlops / Frequency(MHz)
+            try:
+              if not deviceMaxFreq or deviceMaxFreq <= 0 or math.isnan(deviceMaxFreq):
+                performance_metric = round(float(winnerGFlops))
+                print("Error when retrieving device frequency, fall back to winnerGFlops.")
+              else:
+                performance_metric = round(float(winnerGFlops) / deviceMaxFreq, 2)
+            except:
+              print1("Error: Could not convert winnerGFlops to float.")
+              performance_metric = float('nan')
+          else:
+            try:
+              performance_metric = float(winnerGFlops)
+            except:
+              print1("Error: Could not convert winnerGFlops to float.")
+              performance_metric = float('nan')
+            
           if winnerIdx != -1:
             if problemSize in self.exactWinners:
               if winnerGFlops > self.exactWinners[problemSize][1]:
@@ -1524,23 +1524,41 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
   print1("%s\n# Finish Analysing data to %s in %.3fs\n%s" % (HR, os.path.split(libraryLogicPath)[0], elapsedTime, HR) )
 
 
+##############################################################################
+# Error handling for frequency issues 
+##############################################################################
 def handle_frequency_issue(message):
     print1(message)
-    print1("  - Type 'yes(y)' to abort the operation.")
-    print1("  - Type 'no(n)' to continue and use GFlops as the efficiency metric.")
+    print1("Input the frequency manually to proceed.")
 
     while True:
-        user_choice = input("Do you want to abort (yes(y)/no(n))? ").strip().lower()
-        if user_choice in ['yes', 'no', 'y', 'n']:
-            break
-        else:
-            print1("Invalid input. Please type 'yes(y)' or 'no(n)'.")
-    if user_choice == "yes" or user_choice == 'y':
-        print1("Operation aborted by the user.")
-        raise Exception("User chose to abort due to frequency issue.")
-    else:
-        globalParameters["UseEffLike"] = False
-        print1("Proceeding with GFlops as the efficiency metric.")
+      frequency_input = input("Frequency: ").strip()
+      if frequency_input == "":
+          print1("Frequency cannot be empty")
+          continue
+      try:
+          frequency = float(frequency_input)
+          if frequency > 0:
+            return frequency
+          else:
+            print1("Frequency cannot be negative or zero.")
+      except ValueError:
+          print1("Invalid frequency.Please input a valid frequency.")
+
+def read_max_freq():
+    try:
+        max_freq = os.environ.get("MAX_FREQ")
+        if max_freq is None or max_freq.strip() == "":
+          raise ValueError("Environment variable 'MAX_FREQ' is not set or is empty.")
+
+        return float(max_freq)
+    except ValueError as ve:
+        print(f"Error: {ve}")  # Handle invalid or missing value
+        return None
+    except Exception as e:
+        print(f"Unexpected error: {e}")  # Handle any other unexpected errors
+        return None
+
 ################################################################################
 ################################################################################
 ###
