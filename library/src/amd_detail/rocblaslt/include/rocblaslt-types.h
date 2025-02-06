@@ -196,14 +196,15 @@ typedef enum rocblaslt_pointer_mode_
  */
 typedef enum rocblaslt_layer_mode
 {
-    rocblaslt_layer_mode_none        = 0, /**< layer is not active. */
-    rocblaslt_layer_mode_log_error   = 1, /**< layer is in error mode. */
-    rocblaslt_layer_mode_log_trace   = 2, /**< layer is in trace mode. */
-    rocblaslt_layer_mode_log_hints   = 4, /**< layer is in hints mode. */
-    rocblaslt_layer_mode_log_info    = 8, /**< layer is in info mode. */
-    rocblaslt_layer_mode_log_api     = 16, /**< layer is in api mode. */
-    rocblaslt_layer_mode_log_bench   = 32, /**< layer is in bench mode. */
-    rocblaslt_layer_mode_log_profile = 64, /**< layer is in profile mode. */
+    rocblaslt_layer_mode_none                 = 0, /**< layer is not active. */
+    rocblaslt_layer_mode_log_error            = 1, /**< layer is in error mode. */
+    rocblaslt_layer_mode_log_trace            = 2, /**< layer is in trace mode. */
+    rocblaslt_layer_mode_log_hints            = 4, /**< layer is in hints mode. */
+    rocblaslt_layer_mode_log_info             = 8, /**< layer is in info mode. */
+    rocblaslt_layer_mode_log_api              = 16, /**< layer is in api mode. */
+    rocblaslt_layer_mode_log_bench            = 32, /**< layer is in bench mode. */
+    rocblaslt_layer_mode_log_profile          = 64, /**< layer is in profile mode. */
+    rocblaslt_layer_mode_log_extended_profile = 128, /**< layer is in Extended profile mode. */
 } rocblaslt_layer_mode;
 
 /*! \ingroup types_module
@@ -274,11 +275,11 @@ typedef enum rocblaslt_compute_type_
     = 102, /**< 32-bit input can use fp8 for A and bf8 for B compute */
     rocblaslt_compute_f32_fast_bf8f8_fnuz
     = 103, /**< 32-bit input can use bf8 for A and fp8 for B compute */
-    rocblaslt_compute_f32_fast_f8_ocp  = 104, /**< 32-bit input can use fp8 compute */
-    rocblaslt_compute_f32_fast_bf8_ocp = 105, /**< 32-bit input can use bf8 compute */
-    rocblaslt_compute_f32_fast_f8bf8_ocp
+    rocblaslt_compute_f32_fast_f8  = 104, /**< 32-bit input can use fp8 compute */
+    rocblaslt_compute_f32_fast_bf8 = 105, /**< 32-bit input can use bf8 compute */
+    rocblaslt_compute_f32_fast_f8bf8
     = 106, /**< 32-bit input can use fp8 for A and bf8 for B compute */
-    rocblaslt_compute_f32_fast_bf8f8_ocp
+    rocblaslt_compute_f32_fast_bf8f8
     = 107, /**< 32-bit input can use bf8 for A and fp8 for B compute */
 } rocblaslt_compute_type;
 

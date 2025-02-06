@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 from ..Component import Signature
 from ..Common import globalParameters
 from ..Utils import DataDirection
-from ..TensileInstructions import SignatureBase, getCOVFromParam
+from ..TensileInstructions import SignatureBase
 from ..TensileInstructions import SignatureValueKind as SVK
 from ..Activation import ActivationType
 
@@ -66,13 +66,13 @@ class UserArgumentsInfo:
 
 def getSrcValueType(kernel, isTypeA):
     # special cases for F8 datatypes
-    if kernel["ProblemType"]["DataType"].isFloat8():
+    if kernel["ProblemType"]["DataType"].isAnyFloat8():
         srcValueType = "FP8"
-    elif kernel["ProblemType"]["DataType"].isBFloat8():
+    elif kernel["ProblemType"]["DataType"].isAnyBFloat8():
         srcValueType = "BF8"
-    elif kernel["ProblemType"]["DataType"].isFloat8BFloat8():
+    elif kernel["ProblemType"]["DataType"].isAnyFloat8BFloat8():
         srcValueType = "FP8" if isTypeA else "BF8"
-    elif kernel["ProblemType"]["DataType"].isBFloat8Float8():
+    elif kernel["ProblemType"]["DataType"].isAnyBFloat8Float8():
         srcValueType = "BF8" if isTypeA else "FP8"
     else:
         if isTypeA:
@@ -85,9 +85,9 @@ def getSrcValueType(kernel, isTypeA):
 
 def getDstValueType(kernel):
     # special cases for F8 datatypes
-    if kernel["ProblemType"]["DataType"].isFloat8():
+    if kernel["ProblemType"]["DataType"].isAnyFloat8():
         dstValueType = "FP8"
-    elif kernel["ProblemType"]["DataType"].isBFloat8():
+    elif kernel["ProblemType"]["DataType"].isAnyBFloat8():
         dstValueType = "BF8"
     else:
         dstValueType = kernel["ProblemType"]["DataType"].toNameAbbrev().upper()
@@ -128,7 +128,7 @@ class SignatureDefault(Signature):
         sgprWgZ = 1 if kernel["ProblemType"]["NumIndicesC"] > 2 else 0
         signature = SignatureBase(kernelName=writer.states.kernelName,
                                     kernArgsVersion=kernel["InternalSupportParams"]["KernArgsVersion"],
-                                    codeObjectVersion=getCOVFromParam(kernel["CodeObjectVersion"]),
+                                    codeObjectVersion=kernel["CodeObjectVersion"],
                                     groupSegmentSize=group_segment_size,
                                     sgprWorkGroup=[1, 1, sgprWgZ],
                                     vgprWorkItem=0,

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,12 +31,16 @@ import sys
 import argparse
 from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR
+from .Toolchain.Assembly import AssemblyToolchain
+from .Toolchain.Source import SourceToolchain
+from .Toolchain.Validators import validateToolchain, ToolchainDefaults
 from . import BenchmarkProblems
 from . import ClientWriter
 from . import LibraryIO
 from . import LibraryLogic
 from . import __version__
 from datetime import datetime
+from pathlib import Path
 
 
 ###############################################################################
@@ -47,20 +51,43 @@ from datetime import datetime
 #   LibraryLogic.main() to analyse final benchmark data and produce logic/yaml
 #   ClientWriter.main() to create client which calls library based on above yaml
 ################################################################################
-def executeStepsInConfig(config):
+def executeStepsInConfig(
+        config: dict,
+        outputPath: Path,
+        asmToolchain: AssemblyToolchain,
+        srcToolchain: SourceToolchain,
+        cCompiler: str
+   ):
+    """Conducts the steps in the provided ``config`` according to the Tensile workflow.
 
+    The top-level steps are:
+    1. BenchmarkProblems: Runs the benchmarking steps and generates the directories
+        build_tmp, 1_BenchmarkProblems, 2_BenchmarkData
+    2. LibraryLogic: Analyzes the benchmark data, makes logic files, and generates
+        the directory 3_LibraryLogic
+    3. LibraryClient: Makes the client callable libraries and generates the
+        directory 4_LibraryClient
+
+    Args:
+        config (dict): The configuration dictionary.
+        outputPath (Path): The path to the top-level build directory.
+        asmToolchain (AssemblyToolchain): The toolchain for making assembly kernels.
+        srcToolchain (SourceToolchain): The toolchain for making source kernels.
+        cCompiler (str): The C compiler to use.
+    """
+
+    buildTmpPath = outputPath / "build_tmp"
     ##############################################################################
     # Benchmark Problems
     ##############################################################################
     if "BenchmarkProblems" in config:
-        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"])
+        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, cCompiler, outputPath, buildTmpPath)
         print1("")
 
     ##############################################################################
     # Library Logic
     ##############################################################################
-    libraryLogicDataPath = os.path.join(globalParameters["WorkingPath"], \
-      globalParameters["LibraryLogicPath"])
+    libraryLogicDataPath = os.path.join(outputPath, globalParameters["LibraryLogicPath"])
     if "LibraryLogic" in config:
         if os.path.exists(libraryLogicDataPath):
             libraryLogicFiles = os.listdir(libraryLogicDataPath)
@@ -71,7 +98,7 @@ def executeStepsInConfig(config):
                 libraryLogicConfig = config["LibraryLogic"]
             else:
                 libraryLogicConfig = {}
-            LibraryLogic.main(libraryLogicConfig)
+            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler, outputPath)
             print1("")
         else:
             print1("# LibraryLogic already done.")
@@ -85,7 +112,7 @@ def executeStepsInConfig(config):
             libraryClientConfig = config["LibraryClient"]
         else:
             libraryClientConfig = {}
-        ClientWriter.main(libraryClientConfig)
+        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler, outputPath)
         print1("")
 
 
@@ -111,17 +138,21 @@ def addCommonArguments(argParser):
     argParser.add_argument("--runtime-language", dest="RuntimeLanguage", \
         choices=["HIP", "OCL"], help="override which runtime language to use")
     argParser.add_argument("--code-object-version", dest="CodeObjectVersion", \
-        choices=["default", "V4", "V5"], help="HSA code-object version")
+        choices=["4", "5"], action="store", default="4", help="HSA code-object version")
     argParser.add_argument("-v", "--verbose", action="store_true", \
         help="set PrintLevel=2")
     argParser.add_argument("--debug", dest="debug", action="store_true", \
         help="set PrintLevel=2 and CMakeBuildType=Debug")
     argParser.add_argument("--short-names", dest="shortNames", action="store_true", \
         help="use serial kernel and solution names")
-    argParser.add_argument("--no-merge-files", dest="noMergeFiles", action="store_true", \
-        help="kernels and solutions written to individual files")
-    argParser.add_argument("--cxx-compiler", dest="CxxCompiler", choices=["hipcc", 'amdclang++'], \
-        action="store", default="amdclang++", help="select which compiler to use")
+    argParser.add_argument("--cxx-compiler", dest="CxxCompiler", \
+        action="store", default=ToolchainDefaults.CXX_COMPILER, help="select which C++/HIP compiler to use")
+    argParser.add_argument("--c-compiler", dest="CCompiler", \
+        action="store", default=ToolchainDefaults.C_COMPILER, help="select which C compiler to use")
+    argParser.add_argument("--assembler", dest="Assembler", \
+        action="store", default=ToolchainDefaults.ASSEMBLER, help="select which assembler to use")
+    argParser.add_argument("--offload-bundler", dest="OffloadBundler", \
+        action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER, help="select which offload bundler to use")
     argParser.add_argument("--logic-format", dest="LogicFormat", choices=["yaml", "json"], \
         action="store", default="yaml", help="select which logic format to use")
     argParser.add_argument("--library-format", dest="LibraryFormat", choices=["yaml", "msgpack"], \
@@ -160,11 +191,6 @@ def argUpdatedGlobalParameters(args):
         rv["CMakeBuildType"] = "Debug"
     if args.shortNames:
         rv["ShortNames"] = True
-    if args.noMergeFiles:
-        rv["MergeFiles"] = False
-    if args.CxxCompiler:
-        rv['CxxCompiler'] = args.CxxCompiler
-    print1("")
     if args.client_build_path:
         rv["ClientBuildPath"] = args.client_build_path
     if args.client_lock:
@@ -189,18 +215,15 @@ def argUpdatedGlobalParameters(args):
 def Tensile(userArgs):
     global globalParameters
 
-    # 1st half of splash
     print1("")
     print1(HR)
     print1("#")
     print1("#  Tensile v%s" % (__version__))
 
-    # setup argument parser
-    # yapf: disable
     argParser = argparse.ArgumentParser()
-    argParser.add_argument("config_file", type=os.path.realpath, nargs="+",
+    argParser.add_argument("ConfigFile", type=os.path.realpath, nargs="+",
             help="Benchmark config.yaml file")
-    argParser.add_argument("output_path", \
+    argParser.add_argument("OutputPath", \
             help="Path to conduct benchmark and write output files")
     argParser.add_argument("--version", action="version", \
             version="%(prog)s {version}".format(version=__version__))
@@ -209,14 +232,15 @@ def Tensile(userArgs):
             "and optional second file is size list")
     argParser.add_argument("--use-cache", dest="useCache", action="store_true",
             help="Ignore cache; redo parameter forking and solution generation")
-    # yapf: enable
 
     addCommonArguments(argParser)
     args = argParser.parse_args(userArgs)
 
-    configPaths = args.config_file
+    configPaths = args.ConfigFile
     altFormat = args.AlternateFormat
     useCache = args.useCache
+    outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
+    print1(f"#  OutputPath: {str(outputPath)}")
 
     if altFormat and len(configPaths) > 2:
         printExit("Only 1 or 2 config_files are accepted for the alternate config format: "
@@ -238,9 +262,6 @@ def Tensile(userArgs):
     print1("# Restoring default globalParameters")
     restoreDefaultGlobalParameters()
 
-    # CxxCompiler and LibraryFormat needs to be updated before assignGlobalParameters.
-    if args.CxxCompiler:
-        globalParameters['CxxCompiler'] = args.CxxCompiler
     if args.LogicFormat:
         globalParameters['LogicFormat'] = args.LogicFormat
     if args.LibraryFormat:
@@ -275,14 +296,12 @@ def Tensile(userArgs):
     config["UseCache"] = useCache
     globalParameters["ConfigPath"] = configPaths
 
-    # assign global parameters
-    if "GlobalParameters" in config:
-        assignGlobalParameters(config["GlobalParameters"])
-    else:
-        assignGlobalParameters({})
+    cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
+    assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
 
-    globalParameters["OutputPath"] = ensurePath(os.path.abspath(args.output_path))
-    globalParameters["WorkingPath"] = globalParameters["OutputPath"]
+
+    asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
+    srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
     overrideParameters = argUpdatedGlobalParameters(args)
 
@@ -299,14 +318,13 @@ def Tensile(userArgs):
         profiler = cProfile.Profile()
         profiler.enable()
 
-    # Execute Steps in the config script
-    executeStepsInConfig(config)
+    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, cCompiler)
 
     if profiler:
         profiler.disable()
-        filename = globalParameters["OutputPath"] + "/tensile.stats"
+        filename = outputPath / "tensile.stats"
         profiler.dump_stats(filename)
-        filename = globalParameters["OutputPath"] + "/tensile.prof"
+        filename = outputPath / "tensile.prof"
         profiler.dump_stats(filename)
 
 def TensileConfigPath(*args):

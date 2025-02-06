@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -962,6 +962,12 @@ void testing_matmul(const Arguments& arg)
     Arguments   arg_revised    = arg;
     arg_revised.bias_type      = real_bias_type;
 
+    // Set the values of flush, rotating size, cold_iters and hot_iters only for internal use
+    hipblasltSetFlushValue(arg.flush);
+    hipblasltSetRotatingBufferSizeValue(arg.rotating);
+    hipblasltSetColdIterationsValue(arg.cold_iters);
+    hipblasltSetHotIterationsValue(arg.iters);
+
     // for all f8/bf8 cases including mix mode
     if((realDataTypeSize(tiA) == 1 || realDataTypeSize(tiB) == 1) && tc != HIP_R_32I)
     {
@@ -1047,7 +1053,7 @@ void testing_matmul_with_bias(const Arguments& arg,
     hipblasOperation_t transA(char_to_hipblas_operation(arg.transA));
     hipblasOperation_t transB(char_to_hipblas_operation(arg.transB));
 
-    hipDataType Talpha = (Tc == HIP_R_16F ? HIP_R_32F : Tc);
+    hipDataType Talpha = Tc;
 
     bool    do_grouped_gemm = arg.grouped_gemm > 0;
     int32_t gemm_count      = std::max(1, arg.grouped_gemm);
@@ -1190,7 +1196,7 @@ void testing_matmul_with_bias(const Arguments& arg,
         CHECK_HIPBLASLT_ERROR(
             hipblasLtMatrixLayoutCreate(&(matC[i]), arg.c_type, M[i], N[i], ldc[i]));
         CHECK_HIPBLASLT_ERROR(
-            hipblasLtMatrixLayoutCreate(&(matD[i]), arg.d_type, M[i], N[i], ldc[i]));
+            hipblasLtMatrixLayoutCreate(&(matD[i]), arg.d_type, M[i], N[i], ldd[i]));
 
         if(do_batched[i])
         {
@@ -2889,9 +2895,8 @@ void testing_matmul_with_bias(const Arguments& arg,
             double              hipblaslt_atol  = 1;
             double              hipblaslt_rtol  = 1;
             std::vector<double> tol(gemm_count);
-            if(arg.unit_check
-               && (hipblaslt_get_arch_major() == 11 || hipblaslt_get_arch_major() == 12)
-               && realDataTypeSize(TiA) == 2 && realDataTypeSize(TiB) == 2)
+            if(arg.unit_check && (hipblaslt_get_arch_major() == 11) && realDataTypeSize(TiA) == 2
+               && realDataTypeSize(TiB) == 2)
             {
                 for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
                 {
@@ -3288,9 +3293,8 @@ void testing_matmul_with_bias(const Arguments& arg,
             double              hipblaslt_atol  = 1;
             double              hipblaslt_rtol  = 1;
             std::vector<double> tol(gemm_count);
-            if(arg.unit_check
-               && (hipblaslt_get_arch_major() == 11 || hipblaslt_get_arch_major() == 12)
-               && realDataTypeSize(TiA) == 2 && realDataTypeSize(TiB) == 2)
+            if(arg.unit_check && (hipblaslt_get_arch_major() == 11) && realDataTypeSize(TiA) == 2
+               && realDataTypeSize(TiB) == 2)
             {
                 for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
                 {

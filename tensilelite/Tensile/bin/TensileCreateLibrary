@@ -2,7 +2,7 @@
 
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,17 +27,18 @@
 # This script only gets called by CMake
 
 try:
-    from Tensile.TensileCreateLibrary import TensileCreateLibrary
+    from Tensile import TensileCreateLibrary
 except ImportError:
     import os.path
     import sys
     parentdir = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
+    print(parentdir)
     sys.path.append(parentdir)
 
-    from Tensile.TensileCreateLibrary import TensileCreateLibrary
+    from Tensile import TensileCreateLibrary
 
 ################################################################################
 # Main
 ################################################################################
 if __name__ == "__main__":
-    TensileCreateLibrary()
+    TensileCreateLibrary.run()

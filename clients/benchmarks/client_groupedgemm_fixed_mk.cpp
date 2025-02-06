@@ -402,6 +402,10 @@ static int parse_arguments(int                          argc,
                     {
                         trans_a = HIPBLAS_OP_T;
                     }
+                    else if(strncmp(argv[i], "C", 1) == 0 || strncmp(argv[i], "c", 1) == 0)
+                    {
+                        trans_a = HIPBLAS_OP_C;
+                    }
                     else
                     {
                         std::cerr << "error with " << arg << std::endl;
@@ -419,6 +423,10 @@ static int parse_arguments(int                          argc,
                     else if(strncmp(argv[i], "T", 1) == 0 || strncmp(argv[i], "t", 1) == 0)
                     {
                         trans_b = HIPBLAS_OP_T;
+                    }
+                    else if(strncmp(argv[i], "C", 1) == 0 || strncmp(argv[i], "c", 1) == 0)
+                    {
+                        trans_b = HIPBLAS_OP_C;
                     }
                     else
                     {
@@ -510,7 +518,7 @@ bool bad_argument(hipblasOperation_t trans_a,
         argument_error = true;
         std::cerr << "ERROR: bad argument lda = " << lda << " < " << m << std::endl;
     }
-    if((trans_a == HIPBLAS_OP_T) && (lda < k))
+    if((trans_a != HIPBLAS_OP_N) && (lda < k))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument lda = " << lda << " < " << k << std::endl;
@@ -520,7 +528,7 @@ bool bad_argument(hipblasOperation_t trans_a,
         argument_error = true;
         std::cerr << "ERROR: bad argument ldb = " << ldb << " < " << k << std::endl;
     }
-    if((trans_b == HIPBLAS_OP_T) && (ldb < n))
+    if((trans_b != HIPBLAS_OP_N) && (ldb < n))
     {
         argument_error = true;
         std::cerr << "ERROR: bad argument ldb = " << ldb << " < " << n << std::endl;
@@ -811,8 +819,8 @@ int test_hipblaslt(hipDataType                 in_datatype,
 
     for(int i = 0; i < gemm_count; i++)
     {
-        std::cout << i << ", " << (trans_a == HIPBLAS_OP_N ? "N" : "T")
-                  << (trans_b == HIPBLAS_OP_N ? "N" : "T") << ", " << m[i] << ", " << n[i] << ", "
+        std::cout << i << ", " << hipblas_operation_to_string(trans_a)
+                  << hipblas_operation_to_string(trans_b) << ", " << m[i] << ", " << n[i] << ", "
                   << k[i] << ", " << lda[i] << ", " << ldb[i] << ", " << ldc[i] << ", "
                   << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i] << ", "
                   << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", " << enable_bias[i]

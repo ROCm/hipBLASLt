@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -2067,8 +2067,9 @@ class _VMulPKF32(CommonInstruction):
         self.setInst("v_pk_mul_f32")
 
 class VMulPKF32(CompositeInstruction):
-    def __init__(self, dst, src0, src1, comment="") -> None:
+    def __init__(self, dst, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, [src0, src1], comment)
+        self.vop3 = vop3
         self.setInst("v_pk_mul_f32")
 
     def toList(self) -> list:
@@ -2079,7 +2080,7 @@ class VMulPKF32(CompositeInstruction):
         super().setupInstructions()
         assert isinstance(self.srcs, List)
         if self.asmCaps["v_pk_mul_f32"]:
-            self.instructions = [_VMulPKF32(self.dst, self.srcs[0], self.srcs[1], None, None, self.comment)]
+            self.instructions = [_VMulPKF32(self.dst, self.srcs[0], self.srcs[1], None, self.vop3, self.comment)]
         else:
             dst1, dst2 = self.dst.splitRegContainer()
             srcs1 = []
@@ -2092,10 +2093,25 @@ class VMulPKF32(CompositeInstruction):
                 else:
                     srcs1.append(s)
                     srcs2.append(s)
-            self.instructions = [VMulF32(dst1, srcs1[0], srcs1[1], None, self.comment),
-                                VMulF32(dst2, srcs2[0], srcs2[1], None, self.comment)]
+            if self.vop3 == None:
+                self.instructions = [VMulF32(dst1, srcs1[0], srcs1[1], None, self.comment),
+                                    VMulF32(dst2, srcs2[0], srcs2[1], None, self.comment)]
+            else:
+                if self.vop3.op_sel:
+                    assert len(self.vop3.op_sel) == 3
+                if self.vop3.op_sel_hi:
+                    assert len(self.vop3.op_sel_hi) == 3
+                if self.vop3.byte_sel:
+                    assert "Byte sel not supported"
+                lowDst   = dst2     if self.vop3.op_sel and self.vop3.op_sel[2] == 1 else dst1
+                lowSrc1  = srcs2[0] if self.vop3.op_sel and self.vop3.op_sel[0] == 1 else srcs1[0]
+                lowSrc2  = srcs2[1] if self.vop3.op_sel and self.vop3.op_sel[1] == 1 else srcs1[1]
+                highDst  = dst1     if self.vop3.op_sel_hi and self.vop3.op_sel_hi[2] == 0 else dst2
+                highSrc1 = srcs1[0] if self.vop3.op_sel_hi and self.vop3.op_sel_hi[0] == 0 else srcs2[0]
+                highSrc2 = srcs1[1] if self.vop3.op_sel_hi and self.vop3.op_sel_hi[1] == 0 else srcs2[1]
+                self.instructions = [VMulF32(lowDst, lowSrc1, lowSrc2, None, self.comment),
+                                    VMulF32(highDst, highSrc1, highSrc2, None, self.comment)]
 
-        assert all(inst.vop3 is None for inst in self.instructions), "Currently does not support with vop3 enabled"
 
 class VMulLOU32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:
@@ -2721,7 +2737,7 @@ class VAddLShiftLeftU32(CompositeInstruction):
 
 class _VLShiftLeftAddU32(CommonInstruction):
     def __init__(self, dst, shiftHex, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_U32, dst, [src0, src1, shiftHex], None, vop3, comment)
+        super().__init__(InstType.INST_U32, dst, [src0, shiftHex, src1], None, vop3, comment)
         self.setInst("v_lshl_add_u32")
 
 class VLShiftLeftAddU32(CompositeInstruction):
@@ -2752,6 +2768,35 @@ class VMovB32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
         self.setInst("v_mov_b32")
+
+class _VMovB64(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B64, dst, [src], None, None, comment)
+        self.setInst("v_mov_b64")
+
+class VMovB64(CompositeInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B64, dst, [src], comment)
+        self.setInst("v_mov_b64")
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def setupInstructions(self):
+        super().setupInstructions()
+        assert isinstance(self.srcs, List)
+        if self.asmCaps["v_mov_b64"]:
+            self.instructions = [_VMovB64(self.dst, self.srcs[0], self.comment)]
+        else:
+            dst1, dst2 = self.dst.splitRegContainer()
+            if isinstance(self.srcs[0], RegisterContainer) or isinstance(self.srcs[0], HolderContainer):
+                src1, src2 = self.srcs[0].splitRegContainer()
+            else:
+                srcs1 = (self.srcs[0] and 0xFFFFFFFF)
+                srcs2 = self.srcs[0] >> 32
+            self.instructions = [VMovB32(dst1, src1, self.comment),
+                                 VMovB32(dst2, src2, self.comment)]
 
 # V Bfe
 class VBfeI32(CommonInstruction):

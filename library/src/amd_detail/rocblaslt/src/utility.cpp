@@ -72,9 +72,9 @@ const char* hipDataType_to_string(hipDataType type)
     case HIP_R_64F:
         return "R_64F";
     case HIP_R_8F_E4M3_FNUZ:
-        return "R_8F_E4M3";
+        return "R_8F_E4M3_FNUZ";
     case HIP_R_8F_E5M2_FNUZ:
-        return "R_8F_E5M2";
+        return "R_8F_E5M2_FNUZ";
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
         return "R_8F_E4M3";
@@ -86,6 +86,15 @@ const char* hipDataType_to_string(hipDataType type)
     default:
         return "Invalid";
     }
+}
+
+bool rocblaslt_is_complex_datatype(hipDataType type)
+{
+    return type == HIP_C_32F  || type == HIP_C_64F || type == HIP_C_16F ||
+           type == HIP_C_8I   || type == HIP_C_8U  || type == HIP_C_32I ||
+           type == HIP_C_32U || type == HIP_C_16BF || type == HIP_C_4I  ||
+           type == HIP_C_4U  || type == HIP_C_16I || type == HIP_C_16U  ||
+           type == HIP_C_64I || type == HIP_C_64U;
 }
 
 const char* hipDataType_to_bench_string(hipDataType type)
@@ -203,6 +212,10 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_A_SCALE_POINTER_VEC";
     case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT:
         return "MATMUL_DESC_B_SCALE_POINTER_VEC";
+    case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT:
+        return "MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT";
+    case ROCBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT:
+        return "MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT";
     default:
         return "Invalid";
     }
@@ -217,6 +230,7 @@ const char* hipblasOperation_to_string(hipblasOperation_t op)
     case HIPBLAS_OP_T:
         return "OP_T";
     case HIPBLAS_OP_C:
+        return "OP_C";
     default:
         return "Invalid";
     }
@@ -242,6 +256,8 @@ const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode)
         return "Bench";
     case rocblaslt_layer_mode_log_profile:
         return "Profile";
+    case rocblaslt_layer_mode_log_extended_profile:
+        return "ExtendedProfile";
     default:
         return "Invalid";
     }
@@ -331,3 +347,9 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
                      hipDataType_to_string(matmul_desc->bias_type));
     return std::string(buf.get());
 }
+
+// Define and initialize static member flush and rotatingBufferSize outside the class UserClientArguments
+bool    UserClientArguments::m_flush              = false;
+int32_t UserClientArguments::m_rotatingBufferSize = 0;
+int32_t UserClientArguments::m_coldIterations     = 0;
+int32_t UserClientArguments::m_hotIterations      = 0;

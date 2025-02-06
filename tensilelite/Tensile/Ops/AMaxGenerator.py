@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ from contextlib import contextmanager
 import Tensile.TensileInstructions as ti
 from Tensile.Common import detectGlobalCurrentISA, restoreDefaultGlobalParameters, \
     assignGlobalParameters, getGfxName, gfxArch, globalParameters
+from Tensile.Toolchain.Validators import ToolchainDefaults, validateToolchain
 
 def kernel_header(name: str, gfx_arch: str, vgpr: int, sgpr: int, lds: int):
     vgpr = ((vgpr+7)//8)*8
@@ -272,12 +273,12 @@ class AMaxKernelGenerator:
             self.defineVgpr("OffsetD", self.num_load_count * self.num_load_size, 1)
             self.defineVgpr("OutputD", self.num_load_count * self.num_load_size, self.num_load_size)
             self.defineVgpr("TmpD",    4, 1)
-            if self.scale_type == ti.DataType("F8"):
+            if self.scale_type == ti.DataType("F8") or self.scale_type == ti.DataType("F8N"):
                 self.defineVgpr("Fp8NanInf", 1, 1)
                 self.defineVgpr("Fp8Max",    1, 1)
                 self.defineVgpr("Fp8Min",    1, 1)
                 self.defineVgpr("Fp8Tmp",    1, 1)
-            elif self.scale_type == ti.DataType("B8"):
+            elif self.scale_type == ti.DataType("B8") or self.scale_type == ti.DataType("B8N"):
                 self.defineVgpr("BF8NanInf", 1, 1)
                 self.defineVgpr("BF8Max",    1, 1)
                 self.defineVgpr("BF8Min",    1, 1)
@@ -362,11 +363,15 @@ class AMaxKernelGenerator:
 
         mod.add(ti.VMovB32(ti.vgpr("Output"), 0))
         if self.is_scale:
-            if self.scale_type == ti.DataType("F8"):
+            if self.scale_type == ti.DataType("F8N"):
                 mod.add(ti.VMovB32(ti.vgpr("Fp8NanInf"), "0x207", "Nan and +/- inf"))
                 mod.add(ti.VMovB32(ti.vgpr("Fp8Max"), "0x43700000", "Fp8 Max value 240 as float32"))
                 mod.add(ti.VMovB32(ti.vgpr("Fp8Min"), "0xc3700000", "Fp8 Min value -240 as float32"))
-            elif self.scale_type == ti.DataType("B8"):
+            elif self.scale_type == ti.DataType("F8"):
+                mod.add(ti.VMovB32(ti.vgpr("Fp8NanInf"), "0x207", "Nan and +/- inf"))
+                mod.add(ti.VMovB32(ti.vgpr("Fp8Max"), "0x43e00000", "Fp8 Max value 448 as float32"))
+                mod.add(ti.VMovB32(ti.vgpr("Fp8Min"), "0xc3e00000", "Fp8 Min value -448 as float32"))
+            elif self.scale_type == ti.DataType("B8") or self.scale_type == ti.DataType("B8N"):
                 mod.add(ti.VMovB32(ti.vgpr("BF8NanInf"), "0x207", "Nan and +/- inf"))
                 mod.add(ti.VMovB32(ti.vgpr("BF8Max"), "0x47600000", "BF8 Max value 57344 as float32"))
                 mod.add(ti.VMovB32(ti.vgpr("BF8Min"), "0xc7600000", "BF8 Min value -57344 as float32"))
@@ -427,12 +432,12 @@ class AMaxKernelGenerator:
         mod = ti.Module("scale_per_data")
         if self.is_scale:
             mod.add(ti.VMulF32(ti.vgpr(f"OutputD+{i}"), ti.sgpr("Scale"), ti.vgpr(f"Value+{i}")))
-            if self.scale_type == ti.DataType("F8"):
+            if self.scale_type == ti.DataType("F8") or self.scale_type == ti.DataType("F8N"):
                 mod.add(ti.VCmpClassF32(dst="vcc", src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("Fp8NanInf")))
                 mod.add(ti.VMed3F32(dst=ti.vgpr("Fp8Tmp"), src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("Fp8Min"), src2=ti.vgpr("Fp8Max")))
                 mod.add(ti.VCndMaskB32(dst=ti.vgpr(f"OutputD+{i}"), src0=ti.vgpr("Fp8Tmp"), src1=ti.vgpr(f"OutputD+{i}"), src2="vcc"))
                 mod.add(ti.VCvtPkF32toFP8(ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}"), ti.vgpr(f"OutputD+{i}")))
-            elif self.scale_type == ti.DataType("B8"):
+            elif self.scale_type == ti.DataType("B8") or self.scale_type == ti.DataType("B8N"):
                 mod.add(ti.VCmpClassF32(dst="vcc", src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("BF8NanInf")))
                 mod.add(ti.VMed3F32(dst=ti.vgpr("BF8Tmp"), src0=ti.vgpr(f"OutputD+{i}"), src1=ti.vgpr("BF8Min"), src2=ti.vgpr("BF8Max")))
                 mod.add(ti.VCndMaskB32(dst=ti.vgpr(f"OutputD+{i}"), src0=ti.vgpr("BF8Tmp"), src1=ti.vgpr(f"OutputD+{i}"), src2="vcc"))
@@ -818,10 +823,10 @@ if __name__ == '__main__':
     ap.add_argument('-o', '--output', type=str, required=True, help='Output path of compiled binary')
     ap.add_argument('-t', type=str, default="S", help='data type')
     ap.add_argument('-d', type=str, default="None", help='dest data type')
-    ap.add_argument('-s', type=str, default="F8", help='scale data type')
+    ap.add_argument('-s', type=str, default="F8N", help='scale data type')
     ap.add_argument('-w', type=int, default=256, help='workitem')
     ap.add_argument('-c', type=int, default=4, help='load conut per iteration')
-    ap.add_argument('--toolchain', type=str, default='/opt/rocm/llvm/bin/clang++', help='Path to ROCm compiler')
+    ap.add_argument('--toolchain', type=str, default=ToolchainDefaults.CXX_COMPILER, help='Path to ROCm compiler')
     ap.add_argument('--debug-build', action='store_true', dest='debug_build', help='Build with debug information')
     ap.add_argument('--is-scale', action='store_true', dest='is_scale', help='Enable scaled output or not')
     ap.add_argument('--arch', type=str, default='gfx90a', help='Target architecture for assembler, e.g. gfx908. Default is gfx90a')
@@ -834,7 +839,7 @@ if __name__ == '__main__':
     s: str = args.s
     w: int = args.w
     c: int = args.c
-    toolchain_path: str = args.toolchain
+    toolchain_path: str = validateToolchain(args.toolchain)
     debug_build: bool = args.debug_build
     arch: str = args.arch
     is_scale: bool = args.is_scale
@@ -846,7 +851,7 @@ if __name__ == '__main__':
         detectGlobalCurrentISA()
         isa = globalParameters['CurrentISA']
         arch = getGfxName(isa)
-        toolchain_path = globalParameters['AssemblerPath']
+        toolchain_path = validateToolchain(ToolchainDefaults.CXX_COMPILER)
 
     ti.Base._global_ti.init(isa, toolchain_path, False)
     amax = AMaxKernelGenerator(ti.DataType(t), ti.DataType(d), ti.DataType(s), w, c, 4, arch, is_scale)

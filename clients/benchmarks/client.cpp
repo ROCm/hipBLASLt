@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,7 +50,7 @@
 using namespace roc; // For emulated program_options
 using namespace std::literals; // For std::string literals of form "str"s
 
-struct perf_matmul: hipblaslt_test_valid
+struct perf_matmul : hipblaslt_test_valid
 {
     void operator()(const Arguments& arg)
     {
@@ -390,11 +390,11 @@ try
 
         ("compute_input_typeA",
          value<std::string>(&compute_input_typeA), "Precision of computation input A. "
-         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the compute_input_typeA has no effect.")
+         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, f8_fnuz_r, bf8_fnuz_r, The default value indicates that the compute_input_typeA has no effect.")
 
         ("compute_input_typeB",
          value<std::string>(&compute_input_typeB), "Precision of computation input B. "
-         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the compute_input_typeA has no effect.")
+         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, f8_fnuz_r, bf8_fnuz_r, The default value indicates that the compute_input_typeA has no effect.")
 
         ("scale_type",
          value<std::string>(&scale_type), "Precision of scalar. "
@@ -447,7 +447,7 @@ try
 
         ("activation_type",
          value<std::string>(&activation_type)->default_value("none"),
-         "Options: None, gelu, relu")
+         "Options: none, gelu, relu")
 
         ("activation_arg1",
          value<float>(&arg.activation_arg1)->default_value(0),
@@ -734,7 +734,7 @@ try
     }
 
     // Device Query
-    int64_t device_count = query_device_property();
+    int64_t device_count = query_device_property(device_id);
 
     hipblaslt_cout << std::endl;
     if(device_count <= device_id)
@@ -780,6 +780,11 @@ try
     if(arg.d_type == HIPBLASLT_DATATYPE_INVALID)
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
 
+    if(arg.c_type != arg.d_type)
+        throw std::invalid_argument(
+            "Invalid: --c_type " + std::string(hip_datatype_to_string(arg.c_type))
+            + " is not equal to --d_type " + std::string(hip_datatype_to_string(arg.d_type)));
+
     bool is_f16 = arg.a_type == HIP_R_16F || arg.a_type == HIP_R_16BF;
     bool is_f32 = arg.a_type == HIP_R_32F;
     arg.compute_type
@@ -813,7 +818,7 @@ try
         throw std::invalid_argument("Invalid value for --initialization " + initialization);
 
     arg.activation_type = string_to_hipblaslt_activation_type(activation_type);
-    if(arg.activation_type == static_cast<hipblaslt_activation_type>(0))
+    if(arg.activation_type == static_cast<hipblaslt_activation_type>(-1))
         throw std::invalid_argument("Invalid value for --activation_type " + activation_type);
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);

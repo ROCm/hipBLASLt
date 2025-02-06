@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -80,17 +80,16 @@ function(TensileCreateLibraryFiles
 
   # Boolean options
   set(options
-       MERGE_FILES
-       NO_MERGE_FILES
        SHORT_FILE_NAMES
        PRINT_DEBUG
        GENERATE_PACKAGE
        SEPARATE_ARCHITECTURES
-       LAZY_LIBRARY_LOADING
+       NO_LAZY_LIBRARY_LOADING
        ASAN_BUILD
        KEEP_BUILD_TMP
        NO_COMPRESS
-       EXPERIMENTAL 
+       EXPERIMENTAL
+       ENABLE_MAKRER
        )
 
   # Single value settings
@@ -129,23 +128,8 @@ function(TensileCreateLibraryFiles
 
   message(STATUS "Tensile script: ${Script}")
 
-  # Older NO_MERGE_FILES flag overrides MERGE_FILES option.
-  if(Tensile_NO_MERGE_FILES)
-    set(Tensile_MERGE_FILES FALSE)
-  endif()
-
-  if(Tensile_MERGE_FILES)
-    set(Options ${Options} "--merge-files")
-  else()
-    set(Options ${Options} "--no-merge-files")
-  endif()
-
-  if(Tensile_SEPARATE_ARCHITECTURES)
-    set(Options ${Options} "--separate-architectures")
-  endif()
-
-  if(Tensile_LAZY_LIBRARY_LOADING)
-    set(Options ${Options} "--lazy-library-loading")
+  if(Tensile_NO_LAZY_LIBRARY_LOADING)
+    set(Options ${Options} "--no-lazy-library-loading")
   endif()
 
   if(Tensile_ENABLE_MARKER)
@@ -174,14 +158,6 @@ function(TensileCreateLibraryFiles
 
   if(Tensile_SHORT_FILE_NAMES)
     set(Options ${Options} "--short-file-names")
-  else()
-    set(Options ${Options} "--no-short-file-names")
-  endif()
-
-  if(Tensile_PRINT_DEBUG)
-    set(Options ${Options} "--library-print-debug")
-  else()
-    set(Options ${Options} "--no-library-print-debug")
   endif()
 
   if(Tensile_EMBED_LIBRARY)
@@ -285,7 +261,7 @@ endfunction()
 function(TensileCreateExtOpLibraries OutputFolder ArchStr)
   string(REGEX MATCHALL "gfx[a-z0-9]+" Archs "${ArchStr}")
   list(REMOVE_DUPLICATES Archs)
-  set(build_tmp_dir ${CMAKE_CURRENT_BINARY_DIR}/build_tmp/ops)
+  set(build_tmp_dir ${OutputFolder}/../build_tmp/ops)
   set(Tensile_PACKAGE_DIR ${Tensile_SOURCE_DIR}/../)
   set(cwd "${Tensile_PACKAGE_DIR}/Ops")
   set(script "${cwd}/gen_assembly.sh")

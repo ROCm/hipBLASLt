@@ -49,6 +49,18 @@ class KernelWriterConversion(KernelWriterBase):
     # setup load vector width
     self.num_elements_load = load_vw
 
+    # Macro guards for f8 types
+    # For now, it is enough to check dest type to determine if we are using f8 types
+    # May need to include checks for input data type in the future.
+    self.f8MacroGuardStart = "";
+    self.f8MacroGuardEnd   = "";
+    if (self.state["ProblemType"]["DestDataType"].isFloat8() or self.state["ProblemType"]["DestDataType"].isBFloat8()):
+      self.f8MacroGuardStart = "\n#if TENSILELITE_FP8_TYPE_OCP\n"
+      self.f8MacroGuardEnd   = "\n#endif // F8 macro guard\n"
+    if (self.state["ProblemType"]["DestDataType"].isFloat8_fnuz() or self.state["ProblemType"]["DestDataType"].isBFloat8_fnuz()):
+      self.f8MacroGuardStart = "\n#if TENSILELITE_FP8_TYPE_FNUZ\n"
+      self.f8MacroGuardEnd   = "\n#endif // F8 macro guard\n"
+
     # derive parameter
     self.language = "HIP"
     self.kernelName = self.getKernelName()
@@ -462,7 +474,7 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "  auto idxW_ori = idxW;%s"%self.endLine
 
     typeStr = "int" if self.state["ProblemType"]["DataType"].isInt8() or self.state["ProblemType"]["DataType"].isInt32() else ("double" if self.state["ProblemType"]["DataType"].isDouble() else "float")
-    typeStr2 = "int16_t" if self.state["ProblemType"]["DestDataType"].isInt8() else ("tensile_half" if self.state["ProblemType"]["DestDataType"].isFloat8() else "tensile_bfloat16")
+    typeStr2 = "int16_t" if self.state["ProblemType"]["DestDataType"].isInt8() else ("tensile_half" if self.state["ProblemType"]["DestDataType"].isAnyFloat8() else "tensile_bfloat16")
     loadTypeStr = "%s%s" % (typeStr, "" if self.num_dword_load == 1 else self.num_dword_load)
     storeTypeStr = "%s%s" % (typeStr, self.num_dword_store) if self.num_dword_store >= 1 else typeStr2 if self.num_dword_store == 0.5 else destTypeStr
 
@@ -836,22 +848,6 @@ class KernelWriterConversion(KernelWriterBase):
 
   def getHeaderFileString(self):
     fileString = "" # CHeader
-    if not globalParameters["MergeFiles"]:
-      fileString += CHeader
-      fileString += "#pragma once\n\n"
-      fileString += "\n"
-      fileString += "#include <KernelHeader.h>\n\n"
-      fileString += "#include <hip/hip_runtime.h>\n"
-      fileString += "#include <hip/hip_fp16.h>\n"
-      fileString += "\n"
-      activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
-      if self.state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
-        fileString += "#include \"Tensile%sActivation%s_%s_%s.h\"\n"%(self.actGradientPrefix, \
-                                                                      self.gaurdStr, \
-                                                                      activationCDataType.toChar(), \
-                                                                      self.state["ProblemType"]["ActivationType"])
-      fileString += "\n"
-
     backupGSU    = self.state["GlobalSplitU"]
     backupUnroll = self.state["UnrollOnly"]
     for gsu in self.gsuKernels:
@@ -859,9 +855,11 @@ class KernelWriterConversion(KernelWriterBase):
         self.state["GlobalSplitU"] = gsu
         self.state["ProblemType"]["GroupedGemm"] = toggle
         self.kernelName = self.getKernelName()
+        fileString += self.f8MacroGuardStart
         fileString += self.functionArgument()
         fileString += self.functionSignature()
         fileString += ";\n"
+        fileString += self.f8MacroGuardEnd
       if not self.state["UnrollOnly"]:
         self.state["UnrollOnly"] = True
     self.state["GlobalSplitU"] = backupGSU
@@ -873,11 +871,6 @@ class KernelWriterConversion(KernelWriterBase):
 
   def getSourceFileString(self):
     fileString = ""
-    if not globalParameters["MergeFiles"]:
-      fileString += "\n"
-      fileString += "#include \"%s.h\"\n" % self.kernelName
-      fileString += "\n"
-
     backupGSU    = self.state["GlobalSplitU"]
     backupUnroll = self.state["UnrollOnly"]
     for gsu in self.gsuKernels:
@@ -885,8 +878,10 @@ class KernelWriterConversion(KernelWriterBase):
         self.state["GlobalSplitU"] = gsu
         self.state["ProblemType"]["GroupedGemm"] = toggle
         self.kernelName = self.getKernelName()
+        fileString += self.f8MacroGuardStart
         fileString += self.functionSignature()
         fileString += self.kernelBody()
+        fileString += self.f8MacroGuardEnd
       if not self.state["UnrollOnly"]:
         self.state["UnrollOnly"] = True
     self.state["GlobalSplitU"] = backupGSU

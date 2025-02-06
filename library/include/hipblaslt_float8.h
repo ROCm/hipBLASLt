@@ -29,27 +29,26 @@
 
 #if __cplusplus < 201103L || (!defined(__HCC__) && !defined(__HIPCC__))
 /*! \brief Struct to represent a 8 bit floating-point number. */
+
 typedef struct
 {
-    uint8_t data;
+    uint8_t __x;
 } hipblaslt_f8_fnuz;
 
 typedef struct
 {
-    uint8_t data;
-} hipblaslt_bf8_fnuz;
-
-#ifdef ROCM_USE_FLOAT8
-typedef struct
-{
-    uint8_t data;
+    uint8_t __x;
 } hipblaslt_f8;
 
 typedef struct
 {
-    uint8_t data;
+    uint8_t __x;
+} hipblaslt_bf8_fnuz;
+
+typedef struct
+{
+    uint8_t __x;
 } hipblaslt_bf8;
-#endif
 
 #else // __cplusplus < 201103L || (!defined(__HCC__) && !defined(__HIPCC__))
 
@@ -57,652 +56,218 @@ typedef struct
 #define HIP_HOST __host__
 #define HIP_DEVICE __device__
 
-// We are clipping in down conversion by default
-#define hipblaslt_F8_downcast_clipping 1
-
-namespace hipblaslt_hip_f8_impl
+#if !HIPBLASLT_USE_F8_FNUZ_BC
+// NANOO E4M3
+struct HIPBLASLT_EXPORT hipblaslt_f8_fnuz: public __hip_fp8_e4m3_fnuz
 {
+    using __hip_fp8_e4m3_fnuz:: __hip_fp8_e4m3_fnuz;
 
-    template <int wm, int we, typename T, bool negative_zero_nan, bool clip>
-    HIP_HOST_DEVICE uint8_t cast_to_f8(T _x, bool stoch = false, uint32_t rng = 0);
-
-    template <int wm, int we, typename T, bool negative_zero_nan>
-    HIP_HOST_DEVICE T cast_from_f8(uint8_t x);
-
-} // namespace hipblaslt_hip_f8_impl
-
-#include "hipblaslt_hip_f8_impl.h"
-
-static __device__ bool hipblaslt_hip_f8_bias_mode_bit_device = true;
-static bool            hipblaslt_hip_f8_bias_mode_bit_host   = true;
-
-struct HIPBLASLT_EXPORT hipblaslt_f8_fnuz
-{
-    uint8_t data;
-    enum class hipblaslt_hip_f8_rounding_mode
-    {
-        standard,
-        stochastic
-    };
-
-    // default constructor
-    HIP_HOST_DEVICE hipblaslt_f8_fnuz() = default;
-
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-    // device specific optimized F8 down-conversion code
-
-    template <bool stochastic_rounding = false>
-    static HIP_DEVICE uint8_t cast_to_f8_from_f32(float v, uint32_t rng = 0)
-    {
-        uint8_t i8data;
-        union
-        {
-            float    fval;
-            uint32_t i32val;
-            uint8_t  i8val[4]; // NOTE: not endian independent
-        } val;
-
-        uint32_t ival = 0;
-        val.fval      = v;
-
-#ifdef hipblaslt_F8_downcast_clipping
-        if((val.i32val & 0x7F800000) != 0x7F800000) /// propagate NAN/INF, no clipping
-            val.fval = __builtin_amdgcn_fmed3f(val.fval, 240.0, -240.0);
-#endif
-        if(stochastic_rounding)
-        {
-            ival       = __builtin_amdgcn_cvt_sr_fp8_f32(val.fval, rng, ival, 0); // 0 pos
-            val.i32val = ival;
-            i8data     = val.i8val[0]; // little endian
-        }
-        else // RNE CVT
-        {
-            ival = __builtin_amdgcn_cvt_pk_fp8_f32(
-                val.fval, val.fval, ival, false); // false -> WORD0
-            val.i32val = ival;
-            i8data     = val.i8val[0];
-        }
-        return i8data;
-    }
-
-#endif // __gfx940__
-
-    // constructor from float
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-
-    // NOTE: ON-DEVICE... always optimal bias
-    explicit HIP_DEVICE hipblaslt_f8_fnuz(float                          v,
-                                          hipblaslt_hip_f8_rounding_mode rm
-                                          = hipblaslt_hip_f8_rounding_mode::standard,
-                                          uint32_t rng = 0)
-    {
-        // runtime branch, use cast_to_f8_from_f32 if want to avoid it
-        if(rm == hipblaslt_hip_f8_rounding_mode::stochastic)
-            data = cast_to_f8_from_f32<true>(v, rng);
-        else
-            data = cast_to_f8_from_f32<false>(v);
-    }
-
-    // Host only implementation using s/w simulation
-    explicit HIP_HOST
+#if HIP_FP8_TYPE_FNUZ
+    HIP_HOST_DEVICE hipblaslt_f8_fnuz(const _Float16 f)
 #else
-    // both Host and DEVICE for non-gfx940 using s/w simulation
-    explicit HIP_HOST_DEVICE
+    HIP_HOST hipblaslt_f8_fnuz(const _Float16 f)
 #endif
-        hipblaslt_f8_fnuz(float                          v,
-                          hipblaslt_hip_f8_rounding_mode rm
-                          = hipblaslt_hip_f8_rounding_mode::standard,
-                          uint32_t rng = 0)
-    {
-#ifdef hipblaslt_F8_downcast_clipping
-        data = hipblaslt_hip_f8_impl::
-            cast_to_f8<3, 4, float, true /*negative_zero_nan*/, true /*clip*/>(
-                v, (rm == hipblaslt_hip_f8_rounding_mode::stochastic), rng);
-#else // hipblaslt_F8_downcast_clipping
-        data = hipblaslt_hip_f8_impl::
-            cast_to_f8<3, 4, float, true /*negative_zero_nan*/, false /*clip*/>(
-                v, (rm == hipblaslt_hip_f8_rounding_mode::stochastic), rng);
-#endif // hipblaslt_F8_downcast_clipping
-    }
+    : __hip_fp8_e4m3_fnuz(reinterpret_cast<const __half &>(f)) {}
 
-    // Constructor from half
-    explicit HIP_HOST_DEVICE hipblaslt_f8_fnuz(_Float16                       v,
-                                               hipblaslt_hip_f8_rounding_mode rm
-                                               = hipblaslt_hip_f8_rounding_mode::standard,
-                                               uint32_t rng = 0)
-        : hipblaslt_f8_fnuz((float)v, rm, rng)
-    {
-    }
-    // constructor from bfloat16
-    explicit HIP_HOST_DEVICE hipblaslt_f8_fnuz(hip_bfloat16                   v,
-                                               hipblaslt_hip_f8_rounding_mode rm
-                                               = hipblaslt_hip_f8_rounding_mode::standard,
-                                               uint32_t rng = 0)
-        : hipblaslt_f8_fnuz((float)v, rm, rng)
-    {
-    }
-    // constructor from int
-    explicit HIP_HOST_DEVICE hipblaslt_f8_fnuz(int                            v,
-                                               hipblaslt_hip_f8_rounding_mode rm
-                                               = hipblaslt_hip_f8_rounding_mode::standard,
-                                               uint32_t rng = 0)
-        : hipblaslt_f8_fnuz((float)v, rm, rng)
-    {
-    }
-    // constructor from double
-    explicit HIP_HOST_DEVICE hipblaslt_f8_fnuz(double                         v,
-                                               hipblaslt_hip_f8_rounding_mode rm
-                                               = hipblaslt_hip_f8_rounding_mode::standard,
-                                               uint32_t rng = 0)
-        : hipblaslt_f8_fnuz((float)v, rm, rng)
-    {
-    }
-
-    // convert to float
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-    // upcast using device specific intrinsic
-    explicit inline HIP_DEVICE operator float() const
-    {
-        float    fval;
-        uint32_t i32val = static_cast<uint32_t>(data);
-
-        // upcast
-        asm volatile("v_cvt_f32_fp8 %0, %1 src0_sel:BYTE_0" : "=v"(fval) : "v"(i32val));
-
-        return fval;
-    }
-
-    explicit inline HIP_HOST operator float() const
-#else // non gfx940
-    explicit inline HIP_HOST_DEVICE operator float() const
+        // operator overloadiing -> upcast
+#if HIP_FP8_TYPE_FNUZ
+    HIP_HOST_DEVICE operator _Float16() const
+#else
+    HIP_HOST operator _Float16() const
 #endif
     {
-        return hipblaslt_hip_f8_impl::cast_from_f8<3, 4, float, true /*negative_zero_nan*/>(data);
-    }
-
-    // convert to half
-    explicit inline HIP_HOST_DEVICE operator _Float16() const
-    {
-        return _Float16(float(*this)); // convert to float, then convert to f16
-    }
-
-    // convert to bfloat16
-    explicit inline HIP_HOST_DEVICE operator hip_bfloat16() const
-    {
-        return hip_bfloat16(float(*this)); // convert to float, then convert to f16
+        return _Float16(float(*this));
     }
 
     // check for zero
     inline HIP_HOST_DEVICE bool is_zero() const
     {
-        return data == 0x00;
+        return __x == 0x00;
     }
 
     // check for nan
     inline HIP_HOST_DEVICE bool is_nan() const
     {
-        return data == 0x80;
+        return __x == 0x80;
     }
 
     // check for inf
     inline HIP_HOST_DEVICE bool is_inf() const
     {
-        return data == 0x80;
+        return __x == 0x80;
     }
 
     // assignment overloading only from the same F8 types
     inline __host__ __device__ hipblaslt_f8_fnuz& operator=(const hipblaslt_f8_fnuz& a)
     {
-        data = a.data;
+        __x = a.__x;
         return *this;
     }
 };
+#endif // #if !HIPBLASLT_USE_F8_FNUZ_BC
 
-struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz
+#if !HIPBLASLT_USE_F8_OCP_BC
+// OCPFP8 E4M3
+struct HIPBLASLT_EXPORT hipblaslt_f8: public __hip_fp8_e4m3
 {
-    uint8_t data;
-    enum class hipblaslt_hip_f8_rounding_mode
-    {
-        standard,
-        stochastic
-    };
+    using __hip_fp8_e4m3:: __hip_fp8_e4m3;
 
-    // default constructor
-    HIP_HOST_DEVICE hipblaslt_bf8_fnuz() = default;
-
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-    // device specific optimized F8 down-conversion code
-
-    template <bool stochastic_rounding = false>
-    static HIP_DEVICE uint8_t cast_to_bf8_from_f32(float v, uint32_t rng = 0)
-    {
-        uint8_t i8data;
-        union
-        {
-            float    fval;
-            uint32_t i32val;
-            uint8_t  i8val[4]; // NOTE: not endian independent
-        } val;
-
-        uint32_t ival = 0;
-        val.fval      = v;
-
-#ifdef hipblaslt_F8_downcast_clipping
-        if((val.i32val & 0x7F800000) != 0x7F800000) // propagate NAN/INF, no clipping
-            val.fval = __builtin_amdgcn_fmed3f(val.fval, 57344.0, -57344.0);
-#endif
-        if(stochastic_rounding)
-        {
-            ival       = __builtin_amdgcn_cvt_sr_bf8_f32(val.fval, rng, ival, 0); // 0 pos
-            val.i32val = ival;
-            i8data     = val.i8val[0]; // little endian
-        }
-        else // RNE CVT
-        {
-            ival = __builtin_amdgcn_cvt_pk_bf8_f32(
-                val.fval, val.fval, ival, false); // false -> WORD0
-            val.i32val = ival;
-            i8data     = val.i8val[0];
-        }
-        return i8data;
-    }
-
-#endif // __gfx940__
-
-    // constructor from float
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-
-    // NOTE: ON-DEVICE... always optimal bias
-    explicit HIP_DEVICE hipblaslt_bf8_fnuz(float                          v,
-                                           hipblaslt_hip_f8_rounding_mode rm
-                                           = hipblaslt_hip_f8_rounding_mode::standard,
-                                           uint32_t rng = 0)
-    {
-        // runtime branch, use cast_to_f8_from_f32 if want to avoid it
-        if(rm == hipblaslt_hip_f8_rounding_mode::stochastic)
-            data = cast_to_bf8_from_f32<true>(v, rng);
-        else
-            data = cast_to_bf8_from_f32<false>(v);
-    }
-
-    // Host only implementation using s/w simulation
-    explicit HIP_HOST
+#if HIP_FP8_TYPE_OCP
+    HIP_HOST_DEVICE hipblaslt_f8(const _Float16 f)
 #else
-    // both Host and DEVICE for non-gfx940 using s/w simulation
-    explicit HIP_HOST_DEVICE
+    HIP_HOST hipblaslt_f8(const _Float16 f)
 #endif
-        hipblaslt_bf8_fnuz(float                          v,
-                           hipblaslt_hip_f8_rounding_mode rm
-                           = hipblaslt_hip_f8_rounding_mode::standard,
-                           uint32_t rng = 0)
-    {
-#ifdef hipblaslt_F8_downcast_clipping
-        data = hipblaslt_hip_f8_impl::
-            cast_to_f8<2, 5, float, true /*negative_zero_nan*/, true /*clip*/>(
-                v, (rm == hipblaslt_hip_f8_rounding_mode::stochastic), rng);
+    : __hip_fp8_e4m3(reinterpret_cast<const __half &>(f)) {}
+
+        // operator overloadiing -> upcast
+#if HIP_FP8_TYPE_OCP
+    HIP_HOST_DEVICE operator _Float16() const
 #else
-        data = hipblaslt_hip_f8_impl::
-            cast_to_f8<2, 5, float, true /*negative_zero_nan*/, false /*clip*/>(
-                v, (rm == hipblaslt_hip_f8_rounding_mode::stochastic), rng);
-#endif // hipblaslt_F8_downcast_clipping
-    }
-
-    // Constructor from half
-    explicit HIP_HOST_DEVICE hipblaslt_bf8_fnuz(_Float16                       v,
-                                                hipblaslt_hip_f8_rounding_mode rm
-                                                = hipblaslt_hip_f8_rounding_mode::standard,
-                                                uint32_t rng = 0)
-        : hipblaslt_bf8_fnuz((float)v, rm, rng)
-    {
-    }
-    // constructor from bfloat16
-    explicit HIP_HOST_DEVICE hipblaslt_bf8_fnuz(hip_bfloat16                   v,
-                                                hipblaslt_hip_f8_rounding_mode rm
-                                                = hipblaslt_hip_f8_rounding_mode::standard,
-                                                uint32_t rng = 0)
-        : hipblaslt_bf8_fnuz((float)v, rm, rng)
-    {
-    }
-    // constructor from int
-    explicit HIP_HOST_DEVICE hipblaslt_bf8_fnuz(int                            v,
-                                                hipblaslt_hip_f8_rounding_mode rm
-                                                = hipblaslt_hip_f8_rounding_mode::standard,
-                                                uint32_t rng = 0)
-        : hipblaslt_bf8_fnuz((float)v, rm, rng)
-    {
-    }
-    // constructor from double
-    explicit HIP_HOST_DEVICE hipblaslt_bf8_fnuz(double                         v,
-                                                hipblaslt_hip_f8_rounding_mode rm
-                                                = hipblaslt_hip_f8_rounding_mode::standard,
-                                                uint32_t rng = 0)
-        : hipblaslt_bf8_fnuz((float)v, rm, rng)
-    {
-    }
-
-    // convert to float
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-    // upcast using device specific intrinsic
-    explicit inline HIP_DEVICE operator float() const
-    {
-        float    fval;
-        uint32_t i32val = static_cast<uint32_t>(data);
-
-        // upcast
-        asm volatile("v_cvt_f32_bf8 %0, %1 src0_sel:BYTE_0" : "=v"(fval) : "v"(i32val));
-
-        return fval;
-    }
-
-    explicit inline HIP_HOST operator float() const
-#else // non gfx940
-    explicit inline HIP_HOST_DEVICE operator float() const
+    HIP_HOST operator _Float16() const
 #endif
     {
-        return hipblaslt_hip_f8_impl::cast_from_f8<2, 5, float, true /*negative_zero_nan*/>(data);
-    }
-
-    // convert to half
-    explicit inline HIP_HOST_DEVICE operator _Float16() const
-    {
-        return _Float16(float(*this)); // convert to float, then convert to f16
-    }
-
-    // convert to bfloat16
-    explicit inline HIP_HOST_DEVICE operator hip_bfloat16() const
-    {
-        return hip_bfloat16(float(*this)); // convert to float, then convert to f16
+#if HIP_FP8_CVT_FAST_PATH
+        return _Float16(float(*this));
+#else
+        return _Float16(float(*this));
+#endif
     }
 
     // check for zero
     inline HIP_HOST_DEVICE bool is_zero() const
     {
-        return data == 0x00;
+        return __x == 0x00;
     }
 
     // check for nan
     inline HIP_HOST_DEVICE bool is_nan() const
     {
-        return data == 0x80;
+        return __x == 0x80;
     }
 
     // check for inf
     inline HIP_HOST_DEVICE bool is_inf() const
     {
-        return data == 0x80;
-    }
-
-    // assignment overloading only from the same F8 types
-    inline __host__ __device__ hipblaslt_bf8_fnuz& operator=(const hipblaslt_bf8_fnuz& a)
-    {
-        data = a.data;
-        return *this;
-    }
-};
-
-#ifdef ROCM_USE_FLOAT8
-struct HIPBLASLT_EXPORT hipblaslt_f8
-{
-    uint8_t data;
-    enum class hipblaslt_hip_f8_rounding_mode
-    {
-        standard,
-        stochastic
-    };
-
-    // default constructor
-    HIP_HOST_DEVICE hipblaslt_f8() = default;
-
-    // constructor from float
-#if defined(__gfx1200__) || defined(__gfx1201__)
-
-    // NOTE: ON-DEVICE... always optimal bias
-    explicit HIP_DEVICE hipblaslt_f8(float                          v,
-                                     hipblaslt_hip_f8_rounding_mode rm
-                                     = hipblaslt_hip_f8_rounding_mode::standard,
-                                     uint32_t rng = 0)
-    {
-        __hip_fp8_e4m3 tmp(v);
-        data = tmp.__x;
-    }
-
-    // Host only implementation using s/w simulation
-    explicit HIP_HOST
-#else
-    // both Host and DEVICE for non-gfx940 using s/w simulation
-    explicit HIP_HOST_DEVICE
-#endif
-        hipblaslt_f8(float                          v,
-                     hipblaslt_hip_f8_rounding_mode rm  = hipblaslt_hip_f8_rounding_mode::standard,
-                     uint32_t                       rng = 0)
-    {
-#ifdef hipblaslt_F8_downcast_clipping
-        data = internal::cast_to_f8<float, false /*is_funz*/>(
-            v, 3, 4, true /*clip*/, (rm == hipblaslt_hip_f8_rounding_mode::stochastic), rng);
-#else // hipblaslt_F8_downcast_clipping
-        data = internal::cast_to_f8<float, false /*is_funz*/>(
-            v, 3, 4, false /*clip*/, (rm == hipblaslt_hip_f8_rounding_mode::stochastic), rng);
-#endif // hipblaslt_F8_downcast_clipping
-    }
-
-    // Constructor from half
-    explicit HIP_HOST_DEVICE hipblaslt_f8(_Float16                       v,
-                                          hipblaslt_hip_f8_rounding_mode rm
-                                          = hipblaslt_hip_f8_rounding_mode::standard,
-                                          uint32_t rng = 0)
-        : hipblaslt_f8((float)v, rm, rng)
-    {
-    }
-    // constructor from bfloat16
-    explicit HIP_HOST_DEVICE hipblaslt_f8(hip_bfloat16                   v,
-                                          hipblaslt_hip_f8_rounding_mode rm
-                                          = hipblaslt_hip_f8_rounding_mode::standard,
-                                          uint32_t rng = 0)
-        : hipblaslt_f8((float)v, rm, rng)
-    {
-    }
-    // constructor from int
-    explicit HIP_HOST_DEVICE hipblaslt_f8(int                            v,
-                                          hipblaslt_hip_f8_rounding_mode rm
-                                          = hipblaslt_hip_f8_rounding_mode::standard,
-                                          uint32_t rng = 0)
-        : hipblaslt_f8((float)v, rm, rng)
-    {
-    }
-    // constructor from double
-    explicit HIP_HOST_DEVICE hipblaslt_f8(double                         v,
-                                          hipblaslt_hip_f8_rounding_mode rm
-                                          = hipblaslt_hip_f8_rounding_mode::standard,
-                                          uint32_t rng = 0)
-        : hipblaslt_f8((float)v, rm, rng)
-    {
-    }
-
-    // convert to float
-#if defined(__gfx1200__) || defined(__gfx1201__)
-    // upcast using device specific intrinsic
-    explicit inline HIP_DEVICE operator float() const
-    {
-        return internal::cast_to_f32_from_f8(data, __HIP_E4M3);
-    }
-
-    explicit inline HIP_HOST operator float() const
-#else // non gfx1200
-    explicit inline HIP_HOST_DEVICE operator float() const
-#endif
-    {
-        return internal::cast_from_f8<float, false /*is_funz*/>(data, 3, 4, false);
-    }
-
-    // convert to half
-    explicit inline HIP_HOST_DEVICE operator _Float16() const
-    {
-        return _Float16(float(*this)); // convert to float, then convert to f16
-    }
-
-    // convert to bfloat16
-    explicit inline HIP_HOST_DEVICE operator hip_bfloat16() const
-    {
-        return hip_bfloat16(float(*this)); // convert to float, then convert to f16
-    }
-
-    // check for zero
-    inline HIP_HOST_DEVICE bool is_zero() const
-    {
-        return data == 0x00;
-    }
-
-    // check for nan
-    inline HIP_HOST_DEVICE bool is_nan() const
-    {
-        return (data & 0x7f) == 0x7f;
-    }
-
-    // check for inf
-    inline HIP_HOST_DEVICE bool is_inf() const
-    {
-        return false;
+        return __x == 0x80;
     }
 
     // assignment overloading only from the same F8 types
     inline __host__ __device__ hipblaslt_f8& operator=(const hipblaslt_f8& a)
     {
-        data = a.data;
+        __x = a.__x;
         return *this;
     }
 };
+#endif // #if !HIPBLASLT_USE_F8_OCP_BC
 
-struct HIPBLASLT_EXPORT hipblaslt_bf8
+#if !HIPBLASLT_USE_F8_FNUZ_BC
+// NANOO E5M2
+struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz: public __hip_fp8_e5m2_fnuz
 {
-    uint8_t data;
-    enum class hipblaslt_hip_f8_rounding_mode
-    {
-        standard,
-        stochastic
-    };
 
-    // default constructor
-    HIP_HOST_DEVICE hipblaslt_bf8() = default;
+    using __hip_fp8_e5m2_fnuz:: __hip_fp8_e5m2_fnuz;
 
-    // constructor from float
-#if defined(__gfx1200__) || defined(__gfx1201__)
-
-    // NOTE: ON-DEVICE... always optimal bias
-    explicit HIP_DEVICE hipblaslt_bf8(float                          v,
-                                      hipblaslt_hip_f8_rounding_mode rm
-                                      = hipblaslt_hip_f8_rounding_mode::standard,
-                                      uint32_t rng = 0)
-    {
-        __hip_fp8_e5m2 tmp(v);
-        data = tmp.__x;
-    }
-
-    // Host only implementation using s/w simulation
-    explicit HIP_HOST
+#if HIP_FP8_TYPE_FNUZ
+    HIP_HOST_DEVICE hipblaslt_bf8_fnuz(const _Float16 f)
 #else
-    // both Host and DEVICE for non-gfx940 using s/w simulation
-    explicit HIP_HOST_DEVICE
+    HIP_HOST hipblaslt_bf8_fnuz(const _Float16 f)
 #endif
-        hipblaslt_bf8(float                          v,
-                      hipblaslt_hip_f8_rounding_mode rm  = hipblaslt_hip_f8_rounding_mode::standard,
-                      uint32_t                       rng = 0)
-    {
-#ifdef hipblaslt_F8_downcast_clipping
-        data = internal::cast_to_f8<float, false /*is_funz*/>(
-            v, 2, 5, true /*clip*/, (rm == hipblaslt_hip_f8_rounding_mode::stochastic), rng);
-#else // hipblaslt_F8_downcast_clipping
-        data = internal::cast_to_f8<float, false /*is_funz*/>(
-            v, 2, 5, false /*clip*/, (rm == hipblaslt_hip_f8_rounding_mode::stochastic), rng);
-#endif // hipblaslt_F8_downcast_clipping
-    }
+    : __hip_fp8_e5m2_fnuz(reinterpret_cast<const __half &>(f)) {}
 
-    // Constructor from half
-    explicit HIP_HOST_DEVICE hipblaslt_bf8(_Float16                       v,
-                                           hipblaslt_hip_f8_rounding_mode rm
-                                           = hipblaslt_hip_f8_rounding_mode::standard,
-                                           uint32_t rng = 0)
-        : hipblaslt_bf8((float)v, rm, rng)
-    {
-    }
-    // constructor from bfloat16
-    explicit HIP_HOST_DEVICE hipblaslt_bf8(hip_bfloat16                   v,
-                                           hipblaslt_hip_f8_rounding_mode rm
-                                           = hipblaslt_hip_f8_rounding_mode::standard,
-                                           uint32_t rng = 0)
-        : hipblaslt_bf8((float)v, rm, rng)
-    {
-    }
-    // constructor from int
-    explicit HIP_HOST_DEVICE hipblaslt_bf8(int                            v,
-                                           hipblaslt_hip_f8_rounding_mode rm
-                                           = hipblaslt_hip_f8_rounding_mode::standard,
-                                           uint32_t rng = 0)
-        : hipblaslt_bf8((float)v, rm, rng)
-    {
-    }
-    // constructor from double
-    explicit HIP_HOST_DEVICE hipblaslt_bf8(double                         v,
-                                           hipblaslt_hip_f8_rounding_mode rm
-                                           = hipblaslt_hip_f8_rounding_mode::standard,
-                                           uint32_t rng = 0)
-        : hipblaslt_bf8((float)v, rm, rng)
-    {
-    }
-
-    // convert to float
-#if defined(__gfx1200__) || defined(__gfx1201__)
-    // upcast using device specific intrinsic
-    explicit inline HIP_DEVICE operator float() const
-    {
-        return internal::cast_to_f32_from_f8(data, __HIP_E5M2);
-    }
-
-    explicit inline HIP_HOST operator float() const
-#else // non gfx1200
-    explicit inline HIP_HOST_DEVICE operator float() const
+        // operator overloadiing -> upcast
+#if HIP_FP8_TYPE_OCP
+    HIP_HOST_DEVICE operator _Float16() const
+#else
+    HIP_HOST operator _Float16() const
 #endif
     {
-        return internal::cast_from_f8<float, false /*is_funz*/>(data, 2, 5, false);
-    }
-
-    // convert to half
-    explicit inline HIP_HOST_DEVICE operator _Float16() const
-    {
-        return _Float16(float(*this)); // convert to float, then convert to f16
-    }
-
-    // convert to bfloat16
-    explicit inline HIP_HOST_DEVICE operator hip_bfloat16() const
-    {
-        return hip_bfloat16(float(*this)); // convert to float, then convert to f16
+        return _Float16(float(*this));
     }
 
     // check for zero
     inline HIP_HOST_DEVICE bool is_zero() const
     {
-        return data == 0x00;
+        return (__x == 0x00 || __x == 0x80);
     }
 
     // check for nan
     inline HIP_HOST_DEVICE bool is_nan() const
     {
-        return (data & 0x7f) > 0x7c;
+        return __x == 0x80;
+    }
+
+    // check for inf: no inf, so checking nan?
+    inline HIP_HOST_DEVICE bool is_inf() const
+    {
+        return __x == 0x80;
+    }
+
+    // assignment overloading only from the same F8 types
+    inline __host__ __device__ hipblaslt_bf8_fnuz& operator=(const hipblaslt_bf8_fnuz& a)
+    {
+        __x = a.__x;
+        return *this;
+    }
+};
+#endif // #if !HIPBLASLT_USE_F8_FNUZ_BC
+
+
+#if !HIPBLASLT_USE_F8_OCP_BC
+// OCPFP8 E5M2
+struct HIPBLASLT_EXPORT hipblaslt_bf8: public __hip_fp8_e5m2
+{
+    using __hip_fp8_e5m2:: __hip_fp8_e5m2;
+
+#if HIP_FP8_TYPE_OCP
+    HIP_HOST_DEVICE hipblaslt_bf8(const _Float16 f)
+#else
+    HIP_HOST hipblaslt_bf8(const _Float16 f)
+#endif
+    : __hip_fp8_e5m2(reinterpret_cast<const __half &>(f)) {}
+
+        // operator overloadiing -> upcast
+#if HIP_FP8_TYPE_OCP
+    HIP_HOST_DEVICE operator _Float16() const
+#else
+    HIP_HOST operator _Float16() const
+#endif
+    {
+#if HIP_FP8_CVT_FAST_PATH
+        //TODO: use single CVT instruction
+        return _Float16(float(*this));
+#else
+        return _Float16(float(*this));
+#endif
+    }
+
+    // check for zero
+    inline HIP_HOST_DEVICE bool is_zero() const
+    {
+        return __x == 0x00 || __x == 0x80;
+    }
+
+    // check for nan
+    inline HIP_HOST_DEVICE bool is_nan() const
+    {
+        return (__x == 0x7d) || (__x == 0x7e) || (__x == 0x7f) ||
+        (__x == 0xfd) || (__x == 0xfe) || (__x == 0xff);
     }
 
     // check for inf
     inline HIP_HOST_DEVICE bool is_inf() const
     {
-        return (data & 0x7f) == 0x7c;
+        return (__x == 0x7c) || (__x == 0xfc);
     }
 
     // assignment overloading only from the same F8 types
     inline __host__ __device__ hipblaslt_bf8& operator=(const hipblaslt_bf8& a)
     {
-        data = a.data;
+        __x = a.__x;
         return *this;
     }
 };
-#endif
+#endif // #if !HIPBLASLT_USE_F8_OCP_BC
+
 
 namespace std
 {
@@ -710,19 +275,39 @@ namespace std
     {
         return hipblaslt_f8_fnuz(sinf(float(a)));
     }
+    inline hipblaslt_f8 sin(hipblaslt_f8 a)
+    {
+        return hipblaslt_f8(sinf(float(a)));
+    }
     inline hipblaslt_f8_fnuz cos(hipblaslt_f8_fnuz a)
     {
         return hipblaslt_f8_fnuz(cosf(float(a)));
+    }
+    inline hipblaslt_f8 cos(hipblaslt_f8 a)
+    {
+        return hipblaslt_f8(cosf(float(a)));
     }
     inline hipblaslt_bf8_fnuz sin(hipblaslt_bf8_fnuz a)
     {
         return hipblaslt_bf8_fnuz(sinf(float(a)));
     }
+    inline hipblaslt_bf8 sin(hipblaslt_bf8 a)
+    {
+        return hipblaslt_bf8(sinf(float(a)));
+    }
     inline hipblaslt_bf8_fnuz cos(hipblaslt_bf8_fnuz a)
     {
         return hipblaslt_bf8_fnuz(cosf(float(a)));
     }
+    inline hipblaslt_bf8 cos(hipblaslt_bf8 a)
+    {
+        return hipblaslt_bf8(cosf(float(a)));
+    }
     __device__ __host__ constexpr hipblaslt_f8_fnuz real(const hipblaslt_f8_fnuz& a)
+    {
+        return a;
+    }
+    __device__ __host__ constexpr hipblaslt_f8 real(const hipblaslt_f8& a)
     {
         return a;
     }
@@ -730,41 +315,27 @@ namespace std
     {
         return a;
     }
-#ifdef ROCM_USE_FLOAT8
-    inline hipblaslt_f8 sin(hipblaslt_f8 a)
-    {
-        return hipblaslt_f8(sinf(float(a)));
-    }
-    inline hipblaslt_f8 cos(hipblaslt_f8 a)
-    {
-        return hipblaslt_f8(cosf(float(a)));
-    }
-    inline hipblaslt_bf8 sin(hipblaslt_bf8 a)
-    {
-        return hipblaslt_bf8(sinf(float(a)));
-    }
-    inline hipblaslt_bf8 cos(hipblaslt_bf8 a)
-    {
-        return hipblaslt_bf8(cosf(float(a)));
-    }
-    __device__ __host__ constexpr hipblaslt_f8 real(const hipblaslt_f8& a)
-    {
-        return a;
-    }
     __device__ __host__ constexpr hipblaslt_bf8 real(const hipblaslt_bf8& a)
     {
         return a;
     }
-#endif
 }
 
+// TODO: remove all operator overloading below after analyzing where those are used!
 // Special operator overloading
 inline std::ostream& operator<<(std::ostream& os, const hipblaslt_f8_fnuz& f8)
 {
     return os << float(f8);
 }
-
+inline std::ostream& operator<<(std::ostream& os, const hipblaslt_f8& f8)
+{
+    return os << float(f8);
+}
 inline std::ostream& operator<<(std::ostream& os, const hipblaslt_bf8_fnuz& bf8)
+{
+    return os << float(bf8);
+}
+inline std::ostream& operator<<(std::ostream& os, const hipblaslt_bf8& bf8)
 {
     return os << float(bf8);
 }
@@ -775,8 +346,16 @@ inline __host__ __device__ float operator+(const float fa, hipblaslt_f8_fnuz b)
 {
     return (fa + float(b));
 }
+inline __host__ __device__ float operator+(const float fa, hipblaslt_f8 b)
+{
+    return (fa + float(b));
+}
 
 inline __host__ __device__ float operator+(const float fa, hipblaslt_bf8_fnuz b)
+{
+    return (fa + float(b));
+}
+inline __host__ __device__ float operator+(const float fa, hipblaslt_bf8 b)
 {
     return (fa + float(b));
 }
@@ -785,8 +364,16 @@ inline __host__ __device__ float operator+(hipblaslt_f8_fnuz a, const float fb)
 {
     return (float(a) + fb);
 }
+inline __host__ __device__ float operator+(hipblaslt_f8 a, const float fb)
+{
+    return (float(a) + fb);
+}
 
 inline __host__ __device__ float operator+(hipblaslt_bf8_fnuz a, const float fb)
+{
+    return (float(a) + fb);
+}
+inline __host__ __device__ float operator+(hipblaslt_bf8 a, const float fb)
 {
     return (float(a) + fb);
 }
@@ -795,8 +382,16 @@ inline __host__ __device__ float operator+(hipblaslt_f8_fnuz a, hipblaslt_bf8_fn
 {
     return (float(a) + float(b));
 }
+inline __host__ __device__ float operator+(hipblaslt_f8 a, hipblaslt_bf8 b)
+{
+    return (float(a) + float(b));
+}
 
 inline __host__ __device__ float operator+(hipblaslt_bf8_fnuz a, hipblaslt_f8_fnuz b)
+{
+    return (float(a) + float(b));
+}
+inline __host__ __device__ float operator+(hipblaslt_bf8 a, hipblaslt_f8 b)
 {
     return (float(a) + float(b));
 }
@@ -805,15 +400,27 @@ inline __host__ __device__ hipblaslt_f8_fnuz operator+(hipblaslt_f8_fnuz a, hipb
 {
     return hipblaslt_f8_fnuz(float(a) + float(b));
 }
+inline __host__ __device__ hipblaslt_f8 operator+(hipblaslt_f8 a, hipblaslt_f8 b)
+{
+    return hipblaslt_f8(float(a) + float(b));
+}
 
 inline __host__ __device__ hipblaslt_bf8_fnuz operator+(hipblaslt_bf8_fnuz a, hipblaslt_bf8_fnuz b)
 {
     return hipblaslt_bf8_fnuz(float(a) + float(b));
 }
+inline __host__ __device__ hipblaslt_bf8 operator+(hipblaslt_bf8 a, hipblaslt_bf8 b)
+{
+    return hipblaslt_bf8(float(a) + float(b));
+}
 
 inline __host__ __device__ hipblaslt_f8_fnuz& operator+=(hipblaslt_f8_fnuz& a, hipblaslt_f8_fnuz b)
 {
     return a = hipblaslt_f8_fnuz(float(a) + float(b));
+}
+inline __host__ __device__ hipblaslt_f8& operator+=(hipblaslt_f8& a, hipblaslt_f8 b)
+{
+    return a = hipblaslt_f8(float(a) + float(b));
 }
 
 inline __host__ __device__ hipblaslt_bf8_fnuz& operator+=(hipblaslt_bf8_fnuz& a,
@@ -821,9 +428,18 @@ inline __host__ __device__ hipblaslt_bf8_fnuz& operator+=(hipblaslt_bf8_fnuz& a,
 {
     return a = hipblaslt_bf8_fnuz(float(a) + float(b));
 }
+inline __host__ __device__ hipblaslt_bf8& operator+=(hipblaslt_bf8& a,
+                                                     hipblaslt_bf8  b)
+{
+    return a = hipblaslt_bf8(float(a) + float(b));
+}
 
 // overloading multiplication, always returns float,
 inline __host__ __device__ float operator*(hipblaslt_f8_fnuz a, hipblaslt_f8_fnuz b)
+{
+    return float(a) * float(b);
+}
+inline __host__ __device__ float operator*(hipblaslt_f8 a, hipblaslt_f8 b)
 {
     return float(a) * float(b);
 }
@@ -832,8 +448,16 @@ inline __host__ __device__ float operator*(float a, hipblaslt_f8_fnuz b)
 {
     return (a * float(b));
 }
+inline __host__ __device__ float operator*(float a, hipblaslt_f8 b)
+{
+    return (a * float(b));
+}
 
 inline __host__ __device__ float operator*(hipblaslt_f8_fnuz a, float b)
+{
+    return (float(a) * b);
+}
+inline __host__ __device__ float operator*(hipblaslt_f8 a, float b)
 {
     return (float(a) * b);
 }
@@ -842,8 +466,16 @@ inline __host__ __device__ float operator*(int32_t a, hipblaslt_f8_fnuz b)
 {
     return ((float)a * float(b));
 }
+inline __host__ __device__ float operator*(int32_t a, hipblaslt_f8 b)
+{
+    return ((float)a * float(b));
+}
 
 inline __host__ __device__ float operator*(double a, hipblaslt_f8_fnuz b)
+{
+    return ((float)a * float(b));
+}
+inline __host__ __device__ float operator*(double a, hipblaslt_f8 b)
 {
     return ((float)a * float(b));
 }
@@ -852,8 +484,16 @@ inline __host__ __device__ float operator*(hipblaslt_bf8_fnuz a, hipblaslt_bf8_f
 {
     return float(a) * float(b);
 }
+inline __host__ __device__ float operator*(hipblaslt_bf8 a, hipblaslt_bf8 b)
+{
+    return float(a) * float(b);
+}
 
 inline __host__ __device__ float operator*(float a, hipblaslt_bf8_fnuz b)
+{
+    return (a * float(b));
+}
+inline __host__ __device__ float operator*(float a, hipblaslt_bf8 b)
 {
     return (a * float(b));
 }
@@ -862,13 +502,25 @@ inline __host__ __device__ float operator*(hipblaslt_bf8_fnuz a, float b)
 {
     return (float(a) * b);
 }
+inline __host__ __device__ float operator*(hipblaslt_bf8 a, float b)
+{
+    return (float(a) * b);
+}
 
 inline __host__ __device__ float operator*(int32_t a, hipblaslt_bf8_fnuz b)
 {
     return ((float)a * float(b));
 }
+inline __host__ __device__ float operator*(int32_t a, hipblaslt_bf8 b)
+{
+    return ((float)a * float(b));
+}
 
 inline __host__ __device__ float operator*(double a, hipblaslt_bf8_fnuz b)
+{
+    return ((float)a * float(b));
+}
+inline __host__ __device__ float operator*(double a, hipblaslt_bf8 b)
 {
     return ((float)a * float(b));
 }
@@ -878,8 +530,16 @@ inline __host__ __device__ float operator*(hipblaslt_f8_fnuz a, hipblaslt_bf8_fn
 {
     return float(a) * float(b);
 }
+inline __host__ __device__ float operator*(hipblaslt_f8 a, hipblaslt_bf8 b)
+{
+    return float(a) * float(b);
+}
 
 inline __host__ __device__ float operator*(hipblaslt_bf8_fnuz a, hipblaslt_f8_fnuz b)
+{
+    return float(a) * float(b);
+}
+inline __host__ __device__ float operator*(hipblaslt_bf8 a, hipblaslt_f8 b)
 {
     return float(a) * float(b);
 }
@@ -887,23 +547,43 @@ inline __host__ __device__ float operator*(hipblaslt_bf8_fnuz a, hipblaslt_f8_fn
 // overloading for compare
 inline __host__ __device__ bool operator==(hipblaslt_f8_fnuz a, hipblaslt_f8_fnuz b)
 {
-    return (a.data == b.data);
+    return (a.__x == b.__x);
+}
+inline __host__ __device__ bool operator==(hipblaslt_f8 a, hipblaslt_f8 b)
+{
+    return (a.__x == b.__x);
 }
 inline __host__ __device__ bool operator==(hipblaslt_bf8_fnuz a, hipblaslt_bf8_fnuz b)
 {
-    return (a.data == b.data);
+    return (a.__x == b.__x);
+}
+inline __host__ __device__ bool operator==(hipblaslt_bf8 a, hipblaslt_bf8 b)
+{
+    return (a.__x == b.__x);
 }
 
 inline __host__ __device__ bool operator!=(hipblaslt_f8_fnuz a, hipblaslt_f8_fnuz b)
 {
-    return (a.data != b.data);
+    return (a.__x != b.__x);
+}
+inline __host__ __device__ bool operator!=(hipblaslt_f8 a, hipblaslt_f8 b)
+{
+    return (a.__x != b.__x);
 }
 inline __host__ __device__ bool operator!=(hipblaslt_bf8_fnuz a, hipblaslt_bf8_fnuz b)
 {
-    return (a.data != b.data);
+    return (a.__x != b.__x);
+}
+inline __host__ __device__ bool operator!=(hipblaslt_bf8 a, hipblaslt_bf8 b)
+{
+    return (a.__x != b.__x);
 }
 
 inline __host__ __device__ bool operator>=(hipblaslt_f8_fnuz a, hipblaslt_f8_fnuz b)
+{
+    return static_cast<float>(a) >= static_cast<float>(b);
+}
+inline __host__ __device__ bool operator>=(hipblaslt_f8 a, hipblaslt_f8 b)
 {
     return static_cast<float>(a) >= static_cast<float>(b);
 }
@@ -911,220 +591,10 @@ inline __host__ __device__ bool operator>(hipblaslt_f8_fnuz a, hipblaslt_f8_fnuz
 {
     return static_cast<float>(a) > static_cast<float>(b);
 }
-
-#ifdef ROCM_USE_FLOAT8
-inline std::ostream& operator<<(std::ostream& os, const hipblaslt_f8& f8)
-{
-    return os << float(f8);
-}
-
-inline std::ostream& operator<<(std::ostream& os, const hipblaslt_bf8& bf8)
-{
-    return os << float(bf8);
-}
-
-// all + operator overloading with mixed types
-// mixed types, always converts to f32, does computation in f32, and returns float
-inline __host__ __device__ float operator+(const float fa, hipblaslt_f8 b)
-{
-    return (fa + float(b));
-}
-
-inline __host__ __device__ float operator+(const float fa, hipblaslt_bf8 b)
-{
-    return (fa + float(b));
-}
-
-inline __host__ __device__ float operator+(hipblaslt_f8 a, const float fb)
-{
-    return (float(a) + fb);
-}
-
-inline __host__ __device__ float operator+(hipblaslt_bf8 a, const float fb)
-{
-    return (float(a) + fb);
-}
-
-inline __host__ __device__ float operator+(hipblaslt_f8 a, hipblaslt_bf8 b)
-{
-    return (float(a) + float(b));
-}
-
-inline __host__ __device__ float operator+(hipblaslt_bf8 a, hipblaslt_f8 b)
-{
-    return (float(a) + float(b));
-}
-
-inline __host__ __device__ hipblaslt_f8 operator+(hipblaslt_f8 a, hipblaslt_f8 b)
-{
-    return hipblaslt_f8(float(a) + float(b));
-}
-
-inline __host__ __device__ hipblaslt_bf8 operator+(hipblaslt_bf8 a, hipblaslt_bf8 b)
-{
-    return hipblaslt_bf8(float(a) + float(b));
-}
-
-inline __host__ __device__ hipblaslt_f8& operator+=(hipblaslt_f8& a, hipblaslt_f8 b)
-{
-    return a = hipblaslt_f8(float(a) + float(b));
-}
-
-inline __host__ __device__ hipblaslt_bf8& operator+=(hipblaslt_bf8& a, hipblaslt_bf8 b)
-{
-    return a = hipblaslt_bf8(float(a) + float(b));
-}
-
-// overloading multiplication, always returns float,
-inline __host__ __device__ float operator*(hipblaslt_f8 a, hipblaslt_f8 b)
-{
-    return float(a) * float(b);
-}
-
-inline __host__ __device__ float operator*(float a, hipblaslt_f8 b)
-{
-    return (a * float(b));
-}
-
-inline __host__ __device__ float operator*(hipblaslt_f8 a, float b)
-{
-    return (float(a) * b);
-}
-
-inline __host__ __device__ float operator*(int32_t a, hipblaslt_f8 b)
-{
-    return ((float)a * float(b));
-}
-
-inline __host__ __device__ float operator*(double a, hipblaslt_f8 b)
-{
-    return ((float)a * float(b));
-}
-
-inline __host__ __device__ float operator*(hipblaslt_bf8 a, hipblaslt_bf8 b)
-{
-    return float(a) * float(b);
-}
-
-inline __host__ __device__ float operator*(float a, hipblaslt_bf8 b)
-{
-    return (a * float(b));
-}
-
-inline __host__ __device__ float operator*(hipblaslt_bf8 a, float b)
-{
-    return (float(a) * b);
-}
-
-inline __host__ __device__ float operator*(int32_t a, hipblaslt_bf8 b)
-{
-    return ((float)a * float(b));
-}
-
-inline __host__ __device__ float operator*(double a, hipblaslt_bf8 b)
-{
-    return ((float)a * float(b));
-}
-
-// overloading for mixed f8 and bf8 types
-inline __host__ __device__ float operator*(hipblaslt_f8 a, hipblaslt_bf8 b)
-{
-    return float(a) * float(b);
-}
-
-inline __host__ __device__ float operator*(hipblaslt_bf8 a, hipblaslt_f8 b)
-{
-    return float(a) * float(b);
-}
-
-// overloading for compare
-inline __host__ __device__ bool operator==(hipblaslt_f8 a, hipblaslt_f8 b)
-{
-    return (a.data == b.data);
-}
-inline __host__ __device__ bool operator==(hipblaslt_bf8 a, hipblaslt_bf8 b)
-{
-    return (a.data == b.data);
-}
-
-inline __host__ __device__ bool operator!=(hipblaslt_f8 a, hipblaslt_f8 b)
-{
-    return (a.data != b.data);
-}
-inline __host__ __device__ bool operator!=(hipblaslt_bf8 a, hipblaslt_bf8 b)
-{
-    return (a.data != b.data);
-}
-
-inline __host__ __device__ bool operator>=(hipblaslt_f8 a, hipblaslt_f8 b)
-{
-    return static_cast<float>(a) >= static_cast<float>(b);
-}
 inline __host__ __device__ bool operator>(hipblaslt_f8 a, hipblaslt_f8 b)
 {
     return static_cast<float>(a) > static_cast<float>(b);
 }
-#endif
-// ================ Explicit downcasting to support different rounding (RNE, SR) ===============
-// NOTE: we going to remove all assignment operator overloading from other types and enforce
-// this explicit_downcast function to make any rounding behavior default
-// We have to explicitly call this function with SR flag
-/*
-template <typename T,
-          typename Ta,
-          bool stochastic_rounding,
-          typename std::enable_if<std::is_same<T, Ta>{}, int>::type = 0>
-inline __host__ __device__ T explicit_downcast(Ta a, uint32_t rng = 0)
-{
-    // same type, no conversion
-    return a;
-}
-
-// Use h/w intrinsic and optimized version when __gfx940__
-template <
-    typename T,
-    typename Ta,
-    bool stochastic_rounding,
-    typename std::enable_if<(!(std::is_same<T, Ta>{})
-                             && (std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_bf8_fnuz>{})),
-                            int>::type
-    = 0>
-inline __host__ __device__ T explicit_downcast(Ta a, uint32_t rng)
-{
-#if defined(__gfx940__)
-    // NOTE: we are directly calling cast_to_f8_from_f32 instead of constructor to optimize away one runtime branch
-    T val;
-    if(std::is_same<T, hipblaslt_f8_fnuz>::value)
-        val.data = hipblaslt_f8_fnuz::cast_to_f8_from_f32<stochastic_rounding>(float(a), rng);
-    else
-        val.data = hipblaslt_bf8_fnuz::cast_to_bf8_from_f32<stochastic_rounding>(float(a), rng);
-    return val;
-#else // non gfx940
-    return T(float(a),
-             stochastic_rounding ? T::hipblaslt_hip_f8_rounding_mode::stochastic
-                                 : T::hipblaslt_hip_f8_rounding_mode::standard,
-             rng);
-#endif // __gfx940__
-}
-
-// NOTE NOTE: The above code is good if we don't consider HIP-GEMM code and only consider the quantization
-// However, if we need HIP-GEMM for fall-back, we would need explicit_cast handles Tacc=f32 to To=f16/bf16 conversion
-template <
-    typename T,
-    typename Ta,
-    bool stochastic_rounding,
-    typename std::enable_if<(!(std::is_same<T, Ta>{})
-                             && !(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_bf8_fnuz>{})),
-                            int>::type
-    = 0>
-inline __host__ __device__ T explicit_downcast(Ta a, uint32_t rng)
-{
-    // the return type is not a F8 types, no SR for those types
-    // not sure if we have direct conversion, so converting to float first
-    // no effect if the input type is float
-    return T(float(a));
-}
-*/
 // =================================================================================================
 
 #endif // __cplusplus < 201103L || (!defined(__HCC__) && !defined(__HIPCC__))

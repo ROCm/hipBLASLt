@@ -52,17 +52,29 @@ namespace TensileLite
     template struct TypedGemm<Half, Half, Half, Half, float, float, Float8BFloat8>;
     template struct TypedGemm<Half, Half, Half, Half, float, float, BFloat8Float8>;
     template struct TypedGemm<Float8, Float8, Float8, Float8, float, float>;
+    template struct TypedGemm<Float8_fnuz, Float8_fnuz, Float8_fnuz, Float8_fnuz, float, float>;
     template struct TypedGemm<Float8, Float8, BFloat8, BFloat8, float, float>;
+    template struct TypedGemm<Float8_fnuz, Float8_fnuz, BFloat8_fnuz, BFloat8_fnuz, float, float>;
     template struct TypedGemm<Float8, Float8, float, float>;
+    template struct TypedGemm<Float8_fnuz, Float8_fnuz, float, float>;
     template struct TypedGemm<BFloat8, BFloat8, BFloat8, BFloat8, float, float>;
+    template struct TypedGemm<BFloat8_fnuz, BFloat8_fnuz, BFloat8_fnuz, BFloat8_fnuz, float, float>;
     template struct TypedGemm<BFloat8, BFloat8, Float8, Float8, float, float>;
+    template struct TypedGemm<BFloat8_fnuz, BFloat8_fnuz, Float8_fnuz, Float8_fnuz, float, float>;
     template struct TypedGemm<BFloat8, BFloat8, float, float>;
+    template struct TypedGemm<BFloat8_fnuz, BFloat8_fnuz, float, float>;
     // hybrid
     template struct TypedGemm<Float8, BFloat8, Float8, Float8, float, float>;
+    template struct TypedGemm<Float8_fnuz, BFloat8_fnuz, Float8_fnuz, Float8_fnuz, float, float>;
     template struct TypedGemm<Float8, BFloat8, float, float>;
+    template struct TypedGemm<Float8_fnuz, BFloat8_fnuz, float, float>;
     template struct TypedGemm<BFloat8, Float8, Float8, Float8, float, float>;
+    template struct TypedGemm<BFloat8_fnuz, Float8_fnuz, Float8_fnuz, Float8_fnuz, float, float>;
     template struct TypedGemm<BFloat8, Float8, float, float>;
+    template struct TypedGemm<BFloat8_fnuz, Float8_fnuz, float, float>;
     template struct TypedGemm<Float8, BFloat8, BFloat8, BFloat8, float, float>;
+    template struct TypedGemm<Float8_fnuz, BFloat8_fnuz, BFloat8_fnuz, BFloat8_fnuz, float, float>;
     template struct TypedGemm<BFloat8, Float8, BFloat8, BFloat8, float, float>;
+    template struct TypedGemm<BFloat8_fnuz, Float8_fnuz, BFloat8_fnuz, BFloat8_fnuz, float, float>;
 #endif
 } // namespace TensileLite

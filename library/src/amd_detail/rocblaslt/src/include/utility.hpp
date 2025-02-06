@@ -64,6 +64,8 @@ constexpr const char* rocblaslt_datatype_string(hipDataType type)
     }
 }
 
+bool rocblaslt_is_complex_datatype(hipDataType type);
+
 constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
 {
     switch(type)
@@ -82,18 +84,22 @@ constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
         return "f32_f16_r";
     case rocblaslt_compute_f32_fast_bf16:
         return "f32_bf16_r";
-    case rocblaslt_compute_f32_fast_f8_ocp:
-    case rocblaslt_compute_f32_fast_f8_fnuz:
+    case rocblaslt_compute_f32_fast_f8:
         return "f32_f8_r";
-    case rocblaslt_compute_f32_fast_bf8_ocp:
+    case rocblaslt_compute_f32_fast_f8_fnuz:
+        return "f32_f8_fnuz_r";
+    case rocblaslt_compute_f32_fast_bf8:
+        return "f32_bf8_fnuz_r";
     case rocblaslt_compute_f32_fast_bf8_fnuz:
         return "f32_bf8_r";
-    case rocblaslt_compute_f32_fast_f8bf8_ocp:
-    case rocblaslt_compute_f32_fast_f8bf8_fnuz:
+    case rocblaslt_compute_f32_fast_f8bf8:
         return "f32_f8bf8_r";
-    case rocblaslt_compute_f32_fast_bf8f8_ocp:
-    case rocblaslt_compute_f32_fast_bf8f8_fnuz:
+    case rocblaslt_compute_f32_fast_f8bf8_fnuz:
+        return "f32_f8bf8_fnuz_r";
+    case rocblaslt_compute_f32_fast_bf8f8:
         return "f32_bf8f8_r";
+    case rocblaslt_compute_f32_fast_bf8f8_fnuz:
+        return "f32_bf8f8_fnuz_r";
     default:
         return "invalidType";
     }
@@ -107,6 +113,8 @@ constexpr const char* rocblaslt_transpose_letter(hipblasOperation_t op)
         return "N";
     case HIPBLAS_OP_T:
         return "T";
+    case HIPBLAS_OP_C:
+        return "C";
     default:
         return "invalidTranspose";
     }
@@ -202,7 +210,7 @@ void log_base(rocblaslt_layer_mode layer_mode, const char* func, H head, Ts&&...
     if(get_logger_layer_mode() & layer_mode)
     {
         std::lock_guard<std::mutex> lock(log_mutex);
-        std::string comma_separator = " ";
+        std::string                 comma_separator = " ";
 
         std::ostream* os = get_logger_os();
 
@@ -271,7 +279,7 @@ template <typename... Ts>
 void log_bench(const char* func, Ts&&... xs)
 {
     std::lock_guard<std::mutex> lock(log_mutex);
-    std::ostream* os = get_logger_os();
+    std::ostream*               os = get_logger_os();
     *os << "hipblaslt-bench ";
     log_arguments_bench(*os, std::forward<Ts>(xs)...);
     *os << std::endl;
@@ -478,5 +486,60 @@ bool rocblaslt_internal_tensile_supports_ldc_ne_ldd(rocblaslt_handle handle);
 
 // for internal use during testing, fetch arch name
 //std::string rocblaslt_internal_get_arch_name();
+
+/*! \brief User defined client arguments.
+ *
+ * \details This class sets the value of flush and rotating size used in the client which could be further used in the logging, only for internal use.
+ */
+
+class UserClientArguments
+{
+private:
+    static bool    m_flush;
+    static int32_t m_rotatingBufferSize;
+    static int32_t m_coldIterations;
+    static int32_t m_hotIterations;
+
+public:
+    // Getter and setter for the flush member variable.
+    bool GetFlushValue() const
+    {
+        return m_flush;
+    }
+    void SetFlushValue(bool newFlush)
+    {
+        m_flush = newFlush;
+    }
+
+    // Getter and setter for the rotatingBufferSize member variable.
+    int32_t GetRotatingBufferSizeValue() const
+    {
+        return m_rotatingBufferSize;
+    }
+    void SetRotatingBufferSizeValue(int32_t newrotatingBufferSize)
+    {
+        m_rotatingBufferSize = newrotatingBufferSize;
+    }
+
+    // Getter and setter for the coldIterations member variable.
+    int32_t GetColdIterationsValue() const
+    {
+        return m_coldIterations;
+    }
+    void SetColdIterationsValue(int32_t newColdIterations)
+    {
+        m_coldIterations = newColdIterations;
+    }
+
+    // Getter and setter for the hotIterations member variable.
+    int32_t GetHotIterationsValue() const
+    {
+        return m_hotIterations;
+    }
+    void SetHotIterationsValue(int32_t newHotIterations)
+    {
+        m_hotIterations = newHotIterations;
+    }
+};
 
 #endif // UTILITY_H

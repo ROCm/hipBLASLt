@@ -89,7 +89,7 @@ namespace TensileLite
 
         template <typename MyProblem, typename MySolution, typename IO>
         const typename dsmt<MyProblem, MySolution, IO>::SubclassMap
-            dsmt<MyProblem, MySolution, IO>::subclasses
+            SubclassMappingTraits<SolutionLibrary<MyProblem, MySolution>, IO>::subclasses
             = dsmt<MyProblem, MySolution, IO>::GetSubclasses();
 
         template <typename MyProblem, typename MySolution, typename IO>

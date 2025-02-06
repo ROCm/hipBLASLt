@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,8 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .Base import getGfxName, getCOVFromParam
+import warnings
+from .Base import getGfxName
 from .Code import Module
 from .Containers import HolderContainer, RegisterContainer, RegName
 from .DataType import DataType
@@ -235,33 +236,3 @@ def replaceHolder(module, dst):
 
     return module
 
-def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, \
-    isa: Tuple[int, int, int], wavefrontSize: int, \
-    sourceFileName: str, objectFileName: str, *moreArgs, debug: bool=False):
-    launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
-    rv = launcher + [assemblerPath, '-x', 'assembler', '-target', 'amdgcn-amd-amdhsa']
-
-    rv += ['-mcode-object-version=%s'% getCOVFromParam(codeObjectVersion)]
-
-    rv += ['-mcpu=' + getGfxName(isa)]
-
-    if wavefrontSize == 64:
-        rv += ['-mwavefrontsize64']
-    else:
-        rv += ['-mno-wavefrontsize64']
-
-    rv += moreArgs
-
-    if debug:
-        rv += ['-g',]
-
-    rv += ['-c', '-o', objectFileName, sourceFileName]
-    return rv
-
-def getAsmLinkCodeObjectArgs(assemblerPath: str, objectFileNames: List[str], \
-    coFileName: str, buildIdKind: str, *moreArgs):
-    rv = [assemblerPath, '-target', 'amdgcn-amd-amdhsa']
-    rv += ["-Xlinker", "--build-id=%s"%(buildIdKind)]
-    rv += moreArgs
-    rv += ['-o', coFileName] + objectFileNames
-    return rv

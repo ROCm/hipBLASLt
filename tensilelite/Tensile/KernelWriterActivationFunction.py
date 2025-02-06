@@ -29,8 +29,9 @@ from .KernelWriterBase import KernelWriterBase
 
 class KernelWriterActivationFunction(KernelWriterBase):
 
-  def __init__(self, state):
+  def __init__(self, state, cxxCompiler: str):
     super().__init__()
+    self.cxxCompiler = cxxCompiler
     self.state["ProblemType"] = deepcopy(state["ProblemType"])
     self.state["Kernel"] = state["Kernel"]
     self._tf = TensileInstructions()
@@ -94,11 +95,11 @@ class KernelWriterActivationFunction(KernelWriterBase):
 
     isa = tuple(self.state["Kernel"]["ISA"])
     if not self._tf.isInit():
-      self._tf.init(isa, globalParameters["AssemblerPath"])
+      self._tf.init(isa, self.cxxCompiler)
     self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
 
     for arch in self.supportedArchs:
-      self._tf.init(arch, globalParameters["AssemblerPath"])
+      self._tf.init(arch, self.cxxCompiler)
       self._tf.setKernelInfo(arch, self.state["Kernel"]["WavefrontSize"])
       activationStrList.append(activation.generateInlineAssemblyBody(spaces, activationType))
 
@@ -139,7 +140,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
       return fileString
 
     isa = tuple(self.state["Kernel"]["ISA"])
-    self._tf.init(isa, globalParameters["AssemblerPath"])
+    self._tf.init(isa, self.cxxCompiler)
     self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
 
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
@@ -148,12 +149,6 @@ class KernelWriterActivationFunction(KernelWriterBase):
     activation = ActivationInline(activationCDataType, not self.state["ProblemType"]["ActivationNoGuard"])
 
     fileString = "" # CHeader
-    if not globalParameters["MergeFiles"]:
-      fileString += CHeader
-      fileString += "#pragma once\n\n"
-      fileString += "#include \"Tensile%sActivationEnum_%s.h\"\n"%(self.actGradientPrefix, activationCDataType.toChar())
-      fileString += "\n"
-
     fileString += "#pragma clang diagnostic push\n"
     fileString += "#pragma clang diagnostic ignored \"-Winline-asm\"\n"
     fileString += self.functionSignature()

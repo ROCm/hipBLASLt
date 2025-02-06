@@ -47,18 +47,6 @@ bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
     return std::regex_search(gpu_arch.data(), arch_regex);
 }
 
-inline
-bool IsOCPSupported()
-{
-    int             deviceId;
-    hipDeviceProp_t deviceProperties;
-    static_cast<void>(hipGetDevice(&deviceId));
-    static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-    if(gpu_arch_match(deviceProperties.gcnArchName, "12\\d{2}"))
-        return true;
-    return false;
-}
-
 HIPBLASLT_EXPORT
 constexpr const char* hipblas_status_to_string(hipblasStatus_t status)
 {
@@ -97,6 +85,7 @@ constexpr const char* hipblas_operation_to_string(hipblasOperation_t value)
     case HIPBLAS_OP_T:
         return "T";
     case HIPBLAS_OP_C:
+        return "C";
     default:
         return "invalid";
     }
@@ -115,6 +104,7 @@ constexpr hipblasOperation_t char_to_hipblas_operation(char value)
         return HIPBLAS_OP_T;
     case 'C':
     case 'c':
+        return HIPBLAS_OP_C;
     default:
         return HIPBLASLT_OPERATION_INVALID;
     }
@@ -139,9 +129,9 @@ constexpr const char* hip_datatype_to_string(hipDataType type)
     case HIP_R_32I:
         return "i32_r";
     case HIP_R_8F_E4M3_FNUZ:
-        return "f8_r";
+        return "f8_fnuz_r";
     case HIP_R_8F_E5M2_FNUZ:
-        return "bf8_r";
+        return "bf8_fnuz_r";
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
         return "f8_r";
@@ -184,22 +174,25 @@ constexpr const char* hipblas_computetype_to_string(hipblasComputeType_t type)
 HIPBLASLT_EXPORT
 constexpr hipDataType string_to_hip_datatype(const std::string& value)
 {
+    if (value == "f8_fnuz_r")
+    {
+        return HIP_R_8F_E4M3_FNUZ;
+    }
+    else if (value == "bf8_fnuz_r")
+    {
+        return HIP_R_8F_E5M2_FNUZ;
+    }
+
+#ifdef ROCM_USE_FLOAT8
     if (value == "f8_r")
     {
-#ifdef ROCM_USE_FLOAT8
-	if (IsOCPSupported())
-            return HIP_R_8F_E4M3;
-#endif
-        return HIP_R_8F_E4M3_FNUZ;
+        return HIP_R_8F_E4M3;
     }
     else if (value == "bf8_r")
     {
-#ifdef ROCM_USE_FLOAT8
-        if(IsOCPSupported())
-            return HIP_R_8F_E5M2;
-#endif
-        return HIP_R_8F_E5M2_FNUZ;
+        return HIP_R_8F_E5M2;
     }
+#endif
 
     return
         value == "f32_r" || value == "s" ? HIP_R_32F  :

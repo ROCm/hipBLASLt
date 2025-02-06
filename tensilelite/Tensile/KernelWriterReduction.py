@@ -65,15 +65,6 @@ class KernelWriterReduction(KernelWriterBase):
 
     def getHeaderFileString(self):
         fileString = "" # CHeader
-        if not globalParameters["MergeFiles"]:
-            fileString += CHeader
-            fileString += "#pragma once\n\n"
-            fileString += "\n"
-            fileString += "#include <KernelHeader.h>\n\n"
-            fileString += "#include <hip/hip_runtime.h>\n"
-            fileString += "#include <hip/hip_fp16.h>\n"
-            fileString += "\n"
-
         indexChars = globalParameters["IndexChars"]
         # C dimensions
         indicesStr = ""
@@ -101,11 +92,6 @@ class KernelWriterReduction(KernelWriterBase):
 
     def getSourceFileString(self):
         fileString = ""
-        if not globalParameters["MergeFiles"]:
-            fileString += "\n"
-            fileString += "#include \"%s.h\"\n" % self.kernelName
-            fileString += "\n"
-
         fileString += self.kernelBody()
 
         return (0, fileString)

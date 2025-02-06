@@ -287,6 +287,17 @@ struct RocblasltContractionProblem
                 this->bias_type = this->d_type;
             }
         }
+
+        if(this->trans_a == HIPBLAS_OP_C)
+        {
+            if(rocblaslt_is_complex_datatype(this->a_type))
+                this->trans_a = HIPBLAS_OP_T;
+        }
+        if(this->trans_b == HIPBLAS_OP_C)
+        {
+            if(rocblaslt_is_complex_datatype(this->b_type))
+                this->trans_b = HIPBLAS_OP_T;
+        }
     }
 };
 
@@ -462,9 +473,9 @@ inline TensileLite::DataType hipDataType_to_tensile_type(hipDataType type)
     case HIP_R_16BF:
         return TensileLite::DataType::BFloat16;
     case HIP_R_8F_E4M3_FNUZ:
-        return TensileLite::DataType::Float8;
+        return TensileLite::DataType::Float8_fnuz;
     case HIP_R_8F_E5M2_FNUZ:
-        return TensileLite::DataType::BFloat8;
+        return TensileLite::DataType::BFloat8_fnuz;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
         return TensileLite::DataType::Float8;
@@ -483,7 +494,7 @@ inline TensileLite::DataType hipDataType_to_tensile_type(hipDataType type)
 
 namespace
 {
-    TensileLite::DataType roc2TensileType(rocblaslt_compute_type);
+    TensileLite::DataType roc2TensileType(rocblaslt_compute_type, bool);
 }
 
 namespace TensileLite
