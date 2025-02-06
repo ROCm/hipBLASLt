@@ -590,7 +590,7 @@ namespace
             "--solution_index",
             solutionIndex,
             "--activation_type",
-            tensileActivationtType_to_bench_string(problem.gemms[0].getParams().activationEnum()));
+            tensileActivationtType_to_bench_string(problem.getParams().activationEnum()));
         
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             log_bench_from_str(s);
