@@ -62,7 +62,7 @@ class ToolchainDefaults(NamedTuple):
     C_COMPILER= osSelect(linux="amdclang", windows="clang.exe")
     OFFLOAD_BUNDLER= osSelect(linux="clang-offload-bundler", windows="clang-offload-bundler.exe")
     ASSEMBLER = osSelect(linux="amdclang++", windows="clang++.exe")
-    HIP_CONFIG = osSelect(linux="hipconfig", windows="hipconfig")
+    HIP_CONFIG = osSelect(linux="hipconfig", windows="hipconfig.exe")
 
 
 def _supportedComponent(component: str, targets: List[str]) -> bool:
