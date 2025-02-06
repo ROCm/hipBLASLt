@@ -23,10 +23,10 @@ GlobalParameters:
   KeepBuildTmp: True
 
 BenchmarkProblems:
-  - # F8SS NN
+  - # F8NSS NN
     -
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       # DataTypeA: F8
       # DataTypeB: h
       DestDataType: S
@@ -100,10 +100,10 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
 
-  - # F8SS NT ScaleAB=Vector ScaleCD ScaleAlpha Bias
+  - # F8NSS NT ScaleAB=Vector ScaleCD ScaleAlpha Bias
     -
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       # DataTypeA: F8
       # DataTypeB: h
       DestDataType: S
@@ -177,10 +177,10 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
 
-  - # F8HS TN ScaleAB=Vector ScaleCD ScaleAlpha Bias
+  - # F8NHS TN ScaleAB=Vector ScaleCD ScaleAlpha Bias
     -
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       # DataTypeA: F8
       # DataTypeB: h
       DestDataType: h
@@ -254,13 +254,13 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
 
-  - # F8F8S TT ScaleAB=Vector ScaleCD ScaleAlpha Bias
+  - # F8NF8NS TT ScaleAB=Vector ScaleCD ScaleAlpha Bias
     - # ProblemType
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       # DataTypeA: F8
       # DataTypeB: h
-      DestDataType: F8
+      DestDataType: F8N
       ComputeDataType: S
       HighPrecisionAccumulate: True
       TransposeA: 1
@@ -331,10 +331,10 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
 
-  - # B8SS TN ScaleAB=Vector ScaleCD ScaleAlpha Bias
+  - # B8NSS TN ScaleAB=Vector ScaleCD ScaleAlpha Bias
     -
       OperationType: GEMM
-      DataType: B8
+      DataType: B8N
       # DataTypeA: F8
       # DataTypeB: h
       DestDataType: S
@@ -408,11 +408,11 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
 
-  - # F8H_F8SS NN
+  - # F8NH_F8NSS NN
     -
       OperationType: GEMM
-      DataType: F8
-      DataTypeA: F8
+      DataType: F8N
+      DataTypeA: F8N
       DataTypeB: h
       DestDataType: S
       ComputeDataType: S
@@ -485,13 +485,13 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
 
-  - # F8F8S_SR NT ScaleAB=Vector ScaleCD ScaleAlpha Bias
+  - # F8NF8NS_SR NT ScaleAB=Vector ScaleCD ScaleAlpha Bias
     -
       OperationType: GEMM
-      DataType: F8
+      DataType: F8N
       # DataTypeA: F8
       # DataTypeB: h
-      DestDataType: F8
+      DestDataType: F8N
       ComputeDataType: S
       HighPrecisionAccumulate: True
       TransposeA: 0
@@ -563,10 +563,10 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
 
-  - # B8F8BS TN ScaleAB=Vector ScaleCD ScaleAlpha Bias
+  - # B8F8NBS TN ScaleAB=Vector ScaleCD ScaleAlpha Bias
     - # ProblemType
       OperationType: GEMM
-      DataType: B8F8
+      DataType: B8F8N
       # DataTypeA: F8
       # DataTypeB: h
       DestDataType: b
