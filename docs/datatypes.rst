@@ -28,6 +28,10 @@ hipblasLtMatmulDesc_t
 ---------------------
 .. doxygentypedef:: hipblasLtMatmulDesc_t
 
+hipblasLtOrder_t
+---------------------
+.. doxygenenum:: hipblasLtOrder_t
+
 hipblasLtMatmulDescAttributes_t
 -------------------------------
 .. doxygenenum:: hipblasLtMatmulDescAttributes_t

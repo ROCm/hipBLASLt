@@ -345,10 +345,23 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                     void*&                      scaleAlphaVec,
                                                     void*&                      E,
                                                     bool&                       gradient,
-                                                    rocblaslt_compute_type&     compute_type)
+                                                    rocblaslt_compute_type&     compute_type,
+                                                    bool                        swizzleA,
+                                                    bool                        swizzleB)
 {
     // Internal assign
     hipblasOperation_t opA = matmul_descr->op_A;
+    hipblasOperation_t opB = matmul_descr->op_B;
+
+    if(swizzleA && opA != HIPBLAS_OP_T)
+    {
+        return rocblaslt_status_invalid_value;
+    }
+
+    if(swizzleB && opB != HIPBLAS_OP_N)
+    {
+        return rocblaslt_status_invalid_value;
+    }
 
     // matrix A
     int64_t num_rows_a    = matA->m;
