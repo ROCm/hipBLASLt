@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -895,7 +895,21 @@ int test_hipblaslt(hipDataType                 in_datatype,
     if(validIdx.empty())
     {
         std::cerr << "No Solution found!" << std::endl;
-        return EXIT_FAILURE;
+        CHECK_HIP_ERROR(hipFree(d_n_vec));
+        CHECK_HIP_ERROR(hipFree(d_workspace));
+        CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
+
+        for(int i = 0; i < gemm_count; i++)
+        {
+            CHECK_HIP_ERROR(hipFree(da[i]));
+            CHECK_HIP_ERROR(hipFree(db[i]));
+            CHECK_HIP_ERROR(hipFree(dc[i]));
+            CHECK_HIP_ERROR(hipFree(dd[i]));
+            if(enable_bias[i])
+                CHECK_HIP_ERROR(hipFree(d_bias[i]));
+        }
+        CHECK_HIP_ERROR(hipStreamDestroy(stream));
+        return EXIT_SUCCESS;
     }
 
     // step2: get default DeviceUserArguments from grouped gemm objects
