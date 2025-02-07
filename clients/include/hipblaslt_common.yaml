@@ -378,6 +378,7 @@ Arguments:
   - use_e: c_bool
   - gradient: c_bool
   - norm_check_assert: c_bool
+  - swizzle_a: c_bool
   - use_ext: c_bool
   - use_ext_setproblem: c_bool
   - algo_method: c_int32
@@ -478,6 +479,7 @@ Defaults:
   amaxD: false
   grouped_gemm: 0
   norm_check_assert: true
+  swizzle_a: false
   use_ext: false
   use_ext_setproblem: false
   algo_method: 0
