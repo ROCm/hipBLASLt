@@ -665,17 +665,18 @@ namespace TensileLite
         }
 
         size_t getSwizzledTensorNumAllocatedElements(const TensorDescriptor& desc,
-                                                     size_t                  miM,
+                                                     size_t                  miM_N,
                                                      size_t                  miK,
                                                      size_t                  packK)
         {
-            const auto k        = desc.sizes()[0];
-            const auto m        = desc.sizes()[1];
-            const auto b        = desc.sizes()[2];
-            const auto swizzleK = miK * packK;
-            const auto paddedM  = (m + miM - 1) / miM * miM;
-            const auto paddedK  = (k + swizzleK - 1) / swizzleK * swizzleK;
-            return paddedM * paddedK * b;
+            // TODO: currently [0][1] = k, (m or n) is based on TN, need to make this generic in the future
+            const auto k         = desc.sizes()[0];
+            const auto m_n       = desc.sizes()[1];
+            const auto b         = desc.sizes()[2];
+            const auto swizzleK  = miK * packK;
+            const auto paddedM_N = (m_n + miM_N - 1) / miM_N * miM_N;
+            const auto paddedK   = (k + swizzleK - 1) / swizzleK * swizzleK;
+            return paddedM_N * paddedK * b;
         }
 
         double DataInitialization::GetRepresentativeBetaValue(po::variables_map const& args)
@@ -775,11 +776,12 @@ namespace TensileLite
                         if((problem.swizzleTensorA() && i == ContractionProblemGemm::TENSOR::A)
                            || (problem.swizzleTensorB() && i == ContractionProblemGemm::TENSOR::B))
                         {
-                            size_t MiM = 16;
-                            size_t MiK = 0, MiKv = 0, PackK = 0;
+                            //TODO: support more swizzle types,
+                            //      currently, if A then it means MiM = 16, if B then it means MiN = 16
+                            size_t MiM_N = 16, MiK = 0, MiKv = 0, PackK = 0;
                             calculateKforSwizzling(dataType, MiK, MiKv, PackK);
                             numAllocatedElements = getSwizzledTensorNumAllocatedElements(
-                                problem.tensors()[i], MiM, MiK, PackK);
+                                problem.tensors()[i], MiM_N, MiK, PackK);
                             numAllocatedBytes = numAllocatedElements * GetElementSize(dataType);
                         }
 
@@ -1327,12 +1329,13 @@ namespace TensileLite
                     if((problem.swizzleTensorA() && i == ContractionProblemGemm::TENSOR::A)
                        || (problem.swizzleTensorB() && i == ContractionProblemGemm::TENSOR::B))
                     {
-                        size_t MiM = 16;
-                        size_t MiK = 0, MiKv = 0, PackK = 0;
+                        //TODO: support more swizzle types,
+                        //      currently, if A then it means MiM = 16, if B then it means MiN = 16
+                        size_t MiM_N = 16, MiK = 0, MiKv = 0, PackK = 0;
                         calculateKforSwizzling(problem.tensors()[i].dataType(), MiK, MiKv, PackK);
                         padding = pUnit.maxElements
                                   - getSwizzledTensorNumAllocatedElements(
-                                      problem.tensors()[i], MiM, MiK, PackK);
+                                      problem.tensors()[i], MiM_N, MiK, PackK);
                     }
                 }
                 padding *= DataTypeInfo::Get(problem.tensors()[i].dataType()).elementSize;
@@ -1697,11 +1700,12 @@ namespace TensileLite
                         if(problem.swizzleTensorA() && i == ContractionProblemGemm::TENSOR::A
                            || (problem.swizzleTensorB() && i == ContractionProblemGemm::TENSOR::B))
                         {
-                            size_t MiM = 16;
-                            size_t MiK = 0, MiKv = 0, PackK = 0;
+                            //TODO: support more swizzle types,
+                            //      currently, if A then it means MiM = 16, if B then it means MiN = 16
+                            size_t MiM_N = 16, MiK = 0, MiKv = 0, PackK = 0;
                             calculateKforSwizzling(desc.dataType(), MiK, MiKv, PackK);
                             swizzlePadding
-                                = getSwizzledTensorNumAllocatedElements(desc, MiM, MiK, PackK)
+                                = getSwizzledTensorNumAllocatedElements(desc, MiM_N, MiK, PackK)
                                   - desc.totalAllocatedElements();
                         }
 
@@ -1886,8 +1890,8 @@ namespace TensileLite
                 if(needSwizzle)
                 {
                     using Tensor = Tensor::Manipulation::Tensor;
-                    size_t MiM   = 16;
-                    size_t MiK = 0, MiKv = 0, PackK = 0;
+                    // currently, if A then it means MiM = 16, if B then it means MiN = 16
+                    size_t MiM_N = 16, MiK = 0, MiKv = 0, PackK = 0;
                     calculateKforSwizzling(desc.dataType(), MiK, MiKv, PackK);
                     auto unrolledSize = desc.sizes()[0];
                     auto tiledSize    = desc.sizes()[1];
@@ -1895,15 +1899,15 @@ namespace TensileLite
 
                     memcpy(tmpTensor.as<void>(), p.cpuInput.valid.get(), tmpTensor.getNumBytes());
                     ::Tensor::Manipulation::Shape paddedShape{
-                        ((tiledSize / MiM) + !!(tiledSize % MiM)) * MiM,
+                        ((tiledSize / MiM_N) + !!(tiledSize % MiM_N)) * MiM_N,
                         (unrolledSize / (MiK * PackK) + !!(unrolledSize % (MiK * PackK))) * MiK
                             * PackK};
                     //Temporary hack
                     uint64_t padVal{};
                     auto     paddedTensor = ::Tensor::Manipulation::pad(
                         tmpTensor, paddedShape, &padVal, tmpTensor.getElementSize());
-                    paddedTensor.reshape({paddedShape[0] / MiM,
-                                          MiM,
+                    paddedTensor.reshape({paddedShape[0] / MiM_N,
+                                          MiM_N,
                                           paddedShape[1] / (MiK * PackK),
                                           MiK / MiKv,
                                           MiKv * PackK});
