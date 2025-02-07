@@ -24,27 +24,21 @@
 
 import math
 import os.path
+import subprocess
+import sys
 import time
 from collections import OrderedDict
 from copy import deepcopy
 
 from Tensile import __version__
 
+from .Architectures import gfxToIsa, isaToGfx
+from .Capabilities import initArchCaps, initAsmBugs, initAsmCaps
+from .Utilities import locateExe, versionIsCompatible
+
 startTime = time.time()
 
-# print level
-# 0 - user wants no printing
-# 1 - user wants limited prints
-# 2 - user wants full prints
-
-################################################################################
-# Global Parameters
-################################################################################
 globalParameters = OrderedDict()
-
-########################################
-# common
-########################################
 globalParameters["MinimumRequiredVersion"] = (
     "0.0.0"  # which version of tensile is required to handle all the features required by this configuration file
 )
@@ -1514,3 +1508,344 @@ defaultAnalysisParameters = {
     "LibraryType": "GridBased",
     "SolutionImportanceMin": 0.01,  # = 0.01=1% total time saved by keeping this solution
 }
+
+
+################################################################################
+# Printing
+# 0 - user wants no printing
+# 1 - user wants limited prints
+# 2 - user wants full prints
+################################################################################
+def print1(message):
+    if globalParameters["PrintLevel"] >= 1:
+        print(message)
+        sys.stdout.flush()
+
+
+def print2(message):
+    if globalParameters["PrintLevel"] >= 2:
+        print(message)
+        sys.stdout.flush()
+
+
+def printWarning(message):
+    print("Tensile::WARNING: %s" % message)
+    sys.stdout.flush()
+
+
+def printExit(message):
+    print("Tensile::FATAL: %s" % message)
+    sys.stdout.flush()
+    sys.exit(-1)
+
+
+################################################################################
+# Is query version compatible with current version
+# a yaml file is compatible with tensile if
+# tensile.major == yaml.major and tensile.minor.step > yaml.minor.step
+################################################################################
+def detectGlobalCurrentISA_(detectionTool):
+    """
+    Returns returncode if detection failure
+    """
+    global globalParameters
+
+    if globalParameters["CurrentISA"] == (0, 0, 0) and detectionTool:
+        process = subprocess.run([detectionTool], stdout=subprocess.PIPE)
+        if os.name == "nt":
+            line = ""
+            for line_in in process.stdout.decode().splitlines():
+                if "gcnArchName" in line_in:
+                    line += line_in.split()[1]
+                    break  # detemine if hipinfo will support multiple arch
+            arch = gfxToIsa(line.strip())
+            if arch is not None:
+                if arch in globalParameters["SupportedISA"]:
+                    print1("# Detected local GPU with ISA: " + isaToGfx(arch))
+                    globalParameters["CurrentISA"] = arch
+        else:
+            archList = []
+            for line in process.stdout.decode().split("\n"):
+                arch = gfxToIsa(line.strip())
+                if arch is not None:
+                    if arch in globalParameters["SupportedISA"]:
+                        print1("# Detected local GPU with ISA: " + isaToGfx(arch))
+                        archList.append(arch)
+            if len(archList) > 0:
+                globalParameters["CurrentISA"] = archList[globalParameters["Device"]]
+        if process.returncode:
+            printWarning("%s exited with code %u" % (detectionTool, process.returncode))
+        return process.returncode
+    return 0
+
+
+def detectGlobalCurrentISA():
+    """
+    Returns returncode if detection failure
+    """
+    errorCode = detectGlobalCurrentISA_(globalParameters["AMDGPUArchPath"])
+    if errorCode:
+        printWarning("Attempting to detect ISA with rocm_agent_enumerator")
+        return detectGlobalCurrentISA_(globalParameters["ROCmAgentEnumeratorPath"])
+    return errorCode
+
+
+def restoreDefaultGlobalParameters():
+    """
+    Restores `globalParameters` back to defaults.
+    """
+    global globalParameters
+    global defaultGlobalParameters
+    # Can't just assign globalParameters = deepcopy(defaultGlobalParameters) because that would
+    # result in dangling references, specifically in Tensile.Tensile().
+    globalParameters.clear()
+    for key, value in deepcopy(defaultGlobalParameters).items():
+        globalParameters[key] = value
+
+
+def printTable(rows):
+    rows = list([[str(cell) for cell in row] for row in rows])
+    colWidths = list([max([len(cell) for cell in col]) for col in zip(*rows)])
+
+    for row in rows:
+        for width, cell in zip(colWidths, row):
+            pad = " " * (width - len(cell))
+            print(pad, cell, sep="", end=" ")
+        print()
+
+
+def printCapTable(parameters):
+    import itertools
+
+    archs = [(0, 0, 0)] + parameters["SupportedISA"]
+    gfxNames = list(map(isaToGfx, archs))
+
+    headerRow = ["cap"] + gfxNames
+
+    def capRow(caps, cap):
+        return [cap] + [("1" if cap in caps[arch] and caps[arch][cap] else "0") for arch in archs]
+
+    allAsmCaps = set(
+        itertools.chain(*[caps.keys() for arch, caps in parameters["AsmCaps"].items()])
+    )
+    allAsmCaps = sorted(allAsmCaps, key=lambda k: (k.split("_")[-1], k))
+    asmCapRows = [capRow(parameters["AsmCaps"], cap) for cap in allAsmCaps]
+
+    allArchCaps = set(
+        itertools.chain(*[caps.keys() for arch, caps in parameters["ArchCaps"].items()])
+    )
+    allArchCaps = sorted(allArchCaps)
+    archCapRows = [capRow(parameters["ArchCaps"], cap) for cap in allArchCaps]
+
+    printTable([headerRow] + asmCapRows + archCapRows)
+
+
+def assignGlobalParameters(config, cxxCompiler=None):
+    """
+    Assign Global Parameters
+    Each global parameter has a default parameter, and the user
+    can override them, those overridings happen here
+    """
+
+    global globalParameters
+
+    # Minimum Required Version
+    if "MinimumRequiredVersion" in config:
+        if not versionIsCompatible(config["MinimumRequiredVersion"]):
+            printExit(
+                "Config file requires version=%s is not compatible with current Tensile version=%s"
+                % (config["MinimumRequiredVersion"], __version__)
+            )
+
+    # User-specified global parameters
+    print2("GlobalParameters:")
+    for key in globalParameters:
+        defaultValue = globalParameters[key]
+        if key in config:
+            configValue = config[key]
+            if configValue == defaultValue:
+                print2(" %24s: %8s (same)" % (key, configValue))
+            else:
+                print2(" %24s: %8s (overriden)" % (key, configValue))
+        else:
+            print2(" %24s: %8s (unspecified)" % (key, defaultValue))
+
+    globalParameters["ROCmPath"] = "/opt/rocm"
+    if "ROCM_PATH" in os.environ:
+        globalParameters["ROCmPath"] = os.environ.get("ROCM_PATH")
+    if "TENSILE_ROCM_PATH" in os.environ:
+        globalParameters["ROCmPath"] = os.environ.get("TENSILE_ROCM_PATH")
+    if os.name == "nt" and "HIP_DIR" in os.environ:
+        globalParameters["ROCmPath"] = os.environ.get("HIP_DIR")  # windows has no ROCM
+    globalParameters["CmakeCxxCompiler"] = None
+    if "CMAKE_CXX_COMPILER" in os.environ:
+        globalParameters["CmakeCxxCompiler"] = os.environ.get("CMAKE_CXX_COMPILER")
+    if "CMAKE_C_COMPILER" in os.environ:
+        globalParameters["CmakeCCompiler"] = os.environ.get("CMAKE_C_COMPILER")
+
+    globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
+
+    # ROCm AMD GPU Arch Path
+    # ROCm Agent Enumerator Path
+    if os.name == "nt":
+        globalParameters["AMDGPUArchPath"] = locateExe(
+            globalParameters["ROCmBinPath"], "hipinfo.exe"
+        )
+        globalParameters["ROCmAgentEnumeratorPath"] = locateExe(
+            globalParameters["ROCmBinPath"], "hipinfo.exe"
+        )
+    else:
+        globalParameters["AMDGPUArchPath"] = locateExe(
+            globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch"
+        )
+        globalParameters["ROCmAgentEnumeratorPath"] = locateExe(
+            globalParameters["ROCmBinPath"], "rocm_agent_enumerator"
+        )
+
+    globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
+    globalParameters["ROCmLdPath"] = locateExe(
+        os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld"
+    )
+
+    globalParameters["ExtractKernelPath"] = locateExe(
+        os.path.join(globalParameters["ROCmPath"], "hip/bin"), "extractkernel"
+    )
+
+    if "AMDGPUArchPath" in config:
+        globalParameters["AMDGPUArchPath"] = config["AMDGPUArchPath"]
+
+    if "AsanBuild" in config:
+        globalParameters["AsanBuild"] = config["AsanBuild"]
+
+    if "KeepBuildTmp" in config:
+        globalParameters["KeepBuildTmp"] = config["KeepBuildTmp"]
+
+    if "CodeObjectVersion" in config:
+        globalParameters["CodeObjectVersion"] = config["CodeObjectVersion"]
+
+    # read current gfx version
+    returncode = detectGlobalCurrentISA()
+    if globalParameters["CurrentISA"] == (0, 0, 0):
+        printWarning(
+            "Did not detect SupportedISA: %s; cannot benchmark assembly kernels."
+            % globalParameters["SupportedISA"]
+        )
+    if returncode:
+        if os.name == "nt":
+            globalParameters["CurrentISA"] = (9, 0, 6)
+            printWarning("Failed to detect ISA so forcing (gfx906) on windows")
+
+    globalParameters["AsmCaps"] = {}
+    globalParameters["ArchCaps"] = {}
+    globalParameters["AsmBugs"] = {}
+
+    for v in globalParameters["SupportedISA"] + [(0, 0, 0)]:
+        globalParameters["AsmCaps"][v] = initAsmCaps(v, cxxCompiler, False)
+        globalParameters["ArchCaps"][v] = initArchCaps(v)
+        globalParameters["AsmBugs"][v] = initAsmBugs(globalParameters["AsmCaps"][v])
+
+    if globalParameters["PrintLevel"] >= 1:
+        printCapTable(globalParameters)
+
+    globalParameters["SupportedISA"] = list(
+        [
+            i
+            for i in globalParameters["SupportedISA"]
+            if globalParameters["AsmCaps"][i]["SupportedISA"]
+        ]
+    )
+
+    validParameters["ISA"] = [(0, 0, 0), *globalParameters["SupportedISA"]]
+
+    # For ubuntu platforms, call dpkg to grep the version of hip-clang.  This check is platform specific, and in the future
+    # additional support for yum, dnf zypper may need to be added.  On these other platforms, the default version of
+    # '0.0.0' will persist
+
+    # Due to platform.linux_distribution() being deprecated, just try to run dpkg regardless.
+    # The alternative would be to install the `distro` package.
+    # See https://docs.python.org/3.7/library/platform.html#platform.linux_distribution
+
+    # The following try except block computes the hipcc version
+    # TODO: hipcc is deprecated, this block should be removed.
+    try:
+        compiler = "hipcc"
+        output = subprocess.run(
+            [compiler, "--version"], check=True, stdout=subprocess.PIPE
+        ).stdout.decode()
+
+        for line in output.split("\n"):
+            if "HIP version" in line:
+                globalParameters["HipClangVersion"] = line.split()[2]
+                print1("# Found hipcc version " + globalParameters["HipClangVersion"])
+
+    except (subprocess.CalledProcessError, OSError) as e:
+        printWarning("Error: {} running {} {} ".format("hipcc", "--version", e))
+
+    # The following keys may be present in the config, but are not (or no longer) global parameters.
+    ignoreKeys = [
+        "UseCompression",
+        "CxxCompiler",
+        "CCompiler",
+        "OffloadBundler",
+        "Assembler",
+        "LogicPath",
+        "LogicFilter",
+        "OutputPath",
+        "Experimental",
+        "GenSolTable",
+    ]
+    for key in config:
+        if key in ignoreKeys:
+            continue
+        value = config[key]
+        if key not in globalParameters:
+            printWarning("Global parameter %s = %s unrecognised." % (key, value))
+        globalParameters[key] = value
+
+
+def setupRestoreClocks():
+    import atexit
+
+    def restoreClocks():
+        if globalParameters["PinClocks"]:
+            rsmi = globalParameters["ROCmSMIPath"]
+            subprocess.call([rsmi, "-d", "0", "--resetclocks"])
+            subprocess.call([rsmi, "-d", "0", "--setfan", "50"])
+
+    atexit.register(restoreClocks)
+
+
+setupRestoreClocks()
+
+
+def assignParameterWithDefault(destinationDictionary, key, sourceDictionary, defaultDictionary):
+    if key in sourceDictionary:
+        destinationDictionary[key] = deepcopy(sourceDictionary[key])
+    else:
+        destinationDictionary[key] = deepcopy(defaultDictionary[key])
+
+
+def checkParametersAreValid(param, validParams):
+    """Ensures paramaters in params exist and have valid values as specified by validParames"""
+    (name, values) = param
+    if name == "ProblemSizes":
+        return
+    elif name == "InternalSupportParams":
+        return
+
+    if name not in validParams:
+        printExit(
+            "Invalid parameter name: {}\nValid parameters are {}.".format(
+                name, sorted(validParameters.keys())
+            )
+        )
+
+    for value in values:
+        if validParams[name] != -1 and value not in validParams[name]:
+            msgBase = "Invalid parameter value: {} = {}\nValid values for {} are {}{}."
+            msgExt = (
+                " (only first 32 combos printed)\nRefer to Common.py for more info"
+                if len(validParams[name]) > 32
+                else ""
+            )
+            printExit(msgBase.format(name, value, name, validParams[name][:32], msgExt))

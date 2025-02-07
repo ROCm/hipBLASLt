@@ -194,7 +194,7 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: 
   buildPath = ensurePath(outputPath / "build")
 
   runScriptName = writeRunScript(buildPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, buildPath, configPaths)
-  with ClientExecutionLock():
+  with ClientExecutionLock(globalParameters["ClientExecutionLockPath"]):
     process = subprocess.Popen(runScriptName, cwd=buildPath)
     process.communicate()
 

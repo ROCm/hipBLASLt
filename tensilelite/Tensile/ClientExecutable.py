@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -44,13 +44,13 @@ class CMakeEnvironment:
         args += [self.sourceDir]
 
         print2(' '.join(args))
-        with ClientExecutionLock():
+        with ClientExecutionLock(globalParameters["ClientExecutionLockPath"]):
             subprocess.check_call(args, cwd=ensurePath(self.buildDir))
 
     def build(self):
         args = ['make', '-j']
         print2(' '.join(args))
-        with ClientExecutionLock():
+        with ClientExecutionLock(globalParameters["ClientExecutionLockPath"]):
             subprocess.check_call(args, cwd=self.buildDir)
 
     def builtPath(self, path, *paths):
@@ -58,7 +58,7 @@ class CMakeEnvironment:
 
 def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cCompiler: str):
     sourcedir = SOURCE_PATH
-    
+
     builddir = ensurePath(builddir)
 
     options = {'CMAKE_BUILD_TYPE': globalParameters["CMakeBuildType"],
