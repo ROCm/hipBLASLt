@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,7 @@ from . import LibraryIO
 
 from . import ClientWriter
 from .Common import assignGlobalParameters, ensurePath, globalParameters, \
-    printExit, getGfxName, getGfxCommonName
+    printExit, isaToGfx, gfxToSwCodename
 from .SolutionStructs import ProblemSizes
 from .Toolchain.Validators import ToolchainDefaults, validateToolchain
 
@@ -68,8 +68,8 @@ def GenerateSummations(userArgs):
     cxxCompiler, cCompiler = validateToolchain(ToolchainDefaults.CXX_COMPILER, ToolchainDefaults.C_COMPILER)
 
     currentISA = globalParameters["CurrentISA"]
-    gfxName = getGfxName(currentISA)
-    commonName = getGfxCommonName(gfxName)
+    gfxName = isaToGfx(currentISA)
+    commonName = gfxToSwCodename(gfxName)
 
     globPath = os.path.join(inputLogicPath, "{}*".format(commonName))
     logicFileNames = glob.glob(globPath)

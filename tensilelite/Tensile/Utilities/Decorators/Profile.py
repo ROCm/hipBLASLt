@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2016-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2016-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +24,24 @@
 
 import cProfile
 import pstats
-
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Callable, Tuple
 
 from .Shared import envVariableIsSet
 
 PROFILE_ENV_VAR = "TENSILE_PROFILE"
 
-def profile(func: Callable) -> Callable:
-    """Profiling decorator. 
 
-    Add ``@profile`` to mark a function for profiling; set the environment variable 
+def profile(func: Callable) -> Callable:
+    """Profiling decorator.
+
+    Add ``@profile`` to mark a function for profiling; set the environment variable
     TENSILE_PROFILE=ON to enable profiling decorated functions.
     """
     if not envVariableIsSet(PROFILE_ENV_VAR):
         return func
+
     def wrapper(*args, **kwargs):
         path, filename = initProfileArtifacts(func.__name__)
 
@@ -48,22 +49,23 @@ def profile(func: Callable) -> Callable:
         output = prof.runcall(func, *args, **kwargs)
         result = pstats.Stats(prof)
         result.sort_stats(pstats.SortKey.TIME)
-        result.dump_stats(path/filename)
+        result.dump_stats(path / filename)
 
         return output
+
     return wrapper
 
 
 def initProfileArtifacts(funcName: str) -> Tuple[Path, str]:
     """Initializes filenames and paths for profiling artifacts based on the current datetime
     Args:
-        funcName: The name of the function being profiled, nominally passed via func.__name__ 
+        funcName: The name of the function being profiled, nominally passed via func.__name__
     Returns:
         A tuple (path, filename) where the path is the artifact directory and filename is
         a .prof file with the profiling results.
     """
     dt = datetime.now(timezone.utc)
     filename = f"{funcName}-{dt.strftime('%Y-%m-%dT%H-%M-%SZ')}.prof"
-    path = Path().cwd()/f"profiling-results-{dt.strftime('%Y-%m-%d')}"
+    path = Path().cwd() / f"profiling-results-{dt.strftime('%Y-%m-%d')}"
     path.mkdir(exist_ok=True)
     return path, filename

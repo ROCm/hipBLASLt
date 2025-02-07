@@ -32,7 +32,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Union
 
-from ..Common import globalParameters, print2, ensurePath, SemanticVersion, getGfxName
+from ..Common import globalParameters, print2, ensurePath, SemanticVersion, isaToGfx
 from ..KernelWriterAssembly import KernelWriterAssembly
 from ..Toolchain.Validators import getVersion
 from ..SolutionStructs import Solution
@@ -206,7 +206,7 @@ def buildAssemblyCodeObjectFiles(
       if len(archKernels) == 0:
         continue
 
-      gfx = getGfxName(arch)
+      gfx = isaToGfx(arch)
 
       objectFiles = [str(asmDir / (writer.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
       coFileMap = collections.defaultdict(list)

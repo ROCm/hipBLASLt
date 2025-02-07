@@ -22,25 +22,28 @@
 #
 ################################################################################
 
-from typing import Callable
 from timeit import default_timer as timer
+from typing import Callable
 
 from .Shared import envVariableIsSet
 
 TIMING_ENV_VAR: str = "TENSILE_PRINT_TIMING"
 
+
 def timing(func: Callable) -> Callable:
-  f"""Timing decorator to measure execution time of a function.
+    f"""Timing decorator to measure execution time of a function.
 
   Add ``@timing`` to mark a function for timing; set the environment variable
   {TIMING_ENV_VAR}=ON to enable timing decorated functions.
   """
-  if not envVariableIsSet(TIMING_ENV_VAR):
-    return func
-  def wrapper(*args, **kwargs):
-    start = timer()
-    res = func(*args, **kwargs)
-    end = timer()
-    print(f'{func.__name__} took {end - start} seconds')
-    return res
-  return wrapper
+    if not envVariableIsSet(TIMING_ENV_VAR):
+        return func
+
+    def wrapper(*args, **kwargs):
+        start = timer()
+        res = func(*args, **kwargs)
+        end = timer()
+        print(f"{func.__name__} took {end - start} seconds")
+        return res
+
+    return wrapper

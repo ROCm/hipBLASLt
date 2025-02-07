@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,7 @@
 from __future__ import print_function
 from os import path
 
-# Hardcoded tensilelite version
-# Also in Tensile/Source/TensileConfigVersion.cmake
+# Hardcoded tensilelite version, also in Tensile/Source/TensileConfigVersion.cmake
 __version__ = "4.33.0"
 
 ROOT_PATH: str = path.dirname(__file__)
@@ -37,4 +36,4 @@ CUSTOM_KERNEL_PATH: str = path.join(ROOT_PATH, "CustomKernels")
 def PrintTensileRoot():
     print(ROOT_PATH, end='')
 
-__all__ = ["__version__", "ROOT_PATH", "SOURCE_PATH"]
+__all__ = ["__version__", "ROOT_PATH", "SOURCE_PATH", "CUSTOM_KERNEL_PATH"]

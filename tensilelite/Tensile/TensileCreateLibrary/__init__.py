@@ -1,3 +1,1 @@
-from .Run import run
-from .Run import copyStaticFiles
-from .Run import writeSolutionsAndKernels
+from .Run import copyStaticFiles, run, writeSolutionsAndKernels

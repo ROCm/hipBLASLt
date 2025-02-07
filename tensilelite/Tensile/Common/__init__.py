@@ -1,10 +1,10 @@
 from .Architectures import *
-from .Utilities import *
-from .GlobalParameters import *
-from .Constants import *
 from .Capabilities import *
-from .Parallel import *
-from .Types import *
+from .Constants import *
 
 # Dunder variables are not exported via `*`
+from .GlobalParameters import *
 from .GlobalParameters import __version__
+from .Parallel import *
+from .Types import *
+from .Utilities import *

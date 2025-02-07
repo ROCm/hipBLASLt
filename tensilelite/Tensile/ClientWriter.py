@@ -34,7 +34,7 @@ from glob import glob
 from . import ROOT_PATH
 from . import ClientExecutable
 from . import LibraryIO
-from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, getGfxName
+from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx
 from .SolutionStructs import ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
 from .TensileCreateLibrary import copyStaticFiles
 from .Contractions import FreeIndex, BatchIndex
@@ -516,7 +516,7 @@ def writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs
           libraryFile = os.path.join(sourceDir, "library", libraryFilename)
         param("library-file", libraryFile)
 
-        currentGFXName = getGfxName(globalParameters["CurrentISA"])
+        currentGFXName = isaToGfx(globalParameters["CurrentISA"])
         for coFile in codeObjectFiles:
             if 'gfx' not in coFile or currentGFXName in coFile:
                 param("code-object", os.path.join(sourceDir,coFile))

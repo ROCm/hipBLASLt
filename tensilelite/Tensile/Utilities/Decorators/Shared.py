@@ -24,6 +24,7 @@
 
 import os
 
+
 def envVariableIsSet(varName: str) -> bool:
     """Checks if the provided environment variable is set to "YES", "ON", "TRUE", or "1"
     Args:

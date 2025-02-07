@@ -27,29 +27,42 @@ from .Types import IsaVersion
 
 # Translate GPU targets to filter filenames in Tensile_LOGIC directory
 architectureMap = {
-  'all':'_',
-  'gfx000':'none',
-  'gfx803':'r9nano',
-  'gfx900':'vega10',
-  'gfx906':'vega20', 'gfx906:xnack+':'vega20', 'gfx906:xnack-':'vega20',
-  'gfx908':'arcturus','gfx908:xnack+':'arcturus', 'gfx908:xnack-':'arcturus',
-  'gfx90a':'aldebaran', 'gfx90a:xnack+':'aldebaran', 'gfx90a:xnack-':'aldebaran',
-  'gfx940':'aquavanjaram', 'gfx940:xnack+':'aquavanjaram', 'gfx940:xnack-':'aquavanjaram',
-  'gfx941':'aquavanjaram', 'gfx941:xnack+':'aquavanjaram', 'gfx941:xnack-':'aquavanjaram',
-  'gfx942':'aquavanjaram', 'gfx942:xnack+':'aquavanjaram', 'gfx942:xnack-':'aquavanjaram',
-  'gfx1010':'navi10',
-  'gfx1011':'navi12',
-  'gfx1012':'navi14',
-  'gfx1030':'navi21',
-  'gfx1100':'navi31',
-  'gfx1101':'navi32',
-  'gfx1102':'navi33',
-  'gfx1200':'gfx1200',
-  'gfx1201':'gfx1201',
+    "all": "_",
+    "gfx000": "none",
+    "gfx803": "r9nano",
+    "gfx900": "vega10",
+    "gfx906": "vega20",
+    "gfx906:xnack+": "vega20",
+    "gfx906:xnack-": "vega20",
+    "gfx908": "arcturus",
+    "gfx908:xnack+": "arcturus",
+    "gfx908:xnack-": "arcturus",
+    "gfx90a": "aldebaran",
+    "gfx90a:xnack+": "aldebaran",
+    "gfx90a:xnack-": "aldebaran",
+    "gfx940": "aquavanjaram",
+    "gfx940:xnack+": "aquavanjaram",
+    "gfx940:xnack-": "aquavanjaram",
+    "gfx941": "aquavanjaram",
+    "gfx941:xnack+": "aquavanjaram",
+    "gfx941:xnack-": "aquavanjaram",
+    "gfx942": "aquavanjaram",
+    "gfx942:xnack+": "aquavanjaram",
+    "gfx942:xnack-": "aquavanjaram",
+    "gfx1010": "navi10",
+    "gfx1011": "navi12",
+    "gfx1012": "navi14",
+    "gfx1030": "navi21",
+    "gfx1100": "navi31",
+    "gfx1101": "navi32",
+    "gfx1102": "navi33",
+    "gfx1200": "gfx1200",
+    "gfx1201": "gfx1201",
 }
 
-def getGfxArch(name: str) -> Optional[IsaVersion]:
-    """Extracts the ISA version from a given GPU architecture name.
+
+def gfxToIsa(name: str) -> Optional[IsaVersion]:
+    """Extracts the ISA version from a given gfx architecture name.
 
     Args:
         name: The gfx name of the GPU architecture (e.g., 'gfx906').
@@ -58,9 +71,9 @@ def getGfxArch(name: str) -> Optional[IsaVersion]:
         An object representing the major, minor, and step version of the ISA.
             Returns None if the name does not match the expected pattern.
     """
-    match = re.search(r'gfx([0-9a-fA-F]{3,})', name)
-    if not match: 
-       return None
+    match = re.search(r"gfx([0-9a-fA-F]{3,})", name)
+    if not match:
+        return None
     ipart = match.group(1)
     step = int(ipart[-1], 16)
 
@@ -71,7 +84,8 @@ def getGfxArch(name: str) -> Optional[IsaVersion]:
     major = int(ipart)
     return tuple((major, minor, step))
 
-def getGfxName(arch: IsaVersion) -> str:
+
+def isaToGfx(arch: IsaVersion) -> str:
     """Converts an ISA version to a gfx architecture name.
 
     Args:
@@ -81,10 +95,11 @@ def getGfxName(arch: IsaVersion) -> str:
         The name of the GPU architecture (e.g., 'gfx906').
     """
     # Convert last digit to hex because reasons
-    name = str(arch[0]) + str(arch[1]) + ('%x' % arch[2])
-    return 'gfx' + ''.join(map(str,name))
+    name = str(arch[0]) + str(arch[1]) + ("%x" % arch[2])
+    return "gfx" + "".join(map(str, name))
 
-def getGfxCommonName(gfxName: str) -> Optional[str]:
+
+def gfxToSwCodename(gfxName: str) -> Optional[str]:
     """Retrieves the common name for a given gfx architecture name.
 
     Args:
