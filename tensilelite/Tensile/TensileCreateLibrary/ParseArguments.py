@@ -53,11 +53,13 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
                            help=f"Default: {ToolchainDefaults.CXX_COMPILER}")
     argParser.add_argument("--c-compiler",             dest="CCompiler",         action="store", default=ToolchainDefaults.C_COMPILER)
     argParser.add_argument("--cmake-cxx-compiler",     dest="CmakeCxxCompiler",  action="store")
+    argParser.add_argument("--roc-obj-extract",        dest="RocObjExtract",     action="store", default=ToolchainDefaults.ROC_OBJ_EXTRACT)
+    argParser.add_argument("--roc-obj-ls",             dest="RocObjLs",          action="store", default=ToolchainDefaults.ROC_OBJ_LS)
     argParser.add_argument("--offload-bundler",        dest="OffloadBundler",    action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER)
     argParser.add_argument("--assembler",              dest="Assembler",         action="store", default=ToolchainDefaults.ASSEMBLER)
     argParser.add_argument("--code-object-version",    dest="CodeObjectVersion", choices=["4", "5"], default="4", action="store")
     argParser.add_argument("--architecture",           dest="Architecture",      type=str, action="store", default="all", help="Supported archs: " + " ".join(architectureMap.keys()))
-    argParser.add_argument("--short-file-names",    dest="ShortNames",        action="store_true", default=False)
+    argParser.add_argument("--short-file-names",       dest="ShortNames",        action="store_true", default=False)
     argParser.add_argument("--no-compress",            dest="NoCompress",        action="store_true", help="Don't compress assembly code objects.")
     argParser.add_argument("--experimental",           dest="Experimental",      action="store_true",
                            help="Include logic files in directories named 'Experimental'.")
@@ -117,6 +119,8 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     arguments["CxxCompiler"] = args.CxxCompiler
     arguments["CCompiler"] = args.CCompiler
     arguments["OffloadBundler"] = args.OffloadBundler
+    arguments["RocObjExtract"] = args.RocObjExtract
+    arguments["RocObjLs"] = args.RocObjLs
     arguments["Assembler"] = args.Assembler
     arguments["LogicPath"] = args.LogicPath
     arguments["LogicFilter"] = args.LogicFilter

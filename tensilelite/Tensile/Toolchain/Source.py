@@ -32,17 +32,18 @@ from pathlib import Path
 from timeit import default_timer as timer
 from typing import List, Union
 
-from ..Common import globalParameters, print1, print2, ensurePath, splitArchs
+from ..Common import globalParameters, print2, printExit
 
 class SourceToolchain:
-    def __init__(self, compiler: str, bundler: str, buildIdKind: str, asanBuild: bool=False, saveTemps: bool=False):
+    def __init__(self, compiler: str, objDump: str, objLs: str, buildIdKind: str, asanBuild: bool=False, saveTemps: bool=False):
         self.compiler = compiler
-        self.bundler = bundler
+        self.objLs = objLs
+        self.objDump = objDump
         self.buildIdKind = buildIdKind
         self.asanBuild = asanBuild
         self.saveTemps = saveTemps
 
-    def invoke(self, args: List[str], desc: str=""):
+    def invoke(self, args: List[str], desc: str="", workingDir=None):
       """Invokes a subprocess with the provided arguments.
 
       Args:
@@ -54,7 +55,10 @@ class SourceToolchain:
       """
       print2(f"{desc}: {' '.join(args)}")
       try:
-          out = subprocess.check_output(args, stderr=subprocess.STDOUT)
+          if workingDir:
+            out = subprocess.check_output(args, stderr=subprocess.STDOUT, cwd=workingDir)
+          else:
+             out = subprocess.check_output(args, stderr=subprocess.STDOUT)
       except subprocess.CalledProcessError as err:
           raise RuntimeError(
               f"Error with {desc}: {err.output}\n"
@@ -63,30 +67,22 @@ class SourceToolchain:
       print2(f"Output: {out}")
       return out
 
-    def compile(self, srcPath: str, destPath: str, includePath: str, gfxs: List[str]):
-        """Compiles a source file into an object file.
-
-        Args:
-            cmdlineArchs: List of architectures for offloading.
-            kernelFile: The path to the kernel source file.
-            buildPath: The build directory path.
-            objectFilename: The name of the output object file.
-            outputPath: The output directory path.
-            globalParameters: A dictionary of global parameters.
-
-        Raises:
-            RuntimeError: If the compilation command fails.
-        """
+    def compile(self, srcPaths: List[str], destPath: str, includePath: str, gfxs: List[str]):
         launcher = shlex.split(os.environ.get("Tensile_CXX_COMPILER_LAUNCHER", ""))
 
         hipFlags = [
+            "-shared",
+            "-fPIC",
+            "-fgpu-rdc",
+            "-Xoffload-linker",
+            "--lto-partitions=16",
             "-D__HIP_HCC_COMPAT_MODE__=1",
-            "--offload-device-only",
-            "-x", "hip", "-O3",    
+            "-x", "hip", "-O3",
             "-I", includePath,
-            "-Xoffload-linker", f"--build-id={self.buildIdKind}",
             "-std=c++17",
+            "-parallel-jobs=64"
         ]
+
         if self.asanBuild:
             hipFlags.extend(["-fsanitize=address", "-shared-libasan", "-fuse-ld=lld"])
         if self.saveTemps:
@@ -96,75 +92,40 @@ class SourceToolchain:
 
         archFlags = [f"--offload-arch={gfx}" for gfx in gfxs]
 
-        args = [
-            *launcher, self.compiler, *hipFlags, *archFlags, srcPath, "-c", "-o", destPath
-        ]
+        args = [*launcher, self.compiler, *hipFlags, *archFlags]
+        args += srcPaths
+        args +=["-o", destPath]
 
         return self.invoke(args, f"Compiling HIP source kernels into objects (.cpp -> .o)")
 
 
-    def targets(self, objFile: str):
-        """Lists the target triples in an object file.
+    def list(self, sharedObjFile: str):
+        """Lists the code objects in shared object.
 
         Args:
-            objFile: The object file path.
+            sharedObjFile: Name of object file to list.
+
+        Returns:
+            List of objects embedded in shared object file.
+        """
+        args = [self.objLs, sharedObjFile]
+        return [e.strip().split()[1:] for e in self.invoke(args, f"Listing code objects in shared object", Path(sharedObjFile).parent).decode().split("\n") if e.strip().split()[1:]]
+
+
+    def extract(self, filename: str):
+        """Extracts code objects from a shared object.
+
+        Args:
+            objFile: Name pf object file to extract.
 
         Returns:
             List of target triples in the object file.
         """
-        args = [self.bundler, "--type=o", f"--input={objFile}", "-list"]
-        return self.invoke(args, f"Listing target triples in object file").decode().split("\n")
-
-    def unbundle(self, target: str, srcPath: str, destPath: str):
-        """Unbundles source code object files using the Clang Offload Bundler.
-
-        Args:
-            target: The target triple, see https://llvm.org/docs/AMDGPUUsage.html#target-triples.
-            infile: The path to the input object file.
-            outfileRaw: The path to the unbundled code object.
-
-        Raises:
-            RuntimeError: If unbundling the source code object file fails.
-        """
-        args = [
-            self.bundler,
-            "--type=o",
-            f"--targets={target}",
-            f"--input={srcPath}",
-            f"--output={destPath}",
-            "--unbundle",
-        ]
-
-        return self.invoke(args, f"Unbundling source code object file")
-            
-
-def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Path, str], arch: str) -> Union[Path, None]:
-    """Generates a code object file path using the target, base, and build path.
-
-    Args:
-        target: The target triple.
-        base: The base name for the output file (name without extension).
-        buildPath: The build directory path.
-
-    Returns:
-        Path to the code object file.
-    """
-    coPath = None
-    buildPath = Path(buildPath)
-    if "TensileLibrary" in base and "fallback" in base:
-        coPath = buildPath / "{0}_{1}.hsaco.raw".format(base, arch)
-    elif "TensileLibrary" in base:
-        variant = [t for t in ["", "xnack-", "xnack+"] if t in target][-1]
-        baseVariant = base + "-" + variant if variant else base
-        if arch in baseVariant:
-            coPath = buildPath / (baseVariant + ".hsaco.raw")
-    else:
-        coPath= buildPath / "{0}.so-000-{1}.hsaco.raw".format(base, arch)
-
-    return coPath
+        args = [self.objDump, filename]
+        return self.invoke(args, f"Extracting code object.", Path(filename.replace("file:","")).parent)
 
 
-def buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Path, str], kernelPath: Union[Path, str]) -> List[str]:
+def buildSourceCodeObjectFile(toolchain: SourceToolchain, destPath: Union[Path, str], sharedObjPath: Union[Path, str], ) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
     Args:
@@ -176,40 +137,16 @@ def buildSourceCodeObjectFile(toolchain: SourceToolchain, outputPath: Union[Path
     Returns:
         List of paths to the created code objects.
     """
-    start = timer()
-
-    buildPath = Path(ensurePath(os.path.join(globalParameters['WorkingPath'], 'code_object_tmp')))
-    destPath = Path(ensurePath(os.path.join(outputPath, 'library')))
-    kernelPath = Path(kernelPath)
 
     if "CmakeCxxCompiler" in globalParameters and globalParameters["CmakeCxxCompiler"] is not None:
       os.environ["CMAKE_CXX_COMPILER"] = globalParameters["CmakeCxxCompiler"]
 
-    objFilename = kernelPath.stem + '.o'
-    coPathsRaw = []
-    coPaths= []
-
-    _, cmdlineArchs = splitArchs()
-
-    objPath = str(buildPath / objFilename)
-    toolchain.compile(str(kernelPath), objPath, str(outputPath), cmdlineArchs)
-
-    for target in toolchain.targets(objPath):
+    for target, filename in toolchain.list(sharedObjPath):
       match = re.search("gfx.*$", target)
       if match:
         arch = re.sub(":", "-", match.group())
-        coPathRaw = _computeSourceCodeObjectFilename(target, kernelPath.stem, buildPath, arch)
-        if not coPathRaw: continue
-        toolchain.unbundle(target, objPath, str(coPathRaw))
-
-        coPath = str(destPath / coPathRaw.stem)
-        coPathsRaw.append(coPathRaw)
-        coPaths.append(coPath)
-
-    for src, dst in zip(coPathsRaw, coPaths):
+        toolchain.extract(filename)
+        print(filename)
+        src = str(Path(sharedObjPath).parent / (str(Path(filename).name).replace("#","-").replace("=","").replace("&","-") + ".co"))
+        dst = str(destPath / f"Kernels.so-000-{arch}.hsaco")
         shutil.move(src, dst)
-
-    stop = timer()
-    print1(f"buildSourceCodeObjectFile time (s): {(stop-start):3.2f}")
-
-    return coPaths

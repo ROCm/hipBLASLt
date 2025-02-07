@@ -188,6 +188,44 @@ def writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNE
         kernelHeaderFile.write(HeaderText)
 
 
+def writeHelper(outputPath, kernelHelperObj) -> str:
+    name = kernelHelperObj.getKernelName()
+    KERNEL_HELPER_FILENAME_CPP = name + ".cpp"
+    KERNEL_HELPER_FILENAME_H = name + ".h"
+    kernelSourceFilename = os.path.join(os.path.normcase(outputPath), "Kernels", KERNEL_HELPER_FILENAME_CPP)
+    kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), "Kernels", KERNEL_HELPER_FILENAME_H)
+
+    with open(kernelHeaderFilename, "w", encoding="utf-8") as kernelHeaderFile, \
+          open(kernelSourceFilename, "w", encoding="utf-8") as kernelSourceFile:
+        kernelSourceFile.write(CHeader)
+        kernelHeaderFile.write(CHeader)
+        kernelSourceFile.write("#include \"{}.h\"\n".format(name))
+        kernelHeaderFile.write("#pragma once\n")
+        if globalParameters["RuntimeLanguage"] == "HIP":
+          kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
+          kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
+        kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")
+        if "Enum" not in name:
+            kernelHeaderFile.write("#include \"Kernels/TensileActivationEnum_S.h\"\n")
+            kernelHeaderFile.write("#include \"Kernels/TensileActivationEnum_I.h\"\n")
+            kernelHeaderFile.write("#include \"Kernels/TensileGradientActivationEnum_S.h\"\n")
+        if "TensileActivation_S" not in name and "TensileActivation_I" not in name and "Enum" not in name:
+            kernelHeaderFile.write("#include \"Kernels/TensileActivation_S_Hipblaslt_all.h\"\n")
+            kernelHeaderFile.write("#include \"Kernels/TensileActivation_I_Hipblaslt_all.h\"\n")
+        if "TensileGradientActivation_S" not in name and "Enum" not in name:
+            kernelHeaderFile.write("#include \"Kernels/TensileGradientActivation_S_Hipblaslt_all.h\"\n")
+
+        HeaderText = ""
+        (err, src) = kernelHelperObj.getSourceFileString()
+        kernelSourceFile.write(src)
+        if err:
+            print("*** warning: invalid kernel#%u" % name)
+        HeaderText += kernelHelperObj.getHeaderFileString()
+        kernelHeaderFile.write(HeaderText)
+
+    return kernelSourceFilename
+
+
 def getKernelWriterAssembly(solutions, assembler):
   kernelSerialNaming   = Solution.getSerialNaming(solutions)
   kernelMinNaming      = Solution.getMinNaming(solutions)
@@ -247,7 +285,7 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, solution
   asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
 
   asmKernels = [k.getKernels()[0] for k in solutions if k['KernelLanguage'] == 'Assembly']
-  #kernelHelperObjs = generateKernelHelperObjects(asmKernels)
+  kernelHelperObjs = generateKernelHelperObjects(asmKernels)
   kernelWriterAssembly = getKernelWriterAssembly(asmKernels, assembler)
 
   uniqueAsmKernels = [k for k in asmKernels if "BuildKernel" in k]
@@ -262,20 +300,20 @@ def writeSolutionsAndKernelsTCL(outputPath, asmToolchain, srcToolchain, solution
   pksResults = [processKernelSource(kernelWriterAssembly, TensileInstructions(), k) for k in uniqueAsmKernels]
   for p, isa, wavefrontsize in [writeAssembly(asmPath, k) for k in pksResults]:
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
+  
   buildAssemblyCodeObjectFiles(asmToolchain, uniqueAsmKernels, kernelWriterAssembly, outputPath, compress)
-
-  #writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
-  #srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  #buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
 
   popWorkingPath() # build_tmp
   popWorkingPath() # workingDir
 
-  return len(uniqueAsmKernels), len(asmKernels)
+  return kernelHelperObjs, len(uniqueAsmKernels), len(asmKernels)
 
 
 def generateKernelHelperObjects(solutions):
-  return list(dict.fromkeys([solution.getHelperKernelObjects() for solution in solutions]))
+  khos = []
+  for solution in solutions:
+      khos.extend(solution.getHelperKernelObjects())
+  return list(dict.fromkeys(khos))
 
 
 @timing
@@ -293,7 +331,6 @@ def generateSolutions(args, cxxCompiler, logicFiles):
             libraries.append((libraryLogic.architecture, libraryLogic.library))
 
     numSoln = len(solutions)
-    #solutions = list(dict.fromkeys(solutions).keys())
     return solutions, libraries, numSoln, (numSoln-len(solutions))
 
 
@@ -420,32 +457,77 @@ def updateMasterLibrary(
         return prevMasterLib, nextIdx
 
 
+def genLazyMasterSolutionLibrary(libraryPath, libraryFormat, libraries):
+    _masterLib = None
+    _nextSolutionIdx = 0
+    if len(libraries) > 0:
+        for gfxName, lib in libraries:
+            _masterLib, _nextSolutionIdx = updateMasterLibrary(gfxName, lib, _masterLib, _nextSolutionIdx)
+        # Can we do this asynchronously before the call to writeSolutionsAndKernels?
+        newLibraryDir = libraryPath
+        for name, lib in list(_masterLib.lazyLibraries.items()):
+            catalogPath = newLibraryDir / name
+            lib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
+            LibraryIO.write(str(catalogPath), Utils.state(lib), libraryFormat)
+
+
 @profile
 def build(arguments, cxxCompiler, assembler, asmToolchain, srcToolchain, logicFiles):
 
     start = timer()
+    libraryPath = Path(arguments["OutputPath"]) / "library"
     solutions, libraries, totalSoln, dupSoln = generateSolutions(arguments, cxxCompiler, logicFiles)
-
-    _masterLib = None
-    _nextSolutionIdx = 0
-    if len(libraries) > 0:
-      for gfxName, lib in libraries:
-          _masterLib, _nextSolutionIdx = updateMasterLibrary(gfxName, lib, _masterLib, _nextSolutionIdx)
-      # Can we do this asynchronously before the call to writeSolutionsAndKernels?
-      newLibraryDir = Path(arguments["OutputPath"]) / "library"
-      for name, lib in list(_masterLib.lazyLibraries.items()):
-          catalogPath = newLibraryDir / name
-          lib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
-          LibraryIO.write(str(catalogPath), Utils.state(lib), "msgpack")
-
-    numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, solutions, 
-                                                      assembler, compress=arguments["UseCompression"])
+    genLazyMasterSolutionLibrary(libraryPath, arguments["LibraryFormat"], libraries)
+    khos, numUniqueKernels, numKernels = writeSolutionsAndKernelsTCL(arguments["OutputPath"], asmToolchain, srcToolchain, solutions, 
+                                                                     assembler, compress=arguments["UseCompression"])
     stop = timer()
-    print1(f"Total time (s): {(stop-start):3.2f}")
-    print1(f"Kernels per second: {(numKernels[0]/(stop-start)):3.2f}")
-    print1(f" {numKernels[0]} {[l[1] for l in logicFiles]}")
+    print2(f"Total time (s): {(stop-start):3.2f}")
+    print2(f"Kernels per second: {(numUniqueKernels/(stop-start)):3.2f}")
+    print2(f" {numUniqueKernels} {[l[1] for l in logicFiles]}")
 
-    return libraries, numKernels, totalSoln, dupSoln
+    return libraries, khos, numUniqueKernels, numKernels, totalSoln, dupSoln
+
+
+def generateParentLibrary(libraryFormat: str, libraryPath: Union[Path, str], masterLibs: Dict[str, MasterSolutionLibrary]):
+    for arch, masterLib in masterLibs.items():
+        name = "TensileLibrary_" + "lazy_" + arch
+        masterLib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
+        LibraryIO.write(str(libraryPath / name), Utils.state(masterLib), libraryFormat)
+
+
+def createDirectories(outputPath):
+    outputPath = Path(outputPath)
+    buildTmp = outputPath.parent / "build_tmp" / str(outputPath.name).upper()
+    srcCodeObjectPath = buildTmp / "code_object_tmp"
+    srcCodeObjectPath.mkdir(parents=True, exist_ok=True)
+    kernelsIncludePath = outputPath / "Kernels"
+    kernelsIncludePath.mkdir(parents=True, exist_ok=True)
+    libraryPath = outputPath / "library"
+    libraryPath.mkdir(exist_ok=True)
+    return outputPath, buildTmp, srcCodeObjectPath, libraryPath
+
+
+def extracBuildResults(result):
+    numKernels = 0
+    numUniqueKernerls = 0
+    numDuplicateKernels = 0
+    numSoln = 0
+    numDuplicateSoln = 0
+    masterLibs = {}
+    nextIdx = 0
+    kho = []
+
+    for library, khos, uniqueKernels, numKerns, soln, dupSoln in result:
+      if len(library) > 0:
+        for gfxName, lib in library:
+          updateParentMasterLibrary(gfxName, lib, masterLibs, nextIdx)
+      numUniqueKernerls += uniqueKernels
+      numKernels += numKerns
+      numDuplicateSoln += dupSoln
+      numSoln += soln
+      kho.extend(khos)
+
+    return kho, masterLibs, numKernels, numUniqueKernerls, numDuplicateKernels, numSoln, numDuplicateSoln
 
 
 ################################################################################
@@ -463,9 +545,10 @@ def run():
   arguments = parseArguments()
   ensurePath(arguments["OutputPath"])
   arguments["OutputPath"] = os.path.abspath(arguments["OutputPath"])
+  outputPath, buildTmpPath, srcCodeObjectPath, libraryPath = createDirectories(arguments["OutputPath"])
 
-  cxxCompiler, cCompiler, offloadBundler, assembler, hipconfig = validateToolchain(
-      arguments["CxxCompiler"], arguments["CCompiler"], arguments["OffloadBundler"], arguments["Assembler"], ToolchainDefaults.HIP_CONFIG
+  cxxCompiler, cCompiler, offloadBundler, rocObjExtract, rocObjLs, assembler, hipconfig = validateToolchain(
+      arguments["CxxCompiler"], arguments["CCompiler"], arguments["OffloadBundler"], arguments["RocObjExtract"], arguments["RocObjLs"], arguments["Assembler"], ToolchainDefaults.HIP_CONFIG
   )
 
   print1(f"# HIP Version:         {getVersion(hipconfig, regex=r'(.+)')}")
@@ -473,46 +556,36 @@ def run():
   print1(f"# C Compiler:          {cCompiler} (version {getVersion(cCompiler)})")
   print1(f"# Assembler:           {assembler} (version {getVersion(assembler)})")
   print1(f"# Offload Bundler:     {offloadBundler} (version {getVersion(offloadBundler)})")
+  print1(f"# Object Extractor:     {rocObjExtract} (version {getVersion(rocObjLs, '-v')})")
+  print1(f"# Object Lister:     {rocObjLs} (version {getVersion(rocObjLs, '-v')})")
   print1(f"# Code Object Version: {arguments['CodeObjectVersion']}")
   print1(f"# Architecture(s):     {arguments['Architecture']}")
   print1(f"# Library Format:      {arguments['LibraryFormat']}")
 
-  libraryDir = Path(arguments["OutputPath"]) / "library"
-  libraryDir.mkdir(exist_ok=True)
+  assignGlobalParameters(arguments, cxxCompiler)
 
+  if ";" in arguments["Architecture"]:
+    archs = arguments["Architecture"].split(";") # user arg list format
+  else:
+    archs = arguments["Architecture"].split("_") # workaround for cmake list in list issue
+
+  asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], arguments["CodeObjectVersion"])
+  srcToolchain = SourceToolchain(cxxCompiler, rocObjExtract, rocObjLs, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
+
+  copyStaticFiles(outputPath)
   unsortedLogic = getLogicFileList(arguments)
   logicFiles = list(filter(lambda x: x != [], schedule(unsortedLogic, 2*arguments["CpuThreads"])))
-
-  assignGlobalParameters(arguments, cxxCompiler)
-  asmToolchain = AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], arguments["CodeObjectVersion"])
-  srcToolchain = SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
-  copyStaticFiles(arguments["OutputPath"])
   unaryBuild = functools.partial(build, arguments, cxxCompiler, assembler, asmToolchain, srcToolchain)
   result  = ParallelMap2(unaryBuild, logicFiles, "Building Library", multiArg=False, return_as="generator_unordered")
 
-  totalKernels = 0
-  totalUnique = 0
-  totDup = 0
-  totSoln = 0
-  dupKernels = 0
+  kho, masterLibs, numKernels, numUniqueKernels, numDuplicateKernels, numSoln, numDuplicateSoln = extracBuildResults(result)
+  unaryWriteHelpers = functools.partial(writeHelper, outputPath)
+  srcFiles = ParallelMap2(unaryWriteHelpers, list(dict.fromkeys(kho)), "Generating Kernels code", multiArg=False, return_as="list")
+  kernelsLib = str(srcCodeObjectPath / "Kernels.so")
+  srcToolchain.compile(srcFiles, str(kernelsLib), str(outputPath), archs)
+  buildSourceCodeObjectFile(srcToolchain, libraryPath, kernelsLib)
 
-  baseName = "TensileLibrary_"
-  masterLibs = {}
-  nextIdx = 0
-
-  for library, n, total, dup in result:
-    if len(library) > 0:
-      for gfxName, lib in library:
-        updateParentMasterLibrary(gfxName, lib, masterLibs, nextIdx)
-    totalKernels += n[1]
-    totalUnique += n[0]
-    totDup += dup
-    totSoln += total
-
-  for arch, masterLib in masterLibs.items():
-    name = baseName + "lazy_" + arch
-    masterLib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
-    LibraryIO.write(str(libraryDir / name), Utils.state(masterLib), arguments["LibraryFormat"])
+  generateParentLibrary(arguments["LibraryFormat"], libraryPath, masterLibs)
 
   print1("# Tensile Library Writer DONE")
   print1(HR)
@@ -521,9 +594,10 @@ def run():
   stop = timer()
 
   print1(f"Total time (s): {(stop-start):3.2f}")
-  print1(f"Total kernels processed: {totalUnique}")
-  print1(f"Total kernels: {totalKernels}")  
-  print1(f"Kernels processed per second: {(totalKernels/(stop-start)):3.2f}")
-  print1(f"Total solutions processed: {totSoln - totDup}")
-  print1(f"Duplicate solutions removed: {totDup}")
-  print1(f"Duplicate kernels removed: {dupKernels}")
+  print1(f"Total kernels: {numKernels}")
+  print1(f"Total kernels processed: {numUniqueKernels}")
+  print1(f"Duplicate kernels removed: {numDuplicateKernels}")
+  print1(f"Kernels processed per second: {(numKernels/(stop-start)):3.2f}")
+  print1(f"Total solutions processed: {numSoln}")
+  print1(f"Duplicate solutions: {numDuplicateSoln}")
+  

@@ -166,14 +166,17 @@ static void set_hip_f8_bias_mode_optimal()
     hip_f8_bias_mode_bit_host = true;
 }
 
-static inline HIP_HOST_DEVICE bool get_hip_f8_bias_mode()
-{
 #if defined(__HIP_DEVICE_COMPILE__)
+static inline HIP_DEVICE bool get_hip_f8_bias_mode()
+{
     return hip_f8_bias_mode_bit_device;
-#else
-    return hip_f8_bias_mode_bit_host;
-#endif
 }
+#else
+static inline HIP_HOST bool get_hip_f8_bias_mode()
+{
+    return hip_f8_bias_mode_bit_host;
+}
+#endif
 
 static bool isOcpF8;
 inline bool IsOCPSupported()
