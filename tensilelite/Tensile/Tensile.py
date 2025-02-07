@@ -42,6 +42,7 @@ from . import __version__
 from datetime import datetime
 from pathlib import Path
 
+import subprocess
 
 ###############################################################################
 # Execute Steps in Config
@@ -207,6 +208,103 @@ def argUpdatedGlobalParameters(args):
 
     return rv
 
+def get_gpu_max_frequency_smi(device_id):
+    '''
+    Get the maximum frequency of the specified GPU device
+    '''
+    try:
+        # Run rocm-smi command and capture output
+        result = subprocess.run(['rocm-smi', '-s'], capture_output=True, text=True)
+       
+        if result.returncode != 0:
+           print(f"Error running rocm-smi: {result.stderr}")
+           return None
+           
+        # Parse the output
+        lines = result.stdout.split('\n')
+        sclk_section = False
+        frequencies = []
+       
+        # Look for the sclk section of the specified device
+        for line in lines:
+            line = line.split(" ")
+            if 'sclk' in line and f"GPU{device_id}" in line:
+                sclk_section = True
+                continue
+
+           # Parse frequencies in the sclk section
+            if sclk_section:
+                for part in line:
+                    if part.endswith("Mhz"):
+                        try:
+                            frequency = part.replace("Mhz", "")
+                            frequencies.append(int(frequency))
+                        except ValueError:
+                            print(f"Error parsing frequency: {part}")
+                        break
+                if "socclk" in line:
+                    break
+        
+        # Return the maximum frequency found
+        return max(frequencies) if frequencies else None
+       
+    except Exception as e:
+       print(f"Error: {e}")
+       return None
+
+def get_gpu_max_frequency(device_id):
+    try:
+        from hip import hip
+    except ImportError:
+        print("HIP module not found. Installing it now...")
+        # Install the HIP module using pip
+        subprocess.run("python3 -m pip install --upgrade pip", shell=True)
+        subprocess.run("python3 -m pip install --index-url https://test.pypi.org/simple/ hip-python", shell=True)
+
+        from hip import hip
+        print("HIP module successfully installed.")
+
+    def hip_check(call_result):
+        err, result = call_result[0], call_result[1]
+        if isinstance(err, hip.hipError_t) and err != hip.hipError_t.hipSuccess:
+            return None
+        return result
+    
+    attrib = hip.hipDeviceAttribute_t.hipDeviceAttributeClockRate
+    freq = hip_check(hip.hipDeviceGetAttribute(attrib, device_id))
+
+    return freq // 1000 if freq else None
+
+def get_user_max_frequency():
+    '''
+    Get the maximum frequency from the user when the GPU frequency cannot be determined
+    '''
+    while True:
+        try:
+            user_input = input("Please enter the maximum frequency (MHz): ")
+
+            frequency = int(user_input)
+
+            if frequency <= 0:
+                print("Error: Frequency must be greater than 0 MHz")
+                continue
+                    
+            return frequency
+            
+        except ValueError:
+            print("Error: Please enter a valid number")
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            print("Please try again")
+
+def store_max_frequency(max_frequency):
+    try:
+        os.environ["MAX_FREQ"] = str(max_frequency)
+        return True
+    except Exception as e:
+        print(f"Error setting MAX_FREQ environment variable: {e}")
+        return False
+
 
 ################################################################################
 # Tensile
@@ -295,6 +393,22 @@ def Tensile(userArgs):
 
     config["UseCache"] = useCache
     globalParameters["ConfigPath"] = configPaths
+
+    device_id = config["GlobalParameters"].get("Device", globalParameters["Device"])
+    UseEffLike = config["GlobalParameters"].get("UseEffLike", globalParameters["UseEffLike"])
+
+    if 'LibraryLogic' in config and UseEffLike:
+        max_frequency = get_gpu_max_frequency(device_id)
+
+        if not max_frequency or max_frequency <= 0:
+            max_frequency = get_gpu_max_frequency_smi(device_id) # Using rocm-smi just in case
+
+        if not max_frequency or max_frequency <= 0:
+            print(f"Could not detect valid GPU frequency for device {device_id}")
+            max_frequency = get_user_max_frequency()
+
+        print(f"Successfully retrieve Max frequency: {max_frequency} for device {device_id}")
+        store_max_frequency(max_frequency)
 
     cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)

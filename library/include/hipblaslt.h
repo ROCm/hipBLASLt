@@ -173,7 +173,9 @@ typedef enum {
   HIPBLASLT_MATMUL_PREF_MAX = 2
 } hipblasLtMatmulPreferenceAttributes_t;
 
-/** Enum for data ordering */
+/*! \ingroup types_module
+ *  \brief Enum for data ordering.
+ */
 typedef enum {
   /** Column-major
    *
@@ -185,6 +187,17 @@ typedef enum {
    * Leading dimension is the stride (in elements) to the beginning of next row in memory.
    */
   HIPBLASLT_ORDER_ROW = 1,
+  HIPBLASLT_ORDER_COL16_4R16 = 100,
+  /**
+   * Data is ordered in column-major ordered tiles of composite tiles with total 16 columns and 32 rows.
+   * A tile is composed of 4 inner tiles in column-major with total 8 rows and 16 columns.
+   * Element offset within the tile is calculated as row%8+8*col+(row/8)*16*8.
+   * Note that for this order, the number of columns(rows) of the tensor has to be multiple of 16(32) or
+   * pre-padded to 16(32).
+   */
+  HIPBLASLT_ORDER_COL16_4R8 = 101,
+  HIPBLASLT_ORDER_COL16_4R4 = 102,
+  HIPBLASLT_ORDER_COL16_4R2 = 103
 } hipblasLtOrder_t;
 
 /** Matrix transform descriptor attributes to define details of the operation.
