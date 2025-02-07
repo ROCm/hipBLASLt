@@ -2,7 +2,7 @@ import subprocess
 from functools import lru_cache
 from typing import Tuple
 
-from .Architectures import getGfxName
+from .Architectures import isaToGfx
 
 
 def _tryAssembler(
@@ -27,7 +27,7 @@ def _tryAssembler(
         "assembler",
         "-target",
         "amdgcn-amdhsa",
-        "-mcpu=" + getGfxName(isaVersion),
+        "-mcpu=" + isaToGfx(isaVersion),
         *options,
         "-",
     ]
