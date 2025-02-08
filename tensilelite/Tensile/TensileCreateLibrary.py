@@ -535,6 +535,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
   # Kernels may be intended for different co files, but generate the same .o file
   # Mark duplicate kernels to avoid race condition
   # @TODO improve organization so this problem doesn't appear
+  numKernels = len(kernels)
   objFilenames = set()
   for kernel in kernels:
     if kernel["KernelLanguage"] == "Assembly":
@@ -544,7 +545,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
       else:
         objFilenames.add(base)
         kernel.duplicate = False
-
+  numUniqueKernels = len([k for k in kernels if not k.duplicate])
   kIter   = zip(kernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
   results = Common.ParallelMap2(processKernelSource, kIter, "Generating kernels")
 
@@ -652,7 +653,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
 
-  return codeObjectFiles
+  return codeObjectFiles, numKernels, numUniqueKernels
 
 def writeSolutionAndExactTable(scheduleName, deviceNames, schedProbName, problemType, \
                                solutionsForSchedule, solutionNames, exactLogic):
@@ -1153,12 +1154,14 @@ def generateLogicDataAndSolutions(logicFiles, args):
     solutions = [sol.originalSolution for _, sol in fullMasterLibrary.solutions.items()]
 
   # remove duplicates while preserving order
+  numSoln = len(solutions)
   solutions = dict.fromkeys(solutions).keys()
+  numUniqueSoln = len(solutions)
 
   if args.GenSolTable:
     LibraryIO.write("MatchTable", matchTable)
 
-  return solutions, masterLibraries, fullMasterLibrary
+  return solutions, masterLibraries, fullMasterLibrary, numSoln, numUniqueSoln
 
 ################################################################################
 # Write Benchmark Client Files
@@ -1238,6 +1241,7 @@ def validateLibrary(masterLibraries: MasterSolutionLibrary,
 ################################################################################
 @profile
 def TensileCreateLibrary():
+  start = timer()
   print1("")
   print1(HR)
   print1("# Tensile Create Library")
@@ -1429,7 +1433,7 @@ def TensileCreateLibrary():
   ##############################################################################
 
   # Parse logicData, solutions, and masterLibraries from logic files
-  solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args)
+  solutions, masterLibraries, fullMasterLibrary, numSoln, numUniqueSoln = generateLogicDataAndSolutions(logicFiles, args)
 
   kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
 
@@ -1479,8 +1483,8 @@ def TensileCreateLibrary():
       outputPath )
 
   # write solutions and kernels
-  codeObjectFiles = writeSolutionsAndKernels(outputPath, CxxCompiler, None, solutions,
-                                             kernels, kernelHelperObjs, kernelWriterAssembly)
+  codeObjectFiles, numKernels, numUniqueKernels = writeSolutionsAndKernels(outputPath, CxxCompiler, None, solutions,
+                                                                           kernels, kernelHelperObjs, kernelWriterAssembly)
 
   bothLibSet = set(sourceLibPaths + asmLibPaths)
   setA = set( map( os.path.normcase, set(codeObjectFiles) ) )
@@ -1585,3 +1589,11 @@ def TensileCreateLibrary():
   print1("# Tensile Library Writer DONE")
   print1(HR)
   print1("")
+  stop = timer()
+  print1(f"Total time (s): {(stop-start):3.2f}")
+  print1(f"Total kernels: {numKernels}")
+  print1(f"Total kernels processed: {numUniqueKernels}")
+  print1(f"Duplicate kernels removed: {numKernels - numUniqueKernels}")
+  print1(f"Kernels processed per second: {(numUniqueKernels/(stop-start)):3.2f}")
+  print1(f"Total solutions processed: {numSoln}")
+  print1(f"Duplicate solutions: {numSoln - numUniqueSoln}")
