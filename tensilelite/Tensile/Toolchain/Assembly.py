@@ -196,7 +196,7 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
         if coName:
           coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
       for coFileRaw, objFiles in coFileMap.items():
-        objFiles = _batchObjectFiles(objFiles, coFileRaw)
+        objFiles = _batchObjectFiles(set(objFiles), coFileRaw) # shouldn't need a set here
         toolchain.link(objFiles, str(coFileRaw))
         coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
         if compress:

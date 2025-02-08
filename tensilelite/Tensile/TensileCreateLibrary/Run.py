@@ -597,7 +597,7 @@ def run():
   print1(f"Total kernels: {numKernels}")
   print1(f"Total kernels processed: {numUniqueKernels}")
   print1(f"Duplicate kernels removed: {numDuplicateKernels}")
-  print1(f"Kernels processed per second: {(numKernels/(stop-start)):3.2f}")
+  print1(f"Kernels processed per second: {(numUniqueKernels/(stop-start)):3.2f}")
   print1(f"Total solutions processed: {numSoln}")
   print1(f"Duplicate solutions: {numDuplicateSoln}")
   
