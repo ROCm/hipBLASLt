@@ -28,14 +28,15 @@ import os
 import shlex
 import shutil
 import subprocess
-import warnings
 
 from pathlib import Path
-from typing import List, Literal, Union, Tuple
+from typing import List, Literal, Union
 
-from .. import Utils
 from ..TensileInstructions import getGfxName
-from ..Common import globalParameters, print2, ensurePath
+from ..Common import globalParameters, print2
+from Tensile.SolutionStructs import Solution
+from Tensile.KernelWriterAssembly import KernelWriterAssembly
+from Tensile.Utilities.RequiredParameters import getRequiredParametersMin
 class AssemblyToolchain:
     def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: Literal[4, 5]):
         self.assembler = assembler
@@ -167,14 +168,13 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 
     return newObjFilesOutput
 
-def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAsm, outputPath, compress: bool=True):
+def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, srcDir, destDir, writerAsm, compress: bool, kernels):
     
     extObj = ".o"
     extCo = ".co"
     extCoRaw = ".co.raw"
 
-    destDir = Path(ensurePath(os.path.join(outputPath, 'library')))
-    asmDir = Path(ensurePath(os.path.join(globalParameters["WorkingPath"], f"assembly/{str(os.getpid())}")))
+    asmDir = srcDir
 
     archKernelMap = collections.defaultdict(list)
     for k in kernels:
@@ -187,16 +187,25 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, kernels, writerAs
 
       gfx = getGfxName(arch)
 
-      objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
+      ### start of map for separate architectures no lazy loading - the absence of codeObjectFile means no lazy loading
+      objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k or k['codeObjectFile'] == "TensileLibrary"]
       coFileMap = collections.defaultdict(list)
       if len(objectFiles):
         coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
-      for kernel in archKernels:
-        coName = kernel.get("codeObjectFile", None)
-        if coName:
-          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
+      ### end of map for separate architectures no lazy loading
+
+      ### start of map for separate architectures and lazy loading
+      else:
+        for kernel in archKernels:
+          coName = kernel.get("codeObjectFile", None)
+          if coName:
+            coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
+      ### end of map for separate architectures and lazy loading
+
       for coFileRaw, objFiles in coFileMap.items():
-        objFiles = _batchObjectFiles(set(objFiles), coFileRaw) # shouldn't need a set here
+        # shouldn't need a set here the fact that we do implies we have duplicates
+        #objFiles = _batchObjectFiles(set(objFiles), coFileRaw)
+        objFiles = _batchObjectFiles(objFiles, coFileRaw)
         toolchain.link(objFiles, str(coFileRaw))
         coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
         if compress:

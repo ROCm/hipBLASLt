@@ -40,7 +40,8 @@ from .Common import globalParameters, HR, pushWorkingPath, popWorkingPath, print
         printExit, printWarning, ensurePath, startTime, validParameters
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionStructs import Solution, ProblemType, ProblemSizes
-from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
+from Tensile.TensileCreateLibrary import copyStaticFiles 
+from Tensile.TensileCreateLibrary.Tuning import writeSolutionsAndKernels
 from .CustomKernels import getCustomKernelConfig
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain

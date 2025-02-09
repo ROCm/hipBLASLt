@@ -146,7 +146,6 @@ def buildSourceCodeObjectFile(toolchain: SourceToolchain, destPath: Union[Path, 
       if match:
         arch = re.sub(":", "-", match.group())
         toolchain.extract(filename)
-        print(filename)
         src = str(Path(sharedObjPath).parent / (str(Path(filename).name).replace("#","-").replace("=","").replace("&","-") + ".co"))
         dst = str(destPath / f"Kernels.so-000-{arch}.hsaco")
         shutil.move(src, dst)

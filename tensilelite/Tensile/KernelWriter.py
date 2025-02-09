@@ -359,9 +359,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
+  def __init__(self, kernelMinNaming, assembler: str):
     self.kernelMinNaming = kernelMinNaming
-    self.kernelSerialNaming = kernelSerialNaming
+    #self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
     self.ti = None
 
@@ -5016,8 +5016,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
   def getKernelFileBase(self, kernel):
     if isCustomKernelConfig(kernel):
       fileBase = kernel["CustomKernelName"]
-    elif globalParameters["ShortNames"]:
-      fileBase = Solution.getNameSerial(kernel, self.kernelSerialNaming)
+    #elif globalParameters["ShortNames"]:
+    #  fileBase = Solution.getNameSerial(kernel, self.kernelSerialNaming)
     else:
       fileBase = self._shortenFileBase(kernel)
     return fileBase

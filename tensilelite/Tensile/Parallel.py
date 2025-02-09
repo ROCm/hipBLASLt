@@ -28,6 +28,7 @@ import sys
 import time
 import concurrent.futures
 
+from typing import NamedTuple
 from joblib import Parallel, delayed
 
 def joblibParallelSupportsGenerator():
@@ -173,7 +174,15 @@ def ParallelMapReturnAsGenerator(function, objects, message="", enable=True, mul
     for result in concurrent.futures.as_completed(resultFutures):
       yield result.result()
 
-def ParallelMap2(function, objects, message="", enable=True, multiArg=True, return_as="list"):
+
+
+class ParallelMapConfig(NamedTuple):
+  message: str = ""
+  enable: bool = True
+  multiArg: bool = False
+  return_as: str = "generator_unordered"
+
+def ParallelMap2(function, config: ParallelMapConfig, objects):
   """
   Generally equivalent to list(map(function, objects)), possibly executing in parallel.
 
@@ -182,36 +191,38 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True, retu
     multiArg: True if objects represent multiple arguments
                 (differentiates multi args vs single collection arg)
   """
-  if return_as in ('generator', 'generator_unordered') and not joblibParallelSupportsGenerator():
-    return ParallelMapReturnAsGenerator(function, objects, message, enable, multiArg)
+  if config.return_as in ('generator', 'generator_unordered') and not joblibParallelSupportsGenerator():
+    return ParallelMapReturnAsGenerator(function, objects, message, config.enable, config.multiArg)
 
   from .Common import globalParameters
   from . import Utils
-  threadCount = CPUThreadCount(enable)
+  threadCount = CPUThreadCount(config.enable)
 
   if threadCount <= 1 and globalParameters["ShowProgressBar"]:
     # Provide a progress bar for single-threaded operation.
-    return [function(*args) if multiArg else function(args) for args in Utils.tqdm(objects, message)]
+    return [function(*args) if config.multiArg else function(args) for args in Utils.tqdm(objects, message)]
 
   countMessage = ""
   try:
     countMessage = " for {} tasks".format(len(objects))
   except TypeError: pass
-
-  if message != "": message += ": "
-  print("{0}Launching {1} threads{2}...".format(message, threadCount, countMessage))
+  
+  message = config.message
+  if message != "": 
+    message += ": "
+  print(f"{message} Launching {threadCount} threads{countMessage}...")
   sys.stdout.flush()
   currentTime = time.time()
 
-  pcall = pcallWithGlobalParamsMultiArg if multiArg else pcallWithGlobalParamsSingleArg
+  pcall = pcallWithGlobalParamsMultiArg if config.multiArg else pcallWithGlobalParamsSingleArg
   pargs = zip(objects, itertools.repeat(globalParameters))
 
   if joblibParallelSupportsGenerator():
-    rv = Parallel(n_jobs=threadCount,timeout=99999, return_as=return_as)(delayed(pcall)(function, a, params) for a, params in pargs)
+    rv = Parallel(n_jobs=threadCount,timeout=99999, return_as=config.return_as)(delayed(pcall)(function, a, params) for a, params in pargs)
   else:
     rv = Parallel(n_jobs=threadCount,timeout=99999)(delayed(pcall)(function, a, params) for a, params in pargs)
 
   totalTime = time.time() - currentTime
-  print("{0}Done. ({1:.1f} secs elapsed)".format(message, totalTime))
+  print(f"{message}Done. ({totalTime:.1f} secs elapsed)")
   sys.stdout.flush()
   return rv

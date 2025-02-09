@@ -67,8 +67,8 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
-    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler)
+  def __init__(self, kernelMinNaming, assembler: str):
+    super(KernelWriterAssembly, self).__init__(kernelMinNaming, assembler)
 
 
   def getSourceFileString(self, kernel) -> Tuple[int, str]:
