@@ -1111,7 +1111,7 @@ class Solution(collections.abc.Mapping):
       self["AssignedDerivedParameters"] = False
     # DepthU == -1?
     if self._state["DepthU"] == -1:
-      depthuList = [128, 64, 32, 16]
+      depthuList = [256, 128, 64, 32, 16]
     else:
       depthuList = [self._state["DepthU"]]
     index = [0]
