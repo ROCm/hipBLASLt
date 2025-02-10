@@ -22,21 +22,21 @@
 #
 ################################################################################
 
-from pathlib import Path
-from . import ClientExecutable
-from . import LibraryIO
-from .TensileInstructions import getGfxName, DataType
-from .Common import globalParameters, ensurePath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
-from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
-from .TensileCreateLibrary import copyStaticFiles
-
 import os
 import subprocess
 import shlex
 import shutil
+
+from pathlib import Path
 from enum import Enum
 from glob import glob
 
+from . import ROOT_PATH
+from . import ClientExecutable
+from . import LibraryIO
+from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx
+from .SolutionStructs import ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
+from .TensileCreateLibrary import copyStaticFiles
 from .Contractions import FreeIndex, BatchIndex
 from .Contractions import ProblemType as ContractionsProblemType
 
@@ -194,7 +194,7 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: 
   buildPath = ensurePath(outputPath / "build")
 
   runScriptName = writeRunScript(buildPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, buildPath, configPaths)
-  with ClientExecutionLock():
+  with ClientExecutionLock(globalParameters["ClientExecutionLockPath"]):
     process = subprocess.Popen(runScriptName, cwd=buildPath)
     process.communicate()
 
@@ -207,7 +207,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
   import io
   runScriptFile = io.StringIO()
 
-  callCreateLibraryCmd = globalParameters["ScriptPath"] + "/bin/TensileCreateLibrary"
+  callCreateLibraryCmd = ROOT_PATH + "/bin/TensileCreateLibrary"
 
   if not globalParameters["LazyLibraryLoading"]:
     callCreateLibraryCmd += " --no-lazy-library-loading"
@@ -516,7 +516,7 @@ def writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs
           libraryFile = os.path.join(sourceDir, "library", libraryFilename)
         param("library-file", libraryFile)
 
-        currentGFXName = getGfxName(globalParameters["CurrentISA"])
+        currentGFXName = isaToGfx(globalParameters["CurrentISA"])
         for coFile in codeObjectFiles:
             if 'gfx' not in coFile or currentGFXName in coFile:
                 param("code-object", os.path.join(sourceDir,coFile))

@@ -22,7 +22,7 @@
 
 from .TensileInstructions import DataType
 from .AsmAddressCalculation import AddrCalculation
-from .Utils import DataDirection
+from .Common import DataDirection
 
 from math import ceil, trunc, modf
 from dataclasses import dataclass, field

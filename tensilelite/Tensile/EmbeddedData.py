@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from . import Common
+from .Common import CHeader 
 
 import itertools
 import os
@@ -98,7 +98,7 @@ class EmbeddedDataFile:
         ns.__exit__(None, None, None)
 
     def write_header(self):
-        self.write(Common.CHeader)
+        self.write(CHeader)
 
         self.write(self.includes)
 

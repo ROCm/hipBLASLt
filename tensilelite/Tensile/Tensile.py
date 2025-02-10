@@ -26,11 +26,12 @@ if __name__ == "__main__":
     print("This file can no longer be run as a script.  Run 'Tensile/bin/Tensile' instead.")
     exit(1)
 
+import joblib
 import os
 import sys
 import argparse
 from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
-    assignGlobalParameters, restoreDefaultGlobalParameters, HR
+    assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
 from .Toolchain.Validators import validateToolchain, ToolchainDefaults
@@ -38,7 +39,6 @@ from . import BenchmarkProblems
 from . import ClientWriter
 from . import LibraryIO
 from . import LibraryLogic
-from . import __version__
 from datetime import datetime
 from pathlib import Path
 
@@ -215,16 +215,16 @@ def get_gpu_max_frequency_smi(device_id):
     try:
         # Run rocm-smi command and capture output
         result = subprocess.run(['rocm-smi', '-s'], capture_output=True, text=True)
-       
+
         if result.returncode != 0:
            print(f"Error running rocm-smi: {result.stderr}")
            return None
-           
+
         # Parse the output
         lines = result.stdout.split('\n')
         sclk_section = False
         frequencies = []
-       
+
         # Look for the sclk section of the specified device
         for line in lines:
             line = line.split(" ")
@@ -244,10 +244,10 @@ def get_gpu_max_frequency_smi(device_id):
                         break
                 if "socclk" in line:
                     break
-        
+
         # Return the maximum frequency found
         return max(frequencies) if frequencies else None
-       
+
     except Exception as e:
        print(f"Error: {e}")
        return None
@@ -269,7 +269,7 @@ def get_gpu_max_frequency(device_id):
         if isinstance(err, hip.hipError_t) and err != hip.hipError_t.hipSuccess:
             return None
         return result
-    
+
     attrib = hip.hipDeviceAttribute_t.hipDeviceAttributeClockRate
     freq = hip_check(hip.hipDeviceGetAttribute(attrib, device_id))
 
@@ -288,9 +288,9 @@ def get_user_max_frequency():
             if frequency <= 0:
                 print("Error: Frequency must be greater than 0 MHz")
                 continue
-                    
+
             return frequency
-            
+
         except ValueError:
             print("Error: Please enter a valid number")
         except Exception as e:

@@ -474,7 +474,7 @@ class LogicAnalyzer:
           except ValueError as e:
             csvHasWinnerColumn = False
             print1(f"Error: Could not find WinnerGFlops or WinnerIdx column in CSV file: {e}")
-          
+
         # get the length of each row, and derive the first column of the solution instead of using wrong "solutionStartIdx = totalSizeIdx + 1"
         rowLength = len(row)
         solutionStartIdx = rowLength - numSolutions
@@ -531,7 +531,7 @@ class LogicAnalyzer:
             except:
               print1("Error: Could not convert winnerGFlops to float.")
               performance_metric = float('nan')
-            
+
           if winnerIdx != -1:
             if problemSize in self.exactWinners:
               if winnerGFlops > self.exactWinners[problemSize][1]:
@@ -1525,7 +1525,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
 
 
 ##############################################################################
-# Error handling for frequency issues 
+# Error handling for frequency issues
 ##############################################################################
 def handle_frequency_issue(message):
     print1(message)

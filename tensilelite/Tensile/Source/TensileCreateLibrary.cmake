@@ -93,12 +93,6 @@ function(TensileCreateLibraryCmake
     set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--no-short-file-names")
   endif()
 
-  if(${Tensile_LIBRARY_PRINT_DEBUG})
-    set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--library-print-debug")
-  else()
-    set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--no-library-print-debug")
-  endif()
-
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--architecture=${Tensile_ARCHITECTURE}")
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--code-object-version=${Tensile_CODE_OBJECT_VERSION}")
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--cxx-compiler=${Tensile_COMPILER}")
