@@ -195,7 +195,9 @@ def ParallelMapReturnAsGenerator(function, objects, message="", enable=True, mul
             yield result.result()
 
 
-def ParallelMap2(function, objects, message="", enable=True, multiArg=True, return_as="list"):
+def ParallelMap2(
+    function, objects, message="", enable=True, multiArg=True, return_as="list", procs=None
+):
     """
     Generally equivalent to list(map(function, objects)), possibly executing in parallel.
 
@@ -208,6 +210,8 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True, retu
         return ParallelMapReturnAsGenerator(function, objects, message, enable, multiArg)
 
     from .GlobalParameters import globalParameters
+
+    threadCount = procs if procs else CPUThreadCount(enable)
 
     threadCount = CPUThreadCount(enable)
 
