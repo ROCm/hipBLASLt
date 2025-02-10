@@ -362,7 +362,7 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
     # Match yaml file solutions to solution index
     for _,masterLibrary in masterLibraries.items():
       for localIdx, _, s in libraryIter(masterLibrary):
-        matchTable[s.index] = [s.srcName, localIdx]
+        matchTable[s.index] = [s.srcName, s.libraryLogicIndex]
     LibraryIO.write("MatchTable", matchTable)
 
   if "fallback" in masterLibraries.keys():
