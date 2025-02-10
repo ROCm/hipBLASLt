@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2019-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2019-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,36 @@
 
 #ifndef _HIPBLASLT_FLOAT8_BC_H_
 #define _HIPBLASLT_FLOAT8_BC_H_
+
+#if __cplusplus < 201103L || (!defined(__HCC__) && !defined(__HIPCC__))
+/*! \brief Struct to represent a 8 bit floating-point number. */
+
+#if HIPBLASLT_USE_F8_FNUZ_BC
+typedef struct
+{
+    uint8_t __x;
+} hipblaslt_f8_fnuz;
+
+typedef struct
+{
+    uint8_t __x;
+} hipblaslt_bf8_fnuz;
+
+#endif
+
+#if HIPBLASLT_USE_F8_OCP_BC
+typedef struct
+{
+    uint8_t __x;
+} hipblaslt_f8;
+
+typedef struct
+{
+    uint8_t __x;
+} hipblaslt_bf8;
+#endif
+
+#else // __cplusplus < 201103L || (!defined(__HCC__) && !defined(__HIPCC__))
 
 #define HIP_HOST_DEVICE __host__ __device__
 #define HIP_HOST __host__
@@ -902,5 +932,5 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8
 };
 
 #endif // #if HIPBLASLT_USE_F8_OCP_BC
-
+#endif // __cplusplus < 201103L || (!defined(__HCC__) && !defined(__HIPCC__))
 #endif // _HIPBLASLT_FLOAT8_BC_H_

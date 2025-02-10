@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -145,6 +145,7 @@ struct Arguments
     bool                     use_e;
     bool                     gradient;
     bool                     norm_check_assert;
+    bool                     swizzle_a;
 
     // API related
     bool    use_ext;
@@ -244,6 +245,7 @@ struct Arguments
     OPER(use_e) SEP                  \
     OPER(gradient) SEP               \
     OPER(norm_check_assert) SEP      \
+    OPER(swizzle_a) SEP              \
     OPER(use_ext) SEP                \
     OPER(use_ext_setproblem) SEP     \
     OPER(algo_method) SEP            \

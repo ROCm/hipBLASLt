@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -214,9 +214,12 @@ class GSUOn(GSU):
         tc = tP["tensorChar"]
         depthU = kernel["DepthU"]
         depthUDiv = kernel["DepthU"]
-        # Swizzled for A, TODO- check for SwizzleTensorB
-        depthUDiv = "%s%s"%(kernel["DepthU"], "*MI_M") if (tP["isSwizzled"] and tc == 'A') else "%s"%kernel["DepthU"]
-        #
+        # swizzle
+        if (tP["isSwizzled"] and tc == 'A'):
+            depthUDiv = "%s%s"%(kernel["DepthU"], "*MI_M")
+        elif (tP["isSwizzled"] and tc == 'B'):
+            depthUDiv = "%s%s"%(kernel["DepthU"], "*MI_N")
+
         gsuOffsetStr = "gsuOffset = DepthU*bpeGR*GSUSumIdx"
         divider = 1
         if kernel["ProblemType"]["Sparse"]:
@@ -271,11 +274,15 @@ class GSUOn(GSU):
 
             tcGR = tc if tc == "Metadata" else (tc + "GR")
 
-            # DVTA + SwA
-            mult_MI_M = "*MI_M" if tc == "A" and kernel["ProblemType"]["SwizzleTensorA"] else ""
+            # swizzle
+            mult_MI_Dim = ""
+            if tc == "A" and kernel["ProblemType"]["SwizzleTensorA"]:
+                mult_MI_Dim = "*MI_M"
+            elif tc == "B" and kernel["ProblemType"]["SwizzleTensorB"]:
+                mult_MI_Dim = "*MI_N"
 
             module.add(SAndB32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-            module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr(gsuSgpr), src1="DepthU*Bpe%s%s"%(tcGR, mult_MI_M), comment="GSU*DepthU*Bpe%s"%(mult_MI_M)))
+            module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr(gsuSgpr), src1="DepthU*Bpe%s%s"%(tcGR, mult_MI_Dim), comment="GSU*DepthU*Bpe%s"%(mult_MI_Dim)))
             module.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
 
             m = sgpr(gsuSgpr)
@@ -284,7 +291,7 @@ class GSUOn(GSU):
                 m.setMinus(True)
 
             incr = sgpr("GlobalReadIncs%s+%u"%(tc, loopIdx))
-            duBpe = "DepthU*Bpe%s%s"%(tcGR, mult_MI_M)
+            duBpe = "DepthU*Bpe%s%s"%(tcGR, mult_MI_Dim)
             # multiply by stride, optimizing if unit stride
             if writer.isConstUnitStride(stride):
                 module.add(SCSelectB32(dst=incr, src0=duBpe, src1=m, comment="incr%s (unrollIdx)"%(tc)))
