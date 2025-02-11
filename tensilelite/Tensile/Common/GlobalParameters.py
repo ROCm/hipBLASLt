@@ -57,9 +57,9 @@ globalParameters["PreciseKernelTime"] = (
     True  # T=On hip, use the timestamps for kernel start and stop rather than separate events.  Can provide more accurate kernel timing.  For GlobalSplitU kernels, recommend disabling this to provide consistent
 )
 # timing between GSU / non-GSU kernels
-globalParameters["CodeFromFiles"] = (
-    True  # if False byte arrays will be generated during Benchmarking phase as before
-)
+#globalParameters["CodeFromFiles"] = (
+#    True  # if False byte arrays will be generated during Benchmarking phase as before
+#)
 globalParameters["PinClocks"] = False  # T=pin gpu clocks and fan, F=don't
 globalParameters["HardwareMonitor"] = (
     True  # False: disable benchmarking client monitoring clocks using rocm-smi.
@@ -130,7 +130,7 @@ globalParameters["NumWarmups"] = 0
 # even if error occurs in kernel generation (ie due to resource overflow),
 # generate the kernel source anyway.  Tensile will also attempt to run
 # the kernel.  Useful to examine and debug overflow errors.
-globalParameters["ForceGenerateKernel"] = 0
+# globalParameters["ForceGenerateKernel"] = 0
 
 ########################################
 # less common

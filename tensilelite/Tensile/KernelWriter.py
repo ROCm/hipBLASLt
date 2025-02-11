@@ -357,6 +357,7 @@ class DebugConfig(NamedTuple):
   expectedValueC: float=16.0
   forceCExpectedValue: bool=False
   debugKernel: bool=False
+  forceGenerateKernel: bool=False
 
 ################################################################################
 # Kernel Writer
@@ -3201,7 +3202,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Check if the address setup code for LWA and GRO causes register growth.
     # This is not an error condition but bears further investigation.
     # Realistically we just have the GlobalToLocal VGPRs, all else is growth.
-    self.states.preventVgprOverflowDuringNewTile = 0 and not globalParameters["ForceGenerateKernel"]
+    self.states.preventVgprOverflowDuringNewTile = 0 and not self.debugConfig.forceGenerateKernel
 
     # For Beta:
     # Rather than waiting for all loads to finish with s_waitcnt vmcnt(0), interleave
@@ -5007,7 +5008,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     fileString += str(kb)
 
     if error != 0:
-      if globalParameters["ForceGenerateKernel"]:
+      if self.debugConfig.forceGenerateKernel:
         printWarning("Generating kernel source resulted in error {}, but ForceGenerateKernel=1 so saving source".format(error))
       else:
         raise RuntimeError("Generating kernel source resulted in error {}".format(error))
@@ -5034,8 +5035,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   def getSourceFileString(self, kernel) -> Tuple[int, str]:
     """
     Returns a string suitable for placing in Kernels.cpp.  This means the actual kernel source in the case
-    of a source kernel, or an assembled code object byte array definition in the case of an assembly kernel,
-    or an empty string in the case that CodeFromFiles is true.
+    of a source kernel, or an assembled code object byte array definition in the case of an assembly kernel.
 
     In the case of an assembly kernel, this function has the side effect of creating the following files:
      * An assembly source file
@@ -5048,8 +5048,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   def getHeaderFileString(self, kernel):
     kernelName = self.getKernelName(kernel)
     fileString = "" # CHeader
-    if not globalParameters["CodeFromFiles"]:
-      fileString += "extern const unsigned char %s_coba[]; // code object byte array\n" % kernelName
+    fileString += "extern const unsigned char %s_coba[]; // code object byte array\n" % kernelName
 
     return fileString
 
