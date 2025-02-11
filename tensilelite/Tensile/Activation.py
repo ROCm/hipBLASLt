@@ -169,6 +169,9 @@ class ActivationType:
                             'supported_by': SupportedBy.TENSILE}), \
                           ('silu', { \
                             'instance': ActivationTypeRegister('silu', False, 0,        True,  True, False,   False, False, False, False), \
+                            'supported_by': SupportedBy.TENSILE | SupportedBy.HIPBLASLT}), \
+                          ('swish', { \
+                            'instance': ActivationTypeRegister('swish', False, 1,        True,  True, False,   False, False, False, False), \
                             'supported_by': SupportedBy.TENSILE}), \
                           ('hipblaslt_all', { \
                             'instance': ActivationTypeRegister('hipblaslt_all', False, 0), \
@@ -355,6 +358,8 @@ class ActivationModule:
             module = self.getDGeluModule(cDataType, vgprIn, vgprOut)
         elif (activationType == 'silu'):
             module = self.getSiluModule(cDataType, vgprIn, vgprOut)
+        elif (activationType == 'swish'):
+            module = self.getSwishModule(cDataType, vgprIn, vgprOut, "activationAlpha")
         elif (activationType == 'none'):
             return Module("No activation")
         else:
@@ -829,6 +834,25 @@ class ActivationModule:
         else:
             raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
         module.add(mulFunction(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(Holder(idx=vgprTemp)), comment="x / (1 + exp(-x))"))
+        return module
+
+    def getSwishModule(self, cDataType, vgprIn, vgprOut, activationAlpha):
+        self.needCombine = True
+        module = Module("Swish")
+        if cDataType.isHalf():
+            if self.usePK:
+                mulFunction = VMulPKF16
+            else:
+                mulFunction = VMulF16
+        elif cDataType.isSingle():
+            mulFunction = VMulF32
+        else:
+            raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
+        vgprTempIn = self.getVgpr(1)
+        vgprTempOut = self.getVgpr(1)
+        module.add(mulFunction(dst=self.vgprPrefix(Holder(idx=vgprTempIn)), src0=self.vgprPrefix(vgprIn), src1=sgpr(activationAlpha), comment="x * beta"))
+        module.addModuleAsFlatItems(self.getSigmoidModule(cDataType, Holder(idx=vgprTempIn), Holder(idx=vgprTempOut)))
+        module.add(mulFunction(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(Holder(idx=vgprTempOut)), comment="x / (1 + exp(-x * beta))"))
         return module
 
     ################################################################################
@@ -1317,6 +1341,12 @@ class ActivationInline:
       module = activation.getSiluModule(self.dataType, 0, 0)
       kStr += self.getActivationAsmStr(activation, module, (len(asm) * " "))
       kStr += addSpace(asm, ": \"+v\"(value) : \n")
+      kStr += self.getRequiredRegStr(asm, activation.vgprCounter, activation.sgprCounter)
+    elif (activationType == 'swish'):
+      kStr += (asm + " // Swish\n")
+      module = activation.getSwishModule(self.dataType, 0, 0, 1)
+      kStr += self.getActivationAsmStr(activation, module, (len(asm) * " "))
+      kStr += addSpace(asm, ": \"+v\"(value) : \"s\"(alpha)\n")
       kStr += self.getRequiredRegStr(asm, activation.vgprCounter, activation.sgprCounter)
     else:
       if (activationType != 'none'):
