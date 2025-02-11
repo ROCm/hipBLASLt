@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2019-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2019-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +60,6 @@ typedef struct
 #define HIP_HOST_DEVICE __host__ __device__
 #define HIP_HOST __host__
 #define HIP_DEVICE __device__
-
 
 // We are clipping in down conversion by default
 #define hipblaslt_F8_downcast_clipping 1
@@ -380,7 +379,7 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_fnuz
     // default constructor
     HIP_HOST_DEVICE hipblaslt_f8_fnuz() = default;
 
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
+#if defined(__gfx942__)
     // device specific optimized F8 down-conversion code
 
     template <bool stochastic_rounding = false>
@@ -417,10 +416,10 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_fnuz
         return i8data;
     }
 
-#endif // __gfx940__
+#endif // __gfx942__
 
     // constructor from float
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
+#if defined(__gfx942__)
 
     // NOTE: ON-DEVICE... always optimal bias
     explicit HIP_DEVICE hipblaslt_f8_fnuz(float                          v,
@@ -438,7 +437,7 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_fnuz
     // Host only implementation using s/w simulation
     explicit HIP_HOST
 #else
-    // both Host and DEVICE for non-gfx940 using s/w simulation
+    // both Host and DEVICE for non-gfx942 using s/w simulation
     explicit HIP_HOST_DEVICE
 #endif
         hipblaslt_f8_fnuz(float                          v,
@@ -491,7 +490,7 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_fnuz
     }
 
     // convert to float
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
+#if defined(__gfx942__)
     // upcast using device specific intrinsic
     explicit inline HIP_DEVICE operator float() const
     {
@@ -505,7 +504,7 @@ struct HIPBLASLT_EXPORT hipblaslt_f8_fnuz
     }
 
     explicit inline HIP_HOST operator float() const
-#else // non gfx940
+#else // non gfx942
     explicit inline HIP_HOST_DEVICE operator float() const
 #endif
     {
@@ -562,7 +561,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz
     // default constructor
     HIP_HOST_DEVICE hipblaslt_bf8_fnuz() = default;
 
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
+#if defined(__gfx942__)
     // device specific optimized F8 down-conversion code
 
     template <bool stochastic_rounding = false>
@@ -602,7 +601,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz
 #endif // __gfx940__
 
     // constructor from float
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
+#if defined(__gfx942__)
 
     // NOTE: ON-DEVICE... always optimal bias
     explicit HIP_DEVICE hipblaslt_bf8_fnuz(float                          v,
@@ -673,7 +672,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz
     }
 
     // convert to float
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
+#if defined(__gfx942__)
     // upcast using device specific intrinsic
     explicit inline HIP_DEVICE operator float() const
     {
@@ -687,7 +686,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz
     }
 
     explicit inline HIP_HOST operator float() const
-#else // non gfx940
+#else // non gfx942
     explicit inline HIP_HOST_DEVICE operator float() const
 #endif
     {
@@ -733,8 +732,6 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8_fnuz
 };
 #endif // #if HIPBLASLT_USE_F8_FNUZ_BC
 
-
-
 #if HIPBLASLT_USE_F8_OCP_BC
 
 struct HIPBLASLT_EXPORT hipblaslt_f8
@@ -750,10 +747,10 @@ struct HIPBLASLT_EXPORT hipblaslt_f8
     HIP_HOST_DEVICE hipblaslt_f8() = default;
 
     // constructor from float
-    explicit HIP_HOST_DEVICE
-        hipblaslt_f8(float                          v,
-                     hipblaslt_hip_f8_rounding_mode rm  = hipblaslt_hip_f8_rounding_mode::standard,
-                     uint32_t                       rng = 0)
+    explicit HIP_HOST_DEVICE hipblaslt_f8(float                          v,
+                                          hipblaslt_hip_f8_rounding_mode rm
+                                          = hipblaslt_hip_f8_rounding_mode::standard,
+                                          uint32_t rng = 0)
     {
     }
 
@@ -847,10 +844,10 @@ struct HIPBLASLT_EXPORT hipblaslt_bf8
     HIP_HOST_DEVICE hipblaslt_bf8() = default;
 
     // constructor from float
-    explicit HIP_HOST_DEVICE
-        hipblaslt_bf8(float                          v,
-                      hipblaslt_hip_f8_rounding_mode rm  = hipblaslt_hip_f8_rounding_mode::standard,
-                      uint32_t                       rng = 0)
+    explicit HIP_HOST_DEVICE hipblaslt_bf8(float                          v,
+                                           hipblaslt_hip_f8_rounding_mode rm
+                                           = hipblaslt_hip_f8_rounding_mode::standard,
+                                           uint32_t rng = 0)
     {
     }
 
