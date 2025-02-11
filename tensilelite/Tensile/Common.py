@@ -223,7 +223,7 @@ globalParameters["MaxLDS"] = 65536                # max LDS a kernel should atte
 globalParameters["ShortNames"] = False            # on windows kernel names can get too long; =True will convert solution/kernel names to serial ids
 
 globalParameters["MaxFileName"] = 64              # If a file name would be longer than this, shorten it with a hash.
-globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2), (12,0,0), (12,0,1)] # assembly kernels writer supports these architectures
+globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,2), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2), (12,0,0), (12,0,1)] # assembly kernels writer supports these architectures
 
 globalParameters["NewClient"] = 2                                 # Old client deprecated: NewClient must be set to 2.
 globalParameters["ClientBuildPath"] = "0_Build"                   # subdirectory for host code build directory
@@ -304,8 +304,6 @@ architectureMap = {
   'gfx906':'vega20', 'gfx906:xnack+':'vega20', 'gfx906:xnack-':'vega20',
   'gfx908':'arcturus','gfx908:xnack+':'arcturus', 'gfx908:xnack-':'arcturus',
   'gfx90a':'aldebaran', 'gfx90a:xnack+':'aldebaran', 'gfx90a:xnack-':'aldebaran',
-  'gfx940':'aquavanjaram', 'gfx940:xnack+':'aquavanjaram', 'gfx940:xnack-':'aquavanjaram',
-  'gfx941':'aquavanjaram', 'gfx941:xnack+':'aquavanjaram', 'gfx941:xnack-':'aquavanjaram',
   'gfx942':'aquavanjaram', 'gfx942:xnack+':'aquavanjaram', 'gfx942:xnack-':'aquavanjaram',
   'gfx1010':'navi10', 'gfx1011':'navi12', 'gfx1012':'navi14', 'gfx1030':'navi21',
   'gfx1100':'navi31', 'gfx1101':'navi32', 'gfx1102':'navi33',
@@ -1085,7 +1083,7 @@ validParameters = {
 
     # add gls or slc after global memory read/writes to change caching, not caching the writes is promising and improved performance a tiny bit
     # 0: none, 1: glc, 2: slc, 3: glc slc
-    # For gfx940, sets sc0/sc1 bits
+    # For gfx942, sets sc0/sc1/nt bits
     # 0: none, 1: sc0, 2: sc1, 3: sc0 sc1, 4: nt, 5: nt sc0, 6: nt sc1, 7: nt sc0 sc1
     "NonTemporalE":               list(range(0,8)),
     "NonTemporalD":               list(range(0,8)),
@@ -1638,7 +1636,7 @@ def splitArchs(fromTensile=False):
   if "all" in wantedArchs:
     for arch in globalParameters['SupportedISA']:
       if isSupported(arch):
-        if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
+        if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,2)]):
           if (arch == (9,0,10)):
             archs += [getGfxName(arch) + '-xnack+']
             cmdlineArchs += [getGfxName(arch) + ':xnack+']

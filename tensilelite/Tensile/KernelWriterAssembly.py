@@ -5227,7 +5227,7 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   def mfmaIter_waitCount(self, kernel):
-    if self.states.version in [(9,4,0), (9,4,1), (9,4,2)]:
+    if self.states.version in [(9,4,2)]:
       dataType = kernel["ProblemType"]["DataType"]
       miM = kernel["MatrixInstM"]
       miN = kernel["MatrixInstN"]
@@ -8682,7 +8682,6 @@ class KernelWriterAssembly(KernelWriter):
     module.addSpaceLine()
 
     # Global Write
-    #Store SC1 WA for gfx940/gfx941
     addr1 = sgpr("SrdD", 4)
     packedD1 = kernel["PackedC1IndicesX"]
     strideD1 = "StrideD%s" % (self.states.indexChars[packedD1[0]])
@@ -8690,8 +8689,8 @@ class KernelWriterAssembly(KernelWriter):
     vTmp = self.vgprPool.checkOut(1, "SR Store temp addr0")
     addr0 = vgpr(vTmp)
 
-    isGlc = kernel["NonTemporalD"] & 0x1 or self.states.archCaps["ForceStoreSC1"]
-    isSlc = kernel["NonTemporalD"] & 0x2 or self.states.archCaps["ForceStoreSC1"]
+    isGlc = kernel["NonTemporalD"] & 0x1
+    isSlc = kernel["NonTemporalD"] & 0x2
     isNT  = kernel["NonTemporalD"] & 0x4
     if kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
       isGlc = True
