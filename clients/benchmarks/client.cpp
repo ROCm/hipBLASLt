@@ -62,7 +62,7 @@ struct perf_matmul : hipblaslt_test_valid
     }
 };
 
-int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, bool yaml = false)
+int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, hipDeviceProp_t &props, bool yaml = false)
 {
     hipblaslt_cout << std::setiosflags(std::ios::fixed)
                    << std::setprecision(7); // Set precision to 7 digits
@@ -165,15 +165,48 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
         }
     }
 
+
+#ifdef ROCM_USE_FLOAT8
+    // Check for F8 OCP data types and convert to NANOO
+    {
+        std::string deviceFullString(props.gcnArchName);
+        std::string deviceString = deviceFullString.substr(0, deviceFullString.find(":"));
+
+        bool isGFX94X = deviceString.find("gfx940") != std::string::npos ||
+            deviceString.find("gfx941") != std::string::npos ||
+            deviceString.find("gfx942") != std::string::npos;
+
+        if (isGFX94X) {
+            auto convertF8Type = [](hipDataType type) {
+                if (type == HIP_R_8F_E4M3) {
+                    hipblaslt_cerr << "hipblaslt-bench INFO: Converting f8_r to f8_fnuz_r" << std::endl;
+                    return HIP_R_8F_E4M3_FNUZ;
+                }
+                if (type == HIP_R_8F_E5M2) {
+                    hipblaslt_cerr << "hipblaslt-bench INFO: Converting b8_r to b8_fnuz_r" << std::endl;
+                    return HIP_R_8F_E5M2_FNUZ;
+                }
+                else
+                    return type;
+            };
+
+            arg.a_type = convertF8Type(arg.a_type);
+            arg.b_type = convertF8Type(arg.b_type);
+            arg.c_type = convertF8Type(arg.c_type);
+            arg.d_type = convertF8Type(arg.d_type);
+        }
+    }
+#endif
+
     perf_matmul{}(arg);
     return 0;
 }
 
-int hipblaslt_bench_datafile(const std::string& filter, bool any_stride)
+int hipblaslt_bench_datafile(const std::string& filter, bool any_stride, hipDeviceProp_t &props)
 {
     int ret = 0;
     for(Arguments arg : HipBlasLt_TestData())
-        ret |= run_bench_test(arg, filter, any_stride, true);
+        ret |= run_bench_test(arg, filter, any_stride, props, true);
     test_cleanup::cleanup();
     return ret;
 }
@@ -744,7 +777,8 @@ try
     }
 
     // Device Query
-    int64_t device_count = query_device_property(device_id);
+    hipDeviceProp_t props;
+    int64_t device_count = query_device_property(device_id, props);
 
     hipblaslt_cout << std::endl;
     if(device_count <= device_id)
@@ -755,7 +789,7 @@ try
     freq_monitor.set_device_id(device_id);
 
     if(datafile)
-        return hipblaslt_bench_datafile(filter, any_stride);
+        return hipblaslt_bench_datafile(filter, any_stride, props);
 
     // single bench run
 
@@ -887,7 +921,7 @@ try
     }
 
     arg.norm_check_assert = false;
-    int status            = run_bench_test(arg, filter, any_stride);
+    int status            = run_bench_test(arg, filter, any_stride, props);
     freeFrequencyMonitor();
     return status;
 }

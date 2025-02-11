@@ -192,6 +192,15 @@ constexpr hipDataType string_to_hip_datatype(const std::string& value)
     {
         return HIP_R_8F_E5M2;
     }
+#else
+    if (value == "f8_r")
+    {
+        return HIP_R_8F_E4M3_FNUZ;
+    }
+    else if (value == "bf8_r")
+    {
+        return HIP_R_8F_E5M2_FNUZ;
+    }
 #endif
 
     return
