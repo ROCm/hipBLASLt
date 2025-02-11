@@ -889,10 +889,7 @@ class ProblemSizes:
         self.problems.update({Problem(rangeSize) : 1})
     for e in self.exacts:
         self.problems.update({e : 1})
-    if globalParameters["SortProblems"]:
-      self.problems =  sorted(list( self.problems.keys()), key=operator.attrgetter("sizes"))
-    else:
-      self.problems =  list(self.problems.keys())
+    self.problems =  list(self.problems.keys())
     self.totalProblemSizes = len(self.problems)
 
     # max sizes

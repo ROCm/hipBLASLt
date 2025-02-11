@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,6 @@ function(TensileCreateLibraryCmake
     Tensile_ARCHITECTURE
     Tensile_LIBRARY_FORMAT
     Tensile_SHORT_FILE_NAMES
-    Tensile_LIBRARY_PRINT_DEBUG
     Tensile_CPU_THREADS
     Tensile_SEPARATE_ARCHITECTURES
     Tensile_LAZY_LIBRARY_LOADING,

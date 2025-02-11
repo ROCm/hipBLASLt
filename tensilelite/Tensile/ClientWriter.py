@@ -34,7 +34,8 @@ from glob import glob
 from . import ROOT_PATH
 from . import ClientExecutable
 from . import LibraryIO
-from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx
+from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx, \
+  LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR
 from .SolutionStructs import ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
 from .TensileCreateLibrary import copyStaticFiles
 from .Contractions import FreeIndex, BatchIndex
@@ -80,8 +81,8 @@ class ClientLogLevel(Enum):
 ################################################################################
 def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
 
-  libraryLogicPath = ensurePath(outputPath / globalParameters["LibraryLogicPath"])
-  clientLibraryPath = ensurePath(outputPath / globalParameters["LibraryClientPath"])
+  libraryLogicPath = ensurePath(outputPath / LIBRARY_LOGIC_DIR)
+  clientLibraryPath = ensurePath(outputPath / LIBRARY_CLIENT_DIR)
   sourcePath = ensurePath(clientLibraryPath / "source")
   copyStaticFiles(sourcePath)
 
@@ -95,7 +96,6 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
   print1("LogicFiles: %s" % logicFiles)
   functions = []
   functionNames = []
-  enableHalf = False
 
   createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, cxxCompiler)
   subprocess.run(shlex.split(createLibraryScript), cwd=clientLibraryPath)
@@ -106,8 +106,6 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary) \
         = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler)
-    if problemType["DataType"].isHalf():
-        enableHalf = True
     functions.append((scheduleName, problemType))
     functionNames.append("tensile_%s" % (problemType))
     problemSizes = ProblemSizesMock(exactLogic) if exactLogic else ProblemSizesMockDummy()
@@ -154,7 +152,6 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
                                   codeObjectFiles=coList,
                                   tileAwareSelection=False,
                                   libraryFile=yamlList[0]))
-  globalParameters["EnableHalf"] = enableHalf
 
   forBenchmark = False
   problemSizes = None
@@ -286,7 +283,7 @@ def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cC
 
     clientExe = ClientExecutable.getClientExecutable(cxxCompiler, cCompiler, buildDir)
     for configFile in configPaths:
-      runScriptFile.write("{} --config-file {} {}\n".format(clientExe, configFile, globalParameters["ClientArgs"]))
+      runScriptFile.write("{} --config-file {}\n".format(clientExe, configFile))
     runScriptFile.write("ERR2=$?\n\n")
 
     runScriptFile.write("""
@@ -309,7 +306,7 @@ fi
         runScriptFile.write("%s -d 0 --setfan 50\n" % globalParameters["ROCmSMIPath"])
   else:
     for configFile in configPaths:
-      runScriptFile.write("{} --config-file {} {} --best-solution 1\n".format(ClientExecutable.getClientExecutable(cxxCompiler, cCompiler, buildDir), configFile, globalParameters["ClientArgs"]))
+      runScriptFile.write("{} --config-file {} --best-solution 1\n".format(ClientExecutable.getClientExecutable(cxxCompiler, cCompiler, buildDir), configFile))
   if os.name != "nt":
     runScriptFile.write("exit $ERR\n")
   runScriptFile.close()

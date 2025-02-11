@@ -60,7 +60,6 @@ globalParameters["PreciseKernelTime"] = (
 globalParameters["CodeFromFiles"] = (
     True  # if False byte arrays will be generated during Benchmarking phase as before
 )
-globalParameters["SortProblems"] = False  # sort problems by size; else use order in YAML file
 globalParameters["PinClocks"] = False  # T=pin gpu clocks and fan, F=don't
 globalParameters["HardwareMonitor"] = (
     True  # False: disable benchmarking client monitoring clocks using rocm-smi.
@@ -87,10 +86,6 @@ globalParameters["SkipSlowSolutionRatio"] = 0.0  # Skip slow solution during war
 #     Medium size: 0.75
 #     Large size :  0.9
 
-# cProfile
-globalParameters["Profiler"] = (
-    0  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
-)
 # validation
 globalParameters["NumElementsToValidate"] = (
     128  # number of elements to validate, 128 will be evenly spaced out (with prime number stride) across C tensor
@@ -123,13 +118,7 @@ globalParameters["ShowProgressBar"] = (
 globalParameters["SolutionSelectionAlg"] = (
     1  # algorithm to determine which solutions to keep. 0=removeLeastImportantSolutions, 1=keepWinnerSolutions (faster)
 )
-globalParameters["ExpandRanges"] = (
-    True  # expand ranges into exact configs before writing logic file.  False ignores ranges.
-)
 globalParameters["GenerateSourcesAndExit"] = False  # Exit after kernel source generation.
-globalParameters["WavefrontWidth"] = (
-    64  # if False and library client already built, then building library client will be skipped when tensile is re-run
-)
 globalParameters["ExitOnFails"] = (
     1  # 1: Exit after benchmark run if failures detected.  2: Exit during benchmark run.
 )
@@ -271,9 +260,6 @@ globalParameters["ShortNames"] = (
     False  # on windows kernel names can get too long; =True will convert solution/kernel names to serial ids
 )
 
-globalParameters["MaxFileName"] = (
-    64  # If a file name would be longer than this, shorten it with a hash.
-)
 globalParameters["SupportedISA"] = [
     (8, 0, 3),
     (9, 0, 0),
@@ -295,19 +281,6 @@ globalParameters["SupportedISA"] = [
 ]  # assembly kernels writer supports these architectures
 
 globalParameters["NewClient"] = 2  # Old client deprecated: NewClient must be set to 2.
-globalParameters["ClientBuildPath"] = "0_Build"  # subdirectory for host code build directory
-globalParameters["BenchmarkProblemsPath"] = (
-    "1_BenchmarkProblems"  # subdirectory for benchmarking phases
-)
-globalParameters["BenchmarkDataPath"] = (
-    "2_BenchmarkData"  # subdirectory for storing final benchmarking data
-)
-globalParameters["LibraryLogicPath"] = (
-    "3_LibraryLogic"  # subdirectory for library logic produced by analysis
-)
-globalParameters["LibraryClientPath"] = (
-    "4_LibraryClient"  # subdirectory for building example library client
-)
 globalParameters["ClientExecutionLockPath"] = (
     None  # Path for a file lock to ensure only one client is executed at once.  filelock module is required if this is enabled.
 )
@@ -333,10 +306,6 @@ else:
 
 globalParameters["CodeObjectVersion"] = "4"
 globalParameters["Architecture"] = "all"
-
-# might be deprecated
-globalParameters["EnableHalf"] = False
-globalParameters["ClientArgs"] = ""
 
 # perf model
 globalParameters["PerfModelL2ReadHits"] = 0.0
@@ -374,7 +343,6 @@ globalParameters["RotatingMode"] = (
 # Mode 0 requires memcpy everytime when the problem changes to reset the data, but mode 1 doesn't.
 
 globalParameters["BuildIdKind"] = "sha1"
-globalParameters["ValidateLibrary"] = False
 globalParameters["AsmDebug"] = (
     False  # Set to True to keep debug information for compiled code objects
 )

@@ -1,3 +1,13 @@
+# Subdirectories for Tensile build artifacts
+CLIENT_BUILD_DIR: str = "0_Build"
+BENCHMARK_PROBLEMS_DIR: str = "1_BenchmarkProblems"
+BENCHMARK_DATA_DIR: str = "2_BenchmarkData"
+LIBRARY_LOGIC_DIR: str = "3_LibraryLogic"
+LIBRARY_CLIENT_DIR: str = "4_LibraryClient"
+
+# If a file name is longer than this value, and `--short-filenames` is set, shorten it with a hash.
+MAX_FILENAME_LENGTH: int = 64
+
 # Characters to use for GEMM naming, e.g., C[ij]=Sum[k] A[ik]*B[jk]
 INDEX_CHARS: str = "IJKLMNOPQRSTUVWXYZ"
 

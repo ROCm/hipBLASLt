@@ -29,7 +29,7 @@ from typing import Optional
 from pathlib import Path
 
 from . import SOURCE_PATH
-from .Common import globalParameters, print2, ClientExecutionLock, ensurePath
+from .Common import globalParameters, print2, ClientExecutionLock, ensurePath, CLIENT_BUILD_DIR
 
 class CMakeEnvironment:
     def __init__(self, sourceDir, buildDir, **options):
@@ -81,7 +81,7 @@ def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir):
     global buildEnv
 
     if buildEnv is None:
-        buildEnv = clientExecutableEnvironment(builddir / globalParameters["ClientBuildPath"], cxxCompiler, cCompiler)
+        buildEnv = clientExecutableEnvironment(builddir / CLIENT_BUILD_DIR, cxxCompiler, cCompiler)
         buildEnv.generate()
         buildEnv.build()
 

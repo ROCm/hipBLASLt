@@ -36,7 +36,8 @@ from .CustomKernels import isCustomKernelConfig
 from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
-from .Common import globalParameters, printWarning, roundUp, print2, printExit, INDEX_CHARS, DataDirection, SemanticVersion
+from .Common import globalParameters, printWarning, roundUp, print2, printExit, DataDirection, SemanticVersion, \
+  INDEX_CHARS, MAX_FILENAME_LENGTH
 
 import abc
 import os
@@ -4947,13 +4948,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
   def _shortenFileBase(self, kernel):
     base = self.getKernelName(kernel)
-    if len(base) <= globalParameters["MaxFileName"]:
+    if len(base) <= MAX_FILENAME_LENGTH:
       return base
 
     import hashlib
     import base64
 
-    pivot = globalParameters["MaxFileName"] * 3 // 4
+    pivot = MAX_FILENAME_LENGTH * 3 // 4
     firstPart = base[:pivot]
     secondPart = base[pivot:]
 
