@@ -8,7 +8,7 @@
 Using Stream-K with hipBLASLt
 ********************************
 
-hipBLASLt supports the new Stream-K library, which provides improved performance
+hipBLASLt supports the Stream-K library, which provides improved performance
 and reduced library sizes for a wide range of General Matrix-Matrix Multiplication (GEMM) shapes and sizes.
 Stream-K partitions an equal share of the aggregate inner-loop iterations among physical processing elements,
 which provides a near-perfect utilization of computing resources.
@@ -19,11 +19,10 @@ Configuring the kernel selection strategy
 =========================================
 
 The ``TENSILE_SOLUTION_SELECTION_METHOD`` environment variable controls the hipBLASLt kernel selection strategy for GEMM operations.
-You can optionally set this variable to ``2`` to enable the Stream-K library or leave it set to ``0`` to continue to use the default settings.
+Set this variable to ``2`` to enable the Stream-K library or leave it set to ``0`` to continue to use the default settings.
 
 *  ``TENSILE_SOLUTION_SELECTION_METHOD=0`` (Default)
 
-   *  This is the default setting for the ``TENSILE_SOLUTION_SELECTION_METHOD`` variable.
    *  Kernels are selected from the standard tuned libraries.
    *  The heuristic best kernel is selected from the standard tuning grid.
    *  User-driven tuning (tunable ops) only accesses kernels from the standard grid and free-size libraries.
@@ -38,8 +37,8 @@ You can optionally set this variable to ``2`` to enable the Stream-K library or 
 Configuring the kernel selection strategy
 =========================================
 
-You can control The Stream-K kernel launch behavior using the environment variables listed in this table.
-By default, Stream-K uses a model to predict the optimal grid size to launch a GEMM kernel with at runtime.
+You can control The Stream-K kernel launch behavior using the environment variables listed in the following table.
+By default, Stream-K uses a model to predict the optimal grid size to use when launching a GEMM kernel at runtime.
 However, you can choose how many workgroups to launch a GEMM kernel with using the Stream-K settings below:
 
 .. csv-table::
@@ -53,12 +52,12 @@ However, you can choose how many workgroups to launch a GEMM kernel with using t
 Recommendations for using Stream-K
 =========================================
 
-Stream-K is especially advantageous in certain situations. Follow these guidelines when choosing a kernel selection strategy to use,
+Stream-K is especially advantageous in certain situations. Follow these guidelines when choosing a kernel selection strategy,
 based on your application and the desired performance.
 
 *  **Wide range of GEMM sizes**: Stream-K is a better choice for applications that handle a variety of GEMM shapes and sizes.
 *  **Non-uniform dimensions**: Stream-K is particularly beneficial for GEMMs where one dimension is significantly larger than the others.
-*  **Consistent performance**: Stream-K provides more consistent peak performance compared to the default selection
+*  **Consistent performance**: Stream-K provides more consistent peak performance than the default selection
    method by evenly distributing work across the available compute units.
 
 Managing Stream-K resource use
