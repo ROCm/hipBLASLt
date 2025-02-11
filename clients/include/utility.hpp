@@ -102,6 +102,7 @@ inline bool is_bias_enabled(hipblasLtEpilogue_t value_)
     case HIPBLASLT_EPILOGUE_DGELU_BGRAD:
     case HIPBLASLT_EPILOGUE_BGRADA:
     case HIPBLASLT_EPILOGUE_BGRADB:
+    case HIPBLASLT_EPILOGUE_SWISH_BIAS:
         return true;
     default:
         return false;
