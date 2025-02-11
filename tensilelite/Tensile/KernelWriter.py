@@ -4971,10 +4971,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   def _getCustomKernelSource(self, useShortNames, kernel, CustomKernelDirectory):
     kernelName = self.getKernelFileBase(useShortNames, kernel)
     with open(os.path.join(CustomKernelDirectory, (kernelName + ".s"))) as f:
-      hipccver = globalParameters['HipClangVersion'].split(".")
-      hipccMaj = int(hipccver[0])
-      hipccPatch = int(hipccver[2].split("-")[0])
-      if not (hipccMaj >= 6 and hipccPatch >= 32650):
+      if not (self.amdClangVersion.major >= 6 and self.amdClangVersion.patch >= 32650):
         code = []
         for line in f.readlines():
           if "amdhsa_user_sgpr_kernarg_preload" not in line:
@@ -4983,8 +4980,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       else:
         code = f.read()
 
-    self.tPA = tensorParametersA = {}
-    self.tPB = tensorParametersB = {}
+    self.tPA = {}
+    self.tPB = {}
     self.states.kernel = kernel
     self.states.language = "ASM"
     self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else globalParameters["CurrentISA"]
