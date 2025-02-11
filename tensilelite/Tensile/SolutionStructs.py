@@ -37,19 +37,19 @@ from .Activation import ActivationType
 
 from .CustomKernels import isCustomKernelConfig
 
-from .Common import assignParameterWithDefault, \
+from .Common import assignParameterWithDefault, IsaInfo, \
                     defaultProblemType, defaultSolution, \
                     defaultInternalSupportParams, \
                     globalParameters, internalParameters, \
                     print2, printExit, printWarning, \
                     validMFMA, validSMFMA, validParameters, \
-                    validGEMMTypes, HPATypes, roundUp, validWMMA, INDEX_CHARS
+                    validGEMMTypes, HPATypes, roundUp, validWMMA, INDEX_CHARS, print1
 
 from collections import OrderedDict
 from collections.abc import Mapping
 from enum import Enum
 from functools import lru_cache
-from typing import List
+from typing import List, Dict
 
 import collections
 import math
@@ -1053,9 +1053,10 @@ def isExtractableIndex(ks, index, tc='x'):
 class Solution(collections.abc.Mapping):
 
   ########################################
-  def __init__(self, config, cxxCompiler: str, srcName: str = ""):
+  def __init__(self, config, cxxCompiler: str, isaInfoMap: Dict[str, IsaInfo], srcName: str = ""):
     self._name = None
     self.cxxCompiler = cxxCompiler
+    self.isaInfoMap = isaInfoMap
     self.srcName = srcName
     config = config
 
@@ -1079,7 +1080,8 @@ class Solution(collections.abc.Mapping):
       assignParameterWithDefault(self._state, key, config, defaultSolution)
     if 'ISA' not in self._state:
       if 'ISA' in config:
-        if not globalParameters["AsmCaps"][tuple(config['ISA'])]["SupportedISA"]:
+        isa = tuple(config['ISA'])
+        if not self.isaInfoMap[isa].asmCaps["SupportedISA"]:
           defaultIsa = [9,0,0]
           print("warning: ISA:", config['ISA'], " is not supported; overriding with ", defaultIsa)
           self._state['ISA'] = defaultIsa
@@ -1116,7 +1118,7 @@ class Solution(collections.abc.Mapping):
     while True:
       state = deepcopy(self._state)
       state["DepthU"] = depthuList[index[0]]
-      Solution.assignDerivedParameters(state, index, depthuList)
+      Solution.assignDerivedParameters(state, index, depthuList, isaInfoMap)
       if state["Valid"]:
         self._state = state
         break
@@ -1204,7 +1206,7 @@ class Solution(collections.abc.Mapping):
             state["UnrollOnly"] = unrollOnly
             state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
             state["ActivationFused"] = self["ActivationFused"]
-            self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
+            self.conversionKernelObjects.append(KernelWriterConversion(state, vw, self.isaInfoMap))
           for btype in typeList:
             state = {}
             state["ProblemType"] = deepcopy(self["ProblemType"])
@@ -1217,7 +1219,7 @@ class Solution(collections.abc.Mapping):
             state["UnrollOnly"] = unrollOnly
             state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
             state["ActivationFused"] = self["ActivationFused"]
-            self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
+            self.conversionKernelObjects.append(KernelWriterConversion(state, vw, self.isaInfoMap))
         else:
           state = {}
           state["ProblemType"] = deepcopy(self["ProblemType"])
@@ -1228,7 +1230,7 @@ class Solution(collections.abc.Mapping):
           state["UnrollOnly"] = unrollOnly
           state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
           state["ActivationFused"] = self["ActivationFused"]
-          self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
+          self.conversionKernelObjects.append(KernelWriterConversion(state, vw, self.isaInfoMap))
 
   def initActivationEnumHeaderObjects(self):
     self.activationEnumHeaderObjects = []
@@ -1293,19 +1295,19 @@ class Solution(collections.abc.Mapping):
     return self.conversionKernelObjects
 
   @staticmethod
-  def getMIOutputInfo(state):
+  def getMIOutputInfo(state, isaInfoMap: Dict[str, IsaInfo]):
     outputVectorWidth = 4
     RegsPerOut = 1
 
     isa = tuple(state["ISA"])
-    if globalParameters["AsmCaps"][isa]['HasMFMA']:
+    if isaInfoMap[isa].asmCaps['HasMFMA']:
       if state["ProblemType"]["DataType"].MIOutputTypeNameAbbrev() == 'f64':
         outputVectorWidth, RegsPerOut = 1, 2
       else:
         outputVectorWidth, RegsPerOut = 4, 1
-    elif globalParameters["AsmCaps"][isa]['HasWMMA_V1']:
+    elif isaInfoMap[isa].asmCaps['HasWMMA_V1']:
         outputVectorWidth, RegsPerOut = 1, 1
-    elif globalParameters["AsmCaps"][isa]['HasWMMA_V2']:
+    elif isaInfoMap[isa].asmCaps['HasWMMA_V2']:
         outputVectorWidth, RegsPerOut = 8, 1
     else:
       print("WARNING: unexpect code flow")
@@ -1315,7 +1317,7 @@ class Solution(collections.abc.Mapping):
   ########################################
   # assign tile sizes
   @staticmethod
-  def assignProblemIndependentDerivedParameters(state):
+  def assignProblemIndependentDerivedParameters(state, isaInfoMap: Dict[str, IsaInfo]):
 
     if globalParameters["NewClient"] != 2:
       print("WARNING: Old client deprecated, NewClient parameter being set to 2.")
@@ -1334,7 +1336,7 @@ class Solution(collections.abc.Mapping):
     if (not state["ProblemType"]["StridedBatched"]) and (state["ProblemType"]["OperationType"] != 'GEMM'):
       reject(state, "General Batched GEMM only support GEMM OperationType")
 
-    Solution.MatrixInstructionToMIParameters(state)
+    Solution.MatrixInstructionToMIParameters(state, isaInfoMap)
     EnableMatrixInstruction = state["EnableMatrixInstruction"] if "EnableMatrixInstruction" in state else None
     if EnableMatrixInstruction == None:
       if  ("MIBlock" in state and len(state["MIBlock"]) == 6) \
@@ -1356,7 +1358,7 @@ class Solution(collections.abc.Mapping):
       state["MatrixInstBN"]        = state["MIBlock"][5]
 
       state["LocalSplitU"]         = 1
-      state["MIOutputVectorWidth"], state["MIRegPerOut"] = Solution.getMIOutputInfo(state)
+      state["MIOutputVectorWidth"], state["MIRegPerOut"] = Solution.getMIOutputInfo(state, isaInfoMap)
 
       if state["MatrixInstM"] == 4:
         state["ThreadTile0"] = state["MIWaveTile"][0] * state["MIOutputVectorWidth"]
@@ -1534,194 +1536,10 @@ class Solution(collections.abc.Mapping):
       state["LSP%s"%tc] = state["NumThreads"] // state["WavefrontSize"]
 
     return True
-
-
-  ########################################
-  # Sets the Global Read Tile dims (para, perp)
-  # This information controls which threads read which addresses from global mem)
-  # Output from this function:
-  #   state[NumLoadsCoalesced*]
-  #   state[NumLoadsPerpendicular*]
-  #   state[LSC*]
-  #   state[LSP*]
-  #   state[GlobalReadVectorWidth]
-  #
-  # LSC and LSP define the shape of the PerLoadTile, measured in elements.
-  #   LSC*LSP is the elements loaded by a single instruction across all
-  #   threads in the group.
-  #   LSC is the number of elements loaded in the para(coalesced) dimension
-  #   LSP is the number of elements loaded in the perp(noncoalesced) dimension
-  #   PerLoadTile is always rectangular.
-  #   When BufferLoad=1, the area (LSC*LSP) can be larger than NumThreads.
-  #   In this case, some threads will generate a dummy OOB GRO.
-  #   Related fields:
-  #     LVC = LSC/GRVW  (LVCA = LSCA/GLVWA)
-  #     LVP = LSP/GRVW  (LVPA = LSPA/GLVWA)
-  #
-  # NumLoadsCoalesced and NumLoadsPerpendicular define the number of times the
-  #   PerLoadTile is loaded in each dimension to fetch the LoadTile
-  # LoadTile = (LSC * NumLoadsCoalesced) * (LSP * NumLoadsPerpendicular).
-  #   For Fractional, the LoadTile can be larger than the MacroTile. Buffer
-  #   loads will clip any OOB references to 0 and will also avoid writing these
-  #   into LDS.
-
-  # Fractional load algorithm:
-  #  - Each load instruction loads one or more (complete) rows of the load tile.
-  #     - Each row is LSC elements wide
-  #     - Rows are complete and do not wrap. This allows a single base GRO VGPR
-  #       to be used for all loads in the tile.
-  #     - Some work-items in the load may not perform useful work. These WI will
-  #       set their GRO to a large OOB number so as to do no harm
-  #     - Some G2L registers space may be unused as well.
-  #     - The 'used' message at the bottom of this routine computes and prints the
-  #       wasted register space.
-  #     - The wasted space is removed when the data is written to LDS- the LWO
-  #       for work-items beyond the valid ones are set to safely write to OOB locations.
-
-  #     - In cases where each load is loading multiple rows (multiple lines of lsc
-  #       elements), the last load is allowed to load fewer lines than the others.
-  #       The KernelWriterAssembly will modify the LWO for the last load.  This allows
-  #       flexibility in the unroll factors for example.
-  @staticmethod
-  def setGlobalLoadTileDimFractional(state, tc, depthU):
-
-    assert(depthU > 0)
-    dbFract = 0
-
-    # parDim, perpDim define the LoadTile and are measured in elements
-    if state["ProblemType"]["TLU%s"%tc]:
-      parDim  = state["MacroTile%s"%tc]
-      perpDim = depthU
-    else:
-      parDim  = depthU
-      perpDim = state["MacroTile%s"%tc]
-
-    if dbFract:
-        print("\ninfo: %s Fractional MT%u_%u_%u Par=%u Perp=%u WG%02u_%02u_%02u NumThreads=%u GRWV%s=%u" \
-          % (tc, state["MacroTile0"], state["MacroTile1"], depthU, \
-            parDim, perpDim, \
-            state["WorkGroup"][0], state["WorkGroup"][1], state["LocalSplitU"], \
-            state["NumThreads"], tc, state["GlobalReadVectorWidth%s"%tc]))
-
-    # Try to find a GRVW which is smaller than the LSC and also does not force
-    # the LSC to wrap - both of these conditions can be tested with lsc % grvw ==0.
-    # Each iteration divides GRWV by 2 which provides finer granularity
-    # and a possible opportunity to handle the lsc
-    grvw = state["GlobalReadVectorWidth%s"%tc]
-    minGrvw = 2 if state["ProblemType"]["DataType"].isHalf() and \
-                globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasEccHalf"] else 1
-    # TODO- check this for int8 and fractional load
-    # minGrvw = 4 if state["ProblemType"]["DataType"].isInt8() and \
-    #             globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasEccHalf"] else 1
-    bestVw = -1
-    while grvw >= minGrvw:
-      # Per instruction across the entire group:
-      elementsLoadedPerInst = state["NumThreads"]*grvw
-      mik = 1
-      if (state["DirectToVgpr%s"%tc] and state["ProblemType"]["TLU%s"%tc]):
-        mik = state["MatrixInstK"] * state["LocalSplitU"] // state["MIInputPerThread"]
-        elementsLoadedPerInst //= mik
-      # LSC, LSP - #elements loaded along specified dim with each load
-      if parDim >= elementsLoadedPerInst:
-        # entire work-group can work on (part) of the same row
-        state["LSC%s"%tc] = elementsLoadedPerInst
-        state["LSP%s"%tc] = mik if state["ProblemType"]["TLU%s"%tc] else state["MatrixInstK"]
-        state["NumLoadsCoalesced%s"%tc] = roundupRatio(parDim , state["LSC%s"%tc])
-        state["NumLoadsPerpendicular%s"%tc] = 1
-      else:
-        # work-group exceeds read dimension so wraps to multiple rows
-        state["LSC%s"%tc] = parDim
-        state["LSP%s"%tc] = min(perpDim, elementsLoadedPerInst // parDim)
-        state["NumLoadsCoalesced%s"%tc] = 1
-        state["NumLoadsPerpendicular%s"%tc] = roundupRatio(perpDim , state["LSP%s"%tc])
-
-      # Vector loads can't wrap to next P dim, so LSC must be divisible by vector elements;
-      if dbFract:
-        print("  lsc search : lsc(%u) %% grvw(%u) = %u (?0)" % (state["LSC%s"%tc], grvw, state["LSC%s"%tc] % grvw))
-      if state["LSC%s"%tc] % grvw == 0:
-        bestVw = grvw
-        # Try to shrink GRVW if possible while keeping same LSC and LSP:
-        # For example, avoid cases where we use a GRVW=4 with many empty addresses
-        # when a GRVW=1 will do instead.
-        validElementsLoadedPerInst = state["LSC%s"%tc] * state["LSP%s"%tc]
-        grvw //= 2
-        while grvw >= minGrvw:
-          elementsLoadedPerInst = state["NumThreads"]*grvw//mik
-          if elementsLoadedPerInst < validElementsLoadedPerInst:
-            break # Went too far, not enough load elements at this VW
-          if state["LSC%s"%tc] % grvw == 0:
-            if dbFract:
-              print("  stepdown success (valid)elementsLoadedPerInst=", validElementsLoadedPerInst, "/", elementsLoadedPerInst, "grvw=", grvw, "lsc=", state["LSC%s"%tc])
-            bestVw = grvw
-          grvw //= 2
-        break
-
-      # TODO - could have this generate dwordx3 loads in addition, step down by 1 instead of div2
-      # Would need to change asm code gen to generate x3
-      grvw //= 2
-      # end-- while loop
-
-    if bestVw == -1:
-      if dbFract:
-        print ("reject fractional - no acceptable tile dim? GlobalReadVectorWidth%s"%tc, \
-         state["GlobalReadVectorWidth%s"%tc])
-      return False  # could not find a solution, perhaps only possible for half ?
-
-    state["GlobalReadVectorWidth%s"%tc] = bestVw
-    if bestVw != state["GlobalReadVectorWidth%s"%tc]:
-      if dbFract:
-        print("  reducing GlobalReadVectorWidth%s from %u to %u" \
-            % (tc, state["GlobalReadVectorWidth%s"%tc], bestVw))
-
-    # How many loads per threads in each dimension.
-    # threads which are outside the global read tile bounds will be clipped
-    # in the assembly code generator.
-    # Multiply the LSC*GRVW
-    state["NumLoadsCoalesced%s"%tc] = roundupRatio(parDim, state["LSC%s"%tc])
-    state["NumLoadsPerpendicular%s"%tc] = roundupRatio(perpDim , state["LSP%s"%tc])
-
-    nlc = state["NumLoadsCoalesced%s"%tc]
-    nlp = state["NumLoadsPerpendicular%s"%tc]
-
-    # LoadTile must at least cover the MacroTile:
-    assert(nlc*state["LSC%s"%tc] >= parDim)
-    assert(nlp*state["LSP%s"%tc] >= perpDim)
-
-    perpOverhang = perpDim % state["LSP%s"%tc]
-    state["fractionalPerpOverhang%s"%tc] = perpOverhang
-    if dbFract:
-      # how many threads compute Global Read Offsets (GRO) that are not used
-      print("  PerLoadTile=%ux%u elements Loads/WI=%ux%u LoadTile/WI=%ux%u (MT=%ux%u), %u/%u = %.1f%% WI GRO used %s" \
-          % (state["LSC%s"%tc], state["LSP%s"%tc], \
-             nlc, nlp, \
-             nlc*state["LSC%s"%tc], nlp*state["LSP%s"%tc], \
-             parDim, perpDim, \
-             parDim*perpDim, \
-             nlc*nlp*state["NumThreads"]*state["GlobalReadVectorWidth%s"%tc], \
-             float(parDim*perpDim), \
-             float(nlc*nlp*state["NumThreads"]*state["GlobalReadVectorWidth%s"%tc]) * 100.0) \
-             )
-
-      for p in range(0,nlp):
-        elementWidth = 4
-        if p != nlp-1:
-          perp = state["LSP%s"%tc]
-        else:
-          perp = perpOverhang if perpOverhang else state["LSP%s"%tc]
-
-        validElements = state["LSC%s"%tc] * perp
-        print("  buffer_load_element_x%u %ux%ux%u bytes,  %u/%u valid GRO" %\
-              (state["GlobalReadVectorWidth%s"%tc], \
-              state["LSC%s"%tc], perp, \
-              elementWidth, \
-              validElements//state["GlobalReadVectorWidth%s"%tc],
-              state["NumThreads"]))
-
-    return True
-
+  
 
   @staticmethod
-  def MatrixInstructionToMIParameters(state):
+  def MatrixInstructionToMIParameters(state, isaInfoMap: Dict[str, IsaInfo]):
     isa = tuple(state["ISA"])
     if len(state["MatrixInstruction"]) == 9:
       mi                          = state["MatrixInstruction"]
@@ -1737,7 +1555,7 @@ class Solution(collections.abc.Mapping):
       state["MFMA_BF16_1K"] = False
       if not state["ProblemType"]["Sparse"]:
         miDataType = state["ProblemType"]["DataType"] if (not state["EnableF32XdlMathOp"]) else state["ProblemType"]["F32XdlMathOp"]
-        if globalParameters["AsmCaps"][isa]["HasMFMA"]:
+        if isaInfoMap[isa].asmCaps["HasMFMA"]:
           if not (miDataType.toChar() in validMFMA and \
             state["MatrixInstruction"] in validMFMA[miDataType.toChar()]):
             if miDataType.isBFloat16() and \
@@ -1745,7 +1563,7 @@ class Solution(collections.abc.Mapping):
               state["MFMA_BF16_1K"] = True
             else:
               reject(state, "MatrixInstruction %s not valid for DataType %s" % (state["MatrixInstruction"], miDataType))
-        elif globalParameters["AsmCaps"][isa]["HasWMMA"]:
+        elif isaInfoMap[isa].asmCaps["HasWMMA"]:
           if state["MatrixInstruction"] not in validWMMA:
             reject(state, "MatrixInstruction %s not valid for DataType %s" % (state["MatrixInstruction"], state["ProblemType"]["DataType"]))
       else:
@@ -1781,7 +1599,7 @@ class Solution(collections.abc.Mapping):
       # set MIInputPerThread
       isa = tuple(state["ISA"])
       state['MIInputPerThread'] = state["MatrixInstruction"][0] * state["MatrixInstruction"][2] * state["MatrixInstruction"][3] // state["WavefrontSize"]
-      if (not globalParameters["AsmCaps"][isa]['HasMFMA']) and globalParameters["AsmCaps"][isa]['HasWMMA']:
+      if (not isaInfoMap[isa].asmCaps['HasMFMA']) and isaInfoMap[isa].asmCaps['HasWMMA']:
         if state['ISA'][0] == 10 or state['ISA'][0] == 11:
           state['MIInputPerThread'] = state["MatrixInstruction"][2]
       sparseA = False if not state["ProblemType"]["Sparse"] else False if state["ProblemType"]["Sparse"] == 2 else True
@@ -1811,14 +1629,14 @@ class Solution(collections.abc.Mapping):
   ########################################
   # determine can we use VgprForLocalReadPacking
   @staticmethod
-  def isVgprForLocalReadPackingDoable(state):
+  def isVgprForLocalReadPackingDoable(state, isaInfoMap: Dict[str, IsaInfo]):
     isa = tuple(state["ISA"])
     doable = True
     # MatrixInstruction only
     if not state["EnableMatrixInstruction"]:
       doable = False
     # only for HasEccHalf
-    if not globalParameters["ArchCaps"][isa]["HasEccHalf"]:
+    if not isaInfoMap[isa].archCaps["HasEccHalf"]:
       doable = False
     # only for PLR>=1 (except for DTVA+B)
     if state["PrefetchLocalRead"] < 1 and not (state["DirectToVgprA"] and state["DirectToVgprB"]):
@@ -1839,7 +1657,7 @@ class Solution(collections.abc.Mapping):
   ########################################
   # determine can we use DirectToVgpr
   @staticmethod
-  def isDirectToVgprDoable(state, tc):
+  def isDirectToVgprDoable(state, tc, isaInfoMap: Dict[str, IsaInfo]):
     MIindex = 0 if tc == 'A' else 1
     numBytes = state["ProblemType"]["DataType"].numBytes()
     numBytesGR = state["ProblemType"]["DataType%s"%tc].numBytes()
@@ -1896,7 +1714,7 @@ class Solution(collections.abc.Mapping):
       # numBytes < 4 case
       if state["ProblemType"]["TLU%c"%tc]:
         # use pack logic (with v_perm) same as local read (only if VgprForLocalReadPacking is doable)
-        if not Solution.isVgprForLocalReadPackingDoable(state):
+        if not Solution.isVgprForLocalReadPackingDoable(state, isaInfoMap):
           reject(state, "Does not meet the requirement for DirectToVgpr%c + TLU%c + numByte < 4"%(tc, tc))
           return False
         # force ClusterLocalRead=1 for DTV + pack
@@ -2130,7 +1948,7 @@ class Solution(collections.abc.Mapping):
   ########################################
   # assign all derived parameters
   @staticmethod
-  def assignDerivedParameters(state, index, depthuList):
+  def assignDerivedParameters(state, index, depthuList, isaInfoMap: Dict[str, IsaInfo]):
     state["EnableF32XdlMathOp"] = False #ignore the F32 xDL MathOp by default.
     #enable F32 xDL MathOp only when the input type is f32.
     if "F32XdlMathOp" in state["ProblemType"] \
@@ -2138,7 +1956,7 @@ class Solution(collections.abc.Mapping):
        and (state["ProblemType"]["DataType"].isSingle()):
       state["EnableF32XdlMathOp"] = True
 
-    Solution.assignProblemIndependentDerivedParameters(state)
+    Solution.assignProblemIndependentDerivedParameters(state, isaInfoMap)
 
     if "AssignedDerivedParameters" in state:
       if state["AssignedDerivedParameters"]:
@@ -2189,7 +2007,7 @@ class Solution(collections.abc.Mapping):
         reject(state, "Stream-K requries MIWaveGroup0*MIWaveGroup1=4")
       if not state["EnableMatrixInstruction"]:
         reject(state, "Stream-K requires MatrixInstruction")
-      if globalParameters["AsmCaps"][isa]["HasWMMA"]:
+      if isaInfoMap[isa].asmCaps["HasWMMA"]:
         reject(state, "Stream-K untested with WMMA")
       # if state["PersistentKernel"]:
       #   reject(state, "Cannot enable both Stream-K and PersistentKernel")
@@ -2234,13 +2052,13 @@ class Solution(collections.abc.Mapping):
       print2("in assignDerivedParameters, state['Valid'] = False")
       return
 
-    if not globalParameters["AsmCaps"][isa]["HasNTModifier"]:
+    if not isaInfoMap[isa].asmCaps["HasNTModifier"]:
       # force to disable nt flag if it is not supported by arch
       for ch in ["", "A", "B", "C", "D", "E", "WS", "Metadata"]:
         if state["NonTemporal%s"%ch] >= 4:
           state["NonTemporal%s"%ch] -= 4
 
-    if state["WavefrontSize"] == 32 and not globalParameters["ArchCaps"][isa]["HasWave32"]:
+    if state["WavefrontSize"] == 32 and not isaInfoMap[isa].archCaps["HasWave32"]:
       reject(state, "WavefrontSize=32 not supported for ISA {}".format(isa))
       return
 
@@ -2249,7 +2067,7 @@ class Solution(collections.abc.Mapping):
       return
 
     if state["EnableMatrixInstruction"]:
-      if not (globalParameters["AsmCaps"][isa]["HasMFMA"] or globalParameters["AsmCaps"][isa]["HasWMMA"]):
+      if not (isaInfoMap[isa].asmCaps["HasMFMA"] or isaInfoMap[isa].asmCaps["HasWMMA"]):
         reject(state, f"isa {isa} doesn't support matrix instruction")
         return
       if not (state["ProblemType"]["DataType"].isSingle() \
@@ -2261,7 +2079,7 @@ class Solution(collections.abc.Mapping):
               or state["ProblemType"]["DataType"].isInt8()):
         reject(state, "didn't support Matrix Instruction with type %s" % str(state["ProblemType"]["DataType"]))
         return
-      if (not globalParameters["AsmCaps"][isa]["HasMFMA"] and globalParameters["AsmCaps"][isa]["HasWMMA"] and (state["WavefrontSize"] == 64)):
+      if (not isaInfoMap[isa].asmCaps["HasMFMA"] and isaInfoMap[isa].asmCaps["HasWMMA"] and (state["WavefrontSize"] == 64)):
          print2("!! Warning: WMMA only well tune on WGP mode, wave size = 32")
       #  reject(state, "WMMA only suppport on WGP mode, wave size = 32")
       #  return
@@ -2274,14 +2092,14 @@ class Solution(collections.abc.Mapping):
       if not state["MIWaveTile"] or len(state["MIWaveTile"]) != 2:
         reject(state, "invalid MIWaveTile")
         return
-      if globalParameters["AsmCaps"][isa]["HasMFMA"]:
+      if isaInfoMap[isa].asmCaps["HasMFMA"]:
         if not state["ProblemType"]["HighPrecisionAccumulate"] \
            and state["ProblemType"]["DataType"].numRegisters() < 1 :
           reject(state, "Matrix instructions for half, bf16 (or i8) types are natively accumulated" + \
            " in fp32 (or i32) precision. Please add the following config:" + \
            "\n - HighPrecisionAccumulate: True")
           return
-      if globalParameters["AsmCaps"][isa]["HasWMMA"]:
+      if isaInfoMap[isa].asmCaps["HasWMMA"]:
         if state["ProblemType"]["DataType"].numRegisters() >=1:
           reject(state, "WMMA only support half, bf16 and i8 type")
           return
@@ -2534,7 +2352,7 @@ class Solution(collections.abc.Mapping):
     if state["KernelLanguage"] == "Assembly" \
       and state["ProblemType"]["DataType"].isHalf():
 
-      if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasEccHalf"]:
+      if isaInfoMap[globalParameters["CurrentISA"]].archCaps["HasEccHalf"]:
         if not state["ProblemType"]["HighPrecisionAccumulate"] and state["AssertFree0ElementMultiple"] % 2 != 0:
           # beta-on-edge has AF0EM requirement except for HPA kernels
           reject(state, "Archs with HasEccHalf require AF0EM%2==0 except for HPA kernels")
@@ -2560,7 +2378,7 @@ class Solution(collections.abc.Mapping):
         else:
           optPadA //= 2
           readRegsA //= 2
-      if (not globalParameters["AsmCaps"][isa]['HasWMMA']) and (readRegsA > 4 or readRegsB > 4):
+      if (not isaInfoMap[isa].asmCaps['HasWMMA']) and (readRegsA > 4 or readRegsB > 4):
         reject(state, "LocalReadVectorWidth results in attemping to read LDS larger than b128, reject")
         return
       if state["EnableMatrixInstruction"]:
@@ -3016,7 +2834,7 @@ class Solution(collections.abc.Mapping):
                 validDepthU = False
 
         if validDepthU and state["KernelLanguage"] == "Assembly":
-          if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasEccHalf"]:
+          if isaInfoMap[globalParameters["CurrentISA"]].archCaps["HasEccHalf"]:
             if state["ProblemType"]["DataType"].numRegisters() == 0.5 and (not state["ProblemType"]["HighPrecisionAccumulate"]):
                 if state["GlobalReadVectorWidthA"] == 1 or state["GlobalReadVectorWidthB"] == 1:
                   reject(state, "HalfEcc requires HPA if glvw = 1")
@@ -3212,7 +3030,7 @@ class Solution(collections.abc.Mapping):
         if state["AssertFree0ElementMultiple"] < 2:
           reject(state, "Assembly GSU half requires AF0EM>=2 (for atomics on edge tiles)")
 
-        if state["EnableMatrixInstruction"] and globalParameters["AsmCaps"][isa]['HasWMMA']:
+        if state["EnableMatrixInstruction"] and isaInfoMap[isa].asmCaps['HasWMMA']:
           reject(state, "Half WMMA doesn't support single buffer GSU")
           return
 
@@ -3318,10 +3136,10 @@ class Solution(collections.abc.Mapping):
     # Determine if we can load directly-to-Vgpr
     # need to check after state["LocalReadVectorWidth"] = -1 is resolved
     if state["DirectToVgprA"]:
-      if not Solution.isDirectToVgprDoable(state, 'A'):
+      if not Solution.isDirectToVgprDoable(state, 'A', isaInfoMap):
         return  # rejected
     if state["DirectToVgprB"]:
-      if not Solution.isDirectToVgprDoable(state, 'B'):
+      if not Solution.isDirectToVgprDoable(state, 'B', isaInfoMap):
         return  # rejected
 
     ########################################
@@ -3729,13 +3547,13 @@ class Solution(collections.abc.Mapping):
 
     # check if need to use lds init Acc vgprs
     state["LdsInitCVgprs"] = False
-    if globalParameters["ArchCaps"][isa]["HasAccCD"] and \
+    if isaInfoMap[isa].archCaps["HasAccCD"] and \
          state["EnableMatrixInstruction"] and state["StorePriorityOpt"] and \
          state["ProblemType"]["DataType"].isDouble():
       state["LdsInitCVgprs"] = True
 
     # force MIArchVgpr when using WMMA
-    if state["EnableMatrixInstruction"] and globalParameters["AsmCaps"][isa]["HasWMMA"]:
+    if state["EnableMatrixInstruction"] and isaInfoMap[isa].asmCaps["HasWMMA"]:
       state["MIArchVgpr"] = True
 
     if state["MIArchVgpr"]:
@@ -3743,7 +3561,7 @@ class Solution(collections.abc.Mapping):
         reject(state, "MIArchVgpr only support for MatrixInstruction")
         return
 
-      if globalParameters["AsmCaps"][isa]["HasMFMA"]:
+      if isaInfoMap[isa].asmCaps["HasMFMA"]:
         if not (state["ProblemType"]["ComputeDataType"].isDouble() or \
                 state["ProblemType"]["ComputeDataType"].isSingle() or \
                 (state["ProblemType"]["ComputeDataType"].isHalf() and state["ProblemType"]["HighPrecisionAccumulate"]) or \

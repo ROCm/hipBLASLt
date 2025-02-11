@@ -23,13 +23,14 @@
 ################################################################################
 
 import itertools
+from typing import Dict
 
 from . import Properties
 from . import Hardware
 from . import Common
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import state
+from .Common import state, IsaInfo
 
 class SingleSolutionLibrary:
     Tag = "Single"
@@ -301,6 +302,7 @@ class MasterSolutionLibrary:
                           origData,
                           origSolutions,
                           cxxCompiler,
+                          isaInfoMap: Dict[str, IsaInfo],
                           solutionClass=Contractions.Solution,
                           libraryOrder=None,
                           placeholderName='TensileLibrary'):
@@ -461,6 +463,7 @@ class MasterSolutionLibrary:
                 MasterSolutionLibrary.FromOriginalState(origData,
                                                         origSolutions,
                                                         cxxCompiler,
+                                                        isaInfoMap,
                                                         solutionClass,
                                                         libraryOrder[placeholderIndex:],
                                                         placeholderName)
@@ -468,7 +471,7 @@ class MasterSolutionLibrary:
             origSolutions = []
 
         problemType = Contractions.ProblemType.FromOriginalState(origData["ProblemType"])
-        allSolutions = [solutionClass.FromSolutionStruct(s, cxxCompiler) for s in origSolutions]
+        allSolutions = [solutionClass.FromSolutionStruct(s, cxxCompiler, isaInfoMap) for s in origSolutions]
         cls.FixSolutionIndices(allSolutions)
 
         # library is constructed in reverse order i.e. bottom-up
@@ -489,8 +492,8 @@ class MasterSolutionLibrary:
         return rv, placeholderName
 
     @classmethod
-    def BenchmarkingLibrary(cls, solutions, cxxCompiler):
-        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, cxxCompiler) for s in solutions])
+    def BenchmarkingLibrary(cls, solutions, cxxCompiler, isaInfoMap):
+        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, cxxCompiler, isaInfoMap) for s in solutions])
         cls.FixSolutionIndices(solutionObjs)
 
         predRows = list([{

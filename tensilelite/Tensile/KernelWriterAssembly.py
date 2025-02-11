@@ -48,12 +48,13 @@ from .AsmStoreState import StoreState, VectorDataTypes
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationType
 from .CustomKernels import isCustomKernelConfig
-from .Common import globalParameters, print2, printExit, printWarning, roundUp, ensurePath, INDEX_CHARS, DataDirection, SemanticVersion
+from .Common import globalParameters, print2, printExit, printWarning, roundUp, ensurePath, \
+  INDEX_CHARS, DataDirection, SemanticVersion, IsaInfo
 
 from math import ceil, log, floor
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import NamedTuple, Tuple
+from typing import NamedTuple, Tuple, Dict
 
 import os
 import subprocess
@@ -67,8 +68,15 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion):
-    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, amdClangVersion)
+  def __init__(
+      self,
+      kernelMinNaming,
+      kernelSerialNaming,
+      assembler: str,
+      isaInfoMap: Dict[str, IsaInfo],
+      amdClangVersion: SemanticVersion
+    ):
+    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, amdClangVersion, isaInfoMap)
 
   def getSourceFileString(self, kernel) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"

@@ -30,7 +30,7 @@ import joblib
 import os
 import sys
 import argparse
-from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
+from .Common import globalParameters, print1, printExit, printWarning, ensurePath, IsaInfo, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
@@ -42,6 +42,7 @@ from . import LibraryIO
 from . import LibraryLogic
 from datetime import datetime
 from pathlib import Path
+from typing import Dict
 
 import subprocess
 
@@ -59,6 +60,7 @@ def executeStepsInConfig(
         outputPath: Path,
         asmToolchain: AssemblyToolchain,
         srcToolchain: SourceToolchain,
+        isaInfoMap: Dict[str, IsaInfo],
         cCompiler: str
    ):
     """Conducts the steps in the provided ``config`` according to the Tensile workflow.
@@ -84,7 +86,16 @@ def executeStepsInConfig(
     # Benchmark Problems
     ##############################################################################
     if "BenchmarkProblems" in config:
-        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, cCompiler, outputPath, buildTmpPath)
+        BenchmarkProblems.main(
+            config["BenchmarkProblems"],
+            config["UseCache"],
+            asmToolchain,
+            srcToolchain,
+            isaInfoMap,
+            cCompiler,
+            outputPath,
+            buildTmpPath
+        )
         print1("")
 
     ##############################################################################
@@ -101,7 +112,7 @@ def executeStepsInConfig(
                 libraryLogicConfig = config["LibraryLogic"]
             else:
                 libraryLogicConfig = {}
-            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler, outputPath)
+            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler, isaInfoMap, outputPath)
             print1("")
         else:
             print1("# LibraryLogic already done.")
@@ -410,7 +421,7 @@ def Tensile(userArgs):
         store_max_frequency(max_frequency)
 
     cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
-    assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
+    isaInfoMap = assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
 
 
     asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
@@ -425,7 +436,7 @@ def Tensile(userArgs):
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
 
-    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, cCompiler)
+    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler)
 
 def TensileConfigPath(*args):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)

@@ -5,11 +5,12 @@ import re
 import sys
 import time
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from Tensile import __version__
 
 from .Architectures import isaToGfx
+from .Types import IsaInfo
 
 
 # get param values from structures.
@@ -42,7 +43,7 @@ def locateExe(defaultPath, exeName):  # /opt/rocm/bin, hip-clang
     return None
 
 
-def splitArchs(params: dict, fromTensile=False) -> Tuple[List[str], List[str]]:
+def splitArchs(params: dict, isaInfoMap: Dict[str, IsaInfo], fromTensile=False) -> Tuple[List[str], List[str]]:
     """
     Splits and processes the architecture strings based on the provided parameters.
 
@@ -58,7 +59,7 @@ def splitArchs(params: dict, fromTensile=False) -> Tuple[List[str], List[str]]:
 
     def isSupported(arch):
         return (
-            params["AsmCaps"][arch]["SupportedISA"] and params["AsmCaps"][arch]["SupportedSource"]
+            isaInfoMap[arch].asmCaps["SupportedISA"] and isaInfoMap[arch].asmCaps["SupportedSource"]
         )
 
     if ";" in params["Architecture"]:
@@ -103,7 +104,7 @@ def ensurePath(path):
     except FileExistsError:
         pass
     except OSError:
-        printExit('Failed to create directory "%s" ' % (path))
+        raise OSError('Failed to create directory "%s" ' % (path))
     return path
 
 

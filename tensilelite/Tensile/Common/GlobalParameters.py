@@ -33,7 +33,8 @@ from copy import deepcopy
 from Tensile import __version__
 
 from .Architectures import gfxToIsa, isaToGfx
-from .Capabilities import initArchCaps, initAsmBugs, initAsmCaps
+from .Capabilities import initArchCaps, initAsmBugs, initAsmCaps, initRegisterCaps
+from .Types import IsaInfo
 from .Utilities import locateExe, versionIsCompatible
 
 startTime = time.time()
@@ -1571,41 +1572,41 @@ def restoreDefaultGlobalParameters():
         globalParameters[key] = value
 
 
-def printTable(rows):
-    rows = list([[str(cell) for cell in row] for row in rows])
-    colWidths = list([max([len(cell) for cell in col]) for col in zip(*rows)])
+# def printTable(rows):
+#     rows = list([[str(cell) for cell in row] for row in rows])
+#     colWidths = list([max([len(cell) for cell in col]) for col in zip(*rows)])
 
-    for row in rows:
-        for width, cell in zip(colWidths, row):
-            pad = " " * (width - len(cell))
-            print(pad, cell, sep="", end=" ")
-        print()
+#     for row in rows:
+#         for width, cell in zip(colWidths, row):
+#             pad = " " * (width - len(cell))
+#             print(pad, cell, sep="", end=" ")
+#         print()
 
 
-def printCapTable(parameters):
-    import itertools
+# def printCapTable(parameters, isaInfoMap):
+#     import itertools
 
-    archs = [(0, 0, 0)] + parameters["SupportedISA"]
-    gfxNames = list(map(isaToGfx, archs))
+#     archs = [(0, 0, 0)] + parameters["SupportedISA"]
+#     gfxNames = list(map(isaToGfx, archs))
 
-    headerRow = ["cap"] + gfxNames
+#     headerRow = ["cap"] + gfxNames
 
-    def capRow(caps, cap):
-        return [cap] + [("1" if cap in caps[arch] and caps[arch][cap] else "0") for arch in archs]
+#     def capRow(caps, cap):
+#         return [cap] + [("1" if cap in caps[arch] and caps[arch][cap] else "0") for arch in archs]
 
-    allAsmCaps = set(
-        itertools.chain(*[caps.keys() for arch, caps in parameters["AsmCaps"].items()])
-    )
-    allAsmCaps = sorted(allAsmCaps, key=lambda k: (k.split("_")[-1], k))
-    asmCapRows = [capRow(parameters["AsmCaps"], cap) for cap in allAsmCaps]
+#     allAsmCaps = set(
+#         itertools.chain(*[caps.keys() for arch, caps in isaInfoMap.items()])
+#     )
+#     allAsmCaps = sorted(allAsmCaps, key=lambda k: (k.split("_")[-1], k))
+#     asmCapRows = [capRow(parameters["AsmCaps"], cap) for cap in allAsmCaps]
 
-    allArchCaps = set(
-        itertools.chain(*[caps.keys() for arch, caps in parameters["ArchCaps"].items()])
-    )
-    allArchCaps = sorted(allArchCaps)
-    archCapRows = [capRow(parameters["ArchCaps"], cap) for cap in allArchCaps]
+#     allArchCaps = set(
+#         itertools.chain(*[caps.keys() for arch, caps in parameters["ArchCaps"].items()])
+#     )
+#     allArchCaps = sorted(allArchCaps)
+#     archCapRows = [capRow(parameters["ArchCaps"], cap) for cap in allArchCaps]
 
-    printTable([headerRow] + asmCapRows + archCapRows)
+#     printTable([headerRow] + asmCapRows + archCapRows)
 
 
 def assignGlobalParameters(config, cxxCompiler=None):
@@ -1703,23 +1704,22 @@ def assignGlobalParameters(config, cxxCompiler=None):
             globalParameters["CurrentISA"] = (9, 0, 6)
             printWarning("Failed to detect ISA so forcing (gfx906) on windows")
 
-    globalParameters["AsmCaps"] = {}
-    globalParameters["ArchCaps"] = {}
-    globalParameters["AsmBugs"] = {}
-
+    isaInfoMap = {}
     for v in globalParameters["SupportedISA"] + [(0, 0, 0)]:
-        globalParameters["AsmCaps"][v] = initAsmCaps(v, cxxCompiler, False)
-        globalParameters["ArchCaps"][v] = initArchCaps(v)
-        globalParameters["AsmBugs"][v] = initAsmBugs(globalParameters["AsmCaps"][v])
+        asmCaps = initAsmCaps(v, cxxCompiler, False)
+        archCaps = initArchCaps(v)
+        regCaps = initRegisterCaps(v, archCaps)
+        asmBugs = initAsmBugs(asmCaps)
+        isaInfoMap[v] = IsaInfo(cxxCompiler, asmCaps, archCaps, regCaps, asmBugs)
 
-    if globalParameters["PrintLevel"] >= 1:
-        printCapTable(globalParameters)
+    # if globalParameters["PrintLevel"] >= 1:
+    #     printCapTable(globalParameters, isaInfoMap)
 
     globalParameters["SupportedISA"] = list(
         [
-            i
-            for i in globalParameters["SupportedISA"]
-            if globalParameters["AsmCaps"][i]["SupportedISA"]
+            v 
+            for v in globalParameters["SupportedISA"]
+            if isaInfoMap[v].asmCaps["SupportedISA"]
         ]
     )
 
@@ -1769,6 +1769,8 @@ def assignGlobalParameters(config, cxxCompiler=None):
         if key not in globalParameters:
             printWarning("Global parameter %s = %s unrecognised." % (key, value))
         globalParameters[key] = value
+
+    return isaInfoMap
 
 
 def setupRestoreClocks():

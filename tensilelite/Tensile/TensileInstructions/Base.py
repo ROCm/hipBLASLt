@@ -27,7 +27,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Tuple
 
-from ..Common import initAsmCaps, initArchCaps, initRegisterCaps, initAsmBugs
+from ..Common import initAsmCaps, initArchCaps, initRegisterCaps, initAsmBugs, IsaInfo
 from .Formatting import __TI_DEBUG_LEVEL__, printExit
 
 
@@ -48,13 +48,6 @@ class TensileInstructions:
                 cls._instance._kernelInfo = {}
         return cls._instance
 
-    @dataclass
-    class IsaInfo:
-        assemblerPath: str
-        asmCaps: dict
-        archCaps: dict
-        regCaps: dict
-        asmBugs: dict
 
     @dataclass
     class kernelInfo:
@@ -71,8 +64,7 @@ class TensileInstructions:
                 archCaps = initArchCaps(isaVersion)
                 regCaps  = initRegisterCaps(isaVersion, archCaps)
                 asmBugs  = initAsmBugs(asmCaps)
-                self._isaInfo[isaVersion] = TensileInstructions.IsaInfo(assemblerPath, # type: ignore
-                    asmCaps, archCaps, regCaps, asmBugs)
+                self._isaInfo[isaVersion] = IsaInfo(assemblerPath, asmCaps, archCaps, regCaps, asmBugs)
 
     def setDebugLevel(self, level: int) -> None:
         __TI_DEBUG_LEVEL__ = level

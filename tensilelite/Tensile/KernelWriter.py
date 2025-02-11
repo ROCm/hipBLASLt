@@ -37,7 +37,7 @@ from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
 from .Common import globalParameters, printWarning, roundUp, print2, printExit, DataDirection, SemanticVersion, \
-  INDEX_CHARS, MAX_FILENAME_LENGTH
+  INDEX_CHARS, MAX_FILENAME_LENGTH, IsaInfo
 
 import abc
 import os
@@ -357,12 +357,20 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion):
+  def __init__(
+      self,
+      kernelMinNaming,
+      kernelSerialNaming,
+      assembler: str,
+      amdClangVersion: SemanticVersion,
+      isaInfoMap: Dict[str, IsaInfo]
+    ):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
     self.amdClangVersion = amdClangVersion
     self.ti = None
+    self.isaInfoMap = isaInfoMap
 
     self.do = {}
     self.do["PreLoop"]     = True
@@ -2890,6 +2898,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.ti = TensileInstructions()
     self.ti.init(version, self.assembler)
     self.ti.setKernelInfo(version, kernel["WavefrontSize"])
+    self.ti.getArchCaps
 
     self.consts = ConstValues()
     self.states = StateValues(version=version, kernel=kernel, kernelName=self.getKernelName(kernel))
@@ -4984,7 +4993,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.kernel = kernel
     self.states.language = "ASM"
     self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else globalParameters["CurrentISA"]
-    if not globalParameters["AsmCaps"][self.states.version]["SupportedISA"]:
+    if self.isaInfoMap[self.states.version].asmCaps["SupportedISA"]:
       self.states.version = (9,0,0)
       printWarning(f"ISA: {self.version} is not supported; overriding with {self.states.version}")
 

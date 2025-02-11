@@ -30,11 +30,12 @@ import shutil
 from pathlib import Path
 from enum import Enum
 from glob import glob
+from typing import Dict
 
 from . import ROOT_PATH
 from . import ClientExecutable
 from . import LibraryIO
-from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx, \
+from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx, IsaInfo, \
   LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR
 from .SolutionStructs import ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
 from .TensileCreateLibrary import copyStaticFiles
@@ -79,7 +80,7 @@ class ClientLogLevel(Enum):
 ################################################################################
 # Main
 ################################################################################
-def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
+def main(config, cxxCompiler: str, cCompiler: str, isaInfoMap: Dict[str, IsaInfo], outputPath: Path):
 
   libraryLogicPath = ensurePath(outputPath / LIBRARY_LOGIC_DIR)
   clientLibraryPath = ensurePath(outputPath / LIBRARY_CLIENT_DIR)
@@ -105,7 +106,7 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
   clientParametersPaths = []
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary) \
-        = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler)
+        = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler, isaInfoMap)
     functions.append((scheduleName, problemType))
     functionNames.append("tensile_%s" % (problemType))
     problemSizes = ProblemSizesMock(exactLogic) if exactLogic else ProblemSizesMockDummy()

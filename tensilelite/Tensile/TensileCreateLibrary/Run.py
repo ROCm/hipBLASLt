@@ -29,13 +29,14 @@ import os
 import shutil
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import List, NamedTuple, Optional, Sequence, Union
+from typing import List, NamedTuple, Optional, Sequence, Union, Dict
 
 from Tensile import SOURCE_PATH, LibraryIO
 from Tensile.Common import (
     HR,
     CHeader,
     IsaVersion,
+    IsaInfo,
     ParallelMap2,
     SemanticVersion,
     architectureMap,
@@ -197,6 +198,7 @@ def writeSolutionsAndKernels(
     kernels,
     kernelHelperObjs,
     kernelWriterAssembly,
+    isaInfoMap: Dict[str, IsaInfo],
     errorTolerant=False,
     generateSourcesAndExit=False,
     compress=True,
@@ -261,7 +263,7 @@ def writeSolutionsAndKernels(
             asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress
         )
         buildSourceCodeObjectFiles(
-            srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile
+            srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, isaInfoMap, fromTensile
         )
 
     return codeObjectFiles, numKernels
@@ -274,10 +276,10 @@ def writeSolutionsAndKernelsTCL(
     kernels,
     kernelHelperObjs,
     kernelWriterAssembly,
+    isaInfoMap: Dict[str, IsaInfo],
     compress=True,
     fromTensile=False,
 ):
-
     outputPath = Path(outputPath)
     destLibPath = ensurePath(
         outputPath / "library"
@@ -326,7 +328,7 @@ def writeSolutionsAndKernelsTCL(
     writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
     srcKernelFile = Path(outputPath) / "Kernels.cpp"
     buildSourceCodeObjectFiles(
-        srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile
+        srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, isaInfoMap, fromTensile
     )
 
     return len(uniqueAsmKernels)
@@ -334,13 +336,13 @@ def writeSolutionsAndKernelsTCL(
 
 @timing
 def getSolutionAndKernelWriters(
-    solutions, kernels, assembler: str, assemblerVersion: SemanticVersion
+    solutions, kernels, assembler: str, assemblerVersion: SemanticVersion, isaInfoMap: Dict[str, IsaInfo]
 ):
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     solutionMinNaming = Solution.getMinNaming(solutions)
     kernelMinNaming = Solution.getMinNaming(kernels)
     kernelWriterAssembly = KernelWriterAssembly(
-        kernelMinNaming, kernelSerialNaming, assembler, assemblerVersion
+        kernelMinNaming, kernelSerialNaming, assembler, assemblerVersion, isaInfoMap
     )
 
     return (kernelWriterAssembly, kernelMinNaming, solutionMinNaming)
@@ -394,7 +396,7 @@ def generateKernelObjectsFromSolutions(solutions):
 
 
 @timing
-def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
+def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler, isaInfoMap):
 
     if ";" in args["Architecture"]:
         archs = args["Architecture"].split(";")  # user arg list format
@@ -405,7 +407,7 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
     masterLibraries = {}
     nextSolIndex = 0
 
-    fIter = zip(logicFiles, itertools.repeat(cxxCompiler), itertools.repeat(archs))
+    fIter = zip(logicFiles, itertools.repeat(cxxCompiler), itertools.repeat(isaInfoMap), itertools.repeat(archs))
 
     def libraryIter(lib: MasterSolutionLibrary):
         if len(lib.solutions):
@@ -510,7 +512,7 @@ def run():
     print1(f"# Architecture(s):     {arguments['Architecture']}")
     print1(f"# Library Format:      {arguments['LibraryFormat']}")
 
-    assignGlobalParameters(arguments, cxxCompiler)
+    isaInfoMap = assignGlobalParameters(arguments, cxxCompiler)
 
     asmToolchain = AssemblyToolchain(
         assembler, offloadBundler, globalParameters["BuildIdKind"], arguments["CodeObjectVersion"]
@@ -573,10 +575,10 @@ def run():
     for logicFile in logicFiles:
         print2("#   %s" % logicFile)
 
-    solutions, masterLibraries = generateLogicDataAndSolutions(logicFiles, arguments, cxxCompiler)
+    solutions, masterLibraries = generateLogicDataAndSolutions(logicFiles, arguments, cxxCompiler, isaInfoMap)
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
     kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(
-        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion
+        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion, isaInfoMap
     )
 
     copyStaticFiles(outputPath)
@@ -588,13 +590,14 @@ def run():
         kernels,
         kernelHelperObjs,
         kernelWriterAssembly,
+        isaInfoMap,
         compress=arguments["UseCompression"],
     )
 
     archs = [
         isaToGfx(arch)
         for arch in globalParameters["SupportedISA"]
-        if globalParameters["AsmCaps"][arch]["SupportedISA"]
+        if isaInfoMap[arch].asmCaps["SupportedISA"]
     ]
     newLibraryDir = ensurePath(os.path.join(outputPath, "library"))
 

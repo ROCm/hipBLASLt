@@ -26,9 +26,9 @@ from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
-from .Common import gfxToIsa, printExit, printWarning, print2, versionIsCompatible, __version__
+from .Common import gfxToIsa, printExit, printWarning, print2, versionIsCompatible, __version__, print1, IsaInfo
 
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Dict
 import os
 import sys
 
@@ -192,12 +192,12 @@ def readJson(filename):
         data = json.loads(f.read())
     return data
 
-def parseSolutionsFile(filename, cxxCompiler):
+def parseSolutionsFile(filename, cxxCompiler, isaInfoMap):
     """Wrapper function to read and parse a solutions file."""
-    return parseSolutionsData(read(filename), filename, cxxCompiler)
+    return parseSolutionsData(read(filename), filename, cxxCompiler, isaInfoMap)
 
 
-def parseSolutionsData(data, srcFile, cxxCompiler):
+def parseSolutionsData(data, srcFile, cxxCompiler, isaInfoMap):
     """Parses problem sizes and solutions from the data of a solutions file."""
     if len(data) < 3:
         printExit("Solution file {} is missing required fields (len = {} < 3" \
@@ -224,7 +224,7 @@ def parseSolutionsData(data, srcFile, cxxCompiler):
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
-        solutionObject = Solution(solutionState, cxxCompiler, srcFile)
+        solutionObject = Solution(solutionState, cxxCompiler, isaInfoMap, srcFile)
         solutions.append(solutionObject)
     problemType = solutions[0]["ProblemType"]
     problemSizes = ProblemSizes(problemType, problemSizesConfig)
@@ -240,12 +240,12 @@ class LibraryLogic(NamedTuple):
     exactLogic: list
     library: SolutionLibrary.MasterSolutionLibrary
 
-def parseLibraryLogicFile(filename, cxxCompiler, archs=None):
+def parseLibraryLogicFile(filename, cxxCompiler, isaInfoMap: Dict[str, IsaInfo], archs=None):
     """Wrapper function to read and parse a library logic file."""
-    return parseLibraryLogicData(read(filename, True), filename, cxxCompiler, archs)
+    return parseLibraryLogicData(read(filename, True), filename, cxxCompiler, isaInfoMap, archs)
 
 
-def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
+def parseLibraryLogicData(data, srcFile, cxxCompiler, isaInfoMap: Dict[str, IsaInfo], archs=None):
     """Parses the data of a library logic file."""
     if isinstance(data, List):
         data = parseLibraryLogicList(data, srcFile)
@@ -271,7 +271,7 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
     problemType = ProblemType(data["ProblemType"])
 
     # unpack solution
-    def solutionStateToSolution(solutionState, cxxCompiler) -> Solution:
+    def solutionStateToSolution(solutionState, cxxCompiler, isaInfoMap) -> Solution:
         if solutionState["KernelLanguage"] == "Assembly":
             solutionState["ISA"] = gfxToIsa(data["ArchitectureName"])
         else:
@@ -290,7 +290,7 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
             # The ActivationType setting in YAML is meaningless in customKernel case.
             # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
             solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
-        solutionObject = Solution(solutionState, cxxCompiler, srcFile)
+        solutionObject = Solution(solutionState, cxxCompiler, isaInfoMap, srcFile)
         solutionProblemType = solutionObject["ProblemType"]
         if problemType != solutionProblemType:
             # find the mismatched items in ProblemType
@@ -302,9 +302,9 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
             printExit(f"ProblemType in library logic file {srcFile} doesn't match solution(idx={solIdx}): \n{results}")
         return solutionObject
 
-    solutions = [solutionStateToSolution(solutionState, cxxCompiler) for solutionState in data["Solutions"]]
+    solutions = [solutionStateToSolution(solutionState, cxxCompiler, isaInfoMap) for solutionState in data["Solutions"]]
 
-    newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions, cxxCompiler)
+    newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions, cxxCompiler, isaInfoMap)
 
     return LibraryLogic(data["ScheduleName"], data["ArchitectureName"], problemType, solutions, \
             data.get("ExactLogic"), newLibrary)

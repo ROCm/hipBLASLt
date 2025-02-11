@@ -23,8 +23,9 @@
 ################################################################################
 
 from pathlib import Path
+from typing import Dict
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
-  assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, \
+  assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, IsaInfo, \
   LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR
 from .SolutionStructs import Solution
 from . import LibraryIO
@@ -1430,7 +1431,7 @@ class LogicAnalyzer:
 
 
 
-def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str):
+def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str, isaInfoMap: Dict[str, IsaInfo]):
 
   libraryLogicPath = ensurePath(libraryLogicPath)
 
@@ -1473,7 +1474,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
         printExit("%s doesn't exist for %s" % (dataFileName, fileBase) )
       if not os.path.exists(solutionsFileName):
         printExit("%s doesn't exist for %s" % (solutionsFileName, fileBase) )
-      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler)
+      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler, isaInfoMap)
       if len(solutions) == 0:
         printExit("%s doesn't contains any solutions." % (solutionsFileName) )
       problemType = solutions[0]["ProblemType"]
@@ -1546,7 +1547,7 @@ def read_max_freq():
 ###
 ################################################################################
 ################################################################################
-def main(config, cxxCompiler: str, outputPath: Path):
+def main(config, cxxCompiler: str, isaInfoMap: Dict[str, IsaInfo], outputPath: Path):
   benchmarkDataPath = outputPath / BENCHMARK_DATA_DIR
   libraryLogicPath = outputPath / LIBRARY_LOGIC_DIR
-  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler)
+  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler, isaInfoMap)
