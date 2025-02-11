@@ -256,9 +256,6 @@ globalParameters["Device"] = 0  # select hip device or opencl device within plat
 # shouldn't need to change
 globalParameters["DeviceLDS"] = 65536  # LDS bytes per CU, for computing occupancy
 globalParameters["MaxLDS"] = 65536  # max LDS a kernel should attempt to use
-globalParameters["ShortNames"] = (
-    False  # on windows kernel names can get too long; =True will convert solution/kernel names to serial ids
-)
 
 globalParameters["SupportedISA"] = [
     (8, 0, 3),

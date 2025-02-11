@@ -84,7 +84,7 @@ def executeStepsInConfig(
     # Benchmark Problems
     ##############################################################################
     if "BenchmarkProblems" in config:
-        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, cCompiler, outputPath, buildTmpPath)
+        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, cCompiler, outputPath, buildTmpPath, config["ShortNames"])
         print1("")
 
     ##############################################################################
@@ -115,7 +115,7 @@ def executeStepsInConfig(
             libraryClientConfig = config["LibraryClient"]
         else:
             libraryClientConfig = {}
-        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler, outputPath)
+        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler, outputPath, config["ShortNames"])
         print1("")
 
 
@@ -412,11 +412,12 @@ def Tensile(userArgs):
     cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
 
-
     asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
     srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
     overrideParameters = argUpdatedGlobalParameters(args)
+
+    config["ShortNames"] = args["ShortNames"]
 
     for key, value in overrideParameters.items():
         print("Overriding {0}={1}".format(key, value))

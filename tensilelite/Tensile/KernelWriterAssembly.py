@@ -70,7 +70,7 @@ class KernelWriterAssembly(KernelWriter):
   def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion):
     super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, amdClangVersion)
 
-  def getSourceFileString(self, kernel) -> Tuple[int, str]:
+  def getSourceFileString(self, kernel, useShortNames: bool=False) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"
     # Skip if .o files will have already been built for this file
     if kernel.duplicate:
@@ -78,7 +78,7 @@ class KernelWriterAssembly(KernelWriter):
       return (0, "") # should this be an non zero number
 
     try:
-      code = self._getCustomKernelSource(kernel, CUSTOM_KERNEL_PATH) if isCustomKernelConfig(kernel) else self._getKernelSource(kernel)
+      code = self._getCustomKernelSource(useShortNames, kernel, CUSTOM_KERNEL_PATH) if isCustomKernelConfig(kernel) else self._getKernelSource(kernel)
       errcode = 0
     except RuntimeError as e:
       printWarning(f"Failed to generate assembly source code for {kernel}: {e}")

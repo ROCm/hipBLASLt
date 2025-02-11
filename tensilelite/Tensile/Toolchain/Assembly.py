@@ -175,7 +175,8 @@ def buildAssemblyCodeObjectFiles(
       writer: KernelWriterAssembly,
       destDir: Union[Path, str],
       asmDir: Union[Path, str],
-      compress: bool=True
+      compress: bool=True,
+      useShortNames: bool=False,
     ):
     """Builds code object files from assembly files
 
@@ -208,14 +209,14 @@ def buildAssemblyCodeObjectFiles(
 
       gfx = isaToGfx(arch)
 
-      objectFiles = [str(asmDir / (writer.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
+      objectFiles = [str(asmDir / (writer.getKernelFileBase(useShortNames, k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
       coFileMap = collections.defaultdict(list)
       if len(objectFiles):
         coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
       for kernel in archKernels:
         coName = kernel.get("codeObjectFile", None)
         if coName:
-          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writer.getKernelFileBase(kernel) + extObj)))
+          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writer.getKernelFileBase(useShortNames, kernel) + extObj)))
       for coFileRaw, objFiles in coFileMap.items():
         objFiles = _batchObjectFiles(objFiles, coFileRaw)
         toolchain.link(objFiles, str(coFileRaw))

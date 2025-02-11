@@ -113,7 +113,8 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
 
 def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
         biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes, \
-        asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, sourcePath: Path):
+        asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, sourcePath: Path,
+        useShortNames: bool):
     """Write all the files needed for a given benchmarking step"""
 
     ensurePath(sourcePath)
@@ -150,7 +151,8 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
             sourcePath, asmToolchain, srcToolchain, \
             solutions, kernels, kernelHelperObjs, \
             kernelWriterAssembly, errorTolerant=True, fromTensile=True, \
-            generateSourcesAndExit=globalParameters["GenerateSourcesAndExit"])
+            generateSourcesAndExit=globalParameters["GenerateSourcesAndExit"], \
+            useShortNames=useShortNames)
     # ^ this is where solutions is mutated
 
     newLibraryDir = ensurePath(sourcePath / 'library')
@@ -200,7 +202,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
 
 def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeGroupIdx, useCache,
                          asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str,
-                         buildTmpPath: Path, benchmarkProblemsPath: Path
+                         buildTmpPath: Path, benchmarkProblemsPath: Path, useShortNames: bool
     ):
     """Run the benchmarking for a single entry in the BenchmarkProblems of a Tensile config"""
     benchmarkTestFails = 0
@@ -314,7 +316,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                     benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,    \
                     benchmarkStep.factorDimArgs, benchmarkStep.activationArgs, \
                     benchmarkStep.icacheFlushArgs, shortName, [], asmToolchain, srcToolchain, \
-                    sourcePath)
+                    sourcePath, useShortNames)
             # ^ this mutates solutions
 
             # write cache data
@@ -379,7 +381,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
     return (resultsFileBaseFinal, benchmarkTestFails)
 
 
-def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str, outputPath: Path, buildTmpPath: Path):
+def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str, outputPath: Path, buildTmpPath: Path, useShortNames: bool):
     """Entry point for the "BenchmarkProblems" section of a Tensile config yaml"""
     ClientExecutable.getClientExecutable(srcToolchain.compiler, cCompiler, outputPath)
 
@@ -418,7 +420,7 @@ def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: Source
                 # benchmark problem size group
                 benchmarkProblemsPath = ensurePath(outputPath / BENCHMARK_PROBLEMS_DIR)
                 (resultsFileBaseFinal, benchmarkErrors) = \
-                        benchmarkProblemType(problemTypeConfig, sizeGroupConfig, idx, useCache, asmToolchain, srcToolchain, cCompiler, buildTmpPath, benchmarkProblemsPath)
+                        benchmarkProblemType(problemTypeConfig, sizeGroupConfig, idx, useCache, asmToolchain, srcToolchain, cCompiler, buildTmpPath, benchmarkProblemsPath, useShortNames)
                 totalTestFails += benchmarkErrors
 
                 print("clientExit={} {} for {}" \

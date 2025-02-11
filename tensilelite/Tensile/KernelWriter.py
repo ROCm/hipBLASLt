@@ -348,6 +348,7 @@ class ExternClasses:
   activation: ActivationModule = ActivationModule()
   biasSumUnroll: Optional[Component.SumUnroll] = None
 
+
 ################################################################################
 # Kernel Writer
 ################################################################################
@@ -4964,8 +4965,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return firstPart + secondPart
 
 
-  def _getCustomKernelSource(self, kernel, CustomKernelDirectory):
-    kernelName = self.getKernelFileBase(kernel)
+  def _getCustomKernelSource(self, useShortNames, kernel, CustomKernelDirectory):
+    kernelName = self.getKernelFileBase(useShortNames, kernel)
     with open(os.path.join(CustomKernelDirectory, (kernelName + ".s"))) as f:
       hipccver = globalParameters['HipClangVersion'].split(".")
       hipccMaj = int(hipccver[0])
@@ -5014,10 +5015,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # get kernel name
   ##############################################################################
-  def getKernelFileBase(self, kernel):
+  def getKernelFileBase(self, useShortNames: bool, kernel):
     if isCustomKernelConfig(kernel):
       fileBase = kernel["CustomKernelName"]
-    elif globalParameters["ShortNames"]:
+    elif useShortNames:
       fileBase = Solution.getNameSerial(kernel, self.kernelSerialNaming)
     else:
       fileBase = self._shortenFileBase(kernel)

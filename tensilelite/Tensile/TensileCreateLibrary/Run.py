@@ -81,15 +81,15 @@ class KernelCodeGenResult(NamedTuple):
     wavefrontSize: int
 
 
-def processKernelSource(kernelWriterAssembly, ti, kernel) -> KernelCodeGenResult:
+def processKernelSource(kernelWriterAssembly, ti, useShortNames, kernel) -> KernelCodeGenResult:
     """
     Generate source for a single kernel.
     Returns (error, source, header, kernelName).
     """
     kernelWriter = kernelWriterAssembly
     kernelWriter.setTensileInstructions(ti)
-    asmFilename = kernelWriter.getKernelFileBase(kernel)
-    err, src = kernelWriter.getSourceFileString(kernel)
+    asmFilename = kernelWriter.getKernelFileBase(useShortNames, kernel)
+    err, src = kernelWriter.getSourceFileString(kernel, useShortNames)
     header = kernelWriter.getHeaderFileString(kernel)
     objFilename = kernel._state.get("codeObjectFile", None)
 
@@ -201,6 +201,7 @@ def writeSolutionsAndKernels(
     generateSourcesAndExit=False,
     compress=True,
     fromTensile=False,
+    useShortNames=False,
 ):
     codeObjectFiles = []
 
@@ -221,7 +222,7 @@ def writeSolutionsAndKernels(
     visited = set()
     duplicates = 0
     for k in asmKernels:
-        base = kernelWriterAssembly.getKernelFileBase(k)
+        base = kernelWriterAssembly.getKernelFileBase(useShortNames, k)
         k.duplicate = True if base in visited else False
         duplicates += k.duplicate
         print2(f"Duplicate: {base}")
@@ -232,7 +233,7 @@ def writeSolutionsAndKernels(
     numKernels = len(asmKernels)
     assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
     asmIter = zip(
-        itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()), asmKernels
+        itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()), itertools.repeat(useShortNames), asmKernels
     )
     asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels")
     removeInvalidSolutionsAndKernels(
@@ -258,7 +259,7 @@ def writeSolutionsAndKernels(
 
     if not generateSourcesAndExit:
         codeObjectFiles += buildAssemblyCodeObjectFiles(
-            asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress
+            asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress, useShortNames
         )
         buildSourceCodeObjectFiles(
             srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile
@@ -276,6 +277,7 @@ def writeSolutionsAndKernelsTCL(
     kernelWriterAssembly,
     compress=True,
     fromTensile=False,
+    useShortNames=False,
 ):
 
     outputPath = Path(outputPath)
@@ -295,7 +297,7 @@ def writeSolutionsAndKernelsTCL(
     visited = set()
     duplicates = 0
     for k in asmKernels:
-        base = kernelWriterAssembly.getKernelFileBase(k)
+        base = kernelWriterAssembly.getKernelFileBase(useShortNames, k)
         k.duplicate = True if base in visited else False
         duplicates += k.duplicate
         print2(f"Duplicate: {base}")
@@ -309,7 +311,7 @@ def writeSolutionsAndKernelsTCL(
         asmToolchain.assemble(str(p), str(p.with_suffix(".o")), isaToGfx(isa), wavefrontsize)
 
     unaryProcessKernelSource = functools.partial(
-        processKernelSource, kernelWriterAssembly, TensileInstructions()
+        processKernelSource, kernelWriterAssembly, TensileInstructions(), useShortNames
     )
     unaryWriteAssembly = functools.partial(writeAssembly, assemblyTmpPath)
     compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
@@ -320,7 +322,7 @@ def writeSolutionsAndKernelsTCL(
         multiArg=False,
     )
     buildAssemblyCodeObjectFiles(
-        asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress
+        asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress, useShortNames
     )
 
     writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)

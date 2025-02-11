@@ -97,7 +97,7 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
   functions = []
   functionNames = []
 
-  createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, cxxCompiler)
+  createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, cxxCompiler, config["ShortNames"])
   subprocess.run(shlex.split(createLibraryScript), cwd=clientLibraryPath)
   coList = glob(os.path.join(clientLibraryPath, "library/*.co"))
   yamlList = glob(os.path.join(clientLibraryPath, "library/*.yaml"))
@@ -200,7 +200,7 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: 
 
   return process.returncode
 
-def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
+def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, useShortNames: bool=False):
   import io
   runScriptFile = io.StringIO()
 
@@ -209,7 +209,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
   if not globalParameters["LazyLibraryLoading"]:
     callCreateLibraryCmd += " --no-lazy-library-loading"
 
-  if globalParameters["ShortNames"]:
+  if useShortNames:
     callCreateLibraryCmd += " --short-file-names"
 
   if globalParameters.get("AsmDebug", False):
