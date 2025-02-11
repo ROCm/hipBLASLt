@@ -2324,13 +2324,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
       ## 8x8 -> split into group of 16 MAC(s)
       ## supports only PLR=0
       ###############################################################################
-      if self.states.numItersPLR:
-        subIterCode = self._makeSubIterSchedule(kernel, tensorParametersA, tensorParametersB, localReads, \
-                        u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], module)
-        module.add(subIterCode) # add scheduled "other", local reads, local writes
-        pack[luIdx] = Module()
-      else:
-        printExit("TensileLite does not support MAC instructions.")
+      subIterCode = self._makeSubIterSchedule(kernel, tensorParametersA, tensorParametersB, localReads, \
+                      u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], module)
+      module.add(subIterCode) # add scheduled "other", local reads, local writes
+      pack[luIdx] = Module()
 
     # close unrolled loop
     endStr = ""
@@ -3628,7 +3625,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       else:
         numVgprGlobalReadIncsMetadata = 0
 
-    numVgprAddressDbg = self.states.rpga if globalParameters["DebugKernel"] else 0
+    numVgprAddressDbg = self.states.rpga if self.debugConfig.debugKernel else 0
 
     ####################################
     # num vgprs: c write address
@@ -3952,7 +3949,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.numActivationTypeArgSize = 0 # Will change to 1 if activationType == All
     self.states.numActivationArgSize = max(1, int(kernel["ProblemType"]["DestDataType"].numRegisters()))
     self.states.numactivationArgTotalSize = self.states.numActivationArgSize * kernel["ProblemType"]["ActivationType"].getAdditionalArgNum()
-    self.states.numSgprAddressDbg = self.states.rpga if globalParameters["DebugKernel"] else 0
+    self.states.numSgprAddressDbg = self.states.rpga if self.debugConfig.debugKernel else 0
 
     ####################################
     # num sgprs: global read increments
@@ -4024,7 +4021,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     self.defineSgpr("OrigLoopCounter", 1)
 
-    if globalParameters["DebugKernel"]:
+    if self.debugConfig.debugKernel:
       self.defineSgpr("AddressDbg", self.states.numSgprAddressDbg)
       self.defineSgpr("DebugKernelItems", 1)
 

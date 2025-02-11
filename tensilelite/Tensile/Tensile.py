@@ -26,6 +26,7 @@ if __name__ == "__main__":
     print("This file can no longer be run as a script.  Run 'Tensile/bin/Tensile' instead.")
     exit(1)
 
+import os
 import subprocess
 import sys
 import argparse
@@ -61,7 +62,7 @@ def executeStepsInConfig(
         asmToolchain: AssemblyToolchain,
         srcToolchain: SourceToolchain,
         cCompiler: str,
-        dbconfig: DebugConfig
+        debugConfig: DebugConfig
    ):
     """Conducts the steps in the provided ``config`` according to the Tensile workflow.
 
@@ -87,7 +88,7 @@ def executeStepsInConfig(
     ##############################################################################
     if "BenchmarkProblems" in config:
         BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, \
-                               cCompiler, outputPath, buildTmpPath, config["ShortNames"], dbconfig)
+                               cCompiler, outputPath, buildTmpPath, config["ShortNames"], debugConfig)
         print1("")
 
     ##############################################################################
@@ -306,24 +307,24 @@ def store_max_frequency(max_frequency):
         return False
 
 
-  def debugConfig(config: dict) -> DebugConfig:
-    dbConfig = DebugConfig()
+def makeDebugConfig(config: dict) -> DebugConfig:
+    debugConfig = DebugConfig()
 
     if "EnableAsserts" in config:
-        dbConfig.enableAsserts = config["EnableAsserts"]
+        debugConfig.enableAsserts = config["EnableAsserts"]
     if "EnableDebugA" in config:
-        dbConfig.enableDebugA = config["EnableDebugA"]
+        debugConfig.enableDebugA = config["EnableDebugA"]
     if "EnableDebugB" in config:
-        dbConfig.enableDebugB = config["EnableDebugB"]
+        debugConfig.enableDebugB = config["EnableDebugB"]
     if "EnableDebugC" in config:
-        dbConfig.enableDebugC = config["EnableDebugC"]
+        debugConfig.enableDebugC = config["EnableDebugC"]
     if "ExpectedValueC" in config:
-        dbConfig.expectedValueC = config["ExpectedValueC"]
+        debugConfig.expectedValueC = config["ExpectedValueC"]
     if "ForceCExpectedValue" in config:
-        dbConfig.forceCExpectedValue = config["ForceCExpectedValue"]
+        debugConfig.forceCExpectedValue = config["ForceCExpectedValue"]
     if "DebugKernel" in config:
-        dbConfig.debugKernel = config["DebugKernel"]
-    return dbConfig
+        debugConfig.debugKernel = config["DebugKernel"]
+    return debugConfig
 
 
 ################################################################################
@@ -437,11 +438,11 @@ def Tensile(userArgs):
     srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
     overrideParameters = argUpdatedGlobalParameters(args)
-    
+
     if "ShortNames" not in config:
-      config["ShortNames"] = args["ShortNames"]
-    
-    dbConfig = debugConfig(config)
+      config["ShortNames"] = args.shortNames
+
+    debugConfig = makeDebugConfig(config)
 
     for key, value in overrideParameters.items():
         print("Overriding {0}={1}".format(key, value))
@@ -450,7 +451,7 @@ def Tensile(userArgs):
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
 
-    executeStepsInConfig(config, dbConfig, outputPath, asmToolchain, srcToolchain, cCompiler)
+    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, cCompiler, debugConfig)
 
 def TensileConfigPath(*args):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)

@@ -23,7 +23,7 @@
 ################################################################################
 
 from ..Component import Signature
-from ..Common import globalParameters, DataDirection
+from ..Common import DataDirection
 from ..TensileInstructions import SignatureBase
 from ..TensileInstructions import SignatureValueKind as SVK
 from ..Activation import ActivationType
@@ -118,7 +118,7 @@ class SignatureDefault(Signature):
             kernArgReg -= 2 # strides
         kernArgReg += kernel["ProblemType"]["NumIndicesSummation"]
         kernArgReg += kernel["ProblemType"]["NumIndicesC"]
-        if globalParameters["DebugKernel"]:
+        if writer.debugConfig.debugKernel:
             kernArgReg += writer.states.rpga # debug buffer
         # kernArgBytes = kernArgReg * 4 # bytes/reg
 
@@ -159,7 +159,7 @@ class SignatureDefault(Signature):
             signature.addArg(             "SizesSum%u"%i, SVK.SIG_VALUE,               "u32")
             userArgumentsInfo.gemmArgumentSize += 4
 
-        if globalParameters["DebugKernel"]:
+        if writer.debugConfig.debugKernel:
             signature.addArg("AddressDbg", SVK.SIG_GLOBALBUFFER, "struct", "generic")
         signature.addArg(    "D", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
         signature.addArg(    "C", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")

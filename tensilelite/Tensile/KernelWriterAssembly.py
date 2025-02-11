@@ -41,7 +41,7 @@ from .TensileInstructions.Instructions import *
 from .TensilePass import getActivationFunctionModuleName, getActivationBranchModuleName
 from .TensileInstructions.Containers import HWRegContainer
 from .Component import Component
-from .KernelWriter import KernelWriter, ConstValues, StateValues, StateVgprs, CodeModules
+from .KernelWriter import KernelWriter, DebugConfig
 from .KernelWriterModules import *
 from .SolutionStructs import isPackedIndex
 from .AsmStoreState import StoreState, VectorDataTypes
@@ -67,8 +67,8 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion):
-    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, amdClangVersion)
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion, debugConfig: DebugConfig):
+    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, amdClangVersion, debugConfig)
 
   def getSourceFileString(self, kernel, useShortNames: bool=False) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"
@@ -740,7 +740,7 @@ class KernelWriterAssembly(KernelWriter):
 
     module.add(RegSet("v", "vgprSerial", self.states.startVgprSerial))
 
-    if globalParameters["DebugKernel"]:
+    if self.debugConfig.debugKernel:
       module.add(RegSet("v", "vgprAddressDbg", \
           self.states.startVgprAddressDbg))
     #module.addComment0("Occu: %u waves/simd" % self.numWavesPerSimd )
@@ -1225,7 +1225,7 @@ class KernelWriterAssembly(KernelWriter):
   def getKernelArgLoadModule(self, kernel, sgprStartIdx, numsOfLoad, preloadNum):
     kernelArgs = Module("load arguments")
     kernelArgs.addComment1("Load Kernel Args")
-    if globalParameters["DebugKernel"]:
+    if self.debugConfig.debugKernel:
       kernelArgs.add(self.argLoader.loadKernArg("AddressDbg", "KernArgAddress", dword=2))
     self.argLoader.resetOffset()
     kernelArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStartIdx, "KernArgAddress", numsOfLoad, preloadNum))
@@ -1961,7 +1961,7 @@ class KernelWriterAssembly(KernelWriter):
 
     ########################################
     # Debug Buffer
-    if globalParameters["DebugKernel"]:
+    if self.debugConfig.debugKernel:
       module.addComment1("Debug Buffer")
 
       # nwg0 FIXME use NumWorkGroups0
