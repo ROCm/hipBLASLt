@@ -3249,11 +3249,13 @@ class Solution(collections.abc.Mapping):
         totalElementsCoalescedM = depthUM
         totalElementsPerpM = state["MacroTileMetadata"]
       totalElementsM = totalElementsCoalescedM * totalElementsPerpM
+      GlobalReadVectorWidthMetadata = state["GlobalReadVectorWidthMetadata"]
+      totalVectorsCoalescedM = totalElementsCoalescedM // GlobalReadVectorWidthMetadata
 
       # Try to enlarge GLVW for metadata
       bGlobalReadVectorWidthMetadata = state["GlobalReadVectorWidthMetadata"]
       if state["ProblemType"]["Sparse"] == 2:
-        GlobalReadVectorWidth = state["GlobalReadVectorWidthMetadata"] * state["NumLoadsPerpendicularB"] #sum all need read
+        GlobalReadVectorWidth = min(state["GlobalReadVectorWidthMetadata"] * state["NumLoadsPerpendicularB"], depthUM) #sum all need read
         tvm = totalElementsM // GlobalReadVectorWidth
         if not Solution.setGlobalReadVectorWidth(state, "Metadata", tvm, GlobalReadVectorWidth):
           #fallback
@@ -3266,7 +3268,7 @@ class Solution(collections.abc.Mapping):
         totalVectorsCoalescedM = totalElementsCoalescedM // GlobalReadVectorWidthMetadata
         totalVectorsM = totalElementsM // GlobalReadVectorWidthMetadata
       else:
-        GlobalReadVectorWidth = state["GlobalReadVectorWidthMetadata"] * state["NumLoadsPerpendicularA"] #sum all need read
+        GlobalReadVectorWidth = min(state["GlobalReadVectorWidthMetadata"] * state["NumLoadsPerpendicularA"], depthUM) #sum all need read
         tvm = totalElementsM // GlobalReadVectorWidth
         if not Solution.setGlobalReadVectorWidth(state, "Metadata", tvm, GlobalReadVectorWidth):
           #fallback
