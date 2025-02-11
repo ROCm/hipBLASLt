@@ -591,6 +591,7 @@ def run():
         kernelHelperObjs,
         kernelWriterAssembly,
         compress=arguments["UseCompression"],
+        arguments["ShortNames"],
     )
 
     archs = [

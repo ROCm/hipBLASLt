@@ -133,14 +133,6 @@ globalParameters["NumWarmups"] = 0
 globalParameters["ForceGenerateKernel"] = 0
 
 ########################################
-# optimization knob controls
-########################################
-
-globalParameters["UnrollLoopEfficiencyEnable"] = (
-    False  # if True split(S) MAC&LDS in each unroll iteration into n smaller groups..
-)
-
-########################################
 # less common
 ########################################
 globalParameters["CMakeBuildType"] = (
@@ -205,22 +197,11 @@ globalParameters["PruneSparseMode"] = (
 # build parameters
 globalParameters["CMakeCXXFlags"] = ""  # pass flags to cmake
 globalParameters["CMakeCFlags"] = ""  # pass flags to cmake
-globalParameters["DebugKernel"] = (
-    False  # assembly only, kernel gets buffer for debug "printing"; kernel writes data to memory, gets coppied to host and printed
-)
 globalParameters["AsanBuild"] = False  # build with asan
 globalParameters["SaveTemps"] = False  # Generate intermediate results of hip kernels
 globalParameters["KeepBuildTmp"] = False  # If true, do not remove artifacts in build_tmp
 
 # debug for assembly
-globalParameters["EnableAsserts"] = False  # Enable assembly debug assert
-globalParameters["EnableDebugA"] = False  # Enable / Disable CheckValue1A
-globalParameters["EnableDebugB"] = False  # Enable / Disable CheckValue1B
-globalParameters["EnableDebugC"] = False  # Enable / Disable CheckValueC
-globalParameters["ExpectedValueC"] = 16.0  # Expected C Value when CheckValueC, debug for Alpha*A*B
-globalParameters["ForceCExpectedValue"] = (
-    False  # Force C to "DebugExpectedValueC", debug for global write
-)
 globalParameters["SplitGSU"] = False  # Split GSU kernel into GSU1 and GSUM
 
 # Tensor printing controls:

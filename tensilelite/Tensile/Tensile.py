@@ -26,24 +26,25 @@ if __name__ == "__main__":
     print("This file can no longer be run as a script.  Run 'Tensile/bin/Tensile' instead.")
     exit(1)
 
-import joblib
-import os
+import subprocess
 import sys
 import argparse
-from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
-    assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR
-from .Toolchain.Assembly import AssemblyToolchain
-from .Toolchain.Source import SourceToolchain
-from .Toolchain.Validators import validateToolchain, ToolchainDefaults
-from .Utilities.Decorators.Profile import profile
-from . import BenchmarkProblems
-from . import ClientWriter
-from . import LibraryIO
-from . import LibraryLogic
+
 from datetime import datetime
 from pathlib import Path
 
-import subprocess
+from Tensile.Common import globalParameters, print1, printExit, printWarning, ensurePath, \
+    assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR
+from Tensile.Toolchain.Assembly import AssemblyToolchain
+from Tensile.Toolchain.Source import SourceToolchain
+from Tensile.Toolchain.Validators import validateToolchain, ToolchainDefaults
+from Tensile.Utilities.Decorators.Profile import profile
+from Tensile import BenchmarkProblems
+from Tensile import ClientWriter
+from Tensile import LibraryIO
+from Tensile import LibraryLogic
+
+from Tensile.KernelWriter import DebugConfig
 
 ###############################################################################
 # Execute Steps in Config
@@ -59,7 +60,8 @@ def executeStepsInConfig(
         outputPath: Path,
         asmToolchain: AssemblyToolchain,
         srcToolchain: SourceToolchain,
-        cCompiler: str
+        cCompiler: str,
+        dbconfig: DebugConfig
    ):
     """Conducts the steps in the provided ``config`` according to the Tensile workflow.
 
@@ -84,7 +86,8 @@ def executeStepsInConfig(
     # Benchmark Problems
     ##############################################################################
     if "BenchmarkProblems" in config:
-        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, cCompiler, outputPath, buildTmpPath, config["ShortNames"])
+        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, \
+                               cCompiler, outputPath, buildTmpPath, config["ShortNames"], dbconfig)
         print1("")
 
     ##############################################################################
@@ -191,8 +194,6 @@ def argUpdatedGlobalParameters(args):
         print1("# Command-line override: Debug")
         rv["PrintLevel"] = 2
         rv["CMakeBuildType"] = "Debug"
-    if args.shortNames:
-        rv["ShortNames"] = True
     if args.client_lock:
         rv["ClientExecutionLockPath"] = args.client_lock
     if args.prebuilt_client:
@@ -303,6 +304,26 @@ def store_max_frequency(max_frequency):
     except Exception as e:
         print(f"Error setting MAX_FREQ environment variable: {e}")
         return False
+
+
+  def debugConfig(config: dict) -> DebugConfig:
+    dbConfig = DebugConfig()
+
+    if "EnableAsserts" in config:
+        dbConfig.enableAsserts = config["EnableAsserts"]
+    if "EnableDebugA" in config:
+        dbConfig.enableDebugA = config["EnableDebugA"]
+    if "EnableDebugB" in config:
+        dbConfig.enableDebugB = config["EnableDebugB"]
+    if "EnableDebugC" in config:
+        dbConfig.enableDebugC = config["EnableDebugC"]
+    if "ExpectedValueC" in config:
+        dbConfig.expectedValueC = config["ExpectedValueC"]
+    if "ForceCExpectedValue" in config:
+        dbConfig.forceCExpectedValue = config["ForceCExpectedValue"]
+    if "DebugKernel" in config:
+        dbConfig.debugKernel = config["DebugKernel"]
+    return dbConfig
 
 
 ################################################################################
@@ -416,8 +437,11 @@ def Tensile(userArgs):
     srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
 
     overrideParameters = argUpdatedGlobalParameters(args)
-
-    config["ShortNames"] = args["ShortNames"]
+    
+    if "ShortNames" not in config:
+      config["ShortNames"] = args["ShortNames"]
+    
+    dbConfig = debugConfig(config)
 
     for key, value in overrideParameters.items():
         print("Overriding {0}={1}".format(key, value))
@@ -426,7 +450,7 @@ def Tensile(userArgs):
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
 
-    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, cCompiler)
+    executeStepsInConfig(config, dbConfig, outputPath, asmToolchain, srcToolchain, cCompiler)
 
 def TensileConfigPath(*args):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)

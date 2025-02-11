@@ -31,17 +31,18 @@ import time
 from copy import deepcopy
 from pathlib import Path
 
-from . import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
-from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
-from .Contractions import ProblemType as ContractionsProblemType
-from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
-from .KernelWriterAssembly import KernelWriterAssembly
-from .SolutionStructs import Solution, ProblemType, ProblemSizes
-from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
-from .CustomKernels import getCustomKernelConfig
-from .Toolchain.Assembly import AssemblyToolchain
-from .Toolchain.Source import SourceToolchain
-from .Common import globalParameters, HR, print1, print2, \
+from Tensile import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
+from Tensile.BenchmarkStructs import BenchmarkProcess, constructForkPermutations
+from Tensile.Contractions import ProblemType as ContractionsProblemType
+from Tensile.ClientWriter import runClient, writeClientConfig, writeClientConfigIni
+from Tensile.KernelWriterAssembly import KernelWriterAssembly
+from Tensile.KernelWriter import DebugConfig
+from Tensile.SolutionStructs import Solution, ProblemType, ProblemSizes
+from Tensile.TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
+from Tensile.CustomKernels import getCustomKernelConfig
+from Tensile.Toolchain.Assembly import AssemblyToolchain
+from Tensile.Toolchain.Source import SourceToolchain
+from Tensile.Common import globalParameters, HR, print1, print2, \
         printExit, printWarning, ensurePath, startTime, tqdm, state, \
         BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR
 
@@ -114,7 +115,8 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
 def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
         biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, stepName, solutionSummationSizes, \
         asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, sourcePath: Path,
-        useShortNames: bool):
+        useShortNames: bool,
+        dbConfig: DebugConfig):
     """Write all the files needed for a given benchmarking step"""
 
     ensurePath(sourcePath)
@@ -143,7 +145,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
 
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     kernelMinNaming = Solution.getMinNaming(kernels)
-    kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, asmToolchain.assembler, asmToolchain.assemblerVersion)
+    kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, asmToolchain.assembler, asmToolchain.assemblerVersion, dbConfig)
 
     # write solution, kernels and CMake
     problemType = solutions[0]["ProblemType"]
@@ -202,7 +204,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
 
 def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeGroupIdx, useCache,
                          asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str,
-                         buildTmpPath: Path, benchmarkProblemsPath: Path, useShortNames: bool
+                         buildTmpPath: Path, benchmarkProblemsPath: Path, useShortNames: bool, dbConfig: DebugConfig
     ):
     """Run the benchmarking for a single entry in the BenchmarkProblems of a Tensile config"""
     benchmarkTestFails = 0
@@ -316,7 +318,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                     benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,    \
                     benchmarkStep.factorDimArgs, benchmarkStep.activationArgs, \
                     benchmarkStep.icacheFlushArgs, shortName, [], asmToolchain, srcToolchain, \
-                    sourcePath, useShortNames)
+                    sourcePath, useShortNames, dbConfig)
             # ^ this mutates solutions
 
             # write cache data
@@ -381,7 +383,8 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
     return (resultsFileBaseFinal, benchmarkTestFails)
 
 
-def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str, outputPath: Path, buildTmpPath: Path, useShortNames: bool):
+def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, \
+         cCompiler: str, outputPath: Path, buildTmpPath: Path, useShortNames: bool, dbConfig: DebugConfig):
     """Entry point for the "BenchmarkProblems" section of a Tensile config yaml"""
     ClientExecutable.getClientExecutable(srcToolchain.compiler, cCompiler, outputPath)
 
@@ -420,7 +423,9 @@ def main(config, useCache, asmToolchain: AssemblyToolchain, srcToolchain: Source
                 # benchmark problem size group
                 benchmarkProblemsPath = ensurePath(outputPath / BENCHMARK_PROBLEMS_DIR)
                 (resultsFileBaseFinal, benchmarkErrors) = \
-                        benchmarkProblemType(problemTypeConfig, sizeGroupConfig, idx, useCache, asmToolchain, srcToolchain, cCompiler, buildTmpPath, benchmarkProblemsPath, useShortNames)
+                        benchmarkProblemType(problemTypeConfig, sizeGroupConfig, idx, useCache, \
+                                             asmToolchain, srcToolchain, cCompiler, buildTmpPath, \
+                                             benchmarkProblemsPath, useShortNames, dbConfig)
                 totalTestFails += benchmarkErrors
 
                 print("clientExit={} {} for {}" \
