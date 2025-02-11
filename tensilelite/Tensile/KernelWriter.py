@@ -358,6 +358,8 @@ class DebugConfig(NamedTuple):
   forceCExpectedValue: bool=False
   debugKernel: bool=False
   forceGenerateKernel: bool=False
+  printSolutionRejectionReason: bool=False
+  splitGSU: bool=False
 
 ################################################################################
 # Kernel Writer

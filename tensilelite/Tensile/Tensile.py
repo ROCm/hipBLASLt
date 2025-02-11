@@ -324,6 +324,13 @@ def makeDebugConfig(config: dict) -> DebugConfig:
         debugConfig.forceCExpectedValue = config["ForceCExpectedValue"]
     if "DebugKernel" in config:
         debugConfig.debugKernel = config["DebugKernel"]
+    if "ForceGenerateKernel" in config:
+        debugConfig.forceGenerateKernel = config["ForceGenerateKernel"]
+    if "PrintSolutionRejectionReason" in config:
+        debugConfig.printSolutionRejectionReason = config["PrintSolutionRejectionReason"]
+    if "SplitGSU" in config:
+        debugConfig.splitGSU = config["SplitGSU"]
+
     return debugConfig
 
 

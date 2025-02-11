@@ -138,9 +138,9 @@ globalParameters["NumWarmups"] = 0
 globalParameters["CMakeBuildType"] = (
     "Release"  # whether benchmark clients and library client should be release or debug
 )
-globalParameters["PrintSolutionRejectionReason"] = (
-    False  # when a solution is marked as invalid, print why
-)
+#globalParameters["PrintSolutionRejectionReason"] = (
+#    False  # when a solution is marked as invalid, print why
+#)
 globalParameters["LogicFormat"] = "yaml"  # set library backend (yaml, or json)
 globalParameters["LibraryFormat"] = "yaml"  # set library backend (yaml, or msgpack)
 
@@ -202,7 +202,7 @@ globalParameters["SaveTemps"] = False  # Generate intermediate results of hip ke
 globalParameters["KeepBuildTmp"] = False  # If true, do not remove artifacts in build_tmp
 
 # debug for assembly
-globalParameters["SplitGSU"] = False  # Split GSU kernel into GSU1 and GSUM
+#globalParameters["SplitGSU"] = False  # Split GSU kernel into GSU1 and GSUM
 
 # Tensor printing controls:
 globalParameters["PrintTensorA"] = 0  # Print TensorA after initialization
