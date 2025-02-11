@@ -63,6 +63,7 @@ namespace TensileLite
         DGelu,
         Geluscaling,
         Silu,
+        Swish,
         All,
         Hipblaslt_all,
         Exp, // Verification use only.
