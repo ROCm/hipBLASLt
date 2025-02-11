@@ -674,12 +674,6 @@ try
         return 1;
     }
 
-    if(arg.swizzle_a && (arg.transA != 'T' || arg.transB != 'N' || a_type != "f16_r"))
-    {
-        hipblaslt_cerr << "For swizzle-A, problem type must be FP16 TN" << std::endl;
-        return 1;
-    }
-
     // transfer local variable state
     ArgumentModel_set_log_function_name(log_function_name);
 
@@ -832,6 +826,15 @@ try
         throw std::invalid_argument("Invalid value for --activation_type " + activation_type);
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
+
+    if(arg.swizzle_a
+       && (arg.transA != 'T' || arg.transB != 'N'
+           || (arg.a_type != string_to_hip_datatype("f16_r")
+               && arg.a_type != string_to_hip_datatype("f8_fnuz_r"))))
+    {
+        hipblaslt_cerr << "For swizzle-A, problem type must be FP16 or FP8 TN" << std::endl;
+        return 1;
+    }
 
     auto scaleInt2Enum = [](int s) {
         if(s == 0)
