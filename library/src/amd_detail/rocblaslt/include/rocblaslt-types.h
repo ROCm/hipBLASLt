@@ -167,7 +167,9 @@ typedef enum rocblaslt_epilogue_
     ROCBLASLT_EPILOGUE_DGELU         = 192,
     ROCBLASLT_EPILOGUE_DGELU_BGRAD   = 208,
     ROCBLASLT_EPILOGUE_BGRADA        = 256,
-    ROCBLASLT_EPILOGUE_BGRADB        = 512
+    ROCBLASLT_EPILOGUE_BGRADB        = 512,
+    ROCBLASLT_EPILOGUE_SWISH         = 1024,
+    ROCBLASLT_EPILOGUE_SWISH_BIAS    = 1028,
 } rocblaslt_epilogue;
 
 /*! \ingroup types_module
