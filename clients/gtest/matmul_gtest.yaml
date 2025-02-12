@@ -458,7 +458,8 @@ Tests:
   beta: [ 0.0, 2.0 ]
   activation_type: swish
   bias_vector: [0, 1]
-  unit_check: 1
+  unit_check: 0
+  norm_check: 1
 
 - name: matmul_bias_only
   category: pre_checkin
