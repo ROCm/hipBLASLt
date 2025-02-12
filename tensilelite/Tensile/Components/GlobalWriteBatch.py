@@ -1257,6 +1257,15 @@ class GlobalWriteBatchWriter:
             else:
               module.add(VAddPKF32(dst=vgpr(vgprDst, 2), src0=vgpr(inputVgpr, 2), \
                                    src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="C += bias"))
+
+          elif self.kernel["ProblemType"]["ComputeDataType"].isInt32():
+            vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
+            vgprDst = (self.activationSetPCStruct.vgprActCopy + vi) if mergeActFuncCall else "ValuC+%d"%vgprIdx
+            # Generate single Int32 code if edge is detected.
+            if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
+              module.add(VAddU32(dst=vgpr(vgprDst), src0=vgpr(inputVgpr), src1=vgpr("ValuC+%d"%vgprIdx), \
+                                 comment="C += bias"))
+
           else:
             raise RuntimeError("Unsupported bias compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
 
