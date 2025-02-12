@@ -1109,23 +1109,7 @@ class Solution(collections.abc.Mapping):
       self["AssignedProblemIndependentDerivedParameters"] = False
     if "AssignedDerivedParameters" not in self._state:
       self["AssignedDerivedParameters"] = False
-    # DepthU == -1?
-    if self._state["DepthU"] == -1:
-      depthuList = [256, 128, 64, 32, 16]
-    else:
-      depthuList = [self._state["DepthU"]]
-    index = [0]
-    while True:
-      state = deepcopy(self._state)
-      state["DepthU"] = depthuList[index[0]]
-      Solution.assignDerivedParameters(state, index, depthuList)
-      if state["Valid"]:
-        self._state = state
-        break
-      index[0] += 1
-      if index[0] >= len(depthuList):
-        self._state = state
-        break
+    Solution.assignDerivedParameters(self._state)
     self._name = config["CustomKernelName"] if isCustomKernelConfig(config) else None
     self.initHelperKernelObjects()
 
@@ -2134,7 +2118,7 @@ class Solution(collections.abc.Mapping):
   ########################################
   # assign all derived parameters
   @staticmethod
-  def assignDerivedParameters(state, index, depthuList):
+  def assignDerivedParameters(state):
     state["EnableF32XdlMathOp"] = False #ignore the F32 xDL MathOp by default.
     #enable F32 xDL MathOp only when the input type is f32.
     if "F32XdlMathOp" in state["ProblemType"] \
@@ -2552,185 +2536,34 @@ class Solution(collections.abc.Mapping):
             reject(state, "one of DataTypeA or DataTypeB need to be float8")
             return
 
-    def calcLdsPad(lrvw: int) -> int:
-      ldsPadA = state["LdsPadA"]
-      ldsPadB = state["LdsPadB"]
-      optPadA = optPadB = lrvw
-      readRegsA = readRegsB = lrvw * state["ProblemType"]["DataType"].numBytes() // 4
-      if state["ProblemType"]["Sparse"]:
-        if state["ProblemType"]["Sparse"] == 2:
-          optPadB //= 2
-          readRegsB //= 2
-        else:
-          optPadA //= 2
-          readRegsA //= 2
-      if (not globalParameters["AsmCaps"][isa]['HasWMMA']) and (readRegsA > 4 or readRegsB > 4):
-        reject(state, "LocalReadVectorWidth results in attemping to read LDS larger than b128, reject")
-        return
-      if state["EnableMatrixInstruction"]:
-        # for readRegs = 1 or 4, we need to double pad for MI16x16xNx1 to avoid bank conflict.
-        if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
-          if readRegsA == 4 or readRegsA == 1:
-            optPadA *= 2
-          if readRegsB == 4 or readRegsB == 1:
-            optPadB *= 2
-      if ldsPadA == -1:
-        if not state["UnrollMajorLDSA"]:
-          if state["EnableMatrixInstruction"]:
-            ldsPadA = 0
-            if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
-              ldsPadA = ((16 * state["VectorWidthA"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile0"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
-            if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadA == 0:
-              ldsPadA = 16 // state["ProblemType"]["DataType"].numBytes()
-          else: # mac instruction
-            if state["ProblemType"]["TLUA"]:
-              ldsPadA = 0
-            else:
-              ldsPadA = state["VectorWidthA"]
-        else:
-          ldsPadA = max(state["GlobalReadVectorWidthA"],optPadA)
-          ## turn-off padding for directToLds
-          if state["DirectToLdsA"]:
-            ldsPadA = 0
-        assert(ldsPadA >= 0)
-
-      if ldsPadB == -1:
-        if not state["UnrollMajorLDSB"]:
-          if state["EnableMatrixInstruction"]:
-            ldsPadB = 0
-            if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
-              ldsPadB = ((16 * state["VectorWidthB"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile1"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
-            if state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadB == 0:
-              ldsPadB = 16 // state["ProblemType"]["DataType"].numBytes()
-          else:
-            if state["ProblemType"]["TLUB"]:
-              ldsPadB = 0
-            else:
-              ldsPadB = state["VectorWidthB"]
-        else:
-          ldsPadB = max(state["GlobalReadVectorWidthB"],optPadB)
-          if state["DirectToLdsB"]:
-            ldsPadB = 0
-        assert(ldsPadB >= 0)
-
-      ldsPadM = state["LdsPadMetadata"]
-      if state["ProblemType"]["Sparse"] and not state["DirectToVgprSparseMetadata"]:
-        optPadM = (optPadB if state["ProblemType"]["Sparse"] == 2 else optPadA) // 4
-        grvwM = (state["GlobalReadVectorWidthB"] if state["ProblemType"]["Sparse"] == 2 else state["GlobalReadVectorWidthA"])  // 4
-        vwM = (state["VectorWidthB"] if state["ProblemType"]["Sparse"] == 2 else state["VectorWidthA"]) // 4
-
-        if ldsPadM == -1:
-          ldsPadM = 0
-          if not state["ProblemType"]["TLUMetadata"]:
-            if state["EnableMatrixInstruction"] and state["TransposeLDSMetadata"]:
-              ldsPadM = max(grvwM, optPadM)
-            else:
-              ldsPadM = vwM
-            ## turn-off padding for directToLds
-            if state["EnableMatrixInstruction"] and state["TransposeLDSMetadata"] and state["DirectToLdsMetadata"]:
-              ldsPadM = 0
-        assert(ldsPadM >= 0)
-
-      # set ldsPadA,B=0 for DirectToLds or DirectToVgpr
-      # TODO: enable ldsPad for DirectToLds (if needed)
-      if state["DirectToLds"] or state["DirectToVgprA"]:
-        ldsPadA = 0
-      if state["DirectToLds"] or state["DirectToVgprB"]:
-        ldsPadB = 0
-
-      return ldsPadA, ldsPadB, ldsPadM
-
-    def calcLdsBlockSizePerPad(lrvw: int) -> int:
-      LdsBlockSizePerPadA = state["LdsBlockSizePerPadA"]
-      LdsBlockSizePerPadB = state["LdsBlockSizePerPadB"]
-      tmpBpe = state["ProblemType"]["DataTypeA"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
-      if LdsBlockSizePerPadA == -1:
-        if state["EnableMatrixInstruction"]:
-          if state["UnrollMajorLDSA"]:
-            LdsBlockSizePerPadA = roundUpToNearestMultiple(state["_DepthUA"] * tmpBpe, 128)
-            if state["_DepthUA"] * tmpBpe * state["VectorWidthA"] > 128:
-              LdsBlockSizePerPadA = roundUpToNearestMultiple(state["_DepthUA"] * tmpBpe * state["VectorWidthA"], 128)
-          else:
-            if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
-              LdsBlockSizePerPadA = state["MacroTile0"] * tmpBpe * lrvw
-            else:
-              LdsBlockSizePerPadA = 0
-        else:
-          LdsBlockSizePerPadA = 0
-      tmpBpe = state["ProblemType"]["DataTypeB"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
-      if LdsBlockSizePerPadB == -1:
-        if state["EnableMatrixInstruction"]:
-          if state["UnrollMajorLDSB"]:
-            LdsBlockSizePerPadB = roundUpToNearestMultiple(state["_DepthUB"] * tmpBpe, 128)
-            if state["_DepthUB"] * tmpBpe * state["VectorWidthB"] > 128:
-              LdsBlockSizePerPadB = roundUpToNearestMultiple(state["_DepthUB"] * tmpBpe * state["VectorWidthB"], 128)
-          else:
-            if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
-              LdsBlockSizePerPadB = state["MacroTile1"] * tmpBpe * lrvw
-            else:
-              LdsBlockSizePerPadB = 0
-        else:
-          LdsBlockSizePerPadB = 0
-
-      # set LdsBlockSizePerPadA,B=0 for DirectToLds or DirectToVgpr
-      if state["DirectToLds"] or state["DirectToVgprA"]:
-        LdsBlockSizePerPadA = 0
-      if state["DirectToLds"] or state["DirectToVgprB"]:
-        LdsBlockSizePerPadB = 0
-
-      return LdsBlockSizePerPadA, LdsBlockSizePerPadB
-
-    def calcLdsNumBytes(ldsPadA: int, LdsBlockSizePerPadA: int, ldsPadB: int, LdsBlockSizePerPadB: int) -> int:
-      bpeA = state["ProblemType"]["DataTypeA"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
-      bpeB = state["ProblemType"]["DataTypeB"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
-      ldsAlign = int(64 / state["ProblemType"]["DataType"].numRegisters())
-
-      if state["UnrollMajorLDSA"]:
-        ldsNumBytesA = (state["_DepthUA"] + ldsPadA) * state["MacroTileA"] * bpeA
+    # DepthU == -1?
+    if state["DepthU"] == -1:
+      if state["ProblemType"]["ComputeDataType"].numBytes() < 4:
+        depthuList = [256, 128, 64, 32]
       else:
-        ldsNumBytesA = state["_DepthUA"] * (state["MacroTileA"] + ldsPadA) * bpeA
-      padInterval = LdsBlockSizePerPadA
-      if padInterval != 0:
-        ldsNumBytesA = int((state["_DepthUA"] * state["MacroTileA"] * bpeA) / padInterval * (padInterval + ldsPadA * bpeA))
-      ldsNumBytesAlignedA = roundUpToNearestMultiple(ldsNumBytesA, ldsAlign)
-
-      # DirectToVgpr case, set 0 to lds related variables
-      if state["DirectToVgprA"]:
-        ldsNumBytesA = 0
-        ldsNumBytesAlignedA = 0
-
-      if state["UnrollMajorLDSB"]:
-        ldsNumBytesB = (state["_DepthUB"] + ldsPadB) * state["MacroTileB"] * bpeB
-      else:
-        ldsNumBytesB = state["_DepthUB"] * (state["MacroTileB"] + ldsPadB) * bpeB
-      padInterval = LdsBlockSizePerPadB
-      if padInterval != 0:
-        ldsNumBytesB = int((state["_DepthUB"] * state["MacroTileB"] * bpeB) / padInterval * (padInterval + ldsPadB * bpeB))
-      ldsNumBytesAlignedB = roundUpToNearestMultiple(ldsNumBytesB, ldsAlign)
-
-      # DirectToVgpr case, set 0 to lds related variables
-      if state["DirectToVgprB"]:
-        ldsNumBytesB = 0
-        ldsNumBytesAlignedB = 0
-
-      if state["ProblemType"]["Sparse"] and not state["DirectToVgprSparseMetadata"]:
-        bpeAB = state["ProblemType"]["DataType"].numBytes()
-        if state["UnrollMajorLDSMetadata"]:
-          ldsNumBytesMetadata = (state["_DepthUMetadata"] + state["LdsPadMetadata"]) * state["MacroTileMetadata"]
-        else:
-          ldsNumBytesMetadata = state["_DepthUMetadata"] * (state["MacroTileMetadata"] + state["LdsPadMetadata"])
-        ldsNumBytesMetadata = roundUp(ldsNumBytesMetadata / bpeAB) # metadata is in byte type. so divide ldsNumBytesMetadata by A,B's bpe
-        padInterval = state["LdsBlockSizePerPadMetadata"]
-        if padInterval != 0:
-          ldsNumBytesMetadata = int(roundUp(state["_DepthUMetadata"] * state["MacroTileMetadata"] / bpeAB) / padInterval * (padInterval + state["LdsPadMetadata"]))
-        ldsNumBytesAlignedMetadata = roundUpToNearestMultiple(ldsNumBytesMetadata, ldsAlign) * bpeAB
-        ldsNumBytesMetadata = ldsNumBytesMetadata * bpeAB
-      else:
-        ldsNumBytesMetadata = 0
-        ldsNumBytesAlignedMetadata = 0
-
-      return ldsNumBytesA, ldsNumBytesAlignedA, ldsNumBytesB, ldsNumBytesAlignedB, ldsNumBytesMetadata, ldsNumBytesAlignedMetadata
-
+        depthuList = [128, 64, 32, 16]
+    else:
+      depthuList = [state["DepthU"]]
+    index = [0]
+    backupValues = []
+    for key, value in state.items():
+      if isinstance(value, int) and value < 0:
+        backupValues.append([key, value])
+    while True:
+      for backup in backupValues:
+        state[backup[0]] = backup[1]
+      state["ValidDepthU"] = True
+      state["DepthU"]      = depthuList[index[0]]
+      Solution.depthUIteration(state, index, depthuList, problemType, isa, bufferLoad, packedC0, packedC1)
+      if state["Valid"] or (state["ValidDepthU"] and (not state["Valid"])):
+        break
+      index[0] += 1
+      if index[0] >= len(depthuList):
+        break
+    if "ValidDepthU" in state:
+      del state["ValidDepthU"]
+ 
+  def depthUIteration(state, index, depthuList, problemType, isa, bufferLoad, packedC0, packedC1):
     ########################################
     # Auto search for DepthU starts here
     # Activates when DepthU == -1
@@ -2794,6 +2627,185 @@ class Solution(collections.abc.Mapping):
           % (state["StaggerUStride"], state["DepthU"], bpeAB))
       #print "staggerStrideShift=", staggerStrideShift, "depthu=", state["DepthU"]
       state["_staggerStrideShift"] = staggerStrideShift
+
+      def calcLdsPad(lrvw: int) -> int:
+        ldsPadA = state["LdsPadA"]
+        ldsPadB = state["LdsPadB"]
+        optPadA = optPadB = lrvw
+        readRegsA = readRegsB = lrvw * state["ProblemType"]["DataType"].numBytes() // 4
+        if state["ProblemType"]["Sparse"]:
+          if state["ProblemType"]["Sparse"] == 2:
+            optPadB //= 2
+            readRegsB //= 2
+          else:
+            optPadA //= 2
+            readRegsA //= 2
+        if (not globalParameters["AsmCaps"][isa]['HasWMMA']) and (readRegsA > 4 or readRegsB > 4):
+          reject(state, "LocalReadVectorWidth results in attemping to read LDS larger than b128, reject")
+          return
+        if state["EnableMatrixInstruction"]:
+          # for readRegs = 1 or 4, we need to double pad for MI16x16xNx1 to avoid bank conflict.
+          if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
+            if readRegsA == 4 or readRegsA == 1:
+              optPadA *= 2
+            if readRegsB == 4 or readRegsB == 1:
+              optPadB *= 2
+        if ldsPadA == -1:
+          if not state["UnrollMajorLDSA"]:
+            if state["EnableMatrixInstruction"]:
+              ldsPadA = 0
+              if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
+                ldsPadA = ((16 * state["VectorWidthA"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile0"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
+              if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadA == 0:
+                ldsPadA = 16 // state["ProblemType"]["DataType"].numBytes()
+            else: # mac instruction
+              if state["ProblemType"]["TLUA"]:
+                ldsPadA = 0
+              else:
+                ldsPadA = state["VectorWidthA"]
+          else:
+            ldsPadA = max(state["GlobalReadVectorWidthA"],optPadA)
+            ## turn-off padding for directToLds
+            if state["DirectToLdsA"]:
+              ldsPadA = 0
+          assert(ldsPadA >= 0)
+
+        if ldsPadB == -1:
+          if not state["UnrollMajorLDSB"]:
+            if state["EnableMatrixInstruction"]:
+              ldsPadB = 0
+              if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
+                ldsPadB = ((16 * state["VectorWidthB"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile1"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
+              if state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataType"].numBytes() == 32 and ldsPadB == 0:
+                ldsPadB = 16 // state["ProblemType"]["DataType"].numBytes()
+            else:
+              if state["ProblemType"]["TLUB"]:
+                ldsPadB = 0
+              else:
+                ldsPadB = state["VectorWidthB"]
+          else:
+            ldsPadB = max(state["GlobalReadVectorWidthB"],optPadB)
+            if state["DirectToLdsB"]:
+              ldsPadB = 0
+          assert(ldsPadB >= 0)
+
+        ldsPadM = state["LdsPadMetadata"]
+        if state["ProblemType"]["Sparse"] and not state["DirectToVgprSparseMetadata"]:
+          optPadM = (optPadB if state["ProblemType"]["Sparse"] == 2 else optPadA) // 4
+          grvwM = (state["GlobalReadVectorWidthB"] if state["ProblemType"]["Sparse"] == 2 else state["GlobalReadVectorWidthA"])  // 4
+          vwM = (state["VectorWidthB"] if state["ProblemType"]["Sparse"] == 2 else state["VectorWidthA"]) // 4
+
+          if ldsPadM == -1:
+            ldsPadM = 0
+            if not state["ProblemType"]["TLUMetadata"]:
+              if state["EnableMatrixInstruction"] and state["TransposeLDSMetadata"]:
+                ldsPadM = max(grvwM, optPadM)
+              else:
+                ldsPadM = vwM
+              ## turn-off padding for directToLds
+              if state["EnableMatrixInstruction"] and state["TransposeLDSMetadata"] and state["DirectToLdsMetadata"]:
+                ldsPadM = 0
+          assert(ldsPadM >= 0)
+
+        # set ldsPadA,B=0 for DirectToLds or DirectToVgpr
+        # TODO: enable ldsPad for DirectToLds (if needed)
+        if state["DirectToLds"] or state["DirectToVgprA"]:
+          ldsPadA = 0
+        if state["DirectToLds"] or state["DirectToVgprB"]:
+          ldsPadB = 0
+
+        return ldsPadA, ldsPadB, ldsPadM
+
+      def calcLdsBlockSizePerPad(lrvw: int) -> int:
+        LdsBlockSizePerPadA = state["LdsBlockSizePerPadA"]
+        LdsBlockSizePerPadB = state["LdsBlockSizePerPadB"]
+        tmpBpe = state["ProblemType"]["DataTypeA"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
+        if LdsBlockSizePerPadA == -1:
+          if state["EnableMatrixInstruction"]:
+            if state["UnrollMajorLDSA"]:
+              LdsBlockSizePerPadA = roundUpToNearestMultiple(state["_DepthUA"] * tmpBpe, 128)
+              if state["_DepthUA"] * tmpBpe * state["VectorWidthA"] > 128:
+                LdsBlockSizePerPadA = roundUpToNearestMultiple(state["_DepthUA"] * tmpBpe * state["VectorWidthA"], 128)
+            else:
+              if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
+                LdsBlockSizePerPadA = state["MacroTile0"] * tmpBpe * lrvw
+              else:
+                LdsBlockSizePerPadA = 0
+          else:
+            LdsBlockSizePerPadA = 0
+        tmpBpe = state["ProblemType"]["DataTypeB"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
+        if LdsBlockSizePerPadB == -1:
+          if state["EnableMatrixInstruction"]:
+            if state["UnrollMajorLDSB"]:
+              LdsBlockSizePerPadB = roundUpToNearestMultiple(state["_DepthUB"] * tmpBpe, 128)
+              if state["_DepthUB"] * tmpBpe * state["VectorWidthB"] > 128:
+                LdsBlockSizePerPadB = roundUpToNearestMultiple(state["_DepthUB"] * tmpBpe * state["VectorWidthB"], 128)
+            else:
+              if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
+                LdsBlockSizePerPadB = state["MacroTile1"] * tmpBpe * lrvw
+              else:
+                LdsBlockSizePerPadB = 0
+          else:
+            LdsBlockSizePerPadB = 0
+
+        # set LdsBlockSizePerPadA,B=0 for DirectToLds or DirectToVgpr
+        if state["DirectToLds"] or state["DirectToVgprA"]:
+          LdsBlockSizePerPadA = 0
+        if state["DirectToLds"] or state["DirectToVgprB"]:
+          LdsBlockSizePerPadB = 0
+
+        return LdsBlockSizePerPadA, LdsBlockSizePerPadB
+
+      def calcLdsNumBytes(ldsPadA: int, LdsBlockSizePerPadA: int, ldsPadB: int, LdsBlockSizePerPadB: int) -> int:
+        bpeA = state["ProblemType"]["DataTypeA"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
+        bpeB = state["ProblemType"]["DataTypeB"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
+        ldsAlign = int(64 / state["ProblemType"]["DataType"].numRegisters())
+
+        if state["UnrollMajorLDSA"]:
+          ldsNumBytesA = (state["_DepthUA"] + ldsPadA) * state["MacroTileA"] * bpeA
+        else:
+          ldsNumBytesA = state["_DepthUA"] * (state["MacroTileA"] + ldsPadA) * bpeA
+        padInterval = LdsBlockSizePerPadA
+        if padInterval != 0:
+          ldsNumBytesA = int((state["_DepthUA"] * state["MacroTileA"] * bpeA) / padInterval * (padInterval + ldsPadA * bpeA))
+        ldsNumBytesAlignedA = roundUpToNearestMultiple(ldsNumBytesA, ldsAlign)
+
+        # DirectToVgpr case, set 0 to lds related variables
+        if state["DirectToVgprA"]:
+          ldsNumBytesA = 0
+          ldsNumBytesAlignedA = 0
+
+        if state["UnrollMajorLDSB"]:
+          ldsNumBytesB = (state["_DepthUB"] + ldsPadB) * state["MacroTileB"] * bpeB
+        else:
+          ldsNumBytesB = state["_DepthUB"] * (state["MacroTileB"] + ldsPadB) * bpeB
+        padInterval = LdsBlockSizePerPadB
+        if padInterval != 0:
+          ldsNumBytesB = int((state["_DepthUB"] * state["MacroTileB"] * bpeB) / padInterval * (padInterval + ldsPadB * bpeB))
+        ldsNumBytesAlignedB = roundUpToNearestMultiple(ldsNumBytesB, ldsAlign)
+
+        # DirectToVgpr case, set 0 to lds related variables
+        if state["DirectToVgprB"]:
+          ldsNumBytesB = 0
+          ldsNumBytesAlignedB = 0
+
+        if state["ProblemType"]["Sparse"] and not state["DirectToVgprSparseMetadata"]:
+          bpeAB = state["ProblemType"]["DataType"].numBytes()
+          if state["UnrollMajorLDSMetadata"]:
+            ldsNumBytesMetadata = (state["_DepthUMetadata"] + state["LdsPadMetadata"]) * state["MacroTileMetadata"]
+          else:
+            ldsNumBytesMetadata = state["_DepthUMetadata"] * (state["MacroTileMetadata"] + state["LdsPadMetadata"])
+          ldsNumBytesMetadata = roundUp(ldsNumBytesMetadata / bpeAB) # metadata is in byte type. so divide ldsNumBytesMetadata by A,B's bpe
+          padInterval = state["LdsBlockSizePerPadMetadata"]
+          if padInterval != 0:
+            ldsNumBytesMetadata = int(roundUp(state["_DepthUMetadata"] * state["MacroTileMetadata"] / bpeAB) / padInterval * (padInterval + state["LdsPadMetadata"]))
+          ldsNumBytesAlignedMetadata = roundUpToNearestMultiple(ldsNumBytesMetadata, ldsAlign) * bpeAB
+          ldsNumBytesMetadata = ldsNumBytesMetadata * bpeAB
+        else:
+          ldsNumBytesMetadata = 0
+          ldsNumBytesAlignedMetadata = 0
+
+        return ldsNumBytesA, ldsNumBytesAlignedA, ldsNumBytesB, ldsNumBytesAlignedB, ldsNumBytesMetadata, ldsNumBytesAlignedMetadata
 
       # Default LocalReadVectorWidth
       if state["EnableMatrixInstruction"]:
@@ -3103,6 +3115,7 @@ class Solution(collections.abc.Mapping):
         # this depthU not valid
         else:
           reject(state, "No valid DepthU found")
+          state["ValidDepthU"] = False
           break
       ########################################
       # end DepthU loop
@@ -3919,6 +3932,7 @@ class Solution(collections.abc.Mapping):
     ldsSize = ldsNumBytes
     if ldsSize > globalParameters["MaxLDS"]:
       reject(state, "Kernel Uses %u > %u bytes of LDS" % ( ldsSize, globalParameters["MaxLDS"]))
+      state["ValidDepthU"] = False
       return
 
     # LoopUnroll  = DepthU / LocalSplitU
