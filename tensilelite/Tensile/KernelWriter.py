@@ -2627,33 +2627,59 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # if swapGlobalRoad is true, swap the order of global read (B->A)
       tensorParameters1st = tensorParametersA
       tensorParameters2nd = tensorParametersB
+      tailLoopOpt1st = kernel["tailLoopOptA"]
+      tailLoopOpt2nd = kernel["tailLoopOptB"]
+
       tc1 = 'A'
       tc2 = 'B'
       if self.isSwapGlobalReadOrderForDtvOrDtl(kernel):
         tensorParameters1st, tensorParameters2nd = tensorParameters2nd, tensorParameters1st
+        tailLoopOpt1st, tailLoopOpt2nd = tailLoopOpt2nd, tailLoopOpt1st
         tc1, tc2 = tc2, tc1
 
       globalReadMode1st = 2 if (((tensorParameters1st["glvw"] * tensorParameters1st["bpeGR"]) < 4) or \
-                               kernel["tailLoopOpt"] == False) else 0
+                               tailLoopOpt1st == False) else 3
       globalReadMode2nd = 2 if (((tensorParameters2nd["glvw"] * tensorParameters2nd["bpeGR"]) < 4) or \
-                               kernel["tailLoopOpt"] == False) else 0
-      globalReadMode1st = 0 if tensorParameters1st["isSwizzled"] else globalReadMode1st
-      globalReadMode2nd = 0 if tensorParameters2nd["isSwizzled"] else globalReadMode2nd
+                               tailLoopOpt2nd == False) else 3
+
+      globalReadMode1st = 3 if tensorParameters1st["isSwizzled"] else globalReadMode1st
+      globalReadMode2nd = 3 if tensorParameters2nd["isSwizzled"] else globalReadMode2nd
 
       module.addComment1("Update M0 for DTLDS")
       moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters1st)
       module.add(replaceHolder(moduleTmp, 0))
       module.addComment1("Tail global read %s"%tc1)
-      module.add(self.globalReadDo(kernel, globalReadMode1st, tensorParameters1st))
+      if tailLoopOpt1st and (globalReadMode1st == 2):
+        module.add(self.doTailLoopOpt(kernel, tensorParameters1st))
+      else:
+        module.add(self.globalReadDo(kernel, globalReadMode1st, tensorParameters1st))
       module.addComment1("Update M0 for DTLDS")
       moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters2nd)
       module.add(replaceHolder(moduleTmp, 0))
       module.addComment1("Tail global read %s"%tc2)
-      module.add(self.globalReadDo(kernel, globalReadMode2nd, tensorParameters2nd))
-      if kernel["tailLoopOpt"] and \
-         (((tensorParameters1st["glvw"] * tensorParameters1st["bpeGR"]) >= 4) or \
-          ((tensorParameters2nd["glvw"] * tensorParameters2nd["bpeGR"]) >= 4)):
-        module.add(self.tailLoopGlobalRead(kernel, tensorParameters1st, tensorParameters2nd))
+      if tailLoopOpt2nd and (globalReadMode2nd == 2):
+        module.add(self.doTailLoopOpt(kernel, tensorParameters2nd))
+      else:
+        module.add(self.globalReadDo(kernel, globalReadMode2nd, tensorParameters2nd))
+
+      doA = False
+      doB = False
+      if globalReadMode1st == 3:
+        if tc1 == 'A':
+          doA = True if (tensorParameters1st["bpeGR"] % 4 != 0) and (not kernel["ProblemType"]["TLU%s"%(tc1)]) else False
+        else:
+          doB = True if (tensorParameters1st["bpeGR"] % 4 != 0) and (not kernel["ProblemType"]["TLU%s"%(tc1)]) else False
+      if globalReadMode2nd == 3:
+        if tc2 == 'A':
+          doA = True if (tensorParameters2nd["bpeGR"] % 4 != 0) and (not kernel["ProblemType"]["TLU%s"%(tc2)]) else False
+        else:
+          doB = True if (tensorParameters2nd["bpeGR"] % 4 != 0) and (not kernel["ProblemType"]["TLU%s"%(tc2)]) else False
+
+      if doA or doB:
+        if tc1 == 'A':
+          module.add(self.tailLoopGlobalRead(kernel, tensorParameters1st, tensorParameters2nd, doA, doB))
+        else:
+          module.add(self.tailLoopGlobalRead(kernel, tensorParameters2nd, tensorParameters1st, doA, doB))
       module.add(self._wait(kernel, tensorParameters1st, tensorParameters2nd, 0, -1, -1, "2wait for global read"))
       module.add(self._syncThreads(kernel))
 

@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -126,6 +126,7 @@ foreach( exe ${sample_list_all} )
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/common>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/src/include>
       )
 
   target_include_directories( ${exe}
@@ -151,7 +152,7 @@ endforeach( )
 foreach( exe ${samples} )
   install(
     TARGETS ${exe}
-    RUNTIME 
+    RUNTIME
     DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/hipblaslt-samples
     COMPONENT samples
   )
@@ -163,7 +164,7 @@ install(
     ${CMAKE_CURRENT_SOURCE_DIR}/
   DESTINATION ${CMAKE_INSTALL_DATADIR}/hipblaslt/samples
   COMPONENT samples
-  FILES_MATCHING 
+  FILES_MATCHING
   PATTERN "*.cpp"
   PATTERN "*.h"
   PATTERN "CMakeLists.txt" EXCLUDE
