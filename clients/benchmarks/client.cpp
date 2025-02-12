@@ -172,18 +172,16 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, h
         std::string deviceFullString(props.gcnArchName);
         std::string deviceString = deviceFullString.substr(0, deviceFullString.find(":"));
 
-        bool isGFX94X = deviceString.find("gfx940") != std::string::npos ||
-            deviceString.find("gfx941") != std::string::npos ||
-            deviceString.find("gfx942") != std::string::npos;
+        bool isGFX942 = deviceString.find("gfx942") != std::string::npos;
 
-        if (isGFX94X) {
+        if (isGFX942) {
             auto convertF8Type = [](hipDataType type) {
                 if (type == HIP_R_8F_E4M3) {
-                    hipblaslt_cerr << "hipblaslt-bench INFO: Converting f8_r to f8_fnuz_r" << std::endl;
+                    hipblaslt_cerr << "hipblaslt-bench INFO: Using f8_fnuz_r instead of f8_r" << std::endl;
                     return HIP_R_8F_E4M3_FNUZ;
                 }
                 if (type == HIP_R_8F_E5M2) {
-                    hipblaslt_cerr << "hipblaslt-bench INFO: Converting b8_r to b8_fnuz_r" << std::endl;
+                    hipblaslt_cerr << "hipblaslt-bench INFO: Using b8_fnuz_r instead of b8_r" << std::endl;
                     return HIP_R_8F_E5M2_FNUZ;
                 }
                 else
