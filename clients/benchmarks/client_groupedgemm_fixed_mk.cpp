@@ -852,7 +852,7 @@ int test_hipblaslt(hipDataType                 in_datatype,
         else if(enable_bias[i] && actType[i] == ActivationType::GELU)
             epilogue[i] = HIPBLASLT_EPILOGUE_GELU_BIAS;
         else if(enable_bias[i] && actType[i] == ActivationType::SWISH)
-            epilogue[i] = HIPBLASLT_EPILOGUE_SWISH_BIAS;
+            epilogue[i] = HIPBLASLT_EPILOGUE_SWISH_BIAS_EXT;
         else if(!enable_bias[i] && actType[i] == ActivationType::NONE)
             epilogue[i] = HIPBLASLT_EPILOGUE_DEFAULT;
         else if(!enable_bias[i] && actType[i] == ActivationType::RELU)
@@ -860,7 +860,7 @@ int test_hipblaslt(hipDataType                 in_datatype,
         else if(!enable_bias[i] && actType[i] == ActivationType::GELU)
             epilogue[i] = HIPBLASLT_EPILOGUE_GELU;
         else if(!enable_bias[i] && actType[i] == ActivationType::SWISH)
-            epilogue[i] = HIPBLASLT_EPILOGUE_SWISH;
+            epilogue[i] = HIPBLASLT_EPILOGUE_SWISH_EXT;
         gemmEpilogue[i].setMode(epilogue[i]);
         gemmEpilogue[i].setBiasDataType(static_cast<hipDataType>(HIP_R_32F));
         gemmInputs[i].setA(da[i]);

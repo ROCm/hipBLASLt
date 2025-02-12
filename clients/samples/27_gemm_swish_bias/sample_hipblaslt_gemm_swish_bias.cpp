@@ -127,7 +127,7 @@ void simpleGemmSwishBias(hipblasLtHandle_t  handle,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
-    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_SWISH_BIAS;
+    hipblasLtEpilogue_t epilogue = HIPBLASLT_EPILOGUE_SWISH_BIAS_EXT;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
 
