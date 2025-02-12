@@ -291,10 +291,10 @@ const char* rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue)
         return "EPILOGUE_DGELU_BGRADA";
     case ROCBLASLT_EPILOGUE_BGRADB:
         return "EPILOGUE_DGELU_BGRADB";
-    case ROCBLASLT_EPILOGUE_SWISH:
-        return "EPILOGUE_SWISH";
-    case ROCBLASLT_EPILOGUE_SWISH_BIAS:
-        return "EPILOGUE_SWISH_BIAS";
+    case ROCBLASLT_EPILOGUE_SWISH_EXT:
+        return "EPILOGUE_SWISH_EXT";
+    case ROCBLASLT_EPILOGUE_SWISH_BIAS_EXT:
+        return "EPILOGUE_SWISH_BIAS_EXT";
     default:
         return "Invalid epilogue";
     }

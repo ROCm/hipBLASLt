@@ -1326,7 +1326,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                 epilogue[i] = HIPBLASLT_EPILOGUE_GELU_BIAS;
                 break;
             case hipblaslt_activation_type::swish:
-                epilogue[i] = HIPBLASLT_EPILOGUE_SWISH_BIAS;
+                epilogue[i] = HIPBLASLT_EPILOGUE_SWISH_BIAS_EXT;
                 break;
             default:
                 epilogue[i] = HIPBLASLT_EPILOGUE_BIAS;
@@ -1346,7 +1346,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                 epilogue_on[i] = true;
                 break;
             case hipblaslt_activation_type::swish:
-                epilogue[i] = HIPBLASLT_EPILOGUE_SWISH;
+                epilogue[i] = HIPBLASLT_EPILOGUE_SWISH_EXT;
                 epilogue_on[i] = true;
                 break;
             default:
