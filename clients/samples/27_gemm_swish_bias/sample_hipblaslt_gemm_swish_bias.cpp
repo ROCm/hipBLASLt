@@ -169,35 +169,33 @@ void simpleGemmSwishBias(hipblasLtHandle_t  handle,
                                                           heuristicResult,
                                                           &returnedAlgoCount));
 
-    if(returnedAlgoCount == 0)
-    {
+    if(returnedAlgoCount == 0) {
         std::cerr << "No valid solution found!" << std::endl;
-        return;
+    } else {
+        uint64_t workspace_size = 0;
+        for(int i = 0; i < returnedAlgoCount; i++)
+            workspace_size = max(workspace_size, heuristicResult[i].workspaceSize);
+        // In this sample, the workspace is already allocated with max_workspace_size
+        // If not, allocate d_workspace here
+        // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
+
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
+                                            matmul,
+                                            &alpha,
+                                            d_a,
+                                            matA,
+                                            d_b,
+                                            matB,
+                                            &beta,
+                                            d_c,
+                                            matC,
+                                            d_d,
+                                            matD,
+                                            &heuristicResult[0].algo,
+                                            d_workspace,
+                                            workspace_size,
+                                            stream));
     }
-
-    uint64_t workspace_size = 0;
-    for(int i = 0; i < returnedAlgoCount; i++)
-        workspace_size = max(workspace_size, heuristicResult[i].workspaceSize);
-    // In this sample, the workspace is already allocated with max_workspace_size
-    // If not, allocate d_workspace here
-    // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
-
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
-                                          matmul,
-                                          &alpha,
-                                          d_a,
-                                          matA,
-                                          d_b,
-                                          matB,
-                                          &beta,
-                                          d_c,
-                                          matC,
-                                          d_d,
-                                          matD,
-                                          &heuristicResult[0].algo,
-                                          d_workspace,
-                                          workspace_size,
-                                          stream));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
