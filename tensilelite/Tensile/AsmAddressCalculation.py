@@ -62,23 +62,23 @@ class AddrCalculation:
         self.scaleAlphaVecOffset = [0, 0]
         if ss.optSingleColVgpr:
             # optimized stores use the load offset for coordOffset0 calculations.
-            self.biasOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.bias.ldsOffset
-            self.biasOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.bias.ldsOffset
+            self.biasOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.bias(0).ldsOffset
+            self.biasOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.bias(1).ldsOffset
             self.scaleAVecOffset = coordOffset0 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.scaleA.ldsOffset
             self.scaleBVecOffset = coordOffset1 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.scaleB.ldsOffset
-            self.scaleAlphaVecOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.scaleAlpha.ldsOffset
-            self.scaleAlphaVecOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.scaleAlpha.ldsOffset
+            self.scaleAlphaVecOffset[0]   = coordOffset0 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.scaleAlpha(0).ldsOffset
+            self.scaleAlphaVecOffset[1]   = coordOffset1 * kernelWriter.states.bpeCinternal + self.vectorDataTypes.scaleAlpha(1).ldsOffset
             self.globalOffset  = coordOffset0 * kernelWriter.states.bpeCexternal
             self.globalOffsetE = coordOffset0 * kernelWriter.states.bpeE
             self.globalOffsetInternal = coordOffset0 * kernelWriter.states.bpeCinternal
         else:
             # else non-opt stores include the coord0 offset into VGPR address calcs
-            self.biasOffset[0]   = self.vectorDataTypes.bias.ldsOffset
-            self.biasOffset[1]   = self.vectorDataTypes.bias.ldsOffset
+            self.biasOffset[0]   = self.vectorDataTypes.bias(0).ldsOffset
+            self.biasOffset[1]   = self.vectorDataTypes.bias(1).ldsOffset
             self.scaleAVecOffset = self.vectorDataTypes.scaleA.ldsOffset
             self.scaleBVecOffset = self.vectorDataTypes.scaleB.ldsOffset
-            self.scaleAlphaVecOffset[0] = self.vectorDataTypes.scaleAlpha.ldsOffset
-            self.scaleAlphaVecOffset[1] = self.vectorDataTypes.scaleAlpha.ldsOffset
+            self.scaleAlphaVecOffset[0] = self.vectorDataTypes.scaleAlpha(0).ldsOffset
+            self.scaleAlphaVecOffset[1] = self.vectorDataTypes.scaleAlpha(1).ldsOffset
             self.globalOffset = 0
             self.globalOffsetE = 0
             self.globalOffsetInternal = 0

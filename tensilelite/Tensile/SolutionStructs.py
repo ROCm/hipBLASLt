@@ -3871,19 +3871,27 @@ class Solution(collections.abc.Mapping):
     savDim = state["ProblemType"]["UseScaleAlphaVec"]
     sAB = state["ProblemType"]["UseScaleAB"] == "Vector"
     # Calc LDS for Bias
+    maxTurn = 0
     if biasDim == 1:
-      vecDT.bias.turn = calcEpilogueTurns([0])
+      maxTurn = calcEpilogueTurns([0])
     elif biasDim == 2:
-      vecDT.bias.turn = calcEpilogueTurns([1])
+      maxTurn = calcEpilogueTurns([1])
     elif biasDim == 3:
-      vecDT.bias.turn = calcEpilogueTurns([0, 1])
+      maxTurn = calcEpilogueTurns([0, 1])
+    vecDT.bias(0).turn = maxTurn
+    vecDT.bias(1).turn = maxTurn
+  
     # Calc LDS for SAV
+    maxTurn = 0
     if savDim == 1:
-      vecDT.scaleAlpha.turn = calcEpilogueTurns([0])
+      maxTurn = calcEpilogueTurns([0])
     elif savDim == 2:
-      vecDT.scaleAlpha.turn = calcEpilogueTurns([1])
+      maxTurn = calcEpilogueTurns([1])
     elif savDim == 3:
-      vecDT.scaleAlpha.turn = calcEpilogueTurns([0, 1])
+      maxTurn = calcEpilogueTurns([0, 1])
+    vecDT.scaleAlpha(0).turn = maxTurn
+    vecDT.scaleAlpha(1).turn = maxTurn
+
     # Calc LDS for ScaleA, ScaleB
     if sAB:
       vecDT.scaleA.turn = calcEpilogueTurns([0])
@@ -3908,10 +3916,10 @@ class Solution(collections.abc.Mapping):
           for dataType in state["ProblemType"]["BiasDataTypeList"]:
             epilogueSize = max(epilogueSize, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes()) # TODO- GetTurn ?
       else:
-        epilogueSize = state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * vecDT.bias.turn
+        epilogueSize = state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * vecDT.bias(0).turn
     # Calculate max ldsNumBytes for other epilogues
     if state["ProblemType"]["UseScaleAlphaVec"]:
-      epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * vecDT.scaleAlpha.turn
+      epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * vecDT.scaleAlpha(0).turn
     if state["ProblemType"]["UseScaleAB"] == "Vector":
       epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * (vecDT.scaleA.turn + vecDT.scaleB.turn)
     ldsNumBytes = max(ldsNumBytes, state["LdsOffsetBias"] + epilogueSize)

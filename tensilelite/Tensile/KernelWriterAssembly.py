@@ -9792,6 +9792,12 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SLoadB32(dst=sgpr(sgprScaleC), base=sgpr("AddressScaleC",2), soffset=0, comment="load scaleC"))
         module.add(label)
 
+      factorDims = [0]
+      if self.states.FactorDim == 3:
+        factorDims.append(1)
+      elif self.states.FactorDim == 2:
+        factorDims = [1]
+
       vectorDataTypes = VectorDataTypes()
       if (kernel["ProblemType"]["UseScaleAlphaVec"]) and ((kernel["GlobalSplitU"] == 1) or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
         labelStr = self.labels.getNameInc("ScaleAlphaVec")
@@ -9806,7 +9812,8 @@ class KernelWriterAssembly(KernelWriter):
         else:
           module.add(allocPostLoopSrdSuppress("ScaleAlphaVec", labelStr, sgprLength=sgpr("SizeI")))
         module.add(SMulI32(dst=sgpr("SrdScaleAlphaVec+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleAlphaVec+2"), comment="ScaleAlphaVec scaled by BPE"))# scaled by BPE
-        vectorDataTypes.scaleAlpha.dataType = kernel["ProblemType"]["ComputeDataType"]
+        for d in range(len(factorDims)):
+          vectorDataTypes.scaleAlpha(d).dataType = kernel["ProblemType"]["ComputeDataType"]
 
       if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
         module.add(self.SrdTDinit(kernel))
@@ -9823,11 +9830,6 @@ class KernelWriterAssembly(KernelWriter):
         vectorDataTypes.scaleA.dataType = kernel["ProblemType"]["ComputeDataType"]
         vectorDataTypes.scaleB.dataType = kernel["ProblemType"]["ComputeDataType"]
 
-      factorDims = [0]
-      if self.states.FactorDim == 3:
-        factorDims.append(1)
-      elif self.states.FactorDim == 2:
-        factorDims = [1]
       factorDim0Label = Label(self.labels.getNameInc("Load_FactorDim_0"), "")
       factorDim1Label = Label(self.labels.getNameInc("Load_FactorDim_1"), "")
 
@@ -9861,7 +9863,7 @@ class KernelWriterAssembly(KernelWriter):
 
         for d in range(len(factorDims)):
           # Calculate max vgpr for bias read
-          vectorDataTypes.bias.dataType = kernel["ProblemType"]["BiasDataTypeList"][0]
+          vectorDataTypes.bias(d).dataType = kernel["ProblemType"]["BiasDataTypeList"][0]
           totalTmpVgpr = self.getNumOfTempVgprs(vectorDataTypes, kernel, 1, factorDims[d])
           tmpVgpr      = self.vgprPool.checkOutAligned(totalTmpVgpr, 2, "store tmps")
           tmpVgprRes   = RegisterPoolResource(idx=tmpVgpr, size=4)
@@ -9876,7 +9878,7 @@ class KernelWriterAssembly(KernelWriter):
           offsetVgpr  = self.vgprPool.checkOut(1, 1)
           with self.allocTmpSgpr(4, 1) as tmpSgprRes:
             if len(kernel["ProblemType"]["BiasDataTypeList"]) == 1:
-              vectorDataTypes.bias.dataType = kernel["ProblemType"]["BiasDataTypeList"][0]
+              vectorDataTypes.bias(d).dataType = kernel["ProblemType"]["BiasDataTypeList"][0]
               module.add(self.readVectorToLDS(vectorDataTypes, kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes, factorDims[d]))
               if len(factorDims) == 2:
                 if d == 0:
@@ -9890,7 +9892,7 @@ class KernelWriterAssembly(KernelWriter):
                 #module.add(SCmpKLGU32(sgpr("BiasType"), typeValue, "BiasType != %u"%typeValue))
                 module.add(self.getSCMPKInstruction("LGU32", "BiasType", typeValue, comment="BiasType != %u"%typeValue))
                 module.add(SCBranchSCC1(label.getLabelName(), "Branch if true"))
-                vectorDataTypes.bias.dataType = kernel["ProblemType"]["BiasDataTypeList"][i]
+                vectorDataTypes.bias(d).dataType = kernel["ProblemType"]["BiasDataTypeList"][i]
                 module.add(self.readVectorToLDS(vectorDataTypes, kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes, factorDims[d]))
                 module.add(SBranch(labelName=loadBiasEndLabel.getLabelName(), comment="Branch to load bias end"))
               if d == len(factorDims) -1:
@@ -11304,21 +11306,21 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   def getNumOfTempVgprs(self, vectorDataTypes: VectorDataTypes, kernel, gwvw, dim):
-    biasDataType   = vectorDataTypes.bias.dataType
+    biasDataType   = vectorDataTypes.bias(dim).dataType
     scaleADataType = vectorDataTypes.scaleA.dataType
     scaleBDataType = vectorDataTypes.scaleB.dataType
-    scaleAlphaDataType = vectorDataTypes.scaleAlpha.dataType
+    scaleAlphaDataType = vectorDataTypes.scaleAlpha(dim).dataType
 
     # Calculate nums of vgpr for store data
     totalReg  = 0
     regPerVec = gwvw * kernel["ProblemType"]["ComputeDataType"].numRegisters()
     if biasDataType:
-      vectorDataTypes.bias.dstVgpr = totalReg
-      vectorDataTypes.bias.turn = self.getTurn(kernel, gwvw, dim)[0]
+      vectorDataTypes.bias(dim).dstVgpr = totalReg
+      vectorDataTypes.bias(dim).turn = self.getTurn(kernel, gwvw, dim)[0]
       totalReg = totalReg + (self.getTurn(kernel, gwvw, dim)[0] * regPerVec)
     if scaleAlphaDataType:
-      vectorDataTypes.scaleAlpha.dstVgpr = totalReg
-      vectorDataTypes.scaleAlpha.turn = self.getTurn(kernel, gwvw, dim)[0]
+      vectorDataTypes.scaleAlpha(dim).dstVgpr = totalReg
+      vectorDataTypes.scaleAlpha(dim).turn = self.getTurn(kernel, gwvw, dim)[0]
       totalReg = totalReg + (self.getTurn(kernel, gwvw, dim)[0] * regPerVec)
     if scaleADataType:
       vectorDataTypes.scaleA.dstVgpr = totalReg
@@ -11335,13 +11337,13 @@ class KernelWriterAssembly(KernelWriter):
     # Only vector without stride input can add to dimKey
     dimKey = {}
     if biasDataType:
-      vectorDataTypes.bias.offsetVgpr = offsetVgprStart
+      vectorDataTypes.bias(dim).offsetVgpr = offsetVgprStart
       tmpVgprNum = tmpVgprNum + 1
     if scaleAlphaDataType:
       if (scaleAlphaDataType, 1) in dimKey:
-        vectorDataTypes.scaleAlpha.offsetVgpr = dimKey[(scaleAlphaDataType, dim)]
+        vectorDataTypes.scaleAlpha(dim).offsetVgpr = dimKey[(scaleAlphaDataType, dim)]
       else:
-        vectorDataTypes.scaleAlpha.offsetVgpr = offsetVgprStart + tmpVgprNum
+        vectorDataTypes.scaleAlpha(dim).offsetVgpr = offsetVgprStart + tmpVgprNum
         tmpVgprNum = tmpVgprNum + 1
     if scaleADataType:
       if (scaleADataType, 0) in dimKey:
@@ -11360,22 +11362,22 @@ class KernelWriterAssembly(KernelWriter):
   def readVectorToLDS(self, vectorDataTypes: VectorDataTypes, kernel, gwvw, offsetVgpr, tmpSgpr, tmpVgpr1Res: RegisterPoolResource, dim):
     assert gwvw == 1
     # Params
-    biasDataType         = vectorDataTypes.bias.dataType
+    biasDataType         = vectorDataTypes.bias(dim).dataType
     scaleADataType       = vectorDataTypes.scaleA.dataType
     scaleBDataType       = vectorDataTypes.scaleB.dataType
-    scaleAlphaDataType   = vectorDataTypes.scaleAlpha.dataType
+    scaleAlphaDataType   = vectorDataTypes.scaleAlpha(dim).dataType
     biasBpe              = int(self.states.bpr * biasDataType.numRegisters()) if biasDataType else 0
     scaleABpe            = int(self.states.bpr * scaleADataType.numRegisters()) if scaleADataType else 0
     scaleBBpe            = int(self.states.bpr * scaleBDataType.numRegisters()) if scaleBDataType else 0
     scaleAlphaBpe        = int(self.states.bpr * scaleAlphaDataType.numRegisters()) if scaleAlphaDataType else 0
-    biasDstVgpr          = vectorDataTypes.bias.dstVgpr
+    biasDstVgpr          = vectorDataTypes.bias(dim).dstVgpr
     scaleADstVgpr        = vectorDataTypes.scaleA.dstVgpr
     scaleBDstVgpr        = vectorDataTypes.scaleB.dstVgpr
-    scaleAlphaDstVgpr    = vectorDataTypes.scaleAlpha.dstVgpr
-    biasOffsetVgpr       = vectorDataTypes.bias.offsetVgpr + tmpVgpr1Res.idx
+    scaleAlphaDstVgpr    = vectorDataTypes.scaleAlpha(dim).dstVgpr
+    biasOffsetVgpr       = vectorDataTypes.bias(dim).offsetVgpr + tmpVgpr1Res.idx
     scaleAOffsetVgpr     = vectorDataTypes.scaleA.offsetVgpr + tmpVgpr1Res.idx
     scaleBOffsetVgpr     = vectorDataTypes.scaleB.offsetVgpr + tmpVgpr1Res.idx
-    scaleAlphaOffsetVgpr = vectorDataTypes.scaleAlpha.offsetVgpr + tmpVgpr1Res.idx
+    scaleAlphaOffsetVgpr = vectorDataTypes.scaleAlpha(dim).offsetVgpr + tmpVgpr1Res.idx
 
     module = Module("ReadVecToLds")
     module.addComment2("Read vector to LDS")
@@ -11452,13 +11454,13 @@ class KernelWriterAssembly(KernelWriter):
     storeModules = Module("Store")
     subGroupOffset = [0]
     if biasDataType:
-      vectorDataTypes.bias.ldsOffset = subGroupOffset[0]
+      vectorDataTypes.bias(dim).ldsOffset = subGroupOffset[0]
       storeModules.add(self.addVectorLocalStore(kernel, "Bias", offsetVgpr, biasShiftOffset, biasDataType, gwvw, tmpVgpr1Res, biasDstVgpr, subGroupOffset, dim, comment="store bias"))
-      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.bias.turn
+      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.bias(dim).turn
     if scaleAlphaDataType:
-      vectorDataTypes.scaleAlpha.ldsOffset = subGroupOffset[0]
+      vectorDataTypes.scaleAlpha(dim).ldsOffset = subGroupOffset[0]
       storeModules.add(self.addVectorLocalStore(kernel, "ScaleAlphaVec", offsetVgpr, scaleAlphaShiftOffset, scaleAlphaDataType, gwvw, tmpVgpr1Res, scaleAlphaDstVgpr, subGroupOffset, dim, setToOne=True, comment="store scaleAlpha"))
-      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleAlpha.turn
+      subGroupOffset[0] += kernel["NumThreads"] * kernel["ProblemType"]["ComputeDataType"].numBytes() * vectorDataTypes.scaleAlpha(dim).turn
     if scaleADataType:
       vectorDataTypes.scaleA.ldsOffset = subGroupOffset[0]
       storeModules.add(self.addVectorLocalStore(kernel, "ScaleA", offsetVgpr, scaleAShiftOffset, scaleADataType, gwvw, tmpVgpr1Res, scaleADstVgpr, subGroupOffset, 0, setToOne=True, comment="store scaleA"))
