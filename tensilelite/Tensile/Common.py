@@ -58,6 +58,7 @@ globalParameters = OrderedDict()
 # common
 ########################################
 globalParameters["MinimumRequiredVersion"] = "0.0.0" # which version of tensile is required to handle all the features required by this configuration file
+globalParameters["DeviceList"] = []  # list of GPU devices to use for tuning, empty=use default, [-1]=use all available
 globalParameters["PerformanceMetric"] = "DeviceEfficiency" # performance metric for benchmarking; one of {DeviceEfficiency, CUEfficiency}
 globalParameters["PrintLevel"] = 1                # how much info to print in generator. 0=none, 1=standard, 2=verbose
 globalParameters["PrintTiming"] = False           # print duration for each stage in generator.
