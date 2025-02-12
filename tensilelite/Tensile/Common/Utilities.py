@@ -70,7 +70,7 @@ def splitArchs(params: dict, fromTensile=False) -> Tuple[List[str], List[str]]:
     if "all" in wantedArchs:
         for arch in params["SupportedISA"]:
             if isSupported(arch):
-                if arch in [(9, 0, 6), (9, 0, 8), (9, 0, 10), (9, 4, 0), (9, 4, 1), (9, 4, 2)]:
+                if arch in [(9, 0, 6), (9, 0, 8), (9, 0, 10), (9, 4, 2)]:
                     if arch == (9, 0, 10):
                         archs += [isaToGfx(arch) + "-xnack+"]
                         cmdlineArchs += [isaToGfx(arch) + ":xnack+"]

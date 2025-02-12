@@ -266,8 +266,6 @@ globalParameters["SupportedISA"] = [
     (9, 0, 6),
     (9, 0, 8),
     (9, 0, 10),
-    (9, 4, 0),
-    (9, 4, 1),
     (9, 4, 2),
     (10, 1, 0),
     (10, 1, 1),
@@ -1201,7 +1199,7 @@ validParameters = {
     "TransposeLDS": [-1, 1, 0, 2],
     # add gls or slc after global memory read/writes to change caching, not caching the writes is promising and improved performance a tiny bit
     # 0: none, 1: glc, 2: slc, 3: glc slc
-    # For gfx940, sets sc0/sc1 bits
+    # For gfx942, sets sc0/sc1/nt bits
     # 0: none, 1: sc0, 2: sc1, 3: sc0 sc1, 4: nt, 5: nt sc0, 6: nt sc1, 7: nt sc0 sc1
     "NonTemporalE": list(range(0, 8)),
     "NonTemporalD": list(range(0, 8)),
