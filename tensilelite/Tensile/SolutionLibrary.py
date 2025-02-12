@@ -489,8 +489,8 @@ class MasterSolutionLibrary:
         return rv, placeholderName
 
     @classmethod
-    def BenchmarkingLibrary(cls, solutions, cxxCompiler):
-        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, cxxCompiler) for s in solutions])
+    def BenchmarkingLibrary(cls, solutions, cxxCompiler, splitGSU: bool):
+        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, cxxCompiler, splitGSU) for s in solutions])
         cls.FixSolutionIndices(solutionObjs)
 
         predRows = list([{
@@ -519,14 +519,14 @@ class MasterSolutionLibrary:
             rv["version"] = self.version
         return rv
 
-    def applyNaming(self, naming=None):
+    def applyNaming(self, splitGSU: bool, naming=None):
         if naming is None:
             kernels = itertools.chain(s.originalSolution.getKernels() for s in self.solutions.values())
             naming = OriginalSolution.getMinNaming(kernels)
 
         for s in list(self.solutions.values()):
-            s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming)
-            s.kernelName = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
+            s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, splitGSU)
+            s.kernelName = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, splitGSU, True)
 
     def remapSolutionIndicesStartingFrom(self, curIndex):
         reIndexMap = {}

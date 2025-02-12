@@ -47,7 +47,7 @@ from Tensile.Common import globalParameters, HR, print1, print2, \
         BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR
 
 
-def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCompiler):
+def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCompiler, debugConfig: DebugConfig):
     """Creates a list with a Solution object for each parameter combination in forkPermutations"""
     print1("# Enumerating Solutions")
 
@@ -59,12 +59,12 @@ def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCo
         solution.update(perm)
 
         # TODO check if solution matches problem size for exact tile kernels
-        solutionObject = Solution(solution, cxxCompiler)
+        solutionObject = Solution(solution, debugConfig.splitGSU, cxxCompiler)
         if solutionObject["Valid"]:
             if solutionObject not in solutionSet:
                 solutionSet.add(solutionObject)
                 solutions.append(solutionObject)
-        elif globalParameters["PrintSolutionRejectionReason"]:
+        elif debugConfig.printSolutionRejectionReason:
             print1("rejecting solution " + str(solutionObject))
 
     return solutions
@@ -76,7 +76,7 @@ def getCustomKernelSolutionObj(kernelName, internalSupportParams, cxxCompiler: s
     return Solution(config, cxxCompiler)
 
 
-def generateCustomKernelSolutions(problemType, customKernels, internalSupportParams, failOnMismatch, cxxCompiler: str):
+def generateCustomKernelSolutions(problemType, customKernels, internalSupportParams, failOnMismatch, cxxCompiler: str, printSolutionRejectionReason: bool):
     """Creates a list with a Solution object for each name in customKernel"""
     solutions = []
     for kernelName in customKernels:
@@ -107,7 +107,7 @@ def generateCustomKernelSolutions(problemType, customKernels, internalSupportPar
             print1("# Added {} to solutions".format(kernelName))
             if solution["Valid"]:
                 solutions.append(solution)
-            elif globalParameters["PrintSolutionRejectionReason"]:
+            elif printSolutionRejectionReason:
                 print1("rejecting solution " + str(solution))
 
     return solutions
@@ -131,7 +131,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     for solution in tqdm(solutions, "Finding unique solutions"):
         solutionKernels = solution.getKernels()
         for kernel in solutionKernels:
-            kName = Solution.getKeyNoInternalArgs(kernel)
+            kName = Solution.getKeyNoInternalArgs(kernel, debugConfig.splitGSU)
             if kName not in kernelNames:
                 kernels.append(kernel)
                 kernelNames.add(kName)
@@ -152,15 +152,15 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
     codeObjectFiles, _= writeSolutionsAndKernels( \
             sourcePath, asmToolchain, srcToolchain, \
             solutions, kernels, kernelHelperObjs, \
-            kernelWriterAssembly, errorTolerant=True, fromTensile=True, \
+            kernelWriterAssembly, debugConfig.splitGSU, errorTolerant=True, fromTensile=True, \
             generateSourcesAndExit=globalParameters["GenerateSourcesAndExit"], \
             useShortNames=useShortNames)
     # ^ this is where solutions is mutated
 
     newLibraryDir = ensurePath(sourcePath / 'library')
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")
-    newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, asmToolchain.assembler)
-    newLibrary.applyNaming(kernelMinNaming)
+    newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(solutions, asmToolchain.assembler, debugConfig.splitGSU)
+    newLibrary.applyNaming(debugConfig.splitGSU, kernelMinNaming)
     LibraryIO.write(newLibraryFile, state(newLibrary), globalParameters["LibraryFormat"])
 
     codeObjectFiles = [os.path.relpath(f, sourcePath) \
@@ -285,10 +285,10 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             maxPossibleSolutions = len(forkPermutations)
 
             regSolutions = generateForkedSolutions(benchmarkProcess.problemType, \
-                    benchmarkStep.constantParams, forkPermutations, srcToolchain.compiler)
+                    benchmarkStep.constantParams, forkPermutations, srcToolchain.compiler, debugConfig)
             kcSolutions = generateCustomKernelSolutions(benchmarkProcess.problemType, \
                     benchmarkStep.customKernels, benchmarkStep.internalSupportParams, \
-                    not benchmarkStep.customKernelWildcard, srcToolchain.compiler)
+                    not benchmarkStep.customKernelWildcard, srcToolchain.compiler, debugConfig.printSolutionRejectionReason)
 
             maxPossibleSolutions += len(kcSolutions)
             solutions = regSolutions + kcSolutions
@@ -299,7 +299,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             # handle no valid solutions
             if len(solutions) == 0:
                 msg = "Your parameters resulted in 0 valid solutions."
-                if globalParameters["PrintSolutionRejectionReason"]:
+                if debugConfig.printSolutionRejectionReason:
                     msg += "\nExamine reject and backtrace messages above to see why" \
                             "and where solutions were rejected."
                 else:
@@ -309,7 +309,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
             if globalParameters["PrintLevel"] >= 1:
                 for solution in solutions:
-                    print2("#    ({}:{}) {}".format(0, 0, Solution.getNameFull(solution)))
+                    print2("#    ({}:{}) {}".format(0, 0, Solution.getNameFull(solution, debugConfig.splitGSU)))
                 print2(HR)
 
             # write benchmarkFiles
@@ -340,8 +340,8 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             for i in range(0, len(solutions)):
                 solution = solutions[i]
                 solution["SolutionIndex"] = i
-                solution["SolutionNameMin"] = Solution.getNameMin(solution, solutionMinNaming)
-                solution["KernelNameMin"]   = Solution.getNameMin(solution, solutionMinNaming, True)
+                solution["SolutionNameMin"] = Solution.getNameMin(solution, solutionMinNaming, debugConfig.splitGSU)
+                solution["KernelNameMin"]   = Solution.getNameMin(solution, solutionMinNaming, debugConfig.splitGSU, True)
         else:
             solutions = None
             print1("# Using cached solution data")

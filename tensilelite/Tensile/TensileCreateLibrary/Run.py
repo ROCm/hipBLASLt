@@ -98,7 +98,7 @@ def processKernelSource(kernelWriterAssembly, ti, useShortNames, kernel) -> Kern
     )
 
 
-def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant, globalParameters):
+def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant, printLevel: bool, splitGSU: bool):
     removeKernels = []
     removeKernelNames = []
     removeSolutions = []
@@ -116,7 +116,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
                 )
                 print(kernels[kernIdx]["SolutionNameMin"])
             removeKernels.append(kernels[kernIdx])
-            kName = Solution.getKeyNoInternalArgs(kernels[kernIdx])
+            kName = Solution.getKeyNoInternalArgs(kernels[kernIdx], splitGSU)
             if kName not in removeKernelNames:
                 removeKernelNames.append(kName)
             removeResults.append(results[kernIdx])
@@ -129,12 +129,12 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
 
     for solution in (
         tqdm(solutions, "Finding invalid solutions")
-        if globalParameters["PrintLevel"] > 1
+        if printLevel > 1
         else solutions
     ):
         solutionKernels = solution.getKernels()
         for kernel in solutionKernels:
-            kName = Solution.getKeyNoInternalArgs(kernel)
+            kName = Solution.getKeyNoInternalArgs(kernel, splitGSU)
             if kName in removeKernelNames:
                 removeSolutions.append(solution)
                 break
@@ -197,6 +197,7 @@ def writeSolutionsAndKernels(
     kernels,
     kernelHelperObjs,
     kernelWriterAssembly,
+    splitGSU: bool,
     errorTolerant=False,
     generateSourcesAndExit=False,
     compress=True,
@@ -237,7 +238,7 @@ def writeSolutionsAndKernels(
     )
     asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels")
     removeInvalidSolutionsAndKernels(
-        asmResults, asmKernels, solutions, errorTolerant, globalParameters
+        asmResults, asmKernels, solutions, errorTolerant, globalParameters["PrintLevel"], splitGSU
     )
 
     def assemble(ret):

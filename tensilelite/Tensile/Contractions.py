@@ -660,7 +660,7 @@ class Solution:
         return cls.FromOriginalState(solution._state, cxxCompiler, solution.srcName)
 
     @classmethod
-    def FromOriginalState(cls, d, cxxCompiler, srcName = "", deviceInfo=None):
+    def FromOriginalState(cls, d, cxxCompiler, splitGSU: bool, srcName = "", deviceInfo=None):
         rv = cls()
 
 
@@ -707,7 +707,7 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d, cxxCompiler, srcName)
+        rv.originalSolution = OriginalSolution(d, splitGSU, cxxCompiler, srcName)
         rv.srcName = srcName
 
         return rv

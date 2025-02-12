@@ -192,12 +192,12 @@ def readJson(filename):
         data = json.loads(f.read())
     return data
 
-def parseSolutionsFile(filename, cxxCompiler):
+def parseSolutionsFile(filename, cxxCompiler, splitGSU: bool):
     """Wrapper function to read and parse a solutions file."""
-    return parseSolutionsData(read(filename), filename, cxxCompiler)
+    return parseSolutionsData(read(filename), filename, cxxCompiler, splitGSU)
 
 
-def parseSolutionsData(data, srcFile, cxxCompiler):
+def parseSolutionsData(data, srcFile, cxxCompiler, splitGSU: bool):
     """Parses problem sizes and solutions from the data of a solutions file."""
     if len(data) < 3:
         printExit("Solution file {} is missing required fields (len = {} < 3" \
@@ -224,7 +224,7 @@ def parseSolutionsData(data, srcFile, cxxCompiler):
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
-        solutionObject = Solution(solutionState, cxxCompiler, srcFile)
+        solutionObject = Solution(solutionState, splitGSU, cxxCompiler, srcFile)
         solutions.append(solutionObject)
     problemType = solutions[0]["ProblemType"]
     problemSizes = ProblemSizes(problemType, problemSizesConfig)

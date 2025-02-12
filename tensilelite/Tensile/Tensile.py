@@ -105,7 +105,7 @@ def executeStepsInConfig(
                 libraryLogicConfig = config["LibraryLogic"]
             else:
                 libraryLogicConfig = {}
-            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler, outputPath)
+            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler, outputPath, debugConfig)
             print1("")
         else:
             print1("# LibraryLogic already done.")

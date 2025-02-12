@@ -49,7 +49,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from enum import Enum
 from functools import lru_cache
-from typing import List
+from typing import List, NamedTuple
 
 import collections
 import math
@@ -58,11 +58,11 @@ import sys
 
 ########################################
 # Print a reject message :
-def reject(state, *args):
+def reject(state, printSolutionRejectionReason: bool, *args):
   if state and "NoReject" in state and state["NoReject"]:
     return
 
-  if globalParameters["PrintSolutionRejectionReason"]:
+  if printSolutionRejectionReason:
     sys.stdout.write("\nreject: ")
     for a in args:
       print(a)
@@ -1053,10 +1053,11 @@ def isExtractableIndex(ks, index, tc='x'):
 class Solution(collections.abc.Mapping):
 
   ########################################
-  def __init__(self, config, cxxCompiler: str, srcName: str = ""):
+  def __init__(self, config, splitGSU: bool, cxxCompiler: str, srcName: str = ""):
     self._name = None
     self.cxxCompiler = cxxCompiler
     self.srcName = srcName
+    self.splitGSU = splitGSU
     config = config
 
     self._state = {}
@@ -1116,7 +1117,7 @@ class Solution(collections.abc.Mapping):
     while True:
       state = deepcopy(self._state)
       state["DepthU"] = depthuList[index[0]]
-      Solution.assignDerivedParameters(state, index, depthuList)
+      Solution.assignDerivedParameters(state, index, depthuList, splitGSU)
       if state["Valid"]:
         self._state = state
         break
@@ -2130,7 +2131,7 @@ class Solution(collections.abc.Mapping):
   ########################################
   # assign all derived parameters
   @staticmethod
-  def assignDerivedParameters(state, index, depthuList):
+  def assignDerivedParameters(state, index, depthuList, splitGSU: bool):
     state["EnableF32XdlMathOp"] = False #ignore the F32 xDL MathOp by default.
     #enable F32 xDL MathOp only when the input type is f32.
     if "F32XdlMathOp" in state["ProblemType"] \
@@ -2162,7 +2163,7 @@ class Solution(collections.abc.Mapping):
     elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
       state["_GlobalAccumulation"] = 'MultipleBuffer'
     elif state["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel':
-      if (not globalParameters["SplitGSU"]):
+      if (not splitGSU):
         state["_GlobalAccumulation"] = 'MultipleBufferSingleKernel'
       else:
         if state["GlobalSplitU"] > 1:
@@ -4256,12 +4257,12 @@ class Solution(collections.abc.Mapping):
 
   ########################################
   @ staticmethod
-  def getKeyNoInternalArgs(state):
+  def getKeyNoInternalArgs(state, splitGSU: bool):
     state_copy = deepcopy(state)
 
     state_copy["ProblemType"]["GroupedGemm"] = False
 
-    if globalParameters["SplitGSU"]:
+    if splitGSU:
       state_copy["GlobalSplitU"] = "M" if (state_copy["GlobalSplitU"] > 1) else state_copy["GlobalSplitU"]
     elif state["GlobalSplitU"] > 0:
       state_copy["GlobalSplitU"] = "M"
@@ -4277,7 +4278,7 @@ class Solution(collections.abc.Mapping):
     return state_copy
 
   @ staticmethod
-  def getNameFull(state):
+  def getNameFull(state, splitGSU: bool):
     requiredParameters = {}
     for key in state:
       if key in list(validParameters.keys()):
@@ -4286,12 +4287,12 @@ class Solution(collections.abc.Mapping):
       # Use MIWaveGroup and MIWaveTile instead of WG and MT
       requiredParameters["MIWaveTile"]  = True
       requiredParameters["ThreadTile"]  = False
-    return Solution.getNameMin(state, requiredParameters)
+    return Solution.getNameMin(state, requiredParameters, splitGSU)
 
   ########################################
   # Get Name Min
   @ staticmethod
-  def getNameMin(state, requiredParameters, ignoreInternalArgs = False):
+  def getNameMin(state, requiredParameters, splitGSU: bool, ignoreInternalArgs = False):
     if isCustomKernelConfig(state):
       return state["CustomKernelName"]
 
@@ -4319,7 +4320,7 @@ class Solution(collections.abc.Mapping):
     backup = state["GlobalSplitU"]
 
     if ignoreInternalArgs:
-      if globalParameters["SplitGSU"]:
+      if splitGSU:
         state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1) else state["GlobalSplitU"]
       elif state["GlobalSplitU"] > 0:
         requiredParameters["GlobalSplitU"] = False
@@ -4491,7 +4492,7 @@ class Solution(collections.abc.Mapping):
 
   def __str__(self):
     if self._name is None:
-      self._name = Solution.getNameFull(self._state)
+      self._name = Solution.getNameFull(self._state, self.splitGSU)
     return self._name
 
   def __repr__(self):

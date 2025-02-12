@@ -36,7 +36,7 @@ from .CustomKernels import isCustomKernelConfig
 from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
-from .Common import globalParameters, printWarning, roundUp, print2, printExit, DataDirection, SemanticVersion, \
+from .Common import globalParameters, printWarning, roundUp, print2, DebugConfig, DataDirection, SemanticVersion, \
   INDEX_CHARS, MAX_FILENAME_LENGTH
 
 import abc
@@ -348,18 +348,6 @@ class ExternClasses:
   activation: ActivationModule = ActivationModule()
   biasSumUnroll: Optional[Component.SumUnroll] = None
 
-
-class DebugConfig(NamedTuple):
-  enableAsserts: bool=False
-  enableDebugA: bool=False
-  enableDebugB: bool=False
-  enableDebugC: bool=False
-  expectedValueC: float=16.0
-  forceCExpectedValue: bool=False
-  debugKernel: bool=False
-  forceGenerateKernel: bool=False
-  printSolutionRejectionReason: bool=False
-  splitGSU: bool=False
 
 ################################################################################
 # Kernel Writer
@@ -4986,6 +4974,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.tPB = {}
     self.states.kernel = kernel
     self.states.language = "ASM"
+    # we already do this in the solution ctor
     self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else globalParameters["CurrentISA"]
     if not globalParameters["AsmCaps"][self.states.version]["SupportedISA"]:
       self.states.version = (9,0,0)
@@ -5027,7 +5016,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return fileBase
 
   def getKernelName(self, kernel):
-    kernelName = Solution.getNameMin(kernel, self.kernelMinNaming, True)
+    kernelName = Solution.getNameMin(kernel, self.kernelMinNaming, True, self.debugConfig.splitGSU)
     return kernelName
 
   @abc.abstractmethod

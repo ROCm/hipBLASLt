@@ -42,7 +42,7 @@ import math
 ################################################################################
 # Analyze Problem Type
 ################################################################################
-def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryLogicPath):
+def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryLogicPath, splitGSU: bool):
   print2(HR)
   print1("# Analyzing: %s" % problemType)
 
@@ -77,14 +77,14 @@ def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryL
     solutionIdx = 0
     for solution in solutions:
       print2("#  (%u) %s" % (solutionIdx, Solution.getNameMin(solution, \
-          solutionMinNaming)))
+          solutionMinNaming, splitGSU)))
       solutionIdx += 1
     print2(HR)
 
   ######################################
   # Create Logic Analyzer
   logicAnalyzer = LogicAnalyzer( problemType, problemSizesList, solutionsList, \
-      dataFileNameList, inputParameters)
+      dataFileNameList, inputParameters, splitGSU)
 
   selectionSolutionsIdsList = None
   selectionSolutions = None
@@ -126,9 +126,9 @@ def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryL
   for i in range(0, len(logicAnalyzer.solutions)):
     s = logicAnalyzer.solutions[i]
     s["SolutionIndex"] = i
-    s["SolutionNameMin"] = Solution.getNameMin(s, solutionMinNaming)
-    s["KernelNameMin"]   = Solution.getNameMin(s, solutionMinNaming, True)
-    print1("(%2u) %s : %s" % (i, Solution.getNameMin(s, solutionMinNaming), Solution.getNameFull(s)))
+    s["SolutionNameMin"] = Solution.getNameMin(s, solutionMinNaming, splitGSU)
+    s["KernelNameMin"]   = Solution.getNameMin(s, solutionMinNaming, splitGSU, True)
+    print1("(%2u) %s : %s" % (i, Solution.getNameMin(s, solutionMinNaming, splitGSU), Solution.getNameFull(s, splitGSU)))
 
   if enableTileSelection:
     validSelectionSolutions = SolutionSelectionLibrary.analyzeSolutionSelection(problemType, selectionFileNameList, \
@@ -160,8 +160,8 @@ def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryL
       (validSolution, validSolutionInfo) = validSelectionSolution
       selectionSolutionIndex = solutionsStartIndex + i
       selectionSolutionsIds.add(selectionSolutionIndex)
-      validSolution["SolutionNameMin"] = Solution.getNameMin(validSolution, solutionMinNaming)
-      validSolution["KernelNameMin"]   = Solution.getNameMin(validSolution, solutionMinNaming, True)
+      validSolution["SolutionNameMin"] = Solution.getNameMin(validSolution, solutionMinNaming, splitGSU)
+      validSolution["KernelNameMin"]   = Solution.getNameMin(validSolution, solutionMinNaming, splitGSU, True)
       validSolution["Ideals"] = validSolutionInfo
       selectionSolutions.append(validSolution)
 
@@ -250,10 +250,11 @@ class LogicAnalyzer:
   # ENTRY: Init
   ##############################################################################
   def __init__(self, problemType, problemSizesList, solutionsList, \
-      dataFileNameList, inputParameters):
+      dataFileNameList, inputParameters, splitGSU: bool):
 
     # parameters
     self.parameters = inputParameters
+    self.splitGSU = splitGSU
 
     # problem type
     self.problemType = problemType
@@ -295,7 +296,7 @@ class LogicAnalyzer:
     self.solutionTiles = []
     for solution in self.solutions:
       self.solutionNames.append(Solution.getNameMin(solution, \
-          self.solutionMinNaming))
+          self.solutionMinNaming, self.splitGSU))
       self.solutionTiles.append("%ux%u"%(solution["MacroTile0"], \
           solution["MacroTile1"]))
     self.flopsPerMac = self.problemType["DataType"].flopsPerMac()
@@ -1122,7 +1123,7 @@ class LogicAnalyzer:
     self.solutionTiles = []
     for solution in self.solutions:
       self.solutionNames.append(Solution.getNameMin(solution, \
-          self.solutionMinNaming))
+          self.solutionMinNaming, self.splitGSU))
       self.solutionTiles.append("%ux%u"%(solution["MacroTile0"], \
           solution["MacroTile1"]))
     self.numSolutions = len(self.solutions)
@@ -1173,7 +1174,7 @@ class LogicAnalyzer:
     self.solutionTiles = []
     for solution in self.solutions:
       self.solutionNames.append(Solution.getNameMin(solution, \
-          self.solutionMinNaming))
+          self.solutionMinNaming, self.splitGSU))
       self.solutionTiles.append("%ux%u"%(solution["MacroTile0"], \
           solution["MacroTile1"]))
     self.numSolutions = len(self.solutions)
@@ -1429,8 +1430,7 @@ class LogicAnalyzer:
     return serial
 
 
-
-def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str):
+def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str, splitGSU: bool):
 
   libraryLogicPath = ensurePath(libraryLogicPath)
 
@@ -1473,7 +1473,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
         printExit("%s doesn't exist for %s" % (dataFileName, fileBase) )
       if not os.path.exists(solutionsFileName):
         printExit("%s doesn't exist for %s" % (solutionsFileName, fileBase) )
-      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler)
+      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler, splitGSU)
       if len(solutions) == 0:
         printExit("%s doesn't contains any solutions." % (solutionsFileName) )
       problemType = solutions[0]["ProblemType"]
@@ -1483,7 +1483,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
           dataFileName, solutionsFileName, selectionFileName, solutions) )
 
   for problemType in problemTypes:
-    logicTuple = analyzeProblemType(problemType, problemTypes[problemType], analysisParameters, libraryLogicPath)
+    logicTuple = analyzeProblemType(problemType, problemTypes[problemType], analysisParameters, libraryLogicPath, splitGSU)
 
     filename = os.path.join(libraryLogicPath, \
         "{}_{}".format(analysisParameters["ScheduleName"], str(problemType)))
@@ -1546,7 +1546,7 @@ def read_max_freq():
 ###
 ################################################################################
 ################################################################################
-def main(config, cxxCompiler: str, outputPath: Path):
+def main(config, cxxCompiler: str, outputPath: Path, splitGSU: bool):
   benchmarkDataPath = outputPath / BENCHMARK_DATA_DIR
   libraryLogicPath = outputPath / LIBRARY_LOGIC_DIR
-  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler)
+  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler, splitGSU)
