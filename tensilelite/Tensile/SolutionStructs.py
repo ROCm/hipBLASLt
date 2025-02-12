@@ -1402,15 +1402,17 @@ class Solution(collections.abc.Mapping):
         reject(state, "MacroTile mismatch")
 
     # tail loop optimization
+    state["tailLoopOptA"] = True
+    state["tailLoopOptB"] = True
+
     if (tuple(state["ISA"]) != (9, 4, 2)) or \
-       (state["ProblemType"]["Sparse"]) or \
-       (state["LocalSplitU"] > 1) or \
-       (state["WaveSeparateGlobalReadA"] != 0) or \
-       (state["WaveSeparateGlobalReadB"] != 0) or \
-       (state["DirectToVgprA"] or state["DirectToVgprB"]):
-       state["tailLoopOpt"] = False
-    else:
-       state["tailLoopOpt"] = True
+       (state["ProblemType"]["Sparse"]):
+      state["tailLoopOptA"] = False
+      state["tailLoopOptB"] = False
+    if (state["DirectToVgprA"]):
+      state["tailLoopOptA"] = False
+    if (state["DirectToVgprB"]):
+      state["tailLoopOptB"] = False
 
     # done
     state["AssignedProblemIndependentDerivedParameters"] = True
