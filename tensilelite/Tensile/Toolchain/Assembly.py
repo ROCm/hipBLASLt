@@ -136,7 +136,7 @@ class AssemblyToolchain:
             "--compress",
             "--type=o",
             "--bundle-align=4096",
-            f"--targets=host-x86_64-unknown-linux-gnu,hipv4-amdgcn-amd-amdhsa-unknown--{gfx}",
+            f"--targets=host-x86_64-unknown-linux-gnu,hipv4-amdgcn-amd-amdhsa-unknown-{gfx}",
             "--input=/dev/null",
             f"--input={srcPath}",
             f"--output={destPath}",
