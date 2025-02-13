@@ -29,14 +29,14 @@ import os
 import shutil
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import List, NamedTuple, Optional, Sequence, Union, Dict
+from typing import Dict, List, NamedTuple, Optional, Sequence, Union
 
 from Tensile import SOURCE_PATH, LibraryIO
 from Tensile.Common import (
     HR,
     CHeader,
-    IsaVersion,
     IsaInfo,
+    IsaVersion,
     ParallelMap2,
     SemanticVersion,
     architectureMap,
@@ -47,6 +47,7 @@ from Tensile.Common import (
     print1,
     print2,
     printExit,
+    printWarning,
     state,
     tqdm,
 )
@@ -263,7 +264,13 @@ def writeSolutionsAndKernels(
             asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress
         )
         buildSourceCodeObjectFiles(
-            srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, isaInfoMap, fromTensile
+            srcToolchain,
+            destLibPath,
+            objectTmpPath,
+            outputPath,
+            srcKernelFile,
+            isaInfoMap,
+            fromTensile,
         )
 
     return codeObjectFiles, numKernels
@@ -336,7 +343,11 @@ def writeSolutionsAndKernelsTCL(
 
 @timing
 def getSolutionAndKernelWriters(
-    solutions, kernels, assembler: str, assemblerVersion: SemanticVersion, isaInfoMap: Dict[str, IsaInfo]
+    solutions,
+    kernels,
+    assembler: str,
+    assemblerVersion: SemanticVersion,
+    isaInfoMap: Dict[str, IsaInfo],
 ):
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     solutionMinNaming = Solution.getMinNaming(solutions)
@@ -407,7 +418,12 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler, isaInfoMap):
     masterLibraries = {}
     nextSolIndex = 0
 
-    fIter = zip(logicFiles, itertools.repeat(cxxCompiler), itertools.repeat(isaInfoMap), itertools.repeat(archs))
+    fIter = zip(
+        logicFiles,
+        itertools.repeat(cxxCompiler),
+        itertools.repeat(isaInfoMap),
+        itertools.repeat(archs),
+    )
 
     def libraryIter(lib: MasterSolutionLibrary):
         if len(lib.solutions):
@@ -575,7 +591,9 @@ def run():
     for logicFile in logicFiles:
         print2("#   %s" % logicFile)
 
-    solutions, masterLibraries = generateLogicDataAndSolutions(logicFiles, arguments, cxxCompiler, isaInfoMap)
+    solutions, masterLibraries = generateLogicDataAndSolutions(
+        logicFiles, arguments, cxxCompiler, isaInfoMap
+    )
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
     kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(
         solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion, isaInfoMap

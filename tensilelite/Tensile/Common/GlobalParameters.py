@@ -30,13 +30,13 @@ import sys
 import time
 from collections import OrderedDict
 from copy import deepcopy
-from typing import Dict, List
+from typing import Dict
 
 from Tensile import __version__
 
 from .Architectures import gfxToIsa, isaToGfx
 from .Capabilities import initArchCaps, initAsmBugs, initAsmCaps, initRegisterCaps
-from .Types import IsaInfo, IsaVersion
+from .Types import IsaInfo
 from .Utilities import locateExe, versionIsCompatible
 
 startTime = time.time()
@@ -269,8 +269,6 @@ globalParameters["SupportedISA"] = [
     (9, 0, 6),
     (9, 0, 8),
     (9, 0, 10),
-    (9, 4, 0),
-    (9, 4, 1),
     (9, 4, 2),
     (10, 1, 0),
     (10, 1, 1),
@@ -1204,7 +1202,7 @@ validParameters = {
     "TransposeLDS": [-1, 1, 0, 2],
     # add gls or slc after global memory read/writes to change caching, not caching the writes is promising and improved performance a tiny bit
     # 0: none, 1: glc, 2: slc, 3: glc slc
-    # For gfx940, sets sc0/sc1 bits
+    # For gfx942, sets sc0/sc1/nt bits
     # 0: none, 1: sc0, 2: sc1, 3: sc0 sc1, 4: nt, 5: nt sc0, 6: nt sc1, 7: nt sc0 sc1
     "NonTemporalE": list(range(0, 8)),
     "NonTemporalD": list(range(0, 8)),
@@ -1574,7 +1572,7 @@ def restoreDefaultGlobalParameters():
         globalParameters[key] = value
 
 
-def printCapabilitiesTable(supportedIsas: List[IsaVersion], isaInfoMap: Dict[str, IsaInfo]):
+def printCapabilitiesTable(isaInfoMap: Dict[str, IsaInfo]):
     """
     Prints a capability table for the given parameters and ISA information map.
 
@@ -1596,7 +1594,7 @@ def printCapabilitiesTable(supportedIsas: List[IsaVersion], isaInfoMap: Dict[str
             for info in isaInfoMap.values()
         ]
 
-    gfxs = list(map(isaToGfx, supportedIsas))
+    gfxs = list(map(isaToGfx, isaInfoMap.keys()))
     headerRow = ["Capability"] + gfxs
 
     allAsmCaps = sorted(
@@ -1715,14 +1713,10 @@ def assignGlobalParameters(config, cxxCompiler=None):
         isaInfoMap[v] = IsaInfo(asmCaps, archCaps, regCaps, asmBugs)
 
     if globalParameters["PrintLevel"] >= 1:
-        printCapabilitiesTable(globalParameters["SupportedISA"], isaInfoMap)
+        printCapabilitiesTable(isaInfoMap)
 
     globalParameters["SupportedISA"] = list(
-        [
-            v 
-            for v in globalParameters["SupportedISA"]
-            if isaInfoMap[v].asmCaps["SupportedISA"]
-        ]
+        [v for v in globalParameters["SupportedISA"] if isaInfoMap[v].asmCaps["SupportedISA"]]
     )
 
     validParameters["ISA"] = [(0, 0, 0), *globalParameters["SupportedISA"]]
