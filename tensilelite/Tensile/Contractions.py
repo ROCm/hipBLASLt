@@ -28,7 +28,8 @@ from . import Hardware
 from . import Properties
 from .SolutionStructs import getBiasDataTypeListDefault
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import gfxToIsa, internalParameters, globalParameters, state, state_key_ordering
+from .Common import gfxToIsa, internalParameters, globalParameters, state, state_key_ordering, \
+                    IsaVersion
 
 @state_key_ordering
 class FreeIndex:
@@ -656,13 +657,12 @@ class Solution:
     HiddenKeys = ['originalSolution']
 
     @classmethod
-    def FromSolutionStruct(cls, solution, cxxCompiler: str):
-        return cls.FromOriginalState(solution._state, cxxCompiler, solution.srcName)
+    def FromSolutionStruct(cls, solution, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: IsaVersion, cxxCompiler: str, ):
+        return cls.FromOriginalState(solution._state, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, solution.srcName)
 
     @classmethod
-    def FromOriginalState(cls, d, cxxCompiler, splitGSU: bool, srcName = "", deviceInfo=None):
+    def FromOriginalState(cls, d, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: IsaVersion, cxxCompiler, srcName = "", deviceInfo=None):
         rv = cls()
-
 
         if 'SolutionNameMin' in d:
             rv.name = d['SolutionNameMin']
@@ -707,7 +707,7 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d, splitGSU, cxxCompiler, srcName)
+        rv.originalSolution = OriginalSolution(d, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, srcName)
         rv.srcName = srcName
 
         return rv

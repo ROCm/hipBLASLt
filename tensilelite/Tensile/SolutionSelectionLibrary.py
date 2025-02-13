@@ -89,8 +89,9 @@ def updateValidSolutions(validSolutions, analyzerSolutions, solutionMinNaming):
     (validSolution, validSolutionInfo) = validSelectionSolution
     selectionSolutionIndex = solutionsStartIndex + i
     selectionSolutionsIds.add(selectionSolutionIndex)
-    validSolution["SolutionNameMin"] = Solution.getNameMin(validSolution, solutionMinNaming)
-    validSolution["KernelNameMin"]   = Solution.getNameMin(validSolution, solutionMinNaming, True)
+    splitGSU = False # this is a reminder that we need to add this in to the function signature
+    validSolution["SolutionNameMin"] = Solution.getNameMin(validSolution, solutionMinNaming, splitGSU)
+    validSolution["KernelNameMin"]   = Solution.getNameMin(validSolution, solutionMinNaming, splitGSU, True)
     validSolution["Ideals"] = validSolutionInfo
     selectionSolutions.append(validSolution)
 

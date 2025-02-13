@@ -1430,7 +1430,7 @@ class LogicAnalyzer:
     return serial
 
 
-def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str, splitGSU: bool):
+def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str, splitGSU: bool, printSolutionRejectionReason: bool):
 
   libraryLogicPath = ensurePath(libraryLogicPath)
 
@@ -1473,7 +1473,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str,
         printExit("%s doesn't exist for %s" % (dataFileName, fileBase) )
       if not os.path.exists(solutionsFileName):
         printExit("%s doesn't exist for %s" % (solutionsFileName, fileBase) )
-      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler, splitGSU)
+      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler, splitGSU, printSolutionRejectionReason)
       if len(solutions) == 0:
         printExit("%s doesn't contains any solutions." % (solutionsFileName) )
       problemType = solutions[0]["ProblemType"]
@@ -1546,7 +1546,7 @@ def read_max_freq():
 ###
 ################################################################################
 ################################################################################
-def main(config, cxxCompiler: str, outputPath: Path, splitGSU: bool):
+def main(config, cxxCompiler: str, outputPath: Path, splitGSU: bool, printSolutionRejectionReason: bool):
   benchmarkDataPath = outputPath / BENCHMARK_DATA_DIR
   libraryLogicPath = outputPath / LIBRARY_LOGIC_DIR
-  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler, splitGSU)
+  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler, splitGSU, printSolutionRejectionReason)

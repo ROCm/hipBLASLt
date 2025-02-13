@@ -3,10 +3,11 @@ from functools import lru_cache
 from typing import Tuple
 
 from .Architectures import isaToGfx
+from .Types import IsaVersion
 
 
 def _tryAssembler(
-    isaVersion: Tuple[int, int, int],
+    isaVersion: IsaVersion,
     assemblerPath: str,
     asmString: str,
     debug: bool = False,
@@ -31,7 +32,6 @@ def _tryAssembler(
         *options,
         "-",
     ]
-
     result = subprocess.run(
         args, input=asmString.encode(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )

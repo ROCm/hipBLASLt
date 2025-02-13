@@ -27,9 +27,10 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Tuple
 
-from ..Common import initAsmCaps, initArchCaps, initRegisterCaps, initAsmBugs
+from ..Common import initAsmCaps, initArchCaps, initRegisterCaps, initAsmBugs, IsaVersion, print1
 from .Formatting import __TI_DEBUG_LEVEL__, printExit
 
+from timeit import default_timer as timer 
 
 def fastdeepcopy(x):
     # Note: Some object can't be pickled
@@ -58,26 +59,31 @@ class TensileInstructions:
 
     @dataclass
     class kernelInfo:
-        isa: Tuple[int, int, int]
+        isa: IsaVersion
         wavefrontSize: int = 64
 
-    def init(self, isaVersion: Tuple[int, int, int], assemblerPath: str, debug: bool=False) -> None:
+    def init(self, isaVersion: IsaVersion, assemblerPath: str, debug: bool=False) -> None:
+        if isinstance(isaVersion, int):
+           raise Exception(f"{isaVersion}")
         with self._lock:
             if len(self._kernelInfo) > 1000:
                 self._kernelInfo = _removeIdent(self._kernelInfo)
             self._kernelInfo[threading.get_ident()] = TensileInstructions.kernelInfo(isa=isaVersion)
             if isaVersion not in self._isaInfo: # type: ignore
+                start = timer()
                 asmCaps  = initAsmCaps(isaVersion, assemblerPath, debug)
                 archCaps = initArchCaps(isaVersion)
                 regCaps  = initRegisterCaps(isaVersion, archCaps)
                 asmBugs  = initAsmBugs(asmCaps)
                 self._isaInfo[isaVersion] = TensileInstructions.IsaInfo(assemblerPath, # type: ignore
                     asmCaps, archCaps, regCaps, asmBugs)
+                stop = timer()
+                print1(f"time: {stop-start}")
 
     def setDebugLevel(self, level: int) -> None:
         __TI_DEBUG_LEVEL__ = level
 
-    def setKernelInfo(self, isaVersion: Tuple[int, int, int], wavefrontSize: int) -> None:
+    def setKernelInfo(self, isaVersion: IsaVersion, wavefrontSize: int) -> None:
         if isaVersion not in self._isaInfo: # type: ignore
             import traceback
             printExit(f"Current isa {str(isaVersion)} not initialized. Initialized isas are {str(self._isaInfo.keys())}, traceback: {traceback.format_stack()}")

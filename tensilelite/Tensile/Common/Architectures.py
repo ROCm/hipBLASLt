@@ -21,9 +21,11 @@
 ################################################################################
 
 import re
-from typing import Optional
+from subprocess import run, PIPE
+from typing import List, Optional, Tuple
 
 from .Types import IsaVersion
+from .Utilities import locateExe
 
 # Translate GPU targets to filter filenames in Tensile_LOGIC directory
 architectureMap = {
@@ -61,6 +63,27 @@ architectureMap = {
 }
 
 
+SUPPORTED_ISA = [
+    IsaVersion(8, 0, 3),
+    IsaVersion(9, 0, 0),
+    IsaVersion(9, 0, 6),
+    IsaVersion(9, 0, 8),
+    IsaVersion(9, 0, 10),
+    IsaVersion(9, 4, 0),
+    IsaVersion(9, 4, 1),
+    IsaVersion(9, 4, 2),
+    IsaVersion(10, 1, 0),
+    IsaVersion(10, 1, 1),
+    IsaVersion(10, 1, 2),
+    IsaVersion(10, 3, 0),
+    IsaVersion(11, 0, 0),
+    IsaVersion(11, 0, 1),
+    IsaVersion(11, 0, 2),
+    IsaVersion(12, 0, 0),
+    IsaVersion(12, 0, 1),
+]
+
+
 def gfxToIsa(name: str) -> Optional[IsaVersion]:
     """Extracts the ISA version from a given gfx architecture name.
 
@@ -82,7 +105,7 @@ def gfxToIsa(name: str) -> Optional[IsaVersion]:
 
     ipart = ipart[:-1]
     major = int(ipart)
-    return tuple((major, minor, step))
+    return IsaVersion(major, minor, step)
 
 
 def isaToGfx(arch: IsaVersion) -> str:
@@ -116,3 +139,57 @@ def gfxToSwCodename(gfxName: str) -> Optional[str]:
             if gfxName in archKey:
                 return architectureMap[archKey]
             return None
+
+
+def cliArchsToIsa(cliArchs: str) -> List[IsaVersion]:
+    """Maps the requested gfx architectures to ISA numbers.
+
+    Args:
+        archs: str of ";" or "_" separated gfx architectures (e.g., gfx1100 or gfx90a;gfx1101).
+
+    Returns:
+        List of tuples
+    """
+    archs = cliArchs.split(";") if ";" in cliArchs else cliArchs.split("_")
+    return SUPPORTED_ISA if "all" in archs else [gfxToIsa(''.join(map(str, arch))) for arch in archs]
+
+
+def _detectGlobalCurrentISA(detectionTool, deviceId: int):
+    """
+    Returns returncode if detection failure
+    """
+    process = run([detectionTool], stdout=PIPE)
+    archList = []
+    for line in process.stdout.decode().split("\n"):
+        arch = gfxToIsa(line.strip())
+        if arch is not None:
+            if arch in SUPPORTED_ISA:
+                print("# Detected local GPU with ISA: " + isaToGfx(arch))
+                archList.append(arch)
+    if len(archList) > 0:
+        result = archList[deviceId]
+    if process.returncode:
+        print(f"{detectionTool} exited with code {process.returncode}")
+    return result if process.returncode == 0 else process.returncode
+
+
+# locateExe silently fails which is not good
+AMDGPUArchPath = locateExe(
+    "/opt/rocm", "llvm/bin/amdgpu-arch"
+)
+
+ROCmAgentEnumeratorPath = locateExe(
+    "/opt/rocm/bin","rocm_agent_enumerator"
+)
+
+def detectGlobalCurrentISA(deviceId: int):
+    """
+    Returns returncode if detection failure
+    """
+    result = _detectGlobalCurrentISA(AMDGPUArchPath, deviceId)
+    if not isinstance(result, IsaVersion):
+        print("Attempting to detect ISA with rocm_agent_enumerator")
+        result = _detectGlobalCurrentISA(ROCmAgentEnumeratorPath, deviceId)
+    if not isinstance(result, IsaVersion):
+        raise Exception("Failed to detect currect ISA")
+    return result

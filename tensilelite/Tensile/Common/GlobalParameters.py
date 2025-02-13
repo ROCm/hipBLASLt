@@ -32,8 +32,9 @@ from copy import deepcopy
 
 from Tensile import __version__
 
-from .Architectures import gfxToIsa, isaToGfx
+from .Architectures import isaToGfx, SUPPORTED_ISA, detectGlobalCurrentISA
 from .Capabilities import initArchCaps, initAsmBugs, initAsmCaps
+from .Types import IsaVersion
 from .Utilities import locateExe, versionIsCompatible
 
 startTime = time.time()
@@ -232,31 +233,10 @@ globalParameters["DumpTensors"] = (
 
 # device selection
 globalParameters["Platform"] = 0  # select opencl platform
-globalParameters["Device"] = 0  # select hip device or opencl device within platform
 
 # shouldn't need to change
 globalParameters["DeviceLDS"] = 65536  # LDS bytes per CU, for computing occupancy
 globalParameters["MaxLDS"] = 65536  # max LDS a kernel should attempt to use
-
-globalParameters["SupportedISA"] = [
-    (8, 0, 3),
-    (9, 0, 0),
-    (9, 0, 6),
-    (9, 0, 8),
-    (9, 0, 10),
-    (9, 4, 0),
-    (9, 4, 1),
-    (9, 4, 2),
-    (10, 1, 0),
-    (10, 1, 1),
-    (10, 1, 2),
-    (10, 3, 0),
-    (11, 0, 0),
-    (11, 0, 1),
-    (11, 0, 2),
-    (12, 0, 0),
-    (12, 0, 1),
-]  # assembly kernels writer supports these architectures
 
 globalParameters["NewClient"] = 2  # Old client deprecated: NewClient must be set to 2.
 globalParameters["ClientExecutionLockPath"] = (
@@ -283,7 +263,7 @@ else:
     globalParameters["RuntimeLanguage"] = "HIP"
 
 globalParameters["CodeObjectVersion"] = "4"
-globalParameters["Architecture"] = "all"
+#globalParameters["Architecture"] = "all"
 
 # perf model
 globalParameters["PerfModelL2ReadHits"] = 0.0
@@ -401,7 +381,7 @@ validMacroTileSides = [
 ]
 validMacroTiles = []
 validISA = [(0, 0, 0)]
-validISA.extend(globalParameters["SupportedISA"])
+validISA.extend(SUPPORTED_ISA)
 depthUs = list(range(2, 1024 + 1, 1))
 for i in validMacroTileSides:
     for j in validMacroTileSides:
@@ -1490,52 +1470,6 @@ def printExit(message):
 # a yaml file is compatible with tensile if
 # tensile.major == yaml.major and tensile.minor.step > yaml.minor.step
 ################################################################################
-def detectGlobalCurrentISA_(detectionTool):
-    """
-    Returns returncode if detection failure
-    """
-    global globalParameters
-
-    if globalParameters["CurrentISA"] == (0, 0, 0) and detectionTool:
-        process = subprocess.run([detectionTool], stdout=subprocess.PIPE)
-        if os.name == "nt":
-            line = ""
-            for line_in in process.stdout.decode().splitlines():
-                if "gcnArchName" in line_in:
-                    line += line_in.split()[1]
-                    break  # detemine if hipinfo will support multiple arch
-            arch = gfxToIsa(line.strip())
-            if arch is not None:
-                if arch in globalParameters["SupportedISA"]:
-                    print1("# Detected local GPU with ISA: " + isaToGfx(arch))
-                    globalParameters["CurrentISA"] = arch
-        else:
-            archList = []
-            for line in process.stdout.decode().split("\n"):
-                arch = gfxToIsa(line.strip())
-                if arch is not None:
-                    if arch in globalParameters["SupportedISA"]:
-                        print1("# Detected local GPU with ISA: " + isaToGfx(arch))
-                        archList.append(arch)
-            if len(archList) > 0:
-                globalParameters["CurrentISA"] = archList[globalParameters["Device"]]
-        if process.returncode:
-            printWarning("%s exited with code %u" % (detectionTool, process.returncode))
-        return process.returncode
-    return 0
-
-
-def detectGlobalCurrentISA():
-    """
-    Returns returncode if detection failure
-    """
-    errorCode = detectGlobalCurrentISA_(globalParameters["AMDGPUArchPath"])
-    if errorCode:
-        printWarning("Attempting to detect ISA with rocm_agent_enumerator")
-        return detectGlobalCurrentISA_(globalParameters["ROCmAgentEnumeratorPath"])
-    return errorCode
-
-
 def restoreDefaultGlobalParameters():
     """
     Restores `globalParameters` back to defaults.
@@ -1563,7 +1497,7 @@ def printTable(rows):
 def printCapTable(parameters):
     import itertools
 
-    archs = [(0, 0, 0)] + parameters["SupportedISA"]
+    archs = [(0, 0, 0)] + SUPPORTED_ISA
     gfxNames = list(map(isaToGfx, archs))
 
     headerRow = ["cap"] + gfxNames
@@ -1593,7 +1527,7 @@ def assignGlobalParameters(config, cxxCompiler=None):
     can override them, those overridings happen here
     """
 
-    global globalParameters
+    global globalParameters, SUPPORTED_ISA
 
     # Minimum Required Version
     if "MinimumRequiredVersion" in config:
@@ -1670,38 +1604,39 @@ def assignGlobalParameters(config, cxxCompiler=None):
         globalParameters["CodeObjectVersion"] = config["CodeObjectVersion"]
 
     # read current gfx version
-    returncode = detectGlobalCurrentISA()
+    currentIsa = detectGlobalCurrentISA(0)
+    globalParameters["CurrentISA"] = currentIsa
     if globalParameters["CurrentISA"] == (0, 0, 0):
         printWarning(
             "Did not detect SupportedISA: %s; cannot benchmark assembly kernels."
-            % globalParameters["SupportedISA"]
+            % SUPPORTED_ISA
         )
-    if returncode:
-        if os.name == "nt":
-            globalParameters["CurrentISA"] = (9, 0, 6)
-            printWarning("Failed to detect ISA so forcing (gfx906) on windows")
 
     globalParameters["AsmCaps"] = {}
     globalParameters["ArchCaps"] = {}
     globalParameters["AsmBugs"] = {}
 
-    for v in globalParameters["SupportedISA"] + [(0, 0, 0)]:
+    # We shouldn't need to do this for all ISAs...
+    # Why not only do this for ISAs that we are building.
+    for v in SUPPORTED_ISA + [IsaVersion(0, 0, 0)]:
+
         globalParameters["AsmCaps"][v] = initAsmCaps(v, cxxCompiler, False)
         globalParameters["ArchCaps"][v] = initArchCaps(v)
         globalParameters["AsmBugs"][v] = initAsmBugs(globalParameters["AsmCaps"][v])
 
+
     if globalParameters["PrintLevel"] >= 1:
         printCapTable(globalParameters)
 
-    globalParameters["SupportedISA"] = list(
+    SUPPORTED_ISA = list(
         [
             i
-            for i in globalParameters["SupportedISA"]
+            for i in SUPPORTED_ISA
             if globalParameters["AsmCaps"][i]["SupportedISA"]
         ]
     )
 
-    validParameters["ISA"] = [(0, 0, 0), *globalParameters["SupportedISA"]]
+    validParameters["ISA"] = [(0, 0, 0), *SUPPORTED_ISA]
 
     # For ubuntu platforms, call dpkg to grep the version of hip-clang.  This check is platform specific, and in the future
     # additional support for yum, dnf zypper may need to be added.  On these other platforms, the default version of

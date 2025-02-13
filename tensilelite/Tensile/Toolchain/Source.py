@@ -32,7 +32,7 @@ from pathlib import Path
 from timeit import default_timer as timer
 from typing import List, Union
 
-from ..Common import globalParameters, print1, print2, ensurePath, splitArchs
+from ..Common import globalParameters, print1, print2, ensurePath
 
 class SourceToolchain:
     def __init__(self, compiler: str, bundler: str, buildIdKind: str, asanBuild: bool=False, saveTemps: bool=False):
@@ -170,7 +170,7 @@ def buildSourceCodeObjectFiles(
         tmpObjDir: Union[Path, str],
         includeDir: Union[Path, str],
         kernelPath: Union[Path, str],
-        fromTensile: bool
+        cmdlineArchs: List[str]
     ) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
@@ -196,8 +196,6 @@ def buildSourceCodeObjectFiles(
     objFilename = kernelPath.stem + '.o'
     coPathsRaw = []
     coPaths= []
-
-    _, cmdlineArchs = splitArchs(globalParameters, fromTensile)
 
     objPath = str(tmpObjDir / objFilename)
     toolchain.compile(str(kernelPath), objPath, str(includeDir), cmdlineArchs)

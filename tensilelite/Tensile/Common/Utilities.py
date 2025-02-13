@@ -1,16 +1,11 @@
 import functools
 import math
 import os
-import re
 import sys
 import time
 from enum import Enum
-from typing import List, Tuple
 
 from Tensile import __version__
-
-from .Architectures import isaToGfx
-
 
 # get param values from structures.
 def hasParam(name, structure):
@@ -39,62 +34,8 @@ def locateExe(defaultPath, exeName):  # /opt/rocm/bin, hip-clang
         exePath = os.path.join(path, exeName)
         if isExe(exePath):
             return exePath
+    # if we reach this point we should at least warn and maybe fail
     return None
-
-
-def splitArchs(params: dict, fromTensile=False) -> Tuple[List[str], List[str]]:
-    """
-    Splits and processes the architecture strings based on the provided parameters.
-
-    Args:
-        params: A dictionary of global parameters.
-        fromTensile: A flag indicating if the function is called from the context of Tensile.
-
-    Returns:
-        A tuple containing two lists:
-            - archs: A list of architecture strings with ``-`` instead of ``:``
-            - cmdlineArchs: A list of architecture strings that retain ``:`` characters.
-    """
-
-    def isSupported(arch):
-        return (
-            params["AsmCaps"][arch]["SupportedISA"] and params["AsmCaps"][arch]["SupportedSource"]
-        )
-
-    if ";" in params["Architecture"]:
-        wantedArchs = params["Architecture"].split(";")
-    else:
-        wantedArchs = params["Architecture"].split("_")
-    archs = []
-    cmdlineArchs = []
-    if "all" in wantedArchs:
-        for arch in params["SupportedISA"]:
-            if isSupported(arch):
-                if arch in [(9, 0, 6), (9, 0, 8), (9, 0, 10), (9, 4, 0), (9, 4, 1), (9, 4, 2)]:
-                    if arch == (9, 0, 10):
-                        archs += [isaToGfx(arch) + "-xnack+"]
-                        cmdlineArchs += [isaToGfx(arch) + ":xnack+"]
-                    if params["AsanBuild"]:
-                        archs += [isaToGfx(arch) + "-xnack+"]
-                        cmdlineArchs += [isaToGfx(arch) + ":xnack+"]
-                    else:
-                        archs += [isaToGfx(arch) + "-xnack-"]
-                        cmdlineArchs += [isaToGfx(arch) + ":xnack-"]
-                else:
-                    archs += [isaToGfx(arch)]
-                    cmdlineArchs += [isaToGfx(arch)]
-    else:
-        for arch in wantedArchs:
-            archs += [re.sub(":", "-", arch)]
-            cmdlineArchs += [arch]
-
-    # if calling from the context of Tensile we only want the arch associated with the current ISA
-    if fromTensile:
-        gfx = isaToGfx(params["CurrentISA"])
-        archs = set(a for a in archs if gfx in a)
-        cmdlineArchs = set(a for a in cmdlineArchs if gfx in a)
-
-    return archs, cmdlineArchs
 
 
 def ensurePath(path):

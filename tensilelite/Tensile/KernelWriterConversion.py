@@ -23,15 +23,16 @@
 ################################################################################
 
 from copy import deepcopy
+from typing import List
 
 from .KernelWriterBase import KernelWriterBase
 from .TensileInstructions import DataType
 
-from .Common import globalParameters, gfxToIsa, isaToGfx, INDEX_CHARS
+from .Common import globalParameters, isaToGfx, INDEX_CHARS
 
 class KernelWriterConversion(KernelWriterBase):
 
-  def __init__(self, state, load_vw):
+  def __init__(self, state, load_vw, supportedArchs: List[tuple]):
     super().__init__()
 
     self.state["ProblemType"] = deepcopy(state["ProblemType"])
@@ -80,15 +81,7 @@ class KernelWriterConversion(KernelWriterBase):
     self.tileChar1 = self.indexChars[self.state["ProblemType"]["Index1"]]
 
     # Get supported archs
-    if ";" in globalParameters["Architecture"]:
-      self.supportedArchs = globalParameters["Architecture"].split(";")
-    else:
-      self.supportedArchs = globalParameters["Architecture"].split("_")
-    if "all" in self.supportedArchs:
-      self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
-    else:
-      for idx, arch in enumerate(self.supportedArchs):
-        self.supportedArchs[idx] = gfxToIsa(''.join(map(str, arch)))
+    self.supportedArchs = supportedArchs
 
     self.gsuKernels = [self.state["GlobalSplitU"]]
     if self.state["GenPGRPostKernels"]:

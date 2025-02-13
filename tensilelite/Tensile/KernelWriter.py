@@ -37,7 +37,7 @@ from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
 from .Common import globalParameters, printWarning, roundUp, print2, DebugConfig, DataDirection, SemanticVersion, \
-  INDEX_CHARS, MAX_FILENAME_LENGTH
+  INDEX_CHARS, MAX_FILENAME_LENGTH, IsaVersion
 
 import abc
 import os
@@ -358,13 +358,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion, debugConfig: DebugConfig):
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion, debugConfig: DebugConfig, currentIsa: IsaVersion):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
-    self.amdClangVersion = amdClangVersion
+    self.amdClangVersion = amdClangVersion # this is a bug
     self.ti = None
     self.debugConfig = debugConfig
+    self.currentIsa = currentIsa
 
     self.do = {}
     self.do["PreLoop"]     = True
@@ -4975,7 +4976,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.kernel = kernel
     self.states.language = "ASM"
     # we already do this in the solution ctor
-    self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else globalParameters["CurrentISA"]
+    #self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else globalParameters["CurrentISA"]
+    self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else self.currentIsa
     if not globalParameters["AsmCaps"][self.states.version]["SupportedISA"]:
       self.states.version = (9,0,0)
       printWarning(f"ISA: {self.version} is not supported; overriding with {self.states.version}")
@@ -5016,7 +5018,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return fileBase
 
   def getKernelName(self, kernel):
-    kernelName = Solution.getNameMin(kernel, self.kernelMinNaming, True, self.debugConfig.splitGSU)
+    kernelName = Solution.getNameMin(kernel, self.kernelMinNaming, self.debugConfig.splitGSU, True)
     return kernelName
 
   @abc.abstractmethod

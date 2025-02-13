@@ -33,9 +33,11 @@ import argparse
 
 from datetime import datetime
 from pathlib import Path
+from typing import List
 
 from Tensile.Common import globalParameters, print1, printExit, printWarning, ensurePath, \
-    assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR
+    assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR, \
+    detectGlobalCurrentISA, IsaVersion
 from Tensile.Toolchain.Assembly import AssemblyToolchain
 from Tensile.Toolchain.Source import SourceToolchain
 from Tensile.Toolchain.Validators import validateToolchain, ToolchainDefaults
@@ -62,7 +64,9 @@ def executeStepsInConfig(
         asmToolchain: AssemblyToolchain,
         srcToolchain: SourceToolchain,
         cCompiler: str,
-        debugConfig: DebugConfig
+        debugConfig: DebugConfig,
+        currentIsa: IsaVersion,
+        deviceId: int
    ):
     """Conducts the steps in the provided ``config`` according to the Tensile workflow.
 
@@ -88,7 +92,7 @@ def executeStepsInConfig(
     ##############################################################################
     if "BenchmarkProblems" in config:
         BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, \
-                               cCompiler, outputPath, buildTmpPath, config["ShortNames"], debugConfig)
+                               cCompiler, outputPath, buildTmpPath, config["ShortNames"], debugConfig, currentIsa, deviceId)
         print1("")
 
     ##############################################################################
@@ -105,7 +109,7 @@ def executeStepsInConfig(
                 libraryLogicConfig = config["LibraryLogic"]
             else:
                 libraryLogicConfig = {}
-            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler, outputPath, debugConfig)
+            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler, outputPath, debugConfig.splitGSU, debugConfig.printSolutionRejectionReason)
             print1("")
         else:
             print1("# LibraryLogic already done.")
@@ -138,7 +142,7 @@ def addCommonArguments(argParser):
         value = eval(value)
         return (key, value)
 
-    argParser.add_argument("-d", "--device", dest="device", type=int, \
+    argParser.add_argument("-d", "--device", dest="device", default=0, type=int, \
         help="override which device to benchmark")
     argParser.add_argument("-p", "--platform", dest="platform", type=int, \
         help="override which OpenCL platform to benchmark")
@@ -176,9 +180,6 @@ def argUpdatedGlobalParameters(args):
     """
     rv = {}
     # override config with command-line options
-    if args.device:
-        print1("# Command-line override: Device")
-        rv["Device"] = args.device
     if args.platform:
         print1("# Command-line override: Platform")
         rv["Platform"] = args.platform
@@ -422,7 +423,7 @@ def Tensile(userArgs):
     config["UseCache"] = useCache
     globalParameters["ConfigPath"] = configPaths
 
-    device_id = config["GlobalParameters"].get("Device", globalParameters["Device"])
+    device_id = config["GlobalParameters"].get("Device", int(args.device))
     UseEffLike = config["GlobalParameters"].get("UseEffLike", globalParameters["UseEffLike"])
 
     if 'LibraryLogic' in config and UseEffLike:
@@ -458,7 +459,9 @@ def Tensile(userArgs):
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
 
-    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, cCompiler, debugConfig)
+    currentIsa = detectGlobalCurrentISA(device_id)
+
+    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, cCompiler, debugConfig, currentIsa, device_id)
 
 def TensileConfigPath(*args):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)

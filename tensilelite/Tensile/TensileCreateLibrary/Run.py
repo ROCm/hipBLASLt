@@ -33,8 +33,10 @@ from typing import List, NamedTuple, Optional, Sequence, Union
 
 from Tensile import SOURCE_PATH, LibraryIO
 from Tensile.Common import (
-    HR,
     CHeader,
+    DebugConfig,
+    detectGlobalCurrentISA,
+    HR,
     IsaVersion,
     ParallelMap2,
     SemanticVersion,
@@ -45,8 +47,10 @@ from Tensile.Common import (
     isaToGfx,
     print1,
     print2,
+    printWarning,
     printExit,
     state,
+    SUPPORTED_ISA,
     tqdm,
 )
 from Tensile.CustomYamlLoader import load_logic_gfx_arch
@@ -198,10 +202,10 @@ def writeSolutionsAndKernels(
     kernelHelperObjs,
     kernelWriterAssembly,
     splitGSU: bool,
+    cmdlineArchs: List[str],
     errorTolerant=False,
     generateSourcesAndExit=False,
     compress=True,
-    fromTensile=False,
     useShortNames=False,
 ):
     codeObjectFiles = []
@@ -263,7 +267,7 @@ def writeSolutionsAndKernels(
             asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress, useShortNames
         )
         buildSourceCodeObjectFiles(
-            srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile
+            srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, cmdlineArchs
         )
 
     return codeObjectFiles, numKernels
@@ -276,8 +280,8 @@ def writeSolutionsAndKernelsTCL(
     kernels,
     kernelHelperObjs,
     kernelWriterAssembly,
+    cmdlineArchs: List[str],
     compress=True,
-    fromTensile=False,
     useShortNames=False,
 ):
 
@@ -329,7 +333,7 @@ def writeSolutionsAndKernelsTCL(
     writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
     srcKernelFile = Path(outputPath) / "Kernels.cpp"
     buildSourceCodeObjectFiles(
-        srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile
+        srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, cmdlineArchs
     )
 
     return len(uniqueAsmKernels)
@@ -337,13 +341,13 @@ def writeSolutionsAndKernelsTCL(
 
 @timing
 def getSolutionAndKernelWriters(
-    solutions, kernels, assembler: str, assemblerVersion: SemanticVersion
+    solutions, kernels, assembler: str, assemblerVersion: SemanticVersion, currentIsa: IsaVersion
 ):
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     solutionMinNaming = Solution.getMinNaming(solutions)
     kernelMinNaming = Solution.getMinNaming(kernels)
     kernelWriterAssembly = KernelWriterAssembly(
-        kernelMinNaming, kernelSerialNaming, assembler, assemblerVersion
+        kernelMinNaming, kernelSerialNaming, assembler, assemblerVersion, DebugConfig(), currentIsa
     )
 
     return (kernelWriterAssembly, kernelMinNaming, solutionMinNaming)
@@ -373,11 +377,11 @@ def generateKernelObjectsFromSolutions(solutions):
     kernelHelperObjs = []
     kernelNames = set()
     kernelHelperNames = set()
-
+    splitGSU = False
     for solution in solutions:
         solutionKernels = solution.getKernels()
         for kernel in solutionKernels:
-            kName = Solution.getKeyNoInternalArgs(kernel)
+            kName = Solution.getKeyNoInternalArgs(kernel, splitGSU)
             if kName not in kernelNames:
                 kernels.append(kernel)
                 kernelNames.add(kName)
@@ -408,7 +412,9 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
     masterLibraries = {}
     nextSolIndex = 0
 
-    fIter = zip(logicFiles, itertools.repeat(cxxCompiler), itertools.repeat(archs))
+    splitGSU = False # TODO make this configurable
+    printSolutionRejectionReason = False # TODO make this configurable
+    fIter = zip(logicFiles, itertools.repeat(cxxCompiler), itertools.repeat(splitGSU), itertools.repeat(printSolutionRejectionReason), itertools.repeat(archs))
 
     def libraryIter(lib: MasterSolutionLibrary):
         if len(lib.solutions):
@@ -575,11 +581,11 @@ def run():
     print2(f"# LibraryLogicFiles: {len(logicFiles)}")
     for logicFile in logicFiles:
         print2("#   %s" % logicFile)
-
+    currentIsa = detectGlobalCurrentISA(0)
     solutions, masterLibraries = generateLogicDataAndSolutions(logicFiles, arguments, cxxCompiler)
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
     kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(
-        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion
+        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion, currentIsa
     )
 
     copyStaticFiles(outputPath)
@@ -591,28 +597,29 @@ def run():
         kernels,
         kernelHelperObjs,
         kernelWriterAssembly,
-        arguments["ShortNames"],
+        archs,
+        useShortNames=arguments["ShortNames"],
         compress=arguments["UseCompression"],
     )
 
-    archs = [
+    archs = [ # is this really different than the other archs above?
         isaToGfx(arch)
-        for arch in globalParameters["SupportedISA"]
+        for arch in SUPPORTED_ISA
         if globalParameters["AsmCaps"][arch]["SupportedISA"]
     ]
     newLibraryDir = ensurePath(os.path.join(outputPath, "library"))
-
+    splitGSU = False
     for archName, newMasterLibrary in masterLibraries.items():
         if archName in archs:
             if globalParameters["LazyLibraryLoading"]:
                 masterFile = os.path.join(newLibraryDir, "TensileLibrary_lazy_" + archName)
             else:
                 masterFile = os.path.join(newLibraryDir, "TensileLibrary_" + archName)
-            newMasterLibrary.applyNaming(kernelMinNaming)
+            newMasterLibrary.applyNaming(splitGSU, kernelMinNaming)
             LibraryIO.write(masterFile, state(newMasterLibrary), arguments["LibraryFormat"])
             for name, lib in newMasterLibrary.lazyLibraries.items():
                 filename = os.path.join(newLibraryDir, name)
-                lib.applyNaming(kernelMinNaming)
+                lib.applyNaming(splitGSU, kernelMinNaming)
                 LibraryIO.write(filename, state(lib), arguments["LibraryFormat"])
 
     if not globalParameters["KeepBuildTmp"]:
