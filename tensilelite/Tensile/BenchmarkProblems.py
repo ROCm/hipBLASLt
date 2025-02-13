@@ -82,12 +82,14 @@ def getCustomKernelSolutionObj(
     return Solution(config, cxxCompiler, isaInfoMap)
 
 
-def generateCustomKernelSolutions(problemType, customKernels, internalSupportParams, failOnMismatch, cxxCompiler: str):
+def generateCustomKernelSolutions(
+        problemType, customKernels, internalSupportParams, failOnMismatch, cxxCompiler: str, isaInfoMap: Dict[str, IsaInfo]
+    ):
     """Creates a list with a Solution object for each name in customKernel"""
     solutions = []
     for kernelName in customKernels:
         print1("# Processing custom kernel {}".format(kernelName))
-        solution = getCustomKernelSolutionObj(kernelName, internalSupportParams, cxxCompiler)
+        solution = getCustomKernelSolutionObj(kernelName, internalSupportParams, cxxCompiler, isaInfoMap)
         # The ActivationType setting in YAML is meaningless in customKernel case.
         # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
         solution["ProblemType"]["ActivationType"] = problemType["ActivationType"]
@@ -293,7 +295,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                     benchmarkStep.constantParams, forkPermutations, srcToolchain.compiler, isaInfoMap)
             kcSolutions = generateCustomKernelSolutions(benchmarkProcess.problemType, \
                     benchmarkStep.customKernels, benchmarkStep.internalSupportParams, \
-                    not benchmarkStep.customKernelWildcard, srcToolchain.compiler)
+                    not benchmarkStep.customKernelWildcard, srcToolchain.compiler, isaInfoMap)
 
             maxPossibleSolutions += len(kcSolutions)
             solutions = regSolutions + kcSolutions

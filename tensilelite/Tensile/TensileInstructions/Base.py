@@ -27,7 +27,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Tuple
 
-from ..Common import initAsmCaps, initArchCaps, initRegisterCaps, initAsmBugs, IsaInfo
+from ..Common import initAsmCaps, initArchCaps, initRegisterCaps, initAsmBugs, IsaInfo, IsaVersion
 from .Formatting import __TI_DEBUG_LEVEL__, printExit
 
 
@@ -51,10 +51,10 @@ class TensileInstructions:
 
     @dataclass
     class kernelInfo:
-        isa: Tuple[int, int, int]
+        isa: IsaVersion
         wavefrontSize: int = 64
 
-    def init(self, isaVersion: Tuple[int, int, int], assemblerPath: str, debug: bool=False) -> None:
+    def init(self, isaVersion: IsaVersion, assemblerPath: str, debug: bool=False) -> None:
         with self._lock:
             if len(self._kernelInfo) > 1000:
                 self._kernelInfo = _removeIdent(self._kernelInfo)

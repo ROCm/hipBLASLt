@@ -126,7 +126,7 @@ def executeStepsInConfig(
             libraryClientConfig = config["LibraryClient"]
         else:
             libraryClientConfig = {}
-        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler, outputPath)
+        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler, isaInfoMap, outputPath)
         print1("")
 
 
