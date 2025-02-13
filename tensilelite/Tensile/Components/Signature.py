@@ -23,8 +23,7 @@
 ################################################################################
 
 from ..Component import Signature
-from ..Common import globalParameters
-from ..Utils import DataDirection
+from ..Common import globalParameters, DataDirection
 from ..TensileInstructions import SignatureBase
 from ..TensileInstructions import SignatureValueKind as SVK
 from ..Activation import ActivationType

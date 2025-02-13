@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,18 @@
 ################################################################################
 
 from . import Properties
-from .TensileInstructions import getGfxName
+from .Common import isaToGfx
 import copy
 
 class HardwarePredicate(Properties.Predicate):
     @classmethod
     def FromISA(cls, isa):
-        gfxArch = getGfxName(isa)
+        gfxArch = isaToGfx(isa)
         return cls("AMDGPU", value=cls("Processor", value=gfxArch))
 
     @classmethod
     def FromHardware(cls, isa, cuCount=None):
-        gfxArch = getGfxName(isa)
+        gfxArch = isaToGfx(isa)
         if cuCount == None:
             return cls("AMDGPU", value=cls("Processor", value=gfxArch))
         else:

@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,6 +59,9 @@ add_executable( sample_hipblaslt_gemm_ext_deprecated deprecated/sample_hipblaslt
 add_executable( sample_hipblaslt_ext_op_amax 23_amax_ext/sample_hipblaslt_ext_op_amax.cpp)
 add_executable( sample_hipblaslt_ext_op_amax_with_scale 24_amax_with_scale_ext/sample_hipblaslt_ext_op_amax_with_scale.cpp)
 add_executable( sample_hipblaslt_gemm_with_TF32 25_gemm_with_TF32/sample_hipblaslt_gemm_with_TF32.cpp)
+add_executable( sample_hipblaslt_gemm_swizzle_a 26_gemm_swizzle_a/sample_hipblaslt_gemm_swizzle_a.cpp)
+add_executable( sample_hipblaslt_gemm_bias_swizzle_a_ext 26_gemm_swizzle_a/sample_hipblaslt_gemm_bias_swizzle_a_ext.cpp)
+add_executable( sample_hipblaslt_weight_swizzle_padding 26_gemm_swizzle_a/sample_hipblaslt_weight_swizzle_padding.cpp)
 
 
 set(samples sample_hipblaslt_gemm
@@ -97,7 +100,10 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext_deprecated
             sample_hipblaslt_ext_op_amax
             sample_hipblaslt_ext_op_amax_with_scale
-            sample_hipblaslt_gemm_with_TF32)
+            sample_hipblaslt_gemm_with_TF32
+            sample_hipblaslt_gemm_swizzle_a
+            sample_hipblaslt_gemm_bias_swizzle_a_ext
+            sample_hipblaslt_weight_swizzle_padding)
 
 set( sample_list_all ${samples})
 
@@ -120,6 +126,7 @@ foreach( exe ${sample_list_all} )
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/common>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/src/include>
       )
 
   target_include_directories( ${exe}
@@ -145,7 +152,7 @@ endforeach( )
 foreach( exe ${samples} )
   install(
     TARGETS ${exe}
-    RUNTIME 
+    RUNTIME
     DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/hipblaslt-samples
     COMPONENT samples
   )
@@ -157,7 +164,7 @@ install(
     ${CMAKE_CURRENT_SOURCE_DIR}/
   DESTINATION ${CMAKE_INSTALL_DATADIR}/hipblaslt/samples
   COMPONENT samples
-  FILES_MATCHING 
+  FILES_MATCHING
   PATTERN "*.cpp"
   PATTERN "*.h"
   PATTERN "CMakeLists.txt" EXCLUDE

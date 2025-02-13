@@ -1423,7 +1423,7 @@ Tests:
     - { M:  128,  N:  128,  K:  1024 }
     - { M:  4608, N:  1335, K:  640  }
   transA_transB: *transA_transB_range
-  alpha: 1
+  alpha: [1.0, 2.0]
   beta: [ 0.0, 2.0 ]
   unit_check: 1
   gpu_arch: '9(0a|4[0-2])'

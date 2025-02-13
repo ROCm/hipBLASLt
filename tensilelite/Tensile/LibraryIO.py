@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,16 @@
 #
 ################################################################################
 
-from .Common import printExit, printWarning, print2, versionIsCompatible
 from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
-from . import __version__
-from . import Common
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
+from .Common import gfxToIsa, printExit, printWarning, print2, versionIsCompatible, __version__
 
 from typing import NamedTuple, List
 import os
 import sys
+
 
 try:
     import orjson as json
@@ -274,7 +273,7 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
     # unpack solution
     def solutionStateToSolution(solutionState, cxxCompiler) -> Solution:
         if solutionState["KernelLanguage"] == "Assembly":
-            solutionState["ISA"] = Common.gfxArch(data["ArchitectureName"])
+            solutionState["ISA"] = gfxToIsa(data["ArchitectureName"])
         else:
             solutionState["ISA"] = (0, 0, 0)
         solutionState["CUCount"] = data["CUCount"]

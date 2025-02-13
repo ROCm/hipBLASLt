@@ -28,33 +28,80 @@ from pathlib import Path
 from typing import List, NamedTuple, Union
 from subprocess import run, PIPE
 
-ROCM_BIN_PATH = Path("/opt/rocm/bin")
-ROCM_LLVM_BIN_PATH = Path("/opt/rocm/lib/llvm/bin")
-
-if os.name == "nt":
-    def _windowsLatestRocmBin(path: Union[Path, str]) -> Path:
-        """Get the path to the latest ROCm bin directory, on Windows.
-
-        This function assumes that ROCm versions are differentiated with the form ``X.Y``.
-
-        Args:
-            path: The path to the ROCm root directory, typically ``C:/Program Files/AMD/ROCm``.
-
-        Returns:
-            The path to the ROCm bin directory for the latest ROCm version.
-            Typically of the form ``C:/Program Files/AMD/ROCm/X.Y/bin``.
-        """
-        path = Path(path)
-        pattern = re.compile(r"^\d+\.\d+$")
-        versions = filter(lambda d: d.is_dir() and pattern.match(d.name), path.iterdir())
-        latest = max(versions, key=lambda d: tuple(map(int, d.name.split("."))))
-        return latest / "bin"
-    # LLVM binaries are in the same directory as ROCm binaries on Windows
-    ROCM_BIN_PATH = _windowsLatestRocmBin("C:/Program Files/AMD/ROCm")
-    ROCM_LLVM_BIN_PATH = _windowsLatestRocmBin("C:/Program Files/AMD/ROCm")
+DEFAULT_ROCM_BIN_PATH_POSIX = Path("/opt/rocm/bin")
+DEFAULT_ROCM_LLVM_BIN_PATH_POSIX = Path("/opt/rocm/lib/llvm/bin")
+DEFAULT_ROCM_BIN_PATH_WINDOWS = Path("C:/Program Files/AMD/ROCm")
 
 
 osSelect = lambda linux, windows: linux if os.name != "nt" else windows
+
+
+def _windowsLatestRocmBin(path: Union[Path, str]) -> Path:
+    """Get the path to the latest ROCm bin directory, on Windows.
+
+    This function assumes that ROCm versions are differentiated with the form ``X.Y``.
+
+    Args:
+        path: The path to the ROCm root directory, typically ``C:/Program Files/AMD/ROCm``.
+
+    Returns:
+        The path to the ROCm bin directory for the latest ROCm version.
+        Typically of the form ``C:/Program Files/AMD/ROCm/X.Y/bin``.
+    """
+    path = Path(path)
+    pattern = re.compile(r"^\d+\.\d+$")
+    versions = filter(lambda d: d.is_dir() and pattern.match(d.name), path.iterdir())
+    latest = max(versions, key=lambda d: tuple(map(int, d.name.split("."))))
+    return latest / "bin"
+
+
+def _windowsSearchPaths() -> List[Path]:
+    defaultPath = DEFAULT_ROCM_BIN_PATH_WINDOWS
+    searchPaths = []
+
+    if os.environ.get("HIP_PATH"):
+        hipPaths = [Path(p) / "bin" for p in os.environ["HIP_PATH"].split(os.pathsep)]
+        searchPaths.extend(hipPaths)
+
+    if Path(defaultPath).exists():
+        searchPaths.append(_windowsLatestRocmBin(defaultPath))
+
+    if os.environ.get("PATH"):
+        envPath = [Path(p) for p in os.environ["PATH"].split(os.pathsep)]
+        searchPaths.extend(envPath)
+
+    return searchPaths
+
+
+def _windowsWithExtensions(exe: str) -> List[str]:
+    if not os.name == "nt":
+        raise ValueError("These extensions should not be added on anything but Windows")
+    files = [exe]
+    files.extend([exe + ext.lower() for ext in os.environ["PATHEXT"].split(";")])
+    return files
+
+
+def _posixSearchPaths() -> List[Path]:
+
+    searchPaths = []
+
+    if os.environ.get("ROCM_PATH"):
+        for p in os.environ["ROCM_PATH"].split(os.pathsep):
+            searchPaths.append(Path(p) / "bin")
+            searchPaths.append(Path(p) / "lib" / "llvm" / "bin")
+
+    searchPaths.extend(
+        [
+            DEFAULT_ROCM_BIN_PATH_POSIX,
+            DEFAULT_ROCM_LLVM_BIN_PATH_POSIX,
+        ]
+    )
+
+    if os.environ.get("PATH"):
+        envPath = [Path(p) for p in os.environ["PATH"].split(os.pathsep)]
+        searchPaths.extend(envPath)
+
+    return searchPaths
 
 
 class ToolchainDefaults(NamedTuple):
@@ -66,6 +113,8 @@ class ToolchainDefaults(NamedTuple):
 
 
 def _supportedComponent(component: str, targets: List[str]) -> bool:
+    if os.name == "nt":
+        targets = [tExt for t in targets for tExt in _windowsWithExtensions(t)]
     isSupported = any([component == t for t in targets]) or any([Path(component).name == t for t in targets])
     return isSupported
 
@@ -79,7 +128,7 @@ def supportedCCompiler(compiler: str) -> bool:
     Return:
         If supported True; otherwise, False.
     """
-    return _supportedComponent(compiler, [ToolchainDefaults.C_COMPILER])
+    return _supportedComponent(compiler, ["amdclang", "clang"])
 
 
 def supportedCxxCompiler(compiler: str) -> bool:
@@ -91,7 +140,7 @@ def supportedCxxCompiler(compiler: str) -> bool:
     Return:
         If supported True; otherwise, False.
     """
-    return _supportedComponent(compiler, [ToolchainDefaults.CXX_COMPILER])
+    return _supportedComponent(compiler, ["amdclang++", "clang++"])
 
 
 def supportedOffloadBundler(bundler: str) -> bool:
@@ -103,19 +152,33 @@ def supportedOffloadBundler(bundler: str) -> bool:
     Return:
         If supported True; otherwise, False.
     """
-    return _supportedComponent(bundler, [ToolchainDefaults.OFFLOAD_BUNDLER])
+    return _supportedComponent(bundler, ["clang-offload-bundler"])
 
 
-def supportedHip(smi: str) -> bool:
-    """Determine if an offload bundler is supported by Tensile.
+def supportedHip(hip: str) -> bool:
+    """Determine if a hip callable binary is supported by Tensile.
 
     Args:
-        bundler: The name of an offload bundler to test for support.
+        hip: The name of an offload bundler to test for support.
 
     Return:
         If supported True; otherwise, False.
     """
-    return _supportedComponent(smi, [ToolchainDefaults.HIP_CONFIG])
+    return _supportedComponent(hip, ["hipcc", "hipconfig"])
+
+
+def supportedDeviceEnumerator(enumerator: str) -> bool:
+    """Determine if a device enumerator is supported by Tensile.
+
+    Args:
+        enumerator: The name of a device enumerator to test for support.
+
+    Return:
+        If supported True; otherwise, False.
+    """
+    if os.name == "nt":
+        return _supportedComponent(enumerator, ["hipinfo", "hipInfo"])
+    return _supportedComponent(enumerator, ["rocm_agent_enumerator", "amdgpu-arch"])
 
 
 def _exeExists(file: Path) -> bool:
@@ -141,14 +204,25 @@ def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
         The validated executable with an absolute path.
     """
     if not any((
-        supportedCxxCompiler(file), supportedCCompiler(file), supportedOffloadBundler(file), supportedHip(file)
+        supportedCxxCompiler(file),
+        supportedCCompiler(file),
+        supportedOffloadBundler(file),
+        supportedHip(file),
+        supportedDeviceEnumerator(file)
     )):
         raise ValueError(f"{file} is not a supported toolchain component for OS: {os.name}")
 
-    if _exeExists(Path(file)): return file
+    # Check if the file is an absolute path and executable
+    if _exeExists(Path(file)):
+        return file
+
+    # Then check the search paths
+    files = _windowsWithExtensions(file) if os.name == "nt" else [file]
     for path in searchPaths:
-        path /= file
-        if _exeExists(path): return str(path)
+        for f in files:
+            p = path / f
+            if _exeExists(p):
+                return str(p)
     raise FileNotFoundError(f"`{file}` either not found or not executable in any search path: {':'.join(map(str, searchPaths))}")
 
 
@@ -168,10 +242,7 @@ def validateToolchain(*args: str):
     if not args:
         raise ValueError("No toolchain components to validate, at least one argument is required")
 
-    searchPaths = [
-        ROCM_BIN_PATH,
-        ROCM_LLVM_BIN_PATH,
-    ] + [Path(p) for p in os.environ["PATH"].split(os.pathsep)]
+    searchPaths = _windowsSearchPaths() if os.name == "nt" else _posixSearchPaths()
 
     out = (_validateExecutable(x, searchPaths) for x in args)
     return next(out) if len(args) == 1 else tuple(out)
