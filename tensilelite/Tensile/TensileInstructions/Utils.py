@@ -20,8 +20,6 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-import warnings
-from .Base import getGfxName
 from .Code import Module
 from .Containers import HolderContainer, RegisterContainer, RegName
 from .DataType import DataType
@@ -31,10 +29,8 @@ from .Instructions import Instruction, SWaitCnt
 
 from functools import lru_cache
 from math import log
-from typing import List, Tuple
-import os
+from typing import Tuple
 import random
-import shlex
 import string
 
 ########################################

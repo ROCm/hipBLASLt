@@ -22,6 +22,7 @@
 #
 ################################################################################
 
+from . import CUSTOM_KERNEL_PATH
 from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUpperValue, \
                           StructuredModule, TextBlock, ValueEndif, ValueIf, ValueSet, SignatureBase, \
                           MUBUFModifiers, RegisterContainer, InstType, SelectBit, SGetPositivePCOffset, \
@@ -38,7 +39,6 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           LabelManager, Assert
 from .TensileInstructions.Instructions import *
 from .TensilePass import getActivationFunctionModuleName, getActivationBranchModuleName
-from .Common import globalParameters, print2, printExit, printWarning, roundUp, ensurePath
 from .TensileInstructions.Containers import HWRegContainer
 from .Component import Component
 from .KernelWriter import KernelWriter, ConstValues, StateValues, StateVgprs, CodeModules
@@ -47,8 +47,8 @@ from .SolutionStructs import isPackedIndex
 from .AsmStoreState import StoreState, VectorDataTypes
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationType
-from .Utils import DataDirection
 from .CustomKernels import isCustomKernelConfig
+from .Common import globalParameters, print2, printExit, printWarning, roundUp, ensurePath, INDEX_CHARS, DataDirection, SemanticVersion
 from dataclasses import dataclass
 
 from math import ceil, log, floor
@@ -82,8 +82,8 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
-    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler)
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion):
+    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, amdClangVersion)
 
   def getSourceFileString(self, kernel) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"
@@ -93,7 +93,7 @@ class KernelWriterAssembly(KernelWriter):
       return (0, "") # should this be an non zero number
 
     try:
-      code = self._getCustomKernelSource(kernel, globalParameters["CustomKernelDirectory"]) if isCustomKernelConfig(kernel) else self._getKernelSource(kernel)
+      code = self._getCustomKernelSource(kernel, CUSTOM_KERNEL_PATH) if isCustomKernelConfig(kernel) else self._getKernelSource(kernel)
       errcode = 0
     except RuntimeError as e:
       printWarning(f"Failed to generate assembly source code for {kernel}: {e}")
@@ -179,12 +179,12 @@ class KernelWriterAssembly(KernelWriter):
     See above definitions for how these are mapped to Free or Sum sizes
     based on the problem definition.
     """
-    idxChar= globalParameters["IndexChars"][idx]
+    idxChar= INDEX_CHARS[idx]
     return sgpr("Size%s"%idxChar)
 
   def loopChar(self, kernel, loopIdx):
     loopDim = kernel["ProblemType"]["IndicesSummation"][loopIdx]
-    return globalParameters["IndexChars"][loopDim]
+    return INDEX_CHARS[loopDim]
 
   def loopSizeRef(self, kernel, loopIdx):
     loopDim = kernel["ProblemType"]["IndicesSummation"][loopIdx]
@@ -777,7 +777,7 @@ class KernelWriterAssembly(KernelWriter):
     module.addComment0("Size Assignments")
     problemType = kernel["ProblemType"]
     for idx in range(max(problemType["IndexAssignmentsA"] + problemType["IndexAssignmentsB"])+1):
-      idxChar= globalParameters["IndexChars"][idx]
+      idxChar= INDEX_CHARS[idx]
       if idx in problemType["IndicesFree"] or idx in problemType["IndicesBatch"]:
         idxType="Free"
       elif idx in problemType["IndicesSummation"]:
@@ -950,13 +950,13 @@ class KernelWriterAssembly(KernelWriter):
           dest = "v[\\vgprTmp+0]"
           needAdd = 1
         macro.add(VSubU32(dst=dest, \
-                src0=sgpr("Size%s"%globalParameters["IndexChars"][indices[i]]), \
+                src0=sgpr("Size%s"%INDEX_CHARS[indices[i]]), \
                 src1=1, \
-                comment="mirror %s%s 1"%(tc, globalParameters["IndexChars"][indices[i]])))
+                comment="mirror %s%s 1"%(tc, INDEX_CHARS[indices[i]])))
         macro.add(VMulLOU32(dst=dest, \
                 src0=dest, \
                 src1=self.strideRef(tc, indices[i]), \
-                comment="mirror %s%s 2"%(tc, globalParameters["IndexChars"][indices[i]])))
+                comment="mirror %s%s 2"%(tc, INDEX_CHARS[indices[i]])))
 
         if needAdd:
           writeDirectToAddr = 0 # safety net, once we write address can't directly overwrite it later
@@ -1020,14 +1020,14 @@ class KernelWriterAssembly(KernelWriter):
             if isMirrorIdx:
               macro.add(VSubI32(
                 dst="v[\\vgprTmp+0]",
-                src0=sgpr("Size%s"%globalParameters["IndexChars"][idx]), \
+                src0=sgpr("Size%s"%INDEX_CHARS[idx]), \
                 src1=offset, \
-                comment="mirror %s%s 1"%(tc, globalParameters["IndexChars"][indices[i]])))
+                comment="mirror %s%s 1"%(tc, INDEX_CHARS[indices[i]])))
               macro.add(VSubI32(\
                 dst="v[\\vgprTmp+0]",
                 src0="v[\\vgprTmp+0]", \
                 src1=1, \
-                comment="mirror %s%s 2"%(tc, globalParameters["IndexChars"][indices[i]])))
+                comment="mirror %s%s 2"%(tc, INDEX_CHARS[indices[i]])))
               offset = "v[\\vgprTmp+0]"
 
             # offset * stride
@@ -2038,7 +2038,7 @@ class KernelWriterAssembly(KernelWriter):
 
     module.add(VMovB32(dst=vgpr(tmpV0), src=vgpr(packedCoordVgpr),  comment="copy coord1 then unpack"))
     for i,idx in enumerate(packedC1[:-1]):
-      idxChar= globalParameters["IndexChars"][idx]
+      idxChar= INDEX_CHARS[idx]
       module.addComment0("extract %s"%self.sizeRef(idx))
       module.add(MacroInstruction(name="V_MAGIC_DIV", \
                 args=[tmpV1, vgpr(tmpV0), sgpr("MagicNumberSize%s"%idxChar), \
@@ -2373,16 +2373,16 @@ class KernelWriterAssembly(KernelWriter):
           module.addSpaceLine()
           for p in range(0, numExtraPackedOffsetsPerTile):
             groIdx  = tP["PackedIndices"][p+1]
-            groChar = globalParameters["IndexChars"][tP["PackedIndices"][p+1]]
+            groChar = INDEX_CHARS[tP["PackedIndices"][p+1]]
             groVgpr = vgpr(tP["vgprPackedOffsets"] + l*numExtraPackedOffsetsPerTile + p)
-            pChar = globalParameters["IndexChars"][tP["PackedIndices"][p]]
+            pChar = INDEX_CHARS[tP["PackedIndices"][p]]
             module.add(MacroInstruction(name="V_MAGIC_DIV", \
                 args=[tmpV, lastGroVgpr, sgpr("MagicNumberSize%s"%pChar), \
                 sgpr("MagicShiftSize%s"%pChar), (sgpr("MagicAbitSize%s"%pChar) if kernel["MagicDivAlg"]==2 else "0")] ))
             module.add(VMovB32(dst=groVgpr, src=vgpr(tmpV), comment="extract gro%s%s_%u (%s)"%(tc,groChar,l,groVgpr)))
             module.add(VMulLOU32(dst=vgpr(tmpV), src0=groVgpr, src1=sgpr("SizesFree+%u"%lastGroIdx), comment="remainder part 1"))
             module.add(VSubU32(dst=lastGroVgpr, src0=lastGroVgpr, src1=vgpr(tmpV), \
-                comment="remove extracted bits from gro%s%s_%u (%s)"%(tc, globalParameters["IndexChars"][lastGroIdx], l, lastGroVgpr)))
+                comment="remove extracted bits from gro%s%s_%u (%s)"%(tc, INDEX_CHARS[lastGroIdx], l, lastGroVgpr)))
             lastGroVgpr = groVgpr
             lastGroIdx = groIdx
         self.vgprPool.checkIn(tmpV)
@@ -8651,15 +8651,15 @@ class KernelWriterAssembly(KernelWriter):
                 # Skip cause stride = 1 if use size instead
                 continue
               if i > 1:
-                strideC0 = "Size%s"%(globalParameters["IndexChars"][0])
-                strideC1 = "Size%s"%(globalParameters["IndexChars"][1])
+                strideC0 = "Size%s"%(INDEX_CHARS[0])
+                strideC1 = "Size%s"%(INDEX_CHARS[1])
                 module.add(SMulI32(dst=sgpr(tmpS0), src0=sgpr(strideC0), src1=sgpr(strideC1)))
                 for x in range(2, i - 1):
-                  strideC = "Size%s"%(globalParameters["IndexChars"][x])
+                  strideC = "Size%s"%(INDEX_CHARS[x])
                   module.add(SMulI32(dst=sgpr(tmpS0), src0=sgpr(tmpS0), src1=sgpr(strideC)))
                 module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tmpS0), sgpr(tmpS1), coord, sgpr(tmpS0), "Scale%s %s by Stride"%(mat, coord)))
               else:
-                strideC = "Size%s"%(globalParameters["IndexChars"][i-1])
+                strideC = "Size%s"%(INDEX_CHARS[i-1])
                 module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tmpS0), sgpr(tmpS1), coord, sgpr(strideC), "Scale%s %s by Stride"%(mat, coord)))
             else:
               strideC = "Stride%s%s"%(mat, self.states.indexChars[i])
@@ -11186,7 +11186,8 @@ class KernelWriterAssembly(KernelWriter):
         batchElements, addrE, addrD, addrC, addrBias, \
         addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, biasLocalBarrierInit, \
         tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
-        batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, factorDim)
+        batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, factorDim, \
+        self.amdClangVersion)
 
   ##############################################################################
   def openPrefetchGlobalRead2(self, kernel):

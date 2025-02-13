@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,24 +36,12 @@ from copy import deepcopy
 from . import LibraryIO
 
 from . import ClientWriter
-from .TensileInstructions import getGfxName
 from .Common import assignGlobalParameters, ensurePath, globalParameters, \
-    gfxArch, printExit, getArchitectureName
+    printExit, isaToGfx, gfxToSwCodename
 from .SolutionStructs import ProblemSizes
-from .Utilities.Toolchain import ToolchainDefaults, validateToolchain
+from .Toolchain.Validators import ToolchainDefaults, validateToolchain
 
 
-def getArchitecture(isaName):
-    archid = getGfxName(isaName)
-    return getArchitectureName(archid)
-
-def isValidArch(archName, currentArch):
-    arch = gfxArch(archName)
-    return currentArch == arch
-
-##############################################################################
-# createLibraryForBenchmark
-##############################################################################
 def createLibraryForBenchmark(logicPath, libraryPath, currentPath):
     """
     takes the path of existing logic files as input and adds the summation
@@ -63,7 +51,7 @@ def createLibraryForBenchmark(logicPath, libraryPath, currentPath):
 
     pythonExePath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin", "TensileCreateLibrary")
     args = [pythonExePath, \
-        "--new-client-only", "--no-short-file-names", "--no-library-print-debug", \
+        "--new-client-only", "--no-short-file-names", \
         "--architecture=all", "--code-object-version=default", "--library-format=yaml", \
         logicPath, libraryPath, "HIP"]
 
@@ -80,9 +68,10 @@ def GenerateSummations(userArgs):
     cxxCompiler, cCompiler = validateToolchain(ToolchainDefaults.CXX_COMPILER, ToolchainDefaults.C_COMPILER)
 
     currentISA = globalParameters["CurrentISA"]
-    currentArchitecture = getArchitecture(currentISA)
+    gfxName = isaToGfx(currentISA)
+    commonName = gfxToSwCodename(gfxName)
 
-    globPath = os.path.join(inputLogicPath, "{}*".format(currentArchitecture))
+    globPath = os.path.join(inputLogicPath, "{}*".format(commonName))
     logicFileNames = glob.glob(globPath)
 
     for logicFileName in logicFileNames:

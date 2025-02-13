@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,9 +28,8 @@ import subprocess
 from typing import Optional
 from pathlib import Path
 
-from . import Common
-from .Common import globalParameters
-from .Parallel import CPUThreadCount
+from . import SOURCE_PATH
+from .Common import globalParameters, print2, ClientExecutionLock, ensurePath, CLIENT_BUILD_DIR
 
 def cmake_path(os_path):
     return (os_path.replace("\\", "/") if (os.name == "nt") else os_path)
@@ -49,20 +48,17 @@ class CMakeEnvironment:
         args += [self.sourceDir]
         args = [cmake_path(arg) for arg in args]
 
-        Common.print2(' '.join(args))
-        with Common.ClientExecutionLock():
-            try:
-                subprocess.check_output(args, stderr=subprocess.STDOUT, cwd=Common.ensurePath(self.buildDir))
-            except subprocess.SubprocessError as e:
-                print(e.stdout)
+        print2(' '.join(args))
+        with ClientExecutionLock(globalParameters["ClientExecutionLockPath"]):
+            subprocess.check_call(args, cwd=ensurePath(self.buildDir))
 
     def build(self):
         makeProgram = CMakeEnvironment.getBuildProgramPath()
-        args = [makeProgram, f'-j{CPUThreadCount()}']
-        Common.print2(' '.join(args))
-        with Common.ClientExecutionLock():
-            subprocess.check_output(args, stderr=subprocess.STDOUT, cwd=self.buildDir)
-    
+        args = [makeProgram, '-j']
+        print2(' '.join(args))
+        with ClientExecutionLock(globalParameters["ClientExecutionLockPath"]):
+            subprocess.check_call(args, cwd=self.buildDir)
+
     @staticmethod
     def getBuildProgramPath() -> str:
         if globalParameters.get("MakeProgram", None):
@@ -77,9 +73,9 @@ class CMakeEnvironment:
         return os.path.join(self.buildDir, path, *paths)
 
 def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cCompiler: str):
-    sourcedir = globalParameters["SourcePath"]
-    
-    builddir = Common.ensurePath(builddir)
+    sourcedir = SOURCE_PATH
+
+    builddir = ensurePath(builddir)
 
     options = {'CMAKE_BUILD_TYPE': globalParameters["CMakeBuildType"],
                'TENSILE_USE_MSGPACK': 'ON',
@@ -106,7 +102,7 @@ def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir):
     global buildEnv
 
     if buildEnv is None:
-        buildEnv = clientExecutableEnvironment(builddir / globalParameters["ClientBuildPath"], cxxCompiler, cCompiler)
+        buildEnv = clientExecutableEnvironment(builddir / CLIENT_BUILD_DIR, cxxCompiler, cCompiler)
         buildEnv.generate()
         buildEnv.build()
 

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +22,28 @@
 #
 ################################################################################
 
-# Even though we don't support python 2, this is still packaged sometimes with python 2.
-from __future__ import print_function
-from os import path
+from timeit import default_timer as timer
+from typing import Callable
 
-# Hardcoded tensilelite version, also in Tensile/Source/TensileConfigVersion.cmake
-__version__ = "4.33.0"
+from .Shared import envVariableIsSet
 
-ROOT_PATH: str = path.dirname(__file__)
-SOURCE_PATH: str = path.join(ROOT_PATH, "Source")
-CUSTOM_KERNEL_PATH: str = path.join(ROOT_PATH, "CustomKernels")
+TIMING_ENV_VAR: str = "TENSILE_PRINT_TIMING"
 
-def PrintTensileRoot():
-    print(ROOT_PATH, end='')
 
-__all__ = ["__version__", "ROOT_PATH", "SOURCE_PATH", "CUSTOM_KERNEL_PATH"]
+def timing(func: Callable) -> Callable:
+    f"""Timing decorator to measure execution time of a function.
+
+  Add ``@timing`` to mark a function for timing; set the environment variable
+  {TIMING_ENV_VAR}=ON to enable timing decorated functions.
+  """
+    if not envVariableIsSet(TIMING_ENV_VAR):
+        return func
+
+    def wrapper(*args, **kwargs):
+        start = timer()
+        res = func(*args, **kwargs)
+        end = timer()
+        print(f"{func.__name__} took {end - start} seconds")
+        return res
+
+    return wrapper

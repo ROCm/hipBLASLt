@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +22,15 @@
 #
 ################################################################################
 
-# Even though we don't support python 2, this is still packaged sometimes with python 2.
-from __future__ import print_function
-from os import path
+import os
 
-# Hardcoded tensilelite version, also in Tensile/Source/TensileConfigVersion.cmake
-__version__ = "4.33.0"
 
-ROOT_PATH: str = path.dirname(__file__)
-SOURCE_PATH: str = path.join(ROOT_PATH, "Source")
-CUSTOM_KERNEL_PATH: str = path.join(ROOT_PATH, "CustomKernels")
-
-def PrintTensileRoot():
-    print(ROOT_PATH, end='')
-
-__all__ = ["__version__", "ROOT_PATH", "SOURCE_PATH", "CUSTOM_KERNEL_PATH"]
+def envVariableIsSet(varName: str) -> bool:
+    """Checks if the provided environment variable is set to "YES", "ON", "TRUE", or "1"
+    Args:
+        varName: Environment variable name.
+    Returns:
+        True if the environment variable is set, otherwise False.
+    """
+    value = os.environ.get(varName, "").upper()
+    return True if value in ["YES", "ON", "TRUE", "1"] else False

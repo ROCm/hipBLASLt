@@ -22,13 +22,6 @@
 #
 ################################################################################
 
-from .Common import assignParameterWithDefault, \
-                    defaultProblemType, defaultSolution, \
-                    defaultInternalSupportParams, \
-                    globalParameters, internalParameters, \
-                    print2, printExit, printWarning, \
-                    validMFMA, validSMFMA, validParameters, \
-                    validGEMMTypes, HPATypes, roundUp, validWMMA
 from .TensileInstructions import DataType, roundUpToNearestMultiple
 from .TensileInstructions.Base import fastdeepcopy as deepcopy
 
@@ -43,6 +36,14 @@ from .AsmStoreState import VectorDataTypes
 from .Activation import ActivationType
 
 from .CustomKernels import isCustomKernelConfig
+
+from .Common import assignParameterWithDefault, \
+                    defaultProblemType, defaultSolution, \
+                    defaultInternalSupportParams, \
+                    globalParameters, internalParameters, \
+                    print2, printExit, printWarning, \
+                    validMFMA, validSMFMA, validParameters, \
+                    validGEMMTypes, HPATypes, roundUp, validWMMA, INDEX_CHARS
 
 from collections import OrderedDict
 from collections.abc import Mapping
@@ -458,7 +459,7 @@ class ProblemType(Mapping):
 
   ########################################
   def __str__(self):
-    indexChars = globalParameters["IndexChars"]
+    indexChars = INDEX_CHARS
     # C dimensions
     name = "C"
     for i in range(0, self["NumIndicesC"]):
@@ -888,10 +889,7 @@ class ProblemSizes:
         self.problems.update({Problem(rangeSize) : 1})
     for e in self.exacts:
         self.problems.update({e : 1})
-    if globalParameters["SortProblems"]:
-      self.problems =  sorted(list( self.problems.keys()), key=operator.attrgetter("sizes"))
-    else:
-      self.problems =  list(self.problems.keys())
+    self.problems =  list(self.problems.keys())
     self.totalProblemSizes = len(self.problems)
 
     # max sizes
@@ -2329,7 +2327,7 @@ class Solution(collections.abc.Mapping):
     if state["ProblemType"]["Sparse"] == 2 and state["DirectToVgprSparseMetadata"]:
       reject(state, "Sparse B does not supprot DirectToVgprSparseMetadata")
       return
-    
+
 
     if state["ProblemType"]["Sparse"]:
       if state["ProblemType"]["Sparse"] == 2:
@@ -2391,7 +2389,7 @@ class Solution(collections.abc.Mapping):
     # grid size [0,1]
     state["PackedC0IdxChars"] = []
     state["PackedC0IndicesX"] = []
-    indexChars = globalParameters["IndexChars"]
+    indexChars = INDEX_CHARS
     # Pack all the dimensions (free) of A into grid[0]
 
     if problemType["Index0"] in problemType["IndexAssignmentsA"]:
@@ -2606,7 +2604,7 @@ class Solution(collections.abc.Mapping):
         else:
           if not state["DirectToVgprSparseMetadata"]:
             Solution.checkAndAssignWaveSeparateGlobalRead(state, 'Metadata')
-            
+
       # Set up stagger shift:
       bpeAB = int(4*state["ProblemType"]["DataType"].numRegisters())
       # (1<<staggerStrideShift) is number of loop iterations to traverse the stride

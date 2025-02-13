@@ -31,7 +31,7 @@ from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterCon
                           TensileInstructions
 from .TensileInstructions.Enums import *
 from .TensileInstructions.Instructions import *
-from .Common import printExit, printWarning, globalParameters
+from .Common import printExit, printWarning
 
 from dataclasses import dataclass, field
 

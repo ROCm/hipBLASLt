@@ -22,8 +22,7 @@
 
 from .TensileInstructions import Module, EXEC, vgpr, sgpr, log2, Label
 from .TensileInstructions.Instructions import *
-from .Common import globalParameters
-from .Utils import DataDirection
+from .Common import INDEX_CHARS, DataDirection
 
 ##############################################################################
 # Fields associated with computing address
@@ -192,7 +191,7 @@ class AddrCalculation:
             #   - tmp+0 may be the incoming packed coordinate 0, used on replay too
             #   - tmp+1 is DIV output
             #   - tmp+2 is scratch
-            idxChar= globalParameters["IndexChars"][idx]
+            idxChar= INDEX_CHARS[idx]
             module.addComment0("extract %s"%kw.sizeRef(idx))
             assert(tmpVgpr+1 != packedBits) # bad since we still need packedBits below for remainder (can't overwrite here)
             module.add(MacroInstruction("V_MAGIC_DIV", \

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 from copy import deepcopy
 
 from .TensileInstructions import TensileInstructions
-from .Common import globalParameters, CHeader, gfxArch, getGfxName
+from .Common import globalParameters, gfxToIsa, isaToGfx
 from .Activation import ActivationInline, ActivationType
 from .KernelWriterBase import KernelWriterBase
 
@@ -55,7 +55,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
       self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
     else:
       for idx, arch in enumerate(self.supportedArchs):
-        self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
+        self.supportedArchs[idx] = gfxToIsa(''.join(map(str, arch)))
 
     # derive parameter
     self.language = "HIP"
@@ -120,9 +120,9 @@ class KernelWriterActivationFunction(KernelWriterBase):
     defineStr = []
     macroStr = "#if"
     for archList in cateArch:
-      defStr = "%s defined(__%s__)"%(macroStr, getGfxName(archList[0]))
+      defStr = "%s defined(__%s__)"%(macroStr, isaToGfx(archList[0]))
       for arch in archList:
-        defStr += "|| defined(__%s__)"%getGfxName(arch)
+        defStr += "|| defined(__%s__)"%isaToGfx(arch)
       defStr += "\n"
       defineStr.append(defStr)
       macroStr = "#elif"

@@ -22,8 +22,7 @@
 #
 ################################################################################
 
-from . import Common
-from .TensileInstructions import Item, TensileInstructions, slash50, replaceHolder, \
+from .TensileInstructions import TensileInstructions, replaceHolder, \
                           KernelBody, Module, StructuredModule, TextBlock, Dump, LabelManager, \
                           RegisterPool, Assert, fastdeepcopy, TensileInstructionsPassOptions, \
                           TensileInstructionsPass, \
@@ -31,15 +30,14 @@ from .TensileInstructions import Item, TensileInstructions, slash50, replaceHold
 from .TensileInstructions.Instructions import *
 from .KernelWriterModules import *
 from .TensilePass import TensilePass, TensilePassOptions
-from .Common import globalParameters, CHeader, print1, printWarning, roundUp, Backup, print2, printExit
 from .Component import Component, LraTileProperties
 from .Components.Signature import UserArgumentsInfo
 from .CustomKernels import isCustomKernelConfig
 from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
-from .Utils import DataDirection
-
 from .Activation import ActivationModule
+from .Common import globalParameters, printWarning, roundUp, print2, printExit, DataDirection, SemanticVersion, \
+  INDEX_CHARS, MAX_FILENAME_LENGTH
 
 import abc
 import os
@@ -359,10 +357,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str):
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
+    self.amdClangVersion = amdClangVersion
     self.ti = None
 
     self.do = {}
@@ -2971,8 +2970,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
           self.states.doShadowInit = 1 # 1 is just store setup
 
     self.states.indexChars = []
-    for i in range(0, len(globalParameters["IndexChars"])):
-      self.states.indexChars.append(globalParameters["IndexChars"][i])
+    for i in range(0, len(INDEX_CHARS)):
+      self.states.indexChars.append(INDEX_CHARS[i])
     self.states.indexChars[kernel["ProblemType"]["Index0"]] \
         = "0" + self.states.indexChars[kernel["ProblemType"]["Index0"]]
     self.states.indexChars[kernel["ProblemType"]["Index1"]] \
@@ -4975,13 +4974,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
   def _shortenFileBase(self, kernel):
     base = self.getKernelName(kernel)
-    if len(base) <= globalParameters["MaxFileName"]:
+    if len(base) <= MAX_FILENAME_LENGTH:
       return base
 
     import hashlib
     import base64
 
-    pivot = globalParameters["MaxFileName"] * 3 // 4
+    pivot = MAX_FILENAME_LENGTH * 3 // 4
     firstPart = base[:pivot]
     secondPart = base[pivot:]
 

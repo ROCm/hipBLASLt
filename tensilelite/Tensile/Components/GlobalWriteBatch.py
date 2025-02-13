@@ -20,12 +20,11 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from ..Common import globalParameters
+from ..Common import globalParameters, DataDirection, SemanticVersion
 from ..Component import GlobalWriteComponents
 from ..SolutionStructs import Solution
 from ..Activation import ActivationModule, ActivationType
 from ..AsmStoreState import StoreState
-from ..Utils import DataDirection
 from ..TensileInstructions import Label, Module, EXEC, SDWAModifiers, VCC, SelectBit, \
                             vgpr, sgpr, replaceHolder, SaturateCastType, VCvtBF16toFP32, \
                             DataType, CvtType, RoundType
@@ -42,19 +41,19 @@ class GlobalWriteBatchComponent(GlobalWriteComponents):
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
     batchElements, addrE, addrD, addrC, addrBias, addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, isLocalBarrierInit: bool, \
     tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, \
-    codeMulAlpha, packdata, parentWriter, factorDim) -> Module:
+    codeMulAlpha, packdata, parentWriter, factorDim, amdClangVersion: SemanticVersion) -> Module:
     return GlobalWriteBatchWriter(kernel, tPA, tPB, activation, ss, batchIdx, applyAlpha, \
       beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrE, addrD, addrC, addrBias, addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, isLocalBarrierInit, \
       tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, \
-      codeAccVgprRead, codeMulAlpha, packdata, parentWriter, factorDim).emit()
+      codeAccVgprRead, codeMulAlpha, packdata, parentWriter, factorDim, amdClangVersion).emit()
 
 class GlobalWriteBatchWriter:
   def __init__(self, kernel: Solution, tPA, tPB, activation: ActivationModule, ss: StoreState, \
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
     batchElements, addrE, addrD, addrC, addrBias, addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, isLocalBarrierInit: bool, \
     tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, \
-    codeMulAlpha, packdata, parentWriter, factorDim):
+    codeMulAlpha, packdata, parentWriter, factorDim, amdClangVersion: SemanticVersion):
     self.kernel = kernel
     self.tPA    = tPA
     self.tPB    = tPB
@@ -92,6 +91,7 @@ class GlobalWriteBatchWriter:
     self.parentWriter = parentWriter
     self.storesIssued = 0
     self.factorDim = factorDim
+    self.amdClangVersion = amdClangVersion
 
     # Internal state for GlobalWriteBatch
     # 0 for None, 1 for WorkGroupReduction = False, 2 for WorkGroupReduction = True
@@ -2033,9 +2033,7 @@ class GlobalWriteBatchWriter:
           if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
             if self.parentWriter.states.archCaps["VOP3ByteSel"]:
               sb = 0 if self.gwvw == 1 else 1
-              clangver = globalParameters['AMDClangVersion'].split(".")
-              clangMaj = int(clangver[0])
-              if not (clangMaj >= 19):
+              if not self.amdClangVersion.major >= 19:
                 module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
               else:
                 module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(byte_sel=sb)))
@@ -2069,9 +2067,7 @@ class GlobalWriteBatchWriter:
           if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
             if self.parentWriter.states.archCaps["VOP3ByteSel"]:
               sb = 0 if self.gwvw == 1 else 1
-              clangver = globalParameters['AMDClangVersion'].split(".")
-              clangMaj = int(clangver[0])
-              if not (clangMaj >= 19):
+              if not self.amdClangVersion.major >= 19:
                 module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
               else:
                 module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(byte_sel=sb)))
