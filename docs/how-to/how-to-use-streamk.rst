@@ -8,8 +8,8 @@
 Using Stream-K with hipBLASLt
 ********************************
 
-hipBLASLt supports the Stream-K library, which provides improved performance
-and reduced library sizes for a wide range of General Matrix-Matrix Multiplication (GEMM) shapes and sizes.
+hipBLASLt supports the Stream-K library, which reduces library sizes for a wide range of General Matrix-Matrix Multiplication (GEMM) shapes and sizes.
+It also provides more consistent performance, which might be better in some cases.
 Stream-K partitions an equal share of the aggregate inner-loop iterations among physical processing elements,
 which provides a near-perfect utilization of computing resources.
 For more information about Stream-K, see
