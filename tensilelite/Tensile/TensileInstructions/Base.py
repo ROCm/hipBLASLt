@@ -64,7 +64,7 @@ class TensileInstructions:
                 archCaps = initArchCaps(isaVersion)
                 regCaps  = initRegisterCaps(isaVersion, archCaps)
                 asmBugs  = initAsmBugs(asmCaps)
-                self._isaInfo[isaVersion] = IsaInfo(assemblerPath, asmCaps, archCaps, regCaps, asmBugs)
+                self._isaInfo[isaVersion] = IsaInfo(asmCaps, archCaps, regCaps, asmBugs)
 
     def setDebugLevel(self, level: int) -> None:
         __TI_DEBUG_LEVEL__ = level

@@ -5,7 +5,6 @@ IsaVersion = Tuple[int, int, int]
 
 @dataclass
 class IsaInfo:
-    assemblerPath: str
     asmCaps: dict
     archCaps: dict
     regCaps: dict

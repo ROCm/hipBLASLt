@@ -1712,7 +1712,7 @@ def assignGlobalParameters(config, cxxCompiler=None):
         archCaps = initArchCaps(v)
         regCaps = initRegisterCaps(v, archCaps)
         asmBugs = initAsmBugs(asmCaps)
-        isaInfoMap[v] = IsaInfo(cxxCompiler, asmCaps, archCaps, regCaps, asmBugs)
+        isaInfoMap[v] = IsaInfo(asmCaps, archCaps, regCaps, asmBugs)
 
     if globalParameters["PrintLevel"] >= 1:
         printCapabilitiesTable(globalParameters["SupportedISA"], isaInfoMap)
