@@ -28,7 +28,6 @@ from .Formatting import formatStr, printExit
 import abc
 from enum import Enum
 from typing import List, Optional, Union
-#from .Utils import sgpr
 
 ################################################################################
 ################################################################################

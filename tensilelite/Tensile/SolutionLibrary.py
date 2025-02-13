@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ from . import Hardware
 from . import Common
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Utils import state
+from .Common import state
 
 class SingleSolutionLibrary:
     Tag = "Single"
@@ -183,7 +183,7 @@ class DecisionTreeLibrary:
         origTrees = d["trees"]
 
         trees = []
-        
+
         if "fallback" in d:
             fallbackIndex = d["fallback"]
             nullValue = SingleSolutionLibrary(solutions[fallbackIndex])
@@ -314,7 +314,7 @@ class MasterSolutionLibrary:
             if devicePart == "fallback":
                 pred = Hardware.HardwarePredicate("TruePred")
             else:
-                pred = Hardware.HardwarePredicate.FromHardware(Common.gfxArch(devicePart), cuCount)
+                pred = Hardware.HardwarePredicate.FromHardware(Common.gfxToIsa(devicePart), cuCount)
 
             newLib.rows.append({"predicate": pred, "library": library})
 

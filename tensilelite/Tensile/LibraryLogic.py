@@ -24,7 +24,8 @@
 
 from pathlib import Path
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
-  assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath
+  assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, \
+  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR
 from .SolutionStructs import Solution
 from . import LibraryIO
 from . import SolutionSelectionLibrary
@@ -317,30 +318,9 @@ class LogicAnalyzer:
       #FIXME-problem
       self.rangeProblemSizes.update([tuple(problem.sizes) for problem in problemSizes.problems])
       for rangeSize in problemSizes.ranges:
-
-        if globalParameters["ExpandRanges"]:
-          # Treat ranges as pile of exacts:
-          for rsize in rangeSize.problemSizes:
-            self.exactProblemSizes.add(tuple(rsize))
-        else:
-          # Create the ranges info in the logic file
-          #print "RangeSize", rangeSize
-          sizedIdx = 0
-          mappedIdx = 0
-          for i in range(0, self.numIndices):
-            if rangeSize.indexIsSized[i]:
-              index = rangeSize.indicesSized[sizedIdx]
-              sizedIdx += 1
-            else:
-              index = rangeSize.indicesSized[ \
-                rangeSize.indicesMapped[mappedIdx]]
-              mappedIdx += 1
-            currentSize = index[0]
-            currentStride = index[1]
-            while currentSize <= index[3]:
-              unifiedProblemSizes[i].add(currentSize)
-              currentSize += currentStride
-              currentStride += index[2]
+        # Treat ranges as pile of exacts:
+        for rsize in rangeSize.problemSizes:
+          self.exactProblemSizes.add(tuple(rsize))
     for i in range(0, len(unifiedProblemSizes)):
       unifiedProblemSizes[i] = sorted(list(unifiedProblemSizes[i]))
     print2("UnifiedProblemSizes: %s" % unifiedProblemSizes)
@@ -474,7 +454,7 @@ class LogicAnalyzer:
           except ValueError as e:
             csvHasWinnerColumn = False
             print1(f"Error: Could not find WinnerGFlops or WinnerIdx column in CSV file: {e}")
-          
+
         # get the length of each row, and derive the first column of the solution instead of using wrong "solutionStartIdx = totalSizeIdx + 1"
         rowLength = len(row)
         solutionStartIdx = rowLength - numSolutions
@@ -531,7 +511,7 @@ class LogicAnalyzer:
             except:
               print1("Error: Could not convert winnerGFlops to float.")
               performance_metric = float('nan')
-            
+
           if winnerIdx != -1:
             if problemSize in self.exactWinners:
               if winnerGFlops > self.exactWinners[problemSize][1]:
@@ -1525,7 +1505,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str)
 
 
 ##############################################################################
-# Error handling for frequency issues 
+# Error handling for frequency issues
 ##############################################################################
 def handle_frequency_issue(message):
     print1(message)
@@ -1567,6 +1547,6 @@ def read_max_freq():
 ################################################################################
 ################################################################################
 def main(config, cxxCompiler: str, outputPath: Path):
-  benchmarkDataPath = outputPath / globalParameters["BenchmarkDataPath"]
-  libraryLogicPath = outputPath / globalParameters["LibraryLogicPath"]
+  benchmarkDataPath = outputPath / BENCHMARK_DATA_DIR
+  libraryLogicPath = outputPath / LIBRARY_LOGIC_DIR
   generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler)

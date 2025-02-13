@@ -22,15 +22,13 @@
 #
 ################################################################################
 
-from . import Common
 from . import ClientWriter
 from . import LibraryIO
 from .Contractions import ProblemType as ContractionsProblemType
 from .SolutionStructs import ProblemSizes, ProblemType
-from .Common import print1, printExit, printWarning, assignGlobalParameters, \
-        restoreDefaultGlobalParameters, HR
+from .Common import globalParameters, print1, printExit, printWarning, assignGlobalParameters, \
+        restoreDefaultGlobalParameters, HR, __version__
 from .Tensile import addCommonArguments, argUpdatedGlobalParameters
-from . import __version__
 
 import argparse
 import os
@@ -180,7 +178,7 @@ def TensileClientConfig(userArgs):
     overrideParameters = argUpdatedGlobalParameters(args)
     for key, value in overrideParameters.items():
         print1("Overriding {0}={1}".format(key, value))
-        Common.globalParameters[key] = value
+        globalParameters[key] = value
 
     # write output
     ClientWriter.writeClientConfigIni(True, sizes, "", "", "", "", conProblemType, "", [], "", args.OutputConfig, None)
