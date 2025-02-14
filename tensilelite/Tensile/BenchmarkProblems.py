@@ -314,10 +314,9 @@ def _benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSize
                             "to see why each parameter combination was rejected."
                 printExit(msg)
 
-            if globalParameters["PrintLevel"] >= 1:
-                for solution in solutions:
-                    print2("#    ({}:{}) {}".format(0, 0, Solution.getNameFull(solution, debugConfig.splitGSU)))
-                print2(HR)
+            for solution in solutions:
+                print2("#    ({}:{}) {}".format(0, 0, Solution.getNameFull(solution, debugConfig.splitGSU)))
+            print2(HR)
 
             # write benchmarkFiles
             prevCount = len(solutions)

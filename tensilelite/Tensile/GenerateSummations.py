@@ -37,7 +37,7 @@ from . import LibraryIO
 
 from . import ClientWriter
 from .Common import assignGlobalParameters, ensurePath, globalParameters, \
-    printExit, isaToGfx, gfxToSwCodename
+    printExit, isaToGfx, gfxToSwCodename, detectGlobalCurrentISA
 from .SolutionStructs import ProblemSizes
 from .Toolchain.Validators import ToolchainDefaults, validateToolchain
 
@@ -67,7 +67,7 @@ def GenerateSummations(userArgs):
     assignGlobalParameters({})
     cxxCompiler, cCompiler = validateToolchain(ToolchainDefaults.CXX_COMPILER, ToolchainDefaults.C_COMPILER)
 
-    currentISA = globalParameters["CurrentISA"]
+    currentISA = detectGlobalCurrentISA(0)
     gfxName = isaToGfx(currentISA)
     commonName = gfxToSwCodename(gfxName)
 

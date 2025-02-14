@@ -5002,11 +5002,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.kernel = kernel
     self.states.language = "ASM"
     # we already do this in the solution ctor
-    #self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else globalParameters["CurrentISA"]
     self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else self.currentIsa
-    if not globalParameters["AsmCaps"][self.states.version]["SupportedISA"]:
-      self.states.version = (9,0,0)
-      printWarning(f"ISA: {self.version} is not supported; overriding with {self.states.version}")
+    assert globalParameters["AsmCaps"][self.states.version]["SupportedISA"]
 
     return code
 

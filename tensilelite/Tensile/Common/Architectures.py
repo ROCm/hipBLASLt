@@ -158,7 +158,7 @@ def _detectGlobalCurrentISA(detectionTool, deviceId: int):
         arch = gfxToIsa(line.strip())
         if arch is not None:
             if arch in SUPPORTED_ISA:
-                print("# Detected local GPU with ISA: " + isaToGfx(arch))
+                print(f"# Detected GPU {deviceId} with ISA: " + isaToGfx(arch))
                 archList.append(arch)
     if len(archList) > 0:
         result = archList[deviceId]

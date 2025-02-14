@@ -25,7 +25,7 @@
 from pathlib import Path
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
   assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, \
-  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR
+  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity
 from .SolutionStructs import Solution
 from . import LibraryIO
 from . import SolutionSelectionLibrary
@@ -107,7 +107,7 @@ def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryL
     printExit("Bad KeepLogic=%u"%globalParameters["KeepLogic"])
 
   # print raw data
-  if globalParameters["PrintLevel"] >= 2:
+  if verbosity >= 2:
     line = "After Removals:\n"
     numOther = 1
     for size in logicAnalyzer.numProblemSizes:
@@ -689,7 +689,7 @@ class LogicAnalyzer:
           currentIndexRange[self.indexOrder[2]][0], \
           currentIndexRange[self.indexOrder[3]][0])
     tab = self.tab[cii]
-    if globalParameters["PrintLevel"] == 1:
+    if verbosity == 1:
       stdout.write("\n%s"%tab)
     currentIndex = self.indexOrder[currentIndexIndex]
     print2("%senRule(%s)" % (tab, currentIndexRange))
@@ -715,7 +715,7 @@ class LogicAnalyzer:
           print2("%sSingleProblem & LastIndex :: winnerIdx<0; returning" % (tab) )
           return None
         ruleList.append([-1, winnerIdx])
-        if globalParameters["PrintLevel"] == 1:
+        if verbosity == 1:
           stdout.write("%")
 
       ########################################
@@ -731,7 +731,7 @@ class LogicAnalyzer:
           return None
         rule = [ -1, nextRule ]
         ruleList.append(rule)
-        if globalParameters["PrintLevel"] == 1:
+        if verbosity == 1:
           stdout.write("%")
 
     else:
@@ -784,7 +784,7 @@ class LogicAnalyzer:
         initialRule = [ currentIndexRange[currentIndex][0], nextRule ]
       ruleList.append(initialRule)
       print2("%sMultiProblem::InitialRuleList=%s" % (tab, ruleList))
-      if globalParameters["PrintLevel"] == 1:
+      if verbosity == 1:
         stdout.write("#")
 
       ########################################
@@ -809,7 +809,7 @@ class LogicAnalyzer:
           if winnerIdx < 0:
             ruleList[len(ruleList)-1][0] = problemIndex # NO_UPDATE
             print2("%sUpdating range b/c None" % tab)
-            if globalParameters["PrintLevel"] == 1:
+            if verbosity == 1:
               stdout.write(" ")
             continue
           else:
@@ -822,7 +822,7 @@ class LogicAnalyzer:
           if nextRule == None:
             ruleList[len(ruleList)-1][0] = problemIndex # NO_UPDATE
             print2("%sUpdating b/c None" % tab)
-            if globalParameters["PrintLevel"] == 1:
+            if verbosity == 1:
               stdout.write(" ")
             continue
           else:
@@ -833,7 +833,7 @@ class LogicAnalyzer:
         if candidateRule[1] == priorRule[1]:
           print2("%sCandidateRule==PriorRule; just updating prior" % (tab))
           ruleList[len(ruleList)-1][0] = problemIndex # NO_UPDATE
-          if globalParameters["PrintLevel"] == 1:
+          if verbosity == 1:
             stdout.write(" ")
           continue
 
@@ -873,14 +873,14 @@ class LogicAnalyzer:
           if True: # or candidateRuleScore < priorRuleScore:
             ruleList.append(candidateRule)
             print2("%sAppending b/c Different" % tab)
-            if globalParameters["PrintLevel"] == 1:
+            if verbosity == 1:
               stdout.write("#")
 
           ########################################
           # prior wins
           else:
             print2("%sPrior Rule Wins" % tab)
-            if globalParameters["PrintLevel"] == 1:
+            if verbosity == 1:
               stdout.write(".")
             ruleList[len(ruleList)-1][0] = problemIndex # NO_UPDATE
 

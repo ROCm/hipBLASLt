@@ -1061,7 +1061,7 @@ def isExtractableIndex(ks, index, tc='x'):
 class Solution(collections.abc.Mapping):
 
   ########################################   # need to be sure PSRR is passing to all fxns
-  def __init__(self, config, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: List[IsaVersion], cxxCompiler: str, srcName: str = ""):
+  def __init__(self, config, splitGSU: bool, printSolutionRejectionReason: bool, targetIsas: List[IsaVersion], cxxCompiler: str, srcName: str = ""):
     self._name = None
     self.cxxCompiler = cxxCompiler
     self.srcName = srcName
@@ -1087,18 +1087,12 @@ class Solution(collections.abc.Mapping):
       assignParameterWithDefault(self._state, key, config, defaultSolution)
     if 'ISA' not in self._state:
       if 'ISA' in config:
-        if not globalParameters["AsmCaps"][tuple(config['ISA'])]["SupportedISA"]:
-          defaultIsa = [9,0,0]
-          print("warning: ISA:", config['ISA'], " is not supported; overriding with ", defaultIsa)
-          self._state['ISA'] = defaultIsa
-        else:
-          self._state['ISA'] = config['ISA']
+        assert globalParameters["AsmCaps"][tuple(config['ISA'])]["SupportedISA"]
+        isa = config['ISA']
+        self._state['ISA'] = IsaVersion(isa[0], isa[1], isa[2])
       else:
-        # Assembly by default
-        self._state['ISA'] = list(globalParameters["CurrentISA"])
-        if 'KernelLanguage' in config:
-          if config['KernelLanguage'] != 'Assembly':
-            self._state['ISA'] = [0,0,0]
+        printWarning(f"ISA not set on config using {targetIsas[0]}.")
+        self._state['ISA'] = targetIsas[0]
 
     if "CodeObjectVersion" not in self._state:
       if "CodeObjectVersion" in config:
@@ -1118,7 +1112,7 @@ class Solution(collections.abc.Mapping):
     Solution.assignDerivedParameters(self._state, splitGSU, printSolutionRejectionReason)
     self._name = config["CustomKernelName"] if isCustomKernelConfig(config) else None
 
-    self.initHelperKernelObjects(supportedISA)
+    self.initHelperKernelObjects(targetIsas)
 
   # these keys are copied from ProblemType to internal that may be overridden
   InternalKeys = ["UseSgprForGRO","VectorStore"]
@@ -1606,10 +1600,7 @@ class Solution(collections.abc.Mapping):
     # and a possible opportunity to handle the lsc
     grvw = state["GlobalReadVectorWidth%s"%tc]
     minGrvw = 2 if state["ProblemType"]["DataType"].isHalf() and \
-                globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasEccHalf"] else 1
-    # TODO- check this for int8 and fractional load
-    # minGrvw = 4 if state["ProblemType"]["DataType"].isInt8() and \
-    #             globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasEccHalf"] else 1
+                globalParameters["ArchCaps"][state["ISA"]]["HasEccHalf"] else 1 # why were we using current ISA here?
     bestVw = -1
     while grvw >= minGrvw:
       # Per instruction across the entire group:
@@ -1719,7 +1710,7 @@ class Solution(collections.abc.Mapping):
 
   @staticmethod
   def MatrixInstructionToMIParameters(state, printRejectionReason: bool):
-    isa = tuple(state["ISA"])
+    isa = state["ISA"]
     if len(state["MatrixInstruction"]) == 9:
       mi                          = state["MatrixInstruction"]
       state["MatrixInstruction"]  = [state["MatrixInstruction"][0],state["MatrixInstruction"][1],state["MatrixInstruction"][2],state["MatrixInstruction"][3]]
@@ -2531,7 +2522,7 @@ class Solution(collections.abc.Mapping):
     if state["KernelLanguage"] == "Assembly" \
       and state["ProblemType"]["DataType"].isHalf():
 
-      if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasEccHalf"]:
+      if globalParameters["ArchCaps"][state["ISA"]]["HasEccHalf"]:
         if not state["ProblemType"]["HighPrecisionAccumulate"] and state["AssertFree0ElementMultiple"] % 2 != 0:
           # beta-on-edge has AF0EM requirement except for HPA kernels
           reject(state, printRejectionReason, "Archs with HasEccHalf require AF0EM%2==0 except for HPA kernels")
@@ -3041,7 +3032,7 @@ class Solution(collections.abc.Mapping):
                 validDepthU = False
 
         if validDepthU and state["KernelLanguage"] == "Assembly":
-          if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasEccHalf"]:
+          if globalParameters["ArchCaps"][state["ISA"]]["HasEccHalf"]:
             if state["ProblemType"]["DataType"].numRegisters() == 0.5 and (not state["ProblemType"]["HighPrecisionAccumulate"]):
                 if state["GlobalReadVectorWidthA"] == 1 or state["GlobalReadVectorWidthB"] == 1:
                   reject(state, printRejectionReason, "HalfEcc requires HPA if glvw = 1")

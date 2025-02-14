@@ -36,6 +36,7 @@ from Tensile.Common import (
     CHeader,
     DebugConfig,
     detectGlobalCurrentISA,
+    gfxToIsa,
     HR,
     IsaVersion,
     ParallelMap2,
@@ -241,7 +242,7 @@ def writeSolutionsAndKernels(
     asmIter = zip(
         itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()), itertools.repeat(useShortNames), asmKernels
     )
-    asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels", return_as="generator_unordered")
+    asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels", return_as="list")
     removeInvalidSolutionsAndKernels(
         asmResults, asmKernels, solutions, errorTolerant, verbosity, splitGSU
     )
@@ -326,7 +327,7 @@ def writeSolutionsAndKernelsTCL(
         uniqueAsmKernels,
         "Generating assembly kernels",
         multiArg=False,
-        return_as="generator_unordered"
+        return_as="list"
     )
     buildAssemblyCodeObjectFiles(
         asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress, useShortNames
@@ -504,6 +505,8 @@ def run():
     print2("")
 
     arguments = parseArguments()
+    global verbosity
+    verbosity = arguments["PrintLevel"]
     outputPath = Path(ensurePath(os.path.abspath(arguments["OutputPath"])))
     cxxCompiler, cCompiler, offloadBundler, assembler, hipconfig = validateToolchain(
         arguments["CxxCompiler"],
@@ -521,7 +524,12 @@ def run():
     print1(f"# Architecture(s):     {arguments['Architecture']}")
     print1(f"# Library Format:      {arguments['LibraryFormat']}")
 
-    assignGlobalParameters(arguments, cxxCompiler)
+    if ";" in arguments["Architecture"]:
+        archs = arguments["Architecture"].split(";")
+    else:
+        archs = arguments["Architecture"].split("_")
+    targetIsas = [gfxToIsa(a) for a in archs]
+    assignGlobalParameters(arguments, targetIsas, cxxCompiler)
 
     asmToolchain = AssemblyToolchain(
         assembler, offloadBundler, globalParameters["BuildIdKind"], arguments["CodeObjectVersion"]
@@ -537,10 +545,6 @@ def run():
     if not os.path.exists(arguments["LogicPath"]):
         printExit(f"LogicPath {arguments['LogicPath']} doesn't exist")
 
-    if ";" in arguments["Architecture"]:
-        archs = arguments["Architecture"].split(";")
-    else:
-        archs = arguments["Architecture"].split("_")
     logicArchs = set()
     for arch in archs:
         if arch in architectureMap:
@@ -606,7 +610,7 @@ def run():
 
     archs = [ # is this really different than the other archs above?
         isaToGfx(arch)
-        for arch in SUPPORTED_ISA
+        for arch in targetIsas
         if globalParameters["AsmCaps"][arch]["SupportedISA"]
     ]
     newLibraryDir = ensurePath(os.path.join(outputPath, "library"))

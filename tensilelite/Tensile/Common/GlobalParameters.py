@@ -29,13 +29,15 @@ import sys
 import time
 from collections import OrderedDict
 from copy import deepcopy
+from typing import List
 
 from Tensile import __version__
 
-from .Architectures import isaToGfx, SUPPORTED_ISA, detectGlobalCurrentISA
+from .Architectures import isaToGfx, SUPPORTED_ISA
 from .Capabilities import initArchCaps, initAsmBugs, initAsmCaps
 from .Types import IsaVersion
-from .Utilities import locateExe, versionIsCompatible, print1, print2, printExit, printWarning
+from .Utilities import locateExe, versionIsCompatible, print1, print2, printExit, printWarning, \
+     verbosity
 
 startTime = time.time()
 
@@ -45,9 +47,6 @@ globalParameters["MinimumRequiredVersion"] = (
 )
 globalParameters["PerformanceMetric"] = (
     "DeviceEfficiency"  # performance metric for benchmarking; one of {DeviceEfficiency, CUEfficiency}
-)
-globalParameters["PrintLevel"] = (
-    1  # how much info to print in generator. 0=none, 1=standard, 2=verbose
 )
 globalParameters["ClientLogLevel"] = (
     3  # the log level of client. 0=Error, 1=Terse, 2=Verbose, 3=Debug (Aligned with ResultReporter.hpp)
@@ -252,7 +251,6 @@ globalParameters["LibraryUpdateComment"] = (
 )
 
 # internal, i.e., gets set during startup
-globalParameters["CurrentISA"] = (0, 0, 0)
 globalParameters["AMDGPUArchPath"] = None  # /opt/rocm/llvm/bin/amdgpu-arch
 globalParameters["ROCmAgentEnumeratorPath"] = None  # /opt/rocm/bin/rocm_agent_enumerator
 globalParameters["ROCmSMIPath"] = None  # /opt/rocm/bin/rocm-smi
@@ -260,7 +258,7 @@ globalParameters["HipClangVersion"] = "0.0.0"
 
 # default runtime is selected based on operating system, user can override
 if os.name == "nt":
-    globalParameters["RuntimeLanguage"] = "HIP"  # "OCL"
+    globalParameters["RuntimeLanguage"] = "HIP"
 else:
     globalParameters["RuntimeLanguage"] = "HIP"
 
@@ -1466,16 +1464,15 @@ def printTable(rows):
         print()
 
 
-def printCapTable(parameters):
+def printCapTable(parameters, targetIsas: List[IsaVersion]):
     import itertools
 
-    archs = [(0, 0, 0)] + SUPPORTED_ISA
-    gfxNames = list(map(isaToGfx, archs))
+    gfxNames = list(map(isaToGfx, targetIsas))
 
     headerRow = ["cap"] + gfxNames
 
     def capRow(caps, cap):
-        return [cap] + [("1" if cap in caps[arch] and caps[arch][cap] else "0") for arch in archs]
+        return [cap] + [("1" if cap in caps[arch] and caps[arch][cap] else "0") for arch in targetIsas]
 
     allAsmCaps = set(
         itertools.chain(*[caps.keys() for arch, caps in parameters["AsmCaps"].items()])
@@ -1492,7 +1489,7 @@ def printCapTable(parameters):
     printTable([headerRow] + asmCapRows + archCapRows)
 
 
-def assignGlobalParameters(config, cxxCompiler=None):
+def assignGlobalParameters(config, targetIsas: List[IsaVersion], cxxCompiler=None):
     """
     Assign Global Parameters
     Each global parameter has a default parameter, and the user
@@ -1571,40 +1568,30 @@ def assignGlobalParameters(config, cxxCompiler=None):
     if "CodeObjectVersion" in config:
         globalParameters["CodeObjectVersion"] = config["CodeObjectVersion"]
 
-    # read current gfx version
-    currentIsa = detectGlobalCurrentISA(0)
-    globalParameters["CurrentISA"] = currentIsa
-    if globalParameters["CurrentISA"] == (0, 0, 0):
-        printWarning(
-            "Did not detect SupportedISA: %s; cannot benchmark assembly kernels."
-            % SUPPORTED_ISA
-        )
-
     globalParameters["AsmCaps"] = {}
     globalParameters["ArchCaps"] = {}
     globalParameters["AsmBugs"] = {}
 
-    # We shouldn't need to do this for all ISAs...
-    # Why not only do this for ISAs that we are building.
-    for v in SUPPORTED_ISA + [IsaVersion(0, 0, 0)]:
-
+    # do we really need to ad [IsaVersion(0,0,0)] to targetIsas?
+    for v in targetIsas:
         globalParameters["AsmCaps"][v] = initAsmCaps(v, cxxCompiler, False)
         globalParameters["ArchCaps"][v] = initArchCaps(v)
         globalParameters["AsmBugs"][v] = initAsmBugs(globalParameters["AsmCaps"][v])
 
+    if verbosity >= 1:
+        printCapTable(globalParameters, targetIsas)
 
-    if globalParameters["PrintLevel"] >= 1:
-        printCapTable(globalParameters)
-
-    SUPPORTED_ISA = list(
+    # This seems like we are restating line 1577
+    # should we error out here if an isa was requested that we don't support?
+    isaList = list(
         [
             i
-            for i in SUPPORTED_ISA
+            for i in targetIsas
             if globalParameters["AsmCaps"][i]["SupportedISA"]
         ]
     )
 
-    validParameters["ISA"] = [(0, 0, 0), *SUPPORTED_ISA]
+    validParameters["ISA"] = [IsaVersion(0, 0, 0), *isaList]
 
     # For ubuntu platforms, call dpkg to grep the version of hip-clang.  This check is platform specific, and in the future
     # additional support for yum, dnf zypper may need to be added.  On these other platforms, the default version of

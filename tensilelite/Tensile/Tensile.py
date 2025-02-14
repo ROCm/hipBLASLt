@@ -37,7 +37,7 @@ from typing import List
 
 from Tensile.Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR, \
-    detectGlobalCurrentISA, IsaVersion
+    detectGlobalCurrentISA, IsaVersion, verbosity
 from Tensile.Toolchain.Assembly import AssemblyToolchain
 from Tensile.Toolchain.Source import SourceToolchain
 from Tensile.Toolchain.Validators import validateToolchain, ToolchainDefaults
@@ -189,12 +189,8 @@ def argUpdatedGlobalParameters(args):
     if args.CodeObjectVersion:
         print1("# Command-line override: CodeObjectVersion")
         rv["CodeObjectVersion"] = args.CodeObjectVersion
-    if args.verbose:
-        print1("# Command-line override: PrintLevel")
-        rv["PrintLevel"] = 2
     if args.debug:
         print1("# Command-line override: Debug")
-        rv["PrintLevel"] = 2
         rv["CMakeBuildType"] = "Debug"
     if args.client_lock:
         rv["ClientExecutionLockPath"] = args.client_lock
@@ -362,12 +358,14 @@ def Tensile(userArgs):
 
     addCommonArguments(argParser)
     args = argParser.parse_args(userArgs)
-
     configPaths = args.ConfigFile
     altFormat = args.AlternateFormat
     useCache = args.useCache
     outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
     print1(f"#  OutputPath: {str(outputPath)}")
+
+    global verbosity
+    verbosity = 2 if (args.debug or args.verbose) else 1
 
     if altFormat and len(configPaths) > 2:
         printExit("Only 1 or 2 config_files are accepted for the alternate config format: "
@@ -440,7 +438,8 @@ def Tensile(userArgs):
         store_max_frequency(max_frequency)
 
     cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
-    assignGlobalParameters(config.get("GlobalParameters", {}), cxxCompiler)
+    currentIsa = detectGlobalCurrentISA(device_id)
+    assignGlobalParameters(config.get("GlobalParameters", {}), [currentIsa], cxxCompiler)
 
     asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
     srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
@@ -458,8 +457,6 @@ def Tensile(userArgs):
 
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
-
-    currentIsa = detectGlobalCurrentISA(device_id)
 
     executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, cCompiler, debugConfig, currentIsa, device_id)
 
