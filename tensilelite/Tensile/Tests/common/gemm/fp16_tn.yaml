@@ -216,6 +216,8 @@ BenchmarkProblems:
         - BiasTypeArgs: ['h']
         - ActivationArgs:
           - [Enum: relu]
+          - [Enum: silu]
+          - [Enum: swish]
 
   ########################################
   # NN - standard
@@ -309,3 +311,5 @@ BenchmarkProblems:
         - BiasTypeArgs: ['h']
         - ActivationArgs:
           - [Enum: relu]
+          - [Enum: silu]
+          - [Enum: swish]

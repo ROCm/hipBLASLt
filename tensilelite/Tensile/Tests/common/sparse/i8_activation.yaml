@@ -79,3 +79,4 @@ BenchmarkProblems:
           - [Enum: sigmoid]
           - [Enum: tanh]
           - [Enum: silu]
+          - [Enum: swish]

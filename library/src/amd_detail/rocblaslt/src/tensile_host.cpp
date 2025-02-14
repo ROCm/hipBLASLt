@@ -159,6 +159,9 @@ namespace
         case ROCBLASLT_EPILOGUE_DGELU:
         case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
             return TensileLite::ActivationType::DGelu;
+        case ROCBLASLT_EPILOGUE_SWISH_EXT:
+        case ROCBLASLT_EPILOGUE_SWISH_BIAS_EXT:
+            return TensileLite::ActivationType::Silu;
         case ROCBLASLT_EPILOGUE_BIAS:
         case ROCBLASLT_EPILOGUE_DEFAULT:
         case ROCBLASLT_EPILOGUE_BGRADA:
@@ -195,6 +198,7 @@ namespace
         case ROCBLASLT_EPILOGUE_BIAS:
         case ROCBLASLT_EPILOGUE_BGRADA:
         case ROCBLASLT_EPILOGUE_BGRADB:
+        case ROCBLASLT_EPILOGUE_SWISH_BIAS_EXT:
             return true;
             break;
         default:
@@ -508,6 +512,9 @@ namespace
         case TensileLite::ActivationType::Relu:
             return "relu";
             break;
+        case TensileLite::ActivationType::Silu:
+        case TensileLite::ActivationType::Swish:
+            return "swish";
         case TensileLite::ActivationType::None:
         default:
             return "none";
