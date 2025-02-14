@@ -26,11 +26,11 @@ if __name__ == "__main__":
     print("This file can no longer be run as a script.  Run 'Tensile/bin/Tensile' instead.")
     exit(1)
 
+import joblib
 import os
 import subprocess
 import sys
 import argparse
-
 from datetime import datetime
 from pathlib import Path
 from typing import List

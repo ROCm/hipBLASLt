@@ -479,6 +479,11 @@ namespace TensileLite
                 auto castedVal = static_cast<castT>(val);
                 return static_cast<T>(castedVal / (1.f + static_cast<castT>(exp(-castedVal))));
             }
+            else if(new_type == ActivationType::Swish)
+            {
+                auto castedVal = static_cast<castT>(val);
+                return static_cast<T>(castedVal / (1.f + static_cast<castT>(exp(-multiply<castT>(castedVal, static_cast<castT>(args[0]))))));
+            }
             return val;
         }
 

@@ -32,7 +32,7 @@ import subprocess
 from contextlib import contextmanager
 import Tensile.TensileInstructions as ti
 from Tensile.Common import detectGlobalCurrentISA, restoreDefaultGlobalParameters, \
-    assignGlobalParameters, isaToGfx, gfxToIsa, globalParameters
+    assignGlobalParameters, isaToGfx, gfxToIsa
 from Tensile.Toolchain.Validators import ToolchainDefaults, validateToolchain
 
 def record_num_calls(f):
@@ -692,7 +692,7 @@ if __name__ == '__main__':
     if any([not i for i in (arch, toolchain_path, isa)]):
         restoreDefaultGlobalParameters()
         assignGlobalParameters({})
-        isa = detectGlobalCurrentISA()
+        isa = detectGlobalCurrentISA(0)
         arch = isaToGfx(isa)
         toolchain_path = validateToolchain(ToolchainDefaults.CXX_COMPILER)
 

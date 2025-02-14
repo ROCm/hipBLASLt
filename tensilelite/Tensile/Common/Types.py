@@ -6,6 +6,7 @@ class SemanticVersion(NamedTuple):
     patch: int
     
 IsaVersion = SemanticVersion
+
 class DebugConfig(NamedTuple):
   enableAsserts: bool=False
   enableDebugA: bool=False

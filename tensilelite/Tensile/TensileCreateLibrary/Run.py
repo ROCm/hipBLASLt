@@ -52,6 +52,7 @@ from Tensile.Common import (
     state,
     SUPPORTED_ISA,
     tqdm,
+    verbosity,
 )
 from Tensile.CustomYamlLoader import load_logic_gfx_arch
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
@@ -109,7 +110,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     removeResults = []
 
     for kernIdx, r in (
-        tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results)
+        tqdm(enumerate(results)) if printLevel > 1 else enumerate(results)
     ):
         if r.err != 0:
             if not errorTolerant:
@@ -240,9 +241,9 @@ def writeSolutionsAndKernels(
     asmIter = zip(
         itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()), itertools.repeat(useShortNames), asmKernels
     )
-    asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels")
+    asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels", return_as="generator_unordered")
     removeInvalidSolutionsAndKernels(
-        asmResults, asmKernels, solutions, errorTolerant, globalParameters["PrintLevel"], splitGSU
+        asmResults, asmKernels, solutions, errorTolerant, verbosity, splitGSU
     )
 
     def assemble(ret):
@@ -325,6 +326,7 @@ def writeSolutionsAndKernelsTCL(
         uniqueAsmKernels,
         "Generating assembly kernels",
         multiArg=False,
+        return_as="generator_unordered"
     )
     buildAssemblyCodeObjectFiles(
         asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress, useShortNames
@@ -462,8 +464,8 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
         matchTable = {}
         # Match yaml file solutions to solution index
         for _, masterLibrary in masterLibraries.items():
-            for localIdx, _, s in libraryIter(masterLibrary):
-                matchTable[s.index] = [s.srcName, localIdx]
+            for _, _, s in libraryIter(masterLibrary):
+                matchTable[s.index] = [s.srcName, s.libraryLogicIndex]
         LibraryIO.write("MatchTable", matchTable)
 
     if "fallback" in masterLibraries.keys():

@@ -45,6 +45,7 @@ Datatypes:
         none: 0
         relu: 1
         gelu: 2
+        swish: 3
   - hipblaslt_bias_source:
       bases: [ c_int ]
       attr:

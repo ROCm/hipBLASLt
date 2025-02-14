@@ -35,7 +35,7 @@ from Tensile import __version__
 from .Architectures import isaToGfx, SUPPORTED_ISA, detectGlobalCurrentISA
 from .Capabilities import initArchCaps, initAsmBugs, initAsmCaps
 from .Types import IsaVersion
-from .Utilities import locateExe, versionIsCompatible
+from .Utilities import locateExe, versionIsCompatible, print1, print2, printExit, printWarning
 
 startTime = time.time()
 
@@ -198,6 +198,9 @@ globalParameters["PruneSparseMode"] = (
 # build parameters
 globalParameters["CMakeCXXFlags"] = ""  # pass flags to cmake
 globalParameters["CMakeCFlags"] = ""  # pass flags to cmake
+#globalParameters["DebugKernel"] = (
+#    False  # assembly only, kernel gets buffer for debug "printing"; kernel writes data to memory, gets coppied to host and printed
+#)
 globalParameters["AsanBuild"] = False  # build with asan
 globalParameters["SaveTemps"] = False  # Generate intermediate results of hip kernels
 globalParameters["KeepBuildTmp"] = False  # If true, do not remove artifacts in build_tmp
@@ -237,7 +240,6 @@ globalParameters["Platform"] = 0  # select opencl platform
 # shouldn't need to change
 globalParameters["DeviceLDS"] = 65536  # LDS bytes per CU, for computing occupancy
 globalParameters["MaxLDS"] = 65536  # max LDS a kernel should attempt to use
-
 globalParameters["NewClient"] = 2  # Old client deprecated: NewClient must be set to 2.
 globalParameters["ClientExecutionLockPath"] = (
     None  # Path for a file lock to ensure only one client is executed at once.  filelock module is required if this is enabled.
@@ -263,7 +265,6 @@ else:
     globalParameters["RuntimeLanguage"] = "HIP"
 
 globalParameters["CodeObjectVersion"] = "4"
-#globalParameters["Architecture"] = "all"
 
 # perf model
 globalParameters["PerfModelL2ReadHits"] = 0.0
@@ -1159,7 +1160,7 @@ validParameters = {
     "TransposeLDS": [-1, 1, 0, 2],
     # add gls or slc after global memory read/writes to change caching, not caching the writes is promising and improved performance a tiny bit
     # 0: none, 1: glc, 2: slc, 3: glc slc
-    # For gfx940, sets sc0/sc1 bits
+    # For gfx942, sets sc0/sc1/nt bits
     # 0: none, 1: sc0, 2: sc1, 3: sc0 sc1, 4: nt, 5: nt sc0, 6: nt sc1, 7: nt sc0 sc1
     "NonTemporalE": list(range(0, 8)),
     "NonTemporalD": list(range(0, 8)),
@@ -1437,35 +1438,6 @@ defaultAnalysisParameters = {
 
 
 ################################################################################
-# Printing
-# 0 - user wants no printing
-# 1 - user wants limited prints
-# 2 - user wants full prints
-################################################################################
-def print1(message):
-    if globalParameters["PrintLevel"] >= 1:
-        print(message)
-        sys.stdout.flush()
-
-
-def print2(message):
-    if globalParameters["PrintLevel"] >= 2:
-        print(message)
-        sys.stdout.flush()
-
-
-def printWarning(message):
-    print("Tensile::WARNING: %s" % message)
-    sys.stdout.flush()
-
-
-def printExit(message):
-    print("Tensile::FATAL: %s" % message)
-    sys.stdout.flush()
-    sys.exit(-1)
-
-
-################################################################################
 # Is query version compatible with current version
 # a yaml file is compatible with tensile if
 # tensile.major == yaml.major and tensile.minor.step > yaml.minor.step
@@ -1585,10 +1557,6 @@ def assignGlobalParameters(config, cxxCompiler=None):
     globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
     globalParameters["ROCmLdPath"] = locateExe(
         os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld"
-    )
-
-    globalParameters["ExtractKernelPath"] = locateExe(
-        os.path.join(globalParameters["ROCmPath"], "hip/bin"), "extractkernel"
     )
 
     if "AMDGPUArchPath" in config:

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,58 +27,65 @@
 #include <hip/hip_runtime.h>
 #include <hipblaslt-ext-op.h>
 #include <hipblaslt/hipblaslt.h>
+#include <hipblaslt_arguments.hpp>
 #include <iostream>
 
 #include "helper.h"
 
-void simpleAMax(hipDataType type,
-                void*       d_out,
-                void*       d_mean,
-                void*       d_invvar,
-                void*       d_in,
-                int64_t     m,
-                int64_t     n,
-                float       eps,
-                void*       d_gamma,
-                void*       d_beta,
-                hipStream_t stream);
+void simpleLayerNorm(hipDataType type,
+                     void*       d_out,
+                     void*       d_mean,
+                     void*       d_invvar,
+                     void*       d_in,
+                     int64_t     m,
+                     int64_t     n,
+                     float       eps,
+                     void*       d_gamma,
+                     void*       d_beta,
+                     hipStream_t stream);
 
 int main()
 {
-    /** This is a amax example
-     *  in  = (m, n). lda = m
-     *  out = (1). ldb = 1
-     */
+    int             deviceId;
+    hipDeviceProp_t deviceProperties;
+    static_cast<void>(hipGetDevice(&deviceId));
+    static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+    if(gpu_arch_match(deviceProperties.gcnArchName, "1[12]\\d{2}"))
+    {
+        std::cout << "This arch doesn't support Layernorm op yet" << std::endl;
+        return 0;
+    }
+
     LayerNormRunner<float> runnerF32(135, 345);
 
     runnerF32.run([&runnerF32] {
-        simpleAMax(HIP_R_32F,
-                   runnerF32.d_out,
-                   runnerF32.d_mean,
-                   runnerF32.d_invvar,
-                   runnerF32.d_in,
-                   runnerF32.m,
-                   runnerF32.n,
-                   1e-5,
-                   runnerF32.d_gamma,
-                   runnerF32.d_beta,
-                   runnerF32.stream);
+        simpleLayerNorm(HIP_R_32F,
+                        runnerF32.d_out,
+                        runnerF32.d_mean,
+                        runnerF32.d_invvar,
+                        runnerF32.d_in,
+                        runnerF32.m,
+                        runnerF32.n,
+                        1e-5,
+                        runnerF32.d_gamma,
+                        runnerF32.d_beta,
+                        runnerF32.stream);
     });
 
     return 0;
 }
 
-void simpleAMax(hipDataType type,
-                void*       d_out,
-                void*       d_mean,
-                void*       d_invvar,
-                void*       d_in,
-                int64_t     m,
-                int64_t     n,
-                float       eps,
-                void*       d_gamma,
-                void*       d_beta,
-                hipStream_t stream)
+void simpleLayerNorm(hipDataType type,
+                     void*       d_out,
+                     void*       d_mean,
+                     void*       d_invvar,
+                     void*       d_in,
+                     int64_t     m,
+                     int64_t     n,
+                     float       eps,
+                     void*       d_gamma,
+                     void*       d_beta,
+                     hipStream_t stream)
 {
     CHECK_HIPBLASLT_ERROR(hipblasltExtLayerNorm(
         type, d_out, d_mean, d_invvar, d_in, m, n, eps, d_gamma, d_beta, stream));

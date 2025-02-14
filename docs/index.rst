@@ -33,7 +33,8 @@ Our documentation is structured as follows:
 
     * :ref:`how-to-use-hipblaslt-tuning-utility`
     * :ref:`how-to-use-hipblaslt-offline-tuning`
-        
+    * :doc:`Use Stream-K with hipBLASLt <./how-to/how-to-use-streamk>`
+
   .. grid-item-card:: Contribution
 
     * :ref:`source-code-organization`

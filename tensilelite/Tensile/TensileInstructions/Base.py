@@ -77,8 +77,7 @@ class TensileInstructions:
                 asmBugs  = initAsmBugs(asmCaps)
                 self._isaInfo[isaVersion] = TensileInstructions.IsaInfo(assemblerPath, # type: ignore
                     asmCaps, archCaps, regCaps, asmBugs)
-                stop = timer()
-                print1(f"time: {stop-start}")
+
 
     def setDebugLevel(self, level: int) -> None:
         __TI_DEBUG_LEVEL__ = level

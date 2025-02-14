@@ -38,14 +38,22 @@ class VectorUnit:
 
 @dataclass
 class VectorDataTypes:
-  scaleA: VectorUnit     = field(default_factory=VectorUnit)
-  scaleB: VectorUnit     = field(default_factory=VectorUnit)
-  bias: VectorUnit       = field(default_factory=VectorUnit)
-  scaleAlpha: VectorUnit = field(default_factory=VectorUnit)
+  scaleA: VectorUnit      = field(default_factory=VectorUnit)
+  scaleB: VectorUnit      = field(default_factory=VectorUnit)
+  biasM: VectorUnit       = field(default_factory=VectorUnit)
+  biasN: VectorUnit       = field(default_factory=VectorUnit)
+  scaleAlphaM: VectorUnit = field(default_factory=VectorUnit)
+  scaleAlphaN: VectorUnit = field(default_factory=VectorUnit)
+
+  def bias(self, dim):
+      return self.biasM if dim == 0  else self.biasN
+
+  def scaleAlpha(self, dim):
+      return self.scaleAlphaM if dim == 0  else self.scaleAlphaN
 
   def isValid(self):
-    return self.scaleA.dataType or self.scaleB.dataType or self.bias.dataType \
-    or self.scaleAlpha.dataType
+    return self.scaleA.dataType != None or self.scaleB.dataType != None or self.biasM.dataType != None \
+    or self.scaleAlphaM.dataType != None or self.biasN.dataType != None or self.scaleAlphaN.dataType != None 
 
 ##############################################################################
 # StoreState

@@ -712,4 +712,4 @@ BenchmarkProblems:
 LibraryLogic:
     ScheduleName: "aquavanjaram"
     DeviceNames: ["Device 0050", "Device 0049"]
-    ArchitectureName: "gfx940"
+    ArchitectureName: "gfx942"

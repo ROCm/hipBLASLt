@@ -7,6 +7,37 @@ from enum import Enum
 
 from Tensile import __version__
 
+verbosity = 1
+
+################################################################################
+# Printing
+# 0 - user wants no printing
+# 1 - user wants limited prints
+# 2 - user wants full prints
+################################################################################
+def print1(message):
+    if verbosity >= 1:
+        print(message)
+        sys.stdout.flush()
+
+
+def print2(message):
+    if verbosity >= 2:
+        print(message)
+        sys.stdout.flush()
+
+
+def printWarning(message):
+    print("Tensile::WARNING: %s" % message)
+    sys.stdout.flush()
+
+
+def printExit(message):
+    print("Tensile::FATAL: %s" % message)
+    sys.stdout.flush()
+    sys.exit(-1)
+
+
 # get param values from structures.
 def hasParam(name, structure):
     if isinstance(structure, list):
@@ -34,8 +65,8 @@ def locateExe(defaultPath, exeName):  # /opt/rocm/bin, hip-clang
         exePath = os.path.join(path, exeName)
         if isExe(exePath):
             return exePath
-    # if we reach this point we should at least warn and maybe fail
-    return None
+
+    raise OSError(f"Failed to locate {exeName}")
 
 
 def ensurePath(path):
@@ -222,6 +253,7 @@ def hash_objs(*objs, **kwargs):
     return hash(tuple(objs))
 
 
+# Is this used?
 def ClientExecutionLock(lockPath: str):
     if not lockPath:
         return open(os.devnull)

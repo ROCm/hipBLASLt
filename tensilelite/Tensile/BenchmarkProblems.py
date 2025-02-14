@@ -33,17 +33,17 @@ from pathlib import Path
 from typing import List
 
 from Tensile import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
-from Tensile.BenchmarkStructs import BenchmarkProcess, constructForkPermutations
-from Tensile.Contractions import ProblemType as ContractionsProblemType
-from Tensile.ClientWriter import runClient, writeClientConfig, writeClientConfigIni
-from Tensile.KernelWriterAssembly import KernelWriterAssembly
-from Tensile.KernelWriter import DebugConfig
-from Tensile.SolutionStructs import Solution, ProblemType, ProblemSizes
-from Tensile.TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
-from Tensile.CustomKernels import getCustomKernelConfig
-from Tensile.Toolchain.Assembly import AssemblyToolchain
-from Tensile.Toolchain.Source import SourceToolchain
-from Tensile.Common import globalParameters, HR, print1, print2, \
+from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
+from .Contractions import ProblemType as ContractionsProblemType
+from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
+from .KernelWriterAssembly import KernelWriterAssembly
+from .KernelWriter import DebugConfig
+from .SolutionStructs import Solution, ProblemType, ProblemSizes
+from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
+from .CustomKernels import getCustomKernelConfig
+from .Toolchain.Assembly import AssemblyToolchain
+from .Toolchain.Source import SourceToolchain
+from .Common import globalParameters, HR, print1, print2, \
         printExit, printWarning, ensurePath, startTime, tqdm, state, \
         BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, IsaVersion, isaToGfx
 

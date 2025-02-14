@@ -32,6 +32,7 @@ def _tryAssembler(
         *options,
         "-",
     ]
+
     result = subprocess.run(
         args, input=asmString.encode(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )

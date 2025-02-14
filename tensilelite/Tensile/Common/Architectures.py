@@ -22,7 +22,7 @@
 
 import re
 from subprocess import run, PIPE
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from .Types import IsaVersion
 from .Utilities import locateExe
@@ -42,12 +42,6 @@ architectureMap = {
     "gfx90a": "aldebaran",
     "gfx90a:xnack+": "aldebaran",
     "gfx90a:xnack-": "aldebaran",
-    "gfx940": "aquavanjaram",
-    "gfx940:xnack+": "aquavanjaram",
-    "gfx940:xnack-": "aquavanjaram",
-    "gfx941": "aquavanjaram",
-    "gfx941:xnack+": "aquavanjaram",
-    "gfx941:xnack-": "aquavanjaram",
     "gfx942": "aquavanjaram",
     "gfx942:xnack+": "aquavanjaram",
     "gfx942:xnack-": "aquavanjaram",
