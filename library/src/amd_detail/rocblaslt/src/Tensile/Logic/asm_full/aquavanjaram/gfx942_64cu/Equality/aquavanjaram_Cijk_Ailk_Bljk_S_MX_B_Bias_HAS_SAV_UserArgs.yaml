@@ -358,8 +358,8 @@
     _WorkspaceSizePerElemC: 4
     _staggerStrideShift: 0
 - [2, 3, 0, 1]
-- - - [8192, 12288, 1, 4096, 8192, 4096, 8192, 8192]
-    - [0, 0]
+- - - [8192, 12288, 1, 4096]
+    - [0, 0.0]
 - null
 - null
 - DeviceEfficiency
