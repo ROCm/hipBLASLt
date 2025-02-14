@@ -94,6 +94,7 @@ NUM_STAGES = args.num_stages
 DIV_MI = 3 # 33.3%
 MIN_MI = 5 # min 5 solutions
 NONTEMPORALRATIO = 8
+MAX_MT = int(os.environ.get("MAX_MT", 256))
 
 OFFLOAD_ARCH = "/opt/rocm/llvm/bin/offload-arch"
 NUM_INST = "/sys/class/drm/card1/device/compute_partition_config/xcc/num_inst"
@@ -298,14 +299,14 @@ def find_matmul_instruction(mfma_instruction, size):
         for m_tiles in reversed(range(1, CU+1)):
             m_tile_size = size[0] // m_tiles
             # TODO:fp8 384x384
-            if m_tile_size > 256:
+            if m_tile_size > MAX_MT:
                 continue
             wave_tile_m = math.ceil(m_tile_size / mfma_instruction[0])
             if wave_tile_m <= 0:
                 continue
             for n_tiles in reversed(range(1, CU+1)):
                 n_tile_size = size[1] // n_tiles
-                if n_tile_size > 256:
+                if n_tile_size > MAX_MT:
                     continue
                 wave_tile_n = math.ceil(n_tile_size / mfma_instruction[1])
                 if wave_tile_n <= 0:
