@@ -1743,7 +1743,8 @@ def assignGlobalParameters(config, cxxCompiler=None):
     try:
         if os.name == "nt":
             os.environ['HIP_USE_PERL_SCRIPTS'] = '1'
-            compileArgs = ['perl'] + [shutil.which('hipcc')] + ['--version']
+            compiler = os.environ.get("HIP_PATH") + '/bin/hipcc'
+            compileArgs = ['perl'] + [compiler] + ['--version']
             output = subprocess.run(compileArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
         else:
             compiler = "hipcc"
