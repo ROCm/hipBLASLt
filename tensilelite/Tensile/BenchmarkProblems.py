@@ -169,8 +169,6 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
                                asmToolchain.assembler, 
                                asmToolchain.assemblerVersion, 
                                debugConfig, 
-                               currentIsa, 
-                               isaInfoMap
                            )
 
     # write solution, kernels and CMake

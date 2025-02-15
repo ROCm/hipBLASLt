@@ -365,8 +365,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       assembler: str,
       amdClangVersion: SemanticVersion,
       debugConfig: DebugConfig, 
-      currentIsa: IsaVersion,
-      isaInfoMap: Dict[str, IsaInfo]
     ):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
@@ -374,8 +372,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.amdClangVersion = amdClangVersion # this is a bug
     self.ti = None
     self.debugConfig = debugConfig
-    self.currentIsa = currentIsa
-    self.isaInfoMap = isaInfoMap
 
     self.do = {}
     self.do["PreLoop"]     = True
@@ -5013,12 +5009,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.kernel = kernel
     self.states.language = "ASM"
     # we already do this in the solution ctor
-    self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else self.currentIsa
-    # I really doubt we need to do this here. We would be better off verifying this in 
-    # the ctor and then dropping isaInfoMap. I don't know that the kernel should be 
-    # responsible for this at all. We know what we want to build for up front. We 
-    # should verify it in the main process before proceeding.
-    assert self.isaInfoMap[self.states.version].asmCaps["SupportedISA"] 
+    assert "ISA" in kernel
+    self.states.version = tuple(kernel["ISA"])
+    assert globalParameters["AsmCaps"][self.states.version]["SupportedISA"]
 
     return code
 

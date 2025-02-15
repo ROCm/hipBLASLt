@@ -362,8 +362,6 @@ def getSolutionAndKernelWriters(
     kernels,
     assembler: str,
     assemblerVersion: SemanticVersion,
-    currentIsa: IsaVersion,
-    isaInfoMap: Dict[str, IsaInfo],
 ):
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     solutionMinNaming = Solution.getMinNaming(solutions)
@@ -374,8 +372,6 @@ def getSolutionAndKernelWriters(
         assembler, 
         assemblerVersion, 
         DebugConfig(), 
-        currentIsa, 
-        isaInfoMap
     )
 
     return (kernelWriterAssembly, kernelMinNaming, solutionMinNaming)
@@ -628,7 +624,7 @@ def run():
 
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
     kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(
-        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion, currentIsa, isaInfoMap
+        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion
     )
 
     copyStaticFiles(outputPath)
