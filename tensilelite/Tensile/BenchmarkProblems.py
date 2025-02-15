@@ -148,7 +148,7 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
 
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     kernelMinNaming = Solution.getMinNaming(kernels)
-    kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, asmToolchain.assembler, asmToolchain.assemblerVersion, debugConfig, currentIsa)
+    kernelWriterAssembly = KernelWriterAssembly(kernelMinNaming, kernelSerialNaming, asmToolchain.assembler, asmToolchain.assemblerVersion, debugConfig)
 
     # write solution, kernels and CMake
     problemType = solutions[0]["ProblemType"]
