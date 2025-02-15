@@ -1392,7 +1392,7 @@ class Solution(collections.abc.Mapping):
     state["tailLoopOptA"] = True
     state["tailLoopOptB"] = True
 
-    if (tuple(state["ISA"]) != (9, 4, 2)) or \
+    if (state["ISA"] != IsaVersion(9, 4, 2)) or \
        (state["ProblemType"]["Sparse"]):
       state["tailLoopOptA"] = False
       state["tailLoopOptB"] = False
@@ -2283,7 +2283,7 @@ class Solution(collections.abc.Mapping):
             return
       if state["ProblemType"]["ComputeDataType"].isDouble():
         # See [4,4,4,4] snop for more info
-        if state["MatrixInstruction"] == [4,4,4,4] and (not state['ISA'] == [9,0,10]) and state["ScheduleIterAlg"] == 3:
+        if state["MatrixInstruction"] == [4,4,4,4] and (not state['ISA'] == IsaVersion(9,0,10)) and state["ScheduleIterAlg"] == 3:
           reject(state, printRejectionReason, "Currently Matrix instructions [4,4,4,4] is disabled.")
           return
     else:

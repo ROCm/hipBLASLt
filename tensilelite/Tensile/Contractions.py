@@ -700,8 +700,6 @@ class Solution:
         if 'ISA' not in d:
             if d['KernelLanguage'] == 'Assembly':
                 d['ISA'] = gfxToIsa(deviceInfo[1])
-            else:
-                d['ISA'] = [0,0,0]
 
         if 'CUCount' not in d:
             d['CUCount'] = None

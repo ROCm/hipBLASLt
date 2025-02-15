@@ -139,8 +139,8 @@ def useGlobalParameters(tensile_args):
             Common.restoreDefaultGlobalParameters()
             if args.CxxCompiler:
                 Common.globalParameters["CxxCompiler"] = args.CxxCompiler
-
-            Common.assignGlobalParameters({})
+            isa = Common.detectGlobalCurrentISA(args.device)
+            Common.assignGlobalParameters({}, isa)
 
             overrideParameters = Tensile.argUpdatedGlobalParameters(args)
             for key, value in overrideParameters.items():

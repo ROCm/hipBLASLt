@@ -4313,7 +4313,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # Special dependency cases
       if kernel["ProblemType"]["ComputeDataType"].isDouble():
         if kernel["MatrixInstruction"] == [4, 4, 4, 4]:
-          if kernel['ISA'] == [9,0,10]:
+          if kernel['ISA'] == IsaVersion(9,0,10):
             self.states.miDependency = 4
 
 

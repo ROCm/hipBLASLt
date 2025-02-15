@@ -26,8 +26,7 @@ from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
-from .Common import gfxToIsa, printExit, printWarning, print2, versionIsCompatible, __version__, \
-                    IsaVersion
+from .Common import gfxToIsa, printExit, printWarning, print2, versionIsCompatible, __version__
 
 from typing import NamedTuple, List
 import os
@@ -149,6 +148,8 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
             if "DataTypeMetadata" in solutionState["ProblemType"]:
                 solutionState["ProblemType"]["DataTypeMetadata"] = \
                     solutionState["ProblemType"]["DataTypeMetadata"].value
+            isa = solutionState["ISA"]
+            solutionState["ISA"] = [isa[0], isa[1], isa[2]]
             solutionStates.append(solutionState)
     # write dictionaries
     with open(filename, "w") as f:
@@ -277,8 +278,6 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, splitGSU: bool, printSolut
     def solutionStateToSolution(solutionState, cxxCompiler) -> Solution:
         if solutionState["KernelLanguage"] == "Assembly":
             solutionState["ISA"] = gfxToIsa(data["ArchitectureName"])
-        else:
-            solutionState["ISA"] = IsaVersion(0, 0, 0)
         solutionState["CUCount"] = data["CUCount"]
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
@@ -468,6 +467,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
         if "DataTypeMetadata" in solutionState["ProblemType"]:
             solutionState["ProblemType"]["DataTypeMetadata"] = \
                     solutionState["ProblemType"]["DataTypeMetadata"].value
+        isa = solutionState["ISA"]
+        solutionState["ISA"] = [isa[0], isa[1], isa[2]]
         solutionList.append(solutionState)
 
     if tileSelection:

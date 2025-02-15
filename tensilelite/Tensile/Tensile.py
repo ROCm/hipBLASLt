@@ -305,30 +305,49 @@ def store_max_frequency(max_frequency):
 
 
 def makeDebugConfig(config: dict) -> DebugConfig:
-    debugConfig = DebugConfig()
+
+    enableAsserts = False
+    enableDebugA = False
+    enableDebugB = False
+    enableDebugC = False
+    expectedValueC = 16.0
+    forceCExpectedValue = False
+    debugKernel = False
+    forceGenerateKernel = False
+    printSolutionRejectionReason = False
+    splitGSU = False
 
     if "EnableAsserts" in config:
-        debugConfig.enableAsserts = config["EnableAsserts"]
+        enableAsserts = config["EnableAsserts"]
     if "EnableDebugA" in config:
-        debugConfig.enableDebugA = config["EnableDebugA"]
+        enableDebugA = config["EnableDebugA"]
     if "EnableDebugB" in config:
-        debugConfig.enableDebugB = config["EnableDebugB"]
+        enableDebugB = config["EnableDebugB"]
     if "EnableDebugC" in config:
-        debugConfig.enableDebugC = config["EnableDebugC"]
+        enableDebugC = config["EnableDebugC"]
     if "ExpectedValueC" in config:
-        debugConfig.expectedValueC = config["ExpectedValueC"]
+        expectedValueC = config["ExpectedValueC"]
     if "ForceCExpectedValue" in config:
-        debugConfig.forceCExpectedValue = config["ForceCExpectedValue"]
+        forceCExpectedValue = config["ForceCExpectedValue"]
     if "DebugKernel" in config:
-        debugConfig.debugKernel = config["DebugKernel"]
+        debugKernel = config["DebugKernel"]
     if "ForceGenerateKernel" in config:
-        debugConfig.forceGenerateKernel = config["ForceGenerateKernel"]
+        forceGenerateKernel = config["ForceGenerateKernel"]
     if "PrintSolutionRejectionReason" in config:
-        debugConfig.printSolutionRejectionReason = config["PrintSolutionRejectionReason"]
+        printSolutionRejectionReason = config["PrintSolutionRejectionReason"]
     if "SplitGSU" in config:
-        debugConfig.splitGSU = config["SplitGSU"]
+        splitGSU = config["SplitGSU"]
 
-    return debugConfig
+    return DebugConfig(enableAsserts,
+                       enableDebugA,
+                       enableDebugB,
+                       enableDebugC,
+                       expectedValueC,
+                       forceCExpectedValue,
+                       debugKernel,
+                       forceGenerateKernel,
+                       printSolutionRejectionReason,
+                       splitGSU)
 
 
 ################################################################################
@@ -449,7 +468,7 @@ def Tensile(userArgs):
     if "ShortNames" not in config:
       config["ShortNames"] = args.shortNames
 
-    debugConfig = makeDebugConfig(config)
+    debugConfig = makeDebugConfig(config["GlobalParameters"])
 
     for key, value in overrideParameters.items():
         print("Overriding {0}={1}".format(key, value))
