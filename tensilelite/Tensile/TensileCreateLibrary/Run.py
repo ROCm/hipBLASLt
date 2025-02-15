@@ -344,13 +344,13 @@ def writeSolutionsAndKernelsTCL(
 
 @timing
 def getSolutionAndKernelWriters(
-    solutions, kernels, assembler: str, assemblerVersion: SemanticVersion, currentIsa: IsaVersion
+    solutions, kernels, assembler: str, assemblerVersion: SemanticVersion
 ):
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     solutionMinNaming = Solution.getMinNaming(solutions)
     kernelMinNaming = Solution.getMinNaming(kernels)
     kernelWriterAssembly = KernelWriterAssembly(
-        kernelMinNaming, kernelSerialNaming, assembler, assemblerVersion, DebugConfig(), currentIsa
+        kernelMinNaming, kernelSerialNaming, assembler, assemblerVersion, DebugConfig()
     )
 
     return (kernelWriterAssembly, kernelMinNaming, solutionMinNaming)
@@ -587,11 +587,11 @@ def run():
     print2(f"# LibraryLogicFiles: {len(logicFiles)}")
     for logicFile in logicFiles:
         print2("#   %s" % logicFile)
-    currentIsa = detectGlobalCurrentISA(0)
+
     solutions, masterLibraries = generateLogicDataAndSolutions(logicFiles, arguments, cxxCompiler)
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
     kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(
-        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion, currentIsa
+        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion
     )
 
     copyStaticFiles(outputPath)

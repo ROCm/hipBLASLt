@@ -358,14 +358,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion, debugConfig: DebugConfig, currentIsa: IsaVersion):
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion, debugConfig: DebugConfig):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
     self.amdClangVersion = amdClangVersion # this is a bug
     self.ti = None
     self.debugConfig = debugConfig
-    self.currentIsa = currentIsa
 
     self.do = {}
     self.do["PreLoop"]     = True
@@ -5002,7 +5001,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.kernel = kernel
     self.states.language = "ASM"
     # we already do this in the solution ctor
-    self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else self.currentIsa
+    assert "ISA" in kernel
+    self.states.version = tuple(kernel["ISA"])
     assert globalParameters["AsmCaps"][self.states.version]["SupportedISA"]
 
     return code

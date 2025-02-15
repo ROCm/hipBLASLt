@@ -82,8 +82,8 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion, debugConfig: DebugConfig, currentIsa: IsaVersion):
-    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, amdClangVersion, debugConfig, currentIsa)
+  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion, debugConfig: DebugConfig):
+    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, amdClangVersion, debugConfig)
 
   def getSourceFileString(self, kernel, useShortNames: bool=False) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"
