@@ -37,7 +37,7 @@ from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
 from .Common import globalParameters, printWarning, roundUp, print2, DebugConfig, DataDirection, SemanticVersion, \
-  INDEX_CHARS, MAX_FILENAME_LENGTH, IsaVersion
+  INDEX_CHARS, MAX_FILENAME_LENGTH, IsaVersion, IsaInfo
 
 import abc
 import os
@@ -358,7 +358,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # Init
   ##############################################################################
-  def __init__(self, kernelMinNaming, kernelSerialNaming, assembler: str, amdClangVersion: SemanticVersion, debugConfig: DebugConfig, currentIsa: IsaVersion):
+  def __init__(
+      self,
+      kernelMinNaming,
+      kernelSerialNaming,
+      assembler: str,
+      amdClangVersion: SemanticVersion,
+      debugConfig: DebugConfig, 
+      currentIsa: IsaVersion,
+      isaInfoMap: Dict[str, IsaInfo]
+    ):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
@@ -366,6 +375,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.ti = None
     self.debugConfig = debugConfig
     self.currentIsa = currentIsa
+    self.isaInfoMap = isaInfoMap
 
     self.do = {}
     self.do["PreLoop"]     = True
@@ -2911,6 +2921,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.ti = TensileInstructions()
     self.ti.init(version, self.assembler)
     self.ti.setKernelInfo(version, kernel["WavefrontSize"])
+    self.ti.getArchCaps
 
     self.consts = ConstValues()
     self.states = StateValues(version=version, kernel=kernel, kernelName=self.getKernelName(kernel))
@@ -5003,7 +5014,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.language = "ASM"
     # we already do this in the solution ctor
     self.states.version = tuple(kernel["ISA"]) if "ISA" in kernel else self.currentIsa
-    assert globalParameters["AsmCaps"][self.states.version]["SupportedISA"]
+    # I really doubt we need to do this here. We would be better off verifying this in 
+    # the ctor and then dropping isaInfoMap. I don't know that the kernel should be 
+    # responsible for this at all. We know what we want to build for up front. We 
+    # should verify it in the main process before proceeding.
+    assert self.isaInfoMap[self.states.version].asmCaps["SupportedISA"] 
 
     return code
 

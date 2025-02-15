@@ -27,7 +27,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Tuple
 
-from ..Common import initAsmCaps, initArchCaps, initRegisterCaps, initAsmBugs, IsaVersion, print1
+from ..Common import initAsmCaps, initArchCaps, initRegisterCaps, initAsmBugs, IsaInfo, IsaVersion
 from .Formatting import __TI_DEBUG_LEVEL__, printExit
 
 from timeit import default_timer as timer 
@@ -49,13 +49,6 @@ class TensileInstructions:
                 cls._instance._kernelInfo = {}
         return cls._instance
 
-    @dataclass
-    class IsaInfo:
-        assemblerPath: str
-        asmCaps: dict
-        archCaps: dict
-        regCaps: dict
-        asmBugs: dict
 
     @dataclass
     class kernelInfo:
@@ -63,8 +56,6 @@ class TensileInstructions:
         wavefrontSize: int = 64
 
     def init(self, isaVersion: IsaVersion, assemblerPath: str, debug: bool=False) -> None:
-        if isinstance(isaVersion, int):
-           raise Exception(f"{isaVersion}")
         with self._lock:
             if len(self._kernelInfo) > 1000:
                 self._kernelInfo = _removeIdent(self._kernelInfo)
@@ -75,8 +66,7 @@ class TensileInstructions:
                 archCaps = initArchCaps(isaVersion)
                 regCaps  = initRegisterCaps(isaVersion, archCaps)
                 asmBugs  = initAsmBugs(asmCaps)
-                self._isaInfo[isaVersion] = TensileInstructions.IsaInfo(assemblerPath, # type: ignore
-                    asmCaps, archCaps, regCaps, asmBugs)
+                self._isaInfo[isaVersion] = IsaInfo(asmCaps, archCaps, regCaps, asmBugs)
 
 
     def setDebugLevel(self, level: int) -> None:

@@ -23,14 +23,14 @@
 ################################################################################
 
 import itertools
-from typing import List
+from typing import List, Dict
 
 from . import Properties
 from . import Hardware
 from . import Common
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import state, IsaVersion
+from .Common import state, IsaVersion, IsaInfo
 
 class SingleSolutionLibrary:
     Tag = "Single"
@@ -305,6 +305,7 @@ class MasterSolutionLibrary:
                           printSolutionRejectionReason: bool,
                           supportedISA: List[IsaVersion],
                           cxxCompiler,
+                          isaInfoMap: Dict[str, IsaInfo],
                           solutionClass=Contractions.Solution,
                           libraryOrder=None,
                           placeholderName='TensileLibrary'):
@@ -468,6 +469,7 @@ class MasterSolutionLibrary:
                                                         printSolutionRejectionReason,
                                                         supportedISA,
                                                         cxxCompiler,
+                                                        isaInfoMap,
                                                         solutionClass,
                                                         libraryOrder[placeholderIndex:],
                                                         placeholderName)
@@ -475,7 +477,7 @@ class MasterSolutionLibrary:
             origSolutions = []
 
         problemType = Contractions.ProblemType.FromOriginalState(origData["ProblemType"])
-        allSolutions = [solutionClass.FromSolutionStruct(s, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler) for s in origSolutions]
+        allSolutions = [solutionClass.FromSolutionStruct(s, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, isaInfoMap) for s in origSolutions]
         cls.FixSolutionIndices(allSolutions)
 
         # library is constructed in reverse order i.e. bottom-up
@@ -496,8 +498,8 @@ class MasterSolutionLibrary:
         return rv, placeholderName
 
     @classmethod
-    def BenchmarkingLibrary(cls, solutions, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: List[IsaVersion]):
-        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler) for s in solutions])
+    def BenchmarkingLibrary(cls, solutions, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: List[IsaVersion], isaInfoMap):
+        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, isaInfoMap) for s in solutions])
         cls.FixSolutionIndices(solutionObjs)
 
         predRows = list([{

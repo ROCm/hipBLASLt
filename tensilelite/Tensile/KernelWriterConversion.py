@@ -22,17 +22,18 @@
 #
 ################################################################################
 
+from typing import Dict
 from copy import deepcopy
 from typing import List
 
 from .KernelWriterBase import KernelWriterBase
 from .TensileInstructions import DataType
 
-from .Common import globalParameters, isaToGfx, INDEX_CHARS
+from .Common import globalParameters, IsaInfo, isaToGfx, INDEX_CHARS
 
 class KernelWriterConversion(KernelWriterBase):
 
-  def __init__(self, state, load_vw, supportedArchs: List[tuple]):
+  def __init__(self, state, load_vw, supportedArchs: List[tuple], isaInfoMap: Dict[str, IsaInfo]):
     super().__init__()
 
     self.state["ProblemType"] = deepcopy(state["ProblemType"])
@@ -66,6 +67,7 @@ class KernelWriterConversion(KernelWriterBase):
     # derive parameter
     self.language = "HIP"
     self.kernelName = self.getKernelName()
+    self.isaInfoMap = isaInfoMap
     self.datatype = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
     self.int32Str = DataType('int32').toDevice(self.language)
     if self.state["ProblemType"]["DataType"].isInt8() and self.state["ProblemType"]["ComputeDataType"].isSingle() and self.state["ProblemType"]["HighPrecisionAccumulate"]:
@@ -525,9 +527,9 @@ class KernelWriterConversion(KernelWriterBase):
           if self.num_dword_load > 2:
             kStr += "  float2 accumVec2(accum[2], accum[3]);" + self.endLine
       canPKF32Arch = []
-      for arch in self.supportedArchs:
-        archTuple = tuple(arch)
-        if globalParameters["AsmCaps"][archTuple]['v_pk_add_f32']:
+      for arch in self.supportedArchs: # certainly we can move this out to the __init__
+        isa = tuple(arch)
+        if self.isaInfoMap[isa].asmCaps['v_pk_add_f32']: 
           canPKF32Arch.append(arch)
       defineStr = []
       if len(canPKF32Arch) > 0:

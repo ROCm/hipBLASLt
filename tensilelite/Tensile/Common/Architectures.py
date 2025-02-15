@@ -160,11 +160,9 @@ def _detectGlobalCurrentISA(detectionTool, deviceId: int):
             if arch in SUPPORTED_ISA:
                 print(f"# Detected GPU {deviceId} with ISA: " + isaToGfx(arch))
                 archList.append(arch)
-    if len(archList) > 0:
-        result = archList[deviceId]
     if process.returncode:
         print(f"{detectionTool} exited with code {process.returncode}")
-    return result if process.returncode == 0 else process.returncode
+    return archList[deviceId] if (len(archList) > 0 and process.returncode == 0) else process.returncode
 
 
 # locateExe silently fails which is not good

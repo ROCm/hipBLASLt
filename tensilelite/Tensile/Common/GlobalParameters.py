@@ -22,6 +22,7 @@
 #
 ################################################################################
 
+import itertools
 import math
 import os.path
 import subprocess
@@ -29,13 +30,13 @@ import sys
 import time
 from collections import OrderedDict
 from copy import deepcopy
-from typing import List
+from typing import List, Dict
 
 from Tensile import __version__
 
 from .Architectures import isaToGfx, SUPPORTED_ISA
-from .Capabilities import initArchCaps, initAsmBugs, initAsmCaps
-from .Types import IsaVersion
+from .Capabilities import initArchCaps, initAsmBugs, initAsmCaps, initRegisterCaps
+from .Types import IsaVersion, IsaInfo
 from .Utilities import locateExe, versionIsCompatible, print1, print2, printExit, printWarning, \
      verbosity
 
@@ -1453,38 +1454,40 @@ def restoreDefaultGlobalParameters():
         globalParameters[key] = value
 
 
-def printTable(rows):
-    rows = list([[str(cell) for cell in row] for row in rows])
-    colWidths = list([max([len(cell) for cell in col]) for col in zip(*rows)])
+# hopefully the isaInfoMap keys only contain isas we plan to build and not all
+def printCapabilitiesTable(isaInfoMap: Dict[str, IsaInfo]): 
+    """
+    Prints a capability table for the given parameters and ISA information map.
 
-    for row in rows:
-        for width, cell in zip(colWidths, row):
-            pad = " " * (width - len(cell))
-            print(pad, cell, sep="", end=" ")
-        print()
+    Args:
+        supportedIsas: The ISAs to show in the table.
+        isaInfoMap: The ISA information map containing assembler and architecture capabilities.
+    """
 
+    def printTable(rows):
+        rows = [[str(cell) for cell in row] for row in rows]
+        colWidths = [max(len(cell) for cell in col) for col in zip(*rows)]
 
-def printCapTable(parameters, targetIsas: List[IsaVersion]):
-    import itertools
+        for row in rows:
+            print(" ".join(cell.ljust(width) for cell, width in zip(row, colWidths)))
 
-    gfxNames = list(map(isaToGfx, targetIsas))
+    def capRow(isaInfoMap, cap, capType):
+        return [cap] + [
+            "1" if cap in getattr(info, capType) and getattr(info, capType)[cap] else "-"
+            for info in isaInfoMap.values()
+        ]
 
-    headerRow = ["cap"] + gfxNames
+    gfxs = list(map(isaToGfx, isaInfoMap.keys()))
+    headerRow = ["Capability"] + gfxs
 
-    def capRow(caps, cap):
-        return [cap] + [("1" if cap in caps[arch] and caps[arch][cap] else "0") for arch in targetIsas]
-
-    allAsmCaps = set(
-        itertools.chain(*[caps.keys() for arch, caps in parameters["AsmCaps"].items()])
+    allAsmCaps = sorted(
+        set(itertools.chain(*[info.asmCaps for info in isaInfoMap.values()])),
+        key=lambda k: (k.split("_")[-1], k),
     )
-    allAsmCaps = sorted(allAsmCaps, key=lambda k: (k.split("_")[-1], k))
-    asmCapRows = [capRow(parameters["AsmCaps"], cap) for cap in allAsmCaps]
+    asmCapRows = [capRow(isaInfoMap, cap, "asmCaps") for cap in allAsmCaps]
 
-    allArchCaps = set(
-        itertools.chain(*[caps.keys() for arch, caps in parameters["ArchCaps"].items()])
-    )
-    allArchCaps = sorted(allArchCaps)
-    archCapRows = [capRow(parameters["ArchCaps"], cap) for cap in allArchCaps]
+    allArchCaps = sorted(set(itertools.chain(*[info.archCaps for info in isaInfoMap.values()])))
+    archCapRows = [capRow(isaInfoMap, cap, "archCaps") for cap in allArchCaps]
 
     printTable([headerRow] + asmCapRows + archCapRows)
 
@@ -1568,27 +1571,19 @@ def assignGlobalParameters(config, targetIsas: List[IsaVersion], cxxCompiler=Non
     if "CodeObjectVersion" in config:
         globalParameters["CodeObjectVersion"] = config["CodeObjectVersion"]
 
-    globalParameters["AsmCaps"] = {}
-    globalParameters["ArchCaps"] = {}
-    globalParameters["AsmBugs"] = {}
-
-    # do we really need to ad [IsaVersion(0,0,0)] to targetIsas?
+    isaInfoMap = {}
     for v in targetIsas:
-        globalParameters["AsmCaps"][v] = initAsmCaps(v, cxxCompiler, False)
-        globalParameters["ArchCaps"][v] = initArchCaps(v)
-        globalParameters["AsmBugs"][v] = initAsmBugs(globalParameters["AsmCaps"][v])
+        asmCaps = initAsmCaps(v, cxxCompiler, False)
+        archCaps = initArchCaps(v)
+        regCaps = initRegisterCaps(v, archCaps)
+        asmBugs = initAsmBugs(asmCaps)
+        isaInfoMap[v] = IsaInfo(asmCaps, archCaps, regCaps, asmBugs)
 
     if verbosity >= 1:
-        printCapTable(globalParameters, targetIsas)
+        printCapabilitiesTable(isaInfoMap)
 
-    # This seems like we are restating line 1577
-    # should we error out here if an isa was requested that we don't support?
     isaList = list(
-        [
-            i
-            for i in targetIsas
-            if globalParameters["AsmCaps"][i]["SupportedISA"]
-        ]
+        [v for v in targetIsas if isaInfoMap[v].asmCaps["SupportedISA"]]
     )
 
     validParameters["ISA"] = [IsaVersion(0, 0, 0), *isaList]
@@ -1637,6 +1632,8 @@ def assignGlobalParameters(config, targetIsas: List[IsaVersion], cxxCompiler=Non
         if key not in globalParameters:
             printWarning("Global parameter %s = %s unrecognised." % (key, value))
         globalParameters[key] = value
+
+    return isaInfoMap
 
 
 def setupRestoreClocks():

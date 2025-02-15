@@ -26,18 +26,19 @@ if __name__ == "__main__":
     print("This file can no longer be run as a script.  Run 'Tensile/bin/Tensile' instead.")
     exit(1)
 
-import joblib
 import os
 import subprocess
 import sys
 import argparse
+
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import Dict
 
 from Tensile.Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR, \
-    detectGlobalCurrentISA, IsaVersion, verbosity
+    detectGlobalCurrentISA, IsaVersion, verbosity, IsaInfo
+from Tensile.KernelWriter import DebugConfig
 from Tensile.Toolchain.Assembly import AssemblyToolchain
 from Tensile.Toolchain.Source import SourceToolchain
 from Tensile.Toolchain.Validators import validateToolchain, ToolchainDefaults
@@ -46,8 +47,6 @@ from Tensile import BenchmarkProblems
 from Tensile import ClientWriter
 from Tensile import LibraryIO
 from Tensile import LibraryLogic
-
-from Tensile.KernelWriter import DebugConfig
 
 ###############################################################################
 # Execute Steps in Config
@@ -63,6 +62,7 @@ def executeStepsInConfig(
         outputPath: Path,
         asmToolchain: AssemblyToolchain,
         srcToolchain: SourceToolchain,
+        isaInfoMap: Dict[str, IsaInfo],
         cCompiler: str,
         debugConfig: DebugConfig,
         currentIsa: IsaVersion,
@@ -91,8 +91,20 @@ def executeStepsInConfig(
     # Benchmark Problems
     ##############################################################################
     if "BenchmarkProblems" in config:
-        BenchmarkProblems.main(config["BenchmarkProblems"], config["UseCache"], asmToolchain, srcToolchain, \
-                               cCompiler, outputPath, buildTmpPath, config["ShortNames"], debugConfig, currentIsa, deviceId)
+        BenchmarkProblems.main(
+            config["BenchmarkProblems"],
+            config["UseCache"],
+            asmToolchain,
+            srcToolchain,
+            cCompiler,
+            outputPath,
+            buildTmpPath,
+            config["ShortNames"], 
+            debugConfig, 
+            currentIsa, 
+            deviceId,
+            isaInfoMap,
+        )
         print1("")
 
     ##############################################################################
@@ -109,7 +121,14 @@ def executeStepsInConfig(
                 libraryLogicConfig = config["LibraryLogic"]
             else:
                 libraryLogicConfig = {}
-            LibraryLogic.main(libraryLogicConfig, srcToolchain.compiler, outputPath, debugConfig.splitGSU, debugConfig.printSolutionRejectionReason)
+            LibraryLogic.main(
+                libraryLogicConfig, 
+                srcToolchain.compiler, 
+                outputPath, 
+                debugConfig.splitGSU, 
+                debugConfig.printSolutionRejectionReason,
+                isaInfoMap, 
+            )
             print1("")
         else:
             print1("# LibraryLogic already done.")
@@ -123,7 +142,14 @@ def executeStepsInConfig(
             libraryClientConfig = config["LibraryClient"]
         else:
             libraryClientConfig = {}
-        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler, outputPath, config["ShortNames"])
+        ClientWriter.main(
+            libraryClientConfig, 
+            srcToolchain.compiler, 
+            cCompiler, 
+            isaInfoMap, 
+            outputPath, 
+            config["ShortNames"]
+        )
         print1("")
 
 
@@ -458,7 +484,7 @@ def Tensile(userArgs):
 
     cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     currentIsa = detectGlobalCurrentISA(device_id)
-    assignGlobalParameters(config.get("GlobalParameters", {}), [currentIsa], cxxCompiler)
+    isaInfoMap = assignGlobalParameters(config.get("GlobalParameters", {}), [currentIsa], cxxCompiler)
 
     asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
     srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
@@ -477,7 +503,7 @@ def Tensile(userArgs):
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
 
-    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, cCompiler, debugConfig, currentIsa, device_id)
+    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler, debugConfig, currentIsa, device_id)
 
 def TensileConfigPath(*args):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)

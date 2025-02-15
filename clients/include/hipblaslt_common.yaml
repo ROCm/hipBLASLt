@@ -54,7 +54,7 @@ Datatypes:
         d: 3
   - hipblaslt_scaling_format:
       bases: [ c_int ]
-      attr:
+      attr:    
         none: 0
         Scalar: 1
         Vector: 2
@@ -497,3 +497,4 @@ Defaults:
   compute_input_typeA: hipblaslt_datatype_invalid
   compute_input_typeB: hipblaslt_datatype_invalid
   scale_type: hipblaslt_datatype_invalid
+  

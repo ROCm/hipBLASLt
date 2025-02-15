@@ -29,7 +29,7 @@ import os
 import shutil
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import List, NamedTuple, Optional, Sequence, Union
+from typing import Dict, List, NamedTuple, Optional, Sequence, Union
 
 from Tensile import SOURCE_PATH, LibraryIO
 from Tensile.Common import (
@@ -38,6 +38,7 @@ from Tensile.Common import (
     detectGlobalCurrentISA,
     gfxToIsa,
     HR,
+    IsaInfo,
     IsaVersion,
     ParallelMap2,
     SemanticVersion,
@@ -50,6 +51,7 @@ from Tensile.Common import (
     print2,
     printWarning,
     printExit,
+    printWarning,
     state,
     SUPPORTED_ISA,
     tqdm,
@@ -205,6 +207,7 @@ def writeSolutionsAndKernels(
     kernelWriterAssembly,
     splitGSU: bool,
     cmdlineArchs: List[str],
+    isaInfoMap: Dict[str, IsaInfo],
     errorTolerant=False,
     generateSourcesAndExit=False,
     compress=True,
@@ -269,7 +272,12 @@ def writeSolutionsAndKernels(
             asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress, useShortNames
         )
         buildSourceCodeObjectFiles(
-            srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, cmdlineArchs
+            srcToolchain,
+            destLibPath,
+            objectTmpPath,
+            outputPath,
+            srcKernelFile,
+            cmdlineArchs,
         )
 
     return codeObjectFiles, numKernels
@@ -283,10 +291,10 @@ def writeSolutionsAndKernelsTCL(
     kernelHelperObjs,
     kernelWriterAssembly,
     cmdlineArchs: List[str],
+    isaInfoMap: Dict[str, IsaInfo],
     compress=True,
     useShortNames=False,
 ):
-
     outputPath = Path(outputPath)
     destLibPath = ensurePath(
         outputPath / "library"
@@ -336,7 +344,13 @@ def writeSolutionsAndKernelsTCL(
     writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
     srcKernelFile = Path(outputPath) / "Kernels.cpp"
     buildSourceCodeObjectFiles(
-        srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, cmdlineArchs
+        srcToolchain, 
+        destLibPath, 
+        objectTmpPath, 
+        outputPath, 
+        srcKernelFile, 
+        cmdlineArchs, 
+        isaInfoMap, 
     )
 
     return len(uniqueAsmKernels)
@@ -344,13 +358,24 @@ def writeSolutionsAndKernelsTCL(
 
 @timing
 def getSolutionAndKernelWriters(
-    solutions, kernels, assembler: str, assemblerVersion: SemanticVersion, currentIsa: IsaVersion
+    solutions,
+    kernels,
+    assembler: str,
+    assemblerVersion: SemanticVersion,
+    currentIsa: IsaVersion,
+    isaInfoMap: Dict[str, IsaInfo],
 ):
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     solutionMinNaming = Solution.getMinNaming(solutions)
     kernelMinNaming = Solution.getMinNaming(kernels)
     kernelWriterAssembly = KernelWriterAssembly(
-        kernelMinNaming, kernelSerialNaming, assembler, assemblerVersion, DebugConfig(), currentIsa
+        kernelMinNaming, 
+        kernelSerialNaming,
+        assembler, 
+        assemblerVersion, 
+        DebugConfig(), 
+        currentIsa, 
+        isaInfoMap
     )
 
     return (kernelWriterAssembly, kernelMinNaming, solutionMinNaming)
@@ -404,7 +429,7 @@ def generateKernelObjectsFromSolutions(solutions):
 
 
 @timing
-def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
+def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler, isaInfoMap):
 
     if ";" in args["Architecture"]:
         archs = args["Architecture"].split(";")  # user arg list format
@@ -414,10 +439,17 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
     solutions = []
     masterLibraries = {}
     nextSolIndex = 0
-
-    splitGSU = False # TODO make this configurable
-    printSolutionRejectionReason = False # TODO make this configurable
-    fIter = zip(logicFiles, itertools.repeat(cxxCompiler), itertools.repeat(splitGSU), itertools.repeat(printSolutionRejectionReason), itertools.repeat(archs))
+    splitGSU = False
+    printSolutionRejectionReason = False
+    
+    fIter = zip(
+        logicFiles,
+        itertools.repeat(cxxCompiler),
+        itertools.repeat(isaInfoMap),
+        itertools.repeat(splitGSU),
+        itertools.repeat(printSolutionRejectionReason),
+        itertools.repeat(archs),
+    )
 
     def libraryIter(lib: MasterSolutionLibrary):
         if len(lib.solutions):
@@ -529,7 +561,7 @@ def run():
     else:
         archs = arguments["Architecture"].split("_")
     targetIsas = [gfxToIsa(a) for a in archs]
-    assignGlobalParameters(arguments, targetIsas, cxxCompiler)
+    isaInfoMap = assignGlobalParameters(arguments, targetIsas, cxxCompiler)
 
     asmToolchain = AssemblyToolchain(
         assembler, offloadBundler, globalParameters["BuildIdKind"], arguments["CodeObjectVersion"]
@@ -585,13 +617,18 @@ def run():
         ]
 
     print2(f"# LibraryLogicFiles: {len(logicFiles)}")
+
     for logicFile in logicFiles:
         print2("#   %s" % logicFile)
     currentIsa = detectGlobalCurrentISA(0)
-    solutions, masterLibraries = generateLogicDataAndSolutions(logicFiles, arguments, cxxCompiler)
+
+    solutions, masterLibraries = generateLogicDataAndSolutions(
+        logicFiles, arguments, cxxCompiler, isaInfoMap
+    )
+
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
     kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(
-        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion, currentIsa
+        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion, currentIsa, isaInfoMap
     )
 
     copyStaticFiles(outputPath)
@@ -604,6 +641,7 @@ def run():
         kernelHelperObjs,
         kernelWriterAssembly,
         archs,
+        isaInfoMap,
         useShortNames=arguments["ShortNames"],
         compress=arguments["UseCompression"],
     )
@@ -611,7 +649,7 @@ def run():
     archs = [ # is this really different than the other archs above?
         isaToGfx(arch)
         for arch in targetIsas
-        if globalParameters["AsmCaps"][arch]["SupportedISA"]
+        if isaInfoMap[arch].asmCaps["SupportedISA"]
     ]
     newLibraryDir = ensurePath(os.path.join(outputPath, "library"))
     splitGSU = False

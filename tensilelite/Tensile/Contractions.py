@@ -22,6 +22,8 @@
 #
 ################################################################################
 
+from typing import Dict
+
 from .Activation import ActivationType
 from .TensileInstructions import DataType
 from . import Hardware
@@ -29,7 +31,7 @@ from . import Properties
 from .SolutionStructs import getBiasDataTypeListDefault
 from .SolutionStructs import Solution as OriginalSolution
 from .Common import gfxToIsa, internalParameters, globalParameters, state, state_key_ordering, \
-                    IsaVersion
+                    IsaVersion, IsaInfo
 
 @state_key_ordering
 class FreeIndex:
@@ -657,11 +659,11 @@ class Solution:
     HiddenKeys = ['originalSolution']
 
     @classmethod
-    def FromSolutionStruct(cls, solution, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: IsaVersion, cxxCompiler: str, ):
-        return cls.FromOriginalState(solution._state, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, solution.srcName)
+    def FromSolutionStruct(cls, solution, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: IsaVersion, cxxCompiler: str, isaInfoMap: Dict[str, IsaInfo]):
+        return cls.FromOriginalState(solution._state, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, isaInfoMap, solution.srcName)
 
     @classmethod
-    def FromOriginalState(cls, d, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: IsaVersion, cxxCompiler, srcName = "", deviceInfo=None):
+    def FromOriginalState(cls, d, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: IsaVersion, cxxCompiler, isaInfoMap, srcName = "", deviceInfo=None):
         rv = cls()
 
         if 'SolutionNameMin' in d:
@@ -705,7 +707,7 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, srcName)
+        rv.originalSolution = OriginalSolution(d, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, isaInfoMap, srcName)
         rv.srcName = srcName
 
         return rv

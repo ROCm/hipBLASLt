@@ -72,9 +72,9 @@ def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cComp
     return CMakeEnvironment(sourcedir, builddir, **options)
 
 
-buildEnv = None
+buildEnv = None # why?
 
-def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir):
+def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir: Path):
     if "PrebuiltClient" in globalParameters:
         return globalParameters["PrebuiltClient"]
 

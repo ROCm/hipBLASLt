@@ -1,6 +1,9 @@
 import math
+from typing import Dict
 from pathlib import Path
 from inspect import currentframe, getframeinfo
+
+from Tensile.Common import IsaInfo
 
 MI_KEY: str = "MatrixInstruction"
 MI_ENABLED_KEY: str = "EnableMatrixInstruction"
@@ -112,7 +115,7 @@ def elineno():
     return f"{Path(frame.filename).name}:{frame.lineno}"
 
 
-def validateMatrixInstruction(solution: dict, filepath: Path, params: dict):
+def validateMatrixInstruction(solution: dict, filepath: Path, isaInfoMap: Dict[str, IsaInfo]) -> bool:
     """
     Validates the matrix instruction configured in the given solution.
 
@@ -137,7 +140,7 @@ def validateMatrixInstruction(solution: dict, filepath: Path, params: dict):
         AssertionError: If any of the validation checks fail.
     """
     try:
-        _validateMatrixInstruction(solution, params)
+        _validateMatrixInstruction(solution, isaInfoMap)
         return True
     except AssertionError as e:
         print(f"Validation failed: {filepath} (index {solution['SolutionIndex']})")
@@ -145,7 +148,7 @@ def validateMatrixInstruction(solution: dict, filepath: Path, params: dict):
         return False
 
 
-def _validateMatrixInstruction(solution: dict, params: dict):
+def _validateMatrixInstruction(solution: dict, isaInfoMap: Dict[str, IsaInfo]):
     """
     Function to validate the matrix instruction for the provided solution.
     See exported function for more details.
@@ -186,15 +189,15 @@ def _validateMatrixInstruction(solution: dict, params: dict):
 
         # Check datatype
         if not isSparse:
-            if params["AsmCaps"][isa]["HasMFMA"]:
+            if isaInfoMap[isa].asmCaps["HasMFMA"]:
                 if not (miDataType.toChar() in validMFMA and mi in validMFMA[miDataType.toChar()]):
                     assert miDataType.isBFloat16() and mi in validMFMA["B1k"], elineno()
-            elif params["AsmCaps"][isa]["HasWMMA"]:
+            elif isaInfoMap[isa].asmCaps["HasWMMA"]:
                 assert mi in validWMMA, elineno()
         else:
             assert miDataType.toChar() in validSMFMA and mi in validSMFMA[miDataType.toChar()], elineno()
 
-        if (not params["AsmCaps"][isa]["HasMFMA"]) and params["AsmCaps"][isa]["HasWMMA"]:
+        if (not isaInfoMap[isa].asmCaps["HasMFMA"]) and isaInfoMap[isa].asmCaps["HasWMMA"]:
             if isa[0] == 10 or isa[0] == 11:
                 assert miInputPerThread == mi[2], elineno()
 
