@@ -265,6 +265,7 @@ class AddrCalculation:
                 comment="scale element by non-unit stride"))
             elementVgpr = addrVgpr
 
+        isSingleKernel = (kernel["GlobalSplitU"] == 1 or kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or kernel["StreamK"] > 0
         if ss.optSingleColVgpr:
             # This is first element in the first batch, create a byte address that will
             # be re-used by subsequent elements:
@@ -299,7 +300,7 @@ class AddrCalculation:
                                              comment="add lds offset"))
                         ss.singleColBiasAddrUpdated = True
                         return module
-                    if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                    if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
                         if self.addrScaleAlphaVecVgpr:
                             module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                             coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
@@ -314,7 +315,7 @@ class AddrCalculation:
                                                    src1=vgpr(self.addrScaleAlphaVecVgpr), \
                                                    comment="add lds offset"))
                         return module
-                    if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                    if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                         if self.addrScaleAVecVgpr:
                             module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
                             module.add(VSubU32(dst=vgpr(self.addrScaleAVecVgpr), src0=vgpr(self.coord0Vgpr), src1=sgpr(tmpSgpr)))
@@ -328,7 +329,7 @@ class AddrCalculation:
                                                    src1=vgpr(self.addrScaleAVecVgpr), \
                                                    comment="add lds offset"))
                         return module
-                    if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                    if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                         if self.addrScaleBVecVgpr:
                             module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile1"], src1=sgpr("WorkGroup1"), comment="wgp1 * MT1"))
                             module.add(VSubU32(dst=vgpr(self.addrScaleBVecVgpr), src0=vgpr(self.coord1Vgpr), src1=sgpr(tmpSgpr)))
@@ -374,7 +375,7 @@ class AddrCalculation:
                                            src1=vgpr(self.addrBiasVgpr), \
                                            comment="add lds offset"))
                     return module
-                if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
                     if self.addrScaleAlphaVecVgpr:
                         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                         coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
@@ -389,7 +390,7 @@ class AddrCalculation:
                                                src1=vgpr(self.addrScaleAlphaVecVgpr), \
                                                comment="add lds offset"))
                     return module
-                if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                     if self.addrScaleAVecVgpr:
                         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
                         module.add(VSubU32(dst=vgpr(self.addrScaleAVecVgpr), src0=vgpr(self.coord0Vgpr), src1=sgpr(tmpSgpr)))
@@ -403,7 +404,7 @@ class AddrCalculation:
                                                src1=vgpr(self.addrScaleAVecVgpr), \
                                                comment="add lds offset"))
                     return module
-                if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+                if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                     if self.addrScaleBVecVgpr:
                         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile1"], src1=sgpr("WorkGroup1"), comment="wgp1 * MT1"))
                         module.add(VSubU32(dst=vgpr(self.addrScaleBVecVgpr), src0=vgpr(self.coord1Vgpr), src1=sgpr(tmpSgpr)))
@@ -447,7 +448,7 @@ class AddrCalculation:
                                        src1=vgpr(self.addrBiasVgpr), \
                                        comment="add lds offset"))
                 return module
-            if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+            if tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
                 if self.addrScaleAlphaVecVgpr:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                     coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
@@ -462,7 +463,7 @@ class AddrCalculation:
                                            src1=vgpr(self.addrScaleAlphaVecVgpr), \
                                            comment="add lds offset"))
                 return module
-            if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+            if tc == 'ScaleAVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                 if self.addrScaleAVecVgpr:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
                     module.add(VSubU32(dst=vgpr(self.addrScaleAVecVgpr), src0=vgpr(self.coord0Vgpr), src1=sgpr(tmpSgpr)))
@@ -476,7 +477,7 @@ class AddrCalculation:
                                            src1=vgpr(self.addrScaleAVecVgpr), \
                                            comment="add lds offset"))
                 return module
-            if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+            if tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                 if self.addrScaleBVecVgpr:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile1"], src1=sgpr("WorkGroup1"), comment="wgp1 * MT1"))
                     module.add(VSubU32(dst=vgpr(self.addrScaleBVecVgpr), src0=vgpr(self.coord1Vgpr), src1=sgpr(tmpSgpr)))
@@ -697,6 +698,7 @@ class AddrCalculation:
 
         laneSGPRCount = self.kernelWriter.states.laneSGPRCount
         module = Module("emitLdChange")
+        isSingleKernel = (kernel["GlobalSplitU"] == 1 or kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or kernel["StreamK"] > 0
         if kernel["BufferStore"]:
             module.add(self.emitScaleToBpe(kernel, ss, tmpVgpr, tmpSgpr, singleUpdate, tc, dim))
             if edge and (not kernel["StoreRemapVectorWidth"] or (kernel["StoreRemapVectorWidth"] and (beta or kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel"))) and \
@@ -704,7 +706,7 @@ class AddrCalculation:
                 module.add(VCndMaskB32(dst=vgpr(addrVgpr), src0=vgpr(bufferOOB), src1=vgpr(addrVgpr), \
                                src2=sgpr(mask,laneSGPRCount), comment="LD%s clip if OOB. offset" % tc ))
         else:
-            if tc == 'Bias' and kernel["ProblemType"]["UseBias"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+            if tc == 'Bias' and kernel["ProblemType"]["UseBias"] and isSingleKernel:
                 module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                 coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
                 module.add(VSubU32(dst=vgpr(self.addrBiasVgpr), src0=vgpr(coordVgpr), src1=sgpr(tmpSgpr)))
@@ -717,7 +719,7 @@ class AddrCalculation:
                                        src0=(kernel["LdsOffsetBias"]), \
                                        src1=vgpr(self.addrBiasVgpr), \
                                        comment="add lds offset"))
-            elif tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+            elif tc == 'ScaleAlphaVec' and kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
                 if self.addrScaleAlphaVecVgpr:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))
                     coordVgpr = self.coord0Vgpr if dim == 0 else self.coord1Vgpr
@@ -731,7 +733,7 @@ class AddrCalculation:
                                            src0=(kernel["LdsOffsetBias"]), \
                                            src1=vgpr(self.addrScaleAlphaVecVgpr), \
                                            comment="add lds offset"))
-            elif tc == 'ScaleA' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+            elif tc == 'ScaleA' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                 if self.addrScaleAVecVgpr:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
                     module.add(VSubU32(dst=vgpr(self.addrScaleAVecVgpr), src0=vgpr(self.coord0Vgpr), src1=sgpr(tmpSgpr)))
@@ -744,7 +746,7 @@ class AddrCalculation:
                                        src0=(kernel["LdsOffsetBias"]), \
                                        src1=vgpr(self.addrScaleAVecVgpr), \
                                        comment="add lds offset"))
-            elif tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel")):
+            elif tc == 'ScaleBVec' and (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                 if self.addrScaleBVecVgpr:
                     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile1"], src1=sgpr("WorkGroup1"), comment="wgp1 * MT1"))
                     module.add(VSubU32(dst=vgpr(self.addrScaleBVecVgpr), src0=vgpr(self.coord1Vgpr), src1=sgpr(tmpSgpr)))

@@ -375,6 +375,8 @@ namespace TensileLite
                             ContractionInputs const& inputs,
                             uint32_t const&          workspaceOffsetInByte,
                             Hardware const*          hardware,
+                            dim3 const&              problemNumGroupTiles,
+                            dim3 const&              numWorkGroups,
                             KA&                      args) const;
 
         // Common kernel related arguments (e.g. gemm_count, arg type, MT, GSU...)
