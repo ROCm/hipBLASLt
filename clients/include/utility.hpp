@@ -102,6 +102,7 @@ inline bool is_bias_enabled(hipblasLtEpilogue_t value_)
     case HIPBLASLT_EPILOGUE_DGELU_BGRAD:
     case HIPBLASLT_EPILOGUE_BGRADA:
     case HIPBLASLT_EPILOGUE_BGRADB:
+    case HIPBLASLT_EPILOGUE_SWISH_BIAS_EXT:
         return true;
     default:
         return false;
@@ -317,7 +318,7 @@ public:
 
 /* ============================================================================================ */
 /*  device query and print out their ID and name */
-int64_t query_device_property(int device_id);
+int64_t query_device_property(int device_id, hipDeviceProp_t &props);
 
 /*  set current device to device_id */
 void set_device(int64_t device_id);

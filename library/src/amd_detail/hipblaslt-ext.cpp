@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -90,21 +90,21 @@ namespace hipblaslt_ext
     {
     }
 
-    GemmProblemTypeV2::GemmProblemTypeV2(hipblasOperation_t opA,
-                                         hipblasOperation_t opB,
-                                         hipDataType typeA,
-                                         hipDataType typeB,
-                                         hipDataType typeC,
-                                         hipDataType typeD,
+    GemmProblemTypeV2::GemmProblemTypeV2(hipblasOperation_t   opA,
+                                         hipblasOperation_t   opB,
+                                         hipDataType          typeA,
+                                         hipDataType          typeB,
+                                         hipDataType          typeC,
+                                         hipDataType          typeD,
                                          hipblasComputeType_t typeCompute)
         : pimpl(std::make_unique<GemmProblemTypeImpl>())
     {
-        pimpl->op_a = opA;
-        pimpl->op_b = opB;
-        pimpl->type_a = typeA;
-        pimpl->type_b = typeB;
-        pimpl->type_c = typeC;
-        pimpl->type_d = typeD;
+        pimpl->op_a         = opA;
+        pimpl->op_b         = opB;
+        pimpl->type_a       = typeA;
+        pimpl->type_b       = typeB;
+        pimpl->type_c       = typeC;
+        pimpl->type_d       = typeD;
         pimpl->type_compute = typeCompute;
     }
 
@@ -290,7 +290,7 @@ namespace hipblaslt_ext
     {
     public:
         u_int16_t splitK = 0;
-        int16_t wgm = 0;
+        int16_t   wgm    = 0;
     };
 
     GemmTuningV2::GemmTuningV2()
@@ -534,7 +534,7 @@ namespace hipblaslt_ext
         using std::begin;
         using std::end;
 
-        static const std::string fp8Archs[] = {"gfx940", "gfx941", "gfx942"};
+        static const std::string fp8Archs[] = {"gfx942"};
         const auto               archName   = rocblaslt_internal_get_arch_name();
         return std::find(begin(fp8Archs), end(fp8Archs), archName) != end(fp8Archs);
     }
@@ -975,12 +975,12 @@ namespace hipblaslt_ext
             return HIPBLAS_STATUS_INVALID_VALUE;
         }
 
-        int64_t lda     = m_problem_types[0].op_a == HIPBLAS_OP_N ? m : k;
-        int64_t ldb     = m_problem_types[0].op_b == HIPBLAS_OP_N ? k : n;
-        int64_t ldc     = m;
-        int64_t strideA = m * k;
-        int64_t strideB = n * k;
-        int64_t strideC = m * n;
+        int64_t           lda     = m_problem_types[0].op_a == HIPBLAS_OP_N ? m : k;
+        int64_t           ldb     = m_problem_types[0].op_b == HIPBLAS_OP_N ? k : n;
+        int64_t           ldc     = m;
+        int64_t           strideA = m * k;
+        int64_t           strideB = n * k;
+        int64_t           strideC = m * n;
         GemmProblemTypeV2 prob(m_problem_types[0].op_a,
                                m_problem_types[0].op_b,
                                m_problem_types[0].type_a,
@@ -1007,21 +1007,21 @@ namespace hipblaslt_ext
         return status;
     }
 
-    hipblasStatus_t Gemm::setProblem(int64_t            m,
-                                     int64_t            n,
-                                     int64_t            k,
-                                     int64_t            batch_count,
-                                     int64_t            lda,
-                                     int64_t            ldb,
-                                     int64_t            ldc,
-                                     int64_t            ldd,
-                                     int64_t            strideA,
-                                     int64_t            strideB,
-                                     int64_t            strideC,
-                                     int64_t            strideD,
-                                     GemmEpilogue&      epilogue,
-                                     GemmInputs&        inputs,
-                                     GemmProblemType&   problemtype)
+    hipblasStatus_t Gemm::setProblem(int64_t          m,
+                                     int64_t          n,
+                                     int64_t          k,
+                                     int64_t          batch_count,
+                                     int64_t          lda,
+                                     int64_t          ldb,
+                                     int64_t          ldc,
+                                     int64_t          ldd,
+                                     int64_t          strideA,
+                                     int64_t          strideB,
+                                     int64_t          strideC,
+                                     int64_t          strideD,
+                                     GemmEpilogue&    epilogue,
+                                     GemmInputs&      inputs,
+                                     GemmProblemType& problemtype)
     {
         rocblaslt::Debug::Instance().markerStart("hipblasLtGemmSetProblemFullCpp");
         GemmInputs      gemmInputs      = inputs;
@@ -1392,8 +1392,9 @@ namespace hipblaslt_ext
         {
             rocinputs.push_back(*reinterpret_cast<rocblaslt::RocGemmInputsV2*>(i.pimpl.get()));
         }
-        GemmProblemTypeV2 tmp = problemtype;
-        std::vector<rocblaslt::RocGemmProblemTypeV2> rocproblemtype = {*reinterpret_cast<rocblaslt::RocGemmProblemTypeV2*>(tmp.pimpl.get())};
+        GemmProblemTypeV2                            tmp = problemtype;
+        std::vector<rocblaslt::RocGemmProblemTypeV2> rocproblemtype
+            = {*reinterpret_cast<rocblaslt::RocGemmProblemTypeV2*>(tmp.pimpl.get())};
         auto status = RocBlasLtStatusToHIPStatus(
             rocblaslt_groupedgemm_create_cpp((rocblaslt_handle)m_handle,
                                              m,

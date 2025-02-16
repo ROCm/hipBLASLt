@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -110,11 +110,12 @@ class GSUOff(GSU):
         module = Module("GSU Off graIncrements")
 
         tc = tP["tensorChar"]
+        tcGR = tc if tc == "Metadata" else (tc + "GR")
         dimIdx = kernel["ProblemType"]["IndicesSummation"][loopIdx] # dimension index
         stride = writer.strideRef(tc, dimIdx)
         isMirrorIdx = dimIdx in kernel["ProblemType"]["MirrorDims%s"%tc]
 
-        m = "DepthU*Bpe%s"%(tc)
+        m = "DepthU*Bpe%s"%(tcGR)
         if isMirrorIdx:
           m = "-%s"%(m)
 

@@ -22,7 +22,7 @@ D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias)
 Where *op( )* refers to in-place operations, such as transpose and non-transpose, and *alpha* and
 *beta* are scalars.
 
-The activation function supports GELU and ReLU. the bias vector matches matrix D rows and
+The activation function supports GELU, ReLU, and Swish (SiLU). the bias vector matches matrix D rows and
 broadcasts to all D columns.
 
 The following table provides data type support. Note that fp8 and bf8 are only supported on the

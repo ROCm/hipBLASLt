@@ -26,19 +26,20 @@ if __name__ == "__main__":
     print("This file can no longer be run as a script.  Run 'Tensile/bin/Tensile' instead.")
     exit(1)
 
+import joblib
 import os
 import sys
 import argparse
 from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
-    assignGlobalParameters, restoreDefaultGlobalParameters, HR
+    assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
 from .Toolchain.Validators import validateToolchain, ToolchainDefaults
+from .Utilities.Decorators.Profile import profile
 from . import BenchmarkProblems
 from . import ClientWriter
 from . import LibraryIO
 from . import LibraryLogic
-from . import __version__
 from datetime import datetime
 from pathlib import Path
 
@@ -52,6 +53,7 @@ import subprocess
 #   LibraryLogic.main() to analyse final benchmark data and produce logic/yaml
 #   ClientWriter.main() to create client which calls library based on above yaml
 ################################################################################
+@profile
 def executeStepsInConfig(
         config: dict,
         outputPath: Path,
@@ -88,7 +90,7 @@ def executeStepsInConfig(
     ##############################################################################
     # Library Logic
     ##############################################################################
-    libraryLogicDataPath = os.path.join(outputPath, globalParameters["LibraryLogicPath"])
+    libraryLogicDataPath = os.path.join(outputPath, LIBRARY_LOGIC_DIR)
     if "LibraryLogic" in config:
         if os.path.exists(libraryLogicDataPath):
             libraryLogicFiles = os.listdir(libraryLogicDataPath)
@@ -158,7 +160,6 @@ def addCommonArguments(argParser):
         action="store", default="yaml", help="select which logic format to use")
     argParser.add_argument("--library-format", dest="LibraryFormat", choices=["yaml", "msgpack"], \
         action="store", default="yaml", help="select which library format to use")
-    argParser.add_argument("--client-build-path", default=None)
     argParser.add_argument("--client-lock", default=None)
     argParser.add_argument("--prebuilt-client", default=None)
 
@@ -192,8 +193,6 @@ def argUpdatedGlobalParameters(args):
         rv["CMakeBuildType"] = "Debug"
     if args.shortNames:
         rv["ShortNames"] = True
-    if args.client_build_path:
-        rv["ClientBuildPath"] = args.client_build_path
     if args.client_lock:
         rv["ClientExecutionLockPath"] = args.client_lock
     if args.prebuilt_client:
@@ -215,16 +214,16 @@ def get_gpu_max_frequency_smi(device_id):
     try:
         # Run rocm-smi command and capture output
         result = subprocess.run(['rocm-smi', '-s'], capture_output=True, text=True)
-       
+
         if result.returncode != 0:
            print(f"Error running rocm-smi: {result.stderr}")
            return None
-           
+
         # Parse the output
         lines = result.stdout.split('\n')
         sclk_section = False
         frequencies = []
-       
+
         # Look for the sclk section of the specified device
         for line in lines:
             line = line.split(" ")
@@ -244,10 +243,10 @@ def get_gpu_max_frequency_smi(device_id):
                         break
                 if "socclk" in line:
                     break
-        
+
         # Return the maximum frequency found
         return max(frequencies) if frequencies else None
-       
+
     except Exception as e:
        print(f"Error: {e}")
        return None
@@ -269,7 +268,7 @@ def get_gpu_max_frequency(device_id):
         if isinstance(err, hip.hipError_t) and err != hip.hipError_t.hipSuccess:
             return None
         return result
-    
+
     attrib = hip.hipDeviceAttribute_t.hipDeviceAttributeClockRate
     freq = hip_check(hip.hipDeviceGetAttribute(attrib, device_id))
 
@@ -288,9 +287,9 @@ def get_user_max_frequency():
             if frequency <= 0:
                 print("Error: Frequency must be greater than 0 MHz")
                 continue
-                    
+
             return frequency
-            
+
         except ValueError:
             print("Error: Please enter a valid number")
         except Exception as e:
@@ -423,23 +422,10 @@ def Tensile(userArgs):
         print("Overriding {0}={1}".format(key, value))
         globalParameters[key] = value
 
-    # Enable profiler
-    profiler = None
-    if globalParameters["Profiler"] == 1:
-        printWarning("cProfiler is enabled. CpuThreads will be set to 1.")
-        globalParameters["CpuThreads"] = 1
-        import cProfile
-        profiler = cProfile.Profile()
-        profiler.enable()
+    if "MaxFileName" in globalParameters or "MaxFileName" in config:
+        printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
 
     executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, cCompiler)
-
-    if profiler:
-        profiler.disable()
-        filename = outputPath / "tensile.stats"
-        profiler.dump_stats(filename)
-        filename = outputPath / "tensile.prof"
-        profiler.dump_stats(filename)
 
 def TensileConfigPath(*args):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)

@@ -27,7 +27,7 @@ from ..TensileInstructions import Module, SMulI32, VAddLShiftLeftU32, VAddU32, V
                             vectorStaticRemainder, RegisterPoolResource, vgpr, sgpr, log2, \
                             vectorStaticDivideAndRemainder
 from ..Component import ComputeStoreVgprs
-from ..Utils import DataDirection
+from ..Common import DataDirection
 
 class ComputeStoreVgprsVALU(ComputeStoreVgprs):
     kernel = {"EnableMatrixInstruction": False,
