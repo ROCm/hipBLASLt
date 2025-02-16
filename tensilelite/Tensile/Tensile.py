@@ -37,7 +37,7 @@ from typing import Dict
 
 from Tensile.Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR, \
-    detectGlobalCurrentISA, verbosity, IsaInfo, makeIsaInfoMap
+    detectGlobalCurrentISA, verbosity, IsaInfo, makeIsaInfoMap, isaToGfx
 from Tensile.KernelWriter import DebugConfig
 from Tensile.Toolchain.Assembly import AssemblyToolchain, makeAssemblyToolchain
 from Tensile.Toolchain.Source import SourceToolchain, makeSourceToolchain
@@ -143,9 +143,10 @@ def executeStepsInConfig(
         ClientWriter.main(
             libraryClientConfig, 
             srcToolchain.compiler, 
-            cCompiler, 
-            isaInfoMap, 
-            outputPath, 
+            cCompiler,
+            [isaToGfx(isa) for isa in isaInfoMap.keys()][0],
+            outputPath,
+            deviceId,
             config["ShortNames"]
         )
         print1("")

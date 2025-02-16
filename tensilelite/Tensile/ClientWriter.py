@@ -80,7 +80,7 @@ class ClientLogLevel(Enum):
 ################################################################################
 # Main
 ################################################################################
-def main(config, cxxCompiler: str, cCompiler: str, isaInfoMap: Dict[str, IsaInfo], outputPath: Path):
+def main(config, cxxCompiler: str, cCompiler: str, targetGfx: List[str], outputPath: Path, deviceId: int, useShortNames: bool=False):
 
   libraryLogicPath = ensurePath(outputPath / LIBRARY_LOGIC_DIR)
   clientLibraryPath = ensurePath(outputPath / LIBRARY_CLIENT_DIR)
@@ -98,7 +98,7 @@ def main(config, cxxCompiler: str, cCompiler: str, isaInfoMap: Dict[str, IsaInfo
   functions = []
   functionNames = []
 
-  createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, cxxCompiler, config["ShortNames"])
+  createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, cxxCompiler, targetGfx, useShortNames)
   subprocess.run(shlex.split(createLibraryScript), cwd=clientLibraryPath)
   coList = glob(os.path.join(clientLibraryPath, "library/*.co"))
   yamlList = glob(os.path.join(clientLibraryPath, "library/*.yaml"))
@@ -106,7 +106,7 @@ def main(config, cxxCompiler: str, cCompiler: str, isaInfoMap: Dict[str, IsaInfo
   clientParametersPaths = []
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary) \
-        = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler, isaInfoMap)
+        = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler, False, False, [targetGfx])
     functions.append((scheduleName, problemType))
     functionNames.append("tensile_%s" % (problemType))
     problemSizes = ProblemSizesMock(exactLogic) if exactLogic else ProblemSizesMockDummy()
@@ -151,6 +151,7 @@ def main(config, cxxCompiler: str, cCompiler: str, isaInfoMap: Dict[str, IsaInfo
                                   newLibrary=newLibrary,
                                   configBase="ClientParameters_%s"%str(ProblemType(problemType)),
                                   codeObjectFiles=coList,
+                                  deviceId=deviceId,
                                   tileAwareSelection=False,
                                   libraryFile=yamlList[0]))
 
@@ -201,7 +202,7 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: 
 
   return process.returncode
 
-def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, useShortNames: bool=False):
+def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, targetGfx, useShortNames: bool=False):
   import io
   runScriptFile = io.StringIO()
 
@@ -219,7 +220,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, useSho
   if globalParameters["KeepBuildTmp"]:
     callCreateLibraryCmd += " --keep-build-tmp"
 
-  callCreateLibraryCmd += " --architecture=" + globalParameters["Architecture"]
+  callCreateLibraryCmd += " --architecture=" + targetGfx
   callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
   callCreateLibraryCmd += " --cxx-compiler=" + cxxCompiler
   callCreateLibraryCmd += " --library-format=" + globalParameters["LibraryFormat"]
@@ -232,17 +233,6 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, useSho
 
   return runScriptFile.getvalue()
 
-def writeBuildClientLibraryScript(path, libraryLogicPath, cxxCompiler):
-  filename = os.path.join(path, \
-    "build.%s" % ("bat" if os.name == "nt" else "sh") )
-  with open(filename, "w") as file:
-    file.write("#!/bin/bash\n\n")
-    file.write("set -ex\n")
-    file.write(getBuildClientLibraryScript(path, libraryLogicPath, cxxCompiler))
-
-  if os.name != "nt":
-    os.chmod(filename, 0o777)
-  return filename
 
 def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, buildDir, configPaths=None):
   if configPaths is None:
