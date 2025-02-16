@@ -50,6 +50,7 @@ from .Activation import ActivationType
 from .CustomKernels import isCustomKernelConfig
 from Tensile.Common import print2, printExit, printWarning, INDEX_CHARS, DebugConfig, DataDirection, \
                            SemanticVersion, IsaVersion, IsaInfo
+from Tensile.Toolchain.Component import Assembler
 
 from math import ceil, log, floor
 from copy import deepcopy
@@ -86,13 +87,37 @@ class KernelWriterAssembly(KernelWriter):
       self,
       kernelMinNaming,
       kernelSerialNaming,
-      assembler: str,
-      amdClangVersion: SemanticVersion,
+      assembler: Assembler,
       debugConfig: DebugConfig, 
     ):
-    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, amdClangVersion, debugConfig)
+    super(KernelWriterAssembly, self).__init__(kernelMinNaming, kernelSerialNaming, assembler, debugConfig)
 
-  def getSourceFileString(self, kernel, useShortNames: bool=False) -> Tuple[int, str]:
+
+  def _getCustomKernelSource(self, useShortNames, kernel, CustomKernelDirectory):
+    kernelName = self.getKernelFileBase(useShortNames, kernel)
+    with open(os.path.join(CustomKernelDirectory, (kernelName + ".s"))) as f:
+      rocmVersion = self.assembler.rocm_version
+      if not (rocmVersion.major >= 6 and rocmVersion.patch >= 32650):
+        code = []
+        for line in f.readlines():
+          if "amdhsa_user_sgpr_kernarg_preload" not in line:
+            code.append(line)
+        code = "".join(code)
+      else:
+        code = f.read()
+
+    self.tPA = {}
+    self.tPB = {}
+    self.states.kernel = kernel
+    self.states.language = "ASM"
+    self.states.version = kernel["ISA"]
+
+    return code
+
+
+  def getSourceFileString(self, 
+                          kernel, 
+                          useShortNames: bool=False) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"
     # Skip if .o files will have already been built for this file
     if kernel.duplicate:
@@ -11196,7 +11221,7 @@ class KernelWriterAssembly(KernelWriter):
         addrScaleAVec, addrScaleBVec, addrScaleAlphaVec, biasLocalBarrierInit, \
         tmpVgpr, tmpVgprDynamic, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
         batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, factorDim, \
-        self.amdClangVersion)
+        self.assembler.version)
 
   ##############################################################################
   def openPrefetchGlobalRead2(self, kernel):

@@ -36,8 +36,9 @@ from .CustomKernels import isCustomKernelConfig
 from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
-from .Common import globalParameters, printWarning, roundUp, print2, DebugConfig, DataDirection, SemanticVersion, \
-  INDEX_CHARS, MAX_FILENAME_LENGTH, IsaVersion, IsaInfo
+from .Common import printWarning, roundUp, print2, DebugConfig, DataDirection, \
+  INDEX_CHARS, MAX_FILENAME_LENGTH, IsaVersion
+from Tensile.Toolchain.Component import Assembler
 
 import abc
 import os
@@ -362,14 +363,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self,
       kernelMinNaming,
       kernelSerialNaming,
-      assembler: str,
-      amdClangVersion: SemanticVersion,
+      assembler: Assembler,
       debugConfig: DebugConfig, 
     ):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
-    self.amdClangVersion = amdClangVersion # this is a bug
     self.ti = None
     self.debugConfig = debugConfig
 
@@ -2915,7 +2914,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     version = tuple(kernel["ISA"])
     if self.ti == None:
       self.ti = TensileInstructions()
-    self.ti.init(version, self.assembler)
+    self.ti.init(version, str(self.assembler.path))
     self.ti.setKernelInfo(version, kernel["WavefrontSize"])
     self.ti.getArchCaps
 
@@ -4991,29 +4990,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     return firstPart + secondPart
 
-
-  def _getCustomKernelSource(self, useShortNames, kernel, CustomKernelDirectory):
-    kernelName = self.getKernelFileBase(useShortNames, kernel)
-    with open(os.path.join(CustomKernelDirectory, (kernelName + ".s"))) as f:
-      if not (self.amdClangVersion.major >= 6 and self.amdClangVersion.patch >= 32650):
-        code = []
-        for line in f.readlines():
-          if "amdhsa_user_sgpr_kernarg_preload" not in line:
-            code.append(line)
-        code = "".join(code)
-      else:
-        code = f.read()
-
-    self.tPA = {}
-    self.tPB = {}
-    self.states.kernel = kernel
-    self.states.language = "ASM"
-    # we already do this in the solution ctor
-    assert "ISA" in kernel
-    self.states.version = tuple(kernel["ISA"])
-    assert globalParameters["AsmCaps"][self.states.version]["SupportedISA"]
-
-    return code
 
   def _getKernelSource(self, kernel: Solution):
     """

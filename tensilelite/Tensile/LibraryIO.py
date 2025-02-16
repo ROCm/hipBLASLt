@@ -226,7 +226,7 @@ def parseSolutionsData(data, srcFile, cxxCompiler, splitGSU: bool, printSolution
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
-        solutionObject = Solution(solutionState, splitGSU, printSolutionRejectionReason, [solutionState["ISA"]], cxxCompiler, isaInfoMap, srcFile)
+        solutionObject = Solution(solutionState, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap, srcFile)
         solutions.append(solutionObject)
     problemType = solutions[0]["ProblemType"]
     problemSizes = ProblemSizes(problemType, problemSizesConfig)
@@ -242,12 +242,38 @@ class LibraryLogic(NamedTuple):
     exactLogic: list
     library: SolutionLibrary.MasterSolutionLibrary
 
-def parseLibraryLogicFile(filename, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, archs, isaInfoMap: Dict[str, IsaInfo]):
+def parseLibraryLogicFile(
+        filename, 
+        cxxCompiler, 
+        splitGSU: bool, 
+        printSolutionRejectionReason: bool, 
+        archs, 
+        isaInfoMap: Dict[str, IsaInfo],
+        lazyLibraryLoading: bool
+    ):
     """Wrapper function to read and parse a library logic file."""
-    return parseLibraryLogicData(read(filename, True), filename, cxxCompiler, splitGSU, printSolutionRejectionReason, archs, isaInfoMap)
+    return parseLibraryLogicData(
+               read(filename, True), 
+               filename, 
+               cxxCompiler, 
+               splitGSU,
+               printSolutionRejectionReason, 
+               archs, 
+               isaInfoMap,
+               lazyLibraryLoading
+           )
 
 
-def parseLibraryLogicData(data, srcFile, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, archs, isaInfoMap: Dict[str, IsaInfo]):
+def parseLibraryLogicData(
+        data, 
+        srcFile, 
+        cxxCompiler, 
+        splitGSU: bool, 
+        printSolutionRejectionReason: bool, 
+        archs, 
+        isaInfoMap: Dict[str, IsaInfo],
+        lazyLibraryLoading: bool
+    ):
     """Parses the data of a library logic file."""
     if isinstance(data, List):
         data = parseLibraryLogicList(data, srcFile)
@@ -293,7 +319,7 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, splitGSU: bool, printSolut
             # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
             solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
 
-        solutionObject = Solution(solutionState, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, isaInfoMap, srcFile)
+        solutionObject = Solution(solutionState, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap, srcFile)
         solutionProblemType = solutionObject["ProblemType"]
         if problemType != solutionProblemType:
             # find the mismatched items in ProblemType
@@ -307,7 +333,15 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, splitGSU: bool, printSolut
 
     solutions = [solutionStateToSolution(solutionState, cxxCompiler, isaInfoMap) for solutionState in data["Solutions"]]
 
-    newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, isaInfoMap)
+    newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(
+        data, 
+        solutions, 
+        splitGSU, 
+        printSolutionRejectionReason, 
+        cxxCompiler, 
+        isaInfoMap,
+        lazyLibraryLoading
+    )
 
     return LibraryLogic(data["ScheduleName"], data["ArchitectureName"], problemType, solutions, \
             data.get("ExactLogic"), newLibrary)

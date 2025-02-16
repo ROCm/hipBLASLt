@@ -24,10 +24,10 @@
 
 import subprocess
 from functools import lru_cache
-from typing import Tuple
+from typing import List, Dict
 
 from .Architectures import isaToGfx
-from .Types import IsaVersion
+from .Types import IsaVersion, IsaInfo
 
 
 def _tryAssembler(
@@ -236,3 +236,13 @@ def initAsmBugs(asmCaps) -> dict:
     rv["ExplicitNC"] = asmCaps["HasExplicitNC"]
 
     return rv
+
+def makeIsaInfoMap(targetIsas: List[IsaVersion], cxxCompiler: str) -> Dict[IsaVersion, IsaInfo]:
+    isaInfoMap = {}
+    for v in targetIsas:
+        asmCaps = initAsmCaps(v, cxxCompiler, False)
+        archCaps = initArchCaps(v)
+        regCaps = initRegisterCaps(v, archCaps)
+        asmBugs = initAsmBugs(asmCaps)
+        isaInfoMap[v] = IsaInfo(asmCaps, archCaps, regCaps, asmBugs)
+    return isaInfoMap

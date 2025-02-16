@@ -35,17 +35,16 @@ from Tensile import SOURCE_PATH, LibraryIO
 from Tensile.Common import (
     CHeader,
     DebugConfig,
-    detectGlobalCurrentISA,
     gfxToIsa,
     HR,
     IsaInfo,
     IsaVersion,
+    makeIsaInfoMap,
     ParallelMap2,
     SemanticVersion,
     architectureMap,
     assignGlobalParameters,
     ensurePath,
-    globalParameters,
     isaToGfx,
     print1,
     print2,
@@ -66,13 +65,13 @@ from Tensile.KernelWriterBase import (
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.SolutionStructs import Solution
 from Tensile.TensileInstructions import TensileInstructions
-from Tensile.Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
-from Tensile.Toolchain.Source import SourceToolchain, buildSourceCodeObjectFiles
+from Tensile.Toolchain.Assembly import makeAssemblyToolchain, buildAssemblyCodeObjectFiles
+from Tensile.Toolchain.Source import makeSourceToolchain, SourceToolchain, buildSourceCodeObjectFiles
 from Tensile.Toolchain.Validators import (
     ToolchainDefaults,
-    getVersion,
     validateToolchain,
 )
+from Tensile.Toolchain.Component import Assembler
 from Tensile.Utilities.Decorators.Profile import profile
 from Tensile.Utilities.Decorators.Timing import timing
 
@@ -182,9 +181,8 @@ def writeHelpers(
         kernelHeaderFile.write(CHeader)
         kernelSourceFile.write('#include "Kernels.h"\n')
         kernelHeaderFile.write("#pragma once\n")
-        if globalParameters["RuntimeLanguage"] == "HIP":
-            kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
-            kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
+        kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
+        kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
         kernelHeaderFile.write('#include "KernelHeader.h"\n\n')
         HeaderText = ""
         for ko in kernelHelperObjs:
@@ -207,7 +205,6 @@ def writeSolutionsAndKernels(
     kernelWriterAssembly,
     splitGSU: bool,
     cmdlineArchs: List[str],
-    isaInfoMap: Dict[str, IsaInfo],
     errorTolerant=False,
     generateSourcesAndExit=False,
     compress=True,
@@ -252,7 +249,7 @@ def writeSolutionsAndKernels(
 
     def assemble(ret):
         p, isa, wavefrontsize = ret
-        asmToolchain.assemble(str(p), str(p.with_suffix(".o")), isaToGfx(isa), wavefrontsize)
+        asmToolchain.assembler(isaToGfx(isa), wavefrontsize, str(p), str(p.with_suffix(".o")))
 
     unaryWriteAssembly = functools.partial(writeAssembly, assemblyTmpPath)
     compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
@@ -269,10 +266,18 @@ def writeSolutionsAndKernels(
 
     if not generateSourcesAndExit:
         codeObjectFiles += buildAssemblyCodeObjectFiles(
-            asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress, useShortNames
+            asmToolchain.linker,
+            asmToolchain.bundler,
+            asmKernels,
+            kernelWriterAssembly,
+            destLibPath,
+            assemblyTmpPath,
+            compress,
+            useShortNames
         )
         buildSourceCodeObjectFiles(
-            srcToolchain,
+            srcToolchain.compiler,
+            srcToolchain.bundler,
             destLibPath,
             objectTmpPath,
             outputPath,
@@ -291,7 +296,6 @@ def writeSolutionsAndKernelsTCL(
     kernelHelperObjs,
     kernelWriterAssembly,
     cmdlineArchs: List[str],
-    isaInfoMap: Dict[str, IsaInfo],
     compress=True,
     useShortNames=False,
 ):
@@ -323,7 +327,7 @@ def writeSolutionsAndKernelsTCL(
 
     def assemble(ret):
         p, isa, wavefrontsize = ret
-        asmToolchain.assemble(str(p), str(p.with_suffix(".o")), isaToGfx(isa), wavefrontsize)
+        asmToolchain.assembler(isaToGfx(isa), wavefrontsize, str(p), str(p.with_suffix(".o")))
 
     unaryProcessKernelSource = functools.partial(
         processKernelSource, kernelWriterAssembly, TensileInstructions(), useShortNames
@@ -337,20 +341,28 @@ def writeSolutionsAndKernelsTCL(
         multiArg=False,
         return_as="list"
     )
+
     buildAssemblyCodeObjectFiles(
-        asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress, useShortNames
+        asmToolchain.linker,
+        asmToolchain.bundler,
+        asmKernels, 
+        kernelWriterAssembly,
+        destLibPath,
+        assemblyTmpPath,
+        compress,
+        useShortNames
     )
 
     writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
     srcKernelFile = Path(outputPath) / "Kernels.cpp"
     buildSourceCodeObjectFiles(
-        srcToolchain, 
+        srcToolchain.compiler,
+        srcToolchain.bundler,
         destLibPath, 
         objectTmpPath, 
         outputPath, 
         srcKernelFile, 
         cmdlineArchs, 
-        isaInfoMap, 
     )
 
     return len(uniqueAsmKernels)
@@ -360,8 +372,7 @@ def writeSolutionsAndKernelsTCL(
 def getSolutionAndKernelWriters(
     solutions,
     kernels,
-    assembler: str,
-    assemblerVersion: SemanticVersion,
+    assembler: Assembler,
 ):
     kernelSerialNaming = Solution.getSerialNaming(kernels)
     solutionMinNaming = Solution.getMinNaming(solutions)
@@ -369,8 +380,7 @@ def getSolutionAndKernelWriters(
     kernelWriterAssembly = KernelWriterAssembly(
         kernelMinNaming, 
         kernelSerialNaming,
-        assembler, 
-        assemblerVersion, 
+        assembler,
         DebugConfig(), 
     )
 
@@ -441,10 +451,11 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler, isaInfoMap):
     fIter = zip(
         logicFiles,
         itertools.repeat(cxxCompiler),
-        itertools.repeat(isaInfoMap),
         itertools.repeat(splitGSU),
         itertools.repeat(printSolutionRejectionReason),
         itertools.repeat(archs),
+        itertools.repeat(isaInfoMap),
+        itertools.repeat(args["LazyLibraryLoading"]),
     )
 
     def libraryIter(lib: MasterSolutionLibrary):
@@ -536,39 +547,38 @@ def run():
     global verbosity
     verbosity = arguments["PrintLevel"]
     outputPath = Path(ensurePath(os.path.abspath(arguments["OutputPath"])))
-    cxxCompiler, cCompiler, offloadBundler, assembler, hipconfig = validateToolchain(
+    cxxCompiler, _, offloadBundler, _, _ = validateToolchain(
         arguments["CxxCompiler"],
         arguments["CCompiler"],
         arguments["OffloadBundler"],
         arguments["Assembler"],
         ToolchainDefaults.HIP_CONFIG,
     )
-    print1(f"# HIP Version:         {getVersion(hipconfig, regex=r'(.+)')}")
-    print1(f"# Cxx Compiler:        {cxxCompiler} (version {getVersion(cxxCompiler)})")
-    print1(f"# C Compiler:          {cCompiler} (version {getVersion(cCompiler)})")
-    print1(f"# Assembler:           {assembler} (version {getVersion(assembler)})")
-    print1(f"# Offload Bundler:     {offloadBundler} (version {getVersion(offloadBundler)})")
-    print1(f"# Code Object Version: {arguments['CodeObjectVersion']}")
-    print1(f"# Architecture(s):     {arguments['Architecture']}")
-    print1(f"# Library Format:      {arguments['LibraryFormat']}")
 
     if ";" in arguments["Architecture"]:
         archs = arguments["Architecture"].split(";")
     else:
         archs = arguments["Architecture"].split("_")
     targetIsas = [gfxToIsa(a) for a in archs]
-    isaInfoMap = assignGlobalParameters(arguments, targetIsas, cxxCompiler)
+    isaInfoMap = makeIsaInfoMap(targetIsas, cxxCompiler)
+    assignGlobalParameters(arguments, isaInfoMap, cxxCompiler)
 
-    asmToolchain = AssemblyToolchain(
-        assembler, offloadBundler, globalParameters["BuildIdKind"], arguments["CodeObjectVersion"]
+    asmToolchain = makeAssemblyToolchain(
+        cxxCompiler,
+        offloadBundler, 
+        arguments["CodeObjectVersion"],
+        arguments["BuildIdKind"]
     )
-    srcToolchain = SourceToolchain(
+    srcToolchain = makeSourceToolchain(
         cxxCompiler,
         offloadBundler,
-        globalParameters["BuildIdKind"],
-        globalParameters["AsanBuild"],
-        globalParameters["SaveTemps"],
+        arguments["AsanBuild"],
+        arguments["BuildIdKind"],
+        save_temps=False
     )
+
+    print1(asmToolchain.assembler)
+    print1(asmToolchain.bundler)
 
     if not os.path.exists(arguments["LogicPath"]):
         printExit(f"LogicPath {arguments['LogicPath']} doesn't exist")
@@ -616,7 +626,6 @@ def run():
 
     for logicFile in logicFiles:
         print2("#   %s" % logicFile)
-    currentIsa = detectGlobalCurrentISA(0)
 
     solutions, masterLibraries = generateLogicDataAndSolutions(
         logicFiles, arguments, cxxCompiler, isaInfoMap
@@ -624,7 +633,7 @@ def run():
 
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
     kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(
-        solutions, kernels, asmToolchain.assembler, asmToolchain.assemblerVersion
+        solutions, kernels, asmToolchain.assembler
     )
 
     copyStaticFiles(outputPath)
@@ -637,7 +646,6 @@ def run():
         kernelHelperObjs,
         kernelWriterAssembly,
         archs,
-        isaInfoMap,
         useShortNames=arguments["ShortNames"],
         compress=arguments["UseCompression"],
     )
@@ -651,7 +659,7 @@ def run():
     splitGSU = False
     for archName, newMasterLibrary in masterLibraries.items():
         if archName in archs:
-            if globalParameters["LazyLibraryLoading"]:
+            if arguments["LazyLibraryLoading"]:
                 masterFile = os.path.join(newLibraryDir, "TensileLibrary_lazy_" + archName)
             else:
                 masterFile = os.path.join(newLibraryDir, "TensileLibrary_" + archName)
@@ -662,7 +670,7 @@ def run():
                 lib.applyNaming(splitGSU, kernelMinNaming)
                 LibraryIO.write(filename, state(lib), arguments["LibraryFormat"])
 
-    if not globalParameters["KeepBuildTmp"]:
+    if not arguments["KeepBuildTmp"]:
         buildTmp = Path(arguments["OutputPath"]).parent / "library" / "build_tmp"
         if buildTmp.exists() and buildTmp.is_dir():
             shutil.rmtree(buildTmp)

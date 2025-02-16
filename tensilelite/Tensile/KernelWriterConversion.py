@@ -29,7 +29,7 @@ from typing import List
 from .KernelWriterBase import KernelWriterBase
 from .TensileInstructions import DataType
 
-from .Common import globalParameters, IsaInfo, isaToGfx, INDEX_CHARS
+from .Common import IsaInfo, isaToGfx, INDEX_CHARS
 
 class KernelWriterConversion(KernelWriterBase):
 

@@ -659,11 +659,11 @@ class Solution:
     HiddenKeys = ['originalSolution']
 
     @classmethod
-    def FromSolutionStruct(cls, solution, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: IsaVersion, cxxCompiler: str, isaInfoMap: Dict[str, IsaInfo]):
-        return cls.FromOriginalState(solution._state, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, isaInfoMap, solution.srcName)
+    def FromSolutionStruct(cls, solution, splitGSU: bool, printSolutionRejectionReason: bool, cxxCompiler: str, isaInfoMap: Dict[str, IsaInfo]):
+        return cls.FromOriginalState(solution._state, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap, solution.srcName)
 
     @classmethod
-    def FromOriginalState(cls, d, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: IsaVersion, cxxCompiler, isaInfoMap, srcName = "", deviceInfo=None):
+    def FromOriginalState(cls, d, splitGSU: bool, printSolutionRejectionReason: bool, cxxCompiler, isaInfoMap, srcName = "", deviceInfo=None):
         rv = cls()
 
         if 'SolutionNameMin' in d:
@@ -707,7 +707,7 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, isaInfoMap, srcName)
+        rv.originalSolution = OriginalSolution(d, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap, srcName)
         rv.srcName = srcName
 
         return rv

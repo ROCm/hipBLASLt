@@ -37,22 +37,14 @@ from .Activation import ActivationType
 from .CustomKernels import isCustomKernelConfig
 from .AsmStoreState import VectorDataTypes
 
-from .Common import assignParameterWithDefault, \
-                    defaultProblemType, defaultSolution, \
-                    defaultInternalSupportParams, \
-                    globalParameters, internalParameters, \
-                    print2, printExit, printWarning, \
-                    validMFMA, validSMFMA, validParameters, \
-                    validGEMMTypes, HPATypes, roundUp, validWMMA, \
-                    INDEX_CHARS, IsaVersion, print1
-
 from .Common import assignParameterWithDefault, IsaInfo, \
                     defaultProblemType, defaultSolution, \
                     defaultInternalSupportParams, \
                     globalParameters, internalParameters, \
                     print2, printExit, printWarning, \
                     validMFMA, validSMFMA, validParameters, \
-                    validGEMMTypes, HPATypes, roundUp, validWMMA, INDEX_CHARS, print1
+                    validGEMMTypes, HPATypes, roundUp, validWMMA, \
+                    INDEX_CHARS, IsaVersion
 
 from collections import OrderedDict
 from collections.abc import Mapping
@@ -1066,9 +1058,8 @@ class Solution(collections.abc.Mapping):
     config, 
     splitGSU: bool, 
     printSolutionRejectionReason: bool, 
-    targetIsas: List[IsaVersion], 
     cxxCompiler: str, 
-    isaInfoMap: Dict[str, IsaInfo], 
+    isaInfoMap: Dict[IsaVersion, IsaInfo], 
     srcName: str = ""
   ):
 
@@ -1078,6 +1069,7 @@ class Solution(collections.abc.Mapping):
     self.srcName = srcName
     self.splitGSU = splitGSU
     config = config
+    targetIsas = list(isaInfoMap.keys())
 
     self._state = {}
     # problem type

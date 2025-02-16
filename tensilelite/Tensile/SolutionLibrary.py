@@ -23,14 +23,13 @@
 ################################################################################
 
 import itertools
-from typing import List, Dict
+from typing import Dict
 
 from . import Properties
 from . import Hardware
-from . import Common
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import state, IsaVersion, IsaInfo
+from .Common import state, IsaInfo, gfxToIsa
 
 class SingleSolutionLibrary:
     Tag = "Single"
@@ -303,9 +302,9 @@ class MasterSolutionLibrary:
                           origSolutions,
                           splitGSU: bool,
                           printSolutionRejectionReason: bool,
-                          supportedISA: List[IsaVersion],
                           cxxCompiler,
                           isaInfoMap: Dict[str, IsaInfo],
+                          lazyLibraryLoading: bool,
                           solutionClass=Contractions.Solution,
                           libraryOrder=None,
                           placeholderName='TensileLibrary'):
@@ -319,7 +318,7 @@ class MasterSolutionLibrary:
             if devicePart == "fallback":
                 pred = Hardware.HardwarePredicate("TruePred")
             else:
-                pred = Hardware.HardwarePredicate.FromHardware(Common.gfxToIsa(devicePart), cuCount)
+                pred = Hardware.HardwarePredicate.FromHardware(gfxToIsa(devicePart), cuCount)
 
             newLib.rows.append({"predicate": pred, "library": library})
 
@@ -402,7 +401,7 @@ class MasterSolutionLibrary:
             else:
                 assert 0 and "Unrecognized LibraryType."
 
-            if Common.globalParameters["LazyLibraryLoading"]:
+            if lazyLibraryLoading:
                 placeholderName += '_' + str(problemType.aType) + str(problemType.bType)
                 placeholderName += '_' + str(problemType.cType) + str(problemType.computeInputType)
                 if problemType.activationType != 'none':
@@ -447,7 +446,7 @@ class MasterSolutionLibrary:
         # end library creation functions
 
         if libraryOrder is None:
-            if Common.globalParameters["LazyLibraryLoading"]:
+            if lazyLibraryLoading:
                 libraryOrder = [
                     hardware, operationIdentifier, performanceMetric, predicates,
                     placeholder, selection
@@ -467,9 +466,9 @@ class MasterSolutionLibrary:
                                                         origSolutions,
                                                         splitGSU,
                                                         printSolutionRejectionReason,
-                                                        supportedISA,
                                                         cxxCompiler,
                                                         isaInfoMap,
+                                                        lazyLibraryLoading,
                                                         solutionClass,
                                                         libraryOrder[placeholderIndex:],
                                                         placeholderName)
@@ -477,7 +476,7 @@ class MasterSolutionLibrary:
             origSolutions = []
 
         problemType = Contractions.ProblemType.FromOriginalState(origData["ProblemType"])
-        allSolutions = [solutionClass.FromSolutionStruct(s, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, isaInfoMap) for s in origSolutions]
+        allSolutions = [solutionClass.FromSolutionStruct(s, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap) for s in origSolutions]
         cls.FixSolutionIndices(allSolutions)
 
         # library is constructed in reverse order i.e. bottom-up
@@ -498,8 +497,8 @@ class MasterSolutionLibrary:
         return rv, placeholderName
 
     @classmethod
-    def BenchmarkingLibrary(cls, solutions, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, supportedISA: List[IsaVersion], isaInfoMap):
-        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, splitGSU, printSolutionRejectionReason, supportedISA, cxxCompiler, isaInfoMap) for s in solutions])
+    def BenchmarkingLibrary(cls, solutions, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, isaInfoMap):
+        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap) for s in solutions])
         cls.FixSolutionIndices(solutionObjs)
 
         predRows = list([{

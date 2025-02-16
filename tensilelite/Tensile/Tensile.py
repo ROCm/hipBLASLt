@@ -37,10 +37,10 @@ from typing import Dict
 
 from Tensile.Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR, \
-    detectGlobalCurrentISA, IsaVersion, verbosity, IsaInfo
+    detectGlobalCurrentISA, verbosity, IsaInfo, makeIsaInfoMap
 from Tensile.KernelWriter import DebugConfig
-from Tensile.Toolchain.Assembly import AssemblyToolchain
-from Tensile.Toolchain.Source import SourceToolchain
+from Tensile.Toolchain.Assembly import AssemblyToolchain, makeAssemblyToolchain
+from Tensile.Toolchain.Source import SourceToolchain, makeSourceToolchain
 from Tensile.Toolchain.Validators import validateToolchain, ToolchainDefaults
 from Tensile.Utilities.Decorators.Profile import profile
 from Tensile import BenchmarkProblems
@@ -65,7 +65,6 @@ def executeStepsInConfig(
         isaInfoMap: Dict[str, IsaInfo],
         cCompiler: str,
         debugConfig: DebugConfig,
-        currentIsa: IsaVersion,
         deviceId: int
    ):
     """Conducts the steps in the provided ``config`` according to the Tensile workflow.
@@ -101,7 +100,6 @@ def executeStepsInConfig(
             buildTmpPath,
             config["ShortNames"], 
             debugConfig, 
-            currentIsa, 
             deviceId,
             isaInfoMap,
         )
@@ -363,6 +361,8 @@ def makeDebugConfig(config: dict) -> DebugConfig:
         printSolutionRejectionReason = config["PrintSolutionRejectionReason"]
     if "SplitGSU" in config:
         splitGSU = config["SplitGSU"]
+    if "SaveTemps" in config:
+        splitGSU = config["SaveTemps"]
 
     return DebugConfig(enableAsserts,
                        enableDebugA,
@@ -482,12 +482,20 @@ def Tensile(userArgs):
         print(f"Successfully retrieve Max frequency: {max_frequency} for device {device_id}")
         store_max_frequency(max_frequency)
 
-    cxxCompiler, cCompiler, assembler, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
+    cxxCompiler, cCompiler, _, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     currentIsa = detectGlobalCurrentISA(device_id)
-    isaInfoMap = assignGlobalParameters(config.get("GlobalParameters", {}), [currentIsa], cxxCompiler)
+    isaInfoMap = makeIsaInfoMap([currentIsa], cxxCompiler)
+    assignGlobalParameters(config.get("GlobalParameters", {}), isaInfoMap, cxxCompiler)
 
-    asmToolchain= AssemblyToolchain(assembler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["CodeObjectVersion"])
-    srcToolchain= SourceToolchain(cxxCompiler, offloadBundler, globalParameters["BuildIdKind"], globalParameters["AsanBuild"], globalParameters["SaveTemps"])
+    asmToolchain = makeAssemblyToolchain(
+        cxxCompiler,
+        offloadBundler, 
+        args.CodeObjectVersion,
+    )
+    srcToolchain = makeSourceToolchain(
+        cxxCompiler,
+        offloadBundler,
+    )
 
     overrideParameters = argUpdatedGlobalParameters(args)
 
@@ -503,7 +511,7 @@ def Tensile(userArgs):
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
 
-    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler, debugConfig, currentIsa, device_id)
+    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler, debugConfig, device_id)
 
 def TensileConfigPath(*args):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)

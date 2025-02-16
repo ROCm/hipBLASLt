@@ -202,7 +202,7 @@ globalParameters["CMakeCFlags"] = ""  # pass flags to cmake
 #    False  # assembly only, kernel gets buffer for debug "printing"; kernel writes data to memory, gets coppied to host and printed
 #)
 globalParameters["AsanBuild"] = False  # build with asan
-globalParameters["SaveTemps"] = False  # Generate intermediate results of hip kernels
+#globalParameters["SaveTemps"] = False  # Generate intermediate results of hip kernels
 globalParameters["KeepBuildTmp"] = False  # If true, do not remove artifacts in build_tmp
 
 # debug for assembly
@@ -1492,7 +1492,7 @@ def printCapabilitiesTable(isaInfoMap: Dict[str, IsaInfo]):
     printTable([headerRow] + asmCapRows + archCapRows)
 
 
-def assignGlobalParameters(config, targetIsas: List[IsaVersion], cxxCompiler=None):
+def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo], cxxCompiler=None):
     """
     Assign Global Parameters
     Each global parameter has a default parameter, and the user
@@ -1571,21 +1571,10 @@ def assignGlobalParameters(config, targetIsas: List[IsaVersion], cxxCompiler=Non
     if "CodeObjectVersion" in config:
         globalParameters["CodeObjectVersion"] = config["CodeObjectVersion"]
 
-    isaInfoMap = {}
-    for v in targetIsas:
-        asmCaps = initAsmCaps(v, cxxCompiler, False)
-        archCaps = initArchCaps(v)
-        regCaps = initRegisterCaps(v, archCaps)
-        asmBugs = initAsmBugs(asmCaps)
-        isaInfoMap[v] = IsaInfo(asmCaps, archCaps, regCaps, asmBugs)
-
     if verbosity >= 1:
         printCapabilitiesTable(isaInfoMap)
 
-    isaList = list(
-        [v for v in targetIsas if isaInfoMap[v].asmCaps["SupportedISA"]]
-    )
-
+    isaList = list(isaInfoMap.keys())
     validParameters["ISA"] = [IsaVersion(0, 0, 0), *isaList]
 
     # For ubuntu platforms, call dpkg to grep the version of hip-clang.  This check is platform specific, and in the future
@@ -1614,6 +1603,10 @@ def assignGlobalParameters(config, targetIsas: List[IsaVersion], cxxCompiler=Non
 
     # The following keys may be present in the config, but are not (or no longer) global parameters.
     ignoreKeys = [
+        "Architecture",
+        "ShortNames",
+        "PrintLevel",
+        "Device",
         "UseCompression",
         "CxxCompiler",
         "CCompiler",
@@ -1632,8 +1625,6 @@ def assignGlobalParameters(config, targetIsas: List[IsaVersion], cxxCompiler=Non
         if key not in globalParameters:
             printWarning("Global parameter %s = %s unrecognised." % (key, value))
         globalParameters[key] = value
-
-    return isaInfoMap
 
 
 def setupRestoreClocks():
