@@ -37,7 +37,7 @@ from typing import List
 
 from Tensile.Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR, \
-    detectGlobalCurrentISA, IsaVersion, verbosity
+    detectGlobalCurrentISA, IsaVersion, verbosity, isaToGfx
 from Tensile.Toolchain.Assembly import AssemblyToolchain
 from Tensile.Toolchain.Source import SourceToolchain
 from Tensile.Toolchain.Validators import validateToolchain, ToolchainDefaults
@@ -123,7 +123,8 @@ def executeStepsInConfig(
             libraryClientConfig = config["LibraryClient"]
         else:
             libraryClientConfig = {}
-        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler, outputPath, config["ShortNames"])
+        #libraryClientConfig["ShortNames"] = config["ShortNames"]
+        ClientWriter.main(libraryClientConfig, srcToolchain.compiler, cCompiler, outputPath, isaToGfx(currentIsa), deviceId)
         print1("")
 
 
