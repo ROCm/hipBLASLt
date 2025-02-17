@@ -318,7 +318,7 @@ public:
 
 /* ============================================================================================ */
 /*  device query and print out their ID and name */
-int64_t query_device_property(int device_id);
+int64_t query_device_property(int device_id, hipDeviceProp_t &props);
 
 /*  set current device to device_id */
 void set_device(int64_t device_id);

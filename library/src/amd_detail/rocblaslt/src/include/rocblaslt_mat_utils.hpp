@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -65,6 +65,16 @@ inline rocblaslt_status getOriginalSizes(hipblasOperation_t opA,
     }
 
     return rocblaslt_status_success;
+}
+
+inline bool isValidOrderForDatatype(hipDataType datatype, hipblasLtOrder_t order)
+{
+    if((datatype == HIP_R_16F && order != HIPBLASLT_ORDER_COL16_4R8)
+       || (datatype == HIP_R_8F_E4M3_FNUZ && order != HIPBLASLT_ORDER_COL16_4R16))
+    {
+        return false;
+    }
+    return true;
 }
 
 /*******************************************************************************
@@ -177,9 +187,12 @@ inline rocblaslt_status validateMatmulArgs(int64_t                       m,
        && compute_type == rocblaslt_compute_i32)
         status = rocblaslt_status_not_implemented;
     if(!strcmp(hip_datatype_to_string(type_a), hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
-       || !strcmp(hip_datatype_to_string(type_b), hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
-       || !strcmp(hip_datatype_to_string(type_c), hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
-       || !strcmp(hip_datatype_to_string(type_d), hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
+       || !strcmp(hip_datatype_to_string(type_b),
+                  hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
+       || !strcmp(hip_datatype_to_string(type_c),
+                  hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
+       || !strcmp(hip_datatype_to_string(type_d),
+                  hip_datatype_to_string(HIPBLASLT_DATATYPE_INVALID))
        || !strcmp(rocblaslt_compute_type_string(compute_type),
                   rocblaslt_compute_type_string(ROCBLASLT_COMPUTE_TYPE_INVALID)))
         status = rocblaslt_status_not_implemented;
@@ -360,6 +373,18 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
 
     if(swizzleB && opB != HIPBLAS_OP_N)
     {
+        return rocblaslt_status_invalid_value;
+    }
+
+    if(swizzleA && !isValidOrderForDatatype(a_type, matA->order))
+    {
+        log_error(__func__, "Error: Invalid Order for hipDataType A.");
+        return rocblaslt_status_invalid_value;
+    }
+
+    if(swizzleB && !isValidOrderForDatatype(b_type, matB->order))
+    {
+        log_error(__func__, "Error: Invalid Order for hipDataType B.");
         return rocblaslt_status_invalid_value;
     }
 

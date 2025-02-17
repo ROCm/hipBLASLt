@@ -841,8 +841,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
       instPerPackM = 0
       if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"] and not kernel["UnrollMajorLDSMetadata"]:
-        instPerPackM = 1.5 if self.states.lrvwTileMetadata > 1 and kernel["MIInputPerThreadMetadata"] == 1 else 1
-
+        instPerPackM = 1
+        if self.states.lrvwTileMetadata > 1:
+          if kernel["MIInputPerThreadMetadata"] == 1:
+            instPerPackM = 1.5
+        elif kernel["MIInputPerThreadMetadata"] == 4:
+          instPerPackM = 3
       packItems = []
       for iui in range(kernel["InnerUnroll"]):
         packINtems = [ [] for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB,self.states.numReadsIterCoalescedMetadata)) ]
@@ -1298,7 +1302,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             packBIdx = packBIdx if tPB["bpe"] < 4 and (not kernel["UnrollMajorLDSB"] or kernel["ConvertAfterDS"]) else 0
           else:
             packAIdx = packAIdx if tPA["localReadInstruction"].blockWidth == 0.25 else 0
-            packBIdx = packAIdx if tPB["localReadInstruction"].blockWidth == 0.25 else 0
+            packBIdx = packBIdx if tPB["localReadInstruction"].blockWidth == 0.25 else 0
           numPack = (packAIdx + packBIdx)
           if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             packMIdx = packMIdx if not kernel["UnrollMajorLDSMetadata"] else 0
@@ -3566,6 +3570,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           tpM = self.states.bpr if tensorParametersM["bpeDS"] * vwm < self.states.bpr else tensorParametersM["bpeDS"] * vwm
           self.states.m.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedMetadata"] * kernel["NumLoadsPerpendicularMetadata"] * \
             tpM) / (float)(self.states.bpr))
+          self.states.m.numVgprG2L = self.states.m.numVgprG2LAllocated
         # using _ds_store_b8: need one more vgpr space to do lshr
         if tensorParametersM["localWriteInstruction"].blockWidth == 0.25:
           self.states.m.numVgprG2L = self.states.m.numVgprG2L * 2

@@ -218,8 +218,9 @@ static void hipblaslt_print_args(const std::string& args)
 // Device Query
 static void hipblaslt_set_test_device()
 {
+    hipDeviceProp_t props;
     int device_id    = 0;
-    int device_count = query_device_property(device_id);
+    int device_count = query_device_property(device_id, props);
     if(device_count <= device_id)
     {
         hipblaslt_cerr << "Error: invalid device ID. There may not be such device ID." << std::endl;

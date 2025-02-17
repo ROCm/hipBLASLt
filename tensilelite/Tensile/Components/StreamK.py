@@ -620,13 +620,7 @@ class StreamK(Component):
                 module.add(skipFlagSet)
             module.add(SWaitCnt(lgkmcnt=0, comment="wait for flag")) # TODO just for testing
 
-        # TODO - if this is the last tile, don't need to jump to next instruction
-        # NOTE: in SR kernel, we need long branch since PRNG explodes the line of codes
-        if kernel["ProblemType"]["StochasticRounding"]: # in-device RND
-            with self.allocTmpSgpr(3) as tmpSgprInfo:
-                module.add(SLongBranchPositive(endLabel, tmpSgprInfo))
-        else:
-            module.add(SBranch(labelName=endLabel.getLabelName(), comment="jump to end"))
+        module.add(SBranch(labelName=endLabel.getLabelName(), comment="jump to end"))
 
         # Finish one write path, reset currPreLoopVmcntCase to Undefined
         # self.currPreLoopVmcntCase = PreLoopVmcntCase.Undefined
@@ -678,9 +672,9 @@ class StreamK(Component):
                 module.add(SWaitCnt(vscnt=0, comment="writes"))
             module.add(SBarrier("debug"))
         if not edge and writer.db["ForceEdgeStores"]>=2:
-            module.add(self.parentWriter.getBomb()) # should not get here
+            module.add(writer.getBomb()) # should not get here
         if edge and writer.db["AssertNoEdge"]:
-            module.add(self.parentWriter.getBomb()) # should not get here
+            module.add(writer.getBomb()) # should not get here
 
         ## create code Module to push mov vgpr,acc instructions
         # if kernel["StoreCInUnroll"] and not edge:
@@ -1142,9 +1136,9 @@ class StreamK(Component):
                 module.add(SWaitCnt(vscnt=0, comment="writes"))
             module.add(SBarrier("debug"))
         if not edge and writer.db["ForceEdgeStores"]>=2:
-            module.add(self.parentWriter.getBomb()) # should not get here
+            module.add(writer.getBomb()) # should not get here
         if edge and writer.db["AssertNoEdge"]:
-            module.add(self.parentWriter.getBomb()) # should not get here
+            module.add(writer.getBomb()) # should not get here
 
         # atomicAddC = kernel["AtomicAddC"] and not edge
 
@@ -1389,50 +1383,6 @@ class StreamK(Component):
                         newSumIdxV = sumIdxV - writer.states.c.startVgprValu
                         module.add(VAddF32(dst=vgpr("ValuC+%u"%sumIdxV), src0=vgpr("ValuC+%u"%sumIdxV), src1=vgpr(tmpVgpr), comment="accum partials"))
 
-                # float8 precision
-                elif kernel["ProblemType"]["DestDataType"].isFloat8():
-                    if kernel["ProblemType"]["HighPrecisionAccumulate"]:
-                        newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
-                        # Generate single f32 code if edge is detected.
-                        isPK = False
-                        if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-                            sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
-                            module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
-                        # Original packed route
-                        elif vi%2 == 1:
-                            continue
-                        else:
-                            isPK = True
-                            sb = SelectBit.WORD_0 if vi == 0 else SelectBit.WORD_1
-                            module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
-                        module.add(SNop(waitState=0))
-                        if kernel["ProblemType"]["ComputeDataType"].isSingle():
-                            module.add(VAddF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr("ValuC+%u"%newSumIdxV), src1=vgpr(tmpVgpr), comment="accum partials"))
-                            if isPK:
-                                module.add(VAddF32(dst=vgpr("ValuC+%u"%(newSumIdxV+1)), src0=vgpr("ValuC+%u"%(newSumIdxV+1)), src1=vgpr(tmpVgpr+1), comment="accum partials"))
-
-                # bfloat8 precision
-                elif kernel["ProblemType"]["DestDataType"].isAnyBFloat8():
-                    if kernel["ProblemType"]["HighPrecisionAccumulate"]:
-                        newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
-                        # Generate single f32 code if edge is detected.
-                        isPK = False
-                        if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-                            sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
-                            module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
-                        # Original packed route
-                        elif vi%2 == 1:
-                            continue
-                        else:
-                            isPK = True
-                            sb = SelectBit.WORD_0 if vi == 0 else SelectBit.WORD_1
-                            module.add(VCvtPkBF8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
-                        module.add(SNop(waitState=0))
-                        if kernel["ProblemType"]["ComputeDataType"].isSingle():
-                            module.add(VAddF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr("ValuC+%u"%newSumIdxV), src1=vgpr(tmpVgpr), comment="accum partials"))
-                            if isPK:
-                                module.add(VAddF32(dst=vgpr("ValuC+%u"%(newSumIdxV+1)), src0=vgpr("ValuC+%u"%(newSumIdxV+1)), src1=vgpr(tmpVgpr+1), comment="accum partials"))
-
                 elif kernel["ProblemType"]["ComputeDataType"].isSingle():
                     newSumIdxV = sumIdxV - writer.states.c.startVgprValu
                     module.add(VAddF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr("ValuC+%u"%newSumIdxV), src1=vgpr(dataV+0), comment="accum partials"))
@@ -1456,7 +1406,7 @@ class StreamK(Component):
 
                 # double precision complex
                 elif kernel["ProblemType"]["ComputeDataType"].isDoubleComplex():
-                    newSumIdxV = sumIdxV * 4 - self.parentWriter.states.c.startVgprValu
+                    newSumIdxV = sumIdxV * 4 - writer.states.c.startVgprValu
                     module.add(VAddF64(dst=vgpr("ValuC+%u"%(newSumIdxV*4+0),2), src0=vgpr("ValuC+%u"%(newSumIdxV*4+0),2), src1=vgpr(dataV+0,2), comment="accum partials real"))
                     module.add(VAddF64(dst=vgpr("ValuC+%u"%(newSumIdxV*4+2),2), src0=vgpr("ValuC+%u"%(newSumIdxV*4+2),2), src1=vgpr(dataV+2,2), comment="accum partials imag"))
 

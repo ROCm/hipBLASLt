@@ -207,6 +207,25 @@ class SignatureDefault(Signature):
         userArgumentsInfo.gemmArgumentSize += userArgumentsInfo.alphaMaxSize
         userArgumentsInfo.gemmArgumentSize += userArgumentsInfo.betaMaxSize
 
+        if kernel["StreamK"]:
+            # StreamK args
+            signature.addArg("MagicNumberProblemNumGroupTiles0",   SVK.SIG_VALUE, "u32")
+            signature.addArg("MagicShiftProblemNumGroupTiles0",    SVK.SIG_VALUE, "u32")
+            signature.addArg("ItersPerTile",                       SVK.SIG_VALUE, "u32")
+            signature.addArg("MagicNumberItersPerTile",            SVK.SIG_VALUE, "u32")
+            signature.addArg("MagicShiftItersPerTile",             SVK.SIG_VALUE, "u32")
+            signature.addArg("MagicNumProblemNumGroupTiles0By1",   SVK.SIG_VALUE, "u32")
+            signature.addArg("MagicShiftProblemNumGroupTiles0By1", SVK.SIG_VALUE, "u32")
+            signature.addArg("TotalIters",                         SVK.SIG_VALUE, "u32")
+            signature.addArg("SKItersPerWG",                       SVK.SIG_VALUE, "u32")
+            userArgumentsInfo.gemmArgumentSize += 36
+            if kernel["StreamK"] >= 2: # Two-tile SK
+                signature.addArg("skGrid",                         SVK.SIG_VALUE, "u32")
+                signature.addArg("skTiles",                        SVK.SIG_VALUE, "u32")
+                signature.addArg("skExtraIters",                   SVK.SIG_VALUE, "u32")
+                userArgumentsInfo.gemmArgumentSize += 12
+                # "dpTilesPerWG"
+
         if kernel["ProblemType"]["UseScaleAB"]:
             signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
             signature.addArg("AddressScaleB", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
@@ -263,23 +282,6 @@ class SignatureDefault(Signature):
             signature.addArg(    "dstD", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
             signature.addArg(               "Synchronizer", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
             signature.addArg(               "GSUSync", SVK.SIG_VALUE,              "u32")
-
-        if kernel["StreamK"]:
-            # StreamK args
-            signature.addArg("MagicNumberProblemNumGroupTiles0",   SVK.SIG_VALUE, "u32")
-            signature.addArg("MagicShiftProblemNumGroupTiles0",    SVK.SIG_VALUE, "u32")
-            signature.addArg("ItersPerTile",                       SVK.SIG_VALUE, "u32")
-            signature.addArg("MagicNumberItersPerTile",            SVK.SIG_VALUE, "u32")
-            signature.addArg("MagicShiftItersPerTile",             SVK.SIG_VALUE, "u32")
-            signature.addArg("MagicNumProblemNumGroupTiles0By1",   SVK.SIG_VALUE, "u32")
-            signature.addArg("MagicShiftProblemNumGroupTiles0By1", SVK.SIG_VALUE, "u32")
-            signature.addArg("TotalIters",                         SVK.SIG_VALUE, "u32")
-            signature.addArg("SKItersPerWG",                       SVK.SIG_VALUE, "u32")
-            if kernel["StreamK"] >= 2: # Two-tile SK
-                signature.addArg("skGrid",                         SVK.SIG_VALUE, "u32")
-                signature.addArg("skTiles",                        SVK.SIG_VALUE, "u32")
-                signature.addArg("skExtraIters",                   SVK.SIG_VALUE, "u32")
-                # "dpTilesPerWG"
 
         activationType = ActivationType("all")
         for name in activationType.getAdditionalArgStringList():

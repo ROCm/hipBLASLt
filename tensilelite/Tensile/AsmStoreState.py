@@ -219,12 +219,16 @@ class StoreState:
 
         # epilogue related
         self.useBias = kernelWriter.states.useBias
+        if kernel["StreamK"] > 0 and isWorkspace:
+            self.useBias = DataDirection.NONE
+
+        isSingleKernel = (kernel["GlobalSplitU"] == 1 or kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel") or (kernel["StreamK"] > 0 and not isWorkspace)
         self.referenceVgprDim = [[], []]
         if self.useBias == DataDirection.READ:
             self.referenceVgprDim[self.factorDim].append("Bias")
-        if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+        if kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
             self.referenceVgprDim[self.factorDim].append("ScaleAlpha")
-        if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+        if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
             self.referenceVgprDim[0].append("ScaleA")
             self.referenceVgprDim[1].append("ScaleB")
 
@@ -248,14 +252,14 @@ class StoreState:
                 self.sharedColEVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColEVgprs for packed elements")
             else:
                 self.sharedColEVgprs = None
-            if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+            if kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
                 if self.referenceVgprDim[self.factorDim] and self.referenceVgprDim[self.factorDim][0] == "ScaleAlpha":
                     self.sharedColScaleAlphaVecVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColScaleAlphaVecVgprs for packed elements")
                 else:
                     self.sharedColScaleAlphaVecVgprs = None
             else:
                 self.sharedColScaleAlphaVecVgprs = None
-            if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+            if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                 if self.referenceVgprDim[0] and self.referenceVgprDim[0][0] == "ScaleA":
                     self.sharedColScaleAVecVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColScaleAVecVgprs for packed elements")
                 else:
@@ -291,14 +295,14 @@ class StoreState:
                 self.sharedColEVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColEVgprs for packed elements")
             else:
                 self.sharedColEVgprs = None
-            if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+            if kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
                 if self.referenceVgprDim[self.factorDim] and self.referenceVgprDim[self.factorDim][0] == "ScaleAlpha":
                     self.sharedColScaleAlphaVecVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColScaleAlphaVecVgprs for packed elements")
                 else:
                     self.sharedColScaleAlphaVecVgprs = None
             else:
                 self.sharedColScaleAlphaVecVgprs = None
-            if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+            if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                 if self.referenceVgprDim[0] and self.referenceVgprDim[0][0] == "ScaleA":
                     self.sharedColScaleAVecVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColScaleAVecVgprs for packed elements")
                 else:
@@ -356,13 +360,13 @@ class StoreState:
                 numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
                 self.numVgprsPerElement += numVgprs * gwvw if self.factorDim == 0 else min(gwvw, 2) # Loaded data
 
-        if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+        if kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
             if self.referenceVgprDim[self.factorDim] and self.referenceVgprDim[self.factorDim][0] == "ScaleAlpha":
                 self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # ScaleAlphaVec address
             numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
             self.numVgprsPerElement += numVgprs * gwvw if self.factorDim == 0 else min(gwvw, 2) # Loaded data
 
-        if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+        if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
             if self.referenceVgprDim[0] and self.referenceVgprDim[0][0] == "ScaleA":
                 self.numVgprsPerElement += self.cfg.numVgprsPerAddr # ScaleAVec address
             if self.referenceVgprDim[1] and self.referenceVgprDim[1][0] == "ScaleB":
@@ -486,6 +490,8 @@ class StoreState:
         scaleAlphaVecVgprMap = {}
         lastData = 0
 
+        isSingleKernel = (kernel["GlobalSplitU"] == 1 or kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel") or (kernel["StreamK"] > 0 and not isWorkspace)
+
         for elementIdx in range(0, len(batchElements)):
             # Create the AddrCalc for each memory load/store
             # This is the control code that sets up the dest, source, offsets, etc and
@@ -601,7 +607,7 @@ class StoreState:
                 dataE = 0
             self.elementDataE.append(dataE)
 
-            if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+            if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                 if coordOffset0 in scaleAVecVgprMap:
                     dataScaleAVec = scaleAVecVgprMap[coordOffset0]
                 else:
@@ -622,7 +628,7 @@ class StoreState:
                 dataScaleBVec = 0
             self.elementDataScaleAVec.append(dataScaleAVec)
             self.elementDataScaleBVec.append(dataScaleBVec)
-            if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+            if kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
                 coordOffset = coordOffset0 if factorDim == 0 else coordOffset1
                 gwvw = self.cfg.gwvw if factorDim == 0 else min(self.cfg.gwvw, 2)
                 if coordOffset in scaleAlphaVecVgprMap:
@@ -675,7 +681,7 @@ class StoreState:
                     addrEVgpr = None
                 #print ("d0=", d0, "vc0=", vc0, "elementCol=", elementCol)
 
-                if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+                if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["StreamK"] > 0 and not isWorkspace)):
                     if self.referenceVgprDim[self.factorDim] and self.referenceVgprDim[self.factorDim][0] == "ScaleAlpha":
                         addrScaleAlphaVecVgpr = self.sharedColScaleAlphaVecVgprs+elementCol
                     else:
@@ -683,7 +689,7 @@ class StoreState:
                 else:
                     addrScaleAlphaVecVgpr = None
 
-                if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and (kernel["GlobalSplitU"] == 1):
+                if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and (kernel["GlobalSplitU"] == 1 or (kernel["StreamK"] > 0 and not isWorkspace)):
                     if self.referenceVgprDim[0] and self.referenceVgprDim[0][0] == "ScaleA":
                         addrScaleAVecVgpr = self.sharedColScaleAVecVgprs+elementCol
                     else:
@@ -721,7 +727,7 @@ class StoreState:
                 else:
                     addrEVgpr = None
 
-                if kernel["ProblemType"]["UseScaleAlphaVec"] and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+                if kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
                     if self.referenceVgprDim[self.factorDim] and self.referenceVgprDim[self.factorDim][0] == "ScaleAlpha":
                         addrScaleAlphaVecVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
                             int(ceil(self.cfg.numVgprsPerAddr)), "loadScaleAlphaVecBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
@@ -730,7 +736,7 @@ class StoreState:
                 else:
                     addrScaleAlphaVecVgpr = None
 
-                if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and ((kernel["GlobalSplitU"] == 1) or (kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel")):
+                if (kernel["ProblemType"]["UseScaleAB"] == "Vector") and isSingleKernel:
                     if self.referenceVgprDim[0] and self.referenceVgprDim[0][0] == "ScaleA":
                         addrScaleAVecVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
                             int(ceil(self.cfg.numVgprsPerAddr)), "loadScaleAVecBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
