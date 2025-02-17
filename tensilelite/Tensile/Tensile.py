@@ -125,6 +125,7 @@ def executeStepsInConfig(
                 outputPath, 
                 debugConfig.splitGSU, 
                 debugConfig.printSolutionRejectionReason,
+                debugConfig.printIndexAssignmentInfo,
                 isaInfoMap, 
             )
             print1("")

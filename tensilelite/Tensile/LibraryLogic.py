@@ -1431,7 +1431,7 @@ class LogicAnalyzer:
     return serial
 
 
-def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str, splitGSU: bool, printSolutionRejectionReason: bool, isaInfoMap: Dict[str, IsaInfo]):
+def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str, splitGSU: bool, printSolutionRejectionReason: bool, printIndexAssignmentInfo: bool, isaInfoMap: Dict[str, IsaInfo]):
 
   libraryLogicPath = ensurePath(libraryLogicPath)
 
@@ -1474,7 +1474,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str,
         printExit("%s doesn't exist for %s" % (dataFileName, fileBase) )
       if not os.path.exists(solutionsFileName):
         printExit("%s doesn't exist for %s" % (solutionsFileName, fileBase) )
-      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler, splitGSU, printSolutionRejectionReason, isaInfoMap)
+      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, isaInfoMap)
       if len(solutions) == 0:
         printExit("%s doesn't contains any solutions." % (solutionsFileName) )
       problemType = solutions[0]["ProblemType"]
@@ -1547,7 +1547,7 @@ def read_max_freq():
 ###
 ################################################################################
 ################################################################################
-def main(config, cxxCompiler: str, outputPath: Path, splitGSU: bool, printSolutionRejectionReason: bool, isaInfoMap: Dict[str, IsaInfo]):
+def main(config, cxxCompiler: str, outputPath: Path, splitGSU: bool, printSolutionRejectionReason: bool, printIndexAssignmentInfo: bool, isaInfoMap: Dict[str, IsaInfo]):
   benchmarkDataPath = outputPath / BENCHMARK_DATA_DIR
   libraryLogicPath = outputPath / LIBRARY_LOGIC_DIR
-  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler, splitGSU, printSolutionRejectionReason, isaInfoMap)
+  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, isaInfoMap)
