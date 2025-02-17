@@ -37,8 +37,8 @@ from typing import Dict
 
 from Tensile.Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR, \
-    detectGlobalCurrentISA, verbosity, IsaInfo, makeIsaInfoMap, isaToGfx, makeDebugConfig
-from Tensile.KernelWriter import DebugConfig
+    detectGlobalCurrentISA, verbosity, IsaInfo, makeIsaInfoMap, isaToGfx, makeDebugConfig, \
+    makeDepthUConfig, DebugConfig, DepthUConfig
 from Tensile.Toolchain.Assembly import AssemblyToolchain, makeAssemblyToolchain
 from Tensile.Toolchain.Source import SourceToolchain, makeSourceToolchain
 from Tensile.Toolchain.Validators import validateToolchain, ToolchainDefaults
@@ -65,6 +65,7 @@ def executeStepsInConfig(
         isaInfoMap: Dict[str, IsaInfo],
         cCompiler: str,
         debugConfig: DebugConfig,
+        depthUConfig: DepthUConfig,
         deviceId: int
    ):
     """Conducts the steps in the provided ``config`` according to the Tensile workflow.
@@ -99,7 +100,8 @@ def executeStepsInConfig(
             outputPath,
             buildTmpPath,
             config["ShortNames"], 
-            debugConfig, 
+            debugConfig,
+            depthUConfig, 
             deviceId,
             isaInfoMap,
         )
@@ -126,6 +128,7 @@ def executeStepsInConfig(
                 debugConfig.splitGSU, 
                 debugConfig.printSolutionRejectionReason,
                 debugConfig.printIndexAssignmentInfo,
+                depthUConfig,
                 isaInfoMap, 
             )
             print1("")
@@ -457,6 +460,7 @@ def Tensile(userArgs):
       config["ShortNames"] = args.shortNames
 
     debugConfig = makeDebugConfig(config["GlobalParameters"])
+    depthUConfig = makeDepthUConfig(config["GlobalParameters"])
 
     for key, value in overrideParameters.items():
         print("Overriding {0}={1}".format(key, value))
@@ -465,7 +469,7 @@ def Tensile(userArgs):
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
 
-    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler, debugConfig, device_id)
+    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler, debugConfig, depthUConfig, device_id)
 
 def TensileConfigPath(*args):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)

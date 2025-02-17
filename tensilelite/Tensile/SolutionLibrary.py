@@ -29,7 +29,7 @@ from . import Properties
 from . import Hardware
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import state, IsaInfo, gfxToIsa
+from .Common import state, IsaInfo, gfxToIsa, DepthUConfig
 
 class SingleSolutionLibrary:
     Tag = "Single"
@@ -303,7 +303,8 @@ class MasterSolutionLibrary:
                           splitGSU: bool,
                           printSolutionRejectionReason: bool,
                           printIndexAssignmentInfo: bool,
-                          cxxCompiler,
+                          depthUConfig: DepthUConfig,
+                          assembler,
                           isaInfoMap: Dict[str, IsaInfo],
                           lazyLibraryLoading: bool,
                           solutionClass=Contractions.Solution,
@@ -468,7 +469,8 @@ class MasterSolutionLibrary:
                                                         splitGSU,
                                                         printSolutionRejectionReason,
                                                         printIndexAssignmentInfo,
-                                                        cxxCompiler,
+                                                        depthUConfig,
+                                                        assembler,
                                                         isaInfoMap,
                                                         lazyLibraryLoading,
                                                         solutionClass,
@@ -478,7 +480,15 @@ class MasterSolutionLibrary:
             origSolutions = []
 
         problemType = Contractions.ProblemType.FromOriginalState(origData["ProblemType"])
-        allSolutions = [solutionClass.FromSolutionStruct(s, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, cxxCompiler, isaInfoMap) for s in origSolutions]
+        allSolutions = [solutionClass.FromSolutionStruct(
+                            s, 
+                            splitGSU, 
+                            printSolutionRejectionReason, 
+                            printIndexAssignmentInfo,
+                            depthUConfig, 
+                            assembler, 
+                            isaInfoMap
+                        ) for s in origSolutions]
         cls.FixSolutionIndices(allSolutions)
 
         # library is constructed in reverse order i.e. bottom-up
@@ -499,8 +509,25 @@ class MasterSolutionLibrary:
         return rv, placeholderName
 
     @classmethod
-    def BenchmarkingLibrary(cls, solutions, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, printIndexAssignmentInfo: bool, isaInfoMap):
-        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, cxxCompiler, isaInfoMap) for s in solutions])
+    def BenchmarkingLibrary(
+        cls, 
+        solutions, 
+        assembler, 
+        splitGSU: bool, 
+        printSolutionRejectionReason: bool, 
+        printIndexAssignmentInfo: bool, 
+        depthUConfig: DepthUConfig,
+        isaInfoMap
+    ):
+        solutionObjs = list([Contractions.Solution.FromOriginalState(
+                                 s._state, 
+                                 splitGSU, 
+                                 printSolutionRejectionReason, 
+                                 printIndexAssignmentInfo, 
+                                 depthUConfig,
+                                 assembler, 
+                                 isaInfoMap) 
+                            for s in solutions])
         cls.FixSolutionIndices(solutionObjs)
 
         predRows = list([{

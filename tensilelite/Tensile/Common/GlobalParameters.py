@@ -237,9 +237,6 @@ globalParameters["DumpTensors"] = (
 globalParameters["Platform"] = 0  # select opencl platform
 
 # shouldn't need to change
-globalParameters["DeviceLDS"] = 65536  # LDS bytes per CU, for computing occupancy
-globalParameters["MaxLDS"] = 65536  # max LDS a kernel should attempt to use
-globalParameters["NewClient"] = 2  # Old client deprecated: NewClient must be set to 2.
 globalParameters["ClientExecutionLockPath"] = (
     None  # Path for a file lock to ensure only one client is executed at once.  filelock module is required if this is enabled.
 )
@@ -272,7 +269,7 @@ globalParameters["PerfModelReadEfficiency"] = 0.85
 
 # limitation for training
 globalParameters["MaxWorkspaceSize"] = 128 * 1024 * 1024  # max workspace for training (128MB)
-globalParameters["MinKForGSU"] = 32  # min K size to use GlobalSplitU algorithm (only for HPA now)
+#globalParameters["MinKForGSU"] = 32  # min K size to use GlobalSplitU algorithm (only for HPA now)
 
 # control if a solution is run for a given problem
 globalParameters["GranularityThreshold"] = 0.0

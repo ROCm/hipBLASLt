@@ -30,8 +30,8 @@ from . import Hardware
 from . import Properties
 from .SolutionStructs import getBiasDataTypeListDefault
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import gfxToIsa, internalParameters, globalParameters, state, state_key_ordering, \
-                    IsaVersion, IsaInfo
+from .Common import gfxToIsa, internalParameters, state, state_key_ordering, \
+                    IsaInfo, DepthUConfig
 from Tensile.Toolchain.Component import Assembler
 
 @state_key_ordering
@@ -515,7 +515,7 @@ class ProblemPredicate(Properties.Predicate):
             rv += [cls('BufferStoreOffsetLimitCheck', value=state['MacroTile1'])]
 
         if '_GlobalAccumulation' in state and state['_GlobalAccumulation'] != None and not state["StreamK"]:
-            value = globalParameters['MinKForGSU']
+            value = 32 # globalParameters['MinKForGSU']
             rv += [cls('GlobalSplitUCheckMinK', value=[value, state["GlobalSplitU"]])]
 
         if ('WorkGroupMappingXCC' in state) and ('WorkGroupMappingXCCGroup' in state):
@@ -660,11 +660,41 @@ class Solution:
     HiddenKeys = ['originalSolution']
 
     @classmethod
-    def FromSolutionStruct(cls, solution, splitGSU: bool, printSolutionRejectionReason: bool, printIndexAssignmentInfo: bool, assembler: Assembler, isaInfoMap: Dict[str, IsaInfo]):
-        return cls.FromOriginalState(solution._state, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, assembler, isaInfoMap, solution.srcName)
+    def FromSolutionStruct(
+        cls,
+        solution,
+        splitGSU: bool,
+        printSolutionRejectionReason: bool,
+        printIndexAssignmentInfo: bool,
+        depthUConfig: DepthUConfig,
+        assembler: Assembler,
+        isaInfoMap: Dict[str, IsaInfo]
+    ):
+        return cls.FromOriginalState(
+                   solution._state, 
+                   splitGSU, 
+                   printSolutionRejectionReason, 
+                   printIndexAssignmentInfo, 
+                   depthUConfig,
+                   assembler, 
+                   isaInfoMap, 
+                   solution.srcName
+               )
 
     @classmethod
-    def FromOriginalState(cls, d, splitGSU: bool, printSolutionRejectionReason: bool, printIndexAssignmentInfo: bool, assembler, isaInfoMap, srcName = "", deviceInfo=None):
+    def FromOriginalState(
+            cls,
+            d,
+            splitGSU: bool,
+            printSolutionRejectionReason: bool,
+            printIndexAssignmentInfo: bool,
+            depthUConfig: DepthUConfig,
+            #mink
+            assembler,
+            isaInfoMap,
+            srcName = "",
+            deviceInfo=None
+        ):
         rv = cls()
 
         if 'SolutionNameMin' in d:
@@ -708,7 +738,16 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, assembler, isaInfoMap, srcName)
+        rv.originalSolution = OriginalSolution(
+                                  d,
+                                  splitGSU,
+                                  printSolutionRejectionReason,
+                                  printIndexAssignmentInfo,
+                                  depthUConfig,
+                                  assembler,
+                                  isaInfoMap,
+                                  srcName
+                              )
         rv.srcName = srcName
 
         return rv

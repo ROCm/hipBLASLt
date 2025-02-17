@@ -26,7 +26,9 @@ from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
-from .Common import gfxToIsa, printExit, printWarning, print2, versionIsCompatible, __version__, print1, IsaInfo
+from .Common import gfxToIsa, printExit, printWarning, print2, \
+                    versionIsCompatible, __version__, \
+                    IsaInfo, DepthUConfig
 
 from typing import NamedTuple, List, Dict
 import os
@@ -203,6 +205,7 @@ def parseSolutionsFile(
         splitGSU: bool,
         printSolutionRejectionReason: bool,
         printIndexAssignmentInfo: bool,
+        depthUConfig: DepthUConfig,
         isaInfoMap
     ):
     """Wrapper function to read and parse a solutions file."""
@@ -213,6 +216,7 @@ def parseSolutionsFile(
                splitGSU,
                printSolutionRejectionReason,
                printIndexAssignmentInfo,
+               depthUConfig,
                isaInfoMap
             )
 
@@ -224,6 +228,7 @@ def parseSolutionsData(
         splitGSU: bool,
         printSolutionRejectionReason: bool,
         printIndexAssignmentInfo: bool,
+        depthUConfig: DepthUConfig,
         isaInfoMap
     ):
     """Parses problem sizes and solutions from the data of a solutions file."""
@@ -257,6 +262,7 @@ def parseSolutionsData(
                              splitGSU,
                              printSolutionRejectionReason,
                              printIndexAssignmentInfo,
+                             depthUConfig,
                              assembler,
                              isaInfoMap,
                              srcFile
@@ -277,11 +283,12 @@ class LibraryLogic(NamedTuple):
     library: SolutionLibrary.MasterSolutionLibrary
 
 def parseLibraryLogicFile(
-        filename, 
-        assembler, 
-        splitGSU: bool, 
-        printSolutionRejectionReason: bool, 
-        printIndexAssignmentInfo: bool, 
+        filename,
+        assembler,
+        splitGSU: bool,
+        printSolutionRejectionReason: bool,
+        printIndexAssignmentInfo: bool,
+        depthUConfig: DepthUConfig,
         archs, 
         isaInfoMap: Dict[str, IsaInfo],
         lazyLibraryLoading: bool
@@ -294,6 +301,7 @@ def parseLibraryLogicFile(
                splitGSU,
                printSolutionRejectionReason,
                printIndexAssignmentInfo,
+               depthUConfig,
                archs,
                isaInfoMap,
                lazyLibraryLoading
@@ -307,6 +315,7 @@ def parseLibraryLogicData(
         splitGSU: bool,
         printSolutionRejectionReason: bool,
         printIndexAssignmentInfo: bool,
+        depthUConfig: DepthUConfig,
         archs,
         isaInfoMap: Dict[str, IsaInfo],
         lazyLibraryLoading: bool
@@ -356,7 +365,16 @@ def parseLibraryLogicData(
             # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
             solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
 
-        solutionObject = Solution(solutionState, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, assembler, isaInfoMap, srcFile)
+        solutionObject = Solution(
+                             solutionState,
+                             splitGSU,
+                             printSolutionRejectionReason,
+                             printIndexAssignmentInfo,
+                             depthUConfig,
+                             assembler,
+                             isaInfoMap,
+                             srcFile
+                         )
         solutionProblemType = solutionObject["ProblemType"]
         if problemType != solutionProblemType:
             # find the mismatched items in ProblemType
@@ -376,6 +394,7 @@ def parseLibraryLogicData(
         splitGSU, 
         printSolutionRejectionReason, 
         printIndexAssignmentInfo,
+        depthUConfig,
         assembler, 
         isaInfoMap,
         lazyLibraryLoading

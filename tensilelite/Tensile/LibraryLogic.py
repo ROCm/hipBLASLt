@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Dict
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
   assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, \
-  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo
+  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo, DepthUConfig
 from .SolutionStructs import Solution
 from . import LibraryIO
 from . import SolutionSelectionLibrary
@@ -1431,7 +1431,17 @@ class LogicAnalyzer:
     return serial
 
 
-def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str, splitGSU: bool, printSolutionRejectionReason: bool, printIndexAssignmentInfo: bool, isaInfoMap: Dict[str, IsaInfo]):
+def generateLogic(
+    config, 
+    benchmarkDataPath, 
+    libraryLogicPath, 
+    cxxCompiler: str, 
+    splitGSU: bool, 
+    printSolutionRejectionReason: bool, 
+    printIndexAssignmentInfo: bool, 
+    depthUConfig: DepthUConfig,
+    isaInfoMap: Dict[str, IsaInfo]
+  ):
 
   libraryLogicPath = ensurePath(libraryLogicPath)
 
@@ -1474,7 +1484,15 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str,
         printExit("%s doesn't exist for %s" % (dataFileName, fileBase) )
       if not os.path.exists(solutionsFileName):
         printExit("%s doesn't exist for %s" % (solutionsFileName, fileBase) )
-      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, isaInfoMap)
+      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(
+                                      solutionsFileName, 
+                                      cxxCompiler, 
+                                      splitGSU, 
+                                      printSolutionRejectionReason, 
+                                      printIndexAssignmentInfo, 
+                                      depthUConfig,
+                                      isaInfoMap
+                                  )
       if len(solutions) == 0:
         printExit("%s doesn't contains any solutions." % (solutionsFileName) )
       problemType = solutions[0]["ProblemType"]
@@ -1547,7 +1565,26 @@ def read_max_freq():
 ###
 ################################################################################
 ################################################################################
-def main(config, cxxCompiler: str, outputPath: Path, splitGSU: bool, printSolutionRejectionReason: bool, printIndexAssignmentInfo: bool, isaInfoMap: Dict[str, IsaInfo]):
+def main(
+      config, 
+      cxxCompiler: str, 
+      outputPath: Path, 
+      splitGSU: bool, 
+      printSolutionRejectionReason: bool, 
+      printIndexAssignmentInfo: bool, 
+      depthUConfig: DepthUConfig,
+      isaInfoMap: Dict[str, IsaInfo]
+    ):
   benchmarkDataPath = outputPath / BENCHMARK_DATA_DIR
   libraryLogicPath = outputPath / LIBRARY_LOGIC_DIR
-  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, isaInfoMap)
+  generateLogic(
+    config, 
+    benchmarkDataPath, 
+    libraryLogicPath, 
+    cxxCompiler, 
+    splitGSU, 
+    printSolutionRejectionReason, 
+    printIndexAssignmentInfo, 
+    depthUConfig, 
+    isaInfoMap
+  )

@@ -35,6 +35,7 @@ from Tensile import SOURCE_PATH, LibraryIO
 from Tensile.Common import (
     CHeader,
     DebugConfig,
+    DepthUConfig,
     gfxToIsa,
     HR,
     IsaInfo,
@@ -457,6 +458,7 @@ def generateLogicDataAndSolutions(logicFiles, args, assembler: Assembler, isaInf
         itertools.repeat(splitGSU),
         itertools.repeat(printSolutionRejectionReason),
         itertools.repeat(printIndexAssignmentInfo),
+        itertools.repeat(DepthUConfig()),
         itertools.repeat(archs),
         itertools.repeat(isaInfoMap),
         itertools.repeat(args["LazyLibraryLoading"]),

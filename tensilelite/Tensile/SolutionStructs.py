@@ -40,11 +40,12 @@ from .AsmStoreState import VectorDataTypes
 from .Common import assignParameterWithDefault, IsaInfo, \
                     defaultProblemType, defaultSolution, \
                     defaultInternalSupportParams, \
-                    globalParameters, internalParameters, \
+                    internalParameters, \
                     print2, printExit, printWarning, \
                     validMFMA, validSMFMA, validParameters, \
                     validGEMMTypes, HPATypes, roundUp, validWMMA, \
-                    INDEX_CHARS, IsaVersion, SemanticVersion
+                    INDEX_CHARS, IsaVersion, SemanticVersion, \
+                    DepthUConfig
 from Tensile.Toolchain.Component import Assembler
 
 from collections import OrderedDict
@@ -1060,6 +1061,7 @@ class Solution(collections.abc.Mapping):
     splitGSU: bool,
     printSolutionRejectionReason: bool,
     printIndexAssignmentInfo: bool,
+    depthUConfig: DepthUConfig,
     assembler: Assembler,
     isaInfoMap: Dict[IsaVersion, IsaInfo],
     srcName: str = ""
@@ -1122,7 +1124,7 @@ class Solution(collections.abc.Mapping):
       printIndexAssignmentInfo,
       isaInfoMap,
       assembler.rocm_version,
-      #depthUParams,
+      depthUConfig,
     )
     self._name = config["CustomKernelName"] if isCustomKernelConfig(config) else None
 
@@ -1954,7 +1956,7 @@ class Solution(collections.abc.Mapping):
     printIndexAssignmentInfo: bool,
     isaInfoMap,
     rocmVersion: SemanticVersion,
-    #depthUParams: Dict
+    depthUConfig: DepthUConfig
   ):
     state["EnableF32XdlMathOp"] = False #ignore the F32 xDL MathOp by default.
     #enable F32 xDL MathOp only when the input type is f32.
@@ -2403,7 +2405,7 @@ class Solution(collections.abc.Mapping):
         printRejectionReason, 
         isaInfoMap, 
         rocmVersion,
-        #depthUParams
+        depthUConfig,
       )
       if state["Valid"] or (state["ValidDepthU"] and (not state["Valid"])):
         break
@@ -2425,7 +2427,7 @@ class Solution(collections.abc.Mapping):
       printRejectionReason: bool,
       isaInfoMap: Dict[IsaVersion, IsaInfo],
       rocmVersion: SemanticVersion,
-      #depthUParams: NamedTuple
+      depthUConfig: DepthUConfig
     ):
     ########################################
     # Auto search for DepthU starts here
@@ -2694,7 +2696,7 @@ class Solution(collections.abc.Mapping):
             padA, padB, padM = calcLdsPad(state["LocalReadVectorWidth"], isaInfoMap)
             ldsBlockSizePerPadA, ldsBlockSizePerPadB = calcLdsBlockSizePerPad(state["LocalReadVectorWidth"])
             ldsNumBytesA, ldsNumBytesAlignedA, ldsNumBytesB, ldsNumBytesAlignedB, ldsNumBytesMetadata, ldsNumBytesAlignedMetadata = calcLdsNumBytes(padA, ldsBlockSizePerPadA, padB, ldsBlockSizePerPadB)
-            if (ldsNumBytesAlignedA + ldsNumBytesAlignedB) > globalParameters["MaxLDS"]:
+            if (ldsNumBytesAlignedA + ldsNumBytesAlignedB) > depthUConfig.maxLDS:
               state["LocalReadVectorWidth"] //= 2
       else:
         if state["LocalReadVectorWidth"] == -1:
@@ -3488,13 +3490,13 @@ class Solution(collections.abc.Mapping):
     # if User want to control the LDS usage, we may open this para in the future
     ldsNumBytesReduction = state["LocalSplitU"] * state["MacroTile0"] * state["MacroTile1"] * state["ProblemType"]["ComputeDataType"].numBytes() if state["LocalSplitU"] > 1 else 0
     state["LocalSplitUReuseLDS"] = 1
-    if ldsNumBytesReduction > globalParameters["MaxLDS"]:
-      state["LocalSplitUReuseLDS"] = math.ceil(ldsNumBytesReduction / globalParameters["MaxLDS"])
+    if ldsNumBytesReduction > depthUConfig.maxLDS:
+      state["LocalSplitUReuseLDS"] = math.ceil(ldsNumBytesReduction / depthUConfig.maxLDS)
       # reserve all the LDS to LSU.
-      ldsNumBytesReduction = globalParameters["MaxLDS"]
+      ldsNumBytesReduction = depthUConfig.maxLDS
 
     # lds max occupancy
-    ldsSizeOccupancy = globalParameters["DeviceLDS"] // state["MaxOccupancy"]
+    ldsSizeOccupancy = depthUConfig.deviceLDS // state["MaxOccupancy"]
     ldsNumBytesOccupancy = ldsSizeOccupancy
 
     #print("LdsOffsetB", state["LdsOffsetB"])
@@ -3511,7 +3513,7 @@ class Solution(collections.abc.Mapping):
     if state["1LDSBuffer"] == -1:
       if ldsNumBytesAB  <= max(ldsSizeOccupancy,32768) or \
           (state["ProblemType"]["ComputeDataType"].numBytes() * state["MacroTile0"] * state["MacroTile1"] > 32768*4 and \
-            not (ldsNumBytesAB > globalParameters["DeviceLDS"])):
+            not (ldsNumBytesAB > depthUConfig.deviceLDS)):
         state["1LDSBuffer"] = 0
       else:
         state["1LDSBuffer"] = 1
@@ -3551,7 +3553,7 @@ class Solution(collections.abc.Mapping):
         ldsNumElementsRemapC = max(ldsNumElementsRemapC, ldsNumElementsRemapC * (computeBytes / state["ProblemType"]["DestDataType"].numBytes()))
         ldsSize = ldsNumElementsRemapC * state["ProblemType"]["DestDataType"].numBytes()
         if not math.log(state["MacroTile0"],2).is_integer() or \
-            ldsSize > globalParameters["MaxLDS"] or \
+            ldsSize > depthUConfig.maxLDS or \
             state["SourceSwap"] or \
             (state["GlobalSplitU"] > 1) and (state["_GlobalAccumulation"] != 'MultipleBuffer') or \
             state["MatrixInstBN"] > 1 and state["MatrixInstN"] == 4 :
@@ -3801,8 +3803,8 @@ class Solution(collections.abc.Mapping):
 
     state["LdsNumBytes"] = ldsNumBytes
     ldsSize = ldsNumBytes
-    if ldsSize > globalParameters["MaxLDS"]:
-      reject(state, printRejectionReason, "Kernel Uses %u > %u bytes of LDS" % ( ldsSize, globalParameters["MaxLDS"]))
+    if ldsSize > depthUConfig.maxLDS:
+      reject(state, printRejectionReason, "Kernel Uses %u > %u bytes of LDS" % ( ldsSize, depthUConfig.maxLDS))
       state["ValidDepthU"] = False
       return
 
