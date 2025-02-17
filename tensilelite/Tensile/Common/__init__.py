@@ -8,3 +8,4 @@ from .GlobalParameters import __version__
 from .Parallel import *
 from .Types import *
 from .Utilities import *
+from .ValidParameters import *
