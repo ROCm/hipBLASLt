@@ -36,6 +36,10 @@ from Tensile.Common import (
     CHeader,
     DebugConfig,
     DepthUConfig,
+    getKernelFileBase,
+    getKeyNoInternalArgs,
+    getMinNaming,
+    getSerialNaming,
     gfxToIsa,
     HR,
     IsaInfo,
@@ -90,14 +94,14 @@ class KernelCodeGenResult(NamedTuple):
     wavefrontSize: int
 
 
-def processKernelSource(kernelWriterAssembly, ti, useShortNames, kernel) -> KernelCodeGenResult:
+def processKernelSource(kernelWriterAssembly, ti, useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, kernel) -> KernelCodeGenResult:
     """
     Generate source for a single kernel.
     Returns (error, source, header, kernelName).
     """
     kernelWriter = kernelWriterAssembly
     kernelWriter.setTensileInstructions(ti)
-    asmFilename = kernelWriter.getKernelFileBase(useShortNames, kernel)
+    asmFilename = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, kernel)
     err, src = kernelWriter.getSourceFileString(kernel, useShortNames)
     header = kernelWriter.getHeaderFileString(kernel)
     objFilename = kernel._state.get("codeObjectFile", None)
@@ -207,6 +211,8 @@ def writeSolutionsAndKernels(
     kernelWriterAssembly,
     splitGSU: bool,
     cmdlineArchs: List[str],
+    kernelSerialNaming,
+    kernelMinNaming,
     errorTolerant=False,
     generateSourcesAndExit=False,
     compress=True,
@@ -231,7 +237,7 @@ def writeSolutionsAndKernels(
     visited = set()
     duplicates = 0
     for k in asmKernels:
-        base = kernelWriterAssembly.getKernelFileBase(useShortNames, k)
+        base = getKernelFileBase(useShortNames, kernelSerialNaming, k)
         k.duplicate = True if base in visited else False
         duplicates += k.duplicate
         print2(f"Duplicate: {base}")
@@ -242,7 +248,13 @@ def writeSolutionsAndKernels(
     numKernels = len(asmKernels)
     assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
     asmIter = zip(
-        itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()), itertools.repeat(useShortNames), asmKernels
+        itertools.repeat(kernelWriterAssembly),
+        itertools.repeat(TensileInstructions()),
+        itertools.repeat(useShortNames),
+        itertools.repeat(splitGSU),
+        itertools.repeat(kernelMinNaming),
+        itertools.repeat(kernelSerialNaming),
+        asmKernels
     )
     asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels", return_as="list")
     removeInvalidSolutionsAndKernels(
@@ -272,9 +284,11 @@ def writeSolutionsAndKernels(
             asmToolchain.bundler,
             globalParameters["ROCmLdPath"],
             asmKernels,
-            kernelWriterAssembly,
+            kernelSerialNaming,
+            kernelMinNaming,
             destLibPath,
             assemblyTmpPath,
+            splitGSU,
             compress,
             useShortNames
         )
@@ -299,6 +313,8 @@ def writeSolutionsAndKernelsTCL(
     kernelHelperObjs,
     kernelWriterAssembly,
     cmdlineArchs: List[str],
+    kernelSerialNaming,
+    kernelMinNaming,
     compress=True,
     useShortNames=False,
 ):
@@ -318,8 +334,9 @@ def writeSolutionsAndKernelsTCL(
 
     visited = set()
     duplicates = 0
+    splitGSU = False
     for k in asmKernels:
-        base = kernelWriterAssembly.getKernelFileBase(useShortNames, k)
+        base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
         k.duplicate = True if base in visited else False
         duplicates += k.duplicate
         print2(f"Duplicate: {base}")
@@ -333,8 +350,15 @@ def writeSolutionsAndKernelsTCL(
         asmToolchain.assembler(isaToGfx(isa), wavefrontsize, str(p), str(p.with_suffix(".o")))
 
     unaryProcessKernelSource = functools.partial(
-        processKernelSource, kernelWriterAssembly, TensileInstructions(), useShortNames
+        processKernelSource,
+        kernelWriterAssembly,
+        TensileInstructions(),
+        useShortNames,
+        splitGSU,
+        kernelMinNaming,
+        kernelSerialNaming
     )
+
     unaryWriteAssembly = functools.partial(writeAssembly, assemblyTmpPath)
     compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
     ret = ParallelMap2(
@@ -349,9 +373,11 @@ def writeSolutionsAndKernelsTCL(
         asmToolchain.bundler,
         globalParameters["ROCmLdPath"],
         asmKernels, 
-        kernelWriterAssembly,
+        kernelSerialNaming,
+        kernelMinNaming,
         destLibPath,
         assemblyTmpPath,
+        splitGSU,
         compress,
         useShortNames
     )
@@ -369,25 +395,6 @@ def writeSolutionsAndKernelsTCL(
     )
 
     return len(uniqueAsmKernels)
-
-
-@timing
-def getSolutionAndKernelWriters(
-    solutions,
-    kernels,
-    assembler: Assembler,
-):
-    kernelSerialNaming = Solution.getSerialNaming(kernels)
-    solutionMinNaming = Solution.getMinNaming(solutions)
-    kernelMinNaming = Solution.getMinNaming(kernels)
-    kernelWriterAssembly = KernelWriterAssembly(
-        kernelMinNaming, 
-        kernelSerialNaming,
-        assembler,
-        DebugConfig(), 
-    )
-
-    return (kernelWriterAssembly, kernelMinNaming, solutionMinNaming)
 
 
 @timing
@@ -418,7 +425,7 @@ def generateKernelObjectsFromSolutions(solutions):
     for solution in solutions:
         solutionKernels = solution.getKernels()
         for kernel in solutionKernels:
-            kName = Solution.getKeyNoInternalArgs(kernel, splitGSU)
+            kName = getKeyNoInternalArgs(kernel, splitGSU)
             if kName not in kernelNames:
                 kernels.append(kernel)
                 kernelNames.add(kName)
@@ -637,8 +644,13 @@ def run():
     )
 
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
-    kernelWriterAssembly, kernelMinNaming, _ = getSolutionAndKernelWriters(
-        solutions, kernels, asmToolchain.assembler
+    kernelSerialNaming = getSerialNaming(kernels)
+    kernelMinNaming = getMinNaming(kernels)
+    kernelWriterAssembly = KernelWriterAssembly(
+        kernelMinNaming, 
+        kernelSerialNaming,
+        asmToolchain.assembler,
+        DebugConfig(), 
     )
 
     copyStaticFiles(outputPath)
@@ -651,6 +663,8 @@ def run():
         kernelHelperObjs,
         kernelWriterAssembly,
         archs,
+        kernelSerialNaming,
+        kernelMinNaming,
         useShortNames=arguments["ShortNames"],
         compress=arguments["UseCompression"],
     )

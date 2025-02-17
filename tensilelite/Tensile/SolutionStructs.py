@@ -33,8 +33,6 @@ from .KernelWriterActivationOnly import KernelWriterActivationOnly
 from .KernelWriterReduction import KernelWriterReduction
 
 from .Activation import ActivationType
-
-from .CustomKernels import isCustomKernelConfig
 from .AsmStoreState import VectorDataTypes
 
 from .Common import assignParameterWithDefault, IsaInfo, \
@@ -42,10 +40,10 @@ from .Common import assignParameterWithDefault, IsaInfo, \
                     defaultInternalSupportParams, \
                     internalParameters, \
                     print2, printExit, printWarning, \
-                    validMFMA, validSMFMA, validParameters, \
+                    validMFMA, validSMFMA, \
                     roundUp, validWMMA, \
                     INDEX_CHARS, IsaVersion, SemanticVersion, \
-                    DepthUConfig
+                    DepthUConfig, getNameFull
 from Tensile.Toolchain.Component import Assembler
 
 from collections import OrderedDict
@@ -1252,7 +1250,7 @@ class Solution(collections.abc.Mapping):
       assembler.rocm_version,
       depthUConfig,
     )
-    self._name = config["CustomKernelName"] if isCustomKernelConfig(config) else None
+    self._name = config["CustomKernelName"] if "CustomKernelName" in config and config["CustomKernelName"] else None
 
     self.initHelperKernelObjects(targetIsas)
 
@@ -4205,218 +4203,6 @@ class Solution(collections.abc.Mapping):
         #print("Force to Disable PreloadKernArgs since this hipcc version doesn't support",)
         state["PreloadKernArgs"] = 0
 
-  ########################################
-  # create a dictionary with booleans on whether to include parameter in name
-  @staticmethod
-  def getMinNaming(objs):
-    nonCKObjs = [obj for obj in objs if not isCustomKernelConfig(obj)]
-
-    # early return
-    if len(nonCKObjs) == 0:
-      return {}
-
-    # determine keys
-    requiredParameters = {}
-    if isinstance(nonCKObjs[0], Solution):
-      keys = list(nonCKObjs[0]._state.keys())
-    else:
-      keys = list(nonCKObjs[0].keys())
-    # only 1, rather than name being nothing, it'll be everything
-    if len(nonCKObjs) == 1:
-      for key in keys:
-        if key in list(validParameters.keys()):
-          requiredParameters[key] = False
-    else:
-      for key in keys:
-        required = False
-        if key in list(validParameters.keys()):
-          for i in range(1, len(nonCKObjs)):
-            if nonCKObjs[0][key] != nonCKObjs[i][key]:
-              required = True
-              break
-        if required:
-          requiredParameters[key] = True
-        else:
-          requiredParameters[key] = False
-
-    requiredParameters["GlobalSplitU"] = True
-    requiredParameters["WorkGroupMapping"] = True
-
-    if "MatrixInstM" in nonCKObjs[0]._state:
-      # Use MIWaveGroup and MIWaveTile instead of WG and MT
-      requiredParameters["MIWaveTile"]  = True
-      requiredParameters["ThreadTile"]  = False
-
-    requiredParameters["ProblemType"]       = False # always prepended
-    requiredParameters["MacroTile0"]        = False # always prepended
-    requiredParameters["MacroTile1"]        = False # always prepended
-    requiredParameters["DepthU"]            = False # always prepended
-    requiredParameters["MatrixInstruction"] = False # always prepended
-    requiredParameters["MatrixInstM"]       = False # always prepended
-    requiredParameters["MatrixInstN"]       = False # always prepended
-    requiredParameters["MatrixInstK"]       = False # always prepended
-    requiredParameters["MatrixInstB"]       = False # always prepended
-    requiredParameters["MatrixInstBM"]      = False # always prepended
-    requiredParameters["MatrixInstBN"]      = False # always prepended
-    requiredParameters["CustomKernelName"]  = False # Will not affect naming
-
-    requiredParameters["Kernel"]            = True  # distinguish kernels from solutions
-                                                    # for single-source compilation
-    return requiredParameters
-
-  ########################################
-  @ staticmethod
-  def getKeyNoInternalArgs(state, splitGSU: bool):
-    state_copy = deepcopy(state)
-
-    state_copy["ProblemType"]["GroupedGemm"] = False
-
-    if splitGSU:
-      state_copy["GlobalSplitU"] = "M" if (state_copy["GlobalSplitU"] > 1) else state_copy["GlobalSplitU"]
-    elif state["GlobalSplitU"] > 0:
-      state_copy["GlobalSplitU"] = "M"
-    state_copy["WorkGroupMapping"] = "M"
-    state_copy["WorkGroupMappingXCC"] = "M"
-    state_copy["WorkGroupMappingXCCGroup"] = "M"
-    state_copy["StaggerU"] = "M"
-    state_copy["StaggerUStride"] = "M"
-    state_copy["StaggerUMapping"] = "M"
-    state_copy["GlobalSplitUCoalesced"] = "M"
-    state_copy["GlobalSplitUWorkGroupMappingRoundRobin"] = "M"
-
-    return state_copy
-
-  @ staticmethod
-  def getNameFull(state, splitGSU: bool):
-    requiredParameters = {}
-    for key in state:
-      if key in list(validParameters.keys()):
-        requiredParameters[key] = True
-    if "MatrixInstM" in state:
-      # Use MIWaveGroup and MIWaveTile instead of WG and MT
-      requiredParameters["MIWaveTile"]  = True
-      requiredParameters["ThreadTile"]  = False
-    return Solution.getNameMin(state, requiredParameters, splitGSU)
-
-  ########################################
-  # Get Name Min
-  @ staticmethod
-  def getNameMin(state, requiredParameters, splitGSU: bool, ignoreInternalArgs = False):
-
-    if isCustomKernelConfig(state):
-      return state["CustomKernelName"]
-
-    components = []
-
-    backup = state["ProblemType"]["GroupedGemm"]
-    if ignoreInternalArgs:
-      state["ProblemType"]["GroupedGemm"] = False
-
-    if "ProblemType" in state:
-      components.append(f'{str(state["ProblemType"])}')
-      # name += str(state["ProblemType"]) + "_"
-
-    if ignoreInternalArgs:
-      state["ProblemType"]["GroupedGemm"] = backup
-
-    if "MacroTile0" in state \
-        and "MacroTile1" in state \
-        and "DepthU" in state:
-      components.append(f'{Solution.getParameterNameAbbreviation("MacroTile")}{state["MacroTile0"]}x{state["MacroTile1"]}x{state["DepthU"]}')
-
-    if "MatrixInstM" in state:
-      components.append(f'{Solution.getParameterNameAbbreviation("MatrixInstruction")}{state["MatrixInstM"]}x{state["MatrixInstN"]}x{state["MatrixInstB"]}')
-
-    backup = state["GlobalSplitU"]
-
-    if ignoreInternalArgs:
-      if splitGSU:
-        state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1) else state["GlobalSplitU"]
-      elif state["GlobalSplitU"] > 0:
-        requiredParameters["GlobalSplitU"] = False
-      requiredParameters["WorkGroupMapping"] = False
-      requiredParameters["WorkGroupMappingXCC"] = False
-      requiredParameters["WorkGroupMappingXCCGroup"] = False
-      requiredParameters["StaggerU"] = False
-      requiredParameters["StaggerUStride"] = False
-      requiredParameters["StaggerUMapping"] = False
-      requiredParameters["GlobalSplitUCoalesced"] = False
-      requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = False
-
-    useWaveTile, useThreadTile = requiredParameters.get("MIWaveTile", False), requiredParameters.get("ThreadTile", False)
-
-    if 'MatrixInstM' in state:
-      requiredParameters["MIWaveTile"] = True
-      requiredParameters["ThreadTile"] = False
-    else:
-      requiredParameters["MIWaveTile"] = False
-      requiredParameters["ThreadTile"] = True
-
-    components.append('SN')
-    for key in sorted(state.keys()):
-      if key in requiredParameters and key[0] != '_':
-        if requiredParameters[key] and key != "CustomKernelName":
-          components.append(f'{Solution.getParameterNameAbbreviation(key)}{Solution.getParameterValueAbbreviation(key, state[key])}')
-
-    state["GlobalSplitU"] = backup
-    requiredParameters["GlobalSplitU"] = True
-    requiredParameters["WorkGroupMapping"] = True
-    requiredParameters["WorkGroupMappingXCC"] = True
-    requiredParameters["WorkGroupMappingXCCGroup"] = True
-    requiredParameters["StaggerU"] = True
-    requiredParameters["StaggerUStride"] = True
-    requiredParameters["StaggerUMapping"] = True
-    requiredParameters["GlobalSplitUCoalesced"] = True
-    requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = True
-    requiredParameters["MIWaveTile"] = useWaveTile
-    requiredParameters["ThreadTile"] = useThreadTile
-
-    return '_'.join(components)
-
-  ########################################
-  # create a dictionary of lists of parameter values
-  @staticmethod
-  def getSerialNaming(objs):
-    data = {}
-    for obj in objs:
-      for paramName in sorted(obj.keys()):
-        if paramName in validParameters.keys():
-          paramValue = obj[paramName]
-          if paramName in data:
-            if paramValue not in data[paramName]:
-              data[paramName].append(paramValue)
-          else:
-            data[paramName] = [ paramValue ]
-    maxObjs = 1
-    for paramName in data:
-      if not isinstance(data[paramName][0], dict):
-        data[paramName] = sorted(data[paramName])
-      maxObjs *= len(data[paramName])
-    numDigits = len(str(maxObjs))
-    return [ data, numDigits ]
-
-  ########################################
-  # Get Name Serial
-  @ staticmethod
-  def getNameSerial(state, serialNaming):
-    data = serialNaming[0]
-    numDigits = serialNaming[1]
-
-    serial = 0
-    multiplier = 1
-    for paramName in sorted(state.keys()):
-      if paramName in list(validParameters.keys()):
-        paramValue = state[paramName]
-        paramData = data[paramName]
-        paramNameMultiplier = len(paramData)
-        if paramValue in paramData:
-          paramValueIdx = paramData.index(paramValue)
-        serial += paramValueIdx * multiplier
-        multiplier *= paramNameMultiplier
-    name = "%s%0*u" % ("S" if isinstance(state, Solution) else "K", \
-        numDigits, serial)
-    return name
-
 
   ########################################
   @ staticmethod
@@ -4427,60 +4213,10 @@ class Solution(collections.abc.Mapping):
       s += "%s%s: %s\n" % (indent, str(key), str(state[key]))
     return s
 
-  ########################################
-  @ staticmethod
-  @ lru_cache(maxsize=None)
-  def getParameterNameAbbreviation( name: str ):
-    return ''.join(c for c in name if c.isupper())
-
-  ########################################
 
   class NonprimitiveParameterValueException(Exception):
     pass
 
-  @ staticmethod
-  @ lru_cache(maxsize=None)
-  def getPrimitiveParameterValueAbbreviation(key, value):
-    if isinstance(value, str):
-      return Solution.getParameterNameAbbreviation(value)
-    elif isinstance(value, bool):
-      return "1" if value else "0"
-    elif isinstance(value, int):
-      if value >= 0:
-        return "%u" % value
-      else: # -1 -> n1
-        return "n%01u" % abs(value)
-    elif isinstance(value, ProblemType):
-      return str(value)
-    elif isinstance(value, float):
-      val1 = int(value)
-      val2 = int(round(value*100)) - int(value)*100
-      if val2 > 0:
-        s =  "%dp%s" % (val1,str(val2).zfill(2))
-      else:
-        s = "%d" % (val1)
-      return s
-
-  ########################################
-
-  @ staticmethod
-  def getParameterValueAbbreviation( key, value ):
-    if key == "ISA":
-      return f"{value[0]}{value[1]}{value[2]:x}"
-
-    compositieTypes = (dict, list, tuple,)
-
-    if not isinstance(value, compositieTypes):
-      return Solution.getPrimitiveParameterValueAbbreviation(key, value)
-    elif isinstance(value, tuple):
-      return ''.join(str(v) for v in value)
-    elif isinstance(value, list):
-      return '_'.join(Solution.getParameterValueAbbreviation(key, v) for v in value)
-    elif isinstance(value, dict):
-      return "_".join(f"{pos:d}{k:d}" for pos,k in value.items())
-    else:
-      printExit('Parameter {key}={value} is new object type ({t})'.format(key=key, value=value, t=type(value)))
-      return str(value)
 
   ##########################
   # make class look like dict
@@ -4502,7 +4238,7 @@ class Solution(collections.abc.Mapping):
 
   def __str__(self):
     if self._name is None:
-      self._name = Solution.getNameFull(self._state, self.splitGSU)
+      self._name = getNameFull(self._state, self.splitGSU)
     return self._name
 
   def __repr__(self):

@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Dict
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
   assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, \
-  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo, DepthUConfig
+  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo, DepthUConfig, getMinNaming, getNameMin
 from .SolutionStructs import Solution
 from . import LibraryIO
 from . import SolutionSelectionLibrary
@@ -71,13 +71,13 @@ def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryL
     solutions = problemSizeGroup[4]
     problemSizesList.append(problemSizes)
     solutionsList.append(solutions)
-    solutionMinNaming = Solution.getMinNaming(solutions)
+    solutionMinNaming = getMinNaming(solutions)
     print1("# Read: %s" % (solutionsFileName))
     print2("# ProblemSizes: %s" % problemSizes)
     print2("# Solutions:")
     solutionIdx = 0
     for solution in solutions:
-      print2("#  (%u) %s" % (solutionIdx, Solution.getNameMin(solution, \
+      print2("#  (%u) %s" % (solutionIdx, getNameMin(solution, \
           solutionMinNaming, splitGSU)))
       solutionIdx += 1
     print2(HR)
@@ -127,9 +127,9 @@ def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryL
   for i in range(0, len(logicAnalyzer.solutions)):
     s = logicAnalyzer.solutions[i]
     s["SolutionIndex"] = i
-    s["SolutionNameMin"] = Solution.getNameMin(s, solutionMinNaming, splitGSU)
-    s["KernelNameMin"]   = Solution.getNameMin(s, solutionMinNaming, splitGSU, True)
-    print1("(%2u) %s : %s" % (i, Solution.getNameMin(s, solutionMinNaming, splitGSU), Solution.getNameFull(s, splitGSU)))
+    s["SolutionNameMin"] = getNameMin(s, solutionMinNaming, splitGSU)
+    s["KernelNameMin"]   = getNameMin(s, solutionMinNaming, splitGSU, True)
+    print1("(%2u) %s : %s" % (i, getNameMin(s, solutionMinNaming, splitGSU), Solution.getNameFull(s, splitGSU)))
 
   if enableTileSelection:
     validSelectionSolutions = SolutionSelectionLibrary.analyzeSolutionSelection(problemType, selectionFileNameList, \
@@ -161,8 +161,8 @@ def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryL
       (validSolution, validSolutionInfo) = validSelectionSolution
       selectionSolutionIndex = solutionsStartIndex + i
       selectionSolutionsIds.add(selectionSolutionIndex)
-      validSolution["SolutionNameMin"] = Solution.getNameMin(validSolution, solutionMinNaming, splitGSU)
-      validSolution["KernelNameMin"]   = Solution.getNameMin(validSolution, solutionMinNaming, splitGSU, True)
+      validSolution["SolutionNameMin"] = getNameMin(validSolution, solutionMinNaming, splitGSU)
+      validSolution["KernelNameMin"]   = getNameMin(validSolution, solutionMinNaming, splitGSU, True)
       validSolution["Ideals"] = validSolutionInfo
       selectionSolutions.append(validSolution)
 
@@ -292,11 +292,11 @@ class LogicAnalyzer:
         self.solutionGroupMap[solutionGroupIdx][solutionIdx] = sIdx
         progressBar.increment()
     self.numSolutions = len(self.solutions)
-    self.solutionMinNaming = Solution.getMinNaming(self.solutions)
+    self.solutionMinNaming = getMinNaming(self.solutions)
     self.solutionNames = []
     self.solutionTiles = []
     for solution in self.solutions:
-      self.solutionNames.append(Solution.getNameMin(solution, \
+      self.solutionNames.append(getNameMin(solution, \
           self.solutionMinNaming, self.splitGSU))
       self.solutionTiles.append("%ux%u"%(solution["MacroTile0"], \
           solution["MacroTile1"]))
@@ -1119,11 +1119,11 @@ class LogicAnalyzer:
     for i in range(0, oldNumSolutions):
       if i != removeSolutionIdx:
         self.solutions.append(oldSolutions[i])
-    self.solutionMinNaming = Solution.getMinNaming(self.solutions)
+    self.solutionMinNaming = getMinNaming(self.solutions)
     self.solutionNames = []
     self.solutionTiles = []
     for solution in self.solutions:
-      self.solutionNames.append(Solution.getNameMin(solution, \
+      self.solutionNames.append(getNameMin(solution, \
           self.solutionMinNaming, self.splitGSU))
       self.solutionTiles.append("%ux%u"%(solution["MacroTile0"], \
           solution["MacroTile1"]))
@@ -1170,11 +1170,11 @@ class LogicAnalyzer:
       else:
         removeSolutionIdxList.append(i)
 
-    self.solutionMinNaming = Solution.getMinNaming(self.solutions)
+    self.solutionMinNaming = getMinNaming(self.solutions)
     self.solutionNames = []
     self.solutionTiles = []
     for solution in self.solutions:
-      self.solutionNames.append(Solution.getNameMin(solution, \
+      self.solutionNames.append(getNameMin(solution, \
           self.solutionMinNaming, self.splitGSU))
       self.solutionTiles.append("%ux%u"%(solution["MacroTile0"], \
           solution["MacroTile1"]))

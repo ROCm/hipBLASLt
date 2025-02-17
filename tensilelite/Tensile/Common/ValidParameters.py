@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-import math 
+import math
 
 from .Architectures import SUPPORTED_ISA
 from .Utilities import printExit
@@ -748,7 +748,8 @@ validParameters = {
     # if source, Runtime will determine language
     # later on, we'll relax this to inner kernel languages and outer kernel languages, such as inline asm embedded in ocl or in llvm
     "KernelLanguage": ["Assembly"],
-    "ISA": validISA,  # arch for assembly kernels
+    # We set ISA in multiple places
+    "ISA": validISA,  # arch for assembly kernels 
     # Name of the custom kernel located at `CUSTOM_KERNEL_PATH`.
     # a custom kernel is a user written assembly kernel with its associated configuration parameters included in a custom.config section
     # inside the yaml block between the --- and ... markers.  These parameters are only used for information purposes, not kernel generation.

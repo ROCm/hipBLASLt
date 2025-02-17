@@ -30,7 +30,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Union, NamedTuple
 
-from ..Common import print2, ensurePath, isaToGfx
+from ..Common import print2, ensurePath, isaToGfx, getKernelFileBase
 from ..KernelWriterAssembly import KernelWriterAssembly
 from ..SolutionStructs import Solution
 
@@ -78,9 +78,11 @@ def buildAssemblyCodeObjectFiles(
       bundler: Bundler,
       ldPath: str,
       kernels: List[Solution],
-      writer: KernelWriterAssembly,
+      kernelSerialNaming,
+      kernelMinNaming,
       destDir: Union[Path, str],
       asmDir: Union[Path, str],
+      splitGSU: bool,
       compress: bool=True,
       useShortNames: bool=False,
     ):
@@ -112,14 +114,14 @@ def buildAssemblyCodeObjectFiles(
 
       gfx = isaToGfx(arch)
 
-      objectFiles = [str(asmDir / (writer.getKernelFileBase(useShortNames, k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
+      objectFiles = [str(asmDir / (getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
       coFileMap = collections.defaultdict(list)
       if len(objectFiles):
         coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
       for kernel in archKernels:
         coName = kernel.get("codeObjectFile", None)
         if coName:
-          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writer.getKernelFileBase(useShortNames, kernel) + extObj)))
+          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, kernel) + extObj)))
       for coFileRaw, objFiles in coFileMap.items():
         objFiles = _batchObjectFiles(ldPath, objFiles, coFileRaw)
         linker(objFiles, str(coFileRaw))

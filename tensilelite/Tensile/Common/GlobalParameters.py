@@ -305,6 +305,7 @@ globalParameters["AsmDebug"] = (
 globalParameters["UseEffLike"] = True  # Set to False to use winnerGFlops as the performance metric
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
+# we should do this here...
 defaultGlobalParameters = deepcopy(globalParameters)
 
 
@@ -331,10 +332,6 @@ defaultInternalSupportParams = {
     # Use GG as G's backend
     "UseUniversalArgs": True,
 }
-
-
-
-
 
 # same parameter for all solution b/c depends only on compiler
 defaultBenchmarkCommonParameters = [

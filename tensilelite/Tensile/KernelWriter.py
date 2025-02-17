@@ -32,12 +32,11 @@ from .KernelWriterModules import *
 from .TensilePass import TensilePass, TensilePassOptions
 from .Component import Component, LraTileProperties
 from .Components.Signature import UserArgumentsInfo
-from .CustomKernels import isCustomKernelConfig
 from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
 from .Common import printWarning, roundUp, print2, DebugConfig, DataDirection, \
-  INDEX_CHARS, MAX_FILENAME_LENGTH, IsaVersion
+  INDEX_CHARS, IsaVersion, getKernelName
 from Tensile.Toolchain.Component import Assembler
 
 import abc
@@ -2923,7 +2922,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.ti.getArchCaps
 
     self.consts = ConstValues()
-    self.states = StateValues(version=version, kernel=kernel, kernelName=self.getKernelName(kernel))
+    self.states = StateValues(version=version, kernel=kernel, kernelName=getKernelName(self.kernelMinNaming, self.debugConfig.splitGSU, kernel))
     self.vgprs  = StateVgprs()
     self.sgprs  = collections.OrderedDict()
     self.codes  = CodeModules()
@@ -4978,23 +4977,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
   #
   ##############################################################################
 
-  def _shortenFileBase(self, kernel):
-    base = self.getKernelName(kernel)
-    if len(base) <= MAX_FILENAME_LENGTH:
-      return base
-
-    import hashlib
-    import base64
-
-    pivot = MAX_FILENAME_LENGTH * 3 // 4
-    firstPart = base[:pivot]
-    secondPart = base[pivot:]
-
-    secondHash = hashlib.sha256(secondPart.encode()).digest()
-    secondPart = base64.b64encode(secondHash, b'_-').decode()
-
-    return firstPart + secondPart
-
 
   def _getKernelSource(self, kernel: Solution):
     """
@@ -5017,22 +4999,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return fileString
 
 
-  ##############################################################################
-  # get kernel name
-  ##############################################################################
-  def getKernelFileBase(self, useShortNames: bool, kernel):
-    if isCustomKernelConfig(kernel):
-      fileBase = kernel["CustomKernelName"]
-    elif useShortNames:
-      fileBase = Solution.getNameSerial(kernel, self.kernelSerialNaming)
-    else:
-      fileBase = self._shortenFileBase(kernel)
-    return fileBase
-
-  def getKernelName(self, kernel):
-    kernelName = Solution.getNameMin(kernel, self.kernelMinNaming, self.debugConfig.splitGSU, True)
-    return kernelName
-
   @abc.abstractmethod
   def getSourceFileString(self, kernel) -> Tuple[int, str]:
     """
@@ -5048,7 +5014,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     pass
 
   def getHeaderFileString(self, kernel):
-    kernelName = self.getKernelName(kernel)
+    kernelName = getKernelName(self.kernelMinNaming, self.debugConfig.splitGSU, kernel)
     fileString = "" # CHeader
     fileString += "extern const unsigned char %s_coba[]; // code object byte array\n" % kernelName
 

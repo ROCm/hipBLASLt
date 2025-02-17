@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from .SolutionStructs import Solution
+from Tensile.Common import getNameMin
 
 import csv
 
@@ -90,8 +90,8 @@ def updateValidSolutions(validSolutions, analyzerSolutions, solutionMinNaming):
     selectionSolutionIndex = solutionsStartIndex + i
     selectionSolutionsIds.add(selectionSolutionIndex)
     splitGSU = False # this is a reminder that we need to add this in to the function signature
-    validSolution["SolutionNameMin"] = Solution.getNameMin(validSolution, solutionMinNaming, splitGSU)
-    validSolution["KernelNameMin"]   = Solution.getNameMin(validSolution, solutionMinNaming, splitGSU, True)
+    validSolution["SolutionNameMin"] = getNameMin(validSolution, solutionMinNaming, splitGSU)
+    validSolution["KernelNameMin"]   = getNameMin(validSolution, solutionMinNaming, splitGSU, True)
     validSolution["Ideals"] = validSolutionInfo
     selectionSolutions.append(validSolution)
 

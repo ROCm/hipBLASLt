@@ -29,7 +29,7 @@ from . import Properties
 from . import Hardware
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import state, IsaInfo, gfxToIsa, DepthUConfig
+from .Common import state, IsaInfo, gfxToIsa, DepthUConfig, getMinNaming, getNameMin
 
 class SingleSolutionLibrary:
     Tag = "Single"
@@ -559,11 +559,11 @@ class MasterSolutionLibrary:
     def applyNaming(self, splitGSU: bool, naming=None):
         if naming is None:
             kernels = itertools.chain(s.originalSolution.getKernels() for s in self.solutions.values())
-            naming = OriginalSolution.getMinNaming(kernels)
+            naming = getMinNaming(kernels)
 
         for s in list(self.solutions.values()):
-            s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, splitGSU)
-            s.kernelName = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, splitGSU, True)
+            s.name = getNameMin(s.originalSolution.getKernels()[0], naming, splitGSU)
+            s.kernelName = getNameMin(s.originalSolution.getKernels()[0], naming, splitGSU, True)
 
     def remapSolutionIndicesStartingFrom(self, curIndex):
         reIndexMap = {}
