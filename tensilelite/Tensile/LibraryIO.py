@@ -289,7 +289,6 @@ def parseLibraryLogicFile(
         printSolutionRejectionReason: bool,
         printIndexAssignmentInfo: bool,
         depthUConfig: DepthUConfig,
-        archs, 
         isaInfoMap: Dict[str, IsaInfo],
         lazyLibraryLoading: bool
     ):
@@ -302,7 +301,6 @@ def parseLibraryLogicFile(
                printSolutionRejectionReason,
                printIndexAssignmentInfo,
                depthUConfig,
-               archs,
                isaInfoMap,
                lazyLibraryLoading
            )
@@ -316,7 +314,6 @@ def parseLibraryLogicData(
         printSolutionRejectionReason: bool,
         printIndexAssignmentInfo: bool,
         depthUConfig: DepthUConfig,
-        archs,
         isaInfoMap: Dict[str, IsaInfo],
         lazyLibraryLoading: bool
     ):
@@ -324,17 +321,15 @@ def parseLibraryLogicData(
     if isinstance(data, List):
         data = parseLibraryLogicList(data, srcFile)
     
-    supportedISA = [gfxToIsa(a) for a in archs]
-
-    is_arch_valid = lambda cArch, tArch : (cArch == tArch or cArch == "all")
-    if not (archs is None) and "ArchitectureName" in data:
-        if isinstance(archs, List):
-            if len(archs) > 0 and not archs[0] == "all":
-                if not (any(is_arch_valid(arch.split(":")[0], data["ArchitectureName"]) for arch in archs)):
-                    return LibraryLogic("", "", None, [], [], None, srcFile)
-        elif isinstance(archs, str):
-            if not is_arch_valid(archs.split(":")[0], data["ArchitectureName"]):
-                return LibraryLogic("", "", None, [], [], None, srcFile)
+    #is_arch_valid = lambda cArch, tArch : (cArch == tArch or cArch == "all")
+    #if not (archs is None) and "ArchitectureName" in data:
+    #    if isinstance(archs, List):
+    #        if len(archs) > 0 and not archs[0] == "all":
+    #            if not (any(is_arch_valid(arch.split(":")[0], data["ArchitectureName"]) for arch in archs)):
+    #                return LibraryLogic("", "", None, [], [], None, srcFile)
+    #    elif isinstance(archs, str):
+    #        if not is_arch_valid(archs.split(":")[0], data["ArchitectureName"]):
+    #            return LibraryLogic("", "", None, [], [], None, srcFile)
 
     if "CUCount" not in data:
         data["CUCount"] = None

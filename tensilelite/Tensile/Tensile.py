@@ -145,10 +145,10 @@ def executeStepsInConfig(
         else:
             libraryClientConfig = {}
         ClientWriter.main(
-            libraryClientConfig, 
-            srcToolchain.compiler, 
+            libraryClientConfig,
+            asmToolchain.assembler,
             cCompiler,
-            [isaToGfx(isa) for isa in isaInfoMap.keys()][0],
+            isaInfoMap,
             outputPath,
             deviceId,
             config["ShortNames"]

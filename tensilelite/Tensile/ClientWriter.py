@@ -36,11 +36,12 @@ from . import ROOT_PATH
 from . import ClientExecutable
 from . import LibraryIO
 from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx, IsaInfo, \
-  LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR, detectGlobalCurrentISA
+  LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR, detectGlobalCurrentISA, DepthUConfig
 from .SolutionStructs import ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
 from .TensileCreateLibrary import copyStaticFiles
 from .Contractions import FreeIndex, BatchIndex
 from .Contractions import ProblemType as ContractionsProblemType
+from Tensile.Toolchain.Component import Assembler
 
 class DataInitName(Enum):
   Zero = 0
@@ -80,7 +81,7 @@ class ClientLogLevel(Enum):
 ################################################################################
 # Main
 ################################################################################
-def main(config, cxxCompiler: str, cCompiler: str, targetGfx: List[str], outputPath: Path, deviceId: int, useShortNames: bool=False):
+def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: Path, deviceId: int, useShortNames: bool=False):
 
   libraryLogicPath = ensurePath(outputPath / LIBRARY_LOGIC_DIR)
   clientLibraryPath = ensurePath(outputPath / LIBRARY_CLIENT_DIR)
@@ -98,7 +99,7 @@ def main(config, cxxCompiler: str, cCompiler: str, targetGfx: List[str], outputP
   functions = []
   functionNames = []
 
-  createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, cxxCompiler, targetGfx, useShortNames)
+  createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, str(assembler.path), isaToGfx(list(isaInfoMap.keys())[0]), useShortNames)
   subprocess.run(shlex.split(createLibraryScript), cwd=clientLibraryPath)
   coList = glob(os.path.join(clientLibraryPath, "library/*.co"))
   yamlList = glob(os.path.join(clientLibraryPath, "library/*.yaml"))
@@ -106,7 +107,7 @@ def main(config, cxxCompiler: str, cCompiler: str, targetGfx: List[str], outputP
   clientParametersPaths = []
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary) \
-        = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler, False, False, [targetGfx])
+        = LibraryIO.parseLibraryLogicFile(logicFileName, assembler, False, False, False, DepthUConfig(), isaInfoMap, globalParameters["LazyLibraryLoading"])
     functions.append((scheduleName, problemType))
     functionNames.append("tensile_%s" % (problemType))
     problemSizes = ProblemSizesMock(exactLogic) if exactLogic else ProblemSizesMockDummy()
@@ -146,10 +147,10 @@ def main(config, cxxCompiler: str, cCompiler: str, targetGfx: List[str], outputP
                                   factorDimArgs=factorDimArgs,
                                   activationArgs=activationArgs,
                                   icacheFlushArgs=icacheFlushArgs,
-                                  stepName=str(ProblemType(problemType)),
+                                  stepName=str(ProblemType(problemType, False)),
                                   stepBaseDir=str(clientLibraryPath),
                                   newLibrary=newLibrary,
-                                  configBase="ClientParameters_%s"%str(ProblemType(problemType)),
+                                  configBase="ClientParameters_%s"%str(ProblemType(problemType, False)),
                                   codeObjectFiles=coList,
                                   deviceId=deviceId,
                                   tileAwareSelection=False,
@@ -169,7 +170,7 @@ def main(config, cxxCompiler: str, cCompiler: str, targetGfx: List[str], outputP
 
   forBenchmark = False
   enableTileSelection = False
-  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, clientLibraryPath, clientParametersPaths)
+  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, str(assembler.path), cCompiler, clientLibraryPath, clientParametersPaths)
 
   return returncode
 
