@@ -30,8 +30,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Union, NamedTuple
 
-from ..Common import print2, ensurePath, isaToGfx, getKernelFileBase
-from ..KernelWriterAssembly import KernelWriterAssembly
+from ..Common import print2, isaToGfx
 from ..SolutionStructs import Solution
 
 from .Component import Assembler, Linker, Bundler
@@ -78,13 +77,9 @@ def buildAssemblyCodeObjectFiles(
       bundler: Bundler,
       ldPath: str,
       kernels: List[Solution],
-      kernelSerialNaming,
-      kernelMinNaming,
       destDir: Union[Path, str],
       asmDir: Union[Path, str],
-      splitGSU: bool,
       compress: bool=True,
-      useShortNames: bool=False,
     ):
     """Builds code object files from assembly files
 
@@ -97,14 +92,12 @@ def buildAssemblyCodeObjectFiles(
         compress: Whether to compress the code object files.
     """
 
-    isAsm = lambda k: k["KernelLanguage"] == "Assembly"
-
     extObj = ".o"
     extCo = ".co"
     extCoRaw = ".co.raw"
 
     archKernelMap = collections.defaultdict(list)
-    for k in filter(isAsm, kernels):
+    for k in kernels:
       archKernelMap[tuple(k['ISA'])].append(k)
 
     coFiles = []
@@ -114,14 +107,14 @@ def buildAssemblyCodeObjectFiles(
 
       gfx = isaToGfx(arch)
 
-      objectFiles = [str(asmDir / (getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
+      objectFiles = [str(asmDir / (k["BaseName"] + extObj)) for k in archKernels if 'codeObjectFile' not in k]
       coFileMap = collections.defaultdict(list)
       if len(objectFiles):
         coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
       for kernel in archKernels:
         coName = kernel.get("codeObjectFile", None)
         if coName:
-          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, kernel) + extObj)))
+          coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (kernel["BaseName"] + extObj)))
       for coFileRaw, objFiles in coFileMap.items():
         objFiles = _batchObjectFiles(ldPath, objFiles, coFileRaw)
         linker(objFiles, str(coFileRaw))

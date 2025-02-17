@@ -239,6 +239,8 @@ def writeSolutionsAndKernels(
     for k in asmKernels:
         base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
         k.duplicate = True if base in visited else False
+        if not k.duplicate:
+            k["BaseName"] = base
         duplicates += k.duplicate
         print2(f"Duplicate: {base}")
         visited.add(base)
@@ -284,13 +286,9 @@ def writeSolutionsAndKernels(
             asmToolchain.bundler,
             globalParameters["ROCmLdPath"],
             asmKernels,
-            kernelSerialNaming,
-            kernelMinNaming,
             destLibPath,
             assemblyTmpPath,
-            splitGSU,
             compress,
-            useShortNames
         )
         buildSourceCodeObjectFiles(
             srcToolchain.compiler,
@@ -337,6 +335,7 @@ def writeSolutionsAndKernelsTCL(
     splitGSU = False
     for k in asmKernels:
         base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
+        k["BaseName"] = base
         k.duplicate = True if base in visited else False
         duplicates += k.duplicate
         print2(f"Duplicate: {base}")
@@ -372,14 +371,10 @@ def writeSolutionsAndKernelsTCL(
         asmToolchain.linker,
         asmToolchain.bundler,
         globalParameters["ROCmLdPath"],
-        asmKernels, 
-        kernelSerialNaming,
-        kernelMinNaming,
+        uniqueAsmKernels, 
         destLibPath,
         assemblyTmpPath,
-        splitGSU,
         compress,
-        useShortNames
     )
 
     writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
@@ -387,11 +382,11 @@ def writeSolutionsAndKernelsTCL(
     buildSourceCodeObjectFiles(
         srcToolchain.compiler,
         srcToolchain.bundler,
-        destLibPath, 
-        objectTmpPath, 
-        outputPath, 
-        srcKernelFile, 
-        cmdlineArchs, 
+        destLibPath,
+        objectTmpPath,
+        outputPath,
+        srcKernelFile,
+        cmdlineArchs,
     )
 
     return len(uniqueAsmKernels)
