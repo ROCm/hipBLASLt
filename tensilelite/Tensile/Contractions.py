@@ -34,6 +34,7 @@ from .Common import gfxToIsa, internalParameters, state, state_key_ordering, \
                     IsaInfo, DepthUConfig
 from Tensile.Toolchain.Component import Assembler
 
+MIN_K_FOR_GSU = 32
 @state_key_ordering
 class FreeIndex:
     StateKeys = ['isA', 'i', 'c', 'd']
@@ -515,7 +516,7 @@ class ProblemPredicate(Properties.Predicate):
             rv += [cls('BufferStoreOffsetLimitCheck', value=state['MacroTile1'])]
 
         if '_GlobalAccumulation' in state and state['_GlobalAccumulation'] != None and not state["StreamK"]:
-            value = 32 # globalParameters['MinKForGSU']
+            value = MIN_K_FOR_GSU
             rv += [cls('GlobalSplitUCheckMinK', value=[value, state["GlobalSplitU"]])]
 
         if ('WorkGroupMappingXCC' in state) and ('WorkGroupMappingXCCGroup' in state):
