@@ -89,7 +89,7 @@ class Component:
 
     @property
     def rocm_version(self):
-        return Component.rocm_version
+        return Component._rocm_version
 
 
 class Assembler(Component):
@@ -122,7 +122,7 @@ class Assembler(Component):
         """
 
         super(Assembler, self).__init__(component_path)
-        
+        self._code_object_version = co_version
         
         self._default_args = [
             *split(environ.get('Tensile_ASM_COMPILER_LAUNCHER', '')),
@@ -154,6 +154,9 @@ class Assembler(Component):
         ]
         return _invoke(args, "Assembling assembly source code into object file (.s -> .o)")
 
+    @property
+    def code_object_version(self):
+        return self._code_object_version
 
 class Compiler(Component):
     """

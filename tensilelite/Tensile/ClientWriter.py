@@ -30,7 +30,7 @@ import shutil
 from pathlib import Path
 from enum import Enum
 from glob import glob
-from typing import Dict
+from typing import List
 
 from . import ROOT_PATH
 from . import ClientExecutable

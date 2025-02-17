@@ -32,6 +32,7 @@ from .SolutionStructs import getBiasDataTypeListDefault
 from .SolutionStructs import Solution as OriginalSolution
 from .Common import gfxToIsa, internalParameters, globalParameters, state, state_key_ordering, \
                     IsaVersion, IsaInfo
+from Tensile.Toolchain.Component import Assembler
 
 @state_key_ordering
 class FreeIndex:
@@ -659,11 +660,11 @@ class Solution:
     HiddenKeys = ['originalSolution']
 
     @classmethod
-    def FromSolutionStruct(cls, solution, splitGSU: bool, printSolutionRejectionReason: bool, cxxCompiler: str, isaInfoMap: Dict[str, IsaInfo]):
-        return cls.FromOriginalState(solution._state, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap, solution.srcName)
+    def FromSolutionStruct(cls, solution, splitGSU: bool, printSolutionRejectionReason: bool, printIndexAssignmentInfo: bool, assembler: Assembler, isaInfoMap: Dict[str, IsaInfo]):
+        return cls.FromOriginalState(solution._state, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, assembler, isaInfoMap, solution.srcName)
 
     @classmethod
-    def FromOriginalState(cls, d, splitGSU: bool, printSolutionRejectionReason: bool, cxxCompiler, isaInfoMap, srcName = "", deviceInfo=None):
+    def FromOriginalState(cls, d, splitGSU: bool, printSolutionRejectionReason: bool, printIndexAssignmentInfo: bool, assembler, isaInfoMap, srcName = "", deviceInfo=None):
         rv = cls()
 
         if 'SolutionNameMin' in d:
@@ -707,7 +708,7 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap, srcName)
+        rv.originalSolution = OriginalSolution(d, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, assembler, isaInfoMap, srcName)
         rv.srcName = srcName
 
         return rv

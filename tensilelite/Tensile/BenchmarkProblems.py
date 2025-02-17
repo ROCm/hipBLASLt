@@ -43,12 +43,13 @@ from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
 from .CustomKernels import getCustomKernelConfig
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
+from Tensile.Toolchain.Component import Assembler
 from .Common import globalParameters, HR, print1, print2, IsaInfo, \
         printExit, printWarning, ensurePath, startTime, tqdm, state, \
         BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, IsaVersion, isaToGfx
 
 
-def _generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCompiler, \
+def _generateForkedSolutions(problemType, constantParams, forkPermutations, assembler: Assembler, \
                             debugConfig: DebugConfig, isaInfoMap: Dict[str, IsaInfo]):
     """Creates a list with a Solution object for each parameter combination in forkPermutations"""
     print1("# Enumerating Solutions")
@@ -61,7 +62,14 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, cxxC
         solution.update(perm)
 
         # TODO check if solution matches problem size for exact tile kernels
-        solutionObject = Solution(solution, debugConfig.splitGSU, debugConfig.printSolutionRejectionReason, cxxCompiler, isaInfoMap)
+        solutionObject = Solution(
+                             solution,
+                             debugConfig.splitGSU,
+                             debugConfig.printSolutionRejectionReason,
+                             debugConfig.printIndexAssignmentInfo,
+                             assembler,
+                             isaInfoMap
+                         )
         if solutionObject["Valid"]:
             if solutionObject not in solutionSet:
                 solutionSet.add(solutionObject)
@@ -75,14 +83,21 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, cxxC
 def _getCustomKernelSolutionObj(
         kernelName, 
         internalSupportParams,
-        cxxCompiler: str, 
+        assembler: Assembler, 
         debugConfig: DebugConfig, \
         isaInfoMap: Dict[str, IsaInfo],
         directory=CUSTOM_KERNEL_PATH
     ):
     """Creates the Solution object for a custom kernel"""
     config = getCustomKernelConfig(kernelName, internalSupportParams, directory)
-    return Solution(config, debugConfig.splitGSU, debugConfig.printSolutionRejectionReason, cxxCompiler, isaInfoMap)
+    return Solution(
+               config,
+               debugConfig.printIndexAssignmentInfo,
+               debugConfig.printSolutionRejectionReason,
+               debugConfig.printIndexAssignmentInfo,
+               assembler,
+               isaInfoMap
+           )
 
 
 def _generateCustomKernelSolutions(
@@ -90,7 +105,7 @@ def _generateCustomKernelSolutions(
         customKernels, 
         internalSupportParams, 
         failOnMismatch,
-        cxxCompiler: str, 
+        assembler: Assembler, 
         debugConfig: DebugConfig, 
         isaInfoMap: Dict[str, IsaInfo]
     ):
@@ -98,7 +113,7 @@ def _generateCustomKernelSolutions(
     solutions = []
     for kernelName in customKernels:
         print1("# Processing custom kernel {}".format(kernelName))
-        solution = _getCustomKernelSolutionObj(kernelName, internalSupportParams, cxxCompiler, debugConfig, isaInfoMap)
+        solution = _getCustomKernelSolutionObj(kernelName, internalSupportParams, assembler, debugConfig, isaInfoMap)
         # The ActivationType setting in YAML is meaningless in customKernel case.
         # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
         solution["ProblemType"]["ActivationType"] = problemType["ActivationType"]
@@ -208,6 +223,7 @@ def writeBenchmarkFiles(
                      asmToolchain.assembler, 
                      debugConfig.splitGSU, 
                      debugConfig.printSolutionRejectionReason, 
+                     debugConfig.printIndexAssignmentInfo,
                      isaInfoMap,
                  )
     newLibrary.applyNaming(debugConfig.splitGSU, kernelMinNaming)
@@ -265,7 +281,7 @@ def _benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSize
     print1("# Converting Config to BenchmarkProcess Object")
     print1(HR)
     print1("")
-    benchmarkProcess = BenchmarkProcess(problemTypeConfig, problemSizeGroupConfig)
+    benchmarkProcess = BenchmarkProcess(problemTypeConfig, problemSizeGroupConfig, debugConfig.printIndexAssignmentInfo)
 
     enableTileSelection = benchmarkProcess.problemType["TileAwareSelection"]
     groupName = "{}_{:02d}".format(str(benchmarkProcess.problemType), problemSizeGroupIdx)
@@ -336,11 +352,11 @@ def _benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSize
             maxPossibleSolutions = len(forkPermutations)
 
             regSolutions = _generateForkedSolutions(benchmarkProcess.problemType, \
-                    benchmarkStep.constantParams, forkPermutations, str(srcToolchain.compiler.path), \
+                    benchmarkStep.constantParams, forkPermutations, asmToolchain.assembler, \
                         debugConfig, isaInfoMap)
             kcSolutions = _generateCustomKernelSolutions(benchmarkProcess.problemType, \
                     benchmarkStep.customKernels, benchmarkStep.internalSupportParams, \
-                    not benchmarkStep.customKernelWildcard, str(srcToolchain.compiler.path), debugConfig, \
+                    not benchmarkStep.customKernelWildcard, asmToolchain.assembler, debugConfig, \
                         isaInfoMap)
 
             maxPossibleSolutions += len(kcSolutions)
@@ -398,7 +414,7 @@ def _benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSize
             solutions = None
             print1("# Using cached solution data")
 
-            ssProblemType = ProblemType(problemTypeConfig)
+            ssProblemType = ProblemType(problemTypeConfig, debugConfig.printIndexAssignmentInfo)
             conProblemType = ContractionsProblemType.FromOriginalState(ssProblemType)
             outFile = os.path.join(sourcePath, "ClientParameters.ini")
 
@@ -467,7 +483,7 @@ def main(
 
         for idx, sizeGroupConfig in enumerate(problemSizeGroupConfigs):
             print2("ProblemTypeConfig: {}".format(problemTypeConfig))
-            problemTypeObj = ProblemType(problemTypeConfig)
+            problemTypeObj = ProblemType(problemTypeConfig, debugConfig.printIndexAssignmentInfo)
 
             # using a suffix to check the csv version (for later addFromCSV())
             csvSuffix = "_CSVWinner" if globalParameters["CSVExportWinner"] else ""

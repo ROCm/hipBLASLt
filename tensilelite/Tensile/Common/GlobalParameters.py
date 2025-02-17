@@ -30,12 +30,11 @@ import sys
 import time
 from collections import OrderedDict
 from copy import deepcopy
-from typing import List, Dict
+from typing import Dict
 
 from Tensile import __version__
 
 from .Architectures import isaToGfx, SUPPORTED_ISA
-from .Capabilities import initArchCaps, initAsmBugs, initAsmCaps, initRegisterCaps
 from .Types import IsaVersion, IsaInfo
 from .Utilities import locateExe, versionIsCompatible, print1, print2, printExit, printWarning, \
      verbosity
@@ -222,7 +221,7 @@ globalParameters["PrintTensorRef"] = (
 )
 globalParameters["PrintTensorBias"] = 0  # Print TensorBias after initialization
 globalParameters["PrintTensorAmaxD"] = 0  # Print AmaxD after validation
-globalParameters["PrintIndexAssignments"] = 0  # Print the tensor index assignment info
+#globalParameters["PrintIndexAssignments"] = 0  # Print the tensor index assignment info
 globalParameters["PrintWinnersOnly"] = False  # Only print the solutions which become the fastest
 globalParameters["PrintCodeCommands"] = (
     False  # print the commands used to generate the code objects (asm,link,hip-clang, etc)

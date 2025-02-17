@@ -302,6 +302,7 @@ class MasterSolutionLibrary:
                           origSolutions,
                           splitGSU: bool,
                           printSolutionRejectionReason: bool,
+                          printIndexAssignmentInfo: bool,
                           cxxCompiler,
                           isaInfoMap: Dict[str, IsaInfo],
                           lazyLibraryLoading: bool,
@@ -466,6 +467,7 @@ class MasterSolutionLibrary:
                                                         origSolutions,
                                                         splitGSU,
                                                         printSolutionRejectionReason,
+                                                        printIndexAssignmentInfo,
                                                         cxxCompiler,
                                                         isaInfoMap,
                                                         lazyLibraryLoading,
@@ -476,7 +478,7 @@ class MasterSolutionLibrary:
             origSolutions = []
 
         problemType = Contractions.ProblemType.FromOriginalState(origData["ProblemType"])
-        allSolutions = [solutionClass.FromSolutionStruct(s, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap) for s in origSolutions]
+        allSolutions = [solutionClass.FromSolutionStruct(s, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, cxxCompiler, isaInfoMap) for s in origSolutions]
         cls.FixSolutionIndices(allSolutions)
 
         # library is constructed in reverse order i.e. bottom-up
@@ -497,8 +499,8 @@ class MasterSolutionLibrary:
         return rv, placeholderName
 
     @classmethod
-    def BenchmarkingLibrary(cls, solutions, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, isaInfoMap):
-        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap) for s in solutions])
+    def BenchmarkingLibrary(cls, solutions, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, printIndexAssignmentInfo: bool, isaInfoMap):
+        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, cxxCompiler, isaInfoMap) for s in solutions])
         cls.FixSolutionIndices(solutionObjs)
 
         predRows = list([{

@@ -29,7 +29,7 @@ import os
 import shutil
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import Dict, List, NamedTuple, Optional, Sequence, Union
+from typing import List, NamedTuple, Optional, Sequence, Union
 
 from Tensile import SOURCE_PATH, LibraryIO
 from Tensile.Common import (
@@ -43,6 +43,7 @@ from Tensile.Common import (
     ParallelMap2,
     SemanticVersion,
     architectureMap,
+    globalParameters,
     assignGlobalParameters,
     ensurePath,
     isaToGfx,
@@ -268,6 +269,7 @@ def writeSolutionsAndKernels(
         codeObjectFiles += buildAssemblyCodeObjectFiles(
             asmToolchain.linker,
             asmToolchain.bundler,
+            globalParameters["ROCmLdPath"],
             asmKernels,
             kernelWriterAssembly,
             destLibPath,
@@ -341,10 +343,10 @@ def writeSolutionsAndKernelsTCL(
         multiArg=False,
         return_as="list"
     )
-
     buildAssemblyCodeObjectFiles(
         asmToolchain.linker,
         asmToolchain.bundler,
+        globalParameters["ROCmLdPath"],
         asmKernels, 
         kernelWriterAssembly,
         destLibPath,
@@ -435,7 +437,7 @@ def generateKernelObjectsFromSolutions(solutions):
 
 
 @timing
-def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler, isaInfoMap):
+def generateLogicDataAndSolutions(logicFiles, args, assembler: Assembler, isaInfoMap):
 
     if ";" in args["Architecture"]:
         archs = args["Architecture"].split(";")  # user arg list format
@@ -447,12 +449,14 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler, isaInfoMap):
     nextSolIndex = 0
     splitGSU = False
     printSolutionRejectionReason = False
+    printIndexAssignmentInfo = False
     
     fIter = zip(
         logicFiles,
-        itertools.repeat(cxxCompiler),
+        itertools.repeat(assembler),
         itertools.repeat(splitGSU),
         itertools.repeat(printSolutionRejectionReason),
+        itertools.repeat(printIndexAssignmentInfo),
         itertools.repeat(archs),
         itertools.repeat(isaInfoMap),
         itertools.repeat(args["LazyLibraryLoading"]),
@@ -628,7 +632,7 @@ def run():
         print2("#   %s" % logicFile)
 
     solutions, masterLibraries = generateLogicDataAndSolutions(
-        logicFiles, arguments, cxxCompiler, isaInfoMap
+        logicFiles, arguments, asmToolchain.assembler, isaInfoMap
     )
 
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)

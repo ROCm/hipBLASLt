@@ -44,7 +44,8 @@ from .Common import assignParameterWithDefault, IsaInfo, \
                     print2, printExit, printWarning, \
                     validMFMA, validSMFMA, validParameters, \
                     validGEMMTypes, HPATypes, roundUp, validWMMA, \
-                    INDEX_CHARS, IsaVersion
+                    INDEX_CHARS, IsaVersion, SemanticVersion
+from Tensile.Toolchain.Component import Assembler
 
 from collections import OrderedDict
 from collections.abc import Mapping
@@ -98,7 +99,7 @@ class Fbs(Enum):
 # name of solution should begin with name of problemType, and arguments can be listed out explicitly
 class ProblemType(Mapping):
   ########################################
-  def __init__(self, config):
+  def __init__(self, config, printIndexAssignmentInfo: bool):
     self.state = {}
 
     for key in defaultProblemType:
@@ -182,7 +183,7 @@ class ProblemType(Mapping):
       printExit("Unsupported OperationType = %s" % self["OperationType"])
 
     self.state["AssignedDerivedParameters"] = False
-    ProblemType.assignDerivedParameters(self.state)
+    ProblemType.assignDerivedParameters(self.state, printIndexAssignmentInfo)
 
     for tc in ('A', 'B'):
       for sc in self["SetConstStride%s"%tc] :
@@ -332,7 +333,7 @@ class ProblemType(Mapping):
   ########################################
   # determine d0, d1, dU
   @staticmethod
-  def assignDerivedParameters(state):
+  def assignDerivedParameters(state, printIndexAssignmentInfo: bool=False):
     if "AssignedDerivedParameters" in state:
       if state["AssignedDerivedParameters"]:
         return
@@ -366,7 +367,7 @@ class ProblemType(Mapping):
       else:
         printExit("invalid index %u (expected summation but not (inA and inB))" % i)
     # print index assignments
-    if globalParameters["PrintIndexAssignments"]:
+    if printIndexAssignmentInfo:
       print("IndicesFree:  %s" % state["IndicesFree"])
       print("IndicesBatch: %s" % state["IndicesBatch"])
       print("IndicesSum:   %s" % state["IndicesSummation"])
@@ -436,7 +437,7 @@ class ProblemType(Mapping):
     state["TLUB"] = strideIdxB < unrollIdxB
     #state["TLUB"] = True # hack
 
-    if globalParameters["PrintIndexAssignments"]:
+    if printIndexAssignmentInfo:
       print("TLUA:  %s (stridePosA(%d) <? unrollIdxA(%d)" % \
 			(state["TLUA"], strideIdxA, unrollIdxA))
       print("TLUB:  %s (stridePosB(%d) <? unrollIdxB(%d)" % \
@@ -452,7 +453,7 @@ class ProblemType(Mapping):
       strideIdxM = state["IndexAssignmentsMetadata"].index(state["Index01Metadata"])
       unrollIdxM = state["IndexAssignmentsMetadata"].index(state["IndexUnroll"])
       state["TLUMetadata"] = strideIdxM < unrollIdxM
-      if globalParameters["PrintIndexAssignments"]:
+      if printIndexAssignmentInfo:
         print("TLUMetadata:  %s (stridePosM(%d) <? unrollIdxM(%d)" % \
           (state["TLUMetadata"], strideIdxM, unrollIdxM))
         print("Index01Metadata:  %s" % state["Index01Metadata"])
@@ -1054,17 +1055,18 @@ class Solution(collections.abc.Mapping):
 
   ########################################   # need to be sure PSRR is passing to all fxns
   def __init__(
-    self, 
-    config, 
-    splitGSU: bool, 
-    printSolutionRejectionReason: bool, 
-    cxxCompiler: str, 
-    isaInfoMap: Dict[IsaVersion, IsaInfo], 
+    self,
+    config,
+    splitGSU: bool,
+    printSolutionRejectionReason: bool,
+    printIndexAssignmentInfo: bool,
+    assembler: Assembler,
+    isaInfoMap: Dict[IsaVersion, IsaInfo],
     srcName: str = ""
   ):
 
     self._name = None
-    self.cxxCompiler = cxxCompiler
+    self.assembler = assembler
     self.isaInfoMap = isaInfoMap
     self.srcName = srcName
     self.splitGSU = splitGSU
@@ -1074,9 +1076,9 @@ class Solution(collections.abc.Mapping):
     self._state = {}
     # problem type
     if "ProblemType" in config:
-      self["ProblemType"] = ProblemType(config["ProblemType"])
+      self["ProblemType"] = ProblemType(config["ProblemType"], printIndexAssignmentInfo)
     else:
-      self["ProblemType"] = ProblemType(defaultProblemType)
+      self["ProblemType"] = ProblemType(defaultProblemType, printIndexAssignmentInfo)
 
     if "InternalSupportParams" in config:
       self["InternalSupportParams"] = {}
@@ -1102,7 +1104,7 @@ class Solution(collections.abc.Mapping):
       if "CodeObjectVersion" in config:
         self._state["CodeObjectVersion"] = str(config["CodeObjectVersion"])
       else:
-        self._state["CodeObjectVersion"] = str(globalParameters["CodeObjectVersion"])
+        self._state["CodeObjectVersion"] = self.assembler.code_object_version
     # assign parameters without defaults
     for key in config:
       if (key != "ProblemType" or key != "InternalSupportParams") and key not in self._state:
@@ -1113,7 +1115,15 @@ class Solution(collections.abc.Mapping):
       self["AssignedProblemIndependentDerivedParameters"] = False
     if "AssignedDerivedParameters" not in self._state:
       self["AssignedDerivedParameters"] = False
-    Solution.assignDerivedParameters(self._state, splitGSU, printSolutionRejectionReason, isaInfoMap)
+    Solution.assignDerivedParameters(
+      self._state,
+      splitGSU,
+      printSolutionRejectionReason,
+      printIndexAssignmentInfo,
+      isaInfoMap,
+      assembler.rocm_version,
+      #depthUParams,
+    )
     self._name = config["CustomKernelName"] if isCustomKernelConfig(config) else None
 
     self.initHelperKernelObjects(targetIsas)
@@ -1240,7 +1250,7 @@ class Solution(collections.abc.Mapping):
       state["Kernel"] = {"WavefrontSize": self["WavefrontSize"], "ISA": tuple(self["ISA"])}
       if not isinstance(supportedISA, list):
         raise Exception(f"{type(supportedISA)}")
-      self.activationFunctionObjects.append(KernelWriterActivationFunction(state, self.cxxCompiler, supportedISA))
+      self.activationFunctionObjects.append(KernelWriterActivationFunction(state, str(self.assembler.path), supportedISA))
 
   def initActivationOnlyKernelObjects(self):
     self.activationOnlyKernelObjects = []
@@ -1309,10 +1319,6 @@ class Solution(collections.abc.Mapping):
   # assign tile sizes
   @staticmethod
   def assignProblemIndependentDerivedParameters(state, printRejectionReason: bool, isaInfoMap: Dict[str, IsaInfo]):
-
-    if globalParameters["NewClient"] != 2:
-      print("WARNING: Old client deprecated, NewClient parameter being set to 2.")
-      globalParameters["NewClient"] = 2
 
     if "AssignedProblemIndependentDerivedParameters" in state:
       if state["AssignedProblemIndependentDerivedParameters"]:
@@ -1527,187 +1533,6 @@ class Solution(collections.abc.Mapping):
       state["LSP%s"%tc] = roundupRatio(state["LSP%s"%tc], state["NumThreads"] // state["WavefrontSize"])
     elif state["WaveSeparateGlobalRead%s"%tc] == 2:
       state["LSP%s"%tc] = state["NumThreads"] // state["WavefrontSize"]
-
-    return True
-
-
-  ########################################
-  # Sets the Global Read Tile dims (para, perp)
-  # This information controls which threads read which addresses from global mem)
-  # Output from this function:
-  #   state[NumLoadsCoalesced*]
-  #   state[NumLoadsPerpendicular*]
-  #   state[LSC*]
-  #   state[LSP*]
-  #   state[GlobalReadVectorWidth]
-  #
-  # LSC and LSP define the shape of the PerLoadTile, measured in elements.
-  #   LSC*LSP is the elements loaded by a single instruction across all
-  #   threads in the group.
-  #   LSC is the number of elements loaded in the para(coalesced) dimension
-  #   LSP is the number of elements loaded in the perp(noncoalesced) dimension
-  #   PerLoadTile is always rectangular.
-  #   When BufferLoad=1, the area (LSC*LSP) can be larger than NumThreads.
-  #   In this case, some threads will generate a dummy OOB GRO.
-  #   Related fields:
-  #     LVC = LSC/GRVW  (LVCA = LSCA/GLVWA)
-  #     LVP = LSP/GRVW  (LVPA = LSPA/GLVWA)
-  #
-  # NumLoadsCoalesced and NumLoadsPerpendicular define the number of times the
-  #   PerLoadTile is loaded in each dimension to fetch the LoadTile
-  # LoadTile = (LSC * NumLoadsCoalesced) * (LSP * NumLoadsPerpendicular).
-  #   For Fractional, the LoadTile can be larger than the MacroTile. Buffer
-  #   loads will clip any OOB references to 0 and will also avoid writing these
-  #   into LDS.
-
-  # Fractional load algorithm:
-  #  - Each load instruction loads one or more (complete) rows of the load tile.
-  #     - Each row is LSC elements wide
-  #     - Rows are complete and do not wrap. This allows a single base GRO VGPR
-  #       to be used for all loads in the tile.
-  #     - Some work-items in the load may not perform useful work. These WI will
-  #       set their GRO to a large OOB number so as to do no harm
-  #     - Some G2L registers space may be unused as well.
-  #     - The 'used' message at the bottom of this routine computes and prints the
-  #       wasted register space.
-  #     - The wasted space is removed when the data is written to LDS- the LWO
-  #       for work-items beyond the valid ones are set to safely write to OOB locations.
-
-  #     - In cases where each load is loading multiple rows (multiple lines of lsc
-  #       elements), the last load is allowed to load fewer lines than the others.
-  #       The KernelWriterAssembly will modify the LWO for the last load.  This allows
-  #       flexibility in the unroll factors for example.
-  @staticmethod
-  def setGlobalLoadTileDimFractional(state, tc, depthU):
-
-    assert(depthU > 0)
-    dbFract = 0
-
-    # parDim, perpDim define the LoadTile and are measured in elements
-    if state["ProblemType"]["TLU%s"%tc]:
-      parDim  = state["MacroTile%s"%tc]
-      perpDim = depthU
-    else:
-      parDim  = depthU
-      perpDim = state["MacroTile%s"%tc]
-
-    if dbFract:
-        print("\ninfo: %s Fractional MT%u_%u_%u Par=%u Perp=%u WG%02u_%02u_%02u NumThreads=%u GRWV%s=%u" \
-          % (tc, state["MacroTile0"], state["MacroTile1"], depthU, \
-            parDim, perpDim, \
-            state["WorkGroup"][0], state["WorkGroup"][1], state["LocalSplitU"], \
-            state["NumThreads"], tc, state["GlobalReadVectorWidth%s"%tc]))
-
-    # Try to find a GRVW which is smaller than the LSC and also does not force
-    # the LSC to wrap - both of these conditions can be tested with lsc % grvw ==0.
-    # Each iteration divides GRWV by 2 which provides finer granularity
-    # and a possible opportunity to handle the lsc
-    grvw = state["GlobalReadVectorWidth%s"%tc]
-    minGrvw = 2 if state["ProblemType"]["DataType"].isHalf() and \
-                globalParameters["ArchCaps"][state["ISA"]]["HasEccHalf"] else 1 # why were we using current ISA here?
-    bestVw = -1
-    while grvw >= minGrvw:
-      # Per instruction across the entire group:
-      elementsLoadedPerInst = state["NumThreads"]*grvw
-      mik = 1
-      if (state["DirectToVgpr%s"%tc] and state["ProblemType"]["TLU%s"%tc]):
-        mik = state["MatrixInstK"] * state["LocalSplitU"] // state["MIInputPerThread"]
-        elementsLoadedPerInst //= mik
-      # LSC, LSP - #elements loaded along specified dim with each load
-      if parDim >= elementsLoadedPerInst:
-        # entire work-group can work on (part) of the same row
-        state["LSC%s"%tc] = elementsLoadedPerInst
-        state["LSP%s"%tc] = mik if state["ProblemType"]["TLU%s"%tc] else state["MatrixInstK"]
-        state["NumLoadsCoalesced%s"%tc] = roundupRatio(parDim , state["LSC%s"%tc])
-        state["NumLoadsPerpendicular%s"%tc] = 1
-      else:
-        # work-group exceeds read dimension so wraps to multiple rows
-        state["LSC%s"%tc] = parDim
-        state["LSP%s"%tc] = min(perpDim, elementsLoadedPerInst // parDim)
-        state["NumLoadsCoalesced%s"%tc] = 1
-        state["NumLoadsPerpendicular%s"%tc] = roundupRatio(perpDim , state["LSP%s"%tc])
-
-      # Vector loads can't wrap to next P dim, so LSC must be divisible by vector elements;
-      if dbFract:
-        print("  lsc search : lsc(%u) %% grvw(%u) = %u (?0)" % (state["LSC%s"%tc], grvw, state["LSC%s"%tc] % grvw))
-      if state["LSC%s"%tc] % grvw == 0:
-        bestVw = grvw
-        # Try to shrink GRVW if possible while keeping same LSC and LSP:
-        # For example, avoid cases where we use a GRVW=4 with many empty addresses
-        # when a GRVW=1 will do instead.
-        validElementsLoadedPerInst = state["LSC%s"%tc] * state["LSP%s"%tc]
-        grvw //= 2
-        while grvw >= minGrvw:
-          elementsLoadedPerInst = state["NumThreads"]*grvw//mik
-          if elementsLoadedPerInst < validElementsLoadedPerInst:
-            break # Went too far, not enough load elements at this VW
-          if state["LSC%s"%tc] % grvw == 0:
-            if dbFract:
-              print("  stepdown success (valid)elementsLoadedPerInst=", validElementsLoadedPerInst, "/", elementsLoadedPerInst, "grvw=", grvw, "lsc=", state["LSC%s"%tc])
-            bestVw = grvw
-          grvw //= 2
-        break
-
-      # TODO - could have this generate dwordx3 loads in addition, step down by 1 instead of div2
-      # Would need to change asm code gen to generate x3
-      grvw //= 2
-      # end-- while loop
-
-    if bestVw == -1:
-      if dbFract:
-        print ("reject fractional - no acceptable tile dim? GlobalReadVectorWidth%s"%tc, \
-         state["GlobalReadVectorWidth%s"%tc])
-      return False  # could not find a solution, perhaps only possible for half ?
-
-    state["GlobalReadVectorWidth%s"%tc] = bestVw
-    if bestVw != state["GlobalReadVectorWidth%s"%tc]:
-      if dbFract:
-        print("  reducing GlobalReadVectorWidth%s from %u to %u" \
-            % (tc, state["GlobalReadVectorWidth%s"%tc], bestVw))
-
-    # How many loads per threads in each dimension.
-    # threads which are outside the global read tile bounds will be clipped
-    # in the assembly code generator.
-    # Multiply the LSC*GRVW
-    state["NumLoadsCoalesced%s"%tc] = roundupRatio(parDim, state["LSC%s"%tc])
-    state["NumLoadsPerpendicular%s"%tc] = roundupRatio(perpDim , state["LSP%s"%tc])
-
-    nlc = state["NumLoadsCoalesced%s"%tc]
-    nlp = state["NumLoadsPerpendicular%s"%tc]
-
-    # LoadTile must at least cover the MacroTile:
-    assert(nlc*state["LSC%s"%tc] >= parDim)
-    assert(nlp*state["LSP%s"%tc] >= perpDim)
-
-    perpOverhang = perpDim % state["LSP%s"%tc]
-    state["fractionalPerpOverhang%s"%tc] = perpOverhang
-    if dbFract:
-      # how many threads compute Global Read Offsets (GRO) that are not used
-      print("  PerLoadTile=%ux%u elements Loads/WI=%ux%u LoadTile/WI=%ux%u (MT=%ux%u), %u/%u = %.1f%% WI GRO used %s" \
-          % (state["LSC%s"%tc], state["LSP%s"%tc], \
-             nlc, nlp, \
-             nlc*state["LSC%s"%tc], nlp*state["LSP%s"%tc], \
-             parDim, perpDim, \
-             parDim*perpDim, \
-             nlc*nlp*state["NumThreads"]*state["GlobalReadVectorWidth%s"%tc], \
-             float(parDim*perpDim), \
-             float(nlc*nlp*state["NumThreads"]*state["GlobalReadVectorWidth%s"%tc]) * 100.0) \
-             )
-
-      for p in range(0,nlp):
-        elementWidth = 4
-        if p != nlp-1:
-          perp = state["LSP%s"%tc]
-        else:
-          perp = perpOverhang if perpOverhang else state["LSP%s"%tc]
-
-        validElements = state["LSC%s"%tc] * perp
-        print("  buffer_load_element_x%u %ux%ux%u bytes,  %u/%u valid GRO" %\
-              (state["GlobalReadVectorWidth%s"%tc], \
-              state["LSC%s"%tc], perp, \
-              elementWidth, \
-              validElements//state["GlobalReadVectorWidth%s"%tc],
-              state["NumThreads"]))
 
     return True
 
@@ -2122,7 +1947,15 @@ class Solution(collections.abc.Mapping):
   ########################################
   # assign all derived parameters
   @staticmethod
-  def assignDerivedParameters(state, splitGSU: bool, printRejectionReason: bool, isaInfoMap):
+  def assignDerivedParameters(
+    state,
+    splitGSU: bool,
+    printRejectionReason: bool,
+    printIndexAssignmentInfo: bool,
+    isaInfoMap,
+    rocmVersion: SemanticVersion,
+    #depthUParams: Dict
+  ):
     state["EnableF32XdlMathOp"] = False #ignore the F32 xDL MathOp by default.
     #enable F32 xDL MathOp only when the input type is f32.
     if "F32XdlMathOp" in state["ProblemType"] \
@@ -2221,7 +2054,7 @@ class Solution(collections.abc.Mapping):
     if state["VectorStore"] == -1:
         state["_VectorStore"] = 1 # default, may be changed if needed to generate a valid kernel
 
-    ProblemType.assignDerivedParameters(state["ProblemType"])
+    ProblemType.assignDerivedParameters(state["ProblemType"], printIndexAssignmentInfo)
     if not state["Valid"]:
       print2("in assignDerivedParameters, state['Valid'] = False")
       return
@@ -2559,7 +2392,18 @@ class Solution(collections.abc.Mapping):
       state["ValidDepthU"] = True
       state["DepthU"]      = depthuList[index[0]]
       Solution.depthUIteration(
-        state, index, depthuList, problemType, isa, bufferLoad, packedC0, packedC1, printRejectionReason, isaInfoMap
+        state, 
+        index, 
+        depthuList, 
+        problemType, 
+        isa, 
+        bufferLoad, 
+        packedC0, 
+        packedC1, 
+        printRejectionReason, 
+        isaInfoMap, 
+        rocmVersion,
+        #depthUParams
       )
       if state["Valid"] or (state["ValidDepthU"] and (not state["Valid"])):
         break
@@ -2568,7 +2412,7 @@ class Solution(collections.abc.Mapping):
         break
     if "ValidDepthU" in state:
       del state["ValidDepthU"]
- 
+
   def depthUIteration(
       state,
       index,
@@ -2579,7 +2423,9 @@ class Solution(collections.abc.Mapping):
       packedC0,
       packedC1,
       printRejectionReason: bool,
-      isaInfoMap: Dict[str, IsaInfo]
+      isaInfoMap: Dict[IsaVersion, IsaInfo],
+      rocmVersion: SemanticVersion,
+      #depthUParams: NamedTuple
     ):
     ########################################
     # Auto search for DepthU starts here
@@ -4231,10 +4077,7 @@ class Solution(collections.abc.Mapping):
     #Need to force disabling PreloadKernArgs if compiler does not support
     #Can not just reject the solution since the user library may find any solutions
     if state["PreloadKernArgs"]:
-      hipccver = globalParameters['HipClangVersion'].split(".")
-      hipccMaj = int(hipccver[0])
-      hipccPatch = int(hipccver[2].split("-")[0])
-      if not (hipccMaj >= 6 and hipccPatch >= 32650 and (isa == (9, 0, 10) or isa[:2] == (9, 4))):
+      if not (rocmVersion.major >= 6 and rocmVersion.patch >= 32650 and (isa == (9, 0, 10) or isa[:2] == (9, 4))):
         #print("Force to Disable PreloadKernArgs since this hipcc version doesn't support",)
         state["PreloadKernArgs"] = 0
 

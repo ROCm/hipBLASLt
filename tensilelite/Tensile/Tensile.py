@@ -37,7 +37,7 @@ from typing import Dict
 
 from Tensile.Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR, \
-    detectGlobalCurrentISA, verbosity, IsaInfo, makeIsaInfoMap, isaToGfx
+    detectGlobalCurrentISA, verbosity, IsaInfo, makeIsaInfoMap, isaToGfx, makeDebugConfig
 from Tensile.KernelWriter import DebugConfig
 from Tensile.Toolchain.Assembly import AssemblyToolchain, makeAssemblyToolchain
 from Tensile.Toolchain.Source import SourceToolchain, makeSourceToolchain
@@ -327,54 +327,6 @@ def store_max_frequency(max_frequency):
     except Exception as e:
         print(f"Error setting MAX_FREQ environment variable: {e}")
         return False
-
-
-def makeDebugConfig(config: dict) -> DebugConfig:
-
-    enableAsserts = False
-    enableDebugA = False
-    enableDebugB = False
-    enableDebugC = False
-    expectedValueC = 16.0
-    forceCExpectedValue = False
-    debugKernel = False
-    forceGenerateKernel = False
-    printSolutionRejectionReason = False
-    splitGSU = False
-
-    if "EnableAsserts" in config:
-        enableAsserts = config["EnableAsserts"]
-    if "EnableDebugA" in config:
-        enableDebugA = config["EnableDebugA"]
-    if "EnableDebugB" in config:
-        enableDebugB = config["EnableDebugB"]
-    if "EnableDebugC" in config:
-        enableDebugC = config["EnableDebugC"]
-    if "ExpectedValueC" in config:
-        expectedValueC = config["ExpectedValueC"]
-    if "ForceCExpectedValue" in config:
-        forceCExpectedValue = config["ForceCExpectedValue"]
-    if "DebugKernel" in config:
-        debugKernel = config["DebugKernel"]
-    if "ForceGenerateKernel" in config:
-        forceGenerateKernel = config["ForceGenerateKernel"]
-    if "PrintSolutionRejectionReason" in config:
-        printSolutionRejectionReason = config["PrintSolutionRejectionReason"]
-    if "SplitGSU" in config:
-        splitGSU = config["SplitGSU"]
-    if "SaveTemps" in config:
-        splitGSU = config["SaveTemps"]
-
-    return DebugConfig(enableAsserts,
-                       enableDebugA,
-                       enableDebugB,
-                       enableDebugC,
-                       expectedValueC,
-                       forceCExpectedValue,
-                       debugKernel,
-                       forceGenerateKernel,
-                       printSolutionRejectionReason,
-                       splitGSU)
 
 
 ################################################################################

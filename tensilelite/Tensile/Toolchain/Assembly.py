@@ -30,7 +30,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Union, NamedTuple
 
-from ..Common import globalParameters, print2, ensurePath, isaToGfx
+from ..Common import print2, ensurePath, isaToGfx
 from ..KernelWriterAssembly import KernelWriterAssembly
 from ..SolutionStructs import Solution
 
@@ -49,7 +49,7 @@ def makeAssemblyToolchain(assembler_path, bundler_path, co_version, build_id_kin
    return AssemblyToolchain(compiler, linker, bundler)
 
 
-def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjFiles: int=10000) -> List[str]:
+def _batchObjectFiles(ldPath: str, objFiles: List[str], coPathDest: Union[Path, str], maxObjFiles: int=10000) -> List[str]:
     numObjFiles = len(objFiles)
 
     if numObjFiles <= maxObjFiles:
@@ -63,7 +63,7 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 
     for batch, filename in zip(batchedObjFiles, newObjFiles):
       if len(batch) > 1:
-        args = [globalParameters["ROCmLdPath"], "-r"] + batch + [ "-o", filename]
+        args = [ldPath, "-r"] + batch + [ "-o", filename]
         print2(f"Linking object files into fewer object files: {' '.join(args)}")
         subprocess.check_call(args)
         newObjFilesOutput.append(filename)
@@ -76,6 +76,7 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 def buildAssemblyCodeObjectFiles(
       linker: Linker,
       bundler: Bundler,
+      ldPath: str,
       kernels: List[Solution],
       writer: KernelWriterAssembly,
       destDir: Union[Path, str],
@@ -100,9 +101,6 @@ def buildAssemblyCodeObjectFiles(
     extCo = ".co"
     extCoRaw = ".co.raw"
 
-    destDir = Path(ensurePath(destDir))
-    asmDir = Path(ensurePath(asmDir))
-
     archKernelMap = collections.defaultdict(list)
     for k in filter(isAsm, kernels):
       archKernelMap[tuple(k['ISA'])].append(k)
@@ -123,7 +121,7 @@ def buildAssemblyCodeObjectFiles(
         if coName:
           coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writer.getKernelFileBase(useShortNames, kernel) + extObj)))
       for coFileRaw, objFiles in coFileMap.items():
-        objFiles = _batchObjectFiles(objFiles, coFileRaw)
+        objFiles = _batchObjectFiles(ldPath, objFiles, coFileRaw)
         linker(objFiles, str(coFileRaw))
         coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
         if compress:

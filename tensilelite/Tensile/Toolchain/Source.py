@@ -30,7 +30,7 @@ from pathlib import Path
 from timeit import default_timer as timer
 from typing import List, Union, NamedTuple
 
-from ..Common import globalParameters, print1, ensurePath
+from ..Common import print1, ensurePath
 
 from .Component import Compiler, Bundler
 
@@ -97,9 +97,6 @@ def buildSourceCodeObjectFiles(
     tmpObjDir = Path(ensurePath(tmpObjDir))
     destDir = Path(ensurePath(destDir))
     kernelPath = Path(kernelPath)
-
-    if "CmakeCxxCompiler" in globalParameters and globalParameters["CmakeCxxCompiler"] is not None:
-      os.environ["CMAKE_CXX_COMPILER"] = globalParameters["CmakeCxxCompiler"]
 
     objFilename = kernelPath.stem + '.o'
     coPathsRaw = []

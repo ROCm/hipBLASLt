@@ -182,11 +182,13 @@ def read(filename, customizedLoader=False):
     else:
         printExit("Unrecognized read format {}".format(extension))
 
+
 def readYAML(filename):
     """Reads and returns YAML data from file."""
     with open(filename, "r") as f:
         data = yaml.load(f, yamlLoader)
     return data
+
 
 def readJson(filename):
     """Reads and returns JSON data from file."""
@@ -194,12 +196,36 @@ def readJson(filename):
         data = json.loads(f.read())
     return data
 
-def parseSolutionsFile(filename, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, isaInfoMap):
+
+def parseSolutionsFile(
+        filename,
+        assembler,
+        splitGSU: bool,
+        printSolutionRejectionReason: bool,
+        printIndexAssignmentInfo: bool,
+        isaInfoMap
+    ):
     """Wrapper function to read and parse a solutions file."""
-    return parseSolutionsData(read(filename), filename, cxxCompiler, splitGSU, printSolutionRejectionReason, isaInfoMap)
+    return parseSolutionsData(
+               read(filename),
+               filename,
+               assembler,
+               splitGSU,
+               printSolutionRejectionReason,
+               printIndexAssignmentInfo,
+               isaInfoMap
+            )
 
 
-def parseSolutionsData(data, srcFile, cxxCompiler, splitGSU: bool, printSolutionRejectionReason: bool, isaInfoMap):
+def parseSolutionsData(
+        data,
+        srcFile,
+        assembler,
+        splitGSU: bool,
+        printSolutionRejectionReason: bool,
+        printIndexAssignmentInfo: bool,
+        isaInfoMap
+    ):
     """Parses problem sizes and solutions from the data of a solutions file."""
     if len(data) < 3:
         printExit("Solution file {} is missing required fields (len = {} < 3" \
@@ -226,7 +252,15 @@ def parseSolutionsData(data, srcFile, cxxCompiler, splitGSU: bool, printSolution
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
-        solutionObject = Solution(solutionState, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap, srcFile)
+        solutionObject = Solution(
+                             solutionState,
+                             splitGSU,
+                             printSolutionRejectionReason,
+                             printIndexAssignmentInfo,
+                             assembler,
+                             isaInfoMap,
+                             srcFile
+                         )
         solutions.append(solutionObject)
     problemType = solutions[0]["ProblemType"]
     problemSizes = ProblemSizes(problemType, problemSizesConfig)
@@ -244,33 +278,36 @@ class LibraryLogic(NamedTuple):
 
 def parseLibraryLogicFile(
         filename, 
-        cxxCompiler, 
+        assembler, 
         splitGSU: bool, 
         printSolutionRejectionReason: bool, 
+        printIndexAssignmentInfo: bool, 
         archs, 
         isaInfoMap: Dict[str, IsaInfo],
         lazyLibraryLoading: bool
     ):
     """Wrapper function to read and parse a library logic file."""
     return parseLibraryLogicData(
-               read(filename, True), 
-               filename, 
-               cxxCompiler, 
+               read(filename, True),
+               filename,
+               assembler,
                splitGSU,
-               printSolutionRejectionReason, 
-               archs, 
+               printSolutionRejectionReason,
+               printIndexAssignmentInfo,
+               archs,
                isaInfoMap,
                lazyLibraryLoading
            )
 
 
 def parseLibraryLogicData(
-        data, 
-        srcFile, 
-        cxxCompiler, 
-        splitGSU: bool, 
-        printSolutionRejectionReason: bool, 
-        archs, 
+        data,
+        srcFile,
+        assembler,
+        splitGSU: bool,
+        printSolutionRejectionReason: bool,
+        printIndexAssignmentInfo: bool,
+        archs,
         isaInfoMap: Dict[str, IsaInfo],
         lazyLibraryLoading: bool
     ):
@@ -298,10 +335,10 @@ def parseLibraryLogicData(
                 .format(srcFile, data["MinimumRequiredVersion"], __version__) )
 
     # unpack problemType
-    problemType = ProblemType(data["ProblemType"])
+    problemType = ProblemType(data["ProblemType"], printIndexAssignmentInfo)
 
     # unpack solution
-    def solutionStateToSolution(solutionState, cxxCompiler, isaInfoMap) -> Solution:
+    def solutionStateToSolution(solutionState, assembler, isaInfoMap) -> Solution:
         if solutionState["KernelLanguage"] == "Assembly":
             solutionState["ISA"] = gfxToIsa(data["ArchitectureName"])
         solutionState["CUCount"] = data["CUCount"]
@@ -319,7 +356,7 @@ def parseLibraryLogicData(
             # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
             solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
 
-        solutionObject = Solution(solutionState, splitGSU, printSolutionRejectionReason, cxxCompiler, isaInfoMap, srcFile)
+        solutionObject = Solution(solutionState, splitGSU, printSolutionRejectionReason, printIndexAssignmentInfo, assembler, isaInfoMap, srcFile)
         solutionProblemType = solutionObject["ProblemType"]
         if problemType != solutionProblemType:
             # find the mismatched items in ProblemType
@@ -331,14 +368,15 @@ def parseLibraryLogicData(
             printExit(f"ProblemType in library logic file {srcFile} doesn't match solution(idx={solIdx}): \n{results}")
         return solutionObject
 
-    solutions = [solutionStateToSolution(solutionState, cxxCompiler, isaInfoMap) for solutionState in data["Solutions"]]
+    solutions = [solutionStateToSolution(solutionState, assembler, isaInfoMap) for solutionState in data["Solutions"]]
 
     newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(
         data, 
         solutions, 
         splitGSU, 
         printSolutionRejectionReason, 
-        cxxCompiler, 
+        printIndexAssignmentInfo,
+        assembler, 
         isaInfoMap,
         lazyLibraryLoading
     )

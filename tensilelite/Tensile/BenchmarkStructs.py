@@ -92,9 +92,9 @@ def checkCDBufferAndStrides(problemType, problemSizes, isCEqualD):
 class BenchmarkProcess:
     """Representation of benchmarking parameters and resulting steps"""
 
-    def __init__(self, problemTypeConfig, problemSizeGroupConfig):
+    def __init__(self, problemTypeConfig, problemSizeGroupConfig, printIndexAssignmentInfo: bool):
         """Create from the two sections of a config for a BenchmarkProblem"""
-        self.problemType = ProblemType(problemTypeConfig)
+        self.problemType = ProblemType(problemTypeConfig, printIndexAssignmentInfo)
         self.isBatched = "Batched" in problemTypeConfig and problemTypeConfig["Batched"]
         print2("# BenchmarkProcess beginning {}".format(self.problemType))
 
