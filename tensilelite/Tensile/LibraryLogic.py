@@ -26,8 +26,8 @@ from pathlib import Path
 from typing import Dict
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
   assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, \
-  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo, DepthUConfig, getMinNaming, getNameMin
-from .SolutionStructs import Solution
+  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo, DepthUConfig, \
+    getMinNaming, getNameMin, getNameFull
 from . import LibraryIO
 from . import SolutionSelectionLibrary
 
@@ -129,7 +129,7 @@ def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryL
     s["SolutionIndex"] = i
     s["SolutionNameMin"] = getNameMin(s, solutionMinNaming, splitGSU)
     s["KernelNameMin"]   = getNameMin(s, solutionMinNaming, splitGSU, True)
-    print1("(%2u) %s : %s" % (i, getNameMin(s, solutionMinNaming, splitGSU), Solution.getNameFull(s, splitGSU)))
+    print1("(%2u) %s : %s" % (i, getNameMin(s, solutionMinNaming, splitGSU), getNameFull(s, splitGSU)))
 
   if enableTileSelection:
     validSelectionSolutions = SolutionSelectionLibrary.analyzeSolutionSelection(problemType, selectionFileNameList, \

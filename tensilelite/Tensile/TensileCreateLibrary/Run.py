@@ -129,7 +129,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
                 )
                 print(kernels[kernIdx]["SolutionNameMin"])
             removeKernels.append(kernels[kernIdx])
-            kName = Solution.getKeyNoInternalArgs(kernels[kernIdx], splitGSU)
+            kName = getKeyNoInternalArgs(kernels[kernIdx], splitGSU)
             if kName not in removeKernelNames:
                 removeKernelNames.append(kName)
             removeResults.append(results[kernIdx])
@@ -147,7 +147,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     ):
         solutionKernels = solution.getKernels()
         for kernel in solutionKernels:
-            kName = Solution.getKeyNoInternalArgs(kernel, splitGSU)
+            kName = getKeyNoInternalArgs(kernel, splitGSU)
             if kName in removeKernelNames:
                 removeSolutions.append(solution)
                 break
@@ -237,7 +237,7 @@ def writeSolutionsAndKernels(
     visited = set()
     duplicates = 0
     for k in asmKernels:
-        base = getKernelFileBase(useShortNames, kernelSerialNaming, k)
+        base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
         k.duplicate = True if base in visited else False
         duplicates += k.duplicate
         print2(f"Duplicate: {base}")

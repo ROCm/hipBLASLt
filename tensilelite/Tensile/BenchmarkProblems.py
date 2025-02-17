@@ -46,8 +46,9 @@ from .Toolchain.Source import SourceToolchain
 from Tensile.Toolchain.Component import Assembler
 from .Common import globalParameters, HR, print1, print2, IsaInfo, \
         printExit, printWarning, ensurePath, startTime, tqdm, state, \
-        BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, IsaVersion, isaToGfx, \
-        DepthUConfig, getMinNaming, getNameMin, getSerialNaming, getNameFull
+        BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, isaToGfx, \
+        DepthUConfig, getMinNaming, getNameMin, getSerialNaming, getNameFull, \
+        getKeyNoInternalArgs
 
 
 def _generateForkedSolutions(problemType, constantParams, forkPermutations, assembler: Assembler, \
@@ -182,7 +183,7 @@ def writeBenchmarkFiles(
     for solution in tqdm(solutions, "Finding unique solutions"):
         solutionKernels = solution.getKernels()
         for kernel in solutionKernels:
-            kName = Solution.getKeyNoInternalArgs(kernel, debugConfig.splitGSU)
+            kName = getKeyNoInternalArgs(kernel, debugConfig.splitGSU)
             if kName not in kernelNames:
                 kernels.append(kernel)
                 kernelNames.add(kName)
@@ -215,6 +216,8 @@ def writeBenchmarkFiles(
                             kernelWriterAssembly,
                             debugConfig.splitGSU,
                             [isaToGfx(isa) for isa in isaInfoMap.keys()],
+                            kernelSerialNaming,
+                            kernelMinNaming,
                             errorTolerant=True,
                             generateSourcesAndExit=globalParameters["GenerateSourcesAndExit"], # put in debug config
                             compress=False,
