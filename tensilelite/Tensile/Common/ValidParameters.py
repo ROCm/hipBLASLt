@@ -25,7 +25,6 @@
 import math
 
 from .Architectures import SUPPORTED_ISA
-from .Utilities import printExit
 
 ################################################################################
 # Enumerate Valid Solution Parameters
@@ -795,7 +794,7 @@ def checkParametersAreValid(param, validParams):
         return
 
     if name not in validParams:
-        printExit(
+        raise Exception(
             "Invalid parameter name: {}\nValid parameters are {}.".format(
                 name, sorted(validParameters.keys())
             )
@@ -809,4 +808,4 @@ def checkParametersAreValid(param, validParams):
                 if len(validParams[name]) > 32
                 else ""
             )
-            printExit(msgBase.format(name, value, name, validParams[name][:32], msgExt))
+            raise Exception(msgBase.format(name, value, name, validParams[name][:32], msgExt))
