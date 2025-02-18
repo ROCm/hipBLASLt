@@ -27,7 +27,10 @@ from typing import List
 
 from Tensile.Activation import ActivationType
 from Tensile.TensileInstructions.DataType import DataType
+
+from Tensile.Common.Constants import INDEX_CHARS
 from Tensile.Common.Utilities import assignParameterWithDefault, printWarning, print2
+
 
 ################################################################################
 # ProblemType
@@ -183,6 +186,62 @@ _validGEMMTypes = [
     ("F8N", "B", "S"),
     ("F8B8N", "B", "S"),
     ("B8F8N", "B", "S"),  # in/out are both R8
+    ("F8N", "F8N", "S"),
+    ("B8N", "B8N", "S"),
+    ("F8B8N", "B8N", "S"),
+    ("B8F8N", "B8N", "S"),
+    ("F8N", "B8N", "S"),
+    ("B8N", "F8N", "S"),
+    ("F8B8N", "F8N", "S"),
+    ("B8F8N", "F8N", "S"),
+]
+
+
+# All HPA types are listed here (HPA=T). The name of the library logic files for these types is:
+# *_TiToTc_BH*.yaml where Ti, To, and Tc are the data types of A/B, C/D, and computation, respectively.
+# The name of the library logic files for non-HPA (HPA=F) types is: *_TiB*.yaml.
+_HPATypes = [
+    ("H", "S", "S"),
+    ("H", "H", "S"),
+    ("B", "B", "S"),
+    ("B", "S", "S"),
+    ("B", "H", "S"),
+    ("I8", "I", "I"),
+    ("4xi8", "I", "I"),
+    ("I8", "I", "S"),
+    ("I8", "I8", "S"),
+    ("I8", "H", "S"),
+    ("I8", "B", "S"),
+    ("F8", "S", "S"),
+    ("B8", "S", "S"),
+    ("F8B8", "S", "S"),
+    ("B8F8", "S", "S"),
+    ("F8", "H", "S"),
+    ("B8", "H", "S"),
+    ("F8B8", "H", "S"),
+    ("B8F8", "H", "S"),
+    ("H", "F8", "S"),
+    ("F8", "B", "S"),
+    ("F8B8", "B", "S"),  # in/out are both R8
+    ("F8", "F8", "S"),
+    ("B8", "B8", "S"),
+    ("F8B8", "B8", "S"),
+    ("B8F8", "B8", "S"),
+    ("F8", "B8", "S"),
+    ("B8", "F8", "S"),
+    ("F8B8", "F8", "S"),
+    ("B8F8", "F8", "S"),
+    ("F8N", "S", "S"),
+    ("B8N", "S", "S"),
+    ("F8B8N", "S", "S"),
+    ("B8F8N", "S", "S"),
+    ("F8N", "H", "S"),
+    ("B8N", "H", "S"),
+    ("F8B8N", "H", "S"),
+    ("B8F8N", "H", "S"),
+    ("H", "F8N", "S"),
+    ("F8N", "B", "S"),
+    ("F8B8N", "B", "S"),  # in/out are both R8
     ("F8N", "F8N", "S"),
     ("B8N", "B8N", "S"),
     ("F8B8N", "B8N", "S"),
@@ -591,7 +650,7 @@ class ProblemType(Mapping):
     #   HHS, HSS, BSS and I8II kernels, use a clearer naming _TiToTc_
     # TODO: Distinguish all kernels by _TiToTc_ to be more consistent with rocblas
     gemmType = (self["DataType"].toChar(),self["DestDataType"].toChar(),self["ComputeDataType"].toChar() )
-    if gemmType in HPATypes:
+    if gemmType in _HPATypes:
       name += self["DestDataType"].toChar()    # Type of C/D
       name += self["ComputeDataType"].toChar() # Type of Alpha/Beta
       name += "_"
