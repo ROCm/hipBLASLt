@@ -76,7 +76,23 @@ SUPPORTED_ISA = [
     IsaVersion(12, 0, 1),
 ]
 
+
+def isaToGfx(arch: IsaVersion) -> str:
+    """Converts an ISA version to a gfx architecture name.
+
+    Args:
+        arch: An object representing the major, minor, and step version of the ISA.
+
+    Returns:
+        The name of the GPU architecture (e.g., 'gfx906').
+    """
+    # Convert last digit to hex because reasons
+    name = str(arch[0]) + str(arch[1]) + ("%x" % arch[2])
+    return "gfx" + "".join(map(str, name))
+
+
 SUPPORTED_GFX = [isaToGfx(isa) for isa in SUPPORTED_ISA]
+
 
 def gfxToIsa(name: str) -> Optional[IsaVersion]:
     """Extracts the ISA version from a given gfx architecture name.
@@ -100,20 +116,6 @@ def gfxToIsa(name: str) -> Optional[IsaVersion]:
     ipart = ipart[:-1]
     major = int(ipart)
     return IsaVersion(major, minor, step)
-
-
-def isaToGfx(arch: IsaVersion) -> str:
-    """Converts an ISA version to a gfx architecture name.
-
-    Args:
-        arch: An object representing the major, minor, and step version of the ISA.
-
-    Returns:
-        The name of the GPU architecture (e.g., 'gfx906').
-    """
-    # Convert last digit to hex because reasons
-    name = str(arch[0]) + str(arch[1]) + ("%x" % arch[2])
-    return "gfx" + "".join(map(str, name))
 
 
 def gfxToSwCodename(gfxName: str) -> Optional[str]:
