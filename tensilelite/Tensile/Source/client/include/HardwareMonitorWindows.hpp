@@ -37,7 +37,7 @@
 
 #include "HardwareMonitorType.hpp"
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
