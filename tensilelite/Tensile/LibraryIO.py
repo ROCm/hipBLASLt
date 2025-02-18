@@ -23,7 +23,8 @@
 ################################################################################
 
 from .CustomKernels import getCustomKernelConfig
-from .SolutionStructs import Solution, ProblemSizes, ProblemType
+from .SolutionStructs import Solution, ProblemSizes
+from Tensile.ProblemType import ProblemType
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
 from .Common import gfxToIsa, printExit, printWarning, print2, \

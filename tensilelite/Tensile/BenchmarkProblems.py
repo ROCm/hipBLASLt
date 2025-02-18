@@ -38,7 +38,8 @@ from .Contractions import ProblemType as ContractionsProblemType
 from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
 from .KernelWriterAssembly import KernelWriterAssembly
 from .KernelWriter import DebugConfig
-from .SolutionStructs import Solution, ProblemType, ProblemSizes
+from .SolutionStructs import Solution, ProblemSizes
+from Tensile.ProblemType import ProblemType
 from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
 from .CustomKernels import getCustomKernelConfig
 from .Toolchain.Assembly import AssemblyToolchain

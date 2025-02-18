@@ -29,36 +29,33 @@ import os
 import shutil
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import List, NamedTuple, Optional, Sequence, Union
+from typing import List, NamedTuple, Optional, Union
 
 from Tensile import SOURCE_PATH, LibraryIO
 from Tensile.Common import (
+    assignGlobalParameters,
     CHeader,
     DebugConfig,
     DepthUConfig,
+    ensurePath,
+    globalParameters,
     getKernelFileBase,
     getKeyNoInternalArgs,
     getMinNaming,
     getSerialNaming,
     gfxToIsa,
     HR,
-    IsaInfo,
+    isaToGfx,
     IsaVersion,
     makeIsaInfoMap,
     ParallelMap2,
-    SemanticVersion,
-    architectureMap,
-    globalParameters,
-    assignGlobalParameters,
-    ensurePath,
-    isaToGfx,
     print1,
     print2,
     printWarning,
     printExit,
     printWarning,
     state,
-    SUPPORTED_ISA,
+    SUPPORTED_GFX,
     tqdm,
     verbosity,
 )
@@ -566,6 +563,8 @@ def run():
         archs = arguments["Architecture"].split(";")
     else:
         archs = arguments["Architecture"].split("_")
+    archs = archs if archs == "all" else SUPPORTED_GFX
+
     targetIsas = [gfxToIsa(a) for a in archs]
     isaInfoMap = makeIsaInfoMap(targetIsas, cxxCompiler)
     assignGlobalParameters(arguments, isaInfoMap, cxxCompiler)
@@ -589,13 +588,6 @@ def run():
 
     if not os.path.exists(arguments["LogicPath"]):
         printExit(f"LogicPath {arguments['LogicPath']} doesn't exist")
-
-    logicArchs = set()
-    for arch in archs:
-        if arch in architectureMap:
-            logicArchs.add(architectureMap[arch])
-        else:
-            printExit("Architecture %s not supported" % arch)
 
     logicExtFormat = ".yaml"
     if arguments["LogicFormat"] == "yaml":

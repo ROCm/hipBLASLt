@@ -28,8 +28,9 @@ from .Common import print1, print2, hasParam, printExit, \
         defaultBenchmarkCommonParameters, validParameters, globalParameters, \
         defaultBatchedBenchmarkFinalProblemSizes, defaultBenchmarkFinalProblemSizes
 from .CustomKernels import getAllCustomKernelNames
-from .SolutionStructs import ProblemType, ProblemSizes, ActivationArgs, BiasTypeArgs, \
+from .SolutionStructs import ProblemSizes, ActivationArgs, BiasTypeArgs, \
         FactorDimArgs
+from Tensile.ProblemType import ProblemType
 
 
 def getDefaultsForMissingParameters(paramList, defaultParams):

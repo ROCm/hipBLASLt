@@ -56,7 +56,6 @@ architectureMap = {
     "gfx1201": "gfx1201",
 }
 
-
 SUPPORTED_ISA = [
     IsaVersion(8, 0, 3),
     IsaVersion(9, 0, 0),
@@ -77,6 +76,7 @@ SUPPORTED_ISA = [
     IsaVersion(12, 0, 1),
 ]
 
+SUPPORTED_GFX = [isaToGfx(isa) for isa in SUPPORTED_ISA]
 
 def gfxToIsa(name: str) -> Optional[IsaVersion]:
     """Extracts the ISA version from a given gfx architecture name.

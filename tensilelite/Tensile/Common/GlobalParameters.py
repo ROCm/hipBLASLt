@@ -438,97 +438,7 @@ for paramDict in defaultBenchmarkCommonParameters:
         defaultSolution[key] = value[0]
 # other non-benchmark options for solutions
 
-################################################################################
-# Default Problem Type
-################################################################################
-defaultProblemType = {
-    # =GEMM uses TransposeA,B parameters and makes the problem type more readable for users
-    # =TensorContraction  requires specifying
-    "OperationType": "GEMM",  # GEMM, TensorContraction, ConvolutionForward, ConvolutionBackwardData, ConvolutionBackwardWeights
-    "DataType": 0,  # data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
-    "DataTypeA": 0,  # A data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
-    "DataTypeB": 0,  # B data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
-    "DataTypeE": 0,  # E data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
-    "DataTypeAmaxD": 0,  # AmaxD data type can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
-    "DestDataType": 0,  # destination data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
-    "ComputeDataType": 0,  # compute data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
-    "F32XdlMathOp": 0,  # reducing intermediate precision from f32 to a specific type, such as "x", as listed in SolutionStructs.py::DataType.
-    # in:f32, intermediate:xf32, out:f32. f32 = xf32(f32) * xf32(f32)
-    "UseBeta": True,  # =True use beta parameter (asm will check for B=0 and optimize the write for that), =False don't use beta parameter
-    "UseE": False,  # =True use output E to output gemm results before activation
-    "Gradient": False,  # =True set globalWriteElements to gradient mode
-    "UseBias": 0,  # =1 support bias vector on M direction, =2 support bias vector on N direction, =3 support bias vector on both M,N direction
-    "BiasSrc": "D",  # This parameter is used in gradient + bias. Support A, B, D.
-    "UseScaleAB": "",  # Support "", "Scalar", and "Vector"
-    "UseScaleCD": False,  # =True use scaleC, scaleD
-    "UseScaleAlphaVec": 0,  # =1 support alpha vector on M direction, =2 support bias vector on N direction, =3 support alpha vector on both M,N direction
-    "HighPrecisionAccumulate": False,  # f32 += f16*f16
-    "SilentHighPrecisionAccumulate": False,  # Keep kernel names the same for HPA mode.  Useful for testing.
-    "Sparse": 0,  # 4:2 Structured Sparse A Matrix, 0=Non Sparse, 1=Sparse Matrix A, 2=Sparse Matrix B
-    "ComplexConjugateA": False,  # complex data should be conjugated for "C" transpose case
-    "ComplexConjugateB": False,
-    "StochasticRounding": False,  # By default, IEEE RNE rounding
-    # for OperationType == GEMM
-    "TransposeA": False,  # =True means transA="T" or "C", =False means transA = "N"
-    "TransposeB": True,
-    "Batched": False,  # add batching dimension
-    "StridedBatched": True,  # use to select general batch or strided batch
-    "GroupedGemm": False,  # use to select general batch or strided batch
-    # for OperationType == TensorContraction
-    # - Indices < NumIndicesC are Free or Batch indices and appear in C and D
-    # - Indices which appear in both A and B, and are < NumIndicesC are batch.  A and B must have same number of batch indices.
-    # - Indices which appear in both A and B, and are >= NumIndicesC are summation. A and B must have same number of summation indices.
-    # - Indices which appear in A or B (but not both), are Free.  A and B may have different numbers of free indices.
-    # - Summation loops are nested from smallest index number to largest, with the largest summation index as the 'unroll' loop.
-    # - Memory order of C and D matrices is always 0..NumIndicesC-1, with 0 as the fastest-moving.
-    #   - By choosing index assignments the output can be 'transposed'.  For example if IA=[1,2] IB=[0,2] then 0 is the coalesced dim for C/D.
-    #   - Likewise batch index may be assigned between two free indices to control the output order, ie to write in CNHW format.
-    #   - For example : IA=[0,1,3] IB=[2,1,3].  0,2 are free indices;  1 is batch.
-    "IndexAssignmentsA": [0, 2],
-    "IndexAssignmentsB": [1, 2],
-    "NumIndicesC": 2,
-    # use initial strides for AB.
-    # This has some performance impact for the increased flexibility:
-    #   - Additional strides will be passed into the kernel and will occupy SGPR registers
-    #   - GlobalReadWidth must be 1 (since elements are not guaranteed to be adjacent in memory)
-    "UseInitialStridesAB": False,
-    # use initial strides for CD.
-    # This has some performance impact for the increased flexibility:
-    #   - Additional strides will be passed into the kernel and will occupy SGPR registers
-    #   - Additional multiply on the store address path
-    #   -VectorStore must be 0.  If VectorStore is -1, it will be silently set to 0 internally.
-    "UseInitialStridesCD": False,
-    "AllowNoFreeDims": False,  # allow A or B to specify no free dims
-    # (if false, A and B must have at least one free dim)
-    # (if true, A and B must have at least one free or batch dim)
-    # SetConstStride* sets the specified stride in the problem.
-    # These no longer generate predicates - see AssertStrideEqualA/B below
-    # List of pairs of [index, constValue].
-    # Index is a member of the global index assignments (not an offset into IndexAssignmentsA/B)
-    # EX: SetConstStrideA: [ [3, 1], [2, 4] ] sets
-    #     strideA for index3 to constant '1' and stride for index2 to constant '4'.
-    "SetConstStrideA": [],
-    "SetConstStrideB": [],
-    "SetConstStrideBias": [],
-    # Summation dimension indices
-    "MirrorDimsA": [],
-    "MirrorDimsB": [],
-    "MirrorDimsMetadata": [],
-    # for LD description
-    "NumIndicesLD": 4,
-    "IndexAssignmentsLD": [3, 4, 5, 6],  # order is LDD, LDC, LDA, LDB
-    # Tile aware solution selection
-    "TileAwareSelection": False,
-    # Activation
-    "Activation": False,
-    "ActivationNoGuard": False,
-    # AmaxD
-    "OutputAmaxD": False,
-    # For kernels putting arguments in workspaces instead of kernel arguments, they can choose to support user arguments input instead.
-    "SupportUserArgs": True,
-    "SwizzleTensorA": False,
-    "SwizzleTensorB": False,
-}
+
 
 defaultProblemSizes = [{"Range": [[2880], 0, 0]}]
 defaultBenchmarkFinalProblemSizes = [{"Range": [[64, 64, 64, 512], 0, 0]}]
@@ -753,12 +663,4 @@ def setupRestoreClocks():
 
     atexit.register(restoreClocks)
 
-
 setupRestoreClocks()
-
-
-def assignParameterWithDefault(destinationDictionary, key, sourceDictionary, defaultDictionary):
-    if key in sourceDictionary:
-        destinationDictionary[key] = deepcopy(sourceDictionary[key])
-    else:
-        destinationDictionary[key] = deepcopy(defaultDictionary[key])

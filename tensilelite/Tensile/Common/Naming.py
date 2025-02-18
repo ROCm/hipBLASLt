@@ -26,6 +26,8 @@ from functools import lru_cache
 from .Constants import MAX_FILENAME_LENGTH
 from .ValidParameters import validParameters
 
+from Tensile.ProblemType import ProblemType
+
 ########################################
 # create a dictionary with booleans on whether to include parameter in name
 def getMinNaming(objs):
@@ -124,7 +126,7 @@ def getPrimitiveParameterValueAbbreviation(key, value):
       return "%u" % value
     else: # -1 -> n1
       return "n%01u" % abs(value)
-  elif isinstance(value, ProblemType):
+  elif isinstance(value, ProblemType): # will need to deal with this
     return str(value)
   elif isinstance(value, float):
     val1 = int(value)

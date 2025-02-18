@@ -748,7 +748,7 @@ validParameters = {
     # if source, Runtime will determine language
     # later on, we'll relax this to inner kernel languages and outer kernel languages, such as inline asm embedded in ocl or in llvm
     "KernelLanguage": ["Assembly"],
-    # We set ISA in multiple places
+    # We set validParams["ISA"] in multiple places
     "ISA": validISA,  # arch for assembly kernels 
     # Name of the custom kernel located at `CUSTOM_KERNEL_PATH`.
     # a custom kernel is a user written assembly kernel with its associated configuration parameters included in a custom.config section

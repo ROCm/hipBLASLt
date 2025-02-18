@@ -27,6 +27,8 @@ import math
 import os
 import sys
 import time
+
+from copy import deepcopy
 from enum import Enum
 
 from .Types import IsaInfo
@@ -285,3 +287,10 @@ def ClientExecutionLock(lockPath: str):
     import filelock
 
     return filelock.FileLock(lockPath)
+
+
+def assignParameterWithDefault(destinationDictionary, key, sourceDictionary, defaultDictionary):
+    if key in sourceDictionary:
+        destinationDictionary[key] = deepcopy(sourceDictionary[key])
+    else:
+        destinationDictionary[key] = deepcopy(defaultDictionary[key])
