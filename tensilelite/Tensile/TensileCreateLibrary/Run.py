@@ -563,7 +563,7 @@ def run():
         archs = arguments["Architecture"].split(";")
     else:
         archs = arguments["Architecture"].split("_")
-    archs = archs if archs == "all" else SUPPORTED_GFX
+    archs = SUPPORTED_GFX if archs == "all" else archs
 
     targetIsas = [gfxToIsa(a) for a in archs]
     isaInfoMap = makeIsaInfoMap(targetIsas, cxxCompiler)
