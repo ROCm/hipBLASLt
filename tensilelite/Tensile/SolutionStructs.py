@@ -43,14 +43,14 @@ from .Common import assignParameterWithDefault, IsaInfo, \
                     validMFMA, validSMFMA, \
                     roundUp, validWMMA, \
                     INDEX_CHARS, IsaVersion, SemanticVersion, \
-                    DepthUConfig, getNameFull
+                    DepthUConfig
+from Tensile.Common.Naming import getNameFull
 from Tensile.ProblemType import ProblemType
 from Tensile.Toolchain.Component import Assembler
 
 from collections import OrderedDict
 from collections.abc import Mapping
 from enum import Enum
-from functools import lru_cache
 from typing import List, Dict
 
 import collections

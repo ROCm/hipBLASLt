@@ -47,9 +47,9 @@ from .Toolchain.Source import SourceToolchain
 from Tensile.Toolchain.Component import Assembler
 from .Common import globalParameters, HR, print1, print2, IsaInfo, \
         printExit, printWarning, ensurePath, startTime, tqdm, state, \
-        BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, isaToGfx, \
-        DepthUConfig, getMinNaming, getNameMin, getSerialNaming, getNameFull, \
-        getKeyNoInternalArgs
+        BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, isaToGfx, DepthUConfig
+from Tensile.Common.Naming import getMinNaming, getNameMin, getSerialNaming, getNameFull, \
+                                  getKeyNoInternalArgs
 
 
 def _generateForkedSolutions(problemType, constantParams, forkPermutations, assembler: Assembler, \

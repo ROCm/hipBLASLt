@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from Tensile.Common import getNameMin
+from Tensile.Common.Naming import getNameMin
 
 import csv
 

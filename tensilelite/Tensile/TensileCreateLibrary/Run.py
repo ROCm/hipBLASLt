@@ -39,10 +39,6 @@ from Tensile.Common import (
     DepthUConfig,
     ensurePath,
     globalParameters,
-    getKernelFileBase,
-    getKeyNoInternalArgs,
-    getMinNaming,
-    getSerialNaming,
     gfxToIsa,
     HR,
     isaToGfx,
@@ -59,6 +55,8 @@ from Tensile.Common import (
     tqdm,
     verbosity,
 )
+from Tensile.Common.Naming import getKernelFileBase, getKeyNoInternalArgs, getMinNaming, getSerialNaming
+
 from Tensile.CustomYamlLoader import load_logic_gfx_arch
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.KernelWriterBase import (

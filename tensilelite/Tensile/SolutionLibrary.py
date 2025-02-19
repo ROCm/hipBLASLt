@@ -29,7 +29,8 @@ from . import Properties
 from . import Hardware
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import state, IsaInfo, gfxToIsa, DepthUConfig, getMinNaming, getNameMin
+from .Common import state, IsaInfo, gfxToIsa, DepthUConfig
+from Tensile.Common.Naming import getMinNaming, getNameMin
 
 class SingleSolutionLibrary:
     Tag = "Single"

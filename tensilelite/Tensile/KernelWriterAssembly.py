@@ -48,8 +48,8 @@ from .AsmStoreState import StoreState, VectorDataTypes
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationType
 from .CustomKernels import isCustomKernelConfig
-from Tensile.Common import print2, printExit, printWarning, INDEX_CHARS, DebugConfig, DataDirection, \
-                           SemanticVersion, IsaVersion, IsaInfo, getKernelFileBase
+from Tensile.Common import print2, printExit, printWarning, INDEX_CHARS, DebugConfig, DataDirection
+from Tensile.Common.Naming import getKernelFileBase
 from Tensile.Toolchain.Component import Assembler
 
 from math import ceil, log, floor
@@ -94,7 +94,7 @@ class KernelWriterAssembly(KernelWriter):
 
 
   def _getCustomKernelSource(self, useShortNames, kernel, CustomKernelDirectory):
-    kernelName = getKernelFileBase(useShortNames, self.kernelSerialNaming, kernel)
+    kernelName = getKernelFileBase(useShortNames, self.debugConfig.splitGSU, self.kernelMinNaming, self.kernelSerialNaming, kernel)
     with open(os.path.join(CustomKernelDirectory, (kernelName + ".s"))) as f:
       rocmVersion = self.assembler.rocm_version
       if not (rocmVersion.major >= 6 and rocmVersion.patch >= 32650):

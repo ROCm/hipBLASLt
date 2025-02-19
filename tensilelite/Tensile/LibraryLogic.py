@@ -26,8 +26,8 @@ from pathlib import Path
 from typing import Dict
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
   assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, \
-  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo, DepthUConfig, \
-    getMinNaming, getNameMin, getNameFull
+  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo, DepthUConfig
+from Tensile.Common.Naming import getMinNaming, getNameMin, getNameFull
 from . import LibraryIO
 from . import SolutionSelectionLibrary
 
