@@ -33,6 +33,8 @@ from pathlib import Path
 from typing import Dict
 
 from Tensile import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
+from Tensile.TensileLogic.ValidMatrixInstruction import validateMIParameters
+
 from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
 from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
@@ -64,17 +66,25 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, asse
         solution.update(constantParams)
         solution.update(perm)
 
-        # TODO check if solution matches problem size for exact tile kernels
-        solutionObject = Solution(
-                             solution,
-                             debugConfig.splitGSU,
-                             debugConfig.printSolutionRejectionReason,
-                             debugConfig.printIndexAssignmentInfo,
-                             depthUConfig,
-                             assembler,
-                             isaInfoMap
-                         )
-        if solutionObject["Valid"]:
+        mi = solution["MatrixInstruction"]
+        isa = solution["ISA"]
+        wavefrontSize = solution["WavefrontSize"]
+        enableF32x = solution.get("EnableF32XdlMathOp", False)
+
+        miParams = Solution.matrixInstructionToMIParameters(mi, isa, wavefrontSize, problemType, enableF32x)
+        solution.update(miParams)
+        validateMIParameters(solution, globalParameters)
+
+        if solution["Valid"]:
+            solutionObject = Solution(
+                solution,
+                debugConfig.splitGSU,
+                debugConfig.printSolutionRejectionReason,
+                debugConfig.printIndexAssignmentInfo,
+                depthUConfig,
+                assembler,
+                isaInfoMap
+            )
             if solutionObject not in solutionSet:
                 solutionSet.add(solutionObject)
                 solutions.append(solutionObject)
