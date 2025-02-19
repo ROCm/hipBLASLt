@@ -39,11 +39,11 @@ from .CustomKernels import isCustomKernelConfig
 
 from .Common import assignParameterWithDefault, \
                     defaultProblemType, defaultSolution, \
-                    defaultInternalSupportParams, \
+                    defaultInternalSupportParams, IsaVersion, \
                     globalParameters, internalParameters, \
-                    print2, printExit, printWarning, \
-                    validMFMA, validSMFMA, validParameters, \
-                    validGEMMTypes, HPATypes, roundUp, validWMMA, INDEX_CHARS
+                    print1, print2, printExit, printWarning, \
+                    validMFMA, validParameters, \
+                    validGEMMTypes, HPATypes, roundUp, INDEX_CHARS
 
 from collections import OrderedDict
 from collections.abc import Mapping
@@ -55,6 +55,9 @@ import collections
 import math
 import operator
 import sys
+import deepdiff
+
+count = 0
 
 ########################################
 # Print a reject message :
@@ -1057,7 +1060,6 @@ class Solution(collections.abc.Mapping):
     self._name = None
     self.cxxCompiler = cxxCompiler
     self.srcName = srcName
-    config = config
 
     self._state = {}
     # problem type
@@ -1318,7 +1320,6 @@ class Solution(collections.abc.Mapping):
     if (not state["ProblemType"]["StridedBatched"]) and (state["ProblemType"]["OperationType"] != 'GEMM'):
       reject(state, "General Batched GEMM only support GEMM OperationType")
 
-    Solution.MatrixInstructionToMIParameters(state)
     EnableMatrixInstruction = state["EnableMatrixInstruction"] if "EnableMatrixInstruction" in state else None
     if EnableMatrixInstruction == None:
       if  ("MIBlock" in state and len(state["MIBlock"]) == 6) \
@@ -1707,78 +1708,76 @@ class Solution(collections.abc.Mapping):
 
 
   @staticmethod
-  def MatrixInstructionToMIParameters(state):
-    isa = tuple(state["ISA"])
-    if len(state["MatrixInstruction"]) == 9:
-      mi                          = state["MatrixInstruction"]
-      state["MatrixInstruction"]  = [state["MatrixInstruction"][0],state["MatrixInstruction"][1],state["MatrixInstruction"][2],state["MatrixInstruction"][3]]
+  def matrixInstructionToMIParameters(mi: list, isa: IsaVersion, wavefrontSize: int, problemType: dict, enableF32x: bool):
+    """
+    Converts a 9-item matrix instruction into the associated 4-item alternative, along with
+    supporting MI parameters.
 
-      waves                       = mi[7]* mi[8]
-      miwg0                       = mi[4] * mi[0] * mi[7]
-      state["WorkGroup"][0]       = miwg0
-      state["WorkGroup"][1]       = waves*state["WavefrontSize"] // state["WorkGroup"][0]
-      state["ThreadTile"][0]      = 1  # dummy
-      state["ThreadTile"][1]      = 1  # dummy
+    Args:
+        mi: The matrix instruction to convert. Must have length 9.
+        isa: The ISA tuple.
+        wavefrontSize: The wavefront size. Typically "WavefrontSize" in a solution.
+        problemType: The problem type dictionary. Typically "ProblemType" in a solution.
+        enableF32x: Whether to enable F32x. Typically "EnableF32XdlMathOp" in a solution.
+    """
+    if len(mi) != 9:
+      raise ValueError(f"MatrixInstruction must be 9 items long to convert into MI"
+                       f" Parameters, found {mi} with length {len(mi)}")
 
-      state["MFMA_BF16_1K"] = False
-      if not state["ProblemType"]["Sparse"]:
-        miDataType = state["ProblemType"]["DataType"] if (not state["EnableF32XdlMathOp"]) else state["ProblemType"]["F32XdlMathOp"]
-        if globalParameters["AsmCaps"][isa]["HasMFMA"]:
-          if not (miDataType.toChar() in validMFMA and \
-            state["MatrixInstruction"] in validMFMA[miDataType.toChar()]):
-            if miDataType.isBFloat16() and \
-              state["MatrixInstruction"] in validMFMA["B1k"]:
-              state["MFMA_BF16_1K"] = True
-            else:
-              reject(state, "MatrixInstruction %s not valid for DataType %s" % (state["MatrixInstruction"], miDataType))
-        elif globalParameters["AsmCaps"][isa]["HasWMMA"]:
-          if state["MatrixInstruction"] not in validWMMA:
-            reject(state, "MatrixInstruction %s not valid for DataType %s" % (state["MatrixInstruction"], state["ProblemType"]["DataType"]))
-      else:
-        if not (state["ProblemType"]["DataType"].toChar() in validSMFMA and \
-          state["MatrixInstruction"] in validSMFMA[state["ProblemType"]["DataType"].toChar()]):
-          reject(state, "Sparse MatrixInstruction %s not valid for DataType %s" % (state["MatrixInstruction"], state["ProblemType"]["DataType"]))
+    result = {}
 
-      # set EnableMatrixInstruction
-      state["EnableMatrixInstruction"] = True
+    mi4  = [mi[0], mi[1], mi[2], mi[3]]
+    result["MatrixInstruction"] = mi4
+    result["EnableMatrixInstruction"] = True
 
-      # set MIBlock
-      MIBlock_BM = miwg0 // mi[0]
-      MIBlock_BM = min(MIBlock_BM, mi[3])
-      MIBlock_BN = mi[3] // MIBlock_BM
+    waves = mi[7]* mi[8]
+    miwg0 = mi[4] * mi[0] * mi[7]
 
-      state["MIBlock"]    = [32, 32, 2, 1, 1, 1]
-      state["MIBlock"][0] = mi[0]
-      state["MIBlock"][1] = mi[1]
-      state["MIBlock"][2] = mi[2]
-      state["MIBlock"][3] = mi[3]
-      state["MIBlock"][4] = MIBlock_BM
-      state["MIBlock"][5] = MIBlock_BN
+    result["WorkGroup"] = [miwg0, waves*wavefrontSize // miwg0]
+    result["ThreadTile"] = [1, 1]
 
-      # set MIWaveGroup
-      state['MIWaveGroup']     = [1, 1]
-      state['MIWaveGroup'][0]  = min((miwg0 // mi[0]) // MIBlock_BM, waves)
-      state['MIWaveGroup'][1]  = waves // state['MIWaveGroup'][0]
+    isSparse = problemType.get(["Sparse"], 0)
+    miDataType = DataType(
+        problemType["DataType"]
+        if not enableF32x
+        else problemType["F32XdlMathOp"]
+    )
 
-      # set MIWaveTile
-      state['MIWaveTile']      = [1, 1]
-      state['MIWaveTile'][0]   = mi[5]
-      state['MIWaveTile'][1]   = mi[6]
-      # set MIInputPerThread
-      isa = tuple(state["ISA"])
-      state['MIInputPerThread'] = state["MatrixInstruction"][0] * state["MatrixInstruction"][2] * state["MatrixInstruction"][3] // state["WavefrontSize"]
-      if (not globalParameters["AsmCaps"][isa]['HasMFMA']) and globalParameters["AsmCaps"][isa]['HasWMMA']:
-        if state['ISA'][0] == 10 or state['ISA'][0] == 11:
-          state['MIInputPerThread'] = state["MatrixInstruction"][2]
-      sparseA = False if not state["ProblemType"]["Sparse"] else False if state["ProblemType"]["Sparse"] == 2 else True
-      sparseB = False if not state["ProblemType"]["Sparse"] else True if state["ProblemType"]["Sparse"] == 2 else False
-      state['MIInputPerThreadA'] = state['MIInputPerThread'] if not sparseA else state['MIInputPerThread']//2
-      state['MIInputPerThreadB'] = state['MIInputPerThread'] if not sparseB else state['MIInputPerThread']//2
-      state['MIInputPerThreadMetadata'] = state['MIInputPerThread'] if not state["ProblemType"]["Sparse"] else state['MIInputPerThread']//8
-    elif state["MatrixInstruction"] != [] and len(state["MatrixInstruction"]) == 4:
-      state["EnableMatrixInstruction"] = True
-    else:
-      state["EnableMatrixInstruction"] = False
+    result["MFMA_BF16_1K"] = (
+        not isSparse
+        and globalParameters["AsmCaps"][isa]["HasMFMA"]
+        and not (miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()])
+        and miDataType.isBFloat16()
+        and mi4 in validMFMA["B1k"]
+    )
+
+    # set MIBlock
+    MIBlockBM = miwg0 // mi[0]
+    MIBlockBM = min(MIBlockBM, mi[3])
+    MIBlockBN = mi[3] // MIBlockBM
+    result["MIBlock"]    = [mi[0], mi[1], mi[2], mi[3], MIBlockBM, MIBlockBN]
+    miwg0 = min((miwg0 // mi[0]) // MIBlockBM, waves)
+
+    # set MIWaveGroup
+    result['MIWaveGroup'][0]  = min((miwg0 // mi[0]) // MIBlockBM, waves)
+    result['MIWaveGroup'][1]  = waves // result['MIWaveGroup'][0]
+
+    # set MIWaveTile
+    result['MIWaveTile'] = [mi[5], mi[6]]
+
+    # set MIInputPerThread
+    hasMFMA = globalParameters["AsmCaps"][isa]["HasMFMA"]
+    hasWMMA = globalParameters["AsmCaps"][isa]["HasWMMA"]
+
+    result['MIInputPerThread'] = mi[0] * mi[2] * mi[3] // wavefrontSize
+    if (not hasMFMA) and hasWMMA and (isa[0] == 10 or isa[0] == 11):
+      result['MIInputPerThread'] = mi[2]
+    sparseA = False if not isSparse or isSparse == 2 else True
+    sparseB = True if isSparse == 2 else False
+    result['MIInputPerThreadA'] = result['MIInputPerThread'] if not sparseA else result['MIInputPerThread']//2
+    result['MIInputPerThreadB'] = result['MIInputPerThread'] if not sparseB else result['MIInputPerThread']//2
+    result['MIInputPerThreadMetadata'] = result['MIInputPerThread'] if not result["ProblemType"]["Sparse"] else result['MIInputPerThread']//8
+    return result
 
 
   ##############################################
@@ -2554,7 +2553,7 @@ class Solution(collections.abc.Mapping):
         break
     if "ValidDepthU" in state:
       del state["ValidDepthU"]
- 
+
   def depthUIteration(state, index, depthuList, problemType, isa, bufferLoad, packedC0, packedC1):
     ########################################
     # Auto search for DepthU starts here
@@ -3876,7 +3875,7 @@ class Solution(collections.abc.Mapping):
       maxTurn = calcEpilogueTurns([0, 1])
     vecDT.bias(0).turn = maxTurn
     vecDT.bias(1).turn = maxTurn
-  
+
     # Calc LDS for SAV
     maxTurn = 0
     if savDim == 1:

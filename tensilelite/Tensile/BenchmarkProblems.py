@@ -31,6 +31,8 @@ import time
 from copy import deepcopy
 from pathlib import Path
 
+from Tensile.TensileLogic.ValidMatrixInstruction import validateMIParameters
+
 from . import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
 from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
@@ -57,9 +59,17 @@ def generateForkedSolutions(problemType, constantParams, forkPermutations, cxxCo
         solution.update(constantParams)
         solution.update(perm)
 
-        # TODO check if solution matches problem size for exact tile kernels
-        solutionObject = Solution(solution, cxxCompiler)
-        if solutionObject["Valid"]:
+        mi = solution["MatrixInstruction"]
+        isa = solution["ISA"]
+        wavefrontSize = solution["WavefrontSize"]
+        enableF32x = solution.get("EnableF32XdlMathOp", False)
+
+        miParams = Solution.matrixInstructionToMIParameters(mi, isa, wavefrontSize, problemType, enableF32x)
+        solution.update(miParams)
+        validateMIParameters(solution, globalParameters)
+
+        if solution["Valid"]:
+            solutionObject = Solution(solution, cxxCompiler)
             if solutionObject not in solutionSet:
                 solutionSet.add(solutionObject)
                 solutions.append(solutionObject)

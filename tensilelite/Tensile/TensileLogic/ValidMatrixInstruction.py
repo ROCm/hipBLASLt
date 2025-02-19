@@ -1,6 +1,62 @@
+################################################################################
+#
+# Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+################################################################################
+
+"""
+ValidMatrixInstruction
+---
+Format: (M x N x K x B)
+    XDLOPS tile definition, only valid for gfx908, gfx90a
+    MxNxKxB specifies matrix instruction variants
+    MxNxB determines the shape of the C tile each instruction worked on
+        K determines the unroll depth
+
+Alternative format: (M x N x K x B x MIBlockM x WaveTileM x WaveTileN x WaveM x WaveN)
+    (Note: MxN means M-by-N in the following comments)
+    MIBlockM determines how many blocks along M dimension for multi-block MI variants. Concrete examples:
+    - MI 16x16x1x4 (4-block variant) with MIBlockM=4 -> (16x16)*(4x1)=64x16 tile per instruction executed
+    - MI 32x32x1x2 (2-block variant) with MIBlockM=1 -> (32x32)*(1x2)=32x64 tile per instruction executed
+    WaveTileM/N are dimensions of the C tile each wave works on, and is close to the concept of ThreadTile in classic VALU kernels
+    - WT 4x1 -> each wave executes 4x1 matrix instructions on the C tile of total area (4*MITileM)x(1*MITileN)
+    WaveM/N are dimensions of waves spawned for one workgroup where each wave consists of 64 threads
+    - Wave2x2 -> a total of 4 waves in one workgroup of shape 2x2
+    Putting it all together:
+    - [32, 32, 1, 2,  1,  4, 1,  2, 2]
+       ^^^^^^^^^^^^   ^   ^^^^   ^^^^
+        MatrixInst   BlkM  WT    Wave
+    - means (32x64) per MI * (4x1) per wave * (2x2) per workgroup = (32*4*2)x(64*1*2) = 256x128 macro tile
+    Tensile will ignore the parameters ThreadTile and WorkGroup when the alternative format is used
+
+Notes:
+    - If empty, do not use these instructions
+"""
+
 import math
-from pathlib import Path
-from inspect import currentframe, getframeinfo
+
+from Tensile.SolutionStructs import reject
+from Tensile.TensileInstructions.DataType import DataType
+
+from .Utilities import elineno
 
 MI_KEY: str = "MatrixInstruction"
 MI_ENABLED_KEY: str = "EnableMatrixInstruction"
@@ -104,15 +160,7 @@ validMatrixInstructions = (
 )
 
 
-def elineno():
-    """
-    Return the file name and line number of the caller.
-    """
-    frame = getframeinfo(currentframe().f_back)
-    return f"{Path(frame.filename).name}:{frame.lineno}"
-
-
-def validateMatrixInstruction(solution: dict, filepath: Path, params: dict):
+def validateMatrixInstruction(solution: dict, globalParams: dict, filepath: str):
     """
     Validates the matrix instruction configured in the given solution.
 
@@ -137,97 +185,118 @@ def validateMatrixInstruction(solution: dict, filepath: Path, params: dict):
         AssertionError: If any of the validation checks fail.
     """
     try:
-        _validateMatrixInstruction(solution, params)
+        validateMIParameters(solution, globalParams)
+        assert solution["Valid"], f"Solution was rejected: {elineno()}"
         return True
     except AssertionError as e:
-        print(f"Validation failed: {filepath} (index {solution['SolutionIndex']})")
-        print(f"Error: file: {e}")
+        print(
+            f"Error: Validation failed: {e} (file: {filepath}, index: {solution['SolutionIndex']})"
+        )
         return False
 
 
-def _validateMatrixInstruction(solution: dict, params: dict):
-    """
-    Function to validate the matrix instruction for the provided solution.
-    See exported function for more details.
-    """
-    assert MI_KEY in solution, elineno()
-    assert MI_ENABLED_KEY in solution, elineno()
-    assert not (solution[MI_KEY] == [] and solution[MI_ENABLED_KEY] == True), elineno()
+def validateMIParameters(solution: dict, globalParams: dict):
+    assert MI_KEY in solution, elineno() + ": missing MatrixInstruction"
+    assert MI_ENABLED_KEY in solution, elineno() + ": missing EnableMatrixInstruction"
+    assert not (solution[MI_KEY] == [] and solution[MI_ENABLED_KEY] == True), elineno() + ": MI empty but enabled"
 
     isa = tuple(solution["ISA"])
-    miFull = solution[MI_KEY]
+
+    # TODO: Temporary until all 940/941 ISAs are removed
+    if (9, 4, 0) <= isa <= (9, 4, 1):
+        isa = (9, 4, 2)
+
+    mi4 = solution[MI_KEY]
+    mi9 = [mi4[0], mi4[1], mi4[2], mi4[3]]
+    assert "MatrixInstBM" in solution, elineno() + ": missing MatrixInstBM"
+    mi9.append(solution["MatrixInstBM"])
+    assert "MIWaveTile" in solution, elineno() + ": missing MIWaveTile"
+    mi9.extend(solution["MIWaveTile"])
+    assert "MIWaveGroup" in solution, elineno() + ": missing MIWaveGroup"
+    mi9.extend(solution["MIWaveGroup"])
+
     miEnabled = solution[MI_ENABLED_KEY]
 
-    assert miFull in validMatrixInstructions, elineno()
-
-    if len(solution[MI_KEY]) == 9:
-        wfsize = solution["WavefrontSize"]
-        mi = [miFull[0], miFull[1], miFull[2], miFull[3]]
-        waves = miFull[7] * miFull[8]
-        miwg0 = miFull[4] * miFull[0] * miFull[7]  # Matrix instruction work group 0
-        miwg1 = waves * wfsize // miwg0
-
-        isSparse = solution["ProblemType"]["Sparse"]
-        miDataType = (
-            solution["ProblemType"]["DataType"]
-            if (not solution["EnableF32XdlMathOp"])
-            else solution["ProblemType"]["F32XdlMathOp"]
-        )
-        miBlock = solution["MIBlock"]
-        miWaveGroup = solution["MIWaveGroup"]
-        miWaveTile = solution["MIWaveTile"]
-        miInputPerThread = solution["MIInputPerThread"]
-        miInputPerThreadA = solution["MIInputPerThreadA"]
-        miInputPerThreadB = solution["MIInputPerThreadB"]
-        miInutPerThreadMeta = solution["MIInputPerThreadMetadata"]
-
-        # Check work group
-        assert solution["WorkGroup"] == [miwg0, miwg1], elineno()
-
-        # Check datatype
-        if not isSparse:
-            if params["AsmCaps"][isa]["HasMFMA"]:
-                if not (miDataType.toChar() in validMFMA and mi in validMFMA[miDataType.toChar()]):
-                    assert miDataType.isBFloat16() and mi in validMFMA["B1k"], elineno()
-            elif params["AsmCaps"][isa]["HasWMMA"]:
-                assert mi in validWMMA, elineno()
-        else:
-            assert miDataType.toChar() in validSMFMA and mi in validSMFMA[miDataType.toChar()], elineno()
-
-        if (not params["AsmCaps"][isa]["HasMFMA"]) and params["AsmCaps"][isa]["HasWMMA"]:
-            if isa[0] == 10 or isa[0] == 11:
-                assert miInputPerThread == mi[2], elineno()
-
-        assert solution["MFMA_BF16_1K"] == False, elineno()
-
-        # Check MIBlock
-        assert miBlock[0] == mi[0], elineno()
-        assert miBlock[1] == mi[1], elineno()
-        assert miBlock[2] == mi[2], elineno()
-        assert miBlock[3] == mi[3], elineno()
-        assert miBlock[4] == min(miwg0 // mi[0], mi[3]), elineno()
-        assert miBlock[5] == mi[3] // miBlock[4], elineno()
-
-        # Check MIWaveGroup
-        assert miWaveGroup[0] == min((miwg0 // mi[0]) // miBlock[4], waves), elineno()
-        assert miWaveGroup[1] == waves // miWaveGroup[0], elineno()
-
-        # Check MIWaveTile
-        assert miWaveTile[0] == mi[5], elineno()
-        assert miWaveTile[1] == mi[6], elineno()
-
-        # Check MIInputPerThread
-        assert miInputPerThread == mi[0] * mi[2] * mi[3] // wfsize, elineno()
-
-        # TODO: sparsity in hipBLASLt appears to be unused or always zero
-        sparseA = not isSparse if isSparse != 2 else False
-        sparseB = isSparse == 2 if isSparse else False
-        assert miInputPerThreadA == miInputPerThread if not sparseA else miInputPerThread // 2, elineno()
-        assert miInputPerThreadB == miInputPerThread if not sparseB else miInputPerThread // 2, elineno()
-        assert miInutPerThreadMeta == miInputPerThread if not isSparse else miInputPerThread // 8, elineno()
-
-        assert miEnabled == True, elineno()
-    elif miFull != [] and len(miFull) == 4:
-        assert miEnabled == True, elineno()
-    else:
+    if len(mi4) == 0:
         assert miEnabled == False, elineno()
+    else:
+        assert len(mi4) == 4 and len(mi9) == 9, (
+            elineno() + " MI4: " + str(mi4) + " MI9: " + str(mi9)
+        )
+
+    if not miEnabled:
+        return
+
+    assert mi4 in validMatrixInstructions, elineno()
+
+    wfsize = solution["WavefrontSize"]
+    waves = solution["MIWaveGroup"][0] * solution["MIWaveGroup"][1]
+    miwg0 = mi9[4] * mi9[0] * mi9[7]  # Matrix instruction work group 0
+    miwg1 = waves * wfsize // miwg0
+
+    hasMFMA = globalParams["AsmCaps"][isa]["HasMFMA"]
+    hasWMMA = globalParams["AsmCaps"][isa]["HasWMMA"]
+
+    ptype = solution["ProblemType"]
+    isSparse = ptype.get("Sparse", 0)
+    miDataType = DataType(
+        ptype["DataType"]
+        if not solution.get("EnableF32XdlMathOp", False)
+        else ptype["F32XdlMathOp"]
+    )
+
+    miBlock = solution["MIBlock"]
+    miWaveGroup = solution["MIWaveGroup"]
+    miWaveTile = solution["MIWaveTile"]
+
+    # Check datatype
+    if not isSparse:
+        if hasMFMA:
+            if not (miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()]):
+                if miDataType.isBFloat16() and mi4 in validMFMA["B1k"]:
+                    assert solution["MFMA_BF16_1K"], elineno()
+                else:
+                    reject(solution, f"Invalid MFMA BFloat16 configuration: {solution}")
+        elif hasWMMA and (not mi4 in validWMMA):
+            reject(solution, f"Invalid WMMA configuration: {solution}")
+    else:
+        if not (miDataType.toChar() in validSMFMA and mi4 in validSMFMA[miDataType.toChar()]):
+            reject(solution, f"Invalid SMFMA configuration: {solution}")
+
+    if (not hasWMMA) and globalParams["AsmCaps"][isa]["HasWMMA"]:
+        if isa[0] == 10 or isa[0] == 11:
+            assert miInputPerThread == mi4[2], elineno()
+
+    # Check MIBlock
+    assert miBlock[0] == mi4[0], elineno()
+    assert miBlock[1] == mi4[1], elineno()
+    assert miBlock[2] == mi4[2], elineno()
+    assert miBlock[3] == mi4[3], elineno()
+    assert miBlock[4] == min(miwg0 // mi4[0], mi4[3]), elineno()
+    assert miBlock[5] == mi4[3] // miBlock[4], elineno()
+
+    # Check MIWaveGroup
+    assert miWaveGroup[0] == min((miwg0 // mi4[0]) // miBlock[4], waves), elineno()
+    assert miWaveGroup[1] == waves // miWaveGroup[0], elineno()
+
+    # Check MIWaveTile
+    assert miWaveTile[0] == mi9[5], elineno()
+    assert miWaveTile[1] == mi9[6], elineno()
+
+    # Check MIInputPerThread
+    miInputPerThread = solution["MIInputPerThread"]
+
+    # If Navi architecture, the input per thread is different
+    if (10, 0, 0) <= isa <= (11, 0, 2):
+        assert miInputPerThread == mi4[2], elineno()
+    else:
+        assert miInputPerThread == mi4[0] * mi4[2] * mi4[3] // wfsize, elineno()
+
+    # miInputPerThreadA = solution["MIInputPerThreadA"]
+    # miInputPerThreadB = solution["MIInputPerThreadB"]
+    # miInutPerThreadMeta = solution["MIInputPerThreadMetadata"]
+    # sparseA = not isSparse if isSparse != 2 else False
+    # sparseB = isSparse == 2 if isSparse else False
+    # assert miInputPerThreadA == miInputPerThread if not sparseA else miInputPerThread // 2, elineno()
+    # assert miInputPerThreadB == miInputPerThread if not sparseB else miInputPerThread // 2, elineno()
+    # assert miInutPerThreadMeta == miInputPerThread if not isSparse else miInputPerThread // 8, elineno()

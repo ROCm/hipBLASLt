@@ -22,40 +22,13 @@
 #
 ################################################################################
 
-from argparse import ArgumentParser
-from typing import Any, Dict
-
-from Tensile.Toolchain.Validators import ToolchainDefaults
+from pathlib import Path
+from inspect import currentframe, getframeinfo
 
 
-def parseArguments() -> Dict[str, Any]:
+def elineno():
     """
-    Returns:
-        A dictionary containing the keys representing options and their values.
+    Return the file name and line number of the caller.
     """
-
-    argParser = ArgumentParser(
-        description="TensileValidateLogic runs critical checks to ensure the "
-        "integrity of the supplied logic files.",
-    )
-
-    argParser.add_argument("LogicPath", help="Path to LibraryLogic.yaml files.")
-    argParser.add_argument("--check", dest="Check", action="store_true", help="Run all checks.")
-    argParser.add_argument(
-        "--jobs",
-        "-j",
-        dest="Jobs",
-        action="store",
-        default=48,
-        help="Number of worker processes to use during validation checks.",
-    )
-    argParser.add_argument(
-        "--cxx-compiler",
-        dest="CxxCompiler",
-        action="store",
-        default=ToolchainDefaults.CXX_COMPILER,
-        help=f"Default: {ToolchainDefaults.CXX_COMPILER}",
-    )
-    args = argParser.parse_args()
-
-    return args
+    frame = getframeinfo(currentframe().f_back)
+    return f"{Path(frame.filename).name}:{frame.lineno}"

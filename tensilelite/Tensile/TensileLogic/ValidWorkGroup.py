@@ -22,40 +22,37 @@
 #
 ################################################################################
 
-from argparse import ArgumentParser
-from typing import Any, Dict
+"""
+ValidWorkGroup
+---
+Dimensions of the workgroup which will operate on a tile and share lds
+Example: ( wg0 x wg1 x LocalSplitU )
+"""
 
-from Tensile.Toolchain.Validators import ToolchainDefaults
+from .Utilities import elineno
+
+validWorkGroups = []
+for numThreads in range(32, 1025, 32):
+    for nsg in [1, 2, 4, 8, 16, 32, 64, 96, 128, 256]:
+        for sg0 in range(1, numThreads // nsg + 1):
+            sg1 = numThreads // nsg // sg0
+            if sg0 * sg1 * nsg == numThreads:
+                workGroup = [sg0, sg1, nsg]
+                validWorkGroups.append(workGroup)
 
 
-def parseArguments() -> Dict[str, Any]:
-    """
-    Returns:
-        A dictionary containing the keys representing options and their values.
-    """
+def validateWorkGroup(solution: dict, globalParams: dict, filepath: str):
+    try:
+        _validateWorkGroup(solution, globalParams)
+        assert solution["Valid"], f"Solution was rejected: {elineno()}"
+        return True
+    except AssertionError as e:
+        print(
+            f"Error: Validation failed: {e} (file: {filepath}, index: {solution['SolutionIndex']})"
+        )
+        return False
 
-    argParser = ArgumentParser(
-        description="TensileValidateLogic runs critical checks to ensure the "
-        "integrity of the supplied logic files.",
-    )
 
-    argParser.add_argument("LogicPath", help="Path to LibraryLogic.yaml files.")
-    argParser.add_argument("--check", dest="Check", action="store_true", help="Run all checks.")
-    argParser.add_argument(
-        "--jobs",
-        "-j",
-        dest="Jobs",
-        action="store",
-        default=48,
-        help="Number of worker processes to use during validation checks.",
-    )
-    argParser.add_argument(
-        "--cxx-compiler",
-        dest="CxxCompiler",
-        action="store",
-        default=ToolchainDefaults.CXX_COMPILER,
-        help=f"Default: {ToolchainDefaults.CXX_COMPILER}",
-    )
-    args = argParser.parse_args()
-
-    return args
+def _validateWorkGroup(solution: dict, globalParams: dict):
+    assert "WorkGroup" in solution, elineno()
+    assert solution["WorkGroup"] in validWorkGroups, elineno()
