@@ -41,9 +41,9 @@ Alternative format: (M x N x K x B x MIBlockM x WaveTileM x WaveTileN x WaveM x 
     WaveM/N are dimensions of waves spawned for one workgroup where each wave consists of 64 threads
     - Wave2x2 -> a total of 4 waves in one workgroup of shape 2x2
     Putting it all together:
-    - [32, 32, 1, 2,  1,  4, 1,  2, 2]
-       ^^^^^^^^^^^^   ^   ^^^^   ^^^^
-        MatrixInst   BlkM  WT    Wave
+    - [32, 32, 1, 2, 1,  4, 1,  2, 2]
+       ^^^^^^^^^^^^  ^   ^^^^   ^^^^
+        MatrixInst  BlkM  WT    Wave
     - means (32x64) per MI * (4x1) per wave * (2x2) per workgroup = (32*4*2)x(64*1*2) = 256x128 macro tile
     Tensile will ignore the parameters ThreadTile and WorkGroup when the alternative format is used
 
@@ -57,11 +57,12 @@ from pathlib import Path
 from inspect import currentframe, getframeinfo
 
 from Tensile.SolutionStructs import reject
+from Tensile.Common import IsaVersion
 from Tensile.TensileInstructions.DataType import DataType
 
 from .Utilities import elineno
 
-from Tensile.Common import IsaInfo
+from Tensile.Common import IsaInfo, print1
 
 MI_KEY: str = "MatrixInstruction"
 MI_ENABLED_KEY: str = "EnableMatrixInstruction"
@@ -173,7 +174,9 @@ def elineno():
     return f"{Path(frame.filename).name}:{frame.lineno}"
 
 
-def validateMatrixInstruction(solution: dict, filepath: Path, isaInfoMap: Dict[str, IsaInfo]) -> bool:
+def validateMatrixInstruction(
+    solution: dict, isaInfoMap: Dict[str, IsaInfo], filepath: Path
+) -> bool:
     """
     Validates the matrix instruction configured in the given solution.
 
@@ -208,10 +211,14 @@ def validateMatrixInstruction(solution: dict, filepath: Path, isaInfoMap: Dict[s
         return False
 
 
-def validateMIParameters(solution: dict, isaInfoMap: Dict[str, IsaInfo]):
+def validateMIParameters(
+    solution: dict, isaInfoMap: Dict[str, IsaInfo], printSolutionRejectionReason: bool = True
+):
     assert MI_KEY in solution, elineno() + ": missing MatrixInstruction"
     assert MI_ENABLED_KEY in solution, elineno() + ": missing EnableMatrixInstruction"
-    assert not (solution[MI_KEY] == [] and solution[MI_ENABLED_KEY] == True), elineno() + ": MI empty but enabled"
+    assert not (solution[MI_KEY] == [] and solution[MI_ENABLED_KEY] == True), (
+        elineno() + ": MI empty but enabled"
+    )
 
     isa = tuple(solution["ISA"])
 
@@ -220,6 +227,12 @@ def validateMIParameters(solution: dict, isaInfoMap: Dict[str, IsaInfo]):
         isa = (9, 4, 2)
 
     mi4 = solution[MI_KEY]
+    miEnabled = solution[MI_ENABLED_KEY]
+    assert len(mi4) == 4 or len(mi4) == 0, elineno() + ": MI length not 4 or 0"
+    if len(mi4) == 0:
+        assert miEnabled == False, elineno()
+        return
+
     mi9 = [mi4[0], mi4[1], mi4[2], mi4[3]]
     assert "MatrixInstBM" in solution, elineno() + ": missing MatrixInstBM"
     mi9.append(solution["MatrixInstBM"])
@@ -228,14 +241,7 @@ def validateMIParameters(solution: dict, isaInfoMap: Dict[str, IsaInfo]):
     assert "MIWaveGroup" in solution, elineno() + ": missing MIWaveGroup"
     mi9.extend(solution["MIWaveGroup"])
 
-    miEnabled = solution[MI_ENABLED_KEY]
-
-    if len(mi4) == 0:
-        assert miEnabled == False, elineno()
-    else:
-        assert len(mi4) == 4 and len(mi9) == 9, (
-            elineno() + " MI4: " + str(mi4) + " MI9: " + str(mi9)
-        )
+    assert len(mi4) == 4 and len(mi9) == 9, elineno() + " MI4: " + str(mi4) + " MI9: " + str(mi9)
 
     if not miEnabled:
         return
@@ -244,8 +250,7 @@ def validateMIParameters(solution: dict, isaInfoMap: Dict[str, IsaInfo]):
 
     wfsize = solution["WavefrontSize"]
     waves = solution["MIWaveGroup"][0] * solution["MIWaveGroup"][1]
-    miwg0 = mi9[4] * mi9[0] * mi9[7]  # Matrix instruction work group 0
-    miwg1 = waves * wfsize // miwg0
+    wg0 = mi9[4] * mi9[0] * mi9[7]  # Work group 0
 
     hasMFMA = isaInfoMap[isa].asmCaps["HasMFMA"]
     hasWMMA = isaInfoMap[isa].asmCaps["HasWMMA"]
@@ -263,18 +268,31 @@ def validateMIParameters(solution: dict, isaInfoMap: Dict[str, IsaInfo]):
     miWaveTile = solution["MIWaveTile"]
 
     # Check datatype
-    if not isSparse:
-        if hasMFMA:
-            if not (miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()]):
-                if miDataType.isBFloat16() and mi4 in validMFMA["B1k"]:
+    if not isSparse:  # If it's sparse
+        if hasMFMA:  # and it supports MFMA
+            if not (
+                miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()]
+            ):  # but is invalid MFMA
+                print1(
+                    f"Looks like {mi4} of type {miDataType.toChar()} is not supported for MFMA {validMFMA[miDataType.toChar()]}"
+                )
+                if miDataType.isBFloat16() and mi4 in validMFMA["B1k"]:  # but is valid bf16 MFMA
                     assert solution["MFMA_BF16_1K"], elineno()
                 else:
-                    reject(solution, f"Invalid MFMA BFloat16 configuration: {solution}")
+                    return reject(
+                        solution,
+                        printSolutionRejectionReason,
+                        f"Invalid MFMA BFloat16 configuration: {solution}",
+                    )
         elif hasWMMA and (not mi4 in validWMMA):
-            reject(solution, f"Invalid WMMA configuration: {solution}")
+            return reject(
+                solution, printSolutionRejectionReason, f"Invalid WMMA configuration: {solution}"
+            )
     else:
         if not (miDataType.toChar() in validSMFMA and mi4 in validSMFMA[miDataType.toChar()]):
-            reject(solution, f"Invalid SMFMA configuration: {solution}")
+            return reject(
+                solution, printSolutionRejectionReason, f"Invalid SMFMA configuration: {solution}"
+            )
 
     if (not hasMFMA) and hasWMMA:
         if isa[0] == 10 or isa[0] == 11:
@@ -285,11 +303,11 @@ def validateMIParameters(solution: dict, isaInfoMap: Dict[str, IsaInfo]):
     assert miBlock[1] == mi4[1], elineno()
     assert miBlock[2] == mi4[2], elineno()
     assert miBlock[3] == mi4[3], elineno()
-    assert miBlock[4] == min(miwg0 // mi4[0], mi4[3]), elineno()
+    assert miBlock[4] == min(wg0 // mi4[0], mi4[3]), elineno()
     assert miBlock[5] == mi4[3] // miBlock[4], elineno()
 
     # Check MIWaveGroup
-    assert miWaveGroup[0] == min((miwg0 // mi4[0]) // miBlock[4], waves), elineno()
+    assert miWaveGroup[0] == min((wg0 // mi4[0]) // miBlock[4], waves), elineno()
     assert miWaveGroup[1] == waves // miWaveGroup[0], elineno()
 
     # Check MIWaveTile
@@ -313,3 +331,4 @@ def validateMIParameters(solution: dict, isaInfoMap: Dict[str, IsaInfo]):
     # assert miInputPerThreadA == miInputPerThread if not sparseA else miInputPerThread // 2, elineno()
     # assert miInputPerThreadB == miInputPerThread if not sparseB else miInputPerThread // 2, elineno()
     # assert miInutPerThreadMeta == miInputPerThread if not isSparse else miInputPerThread // 8, elineno()
+    return True

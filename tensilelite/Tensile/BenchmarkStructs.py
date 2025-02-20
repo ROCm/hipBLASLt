@@ -24,14 +24,16 @@
 
 from copy import deepcopy
 import itertools
-from .Common import print1, print2, hasParam, printExit, \
+
+from Tensile.Common.ValidParameters import checkParametersAreValid
+from Tensile.Common import print1, print2, hasParam, printExit, \
         defaultBenchmarkCommonParameters, validParameters, globalParameters, \
-        defaultBatchedBenchmarkFinalProblemSizes, defaultBenchmarkFinalProblemSizes, \
-        checkParametersAreValid
+        defaultBatchedBenchmarkFinalProblemSizes, defaultBenchmarkFinalProblemSizes
+from Tensile.ProblemType import ProblemType
+
 from .CustomKernels import getAllCustomKernelNames
 from .SolutionStructs import ProblemSizes, ActivationArgs, BiasTypeArgs, \
         FactorDimArgs
-from Tensile.ProblemType import ProblemType
 
 
 def getDefaultsForMissingParameters(paramList, defaultParams):

@@ -480,7 +480,7 @@ def restoreDefaultGlobalParameters():
 
 
 # hopefully the isaInfoMap keys only contain isas we plan to build and not all
-def printCapabilitiesTable(isaInfoMap: Dict[str, IsaInfo]): 
+def printCapabilitiesTable(isaInfoMap: Dict[str, IsaInfo]):
     """
     Prints a capability table for the given parameters and ISA information map.
 
@@ -502,6 +502,7 @@ def printCapabilitiesTable(isaInfoMap: Dict[str, IsaInfo]):
             for info in isaInfoMap.values()
         ]
 
+    print1(f"infomap: {isaInfoMap}")
     gfxs = list(map(isaToGfx, isaInfoMap.keys()))
     headerRow = ["Capability"] + gfxs
 
@@ -517,7 +518,7 @@ def printCapabilitiesTable(isaInfoMap: Dict[str, IsaInfo]):
     printTable([headerRow] + asmCapRows + archCapRows)
 
 
-def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo], cxxCompiler=None):
+def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
     """
     Assign Global Parameters
     Each global parameter has a default parameter, and the user

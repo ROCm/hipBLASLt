@@ -139,6 +139,7 @@ def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: P
     activationArgs = ActivationArgs(problemType, activationEnums) if isForAll else ""
     factorDimArgs = FactorDimArgs(problemType, factorDimEnums)
 
+    print1(f"libraryFile: {yamlList}")
     clientParametersPaths.append(writeClientConfig(
                                   forBenchmark=False,
                                   solutions=None,

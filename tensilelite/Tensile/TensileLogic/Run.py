@@ -26,28 +26,39 @@
 import functools
 from pathlib import Path
 from multiprocessing import Pool
-from typing import List
+from typing import List, Dict
 
-from Tensile.Common import globalParameters, assignGlobalParameters, ParallelMap2, print1, printWarning
+from Tensile.Common import (
+    globalParameters,
+    assignGlobalParameters,
+    ParallelMap2,
+    print1,
+    printWarning,
+    makeIsaInfoMap,
+    SUPPORTED_ISA,
+    gfxToIsa,
+    IsaVersion,
+    IsaInfo,
+)
 from Tensile.LibraryIO import readYAML
 from Tensile.Toolchain.Validators import validateToolchain
 from Tensile.CustomKernels import isCustomKernelConfig, getCustomKernelConfig
-from Tensile.SolutionStructs import Solution
+from Tensile.SolutionStructs import Solution, matrixInstructionToMIParameters
 
 from .ParseArguments import parseArguments
 from .ValidMatrixInstruction import validateMatrixInstruction
 from .ValidWorkGroup import validateWorkGroup
 
 
-def getParams(cxxCompiler):
+def getParams(isaInfoMap, cxxCompiler):
     gp = globalParameters
-    assignGlobalParameters({"PrintSolutionRejectionReason": True}, cxxCompiler)
+    assignGlobalParameters({"PrintSolutionRejectionReason": True}, isaInfoMap, cxxCompiler)
     return gp
 
 
-def handleCustomKernel(sol: dict) -> dict:
+def handleCustomKernel(sol: dict, isaInfoMap: dict) -> dict:
     if not isCustomKernelConfig(sol):
-        return None
+        return sol
 
     name = sol["CustomKernelName"]
     print1(f">>     Custom kernel: {name}")
@@ -57,24 +68,19 @@ def handleCustomKernel(sol: dict) -> dict:
 
     mi = sol["MatrixInstruction"]
     if len(mi) != 9:
-        printWarning(
-            f"Custom kernel {name} has {len(mi)} matrix instructions. Expected 9."
-        )
+        printWarning(f"Custom kernel {name} has MI length {len(mi)}, expected 9.")
 
     isa = sol["ISA"]
     wavefrontSize = sol["WavefrontSize"]
     ptype = sol["ProblemType"]
-    enableF32x = sol.get("EnableF32XdlMathOp", False)
+    workgroup = sol["WorkGroup"]
 
-
-    miParams = Solution.matrixInstructionToMIParameters(
-        mi, isa, wavefrontSize, ptype, enableF32x
-    )
+    miParams = matrixInstructionToMIParameters(mi, isa, wavefrontSize, ptype, workgroup, isaInfoMap)
     sol.update(miParams)
     return sol
 
 
-def runChecks(logicPath: str, gp: dict, files: List[Path]):
+def runChecks(logicPath: str, isaInfoMap: Dict[IsaVersion, IsaInfo], files: List[Path]):
     """
     Run checks on the given files.
 
@@ -96,12 +102,14 @@ def runChecks(logicPath: str, gp: dict, files: List[Path]):
         print1(f">> {file.relative_to(logicPath)}")
 
         for s in solutions:
-            s = handleCustomKernel(s)
-            if s:
-                keep += validateMatrixInstruction(s, gp, file.relative_to(logicPath))
-                keep += validateWorkGroup(s, gp, file.relative_to(logicPath))
-            else:
-                print1(f">>     Skipping non-custom kernel...")
+            s = handleCustomKernel(s, isaInfoMap)
+            if all(
+                [
+                    validateMatrixInstruction(s, isaInfoMap, file.relative_to(logicPath)),
+                    validateWorkGroup(s, isaInfoMap, file.relative_to(logicPath)),
+                ]
+            ):
+                keep += 1
             total += 1
     return keep, total
 
@@ -115,8 +123,8 @@ def main():
     jobs = int(args.Jobs)
     cxxCompiler = validateToolchain(args.CxxCompiler)
 
-    gp = globalParameters
-    assignGlobalParameters({"PrintSolutionRejectionReason": True}, cxxCompiler)
+    isaInfoMap = makeIsaInfoMap(SUPPORTED_ISA, cxxCompiler)
+    assignGlobalParameters({"PrintSolutionRejectionReason": True}, isaInfoMap)
 
     logicPath = Path(args.LogicPath)
     pattern = "**/*.yaml"
@@ -125,19 +133,19 @@ def main():
     batchSize = len(files) // jobs
     batches = (files[i : i + batchSize] for i in range(0, len(files), batchSize))
 
-    fn = functools.partial(runChecks, logicPath, gp)
+    fn = functools.partial(runChecks, logicPath, isaInfoMap)
+    keep, total = 0, 0
     with Pool(processes=jobs) as pool:
-        results = pool.map(fn, batches)
+        results = pool.map_async(fn, batches)
 
-    # TIP: This is how to use joblib. Leave for reference.
-    # for _keep, _total in ParallelMap2(
-    #     fn, batches, multiArg=False, procs=jobs, return_as="generator_unordered"
-    # ):
+        # TIP: This is how to use joblib. Leave for reference.
+        # for _keep, _total in ParallelMap2(
+        #     fn, batches, multiArg=False, procs=jobs, return_as="generator_unordered"
+        # ):
 
-    # keep, total = 0, 0
-    for _keep, _total in results:
-        keep += _keep
-        total += _total
+        for _keep, _total in results.get():
+            keep += _keep
+            total += _total
 
     rejects = total - keep
     print(f"Total  {total} solutions")

@@ -34,20 +34,20 @@ from typing import Dict
 
 from Tensile import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
 from Tensile.TensileLogic.ValidMatrixInstruction import validateMIParameters
+from Tensile.ProblemType import ProblemType
+from Tensile.Toolchain.Component import Assembler
+from Tensile.SolutionStructs import Solution, ProblemSizes, matrixInstructionToMIParameters
 
 from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
 from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
 from .KernelWriterAssembly import KernelWriterAssembly
 from .KernelWriter import DebugConfig
-from .SolutionStructs import Solution, ProblemSizes
-from Tensile.ProblemType import ProblemType
 from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
 from .CustomKernels import getCustomKernelConfig
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
-from Tensile.Toolchain.Component import Assembler
-from .Common import globalParameters, HR, print1, print2, IsaInfo, \
+from .Common import globalParameters, HR, print1, print2, IsaInfo, defaultSolution, \
         printExit, printWarning, ensurePath, startTime, tqdm, state, \
         BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, isaToGfx, DepthUConfig
 from Tensile.Common.Naming import getMinNaming, getNameMin, getSerialNaming, getNameFull, \
@@ -59,23 +59,31 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, asse
     """Creates a list with a Solution object for each parameter combination in forkPermutations"""
     print1("# Enumerating Solutions")
 
-    solutions = []
+    # solutions = []
     solutionSet = set()
     for perm in forkPermutations:
-        solution = {"ProblemType": deepcopy(problemType.state)}
+        # Expect only a single ISA in the map for the Tensile context
+        # because the GPU has to be physically present for benchmarking
+        isa = next(iter(isaInfoMap.keys()))
+
+        solution = {}
+        solution.update({
+            "ProblemType": deepcopy(problemType.state),
+            "ISA": isa,
+        })
         solution.update(constantParams)
         solution.update(perm)
 
+
         mi = solution["MatrixInstruction"]
-        isa = solution["ISA"]
         wavefrontSize = solution["WavefrontSize"]
-        enableF32x = solution.get("EnableF32XdlMathOp", False)
+        workgroup = solution["WorkGroup"]
+        ptype = solution["ProblemType"]
 
-        miParams = Solution.matrixInstructionToMIParameters(mi, isa, wavefrontSize, problemType, enableF32x)
+        miParams = matrixInstructionToMIParameters(mi, isa, wavefrontSize, ptype, workgroup, isaInfoMap)
         solution.update(miParams)
-        validateMIParameters(solution, globalParameters)
 
-        if solution["Valid"]:
+        if validateMIParameters(solution, isaInfoMap):
             solutionObject = Solution(
                 solution,
                 debugConfig.splitGSU,
@@ -85,17 +93,16 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, asse
                 assembler,
                 isaInfoMap
             )
-            if solutionObject not in solutionSet:
+            if solutionObject["Valid"]:
                 solutionSet.add(solutionObject)
-                solutions.append(solutionObject)
         elif debugConfig.printSolutionRejectionReason:
-            print1("rejecting solution " + str(solutionObject))
+            print1("rejecting solution " + str(solution))
 
-    return solutions
+    return list(solutionSet)
 
 
 def _getCustomKernelSolutionObj(
-        kernelName, 
+        kernelName,
         internalSupportParams,
         assembler: Assembler,
         debugConfig: DebugConfig,
@@ -104,9 +111,23 @@ def _getCustomKernelSolutionObj(
         directory=CUSTOM_KERNEL_PATH
     ):
     """Creates the Solution object for a custom kernel"""
-    config = getCustomKernelConfig(kernelName, internalSupportParams, directory)
+    sol = getCustomKernelConfig(kernelName, internalSupportParams, directory)
+
+    mi = sol["MatrixInstruction"]
+    if len(mi) != 9:
+        printWarning(f"Custom kernel {kernelName} has MI length {len(mi)}, expected 9.")
+
+    isa = next(iter(isaInfoMap.keys()))
+
+    wavefrontSize = sol["WavefrontSize"]
+    ptype = sol["ProblemType"]
+    workgroup = sol["WorkGroup"]
+
+    miParams = matrixInstructionToMIParameters(mi, isa, wavefrontSize, ptype, workgroup, isaInfoMap)
+    sol.update(miParams)
+
     return Solution(
-               config,
+               sol,
                debugConfig.printIndexAssignmentInfo,
                debugConfig.printSolutionRejectionReason,
                debugConfig.printIndexAssignmentInfo,
@@ -209,10 +230,10 @@ def writeBenchmarkFiles(
     kernelSerialNaming = getSerialNaming(kernels)
     kernelMinNaming = getMinNaming(kernels)
     kernelWriterAssembly = KernelWriterAssembly(
-                               kernelMinNaming, 
-                               kernelSerialNaming, 
-                               asmToolchain.assembler, 
-                               debugConfig, 
+                               kernelMinNaming,
+                               kernelSerialNaming,
+                               asmToolchain.assembler,
+                               debugConfig,
                            )
 
     # write solution, kernels and CMake
@@ -239,10 +260,10 @@ def writeBenchmarkFiles(
     newLibraryDir = ensurePath(sourcePath / 'library')
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")
     newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(
-                     solutions, 
-                     asmToolchain.assembler, 
-                     debugConfig.splitGSU, 
-                     debugConfig.printSolutionRejectionReason, 
+                     solutions,
+                     asmToolchain.assembler,
+                     debugConfig.splitGSU,
+                     debugConfig.printSolutionRejectionReason,
                      debugConfig.printIndexAssignmentInfo,
                      depthUConfig,
                      isaInfoMap,
@@ -538,7 +559,7 @@ def main(
                             useShortNames,
                             debugConfig,
                             depthUConfig,
-                            deviceId, 
+                            deviceId,
                             isaInfoMap
                         )
                 totalTestFails += benchmarkErrors

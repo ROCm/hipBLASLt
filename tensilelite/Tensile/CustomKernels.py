@@ -23,7 +23,7 @@
 ################################################################################
 
 from . import CUSTOM_KERNEL_PATH
-from .Common import checkParametersAreValid, validParameters
+from .Common.ValidParameters import checkParametersAreValid, validParameters
 
 import yaml
 

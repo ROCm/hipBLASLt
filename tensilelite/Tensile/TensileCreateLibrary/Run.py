@@ -448,7 +448,7 @@ def generateLogicDataAndSolutions(logicFiles, args, assembler: Assembler, isaInf
     splitGSU = False
     printSolutionRejectionReason = False
     printIndexAssignmentInfo = False
-    
+
     fIter = zip(
         logicFiles,
         itertools.repeat(assembler),
@@ -565,11 +565,11 @@ def run():
 
     targetIsas = [gfxToIsa(a) for a in archs]
     isaInfoMap = makeIsaInfoMap(targetIsas, cxxCompiler)
-    assignGlobalParameters(arguments, isaInfoMap, cxxCompiler)
+    assignGlobalParameters(arguments, isaInfoMap)
 
     asmToolchain = makeAssemblyToolchain(
         cxxCompiler,
-        offloadBundler, 
+        offloadBundler,
         arguments["CodeObjectVersion"],
         arguments["BuildIdKind"]
     )
@@ -632,10 +632,10 @@ def run():
     kernelSerialNaming = getSerialNaming(kernels)
     kernelMinNaming = getMinNaming(kernels)
     kernelWriterAssembly = KernelWriterAssembly(
-        kernelMinNaming, 
+        kernelMinNaming,
         kernelSerialNaming,
         asmToolchain.assembler,
-        DebugConfig(), 
+        DebugConfig(),
     )
 
     copyStaticFiles(outputPath)
