@@ -94,32 +94,36 @@ NUM_STAGES = args.num_stages
 DIV_MI = 3 # 33.3%
 MIN_MI = 5 # min 5 solutions
 NONTEMPORALRATIO = 8
-CU = 0
+MAX_MT = int(os.environ.get("MAX_MT", 256))
 
 OFFLOAD_ARCH = "/opt/rocm/llvm/bin/offload-arch"
 NUM_INST = "/sys/class/drm/card1/device/compute_partition_config/xcc/num_inst"
 
-ArchitectureName = None
-if os.path.exists(OFFLOAD_ARCH):
-    res = subprocess.run(OFFLOAD_ARCH, stdout=subprocess.PIPE)
-    ArchitectureName = res.stdout.decode("utf-8").strip()
-else:
-    raise FileNotFoundError(f"{OFFLOAD_ARCH} not found, please specific ArchitectureName in the script.")
-
-res = subprocess.run("rocminfo | grep Compute", stdout=subprocess.PIPE, shell=True, env={"ROCR_VISIBLE_DEVICES":"0"})
-match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
-if match:
-    CU = int(match.group('COMPUTE_UNIT').strip())
-else:
-    raise RuntimeError("Failed to get compute unit from rocminfo")
-
-XCC = None
-if ArchitectureName == 'gfx942':
+ArchitectureName = os.environ.get("GPU_TARGET", None)
+if ArchitectureName is None:
     if os.path.exists(OFFLOAD_ARCH):
-        res = subprocess.run(["cat", NUM_INST], stdout=subprocess.PIPE)
-        XCC = int(res.stdout.decode("utf-8").strip())
+        res = subprocess.run(OFFLOAD_ARCH, stdout=subprocess.PIPE)
+        ArchitectureName = res.stdout.decode("utf-8").strip()
     else:
-        raise FileNotFoundError(f"{NUM_INST} not found, please specific XCC in the script.")
+        raise FileNotFoundError(f"{OFFLOAD_ARCH} not found, please specific GPU_TARGET environment variable.")
+
+CU = os.environ.get("CU", None)
+if CU is None:
+    res = subprocess.run("rocminfo | grep Compute", stdout=subprocess.PIPE, shell=True, env={"ROCR_VISIBLE_DEVICES":"0"})
+    match = re.search(CU_RE, res.stdout.decode("utf-8").split('\n')[-2])
+    if match:
+        CU = int(match.group('COMPUTE_UNIT').strip())
+    else:
+        raise RuntimeError("Failed to get compute unit from rocminfo, please specific CU environment variable.")
+
+XCC = os.environ.get("XCC", None)
+if ArchitectureName == 'gfx942':
+    if XCC is None:
+        if os.path.exists(NUM_INST):
+            res = subprocess.run(["cat", NUM_INST], stdout=subprocess.PIPE)
+            XCC = int(res.stdout.decode("utf-8").strip())
+        else:
+            raise FileNotFoundError(f"{NUM_INST} not found, please specific XCC environment variable.")
     DeviceNames = ["Device 0049", "Device 0050"]
     ScheduleName = "aquavanjaram"
 elif ArchitectureName == 'gfx90a':
@@ -295,14 +299,14 @@ def find_matmul_instruction(mfma_instruction, size):
         for m_tiles in reversed(range(1, CU+1)):
             m_tile_size = size[0] // m_tiles
             # TODO:fp8 384x384
-            if m_tile_size > 256:
+            if m_tile_size > MAX_MT:
                 continue
             wave_tile_m = math.ceil(m_tile_size / mfma_instruction[0])
             if wave_tile_m <= 0:
                 continue
             for n_tiles in reversed(range(1, CU+1)):
                 n_tile_size = size[1] // n_tiles
-                if n_tile_size > 256:
+                if n_tile_size > MAX_MT:
                     continue
                 wave_tile_n = math.ceil(n_tile_size / mfma_instruction[1])
                 if wave_tile_n <= 0:
@@ -337,15 +341,20 @@ def get_groups(matmul_instruction_gen):
     return mi_groups0, mi_groups1, mi_left
 
 def match_pattern(line):
-    if 'bias_vector' in line:
-        match = re.search(
-            HIPBLASLT_BENCH_RE_BIAS, line
-        )
+    if line.startswith("hipblaslt-bench"):
+        if 'bias_vector' in line:
+            match = re.search(
+                HIPBLASLT_BENCH_RE_BIAS, line
+            )
+        else:
+            match = re.search(
+                HIPBLASLT_BENCH_RE, line
+            )
+        if match is None:
+            print("WARNING: can't find match for", line)
+        return match
     else:
-        match = re.search(
-            HIPBLASLT_BENCH_RE, line
-        )
-    return match
+        return None
 
 def extract_range(data):
     shapes = []
@@ -384,6 +393,7 @@ def dump_yaml(gpu_idx, gemm_group, yaml_file, m_sum, n_sum, batch_sum, k_sum, sa
     # Read the YAML file
     with open(yaml_file, 'r') as f:
         data = yaml.safe_load(f)
+
     data["GlobalParameters"]["EnqueuesPerSync"] = ENQUEUES_PER_SYNC
     data["GlobalParameters"]["MaxEnqueuesPerSync"] = iters
     data["GlobalParameters"]["NumWarmups"] = NUM_WARM_UP
@@ -470,7 +480,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                 size = extract_problem_size(match)
                 dtype = extract_dtype(match)
                 if dtype is None:
-                    print(f"Can't find dtype for {line}, please contact hipblaslt expert")
+                    print(f"WARNING: Can't find dtype for {line}, please contact hipblaslt expert")
                     return None
                 size_str = json.dumps(size)
                 dtype_str = json.dumps(dtype)
@@ -506,7 +516,6 @@ if args.hipblaslt_log and args.gridbase_config is None:
         n_sum = 0
         batch_sum = 0
         k_sum = 0
-
         for k, v in unique_gemms_subgroup:
             size_str, dtype_str = k
             original_size = json.loads(size_str)
@@ -570,7 +579,7 @@ if args.hipblaslt_log and args.gridbase_config is None:
                     size[max_dim] = size[max_dim] // 2
 
             if not matmul_instruction_found:
-                print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
+                print(f"WARNING: Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
             else:
                 if dtype_str in gemm_group:
                     gemm_group[dtype_str].append({'Exact': list(original_size)})
@@ -656,7 +665,7 @@ elif args.gridbase_config and args.hipblaslt_log is None:
                     size[max_dim] = size[max_dim] // 2
 
             if not matmul_instruction_found:
-                print(f"Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
+                print(f"WARNING: Can't find mfma instructions for {original_size}, please contact hipblaslt expert")
             else:
                 if dtype_str in gemm_group:
                     gemm_group[dtype_str].append({'Exact': list(original_size)})
@@ -672,3 +681,6 @@ elif args.gridbase_config and args.hipblaslt_log is None:
 
 with concurrent.futures.ProcessPoolExecutor(args.gpus) as executor:
     results = executor.map(_process_gemms, list(enumerate(unique_gemms_subgroups)))
+    for result in results:
+        if result is not None:
+            print(result)

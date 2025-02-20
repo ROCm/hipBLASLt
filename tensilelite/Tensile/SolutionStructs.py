@@ -1506,7 +1506,7 @@ class Solution(collections.abc.Mapping):
         reject(state, printRejectionReason, "ScheduleGlobalRead not supported with Stream-K")
       if state["ScheduleLocalWrite"] != 1:
         reject(state, printRejectionReason, "ScheduleLocalWrite not supported with Stream-K")
-      if state["ScheduleIterAlg"] != 1 and state["ScheduleIterAlg"] != 3:
+      if state["ScheduleIterAlg"] != 2 and state["ScheduleIterAlg"] != 3:
         reject(state, printRejectionReason, "ScheduleIterAlg not supported with Stream-K")
       if state["StreamKAtomic"] == 1:
         if not state["ProblemType"]["DataType"].isSingle():
