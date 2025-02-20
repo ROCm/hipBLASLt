@@ -34,11 +34,46 @@
 #include <hip/hip_runtime.h>
 
 #include <algorithm>
+#include <tuple>
 
 namespace TensileLite
 {
     namespace Client
     {
+        using BitWidth = uint8_t;
+        using Size = uint64_t;
+        using SwizzleCacheKey = std::tuple<BitWidth, Size, Size>;
+        using SwizzleCacheVal = ::Tensor::Manipulation::Tensor;
+        using SwizzleCache = std::map<SwizzleCacheKey, SwizzleCacheVal>;
+        static thread_local SwizzleCache g_swizzleCache;
+
+        BitWidth toBitWidth(DataType datatype)
+        {
+            switch(datatype)
+            {
+            case DataType::Double:
+                return 64;
+            case DataType::XFloat32:
+            case DataType::Float:
+                return 32;
+            case DataType::Half:
+            case DataType::BFloat16:
+                return 16;
+            case DataType::Int8:
+            case DataType::Float8_fnuz:
+            case DataType::BFloat8_fnuz:
+            case DataType::Float8BFloat8_fnuz:
+            case DataType::BFloat8Float8_fnuz:
+            case DataType::Float8:
+            case DataType::BFloat8:
+            case DataType::Float8BFloat8:
+            case DataType::BFloat8Float8:
+                return 8;
+            default:
+                throw std::runtime_error("unsupported datatype");
+            }
+        }
+
         std::string ToString(InitMode mode)
         {
             switch(mode)
@@ -1895,28 +1930,43 @@ namespace TensileLite
                     calculateKforSwizzling(desc.dataType(), MiK, MiKv, PackK);
                     auto unrolledSize = desc.sizes()[0];
                     auto tiledSize    = desc.sizes()[1];
-                    auto tmpTensor    = Tensor({tiledSize, unrolledSize}, desc.elementBytes());
-
-                    memcpy(tmpTensor.as<void>(), p.cpuInput.valid.get(), tmpTensor.getNumBytes());
                     ::Tensor::Manipulation::Shape paddedShape{
                         ((tiledSize / MiM_N) + !!(tiledSize % MiM_N)) * MiM_N,
                         (unrolledSize / (MiK * PackK) + !!(unrolledSize % (MiK * PackK))) * MiK
                             * PackK};
-                    //Temporary hack
-                    uint64_t padVal{};
-                    auto     paddedTensor = ::Tensor::Manipulation::pad(
-                        tmpTensor, paddedShape, &padVal, tmpTensor.getElementSize());
-                    paddedTensor.reshape({paddedShape[0] / MiM_N,
-                                          MiM_N,
-                                          paddedShape[1] / (MiK * PackK),
-                                          MiK / MiKv,
-                                          MiKv * PackK});
-                    Tensor permuted = permute(paddedTensor, {0, 2, 3, 1, 4});
-                    ptr             = copyInputBuffers(desc,
-                                           p.gpuInput.valid.get(),
-                                           permuted.as<void>(),
-                                           permuted.getDesc().flattenSize(),
-                                           hipMemcpyHostToDevice);
+                    auto swizzleKey = std::make_tuple(toBitWidth(desc.dataType()), unrolledSize, tiledSize);
+
+                    if(g_swizzleCache.count(swizzleKey))
+                    {
+                        Tensor &permuted = g_swizzleCache.at(swizzleKey);
+                        ptr              = copyInputBuffers(desc,
+                                                            p.gpuInput.valid.get(),
+                                                            permuted.as<void>(),
+                                                            permuted.getDesc().flattenSize(),
+                                                            hipMemcpyHostToDevice);
+                    }
+                    else 
+                    {
+                        auto tmpTensor    = Tensor({tiledSize, unrolledSize}, desc.elementBytes());
+
+                        memcpy(tmpTensor.as<void>(), p.cpuInput.valid.get(), tmpTensor.getNumBytes());
+                        //Temporary hack
+                        uint64_t padVal{};
+                        auto     paddedTensor = ::Tensor::Manipulation::pad(
+                            tmpTensor, paddedShape, &padVal, tmpTensor.getElementSize());
+                        paddedTensor.reshape({paddedShape[0] / MiM_N,
+                                            MiM_N,
+                                            paddedShape[1] / (MiK * PackK),
+                                            MiK / MiKv,
+                                            MiKv * PackK});
+                        Tensor permuted = permute(paddedTensor, {0, 2, 3, 1, 4});
+                        ptr             = copyInputBuffers(desc,
+                                            p.gpuInput.valid.get(),
+                                            permuted.as<void>(),
+                                            permuted.getDesc().flattenSize(),
+                                            hipMemcpyHostToDevice);
+                        g_swizzleCache.emplace(swizzleKey, std::move(permuted));
+                    }
                 }
                 else
                 {
