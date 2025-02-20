@@ -427,104 +427,6 @@ for i in validMacroTileSides:
     for j in validMacroTileSides:
         validMacroTiles.append([i, j])
 
-validMFMA = {}
-validMFMA["H"] = [[32, 32, 4, 2], [32, 32, 8, 1], [16, 16, 4, 4], [16, 16, 16, 1], [4, 4, 4, 16]]
-validMFMA["S"] = [[32, 32, 1, 2], [32, 32, 2, 1], [16, 16, 1, 4], [16, 16, 4, 1], [4, 4, 1, 16]]
-validMFMA["B"] = [[32, 32, 2, 2], [32, 32, 4, 1], [16, 16, 2, 4], [16, 16, 8, 1], [4, 4, 2, 16]]
-validMFMA["4xi8"] = [
-    [32, 32, 4, 2],
-    [32, 32, 8, 1],
-    [16, 16, 4, 4],
-    [16, 16, 16, 1],
-    [4, 4, 4, 16],
-    [32, 32, 16, 1],
-    [16, 16, 32, 1],
-]
-validMFMA["D"] = [[16, 16, 4, 1], [4, 4, 4, 4]]
-validMFMA["B1k"] = [[32, 32, 4, 2], [32, 32, 8, 1], [16, 16, 4, 4], [16, 16, 16, 1], [4, 4, 4, 16]]
-validMFMA["C"] = validMFMA["S"]
-validMFMA["Z"] = validMFMA["D"]
-validMFMA["I8"] = [
-    [32, 32, 4, 2],
-    [32, 32, 8, 1],
-    [16, 16, 4, 4],
-    [16, 16, 16, 1],
-    [4, 4, 4, 16],
-] + [[32, 32, 16, 1], [16, 16, 32, 1]]
-validMFMA["X"] = [[32, 32, 4, 1], [16, 16, 8, 1]]
-validMFMA["F8"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validMFMA["B8"] = validMFMA["F8"]
-validMFMA["F8B8"] = validMFMA["F8"]
-validMFMA["B8F8"] = validMFMA["F8"]
-validMFMA["F8N"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validMFMA["B8N"] = validMFMA["F8N"]
-validMFMA["F8B8N"] = validMFMA["F8N"]
-validMFMA["B8F8N"] = validMFMA["F8N"]
-validWMMA = [
-    [16, 16, 16, 1],
-]
-validTT = 32
-validMFMA["_format9"] = []
-
-for MFMA in [
-    validMFMA["H"],
-    validMFMA["S"],
-    validMFMA["B"],
-    validMFMA["D"],
-    validMFMA["X"],
-    validMFMA["F8N"],
-    validWMMA,
-]:
-    for MI in MFMA:
-        for bm in range(int(math.log(MI[3], 2)) + 1):
-            for tt0 in range(1, validTT + 1):
-                for tt1 in range(1, validTT + 1):
-                    for wave_m in range(3):
-                        for wave_n in range(3):
-                            validMFMA["_format9"].append(
-                                [MI[0], MI[1], MI[2], MI[3], 2**bm, tt0, tt1, 2**wave_m, 2**wave_n]
-                            )
-validMatrixInstructions = (
-    [[], [-1]]
-    + validMFMA["H"]
-    + validMFMA["S"]
-    + validMFMA["B"]
-    + validMFMA["D"]
-    + validMFMA["B1k"]
-    + validMFMA["X"]
-)
-validMatrixInstructions = validMatrixInstructions + validMFMA["_format9"]
-
-validSMFMA = {}
-validSMFMA["H"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validSMFMA["B"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validSMFMA["4xi8"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
-validSMFMA["I8"] = validSMFMA["4xi8"]
-validSMFMA["F8"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
-validSMFMA["B8"] = validSMFMA["F8"]
-validSMFMA["F8B8"] = validSMFMA["F8"]
-validSMFMA["B8F8"] = validSMFMA["F8"]
-validSMFMA["F8N"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
-validSMFMA["B8N"] = validSMFMA["F8N"]
-validSMFMA["F8B8N"] = validSMFMA["F8N"]
-validSMFMA["B8F8N"] = validSMFMA["F8N"]
-validSMFMA["_format9"] = []
-for SMFMA in [validSMFMA["H"], validSMFMA["B"], validSMFMA["4xi8"], validSMFMA["F8N"]]:
-    for MI in SMFMA:
-        for bm in range(int(math.log(MI[3], 2)) + 1):
-            for tt0 in range(1, validTT + 1):
-                for tt1 in range(1, validTT + 1):
-                    for wave_m in range(3):
-                        for wave_n in range(3):
-                            validSMFMA["_format9"].append(
-                                [MI[0], MI[1], MI[2], MI[3], 2**bm, tt0, tt1, 2**wave_m, 2**wave_n]
-                            )
-validSparseMatrixInstructions = validSMFMA["H"] + validSMFMA["B"] + validSMFMA["4xi8"]
-validMatrixInstructions = (
-    validMatrixInstructions + validSparseMatrixInstructions + validSMFMA["_format9"]
-)
-
-
 # The supported typed GEMM, each entry is (Ti, To, Tc).
 # DataType (Ti)        = The data-type of the input matrices: A/B
 # DestDataType (To)    = The data-type of the output matrices: C/D
@@ -990,29 +892,6 @@ validParameters = {
     "ThreadTile": validThreadTiles,
     "MacroTile": validMacroTiles,  # MT0 = wg0*tt0, MT1 = wg1*tt1
     "WavefrontSize": [32, 64],
-    # MatrixInstruction: (M x N x K x B)
-    # XDLOPS tile definition, only valid for gfx908, gfx90a
-    # MxNxKxB specifies matrix instruction variants
-    #  MxNxB determines the shape of the C tile each instruction worked on
-    #      K determines the unroll depth
-    # If empty, do not use these instructions
-    #
-    # Alternative format: (M x N x K x B x MIBlockM x WaveTileM x WaveTileN x WaveM x WaveN)
-    # (Note: MxN means M-by-N in the following comments)
-    # MIBlockM determines how many blocks along M dimension for multi-block MI variants. Concrete examples:
-    #  - MI 16x16x1x4 (4-block variant) with MIBlockM=4 -> (16x16)*(4x1)=64x16 tile per instruction executed
-    #  - MI 32x32x1x2 (2-block variant) with MIBlockM=1 -> (32x32)*(1x2)=32x64 tile per instruction executed
-    # WaveTileM/N are dimensions of the C tile each wave works on, and is close to the concept of ThreadTile in classic VALU kernels
-    #  - WT 4x1 -> each wave executes 4x1 matrix instructions on the C tile of total area (4*MITileM)x(1*MITileN)
-    # WaveM/N are dimensions of waves spawned for one workgroup where each wave consists of 64 threads
-    #  - Wave2x2 -> a total of 4 waves in one workgroup of shape 2x2
-    # Putting it all together:
-    #  - [32, 32, 1, 2,  1,  4, 1,  2, 2]
-    #     ^^^^^^^^^^^^   ^   ^^^^   ^^^^
-    #      MatrixInst  BlkM   WT    Wave
-    #  - means (32x64) per MI * (4x1) per wave * (2x2) per workgroup = (32*4*2)x(64*1*2) = 256x128 macro tile
-    # Tensile will ignore the parameters ThreadTile and WorkGroup when the alternative format is used
-    "MatrixInstruction": validMatrixInstructions,
     # StoreRemap: Optimize MatrixInstruction store patterns to enhance performance.
     #             MI output data between each threads are along N dims.
     #             But global memory is along M dim continuous.
