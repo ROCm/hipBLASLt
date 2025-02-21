@@ -932,6 +932,25 @@ Tests:
   unit_check: 1
   gpu_arch: '942'
 
+- name: matmul_fp16_SCD
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  M: [128,1023]
+  N: [128,129]
+  K: [128,129]
+  transA: N
+  transB: N
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleC: [1]
+  scaleD: [1]
+  unit_check: 1
+  norm_check: 0
+  gpu_arch: '942'
+
+
+
 - name: matmul_real_1b_dst_f8_SCDNotInt
   category: pre_checkin
   function:
