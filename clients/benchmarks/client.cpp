@@ -265,6 +265,8 @@ try
     std::string activation_type;
     int         scaleAFormat;
     int         scaleBFormat;
+    int         scaleCFormat;
+    int         scaleDFormat;
     int         device_id;
     int         flags             = 0;
     bool        datafile          = hipblaslt_parse_data(argc, argv);
@@ -480,6 +482,14 @@ try
         ("scaleB",
          value<int>(&scaleBFormat)->default_value(0),
          "Apply scale for B buffer. 0 = None, 1 = scalar, 2 = vector.")
+
+        ("scaleC",
+         value<int>(&scaleCFormat)->default_value(0),
+         "Apply scale for C buffer. 0 = None, 1 = scalar")
+
+        ("scaleD",
+         value<int>(&scaleDFormat)->default_value(0),
+         "Apply scale for D buffer. 0 = None, 1 = scalar")
 
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
@@ -845,6 +855,8 @@ try
     };
     arg.scaleA = scaleInt2Enum(scaleAFormat);
     arg.scaleB = scaleInt2Enum(scaleBFormat);
+    arg.scaleC = scaleCFormat;
+    arg.scaleD = scaleDFormat;
 
     if(arg.M[0] < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M[0]));
