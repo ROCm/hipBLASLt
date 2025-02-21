@@ -2326,11 +2326,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
       ## 8x8 -> split into group of 16 MAC(s)
       ## supports only PLR=0
       ###############################################################################
-      if self.states.numItersPLR:
-        subIterCode = self._makeSubIterSchedule(kernel, tensorParametersA, tensorParametersB, localReads, \
-                        u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], module)
-        module.add(subIterCode) # add scheduled "other", local reads, local writes
-        pack[luIdx] = Module()
+
+      # Is this test necessary because of the global variable this if was previously always true
+      # after removing the global variable it is always false...
+      # if self.states.numItersPLR:
+      subIterCode = self._makeSubIterSchedule(kernel, tensorParametersA, tensorParametersB, localReads, \
+                      u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], module)
+      module.add(subIterCode) # add scheduled "other", local reads, local writes
+      pack[luIdx] = Module()
 
     # close unrolled loop
     endStr = ""
