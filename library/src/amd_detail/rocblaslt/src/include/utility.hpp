@@ -543,6 +543,7 @@ public:
     {
         m_hotIterations = newHotIterations;
     }
+};
 
 //! Estimates based on problem size, solution tile, and  machine hardware
 struct hipblasltClientPerformanceArgs

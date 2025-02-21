@@ -922,13 +922,8 @@ try
     }
 
     arg.norm_check_assert = false;
-<<<<<<< HEAD
     int status            = run_bench_test(arg, filter, any_stride, props);
-    freeFrequencyMonitor();
-=======
-    int status            = run_bench_test(arg, filter, any_stride);
     freePerformanceMonitor();
->>>>>>> f32d9622 (Add tensilelite clients to hipblaslt-bench)
     return status;
 }
 catch(const std::invalid_argument& exp)
