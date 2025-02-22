@@ -20,8 +20,8 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa.enum import InstType, CvtType
 from .Base import Item, fastdeepcopy
-from .Enums import InstType, CvtType
 from .Containers import DSModifiers, FLATModifiers, MUBUFModifiers, SMEMModifiers, SDWAModifiers, VOP3PModifiers, VCC, \
                         RegisterContainer, HolderContainer, EXEC, DPPModifiers
 from .Formatting import formatStr, printExit

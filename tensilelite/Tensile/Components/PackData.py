@@ -67,7 +67,7 @@ class PackData_F16(PackData):
 class PackData_BF16(PackData):
     kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.bfloat16)}}
     def __call__(self, gwvw, destIdx, elementSumIdx, bf16CVTVgprStruct, tmpS01, laneSGPRC, tmpVgpr=None, inputPrefix="", prefixOffset=0):
-        ti = TensileInstructions()
+        ti = rocIsa.getInstance()
 
         module = Module("PackData BF16")
         if gwvw == 1:

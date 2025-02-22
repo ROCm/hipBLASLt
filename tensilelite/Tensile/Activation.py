@@ -26,10 +26,11 @@ import struct
 from collections import OrderedDict
 from enum import IntFlag
 
+from rocisa.enum import *
+
 from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterContainer, \
                           VCC, EXEC, vgpr, sgpr, Holder, fastdeepcopy, DataType, SNop, \
                           TensileInstructions
-from .TensileInstructions.Enums import *
 from .TensileInstructions.Instructions import *
 from .Common import printExit, printWarning
 

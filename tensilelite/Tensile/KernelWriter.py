@@ -22,8 +22,9 @@
 #
 ################################################################################
 
+from rocisa.label import LabelManager
 from .TensileInstructions import TensileInstructions, replaceHolder, \
-                          KernelBody, Module, StructuredModule, TextBlock, Dump, LabelManager, \
+                          KernelBody, Module, StructuredModule, TextBlock, Dump, \
                           RegisterPool, Assert, fastdeepcopy, TensileInstructionsPassOptions, \
                           TensileInstructionsPass, ValueSet, RegSet, \
                           SLongBranchPositive, SBranch, SCBranchSCC0, SCBranchSCC1

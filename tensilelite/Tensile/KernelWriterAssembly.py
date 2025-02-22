@@ -22,10 +22,12 @@
 #
 ################################################################################
 
+from rocisa.enum import InstType
+from rocisa.label import LabelManager
 from . import CUSTOM_KERNEL_PATH
 from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUpperValue, \
                           StructuredModule, TextBlock, ValueEndif, ValueIf, ValueSet, SignatureBase, \
-                          MUBUFModifiers, RegisterContainer, InstType, SelectBit, SGetPositivePCOffset, \
+                          MUBUFModifiers, RegisterContainer, SelectBit, SGetPositivePCOffset, \
                           SLongBranchPositive, SCLongBranchScc0, SCLongBranchScc1, \
                           SBranchIfZero, SBranchIfNotZero, SMulInt64to32, DSInit, VCvtBF16toFP32, \
                           ArgumentLoader, bomb, vectorStaticDivideAndRemainder, \
@@ -36,7 +38,7 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           RegisterPool, allocTmpGpr, allocTmpGprList, RegisterPoolResource, Holder, \
                           vgpr, sgpr, accvgpr, mgpr, log2, ceilDivide, DataType, fastdeepcopy, \
                           dataTypeToMfmaInstTypePair, getGlcBitName, getSlcBitName, dataTypeNameAbbrevToInstType, PseudoRandomGenerator, \
-                          LabelManager, Assert
+                          Assert
 from .TensileInstructions.Instructions import *
 from .TensilePass import getActivationFunctionModuleName, getActivationBranchModuleName
 from .TensileInstructions.Containers import HWRegContainer

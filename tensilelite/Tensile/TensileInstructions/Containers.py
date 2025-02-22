@@ -20,8 +20,9 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa.enum import SelectBit, UnusedBit
+
 from .Base import Item
-from .Enums import SelectBit, UnusedBit
 from . import getGlcBitName, getSlcBitName
 
 from copy import deepcopy

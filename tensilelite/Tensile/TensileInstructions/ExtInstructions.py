@@ -20,14 +20,15 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa import rocIsa
+from rocisa.enum import SelectBit
+
 from .Code import Module, Label, TextBlock
 from .Containers import RegisterContainer, VCC
 from .DataType import DataType
 from .RegisterPool import RegisterPoolResource
 from .Utils import vgpr, sgpr, log2
 from .Instructions import *
-from .Enums import SelectBit
-from .Base import TensileInstructions
 
 from enum import Enum 
 
@@ -334,7 +335,7 @@ def VSaturateCastInt(vgprSumIdxV, tmpVgpr, tmpSgpr, lowerBound, upperBound, type
 ########################################
 
 def VCvtBF16toFP32(dst, src, vgprMask, vi, additionalCmts=""):
-    ti = TensileInstructions()
+    ti = rocIsa.getInstance()
     if ti.getAsmCaps()["HasBF16CVT"]:
         select_bit = SelectBit.WORD_0 if vi%2 == 0 else SelectBit.WORD_1
         sdwa=SDWAModifiers(src0_sel=select_bit);

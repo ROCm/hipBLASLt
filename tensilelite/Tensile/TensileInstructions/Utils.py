@@ -20,10 +20,11 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa.enum import InstType
+
 from .Code import Module
 from .Containers import HolderContainer, RegisterContainer, RegName
 from .DataType import DataType
-from .Enums import InstType
 from .Formatting import printAssert, printExit
 from .Instructions import Instruction, SWaitCnt
 
@@ -130,57 +131,6 @@ def dataTypeToMfmaInstTypePair(dataType: DataType, sourceSwap: bool) -> Tuple[In
     miInInstType = dataTypeNameAbbrevToInstType(miInTypeStr, sourceSwap) # v_mfma_[...xK]<InType>
     miOutInstType = dataTypeNameAbbrevToInstType(dataType.MIOutputTypeNameAbbrev()) # v_mfma_<OutType>..
     return miInInstType, miOutInstType
-
-########################################
-# Label Manager
-########################################
-
-def magicGenerator(chars=(string.ascii_uppercase + string.digits)):
-    return ''.join(random.choice(chars) for _ in range(16))
-
-class LabelManager():
-    def __init__(self):
-        self.labelDict = dict()
-
-    def addName(self, name):
-        if name not in self.labelDict:
-            self.labelDict[name] = 0
-        else:
-            self.labelDict[name] += 1
-
-    def getUniqueName(self):
-        name = magicGenerator()
-        while 1:
-            if name not in self.labelDict:
-                break
-            name = magicGenerator()
-        return self.getName(name)
-
-    def getUniqueNamePrefix(self, prefix):
-        name = prefix + "_" + magicGenerator()
-        while 1:
-            if name not in self.labelDict:
-                break
-            name = prefix + "_" + magicGenerator()
-        return self.getName(name)
-
-    def getName(self, name):
-        if name not in self.labelDict:
-            self.labelDict[name] = 0
-        return name + "_" + str(self.labelDict[name])
-
-    def getNameInc(self, name):
-        self.addName(name)
-        if self.labelDict[name] == 0:
-            return name
-        return name + "_" + str(self.labelDict[name])
-
-    def getNameIndex(self, name, index):
-        if name not in self.labelDict:
-            printExit("You have to add a label first to get a label name with specific index.")
-        if index > self.labelDict[name]:
-            printExit("The index %u exceeded. (> %u)"%(index, self.labelDict[name]))
-        return name + "_" + str(index)
 
 ########################################
 # Math

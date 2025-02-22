@@ -20,9 +20,9 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa.enum import SignatureValueKind
 from ..Common import isaToGfx
 from .Base import Item
-from .Enums import SignatureValueKind
 from .Formatting import slash, slash50, block, block3Line, blockNewLine, \
                         formatStr, printExit
 from .Instructions import Instruction, MacroInstruction
