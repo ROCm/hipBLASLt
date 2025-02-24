@@ -226,7 +226,7 @@ rocm_install_targets(TARGETS hipblaslt
 
 if ( NOT BUILD_CUDA )
     if (WIN32)
-      set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}hipblaslt/bin" CACHE PATH "path to tensile library" )
+      set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/bin/hipblaslt" CACHE PATH "path to tensile library" )
     else()
       set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/hipblaslt" CACHE PATH "path to tensile library" )
     endif()
