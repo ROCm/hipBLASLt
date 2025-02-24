@@ -34,17 +34,76 @@
 #include <hip/hip_runtime.h>
 
 #include <algorithm>
+#include <list>
+#include <map>
 #include <tuple>
 
 namespace TensileLite
 {
     namespace Client
     {
+        template <typename K, typename T, std::size_t MaxNumEntries = 128>
+        class LRUCache
+        {
+            using Entries    = std::list<K>;
+            using EntryTrack = std::pair<T, typename Entries::iterator>;
+            using EntryMap   = std::map<K, EntryTrack>;
+
+        public:
+            template <typename... Args>
+            std::pair<typename EntryMap::iterator, bool> emplace(const K& key, Args&&... args)
+            {
+                if(!entryMap.count(key))
+                {
+                    entries.push_back(key);
+                    auto&& ret = entryMap.emplace(
+                        key, std::make_pair(T(std::forward<Args>(args)...), --entries.end()));
+                    while(entries.size() > MaxNumEntries)
+                    {
+                        auto& front = entries.front();
+                        entryMap.erase(front);
+                        entries.pop_front();
+                    }
+                    return ret;
+                }
+                else
+                {
+                    auto& track = entryMap.at(key);
+                    track.first = T(std::forward<Args>(args)...);
+                    entries.splice(entries.end(), entries, track.second);
+                }
+                return {entryMap.find(key), true};
+            }
+
+            size_t count(const K& key) const
+            {
+                return entryMap.count(key);
+            }
+
+            const T& at(const K& key) const
+            {
+                auto& track = entryMap.at(key);
+                entries.splice(entries.end(), entries, track.second);
+                return track.first;
+            }
+
+            T& at(const K& key)
+            {
+                auto& track = entryMap.at(key);
+                entries.splice(entries.end(), entries, track.second);
+                return track.first;
+            }
+
+        private:
+            EntryMap entryMap;
+            Entries  entries;
+        };
+
         using BitWidth        = uint8_t;
         using Size            = uint64_t;
         using SwizzleCacheKey = std::tuple<BitWidth, Size, Size>;
         using SwizzleCacheVal = ::Tensor::Manipulation::Tensor;
-        using SwizzleCache    = std::map<SwizzleCacheKey, SwizzleCacheVal>;
+        using SwizzleCache    = LRUCache<SwizzleCacheKey, SwizzleCacheVal>;
         static thread_local SwizzleCache g_swizzleCache;
 
         BitWidth toBitWidth(DataType datatype)
@@ -1922,8 +1981,7 @@ namespace TensileLite
 
                 void* ptr{};
 
-                //if no validation, skip the swizzle
-                if(needSwizzle && m_elementsToValidate != 0)
+                if(needSwizzle)
                 {
                     using Tensor = Tensor::Manipulation::Tensor;
                     // currently, if A then it means MiM = 16, if B then it means MiN = 16
