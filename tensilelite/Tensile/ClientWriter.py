@@ -201,17 +201,14 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: 
   return process.returncode
 
 def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
-  import io
-  runScriptFile = io.StringIO()
-
   callCreateLibraryCmd = ["python"] if os.name == "nt" else []
   callCreateLibraryCmd += ROOT_PATH + "/bin/TensileCreateLibrary"
 
   if not globalParameters["LazyLibraryLoading"]:
-    callCreateLibraryCmd += " --no-lazy-library-loading"
+    callCreateLibraryCmd += [" --no-lazy-library-loading"]
 
   if globalParameters["ShortNames"]:
-    callCreateLibraryCmd += " --short-file-names"
+    callCreateLibraryCmd += [" --short-file-names"]
 
   if globalParameters.get("AsmDebug", False):
     callCreateLibraryCmd += [" --asm-debug",]
@@ -219,10 +216,10 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
   if globalParameters["KeepBuildTmp"]:
     callCreateLibraryCmd += [" --keep-build-tmp"]
 
-  callCreateLibraryCmd += " --architecture=" + globalParameters["Architecture"]
-  callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
-  callCreateLibraryCmd += " --cxx-compiler=" + cxxCompiler
-  callCreateLibraryCmd += " --library-format=" + globalParameters["LibraryFormat"]
+  callCreateLibraryCmd += [" --architecture=" + globalParameters["Architecture"]]
+  callCreateLibraryCmd += [" --code-object-version=" + globalParameters["CodeObjectVersion"]]
+  callCreateLibraryCmd += [" --cxx-compiler=" + cxxCompiler]
+  callCreateLibraryCmd += [" --library-format=" + globalParameters["LibraryFormat"]]
 
   callCreateLibraryCmd += [" %s" % libraryLogicPath]
   callCreateLibraryCmd += [" %s" % buildPath] #" ../source"
