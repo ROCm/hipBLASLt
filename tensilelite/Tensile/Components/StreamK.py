@@ -1249,6 +1249,10 @@ class StreamK(Component):
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8NanInf), "0x207", "Nan and +/- inf" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Max), "0x47600000", "BF8 Max value 57344 as float32" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", "BF8 Min value -57344 as float32" ))
+        elif kernel["ProblemType"]["DestDataType"].isInt8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprI8Nan), "0x80", "Int8 Nan value -128" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprI8PosInf), "0x7F", "In8 positive inf value 127" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprI8NegInf), "0x81", "In8 negative inf value -127" ))
 
         # DestDataType for 8bit Float can only be F8 or B8
         # if kernel["ProblemType"]["DestDataType"].isFloat8() or kernel["ProblemType"]["DestDataType"].isBFloat8(): # F8 is always HPA
