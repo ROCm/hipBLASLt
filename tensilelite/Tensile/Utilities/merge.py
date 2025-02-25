@@ -30,9 +30,16 @@ import argparse
 from copy import deepcopy
 from enum import IntEnum
 
-sys.path.insert(0, '../')
+try:
+    from Tensile import Tensile
+except ImportError:
+    import os.path
+    import sys
+    parentdir = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
+    sys.path.append(parentdir)
 
-from Tensile import LibraryIO, Common
+from Tensile.LibraryIO import writeYAML, parseLibraryLogicList
+from Tensile.Common import defaultSolution
 
 verbosity = 1
 
@@ -144,7 +151,7 @@ def loadData(filename):
     # If logic file in list format, convert to dictionary format during load
     # and write back.
     if type(data) == list:
-        rv = LibraryIO.parseLibraryLogicList(data, filename)
+        rv = parseLibraryLogicList(data, filename)
         if "Library" in rv.keys():
             del rv["Library"]
 
@@ -154,11 +161,11 @@ def loadData(filename):
                 v = kernel[k]
                 if k == 'ProblemType':
                     del kernel['ProblemType']
-                if k in Common.defaultSolution.keys():
-                    if v == Common.defaultSolution[k]:
+                if k in defaultSolution.keys():
+                    if v == defaultSolution[k]:
                         del kernel[k]
 
-        LibraryIO.writeYAML(filename, rv, explicit_start=False, explicit_end=False)
+        writeYAML(filename, rv, explicit_start=False, explicit_end=False)
         data = rv
 
     return data
@@ -167,7 +174,7 @@ def compareDestFolderToYaml(originalDir, incFile, incData):
     checkFolders = ["Equality", "GridBased"]
     # Parsing destination folder and yaml attribute
     destFolder = originalDir.rstrip('/').split('/')[-1]
-    incAttribute = incData[11] # the last item in yaml file
+    incAttribute = incData["LibraryType"] # the last item in yaml file
     if not incAttribute:
         sys.exit(f"[Error] Empty YAML attribute. Need to set Equality or GridBased in {incFile}.")
     # Check Equality and GradBased folders only
@@ -499,6 +506,9 @@ def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSi
         oriData = loadData(origFile)
         incData = loadData(incFile)
 
+        if oriData == incData:
+          continue
+
         # Terminate when the destination folder doesn't match Incremental logic yaml
         # For example, merge Gridbased yaml to Equality folder or Equality yaml to GridBased folder
         compareDestFolderToYaml(originalDir, incFile, incData)
@@ -526,7 +536,7 @@ def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSi
         # final check of default init parameters, before writing to yaml
         removeDefaultInitParams(mergedData)
 
-        LibraryIO.writeYAML(os.path.join(outputPath, basename), mergedData, explicit_start=False, explicit_end=False)
+        writeYAML(os.path.join(outputPath, basename), mergedData, explicit_start=False, explicit_end=False)
         msg("File written to", os.path.join(outputPath, basename))
         msg("------------------------------")
 
@@ -579,7 +589,7 @@ def mergePartialLogics(partialLogicFilePaths, outputDir, forceMerge, trimSize=Tr
 
     baseFileName = os.path.basename(baseLogicFile)
     outputFilePath = os.path.join(outputDir, baseFileName)
-    LibraryIO.writeYAML(outputFilePath, baseLogicData, explicit_start=False, explicit_end=False)
+    writeYAML(outputFilePath, baseLogicData, explicit_start=False, explicit_end=False)
     msg("File written to", outputFilePath)
     msg("------------------------------")
 
