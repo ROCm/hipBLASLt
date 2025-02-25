@@ -366,7 +366,7 @@ def writeSolutionsAndKernelsTCL(
         asmToolchain.linker,
         asmToolchain.bundler,
         globalParameters["ROCmLdPath"],
-        uniqueAsmKernels, 
+        asmKernels, 
         destLibPath,
         assemblyTmpPath,
         compress,
