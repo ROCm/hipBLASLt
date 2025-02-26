@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,10 @@
 
 from copy import deepcopy
 
-from .Common import globalParameters, CHeader, gfxArch, getGfxName
 from .KernelWriterBase import KernelWriterBase
 from .TensileInstructions import DataType
+
+from .Common import globalParameters, gfxToIsa, isaToGfx, INDEX_CHARS
 
 class KernelWriterConversion(KernelWriterBase):
 
@@ -71,8 +72,8 @@ class KernelWriterConversion(KernelWriterBase):
 
     # determine chars for fast access
     self.indexChars = []
-    for i in range(0, len(globalParameters["IndexChars"])):
-      self.indexChars.append(globalParameters["IndexChars"][i])
+    for i in range(0, len(INDEX_CHARS)):
+      self.indexChars.append(INDEX_CHARS[i])
     self.indexChars[self.state["ProblemType"]["Index0"]] = "0" + self.indexChars[self.state["ProblemType"]["Index0"]]
     self.indexChars[self.state["ProblemType"]["Index1"]] = "1" + self.indexChars[self.state["ProblemType"]["Index1"]]
     self.tileChar0 = self.indexChars[self.state["ProblemType"]["Index0"]]
@@ -87,7 +88,7 @@ class KernelWriterConversion(KernelWriterBase):
       self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
     else:
       for idx, arch in enumerate(self.supportedArchs):
-        self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
+        self.supportedArchs[idx] = gfxToIsa(''.join(map(str, arch)))
 
     self.gsuKernels = [self.state["GlobalSplitU"]]
     if self.state["GenPGRPostKernels"]:
@@ -537,9 +538,9 @@ class KernelWriterConversion(KernelWriterBase):
           canPKF32Arch.append(arch)
       defineStr = []
       if len(canPKF32Arch) > 0:
-        defineStr = "#if defined(__%s__)"%getGfxName(canPKF32Arch[0])
+        defineStr = "#if defined(__%s__)"%isaToGfx(canPKF32Arch[0])
         for arch in canPKF32Arch[1:]:
-          defineStr += "|| defined(__%s__)"%getGfxName(arch)
+          defineStr += "|| defined(__%s__)"%isaToGfx(arch)
       else:
         defineStr = "#if 0"
       # PGR=2
@@ -790,7 +791,7 @@ class KernelWriterConversion(KernelWriterBase):
 
 
   def getKernelName(self):
-    indexChars = globalParameters["IndexChars"]
+    indexChars = INDEX_CHARS
     # C dimensions
     name = "C"
     for i in range(0, self.state["ProblemType"]["NumIndicesC"]):

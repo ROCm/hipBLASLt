@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,16 +23,12 @@
 ################################################################################
 
 from .Activation import ActivationType
-from .Common import internalParameters, printExit
 from .TensileInstructions import DataType
 from . import Hardware
 from . import Properties
 from .SolutionStructs import getBiasDataTypeListDefault
 from .SolutionStructs import Solution as OriginalSolution
-from .Utils import state, state_key_ordering
-
-from . import Common
-from . Common import globalParameters
+from .Common import gfxToIsa, internalParameters, globalParameters, state, state_key_ordering
 
 @state_key_ordering
 class FreeIndex:
@@ -703,7 +699,7 @@ class Solution:
 
         if 'ISA' not in d:
             if d['KernelLanguage'] == 'Assembly':
-                d['ISA'] = Common.gfxArch(deviceInfo[1])
+                d['ISA'] = gfxToIsa(deviceInfo[1])
             else:
                 d['ISA'] = [0,0,0]
 

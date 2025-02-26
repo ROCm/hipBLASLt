@@ -660,6 +660,8 @@ namespace TensileLite
                                              ContractionInputs const&            inputs,
                                              uint32_t const& workspaceOffsetInByte,
                                              Hardware const* hardware,
+                                             dim3 const&     problemNumGroupTiles,
+                                             dim3 const&     numWorkGroups,
                                              KA&             args) const
     {
         if(debugKernel)
@@ -801,6 +803,81 @@ namespace TensileLite
             args.append("beta", inputs.beta, problem.betaType());
             if(problem.betaType() == DataType::Half)
                 args.append("beta_2", inputs.beta, problem.betaType());
+        }
+
+        if(sizeMapping.persistentKernel != 0 || sizeMapping.streamK != 0)
+        {
+            uint32_t magicShift;
+            args.template append<uint32_t>("magicNumberProblemNumGroupTiles0",
+                                     magicNumber(2, problemNumGroupTiles.x, &magicShift));
+            args.template append<uint32_t>("magicShiftProblemNumGroupTiles0", magicShift);
+        }
+
+        if(sizeMapping.streamK != 0)
+        {
+            auto tiles = problem.getNumTiles(sizeMapping);
+
+            // Clamp minimum iters per tile to 1 to allow stream-k index calculation to work in case K==0
+            // In this case no actual iterations will be run, but workgroups will be mapped correctly for beta*C
+            auto     itersPerTile = max(1, problem.getItersPerTile(sizeMapping));
+            auto     totalIters   = tiles * itersPerTile;
+            uint32_t magicNumberItersPerTile;
+            uint32_t magicShiftItersPerTile;
+            magicNumberItersPerTile = magicNumber(2, itersPerTile, &magicShiftItersPerTile);
+
+            args.template append<uint32_t>("itersPerTile", itersPerTile);
+            args.template append<uint32_t>("magicNumberItersPerTile", magicNumberItersPerTile);
+            args.template append<uint32_t>("magicShiftItersPerTile", magicShiftItersPerTile);
+
+            uint32_t numGroupTiles0x1 = problemNumGroupTiles.x * problemNumGroupTiles.y;
+            uint32_t magicNumProblemNumGroupTiles0By1;
+            uint32_t magicShiftProblemNumGroupTiles0By1;
+            magicNumProblemNumGroupTiles0By1
+                = magicNumber(2, numGroupTiles0x1, &magicShiftProblemNumGroupTiles0By1);
+            args.template append<uint32_t>("magicNumProblemNumGroupTiles0By1",
+                                     magicNumProblemNumGroupTiles0By1);
+            args.template append<uint32_t>("magicShiftProblemNumGroupTiles0By1",
+                                     magicShiftProblemNumGroupTiles0By1);
+
+            args.template append<uint32_t>("totalIters", totalIters);
+            if(sizeMapping.streamK == 1) // Basic SK
+            {
+                uint32_t itersPerWave = CeilDivide(totalIters, numWorkGroups.x);
+                args.template append<uint32_t>("SKItersPerWG", itersPerWave);
+            }
+            else if(sizeMapping.streamK >= 2) // Two-tile SK
+            {
+                size_t skGrid = numWorkGroups.x;
+
+                AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(hardware);
+                assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
+                int fullTiles = pAMDGPU->skFullTiles;
+
+                bool bigEnough = tiles > skGrid;
+                // skTiles is number of Stream-K tiles to complete
+                // Two-tile algorithm causes each WG to run an even number of Stream-K iterations,
+                // followed by an even number of data-parllel tiles.
+                // If total tiles is evenly divisble by grid size,
+                // then no Stream-K tiles are needed, all data-parallel
+                uint32_t skTiles = skGrid;
+                // If not evenly divisible, determine number of Stream-K tiles
+                if(tiles % skGrid != 0)
+                {
+                    // Number of data-parallel tiles on each workgroup would be:
+                    // dpTilesPerWG = bigEnough ? (tiles - skTiles) / skGrid : 0;
+                    skTiles = bigEnough ? skGrid * fullTiles + tiles % skGrid : tiles;
+                    // Cap Stream-K tiles at total number of tiles in case of large multiplier
+                    skTiles = min(skTiles, tiles);
+                }
+
+                uint32_t skItersPerWG = skTiles * itersPerTile / skGrid;
+                uint32_t skExtraIters = skTiles * itersPerTile % (skGrid);
+
+                args.template append<uint32_t>("SKItersPerWG", skItersPerWG);
+                args.template append<uint32_t>("skGrid", skGrid);
+                args.template append<uint32_t>("skTiles", skTiles);
+                args.template append<uint32_t>("skExtraIters", skExtraIters);
+            }
         }
 
         if constexpr(insertKernelArgs)
@@ -1106,32 +1183,25 @@ namespace TensileLite
         rv.numWorkGroups.x = CeilDivide(rv.numWorkGroups.x, sizeMapping.macroTile.x);
         rv.numWorkGroups.y = CeilDivide(rv.numWorkGroups.y, sizeMapping.macroTile.y);
 
-        uint32_t problemNumGroupTiles0 = rv.numWorkGroups.x;
-        uint32_t problemNumGroupTiles1 = rv.numWorkGroups.y;
-        // used only when persistent kernel along batch
-        uint32_t problemNumGroupTiles2 = rv.numWorkGroups.z;
+        dim3 problemNumGroupTiles = rv.numWorkGroups;
 
         uint32_t gsu
             = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
         if(gsu > 0)
             rv.numWorkGroups.y *= gsu;
 
-        size_t cuCount   = 0;
         size_t skGrid    = 0;
         auto   tiles     = problem.getNumTiles(sizeMapping);
-        int    fullTiles = 0;
         if(sizeMapping.streamK != 0 || sizeMapping.persistentKernel != 0)
         {
             AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(&hardware);
             assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
-            cuCount = pAMDGPU->computeUnitCount;
             if(sizeMapping.streamK != 0)
             {
                 skGrid             = getSKGrid(problem, hardware, tiles);
                 rv.numWorkGroups.x = skGrid;
                 rv.numWorkGroups.y = 1;
                 rv.numWorkGroups.z = 1;
-                fullTiles          = pAMDGPU->skFullTiles;
             }
         }
 
@@ -1172,80 +1242,13 @@ namespace TensileLite
             kernelArgs<T_Debug, false>(
                 1, 0, rv.args, getNumWorkGroups(rv), &hardware, problem.getParams());
         }
-        singleCallArgs<T_Debug, true>(problem, inputs, 0, &hardware, rv.args);
+        singleCallArgs<T_Debug, true>(problem, inputs, 0, &hardware, problemNumGroupTiles, rv.numWorkGroups, rv.args);
 
         if(sizeMapping.globalAccumulation == 3)
         {
             rv.args.append<void const*>("dstD", inputs.d);
             rv.args.append<void const*>("Synchronizer", inputs.Synchronizer);
             rv.args.append<uint32_t>("GSUSync", 0);
-        }
-
-        if(sizeMapping.persistentKernel != 0 || sizeMapping.streamK != 0)
-        {
-            uint32_t magicShift;
-            rv.args.append<uint32_t>("magicNumberProblemNumGroupTiles0",
-                                     magicNumber(2, problemNumGroupTiles0, &magicShift));
-            rv.args.append<uint32_t>("magicShiftProblemNumGroupTiles0", magicShift);
-        }
-
-        if(sizeMapping.streamK != 0)
-        {
-            // Clamp minimum iters per tile to 1 to allow stream-k index calculation to work in case K==0
-            // In this case no actual iterations will be run, but workgroups will be mapped correctly for beta*C
-            auto     itersPerTile = max(1, problem.getItersPerTile(sizeMapping));
-            auto     totalIters   = tiles * itersPerTile;
-            uint32_t magicNumberItersPerTile;
-            uint32_t magicShiftItersPerTile;
-            magicNumberItersPerTile = magicNumber(2, itersPerTile, &magicShiftItersPerTile);
-
-            rv.args.append<uint32_t>("itersPerTile", itersPerTile);
-            rv.args.append<uint32_t>("magicNumberItersPerTile", magicNumberItersPerTile);
-            rv.args.append<uint32_t>("magicShiftItersPerTile", magicShiftItersPerTile);
-
-            uint32_t numGroupTiles0x1 = problemNumGroupTiles0 * problemNumGroupTiles1;
-            uint32_t magicNumProblemNumGroupTiles0By1;
-            uint32_t magicShiftProblemNumGroupTiles0By1;
-            magicNumProblemNumGroupTiles0By1
-                = magicNumber(2, numGroupTiles0x1, &magicShiftProblemNumGroupTiles0By1);
-            rv.args.append<uint32_t>("magicNumProblemNumGroupTiles0By1",
-                                     magicNumProblemNumGroupTiles0By1);
-            rv.args.append<uint32_t>("magicShiftProblemNumGroupTiles0By1",
-                                     magicShiftProblemNumGroupTiles0By1);
-
-            rv.args.append<uint32_t>("totalIters", totalIters);
-            if(sizeMapping.streamK == 1) // Basic SK
-            {
-                uint32_t itersPerWave = CeilDivide(totalIters, rv.numWorkGroups.x);
-                rv.args.append<uint32_t>("SKItersPerWG", itersPerWave);
-            }
-            else if(sizeMapping.streamK >= 2) // Two-tile SK
-            {
-                bool bigEnough = tiles > skGrid;
-                // skTiles is number of Stream-K tiles to complete
-                // Two-tile algorithm causes each WG to run an even number of Stream-K iterations,
-                // followed by an even number of data-parllel tiles.
-                // If total tiles is evenly divisble by grid size,
-                // then no Stream-K tiles are needed, all data-parallel
-                uint32_t skTiles = skGrid;
-                // If not evenly divisible, determine number of Stream-K tiles
-                if(tiles % skGrid != 0)
-                {
-                    // Number of data-parallel tiles on each workgroup would be:
-                    // dpTilesPerWG = bigEnough ? (tiles - skTiles) / skGrid : 0;
-                    skTiles = bigEnough ? skGrid * fullTiles + tiles % skGrid : tiles;
-                    // Cap Stream-K tiles at total number of tiles in case of large multiplier
-                    skTiles = min(skTiles, tiles);
-                }
-
-                uint32_t skItersPerWG = skTiles * itersPerTile / skGrid;
-                uint32_t skExtraIters = skTiles * itersPerTile % (skGrid);
-
-                rv.args.append<uint32_t>("SKItersPerWG", skItersPerWG);
-                rv.args.append<uint32_t>("skGrid", skGrid);
-                rv.args.append<uint32_t>("skTiles", skTiles);
-                rv.args.append<uint32_t>("skExtraIters", skExtraIters);
-            }
         }
 
         if(problemType.stochasticRounding)
@@ -1371,7 +1374,7 @@ namespace TensileLite
             {
                 auto problem = problems[idx];
                 singleCallArgs<T_Debug, false>(
-                    problem, inputs.grouped[idx], workspaceOffsetInByte, nullptr, h_args);
+                    problem, inputs.grouped[idx], workspaceOffsetInByte, nullptr, rv.numWorkGroups, rv.numWorkGroups, h_args);
 
                 if(sizeMapping.globalAccumulation == 3)
                 {

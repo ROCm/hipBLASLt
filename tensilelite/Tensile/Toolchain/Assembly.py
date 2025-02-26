@@ -32,14 +32,15 @@ import subprocess
 from pathlib import Path
 from typing import List, Union
 
-from ..TensileInstructions import getGfxName
-from ..Common import globalParameters, print2, ensurePath
+from ..Common import globalParameters, print2, ensurePath, SemanticVersion, isaToGfx
 from ..KernelWriterAssembly import KernelWriterAssembly
+from ..Toolchain.Validators import getVersion
 from ..SolutionStructs import Solution
 
 class AssemblyToolchain:
     def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: str):
         self.assembler = assembler
+        self.assemblerVersion = SemanticVersion(*[int(c) for c in getVersion(assembler).split(".")[:3]])
         self.bundler = bundler
         self.buildIdKind = buildIdKind
         self.coVersion = coVersion
@@ -136,7 +137,7 @@ class AssemblyToolchain:
             "--compress",
             "--type=o",
             "--bundle-align=4096",
-            f"--targets=host-x86_64-unknown-linux,hipv4-amdgcn-amd-amdhsa--{gfx}",
+            f"--targets=host-x86_64-unknown-linux-gnu,hipv4-amdgcn-amd-amdhsa-unknown-{gfx}",
             "--input=/dev/null",
             f"--input={srcPath}",
             f"--output={destPath}",
@@ -205,7 +206,7 @@ def buildAssemblyCodeObjectFiles(
       if len(archKernels) == 0:
         continue
 
-      gfx = getGfxName(arch)
+      gfx = isaToGfx(arch)
 
       objectFiles = [str(asmDir / (writer.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k]
       coFileMap = collections.defaultdict(list)

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include "TensorDataManipulation.hpp"
 #include "allclose.hpp"
 #include "cblas_interface.hpp"
 #include "flops.hpp"
@@ -70,6 +71,170 @@ extern "C" __global__ void flush_icache()
                      "s_nop 0 \n\t"
                      "s_nop 0 \n\t" ::
                          :);
+}
+
+bool isSwizzleSupported(hipDataType datatype)
+{
+    switch(datatype)
+    {
+    case HIP_R_16BF:
+    case HIP_R_16F:
+    case HIP_R_8F_E4M3_FNUZ:
+        return true;
+    default:
+        return false;
+    }
+}
+
+hipblasLtOrder_t orderForDatatype(hipDataType datatype)
+{
+    switch(datatype)
+    {
+    case HIP_R_16F:
+    case HIP_R_16BF:
+        return HIPBLASLT_ORDER_COL16_4R8;
+    case HIP_R_8F_E4M3_FNUZ:
+        return HIPBLASLT_ORDER_COL16_4R16;
+    default:
+        throw std::runtime_error("unsupported datatype in orderForDatatype");
+    }
+}
+
+void calculateKforSwizzling(
+    hipDataType datatype, const Arguments& arg, size_t& MiK, size_t& MiKv, size_t& PackK)
+{
+    switch(datatype)
+    {
+    case HIP_R_32F:
+        if(arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
+        {
+            MiK  = 8;
+            MiKv = 2;
+        }
+        else
+        {
+            MiK  = 4;
+            MiKv = 1;
+        }
+        break;
+    case HIP_R_64F:
+        MiK  = 4;
+        MiKv = 1;
+        break;
+    case HIP_R_16F:
+    case HIP_R_16BF:
+        MiK  = 16;
+        MiKv = 4;
+        break;
+    case HIP_R_8I:
+    case HIP_R_8F_E5M2_FNUZ:
+    case HIP_R_8F_E4M3_FNUZ:
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+    case HIP_R_8F_E5M2:
+#endif
+        MiK  = 32;
+        MiKv = 8;
+        break;
+    default:
+        throw std::runtime_error("unsupported datatype in calculateKforSwizzling");
+    }
+
+    PackK = 16 / MiKv / realDataTypeSize(datatype);
+}
+
+template <typename T>
+void swizzle_tensor(T*               dst,
+                    const T*         src,
+                    hipDataType      datatype,
+                    const Arguments& arg,
+                    size_t           b,
+                    size_t           m,
+                    size_t           k,
+                    bool             colMaj)
+{
+    using Tensor = Tensor::Manipulation::Tensor;
+    size_t MiM   = 16;
+    size_t MiK = 0, MiKv = 0, PackK = 0;
+    calculateKforSwizzling(datatype, arg, MiK, MiKv, PackK);
+    const size_t numElements = b * m * k;
+    auto         tmpTensor   = Tensor::create<T>({b, m, k});
+    memcpy(tmpTensor.template as<void>(), src, numElements * sizeof(T));
+
+    if(colMaj)
+    {
+        auto orgTensor = Tensor::create<T>({b, k, m});
+        memcpy(orgTensor.template as<void>(), src, numElements * sizeof(T));
+        tmpTensor = permute(orgTensor, {0, 2, 1});
+    }
+
+    auto                          MultipleM = MiM;
+    auto                          MultipleK = MiK * PackK;
+    const auto                    paddedM   = (m / MultipleM + !!(m % MultipleM)) * MultipleM;
+    const auto                    paddedK   = (k / MultipleK + !!(k % MultipleK)) * MultipleK;
+    ::Tensor::Manipulation::Shape paddedShape{b, paddedM, paddedK};
+    auto paddedTensor = ::Tensor::Manipulation::pad(tmpTensor, paddedShape, T(0));
+    paddedTensor.reshape(
+        {b, paddedM / MiM, MiM, paddedK / (MiK * PackK), MiK / MiKv, MiKv * PackK});
+    Tensor permuted = permute(paddedTensor, {0, 1, 3, 4, 2, 5});
+    memcpy(dst, permuted.template as<void>(), b * paddedM * paddedK * sizeof(T));
+}
+
+void swizzle_tensor_type(HipHostBuffer&       dst,
+                         const HipHostBuffer& src,
+                         hipDataType          datatype,
+                         const Arguments&     arg,
+                         size_t               b,
+                         size_t               m,
+                         size_t               k,
+                         bool                 colMaj)
+{
+    switch(datatype)
+    {
+    case HIP_R_32F:
+        swizzle_tensor<float>(dst.as<float>(), src.as<float>(), datatype, arg, b, m, k, colMaj);
+        return;
+    case HIP_R_16F:
+        swizzle_tensor<hipblasLtHalf>(
+            dst.as<hipblasLtHalf>(), src.as<hipblasLtHalf>(), datatype, arg, b, m, k, colMaj);
+        return;
+    case HIP_R_16BF:
+        swizzle_tensor<hip_bfloat16>(
+            dst.as<hip_bfloat16>(), src.as<hip_bfloat16>(), datatype, arg, b, m, k, colMaj);
+        return;
+    case HIP_R_8F_E4M3_FNUZ:
+        swizzle_tensor<hipblaslt_f8_fnuz>(dst.as<hipblaslt_f8_fnuz>(),
+                                          src.as<hipblaslt_f8_fnuz>(),
+                                          datatype,
+                                          arg,
+                                          b,
+                                          m,
+                                          k,
+                                          colMaj);
+        return;
+    case HIP_R_8F_E5M2_FNUZ:
+        swizzle_tensor<hipblaslt_bf8_fnuz>(dst.as<hipblaslt_bf8_fnuz>(),
+                                           src.as<hipblaslt_bf8_fnuz>(),
+                                           datatype,
+                                           arg,
+                                           b,
+                                           m,
+                                           k,
+                                           colMaj);
+        return;
+#ifdef ROCM_USE_FLOAT8
+    case HIP_R_8F_E4M3:
+        swizzle_tensor<hipblaslt_f8>(
+            dst.as<hipblaslt_f8>(), src.as<hipblaslt_f8>(), datatype, arg, b, m, k, colMaj);
+        return;
+    case HIP_R_8F_E5M2:
+        swizzle_tensor<hipblaslt_bf8>(
+            dst.as<hipblaslt_bf8>(), src.as<hipblaslt_bf8>(), datatype, arg, b, m, k, colMaj);
+        return;
+#endif
+    default:
+        hipblaslt_cerr << "Error type in swizzle_tensor_type()" << std::endl;
+    }
 }
 
 inline void pre_gpu_time(bool         use_gpu_timer,
@@ -534,6 +699,13 @@ auto _dgelu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
     Tc x2   = 4 / pow(exp(-xx) + exp(xx), 2);
     Tc tmp  = 0.5 * tanh(xx) + x1 * x2 + 0.5;
     return static_cast<decltype(in)>(0.5f * tanh(xx) + x1 * x2 + 0.5f);
+};
+
+// swish with beta=1
+auto _silu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
+    using Tc = float;
+    Tc in_Tc   = static_cast<Tc>(in);
+    return static_cast<decltype(in)>(in_Tc / (1.f + exp(-in_Tc)));
 };
 
 void testing_matmul_bad_arg(const Arguments& arg)
@@ -1117,8 +1289,20 @@ void testing_matmul_with_bias(const Arguments& arg,
         stride_d[i] = do_batched[i] ? arg.stride_c[i] : ldd[i] * N[i];
         stride_e[i] = do_batched[i] ? arg.stride_e[i] : lde[i] * N[i];
 
-        size_A[i]
-            = stride_a[i] == 0 ? lda[i] * A_col[i] * num_batches[i] : stride_a[i] * num_batches[i];
+        if(arg.swizzle_a && isSwizzleSupported(TiA))
+        {
+            size_t MiM = 16, MiK = 0, __ = 0, PackK = 0;
+            calculateKforSwizzling(TiA, arg, MiK, __, PackK);
+            size_t K_block = MiK * PackK;
+            size_A[i]      = num_batches[i] * ((M[i] + MiM - 1) / MiM) * MiM
+                        * ((K[i] + K_block - 1) / K_block) * K_block;
+        }
+        else
+        {
+            size_A[i] = stride_a[i] == 0 ? lda[i] * A_col[i] * num_batches[i]
+                                         : stride_a[i] * num_batches[i];
+        }
+
         size_B[i]
             = stride_b[i] == 0 ? ldb[i] * B_col[i] * num_batches[i] : stride_b[i] * num_batches[i];
         size_C[i]
@@ -1196,7 +1380,14 @@ void testing_matmul_with_bias(const Arguments& arg,
         CHECK_HIPBLASLT_ERROR(
             hipblasLtMatrixLayoutCreate(&(matC[i]), arg.c_type, M[i], N[i], ldc[i]));
         CHECK_HIPBLASLT_ERROR(
-            hipblasLtMatrixLayoutCreate(&(matD[i]), arg.d_type, M[i], N[i], ldc[i]));
+            hipblasLtMatrixLayoutCreate(&(matD[i]), arg.d_type, M[i], N[i], ldd[i]));
+
+        if(arg.swizzle_a && isSwizzleSupported(TiA))
+        {
+            hipblasLtOrder_t orderA = orderForDatatype(TiA);
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
+                matA[i], HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA)));
+        }
 
         if(do_batched[i])
         {
@@ -1272,6 +1463,9 @@ void testing_matmul_with_bias(const Arguments& arg,
             case hipblaslt_activation_type::gelu:
                 epilogue[i] = HIPBLASLT_EPILOGUE_GELU_BIAS;
                 break;
+            case hipblaslt_activation_type::swish:
+                epilogue[i] = HIPBLASLT_EPILOGUE_SWISH_BIAS_EXT;
+                break;
             default:
                 epilogue[i] = HIPBLASLT_EPILOGUE_BIAS;
                 break;
@@ -1287,6 +1481,10 @@ void testing_matmul_with_bias(const Arguments& arg,
                 break;
             case hipblaslt_activation_type::gelu:
                 epilogue[i]    = HIPBLASLT_EPILOGUE_GELU;
+                epilogue_on[i] = true;
+                break;
+            case hipblaslt_activation_type::swish:
+                epilogue[i] = HIPBLASLT_EPILOGUE_SWISH_EXT;
                 epilogue_on[i] = true;
                 break;
             default:
@@ -1482,11 +1680,18 @@ void testing_matmul_with_bias(const Arguments& arg,
         CHECK_HIP_ERROR(broadcast(dB[i], block_count));
         CHECK_HIP_ERROR(broadcast(dC[i], block_count));
 
-        if(arg.unit_check || arg.norm_check || arg.allclose_check)
+        if(arg.unit_check || arg.norm_check || arg.allclose_check || arg.swizzle_a)
         {
             CHECK_HIP_ERROR(synchronize(hA[i], dA[i]));
             CHECK_HIP_ERROR(synchronize(hB[i], dB[i]));
             CHECK_HIP_ERROR(synchronize(hC[i], dC[i]));
+        }
+
+        if(arg.swizzle_a && isSwizzleSupported(TiA))
+        {
+            HipHostBuffer tmp(TiA, size_A[i]);
+            swizzle_tensor_type(tmp, hA[i], TiA, arg, num_batches[i], M[i], K[i], false);
+            CHECK_HIP_ERROR(synchronize(dA[i], tmp, block_count));
         }
 
         if(arg.gradient && arg.use_e)
@@ -2695,6 +2900,17 @@ void testing_matmul_with_bias(const Arguments& arg,
                                       To,
                                       Talpha);
                         break;
+                    case hipblaslt_activation_type::swish:
+                        epilogue_func(epilogue_param,
+                                      hBias_buf,
+                                      Tbias,
+                                      arg.activation_arg1,
+                                      arg.activation_arg2,
+                                      ::_silu,
+                                      arg.gradient,
+                                      To,
+                                      Talpha);
+                        break;
                     default:
                         epilogue_func(epilogue_param, hBias_buf, Tbias, false, To, Talpha);
                         break;
@@ -3283,6 +3499,9 @@ void testing_matmul_with_bias(const Arguments& arg,
                     break;
                 case hipblaslt_activation_type::gelu:
                     flops += gelu_gflop_count(M[gemmIdx], N[gemmIdx], Talpha);
+                    break;
+                case hipblaslt_activation_type::swish:
+                    flops += silu_gflop_count(M[gemmIdx], N[gemmIdx], Talpha);
                     break;
                 default:
                     break;

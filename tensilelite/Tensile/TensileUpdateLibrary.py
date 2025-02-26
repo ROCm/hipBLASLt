@@ -23,10 +23,10 @@
 ################################################################################
 
 from . import LibraryIO
-from .Common import assignGlobalParameters, print1, restoreDefaultGlobalParameters, HR, \
-                    globalParameters, architectureMap, ensurePath, ParallelMap
 from .Tensile import addCommonArguments, argUpdatedGlobalParameters
-from . import __version__
+
+from .Common import assignGlobalParameters, print1, restoreDefaultGlobalParameters, HR, \
+                    globalParameters, architectureMap, ensurePath, ParallelMap, __version__
 
 import argparse
 import copy

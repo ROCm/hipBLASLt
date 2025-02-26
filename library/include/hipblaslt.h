@@ -68,18 +68,20 @@
  *  \brief Specify the enum type to set the postprocessing options for the epilogue.
  */
 typedef enum {
-  HIPBLASLT_EPILOGUE_DEFAULT = 1,         /**<No special postprocessing, just scale and quantize the results if necessary.*/
-  HIPBLASLT_EPILOGUE_RELU = 2,            /**<Apply ReLU point-wise transform to the results:(x:=max(x, 0))*/
-  HIPBLASLT_EPILOGUE_BIAS = 4,            /**<Apply (broadcast) bias from the bias vector. Bias vector length must match matrix D rows, and it must be packed (such as stride between vector elements is 1). Bias vector is broadcast to all columns and added before applying the final postprocessing.*/
-  HIPBLASLT_EPILOGUE_RELU_BIAS = 6,       /**<Apply bias and then ReLU transform.*/
-  HIPBLASLT_EPILOGUE_GELU = 32,           /**<Apply GELU point-wise transform to the results (x:=GELU(x)).*/
-  HIPBLASLT_EPILOGUE_GELU_BIAS = 36,      /**<Apply Bias and then GELU transform.*/
-  HIPBLASLT_EPILOGUE_GELU_AUX = 160,      /**<Output GEMM results before applying GELU transform.*/
-  HIPBLASLT_EPILOGUE_GELU_AUX_BIAS = 164, /**<Output GEMM results after applying bias but before applying GELU transform.*/
-  HIPBLASLT_EPILOGUE_DGELU = 192,         /**<Apply gradient GELU transform. Requires additional aux input. */
-  HIPBLASLT_EPILOGUE_DGELU_BGRAD = 208,   /**<Apply gradient GELU transform and bias gradient to the results. Requires additional aux input. */
-  HIPBLASLT_EPILOGUE_BGRADA = 256,        /**<Apply bias gradient to A and output gemm result. */
-  HIPBLASLT_EPILOGUE_BGRADB = 512         /**<Apply bias gradient to B and output gemm result. */
+  HIPBLASLT_EPILOGUE_DEFAULT = 1,               /**<No special postprocessing, just scale and quantize the results if necessary.*/
+  HIPBLASLT_EPILOGUE_RELU = 2,                  /**<Apply ReLU point-wise transform to the results:(x:=max(x, 0))*/
+  HIPBLASLT_EPILOGUE_BIAS = 4,                  /**<Apply (broadcast) bias from the bias vector. Bias vector length must match matrix D rows, and it must be packed (such as stride between vector elements is 1). Bias vector is broadcast to all columns and added before applying the final postprocessing.*/
+  HIPBLASLT_EPILOGUE_RELU_BIAS = 6,             /**<Apply bias and then ReLU transform.*/
+  HIPBLASLT_EPILOGUE_GELU = 32,                 /**<Apply GELU point-wise transform to the results (x:=GELU(x)).*/
+  HIPBLASLT_EPILOGUE_GELU_BIAS = 36,            /**<Apply Bias and then GELU transform.*/
+  HIPBLASLT_EPILOGUE_GELU_AUX = 160,            /**<Output GEMM results before applying GELU transform.*/
+  HIPBLASLT_EPILOGUE_GELU_AUX_BIAS = 164,       /**<Output GEMM results after applying bias but before applying GELU transform.*/
+  HIPBLASLT_EPILOGUE_DGELU = 192,               /**<Apply gradient GELU transform. Requires additional aux input. */
+  HIPBLASLT_EPILOGUE_DGELU_BGRAD = 208,         /**<Apply gradient GELU transform and bias gradient to the results. Requires additional aux input. */
+  HIPBLASLT_EPILOGUE_BGRADA = 256,              /**<Apply bias gradient to A and output gemm result. */
+  HIPBLASLT_EPILOGUE_BGRADB = 512,              /**<Apply bias gradient to B and output gemm result. */
+  HIPBLASLT_EPILOGUE_SWISH_EXT = 65536,         /**<Apply Swish point-wise transform to the results (x:=Swish(x, 1)).*/
+  HIPBLASLT_EPILOGUE_SWISH_BIAS_EXT = 65540,    /**<Apply Bias and then Swish transform.*/
 } hipblasLtEpilogue_t;
 
 /*! \ingroup types_module
@@ -173,7 +175,9 @@ typedef enum {
   HIPBLASLT_MATMUL_PREF_MAX = 2
 } hipblasLtMatmulPreferenceAttributes_t;
 
-/** Enum for data ordering */
+/*! \ingroup types_module
+ *  \brief Enum for data ordering.
+ */
 typedef enum {
   /** Column-major
    *
@@ -185,6 +189,17 @@ typedef enum {
    * Leading dimension is the stride (in elements) to the beginning of next row in memory.
    */
   HIPBLASLT_ORDER_ROW = 1,
+  HIPBLASLT_ORDER_COL16_4R16 = 100,
+  /**
+   * Data is ordered in column-major ordered tiles of composite tiles with total 16 columns and 32 rows.
+   * A tile is composed of 4 inner tiles in column-major with total 8 rows and 16 columns.
+   * Element offset within the tile is calculated as row%8+8*col+(row/8)*16*8.
+   * Note that for this order, the number of columns(rows) of the tensor has to be multiple of 16(32) or
+   * pre-padded to 16(32).
+   */
+  HIPBLASLT_ORDER_COL16_4R8 = 101,
+  HIPBLASLT_ORDER_COL16_4R4 = 102,
+  HIPBLASLT_ORDER_COL16_4R2 = 103
 } hipblasLtOrder_t;
 
 /** Matrix transform descriptor attributes to define details of the operation.

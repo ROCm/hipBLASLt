@@ -79,6 +79,7 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
           - [Enum: relu]
+          - [Enum: silu]
 
   #######################################
   # TN - standard
@@ -144,6 +145,7 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
           - [Enum: relu]
+          - [Enum: silu]
 
   #######################################
   # NN - standard
@@ -209,6 +211,7 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
           - [Enum: relu]
+          - [Enum: silu]
 
   #######################################
   # TN - standard
@@ -274,6 +277,7 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
           - [Enum: relu]
+          - [Enum: silu]
 
   #######################################
   # NN - standard
@@ -339,6 +343,7 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
           - [Enum: relu]
+          - [Enum: silu]
 
   #######################################
   # TN - standard
@@ -404,6 +409,7 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
           - [Enum: relu]
+          - [Enum: silu]
 
   #######################################
   # NN - standard
@@ -469,6 +475,7 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
           - [Enum: relu]
+          - [Enum: silu]
 
   #######################################
   # TN - standard
@@ -534,6 +541,7 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
           - [Enum: relu]
+          - [Enum: silu]
 
 
   #######################################
@@ -601,6 +609,7 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
           - [Enum: relu]
+          - [Enum: silu]
 
   #######################################
   # TN - standard
@@ -667,3 +676,4 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: none]
           - [Enum: relu]
+          - [Enum: silu]

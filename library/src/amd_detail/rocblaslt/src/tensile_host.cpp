@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -142,6 +142,9 @@ namespace
         case ROCBLASLT_EPILOGUE_DGELU:
         case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
             return TensileLite::ActivationType::DGelu;
+        case ROCBLASLT_EPILOGUE_SWISH_EXT:
+        case ROCBLASLT_EPILOGUE_SWISH_BIAS_EXT:
+            return TensileLite::ActivationType::Silu;
         case ROCBLASLT_EPILOGUE_BIAS:
         case ROCBLASLT_EPILOGUE_DEFAULT:
         case ROCBLASLT_EPILOGUE_BGRADA:
@@ -178,6 +181,7 @@ namespace
         case ROCBLASLT_EPILOGUE_BIAS:
         case ROCBLASLT_EPILOGUE_BGRADA:
         case ROCBLASLT_EPILOGUE_BGRADB:
+        case ROCBLASLT_EPILOGUE_SWISH_BIAS_EXT:
             return true;
             break;
         default:
@@ -314,11 +318,13 @@ namespace
         default:;
         }
 
-        if(typeA == TensileLite::DataType::Float8_fnuz && typeB == TensileLite::DataType::BFloat8_fnuz)
+        if(typeA == TensileLite::DataType::Float8_fnuz
+           && typeB == TensileLite::DataType::BFloat8_fnuz)
         {
             return TensileLite::DataType::Float8BFloat8_fnuz;
         }
-        else if(typeA == TensileLite::DataType::BFloat8_fnuz && typeB == TensileLite::DataType::Float8_fnuz)
+        else if(typeA == TensileLite::DataType::BFloat8_fnuz
+                && typeB == TensileLite::DataType::Float8_fnuz)
         {
             return TensileLite::DataType::BFloat8Float8_fnuz;
         }
@@ -422,7 +428,8 @@ namespace
             return "f32_bf16_r";
         }
         else if(typeComputeInput == TensileLite::DataType::Half
-                && (typeA == TensileLite::DataType::Float8_fnuz && typeB == TensileLite::DataType::Half
+                && (typeA == TensileLite::DataType::Float8_fnuz
+                        && typeB == TensileLite::DataType::Half
                     || typeA == TensileLite::DataType::Half
                            && typeB == TensileLite::DataType::Float8_fnuz))
         {
@@ -464,7 +471,8 @@ namespace
             return "c_f32_fast_bf16_r";
         }
         else if(typeComputeInput == TensileLite::DataType::Half
-                && (typeA == TensileLite::DataType::Float8_fnuz && typeB == TensileLite::DataType::Half
+                && (typeA == TensileLite::DataType::Float8_fnuz
+                        && typeB == TensileLite::DataType::Half
                     || typeA == TensileLite::DataType::Half
                            && typeB == TensileLite::DataType::Float8_fnuz))
         {
@@ -487,6 +495,9 @@ namespace
         case TensileLite::ActivationType::Relu:
             return "relu";
             break;
+        case TensileLite::ActivationType::Silu:
+        case TensileLite::ActivationType::Swish:
+            return "swish";
         case TensileLite::ActivationType::None:
         default:
             return "none";
@@ -503,7 +514,7 @@ namespace
                                             const int32_t& hotIterations,
                                             bool           isCpp)
     {
-        log_bench(
+        auto s = log_str(
             __func__,
             "--api_method",
             isCpp ? "cpp" : "c",
@@ -600,6 +611,14 @@ namespace
             coldIterations,
             "--iters",
             hotIterations);
+        
+        if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+            log_bench_from_str(s);
+        if(rocblaslt::Debug::Instance().printLogAsMarker())
+        {
+            rocblaslt::Debug::Instance().logMarkerStart(s.c_str());
+            rocblaslt::Debug::Instance().logMarkerStop();
+        }
     }
 
     inline void logProfileFromTensileDataGemm(const TensileLite::ContractionProblemGemm& problem,
@@ -827,7 +846,7 @@ namespace
                            .tensor(TensileLite::ContractionProblemGemm::TENSOR::E)
                            .strides()[2];
         }
-        log_bench(
+        auto s = log_str(
             __func__,
             "--api_method",
             isCpp ? "cpp" : "c",
@@ -898,6 +917,14 @@ namespace
             coldIterations,
             "--iters",
             hotIterations);
+
+        if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+            log_bench_from_str(s);
+        if(rocblaslt::Debug::Instance().printLogAsMarker())
+        {
+            rocblaslt::Debug::Instance().logMarkerStart(s.c_str());
+            rocblaslt::Debug::Instance().logMarkerStop();
+        }
     }
 
     inline void
@@ -1066,7 +1093,8 @@ namespace
         auto k = prob.k && alpha ? prob.k : 0;
 
         // fallback to f32 for f16 compute type after alpha/beta assignment
-        if (prob.compute_type == rocblaslt_compute_f16) {
+        if(prob.compute_type == rocblaslt_compute_f16)
+        {
             compute_type = roc2TensileType(prob.compute_type);
         }
 
@@ -1239,6 +1267,9 @@ namespace
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
             tensileProblem.setF32XdlMathOp(TensileLite::DataType::XFloat32);
 
+        tensileProblem.setSwizzleTensorA(prob.swizzleA);
+        tensileProblem.setSwizzleTensorB(prob.swizzleB);
+
         return tensileProblem;
     }
 
@@ -1328,7 +1359,8 @@ namespace
         assignAlphaBeta(compute_type, prob.alpha, prob.beta, &alpha, &beta);
 
         // fallback to f32 for f16 compute type after alpha/beta assignment
-        if (prob.compute_type == rocblaslt_compute_f16) {
+        if(prob.compute_type == rocblaslt_compute_f16)
+        {
             compute_type = roc2TensileType(prob.compute_type);
         }
 
@@ -1416,6 +1448,9 @@ namespace
 
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
             tensileProblem.setF32XdlMathOp(TensileLite::DataType::XFloat32);
+
+        tensileProblem.setSwizzleTensorA(prob.swizzleA);
+        tensileProblem.setSwizzleTensorB(prob.swizzleB);
     }
 
     /***************************************************************
@@ -1465,27 +1500,31 @@ namespace
             {TensileLite::DataType::Double, (double)0.0},
         };
 
-        if (argument_vals.find(compute_type) == argument_vals.end()) {
+        if(argument_vals.find(compute_type) == argument_vals.end())
+        {
             log_error(__func__, "Unsupported compute type");
             throw std::runtime_error("[GetTensileInputs] unsupported compute type.");
         }
 
         // push 2 activation arguments
-        std::visit([&inputs, &prob](auto val) {
-            inputs.activationArgs.push_back(val);
-            inputs.activationArgs.push_back(val);
-            if(prob.k)
-                inputs.alpha = *(decltype(val)*)(prob.alpha);
-            else
-                inputs.alpha = val;
-            inputs.beta = *(decltype(val)*)(prob.beta);
-        }, argument_vals.at(compute_type));
+        std::visit(
+            [&inputs, &prob](auto val) {
+                inputs.activationArgs.push_back(val);
+                inputs.activationArgs.push_back(val);
+                if(prob.k)
+                    inputs.alpha = *(decltype(val)*)(prob.alpha);
+                else
+                    inputs.alpha = val;
+                inputs.beta = *(decltype(val)*)(prob.beta);
+            },
+            argument_vals.at(compute_type));
 
         // convert alpha and beta to float if compute type is half
-        if (prob.compute_type == rocblaslt_compute_f16) {
+        if(prob.compute_type == rocblaslt_compute_f16)
+        {
             inputs.activationArgs = {0.0f, 0.0f};
-            inputs.alpha = static_cast<float>(std::get<hipblasLtHalf>(inputs.alpha));
-            inputs.beta = static_cast<float>(std::get<hipblasLtHalf>(inputs.beta));
+            inputs.alpha          = static_cast<float>(std::get<hipblasLtHalf>(inputs.alpha));
+            inputs.beta           = static_cast<float>(std::get<hipblasLtHalf>(inputs.beta));
         }
 
         return inputs;
@@ -1518,14 +1557,6 @@ namespace
         else if(deviceString.find("gfx90a") != std::string::npos)
         {
             return TensileLite::LazyLoadingInit::gfx90a;
-        }
-        else if(deviceString.find("gfx940") != std::string::npos)
-        {
-            return TensileLite::LazyLoadingInit::gfx940;
-        }
-        else if(deviceString.find("gfx941") != std::string::npos)
-        {
-            return TensileLite::LazyLoadingInit::gfx941;
         }
         else if(deviceString.find("gfx942") != std::string::npos)
         {
@@ -1607,7 +1638,7 @@ namespace
         }
 
         // TensileHost is not copyable or assignable
-        TensileHost(const TensileHost&) = delete;
+        TensileHost(const TensileHost&)            = delete;
         TensileHost& operator=(const TensileHost&) = delete;
 
         // Get the number of devices
@@ -2125,7 +2156,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         data->algoIndex    = *solutionIndex;
         data->inputs       = GetTensileInputs(prob);
 
-        if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+        if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) || rocblaslt::Debug::Instance().printLogAsMarker())
         {
             logBenchFromTensileDataGemm(data->problem,
                                         data->inputs,
@@ -2565,7 +2596,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         {
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
-            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+            if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) || rocblaslt::Debug::Instance().printLogAsMarker())
             {
                 logBenchFromTensileDataGemm(data->problem,
                                             data->inputs,
@@ -2598,7 +2629,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                           "GG is initialized with useUserArgs = true, workspace has no arguments.");
                 return rocblaslt_status_not_initialized;
             }
-            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+            if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) || rocblaslt::Debug::Instance().printLogAsMarker())
             {
                 logBenchFromTensileDataGemm(data->problem,
                                             data->inputs,
@@ -2977,38 +3008,6 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
     return rocblaslt_status_success;
 }
 
-void checkF8Compatiblity(const std::string &deviceString, const TensileLite::ContractionProblemGemm& prob) {
-
-    bool isGFX94X = deviceString.find("gfx940") != std::string::npos ||
-        deviceString.find("gfx941") != std::string::npos ||
-        deviceString.find("gfx942") != std::string::npos;
-
-    auto isFNUZ = [](TensileLite::DataType type) {
-        return type == TensileLite::DataType::Float8_fnuz ||
-            type == TensileLite::DataType::BFloat8_fnuz;
-    };
-
-    auto isOCP = [](TensileLite::DataType type) {
-        return type == TensileLite::DataType::Float8 ||
-            type == TensileLite::DataType::BFloat8;
-    };
-
-    bool hasFNUZ = isFNUZ(prob.a().dataType()) ||
-        isFNUZ(prob.b().dataType()) ||
-        isFNUZ(prob.c().dataType()) ||
-        isFNUZ(prob.d().dataType());
-
-    bool hasOCP = isOCP(prob.a().dataType()) ||
-        isOCP(prob.b().dataType()) ||
-        isOCP(prob.c().dataType()) ||
-        isOCP(prob.d().dataType());
-
-    if((hasFNUZ && !isGFX94X) || (hasOCP && isGFX94X) || (hasFNUZ && hasOCP)) {
-        log_error(__func__, "Requested F8 type not supported");
-        throw std::runtime_error("[checkF8] Requested F8 type not supported.");
-    }
-}
-
 template <typename MyProblem>
 rocblaslt_status getAllSolutions(MyProblem&                                      prob,
                                  rocblaslt_handle                                handle,
@@ -3038,16 +3037,11 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
 
     if constexpr(std::is_same<MyProblem, TensileLite::ContractionProblemGemm>::value)
     {
-        checkF8Compatiblity(deviceString, prob);
-
         solutions = library->findAllSolutions(
             prob, *hardware, TensileLite::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
     }
     else if constexpr(std::is_same<MyProblem, TensileLite::ContractionProblemGroupedGemm>::value)
     {
-        for (const auto &gemm : prob.gemms)
-            checkF8Compatiblity(deviceString, gemm);
-
         solutions = library->findAllSolutionsGroupedGemm(
             prob.gemms, *hardware, TensileLite::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
     }

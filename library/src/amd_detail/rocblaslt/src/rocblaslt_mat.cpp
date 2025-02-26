@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@
 #include "handle.h"
 #include "rocblaslt_mat_utils.hpp"
 #include "tensile_host.hpp"
+#include <array>
 
 #include <hip/hip_runtime_api.h>
 
@@ -63,7 +64,9 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
-    rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    bool swizzleA = matA->order != HIPBLASLT_ORDER_COL && matA->order != HIPBLASLT_ORDER_ROW;
+    bool swizzleB = matB->order != HIPBLASLT_ORDER_COL && matB->order != HIPBLASLT_ORDER_ROW;
+    rocblaslt_status isValid = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
                                                            C,
@@ -96,7 +99,9 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                                            scaleAlphaVec,
                                                            E,
                                                            gradient,
-                                                           compute_type);
+                                                           compute_type,
+                                                           swizzleA,
+                                                           swizzleB);
     if(isValid != rocblaslt_status_continue)
         return isValid;
 
@@ -201,7 +206,9 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         workspace,
                                         workspaceSizeInBytes,
                                         stream,
-                                        handle->Synchronizer};
+                                        handle->Synchronizer,
+                                        swizzleA,
+                                        swizzleB};
 
     return runContractionProblem(handle, algo, problem, gemmData);
 }
@@ -229,7 +236,9 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
-    rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    bool swizzleA = matA->order != HIPBLASLT_ORDER_COL && matA->order != HIPBLASLT_ORDER_ROW;
+    bool swizzleB = matB->order != HIPBLASLT_ORDER_COL && matB->order != HIPBLASLT_ORDER_ROW;
+    rocblaslt_status isValid = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
                                                            C,
@@ -262,7 +271,9 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                                            scaleAlphaVec,
                                                            E,
                                                            gradient,
-                                                           compute_type);
+                                                           compute_type,
+                                                           swizzleA,
+                                                           swizzleB);
     if(isValid != rocblaslt_status_continue)
         return isValid;
 
@@ -347,7 +358,9 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                         nullptr,
                                         0,
                                         0,
-                                        handle->Synchronizer};
+                                        handle->Synchronizer,
+                                        swizzleA,
+                                        swizzleB};
     return gemmCreate(problem, gemmData, gemmCount);
 }
 
@@ -376,24 +389,24 @@ rocblaslt_status
     hipDataType            type_c       = matC[0]->type;
     hipDataType            type_d       = matD[0]->type;
 
-    std::vector<const void*>        A_vec, B_vec, C_vec, alpha_vec, beta_vec;
-    std::vector<void*>              D_vec, E_vec, amaxD_vec;
-    std::vector<const void*>        bias_vec;
-    std::vector<const void*>        scaleA_vec;
-    std::vector<const void*>        scaleB_vec;
-    std::vector<const void*>        scaleC_vec;
-    std::vector<const void*>        scaleD_vec;
-    std::vector<const void*>        scaleE_vec;
-    std::vector<const void*>        scaleAlpha_vec;
-    std::vector<hipDataType>        bias_type_vec;
-    std::vector<rocblaslt_epilogue> epilogue_vec;
-    std::vector<int64_t>            m_vec, n_vec, k_vec;
-    std::vector<int64_t>            lda_vec, batch_stride_a_vec, num_batches_a_vec;
-    std::vector<int64_t>            ldb_vec, batch_stride_b_vec, num_batches_b_vec;
-    std::vector<int64_t>            ldc_vec, batch_stride_c_vec, num_batches_c_vec;
-    std::vector<int64_t>            ldd_vec, batch_stride_d_vec, num_batches_d_vec;
-    std::vector<int64_t>            lde_vec, batch_stride_e_vec, num_batches_e_vec;
-    std::vector<int8_t[16]>         alpha_1(matmul_descr.size());
+    std::vector<const void*>            A_vec, B_vec, C_vec, alpha_vec, beta_vec;
+    std::vector<void*>                  D_vec, E_vec, amaxD_vec;
+    std::vector<const void*>            bias_vec;
+    std::vector<const void*>            scaleA_vec;
+    std::vector<const void*>            scaleB_vec;
+    std::vector<const void*>            scaleC_vec;
+    std::vector<const void*>            scaleD_vec;
+    std::vector<const void*>            scaleE_vec;
+    std::vector<const void*>            scaleAlpha_vec;
+    std::vector<hipDataType>            bias_type_vec;
+    std::vector<rocblaslt_epilogue>     epilogue_vec;
+    std::vector<int64_t>                m_vec, n_vec, k_vec;
+    std::vector<int64_t>                lda_vec, batch_stride_a_vec, num_batches_a_vec;
+    std::vector<int64_t>                ldb_vec, batch_stride_b_vec, num_batches_b_vec;
+    std::vector<int64_t>                ldc_vec, batch_stride_c_vec, num_batches_c_vec;
+    std::vector<int64_t>                ldd_vec, batch_stride_d_vec, num_batches_d_vec;
+    std::vector<int64_t>                lde_vec, batch_stride_e_vec, num_batches_e_vec;
+    std::vector<std::array<int8_t, 16>> alpha_1(matmul_descr.size());
 
     std::vector<bool> gradient_vec;
 
@@ -493,10 +506,10 @@ rocblaslt_status
             return validArgs;
 
         const void* alphaTmp = nullptr;
-        memset(alpha_1[i], 0, sizeof(int8_t) * 16);
+        memset(alpha_1[i].data(), 0, sizeof(int8_t) * 16);
         if(scaleAlphaVec)
         {
-            setTo1(compute_type, (void*)alpha_1[i], &alphaTmp);
+            setTo1(compute_type, (void*)alpha_1[i].data(), &alphaTmp);
         }
         else
         {
@@ -573,6 +586,10 @@ rocblaslt_status
     std::vector<RocblasltContractionProblem> problems;
     for(int i = 0; i < m_vec.size(); i++)
     {
+        bool swizzleA
+            = matA[i]->order != HIPBLASLT_ORDER_COL && matA[i]->order != HIPBLASLT_ORDER_ROW;
+        bool swizzleB
+            = matB[i]->order != HIPBLASLT_ORDER_COL && matB[i]->order != HIPBLASLT_ORDER_ROW;
         problems.push_back(RocblasltContractionProblem{opA,
                                                        opB,
                                                        m_vec[i],
@@ -624,7 +641,9 @@ rocblaslt_status
                                                        nullptr,
                                                        0,
                                                        0,
-                                                       handle->Synchronizer});
+                                                       handle->Synchronizer,
+                                                       swizzleA,
+                                                       swizzleB});
     }
     return groupedGemmCreate(problems, gemmData, gemmCount);
 }
@@ -736,7 +755,8 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                   "workSpaceSizeInBytes",
                   workspaceSizeInBytes,
                   (matmul_descr->pointermode) ? "alphaVector" : "alpha",
-                  *(reinterpret_cast<const float*>(alpha)), // TODO: Add casts for f16 and int types of alpha.
+                  *(reinterpret_cast<const float*>(
+                      alpha)), // TODO: Add casts for f16 and int types of alpha.
                   "beta",
                   *(reinterpret_cast<const float*>(beta)),
                   "stream",
@@ -964,7 +984,10 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
                                             nullptr,
                                             0,
                                             0,
-                                            handle->Synchronizer};
+                                            handle->Synchronizer,
+                                            /*TODO: support C++ API */
+                                            false,
+                                            false};
         return gemmCreate(problem, gemmData, gemmCount);
     }
     else
@@ -1020,7 +1043,10 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
                                             nullptr,
                                             0,
                                             0,
-                                            handle->Synchronizer};
+                                            handle->Synchronizer,
+                                            /*TODO: support C++ API */
+                                            false,
+                                            false};
         return gemmCreate(problem, gemmData, gemmCount);
     }
 }
@@ -1193,7 +1219,7 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
     std::vector<int64_t> lde_vec, batch_stride_e_vec, num_batches_e_vec;
     std::vector<bool>    gradient_vec;
 
-    std::vector<int8_t[16]> alpha_1(m.size());
+    std::vector<std::array<int8_t, 16>> alpha_1(m.size());
 
     for(int i = 0; i < m.size(); i++)
     {
@@ -1287,10 +1313,10 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
             return validArgs;
 
         const void* alphaTmp = nullptr;
-        memset(alpha_1[i], 0, sizeof(int8_t) * 16);
+        memset(alpha_1[i].data(), 0, sizeof(int8_t) * 16);
         if(scaleAlphaVec)
         {
-            setTo1(compute_type, (void*)alpha_1[i], &alphaTmp);
+            setTo1(compute_type, (void*)alpha_1[i].data(), &alphaTmp);
         }
         else
         {
@@ -1385,7 +1411,10 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
                                                            nullptr,
                                                            0,
                                                            0,
-                                                           handle->Synchronizer});
+                                                           handle->Synchronizer,
+                                                           /*TODO: support grouped gemm */
+                                                           false,
+                                                           false});
         }
         else
         {
@@ -1441,7 +1470,10 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
                                             nullptr,
                                             0,
                                             0,
-                                            handle->Synchronizer});
+                                            handle->Synchronizer,
+                                            /*TODO: support grouped gemm */
+                                            false,
+                                            false});
         }
     }
     return groupedGemmCreate(problems, gemmData, gemmCount);

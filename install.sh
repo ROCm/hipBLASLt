@@ -325,7 +325,7 @@ install_blis()
         #Download prebuilt AMD multithreaded blis
         if [[ ! -e "./blis/lib/libblis.a" ]]; then
           case "${ID}" in
-              centos|rhel|sles|opensuse-leap)
+              centos|rhel|sles|opensuse-leap|almalinux)
                   wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
                   ;;
               ubuntu)

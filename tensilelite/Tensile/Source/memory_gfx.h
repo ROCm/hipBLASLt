@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (C) 2021-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,8 +40,7 @@
 #endif
 
 #if defined(__gfx803__) || defined(__gfx900__) || defined(__gfx906__) || defined(__gfx908__) \
-    || defined(__gfx90a__) || defined(__gfx940__) || defined(__gfx941__)                     \
-    || defined(__gfx942__) // test device
+    || defined(__gfx90a__) || defined(__gfx942__) // test device
 #define USE_GFX_BUFFER_INTRINSIC
 #define BUFFER_RESOURCE_3RD_DWORD 0x00020000
 #elif defined(__gfx1030__) // special device

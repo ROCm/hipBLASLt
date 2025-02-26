@@ -285,6 +285,23 @@ void log_bench(const char* func, Ts&&... xs)
     *os << std::endl;
 }
 
+inline void log_bench_from_str(std::string s)
+{
+    std::lock_guard<std::mutex> lock(log_mutex);
+    std::ostream*               os = get_logger_os();
+    *os << s.c_str();
+    *os << std::endl;
+}
+
+template <typename... Ts>
+inline std::string log_str(const char* func, Ts&&... xs)
+{
+    std::stringstream ss;
+    ss << "hipblaslt-bench ";
+    log_arguments_bench(ss, std::forward<Ts>(xs)...);
+    return ss.str();
+}
+
 // if profile logging is turned on with
 // (handle->layer_mode & rocblaslt_layer_mode_log_profile) == true
 // log_profile will call argument_profile to profile actual arguments,
@@ -433,6 +450,7 @@ inline bool is_bias_enabled(rocblaslt_epilogue value_)
     case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
     case ROCBLASLT_EPILOGUE_BGRADA:
     case ROCBLASLT_EPILOGUE_BGRADB:
+    case ROCBLASLT_EPILOGUE_SWISH_BIAS_EXT:
         return true;
     default:
         return false;
@@ -451,6 +469,8 @@ inline bool is_act_enabled(rocblaslt_epilogue value_)
     case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
     case ROCBLASLT_EPILOGUE_DGELU:
     case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
+    case ROCBLASLT_EPILOGUE_SWISH_EXT:
+    case ROCBLASLT_EPILOGUE_SWISH_BIAS_EXT:
         return true;
     case ROCBLASLT_EPILOGUE_DEFAULT:
     case ROCBLASLT_EPILOGUE_BIAS:
