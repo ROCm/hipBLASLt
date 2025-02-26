@@ -91,6 +91,20 @@ namespace TensileLite
             return math::safe_ceil_div(iters_per_tile, iters_per_cta); // + hasFixup;
         }
 
+        constexpr size_t num_fixup_peers_v2(size_t g,
+                                            size_t iters_total,
+                                            size_t iters_per_tile,
+                                            size_t iters_per_cta)
+        {
+            // If tiles don't evenly divide there are always at least 2 fixup peers, and more if iters_per_tile > iters_per_cta
+            size_t hasFixup = (iters_total % g == 0 && // Check if some WGs have more iters than others
+                            iters_per_cta % iters_per_tile
+                                == 0) // Check if WGs have an even number of full tiles
+                                ? 0
+                                : 1;
+            return math::safe_ceil_div(iters_per_tile, iters_per_cta) + hasFixup;
+        }
+
         std::tuple<double, size_t, size_t> predicted_runtime(size_t BLK_M,
                                                              size_t BLK_N,
                                                              size_t BLK_K,
@@ -113,6 +127,48 @@ namespace TensileLite
             return {a + (b * (fixup_peers > 1)) + (c * iters_per_cta) + (d * (fixup_peers - 1)),
                     iters_per_cta,
                     fixup_peers};
+        }
+
+        std::tuple<double, size_t, size_t, double> predicted_runtime_v2(size_t BLK_M,
+                                                                        size_t BLK_N,
+                                                                        size_t BLK_K,
+                                                                        size_t m,
+                                                                        size_t n,
+                                                                        size_t k,
+                                                                        size_t batch,
+                                                                        int    g,
+                                                                        double a,
+                                                                        double b,
+                                                                        double c,
+                                                                        double d)
+        {
+            size_t output_tiles   = number_of_output_tiles(BLK_M, BLK_N, m, n, batch);
+            size_t iters_per_tile = num_iters_per_tile(BLK_K, k);
+            size_t iters_total    = num_iters_total(output_tiles, iters_per_tile);
+            size_t iters_per_cta  = num_iters_per_cta(iters_total, g);
+            size_t fixup_peers    = num_fixup_peers_v2(g, iters_total, iters_per_tile, iters_per_cta);
+
+            size_t remainder_tiles = output_tiles % g;
+            double k_split_ratio   = remainder_tiles / static_cast<double>(g);
+
+            double cache_penalty = 0.0;
+            if(fixup_peers >= 1)
+            {
+                // Calculate the ideal equal split ratio
+                double ideal_split_ratio = 1.0 / fixup_peers;
+
+                // Measure deviation from the ideal equal split
+                double imbalance = 1 / std::abs(k_split_ratio - ideal_split_ratio);
+
+                // Scale the penalty by the imbalance and the per-collaborator cost (d)
+                cache_penalty = d * imbalance * fixup_peers;
+            }
+
+            // Include the cache penalty in the runtime prediction
+            double runtime = a + (b * (fixup_peers > 1)) + (c * iters_per_cta) + (d * (fixup_peers - 1))
+                            + cache_penalty;
+
+            return std::make_tuple(runtime, iters_per_cta, fixup_peers, cache_penalty);
         }
 
         int best_predicted_grid_size(size_t BLK_M,
@@ -153,14 +209,19 @@ namespace TensileLite
             // Predict the number of CTAs to use between 1 and 304
             for(; g <= grid_end; ++g)
             {
-                auto [runtime, iters_per_cta, fixup_peers]
-                    = predicted_runtime(BLK_M, BLK_N, BLK_K, m, n, k, batch, g, a, b, c, d);
+                // auto [runtime, iters_per_cta, fixup_peers]
+                //     = predicted_runtime(BLK_M, BLK_N, BLK_K, m, n, k, batch, g, a, b, c, d);
+
+                auto [runtime, iters_per_cta, fixup_peers, cache_penalty]
+                    = predicted_runtime_v2(BLK_M, BLK_N, BLK_K, m, n, k, batch, g, a, b, c, d);
 
                 if(debug)
                 {
                     std::cout << "grid size: " << g << ", runtime: " << runtime
                               << ", iters_per_cta: " << iters_per_cta
-                              << ", fixup_peers: " << fixup_peers << ", m: " << m << ", n: " << n
+                              << ", fixup_peers: " << fixup_peers 
+                              << ", cache_penalty: " << cache_penalty
+                              << ", m: " << m << ", n: " << n
                               << ", k: " << k << ", batch: " << batch << ", a: " << a << ", b: " << b << ", c: " << c
                               << ", d: " << d << std::endl;
                 }
