@@ -259,11 +259,14 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
             data["Library"]["indexOrder"] = None
             data["Library"]["table"] = [0, len(data["Solutions"])]
             data["Library"]["distance"] = None
-        elif libraryType == "Matching":
+        else:
+            data["LibraryType"] = "Matching"
             data["Library"] = {}
             data["Library"]["indexOrder"] = data["IndexOrder"]
             data["Library"]["table"] = data["ExactLogic"]
             data["Library"]["distance"] = libraryType
+    else:
+        printExit(f"Library Logic format not recognized")
 
     is_arch_valid = lambda cArch, tArch : (cArch == tArch or cArch == "all")
     if not (archs is None) and "ArchitectureName" in data:
@@ -387,6 +390,7 @@ def parseLibraryLogicList(data, srcFile="?"):
     else:
         printExit("Library logic file {} is missing required field matching property." \
                 .format(srcFile))
+
     if libraryType == "FreeSize":
         rv["LibraryType"] = "FreeSize"
         rv["Library"] = {}
@@ -441,6 +445,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
         tileSelection = True
 
     data = {}
+    # LibraryLogicVersion
+    data["LibraryLogicVersion"] = "0.0.0"
     # Tensile version
     data["MinimumRequiredVersion"] = __version__
     # schedule name
@@ -449,7 +455,7 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
     # schedule device names
     data["DeviceNames"] = deviceNames
     # default solution (default values for tuning parameters)
-    data["DefaultSolution"] = Common.defaultSolution
+    data["DefaultSolution"] = defaultSolution
     # problem type
     problemTypeState = problemType.state
     problemTypeState["DataType"] = \
@@ -484,8 +490,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
     # so they are copied to the yaml files
     def removeDefaultVals(params):
         for k in list(params.keys()):
-            if k in Common.defaultSolution.keys():
-                if params[k] == Common.defaultSolution[k]:
+            if k in defaultSolution.keys():
+                if params[k] == defaultSolution[k]:
                     del params[k]
     # solutions
     solutionList = []
@@ -514,9 +520,9 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
     if exactLogic:
         for key in exactLogic:
             exactLogicList.append([list(key), exactLogic[key]])
-        data.append(exactLogicList)
+        data["ExactLogic"] = exactLogicList
     else:
-        data.append(None)
+        data["ExactLogic"] = None
 
     # rangeLogic
     data["RangeLogic"] = rangeLogic
@@ -525,9 +531,9 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
         tileSelectionLogic = {}
         tileSelectionIndices = logicTuple[6]
         tileSelectionLogic["TileSelectionIndices"] = tileSelectionIndices
-        data.append(tileSelectionLogic)
+        data["TileSelection"] = tileSelectionLogic
     else:
-        data.append(None)
+        data["TileSelection"] = None
 
     data["PerfMetric"] = logicTuple[7]
     data["LibraryType"] = libraryType
