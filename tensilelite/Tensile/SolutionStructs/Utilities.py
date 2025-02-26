@@ -30,9 +30,20 @@ from Tensile.Common import IsaVersion, IsaInfo, print1
 from Tensile.Common.ValidParameters import validMFMA
 from Tensile.TensileInstructions import DataType
 
-def reject(state, printSolutionRejectionReason: bool = True, *args):
+def reject(state: dict, printSolutionRejectionReason: bool = True, *args) -> bool:
+  """
+  Reject a solution based on its internal state.
+
+  Args:
+      state: The state of the solution.
+      printSolutionRejectionReason: If True, print the rejection reason.
+      *args: Additional arguments to print if rejection occurs.
+
+  Returns:
+      True if the solution is rejected, False otherwise.
+  """
   if state and "NoReject" in state and state["NoReject"]:
-    return
+    return False
   if printSolutionRejectionReason:
     sys.stdout.write("\nreject: ")
     for a in args:
@@ -51,7 +62,7 @@ def reject(state, printSolutionRejectionReason: bool = True, *args):
         SolutionIndex: %d (or SolutionName/ProblemType: %s)"%(solutionIndex, solutionNameMin))
   if state != None:
     state["Valid"] = False
-    return False
+    return True
 
 def matrixInstructionToMIParameters(
       mi: list,
@@ -59,7 +70,7 @@ def matrixInstructionToMIParameters(
       wavefrontSize: int,
       problemType: dict,
       workGroup: list,
-      isaInfoMap: Dict[str, IsaInfo]
+      isaInfoMap: Dict[IsaVersion, IsaInfo]
     ):
     """
     Converts a 9-item matrix instruction into the associated 4-item representation and
@@ -70,7 +81,6 @@ def matrixInstructionToMIParameters(
         isa: The ISA tuple.
         wavefrontSize: The wavefront size. Typically "WavefrontSize" in a solution.
         problemType: The problem type dictionary. Typically "ProblemType" in a solution.
-        enableF32x: Whether to enable F32x. Typically "EnableF32XdlMathOp" in a solution.
     """
     print1(f">> Converting MatrixInstruction {mi} to MI parameter:")
 
@@ -79,6 +89,8 @@ def matrixInstructionToMIParameters(
                        f" Parameters, found {mi} with length {len(mi)}")
 
     result = {}
+    result["ISA"] = isa
+    result["WavefrontSize"] = wavefrontSize
 
     # Enable F32 XDL math operation only when the input type is f32.
     enableF32xdl = (
@@ -94,6 +106,8 @@ def matrixInstructionToMIParameters(
 
     waves = mi[7]* mi[8]
     wg0 = mi[4] * mi[0] * mi[7]
+
+    print(f"### waves: {waves} wg0: {wg0} mi4: {mi4} mi: {mi}")
 
     result["WorkGroup"] = [wg0, waves*wavefrontSize // wg0, workGroup[2]]
     result["ThreadTile"] = [1, 1]  # dummy

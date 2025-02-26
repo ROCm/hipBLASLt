@@ -69,7 +69,6 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, asse
         solution = {}
         solution.update({
             "ProblemType": deepcopy(problemType.state),
-            "ISA": isa,
         })
         solution.update(constantParams)
         solution.update(perm)

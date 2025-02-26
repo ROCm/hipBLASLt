@@ -57,12 +57,12 @@ from pathlib import Path
 from inspect import currentframe, getframeinfo
 
 from Tensile.SolutionStructs import reject
-from Tensile.Common import IsaVersion
+from Tensile.Common import IsaVersion, IsaInfo, print1
+from Tensile.Common.Architectures import SUPPORTED_ISA
 from Tensile.TensileInstructions.DataType import DataType
 
 from .Utilities import elineno
 
-from Tensile.Common import IsaInfo, print1
 
 MI_KEY: str = "MatrixInstruction"
 MI_ENABLED_KEY: str = "EnableMatrixInstruction"
@@ -212,7 +212,7 @@ def validateMatrixInstruction(
 
 
 def validateMIParameters(
-    solution: dict, isaInfoMap: Dict[str, IsaInfo], printSolutionRejectionReason: bool = True
+    solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], printSolutionRejectionReason: bool = True
 ):
     assert MI_KEY in solution, elineno() + ": missing MatrixInstruction"
     assert MI_ENABLED_KEY in solution, elineno() + ": missing EnableMatrixInstruction"
@@ -220,11 +220,19 @@ def validateMIParameters(
         elineno() + ": MI empty but enabled"
     )
 
-    isa = tuple(solution["ISA"])
-
+    isa = IsaVersion(*solution["ISA"])
+    assert isa in SUPPORTED_ISA, elineno() + ": Unsupported ISA: " + str(isa)
     # TODO: Temporary until all 940/941 ISAs are removed
     if (9, 4, 0) <= isa <= (9, 4, 1):
         isa = (9, 4, 2)
+
+    ptype = solution["ProblemType"]
+    isSparse = ptype.get("Sparse", 0)
+    miDataType = DataType(
+        ptype["DataType"]
+        if not solution.get("EnableF32XdlMathOp", False)
+        else ptype["F32XdlMathOp"]
+    )
 
     mi4 = solution[MI_KEY]
     miEnabled = solution[MI_ENABLED_KEY]
@@ -232,6 +240,8 @@ def validateMIParameters(
     if len(mi4) == 0:
         assert miEnabled == False, elineno()
         return
+
+    assert mi4 in validMatrixInstructions, f"{elineno()} : invalid MI4: {str(mi4)} for type {miDataType.toChar()}"
 
     mi9 = [mi4[0], mi4[1], mi4[2], mi4[3]]
     assert "MatrixInstBM" in solution, elineno() + ": missing MatrixInstBM"
@@ -244,9 +254,8 @@ def validateMIParameters(
     assert len(mi4) == 4 and len(mi9) == 9, elineno() + " MI4: " + str(mi4) + " MI9: " + str(mi9)
 
     if not miEnabled:
-        return
+        return False
 
-    assert mi4 in validMatrixInstructions, elineno()
 
     wfsize = solution["WavefrontSize"]
     waves = solution["MIWaveGroup"][0] * solution["MIWaveGroup"][1]
@@ -255,13 +264,6 @@ def validateMIParameters(
     hasMFMA = isaInfoMap[isa].asmCaps["HasMFMA"]
     hasWMMA = isaInfoMap[isa].asmCaps["HasWMMA"]
 
-    ptype = solution["ProblemType"]
-    isSparse = ptype.get("Sparse", 0)
-    miDataType = DataType(
-        ptype["DataType"]
-        if not solution.get("EnableF32XdlMathOp", False)
-        else ptype["F32XdlMathOp"]
-    )
 
     miBlock = solution["MIBlock"]
     miWaveGroup = solution["MIWaveGroup"]
@@ -279,18 +281,18 @@ def validateMIParameters(
                 if miDataType.isBFloat16() and mi4 in validMFMA["B1k"]:  # but is valid bf16 MFMA
                     assert solution["MFMA_BF16_1K"], elineno()
                 else:
-                    return reject(
+                    return not reject(
                         solution,
                         printSolutionRejectionReason,
                         f"Invalid MFMA BFloat16 configuration: {solution}",
                     )
         elif hasWMMA and (not mi4 in validWMMA):
-            return reject(
+            return not reject(
                 solution, printSolutionRejectionReason, f"Invalid WMMA configuration: {solution}"
             )
     else:
         if not (miDataType.toChar() in validSMFMA and mi4 in validSMFMA[miDataType.toChar()]):
-            return reject(
+            return not reject(
                 solution, printSolutionRejectionReason, f"Invalid SMFMA configuration: {solution}"
             )
 
@@ -318,10 +320,11 @@ def validateMIParameters(
     miInputPerThread = solution["MIInputPerThread"]
 
     # If Navi architecture, the input per thread is different
-    if (10, 0, 0) <= isa <= (11, 0, 2):
+    if IsaVersion(10, 0, 0) <= isa <= IsaVersion(11, 0, 2):
         assert miInputPerThread == mi4[2], elineno()
     else:
-        assert miInputPerThread == mi4[0] * mi4[2] * mi4[3] // wfsize, elineno()
+        assert miInputPerThread == mi4[0] * mi4[2] * mi4[3] // wfsize, f"{elineno()} MIInputPerThread: {miInputPerThread} != {mi4[0]} * {mi4[2]} * {mi4[3]} / {wfsize} = {mi4[0] * mi4[2] * mi4[3] // wfsize}"
+
 
     # miInputPerThreadA = solution["MIInputPerThreadA"]
     # miInputPerThreadB = solution["MIInputPerThreadB"]
