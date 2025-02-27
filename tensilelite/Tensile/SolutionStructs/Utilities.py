@@ -26,7 +26,7 @@ import sys
 import pprint
 from typing import Dict
 
-from Tensile.Common import IsaVersion, IsaInfo, print1
+from Tensile.Common import IsaVersion, IsaInfo, print1, print2
 from Tensile.Common.ValidParameters import validMFMA
 from Tensile.TensileInstructions import DataType
 
@@ -82,7 +82,7 @@ def matrixInstructionToMIParameters(
         wavefrontSize: The wavefront size. Typically "WavefrontSize" in a solution.
         problemType: The problem type dictionary. Typically "ProblemType" in a solution.
     """
-    print1(f">> Converting MatrixInstruction {mi} to MI parameter:")
+    print1(f">> --DBG-- Converting MatrixInstruction {mi} to MI parameters")
 
     if len(mi) != 9:
       raise ValueError(f"MatrixInstruction must be 9 items long to convert into MI"
@@ -103,11 +103,13 @@ def matrixInstructionToMIParameters(
     mi4  = [mi[0], mi[1], mi[2], mi[3]]
     result["MatrixInstruction"] = mi4
     result["EnableMatrixInstruction"] = True
+    result["MatrixInstM"] = mi[0]
+    result["MatrixInstN"] = mi[1]
+    result["MatrixInstK"] = mi[2]
+    result["MatrixInstB"] = mi[3]
 
     waves = mi[7]* mi[8]
     wg0 = mi[4] * mi[0] * mi[7]
-
-    print(f"### waves: {waves} wg0: {wg0} mi4: {mi4} mi: {mi}")
 
     result["WorkGroup"] = [wg0, waves*wavefrontSize // wg0, workGroup[2]]
     result["ThreadTile"] = [1, 1]  # dummy

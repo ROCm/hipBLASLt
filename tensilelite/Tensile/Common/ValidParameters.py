@@ -748,7 +748,7 @@ validParameters = {
     # later on, we'll relax this to inner kernel languages and outer kernel languages, such as inline asm embedded in ocl or in llvm
     "KernelLanguage": ["Assembly"],
     # We set validParams["ISA"] in multiple places
-    "ISA": validISA,  # arch for assembly kernels 
+    "ISA": validISA,  # arch for assembly kernels
     # Name of the custom kernel located at `CUSTOM_KERNEL_PATH`.
     # a custom kernel is a user written assembly kernel with its associated configuration parameters included in a custom.config section
     # inside the yaml block between the --- and ... markers.  These parameters are only used for information purposes, not kernel generation.
@@ -782,6 +782,28 @@ validParameters = {
     "ConvertAfterDS": [False, True],
     # Force disable shadow init to release more sgpr in preloop
     "ForceDisableShadowInit": [False, True],
+    "EnableF32XdlMathOp": [False, True],
+    'EnableMatrixInstruction': [False, True],
+    'ISA': -1,
+    'MFMA_BF16_1K': [False, True],
+    'MIBlock': -1,
+    'MIInputPerThread': -1,
+    'MIInputPerThreadA': -1,
+    'MIInputPerThreadB': -1,
+    'MIInputPerThreadMetadata': -1,
+    'MIWaveGroup': -1,
+    'MIWaveTile': -1,
+    'MatrixInstM': -1,
+    'MatrixInstN': -1,
+    'MatrixInstK': -1,
+    'MatrixInstB': -1,
+    'MatrixInstBM': -1,
+    'MatrixInstBN': -1,
+    'MatrixInstruction': -1,
+    'Sparse': -1,
+    'ThreadTile': -1,
+    'WavefrontSize': -1,
+    'WorkGroup': -1,
 }
 
 

@@ -122,6 +122,7 @@ def _getCustomKernelSolutionObj(
     ptype = sol["ProblemType"]
     workgroup = sol["WorkGroup"]
 
+    # TODO: this should be deleted once all custom kernel configs MI are length 4.
     miParams = matrixInstructionToMIParameters(mi, isa, wavefrontSize, ptype, workgroup, isaInfoMap)
     sol.update(miParams)
 

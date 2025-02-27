@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 ################################################################################
 #
 # Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
@@ -24,21 +22,41 @@
 #
 ################################################################################
 
-# This script only gets called by CMake
+"""
+ValidWorkGroup
+---
+Dimensions of the workgroup which will operate on a tile and share lds
+Example: ( wg0 x wg1 x LocalSplitU )
+"""
 
-try:
-    from Tensile import TensileLogicCUSTOM
-except ImportError:
-    import os.path
-    import sys
-    parentdir = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
-    print(parentdir)
-    sys.path.append(parentdir)
+from typing import Dict
 
-    from Tensile import TensileLogicCUSTOM
+from Tensile.Common import IsaVersion, IsaInfo
 
-################################################################################
-# Main
-################################################################################
-if __name__ == "__main__":
-    TensileLogicCUSTOM.main()
+from .Utilities import elineno
+
+validWorkGroups = []
+for numThreads in range(32, 1025, 32):
+    for nsg in [1, 2, 4, 8, 16, 32, 64, 96, 128, 256]:
+        for sg0 in range(1, numThreads // nsg + 1):
+            sg1 = numThreads // nsg // sg0
+            if sg0 * sg1 * nsg == numThreads:
+                workGroup = [sg0, sg1, nsg]
+                validWorkGroups.append(workGroup)
+
+
+def validateWorkGroup(solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], filepath: str):
+    try:
+        _validateWorkGroup(solution, isaInfoMap)
+        assert solution["Valid"], f"Solution was rejected: {elineno()}"
+        return True
+    except AssertionError as e:
+        print(
+            f"Error: Validation failed: {e} (file: {filepath}, index: {solution['SolutionIndex']})"
+        )
+        return False
+
+
+def _validateWorkGroup(solution: dict, isaInfoMap: dict):
+    assert "WorkGroup" in solution, elineno()
+    assert solution["WorkGroup"] in validWorkGroups, elineno()

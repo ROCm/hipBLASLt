@@ -502,7 +502,6 @@ def printCapabilitiesTable(isaInfoMap: Dict[str, IsaInfo]):
             for info in isaInfoMap.values()
         ]
 
-    print1(f"infomap: {isaInfoMap}")
     gfxs = list(map(isaToGfx, isaInfoMap.keys()))
     headerRow = ["Capability"] + gfxs
 

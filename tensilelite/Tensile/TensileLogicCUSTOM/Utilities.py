@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 ################################################################################
 #
 # Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
@@ -24,21 +22,13 @@
 #
 ################################################################################
 
-# This script only gets called by CMake
+from pathlib import Path
+from inspect import currentframe, getframeinfo
 
-try:
-    from Tensile import TensileLogicCUSTOM
-except ImportError:
-    import os.path
-    import sys
-    parentdir = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
-    print(parentdir)
-    sys.path.append(parentdir)
 
-    from Tensile import TensileLogicCUSTOM
-
-################################################################################
-# Main
-################################################################################
-if __name__ == "__main__":
-    TensileLogicCUSTOM.main()
+def elineno():
+    """
+    Return the file name and line number of the caller.
+    """
+    frame = getframeinfo(currentframe().f_back)
+    return f"{Path(frame.filename).name}:{frame.lineno}"
