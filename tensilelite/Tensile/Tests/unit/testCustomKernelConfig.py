@@ -112,47 +112,7 @@ custom.config:
 """
 def testConvert4ItemCustomKernelConfig():
 
-    inputConf = yaml.load(
-        """
-custom.config:
-   ProblemType:
-      OperationType: GEMM
-      DataTypeA: f8n
-      DataTypeB: h
-      UseScaleAB: "Scalar"
-      DataType: h
-      DestDataType: s
-      ComputeDataType: s
-      HighPrecisionAccumulate: True
-      TransposeA: False
-      TransposeB: False
-      UseBias: 1
-      Activation: True
-      UseScaleAlphaVec: 1
-      UseBeta: True
-      Batched: True
-      GroupedGemm:   True
-      SupportUserArgs: True
-   MatrixInstruction: [32, 32, 8, 1, 5, 6, 7, 8, 9]
-   1LDSBuffer: 1
-   ScheduleIterAlg: 3
-   DepthU: 32
-   StaggerU: 0
-   WorkGroupMapping: 8
-   WaveSeparateGlobalReadA: 1
-   WaveSeparateGlobalReadB: 1
-   GlobalReadVectorWidthA: 4
-   GlobalReadVectorWidthB: 2
-   AssertFree0ElementMultiple: 4
-   AssertSummationElementMultiple: 1
-   NoReject: 1
-   InternalSupportParams:
-      KernArgsVersion: 0
-      SupportUserGSU: False
-      SupportCustomWGM: False
-      SupportCustomStaggerU: False
-      UseUniversalArgs: False
-""",
+    inputConf = yaml.load("1234",
         yaml.SafeLoader,
     )
     inputConf = inputConf["custom.config"]

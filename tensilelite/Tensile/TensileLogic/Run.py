@@ -56,9 +56,9 @@ def getParams(isaInfoMap, cxxCompiler):
     return gp
 
 
-def handleCustomKernel(sol: dict, isaInfoMap: dict) -> dict:
+def handleCustomKernel(sol: dict, isaInfoMap: dict) -> dict | None:
     if not isCustomKernelConfig(sol):
-        return sol
+        return None
 
     name = sol["CustomKernelName"]
     print1(f">>     Custom kernel: {name}")
@@ -103,6 +103,10 @@ def runChecks(logicPath: str, isaInfoMap: Dict[IsaVersion, IsaInfo], files: List
 
         for s in solutions:
             s = handleCustomKernel(s, isaInfoMap)
+
+            if s is None:
+                continue
+
             if all(
                 [
                     validateMatrixInstruction(s, isaInfoMap, file.relative_to(logicPath)),

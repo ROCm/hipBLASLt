@@ -28,7 +28,7 @@ from typing import Any, Dict
 from Tensile.Toolchain.Validators import ToolchainDefaults
 
 
-def parseArguments() -> Dict[str, Any]:
+def parseArguments():
     """
     Returns:
         A dictionary containing the keys representing options and their values.
