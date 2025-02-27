@@ -98,7 +98,7 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
   functionNames = []
 
   createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, cxxCompiler)
-  subprocess.run(shlex.split(createLibraryScript), cwd=clientLibraryPath)
+  subprocess.run(createLibraryScript, cwd=clientLibraryPath)
   coList = glob(os.path.join(clientLibraryPath, "library/*.co"))
   yamlList = glob(os.path.join(clientLibraryPath, "library/*.yaml"))
 
