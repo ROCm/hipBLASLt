@@ -94,6 +94,10 @@ namespace TensileLite
                 return track.first;
             }
 
+            const K &back() const {
+                return entries.back();
+            }
+
         private:
             EntryMap entryMap;
             Entries  entries;
@@ -1945,6 +1949,12 @@ namespace TensileLite
         {
             for(size_t i = 0; i < m_vdata.size(); i++)
             {
+                bool needSwizzle
+                    = (problem.swizzleTensorA() && i == ContractionProblemGemm::TENSOR::A)
+                      || (problem.swizzleTensorB() && i == ContractionProblemGemm::TENSOR::B);
+                //Copy swizzle tensor would be in copySwizzledToGPUBuffer
+                if(needSwizzle)
+                    continue;
                 void* ptr  = nullptr;
                 auto& desc = problem.tensors()[i];
                 auto  it   = m_vdata[i].pristine.find(desc.dataType());
@@ -1999,11 +2009,18 @@ namespace TensileLite
                     if(g_swizzleCache.count(swizzleKey))
                     {
                         Tensor& permuted = g_swizzleCache.at(swizzleKey);
-                        ptr              = copyInputBuffers(desc,
-                                               p.gpuInput.valid.get(),
-                                               permuted.as<void>(),
-                                               permuted.getDesc().flattenSize(),
-                                               hipMemcpyHostToDevice);
+
+                        if (swizzleKey != g_swizzleCache.back()) {
+                            ptr = copyInputBuffers(desc,
+                                    p.gpuInput.valid.get(),
+                                    permuted.as<void>(),
+                                    permuted.getDesc().flattenSize(),
+                                    hipMemcpyHostToDevice);
+                        }
+                        else
+                        {
+                            ptr = p.gpuInput.valid.get();
+                        }
                     }
                     else
                     {
