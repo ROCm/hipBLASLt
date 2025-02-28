@@ -55,7 +55,7 @@ from Tensile.Common import (
     tqdm,
     verbosity,
 )
-from Tensile.Common.Naming import getKernelFileBase, getKeyNoInternalArgs, getMinNaming, getSerialNaming
+from Tensile.SolutionStructs.Naming import getKernelFileBase, getKeyNoInternalArgs, getMinNaming, getSerialNaming
 
 from Tensile.CustomYamlLoader import load_logic_gfx_arch
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
@@ -366,7 +366,7 @@ def writeSolutionsAndKernelsTCL(
         asmToolchain.linker,
         asmToolchain.bundler,
         globalParameters["ROCmLdPath"],
-        asmKernels, 
+        asmKernels,
         destLibPath,
         assemblyTmpPath,
         compress,

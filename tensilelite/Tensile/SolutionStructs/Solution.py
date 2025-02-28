@@ -43,7 +43,7 @@ from Tensile.Common import assignParameterWithDefault, IsaInfo, \
                     print1, print2, printExit, printWarning, \
                     roundUp, INDEX_CHARS, IsaVersion, SemanticVersion, \
                     DepthUConfig
-from Tensile.Common.Naming import getNameFull
+from Tensile.SolutionStructs.Naming import getNameFull
 from Tensile.ProblemType import ProblemType
 from Tensile.Toolchain.Component import Assembler
 
@@ -208,9 +208,9 @@ class Solution(collections.abc.Mapping):
     else:
       self["InternalSupportParams"] = defaultInternalSupportParams
 
-    # # assign parameters with defaults
-    # for key in defaultSolution:
-    #   assignParameterWithDefault(self._state, key, config, defaultSolution)
+    # Assign solution state from config, filling missing from the defaultSolution
+    for key in defaultSolution:
+      assignParameterWithDefault(self._state, key, config, defaultSolution)
 
     if 'ISA' not in self._state:
       if 'ISA' in config:

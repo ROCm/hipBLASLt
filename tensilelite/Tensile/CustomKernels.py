@@ -23,7 +23,7 @@
 ################################################################################
 
 from . import CUSTOM_KERNEL_PATH
-from .Common.ValidParameters import checkParametersAreValid, validParameters
+from .Common.ValidParameters import checkParametersAreValid, validParameters, newMIValidParameters
 
 import yaml
 
@@ -95,7 +95,7 @@ def getCustomKernelConfig(
             kernelIsp[key] = internalSupportParams[key]
     for k, v in kernelConfig.items():
         if k != "ProblemType":
-            checkParametersAreValid((k, [v]), validParameters)
+            checkParametersAreValid((k, [v]), validParameters + newMIValidParameters)
 
     kernelConfig["KernelLanguage"] = "Assembly"
     kernelConfig["CustomKernelName"] = kernelName

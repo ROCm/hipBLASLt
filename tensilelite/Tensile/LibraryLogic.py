@@ -27,7 +27,7 @@ from typing import Dict
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
   assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, \
   LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo, DepthUConfig
-from Tensile.Common.Naming import getMinNaming, getNameMin, getNameFull
+from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin, getNameFull
 from . import LibraryIO
 from . import SolutionSelectionLibrary
 
@@ -1432,13 +1432,13 @@ class LogicAnalyzer:
 
 
 def generateLogic(
-    config, 
-    benchmarkDataPath, 
-    libraryLogicPath, 
-    cxxCompiler: str, 
-    splitGSU: bool, 
-    printSolutionRejectionReason: bool, 
-    printIndexAssignmentInfo: bool, 
+    config,
+    benchmarkDataPath,
+    libraryLogicPath,
+    cxxCompiler: str,
+    splitGSU: bool,
+    printSolutionRejectionReason: bool,
+    printIndexAssignmentInfo: bool,
     depthUConfig: DepthUConfig,
     isaInfoMap: Dict[str, IsaInfo]
   ):
@@ -1485,11 +1485,11 @@ def generateLogic(
       if not os.path.exists(solutionsFileName):
         printExit("%s doesn't exist for %s" % (solutionsFileName, fileBase) )
       (problemSizes, solutions) = LibraryIO.parseSolutionsFile(
-                                      solutionsFileName, 
-                                      cxxCompiler, 
-                                      splitGSU, 
-                                      printSolutionRejectionReason, 
-                                      printIndexAssignmentInfo, 
+                                      solutionsFileName,
+                                      cxxCompiler,
+                                      splitGSU,
+                                      printSolutionRejectionReason,
+                                      printIndexAssignmentInfo,
                                       depthUConfig,
                                       isaInfoMap
                                   )
@@ -1566,25 +1566,25 @@ def read_max_freq():
 ################################################################################
 ################################################################################
 def main(
-      config, 
-      cxxCompiler: str, 
-      outputPath: Path, 
-      splitGSU: bool, 
-      printSolutionRejectionReason: bool, 
-      printIndexAssignmentInfo: bool, 
+      config,
+      cxxCompiler: str,
+      outputPath: Path,
+      splitGSU: bool,
+      printSolutionRejectionReason: bool,
+      printIndexAssignmentInfo: bool,
       depthUConfig: DepthUConfig,
       isaInfoMap: Dict[str, IsaInfo]
     ):
   benchmarkDataPath = outputPath / BENCHMARK_DATA_DIR
   libraryLogicPath = outputPath / LIBRARY_LOGIC_DIR
   generateLogic(
-    config, 
-    benchmarkDataPath, 
-    libraryLogicPath, 
-    cxxCompiler, 
-    splitGSU, 
-    printSolutionRejectionReason, 
-    printIndexAssignmentInfo, 
-    depthUConfig, 
+    config,
+    benchmarkDataPath,
+    libraryLogicPath,
+    cxxCompiler,
+    splitGSU,
+    printSolutionRejectionReason,
+    printIndexAssignmentInfo,
+    depthUConfig,
     isaInfoMap
   )

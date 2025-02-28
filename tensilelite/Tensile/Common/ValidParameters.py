@@ -782,6 +782,9 @@ validParameters = {
     "ConvertAfterDS": [False, True],
     # Force disable shadow init to release more sgpr in preloop
     "ForceDisableShadowInit": [False, True],
+}
+
+newMIValidParameters = {
     "EnableF32XdlMathOp": [False, True],
     'EnableMatrixInstruction': [False, True],
     'ISA': -1,

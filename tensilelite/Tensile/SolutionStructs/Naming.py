@@ -23,14 +23,15 @@
 ################################################################################
 from copy import deepcopy
 from functools import lru_cache
-from .Constants import MAX_FILENAME_LENGTH
-from .ValidParameters import validParameters
+from typing import List
 
+from Tensile.Common.Constants import MAX_FILENAME_LENGTH
+from Tensile.Common.ValidParameters import validParameters
 from Tensile.ProblemType import ProblemType
 
 ########################################
 # create a dictionary with booleans on whether to include parameter in name
-def getMinNaming(objs):
+def getMinNaming(objs: list):
   nonCKObjs = [obj for obj in objs if not ("CustomKernelName" in obj and obj["CustomKernelName"])]
   # early return
   if len(nonCKObjs) == 0:

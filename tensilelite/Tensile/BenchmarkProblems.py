@@ -37,6 +37,8 @@ from Tensile.TensileLogic.ValidMatrixInstruction import validateMIParameters
 from Tensile.ProblemType import ProblemType
 from Tensile.Toolchain.Component import Assembler
 from Tensile.SolutionStructs import Solution, ProblemSizes, matrixInstructionToMIParameters
+from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin, getSerialNaming, getNameFull, \
+                                  getKeyNoInternalArgs
 
 from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
@@ -50,8 +52,6 @@ from .Toolchain.Source import SourceToolchain
 from .Common import globalParameters, HR, print1, print2, IsaInfo, defaultSolution, \
         printExit, printWarning, ensurePath, startTime, tqdm, state, \
         BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, isaToGfx, DepthUConfig
-from Tensile.Common.Naming import getMinNaming, getNameMin, getSerialNaming, getNameFull, \
-                                  getKeyNoInternalArgs
 
 
 def _generateForkedSolutions(problemType, constantParams, forkPermutations, assembler: Assembler, \
