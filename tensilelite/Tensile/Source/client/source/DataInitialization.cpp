@@ -2008,9 +2008,8 @@ namespace TensileLite
 
                     if(g_swizzleCache.count(swizzleKey))
                     {
-                        Tensor& permuted = g_swizzleCache.at(swizzleKey);
-
                         if (swizzleKey != g_swizzleCache.back()) {
+                            Tensor& permuted = g_swizzleCache.at(swizzleKey);
                             ptr = copyInputBuffers(desc,
                                     p.gpuInput.valid.get(),
                                     permuted.as<void>(),
