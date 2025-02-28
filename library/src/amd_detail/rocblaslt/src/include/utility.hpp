@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -283,6 +283,23 @@ void log_bench(const char* func, Ts&&... xs)
     *os << "hipblaslt-bench ";
     log_arguments_bench(*os, std::forward<Ts>(xs)...);
     *os << std::endl;
+}
+
+inline void log_bench_from_str(std::string s)
+{
+    std::lock_guard<std::mutex> lock(log_mutex);
+    std::ostream*               os = get_logger_os();
+    *os << s.c_str();
+    *os << std::endl;
+}
+
+template <typename... Ts>
+inline std::string log_str(const char* func, Ts&&... xs)
+{
+    std::stringstream ss;
+    ss << "hipblaslt-bench ";
+    log_arguments_bench(ss, std::forward<Ts>(xs)...);
+    return ss.str();
 }
 
 // if profile logging is turned on with

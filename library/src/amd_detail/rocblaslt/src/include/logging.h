@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -385,8 +385,8 @@ void log_arguments(
     os << "\n";
 }
 
-template <typename T, typename... Ts>
-void log_arguments_bench(std::ostream& os, T& x, Ts&&... xs)
+template <typename S, typename T, typename... Ts>
+void log_arguments_bench(S& os, T& x, Ts&&... xs)
 {
     if constexpr(std::is_same_v<T, const char*>)
     {

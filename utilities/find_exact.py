@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -72,6 +72,7 @@ defaultBenchOptions = {"ProblemType": {
     "SolutionIndex": None, # Only works in AlgoMethod index
     "ApiMethod": "cpp",
     "RotatingBuffer": 512,
+    "Device": 0,
 }, "TuningParameters": {
     "SplitK": [0]
 }, "ProblemSizes": []}
@@ -218,6 +219,7 @@ def findExact(config):
         print("--Running size: %s"%(filename))
         command = [execBenchPath,
                 "--print_kernel_info",
+                "--device", str(config["TestConfig"]["Device"]),
                 "--transA", config["ProblemType"]["TransposeA"],
                 "--transB", config["ProblemType"]["TransposeB"],
                 "--a_type", aType,
