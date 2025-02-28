@@ -29,7 +29,7 @@ from Tensile.Activation import ActivationType
 from Tensile.TensileInstructions.DataType import DataType
 
 from Tensile.Common.Constants import INDEX_CHARS
-from Tensile.Common.Utilities import assignParameterWithDefault, printWarning, print2
+from Tensile.Common.Utilities import assignParameterWithDefault, printWarning, print2, print
 
 
 ################################################################################
@@ -410,6 +410,7 @@ class ProblemType(Mapping):
 
     if "Gradient" in config:
       if config["Gradient"]:
+        print1(f" --ERR-- Use bias and activation: {self['UseBias']} and {self['ActivationType']}")
         if (not self["UseBias"]) and self["ActivationType"] == 'none':
           printWarning("Gradient is disabled cause bias and activation are both disabled.")
           self["Gradient"] = False

@@ -49,8 +49,8 @@ from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
 from .CustomKernels import getCustomKernelConfig
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
-from .Common import globalParameters, HR, print1, print2, IsaInfo, defaultSolution, \
-        printExit, printWarning, ensurePath, startTime, tqdm, state, \
+from .Common import globalParameters, HR, print1, print2, IsaInfo, IsaVersion, \
+        printExit, printWarning, ensurePath, startTime, tqdm, state, gfxToVariants, \
         BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, isaToGfx, DepthUConfig
 
 
@@ -199,7 +199,7 @@ def writeBenchmarkFiles(
         debugConfig: DebugConfig,
         depthUConfig: DepthUConfig,
         deviceId: int,
-        isaInfoMap: Dict[str, IsaInfo]
+        isaInfoMap: Dict[IsaVersion, IsaInfo]
     ):
     """Write all the files needed for a given benchmarking step"""
 
@@ -236,6 +236,8 @@ def writeBenchmarkFiles(
                                debugConfig,
                            )
 
+    cmdLineArchs = [var for isa in isaInfoMap.keys() for var in gfxToVariants(isaToGfx(isa))]
+    # cmdLineArchs = [variant isaToGfx(isa) for isa in isaInfoMap.keys() for gfxToVariants()]
     # write solution, kernels and CMake
     problemType = solutions[0]["ProblemType"]
     codeObjectFiles, _= writeSolutionsAndKernels( \
@@ -247,7 +249,7 @@ def writeBenchmarkFiles(
                             kernelHelperObjs,
                             kernelWriterAssembly,
                             debugConfig.splitGSU,
-                            [isaToGfx(isa) for isa in isaInfoMap.keys()],
+                            cmdLineArchs,
                             kernelSerialNaming,
                             kernelMinNaming,
                             errorTolerant=True,

@@ -58,6 +58,7 @@ def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Pa
     """
     coPath = None
     buildPath = Path(buildPath)
+    print1(f" ---DBG--- target: {target}, base: {base}, buildPath: {buildPath}, arch: {arch}")
     if "TensileLibrary" in base and "fallback" in base:
         coPath = buildPath / "{0}_{1}.hsaco.raw".format(base, arch)
     elif "TensileLibrary" in base:

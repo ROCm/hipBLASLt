@@ -514,6 +514,7 @@ class Solution(collections.abc.Mapping):
         reject(state, printRejectionReason, f"size of WorkGroup {state['NumThreads']} should be multiple of WavefrontSize {state['WavefrontSize']}")
 
     # macro tile sizes
+    printWarning(f" ---ERR--- seting macro tile: {state['SubGroup0']} {state['ThreadTile0']} {state['SubGroup1']} {state['ThreadTile1']}")
     if "SubGroup0" in state and "ThreadTile0" in state:
       state["MacroTile0"] = state["SubGroup0"]*state["ThreadTile0"]
     if "SubGroup1" in state and "ThreadTile1" in state:

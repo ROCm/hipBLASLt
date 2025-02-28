@@ -159,5 +159,5 @@ def matrixInstructionToMIParameters(
     result['MIInputPerThreadMetadata'] = result['MIInputPerThread'] if not isSparse else result['MIInputPerThread'] // 8
     result['Sparse'] = isSparse
 
-    print1(f">> MI Parameters: {pprint.pformat(result)}")
+    print2(f">> MI Parameters: {pprint.pformat(result)}")
     return result

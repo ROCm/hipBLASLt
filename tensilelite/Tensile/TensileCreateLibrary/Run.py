@@ -285,6 +285,7 @@ def writeSolutionsAndKernels(
             assemblyTmpPath,
             compress,
         )
+        print1(f" ---DBG--- Running buildSourceCodeObjectFiles cmdLineArchs: {cmdlineArchs}")
         buildSourceCodeObjectFiles(
             srcToolchain.compiler,
             srcToolchain.bundler,

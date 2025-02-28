@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ from ..TensileInstructions import Module, SMulI32, VAddLShiftLeftU32, VAddU32, V
                             vectorStaticRemainder, RegisterPoolResource, vgpr, sgpr, log2, \
                             vectorStaticDivideAndRemainder
 from ..Component import ComputeStoreVgprs
-from ..Common import DataDirection
+from ..Common import DataDirection, printExit, printWarning
 
 class ComputeStoreVgprsVALU(ComputeStoreVgprs):
     kernel = {"EnableMatrixInstruction": False,
@@ -186,6 +186,7 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
             strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.cinRowPtr), src0=vgpr(lsuTid1), src1=sgpr(strideC1), comment=" offset 1"))
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrD), src0=vgpr(lsuTid1), src1=sgpr(strideD1), comment=" offset 1"))
+            printWarning(f" --ERR-- problem: {kernel['ProblemType']}, GlobalSplitU: {kernel['GlobalSplitU']}, UseE: {kernel['ProblemType']['UseE']}")
             if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
                 module.add(VMovB32(dst=vgpr(writer.vgprs.coutRowPtrE), src=vgpr(lsuTid1), comment=" save offset 1 for E"))
             if writer.vgprs.coutRowPtrBias != -1:
