@@ -92,6 +92,7 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, asse
                 assembler,
                 isaInfoMap
             )
+            print1(f" ---INF--- Solution: {solutionObject._state}")
             if solutionObject["Valid"]:
                 solutionSet.add(solutionObject)
         elif debugConfig.printSolutionRejectionReason:

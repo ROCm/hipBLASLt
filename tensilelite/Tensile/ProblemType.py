@@ -29,7 +29,7 @@ from Tensile.Activation import ActivationType
 from Tensile.TensileInstructions.DataType import DataType
 
 from Tensile.Common.Constants import INDEX_CHARS
-from Tensile.Common.Utilities import assignParameterWithDefault, printWarning, print2, print
+from Tensile.Common.Utilities import assignParameterWithDefault, printWarning, print2, print1
 
 
 ################################################################################

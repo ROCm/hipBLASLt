@@ -523,6 +523,8 @@ class Solution(collections.abc.Mapping):
       if state["MacroTile0"] != state["MacroTile"][0] \
           or state["MacroTile1"] != state["MacroTile"][1]:
         reject(state, printRejectionReason, "MacroTile mismatch")
+    printWarning(f" ---ERR--- seting macro tile: {state['MacroTile0']} {state['MacroTile1']}")
+    printWarning(f" ---ERR--- global split U: {state['GlobalSplitU']}")
 
     # tail loop optimization
     state["tailLoopOptA"] = True
