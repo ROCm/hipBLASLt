@@ -16,6 +16,8 @@ subtrees:
     entries:
     - file: how-to-use-hipblaslt-tuning-utility
     - file: how-to-use-hipblaslt-offline-tuning
+    - file: how-to/how-to-use-streamk
+      title: Use Stream-K with hipBLASLt
   - caption: Contribution
     entries:
     - file: source-org
