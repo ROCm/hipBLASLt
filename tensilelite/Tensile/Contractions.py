@@ -28,10 +28,10 @@ from .Activation import ActivationType
 from .TensileInstructions import DataType
 from . import Hardware
 from . import Properties
-from .SolutionStructs import Solution as OriginalSolution
+from Tensile.SolutionStructs import Solution as OriginalSolution
 from .Common import gfxToIsa, internalParameters, state, state_key_ordering, \
                     IsaInfo, DepthUConfig
-from Tensile.ProblemType import getBiasDataTypeListDefault
+from Tensile.SolutionStructs.Problem import getBiasDataTypeListDefault
 from Tensile.Toolchain.Component import Assembler
 
 MIN_K_FOR_GSU = 32

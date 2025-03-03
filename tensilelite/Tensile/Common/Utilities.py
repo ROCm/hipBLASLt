@@ -28,10 +28,11 @@ import os
 import sys
 import time
 
+from inspect import currentframe, getframeinfo
 from copy import deepcopy
 from enum import Enum
+from pathlib import Path
 
-from .Types import IsaInfo
 from Tensile import __version__
 
 verbosity = 1
@@ -107,6 +108,14 @@ def ensurePath(path):
 
 def roundUp(f):
     return (int)(math.ceil(f))
+
+
+def elineno():
+    """
+    Return the file name and line number of the caller.
+    """
+    frame = getframeinfo(currentframe().f_back)
+    return f"{Path(frame.filename).name}:{frame.lineno}"
 
 
 ################################################################################

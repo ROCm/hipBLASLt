@@ -99,9 +99,9 @@ def executeStepsInConfig(
             cCompiler,
             outputPath,
             buildTmpPath,
-            config["ShortNames"], 
+            config["ShortNames"],
             debugConfig,
-            depthUConfig, 
+            depthUConfig,
             deviceId,
             isaInfoMap,
         )
@@ -122,14 +122,14 @@ def executeStepsInConfig(
             else:
                 libraryLogicConfig = {}
             LibraryLogic.main(
-                libraryLogicConfig, 
-                srcToolchain.compiler, 
-                outputPath, 
-                debugConfig.splitGSU, 
+                libraryLogicConfig,
+                srcToolchain.compiler,
+                outputPath,
+                debugConfig.splitGSU,
                 debugConfig.printSolutionRejectionReason,
                 debugConfig.printIndexAssignmentInfo,
                 depthUConfig,
-                isaInfoMap, 
+                isaInfoMap,
             )
             print1("")
         else:
@@ -442,11 +442,11 @@ def Tensile(userArgs):
     cxxCompiler, cCompiler, _, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     currentIsa = detectGlobalCurrentISA(device_id)
     isaInfoMap = makeIsaInfoMap([currentIsa], cxxCompiler)
-    assignGlobalParameters(config.get("GlobalParameters", {}), isaInfoMap, cxxCompiler)
+    assignGlobalParameters(config.get("GlobalParameters", {}), isaInfoMap)
 
     asmToolchain = makeAssemblyToolchain(
         cxxCompiler,
-        offloadBundler, 
+        offloadBundler,
         args.CodeObjectVersion,
     )
     srcToolchain = makeSourceToolchain(

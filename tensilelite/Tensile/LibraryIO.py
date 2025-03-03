@@ -24,7 +24,7 @@
 
 from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes
-from Tensile.ProblemType import ProblemType
+from Tensile.SolutionStructs.Problem import ProblemType
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
 from .Common import gfxToIsa, printExit, printWarning, print2, \
@@ -321,7 +321,7 @@ def parseLibraryLogicData(
     """Parses the data of a library logic file."""
     if isinstance(data, List):
         data = parseLibraryLogicList(data, srcFile)
-    
+
     #is_arch_valid = lambda cArch, tArch : (cArch == tArch or cArch == "all")
     #if not (archs is None) and "ArchitectureName" in data:
     #    if isinstance(archs, List):
@@ -357,6 +357,10 @@ def parseLibraryLogicData(
             customConfig = getCustomKernelConfig(solutionState["CustomKernelName"], isp)
             for key, value in customConfig.items():
                 solutionState[key] = value
+
+            if len(customConfig["MatrixInstruction"]) != 4:
+                raise ValueError(f"Custom kernel MatrixInstruction can only be of length 4, found {customConfig['MatrixInstruction']}")
+
             # The ActivationType setting in YAML is meaningless in customKernel case.
             # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
             solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
@@ -385,13 +389,13 @@ def parseLibraryLogicData(
     solutions = [solutionStateToSolution(solutionState, assembler, isaInfoMap) for solutionState in data["Solutions"]]
 
     newLibrary, _ = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(
-        data, 
-        solutions, 
-        splitGSU, 
-        printSolutionRejectionReason, 
+        data,
+        solutions,
+        splitGSU,
+        printSolutionRejectionReason,
         printIndexAssignmentInfo,
         depthUConfig,
-        assembler, 
+        assembler,
         isaInfoMap,
         lazyLibraryLoading
     )

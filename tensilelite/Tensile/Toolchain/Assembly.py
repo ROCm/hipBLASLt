@@ -30,7 +30,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Union, NamedTuple
 
-from ..Common import print2, isaToGfx
+from ..Common import print2, isaToGfx, print1
 from ..SolutionStructs import Solution
 
 from .Component import Assembler, Linker, Bundler
@@ -115,6 +115,7 @@ def buildAssemblyCodeObjectFiles(
         coName = kernel.get("codeObjectFile", None)
         if coName:
           coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (kernel["BaseName"] + extObj)))
+
       for coFileRaw, objFiles in coFileMap.items():
         objFiles = _batchObjectFiles(ldPath, objFiles, coFileRaw)
         linker(objFiles, str(coFileRaw))

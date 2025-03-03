@@ -36,8 +36,8 @@ from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
 from .Common import printWarning, roundUp, print2, DebugConfig, DataDirection, \
-  INDEX_CHARS, IsaVersion 
-from Tensile.Common.Naming import getKernelName
+  INDEX_CHARS, IsaVersion
+from Tensile.SolutionStructs.Naming import getKernelName
 from Tensile.Toolchain.Component import Assembler
 
 import abc
@@ -365,7 +365,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       kernelMinNaming,
       kernelSerialNaming,
       assembler: Assembler,
-      debugConfig: DebugConfig, 
+      debugConfig: DebugConfig,
     ):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming

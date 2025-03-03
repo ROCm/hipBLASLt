@@ -22,31 +22,33 @@
 #
 ################################################################################
 
-from .TensileInstructions import DataType, roundUpToNearestMultiple
-from .TensileInstructions.Base import fastdeepcopy as deepcopy
+from Tensile.TensileInstructions import DataType, roundUpToNearestMultiple
+from Tensile.TensileInstructions.Base import fastdeepcopy as deepcopy
 
-from .KernelWriterBetaOnly import KernelWriterBetaOnly
-from .KernelWriterConversion import KernelWriterConversion
-from .KernelWriterActivationEnumHeader import KernelWriterActivationEnumHeader
-from .KernelWriterActivationFunction import KernelWriterActivationFunction
-from .KernelWriterActivationOnly import KernelWriterActivationOnly
-from .KernelWriterReduction import KernelWriterReduction
+from Tensile.KernelWriterBetaOnly import KernelWriterBetaOnly
+from Tensile.KernelWriterConversion import KernelWriterConversion
+from Tensile.KernelWriterActivationEnumHeader import KernelWriterActivationEnumHeader
+from Tensile.KernelWriterActivationFunction import KernelWriterActivationFunction
+from Tensile.KernelWriterActivationOnly import KernelWriterActivationOnly
+from Tensile.KernelWriterReduction import KernelWriterReduction
 
-from .Activation import ActivationType
-from .AsmStoreState import VectorDataTypes
+from Tensile.Activation import ActivationType
+from Tensile.AsmStoreState import VectorDataTypes
 
-from .Common import assignParameterWithDefault, IsaInfo, \
+from Tensile.CustomKernels import isCustomKernelConfig
+from Tensile.Common import assignParameterWithDefault, IsaInfo, \
                     defaultSolution, \
                     defaultInternalSupportParams, \
                     internalParameters, \
-                    print2, printExit, printWarning, \
-                    validMFMA, validSMFMA, \
-                    roundUp, validWMMA, \
-                    INDEX_CHARS, IsaVersion, SemanticVersion, \
+                    print1, print2, printExit, printWarning, \
+                    roundUp, INDEX_CHARS, IsaVersion, SemanticVersion, \
                     DepthUConfig
-from Tensile.Common.Naming import getNameFull
-from Tensile.ProblemType import ProblemType
+from Tensile.SolutionStructs.Naming import getNameFull
+from Tensile.SolutionStructs.Problem import ProblemType
 from Tensile.Toolchain.Component import Assembler
+
+from .Utilities import reject
+
 
 from collections import OrderedDict
 from collections.abc import Mapping
@@ -55,33 +57,9 @@ from typing import List, Dict
 
 import collections
 import math
-import operator
 import sys
 
 
-########################################
-# Print a reject message :
-def reject(state, printSolutionRejectionReason: bool, *args):
-  if state and "NoReject" in state and state["NoReject"]:
-    return
-  if printSolutionRejectionReason:
-    sys.stdout.write("\nreject: ")
-    for a in args:
-      print(a)
-    #traceback.print_stack(None, 2)
-    solutionIndex = state["SolutionIndex"] if (state != None and "SolutionIndex" in state) else -1
-    if solutionIndex != -1:
-      # If we have valid solutionIndex, this means we are during TensileCreateLibrary stage
-      # In this stage, all solutions in the logic should be valid
-      # So if any rejection happens, print the warning for further check
-      # This will be done only when --global-parameters=PrintSolutionRejectionReason=True
-      solutionNameMin = state["SolutionNameMin"] if ("SolutionNameMin" in state) else None
-      # if we don't have SolutionNameMin, we simply use the problemTypeName
-      solutionNameMin = str(state["ProblemType"]) if (solutionNameMin == None) else solutionNameMin
-      raise Exception("!! Warning: Any rejection of a LibraryLogic is not expected, please check. \
-        SolutionIndex: %d (or SolutionName/ProblemType: %s)"%(solutionIndex, solutionNameMin))
-  if state != None:
-    state["Valid"] = False
 
 # print a labled variable
 def pvar(state, field):
@@ -97,351 +75,8 @@ class Fbs(Enum):
 
 
 ################################################################################
-# ProblemSizeRange
-################################################################################
-class ProblemSizeRange:
-
-  ########################################
-  def __init__(self, problemType, config):
-    self.totalIndices = 1+max(problemType["IndexAssignmentsA"]) + problemType["NumIndicesLD"]
-    if len(config) < self.totalIndices:
-      for i in range(len(config), self.totalIndices):
-        if i < self.totalIndices - problemType["NumIndicesLD"]:
-          config.append(0)
-        else:
-          config.append([0])
-
-    self.indexMax = []
-    self.indexIsSized = []
-    self.indicesSized = []
-    self.indicesMapped = []
-    for i in range(0, self.totalIndices):
-      dim = deepcopy(config[i])
-      if isinstance(dim, list):
-        if len(dim) == 1:
-          self.indicesSized.append([dim[0], 1, 0, dim[0]])
-        elif len(dim) == 2:
-          self.indicesSized.append([dim[0], dim[0], 0, dim[1]])
-        elif len(dim) == 3:
-          self.indicesSized.append([dim[0], dim[1], 0, dim[2]])
-        elif len(dim) == 4:
-          self.indicesSized.append([dim[0], dim[1], dim[2], dim[3]])
-        else:
-          printExit("dimension[%u] config (%s) has %u descriptors rather than 1-4."
-              % ( i, dim, len(dim) ))
-        self.indexIsSized.append(True)
-        self.indexMax.append(self.indicesSized[len(self.indicesSized)-1][3])
-
-      elif isinstance(dim, int):
-        self.indicesMapped.append(dim)
-        self.indexIsSized.append(False)
-        self.indexMax.append(self.indicesSized[self.indicesMapped[ \
-            len(self.indicesMapped)-1]][3])
-
-    # max num elements in each tensor
-    self.maxNumElements = [ 1, 1, 1 ]
-    for i in range(0, problemType["NumIndicesC"]):
-      self.maxNumElements[0] *= self.indexMax[i]
-    for i in problemType["IndexAssignmentsA"]:
-      self.maxNumElements[1] *= self.indexMax[i]
-    for i in problemType["IndexAssignmentsB"]:
-      self.maxNumElements[2] *= self.indexMax[i]
-
-    self.totalProblemSizes = 1
-    self.numProblemSizes = [] # per index
-    self.problemSizeToIndex = []
-    self.problemIndexToSize = []
-    sizedIdx = 0
-    for i in range(0, len(self.indexIsSized)):
-      self.problemSizeToIndex.append({})
-      self.problemIndexToSize.append({})
-      if self.indexIsSized[i]:
-        self.numProblemSizes.append(0)
-        index = self.indicesSized[sizedIdx]
-        sizedIdx += 1
-        currentSize = index[0]
-        currentIncrement = index[1]
-        while currentSize <= index[3]:
-          currentSize += currentIncrement
-          currentIncrement += index[2]
-          self.numProblemSizes[i] += 1
-      else:
-        self.numProblemSizes.append(1)
-      self.totalProblemSizes *= self.numProblemSizes[i]
-
-    ########################################
-    # enumerate problem sizes
-    currentSizedIndexSizes = []
-    currentSizedIndexIncrements = []
-    for i in range(0, len(self.indicesSized)):
-      currentSizedIndexSizes.append(self.indicesSized[i][0])
-      currentSizedIndexIncrements.append(self.indicesSized[i][1])
-
-    # iterate over all problem sizes
-    self.problemSizes = []
-    moreProblemSizes = True
-    problemIdx = 0
-    problemSize = [0]*self.totalIndices
-    while moreProblemSizes:
-      #/ convert current sized and mapped indices to full sizes
-      currentSizedIdx = 0
-      currentMappedIdx = 0
-      for i in range(0, self.totalIndices):
-        if self.indexIsSized[i]:
-          problemSize[i] = currentSizedIndexSizes[currentSizedIdx]
-          currentSizedIdx+=1
-        else:
-          problemSize[i] = problemSize[self.indicesMapped[currentMappedIdx]]
-          currentMappedIdx+=1
-      self.problemSizes.append(tuple(problemSize))
-
-      #/ increment sizes for next benchmark
-      currentSizedIndexSizes[0] += currentSizedIndexIncrements[0]
-      currentSizedIndexIncrements[0] += self.indicesSized[0][2]
-      for i in range(1, len(self.indicesSized)+1):
-        # if prior index past max, reset to min and increment next index
-        if currentSizedIndexSizes[i-1] > self.indicesSized[i-1][3]:
-          #/ reset prior index
-          currentSizedIndexSizes[i-1] = self.indicesSized[i-1][0]
-          currentSizedIndexIncrements[i-1] = self.indicesSized[i-1][1]
-          # increment next index
-          if i >= len(self.indicesSized):
-            moreProblemSizes = False
-          else:
-            currentSizedIndexSizes[i] += currentSizedIndexIncrements[i]
-            currentSizedIndexIncrements[i] += self.indicesSized[i][2]
-
-      problemIdx+=1
-
-  ########################################
-  # YAML format
-  def __str__(self):
-    state = "[ "
-    sizedIdx = 0
-    mappedIdx = 0
-    for i in range(0, len(self.indexIsSized)):
-      if self.indexIsSized[i]:
-        indices = self.indicesSized[sizedIdx]
-        state += "[ %u, %u, %u, %u ]" \
-            % (indices[0], indices[1], indices[2], indices[3])
-        sizedIdx += 1
-      else:
-        indices = self.indicesSized[self.indicesMapped[mappedIdx]]
-        state += str(self.indicesMapped[mappedIdx])
-        mappedIdx += 1
-      if i < len(self.indexIsSized)-1:
-        state += ", "
-    state += " ]"
-    return state
-
-class Problem:
-  """ Problem sizes, strides, padding and other info"""
-  def __init__(self, sizes=None, stridesA=None, stridesB=None, stridesC=None, stridesD=None, count=None):
-    self.sizes = tuple(sizes) if sizes else None
-    self.stridesA = tuple(stridesA) if stridesA else None
-    self.stridesB = tuple(stridesB) if stridesB else None
-    self.stridesC = tuple(stridesC) if stridesC else None
-    self.stridesD = tuple(stridesD) if stridesD else None
-
-    self.count = count
-
-  def __str__(self):
-    rv= "{ sizes:" + str(list(self.sizes))
-    if self.stridesA:
-      rv += ", stridesA:" + str(list(self.stridesA))
-    if self.stridesB:
-      rv += ", stridesB:" + str(list(self.stridesB))
-    if self.stridesC:
-      rv += ", stridesC:" + str(list(self.stridesC))
-    if self.stridesD:
-      rv += ", stridesD:" + str(list(self.stridesD))
-    rv += " }"
-    return rv
-
-class ExactList(Problem):
-  def __init__(self, e, problemType):
-    if len(e) == problemType["TotalIndices"]:
-      if -1 in e:
-        printExit("ExactSize %s contains -1" % (e))
-      if problemType["OperationType"] == "GEMM":
-        e += [-1, -1, -1, -1]
-        e = ExactList.convertLeadingDims(problemType, tuple(e))
-      sizes=e
-
-    elif len(e) == (problemType["TotalIndices"] + problemType["NumIndicesLD"]):
-      sizes = ExactList.convertLeadingDims(problemType, tuple(e))
-    else:
-      printExit("ExactSize %s doesn't match indices of ProblemType %s, totalIndices=%d, len e=%d, NumIndicesLD = %d" \
-          % (e, problemType, problemType["TotalIndices"], len(e), problemType["NumIndicesLD"]) )
-
-    # TODO- pass strides here, remove calls to convertLeadingDims
-    Problem.__init__(self, sizes=sizes)
-
-  def __str__(self):
-    return str(list(self.sizes))
-
-  @staticmethod
-  def convertLeadingDims(problemType, problemSize, stridesA = None, stridesB = None, stridesC = None, stridesD = None):
-    # FIXME-problem: refactor to eliminate max, pass strides in strideB parm rather than hacked
-    # onto the end of the sizes list
-    predStridesD = stridesD is not None and stridesD[1] != -1
-    predStridesC = stridesC is not None and stridesC[1] != -1
-    predStridesA = stridesA is not None and stridesA[1] != -1
-    predStridesB = stridesB is not None and stridesB[1] != -1
-    return problemSize[:problemType["NumIndicesC"]+1] + \
-           (max(problemSize[0], problemSize[problemType["IndexAssignmentsLD"][0]]) if not predStridesD else stridesD[1], ) + \
-           (max(problemSize[0], problemSize[problemType["IndexAssignmentsLD"][1]]) if not predStridesC else stridesC[1], ) + \
-           (max(problemSize[problemType["IndexAssignmentsLD"][2]],
-                problemSize[problemType["IndexAssignmentsA"][0]]) if not predStridesA else stridesA[1], ) + \
-           (max(problemSize[problemType["IndexAssignmentsLD"][3]],
-                problemSize[problemType["IndexAssignmentsB"][0]]) if not predStridesB else stridesB[1], )
-
-
-class ExactDict(Problem):
-  AllowedFields = [ 'count', 'sizes', 'stridesA', 'stridesB', 'stridesC', 'stridesD' ]
-
-  def __init__(self, e, problemType):
-    Problem.__init__(self)
-
-    for f in e:
-      if f in ExactDict.AllowedFields:
-        setattr(self, f, e[f])
-      else:
-        raise RuntimeError ("specified field '%s' is not a valid Exact dict field"%f)
-
-    if problemType:
-      if "OperationType" in problemType and problemType["OperationType"] == "GEMM":
-        sizesTuple = tuple(self.sizes + [-1, -1, -1, -1])
-        self.sizes = ExactList.convertLeadingDims(problemType, sizesTuple, self.stridesA, self.stridesB, self.stridesC, self.stridesD)
-
-    if problemType:
-      if "OperationType" in problemType and problemType["OperationType"] == "GEMM":
-        if len(self.sizes) != (problemType["TotalIndices"] + problemType["NumIndicesLD"]):
-        # FIXME-ExactDict size descriptor still (but preferrably not so) uses 8-tuple for GEMM problems
-          raise RuntimeError ("specified size=%s does not have enough indices for problem (expected %d, got %d)" \
-                % (self.sizes, problemType["TotalIndices"]+problemType["NumIndicesLD"], len(self.sizes)))
-      elif len(self.sizes) != problemType["TotalIndices"]:
-        raise RuntimeError ("specified size=%s does not have enough indices for problem (expected %d, got %d)" \
-                % (self.sizes, problemType["TotalIndices"], len(self.sizes)))
-
-
-################################################################################
-# ProblemSizes
-################################################################################
-"""
-Adapter class for class `ProblemSizes`. It satisfies the implicit usage requirement
-of ClientWriter.writeClientConfig() by converting ExactLogic to list of `Problem` objects
-"""
-class ProblemSizesMock:
-  def __init__(self, exactLogic):
-    self.problems = [Problem(problem) for problem, solution in exactLogic]
-
-class ProblemSizesMockDummy:
-  def __init__(self):
-    self.problems = [Problem(sizes=[128, 128, 1, 512])]
-
-class ProblemSizes:
-
-  ########################################
-  def __init__(self, problemType, config):
-    self.problemType = problemType
-    self.ranges = []
-    self.exacts = []
-    self.minStrides = None
-    if config:
-      for dictionary in config:
-        for sizeTypeKey in dictionary:
-          #print ("PROBLEM parsed:", sizeTypeKey, dictionary[sizeTypeKey])
-          if sizeTypeKey == "Range":
-            psr = ProblemSizeRange(problemType, dictionary[sizeTypeKey])
-            self.ranges.append( psr )
-          elif sizeTypeKey == "Exact":
-            e= dictionary[sizeTypeKey]
-            if isinstance(e,list):
-              self.exacts.append(ExactList(e, problemType))
-            elif isinstance(e,dict):
-              self.exacts.append(ExactDict(e, problemType))
-            else:
-              printExit("Unsupported Exact type==%s"%type(e))
-          elif sizeTypeKey == "MinStride":
-            e = dictionary[sizeTypeKey]
-            if len(e) != problemType["TotalIndices"]:
-              printExit("MinStride %s doesn't match indices of ProblemType %s" \
-                  % (e, problemType) )
-            if self.minStrides:
-              printExit("Only one MinStride command is allowed in a ProblemsSizes definition.  Previous minStrides:%s, New minstride:%s" \
-                  % (self.minStrides, e) )
-
-            self.minStrides=(tuple(e))
-          else:
-            printExit("ProblemSize Type %s not supported"%sizeTypeKey)
-
-    if not self.minStrides:
-      # set harmless default mins of 0
-      self.minStrides = ([0]* problemType["TotalIndices"])
-
-    # not the ideal spot, but convert leading dims that are below the minimum size
-    if problemType["OperationType"] == "GEMM":
-      for i in range(0, len(self.ranges)):
-        self.ranges[i].problemSizes[:] = \
-          [ExactList.convertLeadingDims(self.problemType, problemSize) for problemSize in self.ranges[i].problemSizes]
-
-    self.problems = OrderedDict()
-    for sizeRange in self.ranges:
-      for rangeSize in sizeRange.problemSizes:
-        self.problems.update({Problem(rangeSize) : 1})
-    for e in self.exacts:
-        self.problems.update({e : 1})
-    self.problems =  list(self.problems.keys())
-    self.totalProblemSizes = len(self.problems)
-
-    # max sizes
-    self.maxD = 0
-    self.maxC = 0
-    self.maxA = 0
-    self.maxB = 0
-    for problem in self.problems:
-      problemSize = problem.sizes # FIXME-problem.   This should use problem.strides*
-
-      sizeLdd = problemSize[self.problemType["IndexAssignmentsLD"][0]] if problemType["OperationType"] == "GEMM" else problemSize[0]
-      sizeD = max(self.minStrides[0], sizeLdd)
-      for i in range(1, problemType["NumIndicesC"]):
-        sizeD *= max(self.minStrides[i], problemSize[i])
-
-      sizeLdc = problemSize[self.problemType["IndexAssignmentsLD"][1]] if problemType["OperationType"] == "GEMM" else problemSize[0]
-      sizeC = max(self.minStrides[0], sizeLdc)
-      for i in range(1, problemType["NumIndicesC"]):
-        sizeC *= max(self.minStrides[i], problemSize[i])
-
-      sizeLda = problemSize[self.problemType["IndexAssignmentsLD"][2]] \
-                if problemType["OperationType"] == "GEMM" \
-                else problemSize[self.problemType["IndexAssignmentsA"][0]]
-      sizeA = max(self.minStrides[self.problemType["IndexAssignmentsA"][0]], sizeLda)
-      for i in self.problemType["IndexAssignmentsA"][1:]:
-        sizeA *= max(self.minStrides[i], problemSize[i])
-
-      sizeLdb = problemSize[self.problemType["IndexAssignmentsLD"][3]] \
-                if problemType["OperationType"] == "GEMM" \
-                else problemSize[self.problemType["IndexAssignmentsB"][0]]
-      sizeB = max(self.minStrides[self.problemType["IndexAssignmentsB"][0]], sizeLdb)
-      for i in self.problemType["IndexAssignmentsB"][1:]:
-        sizeB *= max(self.minStrides[i], problemSize[i])
-
-      self.maxD = max(self.maxD, sizeD)
-      self.maxC = max(self.maxC, sizeC)
-      self.maxA = max(self.maxA, sizeA)
-      self.maxB = max(self.maxB, sizeB)
-
-  def __str__(self):
-    s = "ProblemSizes\n"
-    for sizeRange in self.ranges:
-      s += "  %s" % sizeRange
-    return s
-
-################################################################################
 # Factor Type
 ################################################################################
-
 class FactorDimArgs:
 
   ########################################
@@ -573,16 +208,19 @@ class Solution(collections.abc.Mapping):
     else:
       self["InternalSupportParams"] = defaultInternalSupportParams
 
-    # assign parameters with defaults
+    # Assign solution state from config, filling missing from the defaultSolution
     for key in defaultSolution:
       assignParameterWithDefault(self._state, key, config, defaultSolution)
+
     if 'ISA' not in self._state:
       if 'ISA' in config:
+        # The ISA is expected to be defined when calling from TensileCreateLibrary
         isa = config['ISA']
         isa = IsaVersion(isa[0], isa[1], isa[2])
         assert self.isaInfoMap[isa].asmCaps["SupportedISA"]
         self._state['ISA'] = IsaVersion(isa[0], isa[1], isa[2])
       else:
+        # When calling from Tensile, the ISA is typically not defined.
         printWarning(f"ISA not set on config using {targetIsas[0]}.")
         self._state['ISA'] = targetIsas[0]
 
@@ -819,7 +457,8 @@ class Solution(collections.abc.Mapping):
     if (not state["ProblemType"]["StridedBatched"]) and (state["ProblemType"]["OperationType"] != 'GEMM'):
       reject(state, printRejectionReason, "General Batched GEMM only support GEMM OperationType")
 
-    Solution.MatrixInstructionToMIParameters(state, printRejectionReason, isaInfoMap)
+    ### ---> This is where we previously called matrixInstructionToMIParameters
+
     EnableMatrixInstruction = state["EnableMatrixInstruction"] if "EnableMatrixInstruction" in state else None
     if EnableMatrixInstruction == None:
       if  ("MIBlock" in state and len(state["MIBlock"]) == 6) \
@@ -1035,79 +674,6 @@ class Solution(collections.abc.Mapping):
     return True
 
 
-  @staticmethod
-  def MatrixInstructionToMIParameters(state, printRejectionReason: bool, isaInfoMap: Dict[str, IsaInfo]):
-    isa = state["ISA"]
-    if len(state["MatrixInstruction"]) == 9:
-      mi                          = state["MatrixInstruction"]
-      state["MatrixInstruction"]  = [state["MatrixInstruction"][0],state["MatrixInstruction"][1],state["MatrixInstruction"][2],state["MatrixInstruction"][3]]
-
-      waves                       = mi[7]* mi[8]
-      miwg0                       = mi[4] * mi[0] * mi[7]
-      state["WorkGroup"][0]       = miwg0
-      state["WorkGroup"][1]       = waves*state["WavefrontSize"] // state["WorkGroup"][0]
-      state["ThreadTile"][0]      = 1  # dummy
-      state["ThreadTile"][1]      = 1  # dummy
-
-      state["MFMA_BF16_1K"] = False
-      if not state["ProblemType"]["Sparse"]:
-        miDataType = state["ProblemType"]["DataType"] if (not state["EnableF32XdlMathOp"]) else state["ProblemType"]["F32XdlMathOp"]
-        if isaInfoMap[isa].asmCaps["HasMFMA"]:
-          if not (miDataType.toChar() in validMFMA and \
-            state["MatrixInstruction"] in validMFMA[miDataType.toChar()]):
-            if miDataType.isBFloat16() and \
-              state["MatrixInstruction"] in validMFMA["B1k"]:
-              state["MFMA_BF16_1K"] = True
-            else:
-              reject(state, printRejectionReason, "MatrixInstruction %s not valid for DataType %s" % (state["MatrixInstruction"], miDataType))
-        elif isaInfoMap[isa].asmCaps["HasWMMA"]:
-          if state["MatrixInstruction"] not in validWMMA:
-            reject(state, printRejectionReason, "MatrixInstruction %s not valid for DataType %s" % (state["MatrixInstruction"], state["ProblemType"]["DataType"]))
-      else:
-        if not (state["ProblemType"]["DataType"].toChar() in validSMFMA and \
-          state["MatrixInstruction"] in validSMFMA[state["ProblemType"]["DataType"].toChar()]):
-          reject(state, printRejectionReason, "Sparse MatrixInstruction %s not valid for DataType %s" % (state["MatrixInstruction"], state["ProblemType"]["DataType"]))
-
-      # set EnableMatrixInstruction
-      state["EnableMatrixInstruction"] = True
-
-      # set MIBlock
-      MIBlock_BM = miwg0 // mi[0]
-      MIBlock_BM = min(MIBlock_BM, mi[3])
-      MIBlock_BN = mi[3] // MIBlock_BM
-
-      state["MIBlock"]    = [32, 32, 2, 1, 1, 1]
-      state["MIBlock"][0] = mi[0]
-      state["MIBlock"][1] = mi[1]
-      state["MIBlock"][2] = mi[2]
-      state["MIBlock"][3] = mi[3]
-      state["MIBlock"][4] = MIBlock_BM
-      state["MIBlock"][5] = MIBlock_BN
-
-      # set MIWaveGroup
-      state['MIWaveGroup']     = [1, 1]
-      state['MIWaveGroup'][0]  = min((miwg0 // mi[0]) // MIBlock_BM, waves)
-      state['MIWaveGroup'][1]  = waves // state['MIWaveGroup'][0]
-
-      # set MIWaveTile
-      state['MIWaveTile']      = [1, 1]
-      state['MIWaveTile'][0]   = mi[5]
-      state['MIWaveTile'][1]   = mi[6]
-      # set MIInputPerThread
-      isa = tuple(state["ISA"])
-      state['MIInputPerThread'] = state["MatrixInstruction"][0] * state["MatrixInstruction"][2] * state["MatrixInstruction"][3] // state["WavefrontSize"]
-      if (not isaInfoMap[isa].asmCaps['HasMFMA']) and isaInfoMap[isa].asmCaps['HasWMMA']:
-        if state['ISA'][0] == 10 or state['ISA'][0] == 11:
-          state['MIInputPerThread'] = state["MatrixInstruction"][2]
-      sparseA = False if not state["ProblemType"]["Sparse"] else False if state["ProblemType"]["Sparse"] == 2 else True
-      sparseB = False if not state["ProblemType"]["Sparse"] else True if state["ProblemType"]["Sparse"] == 2 else False
-      state['MIInputPerThreadA'] = state['MIInputPerThread'] if not sparseA else state['MIInputPerThread']//2
-      state['MIInputPerThreadB'] = state['MIInputPerThread'] if not sparseB else state['MIInputPerThread']//2
-      state['MIInputPerThreadMetadata'] = state['MIInputPerThread'] if not state["ProblemType"]["Sparse"] else state['MIInputPerThread']//8
-    elif state["MatrixInstruction"] != [] and len(state["MatrixInstruction"]) == 4:
-      state["EnableMatrixInstruction"] = True
-    else:
-      state["EnableMatrixInstruction"] = False
 
 
   ##############################################
@@ -1454,12 +1020,12 @@ class Solution(collections.abc.Mapping):
     rocmVersion: SemanticVersion,
     depthUConfig: DepthUConfig
   ):
-    state["EnableF32XdlMathOp"] = False #ignore the F32 xDL MathOp by default.
-    #enable F32 xDL MathOp only when the input type is f32.
-    if "F32XdlMathOp" in state["ProblemType"] \
-       and (not state["ProblemType"]["F32XdlMathOp"].isSingle()) \
-       and (state["ProblemType"]["DataType"].isSingle()):
-      state["EnableF32XdlMathOp"] = True
+    # state["EnableF32XdlMathOp"] = False #ignore the F32 xDL MathOp by default.
+    # #enable F32 xDL MathOp only when the input type is f32.
+    # if "F32XdlMathOp" in state["ProblemType"] \
+    #    and (not state["ProblemType"]["F32XdlMathOp"].isSingle()) \
+    #    and (state["ProblemType"]["DataType"].isSingle()):
+    #   state["EnableF32XdlMathOp"] = True
 
     Solution.assignProblemIndependentDerivedParameters(state, printRejectionReason, isaInfoMap)
 
@@ -1884,16 +1450,16 @@ class Solution(collections.abc.Mapping):
       state["ValidDepthU"] = True
       state["DepthU"]      = depthuList[index[0]]
       Solution.depthUIteration(
-        state, 
-        index, 
-        depthuList, 
-        problemType, 
-        isa, 
-        bufferLoad, 
-        packedC0, 
-        packedC1, 
-        printRejectionReason, 
-        isaInfoMap, 
+        state,
+        index,
+        depthuList,
+        problemType,
+        isa,
+        bufferLoad,
+        packedC0,
+        packedC1,
+        printRejectionReason,
+        isaInfoMap,
         rocmVersion,
         depthUConfig,
       )
@@ -3239,7 +2805,7 @@ class Solution(collections.abc.Mapping):
       maxTurn = calcEpilogueTurns([0, 1])
     vecDT.bias(0).turn = maxTurn
     vecDT.bias(1).turn = maxTurn
-  
+
     # Calc LDS for SAV
     maxTurn = 0
     if savDim == 1:
@@ -3553,7 +3119,7 @@ class Solution(collections.abc.Mapping):
     # if state["GlobalSplitU"] > 1:
     #   if state["ProblemType"]["SupportUserArgs"] and state["_GlobalAccumulation"] != 'MultipleBufferSingleKernel':
     #     reject(state, printRejectionReason, "Currently SupportUserArgs does not support GSU > 1.")
-   
+
     if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
       if state["NumElementsPerBatchStore"] == 1:
         reject(state, printRejectionReason, "too many store at MultipleBufferSingleKernel direct reject")

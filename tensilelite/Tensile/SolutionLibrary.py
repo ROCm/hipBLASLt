@@ -30,7 +30,7 @@ from . import Hardware
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
 from .Common import state, IsaInfo, gfxToIsa, DepthUConfig
-from Tensile.Common.Naming import getMinNaming, getNameMin
+from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin
 
 class SingleSolutionLibrary:
     Tag = "Single"
@@ -482,12 +482,12 @@ class MasterSolutionLibrary:
 
         problemType = Contractions.ProblemType.FromOriginalState(origData["ProblemType"])
         allSolutions = [solutionClass.FromSolutionStruct(
-                            s, 
-                            splitGSU, 
-                            printSolutionRejectionReason, 
+                            s,
+                            splitGSU,
+                            printSolutionRejectionReason,
                             printIndexAssignmentInfo,
-                            depthUConfig, 
-                            assembler, 
+                            depthUConfig,
+                            assembler,
                             isaInfoMap
                         ) for s in origSolutions]
         cls.FixSolutionIndices(allSolutions)
@@ -511,23 +511,23 @@ class MasterSolutionLibrary:
 
     @classmethod
     def BenchmarkingLibrary(
-        cls, 
-        solutions, 
-        assembler, 
-        splitGSU: bool, 
-        printSolutionRejectionReason: bool, 
-        printIndexAssignmentInfo: bool, 
+        cls,
+        solutions,
+        assembler,
+        splitGSU: bool,
+        printSolutionRejectionReason: bool,
+        printIndexAssignmentInfo: bool,
         depthUConfig: DepthUConfig,
         isaInfoMap
     ):
         solutionObjs = list([Contractions.Solution.FromOriginalState(
-                                 s._state, 
-                                 splitGSU, 
-                                 printSolutionRejectionReason, 
-                                 printIndexAssignmentInfo, 
+                                 s._state,
+                                 splitGSU,
+                                 printSolutionRejectionReason,
+                                 printIndexAssignmentInfo,
                                  depthUConfig,
-                                 assembler, 
-                                 isaInfoMap) 
+                                 assembler,
+                                 isaInfoMap)
                             for s in solutions])
         cls.FixSolutionIndices(solutionObjs)
 

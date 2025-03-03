@@ -56,6 +56,13 @@ architectureMap = {
     "gfx1201": "gfx1201",
 }
 
+gfxVariantMap = {
+    "gfx906": ["gfx906:xnack+", "gfx906:xnack-"],
+    "gfx908": ["gfx908:xnack+", "gfx908:xnack-"],
+    "gfx90a": ["gfx90a:xnack+", "gfx90a:xnack-"],
+    "gfx942": ["gfx942:xnack+", "gfx942:xnack-"],
+}
+
 SUPPORTED_ISA = [
     IsaVersion(8, 0, 3),
     IsaVersion(9, 0, 0),
@@ -135,6 +142,18 @@ def gfxToSwCodename(gfxName: str) -> Optional[str]:
             if gfxName in archKey:
                 return architectureMap[archKey]
             return None
+
+
+def gfxToVariants(gfx: str) -> List[str]:
+    """Retrieves the list of variants for a given gfx architecture name.
+
+    Args:
+        gfx: The name of the GPU architecture (e.g., 'gfx906').
+
+    Returns:
+        List of variants for the GPU architecture.
+    """
+    return gfxVariantMap.get(gfx, [gfx])
 
 
 def cliArchsToIsa(cliArchs: str) -> List[IsaVersion]:

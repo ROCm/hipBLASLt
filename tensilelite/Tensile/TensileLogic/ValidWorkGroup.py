@@ -22,40 +22,31 @@
 #
 ################################################################################
 
-from argparse import ArgumentParser
+"""
+ValidWorkGroup
+---
+Dimensions of the workgroup which will operate on a tile and share lds
+Example: ( wg0 x wg1 x LocalSplitU )
+"""
 
-from Tensile.Toolchain.Validators import ToolchainDefaults
+from typing import Dict
+
+from Tensile.Common import IsaVersion, IsaInfo, elineno
+from Tensile.Common.ValidParameters import validWorkGroups
 
 
-def parseArguments():
-    """
-    Returns:
-        A dictionary containing the keys representing options and their values.
-    """
+def validateWorkGroup(solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], filepath: str):
+    try:
+        _validateWorkGroup(solution, isaInfoMap)
+        assert solution["Valid"], f"Solution was rejected: {elineno()}"
+        return True
+    except AssertionError as e:
+        print(
+            f"Error: Validation failed: {e} (file: {filepath}, index: {solution['SolutionIndex']})"
+        )
+        return False
 
-    argParser = ArgumentParser(
-        description="TensileValidateLogic runs critical checks to ensure the "
-        "integrity of the supplied logic files.",
-    )
 
-    argParser.add_argument("LogicPath", help="Path to LibraryLogic.yaml files.")
-    argParser.add_argument("--check", dest="Check", action="store_true", help="Run all checks.")
-    argParser.add_argument("-v", "--verbose", dest="Verbose", type=int, default=1, choices=[0, 1, 2, 3], help="Set print level with ``--v 2``.")
-    argParser.add_argument(
-        "--jobs",
-        "-j",
-        dest="Jobs",
-        action="store",
-        default=48,
-        help="Number of worker processes to use during validation checks.",
-    )
-    argParser.add_argument(
-        "--cxx-compiler",
-        dest="CxxCompiler",
-        action="store",
-        default=ToolchainDefaults.CXX_COMPILER,
-        help=f"Default: {ToolchainDefaults.CXX_COMPILER}",
-    )
-    args = argParser.parse_args()
-
-    return args
+def _validateWorkGroup(solution: dict, isaInfoMap: dict):
+    assert "WorkGroup" in solution, elineno()
+    assert solution["WorkGroup"] in validWorkGroups, elineno()
