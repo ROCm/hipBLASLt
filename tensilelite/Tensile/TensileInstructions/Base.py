@@ -50,7 +50,6 @@ class TensileInstructions:
                 cls._instance._kernelInfo = {}
         return cls._instance
 
-<<<<<<< HEAD
     def __reduce__(self):
         return (TensileInstructions, ())
 
@@ -61,8 +60,6 @@ class TensileInstructions:
         archCaps: dict
         regCaps: dict
         asmBugs: dict
-=======
->>>>>>> braden/remove-valid-mi-NEW
 
     @dataclass
     class kernelInfo:
