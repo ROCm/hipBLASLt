@@ -516,6 +516,31 @@ validParameters = {
     "ThreadTile": validThreadTiles,
     "MacroTile": validMacroTiles,  # MT0 = wg0*tt0, MT1 = wg1*tt1
     "WavefrontSize": [32, 64],
+    # MatrixInstruction: (M x N x K x B)
+    # XDLOPS tile definition, only valid for gfx908, gfx90a
+    # MxNxKxB specifies matrix instruction variants
+    #  MxNxB determines the shape of the C tile each instruction worked on
+    #      K determines the unroll depth
+    # If empty, do not use these instructions
+    #
+    # Alternative format: (M x N x K x B x MIBlockM x WaveTileM x WaveTileN x WaveM x WaveN)
+    # (Note: MxN means M-by-N in the following comments)
+    # MIBlockM determines how many blocks along M dimension for multi-block MI variants. Concrete examples:
+    #  - MI 16x16x1x4 (4-block variant) with MIBlockM=4 -> (16x16)*(4x1)=64x16 tile per instruction executed
+    #  - MI 32x32x1x2 (2-block variant) with MIBlockM=1 -> (32x32)*(1x2)=32x64 tile per instruction executed
+    # WaveTileM/N are dimensions of the C tile each wave works on, and is close to the concept of ThreadTile in classic VALU kernels
+    #  - WT 4x1 -> each wave executes 4x1 matrix instructions on the C tile of total area (4*MITileM)x(1*MITileN)
+    # WaveM/N are dimensions of waves spawned for one workgroup where each wave consists of 64 threads
+    #  - Wave2x2 -> a total of 4 waves in one workgroup of shape 2x2
+    # Putting it all together:
+    #  - [32, 32, 1, 2,  1,  4, 1,  2, 2]
+    #     ^^^^^^^^^^^^   ^   ^^^^   ^^^^
+    #      MatrixInst  BlkM   WT    Wave
+    #  - means (32x64) per MI * (4x1) per wave * (2x2) per workgroup = (32*4*2)x(64*1*2) = 256x128 macro tile
+    # Tensile will ignore the parameters ThreadTile and WorkGroup when the alternative format is used
+    # NOTE: MatrixInstruction is no longer validated through this structure, but is instead validated via the
+    #   ``TensileLogic`` program.
+    "MatrixInstruction": -1,
     # StoreRemap: Optimize MatrixInstruction store patterns to enhance performance.
     #             MI output data between each threads are along N dims.
     #             But global memory is along M dim continuous.
