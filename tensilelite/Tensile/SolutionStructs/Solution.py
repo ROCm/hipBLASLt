@@ -514,7 +514,6 @@ class Solution(collections.abc.Mapping):
         reject(state, printRejectionReason, f"size of WorkGroup {state['NumThreads']} should be multiple of WavefrontSize {state['WavefrontSize']}")
 
     # macro tile sizes
-    printWarning(f" ---ERR--- seting macro tile: {state['SubGroup0']} {state['ThreadTile0']} {state['SubGroup1']} {state['ThreadTile1']}")
     if "SubGroup0" in state and "ThreadTile0" in state:
       state["MacroTile0"] = state["SubGroup0"]*state["ThreadTile0"]
     if "SubGroup1" in state and "ThreadTile1" in state:
@@ -523,8 +522,6 @@ class Solution(collections.abc.Mapping):
       if state["MacroTile0"] != state["MacroTile"][0] \
           or state["MacroTile1"] != state["MacroTile"][1]:
         reject(state, printRejectionReason, "MacroTile mismatch")
-    printWarning(f" ---ERR--- seting macro tile: {state['MacroTile0']} {state['MacroTile1']}")
-    printWarning(f" ---ERR--- global split U: {state['GlobalSplitU']}")
 
     # tail loop optimization
     state["tailLoopOptA"] = True
