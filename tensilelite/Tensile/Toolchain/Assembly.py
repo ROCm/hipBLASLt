@@ -206,7 +206,7 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, srcDir, destDir, 
         # shouldn't need a set here the fact that we do implies we have duplicates
         #objFiles = _batchObjectFiles(set(objFiles), coFileRaw)
         objFiles = _batchObjectFiles(objFiles, coFileRaw)
-        toolchain.link(objFiles, str(coFileRaw))
+        toolchain.link(set(objFiles), str(coFileRaw))
         coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
         if compress:
           toolchain.compress(str(coFileRaw), str(coFile), gfx)

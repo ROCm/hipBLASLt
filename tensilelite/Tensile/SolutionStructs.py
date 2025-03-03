@@ -55,6 +55,92 @@ import math
 import operator
 import sys
 
+
+def conversionKernelObjectsNames(solution):
+  # need to check that the fields mutated in the the init function aren't used in the naming function
+  # e.g. usebias got set to zero if gradient which changes behavior of name function.
+  conversionKernelObjectsNames = []
+  load_vector_width = [1, 2] if solution["ProblemType"]["DataType"].isDouble() else [1, 2, 4]
+  gsuList = [internalParameters["GlobalSplitUPGR"]]
+  if solution["GlobalSplitUAlgorithm"] == "SingleBuffer":
+    gsuList = [1]
+  elif solution["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
+    return
+  for vw in load_vector_width:
+    for _ in gsuList:
+      if solution["ProblemType"]["UseBias"]:
+        typeList = solution["ProblemType"]["BiasDataTypeList"]
+        if solution["ProblemType"]["Gradient"]:
+        #  # If gradient + bias D, generates a normal GSU kernel for bias D = nullptr case
+          conversionKernelObjectsNames.append(KernelWriterConversion._getKernelName(solution, vw))
+        for btype in typeList:
+          conversionKernelObjectsNames.append(KernelWriterConversion._getKernelName(solution, vw, btype))
+      else:
+        #printExit("don't use bias")
+        conversionKernelObjectsNames.append(KernelWriterConversion._getKernelName(solution, vw))
+  return conversionKernelObjectsNames if conversionKernelObjectsNames else []
+
+def activationEnumHeaderObjectsNames(solution):
+  activationEnumHeaderObjectsNames = []
+  if solution["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
+    activationEnumHeaderObjectsNames.append(KernelWriterActivationEnumHeader._getKernelName(solution))
+  return activationEnumHeaderObjectsNames
+
+def activationFunctionObjectsNames(solution):
+  activationFunctionObjectsNames = []
+  if solution["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
+    activationFunctionObjectsNames.append(KernelWriterActivationFunction._getKernelName(solution))
+  return activationFunctionObjectsNames
+
+def activationOnlyKernelObjectsNames(solution):
+  activationOnlyKernelObjectsNames = []
+  if (solution["ActivationFused"] == False) and (solution["ProblemType"]["ActivationType"] != 'none'):
+    activationOnlyKernelObjectsNames.append(KernelWriterActivationOnly._getKernelName(solution))
+  return activationOnlyKernelObjectsNames
+
+def reductionKernelObjectsNames(solution):
+  reductionKernelObjectsNames = []
+  if solution["ProblemType"]["Gradient"] and solution["ProblemType"]["UseBias"]:
+    for btype in solution["ProblemType"]["BiasDataTypeList"]:
+      reductionKernelObjectsNames.append(KernelWriterReduction._getKernelName(solution, btype))
+  return reductionKernelObjectsNames
+
+def betaOnlyKernelObjectsNames(solution):
+  betaOnlyKernelObjectsNames = []
+  if solution["GlobalSplitU"] > 1 or (solution["StreamK"] > 0 and solution["StreamKAtomic"] == 1):
+    if solution["ProblemType"]["UseBias"]:
+      for btype in solution["ProblemType"]["BiasDataTypeList"]:
+        betaOnlyKernelObjectsNames.append(KernelWriterBetaOnly._getKernelName(solution, btype))
+    else:
+      betaOnlyKernelObjectsNames.append(KernelWriterBetaOnly._getKernelName(solution))
+  return betaOnlyKernelObjectsNames
+
+
+def kernelObjectNames(solution):
+  result = []
+  temp = conversionKernelObjectsNames(solution)
+  if temp:
+    result.extend(temp)
+  temp = activationEnumHeaderObjectsNames(solution)
+  if temp:
+    result.extend(temp)
+  temp = activationFunctionObjectsNames(solution)
+  if temp:
+    result.extend(temp)
+  temp = activationOnlyKernelObjectsNames(solution)
+  if temp:
+    result.extend(temp)
+  temp = reductionKernelObjectsNames(solution)
+  if temp:
+    result.extend(temp)
+  temp = betaOnlyKernelObjectsNames(solution)
+  if temp:
+    result.extend(temp)
+  return result
+
+
+
+
 ########################################
 # Print a reject message :
 def reject(state, *args):
@@ -1111,7 +1197,7 @@ class Solution(collections.abc.Mapping):
 
     Solution.assignDerivedParameters(self._state)
     self._name = config["CustomKernelName"] if isCustomKernelConfig(config) else None
-    self.initHelperKernelObjects()
+    #self.initHelperKernelObjects()
 
   # these keys are copied from ProblemType to internal that may be overridden
   InternalKeys = ["UseSgprForGRO","VectorStore"]
@@ -1130,17 +1216,38 @@ class Solution(collections.abc.Mapping):
   ########################################
   # create Helper Kernels
   def initHelperKernelObjects(self):
-    self.initBetaOnlyKernelObjects()
-    self.initConversionKernelObjects()
-    self.initActivationEnumHeaderObjects()
-    self.initActivationFunctionObjects()
-    self.initActivationOnlyKernelObjects()
-    self.initReductionKernelObjects()
+    result = []
+    
+    temp = self.initBetaOnlyKernelObjects()
+    if temp:
+      result.extend(temp)
+
+    temp = self.initConversionKernelObjects()
+    if temp:
+      result.extend(temp)
+
+    temp = self.initActivationEnumHeaderObjects()
+    if temp:
+      result.extend(temp)
+
+    temp = self.initActivationFunctionObjects()
+    if temp:
+      result.extend(temp)
+
+    temp = self.initActivationOnlyKernelObjects()
+    if temp:
+      result.extend(temp)
+
+    temp = self.initReductionKernelObjects()
+    if temp:
+      result.extend(temp)
+
+    return result
 
   ########################################
   # create BetaOnly Kernels
   def initBetaOnlyKernelObjects(self):
-    self.betaOnlyKernelObjects = []
+    betaOnlyKernelObjects = []
     if self["GlobalSplitU"] > 1 or (self["StreamK"] > 0 and self["StreamKAtomic"] == 1):
       if self["ProblemType"]["UseBias"]:
         for btype in self["ProblemType"]["BiasDataTypeList"]:
@@ -1151,20 +1258,21 @@ class Solution(collections.abc.Mapping):
           state["ProblemType"]["BiasDataType"] = deepcopy(btype)
           state["KernelLanguage"] = "Source"
           state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
-          self.betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
+          betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
       else:
         state = {}
         state["ProblemType"] = deepcopy(self["ProblemType"])
         state["ProblemType"]["GroupedGemm"] = False
         state["KernelLanguage"] = "Source"
         state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
-        self.betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
+        betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
+    return betaOnlyKernelObjects
 
 
   ########################################
   # create Conversion Kernels
   def initConversionKernelObjects(self):
-    self.conversionKernelObjects = []
+    conversionKernelObjects = []
     load_vector_width = [1, 2] if self["ProblemType"]["DataType"].isDouble() else [1, 2, 4]
     genPGRPostKernels = True
     gsuList = [internalParameters["GlobalSplitUPGR"]]
@@ -1190,7 +1298,7 @@ class Solution(collections.abc.Mapping):
             state["UnrollOnly"] = unrollOnly
             state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
             state["ActivationFused"] = self["ActivationFused"]
-            self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
+            conversionKernelObjects.append(KernelWriterConversion(state, vw))
           for btype in typeList:
             state = {}
             state["ProblemType"] = deepcopy(self["ProblemType"])
@@ -1203,7 +1311,7 @@ class Solution(collections.abc.Mapping):
             state["UnrollOnly"] = unrollOnly
             state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
             state["ActivationFused"] = self["ActivationFused"]
-            self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
+            conversionKernelObjects.append(KernelWriterConversion(state, vw))
         else:
           state = {}
           state["ProblemType"] = deepcopy(self["ProblemType"])
@@ -1214,29 +1322,32 @@ class Solution(collections.abc.Mapping):
           state["UnrollOnly"] = unrollOnly
           state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
           state["ActivationFused"] = self["ActivationFused"]
-          self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
+          conversionKernelObjects.append(KernelWriterConversion(state, vw))
+    return conversionKernelObjects
 
   def initActivationEnumHeaderObjects(self):
-    self.activationEnumHeaderObjects = []
+    activationEnumHeaderObjects = []
     if self["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
       state["ProblemType"]["GroupedGemm"] = False
       state["KernelLanguage"] = "Source"
-      self.activationEnumHeaderObjects.append(KernelWriterActivationEnumHeader(state))
+      activationEnumHeaderObjects.append(KernelWriterActivationEnumHeader(state))
+      return activationEnumHeaderObjects
 
   def initActivationFunctionObjects(self):
-    self.activationFunctionObjects = []
+    activationFunctionObjects = []
     if self["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
       state["ProblemType"]["GroupedGemm"] = False
       state["KernelLanguage"] = "Source"
       state["Kernel"] = {"WavefrontSize": self["WavefrontSize"], "ISA": tuple(self["ISA"])}
-      self.activationFunctionObjects.append(KernelWriterActivationFunction(state, self.cxxCompiler))
+      activationFunctionObjects.append(KernelWriterActivationFunction(state, self.cxxCompiler))
+      return activationFunctionObjects
 
   def initActivationOnlyKernelObjects(self):
-    self.activationOnlyKernelObjects = []
+    activationOnlyKernelObjects = []
     if (self["ActivationFused"] == False) and (self["ProblemType"]["ActivationType"] != 'none') :
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
@@ -1246,10 +1357,11 @@ class Solution(collections.abc.Mapping):
       state["KernelLanguage"] = "Source"
       state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
       state["ActivationFused"] = self["ActivationFused"]
-      self.activationOnlyKernelObjects.append(KernelWriterActivationOnly(state))
+      activationOnlyKernelObjects.append(KernelWriterActivationOnly(state))
+    return activationOnlyKernelObjects
 
   def initReductionKernelObjects(self):
-    self.reductionKernelObjects = []
+    reductionKernelObjects = []
     if self["ProblemType"]["Gradient"] and self["ProblemType"]["UseBias"]:
       for btype in self["ProblemType"]["BiasDataTypeList"]:
         state = {}
@@ -1257,14 +1369,37 @@ class Solution(collections.abc.Mapping):
         state["ProblemType"]["GroupedGemm"] = False
         state["ProblemType"]["BiasDataTypeList"] = []
         state["ProblemType"]["BiasDataType"] = deepcopy(btype)
-        self.reductionKernelObjects.append(KernelWriterReduction(state))
+        reductionKernelObjects.append(KernelWriterReduction(state))
+    return reductionKernelObjects
+
+  def initBetaOnlyKernelObjects(self):
+    betaOnlyKernelObjects = []
+    if self["GlobalSplitU"] > 1 or (self["StreamK"] > 0 and self["StreamKAtomic"] == 1):
+      if self["ProblemType"]["UseBias"]:
+        for btype in self["ProblemType"]["BiasDataTypeList"]:
+          state = {}
+          state["ProblemType"] = deepcopy(self["ProblemType"])
+          state["ProblemType"]["GroupedGemm"] = False
+          state["ProblemType"]["BiasDataTypeList"] = []
+          state["ProblemType"]["BiasDataType"] = deepcopy(btype)
+          state["KernelLanguage"] = "Source"
+          state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
+          betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
+      else:
+        state = {}
+        state["ProblemType"] = deepcopy(self["ProblemType"])
+        state["ProblemType"]["GroupedGemm"] = False
+        state["KernelLanguage"] = "Source"
+        state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
+        betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
+    return betaOnlyKernelObjects
 
   ########################################
   # get Helper Kernels
-  def getHelperKernelObjects(self):
-    return self.activationEnumHeaderObjects + self.activationFunctionObjects + \
-           self.betaOnlyKernelObjects + self.conversionKernelObjects + \
-           self.activationOnlyKernelObjects + self.reductionKernelObjects
+  #def getHelperKernelObjects(self):
+  #  return self.activationEnumHeaderObjects + self.activationFunctionObjects + \
+  #         self.betaOnlyKernelObjects + self.conversionKernelObjects + \
+  #         self.activationOnlyKernelObjects + self.reductionKernelObjects
 
 
   ########################################
@@ -4446,3 +4581,5 @@ class Solution(collections.abc.Mapping):
     if result is NotImplemented:
       return result
     return not result
+
+

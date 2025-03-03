@@ -29,6 +29,7 @@ import shutil
 from pathlib import Path
 from timeit import default_timer as timer
 from typing import Dict, NamedTuple, List, Optional
+import yaml
 
 from Tensile.Toolchain.Assembly import AssemblyToolchain, buildAssemblyCodeObjectFiles
 from Tensile.Toolchain.Source import SourceToolchain, buildSourceCodeObjectFile
@@ -39,7 +40,7 @@ from Tensile.Common import globalParameters, HR, print1, print2, printWarning, \
 from Tensile.Parallel import ParallelMapConfig
 from Tensile.Utilities.RequiredParameters import getRequiredParametersMin
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
-from Tensile.SolutionStructs import Solution
+from Tensile.SolutionStructs import kernelObjectNames
 from Tensile.Utilities.Profile import profile
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 
@@ -113,15 +114,24 @@ def buildAssemblyKernels(asmPath: Path, asmToolchain: AssemblyToolchain, kernelW
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
     if removeTemporaries:
       p.unlink()
-  
+
   return uniqueAsmKernels, solnLibs[1]
 
 
 def generateKernelHelperObjects(solutions):
   khos = []
+  visited = set()
   for solution in solutions:
-      khos.extend(solution.getHelperKernelObjects())
-  return khos #should we deduplicate here?
+      build = False
+      names = kernelObjectNames(solution)
+      for name in names:
+         if name not in visited:
+            visited.add(name)
+            build = True
+      if build:
+        khos.extend(solution.initHelperKernelObjects())
+  print(len(khos))
+  return list(dict.fromkeys(khos))
 
 
 #def generateMatchTable(masterSolutionLibraries):
@@ -204,6 +214,28 @@ def extractBuildResults(result):
     return flattenedList, masterLibs
 
 
+
+from Tensile.TensileInstructions import DataType
+
+def DataType_constructor(loader, node):
+    value = loader.construct_mapping(node)
+    return DataType(**value)
+
+def DataType_representer(dumper, data):
+    return dumper.represent_mapping('!DataType', {'properties': data.properties, 'value': data.value})
+
+def ActivationType_constructor(loader, node):
+    value = loader.construct_mapping(node)
+    return DataType(**value)
+
+def DataType_representer(dumper, data):
+    return dumper.represent_mapping('!DataType', {'properties': data.properties, 'value': data.value})
+
+yaml.add_constructor('!DataType', DataType_constructor)
+yaml.add_representer(DataType, DataType_representer)
+
+
+
 ################################################################################
 # Tensile Create Library
 ################################################################################
@@ -260,7 +292,7 @@ def run():
   def buildCoAndHelpers(input):
      uniqueAsmKernels, libraries = input
      unaryBuildCOFile(uniqueAsmKernels)
-     return generateKernelHelperObjects(uniqueAsmKernels), libraries
+     return uniqueAsmKernels, libraries
 
   compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
   if arguments["LazyLibraryLoading"]:
@@ -272,8 +304,10 @@ def run():
     parMap = functools.partial(ParallelMap2, assembly, ParallelMapConfig(message="Building Objects"))
     phase1 = compose(buildCoAndHelpers, extractBuildResults, parMap)
 
-  kho, masterLibs = phase1(logicFiles)
-  
+  #khos, masterLibs = phase1(logicFiles)
+  kernels, masterLibs = phase1(logicFiles)
+  khos = generateKernelHelperObjects(kernels)
+  print(len(khos))
   # Phase3: Build Master Solution Library
   generateParentLibrary(arguments["LibraryFormat"], libraryPath, masterLibs, arguments["LazyLibraryLoading"])
   del masterLibs
@@ -281,15 +315,10 @@ def run():
   # Phase2: Write Kernel helpers and build Kernels.co
   copyStaticFiles(outputPath)
   unaryWriteHelpers = functools.partial(writeHelper, outputPath)
-  srcFiles = ParallelMap2(unaryWriteHelpers, ParallelMapConfig(message="Generating Kernels code", return_as="list"), list(dict.fromkeys(kho)))
-  del kho
-
+  srcFiles = ParallelMap2(unaryWriteHelpers, ParallelMapConfig(message="Generating Kernels code", return_as="list"), generateKernelHelperObjects(kernels))  #
   kernelsLib = str(srcCodeObjectPath / "Kernels.so")
   srcToolchain.compile(srcFiles, kernelsLib, str(outputPath), archs)
-  del srcFiles
-
   buildSourceCodeObjectFile(srcToolchain, libraryPath, kernelsLib)
-
 
   if not arguments["KeepBuildTmp"]:
     if buildTmp.exists() and buildTmp.is_dir():
@@ -302,11 +331,11 @@ def run():
   print1("")
 
   stop = timer()
-
   print1(f"Total time (s): {(stop-start):3.2f}")
-  #print1(f"Total kernels: {numKernels}")
+  numKernels = len(kernels)
+  print1(f"Total kernels: {numKernels}")
   #print1(f"Total kernels processed: {numUniqueKernels}")
   #print1(f"Duplicate kernels removed: {numDuplicateKernels}")
-  #print1(f"Kernels processed per second: {(numUniqueKernels/(stop-start)):3.2f}")
+  print1(f"Kernels processed per second: {(numKernels/(stop-start)):3.2f}")
   #print1(f"Total solutions processed: {numSoln}")
   #print1(f"Duplicate solutions: {numDuplicateSoln}")

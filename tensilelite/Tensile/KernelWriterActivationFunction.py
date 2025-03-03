@@ -64,6 +64,17 @@ class KernelWriterActivationFunction(KernelWriterBase):
   def keys(self):
     return self.getKernelName()
 
+
+  @staticmethod
+  def _getKernelName(solution):
+    actGradientPrefix = "Gradient" if solution._state["ProblemType"]["Gradient"] else ""
+    gaurdStr = "NG" if solution._state["ProblemType"]["ActivationNoGuard"] else ""
+    return "Tensile%sActivation%s_%s_%s"%(actGradientPrefix, \
+                                          gaurdStr, \
+                                          solution._state["ProblemType"]["ActivationComputeDataType"].toChar(), \
+                                          solution._state["ProblemType"]["ActivationType"])
+
+
   def getKernelName(self):
     return "Tensile%sActivation%s_%s_%s"%(self.actGradientPrefix, \
                                           self.gaurdStr, \

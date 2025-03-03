@@ -40,13 +40,19 @@ class KernelWriterActivationEnumHeader(KernelWriterBase):
 
     # derive parameter
     self.language = "HIP"
-    self.kernelName = self.getKernelName()
+    self.kernelName = KernelWriterActivationEnumHeader.getKernelName(self)
 
   def keys(self):
     return self.getKernelName()
 
+  @staticmethod
+  def _getKernelName(solution):
+    s = "Gradient" if solution._state["ProblemType"]["Gradient"] else ""
+    return "Tensile%sActivationEnum_%s"%(s,
+                                         solution._state["ProblemType"]["ActivationComputeDataType"].toChar())
+
   def getKernelName(self):
-    return "Tensile%sActivationEnum_%s"%(self.actGradientPrefix, \
+    return "Tensile%sActivationEnum_%s"%(self.actGradientPrefix,
                                          self.state["ProblemType"]["ActivationComputeDataType"].toChar())
 
   def getSourceFileString(self):
