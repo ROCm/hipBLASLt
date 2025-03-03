@@ -60,8 +60,6 @@ from Tensile.Common.Architectures import SUPPORTED_ISA
 from Tensile.Common.ValidParameters import validMatrixInstructions, validMFMA, validWMMA, validSMFMA
 from Tensile.TensileInstructions.DataType import DataType
 
-from .Utilities import elineno
-
 
 MI_KEY: str = "MatrixInstruction"
 MI_ENABLED_KEY: str = "EnableMatrixInstruction"
