@@ -118,14 +118,14 @@ def _getCustomKernelSolutionObj(
     isa = next(iter(isaInfoMap.keys()))
     wavefrontSize = sol.get("WavefrontSize", None)
     ptype = sol["ProblemType"]
-    workgroup = sol["WorkGroup"]
+    workgroup = sol.get("WorkGroup", None)
 
     # TODO: this should be deleted once all custom kernel configs MI are length 4.
     if len(mi) == 9:
         miParams = matrixInstructionToMIParameters(mi, isa, wavefrontSize, ptype, workgroup, isaInfoMap)
         sol.update(miParams)
 
-    return Solution(
+    sol = Solution(
                sol,
                debugConfig.printIndexAssignmentInfo,
                debugConfig.printSolutionRejectionReason,
@@ -134,6 +134,9 @@ def _getCustomKernelSolutionObj(
                assembler,
                isaInfoMap
            )
+    
+    print1(f" --DBG-- wavefrontSize: {sol['WavefrontSize']}")
+    return sol
 
 
 def _generateCustomKernelSolutions(

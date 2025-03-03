@@ -69,7 +69,7 @@ def matrixInstructionToMIParameters(
       isa: IsaVersion,
       wavefrontSize: Optional[int],
       problemType: dict,
-      workGroup: list,
+      workGroup: Optional[list],
       isaInfoMap: Dict[IsaVersion, IsaInfo]
     ):
     """
@@ -90,10 +90,6 @@ def matrixInstructionToMIParameters(
 
     result = {}
     result["ISA"] = isa
-    
-    if wavefrontSize:
-      # Some Solutions used during benchmarking don't have WavefrontSize set on them.
-      result["WavefrontSize"] = wavefrontSize
 
     # Enable F32 XDL math operation only when the input type is f32.
     enableF32xdl = (
@@ -114,7 +110,12 @@ def matrixInstructionToMIParameters(
     waves = mi[7]* mi[8]
     wg0 = mi[4] * mi[0] * mi[7]
 
-    result["WorkGroup"] = [wg0, waves*wavefrontSize // wg0, workGroup[2]]
+    if wavefrontSize:
+      # Some Solutions used during benchmarking don't have WavefrontSize set.
+      result["WavefrontSize"] = wavefrontSize
+    if workGroup:
+      # Some Solutions used during benchmarking don't have WorkGroup set.
+      result["WorkGroup"] = [wg0, waves*wavefrontSize // wg0, workGroup[2]]
     result["ThreadTile"] = [1, 1]  # dummy
 
     isSparse = problemType.get("Sparse", 0)
