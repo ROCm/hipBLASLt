@@ -29,8 +29,11 @@ from . import __version__
 from . import Common
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
+from Tensile.CodeObjectName import codeObjectFileBaseName
 
+from enum import IntEnum
 from typing import NamedTuple, List
+
 import os
 import sys
 
@@ -232,6 +235,24 @@ def parseSolutionsData(data, srcFile, cxxCompiler):
     return (problemSizes, solutions)
 
 
+class DataIndex(IntEnum):
+    CODE_OBEJECT_FILE=0
+    MINIMUM_REQUIRED_VERSION=1
+    SCHEDULE_NAME=2
+    DEVICE_PROPERTIES=3
+    DEVICE_NAMES=4
+    PROBLEM_TYPE=5
+    SOLUTIONS=6
+    INDEX_ORDER=7
+    EXACT_LOGIC=8
+    RANGE_LOGIC=9
+    PERF_METRIC=11
+    LIBRARY_TYPE=12
+
+    def __index__(self):
+        return self.value
+
+
 class LibraryLogic(NamedTuple):
     """Return tuple for parseLibraryLogicData()"""
     schedule: str
@@ -308,7 +329,10 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
 
     solutions = [solutionStateToSolution(solutionState, cxxCompiler) for solutionState in data["Solutions"]]
 
+    n = codeObjectFileBaseName(data)
     newLibrary, codeObjectFile = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions, cxxCompiler)
+    assert n == codeObjectFile, f"codeObjectFileBaseName computed different name than FromOriginalState  \n  {n}\n  {codeObjectFile}"
+
     for solution in solutions:
         solution["codeObjectFile"] = codeObjectFile
 
@@ -321,34 +345,33 @@ def parseLibraryLogicList(data, srcFile="?"):
     if len(data) < 9:
         printExit("Library logic file {} is missing required fields (len = {} < 9)" \
                 .format(srcFile, len(data)))
-
     rv = {}
-    rv["codeObjectFile"] = data[0]["codeObjectFile"]
-    rv["MinimumRequiredVersion"] = data[1]["MinimumRequiredVersion"]
-    rv["ScheduleName"] = data[2]
-    rv["DeviceNames"] = data[4]
-    rv["ProblemType"] = data[5]
-    rv["Solutions"] = data[6]
+    rv["codeObjectFile"] = data[DataIndex.CODE_OBEJECT_FILE]["codeObjectFile"]
+    rv["MinimumRequiredVersion"] = data[DataIndex.MINIMUM_REQUIRED_VERSION]["MinimumRequiredVersion"]
+    rv["ScheduleName"] = data[DataIndex.SCHEDULE_NAME]
+    rv["DeviceNames"] = data[DataIndex.DEVICE_NAMES]
+    rv["ProblemType"] = data[DataIndex.PROBLEM_TYPE]
+    rv["Solutions"] = data[DataIndex.SOLUTIONS]
 
     if type(data[3]) is dict:
-        rv["ArchitectureName"] = data[3]["Architecture"]
+        rv["ArchitectureName"] = data[DataIndex.DEVICE_PROPERTIES]["Architecture"]
         rv["CUCount"] = data[3]["CUCount"]
     else:
-        rv["ArchitectureName"] = data[3]
+        rv["ArchitectureName"] = data[DataIndex.DEVICE_PROPERTIES]
         rv["CUCount"] = None
 
     # TODOBEN: figure out what to do with these...
-    rv["ExactLogic"] = data[8]
-    rv["RangeLogic"] = data[9]
+    rv["ExactLogic"] = data[DataIndex.EXACT_LOGIC]
+    rv["RangeLogic"] = data[DataIndex.RANGE_LOGIC]
 
     # optional fields
-    if len(data) > 10 and data[11]:
-        rv["PerfMetric"] = data[11]
+    if len(data) > 10 and data[DataIndex.PERF_METRIC]:
+        rv["PerfMetric"] = data[DataIndex.PERF_METRIC]
 
     # library logic fields
     libraryType = None
-    if len(data) > 12 and data[12]:
-        libraryType = data[12]
+    if len(data) > 12 and data[DataIndex.LIBRARY_TYPE]:
+        libraryType = data[DataIndex.LIBRARY_TYPE]
     else:
         printExit("Library logic file {} is missing required field matching property." \
                 .format(srcFile))
@@ -356,13 +379,13 @@ def parseLibraryLogicList(data, srcFile="?"):
         rv["LibraryType"] = "FreeSize"
         rv["Library"] = {}
         rv["Library"]["indexOrder"] = None
-        rv["Library"]["table"] = [0, len(data[6])]
+        rv["Library"]["table"] = [0, len(data[DataIndex.SOLUTIONS])]
         rv["Library"]["distance"] = None
     else:
         rv["LibraryType"] = "Matching"
         rv["Library"] = {}
-        rv["Library"]["indexOrder"] = data[7]
-        rv["Library"]["table"] = data[8]
+        rv["Library"]["indexOrder"] = data[DataIndex.INDEX_ORDER]
+        rv["Library"]["table"] = data[DataIndex.EXACT_LOGIC]
         rv["Library"]["distance"] = libraryType
 
     return rv
@@ -370,16 +393,16 @@ def parseLibraryLogicList(data, srcFile="?"):
 
 def rawLibraryLogic(data):
     """Returns a tuple of the data in a library logic file."""
-    codeObjectFile = data[0]
-    versionString = data[1]
-    scheduleName = data[2]
-    architectureName = data[3]
-    deviceNames = data[5]
-    problemTypeState = data[5]
-    solutionStates = data[6]
-    indexOrder = data[7]
-    exactLogic = data[8]
-    rangeLogic = data[9]
+    codeObjectFile = data[DataIndex.CODE_OBEJECT_FILE]
+    versionString = data[DataIndex.MINIMUM_REQUIRED_VERSION]
+    scheduleName = data[DataIndex.SCHEDULE_NAME]
+    architectureName = data[DataIndex.DEVICE_PROPERTIES]
+    deviceNames = data[DataIndex.DEVICE_NAMES]
+    problemTypeState = data[DataIndex.PROBLEM_TYPE]
+    solutionStates = data[DataIndex.SOLUTIONS]
+    indexOrder = data[DataIndex.INDEX_ORDER]
+    exactLogic = data[DataIndex.EXACT_LOGIC]
+    rangeLogic = data[DataIndex.RANGE_LOGIC]
     otherFields = []
 
     dataLength = len(data)

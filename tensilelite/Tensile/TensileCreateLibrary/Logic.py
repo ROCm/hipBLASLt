@@ -22,8 +22,11 @@
 #
 ################################################################################
 
-from Tensile.Common import printExit, print1, print2
+from Tensile.Common import print1, print2, ParallelMap2
+from Tensile.LibraryIO import DataIndex
+from Tensile.Parallel import ParallelMapConfig
 from Tensile.CustomYamlLoader import load_logic_gfx_arch, load_yaml_sequence_item
+from Tensile.CodeObjectName import codeObjectFileBaseName
 
 from glob import iglob
 from pathlib import Path
@@ -36,25 +39,24 @@ def logicFileList(archs, logicPath: Path, logicFilter: str, experimental: bool):
         return (arch in archs) or any(a.startswith(arch) for a in archs)
     def validLogicFile(p: Path):
         return p.suffix == ".yaml" and ("all" in archs or archMatch(load_logic_gfx_arch(p), archs))
-  
-    if not logicPath.exists():
-        printExit(f"LogicPath {str(logicPath)} doesn't exist")
+
+    assert logicPath.exists(), f"LogicPath {str(logicPath)} doesn't exist"
 
     globPattern = str(logicPath / f"**/{logicFilter}.yaml")
-    print1(f"# LogicFilter:         {globPattern}")
     logicFiles = (str(logicPath / file) for file in iglob(globPattern, recursive=True))
-    print1(f"# Experimental:        {experimental}")
-
     if not experimental:
         logicFiles = [file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)]
-    
+
     logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
-    
+
+    print1(f"# LogicFilter:         {globPattern}")
+    print1(f"# Experimental:        {experimental}")
     print2(f"# LibraryLogicFiles: {len(logicFiles)}")
     for logicFile in logicFiles:
         print2("#   %s" % logicFile)
 
     return logicFiles
+
 
 def distribute(lst, n):
     import heapq
@@ -73,17 +75,29 @@ def numberOfBuildKernerls(logicFile):
     return int(str(result.stdout).count("BuildKernel"))
 
 
-def schedule(logicFiles: list, numberOfTasks: int):
+def getCoFileNames(logicFile):
     from yaml import Loader
+    data = {}
+    data["ProblemType"] = load_yaml_sequence_item(logicFile, Loader, DataIndex.PROBLEM_TYPE.value)
+    properties = load_yaml_sequence_item(logicFile, Loader, DataIndex.DEVICE_PROPERTIES.value)
+    if isinstance(properties, dict):
+        data["ArchitectureName"] = properties["Architecture"]
+        data["CUCount"] = properties["CUCount"]
+    else:
+        data["ArchitectureName"] = properties
+        data["CUCount"] = None
+    data["PerfMetric"] = load_yaml_sequence_item(logicFile, Loader, DataIndex.PERF_METRIC.value)
+    return codeObjectFileBaseName(data), logicFile
+
+
+def schedule(logicFiles: list, numberOfTasks: int):
     problemMap = {}
-    for logicFile in logicFiles:
-        codeObjectFile = load_yaml_sequence_item(logicFile, Loader, 0)
-        codeObjectFile = codeObjectFile["codeObjectFile"]
+    cofiles = ParallelMap2(getCoFileNames, ParallelMapConfig(message="Scheudling work."), logicFiles)
+    for codeObjectFile, logicFile in cofiles:
         if codeObjectFile in problemMap:
             problemMap[codeObjectFile].append(logicFile)
         else:
             problemMap[codeObjectFile] = [logicFile]
-
     result = []
     for codeObjectFile, logicFiles in problemMap.items():
         count = sum(numberOfBuildKernerls(logicFile) for logicFile in logicFiles)
