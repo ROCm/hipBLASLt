@@ -108,25 +108,22 @@ def _getCustomKernelSolutionObj(
         assembler: Assembler,
         debugConfig: DebugConfig,
         depthUConfig: DepthUConfig,
-        isaInfoMap: Dict[str, IsaInfo],
+        isaInfoMap: Dict[IsaVersion, IsaInfo],
         directory=CUSTOM_KERNEL_PATH
     ):
     """Creates the Solution object for a custom kernel"""
     sol = getCustomKernelConfig(kernelName, internalSupportParams, directory)
 
     mi = sol["MatrixInstruction"]
-    if len(mi) != 9:
-        printWarning(f"Custom kernel {kernelName} has MI length {len(mi)}, expected 9.")
-
     isa = next(iter(isaInfoMap.keys()))
-
     wavefrontSize = sol["WavefrontSize"]
     ptype = sol["ProblemType"]
     workgroup = sol["WorkGroup"]
 
     # TODO: this should be deleted once all custom kernel configs MI are length 4.
-    miParams = matrixInstructionToMIParameters(mi, isa, wavefrontSize, ptype, workgroup, isaInfoMap)
-    sol.update(miParams)
+    if len(mi) == 9:
+        miParams = matrixInstructionToMIParameters(mi, isa, wavefrontSize, ptype, workgroup, isaInfoMap)
+        sol.update(miParams)
 
     return Solution(
                sol,
