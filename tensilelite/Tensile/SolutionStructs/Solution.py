@@ -44,7 +44,7 @@ from Tensile.Common import assignParameterWithDefault, IsaInfo, \
                     roundUp, INDEX_CHARS, IsaVersion, SemanticVersion, \
                     DepthUConfig
 from Tensile.SolutionStructs.Naming import getNameFull
-from Tensile.ProblemType import ProblemType
+from Tensile.SolutionStructs.Problem import ProblemType
 from Tensile.Toolchain.Component import Assembler
 
 from .Utilities import reject

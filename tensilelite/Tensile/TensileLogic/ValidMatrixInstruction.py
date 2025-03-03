@@ -51,14 +51,13 @@ Notes:
     - If empty, do not use these instructions
 """
 
-import math
 from typing import Dict
 from pathlib import Path
-from inspect import currentframe, getframeinfo
 
 from Tensile.SolutionStructs import reject
-from Tensile.Common import IsaVersion, IsaInfo, print1
+from Tensile.Common import IsaVersion, IsaInfo, print1, elineno
 from Tensile.Common.Architectures import SUPPORTED_ISA
+from Tensile.Common.ValidParameters import validMatrixInstructions, validMFMA, validWMMA, validSMFMA
 from Tensile.TensileInstructions.DataType import DataType
 
 from .Utilities import elineno
@@ -68,114 +67,8 @@ MI_KEY: str = "MatrixInstruction"
 MI_ENABLED_KEY: str = "EnableMatrixInstruction"
 
 
-validMFMA = {}
-validMFMA["H"] = [[32, 32, 4, 2], [32, 32, 8, 1], [16, 16, 4, 4], [16, 16, 16, 1], [4, 4, 4, 16]]
-validMFMA["S"] = [[32, 32, 1, 2], [32, 32, 2, 1], [16, 16, 1, 4], [16, 16, 4, 1], [4, 4, 1, 16]]
-validMFMA["B"] = [[32, 32, 2, 2], [32, 32, 4, 1], [16, 16, 2, 4], [16, 16, 8, 1], [4, 4, 2, 16]]
-validMFMA["4xi8"] = [
-    [32, 32, 4, 2],
-    [32, 32, 8, 1],
-    [16, 16, 4, 4],
-    [16, 16, 16, 1],
-    [4, 4, 4, 16],
-    [32, 32, 16, 1],
-    [16, 16, 32, 1],
-]
-validMFMA["D"] = [[16, 16, 4, 1], [4, 4, 4, 4]]
-validMFMA["B1k"] = [[32, 32, 4, 2], [32, 32, 8, 1], [16, 16, 4, 4], [16, 16, 16, 1], [4, 4, 4, 16]]
-validMFMA["C"] = validMFMA["S"]
-validMFMA["Z"] = validMFMA["D"]
-validMFMA["I8"] = [
-    [32, 32, 4, 2],
-    [32, 32, 8, 1],
-    [16, 16, 4, 4],
-    [16, 16, 16, 1],
-    [4, 4, 4, 16],
-] + [[32, 32, 16, 1], [16, 16, 32, 1]]
-validMFMA["X"] = [[32, 32, 4, 1], [16, 16, 8, 1]]
-validMFMA["F8"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validMFMA["B8"] = validMFMA["F8"]
-validMFMA["F8B8"] = validMFMA["F8"]
-validMFMA["B8F8"] = validMFMA["F8"]
-validMFMA["F8N"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validMFMA["B8N"] = validMFMA["F8N"]
-validMFMA["F8B8N"] = validMFMA["F8N"]
-validMFMA["B8F8N"] = validMFMA["F8N"]
-validWMMA = [
-    [16, 16, 16, 1],
-]
-validTT = 32
-validMFMA["_format9"] = []
-
-for MFMA in [
-    validMFMA["H"],
-    validMFMA["S"],
-    validMFMA["B"],
-    validMFMA["D"],
-    validMFMA["X"],
-    validMFMA["F8N"],
-    validWMMA,
-]:
-    for MI in MFMA:
-        for bm in range(int(math.log(MI[3], 2)) + 1):
-            for tt0 in range(1, validTT + 1):
-                for tt1 in range(1, validTT + 1):
-                    for wave_m in range(3):
-                        for wave_n in range(3):
-                            validMFMA["_format9"].append(
-                                [MI[0], MI[1], MI[2], MI[3], 2**bm, tt0, tt1, 2**wave_m, 2**wave_n]
-                            )
-validMatrixInstructions = (
-    [[], [-1]]
-    + validMFMA["H"]
-    + validMFMA["S"]
-    + validMFMA["B"]
-    + validMFMA["D"]
-    + validMFMA["B1k"]
-    + validMFMA["X"]
-)
-validMatrixInstructions = validMatrixInstructions + validMFMA["_format9"]
-
-validSMFMA = {}
-validSMFMA["H"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validSMFMA["B"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validSMFMA["4xi8"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
-validSMFMA["I8"] = validSMFMA["4xi8"]
-validSMFMA["F8"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
-validSMFMA["B8"] = validSMFMA["F8"]
-validSMFMA["F8B8"] = validSMFMA["F8"]
-validSMFMA["B8F8"] = validSMFMA["F8"]
-validSMFMA["F8N"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
-validSMFMA["B8N"] = validSMFMA["F8N"]
-validSMFMA["F8B8N"] = validSMFMA["F8N"]
-validSMFMA["B8F8N"] = validSMFMA["F8N"]
-validSMFMA["_format9"] = []
-for SMFMA in [validSMFMA["H"], validSMFMA["B"], validSMFMA["4xi8"], validSMFMA["F8N"]]:
-    for MI in SMFMA:
-        for bm in range(int(math.log(MI[3], 2)) + 1):
-            for tt0 in range(1, validTT + 1):
-                for tt1 in range(1, validTT + 1):
-                    for wave_m in range(3):
-                        for wave_n in range(3):
-                            validSMFMA["_format9"].append(
-                                [MI[0], MI[1], MI[2], MI[3], 2**bm, tt0, tt1, 2**wave_m, 2**wave_n]
-                            )
-validSparseMatrixInstructions = validSMFMA["H"] + validSMFMA["B"] + validSMFMA["4xi8"]
-validMatrixInstructions = (
-    validMatrixInstructions + validSparseMatrixInstructions + validSMFMA["_format9"]
-)
-
-
-def elineno():
-    """
-    Return the file name and line number of the caller.
-    """
-    frame = getframeinfo(currentframe().f_back)
-    return f"{Path(frame.filename).name}:{frame.lineno}"
-
-
 def validateMatrixInstruction(
-    solution: dict, isaInfoMap: Dict[str, IsaInfo], filepath: Path
+    solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], filepath: Path
 ) -> bool:
     """
     Validates the matrix instruction configured in the given solution.
@@ -241,6 +134,11 @@ def validateMIParameters(
         assert miEnabled == False, elineno()
         return
 
+    assert solution["MatrixInstM"] == mi4[0]
+    assert solution["MatrixInstN"] == mi4[1]
+    assert solution["MatrixInstK"] == mi4[2]
+    assert solution["MatrixInstB"] == mi4[3]
+
     assert mi4 in validMatrixInstructions, f"{elineno()} : invalid MI4: {str(mi4)} for type {miDataType.toChar()}"
 
     mi9 = [mi4[0], mi4[1], mi4[2], mi4[3]]
@@ -283,7 +181,7 @@ def validateMIParameters(
                 else:
                     return not reject(
                         solution,
-                        printSolutionRejectionReason,
+                        True,#printSolutionRejectionReason,
                         f"Invalid MFMA BFloat16 configuration: {solution}",
                     )
         elif hasWMMA and (not mi4 in validWMMA):
@@ -295,10 +193,6 @@ def validateMIParameters(
             return not reject(
                 solution, printSolutionRejectionReason, f"Invalid SMFMA configuration: {solution}"
             )
-
-    if (not hasMFMA) and hasWMMA:
-        if isa[0] == 10 or isa[0] == 11:
-            assert miInputPerThread == mi4[2], elineno()
 
     # Check MIBlock
     assert miBlock[0] == mi4[0], elineno()
@@ -318,6 +212,10 @@ def validateMIParameters(
 
     # Check MIInputPerThread
     miInputPerThread = solution["MIInputPerThread"]
+
+    if (not hasMFMA) and hasWMMA:
+        if isa[0] == 10 or isa[0] == 11:
+            assert miInputPerThread == mi4[2], elineno()
 
     # If Navi architecture, the input per thread is different
     if IsaVersion(10, 0, 0) <= isa <= IsaVersion(11, 0, 2):

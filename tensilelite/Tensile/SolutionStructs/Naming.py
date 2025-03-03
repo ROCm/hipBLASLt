@@ -27,7 +27,8 @@ from typing import List
 
 from Tensile.Common.Constants import MAX_FILENAME_LENGTH
 from Tensile.Common.ValidParameters import validParameters
-from Tensile.ProblemType import ProblemType
+
+from .Problem import ProblemType
 
 ########################################
 # create a dictionary with booleans on whether to include parameter in name

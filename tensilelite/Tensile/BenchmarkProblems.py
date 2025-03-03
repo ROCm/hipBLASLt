@@ -34,9 +34,9 @@ from typing import Dict
 
 from Tensile import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
 from Tensile.TensileLogic.ValidMatrixInstruction import validateMIParameters
-from Tensile.ProblemType import ProblemType
 from Tensile.Toolchain.Component import Assembler
-from Tensile.SolutionStructs import Solution, ProblemSizes, matrixInstructionToMIParameters
+from Tensile.SolutionStructs.Problem import ProblemType, ProblemSizes
+from Tensile.SolutionStructs import Solution, matrixInstructionToMIParameters
 from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin, getSerialNaming, getNameFull, \
                                   getKeyNoInternalArgs
 

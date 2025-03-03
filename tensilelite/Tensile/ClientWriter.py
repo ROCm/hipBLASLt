@@ -32,16 +32,18 @@ from enum import Enum
 from glob import glob
 from typing import List
 
+from Tensile.SolutionStructs.Problem import ProblemType, ProblemSizesMock, ProblemSizesMockDummy
+from Tensile.SolutionStructs import ActivationArgs, BiasTypeArgs, FactorDimArgs
+from Tensile.Toolchain.Component import Assembler
+
 from . import ROOT_PATH
 from . import ClientExecutable
 from . import LibraryIO
 from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx, IsaInfo, \
   LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR, detectGlobalCurrentISA, DepthUConfig
-from .SolutionStructs import ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
 from .TensileCreateLibrary import copyStaticFiles
 from .Contractions import FreeIndex, BatchIndex
 from .Contractions import ProblemType as ContractionsProblemType
-from Tensile.Toolchain.Component import Assembler
 
 class DataInitName(Enum):
   Zero = 0

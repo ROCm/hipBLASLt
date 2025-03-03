@@ -31,18 +31,8 @@ Example: ( wg0 x wg1 x LocalSplitU )
 
 from typing import Dict
 
-from Tensile.Common import IsaVersion, IsaInfo
-
-from .Utilities import elineno
-
-validWorkGroups = []
-for numThreads in range(32, 1025, 32):
-    for nsg in [1, 2, 4, 8, 16, 32, 64, 96, 128, 256]:
-        for sg0 in range(1, numThreads // nsg + 1):
-            sg1 = numThreads // nsg // sg0
-            if sg0 * sg1 * nsg == numThreads:
-                workGroup = [sg0, sg1, nsg]
-                validWorkGroups.append(workGroup)
+from Tensile.Common import IsaVersion, IsaInfo, elineno
+from Tensile.Common.ValidParameters import validWorkGroups
 
 
 def validateWorkGroup(solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], filepath: str):

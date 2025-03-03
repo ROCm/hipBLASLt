@@ -241,11 +241,6 @@ def validateMIParameters(
         assert miEnabled == False, elineno()
         return
 
-    assert solution["MatrixInstM"] == mi4[0]
-    assert solution["MatrixInstN"] == mi4[1]
-    assert solution["MatrixInstK"] == mi4[2]
-    assert solution["MatrixInstB"] == mi4[3]
-
     assert mi4 in validMatrixInstructions, f"{elineno()} : invalid MI4: {str(mi4)} for type {miDataType.toChar()}"
 
     mi9 = [mi4[0], mi4[1], mi4[2], mi4[3]]
@@ -288,7 +283,7 @@ def validateMIParameters(
                 else:
                     return not reject(
                         solution,
-                        True,#printSolutionRejectionReason,
+                        printSolutionRejectionReason,
                         f"Invalid MFMA BFloat16 configuration: {solution}",
                     )
         elif hasWMMA and (not mi4 in validWMMA):

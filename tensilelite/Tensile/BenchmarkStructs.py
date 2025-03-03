@@ -29,7 +29,7 @@ from Tensile.Common.ValidParameters import checkParametersAreValid
 from Tensile.Common import print1, print2, hasParam, printExit, \
         defaultBenchmarkCommonParameters, validParameters, globalParameters, \
         defaultBatchedBenchmarkFinalProblemSizes, defaultBenchmarkFinalProblemSizes
-from Tensile.ProblemType import ProblemType
+from Tensile.SolutionStructs.Problem import ProblemType
 
 from .CustomKernels import getAllCustomKernelNames
 from .SolutionStructs import ProblemSizes, ActivationArgs, BiasTypeArgs, \
