@@ -25,15 +25,18 @@ from rocisa.container import VOP3PModifiers, MUBUFModifiers, replaceHolder, \
   EXEC, VCC, SDWAModifiers, vgpr, sgpr
 from rocisa.enum import CvtType, RoundType, SaturateCastType, SelectBit
 from rocisa.instruction import BufferAtomicAddF32, BufferAtomicCmpswapB32, \
-  BufferAtomicCmpswapB64, FlatAtomicCmpswapB32, SAndB32, SAndB64, SBarrier, \
-  SCBranchExecNZ, SCBranchExecZ, SMovB32, SMovB64, SNop, SOrB32, \
-  SOrB64, SOrSaveExecB32, SOrSaveExecB64, SSleep, SSwapPCB64, SWaitCnt, \
-  SWaitAlu, VAShiftRightI32, VAddCCOU32, VAddCOU32, VAddF32, VAddF64, \
-  VAddI32, VAddPKF16, VAddPKF32, VAddU32, VBfeI32, VCmpEQU32, VCmpGtU32, VCmpNeU32, \
-  VCmpNeU64, VCndMaskB32, VCvtBF8toF32, VCvtF16toF32, VCvtF32toI32, VCvtFP8toF32, VCvtI32toF32, VCvtPkBF8toF32, \
-  VCvtPkFP8toF32, VFmaF64, VFmaMixF32, VLShiftRightB32, VMacF32, VMadMixF32, VMaxF32, VMovB32, \
-  VMovB64, VMulF32, VMulF64, VMulLOU32, VMulPKF16, VMulPKF32, \
-  VPackF16toB32, VRndneF32, VCvtBF16toFP32
+  BufferAtomicCmpswapB64, FlatAtomicCmpswapB32, SAddCU32, SAddU32, SAndB32, \
+  SAndB64, SAtomicDec, SBarrier, SBranch, SCBranchExecNZ, SCBranchExecZ, \
+  SCBranchSCC1, SCSelectB32, SCmpEQI32, SCmpEQU32, SCmpGtI32, SCmpLeI32, \
+  SLShiftLeftB32, SLShiftLeftB64, SLShiftRightB32, SMovB32, SMovB64, SMulI32, \
+  SNop, SOrB32, SOrB64, SOrSaveExecB32, SOrSaveExecB64, SSleep, SSubI32, SSubU32, \
+  SSwapPCB64, SWaitCnt, SWaitAlu, VAShiftRightI32, VAddCCOU32, VAddCOU32, VAddF32, VAddF64, \
+  VAddI32, VAddPKF16, VAddPKF32, VAddU32, VBfeI32, VCmpEQU32, VCmpGEI32, VCmpGtU32, \
+  VCmpNeU32, VCmpNeU64, VCndMaskB32, VCvtBF8toF32, VCvtF16toF32, VCvtF32toI32, \
+  VCvtFP8toF32, VCvtI32toF32, VCvtPkBF8toF32, VCvtPkFP8toF32, VFmaF64, VFmaMixF32, \
+  VLShiftRightB32, VMacF32, VMadMixF32, VMaxF32, VMovB32, VMovB64, VMulF32, VMulF64, \
+  VMulLOU32, VMulPKF16, VMulPKF32, VPackF16toB32, VReadfirstlaneB32, VRndneF32, VCvtBF16toFP32
+from rocisa.functions import vectorStaticMultiply
 
 from ..Common import DataDirection, SemanticVersion
 from ..Common.DataType import DataType
@@ -42,7 +45,6 @@ from ..Component import Component
 from ..SolutionStructs import Solution
 from ..Activation import ActivationModule
 from ..AsmStoreState import StoreState
-
 from ..AsmAddressCalculation import AddrCalculation
 from ..Components.PackData import formatting, PackData_F16, PackData_BF16, PackData_FLOAT8, PackData_FLOAT8_fnuz
 
@@ -523,7 +525,8 @@ class GlobalWriteBatchWriter:
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'E', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrEVgpr, self.addrE, 0))
       if self.storeBiasD == 1:
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias, self.factorDim))
-      module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'D', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrDVgpr, self.addrD, 0))
+      if self.kernel["GlobalSplitU"] == 1 or (self.kernel["GlobalSplitUAlgorithm"] == "SingleBuffer" or "MultipleBuffer"):
+        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'D', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrDVgpr, self.addrD, 0))
       if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'TD', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrCalc.addrGSUSyncVgprs, self.addrD, 0))
 
@@ -608,12 +611,31 @@ class GlobalWriteBatchWriter:
 
     if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
       module.addComment1("store after Acc, "+"GSU: "+str(self.kernel["GlobalSplitU"]))
+      # module.addComment("calculate the starting WG index of GSU WGs")
+      # module.add(SMulI32(dst=sgpr(self.tmpS01), src0=sgpr("NumWorkGroups1"), src1=sgpr("WorkGroup0"), comment="NumWorkGroups1*wg0"))
+      # module.add(SAndB32(dst=sgpr(self.tmpS01+1), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+      # module.add(SAddU32(dst=sgpr(self.tmpS01), src0=sgpr(self.tmpS01), src1=sgpr("WorkGroup1"), comment="NumWorkGroups1*wg0+wg1"))
+      # module.add(SMulI32(dst=sgpr(self.tmpS01), src0=sgpr(self.tmpS01), src1=sgpr(self.tmpS01+1), comment="(NumWorkGroups1*wg0+wg1)*GSU"))
+      # module.add(SMovB32(dst=sgpr("GSUStartWGIdx"), src=sgpr(self.tmpS01), comment="starting WG index of each GSU WGs"))
+      # module.add(SAddU32(dst=sgpr(self.tmpS01), src0=sgpr(self.tmpS01), src1=sgpr("GSUSumIdx"), comment="(NumWorkGroups0*wg1+wg0)*GSU+GSUSumIdx"))
+      # # adding offset to workspace buffer
+      # reductionOffset = self.kernel["MacroTile0"]*self.kernel["MacroTile1"]*self.parentWriter.states.bpeCinternal
+      # module.add(SMulHIU32(dst=sgpr(self.tmpS01+1), src0=sgpr(self.tmpS01), src1=hex(reductionOffset), comment="(MT0*MT1*bpeC)*WGIdx"))
+      # module.add(SMulI32(dst=sgpr(self.tmpS01), src0=sgpr(self.tmpS01), src1=hex(reductionOffset), comment="(MT0*MT1*bpeC)*WGIdx"))
+      # module.add(SAddU32(dst=sgpr("SrdD+0"), src0=sgpr("AddressD+0"), src1=sgpr(self.tmpS01), comment="add lo to SRD"))
+      # module.add(SAddCU32(dst=sgpr("SrdD+1"), src0=sgpr("AddressD+1"), src1=sgpr(self.tmpS01+1), comment="add hi to SRD"))
+      # module.addSpaceLine()
 
     storeCodeGSUSK = Module("GroupLoadStore")
     if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":#GSUGSU
-      module.addComment1("store after Acc, "+"GSU: "+str(self.kernel["GlobalSplitU"]))
+      storeWidth = self.kernel["StoreVectorWidth"]
       for elementIdx in range(0, len(self.batchElements)):
         addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
+        if self.batchIdx == 0 and elementIdx == 0:
+          addrDVgpr = addrCalc.addrDVgpr
+          storeCodeGSUSK.add(staticMultiply(vgpr(addrDVgpr), vgpr("Serial"), storeWidth * self.parentWriter.states.bpeCinternal, self.tmpS01))
+          storeCodeGSUSK.add(SMovB32(dst=sgpr(self.tmpS01), src=0, comment="Init sgpr offset"))
+          storeCodeGSUSK.addSpaceLine()
         if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
           vgprIdx = self.ss.elementSumIdx[elementIdx] - self.parentWriter.states.c.startVgprValu
           vgprDst = self.activationSetPCStruct.vgprActCopy if mergeActFuncCall else "ValuC+%d"%vgprIdx
@@ -621,18 +643,18 @@ class GlobalWriteBatchWriter:
 
         sumIdx = self.ss.elementSumIdx[elementIdx]
         if not self.kernel["StoreRemapVectorWidth"]:
-          tmpStoreCode = self.parentWriter.addStore(self.kernel, self.ss, 'D', addrCalc, sumIdx, self.tmpS01, self.edge, comment="store D %u" %sumIdx) #here
-          if self.kernel["GroupLoadStore"]:
-            storeCodeGSUSK.add(tmpStoreCode)
-          else:
-            module.addSpaceLine()
-            module.add(tmpStoreCode)
+          # tmpStoreCode = self.parentWriter.addStore(self.kernel, self.ss, 'D', addrCalc, sumIdx, self.tmpS01, self.edge, comment="store D %u" %sumIdx) #here
+          # if self.kernel["GroupLoadStore"]:
+          #   storeCodeGSUSK.add(tmpStoreCode)
+          # else:
+          #   module.add(tmpStoreCode)
+          pass
         else:
           rpe = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr
           module.add(self.parentWriter.storeRemapAddLocalWrite(self.kernel, self.ss, addrCalc, sumIdx*rpe))
           # Column Block Shape has been written to LDS
           # Now read back and write out to global memory
-      module.add(storeCodeGSUSK)
+      # module.add(storeCodeGSUSK)
 
     if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel" and self.kernel["StoreRemapVectorWidth"]:
       if self.parentWriter.StoreRemapLastBatch == 1:
@@ -1203,16 +1225,16 @@ class GlobalWriteBatchWriter:
 
     module.add(storeCode)
 
-    if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":#GSUGSU
-      SynchronizerEndlabelString = "Sync_EDN%s%s" % ("_Beta" if self.beta else "", "_Edge" if self.edge else "" )
-      SynchronizerEndlabelComment = "Sync_EDN"
-      SynchronizerEndlabel = Label(self.parentWriter.labels.getName(SynchronizerEndlabelString), SynchronizerEndlabelComment)
-      module.add(SynchronizerEndlabel)
+    # if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":#GSUGSU
+    #   SynchronizerEndlabelString = "Sync_END%s%s" % ("_Beta" if self.beta else "", "_Edge" if self.edge else "" )
+    #   SynchronizerEndlabelComment = "Sync_END"
+    #   SynchronizerEndlabel = Label(self.parentWriter.labels.getName(SynchronizerEndlabelString), SynchronizerEndlabelComment)
+    #   module.add(SynchronizerEndlabel)
 
-      module.addSpaceLine()
-      module.addCommentAlign("synchronizer store end")
+      # module.addSpaceLine()
+      # module.addCommentAlign("synchronizer store end")
 
-      module.addSpaceLine()
+    #   module.addSpaceLine()
 
     if self.parentWriter.db["CheckStoreC"]>=0:
       useBuffer = self.kernel["BufferStore"]

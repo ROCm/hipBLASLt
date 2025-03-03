@@ -2975,7 +2975,6 @@ namespace TensileLite
                                                       Hardware const& hardware) const
     {
         size_t size = 0;
-
         if(sizeMapping.streamK > 0 && sizeMapping.streamKAtomic == 0)
         {
             const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
@@ -2992,8 +2991,11 @@ namespace TensileLite
             size_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : autoGSU;
             size_t gsuMultiplier = gsu > 1 ? gsu : 0;
 
-            size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC
-                    * gsuMultiplier;
+            // size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC * gsuMultiplier;
+            size_t tiles = problem.getNumTiles(sizeMapping);
+            size_t tileSize = sizeMapping.macroTile.x * sizeMapping.macroTile.y * sizeMapping.workspaceSizePerElemC;
+            size += tiles * tileSize * gsuMultiplier;
+
             if(problemType.useGradient && problemType.useBias
                && problem.getParams().biasEnum() != rocisa::DataType::None)
             {
