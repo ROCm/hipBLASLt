@@ -116,7 +116,7 @@ def _getCustomKernelSolutionObj(
 
     mi = sol["MatrixInstruction"]
     isa = next(iter(isaInfoMap.keys()))
-    wavefrontSize = sol.get("WavefrontSize", None)
+    wavefrontSize = sol["WavefrontSize"]
     ptype = sol["ProblemType"]
     workgroup = sol.get("WorkGroup", None)
 
