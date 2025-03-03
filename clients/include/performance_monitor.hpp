@@ -50,6 +50,8 @@ public:
     virtual int                 getCUs()                   = 0;
     virtual size_t              getMemWriteBytesD()        = 0;
     virtual size_t              getMemReadBytes()          = 0;
+    virtual uint16_t            getCuCount()               = 0;
+    virtual std::string         getDeviceString()          = 0;
 };
 
 PerformanceMonitor& getPerformanceMonitor();

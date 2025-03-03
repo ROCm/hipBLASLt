@@ -107,14 +107,16 @@ public:
 
     bool enabled()
     {
-        static const char* env1 = getenv("HIPBLASLT_BENCH_PERF");
-        static const char* env2 = getenv("HIPBLASLT_BENCH_PERF_ALL");
-        return env1 != nullptr || (env2 != nullptr && m_isMultiXCDSupported);
+        static const char* env1_freq = getenv("HIPBLASLT_BENCH_FREQ");
+        static const char* env1_perf = getenv("HIPBLASLT_BENCH_PERF");
+        static const char* env2      = getenv("HIPBLASLT_BENCH_FREQ_ALL");
+        return env1_freq != nullptr || env1_perf != nullptr
+               || (env2 != nullptr && m_isMultiXCDSupported);
     }
 
     bool detailedReport()
     {
-        static const char* env2 = getenv("HIPBLASLT_BENCH_PERF_ALL");
+        static const char* env2 = getenv("HIPBLASLT_BENCH_FREQ_ALL");
         return (env2 != nullptr && m_isMultiXCDSupported);
     }
 
@@ -299,6 +301,16 @@ public:
         return hipblasltGetMemReadBytes();
     }
 
+    uint16_t getCuCount()
+    {
+        return m_CUCount;
+    }
+
+    std::string getDeviceString()
+    {
+        return m_deviceString;
+    }
+
 private:
     void initThread()
     {
@@ -436,6 +448,10 @@ private:
         hipDeviceProp_t props;
 
         HIP_CHECK_EXC(hipGetDeviceProperties(&props, hipDeviceIndex));
+        m_CUCount = props.multiProcessorCount;
+        std::string deviceFullString(props.gcnArchName);
+        m_deviceString = deviceFullString.substr(0, deviceFullString.find(":"));
+
 #if HIP_VERSION >= 50220730
         int hip_version;
         HIP_CHECK_EXC(hipRuntimeGetVersion(&hip_version));
@@ -500,6 +516,8 @@ private:
     uint32_t                m_smiDeviceIndex;
     bool                    m_isMultiXCDSupported;
     uint16_t                m_XCDCount;
+    uint16_t                m_CUCount;
+    std::string             m_deviceString;
 
     std::vector<uint64_t>              m_SYSCLK_sum;
     std::vector<std::vector<uint64_t>> m_SYSCLK_array;
@@ -603,6 +621,16 @@ public:
     size_t getMemReadBytes()
     {
         return 0.0;
+    }
+
+    uint16_t getCuCount()
+    {
+        return 0.0;
+    }
+
+    std::string getDeviceString()
+    {
+        return " ";
     }
 #endif
 };

@@ -27,6 +27,18 @@
 #include "argument_model.hpp"
 #include "performance_monitor.hpp"
 
+// FLOPS/CLOCK/CU values for gfx942
+auto hipblaslt_get_flops_per_clock_per_cu_gfx942(hipblasComputeType_t type)
+{
+    if(type == HIPBLAS_COMPUTE_32F || type == HIPBLAS_COMPUTE_32F_PEDANTIC
+       || type == HIPBLAS_COMPUTE_64F || type == HIPBLAS_COMPUTE_64F_PEDANTIC)
+        return 256;
+    else if(type == HIPBLAS_COMPUTE_16F || type == HIPBLAS_COMPUTE_16F_PEDANTIC
+            || type == HIPBLAS_COMPUTE_32F_FAST_16F || type == HIPBLAS_COMPUTE_32F_FAST_16BF)
+        return 2048;
+    else
+        return 0;
+}
 // this should have been a member variable but due to the complex variadic template this singleton allows global control
 
 static bool log_function_name = false;
@@ -41,6 +53,26 @@ bool ArgumentModel_get_log_function_name()
     return log_function_name;
 }
 
+void ArgumentModel_log_efficiency(hipblaslt_internal_ostream& name_line,
+                                  hipblaslt_internal_ostream& val_line,
+                                  const Arguments&            arg,
+                                  double                      hipblaslt_gflops)
+{
+    PerformanceMonitor& performance_monitor = getPerformanceMonitor();
+    if(!performance_monitor.enabled())
+        return;
+
+    if(performance_monitor.getDeviceString() == "gfx942"
+       && hipblaslt_get_flops_per_clock_per_cu_gfx942(arg.compute_type) != 0)
+    {
+        double theoretical_gflops = hipblaslt_get_flops_per_clock_per_cu_gfx942(arg.compute_type)
+                                    * performance_monitor.getCuCount()
+                                    * performance_monitor.getLowestAverageSYSCLK() * 0.001;
+        name_line << ",efficiency";
+        val_line << "," << (hipblaslt_gflops / theoretical_gflops) * 100;
+    }
+}
+
 void ArgumentModel_log_performance(hipblaslt_internal_ostream& name_line,
                                    hipblaslt_internal_ostream& val_line)
 {
@@ -49,32 +81,35 @@ void ArgumentModel_log_performance(hipblaslt_internal_ostream& name_line,
     if(!performance_monitor.enabled())
         return;
 
-    name_line << ",Total Granularity";
-    val_line << "," << performance_monitor.getTotalGranularityValue();
+    if(getenv("HIPBLASLT_BENCH_PERF") != nullptr)
+    {
+        name_line << ",total_gran";
+        val_line << "," << performance_monitor.getTotalGranularityValue();
 
-    name_line << ",Tiles Per-CU";
-    val_line << "," << performance_monitor.getTilesPerCuValue();
+        name_line << ",tiles_per_cu";
+        val_line << "," << performance_monitor.getTilesPerCuValue();
 
-    name_line << ",Tile-0 Granularity";
-    val_line << "," << performance_monitor.getTile0Granularity();
+        name_line << ",num_cu's";
+        val_line << "," << performance_monitor.getCUs();
 
-    name_line << ",Tile-1 Granularity";
-    val_line << "," << performance_monitor.getTile1Granularity();
+        name_line << ",tile_0_granularity";
+        val_line << "," << performance_monitor.getTile0Granularity();
 
-    name_line << ",CU granularity";
-    val_line << "," << performance_monitor.getCuGranularity();
+        name_line << ",tile_1_granularity";
+        val_line << "," << performance_monitor.getTile1Granularity();
 
-    name_line << ",Wave granularity";
-    val_line << "," << performance_monitor.getWaveGranularity();
+        name_line << ",cu_gran";
+        val_line << "," << performance_monitor.getCuGranularity();
 
-    name_line << ",#CU's";
-    val_line << "," << performance_monitor.getCUs();
+        name_line << ",wave_gran";
+        val_line << "," << performance_monitor.getWaveGranularity();
 
-    name_line << ",mem-read-bytes";
-    val_line << "," << performance_monitor.getMemReadBytes();
+        name_line << ",mem_read_bytes";
+        val_line << "," << performance_monitor.getMemReadBytes();
 
-    name_line << ",mem-write-bytes";
-    val_line << "," << performance_monitor.getMemWriteBytesD();
+        name_line << ",mem_write_bytes";
+        val_line << "," << performance_monitor.getMemWriteBytesD();
+    }
 
     if(!performance_monitor.detailedReport())
     {
