@@ -891,6 +891,8 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
                     reads = reads + readsInc
                     if reads > readCnt:
                         break
+                    if kernel["ExpertSchedulingMode"] > 0:
+                        imod.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
                     # PK and StoreCUnroll is removed so you cannot find any HolderContainer in s_waitcnt
                     hasHolder, wcList = hasHolderInWaitCnt(itemGR)
                     if hasHolder:

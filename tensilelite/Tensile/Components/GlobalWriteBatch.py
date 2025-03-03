@@ -1683,6 +1683,9 @@ class GlobalWriteBatchWriter:
             dVgpr = formatting(d, "ValuC+", self.parentWriter.states.c.startVgprValu)
             packModule.add(VPackF16toB32(dst=vgpr(dVgpr), src0=vgpr(formatting(sumIdxV-1, "ValuC+", self.parentWriter.states.c.startVgprValu)), src1=vgpr(formatVgpr), \
                           comment="Pack with neighbor"))
+      
+      if self.kernel["ExpertSchedulingMode"] > 0:
+        packModule.add(SWaitCnt(va_vdst=0, comment="wait for writes to complete"))
 
       biasReductionModule = Module("biasReductionModule")
       if self.storeBiasD == 1:

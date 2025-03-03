@@ -25,7 +25,7 @@
 from rocisa import rocIsa, countInstruction, countGlobalRead, \
             countLocalRead, countLocalWrite, countDSStoreB256
 from rocisa.code import Module, TextBlock, StructuredModule, KernelBody
-from rocisa.container import RegisterContainer, replaceHolder
+from rocisa.container import RegisterContainer, replaceHolder, HWRegContainer
 from rocisa.label import LabelManager
 from rocisa.asmpass import rocIsaPass, rocIsaPassOption
 from rocisa.instruction import BufferLoadB128, BufferLoadB32, BufferLoadB64, \
@@ -1641,6 +1641,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
           if i == numMfmaPerIter - 1:
             while packItems:
               iterCode.add(packItems.pop(0))
+          if kernel["ExpertSchedulingMode"] > 0:
+            iterCode.add(SWaitCnt(va_vdst=0, comment="wait for writes to complete"))
         else:
           if i == numMfmaPerIter - 1:
             while packItemsA:
@@ -2596,6 +2598,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
           pointerLWCode.add(self.localWriteSwapOffsets(kernel, expand, tensorParametersB))
 
         if isSwapLroIter: # ResetLroIter
+          if kernel["ExpertSchedulingMode"] > 0:
+            pointerLRCode.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
           # Swap, reset, or increment the LRO:
           pointerLRCode.addComment1("local read swap offsets a")
           pointerLRCode.add(self.localReadSwapOffsets(kernel, expand, tensorParametersA))
@@ -2617,6 +2621,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       waitCode = self._wait(kernel, tensorParametersA, tensorParametersB, \
           -1, 0, 0, \
           "wait for prior local read local write")
+
+      if kernel["ExpertSchedulingMode"] > 0:
+        module.add(SWaitCnt(va_vdst=0, comment="wait for the previous iter's writes to complete"))
 
       luIdx = u % self.states.numVgprBuffer # local to use for MACs
       if kernel["EnableMatrixInstruction"]:
@@ -2852,6 +2859,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         finalLoop = lc == loopCopies - 1
         module.add(self._loopBody( kernel, tensorParametersA, tensorParametersB, pack, lc, loopCopies, finalLoop, isDTVGRSecondBuf=isDTVGRSecondBuf ))
 
+    if kernel["ExpertSchedulingMode"] > 0:
+      module.add(SSetRegIMM32B32(dst=HWRegContainer(reg=26, value=[0,2]), src=0x0, comment="enable hardware dependency checking"))
+
     module.addComment1("Before NLL: Check VGPR.checkin for INT8 LW")
 
     # swap local write, read again before noLoadLoop if PrefetchGlobalRead and DirectToLds is enabled
@@ -2874,6 +2884,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         # generate extra NGLL for second GR buffer
         module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=True, pack=pack, NLLindex=NGLLindex, NLLnum=NGLLnum))
         module.add(loopLabelToNoGRloopAfterABLoop)
+        if kernel["ExpertSchedulingMode"] > 0:
+          module.add(SSetRegIMM32B32(dst=HWRegContainer(reg=26, value=[0,2]), src=0x0, comment="enable hardware dependency checking"))
         NGLLindex += 1
       module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=True, pack=pack, NLLindex=NGLLindex, NLLnum=NGLLnum))
 

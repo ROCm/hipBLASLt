@@ -2059,6 +2059,19 @@ class Solution(collections.abc.Mapping):
           reject(state, printRejectionReason, "MFMA non-SourceSwap mode doesn't support miovw(%u) with svw(%u)" % (state["VectorWidthA"]*state["MIOutputVectorWidth"], state["StoreVectorWidth"]))
           return
 
+    if state["ExpertSchedulingMode"] > 0:
+      if not globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasSchedMode"]:
+        reject(state, "ExpertSchedulingMode not supported on this arch")
+        return
+
+      if state["ExpertSchedulingMode"] != 2:
+        reject(state, "ExpertSchedulingMode=%u not supported" % state["ExpertSchedulingMode"])
+        return
+
+      if state["ScheduleIterAlg"] != 3:
+        reject(state, "ExpertSchedulingMode is only supported when ScheduleIterAlg=3 for now")
+        return
+
     # LocalSplitU too large?
     # dot2: every NumWaveSplitK threads compute the same element.
     numElementsPerWorkGroup = state["MacroTile0"]*state["MacroTile1"]*state["NumWaveSplitK"]

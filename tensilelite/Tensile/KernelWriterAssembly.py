@@ -5436,6 +5436,10 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SCBranchSCC1(labelName=jumpLabel.getLabelName(), \
                   comment="do not enter Loop%s"%loopChar ))
 
+      if kernel["ExpertSchedulingMode"] > 0:
+        expertSchedulingMode = int(kernel["ExpertSchedulingMode"])
+        module.add(SSetRegIMM32B32(dst=HWRegContainer(reg=26, value=[0,2]), src=expertSchedulingMode, comment="disable conservative hardware dependency checking to allow scheduling by software"))
+
       if not noLabelGen:
         module.add(loopLabelBegin)
 
@@ -5643,9 +5647,13 @@ class KernelWriterAssembly(KernelWriter):
           oddIterPreCode.addComment1("Select high bank of LDS")
           # Generate local read address code only if DirectToVgpr is not enabled
           if not kernel["DirectToVgprA"] and not kernel["StoreSwapAddr"]:
+            if kernel["ExpertSchedulingMode"] > 0:
+              oddIterCode.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
             oddIterCode.add(self.localReadSwapOffsets(kernel, False, tPA))
           # Generate local read address code only if DirectToVgpr is not enabled
           if not kernel["DirectToVgprB"] and not kernel["StoreSwapAddr"]:
+            if kernel["ExpertSchedulingMode"] > 0:
+              oddIterCode.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
             oddIterCode.add(self.localReadSwapOffsets(kernel, False, tPB))
 
           if kernel["ProblemType"]["Sparse"]:
@@ -8986,6 +8994,8 @@ class KernelWriterAssembly(KernelWriter):
                 elif tP["glvw"] > 1:
                   localWriteCVTCode.add(VMovB32(dst=vgpr(dst), src=vgpr(src), comment="another VGPR storing lshr 8-bit value"))
                   localWriteCVTCode.add(VLShiftRightB32(dst=vgpr(dst), shiftHex=hex(8), src=vgpr(dst), comment="G2L Vpgr >> 8"))
+                  if kernel["ExpertSchedulingMode"] > 0:
+                    localWriteCVTCode.add(SWaitCnt(va_vdst=0, comment="wait for writes to complete"))
 
             paramList = []
             numsOfRegister = []
