@@ -93,9 +93,15 @@ def getCustomKernelConfig(
     for key in internalSupportParams:
         if key not in kernelIsp:
             kernelIsp[key] = internalSupportParams[key]
+    
+    # validParams = validParameters.update(newMIValidParameters)
+    # if not validParams:
+    #     raise RuntimeError(f"Valid parameters not loaded: {validParameters}\n{newMIValidParameters}\n{validParams}")
+    validParameters.update(newMIValidParameters)
+
     for k, v in kernelConfig.items():
         if k != "ProblemType":
-            checkParametersAreValid((k, [v]), validParameters + newMIValidParameters)
+            checkParametersAreValid((k, [v]), validParameters)
 
     kernelConfig["KernelLanguage"] = "Assembly"
     kernelConfig["CustomKernelName"] = kernelName

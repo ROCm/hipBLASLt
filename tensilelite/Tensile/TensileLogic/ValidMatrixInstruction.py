@@ -160,7 +160,6 @@ def validateMIParameters(
     hasMFMA = isaInfoMap[isa].asmCaps["HasMFMA"]
     hasWMMA = isaInfoMap[isa].asmCaps["HasWMMA"]
 
-
     miBlock = solution["MIBlock"]
     miWaveGroup = solution["MIWaveGroup"]
     miWaveTile = solution["MIWaveTile"]
@@ -168,12 +167,8 @@ def validateMIParameters(
     # Check datatype
     if not isSparse:  # If it's sparse
         if hasMFMA:  # and it supports MFMA
-            if not (
-                miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()]
-            ):  # but is invalid MFMA
-                print1(
-                    f"Looks like {mi4} of type {miDataType.toChar()} is not supported for MFMA {validMFMA[miDataType.toChar()]}"
-                )
+            # but is invalid MFMA
+            if not miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()]:  
                 if miDataType.isBFloat16() and mi4 in validMFMA["B1k"]:  # but is valid bf16 MFMA
                     assert solution["MFMA_BF16_1K"], elineno()
                 else:
