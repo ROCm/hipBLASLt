@@ -116,9 +116,9 @@ def _getCustomKernelSolutionObj(
 
     mi = sol["MatrixInstruction"]
     isa = next(iter(isaInfoMap.keys()))
-    wavefrontSize = sol.get("WavefrontSize", None)
+    wavefrontSize = sol["WavefrontSize"]
     ptype = sol["ProblemType"]
-    workgroup = sol.get("WorkGroup", None)
+    workgroup = sol["WorkGroup"]
 
     # TODO: this should be deleted once all custom kernel configs MI are length 4.
     if len(mi) == 9:

@@ -67,9 +67,9 @@ def reject(state: dict, printSolutionRejectionReason: bool = True, *args) -> boo
 def matrixInstructionToMIParameters(
       mi: list,
       isa: IsaVersion,
-      wavefrontSize: Optional[int],
+      wavefrontSize: int,
       problemType: dict,
-      workGroup: Optional[list],
+      workGroup: list,
       isaInfoMap: Dict[IsaVersion, IsaInfo]
     ):
     """
@@ -110,12 +110,8 @@ def matrixInstructionToMIParameters(
     waves = mi[7]* mi[8]
     wg0 = mi[4] * mi[0] * mi[7]
 
-    if wavefrontSize:
-      # Some Solutions used during benchmarking don't have WavefrontSize set.
-      result["WavefrontSize"] = wavefrontSize
-    if workGroup:
-      # Some Solutions used during benchmarking don't have WorkGroup set.
-      result["WorkGroup"] = [wg0, waves*wavefrontSize // wg0, workGroup[2]]
+    result["WavefrontSize"] = wavefrontSize
+    result["WorkGroup"] = [wg0, waves*wavefrontSize // wg0, workGroup[2]]
     result["ThreadTile"] = [1, 1]  # dummy
 
     isSparse = problemType.get("Sparse", 0)
