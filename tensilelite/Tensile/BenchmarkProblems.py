@@ -136,7 +136,6 @@ def _getCustomKernelSolutionObj(
            )
     
     print1(f" --DBG-- wavefrontSize: {sol['WavefrontSize']}")
-    print1(f" --DBG-- workGroup: {sol['WorkGroup']}")
     return sol
 
 
