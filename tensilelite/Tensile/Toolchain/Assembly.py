@@ -116,7 +116,6 @@ def buildAssemblyCodeObjectFiles(
         if coName:
           coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (kernel["BaseName"] + extObj)))
 
-      print1(f" ---DBG--- CodeObjectFileMap: {coFileMap}, compress: {compress}")
       for coFileRaw, objFiles in coFileMap.items():
         objFiles = _batchObjectFiles(ldPath, objFiles, coFileRaw)
         linker(objFiles, str(coFileRaw))

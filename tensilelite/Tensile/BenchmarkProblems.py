@@ -92,7 +92,6 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, asse
                 assembler,
                 isaInfoMap
             )
-            print1(f" ---INF--- Solution: {solutionObject._state}")
             if solutionObject["Valid"]:
                 if solutionObject not in solutionSet:
                     solutionSet.add(solutionObject)

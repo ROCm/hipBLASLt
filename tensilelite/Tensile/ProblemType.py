@@ -410,7 +410,6 @@ class ProblemType(Mapping):
 
     if "Gradient" in config:
       if config["Gradient"]:
-        print1(f" --ERR-- Use bias and activation: {self['UseBias']} and {self['ActivationType']}")
         if (not self["UseBias"]) and self["ActivationType"] == 'none':
           printWarning("Gradient is disabled cause bias and activation are both disabled.")
           self["Gradient"] = False
