@@ -50,6 +50,16 @@ class TensileInstructions:
                 cls._instance._kernelInfo = {}
         return cls._instance
 
+    def __reduce__(self):
+        return (TensileInstructions, ())
+
+    @dataclass
+    class IsaInfo:
+        assemblerPath: str
+        asmCaps: dict
+        archCaps: dict
+        regCaps: dict
+        asmBugs: dict
 
     @dataclass
     class kernelInfo:
