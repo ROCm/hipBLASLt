@@ -24,7 +24,7 @@
 
 import sys
 import pprint
-from typing import Dict
+from typing import Dict, Optional
 
 from Tensile.Common import IsaVersion, IsaInfo, print1, print2
 from Tensile.Common.ValidParameters import validMFMA
@@ -67,7 +67,7 @@ def reject(state: dict, printSolutionRejectionReason: bool = True, *args) -> boo
 def matrixInstructionToMIParameters(
       mi: list,
       isa: IsaVersion,
-      wavefrontSize: int,
+      wavefrontSize: Optional[int],
       problemType: dict,
       workGroup: list,
       isaInfoMap: Dict[IsaVersion, IsaInfo]
@@ -90,7 +90,10 @@ def matrixInstructionToMIParameters(
 
     result = {}
     result["ISA"] = isa
-    result["WavefrontSize"] = wavefrontSize
+    
+    if wavefrontSize:
+      # Some Solutions used during benchmarking don't have WavefrontSize set on them.
+      result["WavefrontSize"] = wavefrontSize
 
     # Enable F32 XDL math operation only when the input type is f32.
     enableF32xdl = (
