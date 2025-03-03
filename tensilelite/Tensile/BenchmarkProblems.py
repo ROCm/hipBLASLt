@@ -59,7 +59,7 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, asse
     """Creates a list with a Solution object for each parameter combination in forkPermutations"""
     print1("# Enumerating Solutions")
 
-    # solutions = []
+    solutions = []
     solutionSet = set()
     for perm in forkPermutations:
         # Expect only a single ISA in the map for the Tensile context
@@ -94,11 +94,13 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, asse
             )
             print1(f" ---INF--- Solution: {solutionObject._state}")
             if solutionObject["Valid"]:
-                solutionSet.add(solutionObject)
+                if solutionObject not in solutionSet:
+                    solutionSet.add(solutionObject)
+                    solutions.append(solutionObject)
         elif debugConfig.printSolutionRejectionReason:
             print1("rejecting solution " + str(solution))
 
-    return list(solutionSet)
+    return solutions
 
 
 def _getCustomKernelSolutionObj(
