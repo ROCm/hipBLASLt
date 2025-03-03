@@ -69,7 +69,7 @@ def matrixInstructionToMIParameters(
       isa: IsaVersion,
       wavefrontSize: int,
       problemType: dict,
-      workGroup: list,
+      workGroup: Optional[list],
       isaInfoMap: Dict[IsaVersion, IsaInfo]
     ):
     """
@@ -111,7 +111,9 @@ def matrixInstructionToMIParameters(
     wg0 = mi[4] * mi[0] * mi[7]
 
     result["WavefrontSize"] = wavefrontSize
-    result["WorkGroup"] = [wg0, waves*wavefrontSize // wg0, workGroup[2]]
+    if workGroup:
+      # Some Solutions used during benchmarking don't have WorkGroup set.
+      result["WorkGroup"] = [wg0, waves*wavefrontSize // wg0, workGroup[2]]
     result["ThreadTile"] = [1, 1]  # dummy
 
     isSparse = problemType.get("Sparse", 0)
