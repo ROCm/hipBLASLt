@@ -270,7 +270,10 @@ def get_gpu_max_frequency(device_id):
         return result
 
     attrib = hip.hipDeviceAttribute_t.hipDeviceAttributeClockRate
-    freq = hip_check(hip.hipDeviceGetAttribute(attrib, device_id))
+    try:
+        freq = hip_check(hip.hipDeviceGetAttribute(attrib, device_id))
+    except:
+        freq = 1000
 
     return freq // 1000 if freq else None
 
