@@ -116,9 +116,16 @@ def _addRegToGraph(item, assignmentDict, params: list, graph, noOpt):
             _setName2RegNum(p, assignmentDict)
             if p.regType == "acc":
                 continue
-            for i in range(p.regIdx, p.regIdx + p.regNum):
-                if graph[p.regType][i] and graph[p.regType][i][-1] == item:
+            for i in range(p.regIdx, p.regIdx + p.regNum):                 
+                # Checks out of range
+                if i >= len(graph[p.regType]):
                     continue
+                # Does it exists?            
+                if not graph[p.regType][i]:
+                    continue
+                # Whether to append?
+                if graph[p.regType][i][-1] == item:
+                    continue                
                 # print("[%s] Index %d %d" %(p.regType, i, len(graph[p.regType])))
                 if noOpt:
                     graph[p.regType][i].append(NoOptItem(item))
