@@ -232,14 +232,6 @@ class GSU(Component):
             # if kernel["GroupLoadStore"] and kernel["ProblemType"]["UseBeta"]:
             #     numVgprsPerElement += self.ss.cfg.numVgprsPerAddr
 
-            # Use VGPR up to next occupancy threshold:
-            maxVgprs, occupancy = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), writer.sgprPool.size(), \
-                writer.getLdsSize(kernel), writer.agprPool.size(), writer.states.doubleVgpr)
-            # Set occupancy limit for register pools
-            # TODO: Support gfx12
-            if kernel["ISA"][0] != 12:
-                writer.vgprPool.setOccupancyLimit(writer.states.regCaps["MaxVgpr"], writer.states.regCaps["PhysicalMaxVgpr"] // occupancy)
-                writer.sgprPool.setOccupancyLimit(writer.states.regCaps["MaxSgpr"], writer.states.regCaps["PhysicalMaxSgpr"] // occupancy)
             # Get estimated numVgprAvailable
             # print("Max vgprs =", maxVgprs, writer.vgprPool.size(), writer.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align))
             numVgprAvailable = writer.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
@@ -298,6 +290,15 @@ class GSU(Component):
                     numVgprAvailable = writer.vgprPool.available()
                     print2(writer.vgprPool.state())
 
+            # Use VGPR up to next occupancy threshold:
+            maxVgprs, occupancy = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), writer.sgprPool.size(), \
+                writer.getLdsSize(kernel), writer.agprPool.size(), writer.states.doubleVgpr)
+            # Set occupancy limit for register pools
+            # TODO: Support gfx12
+            if kernel["ISA"][0] != 12:
+                writer.vgprPool.setOccupancyLimit(writer.states.regCaps["MaxVgpr"], writer.states.regCaps["PhysicalMaxVgpr"] // occupancy)
+                writer.sgprPool.setOccupancyLimit(writer.states.regCaps["MaxSgpr"], writer.states.regCaps["PhysicalMaxSgpr"] // occupancy)
+            
             if ss.numVgprsPerElement:
                 numElementsPerBatch = numVgprAvailable // ss.numVgprsPerElement
             else:
