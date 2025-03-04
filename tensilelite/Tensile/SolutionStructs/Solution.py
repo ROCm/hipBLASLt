@@ -1020,12 +1020,16 @@ class Solution(collections.abc.Mapping):
     rocmVersion: SemanticVersion,
     depthUConfig: DepthUConfig
   ):
-    # state["EnableF32XdlMathOp"] = False #ignore the F32 xDL MathOp by default.
-    # #enable F32 xDL MathOp only when the input type is f32.
-    # if "F32XdlMathOp" in state["ProblemType"] \
-    #    and (not state["ProblemType"]["F32XdlMathOp"].isSingle()) \
-    #    and (state["ProblemType"]["DataType"].isSingle()):
-    #   state["EnableF32XdlMathOp"] = True
+    # NOTE: This entry should instead should already be set on the solution within the logic
+    # files. This code will be removed once all logic files are updated to contain both
+    # the keys "EnableF32XdlMathOp" and "F32XdlMathOp".
+    state["EnableF32XdlMathOp"] = False 
+    #ignore the F32 xDL MathOp by default.
+    #enable F32 xDL MathOp only when the input type is f32.
+    if "F32XdlMathOp" in state["ProblemType"] \
+       and (not state["ProblemType"]["F32XdlMathOp"].isSingle()) \
+       and (state["ProblemType"]["DataType"].isSingle()):
+      state["EnableF32XdlMathOp"] = True
 
     Solution.assignProblemIndependentDerivedParameters(state, printRejectionReason, isaInfoMap)
 
