@@ -399,6 +399,16 @@ def Tensile(userArgs):
     device_id = config["GlobalParameters"].get("Device", globalParameters["Device"])
     UseEffLike = config["GlobalParameters"].get("UseEffLike", globalParameters["UseEffLike"])
 
+    def isRhel8():
+        try:
+            import distro
+            dist = distro.linux_distribution()
+            return True if 'Red Hat Enterprise Linux' in dist[0] and '8.' in dist[1] else False
+        except:
+            return False
+
+    UseEffLike = False if isRhel8() else UseEffLike
+
     if 'LibraryLogic' in config and UseEffLike:
         max_frequency = get_gpu_max_frequency(device_id)
 
