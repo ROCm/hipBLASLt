@@ -358,7 +358,7 @@ def parseLibraryLogicData(
             for key, value in customConfig.items():
                 solutionState[key] = value
 
-            if len(customConfig["MatrixInstruction"]) != 4:
+            if "MatrixInstruction" in customConfig and len(customConfig["MatrixInstruction"]) != 4:
                 raise ValueError(f"Custom kernel MatrixInstruction can only be of length 4, found {customConfig['MatrixInstruction']}")
 
             # The ActivationType setting in YAML is meaningless in customKernel case.
