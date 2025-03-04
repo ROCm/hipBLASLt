@@ -64,12 +64,11 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, asse
     for perm in forkPermutations:
         # Expect only a single ISA in the map for the Tensile context
         # because the GPU has to be physically present for benchmarking
-        isa = next(iter(isaInfoMap.keys()))
 
-        solution = {}
-        solution.update({
+        solution = {
             "ProblemType": deepcopy(problemType.state),
-        })
+            "ISA": next(iter(isaInfoMap.keys()))
+        }
         solution.update(constantParams)
         solution.update(perm)
 
@@ -78,9 +77,13 @@ def _generateForkedSolutions(problemType, constantParams, forkPermutations, asse
         wavefrontSize = solution["WavefrontSize"]
         workgroup = solution["WorkGroup"]
         ptype = solution["ProblemType"]
+        isa = solution["ISA"]
 
-        miParams = matrixInstructionToMIParameters(mi, isa, wavefrontSize, ptype, workgroup, isaInfoMap)
-        solution.update(miParams)
+        if len(mi) == 9:
+            miParams = matrixInstructionToMIParameters(mi, isa, wavefrontSize, ptype, workgroup, isaInfoMap)
+            solution.update(miParams)
+        elif len(mi) == 0:
+            solution["EnableMatrixInstruction"] = False
 
         if validateMIParameters(solution, isaInfoMap):
             solutionObject = Solution(

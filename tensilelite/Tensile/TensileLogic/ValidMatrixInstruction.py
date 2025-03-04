@@ -105,6 +105,7 @@ def validateMatrixInstruction(
 def validateMIParameters(
     solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], printSolutionRejectionReason: bool = True
 ):
+
     assert MI_KEY in solution, elineno() + ": missing MatrixInstruction"
     assert MI_ENABLED_KEY in solution, elineno() + ": missing EnableMatrixInstruction"
     assert not (solution[MI_KEY] == [] and solution[MI_ENABLED_KEY] == True), (
@@ -130,7 +131,7 @@ def validateMIParameters(
     assert len(mi4) == 4 or len(mi4) == 0, elineno() + ": MI length not 4 or 0"
     if len(mi4) == 0:
         assert miEnabled == False, elineno()
-        return
+        return True
 
     assert solution["MatrixInstM"] == mi4[0]
     assert solution["MatrixInstN"] == mi4[1]
