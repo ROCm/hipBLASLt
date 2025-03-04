@@ -50,12 +50,6 @@ enum hipblaslt_argument : int;
 constexpr std::size_t MAX_SUPPORTED_NUM_PROBLEMS{32};
 struct Arguments
 {
-    enum ScalingFormat
-    {
-        None = 0,
-        Scalar,
-        Vector
-    };
     /*************************************************************************
      *                    Beginning Of Arguments                             *
      *************************************************************************/
@@ -134,23 +128,24 @@ struct Arguments
     float                     activation_arg1; // threshold when activation type is relu
     float                     activation_arg2; // upperbound when activation type is relu
 
-    hipDataType           bias_type;
-    hipblaslt_bias_source bias_source;
-    bool                  bias_vector;
-    ScalingFormat         scaleA;
-    ScalingFormat         scaleB;
-    bool                  scaleC;
-    bool                  scaleD;
-    bool                  scaleE;
-    bool                  scaleAlpha_vector;
-    bool                  amaxScaleA;
-    bool                  amaxScaleB;
-    bool                  amaxD;
-    bool                  c_equal_d;
-    bool                  HMM;
-    bool                  use_e;
-    bool                  gradient;
-    bool                  norm_check_assert;
+    hipDataType              bias_type;
+    hipblaslt_bias_source    bias_source;
+    bool                     bias_vector;
+    hipblaslt_scaling_format scaleA;
+    hipblaslt_scaling_format scaleB;
+    bool                     scaleC;
+    bool                     scaleD;
+    bool                     scaleE;
+    bool                     scaleAlpha_vector;
+    bool                     amaxScaleA;
+    bool                     amaxScaleB;
+    bool                     amaxD;
+    bool                     c_equal_d;
+    bool                     HMM;
+    bool                     use_e;
+    bool                     gradient;
+    bool                     norm_check_assert;
+    bool                     swizzle_a;
 
     // API related
     bool    use_ext;
@@ -250,6 +245,7 @@ struct Arguments
     OPER(use_e) SEP                  \
     OPER(gradient) SEP               \
     OPER(norm_check_assert) SEP      \
+    OPER(swizzle_a) SEP              \
     OPER(use_ext) SEP                \
     OPER(use_ext_setproblem) SEP     \
     OPER(algo_method) SEP            \

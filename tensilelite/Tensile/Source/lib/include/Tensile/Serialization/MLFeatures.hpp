@@ -33,7 +33,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -106,7 +106,7 @@ namespace Tensile
 
         template <typename IO>
         const typename ContractionProblemFeatureSMT<IO>::SubclassMap
-            ContractionProblemFeatureSMT<IO>::subclasses
+            SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblemGemm>, IO>::subclasses
             = ContractionProblemFeatureSMT<IO>::GetSubclasses();
 
         template <typename IO>
@@ -151,4 +151,4 @@ namespace Tensile
         {
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

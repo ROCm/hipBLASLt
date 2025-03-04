@@ -102,7 +102,7 @@ std::vector<boost::filesystem::path> TestData::glob(std::string const& pattern) 
     std::shared_ptr<glob_t> guard(&result, globfree);
 
     if(err == GLOB_NOSPACE || err == GLOB_ABORTED)
-        throw std::runtime_error(Tensile::concatenate("Glob ", wholePattern, " failed."));
+        throw std::runtime_error(TensileLite::concatenate("Glob ", wholePattern, " failed."));
 
     std::vector<boost::filesystem::path> rv(result.gl_pathc);
 

@@ -32,7 +32,7 @@
 #include <Tensile/AMDGPUPredicates.hpp>
 #include <Tensile/Predicates.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -135,7 +135,7 @@ namespace Tensile
         using HardwarePredicateSMT = SubclassMappingTraits<Predicates::Predicate<Hardware>, IO>;
 
         template <typename IO>
-        const typename HardwarePredicateSMT<IO>::SubclassMap HardwarePredicateSMT<IO>::subclasses
+        const typename HardwarePredicateSMT<IO>::SubclassMap SubclassMappingTraits<Predicates::Predicate<Hardware>, IO>::subclasses
             = HardwarePredicateSMT<IO>::GetSubclasses();
 
         template <typename IO>
@@ -178,7 +178,7 @@ namespace Tensile
         using AMDGPUPredicateSMT = SubclassMappingTraits<Predicates::Predicate<AMDGPU>, IO>;
 
         template <typename IO>
-        const typename AMDGPUPredicateSMT<IO>::SubclassMap AMDGPUPredicateSMT<IO>::subclasses
+        const typename AMDGPUPredicateSMT<IO>::SubclassMap SubclassMappingTraits<Predicates::Predicate<AMDGPU>, IO>::subclasses
             = AMDGPUPredicateSMT<IO>::GetSubclasses();
 
         template <typename IO>
@@ -226,4 +226,4 @@ namespace Tensile
             }
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

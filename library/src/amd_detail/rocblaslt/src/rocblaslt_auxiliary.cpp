@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
  *
  * ************************************************************************ */
 
+#include "UserDrivenTuningParser.hpp"
 #include "definitions.h"
 #include "handle.h"
 #include "rocblaslt.h"
@@ -36,6 +37,7 @@
 #endif
 
 #include <hip/hip_runtime_api.h>
+#include <map>
 #include <unistd.h>
 #include <utility>
 
@@ -54,11 +56,191 @@ inline void assignAlphaBeta1(const rocblaslt_compute_type& compute_type, void* a
         *((int32_t*)alpha) = 1.f;
         *((int32_t*)beta)  = 1.f;
     }
+    else if(compute_type == rocblaslt_compute_f16)
+    {
+        *((hipblasLtHalf*)alpha) = 1.f;
+        *((hipblasLtHalf*)beta)  = 1.f;
+    }
     else
     {
         *((float*)alpha) = 1.f;
         *((float*)beta)  = 1.f;
     }
+}
+
+inline void heuristicResult_copy(rocblaslt_matmul_heuristic_result* heuristicResultsDest,
+                                 rocblaslt_matmul_heuristic_result* heuristicResultsSrc,
+                                 size_t&                            maxWorkSpaceBytes,
+                                 size_t&                            required_workspace_size)
+{
+    memcpy(heuristicResultsDest->algo.data,
+           heuristicResultsSrc->algo.data,
+           sizeof(heuristicResultsDest->algo.data));
+    heuristicResultsDest->algo.max_workspace_bytes = maxWorkSpaceBytes;
+    heuristicResultsDest->algo.fallback            = false;
+    heuristicResultsDest->state                    = rocblaslt_status_success;
+    heuristicResultsDest->workspaceSize            = required_workspace_size;
+}
+
+inline bool
+    heuristicResult_check_duplicated(rocblaslt_matmul_heuristic_result* heuristicResultsArray,
+                                     rocblaslt_matmul_heuristic_result* SolutionsResult,
+                                     int&                               AlgoCount,
+                                     bool                               override_option)
+{
+
+    int index = -1;
+
+    for(int i = 0; i < AlgoCount; i++)
+    {
+        if(*(int*)(heuristicResultsArray[i].algo.data)
+           == *(int*)(SolutionsResult->algo.data)) //solution index
+            index = i;
+    }
+
+    if(override_option && index != -1)
+    {
+        for(int i = index; i < AlgoCount - 1; i++)
+        {
+            heuristicResultsArray[i] = heuristicResultsArray[i + 1];
+        }
+    }
+
+    return (index == -1) ? false : true;
+}
+
+// Preload problem/solution mappings
+bool problem_override_from_file(rocblaslt_handle&                 handle,
+                                rocblaslt_matmul_preference&      pref,
+                                RocblasltContractionProblem&      problem,
+                                rocblaslt_matmul_desc&            matmul_desc,
+                                rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                                const std::string&                file_path)
+{
+
+    bool success = false;
+    TensileLite::getContractionProblemsFromFile(file_path);
+    TensileLite::OverrideMap& m_override = TensileLite::OverrideMap::getMap();
+
+    if(m_override.size() == 0)
+    {
+        log_info(__func__, "No valid entries found in override file.");
+    }
+    else
+    {
+        std::vector<rocblaslt_matmul_heuristic_result> overrideResults;
+        std::vector<int>                               solutionIndex(1);
+        TensileLite::ProblemOverride prob_key(RocblasltContractionProblem2ProblemOverride(problem));
+        auto                         sol_iter = m_override.find(prob_key);
+
+        for(auto sol_idx = std::make_reverse_iterator(sol_iter.second);
+            !success && sol_idx != std::make_reverse_iterator(sol_iter.first);
+            sol_idx++)
+        {
+            solutionIndex[0] = sol_idx->second;
+
+            if(rocblaslt_status_success
+               == getSolutionsFromIndex(
+                   handle, solutionIndex, overrideResults, pref->max_workspace_bytes))
+            {
+
+                size_t required_workspace_size = 0;
+                auto&  tensile_data            = matmul_desc->m_data;
+
+                if(rocblaslt_status_success
+                   == isSolutionSupported(handle,
+                                          problem,
+                                          tensile_data,
+                                          &overrideResults[0].algo,
+                                          &required_workspace_size))
+                {
+
+                    heuristicResult_copy(&heuristicResultsArray[0],
+                                         &overrideResults[0],
+                                         pref->max_workspace_bytes,
+                                         required_workspace_size);
+                    success = true;
+                }
+            }
+        }
+
+        if(!success)
+        {
+            log_info(__func__, "No valid solution index found in override file.");
+        }
+        else
+        {
+            std::string mapping_result = "Find solution with index: ";
+            mapping_result += std::to_string(solutionIndex[0]);
+            log_info(__func__, mapping_result);
+        }
+    }
+
+    return success;
+}
+
+bool problem_override_from_file_cpp(
+    rocblaslt_handle&                               handle,
+    rocblaslt::RocGemmType&                         gemmType,
+    std::shared_ptr<void>                           gemmData,
+    size_t                                          workspaceSizeInBytes,
+    std::vector<rocblaslt_matmul_heuristic_result>& heuristicResultsArray,
+    const std::string&                              file_path)
+{
+
+    bool success = false;
+    TensileLite::getContractionProblemsFromFile(file_path);
+    TensileLite::OverrideMap& m_override = TensileLite::OverrideMap::getMap();
+
+    if(m_override.size() == 0)
+    {
+        log_info(__func__, "No valid entries found in override file.");
+    }
+    else
+    {
+        std::vector<rocblaslt_matmul_heuristic_result> overrideResults;
+        std::vector<int>                               solutionIndex(1);
+        TensileLite::ProblemOverride prob_key(TensileDataGemm2ProblemOverride(gemmData));
+        auto                         sol_iter = m_override.find(prob_key);
+
+        for(auto sol_idx = std::make_reverse_iterator(sol_iter.second);
+            !success && sol_idx != std::make_reverse_iterator(sol_iter.first);
+            sol_idx++)
+        {
+            solutionIndex[0]        = sol_idx->second;
+            size_t maxWorkspaceSize = std::numeric_limits<size_t>::max();
+            if(rocblaslt_status_success
+               == getSolutionsFromIndex(handle, solutionIndex, overrideResults, maxWorkspaceSize))
+            {
+                rocblaslt::RocTuningV2* tuning = nullptr;
+                if(rocblaslt_status_success
+                   == isSolutionSupported(handle,
+                                          static_cast<const rocblaslt::RocGemmType>(gemmType),
+                                          gemmData,
+                                          overrideResults[0].algo,
+                                          tuning,
+                                          workspaceSizeInBytes))
+                {
+                    overrideResults[0].workspaceSize = workspaceSizeInBytes;
+                    heuristicResultsArray.push_back(overrideResults[0]);
+                    success = true;
+                }
+            }
+        }
+
+        if(!success)
+        {
+            log_info(__func__, "No valid solution index found in override file.");
+        }
+        else
+        {
+            std::string mapping_result = "Find solution with index: ";
+            mapping_result += std::to_string(solutionIndex[0]);
+            log_info(__func__, mapping_result);
+        }
+    }
+
+    return success;
 }
 
 /******************************************************************************
@@ -84,7 +266,10 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *e = nullptr;
     bool                   gradient = false;
-    rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    bool swizzleA = matA->order != HIPBLASLT_ORDER_COL && matA->order != HIPBLASLT_ORDER_ROW;
+    bool swizzleB = matB->order != HIPBLASLT_ORDER_COL && matB->order != HIPBLASLT_ORDER_ROW;
+
+    rocblaslt_status isValid = rocblaslt_matmul_valid_args(matmul_descr,
                                                            dummy_ptr,
                                                            dummy_ptr,
                                                            dummy_ptr,
@@ -117,7 +302,9 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
                                                            scaleAlphaVec,
                                                            e,
                                                            gradient,
-                                                           compute_type);
+                                                           compute_type,
+                                                           swizzleA,
+                                                           swizzleB);
     if(isValid != rocblaslt_status_continue)
     {
         m = 0;
@@ -198,7 +385,9 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
                                         nullptr,
                                         maxWorkSpaceBytes,
                                         nullptr,
-                                        handle->Synchronizer};
+                                        handle->Synchronizer,
+                                        swizzleA,
+                                        swizzleB};
 
     return problem;
 }
@@ -551,6 +740,7 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
         {
             switch(computeType)
             {
+            case rocblaslt_compute_f16:
             case rocblaslt_compute_f32:
             case rocblaslt_compute_f32_fast_xf32:
             case rocblaslt_compute_f64:
@@ -562,10 +752,10 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             case rocblaslt_compute_f32_fast_f8bf8_fnuz:
             case rocblaslt_compute_f32_fast_bf8f8_fnuz:
 #ifdef ROCM_USE_FLOAT8
-            case rocblaslt_compute_f32_fast_f8_ocp:
-            case rocblaslt_compute_f32_fast_bf8_ocp:
-            case rocblaslt_compute_f32_fast_f8bf8_ocp:
-            case rocblaslt_compute_f32_fast_bf8f8_ocp:
+            case rocblaslt_compute_f32_fast_f8:
+            case rocblaslt_compute_f32_fast_bf8:
+            case rocblaslt_compute_f32_fast_f8bf8:
+            case rocblaslt_compute_f32_fast_bf8f8:
 #endif
                 break;
             default:
@@ -666,13 +856,13 @@ rocblaslt_compute_type _matmul_desc_determine_compute_type(rocblaslt_matmul_desc
             return rocblaslt_compute_f32_fast_bf8f8_fnuz;
 #ifdef ROCM_USE_FLOAT8
         else if(tciA == tciB && tciA == HIP_R_8F_E4M3)
-            return rocblaslt_compute_f32_fast_f8_ocp;
+            return rocblaslt_compute_f32_fast_f8;
         else if(tciA == tciB && tciA == HIP_R_8F_E5M2)
-            return rocblaslt_compute_f32_fast_bf8_ocp;
+            return rocblaslt_compute_f32_fast_bf8;
         else if(tciA == HIP_R_8F_E4M3 && tciB == HIP_R_8F_E5M2)
-            return rocblaslt_compute_f32_fast_f8bf8_ocp;
+            return rocblaslt_compute_f32_fast_f8bf8;
         else if(tciA == HIP_R_8F_E5M2 && tciB == HIP_R_8F_E4M3)
-            return rocblaslt_compute_f32_fast_bf8f8_ocp;
+            return rocblaslt_compute_f32_fast_bf8f8;
 #endif
     }
     return matmulDesc->compute_type_original;
@@ -1004,7 +1194,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                     log_error(__func__, "invalid buf size", sizeInBytes);
                     return rocblaslt_status_invalid_value;
                 }
-                memcpy(buf, &matmulDesc->pointermode, sizeof(void*));
+                memcpy(buf, &matmulDesc->pointermode, sizeof(int32_t));
                 break;
             case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
                 if(sizeWritten)
@@ -1350,16 +1540,47 @@ rocblaslt_status
         }
         auto prob = construct_rocblaslt_problem(
             handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta, pref->max_workspace_bytes);
-        status = getBestSolutions(prob,
-                                  handle,
-                                  tensile_data,
-                                  requestedAlgoCount,
-                                  heuristicResultsArray,
-                                  returnAlgoCount,
-                                  pref->max_workspace_bytes);
+
+        OverrideSingleton& override         = OverrideSingleton::getInstance();
+        bool               override_success = false;
+        if(override.env_mode)
+        {
+            override_success = problem_override_from_file(
+                handle, pref, prob, matmul_desc, heuristicResultsArray, override.file_path);
+            if(override_success)
+                requestedAlgoCount--;
+
+            log_api(__func__, "returnAlgoCount", override_success ? 1 : 0);
+        }
+
+        if(requestedAlgoCount > 0)
+        {
+            status = getBestSolutions(prob,
+                                      handle,
+                                      tensile_data,
+                                      requestedAlgoCount,
+                                      override_success ? &heuristicResultsArray[1]
+                                                       : heuristicResultsArray,
+                                      returnAlgoCount,
+                                      pref->max_workspace_bytes);
+        }
+
+        if(override_success)
+        {
+
+            int oriReturnAlgoCount = *returnAlgoCount;
+            if(!heuristicResult_check_duplicated(
+                   &heuristicResultsArray[1], &heuristicResultsArray[0], oriReturnAlgoCount, true))
+            {
+                (*returnAlgoCount)++;
+            }
+
+            requestedAlgoCount++;
+        }
+
         if(dummy_bias_address)
             matmul_desc->bias = nullptr;
-        log_api(__func__, "returnAlogCount", *returnAlgoCount);
+        log_api(__func__, "returnAlgoCount", *returnAlgoCount);
 
         //Try to get size independent solutions from getAllSolutions()
         if(requestedAlgoCount > *returnAlgoCount)
@@ -1373,14 +1594,11 @@ rocblaslt_status
                     *returnAlgoCount < requestedAlgoCount && i < allSolutionsResults.size();
                     i++)
                 {
-                    bool   duplicated_sol          = false;
                     size_t required_workspace_size = 0;
-                    for(int j = 0; j < oriReturnAlgoCount; j++)
-                        if(*(int*)(heuristicResultsArray[j].algo.data)
-                           == *(int*)(allSolutionsResults[i].algo.data)) //solution index
-                            duplicated_sol = true;
-
-                    if(duplicated_sol == true
+                    if(heuristicResult_check_duplicated(heuristicResultsArray,
+                                                        &allSolutionsResults[i],
+                                                        oriReturnAlgoCount,
+                                                        false)
                        || rocblaslt_status_success
                               != isSolutionSupported(handle,
                                                      prob,
@@ -1388,19 +1606,16 @@ rocblaslt_status
                                                      &allSolutionsResults[i].algo,
                                                      &required_workspace_size))
                         continue;
+
                     //append sol to heuristpicResultsArray
-                    memcpy(heuristicResultsArray[*returnAlgoCount].algo.data,
-                           allSolutionsResults[i].algo.data,
-                           sizeof(heuristicResultsArray[i].algo.data));
-                    heuristicResultsArray[*returnAlgoCount].algo.max_workspace_bytes
-                        = pref->max_workspace_bytes;
-                    heuristicResultsArray[*returnAlgoCount].algo.fallback = false;
-                    heuristicResultsArray[*returnAlgoCount].state = rocblaslt_status_success;
-                    heuristicResultsArray[*returnAlgoCount].workspaceSize = required_workspace_size;
+                    heuristicResult_copy(&heuristicResultsArray[*returnAlgoCount],
+                                         &allSolutionsResults[i],
+                                         pref->max_workspace_bytes,
+                                         required_workspace_size);
                     (*returnAlgoCount)++;
                 }
 
-                log_api(__func__, "final returnAlogCount", *returnAlgoCount);
+                log_api(__func__, "final returnAlgoCount", *returnAlgoCount);
             }
         }
 
@@ -1415,6 +1630,7 @@ rocblaslt_status
     }
     return rocblaslt_status_success;
 }
+
 #ifdef __cplusplus
 }
 #endif
@@ -1530,7 +1746,7 @@ rocblaslt_status rocblaslt_matmul_get_algos_from_index_cpp(
         size_t maxWorkspaceSize = std::numeric_limits<size_t>::max();
         status = getSolutionsFromIndex(handle, solutionIndex, heuristicResults, maxWorkspaceSize);
 
-        log_api(__func__, "returnAlogCount", heuristicResults.size());
+        log_api(__func__, "returnAlgoCount", heuristicResults.size());
         return status;
     }
     catch(const rocblaslt_status& status)
@@ -1582,10 +1798,34 @@ rocblaslt_status
     rocblaslt_status status = rocblaslt_status_success;
     try
     {
-        status = getBestSolutions(
-            handle, gemmType, gemmData, workspaceBytes, requestedAlgoCount, results);
+        OverrideSingleton&                             override = OverrideSingleton::getInstance();
+        bool                                           override_success = false;
+        std::vector<rocblaslt_matmul_heuristic_result> override_result;
 
-        log_api(__func__, "returnAlogCount", results.size());
+        if(override.env_mode)
+        {
+            override_success = problem_override_from_file_cpp(
+                handle, gemmType, gemmData, workspaceBytes, override_result, override.file_path);
+
+            log_api(__func__, "returnAlgoCount", override_success ? 1 : 0);
+        }
+
+        if(requestedAlgoCount - override_result.size() > 0)
+            status
+                = getBestSolutions(handle,
+                                   gemmType,
+                                   gemmData,
+                                   workspaceBytes,
+                                   override_success ? requestedAlgoCount - 1 : requestedAlgoCount,
+                                   results);
+
+        if(override_success)
+        {
+
+            results.insert(results.begin(), override_result[0]);
+        }
+
+        log_api(__func__, "returnAlgoCount", results.size());
         if(status != rocblaslt_status_success)
         {
             throw status;
@@ -1624,7 +1864,7 @@ rocblaslt_status
                     results.push_back(allSolutionsResults[i]);
                 }
 
-                log_api(__func__, "final returnAlogCount", results.size());
+                log_api(__func__, "final returnAlgoCount", results.size());
             }
         }
     }
@@ -1743,7 +1983,7 @@ extern "C" int rocblaslt_matmul_is_tuned(rocblaslt_handle        handle,
     auto& tensile_data = matmul_descr->m_data;
     auto  sols         = getBestRawSolutions(prob, handle, tensile_data, 1, max_workspace_bytes);
 
-    if(sols.size() && sols.front()->tag == Tensile::ContractionSolution::MatchingTag::Equal)
+    if(sols.size() && sols.front()->tag == TensileLite::ContractionSolution::MatchingTag::Equal)
     {
         return 1;
     }

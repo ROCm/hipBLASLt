@@ -41,6 +41,7 @@
 
 #include "handle.h"
 //#include "tuple_helper.hpp"
+#include "UserDrivenTuningParser.hpp"
 #include "utility.hpp"
 #include <Tensile/Contractions.hpp>
 #include <Tensile/DataTypes.hpp>
@@ -135,6 +136,8 @@ struct RocblasltContractionProblem
 
     hipStream_t stream;
     void*       Synchronizer;
+    bool        swizzleA;
+    bool        swizzleB;
 
     // gemm_ex
     // gemm_strided_batched_ex
@@ -189,7 +192,9 @@ struct RocblasltContractionProblem
                                 void*                  workspace,
                                 size_t                 workspaceSize,
                                 hipStream_t            stream,
-                                void*                  Synchronizer)
+                                void*                  Synchronizer,
+                                bool                   swizzleA,
+                                bool                   swizzleB)
         : trans_a(trans_a)
         , trans_b(trans_b)
         , m(m)
@@ -247,6 +252,8 @@ struct RocblasltContractionProblem
         , workspaceSize(workspaceSize)
         , stream(stream)
         , Synchronizer(Synchronizer)
+        , swizzleA(swizzleA)
+        , swizzleB(swizzleB)
     {
         if(this->bias_type == HIPBLASLT_DATATYPE_INVALID)
         {
@@ -285,6 +292,17 @@ struct RocblasltContractionProblem
             {
                 this->bias_type = this->d_type;
             }
+        }
+
+        if(this->trans_a == HIPBLAS_OP_C)
+        {
+            if(rocblaslt_is_complex_datatype(this->a_type))
+                this->trans_a = HIPBLAS_OP_T;
+        }
+        if(this->trans_b == HIPBLAS_OP_C)
+        {
+            if(rocblaslt_is_complex_datatype(this->b_type))
+                this->trans_b = HIPBLAS_OP_T;
         }
     }
 };
@@ -419,7 +437,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
                                      const Tuning*                 tuning,
                                      size_t&                       workspaceSizeInBytes);
 
-std::vector<std::shared_ptr<Tensile::ContractionSolution>>
+std::vector<std::shared_ptr<TensileLite::ContractionSolution>>
     getBestRawSolutions(RocblasltContractionProblem const& prob,
                         rocblaslt_handle                   handle,
                         std::shared_ptr<void>              gemmData,
@@ -448,34 +466,49 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
 /******************************************************
  * Map a hipblaslt data type to a corresponding Tensile type *
  ******************************************************/
-inline Tensile::DataType hipDataType_to_tensile_type(hipDataType type)
+inline TensileLite::DataType hipDataType_to_tensile_type(hipDataType type)
 {
     switch(type)
     {
     case HIP_R_16F:
-        return Tensile::DataType::Half;
+        return TensileLite::DataType::Half;
     case HIP_R_32F:
-        return Tensile::DataType::Float;
+        return TensileLite::DataType::Float;
     case HIP_R_64F:
-        return Tensile::DataType::Double;
+        return TensileLite::DataType::Double;
     case HIP_R_16BF:
-        return Tensile::DataType::BFloat16;
+        return TensileLite::DataType::BFloat16;
     case HIP_R_8F_E4M3_FNUZ:
-        return Tensile::DataType::Float8;
+        return TensileLite::DataType::Float8_fnuz;
     case HIP_R_8F_E5M2_FNUZ:
-        return Tensile::DataType::BFloat8;
+        return TensileLite::DataType::BFloat8_fnuz;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
-        return Tensile::DataType::Float8;
+        return TensileLite::DataType::Float8;
     case HIP_R_8F_E5M2:
-        return Tensile::DataType::BFloat8;
+        return TensileLite::DataType::BFloat8;
 #endif
     case HIP_R_8I:
-        return Tensile::DataType::Int8;
+        return TensileLite::DataType::Int8;
     case HIP_R_32I:
-        return Tensile::DataType::Int32;
+        return TensileLite::DataType::Int32;
     default:
         assert(!"hipDataType_to_tensile_type: non-supported type");
-        return Tensile::DataType::None;
+        return TensileLite::DataType::None;
     }
 }
+
+namespace
+{
+    TensileLite::DataType roc2TensileType(rocblaslt_compute_type, bool);
+}
+
+namespace TensileLite
+{
+    class ProblemOverride;
+}
+
+TensileLite::ProblemOverride
+    RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem&);
+
+TensileLite::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void>);

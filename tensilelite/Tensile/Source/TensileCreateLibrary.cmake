@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,9 +34,7 @@ function(TensileCreateLibraryCmake
     Tensile_CODE_OBJECT_VERSION
     Tensile_ARCHITECTURE
     Tensile_LIBRARY_FORMAT
-    Tensile_MERGE_FILES
     Tensile_SHORT_FILE_NAMES
-    Tensile_LIBRARY_PRINT_DEBUG
     Tensile_CPU_THREADS
     Tensile_SEPARATE_ARCHITECTURES
     Tensile_LAZY_LIBRARY_LOADING,
@@ -72,12 +70,6 @@ function(TensileCreateLibraryCmake
   message(STATUS "Tensile_SOURCE_PATH=${Tensile_SOURCE_PATH}")
 
   # TensileLibraryWriter optional arguments
-  if(${Tensile_MERGE_FILES})
-    set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--merge-files")
-  else()
-    set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--no-merge-files")
-  endif()
-
   if(${Tensile_PACKAGE_LIBRARY})
     set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--package-library")
   endif()
@@ -98,12 +90,6 @@ function(TensileCreateLibraryCmake
     set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--short-file-names")
   else()
     set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--no-short-file-names")
-  endif()
-
-  if(${Tensile_LIBRARY_PRINT_DEBUG})
-    set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--library-print-debug")
-  else()
-    set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--no-library-print-debug")
   endif()
 
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--architecture=${Tensile_ARCHITECTURE}")

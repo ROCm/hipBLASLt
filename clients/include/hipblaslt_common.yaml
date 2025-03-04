@@ -11,10 +11,10 @@ Datatypes:
         i8_r: 3
         i32_r: 10
         bf16_r: 14
-        f8_r: 1000
-        bf8_r: 1001
-        f8_ocp_r: 28
-        bf8_ocp_r: 29
+        f8_fnuz_r: 1000
+        bf8_fnuz_r: 1001
+        f8_r: 28
+        bf8_r: 29
         hipblaslt_datatype_invalid: 255
   - hipblasComputeType_t:
       bases: [ c_int ]
@@ -42,16 +42,22 @@ Datatypes:
   - hipblaslt_activation_type:
       bases: [ c_int ]
       attr:
-        none: 1
-        relu: 2
-        gelu: 3
+        none: 0
+        relu: 1
+        gelu: 2
+        swish: 3
   - hipblaslt_bias_source:
       bases: [ c_int ]
       attr:
         a: 1
         b: 2
         d: 3
-
+  - hipblaslt_scaling_format:
+      bases: [ c_int ]
+      attr:
+        none: 0
+        Scalar: 1
+        Vector: 2
 
 
 Common threads and streams: &common_threads_streams
@@ -68,6 +74,91 @@ Real precisions: &real_precisions
     { a_type: bf16_r, b_type: bf16_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
   - &single_precision
     { a_type: f32_r, b_type: f32_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r , scale_type: f32_r}
+
+# F8 NANOO
+Real precisions 1 bytes (fnuz): &real_precisions_1b_fnuz
+  - &f8_fnuz_precision_dst_fp32
+    { a_type: f8_fnuz_r, b_type: f8_fnuz_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8_fnuz_precision_dst_fp32
+    { a_type: bf8_fnuz_r, b_type: bf8_fnuz_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8f8_fnuz_precision_dst_fp32
+    { a_type: bf8_fnuz_r, b_type: f8_fnuz_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &f8bf8_fnuz_precision_dst_fp32
+    { a_type: f8_fnuz_r, b_type: bf8_fnuz_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &f8_fnuz_precision_dst_fp16
+    { a_type: f8_fnuz_r, b_type: f8_fnuz_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8_fnuz_precision_dst_fp16
+    { a_type: bf8_fnuz_r, b_type: bf8_fnuz_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8f8_fnuz_precision_dst_fp16
+    { a_type: bf8_fnuz_r, b_type: f8_fnuz_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &f8bf8_fnuz_precision_dst_fp16
+    { a_type: f8_fnuz_r, b_type: bf8_fnuz_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &f8_fnuz_precision_dst_bf16
+    { a_type: f8_fnuz_r, b_type: f8_fnuz_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8_fnuz_precision_dst_bf16
+    { a_type: bf8_fnuz_r, b_type: bf8_fnuz_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &f8bf8_fnuz_precision_dst_bf16
+    { a_type: f8_fnuz_r, b_type: bf8_fnuz_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8f8_fnuz_precision_dst_bf16
+    { a_type: bf8_fnuz_r, b_type: f8_fnuz_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &f8_fnuz_precision_dst_f8_fnuz
+    { a_type: f8_fnuz_r, b_type: f8_fnuz_r, c_type: f8_fnuz_r, d_type: f8_fnuz_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &f8_fnuz_precision_dst_bf8_fnuz
+    { a_type: f8_fnuz_r, b_type: f8_fnuz_r, c_type: bf8_fnuz_r, d_type: bf8_fnuz_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8_fnuz_precision_dst_f8_fnuz
+    { a_type: bf8_fnuz_r, b_type: bf8_fnuz_r, c_type: f8_fnuz_r, d_type: f8_fnuz_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8_fnuz_precision_dst_bf8_fnuz
+    { a_type: bf8_fnuz_r, b_type: bf8_fnuz_r, c_type: bf8_fnuz_r, d_type: bf8_fnuz_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &f8bf8_fnuz_precision_dst_f8_fnuz
+    { a_type: f8_fnuz_r, b_type: bf8_fnuz_r, c_type: f8_fnuz_r, d_type: f8_fnuz_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &f8bf8_fnuz_precision_dst_bf8_fnuz
+    { a_type: f8_fnuz_r, b_type: bf8_fnuz_r, c_type: bf8_fnuz_r, d_type: bf8_fnuz_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8f8_fnuz_precision_dst_f8_fnuz
+    { a_type: bf8_fnuz_r, b_type: f8_fnuz_r, c_type: f8_fnuz_r, d_type: f8_fnuz_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8f8_fnuz_precision_dst_bf8_fnuz
+    { a_type: bf8_fnuz_r, b_type: f8_fnuz_r, c_type: bf8_fnuz_r, d_type: bf8_fnuz_r, compute_type: c_f32_r, scale_type: f32_r}
+
+
+Real precisions 1 bytes (fnuz) dst fp32: &real_precisions_1b_fnuz_dst_f32
+  - *f8_fnuz_precision_dst_fp32
+  - *bf8f8_fnuz_precision_dst_fp32
+  - *f8bf8_fnuz_precision_dst_fp32
+  - *bf8_fnuz_precision_dst_fp32
+
+Real precisions 1 bytes (fnuz) dst fp16: &real_precisions_1b_fnuz_dst_f16
+  - *f8_fnuz_precision_dst_fp16
+  - *bf8_fnuz_precision_dst_fp16
+  - *bf8f8_fnuz_precision_dst_fp16
+  - *f8bf8_fnuz_precision_dst_fp16
+
+Real precisions 1 bytes (fnuz) dst bf16: &real_precisions_1b_fnuz_dst_bf16
+  - *f8_fnuz_precision_dst_bf16
+  - *bf8_fnuz_precision_dst_bf16
+  - *f8bf8_fnuz_precision_dst_bf16
+  - *bf8f8_fnuz_precision_dst_bf16
+
+Real precisions 1 bytes (fnuz) dst fp8_fnuz: &real_precisions_1b_fnuz_dst_f8_fnuz
+  - *f8_fnuz_precision_dst_f8_fnuz
+  - *bf8_fnuz_precision_dst_f8_fnuz
+  - *f8bf8_fnuz_precision_dst_f8_fnuz
+  - *bf8f8_fnuz_precision_dst_f8_fnuz
+
+Real precisions 1 bytes (fnuz) dst bf8_fnuz: &real_precisions_1b_fnuz_dst_bf8_fnuz
+  - *f8_fnuz_precision_dst_bf8_fnuz
+  - *bf8_fnuz_precision_dst_bf8_fnuz
+  - *f8bf8_fnuz_precision_dst_bf8_fnuz
+  - *bf8f8_fnuz_precision_dst_bf8_fnuz
+
+Real precisions 1 byte dst 1 byte: &real_precisions_1b_fnuz_dst_1b_fnuz
+  - *f8_fnuz_precision_dst_f8_fnuz
+  - *bf8_fnuz_precision_dst_f8_fnuz
+  - *f8bf8_fnuz_precision_dst_f8_fnuz
+  - *bf8f8_fnuz_precision_dst_f8_fnuz
+  - *f8_fnuz_precision_dst_bf8_fnuz
+  - *bf8_fnuz_precision_dst_bf8_fnuz
+  - *f8bf8_fnuz_precision_dst_bf8_fnuz
+  - *bf8f8_fnuz_precision_dst_bf8_fnuz
+#F8 NANO end
 
 Real precisions 1 bytes: &real_precisions_1b
   - &f8_precision_dst_fp32
@@ -152,106 +243,29 @@ Real precisions 1 byte dst 1 byte: &real_precisions_1b_dst_1b
   - *f8bf8_precision_dst_bf8
   - *bf8f8_precision_dst_bf8
 
-#ocp
-Real precisions 1 bytes: &real_precisions_1b_ocp
-  - &f8_ocp_precision_dst_fp32
-    { a_type: f8_ocp_r, b_type: f8_ocp_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8_ocp_precision_dst_fp32
-    { a_type: bf8_ocp_r, b_type: bf8_ocp_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8f8_ocp_precision_dst_fp32
-    { a_type: bf8_ocp_r, b_type: f8_ocp_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &f8bf8_ocp_precision_dst_fp32
-    { a_type: f8_ocp_r, b_type: bf8_ocp_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &f8_ocp_precision_dst_fp16
-    { a_type: f8_ocp_r, b_type: f8_ocp_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8_ocp_precision_dst_fp16
-    { a_type: bf8_ocp_r, b_type: bf8_ocp_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8f8_ocp_precision_dst_fp16
-    { a_type: bf8_ocp_r, b_type: f8_ocp_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &f8bf8_ocp_precision_dst_fp16
-    { a_type: f8_ocp_r, b_type: bf8_ocp_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &f8_ocp_precision_dst_bf16
-    { a_type: f8_ocp_r, b_type: f8_ocp_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8_ocp_precision_dst_bf16
-    { a_type: bf8_ocp_r, b_type: bf8_ocp_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &f8bf8_ocp_precision_dst_bf16
-    { a_type: f8_ocp_r, b_type: bf8_ocp_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8f8_ocp_precision_dst_bf16
-    { a_type: bf8_ocp_r, b_type: f8_ocp_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &f8_ocp_precision_dst_f8
-    { a_type: f8_ocp_r, b_type: f8_ocp_r, c_type: f8_ocp_r, d_type: f8_ocp_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &f8_ocp_precision_dst_bf8
-    { a_type: f8_ocp_r, b_type: f8_ocp_r, c_type: bf8_ocp_r, d_type: bf8_ocp_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8_ocp_precision_dst_f8
-    { a_type: bf8_ocp_r, b_type: bf8_ocp_r, c_type: f8_ocp_r, d_type: f8_ocp_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8_ocp_precision_dst_bf8
-    { a_type: bf8_ocp_r, b_type: bf8_ocp_r, c_type: bf8_ocp_r, d_type: bf8_ocp_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &f8bf8_ocp_precision_dst_f8
-    { a_type: f8_ocp_r, b_type: bf8_ocp_r, c_type: f8_ocp_r, d_type: f8_ocp_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &f8bf8_ocp_precision_dst_bf8
-    { a_type: f8_ocp_r, b_type: bf8_ocp_r, c_type: bf8_ocp_r, d_type: bf8_ocp_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8f8_ocp_precision_dst_f8
-    { a_type: bf8_ocp_r, b_type: f8_ocp_r, c_type: f8_ocp_r, d_type: f8_ocp_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8f8_ocp_precision_dst_bf8
-    { a_type: bf8_ocp_r, b_type: f8_ocp_r, c_type: bf8_ocp_r, d_type: bf8_ocp_r, compute_type: c_f32_r, scale_type: f32_r}
-
-
-Real precisions 1 bytes dst fp32: &real_precisions_1b_ocp_dst_f32
-  - *f8_ocp_precision_dst_fp32
-  - *bf8f8_ocp_precision_dst_fp32
-  - *f8bf8_ocp_precision_dst_fp32
-  - *bf8_ocp_precision_dst_fp32
-
-Real precisions 1 bytes dst fp16: &real_precisions_1b_ocp_dst_f16
-  - *f8_ocp_precision_dst_fp16
-  - *bf8_ocp_precision_dst_fp16
-  - *bf8f8_ocp_precision_dst_fp16
-  - *f8bf8_ocp_precision_dst_fp16
-
-Real precisions 1 bytes dst bf16: &real_precisions_1b_ocp_dst_bf16
-  - *f8_ocp_precision_dst_bf16
-  - *bf8_ocp_precision_dst_bf16
-  - *f8bf8_ocp_precision_dst_bf16
-  - *bf8f8_ocp_precision_dst_bf16
-
-Real precisions 1 bytes dst fp8: &real_precisions_1b_ocp_dst_f8
-  - *f8_ocp_precision_dst_f8
-  - *bf8_ocp_precision_dst_f8
-  - *f8bf8_ocp_precision_dst_f8
-  - *bf8f8_ocp_precision_dst_f8
-
-Real precisions 1 bytes dst bf8: &real_precisions_1b_ocp_dst_bf8
-  - *f8_ocp_precision_dst_bf8
-  - *bf8_ocp_precision_dst_bf8
-  - *f8bf8_ocp_precision_dst_bf8
-  - *bf8f8_ocp_precision_dst_bf8
-
-Real precisions 1 byte dst 1 byte: &real_precisions_1b_ocp_dst_1b
-  - *f8_ocp_precision_dst_f8
-  - *bf8_ocp_precision_dst_f8
-  - *f8bf8_ocp_precision_dst_f8
-  - *bf8f8_ocp_precision_dst_f8
-  - *f8_ocp_precision_dst_bf8
-  - *bf8_ocp_precision_dst_bf8
-  - *f8bf8_ocp_precision_dst_bf8
-  - *bf8f8_ocp_precision_dst_bf8
-#ocp end
-
 Real precisions 2 bytes: &real_precisions_2b
   - *hpa_half_precision
   - *hpa_bf16_precision
+
+Real precisions swizzle support: &real_precisions_swizzleA_support
+  - &fp16_precision_dst_fp16_swizzleA
+    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r, swizzle_a: true}
+  - &bf16_precision_dst_bf16_swizzleA
+    { a_type: bf16_r, b_type: bf16_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r, swizzle_a: true}
+  - &f8n_precision_dst_fp16_swizzleA
+    { a_type: f8_fnuz_r, b_type: f8_fnuz_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r, swizzle_a: true}
 
 Real precisions f32_bf16_r: &real_precisions_intermeddiate_bf16
   - &hpa_half_fp16dst_bf16computeIn_precision
     { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_fast_bf16_r, scale_type: f32_r}
 
-Real precisions f32_f8_r: &real_precisions_intermeddiate_f8
-  - &hpa_half_fp16dst_f8computeIn_precision
-    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, compute_input_typeA: f8_r, compute_input_typeB: f8_r, scale_type: f32_r}
-  - &hpa_half_fp16dst_f8bf8computeIn_precision
-    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, compute_input_typeA: f8_r, compute_input_typeB: bf8_r, scale_type: f32_r}
-  - &hpa_half_fp16dst_bf8f8computeIn_precision
-    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, compute_input_typeA: bf8_r, compute_input_typeB: f8_r, scale_type: f32_r}
+Real precisions f32_f8_fnuz_r: &real_precisions_intermeddiate_f8_fnuz
+  - &hpa_half_fp16dst_f8_fnuz_computeIn_precision
+    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, compute_input_typeA: f8_fnuz_r, compute_input_typeB: f8_fnuz_r, scale_type: f32_r}
+  - &hpa_half_fp16dst_f8bf8_fnuz_computeIn_precision
+    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, compute_input_typeA: f8_fnuz_r, compute_input_typeB: bf8_fnuz_r, scale_type: f32_r}
+  - &hpa_half_fp16dst_bf8f8_fnuz_computeIn_precision
+    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, compute_input_typeA: bf8_fnuz_r, compute_input_typeB: f8_fnuz_r, scale_type: f32_r}
 
 Real precisions xf32: &real_precisions_intermeddiate
   - &xf32_precision
@@ -263,13 +277,19 @@ Real precisions i8: &integer_precisions_i8
   - &i8_precision_dst_i8
     { a_type: i8_r, b_type: i8_r, c_type: i8_r, d_type: i8_r, compute_type: c_i32_r , scale_type: i32_r}
 
-Real precisions dstf32: &hpa_half_precisions_fp_16_32_dst
+Real precisions compute fp16: &hpa_half_precisions_compute_fp16
+  - &hpa_half_fp16dst_compute_fp16_precision
+    { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f16_r, scale_type: f32_r}
+  - &hpa_half_fp32dst_compute_fp16_precision
+    { a_type: f16_r, b_type: f16_r, c_type: f32_r, d_type: f32_r, compute_type: c_f16_r, scale_type: f32_r}
+
+Real precisions fp16 dstf32: &hpa_half_precisions_fp_16_32_dst
   - &hpa_half_fp16dst_precision
     { a_type: f16_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
   - &hpa_half_fp32dst_precision
     { a_type: f16_r, b_type: f16_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
 
-Real precisions dstf32: &hpa_half_precisions_bf_16_32_dst
+Real precisions bf16 dstf32: &hpa_half_precisions_bf_16_32_dst
   - &hpa_half_bf16_bf16dst_precision
     { a_type: bf16_r, b_type: bf16_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scale_type: f32_r}
   - &hpa_half_bf16_fp32dst_precision
@@ -280,20 +300,20 @@ Real precisions gemm only: &real_precisions_gemm_only
     { a_type: f64_r, b_type: f64_r, c_type: f64_r, d_type: f64_r, compute_type: c_f64_r , scale_type: f64_r}
 
 Real mix precisions: &real_mix_precisions
-  - &fp8fp16_precision_dst_fp16
-    { a_type: f8_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
-  - &fp16fp8_precision_dst_fp16
-    { a_type: f16_r, b_type: f8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
-  - &fp8fp16_precision_dst_fp32
-    { a_type: f8_r, b_type: f16_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
-  - &fp16fp8_precision_dst_fp32
-    { a_type: f16_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+  - &fp8fp16_fnuz_precision_dst_fp16
+    { a_type: f8_fnuz_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+  - &fp16fp8_fnuz_precision_dst_fp16
+    { a_type: f16_r, b_type: f8_fnuz_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+  - &fp8fp16_fnuz_precision_dst_fp32
+    { a_type: f8_fnuz_r, b_type: f16_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+  - &fp16fp8_fnuz_precision_dst_fp32
+    { a_type: f16_r, b_type: f8_fnuz_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
 
-Real mix precisions fp8: &real_mix_precisions_fp8
-  - &fp8fp16_precision_dst_fp8
-    { a_type: f8_r, b_type: f16_r, c_type: f8_r, d_type: f8_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
-  - &fp16fp8_precision_dst_fp8
-    { a_type: f16_r, b_type: f8_r, c_type: f8_r, d_type: f8_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+Real mix precisions fp8: &real_mix_precisions_fp8_fnuz
+  - &fp8fp16_fnuz_precision_dst_fp8_fnuz
+    { a_type: f8_fnuz_r, b_type: f16_r, c_type: f8_fnuz_r, d_type: f8_fnuz_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+  - &fp16fp8_fnuz_precision_dst_fp8_fnuz
+    { a_type: f16_r, b_type: f8_fnuz_r, c_type: f8_fnuz_r, d_type: f8_fnuz_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
 
 # The Arguments struct passed directly to C++. See hipblaslt_arguments.hpp.
 # The order of the entries is significant, so it can't simply be a dictionary.
@@ -353,8 +373,8 @@ Arguments:
   - bias_type: hipDataType
   - bias_source: hipblaslt_bias_source
   - bias_vector: c_bool
-  - scaleA: c_int
-  - scaleB: c_int
+  - scaleA: hipblaslt_scaling_format
+  - scaleB: hipblaslt_scaling_format
   - scaleC: c_bool
   - scaleD: c_bool
   - scaleE: c_bool
@@ -367,6 +387,7 @@ Arguments:
   - use_e: c_bool
   - gradient: c_bool
   - norm_check_assert: c_bool
+  - swizzle_a: c_bool
   - use_ext: c_bool
   - use_ext_setproblem: c_bool
   - algo_method: c_int32
@@ -456,8 +477,8 @@ Defaults:
   use_e: false
   gradient: false
   bias_vector: false
-  scaleA: 0
-  scaleB: 0
+  scaleA: none
+  scaleB: none
   scaleC: false
   scaleD: false
   scaleE: false
@@ -467,6 +488,7 @@ Defaults:
   amaxD: false
   grouped_gemm: 0
   norm_check_assert: true
+  swizzle_a: false
   use_ext: false
   use_ext_setproblem: false
   algo_method: 0

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,6 @@ from .Formatting import formatStr, printExit
 import abc
 from enum import Enum
 from typing import List, Optional, Union
-#from .Utils import sgpr
 
 ################################################################################
 ################################################################################
@@ -1743,6 +1742,21 @@ class _SWaitCntVscnt(Instruction):
     def __str__(self) -> str:
         return self.formatWithComment("s_waitcnt_vscnt null %u"%(self.vscnt))
 
+class _SWaitStorecnt(Instruction):
+    def __init__(self, storecnt: int=-1, comment="") -> None:
+        super().__init__(InstType.INST_NOTYPE, comment)
+        self.storecnt = storecnt
+
+    def getParams(self) -> list:
+        return [self.storecnt]
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def __str__(self) -> str:
+        return self.formatWithComment("s_wait_storecnt %u"%(self.storecnt))
+
 class _SWaitLoadcnt(Instruction):
     def __init__(self, loadcnt: int=-1, comment="") -> None:
         super().__init__(InstType.INST_NOTYPE, comment)
@@ -1797,11 +1811,15 @@ class SWaitCnt(CompositeInstruction):
     If lgkmcnt=vmcnt=vscnt=-1 then the waitcnt is a nop and
     an instruction with a comment is returned.
     """
-    def __init__(self, lgkmcnt: int=-1, vmcnt: int=-1, vscnt: int=-1, comment="", waitAll=False):
+    def __init__(self, lgkmcnt: int=-1, vmcnt: int=-1, vscnt: int=-1, dscnt: int=-1, kmcnt: int=-1, loadcnt: int=-1, storecnt: int=-1, comment="", waitAll=False):
         super().__init__(InstType.INST_NOTYPE, None, None, comment=comment)
-        self.lgkmcnt = lgkmcnt
-        self.vmcnt   = vmcnt
-        self.vscnt   = vscnt
+        self.lgkmcnt = lgkmcnt #LDS, GDS, Constant and Message count, deprecated in gfx12, splits into DScnt and KMcnt
+        self.vmcnt   = vmcnt #Vector memory load count, deprecated in gfx12
+        self.vscnt   = vscnt #Vector memory store, deprecated in gfx12
+        self.dscnt   = dscnt #LDS instruction count, new in gfx12
+        self.kmcnt   = kmcnt #Constant and Message count, new in gfx12
+        self.loadcnt = loadcnt #Vector memory load, new in gfx12
+        self.storecnt= storecnt #Vector memory store, new in gfx12
         self.waitAll = waitAll
 
     def getParams(self) -> list:
@@ -1813,11 +1831,19 @@ class SWaitCnt(CompositeInstruction):
             lgkmcnt = 0
             vmcnt   = 0
             vscnt   = 0
+            dscnt   = 0
+            kmcnt   = 0
+            loadcnt = 0
+            storecnt= 0
             comment = "(Wait all)"
         else:
             lgkmcnt = self.lgkmcnt
             vmcnt   = self.vmcnt
             vscnt   = self.vscnt
+            kmcnt   = self.kmcnt
+            dscnt   = -1 if kmcnt != -1 else self.lgkmcnt
+            loadcnt = self.vmcnt
+            storecnt= self.vscnt
             comment = self.comment
 
         maxVmcnt = self.asmCaps["MaxVmcnt"]
@@ -1826,10 +1852,15 @@ class SWaitCnt(CompositeInstruction):
             self.instructions = [_SWaitCnt(lgkmcnt, vmcnt, comment)]
             if (lgkmcnt != -1 and vmcnt != -1) or vscnt != -1 :
               self.instructions.append(_SWaitCntVscnt(vmcnt, comment))
-        elif self.archCaps["SeparateVMcnt"] or self.archCaps["SeparateLGKMcnt"]: #short-term, will separate them
-            self.instructions = [_SWaitDscnt(0, comment)]
-            self.instructions.append(_SWaitLoadcnt(0, comment))
-            self.instructions.append(_SWaitKMcnt(0, comment))
+        elif self.archCaps["SeparateVMcnt"] or self.archCaps["SeparateLGKMcnt"]:
+            if (dscnt != -1):
+                self.instructions = [_SWaitDscnt(dscnt, comment)]
+            if (kmcnt != -1):
+                self.instructions.append(_SWaitKMcnt(kmcnt, comment))
+            if (loadcnt != -1):
+                self.instructions.append(_SWaitLoadcnt(loadcnt, comment))
+            if (storecnt != -1):
+                self.instructions.append(_SWaitStorecnt(storecnt, comment))
         else:
             vmvscnt = -1
             if vscnt != -1:
@@ -2035,8 +2066,9 @@ class _VMulPKF32(CommonInstruction):
         self.setInst("v_pk_mul_f32")
 
 class VMulPKF32(CompositeInstruction):
-    def __init__(self, dst, src0, src1, comment="") -> None:
+    def __init__(self, dst, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, [src0, src1], comment)
+        self.vop3 = vop3
         self.setInst("v_pk_mul_f32")
 
     def toList(self) -> list:
@@ -2047,7 +2079,7 @@ class VMulPKF32(CompositeInstruction):
         super().setupInstructions()
         assert isinstance(self.srcs, List)
         if self.asmCaps["v_pk_mul_f32"]:
-            self.instructions = [_VMulPKF32(self.dst, self.srcs[0], self.srcs[1], None, None, self.comment)]
+            self.instructions = [_VMulPKF32(self.dst, self.srcs[0], self.srcs[1], None, self.vop3, self.comment)]
         else:
             dst1, dst2 = self.dst.splitRegContainer()
             srcs1 = []
@@ -2060,10 +2092,25 @@ class VMulPKF32(CompositeInstruction):
                 else:
                     srcs1.append(s)
                     srcs2.append(s)
-            self.instructions = [VMulF32(dst1, srcs1[0], srcs1[1], None, self.comment),
-                                VMulF32(dst2, srcs2[0], srcs2[1], None, self.comment)]
+            if self.vop3 == None:
+                self.instructions = [VMulF32(dst1, srcs1[0], srcs1[1], None, self.comment),
+                                    VMulF32(dst2, srcs2[0], srcs2[1], None, self.comment)]
+            else:
+                if self.vop3.op_sel:
+                    assert len(self.vop3.op_sel) == 3
+                if self.vop3.op_sel_hi:
+                    assert len(self.vop3.op_sel_hi) == 3
+                if self.vop3.byte_sel:
+                    assert "Byte sel not supported"
+                lowDst   = dst2     if self.vop3.op_sel and self.vop3.op_sel[2] == 1 else dst1
+                lowSrc1  = srcs2[0] if self.vop3.op_sel and self.vop3.op_sel[0] == 1 else srcs1[0]
+                lowSrc2  = srcs2[1] if self.vop3.op_sel and self.vop3.op_sel[1] == 1 else srcs1[1]
+                highDst  = dst1     if self.vop3.op_sel_hi and self.vop3.op_sel_hi[2] == 0 else dst2
+                highSrc1 = srcs1[0] if self.vop3.op_sel_hi and self.vop3.op_sel_hi[0] == 0 else srcs2[0]
+                highSrc2 = srcs1[1] if self.vop3.op_sel_hi and self.vop3.op_sel_hi[1] == 0 else srcs2[1]
+                self.instructions = [VMulF32(lowDst, lowSrc1, lowSrc2, None, self.comment),
+                                    VMulF32(highDst, highSrc1, highSrc2, None, self.comment)]
 
-        assert all(inst.vop3 is None for inst in self.instructions), "Currently does not support with vop3 enabled"
 
 class VMulLOU32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:
@@ -2556,8 +2603,8 @@ class VCvtFP8toF32(VCvtInstruction):
         self.setInst("v_cvt_f32_fp8")
 
 class VCvtBF8toF32(VCvtInstruction):
-    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_BF8_to_F32, dst, src, sdwa, None, comment)
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_BF8_to_F32, dst, src, sdwa, vop3, comment)
         self.setInst("v_cvt_f32_bf8")
 
 class VCvtPkFP8toF32(VCvtInstruction):
@@ -2566,8 +2613,8 @@ class VCvtPkFP8toF32(VCvtInstruction):
         self.setInst("v_cvt_pk_f32_fp8")
 
 class VCvtPkBF8toF32(VCvtInstruction):
-    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(CvtType.CVT_PK_BF8_to_F32, dst, src, sdwa, None, comment)
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_PK_BF8_to_F32, dst, src, sdwa, vop3, comment)
         self.setInst("v_cvt_pk_f32_bf8")
 
 class VCvtPkF32toFP8(VCvtInstruction):
@@ -2689,7 +2736,7 @@ class VAddLShiftLeftU32(CompositeInstruction):
 
 class _VLShiftLeftAddU32(CommonInstruction):
     def __init__(self, dst, shiftHex, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_U32, dst, [src0, src1, shiftHex], None, vop3, comment)
+        super().__init__(InstType.INST_U32, dst, [src0, shiftHex, src1], None, vop3, comment)
         self.setInst("v_lshl_add_u32")
 
 class VLShiftLeftAddU32(CompositeInstruction):
@@ -2720,6 +2767,35 @@ class VMovB32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
         self.setInst("v_mov_b32")
+
+class _VMovB64(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B64, dst, [src], None, None, comment)
+        self.setInst("v_mov_b64")
+
+class VMovB64(CompositeInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B64, dst, [src], comment)
+        self.setInst("v_mov_b64")
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def setupInstructions(self):
+        super().setupInstructions()
+        assert isinstance(self.srcs, List)
+        if self.asmCaps["v_mov_b64"]:
+            self.instructions = [_VMovB64(self.dst, self.srcs[0], self.comment)]
+        else:
+            dst1, dst2 = self.dst.splitRegContainer()
+            if isinstance(self.srcs[0], RegisterContainer) or isinstance(self.srcs[0], HolderContainer):
+                src1, src2 = self.srcs[0].splitRegContainer()
+            else:
+                srcs1 = (self.srcs[0] and 0xFFFFFFFF)
+                srcs2 = self.srcs[0] >> 32
+            self.instructions = [VMovB32(dst1, src1, self.comment),
+                                 VMovB32(dst2, src2, self.comment)]
 
 # V Bfe
 class VBfeI32(CommonInstruction):

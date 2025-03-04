@@ -29,6 +29,7 @@
 #include "rocblaslt-types.h"
 #include "rocblaslt.h"
 #include <Tensile/hip/HipSolutionAdapter.hpp>
+#include <Tensile/hip/HipUtils.hpp>
 #include <functional>
 #include <hipblaslt/hipblaslt-types.h>
 #include <libgen.h>
@@ -36,6 +37,7 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include <vector>
 
 namespace
 {
@@ -63,25 +65,37 @@ namespace
         return DEFAULT_CO_PATH;
     }
 
-    Tensile::hip::SolutionAdapter& transformAdapter()
+    TensileLite::hip::SolutionAdapter& transformAdapter()
     {
-        static auto& adapter = []() -> Tensile::hip::SolutionAdapter& {
-            static Tensile::hip::SolutionAdapter adp;
-            auto                                 coPath   = transformCodeObjectPath();
-            const std::string                    coFolder = dirname(&coPath[0]);
+        using AdapterPtr     = std::unique_ptr<TensileLite::hip::SolutionAdapter>;
+        static auto& adapter = []() -> std::vector<AdapterPtr>& {
+            static std::vector<AdapterPtr> adapters;
+            int                            numDevices{};
+            HIP_CHECK_EXC(hipGetDeviceCount(&numDevices));
+            for(int i = 0; i < numDevices; ++i)
+            {
+                adapters.emplace_back(new TensileLite::hip::SolutionAdapter);
+            }
+            auto              coPath   = transformCodeObjectPath();
+            const std::string coFolder = dirname(&coPath[0]);
             try
             {
-                (void)adp.initializeLazyLoading("", coFolder);
+                for(auto& adp : adapters)
+                {
+                    (void)adp->initializeLazyLoading("", coFolder);
+                }
             }
             catch(const std::runtime_error& e)
             {
                 rocblaslt_log_error(
                     "transformCodeObject", "TransformCodeObjectPath", coFolder.c_str());
             }
-            return adp;
+            return adapters;
         }();
 
-        return adapter;
+        int        deviceId{};
+        HIP_CHECK_EXC(hipGetDevice(&deviceId));
+        return *adapter.at(deviceId);
     }
 
     rocblaslt_matrix_layout dummyMatrixLayout()
@@ -127,7 +141,7 @@ namespace
         constexpr auto           TileN = RowMajC ? NumThreadsN * VectorWidth : NumThreadsN;
         const auto               numWg = (m / TileM + !!(m % TileM)) * (n / TileN + !!(n % TileN));
         constexpr auto           numWorkitems = NumThreadsM * NumThreadsN;
-        Tensile::KernelArguments kArgs(false);
+        TensileLite::KernelArguments kArgs(false);
 
         if(scalarInDevice)
         {
@@ -159,7 +173,7 @@ namespace
                 betaPtr = dummyScalarPtr<ScaleType>();
             }
 
-            const ScaleType *nullScalePtr = nullptr;
+            const ScaleType* nullScalePtr = nullptr;
 
             kArgs.appendAligned("c", c);
             kArgs.appendAligned("a", a);
@@ -179,7 +193,7 @@ namespace
         }
 
         constexpr auto            NUM_WORKITEMS{NumThreadsM * NumThreadsN};
-        Tensile::KernelInvocation invocation{kernelName,
+        TensileLite::KernelInvocation invocation{kernelName,
                                              "hipblasltTransform.hsaco",
                                              false,
                                              {NUM_WORKITEMS, 1, 1},
@@ -773,8 +787,8 @@ rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 han
         return rocblaslt_status_internal_error;
     }
 
-    bool       transA         = desc->opA == HIPBLAS_OP_T;
-    bool       transB         = desc->opB == HIPBLAS_OP_T;
+    bool       transA         = desc->opA != HIPBLAS_OP_N;
+    bool       transB         = desc->opB != HIPBLAS_OP_N;
     bool       scalarInDevice = desc->pointerMode == HIPBLASLT_POINTER_MODE_DEVICE;
     const auto kernelName     = transformKernelNames.at(key);
 

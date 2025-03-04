@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,14 +23,15 @@
 from copy import deepcopy
 
 from .TensileInstructions import TensileInstructions
-from .Common import globalParameters, CHeader, gfxArch, getGfxName
+from .Common import globalParameters, gfxToIsa, isaToGfx
 from .Activation import ActivationInline, ActivationType
 from .KernelWriterBase import KernelWriterBase
 
 class KernelWriterActivationFunction(KernelWriterBase):
 
-  def __init__(self, state):
+  def __init__(self, state, cxxCompiler: str):
     super().__init__()
+    self.cxxCompiler = cxxCompiler
     self.state["ProblemType"] = deepcopy(state["ProblemType"])
     self.state["Kernel"] = state["Kernel"]
     self._tf = TensileInstructions()
@@ -54,7 +55,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
       self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
     else:
       for idx, arch in enumerate(self.supportedArchs):
-        self.supportedArchs[idx] = gfxArch(''.join(map(str, arch)))
+        self.supportedArchs[idx] = gfxToIsa(''.join(map(str, arch)))
 
     # derive parameter
     self.language = "HIP"
@@ -94,11 +95,11 @@ class KernelWriterActivationFunction(KernelWriterBase):
 
     isa = tuple(self.state["Kernel"]["ISA"])
     if not self._tf.isInit():
-      self._tf.init(isa, globalParameters["AssemblerPath"])
+      self._tf.init(isa, self.cxxCompiler)
     self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
 
     for arch in self.supportedArchs:
-      self._tf.init(arch, globalParameters["AssemblerPath"])
+      self._tf.init(arch, self.cxxCompiler)
       self._tf.setKernelInfo(arch, self.state["Kernel"]["WavefrontSize"])
       activationStrList.append(activation.generateInlineAssemblyBody(spaces, activationType))
 
@@ -119,9 +120,9 @@ class KernelWriterActivationFunction(KernelWriterBase):
     defineStr = []
     macroStr = "#if"
     for archList in cateArch:
-      defStr = "%s defined(__%s__)"%(macroStr, getGfxName(archList[0]))
+      defStr = "%s defined(__%s__)"%(macroStr, isaToGfx(archList[0]))
       for arch in archList:
-        defStr += "|| defined(__%s__)"%getGfxName(arch)
+        defStr += "|| defined(__%s__)"%isaToGfx(arch)
       defStr += "\n"
       defineStr.append(defStr)
       macroStr = "#elif"
@@ -139,7 +140,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
       return fileString
 
     isa = tuple(self.state["Kernel"]["ISA"])
-    self._tf.init(isa, globalParameters["AssemblerPath"])
+    self._tf.init(isa, self.cxxCompiler)
     self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
 
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
@@ -148,12 +149,6 @@ class KernelWriterActivationFunction(KernelWriterBase):
     activation = ActivationInline(activationCDataType, not self.state["ProblemType"]["ActivationNoGuard"])
 
     fileString = "" # CHeader
-    if not globalParameters["MergeFiles"]:
-      fileString += CHeader
-      fileString += "#pragma once\n\n"
-      fileString += "#include \"Tensile%sActivationEnum_%s.h\"\n"%(self.actGradientPrefix, activationCDataType.toChar())
-      fileString += "\n"
-
     fileString += "#pragma clang diagnostic push\n"
     fileString += "#pragma clang diagnostic ignored \"-Winline-asm\"\n"
     fileString += self.functionSignature()

@@ -32,7 +32,7 @@
 
 #include "TestData.hpp"
 
-using namespace Tensile;
+using namespace TensileLite;
 
 /**
  * LibraryPerformanceTest:

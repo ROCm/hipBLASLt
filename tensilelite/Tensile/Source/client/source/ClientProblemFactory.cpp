@@ -29,7 +29,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -52,6 +52,8 @@ namespace Tensile
             , m_f32XdlMathOp(DataType::Float)
             , m_activationComputeType(DataType::Float)
             , m_useUserArgs(false)
+            , m_swizzleTensorA(false)
+            , m_swizzleTensorB(false)
         {
             using std::static_pointer_cast;
 
@@ -188,6 +190,16 @@ namespace Tensile
                 m_f32XdlMathOp = args["f32-xdl-math-op"].as<DataType>();
             }
 
+            if(args.count("swizzle-tensor-a"))
+            {
+                m_swizzleTensorA = args["swizzle-tensor-a"].as<bool>();
+            }
+
+            if(args.count("swizzle-tensor-b"))
+            {
+                m_swizzleTensorB = args["swizzle-tensor-b"].as<bool>();
+            }
+
             if(args.count("use-user-args"))
             {
                 m_useUserArgs = args["use-user-args"].as<bool>();
@@ -315,6 +327,8 @@ namespace Tensile
                             rv.back().setSparse(m_sparse);
                             rv.back().setActivationType(m_activationType);
                             rv.back().setWorkspaceSize(m_maxWorkspaceSize);
+                            rv.back().setSwizzleTensorA(m_swizzleTensorA);
+                            rv.back().setSwizzleTensorB(m_swizzleTensorB);
                             if(k < m_biasTypeArgs.size())
                             {
                                 auto length
@@ -358,7 +372,7 @@ namespace Tensile
                             else
                             {
                                 rv.back().setSynchronizer(
-                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA], 40960);
+                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA], 409600);
                             }
                             if(j < m_activationEnumArg.size())
                             {
@@ -409,4 +423,4 @@ namespace Tensile
             }
         }
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

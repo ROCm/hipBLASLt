@@ -222,6 +222,13 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType dat
                                                            uint32_t          m,
                                                            uint32_t          n,
                                                            hipStream_t       stream);
+
+// Exporting the setters of flush, rotating buffer size, cold iterations and hot iterations.
+HIPBLASLT_EXPORT void hipblasltSetFlushValue(bool newFlush);
+HIPBLASLT_EXPORT void hipblasltSetRotatingBufferSizeValue(int newrotatingBufferSize);
+HIPBLASLT_EXPORT void hipblasltSetColdIterationsValue(int newColdIterations);
+HIPBLASLT_EXPORT void hipblasltSetHotIterationsValue(int newHotIterations);
+
 #ifdef __cplusplus
 }
 #endif

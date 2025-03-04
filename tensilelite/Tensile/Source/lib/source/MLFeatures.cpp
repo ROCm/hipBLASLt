@@ -26,7 +26,7 @@
 
 #include <Tensile/MLFeatures.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace MLFeatures
     {
@@ -50,5 +50,5 @@ namespace Tensile
         {
             return stream << wgsf.cuFactors << " ws=" << wgsf.waveScale;
         };
-    } // namespace Tensile
+    } // namespace TensileLite
 }

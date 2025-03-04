@@ -34,7 +34,7 @@
 #include <Tensile/SolutionLibrary.hpp>
 #include <Tensile/Tensile.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
 
     /**
@@ -103,18 +103,23 @@ namespace Tensile
             if(solution->requiredHostWorkspaceSizePerProblem == static_cast<size_t>(-1))
             {
                 solution->requiredHostWorkspaceSizePerProblem
-                    = solution->requiredHostSizeGroupedGemmSingle(problem,hardware);
+                    = solution->requiredHostSizeGroupedGemmSingle(problem, hardware);
             }
             return solution;
         }
 
-        virtual std::shared_ptr<MySolution> getSolutionByIndex(Hardware const&  hardware, const int index) const override
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(Hardware const& hardware,
+                                                               const int       index) const override
         {
             if(solutions.find(index) == solutions.end())
             {
                 return std::shared_ptr<MySolution>();
             }
-            auto solution = solutions.at(index);
+            auto       solution = solutions.at(index);
+            const bool streamK  = Debug::Instance().useExperimentalSelection() == 2;
+            if(solution->isStreamK() && !streamK)
+                return std::shared_ptr<MySolution>();
+
             if(solution->requiredHostWorkspaceSizePerProblem == static_cast<size_t>(-1))
             {
                 auto problem
@@ -137,7 +142,7 @@ namespace Tensile
                                                       solution->problemType.groupedGemm,
                                                       std::numeric_limits<size_t>::max());
                 solution->requiredHostWorkspaceSizePerProblem
-                    = solution->requiredHostSizeGroupedGemmSingle(problem,hardware);
+                    = solution->requiredHostSizeGroupedGemmSingle(problem, hardware);
             }
             return solution;
         }
@@ -238,4 +243,4 @@ namespace Tensile
         }
     };
 
-} // namespace Tensile
+} // namespace TensileLite

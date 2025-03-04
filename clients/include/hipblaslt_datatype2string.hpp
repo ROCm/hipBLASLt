@@ -42,9 +42,10 @@ enum class hipblaslt_initialization
 
 typedef enum class _hipblaslt_activation_type
 {
-    none = 1,
-    relu = 2,
-    gelu = 3,
+    none  = 0,
+    relu  = 1,
+    gelu  = 2,
+    swish = 3,
 } hipblaslt_activation_type;
 
 typedef enum class _hipblaslt_bias_source
@@ -53,6 +54,13 @@ typedef enum class _hipblaslt_bias_source
     b = 2,
     d = 3,
 } hipblaslt_bias_source;
+
+typedef enum class _hipblaslt_scaling_format
+{
+    none   = 0,
+    Scalar = 1,
+    Vector = 2,
+} hipblaslt_scaling_format;
 
 inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
                                               hipblaslt_activation_type   act)
@@ -67,6 +75,9 @@ inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
         break;
     case hipblaslt_activation_type::gelu:
         os << "gelu";
+        break;
+    case hipblaslt_activation_type::swish:
+        os << "swish";
         break;
     }
     return os;
@@ -88,6 +99,7 @@ inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
     }
     return os;
 }
+
 constexpr auto hipblaslt_initialization2string(hipblaslt_initialization init)
 {
     switch(init)
@@ -129,7 +141,8 @@ inline const hipblaslt_activation_type string_to_hipblaslt_activation_type(const
     return value == "none"   ? hipblaslt_activation_type::none
            : value == "gelu" ? hipblaslt_activation_type::gelu
            : value == "relu" ? hipblaslt_activation_type::relu
-                             : static_cast<hipblaslt_activation_type>(0);
+           : value == "swish" ? hipblaslt_activation_type::swish
+                             : static_cast<hipblaslt_activation_type>(-1);
 }
 
 inline const hipblaslt_bias_source string_to_hipblaslt_bias_source(const std::string& value)
@@ -149,6 +162,8 @@ inline const char* hipblaslt_activation_type_to_string(hipblaslt_activation_type
         return "gelu";
     case hipblaslt_activation_type::relu:
         return "relu";
+    case hipblaslt_activation_type::swish:
+        return "swish";
     case hipblaslt_activation_type::none:
         return "none";
     default:

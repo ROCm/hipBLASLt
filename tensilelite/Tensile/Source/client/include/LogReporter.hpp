@@ -38,7 +38,7 @@
 
 namespace po = boost::program_options;
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -204,7 +204,7 @@ namespace Tensile
             {
                 if(value == "PASSED" || value == "NO_CHECK")
                     m_rowLevel = LogLevel::Normal;
-                else if(value == "FAILED" || value == "FAILED_CONV")
+                else if(value == "FAILED")
                     m_rowLevel = LogLevel::Error;
                 else if(value == "WRONG_HARDWARE")
                     m_rowLevel = LogLevel::Terse;
@@ -316,6 +316,18 @@ namespace Tensile
                                        reinterpret_cast<BFloat8 const*>(data),
                                        tensor,
                                        reinterpret_cast<BFloat8 const*>(ptrVal));
+                    else if(tensor.dataType() == DataType::Float8_fnuz)
+                        logTensorTyped(level,
+                                       name,
+                                       reinterpret_cast<Float8_fnuz const*>(data),
+                                       tensor,
+                                       reinterpret_cast<Float8_fnuz const*>(ptrVal));
+                    else if(tensor.dataType() == DataType::BFloat8_fnuz)
+                        logTensorTyped(level,
+                                       name,
+                                       reinterpret_cast<BFloat8_fnuz const*>(data),
+                                       tensor,
+                                       reinterpret_cast<BFloat8_fnuz const*>(ptrVal));
                     else
                         throw std::runtime_error(
                             concatenate("Can't log tensor of type ", tensor.dataType()));
@@ -343,15 +355,23 @@ namespace Tensile
             {
                 std::unordered_map<std::string, std::string> curRow;
                 m_csvOutput.readCurrentRow(curRow);
-                bool validation = curRow[ResultKey::Validation] == "PASSED"
-                                  || curRow[ResultKey::Validation] == "NO_CHECK";
+                bool  validation    = !(curRow[ResultKey::Validation] == "FAILED"
+                                    || curRow[ResultKey::Validation] == "INVALID");
                 float currentTimeUS = std::stof(curRow[ResultKey::TimeUS]);
                 if(m_rowLevel <= m_level
                    && (!m_PrintWinnersOnly || currentTimeUS < m_winner || !validation
                        || m_firstRun))
                 {
-                    m_csvOutput.writeCurrentRow();
-                    if(validation)
+                    if(std::isnan(currentTimeUS) && !std::stof(curRow[ResultKey::SpeedGFlops])
+                       && validation)
+                        std::cout << curRow[ResultKey::BenchmarkRunNumber] << ","
+                                  << curRow[ResultKey::ProblemProgress] << ","
+                                  << curRow[ResultKey::SolutionProgress]
+                                  << ", Skip Slow Solution: " << curRow[ResultKey::SolutionName]
+                                  << std::endl;
+                    else
+                        m_csvOutput.writeCurrentRow();
+                    if(validation && !std::isnan(currentTimeUS))
                     {
                         m_winner = currentTimeUS;
                     }
@@ -386,4 +406,4 @@ namespace Tensile
             CSVStackFile m_csvOutput;
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

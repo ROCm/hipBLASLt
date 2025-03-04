@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -78,13 +78,12 @@ class FLATModifiers(Container):
 
     def __str__(self) -> str:
         hasGLCModifier = self.asmCaps["HasGLCModifier"]
-        forceStoreSC1 = self.archCaps["ForceStoreSC1"] and self.isStore
         kStr = ""
         if self.offset12 != 0:
             kStr += " offset:%u"%self.offset12
-        if self.glc or forceStoreSC1:
+        if self.glc:
             kStr += " " + getGlcBitName(hasGLCModifier)
-        if self.slc or forceStoreSC1:
+        if self.slc:
             kStr += " " + getSlcBitName(hasGLCModifier)
         if self.lds:
             kStr += " lds"
@@ -110,15 +109,14 @@ class MUBUFModifiers(Container):
     def __str__(self) -> str:
         hasGLCModifier = self.asmCaps["HasGLCModifier"]
         hasNTModifier = self.asmCaps["HasNTModifier"]
-        forceStoreSC1 = self.archCaps["ForceStoreSC1"] and self.isStore
         kStr = ""
         if self.offen:
             kStr += " offen offset:%u"%self.offset12
-        if (self.glc or self.slc or self.lds or forceStoreSC1):
+        if (self.glc or self.slc or self.lds):
             kStr += ","
-        if self.glc or forceStoreSC1:
+        if self.glc:
             kStr += " " + getGlcBitName(hasGLCModifier)
-        if self.slc or forceStoreSC1:
+        if self.slc:
             kStr += " " + getSlcBitName(hasGLCModifier)
         if hasNTModifier and self.nt:
             kStr += " nt"
@@ -187,6 +185,7 @@ class SDWAModifiers(Container):
 class VOP3PModifiers(Container):
     op_sel:     Optional[List[int]] = None
     op_sel_hi:  Optional[List[int]] = None
+    byte_sel:   Optional[List[int]] = None
 
     def __post_init__(self):
         super().__init__()
@@ -197,6 +196,8 @@ class VOP3PModifiers(Container):
             l.append("op_sel:" + str(self.op_sel).replace(" ", ""))
         if self.op_sel_hi != None:
             l.append("op_sel_hi:" + str(self.op_sel_hi).replace(" ", ""))
+        if self.byte_sel != None:
+            l.append("byte_sel:" + str(self.byte_sel).replace(" ", ""))
         return l
 
     def __str__(self) -> str:
@@ -205,6 +206,8 @@ class VOP3PModifiers(Container):
             kStr += " op_sel:" + str(self.op_sel).replace(" ", "")
         if self.op_sel_hi != None:
             kStr += " op_sel_hi:" + str(self.op_sel_hi).replace(" ", "")
+        if self.byte_sel != None:
+            kStr += " byte_sel:" + str(self.byte_sel).replace(" ", "")
         return kStr
 
 class EXEC(Container):
@@ -387,6 +390,30 @@ class RegisterContainer:
                 return "%s%s%u" % (minusStr, self.regType, self.regIdx)
             else:
                 return "%s%s[%u:%u]" % (minusStr, self.regType, self.regIdx, self.regIdx+self.regNum-1)
+
+    def _sameRegBaseAddr(self, b) -> bool:
+        if self.regName is not None and b.regName is not None:
+            return self.regName.name == b.regName.name
+        elif (self.regName, b.regName,) == (None, None,):
+            return self.regIdx == b.regIdx
+        return False
+
+    def __and__(self, b) -> bool:
+        if not isinstance(b, RegisterContainer):
+            return NotImplemented
+
+        if self._sameRegBaseAddr(b):
+            lenA = self.regNum
+            offsetA = sum(self.regName.offsets)
+            lenB = b.regNum
+            offsetB = sum(b.regName.offsets)
+            rangeA = (offsetA, offsetA + lenA,)
+            rangeB = (offsetB, offsetB + lenB,)
+            if rangeA[0] > rangeB[0]:
+                rangeA, rangeB = rangeB, rangeA
+            return rangeA[1] > rangeB[0]
+        return False
+
 
 class HolderContainer(RegisterContainer):
     __slots__ = ('regType', 'regName', 'regIdx', 'regNum', 'isInlineAsm', 'isMinus', \

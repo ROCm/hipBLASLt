@@ -22,7 +22,7 @@ D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias)
 Where *op( )* refers to in-place operations, such as transpose and non-transpose, and *alpha* and
 *beta* are scalars.
 
-The activation function supports GELU and ReLU. the bias vector matches matrix D rows and
+The activation function supports GELU, ReLU, and Swish (SiLU). the bias vector matches matrix D rows and
 broadcasts to all D columns.
 
 The following table provides data type support. Note that fp8 and bf8 are only supported on the
@@ -116,11 +116,11 @@ You can find more information at the following links:
 * [hipblaslt-test](clients/gtest/README.md)
 * [hipblaslt-bench](clients/benchmarks/README.md)
 
-## Host Library Tests
-Host Library Tests can be built and run using the following commands:
-``` git submodule init
- mkdir build && cd build
- cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc -DCODE_OBJECT_VERSION=default -DTensile_ROOT=$(pwd)/../Tensile ../HostLibraryTests
+## TensileLite Host Library Tests
+To build and run TensileLite Host Library Tests, use the following commands:
+``` git submodule update --init
+ cd tensilelite && mkdir build && cd build
+ cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc  -DTensile_ROOT=$(pwd)/../Tensile ../HostLibraryTests
  make -j
  ./TensileTests 
 ```

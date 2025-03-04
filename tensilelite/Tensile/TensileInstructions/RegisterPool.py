@@ -69,6 +69,18 @@ class RegisterPool:
     self.pool = [self.Register(RegisterPool.Status.Unavailable, "init") for i in range(0,size)]
     self.checkOutSize = {}
     self.checkOutSizeTemp = {}
+    self.occupancyLimitSize    = 0
+    self.occupancyLimitMaxSize = 0
+
+  #######################################
+  # Set occupancy limit
+  def setOccupancyLimit(self, maxSize, size):
+    self.occupancyLimitSize    = size
+    self.occupancyLimitMaxSize = maxSize
+
+  def resetOccupancyLimit(self):
+    self.occupancyLimitSize    = 0
+    self.occupancyLimitMaxSize = 0
 
   ########################################
   # Adds registers to the pool so they can be used as temps
@@ -221,6 +233,10 @@ class RegisterPool:
       # new checkout can begin at start
       newSize = start + size
       oldSize = len(self.pool)
+      if self.occupancyLimitSize > 0:
+        if newSize > self.occupancyLimitSize and newSize <= self.occupancyLimitMaxSize:
+          print("newSize", newSize, "OldSIze", oldSize, "Limit", self.occupancyLimitSize)
+          assert self.occupancyLimitSize >= newSize
       overflow = newSize - oldSize
       #print "Overflow: ", overflow
       for i in range(start, len(self.pool)):

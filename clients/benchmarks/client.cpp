@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,14 +29,12 @@
 #include "hipblaslt_data.hpp"
 #include "hipblaslt_datatype2string.hpp"
 #include "hipblaslt_parse_data.hpp"
-#include "type_dispatch.hpp"
 #include "utility.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <map>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -45,7 +43,6 @@
 
 #include "testing_matmul.hpp"
 
-#include "type_dispatch.hpp"
 #include "utility.hpp"
 #include <algorithm>
 #undef I
@@ -53,76 +50,23 @@
 using namespace roc; // For emulated program_options
 using namespace std::literals; // For std::string literals of form "str"s
 
-struct str_less
-{
-    bool operator()(const char* a, const char* b) const
-    {
-        return strcmp(a, b) < 0;
-    }
-};
-
-// Map from const char* to function taking const Arguments& using comparison above
-using func_map = std::map<const char*, void (*)(const Arguments&), str_less>;
-
-// Run a function by using map to map arg.function to function
-void run_function(const func_map& map, const Arguments& arg, const std::string& msg = "")
-{
-    auto match = map.find(arg.function);
-    if(match == map.end())
-        throw std::invalid_argument("Invalid combination --function "s + arg.function
-                                    + " --a_type "s + hip_datatype_to_string(arg.a_type) + msg);
-    match->second(arg);
-}
-
-// Template to dispatch testing_matmul for performance tests
-// the test is marked invalid when (TiA, TiB, To, Tc) not in (H/H/S, B/B/S)
-template <typename TiA,
-          typename TiB  = TiA,
-          typename To   = TiB,
-          typename Tc   = To,
-          typename TciA = TiA,
-          typename TciB = TiB,
-          typename      = void>
-struct perf_matmul : hipblaslt_test_invalid
-{
-};
-
-template <typename TiA, typename TiB, typename To, typename Tc, typename TciA, typename TciB>
-struct perf_matmul<
-    TiA,
-    TiB,
-    To,
-    Tc,
-    TciA,
-    TciB,
-    std::enable_if_t<
-        (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
-        || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
-        || (std::is_same<TiA, float>{} && std::is_same<TiB, float>{})
-        || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
-        || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_bf8_fnuz>{})
-        || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
-        || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_bf8_fnuz>{})
-#ifdef ROCM_USE_FLOAT8
-        || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_f8>{})
-        || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_bf8>{})
-        || (std::is_same<TiA, hipblaslt_bf8>{} && std::is_same<TiB, hipblaslt_f8>{})
-        || (std::is_same<TiA, hipblaslt_bf8>{} && std::is_same<TiB, hipblaslt_bf8>{})
-#endif
-        || (std::is_same<TiA, double>{} && std::is_same<TiB, double>{})
-        || (std::is_same<TiA, hipblasLtInt8>{} && std::is_same<TiB, hipblasLtInt8>{})
-        || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblasLtHalf>{})
-        || (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})>>
-    : hipblaslt_test_valid
+struct perf_matmul : hipblaslt_test_valid
 {
     void operator()(const Arguments& arg)
     {
-        static const func_map map = {{"matmul", testing_matmul<TiA, TiB, To, Tc, TciA, TciB>}};
-        run_function(map, arg);
+        if(strcmp(arg.function, "matmul"))
+            throw std::invalid_argument("Invalid combination --function "s + arg.function
+                                        + " --a_type "s + hip_datatype_to_string(arg.a_type));
+
+        testing_matmul(arg);
     }
 };
 
-int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, bool yaml = false)
+int run_bench_test(Arguments&         arg,
+                   const std::string& filter,
+                   bool               any_stride,
+                   hipDeviceProp_t&   props,
+                   bool               yaml = false)
 {
     hipblaslt_cout << std::setiosflags(std::ios::fixed)
                    << std::setprecision(7); // Set precision to 7 digits
@@ -225,15 +169,50 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
         }
     }
 
-    hipblaslt_matmul_dispatch<perf_matmul>(arg);
+#ifdef ROCM_USE_FLOAT8
+    // Check for F8 OCP data types and convert to NANOO
+    {
+        std::string deviceFullString(props.gcnArchName);
+        std::string deviceString = deviceFullString.substr(0, deviceFullString.find(":"));
+
+        bool isGFX942 = deviceString.find("gfx942") != std::string::npos;
+
+        if(isGFX942)
+        {
+            auto convertF8Type = [](hipDataType type) {
+                if(type == HIP_R_8F_E4M3)
+                {
+                    hipblaslt_cerr << "hipblaslt-bench INFO: Using f8_fnuz_r instead of f8_r"
+                                   << std::endl;
+                    return HIP_R_8F_E4M3_FNUZ;
+                }
+                if(type == HIP_R_8F_E5M2)
+                {
+                    hipblaslt_cerr << "hipblaslt-bench INFO: Using b8_fnuz_r instead of b8_r"
+                                   << std::endl;
+                    return HIP_R_8F_E5M2_FNUZ;
+                }
+                else
+                    return type;
+            };
+
+            arg.a_type = convertF8Type(arg.a_type);
+            arg.b_type = convertF8Type(arg.b_type);
+            arg.c_type = convertF8Type(arg.c_type);
+            arg.d_type = convertF8Type(arg.d_type);
+        }
+    }
+#endif
+
+    perf_matmul{}(arg);
     return 0;
 }
 
-int hipblaslt_bench_datafile(const std::string& filter, bool any_stride)
+int hipblaslt_bench_datafile(const std::string& filter, bool any_stride, hipDeviceProp_t& props)
 {
     int ret = 0;
     for(Arguments arg : HipBlasLt_TestData())
-        ret |= run_bench_test(arg, filter, any_stride, true);
+        ret |= run_bench_test(arg, filter, any_stride, props, true);
     test_cleanup::cleanup();
     return ret;
 }
@@ -253,6 +232,43 @@ void fix_batch(int argc, char* argv[])
                    0);
             argv[i] = b_c;
         }
+}
+
+bool tuning_path_compare_git_version(const char* tuningEnv)
+{
+    char                   git_version[128];
+    hipblaslt_local_handle handle;
+    hipblasLtGetGitRevision(handle, &git_version[0]);
+    std::string   tuningPath = tuningEnv;
+    std::ifstream file_read(tuningPath);
+
+    if(file_read.peek() == std::ifstream::traits_type::eof())
+    {
+        std::ofstream file_write(tuningPath, std::ios::app);
+        file_write << "Git Version: " << (std::string)git_version << std::endl;
+        hipblaslt_cout << "Initialize tuning file." << std::endl;
+        return true;
+    }
+    else
+    {
+        std::string firstline;
+        std::string prefix = "Git Version: ";
+        std::getline(file_read, firstline);
+        size_t pos = firstline.find(prefix);
+        if(pos != std::string::npos)
+        {
+            std::string file_version = firstline.substr(pos + prefix.length());
+            hipblaslt_cout << "tuning file git version: " << file_version << std::endl;
+            if(file_version == git_version)
+            {
+                return true;
+            }
+        }
+    }
+
+    hipblaslt_cout << "The hipBLASLt git version and the tuning file git version are not the same."
+                   << std::endl;
+    return false;
 }
 
 void hipblaslt_print_version(void)
@@ -283,11 +299,13 @@ try
     std::string scale_type;
     std::string bias_type;
     std::string bias_source;
-    std::string scaleAFormat;
-    std::string scaleBFormat;
     std::string initialization;
     std::string filter;
     std::string activation_type;
+    int         scaleAFormat;
+    int         scaleBFormat;
+    int         scaleCFormat;
+    int         scaleDFormat;
     int         device_id;
     int         flags             = 0;
     bool        datafile          = hipblaslt_parse_data(argc, argv);
@@ -306,6 +324,17 @@ try
     std::vector<int64_t>  stride_a, stride_b, stride_c, stride_d, stride_e;
     std::vector<uint32_t> gsu_vector, wgm_vector;
     arg.init(); // set all defaults
+    const char* tuningEnv = getenv("HIPBLASLT_TUNING_FILE");
+    if(tuningEnv)
+    {
+        bool tuning_success = tuning_path_compare_git_version(tuningEnv);
+        if(tuning_success)
+        {
+            hipblaslt_cout << "HIPBLASLT_TUNING_FILE is the correct setting." << std::endl;
+        }
+        else
+            return 1;
+    }
 
     options_description desc("hipblaslt-bench command line options");
     desc.add_options()
@@ -402,11 +431,11 @@ try
 
         ("compute_input_typeA",
          value<std::string>(&compute_input_typeA), "Precision of computation input A. "
-         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the compute_input_typeA has no effect.")
+         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, f8_fnuz_r, bf8_fnuz_r, The default value indicates that the compute_input_typeA has no effect.")
 
         ("compute_input_typeB",
          value<std::string>(&compute_input_typeB), "Precision of computation input B. "
-         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the compute_input_typeA has no effect.")
+         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, f8_fnuz_r, bf8_fnuz_r, The default value indicates that the compute_input_typeA has no effect.")
 
         ("scale_type",
          value<std::string>(&scale_type), "Precision of scalar. "
@@ -425,6 +454,10 @@ try
          value<char>(&arg.transB)->default_value('N'),
          "N = no transpose, T = transpose")
 
+        ("swizzleA",
+         value<bool>(&arg.swizzle_a)->default_value(false),
+         "Enable tensor swizzling for A")
+
         ("batch_count",
          value<int32_t>(&arg.batch_count)->default_value(1),
          "Number of matrices. Only applicable to batched and strided_batched routines")
@@ -438,15 +471,15 @@ try
          "Validate GPU results with CPU?")
 
         ("iters,i",
-         value<int32_t>(&arg.iters)->default_value(10),
+         value<int32_t>(&arg.iters)->default_value(tuningEnv? 1000 : 10),
          "Iterations to run inside timing loop")
 
         ("cold_iters,j",
-         value<int32_t>(&arg.cold_iters)->default_value(2),
+         value<int32_t>(&arg.cold_iters)->default_value(tuningEnv? 1000 : 2),
          "Cold Iterations to run before entering the timing loop")
 
         ("algo_method",
-         value<std::string>(&algo_method_str)->default_value("heuristic"),
+         value<std::string>(&algo_method_str)->default_value(tuningEnv? "all" : "heuristic"),
          "Use different algorithm search API. Options: heuristic, all, index.")
 
         ("solution_index",
@@ -454,12 +487,12 @@ try
          "Used with --algo_method 2.  Specify solution index to use in benchmark.")
 
         ("requested_solution",
-         value<int32_t>(&arg.requested_solution_num)->default_value(1),
+         value<int32_t>(&arg.requested_solution_num)->default_value(tuningEnv? -1 : 1),
          "Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to heuristic.")
 
         ("activation_type",
          value<std::string>(&activation_type)->default_value("none"),
-         "Options: None, gelu, relu")
+         "Options: none, gelu, relu, swish")
 
         ("activation_arg1",
          value<float>(&arg.activation_arg1)->default_value(0),
@@ -482,12 +515,20 @@ try
          "Apply bias vector")
 
         ("scaleA",
-         value<std::string>(&scaleAFormat)->default_value(""),
-         "Apply scale for A buffer. s = scalar, v = vector.")
+         value<int>(&scaleAFormat)->default_value(0),
+         "Apply scale for A buffer. 0 = None, 1 = scalar, 2 = vector.")
 
         ("scaleB",
-         value<std::string>(&scaleBFormat)->default_value(""),
-         "Apply scale for B buffer. s = scalar, v = vector.")
+         value<int>(&scaleBFormat)->default_value(0),
+         "Apply scale for B buffer. 0 = None, 1 = scalar, 2 = vector.")
+
+        ("scaleC",
+         value<int>(&scaleCFormat)->default_value(0),
+         "Apply scale for C buffer. 0 = None, 1 = scalar")
+
+        ("scaleD",
+         value<int>(&scaleDFormat)->default_value(0),
+         "Apply scale for D buffer. 0 = None, 1 = scalar")
 
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
@@ -551,7 +592,7 @@ try
          "Print solution, kernel name and solution index.")
 
         ("rotating",
-         value<int32_t>(&arg.rotating)->default_value(0),
+         value<int32_t>(&arg.rotating)->default_value(tuningEnv ? 512 : 0),
          "Use rotating memory blocks for each iteration, size in MB.")
 
         ("use_gpu_timer",
@@ -573,7 +614,7 @@ try
          "[Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
 
         ("flush",
-        value<bool>(&arg.flush)->default_value(false),
+        value<bool>(&arg.flush)->default_value(tuningEnv ? true : false),
         "Flush icache, only works for gemm.")
 
         ("help,h", "produces this help message")
@@ -593,6 +634,7 @@ try
     }
 
     hipblaslt_print_version();
+
     if(vm.find("version") != vm.end())
     {
         return 0;
@@ -626,7 +668,7 @@ try
     }
     else if(algo_method_str.compare("index") == 0)
     {
-        arg.algo_method = 2;
+        arg.algo_method = tuningEnv ? 1 : 2;
     }
     else
     {
@@ -745,7 +787,8 @@ try
     }
 
     // Device Query
-    int64_t device_count = query_device_property();
+    hipDeviceProp_t props;
+    int64_t         device_count = query_device_property(device_id, props);
 
     hipblaslt_cout << std::endl;
     if(device_count <= device_id)
@@ -756,7 +799,7 @@ try
     freq_monitor.set_device_id(device_id);
 
     if(datafile)
-        return hipblaslt_bench_datafile(filter, any_stride);
+        return hipblaslt_bench_datafile(filter, any_stride, props);
 
     // single bench run
 
@@ -791,6 +834,11 @@ try
     if(arg.d_type == HIPBLASLT_DATATYPE_INVALID)
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
 
+    if(arg.c_type != arg.d_type)
+        throw std::invalid_argument(
+            "Invalid: --c_type " + std::string(hip_datatype_to_string(arg.c_type))
+            + " is not equal to --d_type " + std::string(hip_datatype_to_string(arg.d_type)));
+
     bool is_f16 = arg.a_type == HIP_R_16F || arg.a_type == HIP_R_16BF;
     bool is_f32 = arg.a_type == HIP_R_32F;
     arg.compute_type
@@ -798,7 +846,7 @@ try
     if(arg.compute_type == HIPBLASLT_COMPUTE_TYPE_INVALID)
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
-    //The value HIPBLASLT_DATATYPE_INVALID indicates that the compute_input_typeA has no effect.
+    // The value HIPBLASLT_DATATYPE_INVALID indicates that the compute_input_typeA has no effect.
     arg.compute_input_typeA = (compute_input_typeA != "")
                                   ? string_to_hip_datatype(compute_input_typeA)
                                   : HIPBLASLT_DATATYPE_INVALID;
@@ -824,20 +872,35 @@ try
         throw std::invalid_argument("Invalid value for --initialization " + initialization);
 
     arg.activation_type = string_to_hipblaslt_activation_type(activation_type);
-    if(arg.activation_type == static_cast<hipblaslt_activation_type>(0))
+    if(arg.activation_type == static_cast<hipblaslt_activation_type>(-1))
         throw std::invalid_argument("Invalid value for --activation_type " + activation_type);
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
 
-    auto scaleString2Enum = [](std::string& s) {
-        if(s == "s")
-            return Arguments::ScalingFormat::Scalar;
-        if(s == "v")
-            return Arguments::ScalingFormat::Vector;
-        return Arguments::ScalingFormat::None;
+    if(arg.swizzle_a
+       && (arg.transA != 'T' || arg.transB != 'N'
+           || (arg.a_type != string_to_hip_datatype("f16_r")
+               && arg.a_type != string_to_hip_datatype("f8_fnuz_r")
+               && arg.a_type != string_to_hip_datatype("bf16_r"))))
+    {
+        hipblaslt_cerr << "For swizzle-A, problem type must be FP16 or BF16 or FP8 TN" << std::endl;
+        return 1;
+    }
+
+    auto scaleInt2Enum = [](int s) {
+        if(s == 0)
+            return hipblaslt_scaling_format::none;
+        if(s == 1)
+            return hipblaslt_scaling_format::Scalar;
+        if(s == 2)
+            return hipblaslt_scaling_format::Vector;
+
+        return hipblaslt_scaling_format::none;
     };
-    arg.scaleA = scaleString2Enum(scaleAFormat);
-    arg.scaleB = scaleString2Enum(scaleBFormat);
+    arg.scaleA = scaleInt2Enum(scaleAFormat);
+    arg.scaleB = scaleInt2Enum(scaleBFormat);
+    arg.scaleC = scaleCFormat;
+    arg.scaleD = scaleDFormat;
 
     if(arg.M[0] < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M[0]));
@@ -880,7 +943,7 @@ try
     }
 
     arg.norm_check_assert = false;
-    int status            = run_bench_test(arg, filter, any_stride);
+    int status            = run_bench_test(arg, filter, any_stride, props);
     freeFrequencyMonitor();
     return status;
 }

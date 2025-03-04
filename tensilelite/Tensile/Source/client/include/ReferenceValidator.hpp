@@ -37,7 +37,7 @@
 
 #include <cstddef>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -64,7 +64,9 @@ namespace Tensile
             virtual size_t numWarmupRuns() override;
             virtual void   setNumWarmupRuns(size_t count) override;
             virtual void   preWarmup() override;
-            virtual void   postWarmup() override;
+            virtual void   postWarmup(TimingEvents const& startEvents,
+                                      TimingEvents const& stopEvents,
+                                      hipStream_t const&  stream) override;
             virtual void   validateWarmups(std::shared_ptr<ProblemInputs> inputs,
                                            TimingEvents const&            startEvents,
                                            TimingEvents const&            stopEvents) override;
@@ -152,9 +154,10 @@ namespace Tensile
             bool   m_validatedSolution = false;
             bool   m_errorInSolution   = false;
             bool   m_error             = false;
+            bool   m_executedSolution  = false;
             size_t m_errorsReported    = 0;
 
             bool validateSolution(std::shared_ptr<ProblemInputs> inputs);
         };
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

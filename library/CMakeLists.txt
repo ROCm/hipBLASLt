@@ -41,7 +41,7 @@ configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-ext.hpp" "${PROJE
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-types.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-types.h" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_xfloat32.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_xfloat32.h" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_float8.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_float8.h" COPYONLY)
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_hip_f8_impl.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_hip_f8_impl.h" COPYONLY)
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_float8_bc.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_float8_bc.h" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-ext-op.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-ext-op.h" COPYONLY)
 
 # Public hipBLASLt headers
@@ -50,7 +50,7 @@ set(hipblaslt_headers_public
   include/hipblaslt-ext.hpp
   include/hipblaslt_xfloat32.h
   include/hipblaslt_float8.h
-  include/hipblaslt_hip_f8_impl.h
+  include/hipblaslt_float8_bc.h
   include/hipblaslt-ext-op.h
   ${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
 )
@@ -103,23 +103,6 @@ if( BUILD_WITH_TENSILE )
     list(TRANSFORM TensileHost_SOURCES PREPEND "${TensileHost_SOURCE_DIR}${seperator}")
     # add dependent sources from TensileHost for static build
     target_sources(hipblaslt PRIVATE ${TensileHost_SOURCES})
-
-    # recreate LLVM static dependencies
-    if (${Tensile_LIBRARY_FORMAT} STREQUAL "yaml")
-      find_package(LLVM 13.0 QUIET CONFIG)
-      if(NOT LLVM_FOUND)
-          find_package(LLVM 12.0 QUIET CONFIG)
-          if(NOT LLVM_FOUND)
-              find_package(LLVM REQUIRED CONFIG)
-          endif()
-      endif()
-      find_library(LLVMObjectYAML_LIBRARY
-        NAMES LLVMObjectYAML
-        PATHS ${LLVM_LIBRARY_DIR})
-      message("LLVMObjectYAML_LIBRARY: ${LLVMObjectYAML_LIBRARY}")
-
-      target_link_libraries(hipblaslt PRIVATE LLVMObjectYAML )  # match tensile
-    endif()
   endif()
 
   target_compile_definitions(hipblaslt PRIVATE ${TENSILE_DEFINES} )
@@ -173,12 +156,14 @@ endif()
 if(NOT BUILD_CUDA)
 # Target link libraries
   target_link_libraries(hipblaslt PRIVATE hip::device ${DL_LIB})
-else()
-  target_link_libraries(hipblaslt PRIVATE ${CUDA_cublaslt_LIBRARY})
 endif()
 
 if(HIPBLASLT_ENABLE_MARKER)
   target_link_libraries(hipblaslt PRIVATE -lroctx64)
+endif()
+
+if( NOT BUILD_CUDA AND NOT LEGACY_HIPBLAS_DIRECT )
+  target_link_libraries(hipblaslt INTERFACE roc::hipblas-common)
 endif()
 
 # Target properties
@@ -220,10 +205,16 @@ if ( NOT BUILD_CUDA )
     endif()
 # For ASAN package, Tensile library files are not required
     if( NOT ENABLE_ASAN_PACKAGING )
+    if( BUILD_SHARED_LIBS )
+      set( TENSILE_DATA_COMPONENT_NAME ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME} )
+    else()
+      set( TENSILE_DATA_COMPONENT_NAME devel )
+    endif()
+
       rocm_install(
         DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
         DESTINATION ${HIPBLASLT_TENSILE_LIBRARY_DIR}
-        COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME})
+        COMPONENT ${TENSILE_DATA_COMPONENT_NAME})
     endif()
 endif()
 

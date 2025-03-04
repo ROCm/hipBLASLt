@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from .Utils import hash_objs, state
+from .Common import hash_objs, state
 
 
 class Property:

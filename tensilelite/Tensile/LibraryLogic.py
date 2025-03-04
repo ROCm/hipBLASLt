@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,10 @@
 #
 ################################################################################
 
+from pathlib import Path
 from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
-  setWorkingPath, popWorkingPath, assignParameterWithDefault, startTime, ProgressBar, printWarning
+  assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, \
+  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR
 from .SolutionStructs import Solution
 from . import LibraryIO
 from . import SolutionSelectionLibrary
@@ -35,11 +37,12 @@ import array
 import csv
 import os
 import time
+import math
 
 ################################################################################
 # Analyze Problem Type
 ################################################################################
-def analyzeProblemType( problemType, problemSizeGroups, inputParameters ):
+def analyzeProblemType(problemType, problemSizeGroups, inputParameters, libraryLogicPath):
   print2(HR)
   print1("# Analyzing: %s" % problemType)
 
@@ -189,7 +192,7 @@ def analyzeProblemType( problemType, problemSizeGroups, inputParameters ):
     permutations.append(permutation)
   #print permutations
   for permutation in permutations:
-    logicAnalyzer.print2D(permutation)
+    logicAnalyzer.print2D(permutation, libraryLogicPath)
 
   ######################################
   # Range Logic
@@ -315,30 +318,9 @@ class LogicAnalyzer:
       #FIXME-problem
       self.rangeProblemSizes.update([tuple(problem.sizes) for problem in problemSizes.problems])
       for rangeSize in problemSizes.ranges:
-
-        if globalParameters["ExpandRanges"]:
-          # Treat ranges as pile of exacts:
-          for rsize in rangeSize.problemSizes:
-            self.exactProblemSizes.add(tuple(rsize))
-        else:
-          # Create the ranges info in the logic file
-          #print "RangeSize", rangeSize
-          sizedIdx = 0
-          mappedIdx = 0
-          for i in range(0, self.numIndices):
-            if rangeSize.indexIsSized[i]:
-              index = rangeSize.indicesSized[sizedIdx]
-              sizedIdx += 1
-            else:
-              index = rangeSize.indicesSized[ \
-                rangeSize.indicesMapped[mappedIdx]]
-              mappedIdx += 1
-            currentSize = index[0]
-            currentStride = index[1]
-            while currentSize <= index[3]:
-              unifiedProblemSizes[i].add(currentSize)
-              currentSize += currentStride
-              currentStride += index[2]
+        # Treat ranges as pile of exacts:
+        for rsize in rangeSize.problemSizes:
+          self.exactProblemSizes.add(tuple(rsize))
     for i in range(0, len(unifiedProblemSizes)):
       unifiedProblemSizes[i] = sorted(list(unifiedProblemSizes[i]))
     print2("UnifiedProblemSizes: %s" % unifiedProblemSizes)
@@ -446,14 +428,11 @@ class LogicAnalyzer:
 
     # need to take care if the loaded csv is the export-winner-version
     csvHasWinner = "_CSVWinner" in dataFileName
-    if csvHasWinner:
-      # the column of the two are fixed (GFlops, SizeI/J/K/L, LDD/C/A/B, TotalFlops, WinnerGFlops, WinnerTimeUs, WinnerIdx, WinnerName)
-      # the order are implemented in ResultFileReporter.cpp (NewClient) and Client.h (OldClient)
-      columnOfWinnerGFlops = 12
-      columnOfWinnerIdx = 14
+    csvHasWinnerColumn = True
 
     # iterate over rows
     rowIdx = 0
+    deviceMaxFreq = None
     for row in csvFile:
       rowIdx+=1
       if rowIdx == 1:
@@ -466,6 +445,15 @@ class LogicAnalyzer:
         else:
           printWarning("Performance unit %s in %s is unrecognized: assuming GFlops (device efficiency)" % (perfUnit, dataFileName))
           self.perfMetric = "DeviceEfficiency"
+
+        if csvHasWinner:
+          try:
+            # These two columns only appear when using WinnerCSV
+            columnOfWinnerGFlops = row.index(" WinnerGFlops")
+            columnOfWinnerIdx = row.index(" WinnerIdx")
+          except ValueError as e:
+            csvHasWinnerColumn = False
+            print1(f"Error: Could not find WinnerGFlops or WinnerIdx column in CSV file: {e}")
 
         # get the length of each row, and derive the first column of the solution instead of using wrong "solutionStartIdx = totalSizeIdx + 1"
         rowLength = len(row)
@@ -482,11 +470,10 @@ class LogicAnalyzer:
         for i in range(problemSizeStartIdx, totalSizeIdx):
           problemSize.append(int(row[i]))
         problemSize = tuple(problemSize)
-
         # Exact Problem Size
         if problemSize in self.exactProblemSizes:
 
-          if csvHasWinner:
+          if csvHasWinner and csvHasWinnerColumn:
             # Faster. Get the winner info from csv directly, avoid an extra loop
             winnerGFlops = float(row[columnOfWinnerGFlops])
             winnerIdx = int(row[columnOfWinnerIdx])
@@ -503,13 +490,35 @@ class LogicAnalyzer:
                 winnerGFlops = gflops
               solutionIdx += 1
 
+          if globalParameters["UseEffLike"]:
+            if not deviceMaxFreq:
+              deviceMaxFreq = read_max_freq()
+
+            # calculate effLike
+            # effLike = winnerGFlops / Frequency(MHz)
+            try:
+              if not deviceMaxFreq or deviceMaxFreq <= 0 or math.isnan(deviceMaxFreq):
+                performance_metric = round(float(winnerGFlops))
+                print("Error when retrieving device frequency, fall back to winnerGFlops.")
+              else:
+                performance_metric = round(float(winnerGFlops) / deviceMaxFreq, 2)
+            except:
+              print1("Error: Could not convert winnerGFlops to float.")
+              performance_metric = float('nan')
+          else:
+            try:
+              performance_metric = float(winnerGFlops)
+            except:
+              print1("Error: Could not convert winnerGFlops to float.")
+              performance_metric = float('nan')
+
           if winnerIdx != -1:
             if problemSize in self.exactWinners:
               if winnerGFlops > self.exactWinners[problemSize][1]:
                 #print "update exact", problemSize, "CSV index=", winnerIdx, self.exactWinners[problemSize], "->", solutionMap[winnerIdx], winnerGFlops
-                self.exactWinners[problemSize] = [solutionMap[winnerIdx], winnerGFlops]
+                self.exactWinners[problemSize] = [solutionMap[winnerIdx], performance_metric]
             else:
-              self.exactWinners[problemSize] = [solutionMap[winnerIdx], winnerGFlops]
+              self.exactWinners[problemSize] = [solutionMap[winnerIdx], performance_metric]
               #print "new exact", problemSize, "CSV index=", winnerIdx, self.exactWinners[problemSize]
 
         # Range Problem Size
@@ -910,7 +919,7 @@ class LogicAnalyzer:
   ##############################################################################
   # Print2D
   ##############################################################################
-  def print2D(self, indices ):
+  def print2D(self, indices, libraryLogicPath):
     indicesIdx = 0
     problemIndices = []
     for i in range(0, self.numIndices):
@@ -999,7 +1008,7 @@ class LogicAnalyzer:
     for idx in indices:
       printFileName += "_%u" % idx
     printFileName += ".csv"
-    printFile = open(os.path.join(globalParameters["WorkingPath"], printFileName), "w")
+    printFile = open(os.path.join(libraryLogicPath, printFileName), "w")
     printFile.write( w )
     printFile.write( g )
     printFile.write( f )
@@ -1421,12 +1430,12 @@ class LogicAnalyzer:
 
 
 
-def generateLogic(config, benchmarkDataPath, libraryLogicPath):
+def generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler: str):
+
+  libraryLogicPath = ensurePath(libraryLogicPath)
 
   print2("# LibraryLogic config: %s" % config)
   print2("# DefaultAnalysisParameters: " % defaultAnalysisParameters)
-
-  setWorkingPath(libraryLogicPath)
 
   # Assign Defaults
   analysisParameters = {}
@@ -1438,7 +1447,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
   print1(HR)
   currentTime = time.time()
   elapsedTime = currentTime - startTime
-  print1("# Analysing data in %s - %.3fs" % (globalParameters["BenchmarkDataPath"], elapsedTime) )
+  print1("# Analysing data in %s - %.3fs" % (benchmarkDataPath, elapsedTime) )
   for parameter in analysisParameters:
     print2("#   %s: %s" % (parameter, analysisParameters[parameter]))
   print1(HR)
@@ -1464,7 +1473,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
         printExit("%s doesn't exist for %s" % (dataFileName, fileBase) )
       if not os.path.exists(solutionsFileName):
         printExit("%s doesn't exist for %s" % (solutionsFileName, fileBase) )
-      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName)
+      (problemSizes, solutions) = LibraryIO.parseSolutionsFile(solutionsFileName, cxxCompiler)
       if len(solutions) == 0:
         printExit("%s doesn't contains any solutions." % (solutionsFileName) )
       problemType = solutions[0]["ProblemType"]
@@ -1474,9 +1483,9 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
           dataFileName, solutionsFileName, selectionFileName, solutions) )
 
   for problemType in problemTypes:
-    logicTuple = analyzeProblemType(problemType, problemTypes[problemType], analysisParameters)
+    logicTuple = analyzeProblemType(problemType, problemTypes[problemType], analysisParameters, libraryLogicPath)
 
-    filename = os.path.join(globalParameters["WorkingPath"], \
+    filename = os.path.join(libraryLogicPath, \
         "{}_{}".format(analysisParameters["ScheduleName"], str(problemType)))
 
     print2("# writing library logic YAML {}".format(filename))
@@ -1493,8 +1502,42 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
   currentTime = time.time()
   elapsedTime = currentTime - startTime
   print1("%s\n# Finish Analysing data to %s in %.3fs\n%s" % (HR, os.path.split(libraryLogicPath)[0], elapsedTime, HR) )
-  popWorkingPath()
 
+
+##############################################################################
+# Error handling for frequency issues
+##############################################################################
+def handle_frequency_issue(message):
+    print1(message)
+    print1("Input the frequency manually to proceed.")
+
+    while True:
+      frequency_input = input("Frequency: ").strip()
+      if frequency_input == "":
+          print1("Frequency cannot be empty")
+          continue
+      try:
+          frequency = float(frequency_input)
+          if frequency > 0:
+            return frequency
+          else:
+            print1("Frequency cannot be negative or zero.")
+      except ValueError:
+          print1("Invalid frequency.Please input a valid frequency.")
+
+def read_max_freq():
+    try:
+        max_freq = os.environ.get("MAX_FREQ")
+        if max_freq is None or max_freq.strip() == "":
+          raise ValueError("Environment variable 'MAX_FREQ' is not set or is empty.")
+
+        return float(max_freq)
+    except ValueError as ve:
+        print(f"Error: {ve}")  # Handle invalid or missing value
+        return None
+    except Exception as e:
+        print(f"Unexpected error: {e}")  # Handle any other unexpected errors
+        return None
 
 ################################################################################
 ################################################################################
@@ -1503,12 +1546,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
 ###
 ################################################################################
 ################################################################################
-def main(  config ):
-
-  benchmarkDataPath = os.path.join(globalParameters["WorkingPath"], \
-      globalParameters["BenchmarkDataPath"])
-
-  libraryLogicPath = os.path.join(globalParameters["WorkingPath"], \
-      globalParameters["LibraryLogicPath"])
-
-  generateLogic(config, benchmarkDataPath, libraryLogicPath)
+def main(config, cxxCompiler: str, outputPath: Path):
+  benchmarkDataPath = outputPath / BENCHMARK_DATA_DIR
+  libraryLogicPath = outputPath / LIBRARY_LOGIC_DIR
+  generateLogic(config, benchmarkDataPath, libraryLogicPath, cxxCompiler)

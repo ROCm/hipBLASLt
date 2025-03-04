@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/TensorDescriptor_Detail.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     template <>
     struct Comparison<ContractionProblemGemm::FreeIndex>
@@ -137,80 +137,89 @@ namespace Tensile
                                         lhs.outputAmaxD(),
                                         rhs.outputAmaxD(),
                                         lhs.f32XdlMathOp(),
-                                        rhs.f32XdlMathOp());
+                                        rhs.f32XdlMathOp(),
+                                        lhs.swizzleTensorA(),
+                                        rhs.swizzleTensorA(),
+                                        lhs.swizzleTensorB(),
+                                        rhs.swizzleTensorB());
         }
     };
-} // namespace Tensile
+} // namespace TensileLite
 
 namespace std
 {
     template <>
-    struct hash<Tensile::ContractionProblemGemm>
+    struct hash<TensileLite::ContractionProblemGemm>
     {
-        inline size_t operator()(Tensile::ContractionProblemGemm const& problem) const
+        inline size_t operator()(TensileLite::ContractionProblemGemm const& problem) const
         {
-            return Tensile::hash_combine(problem.operationIdentifier(),
-                                         problem.a(),
-                                         problem.b(),
-                                         problem.c(),
-                                         problem.d(),
-                                         problem.computeInputType(),
-                                         problem.highPrecisionAccumulate(),
-                                         problem.kernelLanguage(),
-                                         problem.deterministicMode(),
-                                         problem.workspaceSize(),
-                                         problem.stridedBatched(),
-                                         problem.groupedGemm(),
-                                         problem.performanceMetric(),
-                                         problem.activationType(),
-                                         problem.activationComputeType(),
-                                         problem.activationNoGuard(),
-                                         problem.useGradient(),
-                                         problem.useBias(),
-                                         problem.biasSrc(),
-                                         problem.useE(),
-                                         problem.useScaleAB(),
-                                         problem.useScaleCD(),
-                                         problem.useScaleAlphaVec(),
-                                         problem.outputAmaxD(),
-                                         problem.f32XdlMathOp());
+            return TensileLite::hash_combine(problem.operationIdentifier(),
+                                             problem.a(),
+                                             problem.b(),
+                                             problem.c(),
+                                             problem.d(),
+                                             problem.computeInputType(),
+                                             problem.highPrecisionAccumulate(),
+                                             problem.kernelLanguage(),
+                                             problem.deterministicMode(),
+                                             problem.workspaceSize(),
+                                             problem.stridedBatched(),
+                                             problem.groupedGemm(),
+                                             problem.performanceMetric(),
+                                             problem.activationType(),
+                                             problem.activationComputeType(),
+                                             problem.activationNoGuard(),
+                                             problem.useGradient(),
+                                             problem.useBias(),
+                                             problem.biasSrc(),
+                                             problem.useE(),
+                                             problem.useScaleAB(),
+                                             problem.useScaleCD(),
+                                             problem.useScaleAlphaVec(),
+                                             problem.outputAmaxD(),
+                                             problem.f32XdlMathOp(),
+                                             problem.swizzleTensorA(),
+                                             problem.swizzleTensorB());
         }
     };
 
     template <>
-    struct hash<std::vector<Tensile::ContractionProblemGemm>>
+    struct hash<std::vector<TensileLite::ContractionProblemGemm>>
     {
-        inline size_t operator()(std::vector<Tensile::ContractionProblemGemm> const& problems) const
+        inline size_t
+            operator()(std::vector<TensileLite::ContractionProblemGemm> const& problems) const
         {
             size_t hash = 0;
             for(int idx = 0; idx < problems.size(); idx++)
             {
                 auto problem = problems[idx];
-                hash += Tensile::hash_combine(problem.operationIdentifier(),
-                                              problem.a(),
-                                              problem.b(),
-                                              problem.c(),
-                                              problem.d(),
-                                              problem.computeInputType(),
-                                              problem.highPrecisionAccumulate(),
-                                              problem.kernelLanguage(),
-                                              problem.deterministicMode(),
-                                              problem.workspaceSize(),
-                                              problem.stridedBatched(),
-                                              problem.groupedGemm(),
-                                              problem.performanceMetric(),
-                                              problem.activationType(),
-                                              problem.activationComputeType(),
-                                              problem.activationNoGuard(),
-                                              problem.useGradient(),
-                                              problem.useBias(),
-                                              problem.biasSrc(),
-                                              problem.useE(),
-                                              problem.useScaleAB(),
-                                              problem.useScaleCD(),
-                                              problem.useScaleAlphaVec(),
-                                              problem.outputAmaxD(),
-                                              problem.f32XdlMathOp());
+                hash += TensileLite::hash_combine(problem.operationIdentifier(),
+                                                  problem.a(),
+                                                  problem.b(),
+                                                  problem.c(),
+                                                  problem.d(),
+                                                  problem.computeInputType(),
+                                                  problem.highPrecisionAccumulate(),
+                                                  problem.kernelLanguage(),
+                                                  problem.deterministicMode(),
+                                                  problem.workspaceSize(),
+                                                  problem.stridedBatched(),
+                                                  problem.groupedGemm(),
+                                                  problem.performanceMetric(),
+                                                  problem.activationType(),
+                                                  problem.activationComputeType(),
+                                                  problem.activationNoGuard(),
+                                                  problem.useGradient(),
+                                                  problem.useBias(),
+                                                  problem.biasSrc(),
+                                                  problem.useE(),
+                                                  problem.useScaleAB(),
+                                                  problem.useScaleCD(),
+                                                  problem.useScaleAlphaVec(),
+                                                  problem.outputAmaxD(),
+                                                  problem.f32XdlMathOp(),
+                                                  problem.swizzleTensorA(),
+                                                  problem.swizzleTensorB());
             }
             return hash;
         }

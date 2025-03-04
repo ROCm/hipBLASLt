@@ -53,7 +53,7 @@
         }                                                                                         \
     } while(0)
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Client
     {
@@ -139,7 +139,7 @@ namespace Tensile
 #if rocm_smi_VERSION_MAJOR >= 7
             auto status2 = rsmi_dev_metrics_xcd_counter_get(m_smiDeviceIndex, &m_XCDCount);
 
-            if(status2 != RSMI_STATUS_SUCCESS)
+            if(status2 != RSMI_STATUS_SUCCESS || m_XCDCount == 0)
             {
                 m_XCDCount = 1;
             }
@@ -159,7 +159,7 @@ namespace Tensile
 #if rocm_smi_VERSION_MAJOR >= 7
             auto status2 = rsmi_dev_metrics_xcd_counter_get(m_smiDeviceIndex, &m_XCDCount);
 
-            if(status2 != RSMI_STATUS_SUCCESS)
+            if(status2 != RSMI_STATUS_SUCCESS || m_XCDCount == 0)
             {
                 m_XCDCount = 1;
             }
@@ -310,7 +310,8 @@ namespace Tensile
 
                 m_hasStopEvent = stopEvent != nullptr;
 
-                m_task   = std::move(Task([this, startEvent, stopEvent]() { this->collect(startEvent, stopEvent); }));
+                m_task   = std::move(Task(
+                    [this, startEvent, stopEvent]() { this->collect(startEvent, stopEvent); }));
                 m_future = m_task.get_future();
 
                 m_stop = false;
@@ -333,8 +334,9 @@ namespace Tensile
             m_lastCollection = clock::time_point();
             m_nextCollection = clock::time_point();
 
-            m_SYSCLK_sum   = std::vector<uint64_t>(m_XCDCount, 0);
-            m_SYSCLK_array = std::vector<std::vector<uint64_t>>(m_XCDCount, std::vector<uint64_t>{});
+            m_SYSCLK_sum = std::vector<uint64_t>(m_XCDCount, 0);
+            m_SYSCLK_array
+                = std::vector<std::vector<uint64_t>>(m_XCDCount, std::vector<uint64_t>{});
         }
 
         void HardwareMonitor::collectOnce()
@@ -380,14 +382,16 @@ namespace Tensile
                         for(uint32_t xcd = 0; xcd < m_XCDCount; xcd++)
                         {
                             m_SYSCLK_sum[xcd] += gpuMetrics.current_gfxclks[xcd] * cMhzToHz;
-                            m_SYSCLK_array[xcd].push_back(gpuMetrics.current_gfxclks[xcd] * cMhzToHz);
+                            m_SYSCLK_array[xcd].push_back(gpuMetrics.current_gfxclks[xcd]
+                                                          * cMhzToHz);
                             sysclkSum += gpuMetrics.current_gfxclks[xcd] * cMhzToHz;
                         }
                         m_clockValues[i] += sysclkSum;
                     }
 #else
                     // XCD0
-                    auto status = rsmi_dev_gpu_clk_freq_get(m_smiDeviceIndex, m_clockMetrics[i], &freq);
+                    auto status
+                        = rsmi_dev_gpu_clk_freq_get(m_smiDeviceIndex, m_clockMetrics[i], &freq);
                     if(status != RSMI_STATUS_SUCCESS)
                     {
                         m_clockValues[i] = std::numeric_limits<uint64_t>::max();
@@ -400,7 +404,8 @@ namespace Tensile
                 }
                 else
                 {
-                    auto status = rsmi_dev_gpu_clk_freq_get(m_smiDeviceIndex, m_clockMetrics[i], &freq);
+                    auto status
+                        = rsmi_dev_gpu_clk_freq_get(m_smiDeviceIndex, m_clockMetrics[i], &freq);
                     if(status != RSMI_STATUS_SUCCESS)
                     {
                         m_clockValues[i] = std::numeric_limits<uint64_t>::max();
@@ -410,7 +415,6 @@ namespace Tensile
                         m_clockValues[i] += freq.frequency[freq.current];
                     }
                 }
-
             }
 
             for(int i = 0; i < m_fanMetrics.size(); i++)
@@ -429,6 +433,45 @@ namespace Tensile
                     m_fanValues[i] += newValue;
             }
 
+            // Retrieves the maximum hardware supported frequency.
+            rsmi_frequencies_t freqs;
+            const int          MAX_RETRY  = 10;
+            const int          SLEEP_TIME = 100; // sleep time in milliseconds
+            bool               success    = false;
+
+            if(!has_maxFreqValues && !m_hasInvalidGpuFreqStatus)
+            {
+                for(int retry = 0; retry < MAX_RETRY; ++retry)
+                {
+                    auto status
+                        = rsmi_dev_gpu_clk_freq_get(m_smiDeviceIndex, RSMI_CLK_TYPE_SYS, &freqs);
+
+                    if(status == RSMI_STATUS_SUCCESS)
+                    {
+                        success = true;
+                        break;
+                    }
+                    // Sleep before next retry
+                    std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+                }
+
+                if(!success)
+                {
+                    m_hasInvalidGpuFreqStatus = true;
+                }
+                else if(freqs.num_supported > 0)
+                {
+                    m_maxFreqValues
+                        = *std::max_element(freqs.frequency, freqs.frequency + freqs.num_supported);
+
+                    has_maxFreqValues = true;
+                    m_maxFreqValues /= cMhzToHz; // Convert to MHz
+                }
+                else
+                {
+                    m_hasInvalidGpuFreqStatus = true;
+                }
+            }
             m_dataPoints++;
         }
 
@@ -509,4 +552,4 @@ namespace Tensile
         }
 
     } // namespace Client
-} // namespace Tensile
+} // namespace TensileLite

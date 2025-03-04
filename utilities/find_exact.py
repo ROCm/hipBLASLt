@@ -72,6 +72,7 @@ defaultBenchOptions = {"ProblemType": {
     "SolutionIndex": None, # Only works in AlgoMethod index
     "ApiMethod": "cpp",
     "RotatingBuffer": 512,
+    "Device": 0,
 }, "TuningParameters": {
     "SplitK": [0]
 }, "ProblemSizes": []}
@@ -118,6 +119,8 @@ def writeYAML(filename, data, **kwargs):
 def dataType2Bench(dataType):
     if dataType == "H":
         return "f16_r"
+    elif dataType == "B":
+        return "bf16_r"
     elif dataType == "S":
         return "f32_r"
     elif dataType == "FP8":
@@ -216,6 +219,7 @@ def findExact(config):
         print("--Running size: %s"%(filename))
         command = [execBenchPath,
                 "--print_kernel_info",
+                "--device", str(config["TestConfig"]["Device"]),
                 "--transA", config["ProblemType"]["TransposeA"],
                 "--transB", config["ProblemType"]["TransposeB"],
                 "--a_type", aType,

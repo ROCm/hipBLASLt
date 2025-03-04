@@ -56,7 +56,7 @@ namespace cl
 
 } // namespace cl
 
-namespace Tensile
+namespace TensileLite
 {
 
     namespace ocl
@@ -239,4 +239,4 @@ namespace Tensile
 
     } // namespace ocl
 
-} // namespace Tensile
+} // namespace TensileLite

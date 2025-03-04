@@ -34,7 +34,7 @@
 #include <Tensile/Distance.hpp>
 #include <Tensile/ExactLogicLibrary.hpp>
 
-using namespace Tensile;
+using namespace TensileLite;
 
 TEST(ContractionSelectionLibraryTest, Single)
 {

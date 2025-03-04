@@ -24,7 +24,7 @@
 
 from copy import deepcopy
 
-from .Common import globalParameters, CHeader
+from .Common import INDEX_CHARS
 from .KernelWriterBase import KernelWriterBase
 from .TensileInstructions import DataType
 
@@ -35,12 +35,11 @@ class KernelWriterReduction(KernelWriterBase):
 
         self.state["ProblemType"] = deepcopy(state["ProblemType"])
 
-        indexChars = globalParameters["IndexChars"]
         # C dimensions
         self.indicesStr = ""
         for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
-            c = indexChars[i].lower()
-            self.indicesStr += indexChars[i].lower()
+            c = INDEX_CHARS[i].lower()
+            self.indicesStr += INDEX_CHARS[i].lower()
 
         # derive parameter
         self.language = "HIP"
@@ -65,23 +64,14 @@ class KernelWriterReduction(KernelWriterBase):
 
     def getHeaderFileString(self):
         fileString = "" # CHeader
-        if not globalParameters["MergeFiles"]:
-            fileString += CHeader
-            fileString += "#pragma once\n\n"
-            fileString += "\n"
-            fileString += "#include <KernelHeader.h>\n\n"
-            fileString += "#include <hip/hip_runtime.h>\n"
-            fileString += "#include <hip/hip_fp16.h>\n"
-            fileString += "\n"
 
-        indexChars = globalParameters["IndexChars"]
         # C dimensions
         indicesStr = ""
         for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
-            c = indexChars[i].lower()
+            c = INDEX_CHARS[i].lower()
             if c == 'k':
                 continue
-            indicesStr += indexChars[i].lower()
+            indicesStr += INDEX_CHARS[i].lower()
 
         computeStr  = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
         computeChar = self.state["ProblemType"]["ComputeDataType"].toChar()
@@ -101,11 +91,6 @@ class KernelWriterReduction(KernelWriterBase):
 
     def getSourceFileString(self):
         fileString = ""
-        if not globalParameters["MergeFiles"]:
-            fileString += "\n"
-            fileString += "#include \"%s.h\"\n" % self.kernelName
-            fileString += "\n"
-
         fileString += self.kernelBody()
 
         return (0, fileString)

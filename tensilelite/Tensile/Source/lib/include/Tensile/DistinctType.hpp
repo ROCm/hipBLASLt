@@ -33,7 +33,7 @@
 
 #include <Tensile/Comparison.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     /**
  * \ingroup DataTypes
@@ -104,4 +104,4 @@ namespace Tensile
     /**
  * @}
  */
-} // namespace Tensile
+} // namespace TensileLite

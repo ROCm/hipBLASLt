@@ -30,7 +30,7 @@
 
 TEST(Predicates, ArithmeticIntensity)
 {
-    using namespace Tensile;
+    using namespace TensileLite;
 
     ContractionProblemGemm a = ContractionProblemGemm::GEMM(
         false, true, 1000, 1500, 500, 2000, 2000, 2000, 3.0, false, 1); // 88.4

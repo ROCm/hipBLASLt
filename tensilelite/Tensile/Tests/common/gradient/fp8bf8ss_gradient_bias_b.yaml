@@ -3,7 +3,6 @@ TestParameters:
 
 GlobalParameters:
   MinimumRequiredVersion: 4.14.0
-  MergeFiles: False
   SleepPercent: 50
   NumElementsToValidate: -1
   DataInitTypeBias: 0
@@ -24,7 +23,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8B8
+      DataType: F8B8N
       DestDataType: S
       ComputeDataType: S
       HighPrecisionAccumulate: True
@@ -94,7 +93,7 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8B8
+      DataType: F8B8N
       DestDataType: S
       ComputeDataType: S
       HighPrecisionAccumulate: True

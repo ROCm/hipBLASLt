@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,9 +39,6 @@ if( BUILD_WITH_TENSILE )
   set( PACKAGE_TENSILE_LIBRARY OFF )
 
   # Build options list
-  if(Tensile_MERGE_FILES)
-    set(Tensile_Options ${Tensile_Options} MERGE_FILES)
-  endif()
   if(Tensile_SHORT_FILENAMES)
     set(Tensile_Options ${Tensile_Options} SHORT_FILE_NAMES)
   endif()
@@ -51,17 +48,20 @@ if( BUILD_WITH_TENSILE )
   if(PACKAGE_TENSILE_LIBRARY)
     set(Tensile_Options ${Tensile_Options} GENERATE_PACKAGE)
   endif()
-  if(Tensile_SEPARATE_ARCHITECTURES)
-    set(Tensile_Options ${Tensile_Options} SEPARATE_ARCHITECTURES)
-  endif()
-  if(Tensile_LAZY_LIBRARY_LOADING)
-    set(Tensile_Options ${Tensile_Options} LAZY_LIBRARY_LOADING)
+  if(Tensile_NO_LAZY_LIBRARY_LOADING)
+    set(Tensile_Options ${Tensile_Options} NO_LAZY_LIBRARY_LOADING)
   endif()
   if(Tensile_ASAN_BUILD)
     set(Tensile_Options ${Tensile_Options} ASAN_BUILD)
   endif()
   if(Tensile_KEEP_BUILD_TMP)
     set(Tensile_Options ${Tensile_Options} KEEP_BUILD_TMP)
+  endif()
+  if(Tensile_NO_COMPRESS)
+    set(Tensile_Options ${Tensile_Options} NO_COMPRESS)
+  endif()
+  if(Tensile_EXPERIMENTAL)
+    set(Tensile_Options ${Tensile_Options} EXPERIMENTAL)
   endif()
 
   # Add a build target for Tensile kernel library
@@ -108,6 +108,25 @@ if( BUILD_WITH_TENSILE )
     set_target_properties( TensileHost PROPERTIES POSITION_INDEPENDENT_CODE ON )
   endif()
 
+# Run gcc --version and capture the first line of the output
+execute_process(
+    COMMAND gcc --version
+    OUTPUT_VARIABLE GCC_OUTPUT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Extract just the version number from the first line using regular expressions
+string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" GCC_VERSION "${GCC_OUTPUT}")
+
+# Print the extracted GCC version number
+message(STATUS "Extracted GCC Version: ${GCC_VERSION}")
+
+# Compare GCC version and set the flag conditionally if it's 7.5.0 or less
+if(${GCC_VERSION} VERSION_LESS "7.6.0")    
+    # Apply -ftemplate-depth=2048 to tensile_host.cpp if GCC_VERSION is less than 7.6.0 to avoid template recursion
+    set_source_files_properties(src/amd_detail/rocblaslt/src/tensile_host.cpp PROPERTIES COMPILE_FLAGS "-ftemplate-depth=2048")
+endif()
+
   set( Tensile_SRC
     src/amd_detail/rocblaslt/src/tensile_host.cpp
   )
@@ -133,5 +152,6 @@ set(rocblaslt_source
   src/amd_detail/rocblaslt/src/rocblaslt_mat.cpp
   src/amd_detail/rocblaslt/src/utility.cpp
   src/amd_detail/rocblaslt/src/rocblaslt_transform.cpp
+  src/amd_detail/rocblaslt/src/UserDrivenTuningParser.cpp
   ${Tensile_SRC}
 )

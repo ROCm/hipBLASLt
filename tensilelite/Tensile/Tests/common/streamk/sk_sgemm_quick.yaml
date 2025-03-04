@@ -484,7 +484,7 @@ BenchmarkProblems:
         - PrefetchLocalRead: [True]
       ForkParameters:
         - 1LDSBuffer: [1]
-        - DepthU: [ 8, 16, 32 ]
+        - DepthU: [ 8, 16, 32, 48 ]
         - ExpandPointerSwap: [False]
         - GlobalReadVectorWidthA: [1, 2, 4]
         - GlobalReadVectorWidthB: [1, 2, 4]

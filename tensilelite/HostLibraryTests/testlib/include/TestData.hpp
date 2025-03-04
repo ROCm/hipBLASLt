@@ -30,9 +30,9 @@
 
 #include <Tensile/Singleton.hpp>
 
-struct TestData : public Tensile::LazySingleton<TestData>
+struct TestData : public TensileLite::LazySingleton<TestData>
 {
-    using Base = Tensile::LazySingleton<TestData>;
+    using Base = TensileLite::LazySingleton<TestData>;
 
     operator bool() const;
 

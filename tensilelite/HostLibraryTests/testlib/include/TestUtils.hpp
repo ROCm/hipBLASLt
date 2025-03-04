@@ -33,7 +33,7 @@
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/TensorDescriptor.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     template <typename T>
     struct RandomInt

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,16 +23,12 @@
 ################################################################################
 
 from .Activation import ActivationType
-from .Common import internalParameters, printExit
 from .TensileInstructions import DataType
 from . import Hardware
 from . import Properties
 from .SolutionStructs import getBiasDataTypeListDefault
 from .SolutionStructs import Solution as OriginalSolution
-from .Utils import state, state_key_ordering
-
-from . import Common
-from . Common import globalParameters
+from .Common import gfxToIsa, internalParameters, globalParameters, state, state_key_ordering
 
 @state_key_ordering
 class FreeIndex:
@@ -68,7 +64,7 @@ class ProblemType:
                  'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleAB', 'useScaleCD', 'useScaleAlphaVec', 'biasDataTypeWhiteList',
                  'highPrecisionAccumulate', 'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'useGradient', 'activationType', 'activationArgLength', 'activationComputeDataType', 'activationNoGuard',
-                 'sparse', 'f32XdlMathOp', 'supportDeviceUserArguments', 'outputAmaxD']
+                 'sparse', 'f32XdlMathOp', 'supportDeviceUserArguments', 'outputAmaxD', 'swizzleTensorA', 'swizzleTensorB']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -141,9 +137,15 @@ class ProblemType:
         if rv.aType.isFloat8BFloat8() or rv.bType.isFloat8BFloat8():
             rv.aType = DataType("F8")
             rv.bType = DataType("B8")
+        elif rv.aType.isFloat8BFloat8_fnuz() or rv.bType.isFloat8BFloat8_fnuz():
+            rv.aType = DataType("F8N")
+            rv.bType = DataType("B8N")
         elif rv.aType.isBFloat8Float8() or rv.bType.isBFloat8Float8():
             rv.aType = DataType("B8")
             rv.bType = DataType("F8")
+        elif rv.aType.isBFloat8Float8_fnuz() or rv.bType.isBFloat8Float8_fnuz():
+            rv.aType = DataType("B8N")
+            rv.bType = DataType("F8N")
 
         if 'DataTypeE' in d:
             rv.eType = DataType(d['DataTypeE'])
@@ -257,6 +259,9 @@ class ProblemType:
         rv.supportDeviceUserArguments = False
         if 'SupportUserArgs' in d:
             rv.supportDeviceUserArguments = d['SupportUserArgs']
+
+        rv.swizzleTensorA = d.get('SwizzleTensorA', False)
+        rv.swizzleTensorB = d.get('SwizzleTensorB', False)
         return rv
 
     def __init__(self, freeIndices=None, batchIndices=None, boundIndices=None, aDims=None, bDims=None, cDims=None, dDims=None):
@@ -374,6 +379,8 @@ class ProblemType:
             predicates.append(ProblemPredicate("Sparse", value=self.sparse))
             predicates.append(ProblemPredicate("F32XdlMathOp", value=self.f32XdlMathOp))
             predicates.append(ProblemPredicate("SupportDeviceUserArguments", value=self.supportDeviceUserArguments))
+            predicates.append(ProblemPredicate("SwizzleTensorA", value=self.swizzleTensorA))
+            predicates.append(ProblemPredicate("SwizzleTensorB", value=self.swizzleTensorB))
 
         return predicates
 
@@ -433,7 +440,7 @@ class ProblemPredicate(Properties.Predicate):
             rv += [cls('BatchSizeEqual', index=0, value=state["BatchSizeEqual"])]
 
         if "SynchronizerSizeCheck" in state:
-            valuepredicates = [];
+            valuepredicates = []
             valuepredicates.append(state["MacroTile0"])
             valuepredicates.append(state["MacroTile1"])
             valuepredicates.append(state["MIWaveTile"][0]*state["MIWaveTile"][1])
@@ -443,6 +450,14 @@ class ProblemPredicate(Properties.Predicate):
                 valuepredicates.append(1)
             valuepredicates.append(state["NumThreads"])
             rv += [cls('SynchronizerSizeCheck', index=0, value=valuepredicates)]
+
+        if state["InternalSupportParams"]["KernArgsVersion"] >= 1 and \
+                 not (('StreamK' in state) and (state['StreamK'] > 0)):
+            valuepredicates = []
+            valuepredicates.append(state["MacroTile0"])
+            valuepredicates.append(state["MacroTile1"])
+            valuepredicates.append(state["GlobalSplitU"])
+            rv += [cls('WorkgroupNumberCheck', index=0, value=valuepredicates)]
 
         if not problemType.aType.isInt8x4():
             # calculate the minimum supported free dimension size
@@ -462,7 +477,7 @@ class ProblemPredicate(Properties.Predicate):
         if ('GlobalSplitU' in state) and (state['GlobalSplitU'] > 1):
             if ('_GlobalAccumulation' not in state) or (state['_GlobalAccumulation'] != 'MultipleBuffer'):
                 rv += [cls("DeterministicMode", value = False)]
-        
+
         if ('StreamK' in state) and (state['StreamK'] > 0) and ('StreamKAtomic' in state) and (state['StreamKAtomic'] == 1):
             # StreamKAtomic = 1 uses atomic for partial tiles
             rv += [cls("DeterministicMode", value = False)]
@@ -501,6 +516,12 @@ class ProblemPredicate(Properties.Predicate):
 
         if ('WorkGroupMappingXCC' in state) and ('WorkGroupMappingXCCGroup' in state):
             rv += [cls("WorkgroupMappingXCCCheck", value=[state['WorkGroupMappingXCC'], state['WorkGroupMappingXCCGroup']])]
+
+        if state['ProblemType']['SwizzleTensorA']:
+            rv += [cls('SwizzleTensorA', value=state['ProblemType']['SwizzleTensorA'])]
+
+        if state['ProblemType']['SwizzleTensorB']:
+            rv += [cls('SwizzleTensorB', value=state['ProblemType']['SwizzleTensorB'])]
 
         return rv
 
@@ -635,11 +656,11 @@ class Solution:
     HiddenKeys = ['originalSolution']
 
     @classmethod
-    def FromSolutionStruct(cls, solution):
-        return cls.FromOriginalState(solution._state)
+    def FromSolutionStruct(cls, solution, cxxCompiler: str):
+        return cls.FromOriginalState(solution._state, cxxCompiler, solution.srcName)
 
     @classmethod
-    def FromOriginalState(cls, d, deviceInfo=None):
+    def FromOriginalState(cls, d, cxxCompiler, srcName = "", deviceInfo=None):
         rv = cls()
 
 
@@ -678,7 +699,7 @@ class Solution:
 
         if 'ISA' not in d:
             if d['KernelLanguage'] == 'Assembly':
-                d['ISA'] = Common.gfxArch(deviceInfo[1])
+                d['ISA'] = gfxToIsa(deviceInfo[1])
             else:
                 d['ISA'] = [0,0,0]
 
@@ -686,7 +707,8 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d)
+        rv.originalSolution = OriginalSolution(d, cxxCompiler, srcName)
+        rv.srcName = srcName
 
         return rv
 
@@ -704,6 +726,7 @@ class Solution:
         self.libraryLogicIndex = {}
         self.index = None
         self.ideals = {}
+        self.srcName = ""
 
         for key, value in kwargs:
             if key not in Solution.StateKeys and key not in Solution.HiddenKeys:

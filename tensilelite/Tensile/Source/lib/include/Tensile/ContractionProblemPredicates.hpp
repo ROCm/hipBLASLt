@@ -40,7 +40,7 @@
 #include <limits>
 #include <vector>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Predicates
     {
@@ -234,7 +234,7 @@ namespace Tensile
                     bool ret = (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
                                 * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
                                    * (value[2]) * (value[4] / 64) * value[3]
-                               <= 40960;
+                               <= 409600;
                     if(problem.groupedGemm())
                         ret = ret && (problem.groupedGemmCount() <= 16);
 
@@ -1393,12 +1393,14 @@ namespace Tensile
                 {
                     bool rv = (*this)(problem);
 
-                    stream << rv << ": " << *this << ": (" << " (" << problem.a().strides()[1]
-                           << " * " << value.depthUorMT0 << " + " << value.shiftPtrElemA << ") * "
-                           << problem.a().elementBytes() << " < 4294967296 && " << " ("
-                           << problem.b().strides()[1] << " * " << value.depthUorMT1 << " + "
-                           << value.shiftPtrElemB << ") * " << problem.b().elementBytes()
-                           << " < 4294967296" << ")" << std::endl;
+                    stream << rv << ": " << *this << ": ("
+                           << " (" << problem.a().strides()[1] << " * " << value.depthUorMT0
+                           << " + " << value.shiftPtrElemA << ") * " << problem.a().elementBytes()
+                           << " < 4294967296 && "
+                           << " (" << problem.b().strides()[1] << " * " << value.depthUorMT1
+                           << " + " << value.shiftPtrElemB << ") * " << problem.b().elementBytes()
+                           << " < 4294967296"
+                           << ")" << std::endl;
 
                     return rv;
                 }
@@ -1450,8 +1452,8 @@ namespace Tensile
                     bool rv = (*this)(problem);
 
                     stream << rv << ": " << *this << ": (" << problem.c().strides()[1] << " * "
-                           << problem.c().elementBytes() << " * " << value << " < 4294967296" << ")"
-                           << std::endl;
+                           << problem.c().elementBytes() << " * " << value << " < 4294967296"
+                           << ")" << std::endl;
 
                     return rv;
                 }
@@ -1495,8 +1497,8 @@ namespace Tensile
                 {
                     bool rv = (*this)(problem);
                     stream << rv << ": " << *this << ": (" << problem.d().strides()[1] << " * "
-                           << problem.d().elementBytes() << " * " << value << " < 4294967296" << ")"
-                           << std::endl;
+                           << problem.d().elementBytes() << " * " << value << " < 4294967296"
+                           << ")" << std::endl;
                     return rv;
                 }
             };
@@ -1597,6 +1599,59 @@ namespace Tensile
                                         "<=",
                                         "max",
                                         problem.workspaceSize());
+                }
+            };
+
+            struct WorkgroupNumberCheck
+                : public Predicate_CRTP<WorkgroupNumberCheck, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = true,
+                    HasValue = true
+                };
+                size_t             index;
+                std::array<int, 3> value;
+
+                WorkgroupNumberCheck() = default;
+                WorkgroupNumberCheck(size_t index, std::array<int, 3> value)
+                    : index(index)
+                    , value(value)
+                {
+                }
+
+// If the number is larger than 2^24, it may lose precision when converted into fp32.
+// TODO: REMOVE custom kernel, then REMOVE the behavior that compressed 3 DIM workgroups into 1 DIM
+#define MAX_WORKGROUP_NUMBER 16777216
+                static std::string Type()
+                {
+                    return "WorkgroupNumberCheck";
+                }
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+                    gsu     = gsu > 1 ? gsu : 1;
+                    return (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
+                            * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]) * gsu
+                            * problem.batchSize(0))
+                           <= MAX_WORKGROUP_NUMBER;
+                }
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+                    gsu     = gsu > 1 ? gsu : 1;
+                    int workgroupNumber
+                        = std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
+                          * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]) * gsu
+                          * problem.batchSize(0);
+                    return debugEvalCmp(problem,
+                                        stream,
+                                        "prob's workgroup number",
+                                        workgroupNumber,
+                                        "<=",
+                                        "max workgroup number",
+                                        MAX_WORKGROUP_NUMBER);
                 }
             };
 
@@ -2025,7 +2080,8 @@ namespace Tensile
                     if(value == ActivationType::Hipblaslt_all
                        && (problem.activationType() == ActivationType::DGelu
                            || problem.activationType() == ActivationType::Gelu
-                           || problem.activationType() == ActivationType::Relu))
+                           || problem.activationType() == ActivationType::Relu
+                           || problem.activationType() == ActivationType::Silu))
                         return true;
 
                     return false;
@@ -2521,6 +2577,72 @@ namespace Tensile
                 }
             };
 
+            struct SwizzleTensorA : public Predicate_CRTP<SwizzleTensorA, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                SwizzleTensorA() = default;
+                SwizzleTensorA(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "SwizzleTensorA";
+                }
+
+                bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.swizzleTensorA() == value;
+                }
+
+                bool debugEval(ContractionProblemGemm const& problem,
+                               std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(
+                        problem, stream, "prob", problem.swizzleTensorA(), "==", "sol", value);
+                }
+            };
+
+            struct SwizzleTensorB : public Predicate_CRTP<SwizzleTensorB, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                SwizzleTensorB() = default;
+                SwizzleTensorB(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "SwizzleTensorB";
+                }
+
+                bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.swizzleTensorB() == value;
+                }
+
+                bool debugEval(ContractionProblemGemm const& problem,
+                               std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(
+                        problem, stream, "prob", problem.swizzleTensorB(), "==", "sol", value);
+                }
+            };
+
             struct F32XdlMathOpEqual
                 : public Predicate_CRTP<F32XdlMathOpEqual, ContractionProblemGemm>
             {
@@ -2660,4 +2782,4 @@ namespace Tensile
  * @}
  */
     } // namespace Predicates
-} // namespace Tensile
+} // namespace TensileLite

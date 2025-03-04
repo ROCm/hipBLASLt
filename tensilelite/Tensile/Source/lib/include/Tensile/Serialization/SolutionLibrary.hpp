@@ -46,7 +46,7 @@
 #include <Tensile/Serialization/MatchingLibrary.hpp>
 #include <Tensile/Serialization/PlaceholderLibrary.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     namespace Serialization
     {
@@ -89,7 +89,7 @@ namespace Tensile
 
         template <typename MyProblem, typename MySolution, typename IO>
         const typename dsmt<MyProblem, MySolution, IO>::SubclassMap
-            dsmt<MyProblem, MySolution, IO>::subclasses
+            SubclassMappingTraits<SolutionLibrary<MyProblem, MySolution>, IO>::subclasses
             = dsmt<MyProblem, MySolution, IO>::GetSubclasses();
 
         template <typename MyProblem, typename MySolution, typename IO>
@@ -195,4 +195,4 @@ namespace Tensile
             const static bool flow = false;
         };
     } // namespace Serialization
-} // namespace Tensile
+} // namespace TensileLite

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@
 #include <Tensile/TensorDescriptor.hpp>
 #include <Tensile/Utils.hpp>
 
-namespace Tensile
+namespace TensileLite
 {
     const size_t TensorDescriptor::UseDefaultStride = static_cast<size_t>(-1);
 
@@ -111,7 +111,7 @@ namespace Tensile
 
         result << "), strides(";
         streamJoin(result, m_strides, ", ");
-
+        result << ") )";
         return result.str();
     }
 
@@ -120,4 +120,4 @@ namespace Tensile
         return stream << t.ToString();
     }
 
-} // namespace Tensile
+} // namespace TensileLite

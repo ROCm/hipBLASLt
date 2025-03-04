@@ -3,7 +3,6 @@ TestParameters:
 
 GlobalParameters:
   MinimumRequiredVersion: 4.14.0
-  MergeFiles: False
   NumWarmups: 1
   SleepPercent: 50
   EnqueuesPerSync: 100
@@ -28,7 +27,7 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: f8
+      DataTypeA: f8n
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True

@@ -29,14 +29,6 @@
  *  C++ style flexible API to let user set attributes for solution selection.
  */
 
-//! HIP = Heterogeneous-compute Interface for Portability
-//!
-//! Define a extremely thin runtime layer that allows source code to be compiled
-//! unmodified through either AMD HCC or NVCC. Key features tend to be in the
-//! spirit and terminology of CUDA, but with a portable path to other
-//! accelerators as well.
-//
-
 #pragma once
 #include "hipblaslt/hipblaslt.h"
 
@@ -99,10 +91,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmPreferenceV2();
         HIPBLASLT_EXPORT ~GemmPreferenceV2();
 
-        HIPBLASLT_EXPORT                   GemmPreferenceV2(const GemmPreferenceV2& pref);
+        HIPBLASLT_EXPORT GemmPreferenceV2(const GemmPreferenceV2& pref);
         HIPBLASLT_EXPORT GemmPreferenceV2& operator=(const GemmPreferenceV2& pref);
 
-        HIPBLASLT_EXPORT                   GemmPreferenceV2(GemmPreferenceV2&& pref);
+        HIPBLASLT_EXPORT GemmPreferenceV2(GemmPreferenceV2&& pref);
         HIPBLASLT_EXPORT GemmPreferenceV2& operator=(GemmPreferenceV2&& pref);
 
         /*! \ingroup library_module
@@ -160,10 +152,10 @@ namespace hipblaslt_ext
                                            hipblasComputeType_t typeCompute);
         HIPBLASLT_EXPORT ~GemmProblemTypeV2();
 
-        HIPBLASLT_EXPORT                    GemmProblemTypeV2(const GemmProblemTypeV2& type);
+        HIPBLASLT_EXPORT GemmProblemTypeV2(const GemmProblemTypeV2& type);
         HIPBLASLT_EXPORT GemmProblemTypeV2& operator=(const GemmProblemTypeV2& type);
 
-        HIPBLASLT_EXPORT                    GemmProblemTypeV2(GemmProblemTypeV2&& type);
+        HIPBLASLT_EXPORT GemmProblemTypeV2(GemmProblemTypeV2&& type);
         HIPBLASLT_EXPORT GemmProblemTypeV2& operator=(GemmProblemTypeV2&& type);
 
         HIPBLASLT_EXPORT void setOpA(hipblasOperation_t op); //!< Set the A martix transpose.
@@ -217,10 +209,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmEpilogueV2();
         HIPBLASLT_EXPORT ~GemmEpilogueV2();
 
-        HIPBLASLT_EXPORT                 GemmEpilogueV2(const GemmEpilogueV2& epilogue);
+        HIPBLASLT_EXPORT GemmEpilogueV2(const GemmEpilogueV2& epilogue);
         HIPBLASLT_EXPORT GemmEpilogueV2& operator=(const GemmEpilogueV2& epilogue);
 
-        HIPBLASLT_EXPORT                 GemmEpilogueV2(GemmEpilogueV2&& epilogue);
+        HIPBLASLT_EXPORT GemmEpilogueV2(GemmEpilogueV2&& epilogue);
         HIPBLASLT_EXPORT GemmEpilogueV2& operator=(GemmEpilogueV2&& epilogue);
 
         HIPBLASLT_EXPORT void
@@ -269,10 +261,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmTuningV2();
         HIPBLASLT_EXPORT ~GemmTuningV2();
 
-        HIPBLASLT_EXPORT               GemmTuningV2(const GemmTuningV2& tuning);
+        HIPBLASLT_EXPORT GemmTuningV2(const GemmTuningV2& tuning);
         HIPBLASLT_EXPORT GemmTuningV2& operator=(const GemmTuningV2& tuning);
 
-        HIPBLASLT_EXPORT               GemmTuningV2(GemmTuningV2&& tuning);
+        HIPBLASLT_EXPORT GemmTuningV2(GemmTuningV2&& tuning);
         HIPBLASLT_EXPORT GemmTuningV2& operator=(GemmTuningV2&& tuning);
 
         HIPBLASLT_EXPORT void setSplitK(
@@ -325,10 +317,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmInputsV2();
         HIPBLASLT_EXPORT ~GemmInputsV2();
 
-        HIPBLASLT_EXPORT               GemmInputsV2(const GemmInputsV2& input);
+        HIPBLASLT_EXPORT GemmInputsV2(const GemmInputsV2& input);
         HIPBLASLT_EXPORT GemmInputsV2& operator=(const GemmInputsV2& input);
 
-        HIPBLASLT_EXPORT               GemmInputsV2(GemmInputsV2&& input);
+        HIPBLASLT_EXPORT GemmInputsV2(GemmInputsV2&& input);
         HIPBLASLT_EXPORT GemmInputsV2& operator=(GemmInputsV2&& input);
 
         HIPBLASLT_EXPORT void setA(const void* a); //!< Set the a matrix input pointer.
@@ -402,7 +394,7 @@ namespace hipblaslt_ext
         int8_t   beta[16]; //!< The beta value.
         // Epilogue inputs
         void* scaleA; //!< The scaleA input pointer.
-        void* scaleB; //!< The scaleA input pointer.
+        void* scaleB; //!< The scaleB input pointer.
         void* scaleC; //!< The scaleC input pointer.
         void* scaleD; //!< The scaleD input pointer.
         void* scaleAlphaVec; //!< The scaleAlpha vector input pointer.
@@ -426,8 +418,8 @@ namespace hipblaslt_ext
     {
     public:
         HIPBLASLT_EXPORT virtual ~GemmInstance(){};
-        HIPBLASLT_EXPORT               GemmInstance(const GemmInstance& rhs) = delete;
-        HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs)    = delete;
+        HIPBLASLT_EXPORT GemmInstance(const GemmInstance& rhs) = delete;
+        HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs) = delete;
         HIPBLASLT_EXPORT               GemmInstance(GemmInstance&& rhs) noexcept;
         HIPBLASLT_EXPORT GemmInstance& operator=(GemmInstance&& rhs) noexcept;
 
@@ -772,10 +764,10 @@ namespace hipblaslt_ext
                                        void*                   D,
                                        hipblasLtMatrixLayout_t matD);
 
-        HIPBLASLT_EXPORT       Gemm(const Gemm&) = delete;
-        HIPBLASLT_EXPORT       Gemm(Gemm&&) noexcept;
+        HIPBLASLT_EXPORT Gemm(const Gemm&) = delete;
+        HIPBLASLT_EXPORT Gemm(Gemm&&) noexcept;
         HIPBLASLT_EXPORT Gemm& operator=(const Gemm&) = delete;
-        HIPBLASLT_EXPORT Gemm& operator=(Gemm&&) noexcept;
+        HIPBLASLT_EXPORT Gemm& operator               =(Gemm&&) noexcept;
 
         /*! \ingroup library_module
         *  \brief Sets the problem for a gemm problem. (Deprecated)
@@ -1028,10 +1020,10 @@ namespace hipblaslt_ext
                                               hipDataType          typeC,
                                               hipDataType          typeD,
                                               hipblasComputeType_t typeCompute);
-        HIPBLASLT_EXPORT              GroupedGemm(const GroupedGemm&) = delete;
-        HIPBLASLT_EXPORT              GroupedGemm(GroupedGemm&&) noexcept;
+        HIPBLASLT_EXPORT GroupedGemm(const GroupedGemm&) = delete;
+        HIPBLASLT_EXPORT GroupedGemm(GroupedGemm&&) noexcept;
         HIPBLASLT_EXPORT GroupedGemm& operator=(const GroupedGemm&) = delete;
-        HIPBLASLT_EXPORT GroupedGemm& operator=(GroupedGemm&&) noexcept;
+        HIPBLASLT_EXPORT GroupedGemm& operator                      =(GroupedGemm&&) noexcept;
 
         /*! \ingroup library_module
         *  \brief Constructor that sets the grouped gemm problem from hipblasLt structures

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,8 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .Base import Item, getGfxName
+from ..Common import isaToGfx
+from .Base import Item
 from .Enums import SignatureValueKind
 from .Formatting import slash, slash50, block, block3Line, blockNewLine, \
                         formatStr, printExit
@@ -202,6 +203,12 @@ class Module(Item):
         if isinstance(targetItem, Item):
             return self.itemList.index(targetItem)
         return -1
+
+    def findIndexByType(self, targetType):
+        for i, item in enumerate(self.itemList):
+            if isinstance(item, targetType):
+                return i
+        return None
 
     def addComment(self, comment):
         """
@@ -680,16 +687,22 @@ class _SignatureKernelDescriptor(Item):
             self.totalVgprs = self.accumOffset + totalAgprs
         else:
             self.accumOffset = None
-            self.totalVgprs = totalVgprs
+            self.totalVgprs = max(totalAgprs, totalVgprs)
         self.originalTotalVgprs = totalVgprs
         self.totalAgprs         = totalAgprs
         self.totalSgprs         = totalSgprs
+
+    def getNextFreeVgpr(self) -> int:
+        return self.totalVgprs
+
+    def getNextFreeSgpr(self) -> int:
+        return self.totalSgprs
 
     def __str__(self):
         kdIndent = " " * 2
         kStr = ""
         kStr += ".amdgcn_target \"amdgcn-amd-amdhsa--%s\"\n" \
-            % (getGfxName(self.kernel.isa))
+            % (isaToGfx(self.kernel.isa))
         kStr += ".text\n"
         kStr += ".protected %s\n" % self.name
         kStr += ".globl %s\n" % self.name
@@ -739,7 +752,7 @@ class SignatureCodeMeta(Item):
         self.kernArgsVersion = kernArgsVersion
         self.groupSegSize = groupSegSize
         self.flatWgSize = flatWgSize
-        self.codeObjectVersion = codeObjectVersion
+        self.codeObjectVersion = str(codeObjectVersion)
         self.totalVgprs = totalVgprs
         self.totalSgprs = totalSgprs
         self.offset = 0
@@ -758,9 +771,9 @@ class SignatureCodeMeta(Item):
         kStr += "    KernArgsVersion: %d\n"%self.kernArgsVersion
         kStr += "amdhsa.version:\n"
         kStr += "  - 1\n"
-        if self.codeObjectVersion == 4:
+        if self.codeObjectVersion == "4" or self.codeObjectVersion == "default":
             kStr += "  - 1\n"
-        elif self.codeObjectVersion == 5:
+        elif self.codeObjectVersion == "5":
             kStr += "  - 2\n"
         kStr += "amdhsa.kernels:\n"
         kStr += "  - .name: %s\n" % self.name
@@ -842,6 +855,12 @@ class SignatureBase(Item):
     def addDescription(self, text: str):
         self.descriptionList.append(TextBlock(slash(text)))
 
+    def getNextFreeVgpr(self) -> int:
+        return self.kernelDescriptor.getNextFreeVgpr()
+
+    def getNextFreeSgpr(self) -> int:
+        return self.kernelDescriptor.getNextFreeSgpr()
+
     def clearDescription(self, text: str):
         self.descriptionList = []
 
@@ -880,6 +899,12 @@ class KernelBody(Item):
         self.totalSgprs = totalSgprs
         self.signature.setGprs(totalVgprs=totalVgprs, totalAgprs=totalAgprs, \
             totalSgprs=totalSgprs)
+
+    def getNextFreeVgpr(self) -> int:
+        return self.signature.getNextFreeVgpr()
+
+    def getNextFreeSgpr(self) -> int:
+        return self.signature.getNextFreeSgpr()
 
     def __str__(self) -> str:
         kStr = str(TextBlock(block3Line("Begin Kernel")))

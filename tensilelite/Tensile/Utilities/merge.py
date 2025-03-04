@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -137,6 +137,18 @@ def loadData(filename):
         sys.exit(-1)
     data = yaml.load(stream, yaml.SafeLoader)
     return data
+
+def compareDestFolderToYaml(originalDir, incFile, incData):
+    checkFolders = ["Equality", "GridBased"]
+    # Parsing destination folder and yaml attribute
+    destFolder = originalDir.rstrip('/').split('/')[-1]
+    incAttribute = incData[11] # the last item in yaml file
+    if not incAttribute:
+        sys.exit(f"[Error] Empty YAML attribute. Need to set Equality or GridBased in {incFile}.")
+    # Check Equality and GradBased folders only
+    if destFolder in checkFolders and destFolder != incAttribute:
+        restuls = f"\t{incFile} must be {destFolder} tuning"
+        sys.exit(f"[Error] Destination folder(={destFolder}) failed to match YAML attribute(={incAttribute}): \n{restuls}")
 
 def compareProblemType(oriData, incData):
     # ProblemType defined in originalFiles and incrementalFiles
@@ -309,6 +321,7 @@ def mergeLogic(oriData, incData, forceMerge, trimSize=True, addSolutionTags=Fals
     origNumSizes = len(oriData[7])
     origNumSolutions = len(oriData[5])
 
+    incData[7] = incData[7] or []
     incNumSizes = len(incData[7])
     incNumSolutions = len(incData[5])
 
@@ -320,7 +333,7 @@ def mergeLogic(oriData, incData, forceMerge, trimSize=True, addSolutionTags=Fals
     incTaggedSizes  = addSolutionTagToKeys(incData[7],  incData[5])
     if addSolutionTags:
         oriData[7] = origTaggedSizes
-        incData[7]  = incTaggedSizes
+        incData[7] = incTaggedSizes
     # Print warning if addSolutionTags=False results in removed sizes
     else:
         origSet       = {tuple(size) for size, [_, _] in oriData[7]}
@@ -421,6 +434,10 @@ def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSi
         "| Add solution tags:", addSolutionTags)
         oriData = loadData(origFile)
         incData = loadData(incFile)
+
+        # Terminate when the destination folder doesn't match Incremental logic yaml
+        # For example, merge Gridbased yaml to Equality folder or Equality yaml to GridBased folder
+        compareDestFolderToYaml(originalDir, incFile, incData)
 
         # Terminate when ProblemType of originalFiles and incrementalFiles mismatch
         compareProblemType(oriData, incData)

@@ -8,12 +8,10 @@ GlobalParameters:
   CMakeBuildType: Release
   EnqueuesPerSync: 1
   SyncsPerBenchmark: 1
-  LibraryPrintDebug: False
   NumElementsToValidate: 0
   ValidationMaxToPrint: 4
   ValidationPrintValids: False
   ShortNames: False
-  MergeFiles: True
   Platform: 0
   Device: 0
   KernelTime: True

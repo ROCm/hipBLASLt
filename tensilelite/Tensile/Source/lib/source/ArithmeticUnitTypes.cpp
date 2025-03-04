@@ -29,7 +29,7 @@
 
 #include <algorithm>
 
-namespace Tensile
+namespace TensileLite
 {
 
     std::string ToString(ArithmeticUnit d)
@@ -151,4 +151,4 @@ namespace Tensile
 
         return stream;
     }
-} // namespace Tensile
+} // namespace TensileLite

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ from . import Hardware
 from . import Common
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Utils import state
+from .Common import state
 
 class SingleSolutionLibrary:
     Tag = "Single"
@@ -183,7 +183,7 @@ class DecisionTreeLibrary:
         origTrees = d["trees"]
 
         trees = []
-        
+
         if "fallback" in d:
             fallbackIndex = d["fallback"]
             nullValue = SingleSolutionLibrary(solutions[fallbackIndex])
@@ -300,6 +300,7 @@ class MasterSolutionLibrary:
     def FromOriginalState(cls,
                           origData,
                           origSolutions,
+                          cxxCompiler,
                           solutionClass=Contractions.Solution,
                           libraryOrder=None,
                           placeholderName='TensileLibrary'):
@@ -313,7 +314,7 @@ class MasterSolutionLibrary:
             if devicePart == "fallback":
                 pred = Hardware.HardwarePredicate("TruePred")
             else:
-                pred = Hardware.HardwarePredicate.FromHardware(Common.gfxArch(devicePart), cuCount)
+                pred = Hardware.HardwarePredicate.FromHardware(Common.gfxToIsa(devicePart), cuCount)
 
             newLib.rows.append({"predicate": pred, "library": library})
 
@@ -406,6 +407,13 @@ class MasterSolutionLibrary:
                         placeholderName += "_HA"
                     else:
                         placeholderName += "_%s"%str(problemType.activationType).upper()
+
+                if problemType.swizzleTensorA:
+                    placeholderName += '_STA'
+
+                if problemType.swizzleTensorB:
+                    placeholderName += '_STB'
+
                 if problemType.useBias:
                     placeholderName += '_Bias'
                 if problemType.useE:
@@ -452,6 +460,7 @@ class MasterSolutionLibrary:
             lazyLibrary, placeholderName = \
                 MasterSolutionLibrary.FromOriginalState(origData,
                                                         origSolutions,
+                                                        cxxCompiler,
                                                         solutionClass,
                                                         libraryOrder[placeholderIndex:],
                                                         placeholderName)
@@ -459,7 +468,7 @@ class MasterSolutionLibrary:
             origSolutions = []
 
         problemType = Contractions.ProblemType.FromOriginalState(origData["ProblemType"])
-        allSolutions = [solutionClass.FromSolutionStruct(s) for s in origSolutions]
+        allSolutions = [solutionClass.FromSolutionStruct(s, cxxCompiler) for s in origSolutions]
         cls.FixSolutionIndices(allSolutions)
 
         # library is constructed in reverse order i.e. bottom-up
@@ -480,8 +489,8 @@ class MasterSolutionLibrary:
         return rv, placeholderName
 
     @classmethod
-    def BenchmarkingLibrary(cls, solutions):
-        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state) for s in solutions])
+    def BenchmarkingLibrary(cls, solutions, cxxCompiler):
+        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, cxxCompiler) for s in solutions])
         cls.FixSolutionIndices(solutionObjs)
 
         predRows = list([{
