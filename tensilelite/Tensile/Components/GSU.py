@@ -429,6 +429,7 @@ class GSU(Component):
         loadsIssued = 0
         storesIssued = 0
         tmpS01 = tmpSgpr # scratch sgprs
+        tmpS02 = tmpSgpr + 1
 
         ########################################
         # calculate addr and masks
@@ -550,16 +551,19 @@ class GSU(Component):
                 if batchIdx == 0 and elementIdx == 0:
                     addrDVgpr = addrCalc.addrDVgpr
                     storeCodeGSUSK.add(staticMultiply(vgpr(addrDVgpr), vgpr("Serial"), storeWidth * writer.states.bpeCinternal, tmpS01))
-                    storeCodeGSUSK.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset"))
+                    storeCodeGSUSK.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset for interleaved wave store"))
                     storeCodeGSUSK.addSpaceLine()
                 # else:
                 #     numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
                 #     increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * writer.states.bpeCinternal
-                #     module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Increase sgpr offset"))
+                #     module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Increase sgpr offset for store"))
 
                 sumIdx = ss.elementSumIdx[elementIdx]
                 if not kernel["StoreRemapVectorWidth"]:
-                    tmpStoreCode = writer.addStore(kernel, ss, 'D', addrCalc, sumIdx, tmpS01, edge, comment="store D %u" %sumIdx) #here
+                    # Only GSU>1 MBSK write to workspace (GSU1 MBSK will write to output buffer)
+                    # so we need wsOffset to coalesced store to workspace buffer
+                    wsOffset = sgpr(tmpS01)
+                    tmpStoreCode = writer.addStore(kernel, ss, 'D', addrCalc, sumIdx, tmpS01, edge, wsOffset, comment="store D %u" %sumIdx) #here
                     if kernel["GroupLoadStore"]:
                         storeCodeGSUSK.add(tmpStoreCode)
                     else:
@@ -586,8 +590,11 @@ class GSU(Component):
             module.addselfAsm("//sourece store done, GSU:"+str(kernel["GlobalSplitU"])+"\n") #GSUSYNC
             module.addSpaceLine()
 
+            if batchIdx == 0:
+                module.add(SMovB32(sgpr(tmpS02), 0, "Init sgpr offset for interleaved wave load"))
+
             module.add(self.GSUSynccodegenOpt(kernel, writer, ss, batchIdx, tmpVgpr, tmpVgprDynamic, gwvw, batchElements,\
-                                        SynchronizerEndlabel, sumIdxGSUSYNC, addrCalc.globalOffset, addrCalc.addrDVgpr, tmpS01))
+                                        SynchronizerEndlabel, sumIdxGSUSYNC, addrCalc.globalOffset, addrCalc.addrDVgpr, tmpS02))
 
             module.add(SynchronizerEndlabel)
             module.addselfAsm("//synchronizer store end\n")
@@ -1252,7 +1259,6 @@ class GSU(Component):
         module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr("AddressD+1"), src1=sgpr(tmpS06+1), comment="add hi to SRD"))
         module.add(SMovB32(sgpr(tmpS06+2), sgpr("SrdD+2"), ""))
         module.add(SMovB32(sgpr(tmpS06+3), sgpr("SrdD+3"), ""))
-        module.add(SMovB32(sgpr(soffset), 0, "Init sgpr offset"))
 
         addr1 = sgpr(tmpS06, 4)
         addr0 = vgpr(vgproffset)
@@ -1285,7 +1291,7 @@ class GSU(Component):
                     storeWidth = kernel["StoreVectorWidth"]
                     numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
                     increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * writer.states.bpeCinternal
-                    module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset"))
+                    module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset for load"))
                     reductionOffset = kernel["MacroTile0"]*kernel["MacroTile1"]*writer.states.bpeCinternal
                     module.add(SMulHIU32(dst=sgpr(tmpS06+1), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
                     module.add(SMulI32(dst=sgpr(tmpS06), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))

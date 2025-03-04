@@ -12151,7 +12151,7 @@ class KernelWriterAssembly(KernelWriter):
             storeWidth = kernel["StoreVectorWidth"]
             numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
             increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * self.states.bpeCinternal
-            module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Increase sgpr offset"))
+            module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Increase sgpr offset for store"))
           else:
             module.add(addrCalc.incrementToNextRow(kernel, "D", ss, tmpS01))
             
