@@ -402,9 +402,20 @@ def Tensile(userArgs):
     def isRhel8():
         try:
             import distro
-            dist = distro.linux_distribution()
-            return True if 'Red Hat Enterprise Linux' in dist[0] and '8.' in dist[1] else False
         except:
+            printWarning(
+                """
+                Failed to import distro package. Cannot verify platform.
+                Run: pip install distro or pip install -r requirements.txt to resolve warning.
+                """
+            )
+            return False
+        
+        dist = distro.linux_distribution()
+        if 'Red Hat Enterprise Linux' in dist[0] and '8.' in dist[1]:
+            printWarning("Rhel8 environments may not support all system queries such as rocm-smi.")
+            return True
+        else:
             return False
 
     UseEffLike = False if isRhel8() else UseEffLike
