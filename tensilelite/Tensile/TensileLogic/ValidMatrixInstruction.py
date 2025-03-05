@@ -169,13 +169,13 @@ def validateMIParameters(
     if not isSparse:  # If it's sparse
         if hasMFMA:  # and it supports MFMA
             # but is invalid MFMA
-            if not miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()]:  
+            if not (miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()]):
                 if miDataType.isBFloat16() and mi4 in validMFMA["B1k"]:  # but is valid bf16 MFMA
                     assert solution["MFMA_BF16_1K"], elineno()
                 else:
                     return not reject(
                         solution,
-                        True,#printSolutionRejectionReason,
+                        printSolutionRejectionReason,
                         f"Invalid MFMA BFloat16 configuration: {solution}",
                     )
         elif hasWMMA and (not mi4 in validWMMA):
