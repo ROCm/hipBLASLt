@@ -118,7 +118,8 @@ You can find more information at the following links:
 
 ## TensileLite Host Library Tests
 To build and run TensileLite Host Library Tests, use the following commands:
-``` git submodule update --init
+``` 
+ git submodule update --init
  cd tensilelite && mkdir build && cd build
  cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc  -DTensile_ROOT=$(pwd)/../Tensile ../HostLibraryTests
  make -j
