@@ -117,7 +117,7 @@ class LraTileAssignmentMFMA(LraTileAssignment):
         enableLDSTr = tP["enableLDSTr"]
         dummy   = writer.vgprPool.checkOut(1,"dummy")
         if enableLDSTr:
-           sReg    = writer.vgprPool.checkOut(1,"mReg") # remainder
+           sReg    = writer.vgprPool.checkOut(1,"sReg") # remainder
            mReg    = writer.vgprPool.checkOut(1,"mReg") # remainder
 
         isWmma_v1 = writer.states.asmCaps["HasWMMA_V1"]
@@ -178,12 +178,11 @@ class LraTileAssignmentMFMA(LraTileAssignment):
               isSparseTrack = (kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] == 1 and tP["isA"]) or tP["isM"]
               strideK      = (inputPerThread if umlds else (mt + LdsPad) * inputPerThread) * (2 if isSparseTrack and kernel["MIInputPerThread%s"%tc] >  inputPerThread else 1)
         #special case for new F8 MFMA
-        elif writer.states.asmCaps["HasMFMA_f8f6f4"]:
-            if kernel["MatrixInstK"] > 32:
-                if umlds:
-                    strideK = 16
-                else:
-                    strideK = (mt + LdsPad) * 16
+        elif kernel["MatrixInstK"] > 32:
+            if umlds:
+                strideK = 16
+            else:
+                strideK = (mt + LdsPad) * 16
         strideBlock      = kernel["MatrixInstM"] * strideTile
         if enableLDSTr:
            strideWave = kernel["MatrixInstM"] * vectorWidth

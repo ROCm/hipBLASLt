@@ -2043,12 +2043,12 @@ class Solution(collections.abc.Mapping):
     # ToDo: Review def of lrvw and this check
     # DTL + LocalReadVectorWidth > MIInputPerThread does not work
     # Need support for TailLoop
-    if not globalParameters["AsmCaps"][isa]["HasMFMA_f8f6f4"] or state["MatrixInstK"] <= 32:
+    if not state["ProblemType"]["Sparse"] and (not globalParameters["AsmCaps"][isa]["HasMFMA_f8f6f4"] or state["MatrixInstK"] <= 32):
       if state["LocalReadVectorWidth"] > state["MIInputPerThread"]:
         reject(state, "DirectToLds does not work with LocalReadVectorWidth > MIInputPerThread")
         return False
 
-    if not globalParameters["AsmCaps"][isa]["HasMFMA_f8f6f4"] or state["MatrixInstK"] <= 32:
+    if not state["ProblemType"]["Sparse"] and (not globalParameters["AsmCaps"][isa]["HasMFMA_f8f6f4"] or state["MatrixInstK"] <= 32):
       if state["ProblemType"]["DataType"].isBFloat16() and state["AssertSummationElementMultiple"] % (2 * state["GlobalReadVectorWidth%c"%tc]) != 0:
         reject(state, "can't use DirectToLds for BF16 with AssertSummationElementMultiple %u" % state["AssertSummationElementMultiple"])
         return False
@@ -2855,7 +2855,7 @@ class Solution(collections.abc.Mapping):
           if state["ProblemType"]["Sparse"] and state["MIInputPerThread"] * state["ProblemType"]["DataType"].numBytes() > 16:
             if state["LocalReadVectorWidth"] < state["MIInputPerThread"] // 2:
               reject(state, "LocalReadVectorWidth < %u" %(state["MIInputPerThread"] // 2))
-          elif not globalParameters["AsmCaps"][tuple(state["ISA"])]["HasMFMA_f8f6f4"] or state["MatrixInstK"] <= 32:
+          elif not state["ProblemType"]["Sparse"] and (not globalParameters["AsmCaps"][isa]["HasMFMA_f8f6f4"] or state["MatrixInstK"] <= 32):
             if state["LocalReadVectorWidth"] < state["MIInputPerThread"]:
               reject(state, "LocalReadVectorWidth < %u" %(state["MIInputPerThread"]))
           if state["LocalReadVectorWidth"] > state["MIInputPerThread"] and not state["TransposeLDS"]:
@@ -3250,9 +3250,6 @@ class Solution(collections.abc.Mapping):
 
     # GlobalSplitU doesn't work with some other things:
     if state["GlobalSplitU"] > 1:
-      if state["ProblemType"]["DestDataType"].isAnyFloat8() or state["ProblemType"]["DestDataType"].isAnyBFloat8():
-        reject(state, "GlobalSplitU currently does not support GSU > 1 for f8 and b8.")
-        return
       # added GSU support for DGEMM
       supported = \
         (state["ProblemType"]["DataType"].isSingle()) or \
@@ -4036,7 +4033,7 @@ class Solution(collections.abc.Mapping):
       # Multiple = WLR-size / input-size = how many iters could be covered by one WLR ?
       wlrMultiple = state["LocalReadVectorWidth"]//state["MIInputPerThread"]
       # NOTE: wlrmultiple can be 0 for new MFMA
-      if not globalParameters["AsmCaps"][tuple(state["ISA"])]["HasMFMA_f8f6f4"] or state["MatrixInstK"] <= 32:
+      if not state["ProblemType"]["Sparse"] and (not globalParameters["AsmCaps"][isa]["HasMFMA_f8f6f4"] or state["MatrixInstK"] <= 32):
         if wlrMultiple == 0:
           reject(state, "LocalReadVectorWidth %u is less than MIInput" % (state["LocalReadVectorWidth"]))
           return

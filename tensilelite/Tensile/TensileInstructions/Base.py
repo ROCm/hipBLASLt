@@ -162,10 +162,6 @@ class Item:
         return _global_ti.getRegCaps()
 
     @property
-    def regCaps(self) -> dict:
-        return _global_ti.getRegCaps()
-
-    @property
     def asmBugs(self) -> dict:
         return _global_ti.getAsmBugs()
 

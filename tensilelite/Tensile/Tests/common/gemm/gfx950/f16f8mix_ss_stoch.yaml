@@ -75,10 +75,8 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Exact: [1,   128, 1, 640]
+          - Exact: [111,   111, 1, 111]
+          - Exact: [777,   777, 1, 777]
         - BiasTypeArgs: ['s']
         - ActivationArgs:
           - [Enum: none]
-LibraryLogic:
-    ScheduleName: "gfx950"
-    DeviceNames: ["Device 0049", "Device 0050"]
-    ArchitectureName: "gfx950" 
