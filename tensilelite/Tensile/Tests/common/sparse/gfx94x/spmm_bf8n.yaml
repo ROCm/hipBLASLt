@@ -1,5 +1,5 @@
 TestParameters:
-  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102, skip-gfx1200, skip-gfx1201] # not supported by arch
+  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx950, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102, skip-gfx1200, skip-gfx1201] # not supported by arch
 
 GlobalParameters:
   NumElementsToValidate: -1
@@ -21,20 +21,19 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: F8N
-      DestDataType: F8N
+      DataType: B8N
+      DestDataType: B8N
       ComputeDataType: s
       HighPrecisionAccumulate:  True
       TransposeA: True
       TransposeB: False
       UseBeta: True
-      Sparse: 2
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationType: all
       UseBias: 3
       UseScaleAlphaVec: 3
-      BiasDataTypeList: [s]
       BiasDataTypeList: [s]
 
     - # BenchmarkProblemSizeGroup - Standard
@@ -65,7 +64,6 @@ BenchmarkProblems:
         - StoreVectorWidth: [-1]
         - AssertFree0ElementMultiple: [8]
         - AssertFree1ElementMultiple: [8]
-        - SourceSwap: [1]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
