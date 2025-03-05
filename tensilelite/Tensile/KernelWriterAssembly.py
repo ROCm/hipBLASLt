@@ -5668,6 +5668,10 @@ class KernelWriterAssembly(KernelWriter):
           evenIterPreCode.add(loopLabelEndEvenExit)
           # generate even code here (so far, for PrefetchGlobalRead=2 only)
           if kernel["PrefetchGlobalRead"]==2:
+            if not kernel["DirectToVgprA"] or not kernel["DirectToVgprB"]:
+              if kernel["ExpertSchedulingMode"] > 0:
+                evenIterCode.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
+
             # Generate local write address code only for PrefetchGlobalRead==2
             if not kernel["DirectToLdsA"]:
               evenIterCode.add(self.localWriteSwapOffsets(kernel, False, tPA))
@@ -6873,6 +6877,9 @@ class KernelWriterAssembly(KernelWriter):
                                        a=src0, b=src1, acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1)), neg=neg_flag,\
                                        comment="left value = %s[%u+%u:%u+%u]" % (accumRegType, accStart, accStoreCIdx, accEnd, accStoreCIdx)))
             prevAccIdx = accIdx
+
+      if kernel["ExpertSchedulingMode"] > 0:
+        imod.add(SWaitCnt(va_vdst=0, comment="wait for the current iter's writes to complete"))
 
     # release register
     if kReg_first is not None: self.vgprPool.checkIn(kReg_first)

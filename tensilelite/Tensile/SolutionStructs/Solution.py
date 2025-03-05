@@ -2060,7 +2060,7 @@ class Solution(collections.abc.Mapping):
           return
 
     if state["ExpertSchedulingMode"] > 0:
-      if not globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasSchedMode"]:
+      if not globalParameters["ArchCaps"][isa]["HasSchedMode"]:
         reject(state, "ExpertSchedulingMode not supported on this arch")
         return
 

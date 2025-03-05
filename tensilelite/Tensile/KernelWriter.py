@@ -2591,6 +2591,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
           syncCode.add(self._syncThreads(kernel, skipForceWaitcnt0=skipForceWaitcnt0))
 
         if isSwapAndResetLwoIter: # ResetLroIter
+          if kernel["ExpertSchedulingMode"] > 0:
+            pointerLWCode.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
+
           # local write for next iter, used to have local writes here
           pointerLWCode.addComment1("local write swap offsets a")
           pointerLWCode.add(self.localWriteSwapOffsets(kernel, expand, tensorParametersA))
@@ -2621,9 +2624,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       waitCode = self._wait(kernel, tensorParametersA, tensorParametersB, \
           -1, 0, 0, \
           "wait for prior local read local write")
-
-      if kernel["ExpertSchedulingMode"] > 0:
-        module.add(SWaitCnt(va_vdst=0, comment="wait for the previous iter's writes to complete"))
 
       luIdx = u % self.states.numVgprBuffer # local to use for MACs
       if kernel["EnableMatrixInstruction"]:
