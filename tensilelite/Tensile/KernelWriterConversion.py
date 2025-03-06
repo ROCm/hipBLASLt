@@ -790,6 +790,64 @@ class KernelWriterConversion(KernelWriterBase):
     return kStr
 
 
+  @staticmethod
+  def _getKernelName(solution, num_elements_load, btype=None):
+    indexChars = INDEX_CHARS
+    # C dimensions
+    name = "C"
+    for i in range(0, solution._state["ProblemType"]["NumIndicesC"]):
+      name += indexChars[i].lower()
+    name += "_"
+
+    # add input datatype into kernel name (the datatype of workspace)
+    inputTypeStr = DataType("I").toChar() if solution._state["ProblemType"]["DataType"].isInt8() or solution._state["ProblemType"]["DataType"].isInt32() else \
+                                  (DataType("D").toChar() if solution._state["ProblemType"]["DataType"].isDouble() else DataType("S").toChar())
+
+    name += (inputTypeStr + solution._state["ProblemType"]["DestDataType"].toChar())
+
+    if solution._state["ProblemType"]["GroupedGemm"]:
+      name += "_GG"
+    else:
+      name += "" if solution._state["ProblemType"]["StridedBatched"] else "_GB"
+    if btype:
+      if solution._state["ProblemType"]["Gradient"]:
+        name += "_DBias%s"%(btype.toChar())
+        name += "_BiasSrc%s"%(solution._state["ProblemType"]["BiasSrc"])
+      else:
+        name += "_Bias%s"%btype.toChar()
+
+    factorDim =  0 if solution._state["ProblemType"]["Gradient"] else solution._state["ProblemType"]["UseBias"]
+    factorDim =  max(factorDim, solution._state["ProblemType"]["UseScaleAlphaVec"])
+    if factorDim > 1:
+        name += "_FD%s"%("N" if factorDim == 2 else "MN")
+
+    if solution._state["ProblemType"]["UseE"]:
+      if solution._state["ProblemType"]["Gradient"]:
+        name += "_Grad%s"%solution._state["ProblemType"]["DataTypeE"].toChar()
+      else:
+        name += "_Aux%s"%solution._state["ProblemType"]["DataTypeE"].toChar()
+
+    if ((solution._state["ProblemType"]["ActivationType"] != 'none') and solution._state["ActivationFused"]):
+      if solution._state["ProblemType"]["ActivationType"] == 'all':
+        name += "_A"
+      elif solution._state["ProblemType"]["ActivationType"] == 'hipblaslt_all':
+        name += "_HA"
+      else:
+        name += "_%s"%str(solution._state["ProblemType"]["ActivationType"]).upper()
+      name += solution._state["ProblemType"]["ActivationComputeDataType"].toChar()
+      name += ("ng" if solution._state["ProblemType"]["ActivationNoGuard"] else "")
+    if solution._state["ProblemType"]["UseScaleAB"] == "Scalar":
+      name += "_ScaleAB"
+    elif solution._state["ProblemType"]["UseScaleAB"] == "Vector":
+      name += "_ScaleABVec"
+    name += "_ScaleCD" if solution._state["ProblemType"]["UseScaleCD"] else ""
+    name += "_ScaleAlphaVec" if solution._state["ProblemType"]["UseScaleAlphaVec"] else ""
+    name += "_PostGSU" + str(solution._state["GlobalSplitU"])
+    if num_elements_load != None:
+      name += "_VW" + str(num_elements_load)
+    return name
+
+
   def getKernelName(self):
     indexChars = INDEX_CHARS
     # C dimensions

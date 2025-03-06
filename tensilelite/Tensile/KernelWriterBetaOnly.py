@@ -292,6 +292,26 @@ class KernelWriterBetaOnly(KernelWriterBase):
     return kStr
 
 
+  @staticmethod
+  def _getKernelName(solution, btype=None):
+    indexChars = INDEX_CHARS
+    # C dimensions
+    name = "C"
+    for i in range(0, solution._state["ProblemType"]["NumIndicesC"]):
+      name += indexChars[i].lower()
+    name += "_"
+    name += solution._state["ProblemType"]["DestDataType"].toChar()
+    if solution._state["ProblemType"]["GroupedGemm"]:
+      name += "_GG"
+    else:
+      name += "" if solution._state["ProblemType"]["StridedBatched"] else "_GB"
+    if solution._state["ProblemType"]["BetaOnlyUseBias"]:
+      name += "_Bias%s"%btype.toChar()
+    name += "_GA" if solution._state["_GlobalAccumulation"] else ""
+
+    return name
+
+
   def getKernelName(self):
     indexChars = INDEX_CHARS
     # C dimensions

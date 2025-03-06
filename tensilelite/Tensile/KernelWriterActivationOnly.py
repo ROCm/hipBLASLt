@@ -208,6 +208,26 @@ class KernelWriterActivationOnly(KernelWriterBase):
     return kStr
 
 
+  @classmethod
+  def _getKernelName(cls, solution):
+    indexChars = INDEX_CHARS
+    # C dimensions
+    name = "D"
+    for i in range(0, solution.state["ProblemType"]["NumIndicesC"]):
+      name += indexChars[i].lower()
+    name += "_"
+    name += solution.state["ProblemType"]["DestDataType"].toChar()
+    if solution.state["ProblemType"]["ActivationType"] != 'none':
+      if solution.state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
+        name += "_%s"%"A"
+      else:
+        name += "_%s"%str(solution.state["ProblemType"]["ActivationType"]).upper()
+      name += solution.state["ProblemType"]["ActivationComputeDataType"].toChar()
+    name += ("ng" if solution.state["ProblemType"]["ActivationNoGuard"] else "")
+
+    return name
+
+
   def getKernelName(self):
     indexChars = INDEX_CHARS
     # C dimensions

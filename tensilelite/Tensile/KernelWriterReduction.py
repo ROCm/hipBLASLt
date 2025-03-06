@@ -53,6 +53,20 @@ class KernelWriterReduction(KernelWriterBase):
         kStr = ""
         return kStr
 
+    @staticmethod
+    def _getKernelName(solution, btype):
+        # C dimensions
+        indexChars = INDEX_CHARS
+        indicesStr = ""
+        for i in range(0, solution._state["ProblemType"]["NumIndicesC"]):
+            c = indexChars[i].lower()
+            indicesStr += indexChars[i].lower()
+        name = "D"
+        name += indicesStr
+        name += "_%s%s"%(btype.toChar(), solution._state["ProblemType"]["ComputeDataType"].toChar())
+        name += "_Reduction"
+        return name
+
 
     def getKernelName(self):
         name = "D"

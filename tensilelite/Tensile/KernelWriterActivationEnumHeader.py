@@ -45,6 +45,12 @@ class KernelWriterActivationEnumHeader(KernelWriterBase):
   def keys(self):
     return self.getKernelName()
 
+  @staticmethod
+  def _getKernelName(solution):
+    s = "Gradient" if solution._state["ProblemType"]["Gradient"] else ""
+    return "Tensile%sActivationEnum_%s"%(s,
+                                         solution._state["ProblemType"]["ActivationComputeDataType"].toChar())
+
   def getKernelName(self):
     return "Tensile%sActivationEnum_%s"%(self.actGradientPrefix, \
                                          self.state["ProblemType"]["ActivationComputeDataType"].toChar())
