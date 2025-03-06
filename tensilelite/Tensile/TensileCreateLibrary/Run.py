@@ -395,6 +395,9 @@ def generateKernelHelperObjects(solutions: List[Solution], cxxCompiler: str):
     Args:
         solutions: a list of solutions to process.
         cxxCompiler: the full path to the cxxCompiler.
+
+    Returns:
+        List of kernel helpers.
     """
     khos = []
     visited = set()
