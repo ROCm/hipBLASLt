@@ -2518,9 +2518,9 @@ class Solution(collections.abc.Mapping):
 
     numBytes = state["ProblemType"]["DataType"].numBytes()
     isa = tuple(state["ISA"])
-    state["enableLDSTrA"] = state["LDSTrInst"] and globalParameters["AsmCaps"][isa]["HasLDSTr"] and numBytes < 4 \
+    state["enableLDSTrA"] = state["LDSTrInst"] and globalParameters["AsmCaps"][isa]["HasLDSTr"] and numBytes == 2 \
             and not state["UnrollMajorLDSA"] and not state["DirectToVgprA"]
-    state["enableLDSTrB"] = state["LDSTrInst"] and globalParameters["AsmCaps"][isa]["HasLDSTr"] and numBytes < 4 \
+    state["enableLDSTrB"] = state["LDSTrInst"] and globalParameters["AsmCaps"][isa]["HasLDSTr"] and numBytes == 2 \
             and not state["UnrollMajorLDSB"] and not state["DirectToVgprB"]
 
     if state["enableLDSTrA"]:

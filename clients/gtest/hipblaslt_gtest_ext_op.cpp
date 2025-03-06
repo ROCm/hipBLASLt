@@ -479,7 +479,7 @@ TEST_P(ExtOpAMaxWithScaleTest, amaxSuccess)
                                                             testdata.scaleType,
                                                             testdata.initMethod,
                                                             testdata.m,
-                                                            testdata.n, 
+                                                            testdata.n,
                                                             "94//d");
     }
     else if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_32F
@@ -496,7 +496,7 @@ TEST_P(ExtOpAMaxWithScaleTest, amaxSuccess)
                                                                    testdata.scaleType,
                                                                    testdata.initMethod,
                                                                    testdata.m,
-                                                                   testdata.n, 
+                                                                   testdata.n,
                                                                    "94//d");
     }
     else if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_16F
@@ -513,7 +513,7 @@ TEST_P(ExtOpAMaxWithScaleTest, amaxSuccess)
                                                                     testdata.scaleType,
                                                                     testdata.initMethod,
                                                                     testdata.m,
-                                                                    testdata.n, 
+                                                                    testdata.n,
                                                                     "94//d");
     }
     else if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_16F

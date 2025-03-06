@@ -3331,10 +3331,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     """
 
     if kernel["EnableMatrixInstruction"] and kernel["LocalReadVectorWidth"] >= kernel["MIInputPerThread"]:
-      WLR = kernel["LocalReadVectorWidth"]//kernel["MIInputPerThread"]
-      if self.states.asmCaps["HasMFMA_f8f6f4"]:
-        # WLR can be 0 with new mfma
-        WLR = 1 if WLR == 0 else WLR
+      WLR = max(kernel["LocalReadVectorWidth"]//kernel["MIInputPerThread"], 1)
       self.states.numItersPLR = kernel["PrefetchLocalRead"]%(kernel["LoopIters"]//WLR)
     else:
       self.states.numItersPLR = kernel["PrefetchLocalRead"]%(kernel["LoopIters"])
