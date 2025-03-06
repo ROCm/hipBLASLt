@@ -412,8 +412,8 @@ def Tensile(userArgs):
             return False
         
         dist = distro.linux_distribution()
-        if 'Red Hat Enterprise Linux' in dist[0] and '8.' in dist[1]:
-            printWarning("Rhel8 environments may not support all system queries such as rocm-smi.")
+        if distro.id() == "rhel" and distro.version()[0] == "8": 
+            printWarning("Rhel8 environments may not support all tools for system queries such as rocm-smi.")
             return True
         else:
             return False
