@@ -2994,7 +2994,8 @@ namespace TensileLite
             // size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC * gsuMultiplier;
             size_t tiles = problem.getNumTiles(sizeMapping);
             size_t tileSize = sizeMapping.macroTile.x * sizeMapping.macroTile.y * sizeMapping.workspaceSizePerElemC;
-            size += tiles * tileSize * gsuMultiplier;
+            size_t tmp = gsu > 1? tiles * tileSize : 0;
+            size += tmp;
 
             if(problemType.useGradient && problemType.useBias
                && problem.getParams().biasEnum() != rocisa::DataType::None)

@@ -239,8 +239,8 @@ class GlobalWriteBatchWriter:
           for cntStr in waitLocalLoadCntStrList:
             tmp += " - %s"%cntStr
           comment = comment + (" " if comment else "") + "lgkmcnt(%d) = %d%s"%(lgkmcnt, lgkmcntTotalIssued, tmp)
-        if not self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
-          return SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="%s (interleaved)"%comment)
+        # if not self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
+        return SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="%s (interleaved)"%comment)
     else:
       commentList = []
       # Global read wait
@@ -809,7 +809,7 @@ class GlobalWriteBatchWriter:
       if waitcntInst:
         module.add(waitcntInst)
 
-    module.addComment1("apply mask, calc new C and issue writes")
+    module.addComment1("apply mask, calc new C and issue writes XD")
     # module.add(self.getBomb()) # can see store addresses just before the store inst
 
     activationCDataType = self.kernel["ProblemType"]["ActivationComputeDataType"]

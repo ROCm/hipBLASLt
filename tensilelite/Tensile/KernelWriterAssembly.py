@@ -11352,7 +11352,8 @@ class KernelWriterAssembly(KernelWriter):
       gsuPartialsLabel = Label(label=self.labels.getNameInc("GSU_Partials"), comment="")
       gsuComponent = Component.GSU.find(self)
       if kernel["GlobalSplitU"] > 1 and kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
-        module.add(gsuComponent.storeBranches(self, kernel, tPB, gsuPartialsLabel, vectorWidths_1, elements_1, tmpVgpr, cvtVgprStruct, vectorDataTypes, factorDims))
+        module.add(gsuComponent.storeBranches(self, kernel, tPB, gsuPartialsLabel, vectorWidths_1, elements_1, tmpVgpr, cvtVgprStruct, \
+          vectorDataTypes, factorDims, endLabel))
 
       betaModules = Module("Betas")
       currentInstLength = 0
@@ -12147,13 +12148,7 @@ class KernelWriterAssembly(KernelWriter):
           addr0 = vgpr(addrCalc.addrDVgpr,2)
           addr1 = ""
         if ss.optSrdIncForRow and addrCalc.rowInc:
-          if kernel["GlobalSplitU"] > 1 and kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
-            storeWidth = kernel["StoreVectorWidth"]
-            numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-            increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * self.states.bpeCinternal
-            module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Increase sgpr offset for store"))
-          else:
-            module.add(addrCalc.incrementToNextRow(kernel, "D", ss, tmpS01))
+          module.add(addrCalc.incrementToNextRow(kernel, "D", ss, tmpS01))
             
         dataType     = kernel["ProblemType"]["DestDataType"]
         globalOffset = addrCalc.globalOffset
