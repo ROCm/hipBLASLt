@@ -22,8 +22,9 @@
 #
 ################################################################################
 
+from rocisa import rocIsa
 from rocisa.label import LabelManager
-from .TensileInstructions import TensileInstructions, replaceHolder, \
+from .TensileInstructions import replaceHolder, \
                           KernelBody, Module, StructuredModule, TextBlock, Dump, \
                           RegisterPool, Assert, fastdeepcopy, TensileInstructionsPassOptions, \
                           TensileInstructionsPass, ValueSet, RegSet, \
@@ -3257,9 +3258,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # ISA version, such as 803
     version = tuple(kernel["ISA"])
     if self.ti == None:
-      self.ti = TensileInstructions()
-    self.ti.init(version, self.assembler)
-    self.ti.setKernelInfo(version, kernel["WavefrontSize"])
+      self.ti = rocIsa.getInstance()
+    self.ti.setKernel(version, kernel["WavefrontSize"])
 
     self.consts = ConstValues()
     self.states = StateValues(version=version, kernel=kernel, kernelName=self.getKernelName(kernel))
@@ -5487,8 +5487,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return fileString
 
 
-  def setTensileInstructions(self, ti):
-    self.ti = ti
+  def setTensileInstructions(self, data):
+    self.ti = rocIsa.getInstance()
+    self.ti.setData(data)
 
   def updateBranchPlaceHolder(self, module, placeholders, targets, operations):
     phs = [ ph for ph in placeholders ]

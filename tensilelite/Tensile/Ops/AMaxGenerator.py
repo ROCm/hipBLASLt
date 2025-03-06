@@ -854,6 +854,7 @@ if __name__ == '__main__':
         toolchain_path = validateToolchain(ToolchainDefaults.CXX_COMPILER)
 
     ti.Base._global_ti.init(isa, toolchain_path, False)
+    ti.Base._global_ti.setKernel(isa, 64)
     amax = AMaxKernelGenerator(ti.DataType(t), ti.DataType(d), ti.DataType(s), w, c, 4, arch, is_scale)
     kernel_body = amax.amax_kernel_body()
     args = amax.kernel_args()

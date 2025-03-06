@@ -20,6 +20,9 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa import rocIsa
+from rocisa.base import KernelInfo
+
 import pickle
 import threading
 
@@ -35,87 +38,6 @@ def fastdeepcopy(x):
     # Note: Some object can't be pickled
     return pickle.loads(pickle.dumps(x))
 
-class TensileInstructions:
-
-    _instance  = None
-    _lock = threading.Lock()
-
-    def __new__(cls, *args, **kwargs):
-        with cls._lock:
-            if cls._instance is None:
-                cls._instance = super().__new__(cls)
-                cls._instance._isaInfo = {}  # type: ignore
-                cls._instance._kernelInfo = {}
-        return cls._instance
-
-    def __reduce__(self):
-        return (TensileInstructions, ())
-
-    @dataclass
-    class IsaInfo:
-        assemblerPath: str
-        asmCaps: dict
-        archCaps: dict
-        regCaps: dict
-        asmBugs: dict
-
-    @dataclass
-    class kernelInfo:
-        isa: Tuple[int, int, int]
-        wavefrontSize: int = 64
-
-    def init(self, isaVersion: Tuple[int, int, int], assemblerPath: str, debug: bool=False) -> None:
-        with self._lock:
-            if len(self._kernelInfo) > 1000:
-                self._kernelInfo = _removeIdent(self._kernelInfo)
-            self._kernelInfo[threading.get_ident()] = TensileInstructions.kernelInfo(isa=isaVersion)
-            if isaVersion not in self._isaInfo: # type: ignore
-                asmCaps  = initAsmCaps(isaVersion, assemblerPath, debug)
-                archCaps = initArchCaps(isaVersion)
-                regCaps  = initRegisterCaps(isaVersion, archCaps)
-                asmBugs  = initAsmBugs(asmCaps)
-                self._isaInfo[isaVersion] = TensileInstructions.IsaInfo(assemblerPath, # type: ignore
-                    asmCaps, archCaps, regCaps, asmBugs)
-
-    def setDebugLevel(self, level: int) -> None:
-        __TI_DEBUG_LEVEL__ = level
-
-    def setKernelInfo(self, isaVersion: Tuple[int, int, int], wavefrontSize: int) -> None:
-        if isaVersion not in self._isaInfo: # type: ignore
-            import traceback
-            printExit(f"Current isa {str(isaVersion)} not initialized. Initialized isas are {str(self._isaInfo.keys())}, traceback: {traceback.format_stack()}")
-        with self._lock:
-            if len(self._kernelInfo) > 1000:
-                self._kernelInfo = _removeIdent(self._kernelInfo)
-            tid = threading.get_ident()
-            if tid not in self._kernelInfo:
-                self._kernelInfo[threading.get_ident()] = \
-                    TensileInstructions.kernelInfo(isa=isaVersion, wavefrontSize=wavefrontSize)
-            else:
-                self._kernelInfo[threading.get_ident()].isa           = isaVersion
-                self._kernelInfo[threading.get_ident()].wavefrontSize = wavefrontSize
-
-    def getCurrentIsa(self) -> Tuple[int]:
-        return self._kernelInfo[threading.get_ident()].isa
-
-    def getAsmCaps(self) -> dict:
-        return self._isaInfo[self._kernelInfo[threading.get_ident()].isa].asmCaps # type: ignore
-
-    def getArchCaps(self) -> dict:
-        return self._isaInfo[self._kernelInfo[threading.get_ident()].isa].archCaps # type: ignore
-
-    def getRegCaps(self) -> dict:
-        return self._isaInfo[self._kernelInfo[threading.get_ident()].isa].regCaps
-
-    def getAsmBugs(self) -> dict:
-        return self._isaInfo[self._kernelInfo[threading.get_ident()].isa].asmBugs # type: ignore
-
-    def getKernel(self) -> kernelInfo:
-        return self._kernelInfo[threading.get_ident()]
-
-    def isInit(self):
-        return len(self._isaInfo) > 0
-
 def printItemList(listOfItems, tag="__unnamed__") -> None:
     header = "="*40
     print("%s\nbegin list %s\n%s"%(header, tag, header))
@@ -129,7 +51,7 @@ def printItemList(listOfItems, tag="__unnamed__") -> None:
     print("%s\nend list %s\n%s"%(header, tag, header))
 
 # Global
-_global_ti = TensileInstructions()
+_global_ti = rocIsa.getInstance()
 
 class Item:
     """
@@ -166,7 +88,7 @@ class Item:
         return _global_ti.getAsmBugs()
 
     @property
-    def kernel(self) -> TensileInstructions.kernelInfo:
+    def kernel(self) -> KernelInfo:
         return _global_ti.getKernel()
 
     def countType(self, ttype) -> int:

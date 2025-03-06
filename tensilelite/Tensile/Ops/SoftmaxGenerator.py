@@ -698,6 +698,7 @@ if __name__ == '__main__':
         toolchain_path = validateToolchain(ToolchainDefaults.CXX_COMPILER)
 
     ti.Base._global_ti.init(isa, toolchain_path, False)
+    ti.Base._global_ti.setKernel(isa, 64)
     softmax = SoftmaxKernelGenerator(ti.DataType('S'), n, m, 256, arch)
     kernel_body = softmax.softmax_kernel_body()
     args = softmax.kernel_args()

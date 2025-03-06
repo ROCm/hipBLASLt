@@ -26,11 +26,11 @@ import struct
 from collections import OrderedDict
 from enum import IntFlag
 
+from rocisa import rocIsa
 from rocisa.enum import *
 
 from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterContainer, \
-                          VCC, EXEC, vgpr, sgpr, Holder, fastdeepcopy, DataType, SNop, \
-                          TensileInstructions
+                          VCC, EXEC, vgpr, sgpr, Holder, fastdeepcopy, DataType, SNop
 from .TensileInstructions.Instructions import *
 from .Common import printExit, printWarning
 
@@ -512,7 +512,7 @@ class ActivationModule:
         return module
 
     def getExpModule(self, cDataType, vgprIn, vgprOut):
-        ti = TensileInstructions()
+        ti = rocIsa.getInstance()
         module = Module("Exp")
         if cDataType.isHalf():
             sgprMagic = self.getSgpr(1)
@@ -661,7 +661,7 @@ class ActivationModule:
         return module
 
     def getSigmoidModule(self, cDataType, vgprIn, vgprOut):
-        ti = TensileInstructions()
+        ti = rocIsa.getInstance()
         self.needCombine = True
         module = Module("Sigmoid")
         if cDataType.isHalf():
@@ -696,7 +696,7 @@ class ActivationModule:
         return module
 
     def getTanhModule(self, cDataType, vgprIn, vgprOut, activationAlpha, activationBeta):
-        ti = TensileInstructions()
+        ti = rocIsa.getInstance()
         self.needCombine = True
         module = Module("Tanh")
         if cDataType.isHalf():
@@ -756,7 +756,7 @@ class ActivationModule:
         return module
 
     def getDGeluModule(self, cDataType, vgprIn, vgprOut):
-        ti = TensileInstructions()
+        ti = rocIsa.getInstance()
         self.needCombine = True
         module = Module("Gradient Gelu")
         # x1 = (0.0535161 * pow(x, 3) + 0.398942 * x)
