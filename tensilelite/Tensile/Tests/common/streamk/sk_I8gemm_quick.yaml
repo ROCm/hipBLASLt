@@ -26,13 +26,13 @@ GlobalParameters:
   KeepBuildTmp: True
 
 BenchmarkProblems:
-  - # I8 NN
+  - # I8I8I NN
     -
       OperationType: GEMM
-      DataType: i8
+      DataType: I8
       # DataTypeA: F8
       # DataTypeB: h
-      DestDataType: i8
+      DestDataType: I8
       ComputeDataType: I
       HighPrecisionAccumulate: True
       TransposeA: 0
@@ -103,14 +103,14 @@ BenchmarkProblems:
         - ActivationArgs:
           - [Enum: relu]
 
-  - # I8 NT ScaleAB=Vector ScaleCD ScaleAlpha Bias
+  - # I8BS NT ScaleAB=Vector ScaleCD ScaleAlpha Bias
     -
       OperationType: GEMM
-      DataType: i8
+      DataType: I8
       # DataTypeA: F8
       # DataTypeB: h
-      DestDataType: i8
-      ComputeDataType: I
+      DestDataType: B
+      ComputeDataType: S
       HighPrecisionAccumulate: True
       TransposeA: 0
       TransposeB: 1
@@ -122,7 +122,7 @@ BenchmarkProblems:
       # UseScaleCD: True
       UseScaleAlphaVec: 3
       UseBias: 3
-      BiasDataTypeList: [I]
+      BiasDataTypeList: [S]
       UseE: True
     -
       InitialSolutionParameters:
@@ -176,18 +176,18 @@ BenchmarkProblems:
           # - Exact: [127,   128, 1, 640]
           # - Exact: [128,   128, 1, 640]
           # - Exact: [129,   128, 1, 640]
-        - BiasTypeArgs: ['I']
+        - BiasTypeArgs: ['S']
         - ActivationArgs:
           - [Enum: relu]
 
-  - # I8 TN ScaleAB=Vector ScaleCD ScaleAlpha Bias
+  - # I8HS TN ScaleAB=Vector ScaleCD ScaleAlpha Bias
     -
       OperationType: GEMM
-      DataType: i8
+      DataType: I8
       # DataTypeA: F8
       # DataTypeB: h
-      DestDataType: i8
-      ComputeDataType: I
+      DestDataType: H
+      ComputeDataType: S
       HighPrecisionAccumulate: True
       TransposeA: 1
       TransposeB: 0
@@ -199,7 +199,7 @@ BenchmarkProblems:
       # UseScaleCD: True
       UseScaleAlphaVec: 3
       UseBias: 3
-      BiasDataTypeList: [I]
+      BiasDataTypeList: [S]
       UseE: True
     -
       InitialSolutionParameters:
@@ -253,7 +253,7 @@ BenchmarkProblems:
           # - Exact: [127,   128, 1, 640]
           # - Exact: [128,   128, 1, 640]
           # - Exact: [129,   128, 1, 640]
-        - BiasTypeArgs: ['I']
+        - BiasTypeArgs: ['S']
         - ActivationArgs:
           - [Enum: relu]
 
@@ -263,8 +263,8 @@ BenchmarkProblems:
       DataType: i8
       # DataTypeA: F8
       # DataTypeB: h
-      DestDataType: i8
-      ComputeDataType: I
+      DestDataType: I
+      ComputeDataType: S
       HighPrecisionAccumulate: True
       TransposeA: 1
       TransposeB: 1
@@ -276,7 +276,7 @@ BenchmarkProblems:
       # UseScaleCD: True
       UseScaleAlphaVec: 3
       UseBias: 3
-      BiasDataTypeList: [I]
+      BiasDataTypeList: [S]
       UseE: True
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -330,6 +330,6 @@ BenchmarkProblems:
           # - Exact: [127,   128, 1, 640]
           # - Exact: [128,   128, 1, 640]
           # - Exact: [129,   128, 1, 640]
-        - BiasTypeArgs: ['I']
+        - BiasTypeArgs: ['S']
         - ActivationArgs:
           - [Enum: relu]
