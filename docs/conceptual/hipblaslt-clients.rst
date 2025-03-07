@@ -75,8 +75,8 @@ For more information, run the command with the ``--help`` option. The output of 
    --stride_c <value>                 Specific stride of strided_batched matrix C, second dimension * leading dimension.
    --stride_d <value>                 Specific stride of strided_batched matrix D, second dimension * leading dimension.
    --stride_e <value>                 Specific stride of strided_batched matrix E, second dimension * leading dimension.
-   --alpha <value>                    specifies the scalar alpha                                                          (Default value is: 1)
-   --beta <value>                     specifies the scalar beta                                                           (Default value is: 0)
+   --alpha <value>                    Specifies the scalar alpha                                                          (Default value is: 1)
+   --beta <value>                     Specifies the scalar beta                                                           (Default value is: 0)
    --function |-f <value>             BLASLt function to test. Options: matmul                                            (Default value is: matmul)
    --precision |-r <value>            Precision of matrix A,B,C,D  Options: f32_r,f16_r,bf16_r,f64_r,i32_r,i8_r           (Default value is: f16_r)
    --a_type <value>                   Precision of matrix A. Options: f32_r,f16_r,bf16_r,i8_r
@@ -130,5 +130,5 @@ For more information, run the command with the ``--help`` option. The output of 
    --splitk <value>                   [Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)
    --wgm <value>                      [Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)
    --flush                            Flush icache, only works for gemm.
-   --help |-h                         produces this help message
+   --help |-h                         Produces this help message
    --version <value>                  Prints the version number
