@@ -23,6 +23,7 @@
 ################################################################################
 
 import math
+from functools import lru_cache
 
 from .Architectures import SUPPORTED_ISA
 
@@ -76,103 +77,114 @@ depthUs = list(range(2, 1024 + 1, 1))
 for i in validMacroTileSides:
     for j in validMacroTileSides:
         validMacroTiles.append([i, j])
-
-validMFMA = {}
-validMFMA["H"] = [[32, 32, 4, 2], [32, 32, 8, 1], [16, 16, 4, 4], [16, 16, 16, 1], [4, 4, 4, 16]]
-validMFMA["S"] = [[32, 32, 1, 2], [32, 32, 2, 1], [16, 16, 1, 4], [16, 16, 4, 1], [4, 4, 1, 16]]
-validMFMA["B"] = [[32, 32, 2, 2], [32, 32, 4, 1], [16, 16, 2, 4], [16, 16, 8, 1], [4, 4, 2, 16]]
-validMFMA["4xi8"] = [
-    [32, 32, 4, 2],
-    [32, 32, 8, 1],
-    [16, 16, 4, 4],
-    [16, 16, 16, 1],
-    [4, 4, 4, 16],
-    [32, 32, 16, 1],
-    [16, 16, 32, 1],
-]
-validMFMA["D"] = [[16, 16, 4, 1], [4, 4, 4, 4]]
-validMFMA["B1k"] = [[32, 32, 4, 2], [32, 32, 8, 1], [16, 16, 4, 4], [16, 16, 16, 1], [4, 4, 4, 16]]
-validMFMA["C"] = validMFMA["S"]
-validMFMA["Z"] = validMFMA["D"]
-validMFMA["I8"] = [
-    [32, 32, 4, 2],
-    [32, 32, 8, 1],
-    [16, 16, 4, 4],
-    [16, 16, 16, 1],
-    [4, 4, 4, 16],
-] + [[32, 32, 16, 1], [16, 16, 32, 1]]
-validMFMA["X"] = [[32, 32, 4, 1], [16, 16, 8, 1]]
-validMFMA["F8"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validMFMA["B8"] = validMFMA["F8"]
-validMFMA["F8B8"] = validMFMA["F8"]
-validMFMA["B8F8"] = validMFMA["F8"]
-validMFMA["F8N"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validMFMA["B8N"] = validMFMA["F8N"]
-validMFMA["F8B8N"] = validMFMA["F8N"]
-validMFMA["B8F8N"] = validMFMA["F8N"]
-validWMMA = [
-    [16, 16, 16, 1],
-]
 validTT = 32
-validMFMA["_format9"] = []
 
-for MFMA in [
-    validMFMA["H"],
-    validMFMA["S"],
-    validMFMA["B"],
-    validMFMA["D"],
-    validMFMA["X"],
-    validMFMA["F8N"],
-    validWMMA,
-]:
-    for MI in MFMA:
-        for bm in range(int(math.log(MI[3], 2)) + 1):
-            for tt0 in range(1, validTT + 1):
-                for tt1 in range(1, validTT + 1):
-                    for wave_m in range(3):
-                        for wave_n in range(3):
-                            validMFMA["_format9"].append(
-                                [MI[0], MI[1], MI[2], MI[3], 2**bm, tt0, tt1, 2**wave_m, 2**wave_n]
-                            )
-validMatrixInstructions = (
-    [[], [-1]]
-    + validMFMA["H"]
-    + validMFMA["S"]
-    + validMFMA["B"]
-    + validMFMA["D"]
-    + validMFMA["B1k"]
-    + validMFMA["X"]
-)
-validMatrixInstructions = validMatrixInstructions + validMFMA["_format9"]
+def makeValidWMMA():
+    return [[16, 16, 16, 1]]
 
-validSMFMA = {}
-validSMFMA["H"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validSMFMA["B"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-validSMFMA["4xi8"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
-validSMFMA["I8"] = validSMFMA["4xi8"]
-validSMFMA["F8"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
-validSMFMA["B8"] = validSMFMA["F8"]
-validSMFMA["F8B8"] = validSMFMA["F8"]
-validSMFMA["B8F8"] = validSMFMA["F8"]
-validSMFMA["F8N"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
-validSMFMA["B8N"] = validSMFMA["F8N"]
-validSMFMA["F8B8N"] = validSMFMA["F8N"]
-validSMFMA["B8F8N"] = validSMFMA["F8N"]
-validSMFMA["_format9"] = []
-for SMFMA in [validSMFMA["H"], validSMFMA["B"], validSMFMA["4xi8"], validSMFMA["F8N"]]:
-    for MI in SMFMA:
-        for bm in range(int(math.log(MI[3], 2)) + 1):
-            for tt0 in range(1, validTT + 1):
-                for tt1 in range(1, validTT + 1):
-                    for wave_m in range(3):
-                        for wave_n in range(3):
-                            validSMFMA["_format9"].append(
-                                [MI[0], MI[1], MI[2], MI[3], 2**bm, tt0, tt1, 2**wave_m, 2**wave_n]
-                            )
-validSparseMatrixInstructions = validSMFMA["H"] + validSMFMA["B"] + validSMFMA["4xi8"]
-validMatrixInstructions = (
-    validMatrixInstructions + validSparseMatrixInstructions + validSMFMA["_format9"]
-)
+
+@lru_cache
+def makeValidMFMA():
+    validMFMA = {}
+    validMFMA["H"] = [[32, 32, 4, 2], [32, 32, 8, 1], [16, 16, 4, 4], [16, 16, 16, 1], [4, 4, 4, 16]]
+    validMFMA["S"] = [[32, 32, 1, 2], [32, 32, 2, 1], [16, 16, 1, 4], [16, 16, 4, 1], [4, 4, 1, 16]]
+    validMFMA["B"] = [[32, 32, 2, 2], [32, 32, 4, 1], [16, 16, 2, 4], [16, 16, 8, 1], [4, 4, 2, 16]]
+    validMFMA["4xi8"] = [
+        [32, 32, 4, 2],
+        [32, 32, 8, 1],
+        [16, 16, 4, 4],
+        [16, 16, 16, 1],
+        [4, 4, 4, 16],
+        [32, 32, 16, 1],
+        [16, 16, 32, 1],
+    ]
+    validMFMA["D"] = [[16, 16, 4, 1], [4, 4, 4, 4]]
+    validMFMA["B1k"] = [[32, 32, 4, 2], [32, 32, 8, 1], [16, 16, 4, 4], [16, 16, 16, 1], [4, 4, 4, 16]]
+    validMFMA["C"] = validMFMA["S"]
+    validMFMA["Z"] = validMFMA["D"]
+    validMFMA["I8"] = [
+        [32, 32, 4, 2],
+        [32, 32, 8, 1],
+        [16, 16, 4, 4],
+        [16, 16, 16, 1],
+        [4, 4, 4, 16],
+    ] + [[32, 32, 16, 1], [16, 16, 32, 1]]
+    validMFMA["X"] = [[32, 32, 4, 1], [16, 16, 8, 1]]
+    validMFMA["F8"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
+    validMFMA["B8"] = validMFMA["F8"]
+    validMFMA["F8B8"] = validMFMA["F8"]
+    validMFMA["B8F8"] = validMFMA["F8"]
+    validMFMA["F8N"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
+    validMFMA["B8N"] = validMFMA["F8N"]
+    validMFMA["F8B8N"] = validMFMA["F8N"]
+    validMFMA["B8F8N"] = validMFMA["F8N"]
+    validMFMA["_format9"] = []
+
+    for MFMA in [
+        validMFMA["H"],
+        validMFMA["S"],
+        validMFMA["B"],
+        validMFMA["D"],
+        validMFMA["X"],
+        validMFMA["F8N"],
+        makeValidWMMA(),
+    ]:
+        for MI in MFMA:
+            for bm in range(int(math.log(MI[3], 2)) + 1):
+                for tt0 in range(1, validTT + 1):
+                    for tt1 in range(1, validTT + 1):
+                        for wave_m in range(3):
+                            for wave_n in range(3):
+                                validMFMA["_format9"].append(
+                                    [MI[0], MI[1], MI[2], MI[3], 2**bm, tt0, tt1, 2**wave_m, 2**wave_n]
+                                )
+    return validMFMA
+
+@lru_cache
+def makeValidSMFMA():
+    validSMFMA = {}
+    validSMFMA["H"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
+    validSMFMA["B"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
+    validSMFMA["4xi8"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
+    validSMFMA["I8"] = validSMFMA["4xi8"]
+    validSMFMA["F8"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
+    validSMFMA["B8"] = validSMFMA["F8"]
+    validSMFMA["F8B8"] = validSMFMA["F8"]
+    validSMFMA["B8F8"] = validSMFMA["F8"]
+    validSMFMA["F8N"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
+    validSMFMA["B8N"] = validSMFMA["F8N"]
+    validSMFMA["F8B8N"] = validSMFMA["F8N"]
+    validSMFMA["B8F8N"] = validSMFMA["F8N"]
+    validSMFMA["_format9"] = []
+    for SMFMA in [validSMFMA["H"], validSMFMA["B"], validSMFMA["4xi8"], validSMFMA["F8N"]]:
+        for MI in SMFMA:
+            for bm in range(int(math.log(MI[3], 2)) + 1):
+                for tt0 in range(1, validTT + 1):
+                    for tt1 in range(1, validTT + 1):
+                        for wave_m in range(3):
+                            for wave_n in range(3):
+                                validSMFMA["_format9"].append(
+                                    [MI[0], MI[1], MI[2], MI[3], 2**bm, tt0, tt1, 2**wave_m, 2**wave_n]
+                                )
+    return validSMFMA
+
+@lru_cache
+def makeValidMatrixInstructions():
+    mfma = makeValidMFMA()
+    smfma = makeValidSMFMA()
+    validMatrixInstructions = (
+        [[], [-1]]
+        + mfma["H"]
+        + mfma["S"]
+        + mfma["B"]
+        + mfma["D"]
+        + mfma["B1k"]
+        + mfma["X"]
+        + smfma["H"]
+        + smfma["B"]
+        + smfma["4xi8"]
+    )
+    return validMatrixInstructions + mfma["_format9"] + smfma["_format9"]
 
 
 validParameters = {

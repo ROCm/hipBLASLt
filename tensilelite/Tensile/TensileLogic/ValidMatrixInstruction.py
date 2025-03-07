@@ -57,13 +57,11 @@ from pathlib import Path
 from Tensile.SolutionStructs import reject
 from Tensile.Common import IsaVersion, IsaInfo, print1, elineno
 from Tensile.Common.Architectures import SUPPORTED_ISA
-from Tensile.Common.ValidParameters import validMatrixInstructions, validMFMA, validWMMA, validSMFMA
+from Tensile.Common.ValidParameters import makeValidMatrixInstructions, makeValidMFMA, makeValidSMFMA, makeValidWMMA
 from Tensile.TensileInstructions.DataType import DataType
-
 
 MI_KEY: str = "MatrixInstruction"
 MI_ENABLED_KEY: str = "EnableMatrixInstruction"
-
 
 def validateMatrixInstruction(
     solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], filepath: Path
@@ -105,6 +103,10 @@ def validateMatrixInstruction(
 def validateMIParameters(
     solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], printSolutionRejectionReason: bool = True
 ):
+    validMatrixInstructions = makeValidMatrixInstructions()
+    validMFMA = makeValidMFMA()
+    validSMFMA = makeValidSMFMA()
+    validWMMA = makeValidWMMA()
 
     assert MI_KEY in solution, elineno() + ": missing MatrixInstruction"
     assert MI_ENABLED_KEY in solution, elineno() + ": missing EnableMatrixInstruction"

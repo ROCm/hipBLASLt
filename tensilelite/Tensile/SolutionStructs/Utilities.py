@@ -27,8 +27,8 @@ import pprint
 from typing import Dict, Optional
 
 from Tensile.Common import IsaVersion, IsaInfo, print1, print2
-from Tensile.Common.ValidParameters import validMFMA
-from Tensile.TensileInstructions import DataType
+from Tensile.Common.ValidParameters import makeValidMFMA
+from Tensile.TensileInstructions.DataType import DataType
 
 def reject(state: dict, printSolutionRejectionReason: bool = True, *args) -> bool:
   """
@@ -123,6 +123,7 @@ def matrixInstructionToMIParameters(
         else problemType["F32XdlMathOp"]
     )
 
+    validMFMA = makeValidMFMA()
     result["MFMA_BF16_1K"] = (
         not isSparse
         and isaInfoMap[isa].asmCaps["HasMFMA"]
