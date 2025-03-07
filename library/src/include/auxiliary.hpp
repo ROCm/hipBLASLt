@@ -192,6 +192,15 @@ constexpr hipDataType string_to_hip_datatype(const std::string& value)
     {
         return HIP_R_8F_E5M2;
     }
+#else
+    if (value == "f8_r")
+    {
+        return HIP_R_8F_E4M3_FNUZ;
+    }
+    else if (value == "bf8_r")
+    {
+        return HIP_R_8F_E5M2_FNUZ;
+    }
 #endif
 
     return
@@ -256,6 +265,8 @@ constexpr hipblasLtEpilogue_t string_to_epilogue_type(const std::string& value)
         value == "HIPBLASLT_EPILOGUE_DGELU_BGRAD" ? HIPBLASLT_EPILOGUE_DGELU_BGRAD :
         value == "HIPBLASLT_EPILOGUE_BGRADA" ? HIPBLASLT_EPILOGUE_BGRADA :
         value == "HIPBLASLT_EPILOGUE_BGRADB" ? HIPBLASLT_EPILOGUE_BGRADB :
+        value == "HIPBLASLT_EPILOGUE_SWISH_EXT" ? HIPBLASLT_EPILOGUE_SWISH_EXT :
+        value == "HIPBLASLT_EPILOGUE_SWISH_BIAS_EXT" ? HIPBLASLT_EPILOGUE_SWISH_BIAS_EXT :
         value == "HIPBLASLT_EPILOGUE_DEFAULT" || value == "" ? HIPBLASLT_EPILOGUE_DEFAULT :
         static_cast<hipblasLtEpilogue_t>(0);
 }

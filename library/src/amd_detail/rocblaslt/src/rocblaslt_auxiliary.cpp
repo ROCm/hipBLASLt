@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -266,9 +266,10 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *e = nullptr;
     bool                   gradient = false;
-    bool                   swizzleA = matA->order == HIPBLASLT_ORDER_COL16_4R8;
-    bool                   swizzleB = matB->order == HIPBLASLT_ORDER_COL16_4R8;
-    rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    bool swizzleA = matA->order != HIPBLASLT_ORDER_COL && matA->order != HIPBLASLT_ORDER_ROW;
+    bool swizzleB = matB->order != HIPBLASLT_ORDER_COL && matB->order != HIPBLASLT_ORDER_ROW;
+
+    rocblaslt_status isValid = rocblaslt_matmul_valid_args(matmul_descr,
                                                            dummy_ptr,
                                                            dummy_ptr,
                                                            dummy_ptr,

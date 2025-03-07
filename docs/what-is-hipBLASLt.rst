@@ -20,5 +20,5 @@ The GEMM operation of hipBLASLt is performed by :ref:`hipblasltmatmul` using thi
 
  D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias)
 
-where :math:`op(A)/op(B)` refers to in-place operations such as transpose or non-transpose and :math:`alpha` and :math:`beta` are the scalars.
-The :math:`Activation` function supports Gelu and Relu. The :math:`Bias` vector matches matrix :math:`D` rows and broadcasts to all :math:`D` columns.
+where, :math:`op(A)/op(B)` refers to in-place operations such as transpose/non-transpose and :math:`alpha`, :math:`beta` are the scalars.
+:math:`Activation` function supports Gelu, Relu, and Swish (SiLU). :math:`Bias` vector matches matrix :math:`D` rows and broadcasts to all :math:`D` columns.

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2024-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,58 +25,83 @@
  *******************************************************************************/
 
 #include <hip/hip_runtime.h>
-#include <hipblaslt/hipblaslt.h>
 #include <hipblaslt/hipblaslt-ext.hpp>
+#include <hipblaslt/hipblaslt.h>
 #include <iostream>
 
-#include "helper.h"
 #include "TensorDataManipulation.hpp"
+#include "datatype_interface.hpp"
+#include "helper.h"
 
-template<typename T>
-void swizzleTensor(T *dst, const T *src, size_t m, size_t k, bool colMaj)
+void calculateKforSwizzling(hipDataType datatype, size_t& MiK, size_t& MiKv, size_t& PackK)
+{
+    switch(datatype)
+    {
+    case HIP_R_32F:
+        MiK  = 4;
+        MiKv = 1;
+        break;
+    case HIP_R_16F:
+    case HIP_R_16BF:
+        MiK  = 16;
+        MiKv = 4;
+        break;
+    case HIP_R_8F_E5M2_FNUZ:
+    case HIP_R_8F_E4M3_FNUZ:
+        MiK  = 32;
+        MiKv = 8;
+        break;
+    default:
+        std::cerr << "unsupported datatype in calculateKforSwizzling" << '\n';
+    }
+
+    PackK = 16 / MiKv / realDataTypeSize(datatype);
+}
+
+template <typename T>
+void swizzleTensor(T* dst, const T* src, size_t m, size_t k, bool colMaj)
 {
     using Tensor = Tensor::Manipulation::Tensor;
-    constexpr size_t MiM = 16;
-    constexpr size_t MiK = 16;
-    constexpr size_t MiKv = 4;
-    constexpr size_t PackK = 2;
+    size_t MiM   = 16;
+    size_t MiK = 0, MiKv = 0, PackK = 0;
+    calculateKforSwizzling(hipblaslt_type2datatype<T>(), MiK, MiKv, PackK);
     auto tmpTensor = Tensor::create<T>({m, k});
-    memcpy(tmpTensor. template as<void>(), src, m * k * sizeof(T));
+    memcpy(tmpTensor.template as<void>(), src, m * k * sizeof(T));
 
     if(colMaj)
     {
         auto orgTensor = Tensor::create<T>({k, m});
-        memcpy(orgTensor. template as<void>(), src, m * k * sizeof(T));
+        memcpy(orgTensor.template as<void>(), src, m * k * sizeof(T));
         tmpTensor = permute(orgTensor, {1, 0});
     }
-    constexpr auto MultipleM = MiM;
-    constexpr auto MultipleK = MiK * PackK;
-    const auto paddedM = (m / MultipleM + !!(m % MultipleM)) * MultipleM;
-    const auto paddedK = (k / MultipleK + !!(k % MultipleK)) * MultipleK;
+    auto                          MultipleM = MiM;
+    auto                          MultipleK = MiK * PackK;
+    const auto                    paddedM   = (m / MultipleM + !!(m % MultipleM)) * MultipleM;
+    const auto                    paddedK   = (k / MultipleK + !!(k % MultipleK)) * MultipleK;
     ::Tensor::Manipulation::Shape paddedShape{paddedM, paddedK};
     auto paddedTensor = ::Tensor::Manipulation::pad(tmpTensor, paddedShape, T(0));
-    paddedTensor.reshape({paddedM / MiM, MiM, paddedK / (MiK * PackK), MiK / MiKv , MiKv * PackK});
+    paddedTensor.reshape({paddedM / MiM, MiM, paddedK / (MiK * PackK), MiK / MiKv, MiKv * PackK});
     Tensor permuted = permute(paddedTensor, {0, 2, 3, 1, 4});
-    memcpy(dst, permuted. template as<void>(), paddedM * paddedK * sizeof(T));
+    memcpy(dst, permuted.template as<void>(), paddedM * paddedK * sizeof(T));
 }
 
 void swizzleGemmEpilogueBiasVecExt(hipblasLtHandle_t  handle,
-                hipblasOperation_t trans_a,
-                hipblasOperation_t trans_b,
-                int64_t            m,
-                int64_t            n,
-                int64_t            k,
-                int64_t            batch_count,
-                float&             alpha,
-                float&             beta,
-                void*              d_a,
-                void*              d_b,
-                void*              d_c,
-                void*              d_d,
-                void*              d_workspace,
-                int64_t            max_workspace_size,
-                bool               swizzleA,
-                hipStream_t        stream);
+                                   hipblasOperation_t trans_a,
+                                   hipblasOperation_t trans_b,
+                                   int64_t            m,
+                                   int64_t            n,
+                                   int64_t            k,
+                                   int64_t            batch_count,
+                                   float&             alpha,
+                                   float&             beta,
+                                   void*              d_a,
+                                   void*              d_b,
+                                   void*              d_c,
+                                   void*              d_d,
+                                   void*              d_workspace,
+                                   int64_t            max_workspace_size,
+                                   bool               swizzleA,
+                                   hipStream_t        stream);
 
 int main()
 {
@@ -89,45 +114,45 @@ int main()
 
     swizzleRunner.run([&swizzleRunner, m, n, k] {
         swizzleGemmEpilogueBiasVecExt(swizzleRunner.handle,
-                   /*For swizzle-A, it forces to use TN*/
-                   HIPBLAS_OP_T,
-                   HIPBLAS_OP_N,
-                   swizzleRunner.m,
-                   swizzleRunner.n,
-                   swizzleRunner.k,
-                   swizzleRunner.batch_count,
-                   swizzleRunner.alpha,
-                   swizzleRunner.beta,
-                   swizzleRunner.d_a,
-                   swizzleRunner.d_b,
-                   swizzleRunner.d_c,
-                   swizzleRunner.d_d,
-                   swizzleRunner.d_workspace,
-                   swizzleRunner.max_workspace_size,
-                   true,
-                   swizzleRunner.stream);
+                                      /*For swizzle-A, it forces to use TN*/
+                                      HIPBLAS_OP_T,
+                                      HIPBLAS_OP_N,
+                                      swizzleRunner.m,
+                                      swizzleRunner.n,
+                                      swizzleRunner.k,
+                                      swizzleRunner.batch_count,
+                                      swizzleRunner.alpha,
+                                      swizzleRunner.beta,
+                                      swizzleRunner.d_a,
+                                      swizzleRunner.d_b,
+                                      swizzleRunner.d_c,
+                                      swizzleRunner.d_d,
+                                      swizzleRunner.d_workspace,
+                                      swizzleRunner.max_workspace_size,
+                                      true,
+                                      swizzleRunner.stream);
     });
 
     return 0;
 }
 
-void swizzleGemmEpilogueBiasVecExt(hipblasLtHandle_t handle,
-                hipblasOperation_t trans_a,
-                hipblasOperation_t trans_b,
-                int64_t            m,
-                int64_t            n,
-                int64_t            k,
-                int64_t            batch_count,
-                float&             alpha,
-                float&             beta,
-                void*              d_a,
-                void*              d_b,
-                void*              d_c,
-                void*              d_d,
-                void*              d_workspace,
-                int64_t            max_workspace_size,
-                bool               swizzleA,
-                hipStream_t        stream)
+void swizzleGemmEpilogueBiasVecExt(hipblasLtHandle_t  handle,
+                                   hipblasOperation_t trans_a,
+                                   hipblasOperation_t trans_b,
+                                   int64_t            m,
+                                   int64_t            n,
+                                   int64_t            k,
+                                   int64_t            batch_count,
+                                   float&             alpha,
+                                   float&             beta,
+                                   void*              d_a,
+                                   void*              d_b,
+                                   void*              d_c,
+                                   void*              d_d,
+                                   void*              d_workspace,
+                                   int64_t            max_workspace_size,
+                                   bool               swizzleA,
+                                   hipStream_t        stream)
 {
     hipblasLtMatrixLayout_t matA, matB, matC, matD;
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, HIP_R_16F, k, n, k));
@@ -141,7 +166,8 @@ void swizzleGemmEpilogueBiasVecExt(hipblasLtHandle_t handle,
         if(swizzleA)
         {
             hipblasLtOrder_t orderA = HIPBLASLT_ORDER_COL16_4R8;
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(matA, HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA)));
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
+                matA, HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA)));
             std::vector<hipblasLtHalf> src(m * k, 0);
             std::vector<hipblasLtHalf> dst(m * k, 0);
             hipMemcpy(src.data(), d_a, m * k * sizeof(hipblasLtHalf), hipMemcpyDeviceToHost);
@@ -190,31 +216,24 @@ void swizzleGemmEpilogueBiasVecExt(hipblasLtHandle_t handle,
         matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
     // Allocate and set the bias tensor
     std::vector<hipblasLtHalf> h_bias(m, 1.0f); // Example bias values, adjust as needed
-    void* d_bias;
+    void*                      d_bias;
     CHECK_HIP_ERROR(hipMalloc(&d_bias, m * sizeof(hipblasLtHalf))); // Allocate memory for bias
-    CHECK_HIP_ERROR(hipMemcpy(d_bias, h_bias.data(), m * sizeof(hipblasLtHalf), hipMemcpyHostToDevice)); // Copy bias to device
+    CHECK_HIP_ERROR(hipMemcpy(d_bias,
+                              h_bias.data(),
+                              m * sizeof(hipblasLtHalf),
+                              hipMemcpyHostToDevice)); // Copy bias to device
 
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias, sizeof(void*)));
 
-    hipblaslt_ext::Gemm gemm(handle,
-                             matmul,
-                             &alpha,
-                             d_a,
-                             matA,
-                             d_b,
-                             matB,
-                             &beta,
-                             d_c,
-                             matC,
-                             d_d,
-                             matD);
+    hipblaslt_ext::Gemm gemm(
+        handle, matmul, &alpha, d_a, matA, d_b, matB, &beta, d_c, matC, d_d, matD);
 
     hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
 
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResults;
-    const int requestedSolutions = 1;
+    const int                                     requestedSolutions = 1;
     CHECK_HIPBLASLT_ERROR(gemm.algoGetHeuristic(requestedSolutions, gemmPref, heuristicResults));
 
     if(heuristicResults.size() == 0)

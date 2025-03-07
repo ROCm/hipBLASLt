@@ -1396,6 +1396,18 @@ class Solution(collections.abc.Mapping):
     if (state["DirectToVgprB"]):
       state["tailLoopOptB"] = False
 
+    # reorder globalread instructions if dtv and TN cases. (along coalesced dim)
+    if state["ScheduleIterAlg"] == 3:
+      state["reorderGRInstForDTVA"] = True if state["ProblemType"]["TransposeA"] and \
+                                              state["DirectToVgprA"] and \
+                                              not state["ProblemType"]["SwizzleTensorA"] else False
+      state["reorderGRInstForDTVB"] = True if not state["ProblemType"]["TransposeB"] and \
+                                              state["DirectToVgprB"] and \
+                                              not state["ProblemType"]["SwizzleTensorB"] else False
+    else:
+      state["reorderGRInstForDTVA"] = False
+      state["reorderGRInstForDTVB"] = False
+
     # done
     state["AssignedProblemIndependentDerivedParameters"] = True
 
@@ -2163,14 +2175,8 @@ class Solution(collections.abc.Mapping):
     if state["StreamK"] != 0:
       state["GlobalSplitU"] = 0 # Cannot enable both Stream-K and GSU
       state["GlobalSplitUAlgorithm"] = "MultipleBuffer" # Set default Algorithm
-      if not (state["ProblemType"]["DataType"].isSingle() or state["ProblemType"]["DataType"].isHalf() or state["ProblemType"]["DataType"].isBFloat16()):
+      if state["ProblemType"]["DataType"].isDouble():
         reject(state, "Type {} for DataType not yet supported with StreamK".format(state["ProblemType"]["DataType"].toChar()))
-      if not (state["ProblemType"]["DataTypeA"].isSingle() or state["ProblemType"]["DataTypeA"].isHalf() or state["ProblemType"]["DataTypeA"].isBFloat16()):
-        reject(state, "Type {} for DataTypeA not yet supported with StreamK".format(state["ProblemType"]["DataTypeA"].toChar()))
-      if not (state["ProblemType"]["DataTypeB"].isSingle() or state["ProblemType"]["DataTypeB"].isHalf() or state["ProblemType"]["DataTypeB"].isBFloat16()):
-        reject(state, "Type {} for DataTypeB not yet supported with StreamK".format(state["ProblemType"]["DataTypeB"].toChar()))
-      if not (state["ProblemType"]["DestDataType"].isSingle() or state["ProblemType"]["DestDataType"].isHalf() or state["ProblemType"]["DestDataType"].isBFloat16()):
-        reject(state, "Type {} for DestDataType not yet supported with StreamK".format(state["ProblemType"]["DestDataType"].toChar()))
       if state["MIWaveGroup"][0] * state["MIWaveGroup"][1] != 4:
         reject(state, "Stream-K requries MIWaveGroup0*MIWaveGroup1=4")
       if not state["EnableMatrixInstruction"]:
@@ -2187,7 +2193,7 @@ class Solution(collections.abc.Mapping):
         reject(state, "ScheduleGlobalRead not supported with Stream-K")
       if state["ScheduleLocalWrite"] != 1:
         reject(state, "ScheduleLocalWrite not supported with Stream-K")
-      if state["ScheduleIterAlg"] != 1 and state["ScheduleIterAlg"] != 3:
+      if state["ScheduleIterAlg"] != 2 and state["ScheduleIterAlg"] != 3:
         reject(state, "ScheduleIterAlg not supported with Stream-K")
       if state["StreamKAtomic"] == 1:
         if not state["ProblemType"]["DataType"].isSingle():
@@ -3249,11 +3255,13 @@ class Solution(collections.abc.Mapping):
         totalElementsCoalescedM = depthUM
         totalElementsPerpM = state["MacroTileMetadata"]
       totalElementsM = totalElementsCoalescedM * totalElementsPerpM
+      GlobalReadVectorWidthMetadata = state["GlobalReadVectorWidthMetadata"]
+      totalVectorsCoalescedM = totalElementsCoalescedM // GlobalReadVectorWidthMetadata
 
       # Try to enlarge GLVW for metadata
       bGlobalReadVectorWidthMetadata = state["GlobalReadVectorWidthMetadata"]
       if state["ProblemType"]["Sparse"] == 2:
-        GlobalReadVectorWidth = state["GlobalReadVectorWidthMetadata"] * state["NumLoadsPerpendicularB"] #sum all need read
+        GlobalReadVectorWidth = min(state["GlobalReadVectorWidthMetadata"] * state["NumLoadsPerpendicularB"], depthUM) #sum all need read
         tvm = totalElementsM // GlobalReadVectorWidth
         if not Solution.setGlobalReadVectorWidth(state, "Metadata", tvm, GlobalReadVectorWidth):
           #fallback
@@ -3266,7 +3274,7 @@ class Solution(collections.abc.Mapping):
         totalVectorsCoalescedM = totalElementsCoalescedM // GlobalReadVectorWidthMetadata
         totalVectorsM = totalElementsM // GlobalReadVectorWidthMetadata
       else:
-        GlobalReadVectorWidth = state["GlobalReadVectorWidthMetadata"] * state["NumLoadsPerpendicularA"] #sum all need read
+        GlobalReadVectorWidth = min(state["GlobalReadVectorWidthMetadata"] * state["NumLoadsPerpendicularA"], depthUM) #sum all need read
         tvm = totalElementsM // GlobalReadVectorWidth
         if not Solution.setGlobalReadVectorWidth(state, "Metadata", tvm, GlobalReadVectorWidth):
           #fallback
@@ -3871,19 +3879,27 @@ class Solution(collections.abc.Mapping):
     savDim = state["ProblemType"]["UseScaleAlphaVec"]
     sAB = state["ProblemType"]["UseScaleAB"] == "Vector"
     # Calc LDS for Bias
+    maxTurn = 0
     if biasDim == 1:
-      vecDT.bias.turn = calcEpilogueTurns([0])
+      maxTurn = calcEpilogueTurns([0])
     elif biasDim == 2:
-      vecDT.bias.turn = calcEpilogueTurns([1])
+      maxTurn = calcEpilogueTurns([1])
     elif biasDim == 3:
-      vecDT.bias.turn = calcEpilogueTurns([0, 1])
+      maxTurn = calcEpilogueTurns([0, 1])
+    vecDT.bias(0).turn = maxTurn
+    vecDT.bias(1).turn = maxTurn
+  
     # Calc LDS for SAV
+    maxTurn = 0
     if savDim == 1:
-      vecDT.scaleAlpha.turn = calcEpilogueTurns([0])
+      maxTurn = calcEpilogueTurns([0])
     elif savDim == 2:
-      vecDT.scaleAlpha.turn = calcEpilogueTurns([1])
+      maxTurn = calcEpilogueTurns([1])
     elif savDim == 3:
-      vecDT.scaleAlpha.turn = calcEpilogueTurns([0, 1])
+      maxTurn = calcEpilogueTurns([0, 1])
+    vecDT.scaleAlpha(0).turn = maxTurn
+    vecDT.scaleAlpha(1).turn = maxTurn
+
     # Calc LDS for ScaleA, ScaleB
     if sAB:
       vecDT.scaleA.turn = calcEpilogueTurns([0])
@@ -3908,10 +3924,10 @@ class Solution(collections.abc.Mapping):
           for dataType in state["ProblemType"]["BiasDataTypeList"]:
             epilogueSize = max(epilogueSize, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes()) # TODO- GetTurn ?
       else:
-        epilogueSize = state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * vecDT.bias.turn
+        epilogueSize = state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * vecDT.bias(0).turn
     # Calculate max ldsNumBytes for other epilogues
     if state["ProblemType"]["UseScaleAlphaVec"]:
-      epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * vecDT.scaleAlpha.turn
+      epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * vecDT.scaleAlpha(0).turn
     if state["ProblemType"]["UseScaleAB"] == "Vector":
       epilogueSize += state["NumThreads"] * state["ProblemType"]["ComputeDataType"].numBytes() * (vecDT.scaleA.turn + vecDT.scaleB.turn)
     ldsNumBytes = max(ldsNumBytes, state["LdsOffsetBias"] + epilogueSize)
@@ -4190,7 +4206,7 @@ class Solution(collections.abc.Mapping):
     if state["ProblemType"]["DataTypeA"] != state["ProblemType"]["DataTypeB"] and \
       state["ProblemType"]["DataTypeA"] != state["ProblemType"]["DataType"] and \
       state["ProblemType"]["UseScaleAB"] == "Vector":
-      reject("Currently does not support using scaleABVec if DataTypeA != DataTypeB != DataType.")
+      reject(state, "Currently does not support using scaleABVec if DataTypeA != DataTypeB != DataType.")
 
     if state["ProblemType"]["UseScaleAB"] and state["OptNoLoadLoop"]:
       # Hard to check alpha == 1.0 directly
