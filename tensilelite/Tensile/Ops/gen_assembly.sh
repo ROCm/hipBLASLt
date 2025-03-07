@@ -22,18 +22,22 @@
 # SOFTWARE.
 #
 ################################################################################
+set -e
 
 archStr=$1
 dst=$2
 venv=$3
 build_id_kind=$4
 
-rocm_path=/opt/rocm
-if ! [ -z ${ROCM_PATH+x} ]; then
-    rocm_path=${ROCM_PATH}
+if [[ -z "$ROCM_PATH" ]]; then
+    toolchain="$(which amdclang++)"
+    if [[ -z "$toolchain" ]]; then
+        echo "error: amdclang++ not found on path"
+        exit 1
+    fi
+else
+    toolchain="${ROCM_PATH}/bin/amdclang++"
 fi
-
-toolchain=${rocm_path}/bin/amdclang++
 
 . ${venv}/bin/activate
 

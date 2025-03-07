@@ -20,6 +20,8 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 # ########################################################################
+set -e
+
 sources=$1
 archs=$2
 build_type=$3
@@ -33,6 +35,14 @@ elif [ "$build_type" = "Debug" ]; then
     additional_options="-O0 -g"
 fi
 
-rocm_path="${ROCM_PATH:-/opt/rocm}"
-clang_path="${rocm_path}/bin/amdclang++"
+if [[ -z "$ROCM_PATH" ]]; then
+    clang_path="$(which amdclang++)"
+    if [[ -z "$clang_path" ]]; then
+        echo "error: amdclang++ not found on path"
+        exit 1
+    fi
+else
+    clang_path="${ROCM_PATH}/bin/amdclang++"
+fi
+
 $clang_path -x hip "$sources" --offload-arch="${archs}" -c --offload-device-only -Xoffload-linker --build-id=$build_id_kind $additional_options -o "$dest"
