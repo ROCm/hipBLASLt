@@ -20,11 +20,14 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 # ########################################################################
+set -e
+
 sources=$1
 archs=$2
 build_type=$3
 build_id_kind=$4
 dest=$5
+clang_path="$6"
 additional_options="-O3"
 
 if [ "$build_type" = "RelWithDebInfo" ]; then
@@ -33,6 +36,4 @@ elif [ "$build_type" = "Debug" ]; then
     additional_options="-O0 -g"
 fi
 
-rocm_path="${ROCM_PATH:-/opt/rocm}"
-clang_path="${rocm_path}/bin/amdclang++"
 $clang_path -x hip "$sources" --offload-arch="${archs}" -c --offload-device-only -Xoffload-linker --build-id=$build_id_kind $additional_options -o "$dest"

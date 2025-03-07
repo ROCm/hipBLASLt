@@ -72,6 +72,33 @@ endif()
 add_subdirectory("${Tensile_ROOT}/Source" "Tensile")
 include("${Tensile_ROOT}/Source/TensileCreateLibrary.cmake")
 
+# Gets the value of the PATH environment variable and asserts that native tooling
+# is present/functioning for running shell scripts. The returned path is escaped
+# with generator $<SEMICOLON> on Windows and can be used in COMMAND strings. On
+# Windows, this ensures that we are using native bash tooling vs WSL.
+function(TensileCheckNativePathEnv out_var)
+  set(path_escaped "$ENV{PATH}")
+  if(WIN32)
+    string(REPLACE ";" "$<SEMICOLON>" path_escaped "${path_escaped}")
+    set(bash_test_command bash -c "cat /proc/version")
+    execute_process(
+      COMMAND ${bash_test_command}
+      OUTPUT_VARIABLE bash_output
+      RESULT_VARIABLE bash_result
+    )
+    if(NOT bash_result STREQUAL "0" OR bash_output MATCHES "WSL")
+      message(FATAL_ERROR 
+              "Windows native bash not found or is WSL bash: Add a mingw/git bash to your "
+              "path to use a native version: \n"
+              "Command: ${bash_test_command}\n"
+              "Output: ${bash_output}\n"
+              "PATH: $ENV{PATH}"
+      )
+      endif()
+  endif()
+  set("${out_var}" "${path_escaped}" PARENT_SCOPE)
+endfunction()
+
 function(TensileCreateLibraryFiles
          Tensile_LOGIC_PATH
          Tensile_OUTPUT_PATH
@@ -209,7 +236,17 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--build-id=${Tensile_BUILD_ID}")
   endif()
 
+  TensileCheckNativePathEnv(path_escaped)
   set(CommandLine ${CMAKE_COMMAND} -E env PYTHONPATH=${PROJECT_BINARY_DIR}/lib -- ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
+  # Tensile relies on the tools from the path, so capture the configure time
+  # path. It would be better if tool paths were explicit, but that would be a pretty
+  # big change.
+  set(CommandLine
+     "${CMAKE_COMMAND}" -E env
+        "PATH=${path_escaped}"
+        "ROCM_PATH=$ENV{ROCM_PATH}"
+      --
+      ${CommandLine})
   message(STATUS "Tensile_CREATE_COMMAND: ${CommandLine}")
 
   if(Tensile_EMBED_LIBRARY)
@@ -263,6 +300,7 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr TensileExt_LIBRARY_TAR
   set(script "${cwd}/gen_assembly.sh")
   set(ext_op_library_path ${build_tmp_dir}/hipblasltExtOpLibrary.dat)
   file(REMOVE ${ext_op_library_path})
+  TensileCheckNativePathEnv(path_escaped)
 
   add_custom_command(
     OUTPUT ${OutputFolder}/hipblasltExtOpLibrary.dat
@@ -271,8 +309,11 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr TensileExt_LIBRARY_TAR
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${OutputFolder}
-    COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${PROJECT_BINARY_DIR}/lib -- bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}" "${Tensile_BUILD_ID}"
-    COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${build_tmp_dir}/extop_*.co ${OutputFolder}
+    COMMAND ${CMAKE_COMMAND} -E env "PATH=${path_escaped}" PYTHONPATH=${PROJECT_BINARY_DIR}/lib -- 
+      bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_BIN_DIR}" "${Tensile_BUILD_ID}"
+        "${CMAKE_CXX_COMPILER}"
+    COMMAND bash -c "cp ${build_tmp_dir}/extop_*.co ${OutputFolder}"
+    COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${OutputFolder}
   )
 
   add_custom_target(
