@@ -22,20 +22,22 @@
 #
 ################################################################################
 
+import collections
+import math
+
+from enum import Enum
+from typing import List, Dict
+
 from Tensile.TensileInstructions import DataType, roundUpToNearestMultiple
 from Tensile.TensileInstructions.Base import fastdeepcopy as deepcopy
-
 from Tensile.KernelWriterBetaOnly import KernelWriterBetaOnly
 from Tensile.KernelWriterConversion import KernelWriterConversion
 from Tensile.KernelWriterActivationEnumHeader import KernelWriterActivationEnumHeader
 from Tensile.KernelWriterActivationFunction import KernelWriterActivationFunction
 from Tensile.KernelWriterActivationOnly import KernelWriterActivationOnly
 from Tensile.KernelWriterReduction import KernelWriterReduction
-
 from Tensile.Activation import ActivationType
 from Tensile.AsmStoreState import VectorDataTypes
-
-from Tensile.CustomKernels import isCustomKernelConfig
 from Tensile.Common import assignParameterWithDefault, IsaInfo, \
                     defaultSolution, \
                     defaultInternalSupportParams, \
@@ -47,26 +49,7 @@ from Tensile.SolutionStructs.Naming import getNameFull
 from Tensile.SolutionStructs.Problem import ProblemType
 from Tensile.Toolchain.Component import Assembler
 
-from .Utilities import reject
-
-
-from collections import OrderedDict
-from collections.abc import Mapping
-from enum import Enum
-from typing import List, Dict
-
-import collections
-import math
-import sys
-
-
-
-# print a labled variable
-def pvar(state, field):
-  return field + "=" + str(state[field])
-
-def roundupRatio(dividend, divisor):
-  return int(math.ceil(float(dividend) / float(divisor)))
+from .Utilities import reject, roundupRatio, pvar
 
 class Fbs(Enum):
   Free=0     # Expect to be free dimension

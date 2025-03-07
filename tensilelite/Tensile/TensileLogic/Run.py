@@ -47,8 +47,8 @@ from Tensile.CustomKernels import isCustomKernelConfig, getCustomKernelConfig
 from Tensile import CUSTOM_KERNEL_PATH
 
 from .ParseArguments import parseArguments
-from .ValidMatrixInstruction import validateMatrixInstruction
-from .ValidWorkGroup import validateWorkGroup
+from .ValidMatrixInstruction import _validateMatrixInstruction
+from .ValidWorkGroup import _validateWorkGroup
 
 
 def handleCustomKernel(sol: dict, isaInfoMap: dict):
@@ -96,8 +96,8 @@ def runChecks(logicPath: str, isaInfoMap: Dict[IsaVersion, IsaInfo], files: List
 
             if all(
                 [
-                    validateMatrixInstruction(s, isaInfoMap, file.relative_to(logicPath)),
-                    validateWorkGroup(s, isaInfoMap, file.relative_to(logicPath)),
+                    _validateMatrixInstruction(s, isaInfoMap, file.relative_to(logicPath)),
+                    _validateWorkGroup(s, isaInfoMap, file.relative_to(logicPath)),
                 ]
             ):
                 keep += 1

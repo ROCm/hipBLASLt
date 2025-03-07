@@ -23,12 +23,7 @@
 ################################################################################
 
 import sys
-import pprint
-from typing import Dict, Optional
-
-from Tensile.Common import IsaVersion, IsaInfo, print1, print2
-from Tensile.Common.ValidParameters import makeValidMFMA
-from Tensile.TensileInstructions.DataType import DataType
+import math
 
 def reject(state: dict, printSolutionRejectionReason: bool = True, *args) -> bool:
   """
@@ -64,103 +59,10 @@ def reject(state: dict, printSolutionRejectionReason: bool = True, *args) -> boo
     state["Valid"] = False
     return True
 
-def matrixInstructionToMIParameters(
-      mi: list,
-      isa: IsaVersion,
-      wavefrontSize: int,
-      problemType: dict,
-      workGroup: Optional[list],
-      isaInfoMap: Dict[IsaVersion, IsaInfo]
-    ):
-    """
-    Converts a 9-item matrix instruction into the associated 4-item representation and
-    populates supporting MI parameters.
+# print a labled variable
+def pvar(state, field):
+  return field + "=" + str(state[field])
 
-    Args:
-        mi: The matrix instruction to convert. Must have length 9.
-        isa: The ISA tuple.
-        wavefrontSize: The wavefront size. Typically "WavefrontSize" in a solution.
-        problemType: The problem type dictionary. Typically "ProblemType" in a solution.
-    """
-    print1(f">> --DBG-- Converting MatrixInstruction {mi} to MI parameters")
+def roundupRatio(dividend, divisor):
+  return int(math.ceil(float(dividend) / float(divisor)))
 
-    if len(mi) != 9:
-      raise ValueError(f"MatrixInstruction must be 9 items long to convert into MI"
-                       f" Parameters, found {mi} with length {len(mi)}")
-
-    result = {}
-    result["ISA"] = isa
-
-    # Enable F32 XDL math operation only when the input type is f32.
-    enableF32xdl = (
-      "F32XdlMathOp" in problemType
-      and not problemType["F32XdlMathOp"].isSingle()
-      and problemType["DataType"].isSingle()
-    )
-    result["EnableF32XdlMathOp"] = enableF32xdl
-
-    mi4  = [mi[0], mi[1], mi[2], mi[3]]
-    result["MatrixInstruction"] = mi4
-    result["EnableMatrixInstruction"] = True
-    result["MatrixInstM"] = mi[0]
-    result["MatrixInstN"] = mi[1]
-    result["MatrixInstK"] = mi[2]
-    result["MatrixInstB"] = mi[3]
-
-    waves = mi[7]* mi[8]
-    wg0 = mi[4] * mi[0] * mi[7]
-
-    result["WavefrontSize"] = wavefrontSize
-    if workGroup:
-      # Some Solutions used during benchmarking don't have WorkGroup set.
-      result["WorkGroup"] = [wg0, waves*wavefrontSize // wg0, workGroup[2]]
-    result["ThreadTile"] = [1, 1]  # dummy
-
-    isSparse = problemType.get("Sparse", 0)
-    miDataType = DataType(
-        problemType["DataType"]
-        if not enableF32xdl
-        else problemType["F32XdlMathOp"]
-    )
-
-    validMFMA = makeValidMFMA()
-    result["MFMA_BF16_1K"] = (
-        not isSparse
-        and isaInfoMap[isa].asmCaps["HasMFMA"]
-        and not (miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()])
-        and miDataType.isBFloat16()
-        and mi4 in validMFMA["B1k"]
-    )
-
-    # set MIBlock
-    MIBlockBM = wg0 // mi[0]
-    MIBlockBM = min(MIBlockBM, mi[3])
-    MIBlockBN = mi[3] // MIBlockBM
-    result["MatrixInstBM"] = MIBlockBM
-    result["MatrixInstBN"] = MIBlockBN
-    result["MIBlock"]    = [mi[0], mi[1], mi[2], mi[3], MIBlockBM, MIBlockBN]
-
-    # set MIWaveGroup
-    miwg0 = min((wg0 // mi[0]) // MIBlockBM, waves)
-    result['MIWaveGroup'] = [miwg0, waves // miwg0]
-
-    # set MIWaveTile
-    result['MIWaveTile'] = [mi[5], mi[6]]
-
-    # set MIInputPerThread
-    hasMFMA = isaInfoMap[isa].asmCaps["HasMFMA"]
-    hasWMMA = isaInfoMap[isa].asmCaps["HasWMMA"]
-
-    result['MIInputPerThread'] = mi[0] * mi[2] * mi[3] // wavefrontSize
-    if (not hasMFMA) and hasWMMA and (isa[0] == 10 or isa[0] == 11):
-      result['MIInputPerThread'] = mi[2]
-
-    sparseA = False if not isSparse else False if isSparse == 2 else True
-    sparseB = False if not isSparse else True if isSparse == 2 else False
-    result['MIInputPerThreadA'] = result['MIInputPerThread'] if not sparseA else result['MIInputPerThread'] // 2
-    result['MIInputPerThreadB'] = result['MIInputPerThread'] if not sparseB else result['MIInputPerThread'] // 2
-    result['MIInputPerThreadMetadata'] = result['MIInputPerThread'] if not isSparse else result['MIInputPerThread'] // 8
-    result['Sparse'] = isSparse
-
-    print2(f">> MI Parameters: {pprint.pformat(result)}")
-    return result

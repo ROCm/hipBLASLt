@@ -33,12 +33,11 @@ from pathlib import Path
 from typing import Dict
 
 from Tensile import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
-from Tensile.TensileLogic.ValidMatrixInstruction import validateMIParameters
 from Tensile.Toolchain.Component import Assembler
 from Tensile.SolutionStructs.Problem import ProblemType, ProblemSizes
-from Tensile.SolutionStructs import Solution, matrixInstructionToMIParameters
-from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin, getSerialNaming, getNameFull, \
-                                  getKeyNoInternalArgs
+from Tensile.SolutionStructs.Solution import Solution
+from Tensile.SolutionStructs.Validators.MatrixInstruction import matrixInstructionToMIParameters, validateMIParameters
+from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin, getSerialNaming, getNameFull, getKeyNoInternalArgs
 
 from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
@@ -55,7 +54,7 @@ from .Common import globalParameters, HR, print1, print2, IsaInfo, IsaVersion, \
 
 
 def _generateForkedSolutions(problemType, constantParams, forkPermutations, assembler: Assembler, \
-                            debugConfig: DebugConfig, depthUConfig: DepthUConfig, isaInfoMap: Dict[str, IsaInfo]):
+                            debugConfig: DebugConfig, depthUConfig: DepthUConfig, isaInfoMap: Dict[IsaVersion, IsaInfo]):
     """Creates a list with a Solution object for each parameter combination in forkPermutations"""
     print1("# Enumerating Solutions")
 
@@ -123,10 +122,11 @@ def _getCustomKernelSolutionObj(
     ptype = sol["ProblemType"]
     workgroup = sol.get("WorkGroup", None)
 
-    # TODO: this should be deleted once all custom kernel configs MI are length 4.
     if len(mi) == 9:
         miParams = matrixInstructionToMIParameters(mi, isa, wavefrontSize, ptype, workgroup, isaInfoMap)
         sol.update(miParams)
+    elif len(mi) == 0:
+        sol["EnableMatrixInstruction"] = False
 
     sol = Solution(
                sol,

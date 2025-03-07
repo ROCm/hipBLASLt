@@ -30,14 +30,6 @@ from .Architectures import SUPPORTED_ISA
 ################################################################################
 # Enumerate Valid Solution Parameters
 ################################################################################
-validWorkGroups = []
-for numThreads in range(32, 1025, 32):
-    for nsg in [1, 2, 4, 8, 16, 32, 64, 96, 128, 256]:
-        for sg0 in range(1, numThreads // nsg + 1):
-            sg1 = numThreads // nsg // sg0
-            if sg0 * sg1 * nsg == numThreads:
-                workGroup = [sg0, sg1, nsg]
-                validWorkGroups.append(workGroup)
 
 validThreadTileSides = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] + list(
     range(20, 256, 4)
@@ -79,9 +71,20 @@ for i in validMacroTileSides:
         validMacroTiles.append([i, j])
 validTT = 32
 
+@lru_cache
+def makeValidWorkGroups():
+    validWorkGroups = []
+    for numThreads in range(32, 1025, 32):
+        for nsg in [1, 2, 4, 8, 16, 32, 64, 96, 128, 256]:
+            for sg0 in range(1, numThreads // nsg + 1):
+                sg1 = numThreads // nsg // sg0
+                if sg0 * sg1 * nsg == numThreads:
+                    workGroup = [sg0, sg1, nsg]
+                    validWorkGroups.append(workGroup)
+    return validWorkGroups
+
 def makeValidWMMA():
     return [[16, 16, 16, 1]]
-
 
 @lru_cache
 def makeValidMFMA():
@@ -521,7 +524,7 @@ validParameters = {
     "MaxOccupancy": list(
         range(1, 40 + 1)
     ),  # wg / CU; if cache thrashing is hurting performance, this allocates extra lds to artificially limit occupancy
-    "WorkGroup": validWorkGroups,  # ( wg0 x wg1 x LocalSplitU ) dimensions of the workgroup which will operate on a tile and share lds
+    "WorkGroup": makeValidWorkGroups(),  # ( wg0 x wg1 x LocalSplitU ) dimensions of the workgroup which will operate on a tile and share lds
     # ThreadTile: ( tt0 x tt1 ) dimensions of the C tile that each thread works on,
     # TT=4 and VW=4 means a thread will work on a tight 4x4 tile of C, where VW=1 means the tile will work on 16 spread out values
     # Generally, the VW determines the consecutive a WI will work on, then it will skip ahead SG0*VW elements to get to the next row of VGPR inputs
