@@ -117,8 +117,8 @@ def _addRegToGraph(item, assignmentDict, params: list, graph, noOpt):
             if p.regType == "acc":
                 continue
             for i in range(p.regIdx, p.regIdx + p.regNum):                 
-                # Checks out of range
-                if i >= len(graph[p.regType]):
+                # Checks out of range               
+                if i not in graph[p.regType]:                                       
                     continue
                 # Does it exists?            
                 if not graph[p.regType][i]:
