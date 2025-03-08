@@ -37,7 +37,7 @@ from . import LibraryIO
 
 from . import ClientWriter
 from .Common import assignGlobalParameters, ensurePath, globalParameters, \
-    printExit, isaToGfx, gfxToSwCodename
+    printExit, isaToGfx, gfxToSwCodename, detectGlobalCurrentISA
 from .SolutionStructs import ProblemSizes
 from .Toolchain.Validators import ToolchainDefaults, validateToolchain
 
@@ -64,10 +64,10 @@ def GenerateSummations(userArgs):
 
     inputLogicPath = userArgs[0]
     outputPath = userArgs[1]
-    assignGlobalParameters({})
+    isaInfoMap = assignGlobalParameters({})
     cxxCompiler, cCompiler = validateToolchain(ToolchainDefaults.CXX_COMPILER, ToolchainDefaults.C_COMPILER)
 
-    currentISA = globalParameters["CurrentISA"]
+    currentISA = detectGlobalCurrentISA(0)
     gfxName = isaToGfx(currentISA)
     commonName = gfxToSwCodename(gfxName)
 
@@ -93,7 +93,7 @@ def GenerateSummations(userArgs):
         # same as the initial logic with the summation model added. To preseve the original
         # logic we also read in the raw unaltered version of the logic and stage the content
         # to write the final logic.
-        logic    = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler)
+        logic    = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler, isaInfoMap)
         rawLogic = LibraryIO.rawLibraryLogic(logicFileName)
 
         # If we cannot read the logic file then skip it

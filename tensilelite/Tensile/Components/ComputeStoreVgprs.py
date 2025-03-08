@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ from ..TensileInstructions import Module, SMulI32, VAddLShiftLeftU32, VAddU32, V
                             vectorStaticRemainder, RegisterPoolResource, vgpr, sgpr, log2, \
                             vectorStaticDivideAndRemainder
 from ..Component import ComputeStoreVgprs
-from ..Common import DataDirection
+from ..Common import DataDirection, printExit, printWarning
 
 class ComputeStoreVgprsVALU(ComputeStoreVgprs):
     kernel = {"EnableMatrixInstruction": False,

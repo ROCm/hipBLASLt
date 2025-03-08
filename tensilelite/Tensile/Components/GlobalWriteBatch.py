@@ -20,7 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from ..Common import globalParameters, DataDirection, SemanticVersion
+from ..Common import DataDirection, SemanticVersion
 from ..Component import GlobalWriteComponents
 from ..SolutionStructs import Solution
 from ..Activation import ActivationModule, ActivationType

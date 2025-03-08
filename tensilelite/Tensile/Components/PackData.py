@@ -29,7 +29,6 @@ from ..TensileInstructions import Module, SDWAModifiers, SelectBit, UnusedBit, \
                             vgpr, sgpr, DataType, TensileInstructions, VAndB32, \
                             VMovB32, VLShiftLeftB32
 from ..Component import PackData
-from ..Common import globalParameters
 
 def formatting(idx, inputPrefix, prefixOffset):
     if inputPrefix:

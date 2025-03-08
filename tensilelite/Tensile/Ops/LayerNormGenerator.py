@@ -33,7 +33,7 @@ import collections
 from contextlib import contextmanager
 import Tensile.TensileInstructions as ti
 from Tensile.Common import detectGlobalCurrentISA, restoreDefaultGlobalParameters, \
-    assignGlobalParameters, isaToGfx, gfxToIsa, globalParameters
+    assignGlobalParameters, isaToGfx, gfxToIsa
 from Tensile.Toolchain.Validators import ToolchainDefaults, validateToolchain
 
 def kernel_header(name: str, gfx_arch: str, vgpr: int, sgpr: int, lds: int):
@@ -925,8 +925,7 @@ if __name__ == '__main__':
     if any([not i for i in (arch, toolchain_path, isa)]):
         restoreDefaultGlobalParameters()
         assignGlobalParameters({})
-        detectGlobalCurrentISA()
-        isa = globalParameters['CurrentISA']
+        isa = detectGlobalCurrentISA(0)
         arch = isaToGfx(isa)
         toolchain_path = validateToolchain(ToolchainDefaults.CXX_COMPILER)
 

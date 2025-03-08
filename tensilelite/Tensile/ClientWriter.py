@@ -30,13 +30,17 @@ import shutil
 from pathlib import Path
 from enum import Enum
 from glob import glob
+from typing import List
+
+from Tensile.SolutionStructs.Problem import ProblemType, ProblemSizesMock, ProblemSizesMockDummy
+from Tensile.SolutionStructs import ActivationArgs, BiasTypeArgs, FactorDimArgs
+from Tensile.Toolchain.Component import Assembler
 
 from . import ROOT_PATH
 from . import ClientExecutable
 from . import LibraryIO
-from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx, \
-  LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR
-from .SolutionStructs import ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, FactorDimArgs
+from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx, IsaInfo, \
+  LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR, detectGlobalCurrentISA, DepthUConfig
 from .TensileCreateLibrary import copyStaticFiles
 from .Contractions import FreeIndex, BatchIndex
 from .Contractions import ProblemType as ContractionsProblemType
@@ -79,7 +83,7 @@ class ClientLogLevel(Enum):
 ################################################################################
 # Main
 ################################################################################
-def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
+def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: Path, deviceId: int, useShortNames: bool=False):
 
   libraryLogicPath = ensurePath(outputPath / LIBRARY_LOGIC_DIR)
   clientLibraryPath = ensurePath(outputPath / LIBRARY_CLIENT_DIR)
@@ -97,7 +101,7 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
   functions = []
   functionNames = []
 
-  createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, cxxCompiler)
+  createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, str(assembler.path), isaToGfx(list(isaInfoMap.keys())[0]), useShortNames)
   subprocess.run(shlex.split(createLibraryScript), cwd=clientLibraryPath)
   coList = glob(os.path.join(clientLibraryPath, "library/*.co"))
   yamlList = glob(os.path.join(clientLibraryPath, "library/*.yaml"))
@@ -105,7 +109,7 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
   clientParametersPaths = []
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary) \
-        = LibraryIO.parseLibraryLogicFile(logicFileName, cxxCompiler)
+        = LibraryIO.parseLibraryLogicFile(logicFileName, assembler, False, False, False, DepthUConfig(), isaInfoMap, globalParameters["LazyLibraryLoading"])
     functions.append((scheduleName, problemType))
     functionNames.append("tensile_%s" % (problemType))
     problemSizes = ProblemSizesMock(exactLogic) if exactLogic else ProblemSizesMockDummy()
@@ -137,6 +141,7 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
     activationArgs = ActivationArgs(problemType, activationEnums) if isForAll else ""
     factorDimArgs = FactorDimArgs(problemType, factorDimEnums)
 
+    print1(f"libraryFile: {yamlList}")
     clientParametersPaths.append(writeClientConfig(
                                   forBenchmark=False,
                                   solutions=None,
@@ -145,11 +150,12 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
                                   factorDimArgs=factorDimArgs,
                                   activationArgs=activationArgs,
                                   icacheFlushArgs=icacheFlushArgs,
-                                  stepName=str(ProblemType(problemType)),
+                                  stepName=str(ProblemType(problemType, False)),
                                   stepBaseDir=str(clientLibraryPath),
                                   newLibrary=newLibrary,
-                                  configBase="ClientParameters_%s"%str(ProblemType(problemType)),
+                                  configBase="ClientParameters_%s"%str(ProblemType(problemType, False)),
                                   codeObjectFiles=coList,
+                                  deviceId=deviceId,
                                   tileAwareSelection=False,
                                   libraryFile=yamlList[0]))
 
@@ -167,7 +173,7 @@ def main(config, cxxCompiler: str, cCompiler: str, outputPath: Path):
 
   forBenchmark = False
   enableTileSelection = False
-  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler, cCompiler, clientLibraryPath, clientParametersPaths)
+  returncode = runClient(libraryLogicPath, forBenchmark, enableTileSelection, str(assembler.path), cCompiler, clientLibraryPath, clientParametersPaths)
 
   return returncode
 
@@ -200,7 +206,7 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: 
 
   return process.returncode
 
-def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
+def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, targetGfx, useShortNames: bool=False):
   import io
   runScriptFile = io.StringIO()
 
@@ -209,7 +215,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
   if not globalParameters["LazyLibraryLoading"]:
     callCreateLibraryCmd += " --no-lazy-library-loading"
 
-  if globalParameters["ShortNames"]:
+  if useShortNames:
     callCreateLibraryCmd += " --short-file-names"
 
   if globalParameters.get("AsmDebug", False):
@@ -218,7 +224,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
   if globalParameters["KeepBuildTmp"]:
     callCreateLibraryCmd += " --keep-build-tmp"
 
-  callCreateLibraryCmd += " --architecture=" + globalParameters["Architecture"]
+  callCreateLibraryCmd += " --architecture=" + targetGfx
   callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
   callCreateLibraryCmd += " --cxx-compiler=" + cxxCompiler
   callCreateLibraryCmd += " --library-format=" + globalParameters["LibraryFormat"]
@@ -231,17 +237,6 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler):
 
   return runScriptFile.getvalue()
 
-def writeBuildClientLibraryScript(path, libraryLogicPath, cxxCompiler):
-  filename = os.path.join(path, \
-    "build.%s" % ("bat" if os.name == "nt" else "sh") )
-  with open(filename, "w") as file:
-    file.write("#!/bin/bash\n\n")
-    file.write("set -ex\n")
-    file.write(getBuildClientLibraryScript(path, libraryLogicPath, cxxCompiler))
-
-  if os.name != "nt":
-    os.chmod(filename, 0o777)
-  return filename
 
 def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, buildDir, configPaths=None):
   if configPaths is None:
@@ -500,7 +495,7 @@ def pruneModeName(mode):
     if mode == 5: return 'Prune0X0X'
     if mode == 6: return 'Prune00XX'
 
-def writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
+def writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, deviceId: int, libraryFile=None):
 
     assert os.path.exists(sourceDir), f"sourceDir={sourceDir} does not exist"
 
@@ -513,7 +508,7 @@ def writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs
           libraryFile = os.path.join(sourceDir, "library", libraryFilename)
         param("library-file", libraryFile)
 
-        currentGFXName = isaToGfx(globalParameters["CurrentISA"])
+        currentGFXName = isaToGfx(detectGlobalCurrentISA(deviceId))
         for coFile in codeObjectFiles:
             if 'gfx' not in coFile or currentGFXName in coFile:
                 param("code-object", os.path.join(sourceDir,coFile))
@@ -573,7 +568,7 @@ def writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs
         if globalParameters["DataInitValueActivationArgs"]:
           param('activation-additional-args', ','.join(map(str, globalParameters["DataInitValueActivationArgs"])))
 
-        param("device-idx",               globalParameters["Device"])
+        param("device-idx",               deviceId)
 
         param("init-seed",                globalParameters["DataInitSeed"])
 
@@ -656,6 +651,7 @@ def writeClientConfig(
       newLibrary,
       codeObjectFiles,
       tileAwareSelection,
+      deviceId: int,
       configBase = "ClientParameters",
       libraryFile = None
     ):
@@ -677,11 +673,11 @@ def writeClientConfig(
       resultsFileName = os.path.join(stepBaseDir, "../Data", stepName+".csv")
 
     newSolution = next(iter(newLibrary.solutions.values()))
-    writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
+    writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs, activationArgs, icacheFlushArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, deviceId, libraryFile)
 
     return filename
 
-def CreateBenchmarkClientParametersForSizes(libraryRootPath, problemSizes, dataFilePath, configFile, problemTypeDict=None):
+def CreateBenchmarkClientParametersForSizes(libraryRootPath, problemSizes, dataFilePath, configFile, deviceId, problemTypeDict=None):
 
     libraryPath = os.path.join(libraryRootPath, "library")
     libraryFiles = [os.path.join(libraryPath, f) for f in os.listdir(libraryPath)]
@@ -698,4 +694,4 @@ def CreateBenchmarkClientParametersForSizes(libraryRootPath, problemSizes, dataF
       problemTypeDict = metaData["ProblemType"]
       problemType = ContractionsProblemType.FromOriginalState(problemTypeDict)
 
-    writeClientConfigIni(True, problemSizes, "", "", "", "", problemType, libraryRootPath, codeObjectFiles, dataFilePath, configFile)
+    writeClientConfigIni(True, problemSizes, "", "", "", "", problemType, libraryRootPath, codeObjectFiles, dataFilePath, configFile, deviceId)

@@ -201,7 +201,6 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     if args.CmakeCxxCompiler:
         os.environ["CMAKE_CXX_COMPILER"] = args.CmakeCxxCompiler
     arguments["ShortNames"] = args.ShortNames
-    arguments["CodeFromFiles"] = False
     arguments["LogicFormat"] = args.LogicFormat
     arguments["LibraryFormat"] = args.LibraryFormat
     if args.no_enumerate:
