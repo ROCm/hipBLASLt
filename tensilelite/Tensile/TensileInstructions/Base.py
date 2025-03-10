@@ -48,6 +48,9 @@ class TensileInstructions:
                 cls._instance._kernelInfo = {}
         return cls._instance
 
+    def __reduce__(self):
+        return (TensileInstructions, ())
+
     @dataclass
     class IsaInfo:
         assemblerPath: str
@@ -153,7 +156,7 @@ class Item:
     @property
     def archCaps(self) -> dict:
         return _global_ti.getArchCaps()
-
+    
     @property
     def regCaps(self) -> dict:
         return _global_ti.getRegCaps()
