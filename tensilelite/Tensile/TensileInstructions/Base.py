@@ -191,9 +191,9 @@ def getSlcBitName(hasGLCModifier):
   return "sc1"
 
 def getCOVFromParam(versionString):
-  if versionString == "default" or versionString == "V4":
+  if versionString == "default" or versionString == "V4" or versionString == "4":
     return 4
-  elif versionString == "V5":
+  elif versionString == "V5" or versionString == "5":
     return 5
   printExit("Unknown CodeObjectVersion %s" % (versionString))
 
