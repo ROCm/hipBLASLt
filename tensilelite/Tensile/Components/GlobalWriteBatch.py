@@ -809,7 +809,7 @@ class GlobalWriteBatchWriter:
       if waitcntInst:
         module.add(waitcntInst)
 
-    module.addComment1("apply mask, calc new C and issue writes XD")
+    module.addComment1("apply mask, calc new C and issue writes")
     # module.add(self.getBomb()) # can see store addresses just before the store inst
 
     activationCDataType = self.kernel["ProblemType"]["ActivationComputeDataType"]
