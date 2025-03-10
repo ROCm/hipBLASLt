@@ -24,13 +24,12 @@ from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, 
     SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SMovB64, SCBranchSCC1, SCmpLeU32, VMovB32, \
     vgpr, SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
     log2, SBarrier, SStoreB32, SLongBranchPositive, SBranch, ceilDivide, replaceHolder, SNop, staticMultiply, SSleep, \
-    VAddU32, VAddF32, VAddF64, SAndB32, SLShiftRightB32, VReadfirstlaneB32, SBranchIfNotZero
+    VAddU32, VAddF32, VAddF64, SAndB32, SLShiftRightB32, VReadfirstlaneB32, SBranchIfNotZero, fastdeepcopy
 from ..Common import print2
 # from ..TensileInstructions.Containers import SMEMModifiers
 from ..Component import Component
 from ..AsmStoreState import StoreState, VectorDataTypes
 import abc
-from copy import deepcopy
 
 class XCCMapping(Component):
     """
@@ -583,7 +582,7 @@ class StreamK(Component):
             tmpSgpr = tmpSgprRes.idx
             elementSgprs = tmpSgpr + ss.cfg.numTempSgprPerBatch
 
-            codeAccVgprRead = deepcopy(writer.codes.accVgprRead) if writer.states.serializedStore else None
+            codeAccVgprRead = fastdeepcopy(writer.codes.accVgprRead) if writer.states.serializedStore else None
             # TODO STREAM-K remove this?
             useCodeMulAlpha = kernel["MIArchVgpr"] and alpha and not (kernel["GlobalSplitU"] > 1)
             if useCodeMulAlpha: # do not set codeAccVgprRead=None if GSU>1
@@ -1047,9 +1046,9 @@ class StreamK(Component):
                 tmpSgpr = tmpSgprRes.idx
                 elementSgprs = tmpSgpr + ss.cfg.numTempSgprPerBatch
 
-                codeAccVgprRead = deepcopy(writer.codes.accVgprRead) if writer.states.serializedStore else None
-                # codeAccVgprRead = deepcopy(writer.codes.codeAccVgprRead) if writer.states.serializedStore else None
-                codeAccVgprWrite = deepcopy(writer.codes.accVgprWrite) if writer.states.serializedStore else None
+                codeAccVgprRead = fastdeepcopy(writer.codes.accVgprRead) if writer.states.serializedStore else None
+                # codeAccVgprRead = fastdeepcopy(writer.codes.codeAccVgprRead) if writer.states.serializedStore else None
+                codeAccVgprWrite = fastdeepcopy(writer.codes.accVgprWrite) if writer.states.serializedStore else None
 
                 module.add(self.computeWorkspaceSrd(writer, kernel, sgpr(sCtaIdx), tmpSgpr))
 

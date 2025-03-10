@@ -25,7 +25,6 @@ from .Base import Item, fastdeepcopy
 from .Containers import DSModifiers, FLATModifiers, MUBUFModifiers, SMEMModifiers, SDWAModifiers, VOP3PModifiers, VCC, \
                         RegisterContainer, HolderContainer, EXEC, DPPModifiers
 from .Formatting import formatStr, printExit
-import abc
 from enum import Enum
 from typing import List, Optional, Union
 
@@ -40,7 +39,7 @@ from typing import List, Optional, Union
 def SrcAbs(val):
     return f'abs({str(val)})'
 
-class Instruction(Item, abc.ABC):
+class Instruction(Item):
     def __init__(self, instType: InstType, comment="") -> None:
         Item.__init__(self, "instruction")
         self.instType = instType
@@ -72,15 +71,12 @@ class Instruction(Item, abc.ABC):
         # Overwrite this if needed
         pass
 
-    @abc.abstractmethod
     def getParams(self) -> list:
         pass
 
-    @abc.abstractmethod
     def toList(self) -> list:
         pass
 
-    @abc.abstractmethod
     def __str__(self) -> str:
         pass
 
@@ -99,7 +95,6 @@ class CompositeInstruction(Instruction):
         self.setupInstructions()
         return [inst.toList() for inst in self.instructions]
 
-    @abc.abstractmethod
     def setupInstructions(self):
         pass
 
@@ -494,10 +489,9 @@ class ReadWriteInstruction(Instruction):
         # Local read is set in DSLoad and DSStore
         self.instStr += self.typeConvert()
 
-    @abc.abstractmethod
     def toList(self) -> list:
         pass
-    @abc.abstractmethod
+
     def __str__(self) -> str:
         pass
 

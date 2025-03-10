@@ -11428,9 +11428,9 @@ class KernelWriterAssembly(KernelWriter):
         tmpSgpr = tmpSgprRes.idx
         actTempSgpr = tmpSgpr # Get sgpr start address, should always be the same
         elementSgprs = tmpSgpr + ss.cfg.numTempSgprPerBatch
-        codeAccVgprRead = deepcopy(self.codes.accVgprRead) if self.states.serializedStore else None
+        codeAccVgprRead = fastdeepcopy(self.codes.accVgprRead) if self.states.serializedStore else None
         mulAlpha = self.codes.mulAlphaMultipleBuffer if (kernel["_GlobalAccumulation"] == 'MultipleBuffer' or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') else self.codes.mulAlphaOther
-        codeMulAlpha = deepcopy(mulAlpha) if self.states.serializedStore else None
+        codeMulAlpha = fastdeepcopy(mulAlpha) if self.states.serializedStore else None
 
         self.alphaBeforeLoadC = False
         if kernel["MIArchVgpr"] and applyAlpha and not kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
@@ -12991,7 +12991,7 @@ class KernelWriterAssembly(KernelWriter):
     activationLabelModules = activationLabelList[gwvw]
     module = Module(getActivationBranchModuleName())
     setAddrEndLabel = Label(self.labels.getNameInc("ActivationSetPCAddrEnd"), "")
-    toActModules = deepcopy(toActModuleList[gwvw])
+    toActModules = fastdeepcopy(toActModuleList[gwvw])
     for index, toActModule in enumerate(toActModules):
       if betaIdx >= 0 and edgeIdx >= 0:
         toActModule.label = self.labels.getNameInc(toActModule.label + "_beta_%u_edge_%u"%(betaIdx, edgeIdx))

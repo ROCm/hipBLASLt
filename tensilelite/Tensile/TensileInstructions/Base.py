@@ -20,7 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from rocisa import rocIsa
+from rocisa import rocIsa, base
 from rocisa.base import KernelInfo
 
 import pickle
@@ -53,52 +53,26 @@ def printItemList(listOfItems, tag="__unnamed__") -> None:
 # Global
 _global_ti = rocIsa.getInstance()
 
-class Item:
-    """
-    Base class for Modules, Instructions, etc
-    Item is a atomic collection of or more instructions and commentsA
-    """
+# This is a temporary wrapper.Will remove when TensileInstructions are all moved to rocisa
+class Item(base.Item):
+    def __init__(self, name=""):
+        super().__init__(name)
 
-    def __init__(self, name: str="") -> None:
-        self.parent = ""
-        self.name = name
+    def __getstate__(self):
+        base_state = super().__getstate__()
+        py_state = {key: value for key, value in self.__dict__.items() if not key.startswith("__")}
+        return (base_state, py_state)
+    
+    def __setstate__(self, state):
+        base_state, py_state = state
+        super().__setstate__(base_state)
+        self.__dict__.update(py_state)
 
     def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
-
-    @property
-    def asmCaps(self) -> dict:
-        return _global_ti.getAsmCaps()
-
-    @property
-    def archCaps(self) -> dict:
-        return _global_ti.getArchCaps()
-    
-    @property
-    def regCaps(self) -> dict:
-        return _global_ti.getRegCaps()
-
-    @property
-    def asmBugs(self) -> dict:
-        return _global_ti.getAsmBugs()
-
-    @property
-    def kernel(self) -> KernelInfo:
-        return _global_ti.getKernel()
+        assert 0, "Not implemented"
 
     def countType(self, ttype) -> int:
         return int(isinstance(self, ttype))
-
-    def prettyPrint(self, indent="") -> str:
-        ostream = ""
-        ostream += "%s%s "%(indent, type(self).__name__)
-        ostream += str(self)
-        return ostream
 
 def getGlcBitName(hasGLCModifier):
   if hasGLCModifier:

@@ -135,6 +135,16 @@ class Module(Item):
         self.tempVgpr = None
         self._isNoOpt = False
 
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.setParent()
+
+    def setParent(self):
+        for item in self.itemList:
+            item.parent = self
+            if isinstance(item, Module):
+                item.setParent()
+
     def setNoOpt(self, noOpt: bool) -> None:
         self._isNoOpt = noOpt
 
