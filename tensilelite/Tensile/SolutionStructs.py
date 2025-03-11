@@ -1391,6 +1391,9 @@ class Solution(collections.abc.Mapping):
     if state["UseDotInstruction"]:
       # need modification for dot4 or dot8
       state["NumDotElements"] = 2
+    if not state["UseDotInstruction"] and state["WaveSplitK"]:
+      reject(state, "WaveSplitK currently only support dot2 kernel.")
+      return
 
     # tail loop optimization
     state["tailLoopOptA"] = True
