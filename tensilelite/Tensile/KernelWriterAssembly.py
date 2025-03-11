@@ -13103,9 +13103,9 @@ class KernelWriterAssembly(KernelWriter):
         for block0 in range(0, kernel["ThreadTile0"]):
           vgprIdx = block0 + block1 * kernel["ThreadTile0"]
           if accK <= 8:
-            module.add(VAddF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=vgpr("ValuC+%d"%vgprIdx), comment="Reduce %s elements"%(accK*2), dpp=DPPModifiers(bound_ctrl=0, row_shr=accK) ))
+            module.add(VAddF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=vgpr("ValuC+%d"%vgprIdx), dpp=DPPModifiers(bound_ctrl=0, row_shr=accK), comment="Reduce %s elements"%(accK*2) ))
           else:
-            module.add(VAddF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=vgpr("ValuC+%d"%vgprIdx), comment="Reduce %s elements"%(accK*2), dpp=DPPModifiers(bound_ctrl=0, row_bcast=accK-1) ))
+            module.add(VAddF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=vgpr("ValuC+%d"%vgprIdx), dpp=DPPModifiers(bound_ctrl=0, row_bcast=accK-1), comment="Reduce %s elements"%(accK*2) ))
       accK *= 2
     
     module.addSpaceLine()  
