@@ -95,13 +95,13 @@ For ``FP8`` type Matmul, hipBLASLt supports the type combinations shown in the f
 
 * This table uses simpler abbrieviations:
 
-  + **FP16** means **HIP_R_16F**
-  + **BF16** means **HIP_R_16BF**
-  + **FP32** means **HIP_R_32F**
-  + **FP8** means **HIP_R_8F_E4M3**
-  + **BF8** means **HIP_R_8F_E5M2**
-  + **FP8_FNUZ** means **HIP_R_8F_E4M3_FNUZ** and
-  + **BF8_FNUZ** means **HIP_R_8F_E5M2_FNUZ**
+  *  **FP16** means **HIP_R_16F**
+  *  **BF16** means **HIP_R_16BF**
+  *  **FP32** means **HIP_R_32F**
+  *  **FP8** means **HIP_R_8F_E4M3**
+  *  **BF8** means **HIP_R_8F_E5M2**
+  *  **FP8_FNUZ** means **HIP_R_8F_E4M3_FNUZ** and
+  *  **BF8_FNUZ** means **HIP_R_8F_E5M2_FNUZ**
 
 *  The table applies to all transpose types (NN/NT/TT/TN).
 *  **Default bias type** indicates the type when the bias type is not explicitly specified.
