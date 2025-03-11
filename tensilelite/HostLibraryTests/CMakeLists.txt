@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2019-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2019-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.25)
 
 project(TensileHostLibraryTest)
 
@@ -32,7 +32,6 @@ set( CMAKE_CXX_EXTENSIONS OFF )
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} /opt/rocm)
 
 option(TENSILE_USE_HIP       "Use the Hip runtime." ON)
-option(TENSILE_USE_OPENCL    "Use the OpenCL runtime." OFF)
 option(TENSILE_USE_LLVM      "Use LLVM for parsing config files." ON)
 option(TENSILE_USE_MSGPACK   "Use msgpack for parsing config files." ON)
 option(TENSILE_USE_OPENMP    "Enable OpenMP multithreading." ON)
@@ -44,9 +43,6 @@ if(TENSILE_USE_HIP)
     if(TENSILE_USE_LLVM)
         set(TENSILE_COMPONENTS ${TENSILE_COMPONENTS} Client)
     endif()
-endif()
-if(TENSILE_USE_OPENCL)
-    set(TENSILE_COMPONENTS ${TENSILE_COMPONENTS} OpenCL)
 endif()
 if(TENSILE_USE_LLVM)
     set(TENSILE_COMPONENTS ${TENSILE_COMPONENTS} LLVM)
@@ -64,20 +60,14 @@ endif()
 
 if(NOT TENSILE_DISABLE_CTEST)
     enable_testing()
-
-    if(CMAKE_VERSION VERSION_GREATER 3.9)
-        include(GoogleTest)
+    find_package( GTest )
+    if(GTest_FOUND)
         option(GTEST_INTEGRATION "Enable Googletest integration with CMake." ON)
     else()
         option(GTEST_INTEGRATION "Enable Googletest integration with CMake." OFF)
     endif()
 endif()
 
-set(INSTALL_GTEST OFF CACHE BOOL "Install GTest")
-add_subdirectory(googletest)
-if(NOT gtest_SOURCE_DIR)
-    message(FATAL_ERROR "googletest not found.  Run git submodule update --init")
-endif()
 
 find_package(Boost COMPONENTS filesystem)
 
@@ -101,10 +91,6 @@ if(TENSILE_USE_OPENMP AND NOT TARGET custom_openmp_cxx)
     endif ()
 endif()
 
-if(TENSILE_USE_OPENCL)
-    find_package(OpenCL REQUIRED)
-endif()
-
 add_subdirectory(configs)
 
 set(TEST_DATA_DIR "${CMAKE_CURRENT_BINARY_DIR}/data")
@@ -117,7 +103,6 @@ foreach(FILE ${SOLUTION_LIBRARY_FILES})
     file(COPY ${FILE} DESTINATION "${TEST_DATA_DIR}")
 endforeach(FILE)
 
-include_directories("." ${GTEST_SOURCE_DIR}/include)
 add_subdirectory(testlib)
 
 set(test_sources ${test_sources}
@@ -149,7 +134,11 @@ if(NOT TENSILE_DISABLE_CTEST)
     endif()
 endif()
 
-target_link_libraries(TensileTests PUBLIC gtest TensileHost TensileTestLib ${Boost_LIBRARIES})
+target_link_libraries(TensileTests PUBLIC TensileHost TensileTestLib ${Boost_LIBRARIES})
+
+if(GTEST_INTEGRATION)
+    target_link_libraries(TensileTests PUBLIC GTest::gtest)
+endif()
 
 if(TENSILE_USE_LLVM)
     find_library(LLVMObjectYAML_LIBRARY
