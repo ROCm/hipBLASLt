@@ -44,8 +44,8 @@ BenchmarkProblems:
       # UseScaleAB: "Scalar"
       # UseScaleCD: True
       UseScaleAlphaVec: 3
-      UseBias: 3
-      BiasDataTypeList: [I]
+    #  UseBias: 3
+      BiasDataTypeList: [S]
       # UseE: True
     -
       InitialSolutionParameters:
@@ -99,7 +99,7 @@ BenchmarkProblems:
           # - Exact: [127,   128, 1, 640]
           # - Exact: [128,   128, 1, 640]
           # - Exact: [129,   128, 1, 640]
-        - BiasTypeArgs: ['I']
+          #   - BiasTypeArgs: ['S']
         - ActivationArgs:
           - [Enum: relu]
 
