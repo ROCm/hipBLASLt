@@ -15,12 +15,12 @@
   ComplexConjugateA: false
   ComplexConjugateB: false
   ComputeDataType: 0
-  DataType: 16
-  DataTypeA: 16
+  DataType: 12
+  DataTypeA: 12
   DataTypeAmaxD: 0
-  DataTypeB: 16
-  DataTypeE: 16
-  DestDataType: 16
+  DataTypeB: 12
+  DataTypeE: 12
+  DestDataType: 12
   F32XdlMathOp: 0
   Gradient: false
   GroupedGemm: false
@@ -237,12 +237,12 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 16
-      DataTypeA: 16
+      DataType: 12
+      DataTypeA: 12
       DataTypeAmaxD: 0
-      DataTypeB: 16
-      DataTypeE: 16
-      DestDataType: 16
+      DataTypeB: 12
+      DataTypeE: 12
+      DestDataType: 12
       F32XdlMathOp: 0
       Gradient: false
       GroupedGemm: false

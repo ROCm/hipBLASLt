@@ -15,10 +15,10 @@
   ComplexConjugateA: false
   ComplexConjugateB: false
   ComputeDataType: 0
-  DataType: 17
-  DataTypeA: 17
+  DataType: 13
+  DataTypeA: 13
   DataTypeAmaxD: 0
-  DataTypeB: 17
+  DataTypeB: 13
   DataTypeE: 0
   DestDataType: 0
   F32XdlMathOp: 0
@@ -237,10 +237,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 17
-      DataTypeA: 17
+      DataType: 13
+      DataTypeA: 13
       DataTypeAmaxD: 0
-      DataTypeB: 17
+      DataTypeB: 13
       DataTypeE: 0
       DestDataType: 0
       F32XdlMathOp: 0
