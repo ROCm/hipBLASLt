@@ -5345,61 +5345,60 @@ class KernelWriterAssembly(KernelWriter):
       else:
         endCounter = 0
 
-      # TODO: decValue not defined
-      # if kernel["AssertSummationElementMultiple"] % (kernel["DepthU"] * 2) == 0 and endCounter > 0:
-      #   # if AssertSummationElementMultiple is multiple of DepthU*2, loop exit is necessary only once in 2 Loop iterations
-      #   #  In endCounter % 2 == 1 case, exit at lc % 2 == 0 (= oddLabel). It means no exit if not oddLabel
-      #   #  In endCounter % 2 == 0 case, exit at lc % 2 == 1 (= not oddLabel). It means no exit if oddLabel
-      #   # No exit case, no code is necessary except for final Loop
+      if kernel["AssertSummationElementMultiple"] % (kernel["DepthU"] * 2) == 0 and endCounter > 0:
+        # if AssertSummationElementMultiple is multiple of DepthU*2, loop exit is necessary only once in 2 Loop iterations
+        #  In endCounter % 2 == 1 case, exit at lc % 2 == 0 (= oddLabel). It means no exit if not oddLabel
+        #  In endCounter % 2 == 0 case, exit at lc % 2 == 1 (= not oddLabel). It means no exit if oddLabel
+        # No exit case, no code is necessary except for final Loop
 
-      #   # decrement by 2 if PGR=2 and StaggerU is 0, else 1
-      #   if kernel["PrefetchGlobalRead"]==2:
-      #     with self.allocTmpSgpr(2) as tmpSgprInfo:
-      #       tmpSgpr = tmpSgprInfo.idx
-      #       module.add(SCmpEQU32(src0=sgpr("StaggerU"), src1=0))
-      #       module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=hex(2), src1=hex(1)))
-      #       decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
-      #           src1=sgpr(tmpSgpr), \
-      #           comment="dec counter%s"%(loopChar) )
-      #   else:
-      #     decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
-      #         src1=1, \
-      #         comment="dec counter%s"%(loopChar) )
-      #   condCode = SCmpEQI32(src0=loopCounter, \
-      #       src1=hex(endCounter), \
-      #       comment="counter%s==%d"%(loopChar,endCounter) )
+        # decrement by 2 if PGR=2 and StaggerU is 0, else 1
+        if kernel["PrefetchGlobalRead"]==2:
+          with self.allocTmpSgpr(2) as tmpSgprInfo:
+            tmpSgpr = tmpSgprInfo.idx
+            module.add(SCmpEQU32(src0=sgpr("StaggerU"), src1=0))
+            module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=hex(2), src1=hex(1)))
+            decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
+                src1=sgpr(tmpSgpr), \
+                comment="dec counter%s"%(loopChar) )
+        else:
+          decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
+              src1=1, \
+              comment="dec counter%s"%(loopChar) )
+        condCode = SCmpEQI32(src0=loopCounter, \
+            src1=hex(endCounter), \
+            comment="counter%s==%d"%(loopChar,endCounter) )
 
-      #   noExit = False
+        noExit = False
 
-      #   if endCounter%2 != 0:
-      #     if not oddLabel:
-      #       noExit = True
-      #   else:
-      #     if oddLabel:
-      #       noExit = True
+        if endCounter%2 != 0:
+          if not oddLabel:
+            noExit = True
+        else:
+          if oddLabel:
+            noExit = True
 
-      #   if noExit:
-      #     # No exit. No dec code if decValue is 2
-      #     if decValue == 2:
-      #       decCode = ""
-      #     condCode = ""
-      #     nonFinalJumpNeeded = False
-      #     if finalLoop:
-      #       # No exit and finalLoop case, use s_branch (no condition)
-      #       finalJump = SBranch
+        if noExit:
+          # No exit. No dec code if decValue is 2
+          if decValue == 2:
+            decCode = ""
+          condCode = ""
+          nonFinalJumpNeeded = False
+          if finalLoop:
+            # No exit and finalLoop case, use s_branch (no condition)
+            finalJump = SBranch
 
-      #   if decCode: module.add(decCode)
-      #   if condCode: module.add(condCode)
-      # else:
-      module.add(SSubU32(
-          dst=loopCounter, src0=loopCounter, \
-          src1=1, \
-          comment="dec counter%s"%(loopChar) ))
+        if decCode: module.add(decCode)
+        if condCode: module.add(condCode)
+      else:
+        module.add(SSubU32(
+            dst=loopCounter, src0=loopCounter, \
+            src1=1, \
+            comment="dec counter%s"%(loopChar) ))
 
-      module.add(SCmpEQI32(
-          src0=loopCounter, \
-          src1=hex(endCounter), \
-          comment="counter%s==%d"%(loopChar,endCounter) ))
+        module.add(SCmpEQI32(
+            src0=loopCounter, \
+            src1=hex(endCounter), \
+            comment="counter%s==%d"%(loopChar,endCounter) ))
 
     jumpLabel = loopLabelEnd
     if not tailLoop and not kernel["SuppressNoLoadLoop"] and kernel["ExpandPointerSwap"]:

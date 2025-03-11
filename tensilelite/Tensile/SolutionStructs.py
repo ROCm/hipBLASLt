@@ -2950,6 +2950,7 @@ class Solution(collections.abc.Mapping):
           if coalescedA % state["GlobalReadVectorWidthA"] != 0 or elementPerThread % state["GlobalReadVectorWidthA"] != 0:
             reject(state, "dot2: non-valid GRVWA")
             return
+          # TODO: support edge shiftptr to release this constraint.
           if state["ProblemType"]["TLUA"]:
             state["AssertFree0ElementMultiple"] = max(state["AssertFree0ElementMultiple"], state["GlobalReadVectorWidthA"])
         
@@ -2987,6 +2988,7 @@ class Solution(collections.abc.Mapping):
           if coalescedB % state["GlobalReadVectorWidthB"] != 0 or elementPerThread % state["GlobalReadVectorWidthB"] != 0:
             reject(state, "dot2: non-valid GRVWB")
             return
+          # TODO: support edge shiftptr to release this constraint.
           if state["ProblemType"]["TLUB"]:
             state["AssertFree1ElementMultiple"] = max(state["AssertFree1ElementMultiple"], state["GlobalReadVectorWidthB"])
 
@@ -3346,10 +3348,10 @@ class Solution(collections.abc.Mapping):
         reject(state, "Unsupported NumWaveSplitK value. Need to be power of 2 and does not exceed 64.")
       if state["DepthU"] % (state["LocalReadVectorWidth"] * state["NumWaveSplitK"]) != 0:
         reject(state, "Non-valid DepthU for dot2 kernel, need to be multiple of (LocalReadVectorWidth * InnerUnroll * NumWaveSplitK) for atomics")
-      # Need to adjust the logic in LraTileAssignmentVALU
+      # TODO: Need to consider VectorWidth in LraTileAssignmentVALU
       if state["VectorWidthA"] != 1 or state["VectorWidthB"] != 1:
         reject(state, "dot2 kernel requires VectorWidth = 1")
-      # Need VGPR index remapping
+      # TODO: Need to remap VGPR index
       if (state["ThreadTile0"] != 1 or state["ThreadTile1"] != 1) and state["InnerUnroll"] > 1: 
         reject(state, "dot2 kernel does not support wider local read with ThreadTile > 1")
       if state["ScheduleLocalWrite"] != 1:
