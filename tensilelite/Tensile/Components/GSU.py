@@ -577,7 +577,7 @@ class GSU(Component):
                 data = ss.elementData[elementIdx]
                 sumIdxGSUSYNC = ss.elementSumIdx[elementIdx]
                 addr0 = vgpr(addrCalc.addrDVgpr)
-                globalOffset = addrCalc.globalOffset
+                globalOffset = 0
         
                 if batchIdx == 0 and elementIdx == 0:
                     addrDVgpr = addrCalc.addrDVgpr
@@ -1614,7 +1614,7 @@ class GSU(Component):
             if dataType.isDouble() or dataType.isSingleComplex():
                 vgprstart = vgprstart*2
             module.add(writer.chooseGlobalRead(True, bps, vgprstart, \
-                            addr0, addr1, soffset=sgpr(soffset), offset=addrCalc.globalOffset, glc=1, slc=1,\
+                            addr0, addr1, soffset=sgpr(soffset), offset=0, glc=1, slc=1,\
                             comment="load GSU D 0 "+str(vgprstart)))
             SyncloadedData += 1
 
@@ -1646,11 +1646,11 @@ class GSU(Component):
 
                 if(kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
                     module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
-                                addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1, \
+                                addr0, addr1, soffset=0, offset=0, glc=1, slc=1, \
                                 comment="load GSU DD %u %u %u" % (bps, gwvw, kernel["ProblemType"]["DestDataType"].numRegisters())))
                 else:
                     module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*i, \
-                                addr0, addr1, soffset=sgpr(soffset), offset=addrCalc.globalOffset, glc=1, slc=1, \
+                                addr0, addr1, soffset=sgpr(soffset), offset=0, glc=1, slc=1, \
                                 comment="load GSU DD %u %u %u" % (bps, gwvw, kernel["ProblemType"]["DestDataType"].numRegisters())))
 
                 SyncloadedData += 1
@@ -1690,11 +1690,11 @@ class GSU(Component):
 
                 if(kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
                     module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
-                                vgpr(GSUMvgpr), addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1, \
+                                vgpr(GSUMvgpr), addr1, soffset=0, offset=0, glc=1, slc=1, \
                                 comment="load GSU DD %u" % bps))
                 else:
                     module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*i, \
-                                vgpr(GSUMvgpr), addr1, soffset=sgpr(soffset), offset=addrCalc.globalOffset, glc=1, slc=1, \
+                                vgpr(GSUMvgpr), addr1, soffset=sgpr(soffset), offset=0, glc=1, slc=1, \
                                 comment="load GSU DD %u" % bps))
 
                 SyncloadedData += 1
