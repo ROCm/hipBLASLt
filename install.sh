@@ -44,6 +44,7 @@ function display_help()
   echo "    [-k|--relwithdebinfo] -DCMAKE_BUILD_TYPE=RelWithDebInfo"
   echo "    [--hip-clang] build library for amdgpu backend using amdclang"
   echo "    [--static] build static library"
+  echo "    [-n|--no-tensile] build hipBLASLt without Tensile GEMM libraries"
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
   echo "    [--gprof] enable profiling functionality with GNU gprof"
@@ -401,8 +402,8 @@ tensile_no_lazy_library_loading=false
 tensile_tag=
 tensile_test_local_path=
 tensile_version=
-build_tensile=true
 tensile_msgpack_backend=true
+build_tensile=false
 update_cmake=true
 enable_gprof=false
 keep_build_tmp=false
@@ -503,7 +504,7 @@ while true; do
             tensile_test_local_path=${2}
             shift 2 ;;
         -n|--no_tensile|--no-tensile)
-            build_tensile=false
+            build_tensile=true
             shift ;;
         --no-lazy-library-loading)
             tensile_no_lazy_library_loading=true
@@ -752,8 +753,8 @@ pushd .
   fi
 
   tensile_opt=""
-  if [[ "${build_tensile}" == false ]]; then
-    tensile_opt="${tensile_opt} -DBUILD_WITH_TENSILE=OFF"
+  if [[ "${build_tensile}" == true ]]; then
+    tensile_opt="${tensile_opt} -DTensile_SKIP_BUILD=ON"
   else
     if [[ -n "${tensile_logic}" ]]; then
       tensile_opt="${tensile_opt} -DTensile_LOGIC=${tensile_logic}"

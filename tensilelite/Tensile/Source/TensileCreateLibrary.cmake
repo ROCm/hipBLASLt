@@ -113,7 +113,7 @@ function(TensileCreateLibraryCmake
   message(STATUS "Tensile_CREATE_COMMAND: ${Tensile_CREATE_COMMAND}")
 
   # execute python command
-  if($ENV{TENSILE_SKIP_LIBRARY})
+  if(Tensile_SKIP_BUILD)
     message(STATUS "Skipping build of ${Tensile_OUTPUT_PATH}")
   else()
     if (WIN32)
