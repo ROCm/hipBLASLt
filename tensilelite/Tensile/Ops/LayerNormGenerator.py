@@ -925,7 +925,8 @@ if __name__ == '__main__':
     if any([not i for i in (arch, toolchain_path, isa)]):
         restoreDefaultGlobalParameters()
         assignGlobalParameters({})
-        isa = detectGlobalCurrentISA(0)
+        enumerator = validateToolchain(ToolchainDefaults.DEVICE_ENUMERATOR)
+        isa = detectGlobalCurrentISA(0, enumerator)
         arch = isaToGfx(isa)
         toolchain_path = validateToolchain(ToolchainDefaults.CXX_COMPILER)
 

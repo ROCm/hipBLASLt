@@ -104,10 +104,17 @@ def _posixSearchPaths() -> List[Path]:
     return searchPaths
 
 
+def isRhel8():
+    import platform
+    osRelease = platform.freedesktop_os_release()
+    return ("8.8" == osRelease["VERSION_ID"] and "rhel" == osRelease["ID"])
+
+
 class ToolchainDefaults(NamedTuple):
-    CXX_COMPILER= osSelect(linux="amdclang++", windows="clang++.exe")
-    C_COMPILER= osSelect(linux="amdclang", windows="clang.exe")
-    OFFLOAD_BUNDLER= osSelect(linux="clang-offload-bundler", windows="clang-offload-bundler.exe")
+    CXX_COMPILER = osSelect(linux="amdclang++", windows="clang++.exe")
+    C_COMPILER = osSelect(linux="amdclang", windows="clang.exe")
+    OFFLOAD_BUNDLER = osSelect(linux="clang-offload-bundler", windows="clang-offload-bundler.exe")
+    DEVICE_ENUMERATOR = osSelect(linux="rocm_agent_enumerator" if isRhel8() else "amdgpu-arch", windows="hipinfo")
     ASSEMBLER = osSelect(linux="amdclang++", windows="clang++.exe")
     HIP_CONFIG = osSelect(linux="hipconfig", windows="hipconfig")
 
@@ -245,4 +252,5 @@ def validateToolchain(*args: str):
     searchPaths = _windowsSearchPaths() if os.name == "nt" else _posixSearchPaths()
 
     out = (_validateExecutable(x, searchPaths) for x in args)
+    
     return next(out) if len(args) == 1 else tuple(out)

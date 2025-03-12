@@ -530,7 +530,7 @@ class KernelWriterConversion(KernelWriterBase):
       canPKF32Arch = []
       for isa in self.supportedArchs:
         if self.isaInfoMap[isa].asmCaps['v_pk_add_f32']: 
-          canPKF32Arch.append(arch)
+          canPKF32Arch.append(isa)
       defineStr = []
       if len(canPKF32Arch) > 0:
         defineStr = "#if defined(__%s__)"%isaToGfx(canPKF32Arch[0])

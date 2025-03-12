@@ -203,8 +203,6 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     arguments["ShortNames"] = args.ShortNames
     arguments["LogicFormat"] = args.LogicFormat
     arguments["LibraryFormat"] = args.LibraryFormat
-    if args.no_enumerate:
-        arguments["AMDGPUArchPath"] = False
     arguments["CpuThreads"] = args.CpuThreads
     arguments["PrintLevel"] = args.PrintLevel
     arguments["AsmDebug"] = args.AsmDebug

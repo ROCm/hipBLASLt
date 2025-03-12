@@ -39,7 +39,7 @@ from Tensile import __version__
 from Tensile.Common import print1, printExit, printWarning, ensurePath, HR, \
                            LIBRARY_LOGIC_DIR, verbosity, IsaInfo, makeDebugConfig, \
                            makeDepthUConfig, DebugConfig, DepthUConfig, IsaVersion
-from Tensile.Common.Architectures import detectGlobalCurrentISA
+from Tensile.Common.Architectures import detectGlobalCurrentISA, isaToGfx
 from Tensile.Common.Capabilities import makeIsaInfoMap
 from Tensile.Common.GlobalParameters import globalParameters, assignGlobalParameters, \
                                             restoreDefaultGlobalParameters
@@ -94,6 +94,7 @@ def executeStepsInConfig(
     ##############################################################################
     # Benchmark Problems
     ##############################################################################
+    gfxName = isaToGfx(next(iter(isaInfoMap)))
     if "BenchmarkProblems" in config:
         BenchmarkProblems.main(
             config["BenchmarkProblems"],
@@ -107,6 +108,7 @@ def executeStepsInConfig(
             debugConfig,
             depthUConfig,
             deviceId,
+            gfxName,
             isaInfoMap,
         )
         print1("")
@@ -155,6 +157,7 @@ def executeStepsInConfig(
             isaInfoMap,
             outputPath,
             deviceId,
+            gfxName,
             config["ShortNames"]
         )
         print1("")
@@ -197,6 +200,8 @@ def addCommonArguments(argParser):
         action="store", default=ToolchainDefaults.ASSEMBLER, help="select which assembler to use")
     argParser.add_argument("--offload-bundler", dest="OffloadBundler", \
         action="store", default=ToolchainDefaults.OFFLOAD_BUNDLER, help="select which offload bundler to use")
+    argParser.add_argument("--device-enumerator", dest="DeviceEnumerator", \
+        action="store", default=ToolchainDefaults.DEVICE_ENUMERATOR, help="select which device enumerator to use")
     argParser.add_argument("--logic-format", dest="LogicFormat", choices=["yaml", "json"], \
         action="store", default="yaml", help="select which logic format to use")
     argParser.add_argument("--library-format", dest="LibraryFormat", choices=["yaml", "msgpack"], \
@@ -443,14 +448,13 @@ def Tensile(userArgs):
         print(f"Successfully retrieve Max frequency: {max_frequency} for device {device_id}")
         store_max_frequency(max_frequency)
 
-    cxxCompiler, cCompiler, _, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
-    currentIsa = detectGlobalCurrentISA(device_id)
-    if currentIsa == IsaVersion(9,5,0):
-        printWarning("HardwareMonitor currently disabled for gfx950")
-        globalParameters["HardwareMonitor"] = False
-    isaInfoMap = makeIsaInfoMap([currentIsa], cxxCompiler)
-    assignGlobalParameters(config.get("GlobalParameters", {}), isaInfoMap)
-
+    cxxCompiler, \
+    cCompiler, \
+    offloadBundler, \
+    enumerator = validateToolchain(args.CxxCompiler,
+                                   args.CCompiler,
+                                   args.OffloadBundler,
+                                   ToolchainDefaults.DEVICE_ENUMERATOR)
     asmToolchain = makeAssemblyToolchain(
         cxxCompiler,
         offloadBundler,
@@ -460,6 +464,13 @@ def Tensile(userArgs):
         cxxCompiler,
         offloadBundler,
     )
+
+    currentIsa = detectGlobalCurrentISA(device_id, enumerator)
+    if currentIsa == IsaVersion(9,5,0):
+        printWarning("HardwareMonitor currently disabled for gfx950")
+        globalParameters["HardwareMonitor"] = False
+    isaInfoMap = makeIsaInfoMap([currentIsa], cxxCompiler)
+    assignGlobalParameters(config.get("GlobalParameters", {}), isaInfoMap)
 
     overrideParameters = argUpdatedGlobalParameters(args)
 

@@ -82,7 +82,7 @@ class Component:
     @property
     def path(self):
         return self._component_path
-    
+
     @property
     def version(self):
         return self._version
@@ -340,3 +340,38 @@ class Linker(Component):
         else:
             args = [*(self.default_args), *srcPaths, "-o", destPath]
         return _invoke(args, "Linking assembly object files into code object (*.o -> .co)")
+
+
+# class DeviceEnumerator(Component):
+#     """
+#     ROCm amdgpu-arch or rocm_agent_enumerator class used to inspect system for current architecture.
+
+#     ...
+
+#     Attributes
+#     ----------
+#     version : str
+#         the version of the component
+#     rocm_version : str
+#         the ROCm version
+#     path : str
+#         path to component
+
+#     Methods
+#     -------
+#     __call__(self)
+#         Invokes component.
+#     """
+#     def __init__(self, component_path: Path):
+#         """Constructs instance of SystemInterogator.
+
+#         Args:
+#             component_path: The path to amdgpu-arch or rocm_agent_enumeraor.
+#         """
+#         super(Assembler, self).__init__(component_path)
+#         self._default_args = [str(component_path)]
+
+#     def __call__(self):
+#         """Run component without args to detect system settings."""
+
+#         return _invoke(self._default_args, "running system inspection")

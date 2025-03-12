@@ -235,8 +235,6 @@ globalParameters["LibraryUpdateComment"] = (
 )
 
 # internal, i.e., gets set during startup
-globalParameters["AMDGPUArchPath"] = None  # /opt/rocm/llvm/bin/amdgpu-arch
-globalParameters["ROCmAgentEnumeratorPath"] = None  # /opt/rocm/bin/rocm_agent_enumerator
 globalParameters["ROCmSMIPath"] = None  # /opt/rocm/bin/rocm-smi
 globalParameters["HipClangVersion"] = "0.0.0"
 
@@ -548,31 +546,10 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
         globalParameters["CmakeCCompiler"] = os.environ.get("CMAKE_C_COMPILER")
 
     globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
-
-    # ROCm AMD GPU Arch Path
-    # ROCm Agent Enumerator Path
-    if os.name == "nt":
-        globalParameters["AMDGPUArchPath"] = locateExe(
-            globalParameters["ROCmBinPath"], "hipinfo.exe"
-        )
-        globalParameters["ROCmAgentEnumeratorPath"] = locateExe(
-            globalParameters["ROCmBinPath"], "hipinfo.exe"
-        )
-    else:
-        globalParameters["AMDGPUArchPath"] = locateExe(
-            globalParameters["ROCmPath"], "llvm/bin/amdgpu-arch"
-        )
-        globalParameters["ROCmAgentEnumeratorPath"] = locateExe(
-            globalParameters["ROCmBinPath"], "rocm_agent_enumerator"
-        )
-
     globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
     globalParameters["ROCmLdPath"] = locateExe(
         os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld"
     )
-
-    if "AMDGPUArchPath" in config:
-        globalParameters["AMDGPUArchPath"] = config["AMDGPUArchPath"]
 
     if "AsanBuild" in config:
         globalParameters["AsanBuild"] = config["AsanBuild"]

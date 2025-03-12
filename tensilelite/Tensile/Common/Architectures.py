@@ -189,16 +189,7 @@ def _detectGlobalCurrentISA(detectionTool, deviceId: int):
     return archList[deviceId] if (len(archList) > 0 and process.returncode == 0) else process.returncode
 
 
-# locateExe silently fails which is not good
-AMDGPUArchPath = locateExe(
-    "/opt/rocm", "llvm/bin/amdgpu-arch"
-)
-
-ROCmAgentEnumeratorPath = locateExe(
-    "/opt/rocm/bin","rocm_agent_enumerator"
-)
-
-def detectGlobalCurrentISA(deviceId: int):
+def detectGlobalCurrentISA(deviceId: int, enumerator: str):
     """Returns the ISA version for a given device.
 
     Given an integer ID for a device, the ISA version tuple
@@ -207,14 +198,11 @@ def detectGlobalCurrentISA(deviceId: int):
 
     Args:
         deviceID: an integer indicating the device to inspect.
-    
+
     Raises:
         Exception if both tools fail to detect ISA.
     """
-    result = _detectGlobalCurrentISA(AMDGPUArchPath, deviceId)
-    if not isinstance(result, IsaVersion):
-        print("Attempting to detect ISA with rocm_agent_enumerator")
-        result = _detectGlobalCurrentISA(ROCmAgentEnumeratorPath, deviceId)
+    result = _detectGlobalCurrentISA(enumerator, deviceId)
     if not isinstance(result, IsaVersion):
         raise Exception("Failed to detect currect ISA")
     return result
