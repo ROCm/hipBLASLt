@@ -585,8 +585,9 @@ class GSU(Component):
                     storeCodeGSUSK.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset for interleaved wave store"))
                     storeCodeGSUSK.addSpaceLine()
                 else:
-                    numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-                    increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * writer.states.bpeCinternal
+                    # numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
+                    # increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * writer.states.bpeCinternal
+                    increment = kernel["NumThreads"] * storeWidth * writer.states.bpeCinternal
                     storeCodeGSUSK.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Increase sgpr offset for store"))
 
                 sumIdx = ss.elementSumIdx[elementIdx]
@@ -1591,8 +1592,9 @@ class GSU(Component):
                 addrCalctmp: AddrCalculation = ss.elementAddr[times]
                 if batchIdx != 0 or elementIdx != 0:
                     storeWidth = kernel["StoreVectorWidth"]
-                    numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-                    increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * writer.states.bpeCinternal
+                    # numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
+                    # increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * writer.states.bpeCinternal
+                    increment = kernel["NumThreads"] * storeWidth * writer.states.bpeCinternal
                     module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset for load"))
                     module.add(SMulHIU32(dst=sgpr(tmpS06+1), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
                     module.add(SMulI32(dst=sgpr(tmpS06), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))

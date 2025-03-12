@@ -586,7 +586,7 @@ class GlobalWriteBatchWriter:
 
     ########################################
     # AccVgpr read
-    if self.codeAccVgprRead is not None and self.kernel["LocalSplitU"] == 1:
+    if self.codeAccVgprRead is not None and (self.kernel["LocalSplitU"] == 1 or self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel"):
       regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
       # loop over store instructions within one batch
       for elementIdx in range(len(self.batchElements)):
