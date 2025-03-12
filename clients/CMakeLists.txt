@@ -92,7 +92,9 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
     set( BLAS_LIBRARY ${BLIS_LIB} )
     set( BLIS_CPP ../common/blis_interface.cpp )
   else()
-    set( BLAS_LIBRARY "blas" )
+    find_package( LAPACK REQUIRED )
+    find_package( BLAS REQUIRED )
+    set( BLAS_LIBRARY "${BLAS_LIBRARIES}" )
   endif()
 
   # Find the package ROCmSMI

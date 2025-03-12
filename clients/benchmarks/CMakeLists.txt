@@ -80,9 +80,9 @@ endif()
 # target_compile_options does not go to linker like CMAKE_CXX_FLAGS does, so manually add
 if (NOT WIN32)
   if (BUILD_CUDA)
-    target_link_libraries( hipblaslt-bench PRIVATE -llapack -lcblas )
+    target_link_libraries( hipblaslt-bench PRIVATE -l${LAPACK_LIBRARIES} -lcblas )
   else()
-    target_link_libraries( hipblaslt-bench PRIVATE lapack cblas )
+    target_link_libraries( hipblaslt-bench PRIVATE ${LAPACK_LIBRARIES} cblas )
   endif()
   list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
 
