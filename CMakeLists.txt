@@ -385,7 +385,7 @@ set( HIPBLASLT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LI
 
 rocm_create_package(
     NAME ${package_name}
-    DESCRIPTION "HIP library for GEMM operations and extended BLAS functionality"
+    DESCRIPTION "HIP library for GEMM operations with extended functionality"
     MAINTAINER "hipBLASLt Maintainer <hipblaslt-maintainer@amd.com>"
     LDCONFIG
     LDCONFIG_DIR ${HIPBLASLT_CONFIG_DIR}
