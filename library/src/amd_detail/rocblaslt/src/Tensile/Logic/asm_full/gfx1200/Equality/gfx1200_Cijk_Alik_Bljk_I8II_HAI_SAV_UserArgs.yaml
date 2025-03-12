@@ -1,7 +1,7 @@
 - {MinimumRequiredVersion: 4.33.0}
 - gfx1200
 - gfx1200
-- [Device 73f0]
+- [Device 7550]
 - Activation: true
   ActivationComputeDataType: 6
   ActivationNoGuard: false
@@ -78,7 +78,7 @@
   UseScaleAB: ''
   UseScaleAlphaVec: 1
   UseScaleCD: false
-- - 1LDSBuffer: 1
+- - 1LDSBuffer: 0
     ActivationAlt: false
     ActivationFuncCall: true
     ActivationFused: true
@@ -141,9 +141,9 @@
     LdsBlockSizePerPadA: 256
     LdsBlockSizePerPadB: 0
     LdsBlockSizePerPadMetadata: 0
-    LdsBytesNoAmax: 9216
+    LdsBytesNoAmax: 25600
     LdsInitCVgprs: false
-    LdsNumBytes: 9216
+    LdsNumBytes: 25600
     LdsNumElementsAlignedA: 9216
     LdsNumElementsAlignedB: 0
     LdsNumElementsAlignedMetadata: 0
@@ -339,7 +339,7 @@
     Valid: true
     VectorStore: -1
     VectorWidthA: 4
-    VectorWidthB: 1
+    VectorWidthB: 2
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0
@@ -365,8 +365,8 @@
     tailLoopOptA: false
     tailLoopOptB: false
 - [2, 3, 0, 1]
-- - - [4096, 4096, 1, 4096, 4096, 4096, 4096, 4096]
-    - [0, 24.75]
+- - - [4096, 4096, 1, 4096, 4160, 4160, 4160, 4160]
+    - [0, 39.55]
 - null
 - null
 - DeviceEfficiency
