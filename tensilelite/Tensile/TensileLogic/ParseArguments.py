@@ -39,7 +39,8 @@ def parseArguments():
     )
 
     argParser.add_argument("LogicPath", help="Path to LibraryLogic.yaml files.")
-    argParser.add_argument("--check", dest="Check", action="store_true", help="Run all checks.")
+    argParser.add_argument("--check", dest="CheckAll", action="store_true", help="Run all checks.")
+    argParser.add_argument("--check-only-custom-kernels", dest="CheckCustomKernels", action="store_true", help="Check custom kernels.")
     argParser.add_argument("-v", "--verbose", dest="Verbose", type=int, default=1, choices=[0, 1, 2, 3], help="Set print level with ``--v 2``.")
     argParser.add_argument(
         "--jobs",

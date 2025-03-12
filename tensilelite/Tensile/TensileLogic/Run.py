@@ -53,7 +53,7 @@ from .ValidWorkGroup import _validateWorkGroup
 
 def handleCustomKernel(sol: dict, isaInfoMap: dict):
     if not isCustomKernelConfig(sol):
-        return sol
+        return sol, False
 
     name = sol["CustomKernelName"]
     dir = CUSTOM_KERNEL_PATH
@@ -66,10 +66,10 @@ def handleCustomKernel(sol: dict, isaInfoMap: dict):
     if not (len(mi) == 4 or len(mi) == 0):
         raise ValueError(f">> Error: Custom kernels should have matrix instruction of length 4, or none at all, not length {len(mi)}\n{name}")
 
-    return sol
+    return sol, True
 
 
-def runChecks(logicPath: str, isaInfoMap: Dict[IsaVersion, IsaInfo], files: List[Path]):
+def runChecks(logicPath: str, isaInfoMap: Dict[IsaVersion, IsaInfo], check: Dict[str, bool], files: List[Path]):
     """
     Run checks on the given files.
 
@@ -87,12 +87,14 @@ def runChecks(logicPath: str, isaInfoMap: Dict[IsaVersion, IsaInfo], files: List
         if "Experimental" in file.parts:
             return keep, total
 
-
         solutions = readYAML(file)[5]  # Solutions are the 5th index
 
         print1(f">> {file.relative_to(logicPath)}")
         for s in solutions:
-            s = handleCustomKernel(s, isaInfoMap)
+            s, isCustom = handleCustomKernel(s, isaInfoMap)
+
+            if check["onlyCustomKernels"] and not check["all"] and not isCustom:
+                continue
 
             if all(
                 [
@@ -123,30 +125,30 @@ def main():
         pattern = "**/*.yaml"
         files = list(logicPath.glob(pattern))
 
-    if not any([args.Check]):
+    if not any([args.CheckAll, args.CheckCustomKernels]):
         print1("No checks specified. Exiting.")
         exit(0)
+    check = {
+        "all": args.CheckAll,
+        "onlyCustomKernels": args.CheckCustomKernels,
+    }
+
     if len(files) == 0:
         print1(f"No files found in {logicPath}")
         exit(1)
-
     print1(f"Found {len(files)} files")
 
     batchSize = len(files) // min(len(files), jobs)
     batches = (files[i : i + batchSize] for i in range(0, len(files), batchSize))
 
-    fn = functools.partial(runChecks, logicPath, isaInfoMap)
+    fn = functools.partial(runChecks, logicPath, isaInfoMap, check)
     keep, total = 0, 0
-    # with Pool(processes=jobs) as pool:
-    #     results = pool.map_async(fn, batches)
 
-    # # TIP: This is how to use joblib. Leave for reference.
     results = ParallelMap2(
         fn, batches, multiArg=False, procs=jobs, return_as="list"
     )
 
     for _keep, _total in results:
-        # for _keep, _total in results.get():
         keep += _keep
         total += _total
 
