@@ -64,6 +64,7 @@ gfxVariantMap = {
     "gfx908": ["gfx908:xnack+", "gfx908:xnack-"],
     "gfx90a": ["gfx90a:xnack+", "gfx90a:xnack-"],
     "gfx942": ["gfx942:xnack+", "gfx942:xnack-"],
+    "gfx950": ["gfx950:xnack+", "gfx950:xnack-"],
 }
 
 SUPPORTED_ISA = [
@@ -72,9 +73,8 @@ SUPPORTED_ISA = [
     IsaVersion(9, 0, 6),
     IsaVersion(9, 0, 8),
     IsaVersion(9, 0, 10),
-    IsaVersion(9, 4, 0),
-    IsaVersion(9, 4, 1),
     IsaVersion(9, 4, 2),
+    IsaVersion(9, 5, 0),
     IsaVersion(10, 1, 0),
     IsaVersion(10, 1, 1),
     IsaVersion(10, 1, 2),
