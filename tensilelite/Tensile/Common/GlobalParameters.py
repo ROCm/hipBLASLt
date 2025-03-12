@@ -37,7 +37,7 @@ from Tensile import __version__
 from .Architectures import isaToGfx, SUPPORTED_ISA
 from .Types import IsaVersion, IsaInfo
 from .Utilities import locateExe, versionIsCompatible, print1, print2, printExit, printWarning, \
-     verbosity
+     getVerbosity
 from .ValidParameters import validParameters
 
 startTime = time.time()
@@ -560,7 +560,7 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
     if "CodeObjectVersion" in config:
         globalParameters["CodeObjectVersion"] = config["CodeObjectVersion"]
 
-    if verbosity >= 1:
+    if getVerbosity() >= 1:
         printCapabilitiesTable(isaInfoMap)
 
     isaList = list(isaInfoMap.keys())

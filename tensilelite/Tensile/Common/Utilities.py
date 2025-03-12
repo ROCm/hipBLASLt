@@ -35,7 +35,14 @@ from pathlib import Path
 
 from Tensile import __version__
 
-verbosity = 1
+_verbosity = 1
+
+def setVerbosity(v: int):
+    global _verbosity
+    _verbosity = v
+
+def getVerbosity():
+    return _verbosity
 
 ################################################################################
 # Printing
@@ -44,13 +51,13 @@ verbosity = 1
 # 2 - user wants full prints
 ################################################################################
 def print1(message):
-    if verbosity >= 1:
+    if getVerbosity() >= 1:
         print(message)
         sys.stdout.flush()
 
 
 def print2(message):
-    if verbosity >= 2:
+    if getVerbosity() >= 2:
         print(message)
         sys.stdout.flush()
 

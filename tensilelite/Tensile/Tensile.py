@@ -37,7 +37,7 @@ from typing import Dict
 
 from Tensile import __version__
 from Tensile.Common import print1, printExit, printWarning, ensurePath, HR, \
-                           LIBRARY_LOGIC_DIR, verbosity, IsaInfo, makeDebugConfig, \
+                           LIBRARY_LOGIC_DIR, setVerbosity, IsaInfo, makeDebugConfig, \
                            makeDepthUConfig, DebugConfig, DepthUConfig, IsaVersion
 from Tensile.Common.Architectures import detectGlobalCurrentISA, isaToGfx
 from Tensile.Common.Capabilities import makeIsaInfoMap
@@ -375,8 +375,7 @@ def Tensile(userArgs):
     outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
     print1(f"#  OutputPath: {str(outputPath)}")
 
-    global verbosity
-    verbosity = 2 if (args.debug or args.verbose) else 1
+    setVerbosity(2 if (args.debug or args.verbose) else 1)
 
     if altFormat and len(configPaths) > 2:
         printExit("Only 1 or 2 config_files are accepted for the alternate config format: "

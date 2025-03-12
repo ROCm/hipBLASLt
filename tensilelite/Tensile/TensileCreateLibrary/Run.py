@@ -47,7 +47,8 @@ from Tensile.Common import (
     printWarning,
     state,
     tqdm,
-    verbosity,
+    setVerbosity,
+    getVerbosity
 )
 from Tensile.Common.Architectures import gfxToIsa, isaToGfx, SUPPORTED_GFX
 from Tensile.Common.Capabilities import makeIsaInfoMap
@@ -252,7 +253,7 @@ def writeSolutionsAndKernels(
     )
     asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels", return_as="list")
     removeInvalidSolutionsAndKernels(
-        asmResults, asmKernels, solutions, errorTolerant, verbosity, splitGSU
+        asmResults, asmKernels, solutions, errorTolerant, getVerbosity(), splitGSU
     )
 
     def assemble(ret):
@@ -543,8 +544,7 @@ def run():
     print2("")
 
     arguments = parseArguments()
-    global verbosity
-    verbosity = arguments["PrintLevel"]
+    setVerbosity(arguments["PrintLevel"])
     outputPath = Path(ensurePath(os.path.abspath(arguments["OutputPath"])))
     cxxCompiler, _, offloadBundler, _, _ = validateToolchain(
         arguments["CxxCompiler"],

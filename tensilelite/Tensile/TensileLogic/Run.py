@@ -34,7 +34,7 @@ from Tensile.Common import (
     print1,
     IsaVersion,
     IsaInfo,
-    verbosity
+    setVerbosity
 )
 
 from Tensile.Common.Architectures import SUPPORTED_ISA
@@ -108,8 +108,7 @@ def runChecks(logicPath: str, isaInfoMap: Dict[IsaVersion, IsaInfo], files: List
 def main():
     args = parseArguments()
 
-    global verbosity
-    verbosity = args.Verbose
+    setVerbosity(args.Verbose)
 
     jobs = int(args.Jobs)
     cxxCompiler = validateToolchain(args.CxxCompiler)
