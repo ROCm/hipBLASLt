@@ -35,10 +35,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict
 
-from Tensile.Common import globalParameters, print1, printExit, printWarning, ensurePath, \
-    assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR, \
-    detectGlobalCurrentISA, verbosity, IsaInfo, makeIsaInfoMap, isaToGfx, makeDebugConfig, \
-    makeDepthUConfig, DebugConfig, DepthUConfig
+from Tensile import __version__
+from Tensile.Common import print1, printExit, printWarning, ensurePath, HR, \
+                           LIBRARY_LOGIC_DIR, verbosity, IsaInfo, makeDebugConfig, \
+                           makeDepthUConfig, DebugConfig, DepthUConfig, IsaVersion
+from Tensile.Common.Architectures import detectGlobalCurrentISA
+from Tensile.Common.Capabilities import makeIsaInfoMap
+from Tensile.Common.GlobalParameters import globalParameters, assignGlobalParameters, \
+                                            restoreDefaultGlobalParameters
 from Tensile.Toolchain.Assembly import AssemblyToolchain, makeAssemblyToolchain
 from Tensile.Toolchain.Source import SourceToolchain, makeSourceToolchain
 from Tensile.Toolchain.Validators import validateToolchain, ToolchainDefaults
@@ -441,6 +445,9 @@ def Tensile(userArgs):
 
     cxxCompiler, cCompiler, _, offloadBundler = validateToolchain(args.CxxCompiler, args.CCompiler, args.Assembler, args.OffloadBundler)
     currentIsa = detectGlobalCurrentISA(device_id)
+    if currentIsa == IsaVersion(9,5,0):
+        printWarning("HardwareMonitor currently disabled for gfx950")
+        globalParameters["HardwareMonitor"] = False
     isaInfoMap = makeIsaInfoMap([currentIsa], cxxCompiler)
     assignGlobalParameters(config.get("GlobalParameters", {}), isaInfoMap)
 

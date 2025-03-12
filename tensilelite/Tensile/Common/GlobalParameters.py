@@ -58,9 +58,6 @@ globalParameters["PreciseKernelTime"] = (
     True  # T=On hip, use the timestamps for kernel start and stop rather than separate events.  Can provide more accurate kernel timing.  For GlobalSplitU kernels, recommend disabling this to provide consistent
 )
 # timing between GSU / non-GSU kernels
-#globalParameters["CodeFromFiles"] = (
-#    True  # if False byte arrays will be generated during Benchmarking phase as before
-#)
 globalParameters["PinClocks"] = False  # T=pin gpu clocks and fan, F=don't
 globalParameters["HardwareMonitor"] = (
     True  # False: disable benchmarking client monitoring clocks using rocm-smi.
@@ -128,20 +125,12 @@ globalParameters["CpuThreads"] = (
 )  # How many CPU threads to use for kernel generation.  0=no threading, -1 == nproc, N=min(nproc,N).  TODO - 0 sometimes fails with a kernel name error?  0 does not check error codes correctly
 globalParameters["NumWarmups"] = 0
 
-# even if error occurs in kernel generation (ie due to resource overflow),
-# generate the kernel source anyway.  Tensile will also attempt to run
-# the kernel.  Useful to examine and debug overflow errors.
-# globalParameters["ForceGenerateKernel"] = 0
-
 ########################################
 # less common
 ########################################
 globalParameters["CMakeBuildType"] = (
     "Release"  # whether benchmark clients and library client should be release or debug
 )
-#globalParameters["PrintSolutionRejectionReason"] = (
-#    False  # when a solution is marked as invalid, print why
-#)
 globalParameters["LogicFormat"] = "yaml"  # set library backend (yaml, or json)
 globalParameters["LibraryFormat"] = "yaml"  # set library backend (yaml, or msgpack)
 
@@ -198,9 +187,6 @@ globalParameters["PruneSparseMode"] = (
 # build parameters
 globalParameters["CMakeCXXFlags"] = ""  # pass flags to cmake
 globalParameters["CMakeCFlags"] = ""  # pass flags to cmake
-#globalParameters["DebugKernel"] = (
-#    False  # assembly only, kernel gets buffer for debug "printing"; kernel writes data to memory, gets coppied to host and printed
-#)
 globalParameters["AsanBuild"] = False  # build with asan
 #globalParameters["SaveTemps"] = False  # Generate intermediate results of hip kernels
 globalParameters["KeepBuildTmp"] = False  # If true, do not remove artifacts in build_tmp
@@ -223,7 +209,6 @@ globalParameters["PrintTensorRef"] = (
 globalParameters["PrintTensorBias"] = 0  # Print TensorBias after initialization
 globalParameters["PrintTensorScaleAlphaVec"] = 0  # Print TensorScaleAlphaVec after initialization
 globalParameters["PrintTensorAmaxD"] = 0  # Print AmaxD after validation
-#globalParameters["PrintIndexAssignments"] = 0  # Print the tensor index assignment info
 globalParameters["PrintWinnersOnly"] = False  # Only print the solutions which become the fastest
 globalParameters["PrintCodeCommands"] = (
     False  # print the commands used to generate the code objects (asm,link,hip-clang, etc)
@@ -526,7 +511,7 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
     can override them, those overridings happen here
     """
 
-    global globalParameters, SUPPORTED_ISA
+    global globalParameters
 
     # Minimum Required Version
     if "MinimumRequiredVersion" in config:

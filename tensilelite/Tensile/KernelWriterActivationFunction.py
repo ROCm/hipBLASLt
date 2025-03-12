@@ -24,7 +24,7 @@ from copy import deepcopy
 from typing import List
 
 from .TensileInstructions import TensileInstructions
-from .Common import isaToGfx, IsaVersion
+from Tensile.Common.Architectures import isaToGfx, IsaVersion
 from .Activation import ActivationInline, ActivationType
 from .KernelWriterBase import KernelWriterBase
 
@@ -89,7 +89,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
     if not self._tf.isInit():
       self._tf.init(isa, self.cxxCompiler)
     self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
-    
+
     for arch in self.supportedArchs:
       self._tf.init(arch, self.cxxCompiler)
       self._tf.setKernelInfo(arch, self.state["Kernel"]["WavefrontSize"])

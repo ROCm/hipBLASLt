@@ -33,17 +33,12 @@ from typing import List, NamedTuple, Optional, Union
 
 from Tensile import SOURCE_PATH, LibraryIO
 from Tensile.Common import (
-    assignGlobalParameters,
     CHeader,
     DebugConfig,
     DepthUConfig,
     ensurePath,
-    globalParameters,
-    gfxToIsa,
     HR,
-    isaToGfx,
     IsaVersion,
-    makeIsaInfoMap,
     ParallelMap2,
     print1,
     print2,
@@ -51,10 +46,12 @@ from Tensile.Common import (
     printExit,
     printWarning,
     state,
-    SUPPORTED_GFX,
     tqdm,
     verbosity,
 )
+from Tensile.Common.Architectures import gfxToIsa, isaToGfx, SUPPORTED_GFX
+from Tensile.Common.Capabilities import makeIsaInfoMap
+from Tensile.Common.GlobalParameters import assignGlobalParameters, globalParameters
 from Tensile.SolutionStructs.Naming import getKernelFileBase, getKeyNoInternalArgs, getMinNaming, getSerialNaming
 
 from Tensile.CustomYamlLoader import load_logic_gfx_arch

@@ -23,7 +23,7 @@
 ################################################################################
 
 from . import CUSTOM_KERNEL_PATH
-from .Common.ValidParameters import checkParametersAreValid, validParameters, newMIValidParameters
+from Tensile.Common.ValidParameters import checkParametersAreValid, validParameters, newMIValidParameters
 
 import yaml
 
@@ -94,9 +94,6 @@ def getCustomKernelConfig(
         if key not in kernelIsp:
             kernelIsp[key] = internalSupportParams[key]
     
-    # validParams = validParameters.update(newMIValidParameters)
-    # if not validParams:
-    #     raise RuntimeError(f"Valid parameters not loaded: {validParameters}\n{newMIValidParameters}\n{validParams}")
     validParameters.update(newMIValidParameters)
 
     for k, v in kernelConfig.items():

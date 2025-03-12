@@ -30,16 +30,16 @@ from multiprocessing import Pool
 from typing import List, Dict
 
 from Tensile.Common import (
-    assignGlobalParameters,
     ParallelMap2,
     print1,
-    makeIsaInfoMap,
-    SUPPORTED_ISA,
     IsaVersion,
     IsaInfo,
     verbosity
 )
-from Tensile.Common.GlobalParameters import globalParameters
+
+from Tensile.Common.Architectures import SUPPORTED_ISA
+from Tensile.Common.Capabilities import makeIsaInfoMap
+from Tensile.Common.GlobalParameters import assignGlobalParameters, globalParameters
 
 from Tensile.LibraryIO import readYAML
 from Tensile.Toolchain.Validators import validateToolchain

@@ -30,7 +30,8 @@ import subprocess
 from pathlib import Path
 from typing import List, Union, NamedTuple
 
-from ..Common import print2, isaToGfx, print1
+from Tensile.Common import print2
+from Tensile.Common.Architectures import isaToGfx
 from ..SolutionStructs import Solution
 
 from .Component import Assembler, Linker, Bundler

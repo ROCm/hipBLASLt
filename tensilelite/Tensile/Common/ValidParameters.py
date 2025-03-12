@@ -89,9 +89,9 @@ def makeValidWMMA():
 @lru_cache
 def makeValidMFMA():
     validMFMA = {}
-    validMFMA["H"] = [[32, 32, 4, 2], [32, 32, 8, 1], [16, 16, 4, 4], [16, 16, 16, 1], [4, 4, 4, 16]]
+    validMFMA["H"] = [[32, 32, 16, 1], [32, 32, 4, 2], [32, 32, 8, 1], [16, 16, 32, 1], [16, 16, 4, 4], [16, 16, 16, 1], [4, 4, 4, 16]]
     validMFMA["S"] = [[32, 32, 1, 2], [32, 32, 2, 1], [16, 16, 1, 4], [16, 16, 4, 1], [4, 4, 1, 16]]
-    validMFMA["B"] = [[32, 32, 2, 2], [32, 32, 4, 1], [16, 16, 2, 4], [16, 16, 8, 1], [4, 4, 2, 16]]
+    validMFMA["B"] = [[32, 32, 16, 1], [32, 32, 2, 2], [32, 32, 4, 1], [16, 16, 32, 1], [16, 16, 2, 4], [16, 16, 8, 1], [4, 4, 2, 16]]
     validMFMA["4xi8"] = [
         [32, 32, 4, 2],
         [32, 32, 8, 1],
@@ -113,7 +113,7 @@ def makeValidMFMA():
         [4, 4, 4, 16],
     ] + [[32, 32, 16, 1], [16, 16, 32, 1]]
     validMFMA["X"] = [[32, 32, 4, 1], [16, 16, 8, 1]]
-    validMFMA["F8"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
+    validMFMA["F8"] = [[32, 32, 16, 1], [16, 16, 32, 1], [32, 32, 64, 1], [16, 16, 128, 1]]
     validMFMA["B8"] = validMFMA["F8"]
     validMFMA["F8B8"] = validMFMA["F8"]
     validMFMA["B8F8"] = validMFMA["F8"]
@@ -146,16 +146,16 @@ def makeValidMFMA():
 @lru_cache
 def makeValidSMFMA():
     validSMFMA = {}
-    validSMFMA["H"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-    validSMFMA["B"] = [[32, 32, 16, 1], [16, 16, 32, 1]]
-    validSMFMA["4xi8"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
+    validSMFMA["H"] = [[32, 32, 16, 1], [16, 16, 32, 1], [16, 16, 64, 1], [32, 32, 32, 1]]
+    validSMFMA["B"] = [[32, 32, 16, 1], [16, 16, 32, 1], [16, 16, 64, 1], [32, 32, 32, 1]]
+    validSMFMA["4xi8"] = [[32, 32, 32, 1], [16, 16, 64, 1], [16, 16, 128, 1], [32, 32, 64, 1]]
     validSMFMA["I8"] = validSMFMA["4xi8"]
-    validSMFMA["F8"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
+    validSMFMA["F8"] = [[32, 32, 32, 1], [16, 16, 64, 1], [16, 16, 128, 1], [32, 32, 64, 1]]
     validSMFMA["B8"] = validSMFMA["F8"]
     validSMFMA["F8B8"] = validSMFMA["F8"]
     validSMFMA["B8F8"] = validSMFMA["F8"]
-    validSMFMA["F8N"] = [[32, 32, 32, 1], [16, 16, 64, 1]]
-    validSMFMA["B8N"] = validSMFMA["F8N"]
+    validSMFMA["F8N"] = validSMFMA["F8"]
+    validSMFMA["B8N"] = validSMFMA["F8"]
     validSMFMA["F8B8N"] = validSMFMA["F8N"]
     validSMFMA["B8F8N"] = validSMFMA["F8N"]
     validSMFMA["_format9"] = []
@@ -799,6 +799,8 @@ validParameters = {
     "ConvertAfterDS": [False, True],
     # Force disable shadow init to release more sgpr in preloop
     "ForceDisableShadowInit": [False, True],
+    # Enable LDS Transpose Instruction
+    "LDSTrInst": [False, True]
 }
 
 newMIValidParameters = {

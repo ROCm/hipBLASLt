@@ -251,6 +251,18 @@ def initAsmBugs(asmCaps) -> dict:
     return rv
 
 def makeIsaInfoMap(targetIsas: List[IsaVersion], cxxCompiler: str) -> Dict[IsaVersion, IsaInfo]:
+    """Computes the supported capabilities for requested ISAs and compiler.
+
+    Given a list of ISAs and a compiler, the ASM, Arch, Register capabilities
+    and ASM bugs are computed and stored in a map.
+
+    Args:
+        targetIsas: A list of requested ISA versions to inspect.
+        cxxCompiler: A string path to a C++ compiler to use when computing capabilities.
+
+    Returns:
+        A map of ISA versions to capabilities.
+    """
     isaInfoMap = {}
     for v in targetIsas:
         asmCaps = initAsmCaps(v, cxxCompiler, False)

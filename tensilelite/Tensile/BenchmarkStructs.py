@@ -26,9 +26,11 @@ from copy import deepcopy
 import itertools
 
 from Tensile.Common.ValidParameters import checkParametersAreValid
-from Tensile.Common import print1, print2, hasParam, printExit, \
-        defaultBenchmarkCommonParameters, validParameters, globalParameters, \
-        defaultBatchedBenchmarkFinalProblemSizes, defaultBenchmarkFinalProblemSizes
+from Tensile.Common import print1, print2, hasParam, printExit
+from Tensile.Common.GlobalParameters import defaultBenchmarkCommonParameters, globalParameters, \
+                                            defaultBatchedBenchmarkFinalProblemSizes, \
+                                            defaultBenchmarkFinalProblemSizes
+from Tensile.Common.ValidParameters import validParameters
 from Tensile.SolutionStructs.Problem import ProblemType
 
 from .CustomKernels import getAllCustomKernelNames

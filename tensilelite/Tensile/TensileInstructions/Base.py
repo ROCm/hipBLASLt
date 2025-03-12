@@ -27,8 +27,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Tuple
 
+from Tensile.Common import IsaInfo, IsaVersion
 from Tensile.Common.Capabilities import initAsmCaps, initArchCaps, initRegisterCaps, initAsmBugs
-from Tensile.Common.Types import IsaInfo, IsaVersion
 from .Formatting import __TI_DEBUG_LEVEL__, printExit
 
 from timeit import default_timer as timer 

@@ -24,12 +24,13 @@
 
 from pathlib import Path
 from typing import Dict
-from .Common import print1, print2, HR, printExit, defaultAnalysisParameters, globalParameters, \
-  assignParameterWithDefault, startTime, ProgressBar, printWarning, ensurePath, \
-  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo, DepthUConfig
-from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin, getNameFull
 from . import LibraryIO
 from . import SolutionSelectionLibrary
+from Tensile.Common import print1, print2, HR, printExit, \
+  assignParameterWithDefault, ProgressBar, printWarning, ensurePath, \
+  LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, verbosity, IsaInfo, DepthUConfig
+from Tensile.Common.GlobalParameters import defaultAnalysisParameters, globalParameters, startTime
+from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin, getNameFull
 
 from copy import deepcopy
 from sys import stdout

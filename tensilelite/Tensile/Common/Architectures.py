@@ -199,8 +199,17 @@ ROCmAgentEnumeratorPath = locateExe(
 )
 
 def detectGlobalCurrentISA(deviceId: int):
-    """
-    Returns returncode if detection failure
+    """Returns the ISA version for a given device.
+
+    Given an integer ID for a device, the ISA version tuple
+    of the form (X, Y, Z) is computed using first amdgpu-arch.
+    If amdgpu-arch fails, rocm_agent_enumerator is used.
+
+    Args:
+        deviceID: an integer indicating the device to inspect.
+    
+    Raises:
+        Exception if both tools fail to detect ISA.
     """
     result = _detectGlobalCurrentISA(AMDGPUArchPath, deviceId)
     if not isinstance(result, IsaVersion):

@@ -29,7 +29,8 @@ from typing import List
 from .KernelWriterBase import KernelWriterBase
 from .TensileInstructions import DataType
 
-from .Common import IsaInfo, isaToGfx, INDEX_CHARS
+from Tensile.Common.Architectures import isaToGfx
+from Tensile.Common import INDEX_CHARS, IsaInfo
 
 class KernelWriterConversion(KernelWriterBase):
 
@@ -527,8 +528,7 @@ class KernelWriterConversion(KernelWriterBase):
           if self.num_dword_load > 2:
             kStr += "  float2 accumVec2(accum[2], accum[3]);" + self.endLine
       canPKF32Arch = []
-      for arch in self.supportedArchs: # certainly we can move this out to the __init__
-        isa = tuple(arch)
+      for isa in self.supportedArchs:
         if self.isaInfoMap[isa].asmCaps['v_pk_add_f32']: 
           canPKF32Arch.append(arch)
       defineStr = []

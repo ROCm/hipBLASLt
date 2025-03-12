@@ -56,17 +56,28 @@ def makeDepthUConfig(config: dict) -> DepthUConfig:
 
 
 class DebugConfig(NamedTuple):
-  enableAsserts: bool=False
-  enableDebugA: bool=False
-  enableDebugB: bool=False
-  enableDebugC: bool=False
-  expectedValueC: float=16.0
-  forceCExpectedValue: bool=False
-  debugKernel: bool=False
-  forceGenerateKernel: bool=False
-  printSolutionRejectionReason: bool=False
-  splitGSU: bool=False
-  printIndexAssignmentInfo: bool=False
+    """
+    Members:
+        debugKernel: assembly only, kernel gets buffer for debug "printing"; 
+                     kernel writes data to memory, gets coppied to host and printed.
+        forceGenerateKernel: Even if error occurs in kernel generation (i.e. due to resource overflow),
+                             generate the kernel source anyway. Tensile will also attempt to run
+                             the kernel. Useful to examine and debug overflow errors.
+        printSolutionRejectionReason: Print why a solution is marked as invalid.
+        printIndexAssignmentInfo: Print the tensor index assignment info.
+
+    """
+    enableAsserts: bool=False
+    enableDebugA: bool=False
+    enableDebugB: bool=False
+    enableDebugC: bool=False
+    expectedValueC: float=16.0
+    forceCExpectedValue: bool=False
+    debugKernel: bool=False
+    forceGenerateKernel: bool=False
+    printSolutionRejectionReason: bool=False
+    splitGSU: bool=False
+    printIndexAssignmentInfo: bool=False
 
 
 def makeDebugConfig(config: dict) -> DebugConfig:

@@ -39,8 +39,10 @@ from Tensile.Toolchain.Component import Assembler
 from . import ROOT_PATH
 from . import ClientExecutable
 from . import LibraryIO
-from .Common import globalParameters, ensurePath, print1, printExit, printWarning, ClientExecutionLock, isaToGfx, IsaInfo, \
-  LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR, detectGlobalCurrentISA, DepthUConfig
+from Tensile.Common import ensurePath, print1, printExit, printWarning, ClientExecutionLock,\
+                           LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR, DepthUConfig
+from Tensile.Common.Architectures import detectGlobalCurrentISA, isaToGfx
+from Tensile.Common.GlobalParameters import globalParameters
 from .TensileCreateLibrary import copyStaticFiles
 from .Contractions import FreeIndex, BatchIndex
 from .Contractions import ProblemType as ContractionsProblemType
@@ -107,9 +109,19 @@ def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: P
   yamlList = glob(os.path.join(clientLibraryPath, "library/*.yaml"))
 
   clientParametersPaths = []
+  splitGSU = False
+  printSolutionRejectionReason = False
+  printIndexAssignmentInfo = False
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary) \
-        = LibraryIO.parseLibraryLogicFile(logicFileName, assembler, False, False, False, DepthUConfig(), isaInfoMap, globalParameters["LazyLibraryLoading"])
+        = LibraryIO.parseLibraryLogicFile(logicFileName, 
+                                          assembler, 
+                                          splitGSU,
+                                          printSolutionRejectionReason,
+                                          printIndexAssignmentInfo, 
+                                          DepthUConfig(),
+                                          isaInfoMap,
+                                          globalParameters["LazyLibraryLoading"])
     functions.append((scheduleName, problemType))
     functionNames.append("tensile_%s" % (problemType))
     problemSizes = ProblemSizesMock(exactLogic) if exactLogic else ProblemSizesMockDummy()
@@ -141,7 +153,6 @@ def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: P
     activationArgs = ActivationArgs(problemType, activationEnums) if isForAll else ""
     factorDimArgs = FactorDimArgs(problemType, factorDimEnums)
 
-    print1(f"libraryFile: {yamlList}")
     clientParametersPaths.append(writeClientConfig(
                                   forBenchmark=False,
                                   solutions=None,

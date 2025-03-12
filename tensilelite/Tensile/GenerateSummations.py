@@ -36,8 +36,9 @@ from copy import deepcopy
 from . import LibraryIO
 
 from . import ClientWriter
-from .Common import assignGlobalParameters, ensurePath, globalParameters, \
-    printExit, isaToGfx, gfxToSwCodename, detectGlobalCurrentISA
+from Tensile.Common import ensurePath, printExit
+from Tensile.Common.Architectures import isaToGfx, gfxToSwCodename, detectGlobalCurrentISA
+from Tensile.Common.GlobalParameters import assignGlobalParameters, globalParameters
 from .SolutionStructs import ProblemSizes
 from .Toolchain.Validators import ToolchainDefaults, validateToolchain
 

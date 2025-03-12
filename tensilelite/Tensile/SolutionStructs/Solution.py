@@ -39,12 +39,12 @@ from Tensile.KernelWriterReduction import KernelWriterReduction
 from Tensile.Activation import ActivationType
 from Tensile.AsmStoreState import VectorDataTypes
 from Tensile.Common import assignParameterWithDefault, IsaInfo, \
-                    defaultSolution, \
-                    defaultInternalSupportParams, \
-                    internalParameters, \
-                    print1, print2, printExit, printWarning, \
+                    print2, printExit, printWarning, \
                     roundUp, INDEX_CHARS, IsaVersion, SemanticVersion, \
                     DepthUConfig
+from Tensile.Common.GlobalParameters import defaultSolution, \
+                                            defaultInternalSupportParams, \
+                                            internalParameters
 from Tensile.SolutionStructs.Naming import getNameFull
 from Tensile.SolutionStructs.Problem import ProblemType
 from Tensile.Toolchain.Component import Assembler

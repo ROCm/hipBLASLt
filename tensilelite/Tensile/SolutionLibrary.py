@@ -29,7 +29,8 @@ from . import Properties
 from . import Hardware
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import state, IsaInfo, gfxToIsa, DepthUConfig
+from Tensile.Common import state, IsaInfo, DepthUConfig
+from Tensile.Common.Architectures import gfxToIsa
 from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin
 
 class SingleSolutionLibrary:

@@ -23,13 +23,14 @@
 ################################################################################
 
 from .CustomKernels import getCustomKernelConfig
-from .SolutionStructs import Solution, ProblemSizes
-from Tensile.SolutionStructs.Problem import ProblemType
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
-from .Common import gfxToIsa, printExit, printWarning, print2, \
-                    versionIsCompatible, __version__, \
-                    IsaInfo, DepthUConfig
+from Tensile import __version__
+from Tensile.Common import printExit, printWarning, print2, \
+                           versionIsCompatible, IsaInfo, DepthUConfig
+from Tensile.Common.Architectures import gfxToIsa
+from Tensile.SolutionStructs import Solution, ProblemSizes
+from Tensile.SolutionStructs.Problem import ProblemType
 
 from typing import NamedTuple, List, Dict
 import os
@@ -321,16 +322,6 @@ def parseLibraryLogicData(
     """Parses the data of a library logic file."""
     if isinstance(data, List):
         data = parseLibraryLogicList(data, srcFile)
-
-    #is_arch_valid = lambda cArch, tArch : (cArch == tArch or cArch == "all")
-    #if not (archs is None) and "ArchitectureName" in data:
-    #    if isinstance(archs, List):
-    #        if len(archs) > 0 and not archs[0] == "all":
-    #            if not (any(is_arch_valid(arch.split(":")[0], data["ArchitectureName"]) for arch in archs)):
-    #                return LibraryLogic("", "", None, [], [], None, srcFile)
-    #    elif isinstance(archs, str):
-    #        if not is_arch_valid(archs.split(":")[0], data["ArchitectureName"]):
-    #            return LibraryLogic("", "", None, [], [], None, srcFile)
 
     if "CUCount" not in data:
         data["CUCount"] = None

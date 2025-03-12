@@ -288,7 +288,6 @@ def hash_objs(*objs, **kwargs):
     return hash(tuple(objs))
 
 
-# Is this used?
 def ClientExecutionLock(lockPath: str):
     if not lockPath:
         return open(os.devnull)

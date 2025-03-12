@@ -26,7 +26,7 @@ import os
 from argparse import ArgumentParser
 from typing import Any, Dict, List, Optional
 
-from Tensile.Common import architectureMap
+from Tensile.Common.Architectures import architectureMap
 from Tensile.Toolchain.Validators import ToolchainDefaults
 
 

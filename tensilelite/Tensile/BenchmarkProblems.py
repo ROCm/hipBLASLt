@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Dict
 
 from Tensile import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
+from Tensile.KernelWriter import DebugConfig
 from Tensile.Toolchain.Component import Assembler
 from Tensile.SolutionStructs.Problem import ProblemType, ProblemSizes
 from Tensile.SolutionStructs.Solution import Solution
@@ -43,14 +44,16 @@ from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
 from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
 from .KernelWriterAssembly import KernelWriterAssembly
-from .KernelWriter import DebugConfig
 from .TensileCreateLibrary import copyStaticFiles, writeSolutionsAndKernels
 from .CustomKernels import getCustomKernelConfig
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
-from .Common import globalParameters, HR, print1, print2, IsaInfo, IsaVersion, \
-        printExit, printWarning, ensurePath, startTime, tqdm, state, gfxToVariants, \
-        BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, isaToGfx, DepthUConfig
+from Tensile.Common import HR, print1, print2, IsaInfo, IsaVersion, \
+        printExit, printWarning, ensurePath, tqdm, state, \
+        BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, DepthUConfig
+from Tensile.Common.Architectures import isaToGfx, gfxToVariants
+from Tensile.Common.GlobalParameters import globalParameters, startTime
+
 
 
 def _generateForkedSolutions(problemType, constantParams, forkPermutations, assembler: Assembler, \
@@ -137,9 +140,7 @@ def _getCustomKernelSolutionObj(
                assembler,
                isaInfoMap
            )
-    
-    print1(f" --DBG-- wavefrontSize: {sol['WavefrontSize']}")
-    print1(f" --DBG-- workGroup: {sol['WorkGroup']}")
+
     return sol
 
 
