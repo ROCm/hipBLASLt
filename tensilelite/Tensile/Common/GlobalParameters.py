@@ -276,6 +276,9 @@ globalParameters["SupportedISA"] = [
     (11, 0, 0),
     (11, 0, 1),
     (11, 0, 2),
+    (11, 0, 3), 
+    (11, 5, 0),
+    (11, 5, 1),
     (12, 0, 0),
     (12, 0, 1),
 ]  # assembly kernels writer supports these architectures

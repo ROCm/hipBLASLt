@@ -53,6 +53,9 @@ architectureMap = {
     "gfx1100": "navi31",
     "gfx1101": "navi32",
     "gfx1102": "navi33",
+    "gfx1103": "gfx1103",
+    "gfx1150": "gfx1150",
+    "gfx1151": "gfx1151",
     "gfx1200": "gfx1200",
     "gfx1201": "gfx1201",
 }
