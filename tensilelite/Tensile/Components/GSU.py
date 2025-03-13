@@ -119,7 +119,7 @@ class GSU(Component):
         pass
 
     @abc.abstractmethod
-    def defineAndResources(self, writer, kernel, tmpSgpr0, tmpSgprM, tmpSgprN, tmpSgprNumWG0):
+    def defineAndResources(self, writer, kernel, tmpSgpr0, tmpSgprM, tmpSgprN, tmpSgprNumWG0, tmpSgprAccumTiles):
         pass
 
     @abc.abstractmethod
@@ -998,8 +998,11 @@ class GSU(Component):
         module.add(SAndB32(dst=sgpr(tmpSgpr+1), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
         module.add(SAddU32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=sgpr("WorkGroup1"), comment="NumWorkGroups1*wg0+wg1"))
         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=sgpr(tmpSgpr+1), comment="(NumWorkGroups1*wg0+wg1)*GSU"))
-        module.add(SMovB32(dst=sgpr("GSUStartWGIdx"), src=sgpr(tmpSgpr), comment="starting WG index of each GSU WGs"))
-        module.add(SAddU32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=sgpr("GSUSumIdx"), comment="(NumWorkGroups0*wg1+wg0)*GSU+GSUSumIdx"))
+        module.add(SMulI32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1"), comment="BatchNumWG"))
+        module.add(SMulI32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("GSUStartWGIdx"), src1=sgpr("WorkGroup2"), comment="BatchNumWG"))
+        module.add(SMulI32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("GSUStartWGIdx"), src1=sgpr(tmpSgpr+1), comment="BatchNumWG"))
+        module.add(SAddU32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("GSUStartWGIdx"), src1=sgpr(tmpSgpr), comment="starting WG index of each GSU WGs"))
+        module.add(SAddU32(dst=sgpr(tmpSgpr), src0=sgpr("GSUStartWGIdx"), src1=sgpr("GSUSumIdx"), comment="(NumWorkGroups0*wg1+wg0)*GSU+BatchNumWG+GSUSumIdx"))
         
         assert kernel["BufferStore"]
         module.addSpaceLine()
@@ -1830,7 +1833,7 @@ class GSUOff(GSU):
         module = Module("GSU Off globalWriteBatchProlog")
         return module
 
-    def defineAndResources(self, writer, kernel, tmpSgpr0, tmpSgprM, tmpSgprN, tmpSgprNumWG0):
+    def defineAndResources(self, writer, kernel, tmpSgpr0, tmpSgprM, tmpSgprN, tmpSgprNumWG0, tmpSgprAccumTiles):
         module = Module("GSU Off defineAndResources")
         return module
 
@@ -2824,19 +2827,17 @@ class GSUOn(GSU):
 
         return module
 
-    def defineAndResources(self, writer, kernel, tmpSgpr0, tmpSgprM, tmpSgprN, tmpSgprNumWG0):
+    def defineAndResources(self, writer, kernel, tmpSgpr0, tmpSgprM, tmpSgprN, tmpSgprNumWG0, tmpSgprAccumTiles):
         module = Module("GSU On defineAndResources")
 
-        if kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel':
+        if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
             extReadEpilogueLabeltmp    = Label(label=writer.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
             module.addComment0("Check if custom structure pointer is null")
             if kernel["ProblemType"]["SupportUserArgs"]:
                 module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
                 module.add(SCBranchSCC0(labelName=extReadEpilogueLabeltmp.getLabelName()))
-            module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgprM), src1=sgpr(tmpSgprN)))
-            module.add(SAndB32(dst=sgpr(tmpSgprNumWG0), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-            module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgprNumWG0)))
-            module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr0), src=sgpr(tmpSgpr0), shiftHex=(2)))
+            reductionOffset = kernel["MacroTile0"]*kernel["MacroTile1"]*writer.states.bpeCinternal
+            module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgprAccumTiles), src1=hex(reductionOffset), comment="accumNumTiles*(MT0*MT1*bpeC)"))
             module.add(SAddU32(dst=sgpr("AddressTD"), src0=sgpr("AddressTD"), src1=sgpr(tmpSgpr0)))
             module.add(SAddCU32(dst=sgpr("AddressTD+1"), src0=sgpr("AddressTD+1"), src1=0))
             module.add(SAddU32(dst=sgpr("Synchronizer"), src0=sgpr("Synchronizer"), src1=hex(1638400)))

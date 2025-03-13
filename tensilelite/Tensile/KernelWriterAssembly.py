@@ -1938,7 +1938,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SCBranchSCC1(labelName=label_FOUND.getLabelName()))
 
         gsuComponent = Component.GSU.find(self)
-        module.add(gsuComponent.defineAndResources(self, kernel, tmpSgpr0, tmpSgprM, tmpSgprN, tmpSgprNumWG0))
+        module.add(gsuComponent.defineAndResources(self, kernel, tmpSgpr0, tmpSgprM, tmpSgprN, tmpSgprNumWG0, tmpSgprAccumTiles))
 
         module.add(SAddU32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprAddrM), src1=sgpr(tmpSgprArgOffsett)))
         module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgprAddrM), dword=4))
