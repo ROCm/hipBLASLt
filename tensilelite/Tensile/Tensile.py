@@ -38,7 +38,7 @@ from typing import Dict
 from Tensile import __version__
 from Tensile.Common import print1, printExit, printWarning, ensurePath, HR, \
                            LIBRARY_LOGIC_DIR, setVerbosity, IsaInfo, makeDebugConfig, \
-                           makeDepthUConfig, DebugConfig, DepthUConfig, IsaVersion
+                           makeDepthUConfig, DebugConfig, DepthUConfig, IsaVersion, coVersionMap
 from Tensile.Common.Architectures import detectGlobalCurrentISA, isaToGfx
 from Tensile.Common.Capabilities import makeIsaInfoMap
 from Tensile.Common.GlobalParameters import globalParameters, assignGlobalParameters, \
@@ -450,9 +450,9 @@ def Tensile(userArgs):
                 """
             )
             return False
-        
+
         dist = distro.linux_distribution()
-        if distro.id() == "rhel" and distro.version()[0] == "8": 
+        if distro.id() == "rhel" and distro.version()[0] == "8":
             printWarning("Rhel8 environments may not support all tools for system queries such as rocm-smi.")
             return True
         else:
