@@ -63,7 +63,7 @@ custom.config:
       SupportUserArgs: True
    EnableF32XdlMathOp: False
    EnableMatrixInstruction: True
-   MFMA_BF16_1K: False
+   MFMA_BF16_1K: True
    MIBlock: [16, 16, 16, 1, 1, 1]
    MIInputPerThread: 4
    MIInputPerThreadA: 4
