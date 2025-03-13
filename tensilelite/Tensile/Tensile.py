@@ -185,7 +185,7 @@ def addCommonArguments(argParser):
     argParser.add_argument("--runtime-language", dest="RuntimeLanguage", \
         choices=["HIP", "OCL"], help="override which runtime language to use")
     argParser.add_argument("--code-object-version", dest="CodeObjectVersion", \
-        choices=["4", "5"], action="store", default="4", help="HSA code-object version")
+        choices=["4", "5", "V4", "V5", "default"], action="store", default="4", help="HSA code-object version")
     argParser.add_argument("-v", "--verbose", action="store_true", \
         help="set PrintLevel=2")
     argParser.add_argument("--debug", dest="debug", action="store_true", \
@@ -404,6 +404,8 @@ def Tensile(userArgs):
         globalParameters['LogicFormat'] = args.LogicFormat
     if args.LibraryFormat:
         globalParameters['LibraryFormat'] = args.LibraryFormat
+    globalParameters['CodeObjectVersion'] = coVersionMap[args.CodeObjectVersion]
+    print1(f"# Code Object Version: {globalParameters['CodeObjectVersion']}")
 
     # default config format
     if not altFormat:
