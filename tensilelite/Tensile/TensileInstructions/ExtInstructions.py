@@ -21,6 +21,7 @@
 ################################################################################
 
 from rocisa import rocIsa
+from rocisa.container import DSModifiers, SDWAModifiers
 from rocisa.enum import SelectBit
 
 from .Code import Module, Label, TextBlock

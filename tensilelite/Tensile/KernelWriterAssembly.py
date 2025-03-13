@@ -37,7 +37,7 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           scalarStaticMultiply, MacroVMagicDiv, MacroVDynamicScalarDiv, \
                           RegisterPool, allocTmpGpr, allocTmpGprList, RegisterPoolResource, Holder, \
                           vgpr, sgpr, accvgpr, mgpr, log2, ceilDivide, DataType, fastdeepcopy, \
-                          dataTypeToMfmaInstTypePair, getGlcBitName, getSlcBitName, dataTypeNameAbbrevToInstType, PseudoRandomGenerator, \
+                          dataTypeToMfmaInstTypePair, dataTypeNameAbbrevToInstType, PseudoRandomGenerator, \
                           Assert
 from .TensileInstructions.Instructions import *
 from .TensilePass import getActivationFunctionModuleName, getActivationBranchModuleName
@@ -7310,9 +7310,9 @@ class KernelWriterAssembly(KernelWriter):
       g2lIdx = 0
       loadWidth = tP["globalReadInstruction"].totalWidth
 
-      isGlc = tP["NonTemporal"] & 0x1
-      isSlc = tP["NonTemporal"] & 0x2
-      isNT  = tP["NonTemporal"] & 0x4
+      isGlc = bool(tP["NonTemporal"] & 0x1)
+      isSlc = bool(tP["NonTemporal"] & 0x2)
+      isNT  = bool(tP["NonTemporal"] & 0x4)
       isLds = True if kernel["DirectToLds%s"%tc] else False
 
       directToLdsLoads = 0
@@ -8049,9 +8049,9 @@ class KernelWriterAssembly(KernelWriter):
       loadWidth = tP["globalReadInstruction"].totalWidth # load width in elements?
       bpe = tP["bpeGR"] if not tP["isM"] else tP["bpe"]
       bpl = bpe * tP["glvw"]  # bytes per load
-      isGlc = tP["NonTemporal"] & 0x1
-      isSlc = tP["NonTemporal"] & 0x2
-      isNT  = tP["NonTemporal"] & 0x4
+      isGlc = bool(tP["NonTemporal"] & 0x1)
+      isSlc = bool(tP["NonTemporal"] & 0x2)
+      isNT  = bool(tP["NonTemporal"] & 0x4)
       isLds = True if kernel["DirectToLds%s"%tc] else False
 
       directToLdsLoads = 0
@@ -10020,9 +10020,9 @@ class KernelWriterAssembly(KernelWriter):
     vTmp = self.vgprPool.checkOut(1, "SR Store temp addr0")
     addr0 = vgpr(vTmp)
 
-    isGlc = kernel["NonTemporalD"] & 0x1
-    isSlc = kernel["NonTemporalD"] & 0x2
-    isNT  = kernel["NonTemporalD"] & 0x4
+    isGlc = bool(kernel["NonTemporalD"] & 0x1)
+    isSlc = bool(kernel["NonTemporalD"] & 0x2)
+    isNT  = bool(kernel["NonTemporalD"] & 0x4)
     if kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
       isGlc = True
       isSlc = True
@@ -11808,15 +11808,15 @@ class KernelWriterAssembly(KernelWriter):
         module.add(DSLoadB128(dst=vgpr(dstVgpr, 4), src=src, ds=ds, comment=comment))
       elif bpl==32:
         module.add(DSLoadB128(dst=vgpr(dstVgpr, 4), src=src, ds=ds, comment=comment))
-        ds = DSModifiers(offset=dsOffset+bpl/2)
+        ds = DSModifiers(offset=int(dsOffset+bpl/2))
         module.add(DSLoadB128(dst=vgpr(dstVgpr+4, 4), src=src, ds=ds, comment=comment))
       elif bpl==64:
         module.add(DSLoadB128(dst=vgpr(dstVgpr, 4), src=src, ds=ds, comment=comment))
-        ds = DSModifiers(offset=dsOffset+bpl/4)
+        ds = DSModifiers(offset=int(dsOffset+bpl/4))
         module.add(DSLoadB128(dst=vgpr(dstVgpr+4, 4), src=src, ds=ds, comment=comment))
-        ds = DSModifiers(offset=dsOffset+2*bpl/4)
+        ds = DSModifiers(offset=int(dsOffset+2*bpl/4))
         module.add(DSLoadB128(dst=vgpr(dstVgpr+8, 4), src=src, ds=ds, comment=comment))
-        ds = DSModifiers(offset=dsOffset+3*bpl/4)
+        ds = DSModifiers(offset=int(dsOffset+3*bpl/4))
         module.add(DSLoadB128(dst=vgpr(dstVgpr+12, 4), src=src, ds=ds, comment=comment))
       else:
         assert 0, "bad bpl"
@@ -11853,9 +11853,9 @@ class KernelWriterAssembly(KernelWriter):
       isNT = False
 
       if tc == 'D':
-        isGlc = kernel["NonTemporalD"] & 0x1
-        isSlc = kernel["NonTemporalD"] & 0x2
-        isNT  = kernel["NonTemporalD"] & 0x4
+        isGlc = bool(kernel["NonTemporalD"] & 0x1)
+        isSlc = bool(kernel["NonTemporalD"] & 0x2)
+        isNT  = bool(kernel["NonTemporalD"] & 0x4)
         if kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
           isGlc = True
           isSlc = True
@@ -11893,7 +11893,7 @@ class KernelWriterAssembly(KernelWriter):
       elif tc == 'WS':
         isGlc = True
         isSlc = True
-        isNT  = kernel["NonTemporalD"] & 0x4
+        isNT  = bool(kernel["NonTemporalD"] & 0x4)
 
         bps = self.states.bpeCinternal * ss.cfg.gwvw
         rpv = self.states.bpeCinternal * ss.cfg.gwvw / self.states.bpr
@@ -11990,9 +11990,9 @@ class KernelWriterAssembly(KernelWriter):
       addr0 = vgpr(addr,2)
       addr1 = ""
 
-    isGlc = kernel["NonTemporal%s"%tc] & 0x1
-    isSlc = kernel["NonTemporal%s"%tc] & 0x2
-    isNT  = kernel["NonTemporal%s"%tc] & 0x4
+    isGlc = bool(kernel["NonTemporal%s"%tc] & 0x1)
+    isSlc = bool(kernel["NonTemporal%s"%tc] & 0x2)
+    isNT  = bool(kernel["NonTemporal%s"%tc] & 0x4)
 
     soffset = 0
     if tc == 'E':

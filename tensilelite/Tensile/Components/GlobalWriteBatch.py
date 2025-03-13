@@ -337,7 +337,7 @@ class GlobalWriteBatchWriter:
     module.add(SWaitCnt(waitAll=True, comment="wait store done before synchronizer start load and add"))
     module.add(SAndB32(dst=sgpr(tmpS02), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
     module.add(SSubU32(dst=sgpr(tmpS02), src0=sgpr(tmpS02), src1=hex(1), comment=""))
-    module.add(SAtomicDec(dst=sgpr(tmpS02), base=sgpr("SrdSync", 2), smem=SMEMModifiers(glc=1)))
+    module.add(SAtomicDec(dst=sgpr(tmpS02), base=sgpr("SrdSync", 2), smem=SMEMModifiers(glc=True)))
     module.addSpaceLine()
     #####################################cal synchronizer sum offset#####################################
     module.addComment("synchronizer sum offset cal")
@@ -454,7 +454,7 @@ class GlobalWriteBatchWriter:
         if dataType.isDouble() or dataType.isSingleComplex():
           vgprstart = vgprstart*2
         module.add(self.parentWriter.chooseGlobalRead(True, bps, vgprstart, \
-                        addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1,\
+                        addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True,\
                         comment="load GSU D 0 "+str(vgprstart)))
         SyncloadedData += 1
 
@@ -486,11 +486,11 @@ class GlobalWriteBatchWriter:
 
           if(self.kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
             module.add(self.parentWriter.chooseGlobalRead(True, bps, tmpVAdd+self.gwvw*self.kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
-                          addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1, \
+                          addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True, \
                           comment="load GSU DD %u %u %u" % (bps, self.gwvw, self.kernel["ProblemType"]["DestDataType"].numRegisters())))
           else:
             module.add(self.parentWriter.chooseGlobalRead(True, bps, tmpVAdd+self.gwvw*i, \
-                          addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1, \
+                          addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True, \
                           comment="load GSU DD %u %u %u" % (bps, self.gwvw, self.kernel["ProblemType"]["DestDataType"].numRegisters())))
 
           SyncloadedData += 1
@@ -541,11 +541,11 @@ class GlobalWriteBatchWriter:
 
           if(self.kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
               module.add(self.parentWriter.chooseGlobalRead(True, bps, tmpVAdd+self.gwvw*self.kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
-                          vgpr(GSUMvgpr), addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1, \
+                          vgpr(GSUMvgpr), addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True, \
                           comment="load GSU DD %u" % bps))
           else:
             module.add(self.parentWriter.chooseGlobalRead(True, bps, tmpVAdd+self.gwvw*i, \
-                          vgpr(GSUMvgpr), addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1, \
+                          vgpr(GSUMvgpr), addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True, \
                           comment="load GSU DD %u" % bps))
 
           SyncloadedData += 1
@@ -639,7 +639,7 @@ class GlobalWriteBatchWriter:
             module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, tmpS05, dst=tmpAddr1))
 
           module.add(self.parentWriter.chooseGlobalRead(True, bps, data, \
-                          addr0, sgpr(tmpAddr1, 4), soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1,\
+                          addr0, sgpr(tmpAddr1, 4), soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True,\
                           comment="load GSU WG %d element %d " % (uidx, elementIdx)))
           
           SyncloadedData += 1
@@ -662,7 +662,7 @@ class GlobalWriteBatchWriter:
             module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, tmpS05, dst=tmpS06))
 
           module.add(self.parentWriter.chooseGlobalRead(True, bps, data, \
-                          addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1,\
+                          addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True,\
                           comment="load GSU WG %d element %d " % (uidx, elementIdx)))
           SyncloadedData += 1
         
@@ -705,7 +705,7 @@ class GlobalWriteBatchWriter:
           module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, tmpS05, dst=tmpS06))
 
         module.add(self.parentWriter.chooseGlobalRead(True, bps, data, \
-                        addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1,\
+                        addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True,\
                         comment="prefetch element %d " % (elementIdx)))
         vmcnt += 1
       
@@ -742,7 +742,7 @@ class GlobalWriteBatchWriter:
             module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, tmpS05, dst=tmpS06))
 
           module.add(self.parentWriter.chooseGlobalRead(True, bps, data, \
-                          addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=1, slc=1,\
+                          addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True,\
                           comment="prefetch element %d " % (elementIdx)))
           vmcnt += 1
           
@@ -2272,7 +2272,7 @@ class GlobalWriteBatchWriter:
               if not self.amdClangVersion.major >= 19:
                 module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
               else:
-                module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(byte_sel=sb)))
+                module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(byte_sel=[sb])))
             else:
               sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
               module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
@@ -2306,7 +2306,7 @@ class GlobalWriteBatchWriter:
               if not self.amdClangVersion.major >= 19:
                 module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(op_sel=[0,sb])))
               else:
-                module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(byte_sel=sb)))
+                module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), vop3=VOP3PModifiers(byte_sel=[sb])))
             else:
               sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
               module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))

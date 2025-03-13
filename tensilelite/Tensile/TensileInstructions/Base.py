@@ -74,16 +74,6 @@ class Item(base.Item):
     def countType(self, ttype) -> int:
         return int(isinstance(self, ttype))
 
-def getGlcBitName(hasGLCModifier):
-  if hasGLCModifier:
-    return "glc"
-  return "sc0"
-
-def getSlcBitName(hasGLCModifier):
-  if hasGLCModifier:
-    return "slc"
-  return "sc1"
-
 def _removeIdent(isaDict) -> list:
     ids = [th.ident for th in threading.enumerate()]
     isaDict = [id for id in isaDict if id in ids]
