@@ -113,10 +113,10 @@ void ArgumentModel_log_performance(hipblaslt_internal_ostream& name_line,
 
     if(!performance_monitor.detailedReport())
     {
-        name_line << ",lowest-avg-freq";
+        name_line << ",lowest_avg_freq";
         val_line << "," << performance_monitor.getLowestAverageSYSCLK();
 
-        name_line << ",lowest-median-freq";
+        name_line << ",lowest_median_freq";
         val_line << "," << performance_monitor.getLowestMedianSYSCLK();
     }
     else
@@ -124,21 +124,21 @@ void ArgumentModel_log_performance(hipblaslt_internal_ostream& name_line,
         auto allAvgSYSCLK = performance_monitor.getAllAverageSYSCLK();
         for(int i = 0; i < allAvgSYSCLK.size(); i++)
         {
-            name_line << ",avg-freq_" << i;
+            name_line << ",avg_freq" << i;
             val_line << "," << allAvgSYSCLK[i];
         }
 
         auto allMedianSYSCLK = performance_monitor.getAllMedianSYSCLK();
         for(int i = 0; i < allMedianSYSCLK.size(); i++)
         {
-            name_line << ",median-freq_" << i;
+            name_line << ",median_freq" << i;
             val_line << "," << allMedianSYSCLK[i];
         }
     }
 
-    name_line << ",avg-MCLK";
+    name_line << ",avg_MCLK";
     val_line << "," << performance_monitor.getAverageMEMCLK();
 
-    name_line << ",median-MCLK";
+    name_line << ",median_MCLK";
     val_line << "," << performance_monitor.getMedianMEMCLK();
 }
