@@ -11053,7 +11053,7 @@ class KernelWriterAssembly(KernelWriter):
                                 soffset=soffset, mubuf=mubuf2, comment=comment))
           return rv
         elif bpl==64:
-          rv = Module("emulated _buffer_load_b256")
+          rv = Module("emulated _buffer_load_b512")
           # +0.25
           dst = None if lds else vgpr(destVgpr, rpv//4)
           rv.add(BufferLoadB128(dst=dst, vaddr=addr0, saddr=addr1, \
