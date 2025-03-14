@@ -413,7 +413,8 @@ defaultBenchmarkCommonParameters = [
     {"WorkGroupReduction": [False]},
     {"ConvertAfterDS": [False]},
     {"ForceDisableShadowInit": [False]},
-    {"LDSTrInst": [False]}
+    {"LDSTrInst": [False]},
+    {"WaveSplitK": [ False ]},
 ]
 
 # dictionary of defaults comprised of default option for each parameter
