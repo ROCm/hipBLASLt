@@ -29,13 +29,13 @@ Dimensions of the workgroup which will operate on a tile and share lds
 Example: ( wg0 x wg1 x LocalSplitU )
 """
 
-from typing import Dict
+from pathlib import Path
 
-from Tensile.Common import IsaVersion, IsaInfo, elineno
+from Tensile.Common import elineno
 from Tensile.SolutionStructs.Validators.WorkGroup import validateWorkGroup
 
 
-def _validateWorkGroup(solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], filepath: str):
+def _validateWorkGroup(solution: dict, filepath: Path):
     try:
         validateWorkGroup(solution)
         assert solution["Valid"], f"Solution was rejected: {elineno()}"
@@ -45,5 +45,3 @@ def _validateWorkGroup(solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], fi
             f"Error: Validation failed: {e} (file: {filepath}, index: {solution['SolutionIndex']})"
         )
         return False
-
-

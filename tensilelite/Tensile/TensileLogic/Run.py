@@ -23,130 +23,117 @@
 ################################################################################
 
 
-import yaml
 import functools
+
 from pathlib import Path
-from multiprocessing import Pool
-from typing import List, Dict
+from typing import List, Dict, NamedTuple
 
-from Tensile.Common import (
-    ParallelMap2,
-    print1,
-    IsaVersion,
-    IsaInfo,
-    setVerbosity
-)
-
+from Tensile.Common import ParallelMap2, print1, IsaVersion, IsaInfo, setVerbosity
 from Tensile.Common.Architectures import SUPPORTED_ISA
 from Tensile.Common.Capabilities import makeIsaInfoMap
-from Tensile.Common.GlobalParameters import assignGlobalParameters, globalParameters
-
+from Tensile.Common.GlobalParameters import assignGlobalParameters
 from Tensile.LibraryIO import readYAML
 from Tensile.Toolchain.Validators import validateToolchain
-from Tensile.CustomKernels import isCustomKernelConfig, getCustomKernelConfig
-from Tensile import CUSTOM_KERNEL_PATH
 
 from .ParseArguments import parseArguments
 from .ValidMatrixInstruction import _validateMatrixInstruction
 from .ValidWorkGroup import _validateWorkGroup
+from .HandleCustomKernel import handleCustomKernel, hasCustomKernel
 
 
-def handleCustomKernel(sol: dict, isaInfoMap: dict):
-    if not isCustomKernelConfig(sol):
-        return sol, False
-
-    name = sol["CustomKernelName"]
-    dir = CUSTOM_KERNEL_PATH
-    config = getCustomKernelConfig(name, {}, dir)
-    sol.update(config)
-
-    mi = sol["MatrixInstruction"]
-    print1(f">>     Found custom kernel: {name} with MI {mi}")
-
-    if not (len(mi) == 4 or len(mi) == 0):
-        raise ValueError(f">> Error: Custom kernels should have matrix instruction of length 4, or none at all, not length {len(mi)}\n{name}")
-
-    return sol, True
+class Check(NamedTuple):
+    OnlyCustomKernels: bool
+    All: bool
 
 
-def runChecks(logicPath: str, isaInfoMap: Dict[IsaVersion, IsaInfo], check: Dict[str, bool], files: List[Path]):
+def _runChecks(
+    logicPath: Path, isaInfoMap: Dict[IsaVersion, IsaInfo], check: Check, files: List[Path]
+):
     """
-    Run checks on the given files.
+    Run checks on the given logic files.
 
     Args:
-        logicPath: Path to the logic directory.
-        gp: Global parameters.
-        files: List of files to check.
+        logicPath: Path to a directory containing logic files or to an individual logic file.
+        isaInfoMap: Map of IsaVersion to IsaInfo.
+        check: Object containing flags for checking.
+        files: List of logic files to check.
 
     Returns:
-        Tuple of (keep, total) where keep is the number of solutions to keep and
-        total is the total number of solutions.
+        Tuple of (keep, total) where keep is the number of unrejected solutions and
+        total is the total number of solutions parsed.
     """
     keep, total = 0, 0
     for file in files:
         if "Experimental" in file.parts:
             return keep, total
 
-        solutions = readYAML(file)[5]  # Solutions are the 5th index
+        solutions = []
+        if check.OnlyCustomKernels and hasCustomKernel(file):
+            print1(f">> {file.relative_to(logicPath)}")
+            solutions = readYAML(file)[5]  # Solutions are the 5th index
+        elif check.All:
+            print1(f">> {file.relative_to(logicPath)}")
+            solutions = readYAML(file)[5]  # Solutions are the 5th index
 
-        print1(f">> {file.relative_to(logicPath)}")
         for s in solutions:
             s, isCustom = handleCustomKernel(s, isaInfoMap)
-
-            if check["onlyCustomKernels"] and not check["all"] and not isCustom:
+            if check.OnlyCustomKernels and not isCustom:
                 continue
 
             if all(
                 [
                     _validateMatrixInstruction(s, isaInfoMap, file.relative_to(logicPath)),
-                    _validateWorkGroup(s, isaInfoMap, file.relative_to(logicPath)),
+                    _validateWorkGroup(s, file.relative_to(logicPath)),
                 ]
             ):
                 keep += 1
             total += 1
+
     return keep, total
 
 
-def main():
+def _setup():
     args = parseArguments()
 
     setVerbosity(args.Verbose)
-
     jobs = int(args.Jobs)
     cxxCompiler = validateToolchain(args.CxxCompiler)
-
-    isaInfoMap = makeIsaInfoMap(SUPPORTED_ISA, cxxCompiler)
-    assignGlobalParameters({"PrintSolutionRejectionReason": True}, isaInfoMap)
-
     logicPath = Path(args.LogicPath)
+
+    if not any([args.CheckAll, args.CheckOnlyCustomKernels]):
+        print1("No checks specified. Exiting.")
+        exit(0)
+    check = Check(
+        OnlyCustomKernels=args.CheckOnlyCustomKernels,
+        All=args.CheckAll,
+    )
+
     if logicPath.is_file() and logicPath.suffix == ".yaml":
         files = [logicPath]
     else:
         pattern = "**/*.yaml"
         files = list(logicPath.glob(pattern))
-
-    if not any([args.CheckAll, args.CheckCustomKernels]):
-        print1("No checks specified. Exiting.")
-        exit(0)
-    check = {
-        "all": args.CheckAll,
-        "onlyCustomKernels": args.CheckCustomKernels,
-    }
-
     if len(files) == 0:
         print1(f"No files found in {logicPath}")
         exit(1)
     print1(f"Found {len(files)} files")
 
+    isaInfoMap = makeIsaInfoMap(SUPPORTED_ISA, str(cxxCompiler))
+    assignGlobalParameters({"PrintSolutionRejectionReason": True}, isaInfoMap)
+
+    return jobs, isaInfoMap, logicPath, files, check
+
+
+def main():
+    jobs, isaInfoMap, logicPath, files, check = _setup()
+
     batchSize = len(files) // min(len(files), jobs)
     batches = (files[i : i + batchSize] for i in range(0, len(files), batchSize))
 
-    fn = functools.partial(runChecks, logicPath, isaInfoMap, check)
+    fn = functools.partial(_runChecks, logicPath, isaInfoMap, check)
     keep, total = 0, 0
 
-    results = ParallelMap2(
-        fn, batches, multiArg=False, procs=jobs, return_as="list"
-    )
+    results = ParallelMap2(fn, batches, multiArg=False, procs=jobs, return_as="list")
 
     for _keep, _total in results:
         keep += _keep

@@ -57,6 +57,7 @@ from pathlib import Path
 from Tensile.Common import IsaVersion, IsaInfo, elineno
 from Tensile.SolutionStructs.Validators.MatrixInstruction import validateMIParameters
 
+
 def _validateMatrixInstruction(
     solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], filepath: Path
 ) -> bool:
