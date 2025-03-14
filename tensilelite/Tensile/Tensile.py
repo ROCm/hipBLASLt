@@ -31,7 +31,8 @@ import os
 import sys
 import argparse
 from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
-    assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR
+    assignGlobalParameters, restoreDefaultGlobalParameters, HR, __version__, LIBRARY_LOGIC_DIR, \
+    coVersionMap
 from .Toolchain.Assembly import AssemblyToolchain
 from .Toolchain.Source import SourceToolchain
 from .Toolchain.Validators import validateToolchain, ToolchainDefaults
@@ -141,7 +142,7 @@ def addCommonArguments(argParser):
     argParser.add_argument("--runtime-language", dest="RuntimeLanguage", \
         choices=["HIP", "OCL"], help="override which runtime language to use")
     argParser.add_argument("--code-object-version", dest="CodeObjectVersion", \
-        choices=["4", "5"], action="store", default="4", help="HSA code-object version")
+        choices=["4", "5", "V4", "V5", "default"], action="store", default="4", help="HSA code-object version")
     argParser.add_argument("-v", "--verbose", action="store_true", \
         help="set PrintLevel=2")
     argParser.add_argument("--debug", dest="debug", action="store_true", \
@@ -270,7 +271,10 @@ def get_gpu_max_frequency(device_id):
         return result
 
     attrib = hip.hipDeviceAttribute_t.hipDeviceAttributeClockRate
-    freq = hip_check(hip.hipDeviceGetAttribute(attrib, device_id))
+    try:
+        freq = hip_check(hip.hipDeviceGetAttribute(attrib, device_id))
+    except:
+        freq = None
 
     return freq // 1000 if freq else None
 
@@ -363,6 +367,8 @@ def Tensile(userArgs):
         globalParameters['LogicFormat'] = args.LogicFormat
     if args.LibraryFormat:
         globalParameters['LibraryFormat'] = args.LibraryFormat
+    globalParameters['CodeObjectVersion'] = coVersionMap[args.CodeObjectVersion]
+    print1(f"# Code Object Version: {globalParameters['CodeObjectVersion']}")
 
     # default config format
     if not altFormat:
@@ -395,6 +401,27 @@ def Tensile(userArgs):
 
     device_id = config["GlobalParameters"].get("Device", globalParameters["Device"])
     UseEffLike = config["GlobalParameters"].get("UseEffLike", globalParameters["UseEffLike"])
+
+    def isRhel8():
+        try:
+            import distro
+        except:
+            printWarning(
+                """
+                Failed to import distro package. Cannot verify platform.
+                Run: pip install distro or pip install -r requirements.txt to resolve warning.
+                """
+            )
+            return False
+        
+        dist = distro.linux_distribution()
+        if distro.id() == "rhel" and distro.version()[0] == "8": 
+            printWarning("Rhel8 environments may not support all tools for system queries such as rocm-smi.")
+            return True
+        else:
+            return False
+
+    UseEffLike = False if isRhel8() else UseEffLike
 
     if 'LibraryLogic' in config and UseEffLike:
         max_frequency = get_gpu_max_frequency(device_id)
