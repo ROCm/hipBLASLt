@@ -23,7 +23,6 @@ GlobalParameters:
   # NumWarmups: 20
   # EnqueuesPerSync: 50
   PrintSolutionRejectionReason: True
-  KeepBuildTmp: True
 
 BenchmarkProblems:
   - # I8I8I NN
@@ -40,12 +39,12 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      UseScaleAB: "Vector"
+      # UseScaleAB: "Vector"
       # UseScaleAB: "Scalar"
       # UseScaleCD: True
-      UseScaleAlphaVec: 3
-    #  UseBias: 3
-      BiasDataTypeList: [S]
+      UseScaleAlphaVec: 1
+      # UseBias: 3
+      # BiasDataTypeList: [S]
       # UseE: True
     -
       InitialSolutionParameters:
@@ -120,8 +119,8 @@ BenchmarkProblems:
       UseScaleAB: "Vector"
       # UseScaleAB: "Scalar"
       # UseScaleCD: True
-      UseScaleAlphaVec: 3
-      UseBias: 3
+      UseScaleAlphaVec: 1
+      UseBias: 1
       BiasDataTypeList: [S]
       UseE: True
     -
@@ -197,8 +196,8 @@ BenchmarkProblems:
       UseScaleAB: "Vector"
       # UseScaleAB: "Scalar"
       # UseScaleCD: True
-      UseScaleAlphaVec: 3
-      UseBias: 3
+      UseScaleAlphaVec: 1
+      UseBias: 1
       BiasDataTypeList: [S]
       UseE: True
     -
@@ -274,8 +273,8 @@ BenchmarkProblems:
       UseScaleAB: "Vector"
       # UseScaleAB: "Scalar"
       # UseScaleCD: True
-      UseScaleAlphaVec: 3
-      UseBias: 3
+      UseScaleAlphaVec: 1
+      UseBias: 1
       BiasDataTypeList: [S]
       UseE: True
     - # BenchmarkProblemSizeGroup - Standard
