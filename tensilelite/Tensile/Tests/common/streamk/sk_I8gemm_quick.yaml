@@ -5,14 +5,11 @@ GlobalParameters:
   NumElementsToValidate: -1
   BoundsCheck: False
   KernelTime: False
-  # DataInitTypeA: 12
-  # DataInitTypeB: 13
   DataInitTypeA: 21
   DataInitTypeB: 21
   DataInitTypeC: 21
   DataInitTypeAlpha: 1
   DataInitTypeBeta: 1
-  # DataInitTypeBeta: 0
   DataInitTypeBias: 21
   DataInitTypeScaleA: 2
   DataInitTypeScaleB: 2
@@ -20,8 +17,6 @@ GlobalParameters:
   DataInitTypeScaleD: 2
   DataInitTypeScaleAlphaVec: 21
   MaxWorkspaceSize: 134217728
-  # NumWarmups: 20
-  # EnqueuesPerSync: 50
   PrintSolutionRejectionReason: True
 
 BenchmarkProblems:
@@ -29,8 +24,6 @@ BenchmarkProblems:
     -
       OperationType: GEMM
       DataType: I8
-      # DataTypeA: F8
-      # DataTypeB: h
       DestDataType: I8
       ComputeDataType: I
       HighPrecisionAccumulate: True
@@ -39,31 +32,21 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Activation:    True
-      # UseScaleAB: "Vector"
-      # UseScaleAB: "Scalar"
-      # UseScaleCD: True
       UseScaleAlphaVec: 1
-      # UseBias: 3
-      # BiasDataTypeList: [S]
-      # UseE: True
     -
       InitialSolutionParameters:
       BenchmarkCommonParameters:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - 1LDSBuffer: [-1]
-        # - AssertFree0ElementMultiple: [1]
         - ClusterLocalRead: [1]
         - DepthU: [ 64 ]
         - ExpandPointerSwap: [1]
         - GlobalReadPerMfma: [1]
         - GlobalReadVectorWidthA: [4]
         - GlobalReadVectorWidthB: [4]
-        # - GlobalSplitU: [0]
-        # - GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - InnerUnroll: [1]
         - MatrixInstruction:
-          # - [16,16,32, 1, 1, 1,1, 2,2]  # 16x16
           - [16,16,32, 1, 1, 2,2, 2,2]  # 16x16
         - LdsBlockSizePerPadA: [0]
         - LdsBlockSizePerPadB: [0]
@@ -86,19 +69,7 @@ BenchmarkProblems:
         - ProblemSizes:
           - Exact: [128, 128, 1, 128]
           - Exact: [1024, 1024, 1, 1024]
-          # - Exact: [4096, 1024, 1, 1024]
-          # - Exact: [1024, 4096, 1, 1024]
-          # - Exact: [1024, 1024, 1, 4096]
-          # - Exact: [4096, 4096, 1, 4096]
-          # - Exact: [4111, 4096, 1, 4096]
-          # - Exact: [4096, 4111, 1, 4096]
-          # - Exact: [4096, 4096, 1, 4111]
           - Exact: [4111, 4111, 1, 4111]
-          # - Exact: [1024, 1024, 1, 512]
-          # - Exact: [127,   128, 1, 640]
-          # - Exact: [128,   128, 1, 640]
-          # - Exact: [129,   128, 1, 640]
-          #   - BiasTypeArgs: ['S']
         - ActivationArgs:
           - [Enum: relu]
 
@@ -106,8 +77,6 @@ BenchmarkProblems:
     -
       OperationType: GEMM
       DataType: I8
-      # DataTypeA: F8
-      # DataTypeB: h
       DestDataType: B
       ComputeDataType: S
       HighPrecisionAccumulate: True
@@ -117,8 +86,6 @@ BenchmarkProblems:
       Batched: True
       Activation:    True
       UseScaleAB: "Vector"
-      # UseScaleAB: "Scalar"
-      # UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [S]
@@ -129,18 +96,14 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - 1LDSBuffer: [-1]
-        # - AssertFree0ElementMultiple: [1]
         - ClusterLocalRead: [1]
         - DepthU: [ 64 ]
         - ExpandPointerSwap: [1]
         - GlobalReadPerMfma: [1]
         - GlobalReadVectorWidthA: [4]
         - GlobalReadVectorWidthB: [4]
-        # - GlobalSplitU: [0]
-        # - GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - InnerUnroll: [1]
         - MatrixInstruction:
-          # - [16,16,32, 1, 1, 1,1, 2,2]  # 16x16
           - [16,16,32, 1, 1, 2,2, 2,2]  # 16x16
         - LdsBlockSizePerPadA: [0]
         - LdsBlockSizePerPadB: [0]
@@ -163,18 +126,7 @@ BenchmarkProblems:
         - ProblemSizes:
           - Exact: [128, 128, 1, 128]
           - Exact: [1024, 1024, 1, 1024]
-          # - Exact: [4096, 1024, 1, 1024]
-          # - Exact: [1024, 4096, 1, 1024]
-          # - Exact: [1024, 1024, 1, 4096]
-          # - Exact: [4096, 4096, 1, 4096]
-          # - Exact: [4111, 4096, 1, 4096]
-          # - Exact: [4096, 4111, 1, 4096]
-          # - Exact: [4096, 4096, 1, 4111]
           - Exact: [4111, 4111, 1, 4111]
-          # - Exact: [1024, 1024, 1, 512]
-          # - Exact: [127,   128, 1, 640]
-          # - Exact: [128,   128, 1, 640]
-          # - Exact: [129,   128, 1, 640]
         - BiasTypeArgs: ['S']
         - ActivationArgs:
           - [Enum: relu]
@@ -183,8 +135,6 @@ BenchmarkProblems:
     -
       OperationType: GEMM
       DataType: I8
-      # DataTypeA: F8
-      # DataTypeB: h
       DestDataType: H
       ComputeDataType: S
       HighPrecisionAccumulate: True
@@ -194,8 +144,6 @@ BenchmarkProblems:
       Batched: True
       Activation:    True
       UseScaleAB: "Vector"
-      # UseScaleAB: "Scalar"
-      # UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [S]
@@ -206,18 +154,14 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - 1LDSBuffer: [-1]
-        # - AssertFree0ElementMultiple: [1]
         - ClusterLocalRead: [1]
         - DepthU: [ 64 ]
         - ExpandPointerSwap: [1]
         - GlobalReadPerMfma: [1]
         - GlobalReadVectorWidthA: [4]
         - GlobalReadVectorWidthB: [4]
-        # - GlobalSplitU: [0]
-        # - GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - InnerUnroll: [1]
         - MatrixInstruction:
-          # - [16,16,32, 1, 1, 1,1, 2,2]  # 16x16
           - [16,16,32, 1, 1, 2,2, 2,2]  # 16x16
         - LdsBlockSizePerPadA: [0]
         - LdsBlockSizePerPadB: [0]
@@ -240,18 +184,7 @@ BenchmarkProblems:
         - ProblemSizes:
           - Exact: [128, 128, 1, 128]
           - Exact: [1024, 1024, 1, 1024]
-          # - Exact: [4096, 1024, 1, 1024]
-          # - Exact: [1024, 4096, 1, 1024]
-          # - Exact: [1024, 1024, 1, 4096]
-          # - Exact: [4096, 4096, 1, 4096]
-          # - Exact: [4111, 4096, 1, 4096]
-          # - Exact: [4096, 4111, 1, 4096]
-          # - Exact: [4096, 4096, 1, 4111]
           - Exact: [4111, 4111, 1, 4111]
-          # - Exact: [1024, 1024, 1, 512]
-          # - Exact: [127,   128, 1, 640]
-          # - Exact: [128,   128, 1, 640]
-          # - Exact: [129,   128, 1, 640]
         - BiasTypeArgs: ['S']
         - ActivationArgs:
           - [Enum: relu]
@@ -260,8 +193,6 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: i8
-      # DataTypeA: F8
-      # DataTypeB: h
       DestDataType: I
       ComputeDataType: S
       HighPrecisionAccumulate: True
@@ -271,8 +202,6 @@ BenchmarkProblems:
       Batched: True
       Activation:    True
       UseScaleAB: "Vector"
-      # UseScaleAB: "Scalar"
-      # UseScaleCD: True
       UseScaleAlphaVec: 1
       UseBias: 1
       BiasDataTypeList: [S]
@@ -283,18 +212,14 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - 1LDSBuffer: [-1]
-        # - AssertFree0ElementMultiple: [1]
         - ClusterLocalRead: [1]
         - DepthU: [ 64 ]
         - ExpandPointerSwap: [1]
         - GlobalReadPerMfma: [1]
         - GlobalReadVectorWidthA: [4]
         - GlobalReadVectorWidthB: [4]
-        # - GlobalSplitU: [0]
-        # - GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - InnerUnroll: [1]
         - MatrixInstruction:
-          # - [16,16,32, 1, 1, 1,1, 2,2]  # 16x16
           - [16,16,32, 1, 1, 2,2, 2,2]  # 16x16
         - LdsBlockSizePerPadA: [0]
         - LdsBlockSizePerPadB: [0]
@@ -317,18 +242,7 @@ BenchmarkProblems:
         - ProblemSizes:
           - Exact: [128, 128, 1, 128]
           - Exact: [1024, 1024, 1, 1024]
-          # - Exact: [4096, 1024, 1, 1024]
-          # - Exact: [1024, 4096, 1, 1024]
-          # - Exact: [1024, 1024, 1, 4096]
-          # - Exact: [4096, 4096, 1, 4096]
-          # - Exact: [4111, 4096, 1, 4096]
-          # - Exact: [4096, 4111, 1, 4096]
-          # - Exact: [4096, 4096, 1, 4111]
           - Exact: [4111, 4111, 1, 4111]
-          # - Exact: [1024, 1024, 1, 512]
-          # - Exact: [127,   128, 1, 640]
-          # - Exact: [128,   128, 1, 640]
-          # - Exact: [129,   128, 1, 640]
         - BiasTypeArgs: ['S']
         - ActivationArgs:
           - [Enum: relu]
