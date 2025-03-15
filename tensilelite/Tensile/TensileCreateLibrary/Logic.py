@@ -70,8 +70,8 @@ def distribute(lst, n):
 
 
 def numberOfBuildKernerls(logicFile):
-    result = run(['/bin/grep', "SolutionIndex", logicFile], stderr=PIPE, stdout=PIPE, check=False)
-    return int(str(result.stdout).count("SolutionIndex"))
+    result = run(['/bin/grep', "BuildKernel", logicFile], stderr=PIPE, stdout=PIPE, check=False)
+    return int(str(result.stdout).count("BuildKernel"))
 
 
 def getCoFileNames(logicFile):

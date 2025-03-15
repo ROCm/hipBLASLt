@@ -271,17 +271,6 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
     if isinstance(data, List):
         data = parseLibraryLogicList(data, srcFile)
 
-    #is_arch_valid = lambda cArch, tArch : (cArch == tArch or cArch == "all")
-    #if not (archs is None) and "ArchitectureName" in data:
-    #    printExit("Shouldn't be here")
-    #    if isinstance(archs, List):
-    #        if len(archs) > 0 and not archs[0] == "all":
-    #            if not (any(is_arch_valid(arch.split(":")[0], data["ArchitectureName"]) for arch in archs)):
-    #                return LibraryLogic("", "", None, [], [], None, srcFile)
-    #    elif isinstance(archs, str):
-    #        if not is_arch_valid(archs.split(":")[0], data["ArchitectureName"]):
-    #            return LibraryLogic("", "", None, [], [], None, srcFile)
-
     if "CUCount" not in data:
         data["CUCount"] = None
 
@@ -350,7 +339,7 @@ def parseLibraryLogicList(data, srcFile="?"):
     rv["ProblemType"] = data[DataIndex.PROBLEM_TYPE]
     rv["Solutions"] = data[DataIndex.SOLUTIONS]
 
-    if type(data[3]) is dict:
+    if type(data[DataIndex.DEVICE_PROPERTIES]) is dict:
         rv["ArchitectureName"] = data[DataIndex.DEVICE_PROPERTIES]["Architecture"]
         rv["CUCount"] = data[DataIndex.DEVICE_PROPERTIES]["CUCount"]
     else:
