@@ -1,4 +1,3 @@
-
 /******************************************/
 /* Begin Kernel                           */
 /******************************************/
@@ -64,6 +63,7 @@ custom.config:
       GroupedGemm: False
       SupportUserArgs: True
    MatrixInstruction: [16, 16, 32, 1, 1, 4, 14, 4, 1]
+   WavefrontSize: 64
    1LDSBuffer: 1
    ScheduleIterAlg: 3
    DepthU: 128
@@ -42787,3 +42787,4 @@ label_GW_End_1:
 label_KernelEnd:
 s_endpgm                                           // Kernel End
 label_ASM_End:  /// The end of the kernel
+>>>>>>> origin/develop
