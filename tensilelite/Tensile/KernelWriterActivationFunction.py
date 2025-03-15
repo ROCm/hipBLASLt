@@ -21,15 +21,16 @@
 ################################################################################
 
 from copy import deepcopy
+from typing import List
 
 from .TensileInstructions import TensileInstructions
-from .Common import globalParameters, gfxToIsa, isaToGfx
+from Tensile.Common.Architectures import isaToGfx, IsaVersion
 from .Activation import ActivationInline, ActivationType
 from .KernelWriterBase import KernelWriterBase
 
 class KernelWriterActivationFunction(KernelWriterBase):
 
-  def __init__(self, state, cxxCompiler: str):
+  def __init__(self, state, cxxCompiler: str, supportedISA: List[IsaVersion]):
     super().__init__()
     self.cxxCompiler = cxxCompiler
     self.state["ProblemType"] = deepcopy(state["ProblemType"])
@@ -46,16 +47,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
     self.enumName = "Tensile::%sActivationType_%s"%(self.actGradientPrefix, \
                                                     self.state["ProblemType"]["ActivationComputeDataType"])
 
-    # Get supported archs
-    if ";" in globalParameters["Architecture"]:
-      self.supportedArchs = globalParameters["Architecture"].split(";")
-    else:
-      self.supportedArchs = globalParameters["Architecture"].split("_")
-    if "all" in self.supportedArchs:
-      self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
-    else:
-      for idx, arch in enumerate(self.supportedArchs):
-        self.supportedArchs[idx] = gfxToIsa(''.join(map(str, arch)))
+    self.supportedArchs = supportedISA
 
     # derive parameter
     self.language = "HIP"
@@ -93,7 +85,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
   def getInlineAsm(self, activation: ActivationInline, spaces: int, activationType: str):
     activationStrList = []
 
-    isa = tuple(self.state["Kernel"]["ISA"])
+    isa = self.state["Kernel"]["ISA"]
     if not self._tf.isInit():
       self._tf.init(isa, self.cxxCompiler)
     self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
