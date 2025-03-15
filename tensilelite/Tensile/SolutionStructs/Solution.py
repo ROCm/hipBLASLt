@@ -510,7 +510,7 @@ class Solution(collections.abc.Mapping):
 
     # dot2: currently only support fp16 with HPA on gfx942
     state["UseDotInstruction"] = (not state["EnableMatrixInstruction"]) and state["ProblemType"]["DataType"].isHalf() \
-      and state["ProblemType"]["HighPrecisionAccumulate"] and (globalParameters["CurrentISA"] == (9,4,2))
+      and state["ProblemType"]["HighPrecisionAccumulate"] and (state["ISA"] == IsaVersion(9,4,2))
     if state["UseDotInstruction"]:
       # need modification for dot4 or dot8
       state["NumDotElements"] = 2
