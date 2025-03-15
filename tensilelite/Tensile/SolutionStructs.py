@@ -22,6 +22,8 @@
 #
 ################################################################################
 
+from Tensile.Common.Naming import getRequiredParametersMin
+
 from .TensileInstructions import DataType, roundUpToNearestMultiple
 from .TensileInstructions.Base import fastdeepcopy as deepcopy
 
@@ -4387,58 +4389,10 @@ class Solution(collections.abc.Mapping):
   def getMinNaming(objs):
     nonCKObjs = [obj for obj in objs if not isCustomKernelConfig(obj)]
 
-    # early return
     if len(nonCKObjs) == 0:
       return {}
 
-    # determine keys
-    requiredParameters = {}
-    if isinstance(nonCKObjs[0], Solution):
-      keys = list(nonCKObjs[0]._state.keys())
-    else:
-      keys = list(nonCKObjs[0].keys())
-    # only 1, rather than name being nothing, it'll be everything
-    if len(nonCKObjs) == 1:
-      for key in keys:
-        if key in list(validParameters.keys()):
-          requiredParameters[key] = False
-    else:
-      for key in keys:
-        required = False
-        if key in list(validParameters.keys()):
-          for i in range(1, len(nonCKObjs)):
-            if nonCKObjs[0][key] != nonCKObjs[i][key]:
-              required = True
-              break
-        if required:
-          requiredParameters[key] = True
-        else:
-          requiredParameters[key] = False
-
-    requiredParameters["GlobalSplitU"] = True
-    requiredParameters["WorkGroupMapping"] = True
-
-    if "MatrixInstM" in nonCKObjs[0]._state:
-      # Use MIWaveGroup and MIWaveTile instead of WG and MT
-      requiredParameters["MIWaveTile"]  = True
-      requiredParameters["ThreadTile"]  = False
-
-    requiredParameters["ProblemType"]       = False # always prepended
-    requiredParameters["MacroTile0"]        = False # always prepended
-    requiredParameters["MacroTile1"]        = False # always prepended
-    requiredParameters["DepthU"]            = False # always prepended
-    requiredParameters["MatrixInstruction"] = False # always prepended
-    requiredParameters["MatrixInstM"]       = False # always prepended
-    requiredParameters["MatrixInstN"]       = False # always prepended
-    requiredParameters["MatrixInstK"]       = False # always prepended
-    requiredParameters["MatrixInstB"]       = False # always prepended
-    requiredParameters["MatrixInstBM"]      = False # always prepended
-    requiredParameters["MatrixInstBN"]      = False # always prepended
-    requiredParameters["CustomKernelName"]  = False # Will not affect naming
-
-    requiredParameters["Kernel"]            = True  # distinguish kernels from solutions
-                                                    # for single-source compilation
-    return requiredParameters
+    return getRequiredParametersMin()
 
   ########################################
   @ staticmethod
