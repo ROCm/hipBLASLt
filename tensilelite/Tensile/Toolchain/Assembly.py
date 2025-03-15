@@ -30,16 +30,21 @@ import shutil
 import subprocess
 
 from pathlib import Path
-from typing import List, Literal, Union
+from typing import List, Union
 
-from ..TensileInstructions import getGfxName
-from ..Common import globalParameters, print2
+from ..Common import globalParameters, print2, isaToGfx, SemanticVersion
 from Tensile.SolutionStructs import Solution
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
-from Tensile.Utilities.RequiredParameters import getRequiredParametersMin
+from typing import List, Union
+
+from ..KernelWriterAssembly import KernelWriterAssembly
+from ..Toolchain.Validators import getVersion
+from ..SolutionStructs import Solution
+
 class AssemblyToolchain:
-    def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: Literal[4, 5]):
+    def __init__(self, assembler: str, bundler: str, buildIdKind: str, coVersion: str):
         self.assembler = assembler
+        self.assemblerVersion = SemanticVersion(*[int(c) for c in getVersion(assembler).split(".")[:3]])
         self.bundler = bundler
         self.buildIdKind = buildIdKind
         self.coVersion = coVersion
@@ -77,15 +82,15 @@ class AssemblyToolchain:
       """
       launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
       args = [
-          *launcher, 
-          self.assembler, 
-          "-x", "assembler", 
-          "--target=amdgcn-amd-amdhsa", 
-          f"-mcode-object-version={self.coVersion}", 
-          f"-mcpu={gfx}",  
+          *launcher,
+          self.assembler,
+          "-x", "assembler",
+          "--target=amdgcn-amd-amdhsa",
+          f"-mcode-object-version={self.coVersion}",
+          f"-mcpu={gfx}",
           "-mwavefrontsize64" if wavefrontSize == 64 else "-mno-wavefrontsize64"
           "-g" if debug else "",
-          "-c", 
+          "-c",
           "-o", destPath, srcPath
       ]
 
@@ -117,7 +122,7 @@ class AssemblyToolchain:
                 "-Xlinker", f"--build-id={self.buildIdKind}",
                 "-o", destPath, *srcPaths
             ]
-        
+
         return self.invoke(args, "Linking assembly object files into code object (*.o -> .co)")
 
     def compress(self, srcPath: str, destPath: str, gfx: str):
@@ -136,7 +141,7 @@ class AssemblyToolchain:
             "--compress",
             "--type=o",
             "--bundle-align=4096",
-            f"--targets=host-x86_64-unknown-linux,hipv4-amdgcn-amd-amdhsa--{gfx}",
+            f"--targets=host-x86_64-unknown-linux-gnu,hipv4-amdgcn-amd-amdhsa-unknown-{gfx}",
             "--input=/dev/null",
             f"--input={srcPath}",
             f"--output={destPath}",
@@ -147,7 +152,7 @@ class AssemblyToolchain:
 
 def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjFiles: int=10000) -> List[str]:
     numObjFiles = len(objFiles)
-    
+
     if numObjFiles <= maxObjFiles:
       return objFiles
 
@@ -168,13 +173,31 @@ def _batchObjectFiles(objFiles: List[str], coPathDest: Union[Path, str], maxObjF
 
     return newObjFilesOutput
 
-def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, srcDir, destDir, writerAsm, compress: bool, kernels):
-    
+
+def buildAssemblyCodeObjectFiles(
+      toolchain: AssemblyToolchain,
+      writer: KernelWriterAssembly,
+      destDir: Union[Path, str],
+      asmDir: Union[Path, str],
+      compress: bool,
+      kernels: List[Solution],
+    ):
+    """Builds code object files from assembly files
+
+    Args:
+        toolchain: The assembly toolchain object to use for building.
+        kernels: A list of the kernel objects to build.
+        writer: The KernelWriterAssembly object to use.
+        destDir: The destination directory for the code object files.
+        asmDir: The directory containing the assembly files.
+        compress: Whether to compress the code object files.
+    """
+
+    isAsm = lambda k: k["KernelLanguage"] == "Assembly"
+
     extObj = ".o"
     extCo = ".co"
     extCoRaw = ".co.raw"
-
-    asmDir = srcDir
 
     archKernelMap = collections.defaultdict(list)
     for k in kernels:
@@ -185,22 +208,17 @@ def buildAssemblyCodeObjectFiles(toolchain: AssemblyToolchain, srcDir, destDir, 
       if len(archKernels) == 0:
         continue
 
-      gfx = getGfxName(arch)
+      gfx = isaToGfx(arch)
 
-      ### start of map for separate architectures no lazy loading - the absence of codeObjectFile means no lazy loading
-      objectFiles = [str(asmDir / (writerAsm.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k or k['codeObjectFile'] == "TensileLibrary"]
+      objectFiles = [str(asmDir / (writer.getKernelFileBase(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k or k['codeObjectFile'] == "TensileLibrary"]
       coFileMap = collections.defaultdict(list)
       if len(objectFiles):
         coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
-      ### end of map for separate architectures no lazy loading
-
-      ### start of map for separate architectures and lazy loading
       else:
         for kernel in archKernels:
           coName = kernel.get("codeObjectFile", None)
           if coName:
-            coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writerAsm.getKernelFileBase(kernel) + extObj)))
-      ### end of map for separate architectures and lazy loading
+            coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (writer.getKernelFileBase(kernel) + extObj)))
 
       for coFileRaw, objFiles in coFileMap.items():
         # shouldn't need a set here the fact that we do implies we have duplicates

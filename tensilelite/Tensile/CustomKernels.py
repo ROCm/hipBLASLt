@@ -22,7 +22,8 @@
 #
 ################################################################################
 
-from .Common import globalParameters, checkParametersAreValid, validParameters
+from . import CUSTOM_KERNEL_PATH
+from .Common import checkParametersAreValid, validParameters
 
 import yaml
 
@@ -31,20 +32,20 @@ import os
 def isCustomKernelConfig(config):
     return "CustomKernelName" in config and config["CustomKernelName"]
 
-def getCustomKernelFilepath(name, directory=globalParameters["CustomKernelDirectory"]):
+def getCustomKernelFilepath(name, directory=CUSTOM_KERNEL_PATH):
     return os.path.join(directory, (name + ".s"))
 
-def getAllCustomKernelNames(directory=globalParameters["CustomKernelDirectory"]):
+def getAllCustomKernelNames(directory=CUSTOM_KERNEL_PATH):
     return [fname[:-2] for fname in os.listdir(directory) if fname.endswith(".s")]
 
-def getCustomKernelContents(name, directory=globalParameters["CustomKernelDirectory"]):
+def getCustomKernelContents(name, directory=CUSTOM_KERNEL_PATH):
     try:
         with open(getCustomKernelFilepath(name, directory)) as f:
             return f.read()
     except:
         raise RuntimeError("Failed to find custom kernel: {}".format(os.path.join(directory, name)))
 
-def getCustomKernelConfigAndAssembly(name, directory=globalParameters["CustomKernelDirectory"]):
+def getCustomKernelConfigAndAssembly(name, directory=CUSTOM_KERNEL_PATH):
     contents  = getCustomKernelContents(name, directory)
     config = "\n"    #Yaml configuration properties
     assembly = ""
@@ -57,14 +58,14 @@ def getCustomKernelConfigAndAssembly(name, directory=globalParameters["CustomKer
 
     return (config, assembly)
 
-def readCustomKernelConfig(name, directory=globalParameters["CustomKernelDirectory"]):
+def readCustomKernelConfig(name, directory=CUSTOM_KERNEL_PATH):
     rawConfig, _ = getCustomKernelConfigAndAssembly(name, directory)
     try:
         return yaml.safe_load(rawConfig)["custom.config"]
     except yaml.scanner.ScannerError as e:
         raise RuntimeError("Failed to read configuration for custom kernel: {0}\nDetails:\n{1}".format(name, e))
 
-def getCustomKernelConfig(kernelName, internalSupportParams, directory=globalParameters["CustomKernelDirectory"]):
+def getCustomKernelConfig(kernelName, internalSupportParams, directory=CUSTOM_KERNEL_PATH):
     kernelConfig = readCustomKernelConfig(kernelName, directory)
     if "InternalSupportParams" not in kernelConfig:
         raise RuntimeError("Custom kernel %s config must have KernArgsVersion"%kernelName)

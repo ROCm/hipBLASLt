@@ -136,6 +136,8 @@ struct RocblasltContractionProblem
 
     hipStream_t stream;
     void*       Synchronizer;
+    bool        swizzleA;
+    bool        swizzleB;
 
     // gemm_ex
     // gemm_strided_batched_ex
@@ -190,7 +192,9 @@ struct RocblasltContractionProblem
                                 void*                  workspace,
                                 size_t                 workspaceSize,
                                 hipStream_t            stream,
-                                void*                  Synchronizer)
+                                void*                  Synchronizer,
+                                bool                   swizzleA,
+                                bool                   swizzleB)
         : trans_a(trans_a)
         , trans_b(trans_b)
         , m(m)
@@ -248,6 +252,8 @@ struct RocblasltContractionProblem
         , workspaceSize(workspaceSize)
         , stream(stream)
         , Synchronizer(Synchronizer)
+        , swizzleA(swizzleA)
+        , swizzleB(swizzleB)
     {
         if(this->bias_type == HIPBLASLT_DATATYPE_INVALID)
         {
@@ -473,9 +479,9 @@ inline TensileLite::DataType hipDataType_to_tensile_type(hipDataType type)
     case HIP_R_16BF:
         return TensileLite::DataType::BFloat16;
     case HIP_R_8F_E4M3_FNUZ:
-        return TensileLite::DataType::Float8;
+        return TensileLite::DataType::Float8_fnuz;
     case HIP_R_8F_E5M2_FNUZ:
-        return TensileLite::DataType::BFloat8;
+        return TensileLite::DataType::BFloat8_fnuz;
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
         return TensileLite::DataType::Float8;

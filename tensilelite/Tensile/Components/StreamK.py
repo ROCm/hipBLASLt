@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,8 @@
 ################################################################################
 
 from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, sgpr, scalarStaticDivideAndRemainder, \
-    SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SCBranchSCC1, SCmpLeU32, VMovB32, vgpr, \
-    SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
+    SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SMovB64, SCBranchSCC1, SCmpLeU32, VMovB32, \
+    vgpr, SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
     log2, SBarrier, SStoreB32, SLongBranchPositive, SBranch, ceilDivide, replaceHolder, SNop, staticMultiply, SSleep, \
     VAddF32, VAddF64, SAndB32, SLShiftRightB32, VReadfirstlaneB32, SBranchIfNotZero
 from ..Common import print2
@@ -379,8 +379,7 @@ class StreamK(Component):
         module = Module("StreamK Common computeWorkspaceSrd")
 
         # Base Address
-        module.add(SMovB32(dst=sgpr("SrdWS+0"), src=sgpr("AddressWS+0"), comment="init SRD base address (lower)"))
-        module.add(SMovB32(dst=sgpr("SrdWS+1"), src=sgpr("AddressWS+1"), comment="init SRD base address (upper) + other fields"))
+        module.add(SMovB64(dst=sgpr("SrdWS+0", 2), src=sgpr("AddressWS+0", 2), comment="init SRD base address"))
         module.add(SMovB32(dst=sgpr("SrdWS+2"), src="BufferOOB", comment=""))
         module.add(SMovB32(dst=sgpr("SrdWS+3"), src="Srd127_96", comment="Set bits 127_96 in post-loop SRD"))
 
@@ -621,13 +620,7 @@ class StreamK(Component):
                 module.add(skipFlagSet)
             module.add(SWaitCnt(lgkmcnt=0, comment="wait for flag")) # TODO just for testing
 
-        # TODO - if this is the last tile, don't need to jump to next instruction
-        # NOTE: in SR kernel, we need long branch since PRNG explodes the line of codes
-        if kernel["ProblemType"]["StochasticRounding"]: # in-device RND
-            with self.allocTmpSgpr(3) as tmpSgprInfo:
-                module.add(SLongBranchPositive(endLabel, tmpSgprInfo))
-        else:
-            module.add(SBranch(labelName=endLabel.getLabelName(), comment="jump to end"))
+        module.add(SBranch(labelName=endLabel.getLabelName(), comment="jump to end"))
 
         # Finish one write path, reset currPreLoopVmcntCase to Undefined
         # self.currPreLoopVmcntCase = PreLoopVmcntCase.Undefined
@@ -679,9 +672,9 @@ class StreamK(Component):
                 module.add(SWaitCnt(vscnt=0, comment="writes"))
             module.add(SBarrier("debug"))
         if not edge and writer.db["ForceEdgeStores"]>=2:
-            module.add(self.parentWriter.getBomb()) # should not get here
+            module.add(writer.getBomb()) # should not get here
         if edge and writer.db["AssertNoEdge"]:
-            module.add(self.parentWriter.getBomb()) # should not get here
+            module.add(writer.getBomb()) # should not get here
 
         ## create code Module to push mov vgpr,acc instructions
         # if kernel["StoreCInUnroll"] and not edge:
@@ -747,11 +740,15 @@ class StreamK(Component):
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Mask), "0xffff0000", "mask for pack two bfloat16 element to 32bit" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp32Nan), "0x7fff0000", "fp32 Nan" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
-        elif kernel["ProblemType"]["DestDataType"].isFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
+        elif kernel["ProblemType"]["DestDataType"].isFloat8_fnuz() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43700000", "Fp8 Max value 240 as float32" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3700000", "Fp8 Min value -240 as float32" ))
-        elif kernel["ProblemType"]["DestDataType"].isBFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
+        elif kernel["ProblemType"]["DestDataType"].isFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43E00000", "Fp8 Max value 448 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3E00000", "Fp8 Min value -448 as float32" ))
+        elif kernel["ProblemType"]["DestDataType"].isAnyBFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8NanInf), "0x207", "Nan and +/- inf" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Max), "0x47600000", "BF8 Max value 57344 as float32" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", "BF8 Min value -57344 as float32" ))
@@ -1139,9 +1136,9 @@ class StreamK(Component):
                 module.add(SWaitCnt(vscnt=0, comment="writes"))
             module.add(SBarrier("debug"))
         if not edge and writer.db["ForceEdgeStores"]>=2:
-            module.add(self.parentWriter.getBomb()) # should not get here
+            module.add(writer.getBomb()) # should not get here
         if edge and writer.db["AssertNoEdge"]:
-            module.add(self.parentWriter.getBomb()) # should not get here
+            module.add(writer.getBomb()) # should not get here
 
         # atomicAddC = kernel["AtomicAddC"] and not edge
 
@@ -1246,9 +1243,13 @@ class StreamK(Component):
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
         elif kernel["ProblemType"]["DestDataType"].isFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43E00000", "OCP Fp8 Max value 448 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3E00000", "OCP Fp8 Min value -448 as float32" ))
+        elif kernel["ProblemType"]["DestDataType"].isFloat8_fnuz() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43700000", "Fp8 Max value 240 as float32" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3700000", "Fp8 Min value -240 as float32" ))
-        elif kernel["ProblemType"]["DestDataType"].isBFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
+        elif kernel["ProblemType"]["DestDataType"].isAnyBFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8NanInf), "0x207", "Nan and +/- inf" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Max), "0x47600000", "BF8 Max value 57344 as float32" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", "BF8 Min value -57344 as float32" ))
@@ -1386,50 +1387,6 @@ class StreamK(Component):
                         newSumIdxV = sumIdxV - writer.states.c.startVgprValu
                         module.add(VAddF32(dst=vgpr("ValuC+%u"%sumIdxV), src0=vgpr("ValuC+%u"%sumIdxV), src1=vgpr(tmpVgpr), comment="accum partials"))
 
-                # float8 precision
-                elif kernel["ProblemType"]["DestDataType"].isFloat8():
-                    if kernel["ProblemType"]["HighPrecisionAccumulate"]:
-                        newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
-                        # Generate single f32 code if edge is detected.
-                        isPK = False
-                        if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-                            sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
-                            module.add(VCvtFP8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
-                        # Original packed route
-                        elif vi%2 == 1:
-                            continue
-                        else:
-                            isPK = True
-                            sb = SelectBit.WORD_0 if vi == 0 else SelectBit.WORD_1
-                            module.add(VCvtPkFP8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
-                        module.add(SNop(waitState=0))
-                        if kernel["ProblemType"]["ComputeDataType"].isSingle():
-                            module.add(VAddF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr("ValuC+%u"%newSumIdxV), src1=vgpr(tmpVgpr), comment="accum partials"))
-                            if isPK:
-                                module.add(VAddF32(dst=vgpr("ValuC+%u"%(newSumIdxV+1)), src0=vgpr("ValuC+%u"%(newSumIdxV+1)), src1=vgpr(tmpVgpr+1), comment="accum partials"))
-
-                # bfloat8 precision
-                elif kernel["ProblemType"]["DestDataType"].isBFloat8():
-                    if kernel["ProblemType"]["HighPrecisionAccumulate"]:
-                        newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
-                        # Generate single f32 code if edge is detected.
-                        isPK = False
-                        if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-                            sb = SelectBit.BYTE_0 if self.gwvw == 1 else SelectBit.BYTE_2
-                            module.add(VCvtBF8toF32(dst=vgpr(tmpVgpr), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
-                        # Original packed route
-                        elif vi%2 == 1:
-                            continue
-                        else:
-                            isPK = True
-                            sb = SelectBit.WORD_0 if vi == 0 else SelectBit.WORD_1
-                            module.add(VCvtPkBF8toF32(dst=vgpr(tmpVgpr, 2), src=vgpr(dataV), sdwa=SDWAModifiers(src0_sel=sb)))
-                        module.add(SNop(waitState=0))
-                        if kernel["ProblemType"]["ComputeDataType"].isSingle():
-                            module.add(VAddF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr("ValuC+%u"%newSumIdxV), src1=vgpr(tmpVgpr), comment="accum partials"))
-                            if isPK:
-                                module.add(VAddF32(dst=vgpr("ValuC+%u"%(newSumIdxV+1)), src0=vgpr("ValuC+%u"%(newSumIdxV+1)), src1=vgpr(tmpVgpr+1), comment="accum partials"))
-
                 elif kernel["ProblemType"]["ComputeDataType"].isSingle():
                     newSumIdxV = sumIdxV - writer.states.c.startVgprValu
                     module.add(VAddF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr("ValuC+%u"%newSumIdxV), src1=vgpr(dataV+0), comment="accum partials"))
@@ -1453,7 +1410,7 @@ class StreamK(Component):
 
                 # double precision complex
                 elif kernel["ProblemType"]["ComputeDataType"].isDoubleComplex():
-                    newSumIdxV = sumIdxV * 4 - self.parentWriter.states.c.startVgprValu
+                    newSumIdxV = sumIdxV * 4 - writer.states.c.startVgprValu
                     module.add(VAddF64(dst=vgpr("ValuC+%u"%(newSumIdxV*4+0),2), src0=vgpr("ValuC+%u"%(newSumIdxV*4+0),2), src1=vgpr(dataV+0,2), comment="accum partials real"))
                     module.add(VAddF64(dst=vgpr("ValuC+%u"%(newSumIdxV*4+2),2), src0=vgpr("ValuC+%u"%(newSumIdxV*4+2),2), src1=vgpr(dataV+2,2), comment="accum partials imag"))
 

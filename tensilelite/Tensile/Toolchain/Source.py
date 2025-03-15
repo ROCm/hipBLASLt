@@ -32,7 +32,7 @@ from pathlib import Path
 from timeit import default_timer as timer
 from typing import List, Union
 
-from ..Common import globalParameters, print2, printExit
+from ..Common import globalParameters, print2
 
 class SourceToolchain:
     def __init__(self, compiler: str, objDump: str, objLs: str, buildIdKind: str, asanBuild: bool=False, saveTemps: bool=False):
@@ -77,6 +77,7 @@ class SourceToolchain:
             "-Xoffload-linker",
             "--lto-partitions=16",
             "-D__HIP_HCC_COMPAT_MODE__=1",
+            #"--offload-device-only",
             "-x", "hip", "-O3",
             "-I", includePath,
             "-std=c++17",
@@ -129,9 +130,10 @@ def buildSourceCodeObjectFile(toolchain: SourceToolchain, destPath: Union[Path, 
     """Compiles a HIP source code file into a code object file.
 
     Args:
-        cxxCompiler: The C++ compiler to use.
-        cxxCompiler: The offload bundler to use.
-        outputPath: The output directory path where code objects will be placed.
+        toolchain: The source toolchain.
+        destDir: The destination directory where HSA code object files are placed.
+        tmpObjDir: The directory where HIP source object files are created.
+        includeDir: The include directory path.
         kernelPath: The path to the kernel source file.
 
     Returns:

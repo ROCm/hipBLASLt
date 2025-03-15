@@ -15,12 +15,12 @@
   ComplexConjugateA: false
   ComplexConjugateB: false
   ComputeDataType: 0
-  DataType: 13
-  DataTypeA: 13
+  DataType: 17
+  DataTypeA: 17
   DataTypeAmaxD: 0
-  DataTypeB: 13
-  DataTypeE: 12
-  DestDataType: 12
+  DataTypeB: 17
+  DataTypeE: 16
+  DestDataType: 16
   F32XdlMathOp: 0
   Gradient: false
   GroupedGemm: false
@@ -225,12 +225,12 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 13
-      DataTypeA: 13
+      DataType: 17
+      DataTypeA: 17
       DataTypeAmaxD: 0
-      DataTypeB: 13
-      DataTypeE: 12
-      DestDataType: 12
+      DataTypeB: 17
+      DataTypeE: 16
+      DestDataType: 16
       F32XdlMathOp: 0
       Gradient: false
       GroupedGemm: false
@@ -492,12 +492,12 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 13
-      DataTypeA: 13
+      DataType: 17
+      DataTypeA: 17
       DataTypeAmaxD: 0
-      DataTypeB: 13
-      DataTypeE: 12
-      DestDataType: 12
+      DataTypeB: 17
+      DataTypeE: 16
+      DestDataType: 16
       F32XdlMathOp: 0
       Gradient: false
       GroupedGemm: false
@@ -759,12 +759,12 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 13
-      DataTypeA: 13
+      DataType: 17
+      DataTypeA: 17
       DataTypeAmaxD: 0
-      DataTypeB: 13
-      DataTypeE: 12
-      DestDataType: 12
+      DataTypeB: 17
+      DataTypeE: 16
+      DestDataType: 16
       F32XdlMathOp: 0
       Gradient: false
       GroupedGemm: false
@@ -1026,12 +1026,12 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 13
-      DataTypeA: 13
+      DataType: 17
+      DataTypeA: 17
       DataTypeAmaxD: 0
-      DataTypeB: 13
-      DataTypeE: 12
-      DestDataType: 12
+      DataTypeB: 17
+      DataTypeE: 16
+      DestDataType: 16
       F32XdlMathOp: 0
       Gradient: false
       GroupedGemm: false
@@ -1293,12 +1293,12 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 13
-      DataTypeA: 13
+      DataType: 17
+      DataTypeA: 17
       DataTypeAmaxD: 0
-      DataTypeB: 13
-      DataTypeE: 12
-      DestDataType: 12
+      DataTypeB: 17
+      DataTypeE: 16
+      DestDataType: 16
       F32XdlMathOp: 0
       Gradient: false
       GroupedGemm: false
@@ -1560,12 +1560,12 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 13
-      DataTypeA: 13
+      DataType: 17
+      DataTypeA: 17
       DataTypeAmaxD: 0
-      DataTypeB: 13
-      DataTypeE: 12
-      DestDataType: 12
+      DataTypeB: 17
+      DataTypeE: 16
+      DestDataType: 16
       F32XdlMathOp: 0
       Gradient: false
       GroupedGemm: false
@@ -1827,12 +1827,12 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 13
-      DataTypeA: 13
+      DataType: 17
+      DataTypeA: 17
       DataTypeAmaxD: 0
-      DataTypeB: 13
-      DataTypeE: 12
-      DestDataType: 12
+      DataTypeB: 17
+      DataTypeE: 16
+      DestDataType: 16
       F32XdlMathOp: 0
       Gradient: false
       GroupedGemm: false
@@ -2094,12 +2094,12 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 13
-      DataTypeA: 13
+      DataType: 17
+      DataTypeA: 17
       DataTypeAmaxD: 0
-      DataTypeB: 13
-      DataTypeE: 12
-      DestDataType: 12
+      DataTypeB: 17
+      DataTypeE: 16
+      DestDataType: 16
       F32XdlMathOp: 0
       Gradient: false
       GroupedGemm: false

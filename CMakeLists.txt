@@ -113,7 +113,7 @@ option(USE_CUDA "Look for CUDA and use that as a backend if found" OFF)
 # For lazy library loading
 option(Tensile_MERGE_FILES "Tensile to merge kernels and solutions files?" ON)
 option(Tensile_SEPARATE_ARCHITECTURES "Tensile to use GPU architecture specific files?" ON)
-option(Tensile_LAZY_LIBRARY_LOADING "Tensile to load kernels on demand?" ON)
+option(Tensile_NO_LAZY_LIBRARY_LOADING "Diasble loading kernels on demand?" OFF)
 # For roctx
 include(CMakeDependentOption)
 cmake_dependent_option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt" ON "BUILD_SHARED_LIBS" OFF)
@@ -162,12 +162,12 @@ else()
     if (NOT BUILD_ADDRESS_SANITIZER)
       #Set the AMDGPU_TARGETS with backward compatiblity
       rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-          TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx942;gfx1100;gfx1101;;gfx1200;gfx1201"
+          TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx942;gfx950;gfx1100;gfx1101;;gfx1200;gfx1201"
       )
     else()
       #build xnack-supported targets only
       rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-          TARGETS "gfx908:xnack+;gfx90a:xnack+;gfx942:xnack+"
+          TARGETS "gfx908:xnack+;gfx90a:xnack+;gfx942:xnack+;gfx950:xnack+"
       )
     endif()
 
@@ -195,7 +195,7 @@ else()
     set( Tensile_ARCHITECTURE "${AMDGPU_TARGETS}" CACHE STRING "Tensile to use which architecture?" FORCE)
 
     set( Tensile_LOGIC "asm_full" CACHE STRING "Tensile to use which logic?")
-    set( Tensile_CODE_OBJECT_VERSION "default" CACHE STRING "Tensile code_object_version")
+    set( Tensile_CODE_OBJECT_VERSION "4" CACHE STRING "Tensile code_object_version")
     set( Tensile_COMPILER "amdclang++" CACHE STRING "Tensile compiler")
     set( Tensile_LIBRARY_FORMAT "msgpack" CACHE STRING "Tensile library format")
     set( Tensile_CPU_THREADS "" CACHE STRING "Number of threads for Tensile parallel build")
@@ -251,10 +251,10 @@ else()
         else()
           list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=0)
         endif()
-        if(Tensile_LAZY_LIBRARY_LOADING)
-          list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=1)
-        else()
+        if(Tensile_NO_LAZY_LIBRARY_LOADING)
           list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=0)
+        else()
+          list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=1)
         endif()
     else()
         list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=0)
@@ -351,8 +351,13 @@ if( NOT BUILD_CUDA )
     rocm_package_add_dependencies(DEPENDS "hipblas >= 0.50.0")
   else()
     set(hipblas_common_minimum 1.0.0)
+    if(BUILD_SHARED_LIBS)
     rocm_package_add_deb_dependencies(COMPONENT devel DEPENDS "hipblas-common-dev >= ${hipblas_common_minimum}")
     rocm_package_add_rpm_dependencies(COMPONENT devel DEPENDS "hipblas-common-devel >= ${hipblas_common_minimum}")
+    else()
+      rocm_package_add_deb_dependencies(COMPONENT devel DEPENDS "hipblas-common-static-dev >= ${hipblas_common_minimum}")
+      rocm_package_add_rpm_dependencies(COMPONENT devel DEPENDS "hipblas-common-static-devel >= ${hipblas_common_minimum}")
+    endif()
   endif()
 endif( )
 
@@ -385,7 +390,7 @@ set( HIPBLASLT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LI
 
 rocm_create_package(
     NAME ${package_name}
-    DESCRIPTION "Radeon Open Compute BLAS marshalling library"
+    DESCRIPTION "HIP library for GEMM operations with extended functionality"
     MAINTAINER "hipBLASLt Maintainer <hipblaslt-maintainer@amd.com>"
     LDCONFIG
     LDCONFIG_DIR ${HIPBLASLT_CONFIG_DIR}

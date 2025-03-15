@@ -15,10 +15,10 @@
   ComplexConjugateA: false
   ComplexConjugateB: false
   ComputeDataType: 0
-  DataType: 12
-  DataTypeA: 12
+  DataType: 16
+  DataTypeA: 16
   DataTypeAmaxD: 0
-  DataTypeB: 12
+  DataTypeB: 16
   DataTypeE: 7
   DestDataType: 7
   F32XdlMathOp: 0
@@ -225,10 +225,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -492,10 +492,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -759,10 +759,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -1026,10 +1026,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -1293,10 +1293,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -1560,10 +1560,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -1827,10 +1827,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -2094,10 +2094,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -2361,10 +2361,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -2628,10 +2628,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -2895,10 +2895,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -3162,10 +3162,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -3429,10 +3429,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -3696,10 +3696,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -3963,10 +3963,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -4230,10 +4230,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -4497,10 +4497,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -4764,10 +4764,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -5031,10 +5031,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -5298,10 +5298,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -5565,10 +5565,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -5832,10 +5832,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -6099,10 +6099,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -6366,10 +6366,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -6633,10 +6633,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -6900,10 +6900,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -7167,10 +7167,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0
@@ -7434,10 +7434,10 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 12
-      DataTypeA: 12
+      DataType: 16
+      DataTypeA: 16
       DataTypeAmaxD: 0
-      DataTypeB: 12
+      DataTypeB: 16
       DataTypeE: 7
       DestDataType: 7
       F32XdlMathOp: 0

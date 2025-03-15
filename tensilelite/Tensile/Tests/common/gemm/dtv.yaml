@@ -1,5 +1,5 @@
 TestParameters:
-  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102, skip-gfx1200, skip-gfx1201] # not supported by arch
+  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx950, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102, skip-gfx1200, skip-gfx1201] # not supported by arch
 
 GlobalParameters:
   NumElementsToValidate: -1
@@ -10,9 +10,12 @@ GlobalParameters:
   CMakeBuildType: Release
   KernelTime: True
   MaxWorkspaceSize: 13421772800
+  DataInitTypeA: 13
+  DataInitTypeB: 12
   DataInitTypeAlpha: 1
   DataInitTypeBeta: 1
-  BoundsCheck: 2
+  DataInitTypeBias: 13
+  DataInitTypeScaleAlphaVec: 12
   #MaxFileName: 256
 
 BenchmarkProblems:
@@ -439,6 +442,11 @@ BenchmarkProblems:
           - [16, 16, 16, 1,  1,   5, 1,  2,1 ] # MT = 160x16. Case to check kernel writer works
           - [32, 32,  8, 1,  1,   2, 1,  4,1 ]
           - [32, 32,  8, 1,  1,   4, 1,  4,1 ]
+
+          - [16, 16, 16, 1,  1,  8,1,   1,4 ] # 128x64
+          - [16, 16, 16, 1,  1,  8,1,   2,2 ] # 256x32
+          - [16, 16, 16, 1,  1,  16,1,  2,2 ] # 512x32
+          - [16, 16, 16, 1,  1,  10,1,  2,2 ] # 160x32
         - WorkGroup:
           - [16,16,1]
         - GlobalReadVectorWidthA: [2,4,8]
@@ -613,6 +621,11 @@ BenchmarkProblems:
           - [16, 16, 16, 1,  1,   1, 5,  1,2 ] # MT = 16x160. Case to check kernel writer works
           - [32, 32,  8, 1,  1,   1, 2,  1,4 ]
           - [32, 32,  8, 1,  1,   1, 4,  1,4 ]
+
+          - [16, 16, 16, 1,  1,  1,8,   4,1 ] # 64x128
+          - [16, 16, 16, 1,  1,  1,8,   2,2 ] # 32x256
+          - [16, 16, 16, 1,  1,  1,16,  2,2 ] # 32x512
+          - [16, 16, 16, 1,  1,  1,10,  2,2 ] # 32x160
         - WorkGroup:
           - [16,16,1]
         - GlobalReadVectorWidthA: [2,4,8]
@@ -1344,8 +1357,8 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: f8
-      DestDataType: f8
+      DataType: f8n
+      DestDataType: f8n
       ComputeDataType: s
       HighPrecisionAccumulate: True
       TransposeA: 0
@@ -1417,8 +1430,8 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: f8
-      DestDataType: f8
+      DataType: f8n
+      DestDataType: f8n
       ComputeDataType: s
       HighPrecisionAccumulate: True
       TransposeA: 0
@@ -1476,8 +1489,8 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: f8
-      DestDataType: f8
+      DataType: f8n
+      DestDataType: f8n
       ComputeDataType: s
       HighPrecisionAccumulate: True
       TransposeA: 1
@@ -1538,8 +1551,8 @@ BenchmarkProblems:
   -
     - # ProblemType
       OperationType: GEMM
-      DataType: f8
-      DestDataType: f8
+      DataType: f8n
+      DestDataType: f8n
       ComputeDataType: s
       HighPrecisionAccumulate: True
       TransposeA: 1
@@ -1600,7 +1613,7 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: f8
+      DataTypeA: f8n
       DataTypeB: h
       DestDataType: h
       ComputeDataType: s
@@ -1693,7 +1706,7 @@ BenchmarkProblems:
       OperationType: GEMM
       DataType: h
       DataTypeA: h
-      DataTypeB: f8
+      DataTypeB: f8n
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -1780,7 +1793,7 @@ BenchmarkProblems:
     - # ProblemType
       OperationType: GEMM
       DataType: h
-      DataTypeA: f8
+      DataTypeA: f8n
       DataTypeB: h
       DestDataType: h
       ComputeDataType: s
@@ -1874,7 +1887,7 @@ BenchmarkProblems:
       OperationType: GEMM
       DataType: h
       DataTypeA: h
-      DataTypeB: f8
+      DataTypeB: f8n
       DestDataType: h
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -1985,6 +1998,10 @@ BenchmarkProblems:
           - [16, 16, 16, 1,  1,  1,8,   4,1 ] # 64x128
           - [16, 16, 16, 1,  1,  2,8,  4,1 ] # 128x128
           - [16, 16, 16, 1,  1,  4,16,  4,1 ] # 256x256
+
+          - [16, 16, 16, 1,  1,  4,2,   1,4 ] # 64x128
+          - [16, 16, 16, 1,  1,  8,2,   1,4 ] # 128x128
+          - [16, 16, 16, 1,  1,  16,4,  1,4 ] # 256x256
         - AssertFree0ElementMultiple: [16]
         - AssertFree1ElementMultiple: [16]
         - AssertSummationElementMultiple: [32]
@@ -2050,6 +2067,10 @@ BenchmarkProblems:
           - [16, 16, 16, 1,  1,  4,2,   1,4 ] # 64x128
           - [16, 16, 16, 1,  1,  8,2,  1,4 ] # 128x128
           - [16, 16, 16, 1,  1,  16,4,  1,4 ] # 256x256
+
+          - [16, 16, 16, 1,  1,  2,4,   4,1 ] # 128x64
+          - [16, 16, 16, 1,  1,  2,8,  4,1 ] # 128x128
+          - [16, 16, 16, 1,  1,  4,16,  4,1 ] # 256x256
         - AssertFree0ElementMultiple: [16]
         - AssertFree1ElementMultiple: [16]
         - AssertSummationElementMultiple: [32]

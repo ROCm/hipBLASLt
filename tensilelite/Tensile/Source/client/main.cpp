@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,6 +57,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <memory>
 
 namespace po = boost::program_options;
 
@@ -245,13 +246,14 @@ namespace TensileLite
                 "4:Memory bound check by both side guard page")
                 ("prune-mode",               po::value<PruneSparseMode>()->default_value(PruneSparseMode::PruneRandom), "prune Sparse mode")
 
-                ("print-tensor-a",           po::value<bool>()->default_value(false), "Print tensor A.")
-                ("print-tensor-b",           po::value<bool>()->default_value(false), "Print tensor B.")
-                ("print-tensor-c",           po::value<bool>()->default_value(false), "Print tensor C.")
-                ("print-tensor-d",           po::value<bool>()->default_value(false), "Print tensor D.")
-                ("print-tensor-ref",         po::value<bool>()->default_value(false), "Print reference tensor D.")
-                ("print-tensor-bias",        po::value<bool>()->default_value(false), "Print tensor Bias.")
-                ("print-tensor-amaxd",       po::value<bool>()->default_value(false), "Print tensor AmaxD value from both CPU and GPU.")
+                ("print-tensor-a",                  po::value<bool>()->default_value(false), "Print tensor A.")
+                ("print-tensor-b",                  po::value<bool>()->default_value(false), "Print tensor B.")
+                ("print-tensor-c",                  po::value<bool>()->default_value(false), "Print tensor C.")
+                ("print-tensor-d",                  po::value<bool>()->default_value(false), "Print tensor D.")
+                ("print-tensor-ref",                po::value<bool>()->default_value(false), "Print reference tensor D.")
+                ("print-tensor-bias",               po::value<bool>()->default_value(false), "Print tensor Bias.")
+                ("print-tensor-scale-alpha-vec",    po::value<bool>()->default_value(false), "Print tensor ScaleAlphaVec.")
+                ("print-tensor-amaxd",              po::value<bool>()->default_value(false), "Print tensor AmaxD value from both CPU and GPU.")
 
                 ("dump-tensors",             po::value<bool>()->default_value(false), "Binary dump tensors instead of printing.")
 
@@ -646,8 +648,7 @@ int main(int argc, const char* argv[])
         iter--;
     }
 
-    auto* ptr      = new DataInitialization(args, problemFactory);
-    auto  dataInit = std::shared_ptr<DataInitialization>(ptr);
+    auto dataInit = std::make_shared<DataInitialization>(args, problemFactory);
 
     auto solutionIterator = SolutionIterator::Default(library, hardware, args);
 

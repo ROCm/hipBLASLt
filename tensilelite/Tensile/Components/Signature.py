@@ -23,8 +23,7 @@
 ################################################################################
 
 from ..Component import Signature
-from ..Common import globalParameters
-from ..Utils import DataDirection
+from ..Common import globalParameters, DataDirection
 from ..TensileInstructions import SignatureBase
 from ..TensileInstructions import SignatureValueKind as SVK
 from ..Activation import ActivationType
@@ -66,13 +65,13 @@ class UserArgumentsInfo:
 
 def getSrcValueType(kernel, isTypeA):
     # special cases for F8 datatypes
-    if kernel["ProblemType"]["DataType"].isFloat8():
+    if kernel["ProblemType"]["DataType"].isAnyFloat8():
         srcValueType = "FP8"
-    elif kernel["ProblemType"]["DataType"].isBFloat8():
+    elif kernel["ProblemType"]["DataType"].isAnyBFloat8():
         srcValueType = "BF8"
-    elif kernel["ProblemType"]["DataType"].isFloat8BFloat8():
+    elif kernel["ProblemType"]["DataType"].isAnyFloat8BFloat8():
         srcValueType = "FP8" if isTypeA else "BF8"
-    elif kernel["ProblemType"]["DataType"].isBFloat8Float8():
+    elif kernel["ProblemType"]["DataType"].isAnyBFloat8Float8():
         srcValueType = "BF8" if isTypeA else "FP8"
     else:
         if isTypeA:
@@ -85,9 +84,9 @@ def getSrcValueType(kernel, isTypeA):
 
 def getDstValueType(kernel):
     # special cases for F8 datatypes
-    if kernel["ProblemType"]["DataType"].isFloat8():
+    if kernel["ProblemType"]["DataType"].isAnyFloat8():
         dstValueType = "FP8"
-    elif kernel["ProblemType"]["DataType"].isBFloat8():
+    elif kernel["ProblemType"]["DataType"].isAnyBFloat8():
         dstValueType = "BF8"
     else:
         dstValueType = kernel["ProblemType"]["DataType"].toNameAbbrev().upper()
@@ -172,7 +171,7 @@ class SignatureDefault(Signature):
             signature.addArg("MetaData", SVK.SIG_GLOBALBUFFER, "void" , "generic")
 
         if kernel["StreamK"] > 0 and kernel["StreamKAtomic"] == 0:
-            signature.addArg("AddressWS", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
+            signature.addArg("AddressWS", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
             signature.addArg("AddressFlags", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
 
         for i in range(0, writer.states.d.numSgprStrides):
@@ -207,6 +206,25 @@ class SignatureDefault(Signature):
         # These are fixed sizes
         userArgumentsInfo.gemmArgumentSize += userArgumentsInfo.alphaMaxSize
         userArgumentsInfo.gemmArgumentSize += userArgumentsInfo.betaMaxSize
+
+        if kernel["StreamK"]:
+            # StreamK args
+            signature.addArg("MagicNumberProblemNumGroupTiles0",   SVK.SIG_VALUE, "u32")
+            signature.addArg("MagicShiftProblemNumGroupTiles0",    SVK.SIG_VALUE, "u32")
+            signature.addArg("ItersPerTile",                       SVK.SIG_VALUE, "u32")
+            signature.addArg("MagicNumberItersPerTile",            SVK.SIG_VALUE, "u32")
+            signature.addArg("MagicShiftItersPerTile",             SVK.SIG_VALUE, "u32")
+            signature.addArg("MagicNumProblemNumGroupTiles0By1",   SVK.SIG_VALUE, "u32")
+            signature.addArg("MagicShiftProblemNumGroupTiles0By1", SVK.SIG_VALUE, "u32")
+            signature.addArg("TotalIters",                         SVK.SIG_VALUE, "u32")
+            signature.addArg("SKItersPerWG",                       SVK.SIG_VALUE, "u32")
+            userArgumentsInfo.gemmArgumentSize += 36
+            if kernel["StreamK"] >= 2: # Two-tile SK
+                signature.addArg("skGrid",                         SVK.SIG_VALUE, "u32")
+                signature.addArg("skTiles",                        SVK.SIG_VALUE, "u32")
+                signature.addArg("skExtraIters",                   SVK.SIG_VALUE, "u32")
+                userArgumentsInfo.gemmArgumentSize += 12
+                # "dpTilesPerWG"
 
         if kernel["ProblemType"]["UseScaleAB"]:
             signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
@@ -264,23 +282,6 @@ class SignatureDefault(Signature):
             signature.addArg(    "dstD", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
             signature.addArg(               "Synchronizer", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
             signature.addArg(               "GSUSync", SVK.SIG_VALUE,              "u32")
-
-        if kernel["StreamK"]:
-            # StreamK args
-            signature.addArg("MagicNumberProblemNumGroupTiles0",   SVK.SIG_VALUE, "u32")
-            signature.addArg("MagicShiftProblemNumGroupTiles0",    SVK.SIG_VALUE, "u32")
-            signature.addArg("ItersPerTile",                       SVK.SIG_VALUE, "u32")
-            signature.addArg("MagicNumberItersPerTile",            SVK.SIG_VALUE, "u32")
-            signature.addArg("MagicShiftItersPerTile",             SVK.SIG_VALUE, "u32")
-            signature.addArg("MagicNumProblemNumGroupTiles0By1",   SVK.SIG_VALUE, "u32")
-            signature.addArg("MagicShiftProblemNumGroupTiles0By1", SVK.SIG_VALUE, "u32")
-            signature.addArg("TotalIters",                         SVK.SIG_VALUE, "u32")
-            signature.addArg("SKItersPerWG",                       SVK.SIG_VALUE, "u32")
-            if kernel["StreamK"] >= 2: # Two-tile SK
-                signature.addArg("skGrid",                         SVK.SIG_VALUE, "u32")
-                signature.addArg("skTiles",                        SVK.SIG_VALUE, "u32")
-                signature.addArg("skExtraIters",                   SVK.SIG_VALUE, "u32")
-                # "dpTilesPerWG"
 
         activationType = ActivationType("all")
         for name in activationType.getAdditionalArgStringList():

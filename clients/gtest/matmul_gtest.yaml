@@ -391,6 +391,58 @@ Tests:
     - { M:  960, N: 1024, K: 1024 }
     - { M: 1024, N: 1024, K: 1024 }
 
+#OCP F8
+- name: matmul_f8_bf8_dst_fp32
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_dst_f32
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [ 0, 1]
+  scaleB: [ 0, 1]
+  #bias_vector: [0, 1]
+  bias_type: bf16_r
+  unit_check: 1
+  gpu_arch: '950'
+
+- name: matmul_f8_bf8_dst_bf16
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_dst_bf16
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [ 0, 1]
+  scaleB: [ 0, 1]
+  #bias_vector: [0, 1]
+  bias_type: bf16_r
+  unit_check: 1
+  gpu_arch: '950'
+
+- name: matmul_f8_bf8_dst_f16
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_dst_f16
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [ 0, 1]
+  scaleB: [ 0, 1]
+  #bias_vector: [0, 1]
+  bias_type: bf16_r
+  unit_check: 1
+  gpu_arch: '950'
+
 - name: matmul_bf16_fp32dst
   category: quick
   function:
@@ -402,7 +454,7 @@ Tests:
     - { M:  512, N:  512, K:  512 }
     - { M:  960, N: 1024, K: 1024 }
     - { M: 1024, N: 1024, K: 1024 }
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_small2
   category: pre_checkin
@@ -442,6 +494,21 @@ Tests:
   alpha: 1
   beta: [ 0.0, 2.0 ]
   activation_type: gelu
+  bias_vector: [0, 1]
+  unit_check: 0
+  norm_check: 1
+
+- name: matmul_bias_swish
+  category: pre_checkin
+  function:
+    matmul: *real_precisions
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  activation_type: swish
   bias_vector: [0, 1]
   unit_check: 0
   norm_check: 1
@@ -598,10 +665,10 @@ Tests:
   bias_vector: [0, 1]
   scaleAlpha_vector: [0, 1]
 
-- name: matmul_f8_bf8_dst_fp32
+- name: matmul_f8_bf8_fnuz_dst_fp32
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_f32
+    matmul: *real_precisions_1b_fnuz_dst_f32
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -613,7 +680,7 @@ Tests:
   bias_vector: [0, 1]
   bias_type: bf16_r
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_input_fp16_computeIn_bf16
   category: pre_checkin
@@ -641,10 +708,10 @@ Tests:
   unit_check: 1
   gpu_arch: '90a'
 
-- name: matmul_input_fp16_computeIn_fp8
+- name: matmul_input_fp16_computeIn_fp8_fnuz
   category: pre_checkin
   function:
-    matmul: *real_precisions_intermeddiate_f8
+    matmul: *real_precisions_intermeddiate_f8_fnuz
   matrix_size:
     - { M: 1, N: 1, K: 1 }
     - { M: 1, N: 1, K: 512 }
@@ -664,12 +731,12 @@ Tests:
   bias_vector: [0, 1]
   bias_type: [f16_r, f32_r]
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
-- name: matmul_f8_bf8_dst_fp16
+- name: matmul_f8_bf8_fnuz_dst_fp16
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_f16
+    matmul: *real_precisions_1b_fnuz_dst_f16
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -681,12 +748,12 @@ Tests:
   bias_vector: [0, 1]
   bias_type: f16_r
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
-- name: matmul_f8_bf8_dst_bf16
+- name: matmul_f8_bf8_fnuz_dst_bf16
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_bf16
+    matmul: *real_precisions_1b_fnuz_dst_bf16
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -698,12 +765,12 @@ Tests:
   bias_vector: [0, 1]
   bias_type: bf16_r
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
-- name: matmul_f8_dst_bf16_scale_ab_vec
+- name: matmul_f8_fnuz_dst_bf16_scale_ab_vec
   category: pre_checkin
   function:
-    matmul: *f8_precision_dst_bf16
+    matmul: *f8_fnuz_precision_dst_bf16
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -716,13 +783,28 @@ Tests:
   bias_vector: [0, 1]
   bias_type: bf16_r
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
+
+- name: matmul_swizzleA
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_swizzleA_support
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA: T
+  transB: N
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  bias_vector: [0, 1]
+  unit_check: 1
+  gpu_arch: '942'
 
 ### GFX12 FP8
 - name: matmul_f8_bf8_dst_fp32_gfx12
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_ocp_dst_f32
+    matmul: *real_precisions_1b_dst_f32
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -740,7 +822,7 @@ Tests:
 - name: matmul_f8_bf8_dst_fp16_gfx12
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_ocp_dst_f16
+    matmul: *real_precisions_1b_dst_f16
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -757,7 +839,7 @@ Tests:
 - name: matmul_f8_bf8_dst_bf16_gfx12
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_ocp_dst_bf16
+    matmul: *real_precisions_1b_dst_bf16
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -778,7 +860,7 @@ Tests:
 - name: matmul_real_1b_dst_f8_SCDInt1_gfx12
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_ocp_dst_f8
+    matmul: *real_precisions_1b_dst_f8
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -797,7 +879,7 @@ Tests:
 - name: matmul_real_1b_dst_f8_SCDNotInt_gfx12
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_ocp_dst_f8
+    matmul: *real_precisions_1b_dst_f8
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -816,7 +898,7 @@ Tests:
 - name: matmul_one_real_precisions_1b_gfx12
   category: quick
   function:
-    matmul: *real_precisions_1b_ocp
+    matmul: *real_precisions_1b
   matrix_size: *one_matrix_size_range
   transA_transB: *transA_transB_range
   alpha: [ 0.0, 1.0 ]
@@ -834,10 +916,10 @@ Tests:
   gpu_arch: '120[0-1]'
 
 ### END
-- name: matmul_real_1b_dst_f8_SCDInt1
+- name: matmul_real_1b_fnuz_dst_f8_fnuz_SCDInt1
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_f8
+    matmul: *real_precisions_1b_fnuz_dst_f8_fnuz
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -851,12 +933,12 @@ Tests:
   bias_vector: [0, 1]
   bias_type: f16_r
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
-- name: matmul_real_1b_dst_1b_smallsize
+- name: matmul_real_1b_fnuz_dst_1b_fnuz_smallsize
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_1b
+    matmul: *real_precisions_1b_fnuz_dst_1b_fnuz
   matrix_size:
     - { M:  1,   N:  1,    K:  1    }
     - { M:  1,   N:  1,    K:  127  }
@@ -893,10 +975,10 @@ Tests:
   gpu_arch: '942'
 
 #TODO: extend to all f8 transpose and datatype if necessary
-- name: matmul_real_f8_dst_fp32
+- name: matmul_real_f8_fnuz_dst_fp32
   category: pre_checkin
   function:
-    matmul: *f8_precision_dst_fp32
+    matmul: *f8_fnuz_precision_dst_fp32
   matrix_size:
     - { M:  1,   N:  1,    K:  1    }
     - { M:  1,   N:  1,    K:  127  }
@@ -932,10 +1014,10 @@ Tests:
   unit_check: 1
   gpu_arch: '942'
 
-- name: matmul_real_1b_dst_f8_SCDNotInt
+- name: matmul_real_1b_fnuz_dst_f8_fnuz_SCDNotInt
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_f8
+    matmul: *real_precisions_1b_fnuz_dst_f8_fnuz
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -950,12 +1032,12 @@ Tests:
   bias_type: f16_r
   unit_check: 0
   norm_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
-- name: matmul_real_1b_dst_1b_amaxD
+- name: matmul_real_1b_fnuz_dst_1b_fnuz_amaxD
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_1b
+    matmul: *real_precisions_1b_fnuz_dst_1b_fnuz
   M: [127, 129]
   N: [127, 129]
   K: [127, 129]
@@ -970,12 +1052,12 @@ Tests:
   amaxD: [1]
   activation_type: [none, relu]
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
-- name: matmul_real_1b_dst_bf8_SCDInt1
+- name: matmul_real_1b_fnuz_dst_bf8_fnuz_SCDInt1
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_bf8
+    matmul: *real_precisions_1b_fnuz_dst_bf8_fnuz
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -989,12 +1071,12 @@ Tests:
   bias_vector: [0,1]
   bias_type: f16_r
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
-- name: matmul_real_1b_dst_bf8_SCDNotInt
+- name: matmul_real_1b_fnuz_dst_bf8_fnuz_SCDNotInt
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_bf8
+    matmul: *real_precisions_1b_fnuz_dst_bf8_fnuz
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -1009,7 +1091,7 @@ Tests:
   bias_type: f16_r
   unit_check: 0
   norm_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_fallback_equality_NN_batch16
   category: pre_checkin
@@ -1074,10 +1156,10 @@ Tests:
   unit_check: 1
   algo_method: [0, 2]
 
-- name: matmul_groupedgemm_f8
+- name: matmul_groupedgemm_f8_fnuz
   category: pre_checkin
   function:
-    matmul: *f8_precision_dst_fp16
+    matmul: *f8_fnuz_precision_dst_fp16
   M: [127, 129]
   N: [127, 129]
   K: [127, 129]
@@ -1214,10 +1296,10 @@ Tests:
   unit_check: 0
   norm_check: 1
 
-- name: matmul_bgradb_f8_bf8_dst_fp32
+- name: matmul_bgradb_f8_bf8_fnuz_dst_fp32
   category: pre_checkin
   function:
-    matmul: *real_precisions_1b_dst_f32
+    matmul: *real_precisions_1b_fnuz_dst_f32
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -1231,7 +1313,7 @@ Tests:
   scaleA: [ 0, 1]
   scaleB: [ 0, 1]
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_bgrada_f16
   category: pre_checkin
@@ -1265,7 +1347,7 @@ Tests:
   bias_vector: [0, 1]
   unit_check: 0
   norm_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_dgelu_fp32
   category: pre_checkin
@@ -1282,7 +1364,7 @@ Tests:
   activation_type: gelu
   unit_check: 0
   norm_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_bgradb_fp32
   category: pre_checkin
@@ -1299,7 +1381,7 @@ Tests:
   bias_type: f32_r
   bias_source: b
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_bias_gelu_aux_bf16_TN
   category: pre_checkin
@@ -1318,7 +1400,7 @@ Tests:
   bias_type: bf16_r
   unit_check: 0
   norm_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_dgelu_bf16_NN
   category: pre_checkin
@@ -1336,7 +1418,7 @@ Tests:
   activation_type: gelu
   unit_check: 0
   norm_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_bgradb_bf16_NT
   category: pre_checkin
@@ -1354,7 +1436,7 @@ Tests:
   bias_type: bf16_r
   bias_source: b
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_bgradb_f16
   category: pre_checkin
@@ -1413,7 +1495,7 @@ Tests:
   alpha: 1
   beta: [ 0.0, 2.0 ]
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_gemm_double
   category: pre_checkin
@@ -1423,7 +1505,7 @@ Tests:
     - { M:  128,  N:  128,  K:  1024 }
     - { M:  4608, N:  1335, K:  640  }
   transA_transB: *transA_transB_range
-  alpha: 1
+  alpha: [1.0, 2.0]
   beta: [ 0.0, 2.0 ]
   unit_check: 1
   gpu_arch: '9(0a|4[0-2])'
@@ -1462,7 +1544,7 @@ Tests:
   scaleAlpha_vector: [0, 1]
   activation_type: relu
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_gemm_i8_dst_i8
   category: pre_checkin
@@ -1494,7 +1576,7 @@ Tests:
   scaleAlpha_vector: [0, 1]
   activation_type: relu
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_gemm_i8_dst_i8_1xxx
   category: pre_checkin
@@ -1533,7 +1615,7 @@ Tests:
 - name: matmul_gemm_mix_precisions
   category: pre_checkin
   function:
-    matmul: *real_mix_precisions
+    matmul: *real_mix_precisions_fnuz
   matrix_size:
   M: [127, 129]
   N: [127, 129]
@@ -1546,12 +1628,12 @@ Tests:
   bias_vector: 1
   bias_type: [f32_r]
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_gemm_mix_precisions2
   category: pre_checkin
   function:
-    matmul: *real_mix_precisions
+    matmul: *real_mix_precisions_fnuz
   matrix_size:
     - { M:  1,   N:  1,    K:  1    }
     - { M:  1,   N:  1,    K:  127  }
@@ -1583,12 +1665,12 @@ Tests:
   bias_vector: 1
   bias_type: [f32_r]
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
-- name: matmul_gemm_mix_precisions_fp8
+- name: matmul_gemm_mix_precisions_fp8_fnuz
   category: pre_checkin
   function:
-    matmul: *real_mix_precisions_fp8
+    matmul: *real_mix_precisions_fp8_fnuz
   M: [127, 129]
   N: [127, 129]
   K: [127, 129]
@@ -1604,12 +1686,12 @@ Tests:
   bias_vector: 1
   bias_type: [f32_r]
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
-- name: matmul_gemm_amaxAB_mix_precisions_fp8
+- name: matmul_gemm_amaxAB_mix_precisions_fp8_fnuz
   category: pre_checkin
   function:
-    matmul: *real_mix_precisions_fp8
+    matmul: *real_mix_precisions_fp8_fnuz
   M: [127, 129]
   N: [127, 129]
   K: [127, 129]
@@ -1625,7 +1707,7 @@ Tests:
   bias_vector: 1
   bias_type: [f32_r]
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
 
 - name: matmul_extapi_algo_method_tuning_gsu_gemm_only
   category: pre_checkin
@@ -1674,10 +1756,10 @@ Tests:
   unit_check: 1
   c_equal_d: [0, 1]
 
-- name: matmul_heuristic_all_solutions_real_1byte
+- name: matmul_heuristic_all_solutions_real_1byte_fnuz
   category: nightly
   function:
-    matmul: *real_precisions_1b
+    matmul: *real_precisions_1b_fnuz
   M: [128]
   N: [128]
   K: [2048]
@@ -1687,6 +1769,6 @@ Tests:
   beta: [0,1]
   requested_solution_num: -1
   unit_check: 1
-  gpu_arch: '94[0-2]'
+  gpu_arch: '942'
   c_equal_d: [0, 1]
 ...

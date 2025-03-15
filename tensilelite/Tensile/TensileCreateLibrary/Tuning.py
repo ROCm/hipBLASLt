@@ -23,21 +23,18 @@
 ################################################################################
 
 from Tensile.Common import CHeader, print1, print2, printExit, globalParameters, \
-                           ParallelMap2, pushWorkingPath, popWorkingPath, ensurePath
-from Tensile.TensileInstructions import getGfxName, TensileInstructions
+                           ParallelMap2, ensurePath, isaToGfx, tqdm, ParallelMapConfig
+from Tensile.TensileInstructions import TensileInstructions
 from Tensile.KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 from Tensile.SolutionStructs import Solution
 from Tensile.Toolchain.Assembly import buildAssemblyCodeObjectFiles
 from Tensile.Toolchain.Source import buildSourceCodeObjectFile
-from Tensile.Utils import tqdm
-
 from .IO import writeAssembly
 from .Run import _processKernelSource
 
 from functools import partial, reduce
 from itertools import repeat
 from pathlib import Path
-import os
 
 def _writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H):
     kernelSourceFilename = str(Path(outputPath) / KERNEL_HELPER_FILENAME_CPP)
@@ -101,47 +98,80 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
         results.remove(rel)
 
 
-def writeSolutionsAndKernels(outputPath, asmToolchain, srcToolchain, solutions, kernels, kernelHelperObjs, \
-    kernelWriterAssembly, errorTolerant=False, generateSourcesAndExit=False, compress=True):
-  codeObjectFiles = []
+def writeSolutionsAndKernels(
+    outputPath,
+    asmToolchain,
+    srcToolchain,
+    solutions,
+    kernels,
+    kernelHelperObjs,
+    kernelWriterAssembly,
+    errorTolerant=False,
+    generateSourcesAndExit=False,
+    compress=True,
+):
+    codeObjectFiles = []
 
-  pushWorkingPath('build_tmp')
-  pushWorkingPath(os.path.basename(outputPath).upper())
-  asmPath = ensurePath(os.path.join(globalParameters["WorkingPath"], "assembly"))
+    outputPath = Path(outputPath)
+    destLibPath = ensurePath(
+        outputPath / "library"
+    )  # Destination for code object library files (.co)
+    buildTmpPath = ensurePath(outputPath / "build_tmp" / outputPath.stem.upper())  #
+    assemblyTmpPath = ensurePath(
+        buildTmpPath / "assembly"
+    )  # Temp path for generated assembly files (.s)
+    objectTmpPath = ensurePath(
+        buildTmpPath / "code_object_tmp"
+    )  # Temp path for HSA code object files (.hsaco)
 
-  asmKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
+    asmKernels = [k for k in kernels if k["KernelLanguage"] == "Assembly"]
 
-  visited = set()
-  duplicates = 0
-  for k in asmKernels:
-    base = kernelWriterAssembly.getKernelFileBase(k)
-    k.duplicate = True if base in visited else False
-    duplicates += k.duplicate
-    print2(f"Duplicate: {base}")
-    visited.add(base)
-  print1(f"Number of duplicates: {duplicates}")
+    visited = set()
+    duplicates = 0
+    for k in asmKernels:
+        base = kernelWriterAssembly.getKernelFileBase(k)
+        k.duplicate = True if base in visited else False
+        duplicates += k.duplicate
+        print2(f"Duplicate: {base}")
+        visited.add(base)
+    print1(f"Number of duplicate kernels: {duplicates}")
 
-  numAsmKernels = len(asmKernels)
-  numKernels = len(asmKernels)
-  assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
-  asmIter   = zip(repeat(kernelWriterAssembly), repeat(TensileInstructions()), asmKernels)
-  asmResults = ParallelMap2(_processKernelSource, asmIter, "Generating assembly kernels")
-  removeInvalidSolutionsAndKernels(asmResults, asmKernels, solutions, errorTolerant, globalParameters)
-  def assemble(ret):
-    p, isa, wavefrontsize = ret
-    asmToolchain.assemble(str(p), str(p.with_suffix(".o")), getGfxName(isa), wavefrontsize)
-  unaryWriteAssembly = partial(writeAssembly, asmPath)
-  compose = lambda *F: reduce(lambda f, g: lambda x: f(g(x)), F)
-  ret = ParallelMap2(compose(assemble, unaryWriteAssembly), asmResults, "Writing assembly kernels", return_as="generator_unordered", multiArg=False)
+    numAsmKernels = len(asmKernels)
+    numKernels = len(asmKernels)
+    assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
+    asmIter = zip(
+        repeat(kernelWriterAssembly), repeat(TensileInstructions()), asmKernels
+    )
+    asmResults = ParallelMap2(_processKernelSource, 
+                              ParallelMapConfig(message="Generating assembly kernels", return_as="list", multiArg=True), 
+                              asmIter)
+    removeInvalidSolutionsAndKernels(
+        asmResults, asmKernels, solutions, errorTolerant, globalParameters
+    )
 
-  _writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
-  srcKernelFile = Path(outputPath) / "Kernels.cpp"
-  
-  if not generateSourcesAndExit:
-      codeObjectFiles += buildAssemblyCodeObjectFiles(asmToolchain, asmKernels, kernelWriterAssembly, outputPath, compress)
-      buildSourceCodeObjectFile(srcToolchain, outputPath, srcKernelFile)
+    def assemble(ret):
+        p, isa, wavefrontsize = ret
+        asmToolchain.assemble(str(p), str(p.with_suffix(".o")), isaToGfx(isa), wavefrontsize)
 
-  popWorkingPath() # build_tmp
-  popWorkingPath() # workingDir
+    unaryWriteAssembly = partial(writeAssembly, assemblyTmpPath)
+    compose = lambda *F: reduce(lambda f, g: lambda x: f(g(x)), F)
+    ret = ParallelMap2(
+        compose(assemble, unaryWriteAssembly),
+        ParallelMapConfig(message="Writing assembly kernels", return_as="list"),
+        asmResults
+    )
+    
+    sortByEnum = lambda x: ("Enum" in x.getKernelName(), kernelHelperObjs.index(x))
+    khos = sorted(kernelHelperObjs, key=sortByEnum, reverse=True) 
+    _writeHelpers(outputPath, khos, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
 
-  return codeObjectFiles, numKernels
+    if not generateSourcesAndExit:
+        codeObjectFiles += buildAssemblyCodeObjectFiles(
+            asmToolchain, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress, asmKernels
+        )
+        kernelsLib = str(objectTmpPath / "Kernels.so")
+        srcKernelFile = str(Path(outputPath) / "Kernels.cpp")
+        srcToolchain.compile([srcKernelFile], kernelsLib, str(outputPath), [isaToGfx(globalParameters["CurrentISA"])])
+        buildSourceCodeObjectFile(srcToolchain, destLibPath, kernelsLib)
+
+    return codeObjectFiles, numKernels

@@ -127,6 +127,7 @@ inline void hipblaslt_init(void*       A,
     case HIP_R_16BF:
         hipblaslt_init<hip_bfloat16>(static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -135,7 +136,8 @@ inline void hipblaslt_init(void*       A,
         hipblaslt_init<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init<hipblaslt_f8>(static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
         break;
@@ -225,6 +227,7 @@ inline void hipblaslt_init_sin(void*       A,
         hipblaslt_init_sin<hip_bfloat16>(
             static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_sin<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -233,7 +236,8 @@ inline void hipblaslt_init_sin(void*       A,
         hipblaslt_init_sin<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_sin<hipblaslt_f8>(
             static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
@@ -306,6 +310,7 @@ inline void hipblaslt_init_alternating_sign(void*       A,
         hipblaslt_init_alternating_sign<hip_bfloat16>(
             static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_alternating_sign<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -314,7 +319,8 @@ inline void hipblaslt_init_alternating_sign(void*       A,
         hipblaslt_init_alternating_sign<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_alternating_sign<hipblaslt_f8>(
             static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
@@ -382,6 +388,7 @@ inline void hipblaslt_init_hpl_alternating_sign(void*       A,
         hipblaslt_init_hpl_alternating_sign<hip_bfloat16>(
             static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_hpl_alternating_sign<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -390,7 +397,8 @@ inline void hipblaslt_init_hpl_alternating_sign(void*       A,
         hipblaslt_init_hpl_alternating_sign<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_hpl_alternating_sign<hipblaslt_f8>(
             static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
@@ -453,6 +461,7 @@ inline void hipblaslt_init_cos(void*       A,
         hipblaslt_init_cos<hip_bfloat16>(
             static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_cos<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -461,7 +470,8 @@ inline void hipblaslt_init_cos(void*       A,
         hipblaslt_init_cos<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_cos<hipblaslt_f8>(
             static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
@@ -529,6 +539,7 @@ inline void hipblaslt_init_hpl(void*       A,
         hipblaslt_init_hpl<hip_bfloat16>(
             static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_hpl<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -537,7 +548,8 @@ inline void hipblaslt_init_hpl(void*       A,
         hipblaslt_init_hpl<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_hpl<hipblaslt_f8>(
             static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
@@ -593,13 +605,15 @@ inline void hipblaslt_init_nan(void* A, size_t N, hipDataType type)
     case HIP_R_16BF:
         hipblaslt_init_nan<hip_bfloat16>(static_cast<hip_bfloat16*>(A), N);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_nan<hipblaslt_f8_fnuz>(static_cast<hipblaslt_f8_fnuz*>(A), N);
         break;
     case HIP_R_8F_E5M2_FNUZ:
         hipblaslt_init_nan<hipblaslt_bf8_fnuz>(static_cast<hipblaslt_bf8_fnuz*>(A), N);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_nan<hipblaslt_f8>(static_cast<hipblaslt_f8*>(A), N);
         break;
@@ -635,6 +649,7 @@ inline void hipblaslt_init_nan(void* A, size_t start_offset, size_t end_offset, 
     case HIP_R_16BF:
         hipblaslt_init_nan<hip_bfloat16>(static_cast<hip_bfloat16*>(A), start_offset, end_offset);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_nan<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), start_offset, end_offset);
@@ -643,7 +658,8 @@ inline void hipblaslt_init_nan(void* A, size_t start_offset, size_t end_offset, 
         hipblaslt_init_nan<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), start_offset, end_offset);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_nan<hipblaslt_f8>(static_cast<hipblaslt_f8*>(A), start_offset, end_offset);
         break;
@@ -702,6 +718,7 @@ inline void hipblaslt_init_nan_tri(bool        upper,
         hipblaslt_init_nan_tri(
             upper, static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_nan_tri(
             upper, static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -710,7 +727,8 @@ inline void hipblaslt_init_nan_tri(bool        upper,
         hipblaslt_init_nan_tri(
             upper, static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_nan_tri(
             upper, static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
@@ -767,6 +785,7 @@ inline void hipblaslt_init_nan(void*       A,
         hipblaslt_init_nan<hip_bfloat16>(
             static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_nan<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -775,7 +794,8 @@ inline void hipblaslt_init_nan(void*       A,
         hipblaslt_init_nan<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_nan<hipblaslt_f8>(
             static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
@@ -831,13 +851,15 @@ inline void hipblaslt_init_inf(void* A, size_t N, hipDataType type)
     case HIP_R_16BF:
         hipblaslt_init_inf<hip_bfloat16>(static_cast<hip_bfloat16*>(A), N);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_inf<hipblaslt_f8_fnuz>(static_cast<hipblaslt_f8_fnuz*>(A), N);
         break;
     case HIP_R_8F_E5M2_FNUZ:
         hipblaslt_init_inf<hipblaslt_bf8_fnuz>(static_cast<hipblaslt_bf8_fnuz*>(A), N);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_inf<hipblaslt_f8>(static_cast<hipblaslt_f8*>(A), N);
         break;
@@ -883,6 +905,7 @@ inline void hipblaslt_init_inf(void* A, size_t start_offset, size_t end_offset, 
     case HIP_R_16BF:
         hipblaslt_init_inf<hip_bfloat16>(static_cast<hip_bfloat16*>(A), start_offset, end_offset);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_inf<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), start_offset, end_offset);
@@ -891,7 +914,8 @@ inline void hipblaslt_init_inf(void* A, size_t start_offset, size_t end_offset, 
         hipblaslt_init_inf<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), start_offset, end_offset);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_inf<hipblaslt_f8>(static_cast<hipblaslt_f8*>(A), start_offset, end_offset);
         break;
@@ -935,6 +959,7 @@ inline void hipblaslt_init_inf(void*       A,
         hipblaslt_init_inf<hip_bfloat16>(
             static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_inf<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -943,7 +968,8 @@ inline void hipblaslt_init_inf(void*       A,
         hipblaslt_init_inf<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_inf<hipblaslt_f8>(
             static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
@@ -1020,6 +1046,7 @@ inline void hipblaslt_init_zero(void*       A,
         hipblaslt_init_zero<hip_bfloat16>(
             static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_zero<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -1028,7 +1055,8 @@ inline void hipblaslt_init_zero(void*       A,
         hipblaslt_init_zero<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_zero<hipblaslt_f8>(
             static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
@@ -1068,6 +1096,7 @@ inline void hipblaslt_init_zero(void* A, size_t start_offset, size_t end_offset,
     case HIP_R_16BF:
         hipblaslt_init_zero<hip_bfloat16>(static_cast<hip_bfloat16*>(A), start_offset, end_offset);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_zero<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), start_offset, end_offset);
@@ -1076,7 +1105,8 @@ inline void hipblaslt_init_zero(void* A, size_t start_offset, size_t end_offset,
         hipblaslt_init_zero<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), start_offset, end_offset);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_zero<hipblaslt_f8>(static_cast<hipblaslt_f8*>(A), start_offset, end_offset);
         break;
@@ -1145,6 +1175,7 @@ inline void hipblaslt_init_alt_impl_big(void*       A,
         hipblaslt_init_alt_impl_big<hip_bfloat16>(
             static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_alt_impl_big<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -1153,7 +1184,8 @@ inline void hipblaslt_init_alt_impl_big(void*       A,
         hipblaslt_init_alt_impl_big<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_alt_impl_big<hipblaslt_f8>(
             static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);
@@ -1225,6 +1257,7 @@ inline void hipblaslt_init_alt_impl_small(void*       A,
         hipblaslt_init_alt_impl_small<hip_bfloat16>(
             static_cast<hip_bfloat16*>(A), M, N, lda, stride, batch_count);
         break;
+#if HIPBLASLT_FP8_TYPE_FNUZ
     case HIP_R_8F_E4M3_FNUZ:
         hipblaslt_init_alt_impl_small<hipblaslt_f8_fnuz>(
             static_cast<hipblaslt_f8_fnuz*>(A), M, N, lda, stride, batch_count);
@@ -1233,7 +1266,8 @@ inline void hipblaslt_init_alt_impl_small(void*       A,
         hipblaslt_init_alt_impl_small<hipblaslt_bf8_fnuz>(
             static_cast<hipblaslt_bf8_fnuz*>(A), M, N, lda, stride, batch_count);
         break;
-#ifdef ROCM_USE_FLOAT8
+#endif
+#if HIPBLASLT_FP8_TYPE_OCP
     case HIP_R_8F_E4M3:
         hipblaslt_init_alt_impl_small<hipblaslt_f8>(
             static_cast<hipblaslt_f8*>(A), M, N, lda, stride, batch_count);

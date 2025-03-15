@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,20 +22,19 @@
 #
 ################################################################################
 
-from .Common import printExit, printWarning, print2, versionIsCompatible
 from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
-from . import __version__
-from . import Common
 from . import SolutionLibrary
 from .CustomYamlLoader import load_yaml_stream
 from Tensile.CodeObjectName import codeObjectFileBaseName
+from .Common import gfxToIsa, printExit, printWarning, print2, versionIsCompatible, __version__
 
 from enum import IntEnum
 from typing import NamedTuple, List
 
 import os
 import sys
+
 
 try:
     import orjson as json
@@ -207,16 +206,16 @@ def parseSolutionsData(data, srcFile, cxxCompiler):
         printExit("Solution file {} is missing required fields (len = {} < 3" \
                 .format(srcFile, len(data)))
 
-    versionString = data[1]["MinimumRequiredVersion"]
+    versionString = data[0]["MinimumRequiredVersion"]
     if not versionIsCompatible(versionString):
         printWarning("Version = {} in solution file {} does not match Tensile version = {}" \
                 .format(srcFile, versionString, __version__) )
 
-    if "ProblemSizes" not in data[2]:
+    if "ProblemSizes" not in data[1]:
         printExit("Solution file {} doesn't begin with ProblemSizes".format(srcFile))
 
-    problemSizesConfig = data[2]["ProblemSizes"]
-    solutionStartIdxInData = 3
+    problemSizesConfig = data[1]["ProblemSizes"]
+    solutionStartIdxInData = 2
     if (len(data) > solutionStartIdxInData) and "BiasTypeArgs" in data[solutionStartIdxInData]:
         solutionStartIdxInData += 1
     if (len(data) > solutionStartIdxInData) and "ActivationArgs" in data[solutionStartIdxInData]:
@@ -228,7 +227,7 @@ def parseSolutionsData(data, srcFile, cxxCompiler):
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
-        solutionObject = Solution(solutionState, cxxCompiler)
+        solutionObject = Solution(solutionState, cxxCompiler, srcFile)
         solutions.append(solutionObject)
     problemType = solutions[0]["ProblemType"]
     problemSizes = ProblemSizes(problemType, problemSizesConfig)
@@ -236,18 +235,17 @@ def parseSolutionsData(data, srcFile, cxxCompiler):
 
 
 class DataIndex(IntEnum):
-    CODE_OBEJECT_FILE=0
-    MINIMUM_REQUIRED_VERSION=1
-    SCHEDULE_NAME=2
-    DEVICE_PROPERTIES=3
-    DEVICE_NAMES=4
-    PROBLEM_TYPE=5
-    SOLUTIONS=6
-    INDEX_ORDER=7
-    EXACT_LOGIC=8
-    RANGE_LOGIC=9
-    PERF_METRIC=11
-    LIBRARY_TYPE=12
+    MINIMUM_REQUIRED_VERSION=0
+    SCHEDULE_NAME=1
+    DEVICE_PROPERTIES=2
+    DEVICE_NAMES=3
+    PROBLEM_TYPE=4
+    SOLUTIONS=5
+    INDEX_ORDER=6
+    EXACT_LOGIC=7
+    RANGE_LOGIC=8
+    PERF_METRIC=10
+    LIBRARY_TYPE=11
 
     def __index__(self):
         return self.value
@@ -263,7 +261,6 @@ class LibraryLogic(NamedTuple):
     library: SolutionLibrary.MasterSolutionLibrary
     srcFile: str
 
-
 def parseLibraryLogicFile(filename, cxxCompiler, archs=None):
     """Wrapper function to read and parse a library logic file."""
     return parseLibraryLogicData(read(filename, True), filename, cxxCompiler, archs)
@@ -274,15 +271,16 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
     if isinstance(data, List):
         data = parseLibraryLogicList(data, srcFile)
 
-    is_arch_valid = lambda cArch, tArch : (cArch == tArch or cArch == "all")
-    if not (archs is None) and "ArchitectureName" in data:
-        if isinstance(archs, List):
-            if len(archs) > 0 and not archs[0] == "all":
-                if not (any(is_arch_valid(arch.split(":")[0], data["ArchitectureName"]) for arch in archs)):
-                    return LibraryLogic("", "", None, [], [], None, srcFile)
-        elif isinstance(archs, str):
-            if not is_arch_valid(archs.split(":")[0], data["ArchitectureName"]):
-                return LibraryLogic("", "", None, [], [], None, srcFile)
+    #is_arch_valid = lambda cArch, tArch : (cArch == tArch or cArch == "all")
+    #if not (archs is None) and "ArchitectureName" in data:
+    #    printExit("Shouldn't be here")
+    #    if isinstance(archs, List):
+    #        if len(archs) > 0 and not archs[0] == "all":
+    #            if not (any(is_arch_valid(arch.split(":")[0], data["ArchitectureName"]) for arch in archs)):
+    #                return LibraryLogic("", "", None, [], [], None, srcFile)
+    #    elif isinstance(archs, str):
+    #        if not is_arch_valid(archs.split(":")[0], data["ArchitectureName"]):
+    #            return LibraryLogic("", "", None, [], [], None, srcFile)
 
     if "CUCount" not in data:
         data["CUCount"] = None
@@ -297,7 +295,7 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
     # unpack solution
     def solutionStateToSolution(solutionState, cxxCompiler) -> Solution:
         if solutionState["KernelLanguage"] == "Assembly":
-            solutionState["ISA"] = Common.gfxArch(data["ArchitectureName"])
+            solutionState["ISA"] = gfxToIsa(data["ArchitectureName"])
         else:
             solutionState["ISA"] = (0, 0, 0)
         solutionState["CUCount"] = data["CUCount"]
@@ -314,7 +312,7 @@ def parseLibraryLogicData(data, srcFile, cxxCompiler, archs=None):
             # The ActivationType setting in YAML is meaningless in customKernel case.
             # Therefore, we override the customKernel setting with the ActivationType value from ProblemType to avoid false alarms during subsequent problemType checks.
             solutionState["ProblemType"]["ActivationType"] = problemType["ActivationType"]
-        solutionObject = Solution(solutionState, cxxCompiler)
+        solutionObject = Solution(solutionState, cxxCompiler, srcFile)
         solutionObject["LogicFileName"] = srcFile
         solutionProblemType = solutionObject["ProblemType"]
         if problemType != solutionProblemType:
@@ -346,7 +344,6 @@ def parseLibraryLogicList(data, srcFile="?"):
         printExit("Library logic file {} is missing required fields (len = {} < 9)" \
                 .format(srcFile, len(data)))
     rv = {}
-    rv["codeObjectFile"] = data[DataIndex.CODE_OBEJECT_FILE]["codeObjectFile"]
     rv["MinimumRequiredVersion"] = data[DataIndex.MINIMUM_REQUIRED_VERSION]["MinimumRequiredVersion"]
     rv["ScheduleName"] = data[DataIndex.SCHEDULE_NAME]
     rv["DeviceNames"] = data[DataIndex.DEVICE_NAMES]
@@ -355,7 +352,7 @@ def parseLibraryLogicList(data, srcFile="?"):
 
     if type(data[3]) is dict:
         rv["ArchitectureName"] = data[DataIndex.DEVICE_PROPERTIES]["Architecture"]
-        rv["CUCount"] = data[3]["CUCount"]
+        rv["CUCount"] = data[DataIndex.DEVICE_PROPERTIES]["CUCount"]
     else:
         rv["ArchitectureName"] = data[DataIndex.DEVICE_PROPERTIES]
         rv["CUCount"] = None
@@ -370,7 +367,7 @@ def parseLibraryLogicList(data, srcFile="?"):
 
     # library logic fields
     libraryType = None
-    if len(data) > 12 and data[DataIndex.LIBRARY_TYPE]:
+    if len(data) > 11 and data[DataIndex.LIBRARY_TYPE]:
         libraryType = data[DataIndex.LIBRARY_TYPE]
     else:
         printExit("Library logic file {} is missing required field matching property." \
@@ -393,7 +390,6 @@ def parseLibraryLogicList(data, srcFile="?"):
 
 def rawLibraryLogic(data):
     """Returns a tuple of the data in a library logic file."""
-    codeObjectFile = data[DataIndex.CODE_OBEJECT_FILE]
     versionString = data[DataIndex.MINIMUM_REQUIRED_VERSION]
     scheduleName = data[DataIndex.SCHEDULE_NAME]
     architectureName = data[DataIndex.DEVICE_PROPERTIES]
@@ -406,11 +402,11 @@ def rawLibraryLogic(data):
     otherFields = []
 
     dataLength = len(data)
-    if dataLength > 10:
-        for idx in range(10, dataLength):
+    if dataLength > 9:
+        for idx in range(9, dataLength):
             otherFields.append(data[idx])
 
-    return (codeObjectFile, versionString, scheduleName, architectureName, deviceNames,\
+    return (versionString, scheduleName, architectureName, deviceNames,\
             problemTypeState, solutionStates, indexOrder, exactLogic, rangeLogic, otherFields)
 
 

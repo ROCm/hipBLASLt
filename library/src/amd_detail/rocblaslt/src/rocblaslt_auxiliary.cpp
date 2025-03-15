@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -266,7 +266,10 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *e = nullptr;
     bool                   gradient = false;
-    rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    bool swizzleA = matA->order != HIPBLASLT_ORDER_COL && matA->order != HIPBLASLT_ORDER_ROW;
+    bool swizzleB = matB->order != HIPBLASLT_ORDER_COL && matB->order != HIPBLASLT_ORDER_ROW;
+
+    rocblaslt_status isValid = rocblaslt_matmul_valid_args(matmul_descr,
                                                            dummy_ptr,
                                                            dummy_ptr,
                                                            dummy_ptr,
@@ -299,7 +302,9 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
                                                            scaleAlphaVec,
                                                            e,
                                                            gradient,
-                                                           compute_type);
+                                                           compute_type,
+                                                           swizzleA,
+                                                           swizzleB);
     if(isValid != rocblaslt_status_continue)
     {
         m = 0;
@@ -380,7 +385,9 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
                                         nullptr,
                                         maxWorkSpaceBytes,
                                         nullptr,
-                                        handle->Synchronizer};
+                                        handle->Synchronizer,
+                                        swizzleA,
+                                        swizzleB};
 
     return problem;
 }
@@ -745,10 +752,10 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             case rocblaslt_compute_f32_fast_f8bf8_fnuz:
             case rocblaslt_compute_f32_fast_bf8f8_fnuz:
 #ifdef ROCM_USE_FLOAT8
-            case rocblaslt_compute_f32_fast_f8_ocp:
-            case rocblaslt_compute_f32_fast_bf8_ocp:
-            case rocblaslt_compute_f32_fast_f8bf8_ocp:
-            case rocblaslt_compute_f32_fast_bf8f8_ocp:
+            case rocblaslt_compute_f32_fast_f8:
+            case rocblaslt_compute_f32_fast_bf8:
+            case rocblaslt_compute_f32_fast_f8bf8:
+            case rocblaslt_compute_f32_fast_bf8f8:
 #endif
                 break;
             default:
@@ -849,13 +856,13 @@ rocblaslt_compute_type _matmul_desc_determine_compute_type(rocblaslt_matmul_desc
             return rocblaslt_compute_f32_fast_bf8f8_fnuz;
 #ifdef ROCM_USE_FLOAT8
         else if(tciA == tciB && tciA == HIP_R_8F_E4M3)
-            return rocblaslt_compute_f32_fast_f8_ocp;
+            return rocblaslt_compute_f32_fast_f8;
         else if(tciA == tciB && tciA == HIP_R_8F_E5M2)
-            return rocblaslt_compute_f32_fast_bf8_ocp;
+            return rocblaslt_compute_f32_fast_bf8;
         else if(tciA == HIP_R_8F_E4M3 && tciB == HIP_R_8F_E5M2)
-            return rocblaslt_compute_f32_fast_f8bf8_ocp;
+            return rocblaslt_compute_f32_fast_f8bf8;
         else if(tciA == HIP_R_8F_E5M2 && tciB == HIP_R_8F_E4M3)
-            return rocblaslt_compute_f32_fast_bf8f8_ocp;
+            return rocblaslt_compute_f32_fast_bf8f8;
 #endif
     }
     return matmulDesc->compute_type_original;

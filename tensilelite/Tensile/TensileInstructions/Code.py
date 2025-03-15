@@ -20,7 +20,8 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .Base import Item, getGfxName
+from ..Common import isaToGfx
+from .Base import Item
 from .Enums import SignatureValueKind
 from .Formatting import slash, slash50, block, block3Line, blockNewLine, \
                         formatStr, printExit
@@ -693,7 +694,7 @@ class _SignatureKernelDescriptor(Item):
 
     def getNextFreeVgpr(self) -> int:
         return self.totalVgprs
-    
+
     def getNextFreeSgpr(self) -> int:
         return self.totalSgprs
 
@@ -701,7 +702,7 @@ class _SignatureKernelDescriptor(Item):
         kdIndent = " " * 2
         kStr = ""
         kStr += ".amdgcn_target \"amdgcn-amd-amdhsa--%s\"\n" \
-            % (getGfxName(self.kernel.isa))
+            % (isaToGfx(self.kernel.isa))
         kStr += ".text\n"
         kStr += ".protected %s\n" % self.name
         kStr += ".globl %s\n" % self.name
@@ -898,7 +899,7 @@ class KernelBody(Item):
         self.totalSgprs = totalSgprs
         self.signature.setGprs(totalVgprs=totalVgprs, totalAgprs=totalAgprs, \
             totalSgprs=totalSgprs)
-        
+
     def getNextFreeVgpr(self) -> int:
         return self.signature.getNextFreeVgpr()
 

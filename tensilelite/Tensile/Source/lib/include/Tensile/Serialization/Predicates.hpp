@@ -135,7 +135,7 @@ namespace TensileLite
         using HardwarePredicateSMT = SubclassMappingTraits<Predicates::Predicate<Hardware>, IO>;
 
         template <typename IO>
-        const typename HardwarePredicateSMT<IO>::SubclassMap HardwarePredicateSMT<IO>::subclasses
+        const typename HardwarePredicateSMT<IO>::SubclassMap SubclassMappingTraits<Predicates::Predicate<Hardware>, IO>::subclasses
             = HardwarePredicateSMT<IO>::GetSubclasses();
 
         template <typename IO>
@@ -178,7 +178,7 @@ namespace TensileLite
         using AMDGPUPredicateSMT = SubclassMappingTraits<Predicates::Predicate<AMDGPU>, IO>;
 
         template <typename IO>
-        const typename AMDGPUPredicateSMT<IO>::SubclassMap AMDGPUPredicateSMT<IO>::subclasses
+        const typename AMDGPUPredicateSMT<IO>::SubclassMap SubclassMappingTraits<Predicates::Predicate<AMDGPU>, IO>::subclasses
             = AMDGPUPredicateSMT<IO>::GetSubclasses();
 
         template <typename IO>
@@ -214,6 +214,7 @@ namespace TensileLite
                 iot::enumCase(io, value, "gfx940", AMDGPU::Processor::gfx940);
                 iot::enumCase(io, value, "gfx941", AMDGPU::Processor::gfx941);
                 iot::enumCase(io, value, "gfx942", AMDGPU::Processor::gfx942);
+                iot::enumCase(io, value, "gfx950", AMDGPU::Processor::gfx950);
                 iot::enumCase(io, value, "gfx1010", AMDGPU::Processor::gfx1010);
                 iot::enumCase(io, value, "gfx1011", AMDGPU::Processor::gfx1011);
                 iot::enumCase(io, value, "gfx1012", AMDGPU::Processor::gfx1012);

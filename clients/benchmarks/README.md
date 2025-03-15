@@ -32,8 +32,8 @@ cd hipBLASLt; cd build/release
 --c_type <value>           Precision of matrix C. Options: f32_r,f16_r,bf16_r,i8_r
 --d_type <value>           Precision of matrix D. Options: f32_r,f16_r,bf16_r,i8_r
 --compute_type <value>     Precision of computation. Options: s,f32_r,x,xf32_r,f64_r,i32_r                     (Default value is: f32_r)
---compute_input_typeA <value>     Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the argument has no effect. (Default value is: INVALID)
---compute_input_typeB <value>     Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the argument has no effect. (Default value is: INVALID)
+--compute_input_typeA <value>     Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, f8_fnuz_r, bf8_fnuz_r, The default value indicates that the argument has no effect. (Default value is: INVALID)
+--compute_input_typeB <value>     Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, f8_fnuz_r, bf8_fnuz_r, The default value indicates that the argument has no effect. (Default value is: INVALID)
 --scale_type <value>       Precision of scalar. Options: f16_r,bf16_r
 --initialization <value>   Initialize matrix data.Options: rand_int, trig_float, hpl(floating), special, zero  (Default value is: hpl)
 --transA <value>           N = no transpose, T = transpose                                                     (Default value is: N)
@@ -46,7 +46,7 @@ cd hipBLASLt; cd build/release
 --algo_method <value>      Use different algorithm search API. Options: heuristic, all, index.                 (Default value is: heuristic)
 --solution_index <value>   Used with --algo_method 2.  Specify solution index to use in benchmark.             (Default value is: -1)
 --requested_solution <value> Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to heuristic.  (Default value is: 1)
---activation_type <value>  Options: None, gelu, relu                                                           (Default value is: none)
+--activation_type <value>  Options: None, gelu, relu, swish                                                    (Default value is: none)
 --activation_arg1 <value>  Reserved.                                                                           (Default value is: 0)
 --activation_arg2 <value>  Reserved.                                                                           (Default value is: inf)
 --bias_type <value>        Precision of bias vector.Options: f16_r,bf16_r,f32_r,default(same with D type)

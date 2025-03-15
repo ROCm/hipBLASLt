@@ -22,11 +22,10 @@
 #
 ################################################################################
 
-from Tensile.Common import CHeader, printExit
+from Tensile.Common import CHeader, printExit, state
 from Tensile.LibraryIO import parseLibraryLogicFile, write
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.Utilities.RequiredParameters import getRequiredParametersMin
-from Tensile.Utils import state
 
 from os import getpid
 from pathlib import Path
@@ -37,7 +36,7 @@ def generateSolutionsAndLibraries(archs, cxxCompiler, logicFiles):
     solutions = []
     libraries = []
     for logicFileGroup in logicFiles:
-        for logicFile in logicFileGroup[1]:
+        for logicFile in logicFileGroup[1]: # should be logicFileGroup[1]
             libraryLogic = parseLibraryLogicFile(logicFile, cxxCompiler, archs)
             solutions.extend(libraryLogic.solutions)
             libraries.append((libraryLogic.architecture, libraryLogic.library))

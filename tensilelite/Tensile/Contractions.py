@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,16 +23,12 @@
 ################################################################################
 
 from .Activation import ActivationType
-from .Common import internalParameters, printExit
 from .TensileInstructions import DataType
 from . import Hardware
 from . import Properties
 from .SolutionStructs import getBiasDataTypeListDefault
 from .SolutionStructs import Solution as OriginalSolution
-from .Utils import state, state_key_ordering
-
-from . import Common
-from . Common import globalParameters
+from .Common import gfxToIsa, internalParameters, globalParameters, state, state_key_ordering
 
 @state_key_ordering
 class FreeIndex:
@@ -141,9 +137,15 @@ class ProblemType:
         if rv.aType.isFloat8BFloat8() or rv.bType.isFloat8BFloat8():
             rv.aType = DataType("F8")
             rv.bType = DataType("B8")
+        elif rv.aType.isFloat8BFloat8_fnuz() or rv.bType.isFloat8BFloat8_fnuz():
+            rv.aType = DataType("F8N")
+            rv.bType = DataType("B8N")
         elif rv.aType.isBFloat8Float8() or rv.bType.isBFloat8Float8():
             rv.aType = DataType("B8")
             rv.bType = DataType("F8")
+        elif rv.aType.isBFloat8Float8_fnuz() or rv.bType.isBFloat8Float8_fnuz():
+            rv.aType = DataType("B8N")
+            rv.bType = DataType("F8N")
 
         if 'DataTypeE' in d:
             rv.eType = DataType(d['DataTypeE'])
@@ -517,15 +519,9 @@ class ProblemPredicate(Properties.Predicate):
 
         if state['ProblemType']['SwizzleTensorA']:
             rv += [cls('SwizzleTensorA', value=state['ProblemType']['SwizzleTensorA'])]
-            # TODO- (TT + DTVA) tail-loop is not working yet.
-            if state['ProblemType']['TransposeB']:
-                rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
 
-        # TODO- Will remove the size predicate once we have SWZ-B request
         if state['ProblemType']['SwizzleTensorB']:
             rv += [cls('SwizzleTensorB', value=state['ProblemType']['SwizzleTensorB'])]
-            rv += [cls("Free1SizeMultiple", index=0, value=state['MacroTile1'])]
-            rv += [cls("BoundSizeMultiple", index=-1, value=state['DepthU'])]
 
         return rv
 
@@ -661,10 +657,10 @@ class Solution:
 
     @classmethod
     def FromSolutionStruct(cls, solution, cxxCompiler: str):
-        return cls.FromOriginalState(solution._state, cxxCompiler)
+        return cls.FromOriginalState(solution._state, cxxCompiler, solution.srcName)
 
     @classmethod
-    def FromOriginalState(cls, d, cxxCompiler, deviceInfo=None):
+    def FromOriginalState(cls, d, cxxCompiler, srcName = "", deviceInfo=None):
         rv = cls()
 
 
@@ -703,7 +699,7 @@ class Solution:
 
         if 'ISA' not in d:
             if d['KernelLanguage'] == 'Assembly':
-                d['ISA'] = Common.gfxArch(deviceInfo[1])
+                d['ISA'] = gfxToIsa(deviceInfo[1])
             else:
                 d['ISA'] = [0,0,0]
 
@@ -711,7 +707,8 @@ class Solution:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d, cxxCompiler)
+        rv.originalSolution = OriginalSolution(d, cxxCompiler, srcName)
+        rv.srcName = srcName
 
         return rv
 
@@ -729,6 +726,7 @@ class Solution:
         self.libraryLogicIndex = {}
         self.index = None
         self.ideals = {}
+        self.srcName = ""
 
         for key, value in kwargs:
             if key not in Solution.StateKeys and key not in Solution.HiddenKeys:

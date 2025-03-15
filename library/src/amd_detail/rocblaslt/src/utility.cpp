@@ -72,9 +72,9 @@ const char* hipDataType_to_string(hipDataType type)
     case HIP_R_64F:
         return "R_64F";
     case HIP_R_8F_E4M3_FNUZ:
-        return "R_8F_E4M3";
+        return "R_8F_E4M3_FNUZ";
     case HIP_R_8F_E5M2_FNUZ:
-        return "R_8F_E5M2";
+        return "R_8F_E5M2_FNUZ";
 #ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
         return "R_8F_E4M3";
@@ -256,6 +256,8 @@ const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode)
         return "Bench";
     case rocblaslt_layer_mode_log_profile:
         return "Profile";
+    case rocblaslt_layer_mode_log_extended_profile:
+        return "ExtendedProfile";
     default:
         return "Invalid";
     }
@@ -289,6 +291,10 @@ const char* rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue)
         return "EPILOGUE_DGELU_BGRADA";
     case ROCBLASLT_EPILOGUE_BGRADB:
         return "EPILOGUE_DGELU_BGRADB";
+    case ROCBLASLT_EPILOGUE_SWISH_EXT:
+        return "EPILOGUE_SWISH_EXT";
+    case ROCBLASLT_EPILOGUE_SWISH_BIAS_EXT:
+        return "EPILOGUE_SWISH_BIAS_EXT";
     default:
         return "Invalid epilogue";
     }
@@ -345,3 +351,9 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
                      hipDataType_to_string(matmul_desc->bias_type));
     return std::string(buf.get());
 }
+
+// Define and initialize static member flush and rotatingBufferSize outside the class UserClientArguments
+bool    UserClientArguments::m_flush              = false;
+int32_t UserClientArguments::m_rotatingBufferSize = 0;
+int32_t UserClientArguments::m_coldIterations     = 0;
+int32_t UserClientArguments::m_hotIterations      = 0;

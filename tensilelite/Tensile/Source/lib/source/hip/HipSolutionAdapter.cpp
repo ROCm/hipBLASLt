@@ -256,6 +256,10 @@ namespace TensileLite
                 {
                     return err;
                 }
+                else
+                {
+                    (void)hipGetLastError(); // clear hipErrorNotFound
+                }
             }
 
             return err;

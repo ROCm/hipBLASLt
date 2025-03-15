@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,7 +50,7 @@
 using namespace roc; // For emulated program_options
 using namespace std::literals; // For std::string literals of form "str"s
 
-struct perf_matmul: hipblaslt_test_valid
+struct perf_matmul : hipblaslt_test_valid
 {
     void operator()(const Arguments& arg)
     {
@@ -62,7 +62,11 @@ struct perf_matmul: hipblaslt_test_valid
     }
 };
 
-int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, bool yaml = false)
+int run_bench_test(Arguments&         arg,
+                   const std::string& filter,
+                   bool               any_stride,
+                   hipDeviceProp_t&   props,
+                   bool               yaml = false)
 {
     hipblaslt_cout << std::setiosflags(std::ios::fixed)
                    << std::setprecision(7); // Set precision to 7 digits
@@ -165,15 +169,50 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
         }
     }
 
+#ifdef ROCM_USE_FLOAT8
+    // Check for F8 OCP data types and convert to NANOO
+    {
+        std::string deviceFullString(props.gcnArchName);
+        std::string deviceString = deviceFullString.substr(0, deviceFullString.find(":"));
+
+        bool isGFX942 = deviceString.find("gfx942") != std::string::npos;
+
+        if(isGFX942)
+        {
+            auto convertF8Type = [](hipDataType type) {
+                if(type == HIP_R_8F_E4M3)
+                {
+                    hipblaslt_cerr << "hipblaslt-bench INFO: Using f8_fnuz_r instead of f8_r"
+                                   << std::endl;
+                    return HIP_R_8F_E4M3_FNUZ;
+                }
+                if(type == HIP_R_8F_E5M2)
+                {
+                    hipblaslt_cerr << "hipblaslt-bench INFO: Using b8_fnuz_r instead of b8_r"
+                                   << std::endl;
+                    return HIP_R_8F_E5M2_FNUZ;
+                }
+                else
+                    return type;
+            };
+
+            arg.a_type = convertF8Type(arg.a_type);
+            arg.b_type = convertF8Type(arg.b_type);
+            arg.c_type = convertF8Type(arg.c_type);
+            arg.d_type = convertF8Type(arg.d_type);
+        }
+    }
+#endif
+
     perf_matmul{}(arg);
     return 0;
 }
 
-int hipblaslt_bench_datafile(const std::string& filter, bool any_stride)
+int hipblaslt_bench_datafile(const std::string& filter, bool any_stride, hipDeviceProp_t& props)
 {
     int ret = 0;
     for(Arguments arg : HipBlasLt_TestData())
-        ret |= run_bench_test(arg, filter, any_stride, true);
+        ret |= run_bench_test(arg, filter, any_stride, props, true);
     test_cleanup::cleanup();
     return ret;
 }
@@ -265,6 +304,8 @@ try
     std::string activation_type;
     int         scaleAFormat;
     int         scaleBFormat;
+    int         scaleCFormat;
+    int         scaleDFormat;
     int         device_id;
     int         flags             = 0;
     bool        datafile          = hipblaslt_parse_data(argc, argv);
@@ -390,11 +431,11 @@ try
 
         ("compute_input_typeA",
          value<std::string>(&compute_input_typeA), "Precision of computation input A. "
-         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the compute_input_typeA has no effect.")
+         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, f8_fnuz_r, bf8_fnuz_r, The default value indicates that the compute_input_typeA has no effect.")
 
         ("compute_input_typeB",
          value<std::string>(&compute_input_typeB), "Precision of computation input B. "
-         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, The default value indicates that the compute_input_typeA has no effect.")
+         "Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, f8_fnuz_r, bf8_fnuz_r, The default value indicates that the compute_input_typeA has no effect.")
 
         ("scale_type",
          value<std::string>(&scale_type), "Precision of scalar. "
@@ -412,6 +453,10 @@ try
         ("transB",
          value<char>(&arg.transB)->default_value('N'),
          "N = no transpose, T = transpose")
+
+        ("swizzleA",
+         value<bool>(&arg.swizzle_a)->default_value(false),
+         "Enable tensor swizzling for A")
 
         ("batch_count",
          value<int32_t>(&arg.batch_count)->default_value(1),
@@ -447,7 +492,7 @@ try
 
         ("activation_type",
          value<std::string>(&activation_type)->default_value("none"),
-         "Options: none, gelu, relu")
+         "Options: none, gelu, relu, swish")
 
         ("activation_arg1",
          value<float>(&arg.activation_arg1)->default_value(0),
@@ -476,6 +521,14 @@ try
         ("scaleB",
          value<int>(&scaleBFormat)->default_value(0),
          "Apply scale for B buffer. 0 = None, 1 = scalar, 2 = vector.")
+
+        ("scaleC",
+         value<int>(&scaleCFormat)->default_value(0),
+         "Apply scale for C buffer. 0 = None, 1 = scalar")
+
+        ("scaleD",
+         value<int>(&scaleDFormat)->default_value(0),
+         "Apply scale for D buffer. 0 = None, 1 = scalar")
 
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
@@ -734,7 +787,8 @@ try
     }
 
     // Device Query
-    int64_t device_count = query_device_property();
+    hipDeviceProp_t props;
+    int64_t         device_count = query_device_property(device_id, props);
 
     hipblaslt_cout << std::endl;
     if(device_count <= device_id)
@@ -745,7 +799,7 @@ try
     freq_monitor.set_device_id(device_id);
 
     if(datafile)
-        return hipblaslt_bench_datafile(filter, any_stride);
+        return hipblaslt_bench_datafile(filter, any_stride, props);
 
     // single bench run
 
@@ -779,6 +833,11 @@ try
     arg.d_type = d_type == "" ? prec : string_to_hip_datatype(d_type);
     if(arg.d_type == HIPBLASLT_DATATYPE_INVALID)
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
+
+    if(arg.c_type != arg.d_type)
+        throw std::invalid_argument(
+            "Invalid: --c_type " + std::string(hip_datatype_to_string(arg.c_type))
+            + " is not equal to --d_type " + std::string(hip_datatype_to_string(arg.d_type)));
 
     bool is_f16 = arg.a_type == HIP_R_16F || arg.a_type == HIP_R_16BF;
     bool is_f32 = arg.a_type == HIP_R_32F;
@@ -818,6 +877,16 @@ try
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
 
+    if(arg.swizzle_a
+       && (arg.transA != 'T' || arg.transB != 'N'
+           || (arg.a_type != string_to_hip_datatype("f16_r")
+               && arg.a_type != string_to_hip_datatype("f8_fnuz_r")
+               && arg.a_type != string_to_hip_datatype("bf16_r"))))
+    {
+        hipblaslt_cerr << "For swizzle-A, problem type must be FP16 or BF16 or FP8 TN" << std::endl;
+        return 1;
+    }
+
     auto scaleInt2Enum = [](int s) {
         if(s == 0)
             return hipblaslt_scaling_format::none;
@@ -830,6 +899,8 @@ try
     };
     arg.scaleA = scaleInt2Enum(scaleAFormat);
     arg.scaleB = scaleInt2Enum(scaleBFormat);
+    arg.scaleC = scaleCFormat;
+    arg.scaleD = scaleDFormat;
 
     if(arg.M[0] < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M[0]));
@@ -872,7 +943,7 @@ try
     }
 
     arg.norm_check_assert = false;
-    int status            = run_bench_test(arg, filter, any_stride);
+    int status            = run_bench_test(arg, filter, any_stride, props);
     freeFrequencyMonitor();
     return status;
 }

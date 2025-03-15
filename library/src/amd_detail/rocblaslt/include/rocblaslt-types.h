@@ -44,6 +44,8 @@
 #include <stdint.h>
 #include <vector>
 
+#include <hipblaslt-ext.hpp>
+
 #define ROCBLASLT_KERNEL __global__
 #define ROCBLASLT_DEVICE_ILF __device__
 
@@ -145,6 +147,18 @@ typedef struct
     uint8_t data;
 } rocblaslt_bf8_fnuz;
 
+#ifdef ROCM_USE_FLOAT8
+typedef struct
+{
+    uint8_t data;
+} rocblaslt_f8;
+
+typedef struct
+{
+    uint8_t data;
+} rocblaslt_bf8;
+#endif
+
 typedef int8_t  rocblasltInt8;
 typedef int32_t rocblasltInt32;
 
@@ -156,18 +170,20 @@ typedef int32_t rocblasltInt32;
  */
 typedef enum rocblaslt_epilogue_
 {
-    ROCBLASLT_EPILOGUE_DEFAULT       = 1,
-    ROCBLASLT_EPILOGUE_RELU          = 2,
-    ROCBLASLT_EPILOGUE_BIAS          = 4,
-    ROCBLASLT_EPILOGUE_RELU_BIAS     = 6,
-    ROCBLASLT_EPILOGUE_GELU          = 32,
-    ROCBLASLT_EPILOGUE_GELU_BIAS     = 36,
-    ROCBLASLT_EPILOGUE_GELU_AUX      = 160,
-    ROCBLASLT_EPILOGUE_GELU_AUX_BIAS = 164,
-    ROCBLASLT_EPILOGUE_DGELU         = 192,
-    ROCBLASLT_EPILOGUE_DGELU_BGRAD   = 208,
-    ROCBLASLT_EPILOGUE_BGRADA        = 256,
-    ROCBLASLT_EPILOGUE_BGRADB        = 512
+    ROCBLASLT_EPILOGUE_DEFAULT        = 1,
+    ROCBLASLT_EPILOGUE_RELU           = 2,
+    ROCBLASLT_EPILOGUE_BIAS           = 4,
+    ROCBLASLT_EPILOGUE_RELU_BIAS      = 6,
+    ROCBLASLT_EPILOGUE_GELU           = 32,
+    ROCBLASLT_EPILOGUE_GELU_BIAS      = 36,
+    ROCBLASLT_EPILOGUE_GELU_AUX       = 160,
+    ROCBLASLT_EPILOGUE_GELU_AUX_BIAS  = 164,
+    ROCBLASLT_EPILOGUE_DGELU          = 192,
+    ROCBLASLT_EPILOGUE_DGELU_BGRAD    = 208,
+    ROCBLASLT_EPILOGUE_BGRADA         = 256,
+    ROCBLASLT_EPILOGUE_BGRADB         = 512,
+    ROCBLASLT_EPILOGUE_SWISH_EXT      = 65536,
+    ROCBLASLT_EPILOGUE_SWISH_BIAS_EXT = 65540,
 } rocblaslt_epilogue;
 
 /*! \ingroup types_module
@@ -196,14 +212,15 @@ typedef enum rocblaslt_pointer_mode_
  */
 typedef enum rocblaslt_layer_mode
 {
-    rocblaslt_layer_mode_none        = 0, /**< layer is not active. */
-    rocblaslt_layer_mode_log_error   = 1, /**< layer is in error mode. */
-    rocblaslt_layer_mode_log_trace   = 2, /**< layer is in trace mode. */
-    rocblaslt_layer_mode_log_hints   = 4, /**< layer is in hints mode. */
-    rocblaslt_layer_mode_log_info    = 8, /**< layer is in info mode. */
-    rocblaslt_layer_mode_log_api     = 16, /**< layer is in api mode. */
-    rocblaslt_layer_mode_log_bench   = 32, /**< layer is in bench mode. */
-    rocblaslt_layer_mode_log_profile = 64, /**< layer is in profile mode. */
+    rocblaslt_layer_mode_none                 = 0, /**< layer is not active. */
+    rocblaslt_layer_mode_log_error            = 1, /**< layer is in error mode. */
+    rocblaslt_layer_mode_log_trace            = 2, /**< layer is in trace mode. */
+    rocblaslt_layer_mode_log_hints            = 4, /**< layer is in hints mode. */
+    rocblaslt_layer_mode_log_info             = 8, /**< layer is in info mode. */
+    rocblaslt_layer_mode_log_api              = 16, /**< layer is in api mode. */
+    rocblaslt_layer_mode_log_bench            = 32, /**< layer is in bench mode. */
+    rocblaslt_layer_mode_log_profile          = 64, /**< layer is in profile mode. */
+    rocblaslt_layer_mode_log_extended_profile = 128, /**< layer is in Extended profile mode. */
 } rocblaslt_layer_mode;
 
 /*! \ingroup types_module
@@ -274,11 +291,11 @@ typedef enum rocblaslt_compute_type_
     = 102, /**< 32-bit input can use fp8 for A and bf8 for B compute */
     rocblaslt_compute_f32_fast_bf8f8_fnuz
     = 103, /**< 32-bit input can use bf8 for A and fp8 for B compute */
-    rocblaslt_compute_f32_fast_f8_ocp  = 104, /**< 32-bit input can use fp8 compute */
-    rocblaslt_compute_f32_fast_bf8_ocp = 105, /**< 32-bit input can use bf8 compute */
-    rocblaslt_compute_f32_fast_f8bf8_ocp
+    rocblaslt_compute_f32_fast_f8  = 104, /**< 32-bit input can use fp8 compute */
+    rocblaslt_compute_f32_fast_bf8 = 105, /**< 32-bit input can use bf8 compute */
+    rocblaslt_compute_f32_fast_f8bf8
     = 106, /**< 32-bit input can use fp8 for A and bf8 for B compute */
-    rocblaslt_compute_f32_fast_bf8f8_ocp
+    rocblaslt_compute_f32_fast_bf8f8
     = 107, /**< 32-bit input can use bf8 for A and fp8 for B compute */
 } rocblaslt_compute_type;
 
@@ -369,13 +386,34 @@ typedef enum rocblaslt_matmul_preference_attributes_
 /********************************************************************************
  * \brief rocblaslt_matmul_algo holds the description of the matrix
  * multiplication algorithm.
- *******************************************************************************/
 typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
 {
     uint8_t data[8]             = {0};
     bool    fallback            = false;
     size_t  max_workspace_bytes = 0;
 } rocblaslt_matmul_algo;
+ *******************************************************************************/
+
+/********************************************************************************
+ * \brief rocblaslt_matmul_algo holds the description of the matrix
+ * multiplication algorithm.
+ *******************************************************************************/
+typedef struct _rocblaslt_matmul_algo{
+#ifdef __cplusplus
+  uint8_t data[8] = {0}; // must match hipblasLtMatmulAlgo_t layout
+  bool fallback = false; // 
+  uint8_t data_pad[7] = {0}; // has uint8_t data[16] 
+  size_t max_workspace_bytes = 0;
+#else
+  uint8_t data[8];
+  bool fallback;
+  uint8_t data_pad[7];
+  size_t max_workspace_bytes;
+#endif
+} rocblaslt_matmul_algo;
+
+static_assert(sizeof(rocblaslt_matmul_algo) == sizeof(hipblasLtMatmulAlgo_t),
+              "rocblaslt_matmul_algo struct does not match size of hipblasLtMatmulAlgo_t");
 
 /********************************************************************************
  * \brief rocblaslt_matmul_heuristic holds the configured matrix
@@ -448,6 +486,9 @@ namespace rocblaslt
         int                aux_stride     = 0;
     };
 
+    static_assert(sizeof(RocGemmEpilogue) == sizeof(hipblaslt_ext::GemmEpilogue),
+                  "RocGemmEpilogue struct does not match size of hipblaslt_ext::GemmEpilogue");
+
     class RocGemmEpilogueV2
     {
     public:
@@ -490,6 +531,9 @@ namespace rocblaslt
         void* scaleAlphaVec = nullptr;
         void* aux           = nullptr;
     };
+
+    static_assert(sizeof(RocGemmInputs) == sizeof(hipblaslt_ext::GemmInputs),
+                  "RocGemmInputs struct does not match size of hipblaslt_ext::GemmInputs");
 
     struct RocGemmInputsV2
     {

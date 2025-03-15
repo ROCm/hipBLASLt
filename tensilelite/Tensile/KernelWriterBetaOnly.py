@@ -24,7 +24,7 @@
 
 from copy import deepcopy
 
-from .Common import globalParameters, CHeader
+from .Common import globalParameters, CHeader, INDEX_CHARS
 from .TensileInstructions import DataType
 from .KernelWriterBase import KernelWriterBase
 
@@ -43,12 +43,24 @@ class KernelWriterBetaOnly(KernelWriterBase):
 
     # determine chars for fast access
     self.indexChars = []
-    for i in range(0, len(globalParameters["IndexChars"])):
-      self.indexChars.append(globalParameters["IndexChars"][i])
+    for i in range(0, len(INDEX_CHARS)):
+      self.indexChars.append(INDEX_CHARS[i])
     self.indexChars[self.state["ProblemType"]["Index0"]] = "0" + self.indexChars[self.state["ProblemType"]["Index0"]]
     self.indexChars[self.state["ProblemType"]["Index1"]] = "1" + self.indexChars[self.state["ProblemType"]["Index1"]]
     self.tileChar0 = self.indexChars[self.state["ProblemType"]["Index0"]]
     self.tileChar1 = self.indexChars[self.state["ProblemType"]["Index1"]]
+
+    # Macro guards for f8 types
+    # For now, it is enough to check dest type to determine if we are using f8 types
+    # May need to include checks for input data type in the future.
+    self.f8MacroGuardStart = "";
+    self.f8MacroGuardEnd   = "";
+    if (self.state["ProblemType"]["DestDataType"].isFloat8() or self.state["ProblemType"]["DestDataType"].isBFloat8()):
+      self.f8MacroGuardStart = "\n#if TENSILELITE_FP8_TYPE_OCP\n"
+      self.f8MacroGuardEnd   = "\n#endif // F8 macro guard\n"
+    if (self.state["ProblemType"]["DestDataType"].isFloat8_fnuz() or self.state["ProblemType"]["DestDataType"].isBFloat8_fnuz()):
+      self.f8MacroGuardStart = "\n#if TENSILELITE_FP8_TYPE_FNUZ\n"
+      self.f8MacroGuardEnd   = "\n#endif // F8 macro guard\n"
 
 
   def functionSignature(self):
@@ -282,7 +294,7 @@ class KernelWriterBetaOnly(KernelWriterBase):
 
   @staticmethod
   def _getKernelName(solution, btype=None):
-    indexChars = globalParameters["IndexChars"]
+    indexChars = INDEX_CHARS
     # C dimensions
     name = "C"
     for i in range(0, solution._state["ProblemType"]["NumIndicesC"]):
@@ -301,7 +313,7 @@ class KernelWriterBetaOnly(KernelWriterBase):
 
 
   def getKernelName(self):
-    indexChars = globalParameters["IndexChars"]
+    indexChars = INDEX_CHARS
     # C dimensions
     name = "C"
     for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
@@ -324,8 +336,10 @@ class KernelWriterBetaOnly(KernelWriterBase):
     for toggle in [True, False]:
       self.state["ProblemType"]["GroupedGemm"] = toggle
       self.kernelName = self.getKernelName()
+      fileString += self.f8MacroGuardStart
       fileString += self.functionSignature()
       fileString += self.kernelBodyBetaOnly()
+      fileString += self.f8MacroGuardEnd
 
     return (0, fileString)
 
@@ -335,7 +349,9 @@ class KernelWriterBetaOnly(KernelWriterBase):
     for toggle in [True, False]:
       self.state["ProblemType"]["GroupedGemm"] = toggle
       self.kernelName = self.getKernelName()
+      fileString += self.f8MacroGuardStart
       fileString += self.functionSignature()
       fileString += ";\n"
+      fileString += self.f8MacroGuardEnd
 
     return fileString

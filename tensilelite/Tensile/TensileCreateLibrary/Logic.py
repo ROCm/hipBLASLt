@@ -22,9 +22,8 @@
 #
 ################################################################################
 
-from Tensile.Common import print1, print2, ParallelMap2
+from Tensile.Common import print1, print2, ParallelMap2, ParallelMapConfig
 from Tensile.LibraryIO import DataIndex
-from Tensile.Parallel import ParallelMapConfig
 from Tensile.CustomYamlLoader import load_logic_gfx_arch, load_yaml_sequence_item
 from Tensile.CodeObjectName import codeObjectFileBaseName
 
@@ -71,8 +70,8 @@ def distribute(lst, n):
 
 
 def numberOfBuildKernerls(logicFile):
-    result = run(['/bin/grep', "BuildKernel", logicFile], stderr=PIPE, stdout=PIPE, check=False)
-    return int(str(result.stdout).count("BuildKernel"))
+    result = run(['/bin/grep', "SolutionIndex", logicFile], stderr=PIPE, stdout=PIPE, check=False)
+    return int(str(result.stdout).count("SolutionIndex"))
 
 
 def getCoFileNames(logicFile):

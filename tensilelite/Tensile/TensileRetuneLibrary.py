@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,19 +27,68 @@ from . import ClientExecutable
 from . import ClientWriter
 from . import LibraryIO
 from . import LibraryLogic
-from . import Common
 from .Common import globalParameters, print1, printWarning, ensurePath, assignGlobalParameters, \
-                    pushWorkingPath, popWorkingPath, restoreDefaultGlobalParameters, HR
+                    restoreDefaultGlobalParameters, HR, __version__
 from .Tensile import addCommonArguments, argUpdatedGlobalParameters
 from .SolutionStructs import ProblemSizes
-from .Utilities.Toolchain import validateToolchain
-from . import __version__
+from .Toolchain.Validators import validateToolchain
+
+from pathlib import Path
 
 import argparse
 import copy
 import os
 import shutil
 import sys
+from pathlib import Path
+
+workingDirectoryStack = []
+def pushWorkingPath( foldername ):
+  # Warning: this is not thread-safe, modifies the global WorkingPath!
+  globalParameters["WorkingPath"] = \
+      os.path.join(globalParameters["WorkingPath"], foldername )
+  return ensurePath( globalParameters["WorkingPath"] )
+def popWorkingPath():
+  # Warning: this is not thread-safe, modifies the global WorkingPath!
+  if len(workingDirectoryStack) == 0:
+    globalParameters["WorkingPath"] = \
+      os.path.split(globalParameters["WorkingPath"])[0]
+  else:
+    globalParameters["WorkingPath"] = workingDirectoryStack.pop()
+def ensurePath(path):
+  try:
+    os.makedirs(path)
+  except FileExistsError:
+    pass
+  return path
+def setWorkingPath( fullPathName ):
+  # Warning: this is not thread-safe, modifies the global WorkingPath!
+  workingDirectoryStack.append(globalParameters["WorkingPath"])
+  globalParameters["WorkingPath"] = ensurePath(fullPathName)
+
+workingDirectoryStack = []
+def pushWorkingPath( foldername ):
+  # Warning: this is not thread-safe, modifies the global WorkingPath!
+  globalParameters["WorkingPath"] = \
+      os.path.join(globalParameters["WorkingPath"], foldername )
+  return ensurePath( globalParameters["WorkingPath"] )
+def popWorkingPath():
+  # Warning: this is not thread-safe, modifies the global WorkingPath!
+  if len(workingDirectoryStack) == 0:
+    globalParameters["WorkingPath"] = \
+      os.path.split(globalParameters["WorkingPath"])[0]
+  else:
+    globalParameters["WorkingPath"] = workingDirectoryStack.pop()
+def ensurePath(path):
+  try:
+    os.makedirs(path)
+  except FileExistsError:
+    pass
+  return path
+def setWorkingPath( fullPathName ):
+  # Warning: this is not thread-safe, modifies the global WorkingPath!
+  workingDirectoryStack.append(globalParameters["WorkingPath"])
+  globalParameters["WorkingPath"] = ensurePath(fullPathName)
 
 
 def parseCurrentLibrary(libPath, sizePath):
@@ -50,7 +99,7 @@ def parseCurrentLibrary(libPath, sizePath):
 
     # get performance metric
     if len(libYaml) > 10:
-        Common.globalParameters["PerformanceMetric"] = libYaml[10]
+        GlobalParameters.globalParameters["PerformanceMetric"] = libYaml[10]
 
     # process exactLogic into ProblemSizes
     sizes = []
@@ -75,6 +124,8 @@ def runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler: str, 
     # could use a refactor to elimate duplicated code
     ClientExecutable.getClientExecutable(cxxCompiler, cCompiler)
 
+
+
     shortName = "benchmark"
     benchmarkDir = os.path.join(outPath, shortName)
     sourceDir = os.path.join(benchmarkDir, "source")
@@ -85,7 +136,7 @@ def runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler: str, 
     ensurePath(resultsDir)
 
     if update:
-        Common.globalParameters["LibraryUpdateFile"] = os.path.join(resultsDir, "update.yaml")
+        globalParameters["LibraryUpdateFile"] = os.path.join(resultsDir, "update.yaml")
 
     pushWorkingPath(shortName)
     pushWorkingPath("source")
@@ -139,6 +190,8 @@ def TensileRetuneLibrary(userArgs):
 
     libPath = args.LogicFile
     sizePath = args.SizeFile
+    libraryFormat = args.LibraryFormat
+
     print1("#  Library Logic: {}".format(libPath))
     print1("#")
     print1(HR)
@@ -159,39 +212,44 @@ def TensileRetuneLibrary(userArgs):
     ##############################################
     # Retuning
     ##############################################
-    outPath = ensurePath(os.path.abspath(args.OutputPath))
+    outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
     restoreDefaultGlobalParameters()
-    assignGlobalParameters({"LibraryFormat": "msgpack",
-                            "OutputPath": outPath,
-                            "WorkingPath": outPath})
+
+    assignGlobalParameters({"LibraryFormat": libraryFormat, "OutputPath": outputPath})
 
     overrideParameters = argUpdatedGlobalParameters(args)
     for key, value in overrideParameters.items():
         print1("Overriding {0}={1}".format(key, value))
-        Common.globalParameters[key] = value
+        globalParameters[key] = value
 
     # parse library logic then setup and run benchmarks
     (rawYaml, solutions, problemSizes) = parseCurrentLibrary(libPath, sizePath)
-    runBenchmarking(solutions, problemSizes, outPath, update, cxxCompiler, cCompiler, assembler, offloadBundler)
+    runBenchmarking(solutions, problemSizes, outputPath, update, cxxCompiler, cCompiler, assembler, offloadBundler)
 
     if remake:
         # write library logic file
-        LibraryLogic.main({"ScheduleName": rawYaml[1],
-                           "ArchitectureName": rawYaml[2],
-                           "DeviceNames": rawYaml[3] })
+        LibraryLogic.main(
+           {
+              "ScheduleName": rawYaml[1],
+              "ArchitectureName": rawYaml[2],
+              "DeviceNames": rawYaml[3]
+            },
+            cxxCompiler,
+            outputPath
+        )
 
     if update:
         # read update yaml from benchmark client and update logic
         print1("")
         print1(HR)
         print1("# Reading update file from Benchmarking Client")
-        updateFile = os.path.join(outPath, "Data", "update.yaml")
+        updateFile = os.path.join(outputPath, "Data", "update.yaml")
         updateLogic = LibraryIO.read(updateFile)
         rawYaml[7] = updateLogic
 
         # write updated library logic (does not overwrite original)
         libName = os.path.basename(libPath)
-        outFile = os.path.join(outPath, libName)
+        outFile = os.path.join(outputPath, libName)
 
         print1("# Writing updated Library Logic: {}".format(outFile))
         LibraryIO.writeYAML(outFile, rawYaml, explicit_start=False, explicit_end=False)
