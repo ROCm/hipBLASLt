@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
 - gfx90a
@@ -17,7 +18,6 @@
   DataType: 4
   DestDataType: 0
   GroupedGemm: true
-  SupportUserArgs: true
   HighPrecisionAccumulate: true
   Index0: 0
   Index01A: 0
@@ -44,6 +44,7 @@
   SetConstStrideB: []
   SilentHighPrecisionAccumulate: false
   StridedBatched: true
+  SupportUserArgs: true
   TLUA: true
   TLUB: true
   Tensor0: 0
@@ -68,6 +69,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -94,6 +96,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x16x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1024_LBSPPB128_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 16
     LSPA: 4
@@ -184,7 +187,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -211,6 +213,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -282,6 +285,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -308,6 +312,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x16x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1536_LBSPPB128_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -398,7 +403,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -425,6 +429,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -496,6 +501,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -522,6 +528,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x32x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA256_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -612,7 +619,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -639,6 +645,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -710,6 +717,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -736,6 +744,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x32x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA512_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -826,7 +835,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -853,6 +861,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -924,6 +933,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -950,6 +960,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT96x32x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA768_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -1040,7 +1051,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1067,6 +1077,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -1138,6 +1149,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -1164,6 +1176,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x32x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 128
     LSCB: 32
     LSPA: 8
@@ -1254,7 +1267,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1281,6 +1293,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -1352,6 +1365,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -1378,6 +1392,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT160x32x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1280_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA5_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -1468,7 +1483,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1495,6 +1509,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -1566,6 +1581,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -1592,6 +1608,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x32x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1536_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT6_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -1682,7 +1699,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1709,6 +1725,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -1780,6 +1797,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -1806,6 +1824,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT224x32x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1792_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA7_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -1896,7 +1915,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1923,6 +1941,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -1994,6 +2013,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -2020,6 +2040,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x48x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA512_LBSPPB384_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -2110,7 +2131,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2137,6 +2157,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -2208,6 +2229,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -2234,6 +2256,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x48x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1024_LBSPPB384_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 16
     LSPA: 4
@@ -2324,7 +2347,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2351,6 +2373,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -2422,6 +2445,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -2448,6 +2472,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x48x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1536_LBSPPB384_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -2538,7 +2563,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2565,6 +2589,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -2636,6 +2661,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -2662,6 +2688,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT16x64x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA128_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -2752,7 +2779,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2779,6 +2805,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -2850,6 +2877,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -2876,6 +2904,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x64x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA256_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 32
     LSCB: 64
     LSPA: 32
@@ -2966,7 +2995,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2993,6 +3021,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -3064,6 +3093,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -3090,6 +3120,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT48x64x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA384_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -3180,7 +3211,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3207,6 +3237,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -3278,6 +3309,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -3304,6 +3336,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x64x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -3394,7 +3427,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3421,6 +3453,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -3492,6 +3525,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -3518,6 +3552,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT80x64x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA640_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA5_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -3608,7 +3643,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3635,6 +3669,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -3706,6 +3741,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -3732,6 +3768,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT96x64x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA768_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT6_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 32
     LSCB: 64
     LSPA: 32
@@ -3822,7 +3859,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3849,6 +3885,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -3920,6 +3957,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -3946,6 +3984,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT112x64x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA896_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA7_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -4036,7 +4075,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4063,6 +4101,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -4134,6 +4173,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -4160,6 +4200,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x64x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -4250,7 +4291,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4277,6 +4317,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -4348,6 +4389,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -4374,6 +4416,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT144x64x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1152_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT9_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA9_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -4464,7 +4507,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4491,6 +4533,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -4562,6 +4605,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -4588,6 +4632,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT160x64x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1280_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT10_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA5_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 32
     LSCB: 64
     LSPA: 32
@@ -4678,7 +4723,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4705,6 +4749,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -4776,6 +4821,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -4802,6 +4848,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT176x64x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1408_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT11_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA11_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -4892,7 +4939,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4919,6 +4965,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -4990,6 +5037,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -5016,6 +5064,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x64x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -5106,7 +5155,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5133,6 +5181,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -5204,6 +5253,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -5230,6 +5280,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x64x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -5320,7 +5371,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5347,6 +5397,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -5418,6 +5469,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -5444,6 +5496,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x80x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA512_LBSPPB640_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -5534,7 +5587,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5561,6 +5613,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -5632,6 +5685,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -5658,6 +5712,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x80x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1024_LBSPPB640_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 16
     LSPA: 4
@@ -5748,7 +5803,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5775,6 +5829,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -5846,6 +5901,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -5872,6 +5928,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x96x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA256_LBSPPB768_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -5962,7 +6019,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5989,6 +6045,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -6060,6 +6117,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -6086,6 +6144,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x96x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA512_LBSPPB768_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -6176,7 +6235,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6203,6 +6261,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -6274,6 +6333,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -6300,6 +6360,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT96x96x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA768_LBSPPB768_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -6390,7 +6451,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6417,6 +6477,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -6488,6 +6549,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -6514,6 +6576,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x96x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 128
     LSCB: 32
     LSPA: 8
@@ -6604,7 +6667,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6631,6 +6693,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -6702,6 +6765,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -6728,6 +6792,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT160x96x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1280_LBSPPB768_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA5_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -6818,7 +6883,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6845,6 +6909,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -6916,6 +6981,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -6942,6 +7008,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x96x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 256
     LSCB: 32
     LSPA: 4
@@ -7032,7 +7099,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7059,6 +7125,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -7130,6 +7197,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -7156,6 +7224,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x112x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA512_LBSPPB896_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -7246,7 +7315,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7273,6 +7341,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -7344,6 +7413,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -7370,6 +7440,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x112x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1024_LBSPPB896_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 16
     LSPA: 4
@@ -7460,7 +7531,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7487,6 +7557,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -7558,6 +7629,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -7584,6 +7656,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT16x128x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA128_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 128
     LSPA: 32
@@ -7674,7 +7747,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7701,6 +7773,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -7772,6 +7845,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -7798,6 +7872,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x128x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 128
     LSPA: 32
@@ -7888,7 +7963,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7915,6 +7989,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -7986,6 +8061,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -8012,6 +8088,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT48x128x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA384_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 128
     LSPA: 32
@@ -8102,7 +8179,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8129,6 +8205,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -8200,6 +8277,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -8226,6 +8304,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x128x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 128
     LSPA: 32
@@ -8316,7 +8395,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8343,6 +8421,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -8414,6 +8493,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -8440,6 +8520,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT80x128x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA640_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA5_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 128
     LSPA: 32
@@ -8530,7 +8611,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8557,6 +8637,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -8628,6 +8709,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -8654,6 +8736,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT96x128x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 128
     LSPA: 32
@@ -8744,7 +8827,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8771,6 +8853,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -8842,6 +8925,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -8868,6 +8952,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT112x128x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA896_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA7_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 128
     LSPA: 32
@@ -8958,7 +9043,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8985,6 +9069,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -9056,6 +9141,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -9082,6 +9168,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x128x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 128
     LSPA: 16
@@ -9172,7 +9259,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9199,6 +9285,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -9270,6 +9357,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -9296,6 +9384,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT160x128x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA5_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 128
     LSPA: 32
@@ -9386,7 +9475,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9413,6 +9501,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -9484,6 +9573,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -9510,6 +9600,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x128x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT6_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 128
     LSPA: 32
@@ -9600,7 +9691,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9627,6 +9717,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -9698,6 +9789,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -9724,6 +9816,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT224x128x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA7_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 128
     LSPA: 32
@@ -9814,7 +9907,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9841,6 +9933,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -9912,6 +10005,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -9938,6 +10032,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x128x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT4_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB2_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 8
@@ -10028,7 +10123,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10055,6 +10149,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -10126,6 +10221,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -10152,6 +10248,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x144x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA512_LBSPPB1152_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_9_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB9_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -10242,7 +10339,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10269,6 +10365,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -10340,6 +10437,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -10366,6 +10464,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x144x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA2048_LBSPPB1152_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT4_9_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB9_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 16
     LSPA: 2
@@ -10456,7 +10555,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10483,6 +10581,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -10554,6 +10653,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -10580,6 +10680,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x160x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA256_LBSPPB1280_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -10670,7 +10771,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10697,6 +10797,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -10768,6 +10869,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -10794,6 +10896,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x160x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA512_LBSPPB1280_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -10884,7 +10987,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10911,6 +11013,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -10982,6 +11085,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -11008,6 +11112,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT96x160x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA768_LBSPPB1280_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -11098,7 +11203,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11125,6 +11229,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -11196,6 +11301,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -11222,6 +11328,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x160x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 128
     LSCB: 32
     LSPA: 8
@@ -11312,7 +11419,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11339,6 +11445,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -11410,6 +11517,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -11436,6 +11544,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT224x160x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1792_LBSPPB1280_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA7_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -11526,7 +11635,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11553,6 +11661,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -11624,6 +11733,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -11650,6 +11760,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x160x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 256
     LSCB: 32
     LSPA: 4
@@ -11740,7 +11851,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11767,6 +11877,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -11838,6 +11949,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -11864,6 +11976,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x176x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA512_LBSPPB1408_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_11_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB11_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -11954,7 +12067,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11981,6 +12093,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -12052,6 +12165,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -12078,6 +12192,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x176x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1536_LBSPPB1408_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_11_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB11_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -12168,7 +12283,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12195,6 +12309,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -12266,6 +12381,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -12292,6 +12408,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x176x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA2048_LBSPPB1408_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT4_11_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB11_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 16
     LSPA: 2
@@ -12382,7 +12499,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12409,6 +12525,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -12480,6 +12597,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -12506,6 +12624,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT16x192x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA128_LBSPPB1536_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -12596,7 +12715,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12623,6 +12741,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -12694,6 +12813,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -12720,6 +12840,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x192x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA256_LBSPPB1536_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 32
     LSCB: 64
     LSPA: 32
@@ -12810,7 +12931,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12837,6 +12957,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -12908,6 +13029,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -12934,6 +13056,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT48x192x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA384_LBSPPB1536_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -13024,7 +13147,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13051,6 +13173,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -13122,6 +13245,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -13148,6 +13272,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x192x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -13238,7 +13363,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13265,6 +13389,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -13336,6 +13461,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -13362,6 +13488,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x192x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -13452,7 +13579,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13479,6 +13605,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -13550,6 +13677,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -13576,6 +13704,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT176x192x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1408_LBSPPB1536_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT11_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA11_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -13666,7 +13795,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13693,6 +13821,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -13764,6 +13893,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -13790,6 +13920,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x192x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -13880,7 +14011,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13907,6 +14037,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -13978,6 +14109,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -14004,6 +14136,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT208x192x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1664_LBSPPB1536_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT13_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA13_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -14094,7 +14227,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14121,6 +14253,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -14192,6 +14325,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -14218,6 +14352,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT224x192x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1792_LBSPPB1536_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_6_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA7_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 64
     LSPA: 32
@@ -14308,7 +14443,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14335,6 +14469,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -14406,6 +14541,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -14432,6 +14568,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT240x192x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1920_LBSPPB1536_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT15_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA15_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 32
@@ -14522,7 +14659,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14549,6 +14685,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -14620,6 +14757,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -14646,6 +14784,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x192x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_6_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -14736,7 +14875,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14763,6 +14901,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -14834,6 +14973,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -14860,6 +15000,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x208x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1536_LBSPPB1664_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_13_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB13_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -14950,7 +15091,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14977,6 +15117,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -15048,6 +15189,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -15074,6 +15216,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x208x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA2048_LBSPPB1664_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT4_13_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB13_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 16
     LSPA: 2
@@ -15164,7 +15307,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15191,6 +15333,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -15262,6 +15405,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -15288,6 +15432,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x224x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA256_LBSPPB1792_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -15378,7 +15523,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15405,6 +15549,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -15476,6 +15621,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -15502,6 +15648,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x224x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 128
     LSCB: 32
     LSPA: 8
@@ -15592,7 +15739,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15619,6 +15765,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -15690,6 +15837,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -15716,6 +15864,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT160x224x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1280_LBSPPB1792_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA5_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -15806,7 +15955,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15833,6 +15981,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -15904,6 +16053,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -15930,6 +16080,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x224x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1536_LBSPPB1792_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_14_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -16020,7 +16171,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16047,6 +16197,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -16118,6 +16269,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -16144,6 +16296,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT224x224x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1792_LBSPPB1792_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA7_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -16234,7 +16387,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16261,6 +16413,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -16332,6 +16485,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -16358,6 +16512,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x224x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 256
     LSCB: 32
     LSPA: 4
@@ -16448,7 +16603,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16475,6 +16629,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -16546,6 +16701,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -16572,6 +16728,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x240x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1536_LBSPPB1920_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_15_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB15_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -16662,7 +16819,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16689,6 +16845,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -16760,6 +16917,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -16786,6 +16944,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x240x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT4_15_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB15_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 16
     LSPA: 2
@@ -16876,7 +17035,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16903,6 +17061,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -16974,6 +17133,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -17000,6 +17160,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x256x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 256
     LSPA: 32
@@ -17090,7 +17251,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17117,6 +17277,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -17188,6 +17349,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -17214,6 +17376,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT96x256x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 256
     LSPA: 32
@@ -17304,7 +17467,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17331,6 +17493,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -17402,6 +17565,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -17428,6 +17592,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x256x32_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB4_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 256
     LSPA: 16
@@ -17518,7 +17683,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17545,6 +17709,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -17616,6 +17781,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -17642,6 +17808,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT144x256x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1152_LBSPPB2048_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT9_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA9_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB4_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 256
     LSPA: 32
@@ -17732,7 +17899,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17759,6 +17925,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -17830,6 +17997,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -17856,6 +18024,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT160x256x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA5_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 256
     LSPA: 32
@@ -17946,7 +18115,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17973,6 +18141,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -18044,6 +18213,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -18070,6 +18240,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT176x256x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1408_LBSPPB2048_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT11_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA11_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB4_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 256
     LSPA: 32
@@ -18160,7 +18331,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18187,6 +18357,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -18258,6 +18429,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -18284,6 +18456,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x256x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB4_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 256
     LSPA: 32
@@ -18374,7 +18547,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18401,6 +18573,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -18472,6 +18645,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -18498,6 +18672,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT208x256x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1664_LBSPPB2048_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT13_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA13_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB4_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 256
     LSPA: 32
@@ -18588,7 +18763,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18615,6 +18789,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -18686,6 +18861,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -18712,6 +18888,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT224x256x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA7_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 256
     LSPA: 32
@@ -18802,7 +18979,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18829,6 +19005,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -18900,6 +19077,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -18926,6 +19104,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT240x256x32_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT15_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA15_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 256
     LSPA: 32
@@ -19016,7 +19195,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19043,6 +19221,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -19114,6 +19293,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -19140,6 +19320,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x256x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_8_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB8_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 256
     LSCB: 256
     LSPA: 8
@@ -19230,7 +19411,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19257,6 +19437,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -19328,6 +19509,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -19354,6 +19536,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x32x64_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA256_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 64
@@ -19444,7 +19627,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19471,6 +19653,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -19542,6 +19725,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -19568,6 +19752,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x32x64_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA512_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -19658,7 +19843,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19685,6 +19869,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -19756,6 +19941,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -19782,6 +19968,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT96x32x64_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA768_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 64
@@ -19872,7 +20059,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19899,6 +20085,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -19970,6 +20157,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -19996,6 +20184,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x32x64_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -20086,7 +20275,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20113,6 +20301,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -20184,6 +20373,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -20210,6 +20400,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x48x64_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA512_LBSPPB384_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 16
@@ -20300,7 +20491,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20327,6 +20517,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -20398,6 +20589,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -20424,6 +20616,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT16x64x64_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA128_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -20514,7 +20707,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20541,6 +20733,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -20612,6 +20805,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -20638,6 +20832,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x64x64_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA256_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -20728,7 +20923,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20755,6 +20949,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -20826,6 +21021,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -20852,6 +21048,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT48x64x64_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA384_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -20942,7 +21139,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20969,6 +21165,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -21040,6 +21237,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -21066,6 +21264,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x64x64_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -21156,7 +21355,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21183,6 +21381,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -21254,6 +21453,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -21280,6 +21480,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x64x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -21370,7 +21571,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21397,6 +21597,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -21468,6 +21669,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -21494,6 +21696,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x96x64_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA256_LBSPPB768_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 64
@@ -21584,7 +21787,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21611,6 +21813,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -21682,6 +21885,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -21708,6 +21912,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x96x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 256
     LSCB: 32
     LSPA: 8
@@ -21798,7 +22003,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21825,6 +22029,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -21896,6 +22101,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -21922,6 +22128,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x112x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA2048_LBSPPB896_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT4_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 16
     LSPA: 4
@@ -22012,7 +22219,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22039,6 +22245,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -22110,6 +22317,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -22136,6 +22344,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT32x128x64_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 128
     LSPA: 64
@@ -22226,7 +22435,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22253,6 +22461,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -22324,6 +22533,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -22350,6 +22560,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x128x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 128
     LSPA: 16
@@ -22440,7 +22651,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22467,6 +22677,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -22538,6 +22749,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -22564,6 +22776,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT160x128x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA5_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 128
     LSPA: 64
@@ -22654,7 +22867,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22681,6 +22893,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -22752,6 +22965,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -22778,6 +22992,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x128x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT6_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 128
     LSPA: 32
@@ -22868,7 +23083,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22895,6 +23109,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -22966,6 +23181,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -22992,6 +23208,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT224x128x64_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA7_NLCB1_ONLL1_PGR0_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 128
     LSPA: 64
@@ -23082,7 +23299,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23109,6 +23325,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -23180,6 +23397,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -23206,6 +23424,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x128x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT4_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB2_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 128
     LSPA: 8
@@ -23296,7 +23515,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23323,6 +23541,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -23394,6 +23613,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -23420,6 +23640,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x144x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT4_9_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB9_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 16
     LSPA: 4
@@ -23510,7 +23731,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23537,6 +23757,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -23608,6 +23829,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -23634,6 +23856,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x160x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -23724,7 +23947,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23751,6 +23973,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -23822,6 +24045,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -23848,6 +24072,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT160x160x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1280_LBSPPB1280_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA5_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 64
@@ -23938,7 +24163,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23965,6 +24189,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -24036,6 +24261,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -24062,6 +24288,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x160x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1536_LBSPPB1280_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT6_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -24152,7 +24379,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24179,6 +24405,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -24250,6 +24477,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -24276,6 +24504,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT224x160x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA7_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 64
@@ -24366,7 +24595,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24393,6 +24621,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -24464,6 +24693,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -24490,6 +24720,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x160x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB5_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 256
     LSCB: 32
     LSPA: 8
@@ -24580,7 +24811,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24607,6 +24837,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -24678,6 +24909,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -24704,6 +24936,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x192x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -24794,7 +25027,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24821,6 +25053,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -24892,6 +25125,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -24918,6 +25152,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x192x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -25008,7 +25243,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25035,6 +25269,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -25106,6 +25341,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -25132,6 +25368,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT224x192x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA1792_LBSPPB1536_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_6_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA7_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -25222,7 +25459,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25249,6 +25485,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -25320,6 +25557,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -25346,6 +25584,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT256x192x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_6_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB3_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -25436,7 +25675,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25463,6 +25701,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -25534,6 +25773,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -25560,6 +25800,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x224x64_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB7_ONLL1_PGR0_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG128_2_1
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -25650,7 +25891,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25677,6 +25917,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -25748,6 +25989,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -25774,6 +26016,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT160x224x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA5_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 64
@@ -25864,7 +26107,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25891,6 +26133,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -25962,6 +26205,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -25988,6 +26232,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT224x224x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA7_NLCB7_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 64
@@ -26078,7 +26323,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26105,6 +26349,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -26176,6 +26421,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -26202,6 +26448,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT64x256x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 256
     LSPA: 32
@@ -26292,7 +26539,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26319,6 +26565,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -26390,6 +26637,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -26416,6 +26664,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT96x256x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 256
     LSPA: 64
@@ -26506,7 +26755,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26533,6 +26781,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -26604,6 +26853,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -26630,6 +26880,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT112x256x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA896_LBSPPB2048_LBSPPM0_LPA16_LPB16_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA7_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB4_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 256
     LSPA: 64
@@ -26720,7 +26971,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26747,6 +26997,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -26818,6 +27069,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -26844,6 +27096,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT128x256x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB4_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 256
     LSPA: 16
@@ -26934,7 +27187,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26961,6 +27213,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -27032,6 +27285,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -27058,6 +27312,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT144x256x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT9_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA9_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 16
     LSCB: 256
     LSPA: 64
@@ -27148,7 +27403,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27175,6 +27429,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -27246,6 +27501,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 0
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -27272,6 +27528,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT160x256x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT5_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA5_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 256
     LSPA: 64
@@ -27362,7 +27619,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27389,6 +27645,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -27460,6 +27717,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -27486,6 +27744,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_UserArgs_MT192x256x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT3_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA3_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS0_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB4_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 256
     LSPA: 32
@@ -27576,7 +27835,6 @@
       DataType: 4
       DestDataType: 0
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27603,6 +27861,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: true
       Tensor0: 0
@@ -27927,3 +28186,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...
