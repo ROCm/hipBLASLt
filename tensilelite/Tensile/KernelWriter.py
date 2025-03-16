@@ -5439,8 +5439,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return fileBase
 
   def getKernelName(self, kernel):
-    kernelName = Solution.getNameMin(kernel, self.kernelMinNaming, True)
-    return kernelName
+    if "KernelNameMin" in kernel and kernel["KernelNameMin"]:
+      return kernel["KernelNameMin"]
+    else:
+      return Solution.getNameMin(kernel, self.kernelMinNaming, True)
 
   @abc.abstractmethod
   def getSourceFileString(self, kernel) -> Tuple[int, str]:

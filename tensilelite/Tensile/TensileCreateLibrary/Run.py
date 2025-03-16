@@ -216,11 +216,9 @@ def writeSolutionsAndKernels(
         buildTmpPath / "code_object_tmp"
     )  # Temp path for HSA code object files (.hsaco)
 
-    asmKernels = [k for k in kernels if k["KernelLanguage"] == "Assembly"]
-
     visited = set()
     duplicates = 0
-    for k in asmKernels:
+    for k in kernels:
         base = kernelWriterAssembly.getKernelFileBase(k)
         k.duplicate = True if base in visited else False
         duplicates += k.duplicate
@@ -228,15 +226,12 @@ def writeSolutionsAndKernels(
         visited.add(base)
     print1(f"Number of duplicate kernels: {duplicates}")
 
-    numAsmKernels = len(asmKernels)
-    numKernels = len(asmKernels)
-    assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
     asmIter = zip(
-        itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()), asmKernels
+        itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()), kernels
     )
     asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels")
     removeInvalidSolutionsAndKernels(
-        asmResults, asmKernels, solutions, errorTolerant, globalParameters
+        asmResults, kernels, solutions, errorTolerant, globalParameters
     )
 
     def assemble(ret):
@@ -258,13 +253,13 @@ def writeSolutionsAndKernels(
 
     if not generateSourcesAndExit:
         codeObjectFiles += buildAssemblyCodeObjectFiles(
-            asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress
+            asmToolchain, kernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress
         )
         buildSourceCodeObjectFiles(
             srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile
         )
 
-    return codeObjectFiles, numKernels
+    return codeObjectFiles, len(kernels)
 
 
 def writeSolutionsAndKernelsTCL(
@@ -290,19 +285,19 @@ def writeSolutionsAndKernelsTCL(
         buildTmpPath / "code_object_tmp"
     )  # Temp path for HSA code object files (.hsaco)
 
-    asmKernels = [k for k in kernels if k["KernelLanguage"] == "Assembly"]
+    buildKernels = [k for k in kernels if k["BuildKernel"]]
+    if len(buildKernels) == 0:
+        visited = set()
+        duplicates = 0
+        for k in kernels:
+            base = kernelWriterAssembly.getKernelFileBase(k)
+            k.duplicate = True if base in visited else False
+            duplicates += k.duplicate
+            print2(f"Duplicate: {base}")
+            visited.add(base)
+        print1(f"Number of duplicate kernels: {duplicates}")
 
-    visited = set()
-    duplicates = 0
-    for k in asmKernels:
-        base = kernelWriterAssembly.getKernelFileBase(k)
-        k.duplicate = True if base in visited else False
-        duplicates += k.duplicate
-        print2(f"Duplicate: {base}")
-        visited.add(base)
-    print1(f"Number of duplicate kernels: {duplicates}")
-
-    uniqueAsmKernels = [k for k in asmKernels if not k.duplicate]
+        buildKernels = [k for k in kernels if not k.duplicate]
 
     def assemble(ret):
         p, isa, wavefrontsize = ret
@@ -315,12 +310,12 @@ def writeSolutionsAndKernelsTCL(
     compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
     ret = ParallelMap2(
         compose(assemble, unaryWriteAssembly, unaryProcessKernelSource),
-        uniqueAsmKernels,
+        buildKernels,
         "Generating assembly kernels",
         multiArg=False,
     )
     buildAssemblyCodeObjectFiles(
-        asmToolchain, asmKernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress
+        asmToolchain, kernels, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress
     )
 
     writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
@@ -329,7 +324,7 @@ def writeSolutionsAndKernelsTCL(
         srcToolchain, destLibPath, objectTmpPath, outputPath, srcKernelFile, fromTensile
     )
 
-    return len(uniqueAsmKernels)
+    return len(buildKernels)
 
 
 @timing
