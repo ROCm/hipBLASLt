@@ -30,6 +30,12 @@ import argparse
 from copy import deepcopy
 from enum import IntEnum
 
+class LogicIndex(IntEnum):
+    HEADER = 5
+    SOLUTIONS = 6
+    SIZES = 8
+    ATTRIBUTE = 12
+
 verbosity = 1
 
 def ensurePath(path):
@@ -49,8 +55,8 @@ def allFiles(startDir):
     return files
 
 def reindexSolutions(data):
-    for i, _ in enumerate(data[5]):
-        data[5][i]["SolutionIndex"] = i
+    for i, _ in enumerate(data[LogicIndex.SOLUTIONS]):
+        data[LogicIndex.SOLUTIONS][i]["SolutionIndex"] = i
     return data
 
 def fixSizeInconsistencies(sizes, fileType):
@@ -99,33 +105,33 @@ def sanitizeSolutions(solList):
             sol["_staggerStrideShift"] = 0
 
 def removeUnusedKernels(oriData, prefix=""):
-    origNumSolutions = len(oriData[5])
+    origNumSolutions = len(oriData[LogicIndex.SOLUTIONS])
 
-    kernelsInUse = [ index for _, [index, _] in oriData[7] ]
-    for i, solution in enumerate(oriData[5]):
+    kernelsInUse = [ index for _, [index, _] in oriData[LogicIndex.SIZES] ]
+    for i, solution in enumerate(oriData[LogicIndex.SOLUTIONS]):
         solutionIndex = solution["SolutionIndex"]
-        oriData[5][i]["__InUse__"] = True if solutionIndex in kernelsInUse else False
+        oriData[LogicIndex.SOLUTIONS][i]["__InUse__"] = True if solutionIndex in kernelsInUse else False
 
     # debug prints
-    for o in [o for o in oriData[5] if o["__InUse__"]==False]:
+    for o in [o for o in oriData[LogicIndex.SOLUTIONS] if o["__InUse__"]==False]:
         debug("{}Solution ({}) {} is unused".format(
             prefix,
             o["SolutionIndex"],
             o["SolutionNameMin"] if "SolutionNameMin" in o else "(SolutionName N/A)"))
 
     # filter out dangling kernels
-    oriData[5] = [ {k: v for k, v in o.items() if k != "__InUse__"}
-                    for o in oriData[5] if o["__InUse__"]==True ]
+    oriData[LogicIndex.SOLUTIONS] = [ {k: v for k, v in o.items() if k != "__InUse__"}
+                    for o in oriData[LogicIndex.SOLUTIONS] if o["__InUse__"]==True ]
 
     # reindex solutions
     idMap = {} # new = idMap[old]
-    for i, solution in enumerate(oriData[5]):
+    for i, solution in enumerate(oriData[LogicIndex.SOLUTIONS]):
         idMap[solution["SolutionIndex"]] = i
-        oriData[5][i]["SolutionIndex"] = i
-    for i, [size, [oldSolIndex, eff]] in enumerate(oriData[7]):
-        oriData[7][i] = [size, [idMap[oldSolIndex], eff]]
+        oriData[LogicIndex.SOLUTIONS][i]["SolutionIndex"] = i
+    for i, [size, [oldSolIndex, eff]] in enumerate(oriData[LogicIndex.SIZES]):
+        oriData[LogicIndex.SIZES][i] = [size, [idMap[oldSolIndex], eff]]
 
-    numInvalidRemoved = origNumSolutions - len(oriData[5])
+    numInvalidRemoved = origNumSolutions - len(oriData[LogicIndex.SOLUTIONS])
     return oriData, numInvalidRemoved
 
 def loadData(filename):
@@ -142,7 +148,7 @@ def compareDestFolderToYaml(originalDir, incFile, incData):
     checkFolders = ["Equality", "GridBased"]
     # Parsing destination folder and yaml attribute
     destFolder = originalDir.rstrip('/').split('/')[-1]
-    incAttribute = incData[11] # the last item in yaml file
+    incAttribute = incData[LogicIndex.ATTRIBUTE] # the last item in yaml file
     if not incAttribute:
         sys.exit(f"[Error] Empty YAML attribute. Need to set Equality or GridBased in {incFile}.")
     # Check Equality and GradBased folders only
@@ -152,8 +158,8 @@ def compareDestFolderToYaml(originalDir, incFile, incData):
 
 def compareProblemType(oriData, incData):
     # ProblemType defined in originalFiles and incrementalFiles
-    oriProblemType = oriData[4] # header
-    incProblemType = incData[4] # header
+    oriProblemType = oriData[LogicIndex.HEADER] # header
+    incProblemType = incData[LogicIndex.HEADER] # header
     # Delete waived ProblemType items in originalFiles
     waivedItems = [item for item in oriProblemType if item not in incProblemType]
     if waivedItems:
@@ -161,22 +167,22 @@ def compareProblemType(oriData, incData):
         for item in waivedItems:
             oriProblemType.pop(item)
         # Kernel ProblemType
-        for i, _ in enumerate(oriData[5]):
+        for i, _ in enumerate(oriData[LogicIndex.SOLUTIONS]):
             # TODO: delete this for loop if kernel ProblemType is removed in the future
-            oriKernelProblemType = oriData[5][i]["ProblemType"]
+            oriKernelProblemType = oriData[LogicIndex.SOLUTIONS][i]["ProblemType"]
             for item in waivedItems:
                 try:
                     oriKernelProblemType.pop(item)
                 except KeyError:
-                    oriSolutionIndex = oriData[5][i]["SolutionIndex"]
+                    oriSolutionIndex = oriData[LogicIndex.SOLUTIONS][i]["SolutionIndex"]
                     print(f"[Warning] Popping '{item}' failed in oriData(idx={oriSolutionIndex})")
 
     results = ""
     solIdx = 0
     # Compare existing ProblemType items of originalFiles with incrementalFiles
-    for i, _ in enumerate(incData[5]):
+    for i, _ in enumerate(incData[LogicIndex.SOLUTIONS]):
         # TODO: check header ProblemType if kernel ProblemType is removed in the future
-        incKernelProblemType = incData[5][i]["ProblemType"]
+        incKernelProblemType = incData[LogicIndex.SOLUTIONS][i]["ProblemType"]
         if oriProblemType !=  incKernelProblemType:
             for item in oriProblemType:
                 if oriProblemType[item] != incKernelProblemType[item]:
@@ -318,27 +324,27 @@ def findFastestCompatibleSolution(origDict, sizeMapping):
 
 # returns merged logic data as list
 def mergeLogic(oriData, incData, forceMerge, trimSize=True, addSolutionTags=False, noEff=False):
-    origNumSizes = len(oriData[7])
-    origNumSolutions = len(oriData[5])
+    origNumSizes = len(oriData[LogicIndex.SIZES])
+    origNumSolutions = len(oriData[LogicIndex.SOLUTIONS])
 
-    incData[7] = incData[7] or []
-    incNumSizes = len(incData[7])
-    incNumSolutions = len(incData[5])
+    incData[LogicIndex.SIZES] = incData[LogicIndex.SIZES] or []
+    incNumSizes = len(incData[LogicIndex.SIZES])
+    incNumSolutions = len(incData[LogicIndex.SOLUTIONS])
 
     verbose(origNumSizes, "sizes and", origNumSolutions, "kernels in base logic file")
     verbose(incNumSizes, "sizes and", incNumSolutions, "kernels in incremental logic file")
 
     # Add SolutionTag to distinguish solutions with different requirements
-    origTaggedSizes = addSolutionTagToKeys(oriData[7], oriData[5])
-    incTaggedSizes  = addSolutionTagToKeys(incData[7],  incData[5])
+    origTaggedSizes = addSolutionTagToKeys(oriData[LogicIndex.SIZES], oriData[LogicIndex.SOLUTIONS])
+    incTaggedSizes  = addSolutionTagToKeys(incData[LogicIndex.SIZES],  incData[LogicIndex.SOLUTIONS])
     if addSolutionTags:
-        oriData[7] = origTaggedSizes
-        incData[7] = incTaggedSizes
+        oriData[LogicIndex.SIZES] = origTaggedSizes
+        incData[LogicIndex.SIZES] = incTaggedSizes
     # Print warning if addSolutionTags=False results in removed sizes
     else:
-        origSet       = {tuple(size) for size, [_, _] in oriData[7]}
+        origSet       = {tuple(size) for size, [_, _] in oriData[LogicIndex.SIZES]}
         origTaggedSet = {tuple(size) for size, [_, _] in origTaggedSizes}
-        incSet        = {tuple(size) for size, [_, _] in incData[7]}
+        incSet        = {tuple(size) for size, [_, _] in incData[LogicIndex.SIZES]}
         incTaggedSet  = {tuple(size) for size, [_, _] in incTaggedSizes}
 
         if len(origSet) != len(origTaggedSet):
@@ -353,20 +359,20 @@ def mergeLogic(oriData, incData, forceMerge, trimSize=True, addSolutionTags=Fals
     if trimSize:
         # trim 8-tuple gemm size format to 4-tuple [m, n, b, k]
         # TODO future gemm size could include dictionary format so need robust preprocessing
-        [oriData[7], origNumSizes] = fixSizeInconsistencies(oriData[7], "base")
-        [incData[7], incNumSizes] = fixSizeInconsistencies(incData[7], "incremental")
+        [oriData[LogicIndex.SIZES], origNumSizes] = fixSizeInconsistencies(oriData[LogicIndex.SIZES], "base")
+        [incData[LogicIndex.SIZES], incNumSizes] = fixSizeInconsistencies(incData[LogicIndex.SIZES], "incremental")
 
-    sanitizeSolutions(oriData[5])
-    sanitizeSolutions(incData[5])
+    sanitizeSolutions(oriData[LogicIndex.SOLUTIONS])
+    sanitizeSolutions(incData[LogicIndex.SOLUTIONS])
     oriData, numOrigRemoved = removeUnusedKernels(oriData, "Base logic file: ")
     incData, numIncRemoved = removeUnusedKernels(incData, "Inc logic file: ")
 
-    solutionPool = deepcopy(oriData[5])
-    solutionMap = deepcopy(oriData[7])
+    solutionPool = deepcopy(oriData[LogicIndex.SOLUTIONS])
+    solutionMap = deepcopy(oriData[LogicIndex.SIZES])
 
-    origDict = {tuple(origSize): [i, origEff] for i, [origSize, [origIndex, origEff]] in enumerate(oriData[7])}
-    for incSize, [incIndex, incEff] in incData[7]:
-        incSolution = findSolutionWithIndex(incData[5], incIndex)
+    origDict = {tuple(origSize): [i, origEff] for i, [origSize, [origIndex, origEff]] in enumerate(oriData[LogicIndex.SIZES])}
+    for incSize, [incIndex, incEff] in incData[LogicIndex.SIZES]:
+        incSolution = findSolutionWithIndex(incData[LogicIndex.SOLUTIONS], incIndex)
 
         storeEff = incEff if noEff == False else 0.0
         try:
@@ -398,12 +404,12 @@ def mergeLogic(oriData, incData, forceMerge, trimSize=True, addSolutionTags=Fals
         solutionMap = removeSolutionTagFromKeys(solutionMap)
 
     mergedData = deepcopy(oriData)
-    mergedData[5] = solutionPool
-    mergedData[7] = solutionMap
+    mergedData[LogicIndex.SOLUTIONS] = solutionPool
+    mergedData[LogicIndex.SIZES] = solutionMap
     mergedData, numReplaced = removeUnusedKernels(mergedData, "Merged data: ")
 
-    numSizesAdded = len(solutionMap)-len(oriData[7])
-    numSolutionsAdded = len(solutionPool)-len(oriData[5])
+    numSizesAdded = len(solutionMap)-len(oriData[LogicIndex.SIZES])
+    numSolutionsAdded = len(solutionPool)-len(oriData[LogicIndex.SOLUTIONS])
     numSolutionsRemoved = numReplaced+numOrigRemoved # incremental file not counted
 
     return [mergedData, numSizesAdded, numSolutionsAdded, numSolutionsRemoved]
@@ -449,6 +455,21 @@ def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSi
 
         mergedData, *stats = mergeLogic(oriData, incData, forceMerge, trimSize, addSolutionTags, noEff)
         msg(stats[0], "size(s) and", stats[1], "kernel(s) added,", stats[2], "kernel(s) removed")
+
+        def markKernelsToBuild(data):
+            uniqueKernels = set()
+            for soln in data[LogicIndex.SOLUTIONS]:
+                name = soln["KernelNameMin"]
+                if name not in uniqueKernels:
+                    # The first time we visit a unique kernel mark it for building
+                    uniqueKernels.add(name)
+                    soln["BuildKernel"] = True
+                else:
+                    # If we've already visited a kernel remove BuildKernel if it is populated
+                    if "BuildKernel" in soln:
+                        soln.pop("BuildKernel")
+
+        markKernelsToBuild(mergedData)
 
         with open(os.path.join(outputPath, basename), "w") as outFile:
             yaml.safe_dump(mergedData,outFile,default_flow_style=None)
