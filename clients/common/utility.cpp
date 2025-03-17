@@ -235,7 +235,6 @@ hipblaslt_local_handle::hipblaslt_local_handle(const Arguments& arg)
 {
     if(arg.solution_selection >= 0)
     {
-        hipblaslt_cout<<"arg.solution_selection "<<arg.solution_selection<<std::endl;
         auto sol_selec_env = getenv("TENSILE_SOLUTION_SELECTION_METHOD");
         if(sol_selec_env)
             m_sol_selec_saved_status = std::string(sol_selec_env);
