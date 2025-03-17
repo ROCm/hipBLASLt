@@ -23,13 +23,14 @@
 from ..TensileInstructions import Item, Module, HolderContainer, Instruction, \
                                 GlobalReadInstruction, LocalReadInstruction, \
                                 LocalWriteInstruction, SSetPrior, SWaitCnt, \
-                                replaceHolder, fastdeepcopy, VMovB32, \
+                                replaceHolder, VMovB32, \
                                 DSStoreB128, DSStoreB64, DSStoreB32
 from ..Common import roundUp
 from ..Component import SIA
 from ..TensileInstructions.Containers import DSModifiers
 
 import copy
+from copy import deepcopy
 from math import ceil
 
 PRECISION = 100
@@ -630,9 +631,9 @@ def getSchedNumForIter0Default(itemsGRToSched, itemsGRIncToSched, numGlobalReadI
 def schedGlobalRead(writer, itemsGRToSched, itemsGRIncToSched, numGlobalReadInsPerIter, schedNumForIter0, endIter):
     # insert dtlsM0UpdateACode dtlsM0UpdateBCode code
     if writer.codes.globalReadA.middle.items():
-        writer.codes.globalReadA.middle.items()[0].items().insert(0,writer.codes.dtlsM0UpdateA)
+        writer.codes.globalReadA.middle.getItem(0).add(writer.codes.dtlsM0UpdateA, 0)
     if writer.codes.globalReadB.middle.items():
-        writer.codes.globalReadB.middle.items()[0].items().insert(0,writer.codes.dtlsM0UpdateB)
+        writer.codes.globalReadB.middle.getItem(0).add(writer.codes.dtlsM0UpdateB, 0)
 
     itemsGRToSched.extend(itemsGRIncToSched)
     # append 'n' global load at a time
@@ -782,7 +783,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
     skip = 0
     for u in range(startIter, localWriteEndIter+1):
         # If we have some LW not scheduled in last Iter, add them.
-        newAdditionalIndexList = fastdeepcopy(additionalIndexList)
+        newAdditionalIndexList = deepcopy(additionalIndexList)
         additionalIndexList = {}
         for idx in newAdditionalIndexList:
             additionalIndexList[idx - itemPerIter] = newAdditionalIndexList[idx]
@@ -898,7 +899,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
                 # Create a new Module instead of deepcopy if item list is empty
                 imodNGLL.add(Module())
             else:
-                imodNGLL.add(fastdeepcopy(item))
+                imodNGLL.add(deepcopy(item))
             if lastLc:
                 # local write code for NGLL should be updated at the last lc
                 # in init acc opt case, the last inner loop generated is not for the last lc.
@@ -984,11 +985,11 @@ def splitDSInstructionIntoSmaller(writer, kernel, item, numLocalWritesPerSched, 
     addr = instruction.getParams()[0]
     srcr = instruction.getParams()[1]
     offs = instruction.getParams()[2]
-    ds   = instruction.getParams()[3]
+    ds   = instruction.ds
     writeInst = []
     for d in range(div):
         ds1 = DSModifiers(na=1, offset=ds.offset + dsOffset * d)
-        r1  = fastdeepcopy(srcr)
+        r1  = deepcopy(srcr)
         r1.regNum //= div
         r1.regName.addOffset(4 // div * d)
         writeInst.append(LocalWriteX(dstAddr=addr, src=r1, ds=ds1, comment=instruction.comment + " splitted"))

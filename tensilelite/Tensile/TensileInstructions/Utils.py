@@ -22,12 +22,12 @@
 
 from rocisa.enum import InstType
 from rocisa.container import vgpr, sgpr, accvgpr, mgpr, Holder
+from rocisa.instruction import Instruction, SWaitCnt
 
 from .Code import Module
 from .Containers import HolderContainer, RegisterContainer, RegName
 from .DataType import DataType
 from .Formatting import printAssert, printExit
-from .Instructions import Instruction, SWaitCnt
 
 from functools import lru_cache
 from math import log

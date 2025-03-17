@@ -23,10 +23,11 @@
 ################################################################################
 
 from rocisa import rocIsa
+from rocisa.container import RegisterContainer
 from rocisa.label import LabelManager
 from .TensileInstructions import replaceHolder, \
                           KernelBody, Module, StructuredModule, TextBlock, Dump, \
-                          RegisterPool, Assert, fastdeepcopy, TensileInstructionsPassOptions, \
+                          RegisterPool, Assert, TensileInstructionsPassOptions, \
                           TensileInstructionsPass, ValueSet, RegSet, \
                           SLongBranchPositive, SBranch, SCBranchSCC0, SCBranchSCC1
 from .TensileInstructions.Instructions import *
@@ -46,8 +47,9 @@ import os
 import shutil
 import sys
 import collections
+from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Dict, NamedTuple, Tuple, Type
+from typing import Dict, List, NamedTuple, Optional,Tuple, Type
 from math import ceil
 
 # Make const values immutable
@@ -521,11 +523,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if lastLc:
       self.codes.perIterLocalWriteCodeNGLL = [ Module() for i in range (kernel["LoopIters"]) ]
     self.states.perIterLocalWriteCanSkip = [ 0 for i in range (kernel["LoopIters"]) ]
-    assert([item.name for item in self.codes.globalReadIncrements.itemList] == ['globalReadIncrementA', 'globalReadIncrementB'])
+    assert([item.name for item in self.codes.globalReadIncrements.items()] == ['globalReadIncrementA', 'globalReadIncrementB'])
 
     globalReadIncACode  = self.codes.globalReadIncrements.findNamedItem("globalReadIncrementA")
     globalReadIncBCode  = self.codes.globalReadIncrements.findNamedItem("globalReadIncrementB")
-
+  
     if skipGlobalReadInc:
       globalReadIncACode  = Module()
       globalReadIncBCode  = Module()
@@ -566,7 +568,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       waitLWCode = Module(), syncCode = Module(), packCode = Module(), prevIterCode = Module(), NLLlast = False):
 
     iterCode = Module()
-    globalReadCode = fastdeepcopy(self.codes.perIterGlobalRead[iteration])
+    globalReadCode = deepcopy(self.codes.perIterGlobalRead[iteration])
     localWriteCode = self.codes.perIterLocalWrite[iteration]
     isBarrier = kernel["LoopIters"] - self.states.numItersPLR
     hasLocalRead = localReadCode.countType(LocalReadInstruction)
@@ -718,7 +720,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if i == 0:
           if not packItems:
             tmpVgpr = self.vgprPool.checkOut(1)
-            iterCode.add(VMovB32(dst="v%u"%(tmpVgpr), src="0x0", comment="valu operation to have different priority"))
+            iterCode.add(VMovB32(dst=vgpr(tmpVgpr), src="0x0", comment="valu operation to have different priority"))
             self.vgprPool.checkIn(tmpVgpr)
           iterCode.add(SSetPrior(prior=3, comment="Raise priority while processing macs"))
         item = macIterItems.pop(0)
@@ -784,17 +786,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if not localReadCodeM:
           localReadCodeM = Module()
         if localReadCodeA.items():
-          localReadCodeAB.add(localReadCodeA.items().pop(0))
+          localReadCodeAB.add(localReadCodeA.popFirstItem())
         if localReadCodeM.items():
-          localReadCodeAB.add(localReadCodeM.items().pop(0))
+          localReadCodeAB.add(localReadCodeM.popFirstItem())
         if localReadCodeB.items():
-          localReadCodeAB.add(localReadCodeB.items().pop(0))
+          localReadCodeAB.add(localReadCodeB.popFirstItem())
         while localReadCodeA.items():
-          localReadCodeAB.add(localReadCodeA.items().pop(0))
+          localReadCodeAB.add(localReadCodeA.popFirstItem())
         while localReadCodeM.items():
-          localReadCodeAB.add(localReadCodeM.items().pop(0))
+          localReadCodeAB.add(localReadCodeM.popFirstItem())
         while localReadCodeB.items():
-          localReadCodeAB.add(localReadCodeB.items().pop(0))
+          localReadCodeAB.add(localReadCodeB.popFirstItem())
       localReadItems = localReadCodeAB.flatitems()
       localReadItemsThisLoop = localReadItems if iteration < isBarrier else []
       localReadItemsNextLoop = localReadItems if iteration >= isBarrier else []
@@ -1195,18 +1197,18 @@ class KernelWriter(metaclass=abc.ABCMeta):
         ####
         for j in range(self.states.numGlobalReadInsPerMfma):
           if globalReadCode.items():
-            loadModule = globalReadCode.items().pop(0)
+            loadModule = globalReadCode.popFirstItem()
             iterCode.add(loadModule)
         # schedule remaining globalReadInst
         if mfmaIndex == self.states.grEndMfmaIndex:
           while globalReadCode.items() and \
               (globalReadCode.countType(GlobalReadInstruction) or kernel["PrefetchGlobalRead"] == 2):
-            loadModule = globalReadCode.items().pop(0)
+            loadModule = globalReadCode.popFirstItem()
             iterCode.add(loadModule)
         # schedule remaining globalReadIncInst
         if i == numMfmaPerIter - 1:
           while globalReadCode.items():
-            loadModule = globalReadCode.items().pop(0)
+            loadModule = globalReadCode.popFirstItem()
             iterCode.add(loadModule)
 
         ####
@@ -1336,7 +1338,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           if kernel["UnrollMajorLDSB"] and not (kernel["ProblemType"]["DataTypeB"].isAnyFloat8() and kernel["ConvertAfterDS"]):
             if iteration == 0 and i == kernel["MIWaveTileA"]:
               # add 1 more waitcnt before using ds read data
-              waitCode2 = fastdeepcopy(waitCode)
+              waitCode2 = deepcopy(waitCode)
               waitCode2.lgkmcnt = localReadsIssuedInThisIter
               iterCode.add(waitCode2)
           if i == 0:
@@ -2354,6 +2356,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # unrolled loop: increment global read addresses
     self.codes.globalReadIncrements = self.globalReadIncrementAB(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx, 0)
+    globalReadIncACode  = self.codes.globalReadIncrements.findNamedItem("globalReadIncrementA")
+    globalReadIncBCode  = self.codes.globalReadIncrements.findNamedItem("globalReadIncrementB")
 
     if not kernel["NoLdsWriteCode"]:
       self.codes.localWriteA = self.localWriteDo(kernel, tensorParametersA)
@@ -2878,7 +2882,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             deepCopyPack = pack
           else:
             # deepCopy packCode for OptNLL noLoadLoop
-            deepCopyPack = fastdeepcopy(pack)
+            deepCopyPack = deepcopy(pack)
           module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=False, pack=deepCopyPack, NLLindex=NLLindex, NLLnum=NLLnum))
           self.restoreLocalPointers(kernel, tensorParametersA, tensorParametersB)
 

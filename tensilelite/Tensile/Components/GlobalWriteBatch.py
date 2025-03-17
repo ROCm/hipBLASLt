@@ -20,6 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa.container import SMEMModifiers, VOP3PModifiers, MUBUFModifiers
 from rocisa.enum import CvtType, RoundType
 
 from ..Common import globalParameters, DataDirection, SemanticVersion
@@ -331,7 +332,7 @@ class GlobalWriteBatchWriter:
                                     comment="" ))
     module.add(SAddCU32(dst=sgpr("SrdSync+1"), \
                         src0=sgpr("Synchronizer+1"), \
-                        src1=hex(0), \
+                        src1=0, \
                         comment="" ))
 
     module.add(SWaitCnt(waitAll=True, comment="wait store done before synchronizer start load and add"))
@@ -446,7 +447,7 @@ class GlobalWriteBatchWriter:
                                               comment="" ))
             module.add(SAddCU32(dst=sgpr("WSDstart+1"), \
                                 src0=sgpr("WSDstart+1"), \
-                                src1=hex(0), \
+                                src1=0, \
                                 comment="" ))
 
         vgprstart = self.ss.elementSumIdx[elementIdx] #here
@@ -883,7 +884,7 @@ class GlobalWriteBatchWriter:
           regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
           for elementIdx in range(len(self.batchElements)):
             for vi in range(self.gwvw):
-              module.add(replaceHolder(self.codeMulAlpha.items().pop(0), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi))
+              module.add(replaceHolder(self.codeMulAlpha.popFirstItem(), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi))
 
     loadInputCode    = Module("loadInputCode")
 
@@ -1106,7 +1107,7 @@ class GlobalWriteBatchWriter:
         for vi in range(self.gwvw):
           # loop over registers within one scalar
           for rIdx in range(0, regsPerScalar):
-            module.add(replaceHolder(self.codeAccVgprRead.items().pop(0), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - self.parentWriter.states.c.startVgprValu))
+            module.add(replaceHolder(self.codeAccVgprRead.popFirstItem(), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - self.parentWriter.states.c.startVgprValu))
     elif self.kernel["LocalSplitU"] > 1:
       # read from LSU VGPRs
       regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
@@ -1168,7 +1169,7 @@ class GlobalWriteBatchWriter:
       SynchronizerEndlabel = Label(self.parentWriter.labels.getNameInc(SynchronizerEndlabelString), SynchronizerEndlabelComment)
       SynchronizerEndlabel = Label(self.parentWriter.labels.getName(SynchronizerEndlabelString), SynchronizerEndlabelComment)
 
-      module.addselfAsm("//sourece store done, GSU:"+str(self.kernel["GlobalSplitU"])+"\n") #GSUSYNC
+      module.addCommentAlign("sourece store done, GSU:"+str(self.kernel["GlobalSplitU"])) #GSUSYNC
       module.addSpaceLine()
 
       module.add(self.GSUSynccodegen(SynchronizerEndlabel, sumIdxGSUSYNC, addrCalc.globalOffset, addrCalc.addrDVgpr))
@@ -1190,7 +1191,7 @@ class GlobalWriteBatchWriter:
           regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
           for elementIdx in range(len(self.batchElements)):
             for vi in range(self.gwvw):
-              module.add(replaceHolder(self.codeMulAlpha.items().pop(0), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi - self.parentWriter.states.c.startVgprValu ))
+              module.add(replaceHolder(self.codeMulAlpha.popFirstItem(), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi - self.parentWriter.states.c.startVgprValu ))
 
   def _epilog(self, module: Module):
     # return registers to pool:
@@ -1272,7 +1273,7 @@ class GlobalWriteBatchWriter:
       module.add(SNop(0, "1 wait state required when next inst writes vgprs held by previous dwordx4 store inst"))
 
     if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
-      module.addselfAsm("//GW end\n") #GSUSYNC
+      module.addCommentAlign("GW end") #GSUSYNC
 
   def _emitAdd(self, module: Module):
     if self.atomic:
@@ -1606,8 +1607,8 @@ class GlobalWriteBatchWriter:
             if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
               if self.kernel["ProblemType"]["OutputAmaxD"]:
                 if self.edge:
-                  activationModule.add(VCmpEQU32(dst="vcc", src0="BufferOOB", src1=(vgpr(addrCalc.addrDVgpr)), comment =""))
-                  activationModule.add(VCndMaskB32(dst=vgpr("AmaxOutB"), src0=vgpr("ValuC+%d"%vgprIdx), src1=hex(0), src2="vcc", comment="Check If OOB, put zero if OOB"))
+                  activationModule.add(VCmpEQU32(dst=VCC(), src0="BufferOOB", src1=(vgpr(addrCalc.addrDVgpr)), comment =""))
+                  activationModule.add(VCndMaskB32(dst=vgpr("AmaxOutB"), src0=vgpr("ValuC+%d"%vgprIdx), src1=0, src2=VCC(), comment="Check If OOB, put zero if OOB"))
                   activationModule.add(VMaxF32(dst=vgpr("AmaxOut"), src0=vgpr("AmaxOut"), src1=SrcAbs(vgpr("AmaxOutB")), comment="absmax"))
                 else:
                   activationModule.add(VMaxF32(dst=vgpr("AmaxOut"), src0=vgpr("AmaxOut"), src1=SrcAbs(vgpr("ValuC+%d"%vgprIdx)), comment="absmax"))
@@ -1724,7 +1725,7 @@ class GlobalWriteBatchWriter:
       module.add(SynchronizerEndlabel)
 
       module.addSpaceLine()
-      module.addselfAsm("//synchronizer store end\n")
+      module.addCommentAlign("synchronizer store end")
 
       module.addSpaceLine()
 
@@ -1940,7 +1941,7 @@ class GlobalWriteBatchWriter:
 
     # or masks together to check early exit
     module.addComment1("or masks to check for exit")
-    module.add(self.getEdgeMovInstType()(sgpr(self.tmpS01, self.laneSGPRC), hex(0), "empty mask"))
+    module.add(self.getEdgeMovInstType()(sgpr(self.tmpS01, self.laneSGPRC), 0, "empty mask"))
     for elementIdx in range(0, len(self.batchElements)):
       mask = self.ss.elementMask[elementIdx]
       module.add(self.getEdgeOrInstType()(sgpr(self.tmpS01, self.laneSGPRC), sgpr(mask, self.laneSGPRC), sgpr(self.tmpS01, self.laneSGPRC), "or to add threads"))
@@ -2033,7 +2034,7 @@ class GlobalWriteBatchWriter:
 
     # or masks together
     module.addComment1("or masks to check for exit")
-    module.add(self.getEdgeMovInstType()(sgpr(self.tmpS01,self.laneSGPRC), hex(0), "empty mask"))
+    module.add(self.getEdgeMovInstType()(sgpr(self.tmpS01,self.laneSGPRC), 0, "empty mask"))
     for elementIdx in range(0, len(self.batchElements)):
       mask = self.ss.elementMask[elementIdx]
       module.add(self.getEdgeOrInstType()(sgpr(self.tmpS01,self.laneSGPRC), sgpr(mask,self.laneSGPRC), sgpr(self.tmpS01,self.laneSGPRC), "or to add threads"))
@@ -2363,9 +2364,11 @@ def copyData(computeDataType, elementSumIdx, gwvw, vgprStart, direction=0):
 
   if direction == 1:
     for i in module.items():
-      tmp = i.srcs[0]
-      i.srcs[0] = i.dst
+      srcs = i.srcs
+      tmp = srcs[0]
+      srcs[0] = i.dst
       i.dst = tmp
+      i.srcs = srcs
   return module
 
 def convertData(gwvw, elementSumIdx, cvtType: CvtType, roundType: RoundType = RoundType.ROUND_UP, inputPrefix="", prefixOffset=0):

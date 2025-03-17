@@ -24,13 +24,15 @@ import ctypes
 import math
 import struct
 from collections import OrderedDict
-from enum import IntFlag
+from copy import deepcopy
+from enum import Enum, IntFlag
+from typing import List, Union
 
 from rocisa import rocIsa
 from rocisa.enum import *
 
 from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterContainer, \
-                          VCC, EXEC, vgpr, sgpr, Holder, fastdeepcopy, DataType, SNop
+                          VCC, EXEC, vgpr, sgpr, Holder, DataType, SNop
 from .TensileInstructions.Instructions import *
 from .Common import printExit, printWarning
 
@@ -327,6 +329,9 @@ class ActivationModule:
 
         self.enableGuard = False
         self.isAlt       = False
+
+    def __reduce__(self):
+        return (ActivationModule, ())
 
     # Public function
     def getModule(self, cDataType, activationType, vgprIn, vgprOut):
@@ -869,7 +874,7 @@ class ActivationModule:
         if activationType not in self.cacheDict:
             self.cacheDict[activationType] = {}
         actDict = self.cacheDict[activationType]
-        copied = fastdeepcopy(module)
+        copied = deepcopy(module)
         # Get reg name
         regName = self.vgprPrefixFormat.split("+")[0] if self.vgprPrefixFormat else ""
         vgprIdxList = createVgprIdxList(copied, [vgprIn, vgprOut], regName)
@@ -902,7 +907,7 @@ class ActivationModule:
                                 vgpr.regIdx = vgprOut
                         self.vgprCounter = actInfo.vgprCounter
                         self.sgprCounter = actInfo.sgprCounter
-                        return fastdeepcopy(actInfo.module)
+                        return deepcopy(actInfo.module)
         return None
 
 ################################################################################
@@ -947,7 +952,7 @@ def RemoveEmptyBlocks(module):
     for idx, item in enumerate(module.items()):
         if isinstance(item, Module):
             newItem = RemoveEmptyBlocks(item)
-            module.items()[idx] = newItem
+            module.setItem(idx, newItem)
     if len(module.items()) == 1 and isinstance(module.items()[0], Module):
         return module.items()[0]
     return module
@@ -986,7 +991,7 @@ def FuseInstruction(currentInst, moduleAndIndex, fuseDebug):
                     # used before the current instruction
                     if not FindAssignAndUse(oldInst, currentInst, outVgpr, outVgpr):
                         newInst = type(oldInst)(oldInst.dst, *oldInst.srcs, oldInst.sdwa)
-                        newInst.srcs[2] = addConst + newInst.srcs[2]
+                        newInst.setSrc(2, addConst + newInst.srcs[2])
                         newInst.comment += " ( + 1 (fused))"
                         replaceInst(currentInst, newInst, fuseDebug)
                         removeOldInst(oldInst, currentInst, newInst, fuseDebug)
@@ -1036,11 +1041,11 @@ def FuseInstruction(currentInst, moduleAndIndex, fuseDebug):
                                 newValue = param * mulConst
                                 formatting = " (fused %f)" if isinstance(param, float) else " (fused %d)"
                                 if newFuseInst:
-                                    newFuseInst.srcs[0] = newValue
-                                    newInst.srcs[paramIdx] = newFuseInst.dst
+                                    newFuseInst.setSrc(0, newValue)
+                                    newInst.setSrc(paramIdx, newFuseInst.dst)
                                     newFuseInst.comment += formatting%newValue
                                 else:
-                                    newInst.srcs[paramIdx] = newValue
+                                    newInst.setSrc(paramIdx, newValue)
                                 newInst.comment += formatting%newValue
                                 replaceInst(currentInst, newInst, fuseDebug)
                                 removeOldInst(oldInst, currentInst, newInst, fuseDebug)
@@ -1133,7 +1138,7 @@ def removeOldInst(removeInst, dstInst, fusedInst, debug):
             if debug:
                 tb = TextBlock("\n/* Fused to block %s + %s -> %s */\n"%(str(removeInst), str(dstInst), str(fusedInst)))
                 tb.name = __FUSE_MAGIC_NAME__
-                module.items()[idx] = tb
+                module.setItem(idx, tb)
             else:
                 targetIdx = idx
             break
@@ -1191,20 +1196,20 @@ def HexToStr(cDataType, isPack, *args):
 
 def ConvertCoeffToHex(module, cDataType, isPack):
     if (module.name == "Exp"):
-        param = module.items()[0].srcs[0]
-        module.items()[0].srcs[0] = getMagic(cDataType, param, isPack)
+        param = module.getItem(0).srcs[0]
+        module.getItem(0).setSrc(0, getMagic(cDataType, param, isPack))
         return module
     for itemIdx, item in enumerate(module.items()):
         if isinstance(item, Module):
             newItem = ConvertCoeffToHex(item, cDataType, isPack)
-            module.items()[itemIdx] = newItem
+            module.setItem(itemIdx, newItem)
     return module
 
 def HolderToGpr(module, idx, pf):
     for itemIdx, item in enumerate(module.items()):
         if isinstance(item, Module):
             newItem = HolderToGpr(item, idx, pf)
-            module.items()[itemIdx] = newItem
+            module.setItem(itemIdx, newItem)
         elif isinstance(item, SNop):
             pass
         elif isinstance(item, Instruction):
@@ -1215,7 +1220,7 @@ def HolderToGpr(module, idx, pf):
                 for itemIdx, param in enumerate(item.srcs):
                     if isinstance(param, HolderContainer) and param.regType == pf:
                         param.setRegNum(idx)
-                        item.srcs[itemIdx] = param.getCopiedRC()
+                        item.setSrc(itemIdx, param.getCopiedRC())
     return module
 
 def addSpace(alignStr, str):
