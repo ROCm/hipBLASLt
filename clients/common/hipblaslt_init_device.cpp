@@ -30,6 +30,8 @@
 #include "hipblaslt_random.hpp"
 #include "hipblaslt_test.hpp"
 #include <hipblaslt/hipblaslt.h>
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_kernel.h>
 
 template <typename T, typename F>
 __global__ void fill_kernel(T* A, size_t size, size_t offset, F f)
