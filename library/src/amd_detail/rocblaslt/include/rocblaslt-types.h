@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -401,8 +401,8 @@ typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
 typedef struct _rocblaslt_matmul_algo{
 #ifdef __cplusplus
   uint8_t data[8] = {0}; // must match hipblasLtMatmulAlgo_t layout
-  bool fallback = false; // 
-  uint8_t data_pad[7] = {0}; // has uint8_t data[16] 
+  bool fallback = false; //
+  uint8_t data_pad[7] = {0}; // has uint8_t data[16]
   size_t max_workspace_bytes = 0;
 #else
   uint8_t data[8];
