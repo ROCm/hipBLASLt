@@ -26,7 +26,7 @@ from functools import lru_cache
 from typing import List
 
 from Tensile.Common.Constants import MAX_FILENAME_LENGTH
-from Tensile.Common.Naming import getRequiredParametersMin
+from Tensile.Common.RequiredParameters import getRequiredParametersMin
 from Tensile.Common.ValidParameters import validParameters
 
 from .Problem import ProblemType
