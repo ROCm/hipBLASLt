@@ -22,28 +22,10 @@
 #
 ################################################################################
 
-"""
-ValidWorkGroup
----
-Dimensions of the workgroup which will operate on a tile and share lds
-Example: ( wg0 x wg1 x LocalSplitU )
-"""
-
-from typing import Dict
-
-from Tensile.Common import IsaVersion, IsaInfo, elineno
-from Tensile.SolutionStructs.Validators.WorkGroup import validateWorkGroup
+from Tensile.Common.Utilities import elineno
 
 
-def _validateWorkGroup(solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], filepath: str):
-    try:
-        validateWorkGroup(solution)
-        assert solution["Valid"], f"Solution was rejected: {elineno()}"
-        return True
-    except AssertionError as e:
-        print(
-            f"Error: Validation failed: {e} (file: {filepath}, index: {solution['SolutionIndex']})"
-        )
-        return False
-
-
+def validateKernelName(sol: dict) -> bool:
+    name = sol.get("KernelNameMin")
+    assert name, f"Solution doesn't have key 'KernelNameMin': {elineno()}"
+    return True

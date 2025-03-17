@@ -34,29 +34,48 @@ def parseArguments():
     """
 
     argParser = ArgumentParser(
-        description="TensileValidateLogic runs critical checks to ensure the "
+        description="TensileLogic runs critical checks to ensure the "
         "integrity of the supplied logic files.",
     )
+    argParser.add_argument("logic_path", help="path to library logic (yaml) files")
 
-    argParser.add_argument("LogicPath", help="Path to LibraryLogic.yaml files.")
-    argParser.add_argument("--check", dest="CheckAll", action="store_true", help="Run all checks.")
-    argParser.add_argument("--check-only-custom-kernels", dest="CheckCustomKernels", action="store_true", help="Check custom kernels.")
-    argParser.add_argument("-v", "--verbose", dest="Verbose", type=int, default=1, choices=[0, 1, 2, 3], help="Set print level with ``--v 2``.")
     argParser.add_argument(
-        "--jobs",
+        "-v",
+        "--verbose",
+        type=int,
+        default=1,
+        choices=[0, 1, 2, 3],
+        help="set print level with `-v 2`",
+    )
+    argParser.add_argument(
         "-j",
-        dest="Jobs",
-        action="store",
+        "--jobs",
+         action="store",
         default=48,
-        help="Number of worker processes to use during validation checks.",
+        help="number of worker processes to use during validation checks",
     )
     argParser.add_argument(
         "--cxx-compiler",
-        dest="CxxCompiler",
         action="store",
         default=ToolchainDefaults.CXX_COMPILER,
-        help=f"Default: {ToolchainDefaults.CXX_COMPILER}",
+        help=f"default: {ToolchainDefaults.CXX_COMPILER}",
     )
+
+    group = argParser.add_mutually_exclusive_group()
+    group.add_argument(
+        "-c", "--check-all", action="store_true", help="run all logic file checks"
+    )
+    group.add_argument(
+        "--check-only-custom-kernels",
+        action="store_true",
+        help="run logic file checks only on custom kernels",
+    )
+    group.add_argument(
+        "--update-build-kernels",
+        action="store_true",
+        help="update kernels marked with `BuildKernel` to match unique kernel names",
+    )
+
     args = argParser.parse_args()
 
     return args
