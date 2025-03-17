@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -70,7 +71,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: "Scalar"
+  UseScaleAB: Scalar
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -84,6 +85,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -113,7 +115,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8B8NHS_BH_BiasSH_HAS_SAB_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_CLR1_GRVWB16_MIWT1_1_NEPBS0_PLR1_SPO0
+    KernelNameMin: Cijk_Alik_Bjlk_F8B8NHS_BH_Bias_HAS_SAB_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_LDSB0_AFC1_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB16_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW8_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB1_WS64_WG16_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -273,7 +275,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -341,6 +343,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 0
     CodeObjectVersion: default
@@ -370,7 +373,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8B8NHS_BH_BiasSH_HAS_SAB_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_CLR0_GRVWB8_MIWT1_1_NEPBS0_PLR0_SPO1
+    KernelNameMin: Cijk_Alik_Bjlk_F8B8NHS_BH_Bias_HAS_SAB_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_LDSB0_AFC1_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW8_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR0_PKA1_SIA3_SS1_SPO1_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB1_WS64_WG16_4_1
     LSCA: 32
     LSCB: 16
     LSPA: 16
@@ -530,7 +533,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -598,6 +601,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -627,7 +631,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8B8NHS_BH_BiasSH_HAS_SAB_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_CLR1_GRVWB16_MIWT1_1_NEPBS2_PLR1_SPO1
+    KernelNameMin: Cijk_Alik_Bjlk_F8B8NHS_BH_Bias_HAS_SAB_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_LDSB0_AFC1_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB16_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW8_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS2_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB1_WS64_WG16_4_1
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -787,7 +791,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1044,7 +1048,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1114,3 +1118,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

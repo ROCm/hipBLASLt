@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -70,7 +71,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: "Scalar"
+  UseScaleAB: Scalar
   UseScaleAlphaVec: 1
   UseScaleCD: true
 - - 1LDSBuffer: 0
@@ -84,6 +85,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 0
     CodeObjectVersion: default
@@ -111,7 +113,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_HF8N_HF8NS_BH_Bias_HAS_SAB_SCD_SAV_MT16x64x16_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_TLDS1
+    KernelNameMin: Cijk_Alik_Bljk_HF8N_HF8NS_BH_Bias_HAS_SAB_SCD_SAV_UserArgs_MT16x64x16_MI16x16x4_SN_LDSB0_AFC1_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB1_WS64_WG16_4_1
     LSCA: 16
     LSCB: 16
     LSPA: 16
@@ -269,7 +271,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: true
     ScheduleGlobalRead: 1
@@ -336,6 +338,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 0
     CodeObjectVersion: default
@@ -363,7 +366,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_HF8N_HF8NS_BH_Bias_HAS_SAB_SCD_SAV_MT32x128x16_MI16x16x4_SN_GRVWA1_GRVWB4_GSU1_MIWT2_2_TLDS1
+    KernelNameMin: Cijk_Alik_Bljk_HF8N_HF8NS_BH_Bias_HAS_SAB_SCD_SAV_UserArgs_MT32x128x16_MI16x16x4_SN_LDSB0_AFC1_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA1_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT2_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB1_WS64_WG16_4_1
     LSCA: 16
     LSCB: 16
     LSPA: 4
@@ -521,7 +524,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: true
     ScheduleGlobalRead: 1
@@ -588,6 +591,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 0
     CodeObjectVersion: default
@@ -615,7 +619,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_HF8N_HF8NS_BH_Bias_HAS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_TLDS1
+    KernelNameMin: Cijk_Alik_Bljk_HF8N_HF8NS_BH_Bias_HAS_SAB_SCD_SAV_UserArgs_MT16x64x32_MI16x16x4_SN_LDSB0_AFC1_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA0_LBSPPB0_LBSPPM0_LPA0_LPB0_LPM0_LRVW4_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB1_WS64_WG16_4_1
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -773,7 +777,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: true
     ScheduleGlobalRead: 1
@@ -846,3 +850,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...
