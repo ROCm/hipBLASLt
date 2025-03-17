@@ -30,8 +30,6 @@
 #include "hipblaslt_random.hpp"
 #include "hipblaslt_test.hpp"
 #include <hipblaslt/hipblaslt.h>
-#include <rocrand/rocrand.h>
-#include <rocrand/rocrand_kernel.h>
 
 template <typename T, typename F>
 __global__ void fill_kernel(T* A, size_t size, size_t offset, F f)
@@ -200,11 +198,11 @@ void hipblaslt_init_device(ABC                      abc,
         case hipblaslt_initialization::norm_dist:
             {
                 std::random_device rd;
-                unsigned long base_seed = rd(); // Get a random seed for each run
+                auto base_seed = rd(); // Get a random seed for each run
                 fill_batch(A, M, N, lda, stride, batch_count, [base_seed] __device__ (size_t idx) -> T {
-                    rocrand_state_philox4x32_10 state;
-                    rocrand_init(base_seed + idx, 0, 0, &state);
-                    return T(rocrand_normal(&state));
+                    hipblaslt_norm_dist::XorwowState state;
+                    hipblaslt_norm_dist::init_xorwow(&state, base_seed + idx); // Unique seed per thread
+                    return T(hipblaslt_norm_dist::box_muller_normal(&state));
                 });
                 break;
             }
