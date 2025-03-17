@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -11477,6 +11478,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -11508,7 +11510,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_LBSPPA512_LBSPPB512_LPA16_LPB16_LRVW8_MIWT1_1_SS1_SVW1_VWA1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 256
     LSPA: 8
@@ -13817,6 +13819,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -13848,7 +13851,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x32x256_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_LBSPPA1024_LBSPPB512_LPA16_LPB16_LRVW8_MIWT2_1_SS1_SVW2_VWA2_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x32x256_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB512_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT2_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 256
     LSCB: 256
     LSPA: 8
@@ -15377,6 +15380,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -15408,7 +15412,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_LBSPPA512_LBSPPB512_LPA16_LPB16_LRVW8_MIWT1_1_SS0_SVW4_VWA1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS0_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 256
     LSPA: 8
@@ -19017,6 +19021,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -19048,7 +19053,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_LBSPPA512_LBSPPB512_LPA16_LPB16_LRVW8_MIWT1_1_SS0_SVW4_VWA1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM1_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS0_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 256
     LSPA: 8
@@ -19277,6 +19282,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -19308,7 +19314,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT32x16x64_MI16x16x1_SN_LDSB0_GRVWA8_GRVWB8_GSUAMBSK_LBSPPA128_LBSPPB128_LPA16_LPB16_LRVW8_MIWT1_1_SS0_SVW4_VWA1_WG32_4_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT32x16x64_MI16x16x1_SN_LDSB0_AFC0_AFEM8_AFEM1_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMBSK_GLS0_ISA942_IU1_K1_LBSPPA128_LBSPPB128_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS0_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_4_1
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -20058,6 +20064,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -20089,7 +20096,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x128x128_MI16x16x1_SN_MIWT4_4_WG16_8_2
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x128x128_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB256_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT4_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA0_WSGRB0_WS64_WG16_8_2
     LSCA: 128
     LSCB: 128
     LSPA: 16
@@ -20318,6 +20325,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -20349,7 +20357,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT32x96x128_MI16x16x1_SN_MIWT2_3_WG16_8_2
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT32x96x128_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA256_LBSPPB256_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT2_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_8_2
     LSCA: 128
     LSCB: 128
     LSPA: 16
@@ -20578,6 +20586,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -20609,7 +20618,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT16x32x512_MI16x16x1_SN_MIWT1_2_SVW1_WG16_4_2
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT16x32x512_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT1_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS0_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_4_2
     LSCA: 512
     LSCB: 512
     LSPA: 2
@@ -20838,6 +20847,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -20869,7 +20879,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_MIWT4_2_WG16_8_2
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB256_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT4_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG16_8_2
     LSCA: 128
     LSCB: 128
     LSPA: 16
@@ -21098,6 +21108,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -21129,7 +21140,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT32x64x256_MI16x16x1_SN_MIWT2_4_WG16_4_4
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT32x64x256_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB512_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT2_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG16_4_4
     LSCA: 256
     LSCB: 256
     LSPA: 8
@@ -21358,6 +21369,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -21389,7 +21401,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x64x128_MI16x16x1_SN_MIWT4_4_SVW2_WG32_4_2
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x64x128_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB256_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT4_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS0_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_4_2
     LSCA: 128
     LSCB: 128
     LSPA: 16
@@ -21618,6 +21630,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -21649,7 +21662,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT32x64x256_MI16x16x1_SN_MIWT2_4_WG16_4_4
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT32x64x256_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT2_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_4_4
     LSCA: 256
     LSCB: 256
     LSPA: 8
@@ -21878,6 +21891,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -21909,7 +21923,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT32x64x256_MI16x16x1_SN_MIWT2_2_WG16_8_2
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT32x64x256_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB512_LBSPPM0_LPA16_LPB16_LPMn1_LRVW8_LWPMn1_MIAV0_MIWT2_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG16_8_2
     LSCA: 256
     LSCB: 256
     LSPA: 8
@@ -22138,6 +22152,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -22169,7 +22184,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x160x64_MI16x16x1_SN_GRVWA2_GRVWB8_LBSPPA512_LPA16_LPB16_LRVW8_MIAV0_MIWT8_5_NTC4_NTD4_NEPBS0_SVW4_VWA4_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x160x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB128_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT8_5_MO40_NTn1_NTA0_NTB0_NTC4_NTD4_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -22398,6 +22413,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -22429,7 +22445,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x192x64_MI16x16x1_SN_GRVWA2_GRVWB8_LBSPPA1024_LPA4_LPB8_LRVW4_MIWT16_3_NTC4_NTD4_SSO0_SVW8_VWA8_WG16_16_1_WGMXCC4
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x192x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB128_LBSPPM0_LPA4_LPB8_LPM0_LRVW4_LWPMn1_MIAV0_MIWT16_3_MO40_NTn1_NTA0_NTB0_NTC4_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA8_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -22658,6 +22674,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -22689,7 +22706,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_GRVWA8_GRVWB2_LBSPPA1024_LPA8_LPB4_LRVW4_MIWT8_7_NTC4_NTD4_SSO0_SVW8_VWA8_WG32_8_1_WGMXCC4
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB2_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB128_LBSPPM0_LPA8_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT8_7_MO40_NTn1_NTA0_NTB0_NTC4_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA8_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -22918,6 +22935,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -22949,7 +22967,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT224x224x64_MI16x16x1_SN_GRVWA2_GRVWB2_LBSPPA128_LPA4_LPB4_LRVW4_MIWT7_7_SSO4_SVW1_VWA1_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT224x224x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA128_LBSPPB128_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT7_7_MO40_NTn1_NTA0_NTB0_NTC4_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO4_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -23178,6 +23196,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -23209,7 +23228,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_GRVWA2_GRVWB2_LBSPPA256_LPA4_LPB4_LRVW4_MIWT8_7_SSO0_SVW2_VWA2_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA256_LBSPPB128_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT8_7_MO40_NTn1_NTA0_NTB0_NTC4_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -23974,6 +23993,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -24007,7 +24027,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT224x128x64_MI16x16x1_SN_GRVWA8_GRVWB8_K1_LBSPPA128_LBSPPB256_LPA16_LPB16_LRVW8_MIAV1_MIWT7_4_NTA1_NTB1_NTC0_NTD0_SS0_SPO0_SVW4_ULSGRO0_VWA1_VWB2_WSGRA2_WSGRB2_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT224x128x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA128_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT7_4_MO40_NTn1_NTA1_NTB1_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS0_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB2_WSGRA2_WSGRB2_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 4
@@ -24242,6 +24262,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -24275,7 +24296,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x192x64_MI16x16x1_SN_GRVWA8_GRVWB8_K1_LBSPPA256_LBSPPB256_LPA16_LPB16_LRVW8_MIAV0_MIWT8_6_NTA1_NTB2_NTC6_NTD6_SS1_SPO0_SVW2_ULSGRO0_VWA2_VWB2_WSGRA1_WSGRB1_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x192x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA256_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT8_6_MO40_NTn1_NTA1_NTB2_NTC6_NTD6_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA1_WSGRB1_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -24510,6 +24531,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -24543,7 +24565,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x192x64_MI16x16x1_SN_GRVWA8_GRVWB8_K1_LBSPPA256_LBSPPB256_LPA16_LPB16_LRVW8_MIAV0_MIWT8_6_NTA3_NTB1_NTC4_NTD4_SS1_SPO0_SVW2_ULSGRO1_VWA2_VWB2_WSGRA2_WSGRB2_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x192x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA256_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT8_6_MO40_NTn1_NTA3_NTB1_NTC4_NTD4_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO1_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA2_WSGRB2_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 4
@@ -24780,6 +24802,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -24817,7 +24840,7 @@
       UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x96x64_MI16x16x1_SN_K1_MIWT4_6_NTD3_NEPBS16_SPO0_ULSGRO1_WSGRA0_WSGRB0
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x96x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT4_6_MO40_NTn1_NTA0_NTB0_NTC0_NTD3_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO1_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB2_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -25058,6 +25081,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -25095,7 +25119,7 @@
       UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_K1_LBSPPA1024_MIWT8_7_SVW8_VWA8
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB128_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT8_7_MO40_NTn1_NTA0_NTB0_NTC4_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA8_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -25336,6 +25360,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -25373,7 +25398,7 @@
       UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_K1_MIWT8_7
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB128_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT8_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA8_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -25614,6 +25639,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -25651,7 +25677,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_CLR1_GRVWA2_GRVWB8_K1_LBSPPA512_LBSPPB512_LPA16_LPB16_LRVW8_MIWT1_1_NTA4_PLR1_SVW1_VWA1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_1_MO40_NTn1_NTA4_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 256
     LSPA: 2
@@ -25892,6 +25918,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -25929,7 +25956,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x16x64_MI16x16x1_SN_CLR1_GRVWA8_GRVWB2_K1_LBSPPA256_LBSPPB128_LPA16_LPB16_LRVW8_MIWT2_1_NTA4_PLR1_SVW2_VWA2_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x16x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB2_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA256_LBSPPB128_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT2_1_MO40_NTn1_NTA4_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -26448,6 +26475,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -26485,7 +26513,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT192x16x128_MI16x16x1_SN_GRVWA2_GRVWB2_K1_LBSPPA256_LBSPPB256_LPA16_LPB16_LRVW8_MIWT3_1_NTA4_NTC0_NTD0_SVW1_VWA1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT192x16x128_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA256_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT3_1_MO40_NTn1_NTA4_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 128
     LSPA: 4
@@ -27004,6 +27032,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -27041,7 +27070,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_GRVWA2_GRVWB2_K1_LBSPPA512_LBSPPB512_LPA16_LPB16_LRVW8_MIWT1_1_NTA4_SVW1_VWA1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x16x256_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_1_MO40_NTn1_NTA4_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 256
     LSCB: 256
     LSPA: 2
@@ -27549,6 +27578,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -27583,7 +27613,7 @@
       UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT160x128x64_MI16x16x1_SN_LDSB1_CLR1_GRVWA8_GRVWB8_K1_LBSPPA128_LBSPPB512_LPA16_LPB16_LRVW8_MIWT5_4_PLR1_SVW1_VWA1_VWB4_WG32_8_1_WGMXCC8_WGMXCCG304
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT160x128x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA128_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT5_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB4_WSGRA1_WSGRB1_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -27818,6 +27848,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -27852,7 +27883,7 @@
       UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x160x64_MI16x16x1_SN_LDSB1_CLR1_GRVWA8_GRVWB8_K1_LBSPPA512_LBSPPB128_LPA16_LPB16_LRVW8_MIWT4_5_PLR1_SVW4_VWA4_VWB1_WG32_8_1_WGMXCC1_WGMXCCG0
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x160x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB128_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT4_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA1_WSGRB1_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -28087,6 +28118,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -28121,7 +28153,7 @@
       UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x128x128_MI16x16x1_SN_LDSB1_CLR1_GRVWA8_GRVWB8_K1_LBSPPA1024_LBSPPB1024_LPA16_LPB16_LRVW8_MIWT4_4_PLR1_SVW4_VWA4_VWB4_WG16_8_2_WGMXCC1_WGMXCCG0
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x128x128_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT4_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB4_WSGRA1_WSGRB1_WS64_WG16_8_2
     LSCA: 128
     LSCB: 128
     LSPA: 4
@@ -28894,6 +28926,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -28928,7 +28961,7 @@
       UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT160x320x64_MI16x16x1_SN_LDSB1_CLR1_GRVWA2_GRVWB2_K1_LBSPPA256_LBSPPB128_LPA4_LPB4_LRVW4_MIWT10_5_PLR1_SVW2_VWA2_VWB1_WG16_16_1_WGMXCC1_WGMXCCG0
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT160x320x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA256_LBSPPB128_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT10_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA1_WSGRB1_WS64_WG16_16_1
     LSCA: 64
     LSCB: 64
     LSPA: 2
@@ -29163,6 +29196,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -29197,7 +29231,7 @@
       UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT192x160x64_MI16x16x1_SN_LDSB1_CLR1_GRVWA8_GRVWB8_K1_LBSPPA256_LBSPPB128_LPA16_LPB16_LRVW8_MIWT6_5_PLR1_SVW2_VWA2_VWB1_WG32_8_1_WGMXCC8_WGMXCCG304
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT192x160x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA256_LBSPPB128_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT6_5_MO40_NTn1_NTA0_NTB0_NTC0_NTD4_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB1_WSGRA1_WSGRB1_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -29992,6 +30026,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -30029,7 +30064,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_K1_LBSPPA1024_LBSPPB512_LSU2_MIWT4_2_NTD7_SVW4_VWA4_VWB2_WG16_8_2
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT64x64x128_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT4_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD7_NTM0_NEPBS8_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO1_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB2_WSGRA0_WSGRB0_WS64_WG16_8_2
     L1CacheSwizzle: false
     LSCA: 128
     LSCB: 128
@@ -30271,6 +30306,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -30308,7 +30344,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_K1_LBSPPA512_LBSPPB1024_LSU1_MIWT4_8_NTD7_SVW4_VWA4_VWB8_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT4_8_MO40_NTn1_NTA0_NTB0_NTC0_NTD7_NTM0_NEPBS8_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO1_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB8_WSGRA0_WSGRB0_WS64_WG64_4_1
     L1CacheSwizzle: false
     LSCA: 64
     LSCB: 64
@@ -30550,6 +30586,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -30587,7 +30624,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_K1_LBSPPA1024_LBSPPB512_LSU1_MIWT8_4_NTD7_SVW8_VWA8_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x128x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT8_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD7_NTM0_NEPBS8_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO1_USL1_UIOFGRO0_USFGROn1_VSn1_VWA8_VWB4_WSGRA0_WSGRB0_WS64_WG32_8_1
     L1CacheSwizzle: false
     LSCA: 64
     LSCB: 64
@@ -31108,6 +31145,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -31145,7 +31183,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_K1_MIWT8_7
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB2_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB128_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT8_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA8_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -31668,6 +31706,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -31705,7 +31744,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x256x32_MI16x16x1_SN_K1_MIWT8_8
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x256x32_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT8_8_MO40_NTn1_NTA0_NTB0_NTC0_NTD5_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO1_VSn1_VWA8_VWB8_WSGRA2_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 4
@@ -31950,6 +31989,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -31987,7 +32027,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x80x128_MI16x16x1_SN_AFEM1_AFEM1_ASEM128_K1_MIWT2_5
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x80x128_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM128_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM0p80_GRVWA8_GRVWB8_GSUAMBSK_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPM0p30_MIAV0_MIWT2_5_MO40_NTn1_NTA1_NTB0_NTC7_NTD4_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO1_USL1_UIOFGRO0_USFGRO1_VSn1_VWA2_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 128
     LSPA: 16
@@ -32233,6 +32273,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -32270,7 +32311,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x96x128_MI16x16x1_SN_AFEM4_AFEM1_ASEM8_K1_MIWT4_3
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x96x128_MI16x16x1_SN_LDSB1_AFC0_AFEM4_AFEM1_ASEM8_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM0p40_GRVWA8_GRVWB8_GSUAMBSK_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPM0p30_MIAV0_MIWT4_3_MO40_NTn1_NTA2_NTB0_NTC1_NTD3_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS2_ULSGRO1_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA0_WSGRB1_WS64_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 16
@@ -32516,6 +32557,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -32553,7 +32595,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_AFEM16_AFEM1_ASEM1_K1_MIWT8_7
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_LDSB1_AFC0_AFEM16_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB128_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT8_7_MO40_NTn1_NTA1_NTB0_NTC0_NTD4_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO1_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO1_USL1_UIOFGRO0_USFGROn1_VSn1_VWA8_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -32798,6 +32840,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -32835,7 +32878,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT192x192x64_MI16x16x1_SN_AFEM2_AFEM4_ASEM8_K1_MIWT6_6
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT192x192x64_MI16x16x1_SN_LDSB1_AFC0_AFEM2_AFEM4_ASEM8_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA256_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT6_6_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS2_ULSGRO1_USL1_UIOFGRO0_USFGRO1_VSn1_VWA2_VWB2_WSGRA1_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -33080,6 +33123,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -33117,7 +33161,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT160x128x64_MI16x16x1_SN_AFEM1_AFEM1_ASEM1_K1_MIWT5_4
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT160x128x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM0p80_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA128_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT5_4_MO40_NTn1_NTA1_NTB4_NTC3_NTD1_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS0_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO1_VSn1_VWA1_VWB4_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -33362,6 +33406,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -33399,7 +33444,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_AFEM4_AFEM1_ASEM32_K1_MIWT8_4
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x256x64_MI16x16x1_SN_LDSB1_AFC0_AFEM4_AFEM1_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM0p27_GRVWA8_GRVWB8_GSUAMBSK_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT8_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD6_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO1_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS2_ULSGRO1_USL1_UIOFGRO0_USFGRO1_VSn1_VWA8_VWB4_WSGRA2_WSGRB2_WS64_WG16_16_1
     LSCA: 64
     LSCB: 64
     LSPA: 4
@@ -33645,6 +33690,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -33682,7 +33728,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_AFEM1_AFEM1_ASEM1_K1_MIWT8_7
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT256x224x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB128_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT8_7_MO40_NTn1_NTA0_NTB0_NTC0_NTD4_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO1_USL1_UIOFGRO0_USFGRO1_VSn1_VWA8_VWB1_WSGRA1_WSGRB2_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 4
@@ -33927,9 +33973,10 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -33964,7 +34011,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x256x32_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_GSUAMBSK_K1_LBSPPA512_LBSPPB256_LPA4_LPB4_LRVW4_MIWT8_4_SVW8_VWA8_VWB4_WG16_16_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x256x32_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMBSK_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB256_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT8_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA8_VWB4_WSGRA0_WSGRB0_WS64_WG16_16_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -34211,9 +34258,10 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -34248,7 +34296,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT192x128x32_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_GSUAMB_K1_LBSPPA128_LBSPPB256_LPA4_LPB4_LRVW4_MIWT6_4_SVW2_VWA2_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT192x128x32_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA128_LBSPPB256_LBSPPM0_LPA4_LPB4_LPM0_LRVW4_LWPMn1_MIAV0_MIWT6_4_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB4_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -34494,9 +34542,10 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -34531,7 +34580,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x64x64_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_GSUAMBSK_K1_LBSPPA512_LBSPPB256_LPA16_LPB16_LRVW8_MIWT4_2_SVW4_VWA4_VWB2_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_UserArgs_MT128x64x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMBSK_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV0_MIWT4_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -35096,3 +35145,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

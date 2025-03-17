@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -91,6 +92,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -128,7 +130,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_S_MX_B_UserArgs_MT16x128x8_MI16x16x1_SN_GRVWA2_K1_MIWT1_8_NTA0_NTB0_SS0_SVW4_VWB4_WG16_4_1
+    KernelNameMin: Cijk_Alik_Bljk_S_MX_B_UserArgs_MT16x128x8_MI16x16x1_SN_LDSB0_AFC0_AFEM8_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA2_GRVWB1_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA128_LBSPPB128_LBSPPM0_LPA2_LPB2_LPM0_LRVW2_LWPMn1_MIAV0_MIWT1_8_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS8_NLCA1_NLCB1_ONLL1_PGR0_PLR0_PKA1_SIA3_SS0_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB4_WSGRA0_WSGRB0_WS64_WG16_4_1
     L1CacheSwizzle: false
     LSCA: 8
     LSCB: 8
@@ -641,3 +643,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...
