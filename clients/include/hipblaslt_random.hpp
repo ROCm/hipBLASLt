@@ -385,6 +385,8 @@ inline std::string random_string(size_t n)
     return str;
 }
 
+/* ============================================================================================ */
+/*! \brief  Random number generator which generates random values in normal distribution N(0,1) */
 namespace hipblaslt_norm_dist {
     // XORWOW state structure
     struct XorwowState {
