@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - {Architecture: gfx942, CUCount: 80}
@@ -85,6 +86,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -117,7 +119,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_LBSPPA512_LBSPPB512_LPA8_LPB8_LRVW8_MIWT8_8_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA8_LPB8_LPM0_LRVW8_LWPMn1_MIAV0_MIWT8_8_MO40_NTn1_NTA0_NTB0_NTC4_NTD4_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA8_VWB8_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -349,6 +351,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -381,7 +384,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_LBSPPA256_LBSPPB256_LPA16_LPB16_LRVW16_MIWT4_4_SVW4_VWA4_VWB4_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA256_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW16_LWPMn1_MIAV0_MIWT4_4_MO40_NTn1_NTA0_NTB0_NTC4_NTD4_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB4_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -877,6 +880,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -909,7 +913,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_LBSPPA1024_LBSPPB128_LPA8_LPB8_LRVW8_MIWT8_7_SVW8_VWA8_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB128_LBSPPM0_LPA8_LPB8_LPM0_LRVW8_LWPMn1_MIAV0_MIWT8_7_MO40_NTn1_NTA0_NTB0_NTC4_NTD4_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW8_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA8_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
     LSCA: 128
     LSCB: 128
     LSPA: 8
@@ -1933,6 +1937,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -1965,7 +1970,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x192x128_MI32x32x1_SN_LBSPPA512_LBSPPB128_LPA16_LPB16_LRVW16_MIWT4_3_SVW4_VWA4_VWB1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x192x128_MI32x32x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA4_GRVWB4_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB128_LBSPPM0_LPA16_LPB16_LPM0_LRVW16_LWPMn1_MIAV0_MIWT4_3_MO40_NTn1_NTA0_NTB0_NTC4_NTD4_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 128
     LSCB: 128
     LSPA: 8
@@ -2257,3 +2262,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...
