@@ -8846,7 +8846,7 @@ class KernelWriterAssembly(KernelWriter):
                   dst_sel = SelectBit.WORD_1 if isHigh16Bits else SelectBit.WORD_0
                   new_src = fastdeepcopy(paramList[0])
                   if isHigh16Bits:
-                    new_src.regName.offsets.append(1)
+                    new_src.regName.addOffset(1)
                   localWriteCVTCode.add(VCvtF32toF16(dst=paramList[0], src=new_src, sdwa=SDWAModifiers(dst_sel=dst_sel), comment="convert C to fp16"))
                 else:
                   for vi in range(0, int(newBlockWidth)):
@@ -8962,7 +8962,7 @@ class KernelWriterAssembly(KernelWriter):
                   new_src = fastdeepcopy(paramList[0])
                   if tP["glvw"] == 1:
                     vgprTmp = self.vgprPool.checkOut(1)
-                    new_src.regName.offsets.append(tP["shiftGR"])
+                    new_src.regName.addOffset(tP["shiftGR"])
                     src_sel = SelectBit.BYTE_2 if isHigh16Bits else SelectBit.BYTE_0
                     dst_sel = SelectBit.WORD_1 if isHigh16Bits else SelectBit.WORD_0
                     if self.states.asmCaps["Hascvtf16_fp8"]:
@@ -8976,12 +8976,12 @@ class KernelWriterAssembly(KernelWriter):
                     if isCvtHighBits and isHigh16Bits:
                       src_sel = SelectBit.BYTE_3
                     elif isHigh16Bits and (not isCvtHighBits):
-                      new_src.regName.offsets.append(tP["shiftGR"])
+                      new_src.regName.addOffset(tP["shiftGR"])
                       src_sel = SelectBit.BYTE_1
                     elif (not isHigh16Bits) and isCvtHighBits:
                       src_sel = SelectBit.BYTE_2
                     else:
-                      new_src.regName.offsets.append(tP["shiftGR"])
+                      new_src.regName.addOffset(tP["shiftGR"])
                       src_sel = SelectBit.BYTE_0
                     dst_sel = SelectBit.WORD_1 if isHigh16Bits else SelectBit.WORD_0
                     if self.states.asmCaps["Hascvtf16_fp8"]:

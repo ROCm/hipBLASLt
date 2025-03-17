@@ -990,7 +990,7 @@ def splitDSInstructionIntoSmaller(writer, kernel, item, numLocalWritesPerSched, 
         ds1 = DSModifiers(na=1, offset=ds.offset + dsOffset * d)
         r1  = fastdeepcopy(srcr)
         r1.regNum //= div
-        r1.regName.offsets.append(4 // div * d)
+        r1.regName.addOffset(4 // div * d)
         writeInst.append(LocalWriteX(dstAddr=addr, src=r1, ds=ds1, comment=instruction.comment + " splitted"))
     
     return writeInst, len(writeInst), numLocalWritesPerSched * (div - 1)

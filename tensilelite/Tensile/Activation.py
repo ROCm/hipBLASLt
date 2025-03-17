@@ -892,9 +892,9 @@ class ActivationModule:
                                       enableGuard=self.enableGuard, prefix=self.vgprPrefixFormat):
                         if self.vgprPrefixFormat:
                             for vgpr in actInfo.vgprIdxList[0]:
-                                vgpr.regName.offsets[0] = vgprIn
+                                vgpr.regName.setOffset(0, vgprIn)
                             for vgpr in actInfo.vgprIdxList[1]:
-                                vgpr.regName.offsets[0] = vgprOut
+                                vgpr.regName.setOffset(0, vgprOut)
                         else:
                             for vgpr in actInfo.vgprIdxList[0]:
                                 vgpr.regIdx = vgprIn
@@ -1385,7 +1385,7 @@ def createVgprIdxList(module, vgprList: list, regName):
             for param in item.getParams():
                 if isinstance(param, RegisterContainer):
                     for index, vgprIdx in enumerate(vgprList):
-                        if param.regName and (param.regName.name == regName) and (param.regName.offsets[0] == vgprIdx):
+                        if param.regName and (param.regName.name == regName) and (param.regName.getOffset()[0] == vgprIdx):
                             vlist[index].append(param)
                         elif param.regIdx == vgprIdx:
                             vlist[index].append(param)

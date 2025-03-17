@@ -1139,7 +1139,8 @@ class DSStoreB256(DSStoreInstruction):
         src = fastdeepcopy(self.src0)
         regNum = src.regNum // 2
         if upper:
-            src.regName.offsets[-1] += regNum
+            idx = len(src.regName.getOffsets()) - 1
+            src.regName.setOffset(idx, src.regName.getOffsets()[idx] + regNum)
         src.regNum = regNum
         kStr = str(self.dstAddr) + ", " + str(src)
         return kStr

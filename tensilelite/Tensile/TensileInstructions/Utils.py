@@ -21,6 +21,7 @@
 ################################################################################
 
 from rocisa.enum import InstType
+from rocisa.container import vgpr, sgpr, accvgpr, mgpr, Holder
 
 from .Code import Module
 from .Containers import HolderContainer, RegisterContainer, RegName
@@ -33,65 +34,6 @@ from math import log
 from typing import Tuple
 import random
 import string
-
-########################################
-# Format GPRs
-########################################
-
-def _gpr(*args):
-    gprType = args[0]
-    args = args[1]
-    if isinstance(args[0], Holder):
-        idx  = args[0].idx
-        name = args[0].name
-        if len(args) == 1:
-            return HolderContainer(gprType, name, idx, 1)
-        elif len(args) == 2:
-            return HolderContainer(gprType, name, idx, args[1])
-    elif isinstance(args[0], int):
-        if len(args) == 1:
-            return RegisterContainer(gprType, None, args[0], 1)
-        elif len(args) == 2:
-            return RegisterContainer(gprType, None, args[0], args[1])
-    elif isinstance(args[0], str):
-        name = _generateRegName(args[0])
-        if len(args) == 1:
-            return RegisterContainer(gprType, name, None, 1)
-        elif len(args) == 2:
-            return RegisterContainer(gprType, name, None, args[1])
-    else:
-        printAssert("Unknown %sgpr name or index"%gprType)
-
-def vgpr(*args):
-    return _gpr("v", args)
-
-def sgpr(*args):
-    return _gpr("s", args)
-
-def accvgpr(*args):
-    return _gpr("acc", args)
-
-def mgpr(*args):
-    return _gpr("m", args)
-
-@lru_cache(maxsize=None)
-def _generateRegName(rawText):
-    splitTxt = rawText.split("+")
-    offsets = []
-    if len(splitTxt) > 1:
-        for arg in splitTxt[1:]:
-            offsets.append(int(arg))
-    return RegName(splitTxt[0], offsets)
-
-class Holder:
-    def __init__(self, idx=None, name=None):
-        if name:
-            self.name = _generateRegName(name)
-            assert(idx == None)
-        else:
-            self.name = name
-            assert(name == None)
-        self.idx    = idx
 
 ########################################
 # mfma
