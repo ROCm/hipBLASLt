@@ -181,10 +181,12 @@ install_packages( )
 
   if [[ "${use_rocroller}" == true ]]; then
     library_dependencies_ubuntu+=( "rocm-llvm-dev" "libboost-container1.74-dev" "libzstd-dev" "libfmt-dev" "libopenblas-dev" )
+    library_dependencies_centos8+=( "rocm-llvm-devel" "boost-container-1.75.0" "zstd" "fmt-devel" "openblas-devel" )
   fi
 
   if [[ "${legacy_hipblas_direct}" == false ]]; then
     library_dependencies_ubuntu+=( "hipblas-common-dev" )
+    library_dependencies_centos8+=( "hipblas-common-devel" )
   fi
 
   # wget is needed for msgpack in this case
