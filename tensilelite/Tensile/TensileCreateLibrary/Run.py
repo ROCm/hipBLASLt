@@ -316,7 +316,7 @@ def writeSolutionsAndKernelsTCL(
         buildTmpPath / "code_object_tmp"
     )  # Temp path for HSA code object files (.hsaco)
 
-    buildKernels = [k for k in kernels if k["BuildKernel"]]
+    buildKernels = [k for k in kernels if "BuildKernel" in k]
     if len(buildKernels) == 0:
         visited = set()
         duplicates = 0
