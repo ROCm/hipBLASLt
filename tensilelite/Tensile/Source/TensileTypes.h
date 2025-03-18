@@ -28,8 +28,8 @@
 #define TENSILETYPES_H
 #include "tensile_bfloat16.h"
 
-#if HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR > 2 \
-    && HIP_VERSION_PATCH > 42130 //tmp before gfx94 use hip f8 header
+#if (HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR == 2 && HIP_VERSION_PATCH > 42130) \
+	|| (HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR >= 3)//tmp before gfx94 use hip f8 header
 
 // Using hip header for both NANOO and OCP data types
 #if defined(__HIPCC__)

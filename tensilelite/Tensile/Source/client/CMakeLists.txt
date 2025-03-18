@@ -48,6 +48,8 @@ if(NOT WIN32)
     )
 endif()
 
+find_package(Boost COMPONENTS program_options filesystem REQUIRED)
+
 add_library(TensileClient STATIC ${client_sources})
 
 set_target_properties(TensileClient
@@ -55,8 +57,6 @@ set_target_properties(TensileClient
                       CXX_STANDARD 17
                       CXX_STANDARD_REQUIRED ON
                       CXX_EXTENSIONS OFF)
-
-find_package(Boost COMPONENTS program_options REQUIRED)
 
 if (NOT WIN32)
     find_package(ROCmSMI QUIET)
@@ -70,7 +70,7 @@ include_directories(${Boost_INCLUDE_DIR})
 
 target_include_directories(TensileClient PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")# "${rocm_smi_root}/include")
 
-target_link_libraries(TensileClient PRIVATE TensileHost ${Boost_LIBRARIES})
+target_link_libraries(TensileClient PRIVATE TensileHost Boost::program_options Boost::filesystem)
 
 if(Tensile_ENABLE_MARKER)
     target_link_libraries(TensileClient PRIVATE -lroctx64)

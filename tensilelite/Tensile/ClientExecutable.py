@@ -85,10 +85,9 @@ def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cComp
                'CMAKE_CXX_COMPILER': os.path.join(globalParameters["ROCmBinPath"], cxxCompiler),
                'CMAKE_C_COMPILER': os.path.join(globalParameters["ROCmBinPath"], cCompiler)}
 
-    if os.name == "nt":
-        options['CMAKE_RC_COMPILER'] = os.path.join(globalParameters["ROCmBinPath"], "llvm-rc.exe")
-        options['CMAKE_MAKE_PROGRAM'] = CMakeEnvironment.getBuildProgramPath()
-        options['CMAKE_PREFIX_PATH'] = os.path.join(globalParameters["ROCmBinPath"], "../lib", "cmake", "hip")
+    if "CCACHE_BASEDIR" in os.environ:
+        options.update({'CMAKE_C_COMPILER_LAUNCHER': 'ccache', 'CMAKE_CXX_COMPILER_LAUNCHER': 'ccache'})
+        print('Is Using CCACHE')
 
     return CMakeEnvironment(sourcedir, builddir, **options)
 

@@ -46,6 +46,7 @@ namespace TensileLite
 {
     namespace streamk
     {
+
         namespace math
         {
             /**
@@ -59,6 +60,7 @@ namespace TensileLite
                 return static_cast<N>(d == 0 ? 0 : (n / d + (n % d != 0 ? 1 : 0)));
             }
         } // namespace math
+
 
         constexpr size_t num_iters_total(size_t output_tiles, size_t iters_per_tile)
         {
@@ -75,94 +77,164 @@ namespace TensileLite
             return math::safe_ceil_div(iters_total, g);
         }
 
-        constexpr size_t number_of_output_tiles(size_t BLK_M, size_t BLK_N, size_t m, size_t n, size_t batch)
+        constexpr size_t
+            number_of_output_tiles(size_t BLK_M, size_t BLK_N, size_t m, size_t n, size_t batch)
         {
             size_t m_tiles = math::safe_ceil_div(m, BLK_M);
             size_t n_tiles = math::safe_ceil_div(n, BLK_N);
             return m_tiles * n_tiles * batch;
         }
 
-        constexpr size_t num_fixup_peers(size_t iters_total, size_t iters_per_tile, size_t iters_per_cta)
+        constexpr size_t num_fixup_peers_v2(size_t g,
+                                            size_t iters_total,
+                                            size_t iters_per_tile,
+                                            size_t iters_per_cta)
         {
             // If tiles don't evenly divide there are always at least 2 fixup peers, and more if iters_per_tile > iters_per_cta
-            // size_t hasFixup = (iters_total % g == 0 && // Check if some WGs have more iters than others
-            //                    iters_per_cta % iters_per_tile == 0) // Check if WGs have an even number of full tiles
-            //                    ? 0 : 1;
-            return math::safe_ceil_div(iters_per_tile, iters_per_cta); // + hasFixup;
+            size_t hasFixup = (iters_total % g == 0 && // Check if some WGs have more iters than others
+                            iters_per_cta % iters_per_tile
+                                == 0) // Check if WGs have an even number of full tiles
+                                ? 0
+                                : 1;
+            return math::safe_ceil_div(iters_per_tile, iters_per_cta) + hasFixup;
+        }
+
+        constexpr size_t num_fixup_peers(size_t iters_per_tile, size_t iters_per_cta)
+        {
+            return math::safe_ceil_div(iters_per_tile, iters_per_cta);
         }
 
         std::tuple<double, size_t, size_t> predicted_runtime(size_t BLK_M,
-                                                             size_t BLK_N,
-                                                             size_t BLK_K,
-                                                             size_t m,
-                                                             size_t n,
-                                                             size_t k,
-                                                             size_t batch,
-                                                             int    g,
-                                                             double a,
-                                                             double b,
-                                                             double c,
-                                                             double d)
+                                                            size_t BLK_N,
+                                                            size_t BLK_K,
+                                                            size_t m,
+                                                            size_t n,
+                                                            size_t k,
+                                                            size_t batch,
+                                                            int    g,
+                                                            double a,
+                                                            double b,
+                                                            double c,
+                                                            double d)
         {
             size_t output_tiles   = number_of_output_tiles(BLK_M, BLK_N, m, n, batch);
-            size_t iters_per_tile = num_iters_per_tile(BLK_K, k); // maximum iters per tile, including extra iters when uneven
+            size_t iters_per_tile = num_iters_per_tile(BLK_K, k);
             size_t iters_total    = num_iters_total(output_tiles, iters_per_tile);
             size_t iters_per_cta  = num_iters_per_cta(iters_total, g);
-            size_t fixup_peers    = num_fixup_peers(iters_total, iters_per_tile, iters_per_cta);
+            size_t fixup_peers    = num_fixup_peers(iters_per_tile, iters_per_cta);
 
-            return {a + (b * (fixup_peers > 1)) + (c * iters_per_cta) + (d * (fixup_peers - 1)),
-                    iters_per_cta,
-                    fixup_peers};
+            double runtime
+                = a + (b * (fixup_peers > 1)) + (c * iters_per_cta) + (d * (fixup_peers - 1));
+
+            return std::make_tuple(runtime, iters_per_cta, fixup_peers);
+        }
+
+        std::tuple<double, size_t, size_t, double> predicted_runtime_v2(size_t BLK_M,
+                                                                        size_t BLK_N,
+                                                                        size_t BLK_K,
+                                                                        size_t m,
+                                                                        size_t n,
+                                                                        size_t k,
+                                                                        size_t batch,
+                                                                        int    g,
+                                                                        double a,
+                                                                        double b,
+                                                                        double c,
+                                                                        double d)
+        {
+            size_t output_tiles   = number_of_output_tiles(BLK_M, BLK_N, m, n, batch);
+            size_t iters_per_tile = num_iters_per_tile(BLK_K, k);
+            size_t iters_total    = num_iters_total(output_tiles, iters_per_tile);
+            size_t iters_per_cta  = num_iters_per_cta(iters_total, g);
+            size_t fixup_peers    = num_fixup_peers_v2(g, iters_total, iters_per_tile, iters_per_cta);
+
+            size_t remainder_tiles = output_tiles % g;
+            double k_split_ratio   = remainder_tiles / static_cast<double>(g);
+
+            double cache_penalty = 0.0;
+            if(fixup_peers >= 1)
+            {
+                // Calculate the ideal equal split ratio
+                double ideal_split_ratio = 1.0 / fixup_peers;
+
+                // Measure deviation from the ideal equal split
+                double imbalance = 1 / std::abs(k_split_ratio - ideal_split_ratio);
+
+                // Scale the penalty by the imbalance and the per-collaborator cost (d)
+                cache_penalty = d * imbalance * fixup_peers;
+            }
+
+            // Include the cache penalty in the runtime prediction
+            double runtime = a + (b * (fixup_peers > 1)) + (c * iters_per_cta) + (d * (fixup_peers - 1))
+                            + cache_penalty;
+
+            return std::make_tuple(runtime, iters_per_cta, fixup_peers, cache_penalty);
         }
 
         int best_predicted_grid_size(size_t BLK_M,
-                                     size_t BLK_N,
-                                     size_t BLK_K,
-                                     size_t m,
-                                     size_t n,
-                                     size_t k,
-                                     size_t batch,
-                                     int    grid_start,
-                                     int    grid_end)
+                                    size_t BLK_N,
+                                    size_t BLK_K,
+                                    size_t m,
+                                    size_t n,
+                                    size_t k,
+                                    size_t batch,
+                                    int    grid_start,
+                                    int    grid_end,
+                                    bool   verbose = false)
         {
-            static const bool debug = Debug::Instance().printStreamKGridInfo();
 
             // Fixed overhead alpha (a), fixed-size cost incurred by
             // each work-group, e.g. the grid launch latency, the initial
             // compulsary cache misses, the cost of writing the final output tile
             // to C.
-            double a = 5.04 + 8.30;
+            // double a = 5544 + 9130;
+            double a = 2.772 + 4.565; // 5.04 + 8.30;
 
             // Beta (b) incorporates conditional costs of outputting temporary partial
             // sums for scenarios where the number of output tiles does not quantize
             // perfectly across the number of processors.
-            double b = 5.47;
+            double b = 3.01; // 5.47; 6017;
 
             // c represents instruction and stall workload of each MAC-iteration.
-            double c = 4.17;
+            double c = 2.2935; // 4.17; 4587;
 
             // Delta (d) is the cost of reading and accumulating the partial sums from
             // other work-groups covering the same tile.
-            double d = 18.59;
+            double d = 10.22; // 18.59; 20449;
 
-            // std::vector<double> runtimes;
-            std::pair<int, double> min_grid_runtime;
-            min_grid_runtime.second = std::numeric_limits<double>::max();
-            int g                   = grid_start;
+            std::pair<size_t, double> min_grid_runtime;
+            std::pair<size_t, double> min_grid_runtime_v2;
+            min_grid_runtime.second    = std::numeric_limits<double>::max();
+            min_grid_runtime_v2.second = std::numeric_limits<double>::max();
+
+            size_t g = grid_start;
 
             // Predict the number of CTAs to use between 1 and 304
-            for(; g <= grid_end; ++g)
+            for(; g <= static_cast<size_t>(grid_end); ++g)
             {
                 auto [runtime, iters_per_cta, fixup_peers]
                     = predicted_runtime(BLK_M, BLK_N, BLK_K, m, n, k, batch, g, a, b, c, d);
 
-                if(debug)
+                auto [runtime_v2, iters_per_cta_v2, fixup_peers_v2, cache_penalty]
+                    = predicted_runtime_v2(BLK_M, BLK_N, BLK_K, m, n, k, batch, g, a, b, c, d);
+
+                if(verbose)
                 {
-                    std::cout << "grid size: " << g << ", runtime: " << runtime
-                              << ", iters_per_cta: " << iters_per_cta
-                              << ", fixup_peers: " << fixup_peers << ", m: " << m << ", n: " << n
-                              << ", k: " << k << ", batch: " << batch << ", a: " << a << ", b: " << b << ", c: " << c
-                              << ", d: " << d << std::endl;
+                    std::cout << "[original] "
+                            << "grid size: " << g << ", runtime: " << runtime
+                            << ", iters_per_cta: " << iters_per_cta << ", fixup_peers: "
+                            << fixup_peers
+                            // << ", cache_penalty: " << cache_penalty
+                            << ", m: " << m << ", n: " << n << ", k: " << k << ", a: " << a
+                            << ", b: " << b << ", c: " << c << ", d: " << d << std::endl;
+
+                    std::cout << "[cache-offset] "
+                            << "grid size: " << g << ", runtime: " << runtime_v2
+                            << ", iters_per_cta: " << iters_per_cta_v2
+                            << ", fixup_peers: " << fixup_peers_v2
+                            << ", cache_penalty: " << cache_penalty << ", m: " << m << ", n: " << n
+                            << ", k: " << k << ", a: " << a << ", b: " << b << ", c: " << c
+                            << ", d: " << d << std::endl;
                 }
 
                 if(min_grid_runtime.second > runtime)
@@ -170,18 +242,30 @@ namespace TensileLite
                     min_grid_runtime.first  = g;
                     min_grid_runtime.second = runtime;
                 }
+
+                if(min_grid_runtime_v2.second > runtime_v2)
+                {
+                    min_grid_runtime_v2.first  = g;
+                    min_grid_runtime_v2.second = runtime_v2;
+                }
             }
 
-            if(debug)
+            if(verbose)
             {
-                std::cout << "Number of Output Tiles: "
-                          << number_of_output_tiles(BLK_M, BLK_N, m, n, batch) << std::endl;
-                std::cout << "Minimum runtime: " << min_grid_runtime.second
-                          << " @ grid size: " << min_grid_runtime.first << std::endl;
+                std::cout << "[original] Number of Output Tiles: "
+                        << number_of_output_tiles(BLK_M, BLK_N, m, n, batch) << std::endl;
+                std::cout << "[original] Minimum runtime: " << min_grid_runtime.second
+                        << " @ grid size: " << min_grid_runtime.first << std::endl;
+
+                std::cout << "[cache-offset] Number of Output Tiles: "
+                        << number_of_output_tiles(BLK_M, BLK_N, m, n, batch) << std::endl;
+                std::cout << "[cache-offset] Minimum runtime: " << min_grid_runtime_v2.second
+                        << " @ grid size: " << min_grid_runtime_v2.first << std::endl;
             }
 
-            return min_grid_runtime.first;
+            return min_grid_runtime_v2.first;
         }
+
     } // namespace streamk
 
     enum class KERNELARGTYPE
@@ -660,6 +744,8 @@ namespace TensileLite
                                              ContractionInputs const&            inputs,
                                              uint32_t const& workspaceOffsetInByte,
                                              Hardware const* hardware,
+                                             dim3 const&     problemNumGroupTiles,
+                                             dim3 const&     numWorkGroups,
                                              KA&             args) const
     {
         if(debugKernel)
@@ -801,6 +887,81 @@ namespace TensileLite
             args.append("beta", inputs.beta, problem.betaType());
             if(problem.betaType() == DataType::Half)
                 args.append("beta_2", inputs.beta, problem.betaType());
+        }
+
+        if(sizeMapping.persistentKernel != 0 || sizeMapping.streamK != 0)
+        {
+            uint32_t magicShift;
+            args.template append<uint32_t>("magicNumberProblemNumGroupTiles0",
+                                     magicNumber(2, problemNumGroupTiles.x, &magicShift));
+            args.template append<uint32_t>("magicShiftProblemNumGroupTiles0", magicShift);
+        }
+
+        if(sizeMapping.streamK != 0)
+        {
+            auto tiles = problem.getNumTiles(sizeMapping);
+
+            // Clamp minimum iters per tile to 1 to allow stream-k index calculation to work in case K==0
+            // In this case no actual iterations will be run, but workgroups will be mapped correctly for beta*C
+            auto     itersPerTile = max(1, problem.getItersPerTile(sizeMapping));
+            auto     totalIters   = tiles * itersPerTile;
+            uint32_t magicNumberItersPerTile;
+            uint32_t magicShiftItersPerTile;
+            magicNumberItersPerTile = magicNumber(2, itersPerTile, &magicShiftItersPerTile);
+
+            args.template append<uint32_t>("itersPerTile", itersPerTile);
+            args.template append<uint32_t>("magicNumberItersPerTile", magicNumberItersPerTile);
+            args.template append<uint32_t>("magicShiftItersPerTile", magicShiftItersPerTile);
+
+            uint32_t numGroupTiles0x1 = problemNumGroupTiles.x * problemNumGroupTiles.y;
+            uint32_t magicNumProblemNumGroupTiles0By1;
+            uint32_t magicShiftProblemNumGroupTiles0By1;
+            magicNumProblemNumGroupTiles0By1
+                = magicNumber(2, numGroupTiles0x1, &magicShiftProblemNumGroupTiles0By1);
+            args.template append<uint32_t>("magicNumProblemNumGroupTiles0By1",
+                                     magicNumProblemNumGroupTiles0By1);
+            args.template append<uint32_t>("magicShiftProblemNumGroupTiles0By1",
+                                     magicShiftProblemNumGroupTiles0By1);
+
+            args.template append<uint32_t>("totalIters", totalIters);
+            if(sizeMapping.streamK == 1) // Basic SK
+            {
+                uint32_t itersPerWave = CeilDivide(totalIters, numWorkGroups.x);
+                args.template append<uint32_t>("SKItersPerWG", itersPerWave);
+            }
+            else if(sizeMapping.streamK >= 2) // Two-tile SK
+            {
+                size_t skGrid = numWorkGroups.x;
+
+                AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(hardware);
+                assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
+                int fullTiles = pAMDGPU->skFullTiles;
+
+                bool bigEnough = tiles > skGrid;
+                // skTiles is number of Stream-K tiles to complete
+                // Two-tile algorithm causes each WG to run an even number of Stream-K iterations,
+                // followed by an even number of data-parllel tiles.
+                // If total tiles is evenly divisble by grid size,
+                // then no Stream-K tiles are needed, all data-parallel
+                uint32_t skTiles = skGrid;
+                // If not evenly divisible, determine number of Stream-K tiles
+                if(tiles % skGrid != 0)
+                {
+                    // Number of data-parallel tiles on each workgroup would be:
+                    // dpTilesPerWG = bigEnough ? (tiles - skTiles) / skGrid : 0;
+                    skTiles = bigEnough ? skGrid * fullTiles + tiles % skGrid : tiles;
+                    // Cap Stream-K tiles at total number of tiles in case of large multiplier
+                    skTiles = min(skTiles, tiles);
+                }
+
+                uint32_t skItersPerWG = skTiles * itersPerTile / skGrid;
+                uint32_t skExtraIters = skTiles * itersPerTile % (skGrid);
+
+                args.template append<uint32_t>("SKItersPerWG", skItersPerWG);
+                args.template append<uint32_t>("skGrid", skGrid);
+                args.template append<uint32_t>("skTiles", skTiles);
+                args.template append<uint32_t>("skExtraIters", skExtraIters);
+            }
         }
 
         if constexpr(insertKernelArgs)
@@ -1106,32 +1267,25 @@ namespace TensileLite
         rv.numWorkGroups.x = CeilDivide(rv.numWorkGroups.x, sizeMapping.macroTile.x);
         rv.numWorkGroups.y = CeilDivide(rv.numWorkGroups.y, sizeMapping.macroTile.y);
 
-        uint32_t problemNumGroupTiles0 = rv.numWorkGroups.x;
-        uint32_t problemNumGroupTiles1 = rv.numWorkGroups.y;
-        // used only when persistent kernel along batch
-        uint32_t problemNumGroupTiles2 = rv.numWorkGroups.z;
+        dim3 problemNumGroupTiles = rv.numWorkGroups;
 
         uint32_t gsu
             = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
         if(gsu > 0)
             rv.numWorkGroups.y *= gsu;
 
-        size_t cuCount   = 0;
         size_t skGrid    = 0;
         auto   tiles     = problem.getNumTiles(sizeMapping);
-        int    fullTiles = 0;
         if(sizeMapping.streamK != 0 || sizeMapping.persistentKernel != 0)
         {
             AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(&hardware);
             assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
-            cuCount = pAMDGPU->computeUnitCount;
             if(sizeMapping.streamK != 0)
             {
                 skGrid             = getSKGrid(problem, hardware, tiles);
                 rv.numWorkGroups.x = skGrid;
                 rv.numWorkGroups.y = 1;
                 rv.numWorkGroups.z = 1;
-                fullTiles          = pAMDGPU->skFullTiles;
             }
         }
 
@@ -1172,80 +1326,13 @@ namespace TensileLite
             kernelArgs<T_Debug, false>(
                 1, 0, rv.args, getNumWorkGroups(rv), &hardware, problem.getParams());
         }
-        singleCallArgs<T_Debug, true>(problem, inputs, 0, &hardware, rv.args);
+        singleCallArgs<T_Debug, true>(problem, inputs, 0, &hardware, problemNumGroupTiles, rv.numWorkGroups, rv.args);
 
         if(sizeMapping.globalAccumulation == 3)
         {
             rv.args.append<void const*>("dstD", inputs.d);
             rv.args.append<void const*>("Synchronizer", inputs.Synchronizer);
             rv.args.append<uint32_t>("GSUSync", 0);
-        }
-
-        if(sizeMapping.persistentKernel != 0 || sizeMapping.streamK != 0)
-        {
-            uint32_t magicShift;
-            rv.args.append<uint32_t>("magicNumberProblemNumGroupTiles0",
-                                     magicNumber(2, problemNumGroupTiles0, &magicShift));
-            rv.args.append<uint32_t>("magicShiftProblemNumGroupTiles0", magicShift);
-        }
-
-        if(sizeMapping.streamK != 0)
-        {
-            // Clamp minimum iters per tile to 1 to allow stream-k index calculation to work in case K==0
-            // In this case no actual iterations will be run, but workgroups will be mapped correctly for beta*C
-            auto     itersPerTile = max(1, problem.getItersPerTile(sizeMapping));
-            auto     totalIters   = tiles * itersPerTile;
-            uint32_t magicNumberItersPerTile;
-            uint32_t magicShiftItersPerTile;
-            magicNumberItersPerTile = magicNumber(2, itersPerTile, &magicShiftItersPerTile);
-
-            rv.args.append<uint32_t>("itersPerTile", itersPerTile);
-            rv.args.append<uint32_t>("magicNumberItersPerTile", magicNumberItersPerTile);
-            rv.args.append<uint32_t>("magicShiftItersPerTile", magicShiftItersPerTile);
-
-            uint32_t numGroupTiles0x1 = problemNumGroupTiles0 * problemNumGroupTiles1;
-            uint32_t magicNumProblemNumGroupTiles0By1;
-            uint32_t magicShiftProblemNumGroupTiles0By1;
-            magicNumProblemNumGroupTiles0By1
-                = magicNumber(2, numGroupTiles0x1, &magicShiftProblemNumGroupTiles0By1);
-            rv.args.append<uint32_t>("magicNumProblemNumGroupTiles0By1",
-                                     magicNumProblemNumGroupTiles0By1);
-            rv.args.append<uint32_t>("magicShiftProblemNumGroupTiles0By1",
-                                     magicShiftProblemNumGroupTiles0By1);
-
-            rv.args.append<uint32_t>("totalIters", totalIters);
-            if(sizeMapping.streamK == 1) // Basic SK
-            {
-                uint32_t itersPerWave = CeilDivide(totalIters, rv.numWorkGroups.x);
-                rv.args.append<uint32_t>("SKItersPerWG", itersPerWave);
-            }
-            else if(sizeMapping.streamK >= 2) // Two-tile SK
-            {
-                bool bigEnough = tiles > skGrid;
-                // skTiles is number of Stream-K tiles to complete
-                // Two-tile algorithm causes each WG to run an even number of Stream-K iterations,
-                // followed by an even number of data-parllel tiles.
-                // If total tiles is evenly divisble by grid size,
-                // then no Stream-K tiles are needed, all data-parallel
-                uint32_t skTiles = skGrid;
-                // If not evenly divisible, determine number of Stream-K tiles
-                if(tiles % skGrid != 0)
-                {
-                    // Number of data-parallel tiles on each workgroup would be:
-                    // dpTilesPerWG = bigEnough ? (tiles - skTiles) / skGrid : 0;
-                    skTiles = bigEnough ? skGrid * fullTiles + tiles % skGrid : tiles;
-                    // Cap Stream-K tiles at total number of tiles in case of large multiplier
-                    skTiles = min(skTiles, tiles);
-                }
-
-                uint32_t skItersPerWG = skTiles * itersPerTile / skGrid;
-                uint32_t skExtraIters = skTiles * itersPerTile % (skGrid);
-
-                rv.args.append<uint32_t>("SKItersPerWG", skItersPerWG);
-                rv.args.append<uint32_t>("skGrid", skGrid);
-                rv.args.append<uint32_t>("skTiles", skTiles);
-                rv.args.append<uint32_t>("skExtraIters", skExtraIters);
-            }
         }
 
         if(problemType.stochasticRounding)
@@ -1371,7 +1458,7 @@ namespace TensileLite
             {
                 auto problem = problems[idx];
                 singleCallArgs<T_Debug, false>(
-                    problem, inputs.grouped[idx], workspaceOffsetInByte, nullptr, h_args);
+                    problem, inputs.grouped[idx], workspaceOffsetInByte, nullptr, rv.numWorkGroups, rv.numWorkGroups, h_args);
 
                 if(sizeMapping.globalAccumulation == 3)
                 {

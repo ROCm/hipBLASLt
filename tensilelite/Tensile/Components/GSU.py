@@ -110,11 +110,12 @@ class GSUOff(GSU):
         module = Module("GSU Off graIncrements")
 
         tc = tP["tensorChar"]
+        tcGR = tc if tc == "Metadata" else (tc + "GR")
         dimIdx = kernel["ProblemType"]["IndicesSummation"][loopIdx] # dimension index
         stride = writer.strideRef(tc, dimIdx)
         isMirrorIdx = dimIdx in kernel["ProblemType"]["MirrorDims%s"%tc]
 
-        m = "DepthU*Bpe%s"%(tc)
+        m = "DepthU*Bpe%s"%(tcGR)
         if isMirrorIdx:
           m = "-%s"%(m)
 

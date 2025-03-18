@@ -186,7 +186,7 @@ double get_time_us_no_sync(void)
 
 /* ============================================================================================ */
 /*  device query and print out their ID and name; return number of compute-capable devices. */
-int64_t query_device_property(int device_id)
+int64_t query_device_property(int device_id, hipDeviceProp_t &props)
 {
     int             device_count;
     hipblasStatus_t status = (hipblasStatus_t)hipGetDeviceCount(&device_count);
@@ -208,7 +208,6 @@ int64_t query_device_property(int device_id)
         return device_count;
     }
 
-    hipDeviceProp_t props;
     status = (hipblasStatus_t)hipGetDeviceProperties(&props, device_id);
     if(status != HIPBLAS_STATUS_SUCCESS)
     {
