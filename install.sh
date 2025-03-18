@@ -422,6 +422,7 @@ force_rocroller=false
 use_rocroller=false
 internal_mrisas=
 logic_filter=
+legacy_hipblas_direct=false
 
 
 rocm_path=/opt/rocm
