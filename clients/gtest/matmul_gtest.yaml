@@ -327,7 +327,7 @@ Tests:
   K: 128
   alpha_beta: *alpha_beta_range
   transA_transB: *transA_transB_range
-  solution_selection: 2
+  tensile_solution_selection_method: 2
 
 - name: matmul_256
   category: pre_checkin
@@ -508,7 +508,7 @@ Tests:
   activation_type: relu
   bias_vector: [0, 1]
   unit_check: 1
-  solution_selection: 2
+  tensile_solution_selection_method: 2
 
 - name: matmul_bias_gelu
   category: pre_checkin

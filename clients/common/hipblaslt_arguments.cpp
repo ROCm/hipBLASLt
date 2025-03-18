@@ -141,7 +141,7 @@ void Arguments::init()
 
     print_solution_found = false;
     flush                = false;
-    solution_selection   = -1;
+    tensile_solution_selection_method   = -1;
 }
 
 // Function to print Arguments out to stream in YAML format

@@ -165,7 +165,7 @@ struct Arguments
     bool print_kernel_info;
 
     bool flush;
-    int solution_selection;
+    int tensile_solution_selection_method;
 
     /*************************************************************************
      *                     End Of Arguments                                  *
@@ -260,7 +260,7 @@ struct Arguments
     OPER(print_solution_found) SEP   \
     OPER(print_kernel_info) SEP      \
     OPER(flush) SEP                  \
-    OPER(solution_selection) SEP
+    OPER(tensile_solution_selection_method) SEP
 
     // clang-format on
 
