@@ -8,7 +8,7 @@
 Building and installing hipBLASLt
 *********************************
 
-This document includes details on how to build and install hipBLASLt on Linux systems.
+This topic describes how to build and install hipBLASLt on Linux systems.
 
 Prerequisites
 =============
@@ -86,7 +86,7 @@ Static library
 To build static libraries with ``install.sh``, use the ``--static`` option.
 This produces a non-standard static library build. This means it has an additional runtime dependency 
 consisting of the entire ``hipblaslt/`` subdirectory, which is located in the ``/opt/rocm/lib`` folder. 
-You can relocate this folder, but you must set the environment variable ``HIPBLASLT_TENSILE_LIBPATH``
+You can move this folder someplace else, but you must set the environment variable ``HIPBLASLT_TENSILE_LIBPATH``
 to the new location.
 
 Dependencies
