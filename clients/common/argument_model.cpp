@@ -28,19 +28,23 @@
 #include "performance_monitor.hpp"
 
 // FLOPS/CLOCK/CU values for gfx942
-auto hipblaslt_get_flops_per_clock_per_cu_gfx942(hipblasComputeType_t type)
+auto hipblaslt_get_flops_per_clock_per_cu_gfx942(hipDataType          inputType,
+                                                 hipblasComputeType_t computeType)
 {
-    if(type == HIPBLAS_COMPUTE_32F || type == HIPBLAS_COMPUTE_32F_PEDANTIC
-       || type == HIPBLAS_COMPUTE_64F || type == HIPBLAS_COMPUTE_64F_PEDANTIC)
+    if(inputType == HIP_R_32F || inputType == HIP_R_64F)
         return 256;
-    else if(type == HIPBLAS_COMPUTE_16F || type == HIPBLAS_COMPUTE_16F_PEDANTIC
-            || type == HIPBLAS_COMPUTE_32F_FAST_16F || type == HIPBLAS_COMPUTE_32F_FAST_16BF)
+    else if(computeType == HIPBLAS_COMPUTE_32F_FAST_TF32)
+        return 1024;
+    else if(inputType == HIP_R_16F || inputType == HIP_R_16BF)
         return 2048;
+    else if(inputType == HIP_R_8F_E4M3_FNUZ || inputType == HIP_R_8F_E5M2_FNUZ
+            || inputType == HIP_R_8F_E4M3 || inputType == HIP_R_8F_E5M2 || inputType == HIP_R_8I)
+        return 4096;
     else
         return 0;
 }
-// this should have been a member variable but due to the complex variadic template this singleton allows global control
 
+// this should have been a member variable but due to the complex variadic template this singleton allows global control
 static bool log_function_name = false;
 
 void ArgumentModel_set_log_function_name(bool f)
@@ -63,11 +67,12 @@ void ArgumentModel_log_efficiency(hipblaslt_internal_ostream& name_line,
         return;
 
     if(performance_monitor.getDeviceString() == "gfx942"
-       && hipblaslt_get_flops_per_clock_per_cu_gfx942(arg.compute_type) != 0)
+       && hipblaslt_get_flops_per_clock_per_cu_gfx942(arg.a_type, arg.compute_type) != 0)
     {
-        double theoretical_gflops = hipblaslt_get_flops_per_clock_per_cu_gfx942(arg.compute_type)
-                                    * performance_monitor.getCuCount()
-                                    * performance_monitor.getLowestAverageSYSCLK() * 0.001;
+        double theoretical_gflops
+            = hipblaslt_get_flops_per_clock_per_cu_gfx942(arg.a_type, arg.compute_type)
+              * performance_monitor.getCuCount() * performance_monitor.getLowestAverageSYSCLK()
+              * 0.001;
         name_line << ",efficiency";
         val_line << "," << (hipblaslt_gflops / theoretical_gflops) * 100;
     }
