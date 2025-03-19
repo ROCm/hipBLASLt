@@ -271,21 +271,6 @@ def writeBenchmarkFiles(
         s["SolutionNameMin"] = getNameMin(solution, solutionMinNaming, debugConfig.splitGSU)
         s["KernelNameMin"]   = getNameMin(solution, solutionMinNaming, debugConfig.splitGSU, True)
 
-    def markKernelsToBuild(data):
-        uniqueKernels = set()
-        for soln in solutions:
-            name = soln["KernelNameMin"]
-            if name not in uniqueKernels:
-                # The first time we visit a unique kernel mark it for building
-                uniqueKernels.add(name)
-                soln["BuildKernel"] = True
-            else:
-                # If we've already visited a kernel remove BuildKernel if it is populated
-                if "BuildKernel" in soln:
-                    soln.pop("BuildKernel")
-
-    markKernelsToBuild(solutions)
-
     newLibraryDir = ensurePath(sourcePath / 'library')
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")
     newLibrary = SolutionLibrary.MasterSolutionLibrary.BenchmarkingLibrary(

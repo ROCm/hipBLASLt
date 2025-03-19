@@ -585,6 +585,23 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
                     solutionState["ProblemType"]["DataTypeMetadata"].value
             solutionList.append(solutionState)
 
+    def markKernelsToBuild(solutions):
+        uniqueKernels = set()
+        for soln in solutions:
+            name = soln["KernelNameMin"]
+            print(name)
+            if name not in uniqueKernels:
+                # The first time we visit a unique kernel mark it for building
+                uniqueKernels.add(name)
+                soln["BuildKernel"] = True
+                print("marking")
+            else:
+                # If we've already visited a kernel remove BuildKernel if it is populated
+                if "BuildKernel" in soln:
+                    soln.pop("BuildKernel")
+
+    markKernelsToBuild(solutionList)
+
     data.append(solutionList)
     # index order
     data.append(indexOrder)

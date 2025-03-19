@@ -31,10 +31,10 @@ from copy import deepcopy
 from enum import IntEnum
 
 class LogicIndex(IntEnum):
-    HEADER = 5
-    SOLUTIONS = 6
-    SIZES = 8
-    ATTRIBUTE = 12
+    HEADER = 4
+    SOLUTIONS = 5
+    SIZES = 7
+    ATTRIBUTE = 11
 
 verbosity = 1
 

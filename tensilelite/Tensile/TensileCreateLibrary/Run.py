@@ -317,10 +317,10 @@ def writeSolutionsAndKernelsTCL(
     )  # Temp path for HSA code object files (.hsaco)
 
     buildKernels = [k for k in kernels if "BuildKernel" in k]
+    splitGSU = False
     if len(buildKernels) == 0:
         visited = set()
         duplicates = 0
-        splitGSU = False
         for k in kernels:
             base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
             k.duplicate = True if base in visited else False
