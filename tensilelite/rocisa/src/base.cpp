@@ -188,7 +188,6 @@ void init_base(nb::module_ m)
         .def_prop_ro("archCaps", &rocisa::Item::getArchCaps)
         .def_prop_ro("asmBugs", &rocisa::Item::getAsmBugs)
         .def_prop_ro("kernel", &rocisa::Item::kernel)
-        .def("countType", &rocisa::Item::countType, "Check if the Item is X instance.")
         .def("prettyPrint", &rocisa::Item::prettyPrint, "Print the instance and the name of Item.")
         .def("__str__", &rocisa::Item::toString)
         .def("__deepcopy__",
@@ -204,7 +203,6 @@ void init_base(nb::module_ m)
 
     nb::class_<rocisa::DummyItem, rocisa::Item>(m_base, "DummyItem")
         .def(nb::init<>())
-        .def("countType", &rocisa::DummyItem::countType, "Always returns false.")
         .def("__deepcopy__",
              [](rocisa::DummyItem& self, nb::dict mamo) { return new rocisa::DummyItem(self); })
         .def("__getstate__", [](const rocisa::DummyItem& self) { return std::make_tuple(); })

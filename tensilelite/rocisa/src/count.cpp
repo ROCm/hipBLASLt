@@ -31,6 +31,13 @@ namespace nb = nanobind;
 
 namespace rocisa
 {
+    // This function can be used for prototyping in Python, but it's slower
+    // e.g. counType(item, Instruction)
+    int countType(const std::shared_ptr<Item>& Item, nb::object& obj)
+    {
+        return Item->countType(obj);
+    }
+
     // Use typeid for exact match, use dynamic_pointer_cast for inheritance match
     template <typename T>
     int countX(const std::shared_ptr<Item>& item)
@@ -91,6 +98,8 @@ namespace rocisa
 
 void init_count(nb::module_ m)
 {
+    m.def("countType", &rocisa::countType, "A Python style API for fast prototyping.");
+
     m.def("countInstruction", &rocisa::countInstruction);
     m.def("countGlobalRead", &rocisa::countGlobalRead);
     m.def("countSMemLoad", &rocisa::countSMemLoad);
