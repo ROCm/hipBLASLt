@@ -36,7 +36,7 @@ def generateSolutionsAndLibraries(archs, cxxCompiler, logicFiles):
     solutions = []
     libraries = []
     for logicFileGroup in logicFiles:
-        for logicFile in logicFileGroup[1]: # should be logicFileGroup[1]
+        for logicFile in logicFileGroup[1]:
             libraryLogic = parseLibraryLogicFile(logicFile, cxxCompiler, archs)
             solutions.extend(libraryLogic.solutions)
             libraries.append((libraryLogic.architecture, libraryLogic.library))
@@ -45,7 +45,7 @@ def generateSolutionsAndLibraries(archs, cxxCompiler, logicFiles):
 
 def writeAssembly(asmPath: Path, result: tuple):
     if result[0]:
-      printExit(f"Failed to build kernel {result[3]} because it has error code {result[0]}")
+      printExit(f"Failed to generate kernel {result[3]} because it has error code {result[0]}")
     filepath = asmPath / f"{result.name}.s"
     isa =  result[5]
     wfsize = result[6]

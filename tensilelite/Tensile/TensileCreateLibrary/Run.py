@@ -115,9 +115,10 @@ def buildAssemblyKernels(asmPath: Path, asmToolchain: AssemblyToolchain, kernelW
   uniqueAsmKernels = [k for k in kernels if "BuildKernel" in k]
   pksResults = [_processKernelSource(kernelWriterAssembly, ti, k) for k in uniqueAsmKernels]
   for p, isa, wavefrontsize in set([writeAssembly(asmPath, k) for k in pksResults]):
+    #Cijk_Ailk_Bljk_BSS_BH_UserArgs_MT128x256x64_MI16Vcp76y7W1sPIjpGVm_aV-u3wID5BM2LfzmbkyHs7rjQ=.s
     asmToolchain.assemble(str(p), str(p.with_suffix(".o")), isaToGfx(isa), wavefrontsize)
-    if removeTemporaries:
-      p.unlink()
+    #if removeTemporaries:
+    #  p.unlink()
   return uniqueAsmKernels, solnLibs[1]
 
 
@@ -259,11 +260,20 @@ def run():
 
   # List logic files
   unsortedLogic = logicFileList(archs, Path(arguments["LogicPath"]), arguments["LogicFilter"], arguments["Experimental"])
-  logicFiles = list(filter(lambda x: x != [], schedule(unsortedLogic, 2*arguments["CpuThreads"])))
+  logicFiles = list(filter(lambda x: x != [], schedule(unsortedLogic, 2*arguments["CpuThreads"], arguments["CpuThreads"])))
 
   # Phase1: Build assembly and master solution libraries
   writerAsm = KernelWriterAssembly(getRequiredParametersMin(), getRequiredParametersMin(), asmToolchain.assembler, asmToolchain.assemblerVersion)
   unaryGenSolutions = functools.partial(generateSolutionsAndLibraries, archs, cxxCompiler)
+  #result = ParallelMap2(unaryGenSolutions, ParallelMapConfig(message="blah"), logicFiles)
+  #d = {}
+  #l_path = Path(arguments["LogicPath"])
+  #for s, _, l in result:
+  #  logic_file = Path(l).relative_to(l_path)
+  #  d[str(logic_file)] = s[0]["codeObjectFile"]
+  #import pprint
+  #pprint.pprint(d, indent=2)
+  #printExit("done")
   unaryProcessMsl = functools.partial(processMsl, libraryPath, arguments["LibraryFormat"])
   unaryBuildAsmKernels = functools.partial(buildAssemblyKernels, assemblyPath, asmToolchain, writerAsm, TensileInstructions(), not arguments["KeepBuildTmp"])
   unaryBuildCOFile = functools.partial(buildAssemblyCodeObjectFiles, asmToolchain, writerAsm, libraryPath, assemblyPath, arguments["UseCompression"])

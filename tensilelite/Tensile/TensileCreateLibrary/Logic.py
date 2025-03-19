@@ -33,7 +33,6 @@ from typing import List
 from subprocess import PIPE, run
 
 def logicFileList(archs, logicPath: Path, logicFilter: str, experimental: bool):
-    
     def archMatch(arch: str, archs: List[str]):
         return (arch in archs) or any(a.startswith(arch) for a in archs)
     def validLogicFile(p: Path):
@@ -76,24 +75,25 @@ def numberOfBuildKernerls(logicFile):
 
 def getCoFileNames(logicFile):
     from yaml import Loader
-    #data = {}
-    #data["ProblemType"] = load_yaml_sequence_item(logicFile, Loader, DataIndex.PROBLEM_TYPE.value)
-    #properties = load_yaml_sequence_item(logicFile, Loader, DataIndex.DEVICE_PROPERTIES.value)
-    #if isinstance(properties, dict):
-    #    data["ArchitectureName"] = properties["Architecture"]
-    #    data["CUCount"] = properties["CUCount"]
-    #else:
-    #    data["ArchitectureName"] = properties
-    #    data["CUCount"] = None
-    #data["PerfMetric"] = load_yaml_sequence_item(logicFile, Loader, DataIndex.PERF_METRIC.value)
-    #return codeObjectFileBaseName(data), logicFile
-    coBasename = load_yaml_sequence_item(logicFile, Loader, DataIndex.CODE_OBJECT_NAME)
-    return coBasename["codeObjectFile"], logicFile
+    data = {}
+    data["ProblemType"] = load_yaml_sequence_item(logicFile, Loader, DataIndex.PROBLEM_TYPE.value)
+    properties = load_yaml_sequence_item(logicFile, Loader, DataIndex.DEVICE_PROPERTIES.value)
+    if isinstance(properties, dict):
+        data["ArchitectureName"] = properties["Architecture"]
+        data["CUCount"] = properties["CUCount"]
+    else:
+        data["ArchitectureName"] = properties
+        data["CUCount"] = None
+    data["PerfMetric"] = load_yaml_sequence_item(logicFile, Loader, DataIndex.PERF_METRIC.value)
+    return codeObjectFileBaseName(data), logicFile
+    #coBasename = load_yaml_sequence_item(logicFile, Loader, DataIndex.CODE_OBJECT_NAME)
+    #coBasename = load_yaml_sequence_item(logicFile, Loader, 0)
+    #return coBasename["codeObjectFile"], logicFile
 
 
-def schedule(logicFiles: list, numberOfTasks: int):
+def schedule(logicFiles: list, numberOfTasks: int, procs: int):
     problemMap = {}
-    cofiles = ParallelMap2(getCoFileNames, ParallelMapConfig(message="Scheudling work."), logicFiles)
+    cofiles = ParallelMap2(getCoFileNames, ParallelMapConfig(message="Scheudling work.", procs=procs), logicFiles)
     for codeObjectFile, logicFile in cofiles:
         if codeObjectFile in problemMap:
             problemMap[codeObjectFile].append(logicFile)

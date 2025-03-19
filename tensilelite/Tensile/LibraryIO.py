@@ -233,25 +233,22 @@ def parseSolutionsData(data, srcFile, cxxCompiler):
     problemSizes = ProblemSizes(problemType, problemSizesConfig)
     return (problemSizes, solutions)
 
-
 class DataIndex(IntEnum):
-    CODE_OBJECT_NAME=0
-    MINIMUM_REQUIRED_VERSION=1
-    SCHEDULE_NAME=2
-    DEVICE_PROPERTIES=3
-    DEVICE_NAMES=4
-    PROBLEM_TYPE=5
-    SOLUTIONS=6
-    INDEX_ORDER=7
-    EXACT_LOGIC=8
-    RANGE_LOGIC=9
-    PERF_METRIC=11
-    LIBRARY_TYPE=12
-
+    MINIMUM_REQUIRED_VERSION=0
+    SCHEDULE_NAME=1
+    DEVICE_PROPERTIES=2
+    DEVICE_NAMES=3
+    PROBLEM_TYPE=4
+    SOLUTIONS=5
+    INDEX_ORDER=6
+    EXACT_LOGIC=7
+    RANGE_LOGIC=8
+    PERF_METRIC=10
+    LIBRARY_TYPE=11
+    CODE_OBJECT_NAME=12
 
     def __index__(self):
         return self.value
-
 
 class LibraryLogic(NamedTuple):
     """Return tuple for parseLibraryLogicData()"""
@@ -358,7 +355,7 @@ def parseLibraryLogicList(data, srcFile="?"):
 
     # library logic fields
     libraryType = None
-    if len(data) > 12 and data[DataIndex.LIBRARY_TYPE]:
+    if len(data) > 11 and data[DataIndex.LIBRARY_TYPE]:
         libraryType = data[DataIndex.LIBRARY_TYPE]
     else:
         printExit("Library logic file {} is missing required field matching property." \
