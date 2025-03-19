@@ -63,6 +63,8 @@ custom.config:
       Batched: True
       GroupedGemm: False
       SupportUserArgs: True
+   MatrixInstruction: [16, 16, 32, 1, 1, 4, 16, 4, 1]
+   WavefrontSize: 64
    1LDSBuffer: 1
    ScheduleIterAlg: 3
    DepthU: 128
