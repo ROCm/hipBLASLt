@@ -20,9 +20,9 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from rocisa.code import Label, Module
-from rocisa.container import VOP3PModifiers, MUBUFModifiers, replaceHolder, \
-  EXEC, VCC, SDWAModifiers, vgpr, sgpr
+from rocisa.code import Label, Module, RegSet
+from rocisa.container import SMEMModifiers, VOP3PModifiers, MUBUFModifiers, \
+  replaceHolder, EXEC, VCC, SDWAModifiers, vgpr, sgpr
 from rocisa.enum import CvtType, RoundType, SaturateCastType, SelectBit
 from rocisa.instruction import BufferAtomicAddF32, BufferAtomicCmpswapB32, \
   BufferAtomicCmpswapB64, FlatAtomicCmpswapB32, SAddCU32, SAddU32, SAndB32, \
@@ -588,6 +588,10 @@ class GlobalWriteBatchWriter:
     # AccVgpr read
     if self.codeAccVgprRead is not None and (self.kernel["LocalSplitU"] == 1 or self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel"):
       regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
+      if self.kernel["MIArchVgpr"] and self.kernel["LocalSplitU"] > 1:
+        tmpStartVgprValuC = self.parentWriter.states.c.startVgprValu
+        self.parentWriter.states.c.startVgprValu = 0
+        module.add(RegSet("v", "vgprValuC", 0))
       # loop over store instructions within one batch
       for elementIdx in range(len(self.batchElements)):
         # loop over scalars within one store instruction
@@ -595,6 +599,11 @@ class GlobalWriteBatchWriter:
           # loop over registers within one scalar
           for rIdx in range(0, regsPerScalar):
             module.add(replaceHolder(self.codeAccVgprRead.popFirstItem(), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - self.parentWriter.states.c.startVgprValu))
+      
+      if self.kernel["MIArchVgpr"] and self.kernel["LocalSplitU"] > 1:
+        self.parentWriter.states.c.startVgprValu = tmpStartVgprValuC
+        module.add(RegSet("v", "vgprValuC", tmpStartVgprValuC))
+        
     elif self.kernel["LocalSplitU"] > 1:
       # read from LSU VGPRs
       regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
