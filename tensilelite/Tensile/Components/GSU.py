@@ -152,13 +152,13 @@ class GSU(Component):
         
         atomic = (kernel["GlobalSplitU"] > 1) and (kernel["_GlobalAccumulation"] != 'MultipleBuffer' and kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel')
         
-        module.add(self.fixupProcedure(writer, kernel, tPB, vectorWidths, elements, alpha, beta, edges, atomic, gwvw, tmpVgpr, cvtVgprStruct, vectorDataTypes, endLabel))
+        module.add(self.reductionProcedure(writer, kernel, tPB, vectorWidths, elements, alpha, beta, edges, atomic, gwvw, tmpVgpr, cvtVgprStruct, vectorDataTypes, endLabel))
     
         return module
     
     # TODO: changed to GSU
-    def fixupProcedure(self, writer, kernel, tPB, vectorWidths, elements, alpha, beta, edges, atomic, gwvw, tmpVgpr, cvtVgprStruct, vectorDataTypes, endLabel):
-        module = Module("GSU Common fixupProcedure")
+    def reductionProcedure(self, writer, kernel, tPB, vectorWidths, elements, alpha, beta, edges, atomic, gwvw, tmpVgpr, cvtVgprStruct, vectorDataTypes, endLabel):
+        module = Module("GSU Common reductionProcedure")
 
         fixupLabels = {}
         for edge in edges:
@@ -363,7 +363,7 @@ class GSU(Component):
                 elementSgprs = tmpSgpr + ss.cfg.numTempSgprPerBatch
 
                 codeAccVgprRead = deepcopy(writer.codes.accVgprRead) if writer.states.serializedStore else None
-                codeAccVgprWrite = mapAcctoArchRegs(kernel, writer.states.maxLimitAgprs, write=True) if writer.states.serializedStore else None
+                codeAccVgprWrite = deepcopy(writer.codes.accVgprWrite) if writer.states.serializedStore else None
                 mulAlpha = writer.codes.mulAlphaMultipleBuffer if (kernel["_GlobalAccumulation"] == 'MultipleBuffer' or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') else writer.codes.mulAlphaOther
                 codeMulAlpha = deepcopy(mulAlpha) if writer.states.serializedStore else None
 
@@ -387,15 +387,14 @@ class GSU(Component):
                     # elementVgprs can be large and should be perfectly tuned to the number of available
                     # VGPRS.    We do not want to accidentally overflow and grow the pool here:
 
-                    module.add(self.fixupBatch(writer, kernel, tPB, ss, batchIdx, alpha, beta, edge, atomic, \
+                    module.add(self.partialWriteBatch(writer, kernel, tPB, ss, batchIdx, alpha, beta, edge, atomic, \
                             gwvw, elementsThisBatch, writer.vgprs.addrD, writer.vgprs.addrC, \
                             tmpVgpr, tmpVgprDynamic, cvtVgprStruct, \
                             elementSgprs, tmpSgpr, codeAccVgprRead, codeAccVgprWrite))
                     biasLocalBarrierInit = True
 
                 # synchronize GSUWG in reductionBatch. If is the last WG -> do reduction; else branch to GW_END
-                if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
-                    module.addselfAsm("// Reduction start\n") #GSUSYNC
+                module.addselfAsm("// Reduction start\n")
 
                 ss.firstBatch = True
                 for batchIdx in range(0, numBatches):
@@ -411,8 +410,7 @@ class GSU(Component):
                             tmpVgpr, tmpVgprDynamic, cvtVgprStruct, \
                             elementSgprs, tmpSgpr, codeAccVgprRead, codeAccVgprWrite, endLabel))
 
-                if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
-                    module.addselfAsm("// Reduction end\n") #GSUSYNC
+                module.addselfAsm("// Reduction end\n")
 
                 ss.resetState()
 
@@ -422,9 +420,9 @@ class GSU(Component):
     
         return module
 
-    def fixupBatch(self, writer, kernel, tPB, ss, batchIdx, alpha, beta, edge, atomic, gwvw, batchElements, addrD, addrC, \
+    def partialWriteBatch(self, writer, kernel, tPB, ss, batchIdx, alpha, beta, edge, atomic, gwvw, batchElements, addrD, addrC, \
             tmpVgpr, tmpVgprDynamic, cvtVgprStruct, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeAccVgprWrite):
-        module = Module("GSU Common fixupBatch")
+        module = Module("GSU Common partialWriteBatch")
 
         module.addComment0("optSingleColVgpr=%u optSharedColVgpr=%u optSGPRUsage=%s optSrdIncForRow=%u" % \
             (ss.optSingleColVgpr, ss.optSharedColVgpr, ss.optSGPRUsage, ss.optSrdIncForRow))
@@ -434,7 +432,7 @@ class GSU(Component):
 
         # comment tt1, tt0, vc1, vc0
         # tt = thread tile, vc=vector component
-        commentStr = "Fixup%s%s Batch #%u (d1,d0,vc1,vc0) =\n   " \
+        commentStr = "Partial Write%s%s Batch #%u (d1,d0,vc1,vc0) =\n   " \
             % (" Beta" if beta else "", " Edge" if edge else "", batchIdx)
         for elementIdx, element in enumerate(batchElements):
             commentStr += "(%u,%u,%u,%u:vw%u)" % (element[0], element[1], element[2], element[3], gwvw)
@@ -535,6 +533,7 @@ class GSU(Component):
     
         ########################################
         # AccVgpr read
+        module.addselfAsm("// accvgpr read\n")
         module.add(SWaitCnt(vmcnt=0, comment="Wait previous batch write over"))
         if codeAccVgprRead is not None and kernel["LocalSplitU"] == 1:
             regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
@@ -563,12 +562,11 @@ class GSU(Component):
         # Write to workspace
         module.add(self.computeWorkspaceSrd(writer, kernel))
 
-        if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":#GSUGSU
+        if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
             storeCodeGSUSK = Module("GroupLoadStore")
             storeWidth = kernel["StoreVectorWidth"]
             bps = kernel["StoreVectorWidth"] * writer.states.bpeCinternal
             rpv = bps / writer.states.bpr
-            addr1 = sgpr("SrdD", 4)
             isGlc = True
             isSlc = True
             isNT  = kernel["NonTemporalD"] & 0x4
@@ -577,6 +575,7 @@ class GSU(Component):
                 data = ss.elementData[elementIdx]
                 sumIdxGSUSYNC = ss.elementSumIdx[elementIdx]
                 addr0 = vgpr(addrCalc.addrDVgpr)
+                addr1 = sgpr("SrdD", 4)
                 globalOffset = 0
         
                 if batchIdx == 0 and elementIdx == 0:
@@ -585,8 +584,7 @@ class GSU(Component):
                     storeCodeGSUSK.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset for interleaved wave store"))
                     storeCodeGSUSK.addSpaceLine()
                 else:
-                    # numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-                    # increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * writer.states.bpeCinternal
+                    # Use "NumThreads" instead of "MIWaveGroup" because LSU will not show in "MIWaveGroup"
                     increment = kernel["NumThreads"] * storeWidth * writer.states.bpeCinternal
                     storeCodeGSUSK.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Increase sgpr offset for store"))
 
@@ -598,11 +596,6 @@ class GSU(Component):
                     storeCodeGSUSK.add(writer.chooseGlobalWrite(True, bps, sumIdx, rpv, \
                         addr0, addr1, globalOffset, soffset=wsOffset, \
                         glc=isGlc, slc=isSlc, nt=isNT, hi16=0, comment="store WS"))
-                    # tmpStoreCode = writer.addStore(kernel, ss, 'D', addrCalc, sumIdx, tmpS01, edge, wsOffset, comment="store D %u" %sumIdx) #here
-                    # if kernel["GroupLoadStore"]:
-                    #     storeCodeGSUSK.add(tmpStoreCode)
-                    # else:
-                    #     storeCodeGSUSK.add(tmpStoreCode)
                 else:
                     rpe = writer.states.bpeCinternal // writer.states.bpr
                     storeCodeGSUSK.add(writer.storeRemapAddLocalWrite(kernel, ss, addrCalc, sumIdx*rpe))
@@ -622,7 +615,7 @@ class GSU(Component):
         #     SynchronizerEndlabel = Label(writer.labels.getNameInc(SynchronizerEndlabelString), SynchronizerEndlabelComment)
         #     SynchronizerEndlabel = Label(writer.labels.getName(SynchronizerEndlabelString), SynchronizerEndlabelComment)
 
-        #     module.addselfAsm("//sourece store done, GSU:"+str(kernel["GlobalSplitU"])+"\n") #GSUSYNC
+        #     module.addselfAsm("// sourece store done, GSU:"+str(kernel["GlobalSplitU"])+"\n") #GSUSYNC
         #     module.addSpaceLine()
             
         #     if batchIdx == 0:
@@ -631,7 +624,7 @@ class GSU(Component):
         #     module.add(self.GSUSynccodegen(kernel, writer, ss, batchIdx, tmpVgpr, tmpVgprDynamic, gwvw, batchElements,\
         #                                 SynchronizerEndlabel, sumIdxGSUSYNC, addrCalc.globalOffset, addrCalc.addrDVgpr, tmpS02))
 
-        #     module.addselfAsm("//synchronizer store end\n")
+        #     module.addselfAsm("// synchronizer store end\n")
         #     module.addSpaceLine()
         
 
@@ -691,9 +684,6 @@ class GSU(Component):
         
         # if writer.states.serializedStore:
         #     module.add(SNop(0, "1 wait state required when next inst writes vgprs held by previous dwordx4 store inst"))
-
-        # if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
-        #     module.addselfAsm("//Reduction end\n") #GSUSYNC
 
         return module
     
@@ -798,7 +788,6 @@ class GSU(Component):
         #     #  TODO: need to check this for loop
         #     isSingleKernel = (kernel["GlobalSplitU"] == 1 or kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or kernel["StreamK"] > 0
 
-
         #     # if storeBiasD == 1:
         #     #     module.add(addrCalc.emitLdChange(kernel, ss, 'Bias', edge, beta, mask, bufferOOB, (elementIdx == len(batchElements) - 1), tmpVgpr, tmpSgpr, addrBiasVgpr, addrBias, 0))
         #     # module.add(addrCalc.emitLdChange(kernel, ss, 'D', edge, beta, mask, bufferOOB, (elementIdx == len(batchElements) - 1), tmpVgpr, tmpSgpr, addrDVgpr, addrD, 0))
@@ -888,7 +877,7 @@ class GSU(Component):
             # SynchronizerEndlabel = Label(writer.labels.getNameInc(SynchronizerEndlabelString), SynchronizerEndlabelComment)
             # SynchronizerEndlabel = Label(writer.labels.getName(SynchronizerEndlabelString), SynchronizerEndlabelComment)
 
-            module.addselfAsm("//sourece store done, GSU:"+str(kernel["GlobalSplitU"])+"\n") #GSUSYNC
+            module.addselfAsm("// sourece store done, GSU:"+str(kernel["GlobalSplitU"])+"\n") #GSUSYNC
             module.addSpaceLine()
 
             if batchIdx == 0:
@@ -897,12 +886,11 @@ class GSU(Component):
             module.add(self.GSUSynccodegenOpt(kernel, writer, ss, batchIdx, tmpVgpr, tmpVgprDynamic, gwvw, batchElements,\
                                         endLabel, sumIdxGSUSYNC, addrCalc.globalOffset, addrCalc.addrDVgpr, tmpS02))
 
-            module.addselfAsm("//synchronizer store end\n")
-            module.addSpaceLine()
-        
+            module.addselfAsm("// synchronizer store end\n")        
 
         ########################################
         # AccVgpr write
+        module.addselfAsm("// accvgpr write\n")
         if codeAccVgprWrite is not None:
             regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
             # loop over store instructions within one batch

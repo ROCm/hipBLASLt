@@ -6007,8 +6007,8 @@ class KernelWriterAssembly(KernelWriter):
       self.codes.accVgprRead = mapAcctoArchRegs(kernel, self.states.maxLimitAgprs, write=False)
       if kernel["StreamK"] > 0 and kernel["StreamKAtomic"] == 0:
         self.codes.accVgprWrite = mapAcctoArchRegs(kernel, self.states.maxLimitAgprs, write=True)
-      # if kernel["GlobalSplitU"] > 1 and kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
-      #   self.codes.accVgprWrite = mapAcctoArchRegs(kernel, self.states.maxLimitAgprs, write=True)
+      if kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
+        self.codes.accVgprWrite = mapAcctoArchRegs(kernel, self.states.maxLimitAgprs, write=True)
       if kernel["MIArchVgpr"]:
         module.addComment1("Multiply MI out register with Alpha -> C Vgpr register")
         self.codes.mulAlphaMultipleBuffer = moveMIoutToArch(kernel, self.states.startVgprAlphaTmp)
@@ -9865,8 +9865,6 @@ class KernelWriterAssembly(KernelWriter):
         module.add(self.undefineSgpr("GSULog2BpeC"))
       if kernel["StreamK"] == 0:
         module.add(self.undefineSgpr("AddressC"))
-        # if not (self.states.useBias == DataDirection.WRITE and kernel["GlobalSplitUAlgorithm"] == "MultipleBuffer"):
-        #   module.add(self.undefineSgpr("AddressD"))
     return module
 
   ##############################################################################
@@ -12133,11 +12131,6 @@ class KernelWriterAssembly(KernelWriter):
         isGlc = bool(kernel["NonTemporalD"] & 0x1)
         isSlc = bool(kernel["NonTemporalD"] & 0x2)
         isNT  = bool(kernel["NonTemporalD"] & 0x4)
-        if kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
-          isGlc = True
-          isSlc = True
-          wsOffset = sgpr(tmpS01)
-
         bps = self.states.bpeCexternal * ss.cfg.gwvw
         rpv = self.states.bpeCexternal * ss.cfg.gwvw / self.states.bpr
 
