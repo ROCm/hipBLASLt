@@ -59,6 +59,7 @@ nanobind_add_module(rocisa NOMINSIZE src/main.cpp
                                      src/base.cpp
                                      src/code.cpp
                                      src/container.cpp
+                                     src/count.cpp
                                      src/enum.cpp
                                      src/label.cpp
                                      ${ROCISAINST_SOURCE})

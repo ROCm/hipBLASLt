@@ -52,6 +52,13 @@ def test_instruction_common():
     iiv.append(sgpr(1))
     print(iiv[2])
 
+    from rocisa.code import Module
+    from rocisa.container import vgpr
+    from rocisa.instruction import BufferLoadB64
+    module = Module("Test")
+    module.add(BufferLoadB64(vgpr(1), vgpr(2), vgpr(3), 3))
+    assert rocisa.countGlobalRead(module) == 1
+
 def test_instruction_cvt():
     from rocisa.instruction import VCvtInstruction, VCvtF16toF32, VCvtF32toF16, VCvtF32toU32, \
         VCvtU32toF32, VCvtI32toF32, VCvtF32toI32, VCvtFP8toF32, VCvtBF8toF32, VCvtPkFP8toF32, \

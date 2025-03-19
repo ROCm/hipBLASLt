@@ -30,6 +30,7 @@ void init_label(nb::module_ m);
 void init_enum(nb::module_ m);
 void init_inst(nb::module_ m);
 void init_code(nb::module_ m);
+void init_count(nb::module_ m);
 
 NB_MODULE(rocisa, m)
 {
@@ -40,4 +41,5 @@ NB_MODULE(rocisa, m)
     init_enum(m);
     init_inst(m);
     init_code(m);
+    init_count(m);
 }

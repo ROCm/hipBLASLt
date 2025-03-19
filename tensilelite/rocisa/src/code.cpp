@@ -53,11 +53,47 @@ namespace rocisa
         return std::move(clonedItemList);
     }
 
+    std::shared_ptr<BitfieldUnion> SrdUpperValue(const IsaVersion& isa)
+    {
+        if(isa[0] == 12)
+        {
+            return std::make_shared<SrdUpperValue12XX>(SrdUpperValue12XX::staticInit());
+        }
+        else if(isa[0] == 11)
+        {
+            return std::make_shared<SrdUpperValue11XX>(SrdUpperValue11XX::staticInit());
+        }
+        else if(isa[0] == 10)
+        {
+            return std::make_shared<SrdUpperValue10XX>(SrdUpperValue10XX::staticInit());
+        }
+        else
+        {
+            return std::make_shared<SrdUpperValue9XX>(SrdUpperValue9XX::staticInit());
+        }
+    }
+
     auto SrdUpperValueTuple(const nb::tuple& t)
     {
         return rocisa::SrdUpperValue(
             IsaVersion{nb::cast<int>(t[0]), nb::cast<int>(t[1]), nb::cast<int>(t[2])});
     }
+
+    const std::unordered_map<std::string, int> SignatureArgument::ValueTypeSizeDict
+        = {{"i8", 1},
+           {"i16", 2},
+           {"i32", 4},
+           {"i64", 8},
+           {"u8", 1},
+           {"u16", 2},
+           {"u32", 4},
+           {"u64", 8},
+           {"bf16", 2},
+           {"f16", 2},
+           {"f32", 4},
+           {"f64", 8},
+           {"pkf16", 4},
+           {"struct", 8}};
 } // namespace rocisa
 
 void init_code(nb::module_ m)
@@ -116,6 +152,7 @@ void init_code(nb::module_ m)
         .def("setInlineAsmPrintMode", &rocisa::Module::setInlineAsmPrintMode)
         .def("addSpaceLine", &rocisa::Module::addSpaceLine)
         .def("add", &rocisa::Module::add, nb::arg("item"), nb::arg("pos") = -1)
+        .def("addItems", &rocisa::Module::addItems)
         .def("appendModule", &rocisa::Module::appendModule)
         .def("addModuleAsFlatItems", &rocisa::Module::addModuleAsFlatItems)
         .def("findIndex", &rocisa::Module::findIndex)
@@ -132,12 +169,14 @@ void init_code(nb::module_ m)
         .def("setItem", &rocisa::Module::setItem)
         .def("setItems", &rocisa::Module::setItems)
         .def("items", &rocisa::Module::items)
+        .def("itemsSize", &rocisa::Module::itemsSize)
         .def("replaceItem", &rocisa::Module::replaceItem)
         .def("replaceItemByIndex", &rocisa::Module::replaceItemByIndex)
         .def("removeItemByIndex", &rocisa::Module::removeItemByIndex)
         .def("removeItem", &rocisa::Module::removeItem)
         .def("removeItemsByName", &rocisa::Module::removeItemsByName)
         .def("popFirstItem", &rocisa::Module::popFirstItem)
+        .def("popFirstNItems", &rocisa::Module::popFirstNItems)
         .def("flatitems", &rocisa::Module::flatitems)
         .def("addTempVgpr", &rocisa::Module::addTempVgpr)
         .def("__str__", &rocisa::Module::toString)

@@ -33,6 +33,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <typeinfo>
 
 #include "hardware_caps.hpp"
 #include "helper.hpp"
@@ -213,10 +214,15 @@ namespace rocisa
             return rocIsa::getInstance().getKernel();
         }
 
-        virtual int countType(nb::object obj) const
+        virtual int countType(const nb::object& obj) const
         {
             nb::object self = nb::cast(*this);
             return static_cast<int>(nb::isinstance(self, obj));
+        }
+
+        virtual int countExactType(const std::type_info& targetType) const
+        {
+            return static_cast<int>(typeid(*this) == targetType);
         }
 
         virtual std::string toString() const
@@ -243,7 +249,7 @@ namespace rocisa
         {
         }
 
-        int countType(nb::object obj) const override
+        int countType(const nb::object& obj) const override
         {
             return 0;
         }

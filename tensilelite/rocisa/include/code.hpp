@@ -1,3 +1,25 @@
+/* ************************************************************************
+ * Copyright (C) 2025 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ * ************************************************************************ */
 #pragma once
 #include "base.hpp"
 #include "container.hpp"
@@ -240,6 +262,14 @@ namespace rocisa
             return item;
         }
 
+        const void addItems(const std::vector<std::shared_ptr<Item>>& items)
+        {
+            for(const auto& item : items)
+            {
+                add(item);
+            }
+        }
+
         const std::shared_ptr<Module> appendModule(const std::shared_ptr<Module>& module)
         {
             /*
@@ -372,12 +402,22 @@ namespace rocisa
             return ostream;
         }
 
-        int countType(nb::object obj) const override
+        int countType(const nb::object& obj) const override
         {
             int count = 0;
             for(const auto& i : itemList)
             {
                 count += i->countType(obj);
+            }
+            return count;
+        }
+
+        int countExactType(const std::type_info& targetType) const override
+        {
+            int count = static_cast<int>(typeid(*this) == targetType);
+            for(const auto& i : itemList)
+            {
+                count += i->countExactType(targetType);
             }
             return count;
         }
@@ -425,6 +465,11 @@ namespace rocisa
         const std::vector<std::shared_ptr<Item>>& items() const
         {
             return itemList;
+        }
+
+        const size_t itemsSize() const
+        {
+            return itemList.size();
         }
 
         /*
@@ -501,6 +546,22 @@ namespace rocisa
             auto item = itemList.front();
             itemList.erase(itemList.begin());
             return item;
+        }
+
+        std::vector<std::shared_ptr<Item>> popFirstNItems(size_t n)
+        {
+            std::vector<std::shared_ptr<Item>> items;
+            if(n >= itemList.size())
+            {
+                items = std::move(itemList);
+                itemList.clear();
+            }
+            else
+            {
+                items.insert(items.end(), itemList.begin(), itemList.begin() + n);
+                itemList.erase(itemList.begin(), itemList.begin() + n);
+            }
+            return items;
         }
 
         std::vector<std::shared_ptr<Item>> flatitems() const
@@ -771,7 +832,7 @@ namespace rocisa
         }
     };
 
-    std::string field_desc(const std::string& field_name, int value, int bits = 0)
+    inline std::string field_desc(const std::string& field_name, int value, int bits = 0)
     {
         std::string bits_str = (bits > 0) ? " (" + std::to_string(bits) + "b)" : "";
         return field_name + bits_str + ": " + std::to_string(value);
@@ -1060,25 +1121,7 @@ namespace rocisa
         }
     };
 
-    std::shared_ptr<BitfieldUnion> SrdUpperValue(const IsaVersion& isa)
-    {
-        if(isa[0] == 12)
-        {
-            return std::make_shared<SrdUpperValue12XX>(SrdUpperValue12XX::staticInit());
-        }
-        else if(isa[0] == 11)
-        {
-            return std::make_shared<SrdUpperValue11XX>(SrdUpperValue11XX::staticInit());
-        }
-        else if(isa[0] == 10)
-        {
-            return std::make_shared<SrdUpperValue10XX>(SrdUpperValue10XX::staticInit());
-        }
-        else
-        {
-            return std::make_shared<SrdUpperValue9XX>(SrdUpperValue9XX::staticInit());
-        }
-    }
+    std::shared_ptr<BitfieldUnion> SrdUpperValue(const IsaVersion& isa);
 
     /***************************************
      * Signatures
@@ -1154,22 +1197,6 @@ namespace rocisa
             return kStr;
         }
     };
-
-    const std::unordered_map<std::string, int> SignatureArgument::ValueTypeSizeDict
-        = {{"i8", 1},
-           {"i16", 2},
-           {"i32", 4},
-           {"i64", 8},
-           {"u8", 1},
-           {"u16", 2},
-           {"u32", 4},
-           {"u64", 8},
-           {"bf16", 2},
-           {"f16", 2},
-           {"f32", 4},
-           {"f64", 8},
-           {"pkf16", 4},
-           {"struct", 8}};
 
     struct SignatureKernelDescriptor : public Item
     {
