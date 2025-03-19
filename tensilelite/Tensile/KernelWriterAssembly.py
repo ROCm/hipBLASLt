@@ -22,6 +22,7 @@
 #
 ################################################################################
 
+from rocisa import countInstruction, countGlobalRead, countSMemLoad
 from rocisa.container import DSModifiers, SDWAModifiers, VOP3PModifiers, \
                       MUBUFModifiers, SMEMModifiers, EXEC, VCC, RegisterContainer, \
                       DPPModifiers
@@ -5759,7 +5760,7 @@ class KernelWriterAssembly(KernelWriter):
         if item:
           module.add(item)
         loadModule = module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(startVgprName, "KernArgAddress", numStoreSgprToLoad))
-        self.states.numStoreSgprInst = loadModule.countType(SMemLoadInstruction)
+        self.states.numStoreSgprInst = countSMemLoad(loadModule)
         self.argLoader.setOffset(argOffset) # Restore offset
         module.add(SBranch(extReadEpilogueLabelEnd.getLabelName()))
         module.add(extReadEpilogueLabel)
@@ -5842,7 +5843,7 @@ class KernelWriterAssembly(KernelWriter):
           dwordLen = loadInfo[1] // 4
           self.externalArgLoader.setOffset(loadInfo[2])
           loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(loadInfo[0], "KernArgAddress", dwordLen)))
-        self.states.numStoreSgprInstExt = loadModuleExt.countType(SMemLoadInstruction)
+        self.states.numStoreSgprInstExt = countSMemLoad(loadModuleExt)
         self.externalArgLoader.setOffset(backupExtArgOffset)
         module.add(extReadEpilogueLabelEnd)
       else:
@@ -5852,7 +5853,7 @@ class KernelWriterAssembly(KernelWriter):
         if item:
           module.add(item)
         loadModule = module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(startVgprName, "KernArgAddress", numStoreSgprToLoad))
-        self.states.numStoreSgprInst = loadModule.countType(SMemLoadInstruction)
+        self.states.numStoreSgprInst = countSMemLoad(loadModule)
         self.argLoader.setOffset(argOffset) # Restore offset
       if noSkipLoad and kernel["GlobalSplitU"] > 0:
         module.add(gsuLabel)
@@ -11124,7 +11125,7 @@ class KernelWriterAssembly(KernelWriter):
               with self.allocTmpSgpr(3) as tmpSgprInfo:
                 checkIsFactorDimZero = edgeModule.add(self.checkIsFactorDimZero(kernel, tmpSgprInfo, \
                   writeLabels[beta][edge][factorDims[1]][idxMN], isLongBranch=isLongBranch), pos=edge_mode_pos)
-                currentInstLength += checkIsFactorDimZero.countType(Instruction)
+                currentInstLength += countInstruction(checkIsFactorDimZero)
 
             betaModule.add(edgeModule, pos=mod_pos)
 
@@ -11136,7 +11137,7 @@ class KernelWriterAssembly(KernelWriter):
             labelMT1 = writeLabels[beta][True][factorDims[0]][0] if len(writeLabels[beta][True][factorDims[0]]) == 1 else writeLabels[beta][True][factorDims[0]][1]
             checkIsEdge = betaModule.add(self.checkIsEdge(kernel, tmpSgprInfo, \
               writeLabels[beta][True][factorDims[0]][0], labelMT1, isLongBranch=isLongBranch), pos=mod_pos)
-            currentInstLength += checkIsEdge.countType(Instruction)
+            currentInstLength += countInstruction(checkIsEdge)
         betaModules.add(betaModule, pos=0)
 
       # Check if branch exceeds
@@ -11473,7 +11474,7 @@ class KernelWriterAssembly(KernelWriter):
 
         ss.resetState()
         actLoopModuleList.append(actLoopModule)
-        actLoopModuleCodeLength.append(actLoopModule.countType(Instruction))
+        actLoopModuleCodeLength.append(countInstruction(actLoopModule))
 
     #################
     # Free after final vgpr vcalculation
@@ -11519,7 +11520,7 @@ class KernelWriterAssembly(KernelWriter):
     else:
       end_placeholder = Module("end_placeholder")
       edgeModule.add(end_placeholder)
-    currentInstLength += edgeModule.countType(Instruction)
+    currentInstLength += countInstruction(edgeModule)
     del ss
 
     return edge_mode_pos, currentInstLength, activationTypeStr
@@ -13146,9 +13147,9 @@ class KernelWriterAssembly(KernelWriter):
         count = 0
         for i in range(u):
           globalReadStr = ' '.join([str(x) for x in self.codes.perIterGlobalRead[i].flatitems()])
-          count += self.codes.perIterGlobalRead[i].countType(GlobalReadInstruction)
+          count += countGlobalRead(self.codes.perIterGlobalRead[i])
           # PGR=2 case, global read is in LocalWriteCode
-          count += self.codes.perIterLocalWrite[i].countType(GlobalReadInstruction)
+          count += countGlobalRead(self.codes.perIterLocalWrite[i])
         needToWait += count
         if u == localWriteEndIter + 1 and beforeBarrier:
           # beforeBarrier case, reduce the amount of non-Vgpr global read

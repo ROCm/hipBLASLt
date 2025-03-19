@@ -20,6 +20,8 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa import countInstruction, countGlobalRead, countLocalWrite, \
+                   countDSStoreB128, countVMovB32
 from rocisa.base import DummyItem
 
 from ..TensileInstructions import Item, Module, HolderContainer, Instruction, \
@@ -539,7 +541,7 @@ def appendInstToSchedSIA3(writer, kernel, numEmptyGlobalReadIncCode, globalReadI
         for i in range(numEmptyGlobalReadIncCode+1):
             imod = Module()
             itemsGRIncToSched.append(imod)
-    numInst = globalReadIncACode.countType(Instruction) + globalReadIncBCode.countType(Instruction)
+    numInst = countInstruction(globalReadIncACode) + countInstruction(globalReadIncBCode)
     numInstPerMfma = max(roundUp(writer.states.miLatencyLeft/2),1)
 
     globalReadIncItems = globalReadIncACode.flatitems() + globalReadIncBCode.flatitems()
@@ -550,7 +552,7 @@ def appendInstToSchedSIA3(writer, kernel, numEmptyGlobalReadIncCode, globalReadI
         while globalReadIncItems and count < numInstPerMfma:
             tempInst = globalReadIncItems.pop(0)
             imod.add(tempInst)
-            if tempInst.countType(Instruction):
+            if countInstruction(tempInst):
                 count += 1
         itemsGRIncToSched.append(imod)
         for i in range(numEmptyGlobalReadIncCode):
@@ -730,7 +732,7 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched, isNGLL=False):
         item = itemsLWToSched.pop(0)
         itemsLWToSchedTemp.append(item)
         skip = kernel["PrefetchGlobalRead"] == 2 and kernel["ProblemType"]["Sparse"] and kernel["DirectToVgprSparseMetadata"] \
-           and item.name.startswith("MetadataWrite") and item.countType(VMovB32)
+           and item.name.startswith("MetadataWrite") and countVMovB32(item)
         if not skip:
            for j in range(PRECISION-1):
                itemsLWToSchedTemp.append(DummyItem())
@@ -742,7 +744,7 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched, isNGLL=False):
     # This counts the number of modules which contain a ds_write
     # Scheduler below keeps all writes in the same module in same iteration
     # so this is better match to what it is trying to do
-    # numWritesToSched = sum(1 for item in itemsLWToSched if item.countType(LocalWriteInstruction))
+    # numWritesToSched = sum(1 for item in itemsLWToSched if countLocalWrite(item)
     numWritesToSched = len(itemsLWToSched)
     return itemsLWToSched, numWritesToSched
 
@@ -806,9 +808,9 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
             imod = Module("LocalWriteMod%u"%u)
             imodNGLL = Module("LocalWriteMod%u"%u)
             if not isinstance(item, DummyItem):
-                writesPerItem = item.countType(LocalWriteInstruction)
+                writesPerItem = countLocalWrite(item)
                 if kernel["ProblemType"]["Sparse"] and not writesPerItem:
-                    writesPerItem = item.name.startswith("MetadataWrite") and item.countType(VMovB32)
+                    writesPerItem = item.name.startswith("MetadataWrite") and countVMovB32(item)
                 if writesPerItem:
                     # Split into several dsStore32
                     itemNew, numItemNew, globalReadInstOffset = splitDSInstructionIntoSmaller(writer, kernel, item, numLocalWritesPerSched, len(itemsLWToSched), itemsLWToSchedIndex)
@@ -877,7 +879,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
                 reads = 0
                 while itemsGRToSchedLater:
                     itemGR = itemsGRToSchedLater[0]
-                    readsInc = itemGR.countType(GlobalReadInstruction)
+                    readsInc = countGlobalRead(itemGR)
                     reads = reads + readsInc
                     if reads > readCnt:
                         break
@@ -925,7 +927,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
 def splitDSInstructionIntoSmaller(writer, kernel, item, numLocalWritesPerSched, lenOfItems, currentModIdx):
     if not item:
         return None, 0, 0
-    if item.countType(DSStoreB128) != 1 or item.countType(Instruction) != 1:
+    if countDSStoreB128(item) != 1 or countInstruction(item) != 1:
         # only support one b128
         return None, 0, 0
 

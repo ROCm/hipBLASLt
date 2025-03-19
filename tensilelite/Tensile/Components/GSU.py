@@ -20,6 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa import countInstruction
 from ..TensileInstructions import Module, Label, RegisterPoolResource, SAddU32, SAddCU32, SCmpEQU32, SCBranchSCC1, \
     scalarUInt32DivideAndRemainder, SMovB32, SMulI32, SBranch, SMovB64, SLShiftRightB32, sgpr, log2, \
     SCmpLtU32, SCMovB32, SSubU32, SLShiftLeftB64, SCBranchSCC0, Instruction, SCmpLgU32, \
@@ -443,7 +444,7 @@ class GSUOn(GSU):
               noLoadLoopModules.add(writer.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=True, isNGLL=False, pack=deepCopyPack, NLLindex=NLLindex, NLLnum=NLLnum))
               writer.restoreLocalPointers(kernel, tensorParametersA, tensorParametersB)
 
-            acclen = noLoadLoopModules.countType(Instruction)
+            acclen = countInstruction(noLoadLoopModules)
         kernel["GlobalSplitU"] = gsuBackup
         kernel["_GlobalAccumulation"] = gsuAccumBackup
         writer.states.bpeCexternal = bpeCexternalBackup
