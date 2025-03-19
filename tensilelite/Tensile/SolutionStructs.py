@@ -1859,6 +1859,11 @@ class Solution(collections.abc.Mapping):
       reject(state, "DirectToVgpr is for MatrixInstruction only")
       return False
 
+    tmplrvw = (state["LocalReadVectorWidth"] // 2) if state["ProblemType"]["Sparse"] else state["LocalReadVectorWidth"]
+    if tmplrvw < state["MIInputPerThread"]:
+      reject(state, "LocalReadVectorWidth < MIInputPerThread %d" % state["MIInputPerThread"])
+      return False
+
     # disable the following combinations for initial implementation
     # TODO: enable them
     if state["LocalSplitU"] != 1 and (not state["ProblemType"]["TLU%c"%tc]):
@@ -2873,12 +2878,9 @@ class Solution(collections.abc.Mapping):
             else:
               state["LocalReadVectorWidth"] = state["MIInputPerThread"]
         else:
-          if state["ProblemType"]["Sparse"] and state["MIInputPerThread"] * state["ProblemType"]["DataType"].numBytes() > 16:
-            if state["LocalReadVectorWidth"] < state["MIInputPerThread"] // 2:
-              reject(state, "LocalReadVectorWidth < %u" %(state["MIInputPerThread"] // 2))
-          elif not state["ProblemType"]["Sparse"] and (not globalParameters["AsmCaps"][isa]["HasMFMA_f8f6f4"] or state["MatrixInstK"] <= 32):
-            if state["LocalReadVectorWidth"] < state["MIInputPerThread"]:
-              reject(state, "LocalReadVectorWidth < %u" %(state["MIInputPerThread"]))
+          tmplrvw = (state["LocalReadVectorWidth"] // 2) if state["ProblemType"]["Sparse"] else state["LocalReadVectorWidth"]
+          if tmplrvw * state["ProblemType"]["DataType"].numRegisters() < 1:
+            reject(state, "LocalReadVectorWidth * dataRegister < 1")
           if state["LocalReadVectorWidth"] > state["MIInputPerThread"] and not state["TransposeLDS"]:
             reject(state, "LocalReadVectorWidth require Transpose LDS")
 
@@ -4129,11 +4131,6 @@ class Solution(collections.abc.Mapping):
     if state["EnableMatrixInstruction"] and state["PrefetchLocalRead"] > 0:
       # Multiple = WLR-size / input-size = how many iters could be covered by one WLR ?
       wlrMultiple = state["LocalReadVectorWidth"]//state["MIInputPerThread"]
-      # NOTE: wlrmultiple can be 0 for new MFMA
-      if not state["ProblemType"]["Sparse"] and (not globalParameters["AsmCaps"][isa]["HasMFMA_f8f6f4"] or state["MatrixInstK"] <= 32):
-        if wlrMultiple == 0:
-          reject(state, "LocalReadVectorWidth %u is less than MIInput" % (state["LocalReadVectorWidth"]))
-          return
       # for example, if the original ds_read is b32...
       #   1. if LoopIters = 5 (b32 x 5 times), WLR-Multiple = 2 (b64), then we can fit the WLR
       #   2. if LoopIters = 2 (b32 x 2 times), WLR-Multiple = 4 (b128), this is not allowed
