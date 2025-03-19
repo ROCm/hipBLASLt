@@ -81,7 +81,7 @@ struct HIPBLASLT_EXPORT hipblaslt_f4
 //       direct use of FP4 type, and we just create a new struct that provides
 //       conversion to float. In the future, we should inherit HIP's FP4 type to 
 //       provide full functionalties when needed.
-#include <hip/hip_ext_ocp.h>
+// #include <hip/hip_ext_ocp.h>
 
 struct HIPBLASLT_EXPORT hipblaslt_f4
 {

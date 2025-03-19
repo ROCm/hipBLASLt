@@ -1238,9 +1238,7 @@ rocblaslt_status runGemmKernel(std::shared_ptr<GemmKernel> gemm,
 
     // TODO: Add scratch space when needed
 
-    //TODO: Replace with launchKernel call that just takes stream.
-    auto t = std::make_shared<HIPTimer>("rocRoller::StreamTimer", 1, prob.stream);
-    gemm->commandKernel->launchKernel(runtimeArgs, t, 0);
+    gemm->commandKernel->launchKernel(runtimeArgs, prob.stream);
     return rocblaslt_status_success;
 }
 

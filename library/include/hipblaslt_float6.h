@@ -229,7 +229,7 @@ struct HIPBLASLT_EXPORT hipblaslt_bf6
 //       is no direct use of F6 type, and we just create a new struct that provides
 //       conversion to float. In the future, we should inherit HIP's F6 type to 
 //       provide full functionalties when needed.
-#include <hip/hip_ext_ocp.h>
+// #include <hip/hip_ext_ocp.h>
 
 struct HIPBLASLT_EXPORT hipblaslt_f6
 {
