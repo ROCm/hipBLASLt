@@ -741775,6 +741775,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -741785,8 +741786,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -742031,6 +742032,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -742041,8 +742043,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -742287,6 +742289,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -742297,8 +742300,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -742543,6 +742546,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -742553,8 +742557,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -742799,6 +742803,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -742809,8 +742814,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -743055,6 +743060,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -743065,8 +743071,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -743311,6 +743317,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -743321,8 +743328,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -743567,6 +743574,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -743577,8 +743585,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -743823,6 +743831,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -743833,8 +743842,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -744079,6 +744088,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -744089,8 +744099,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -744335,6 +744345,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -744345,8 +744356,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -744591,6 +744602,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -744601,8 +744613,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -744847,6 +744859,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -744857,8 +744870,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -745103,6 +745116,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -745113,8 +745127,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -745359,6 +745373,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -745369,8 +745384,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -745615,6 +745630,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -745625,8 +745641,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -745871,6 +745887,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -745881,8 +745898,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -746127,6 +746144,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -746137,8 +746155,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -746383,6 +746401,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -746393,8 +746412,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -746639,6 +746658,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -746649,8 +746669,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -746895,6 +746915,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -746905,8 +746926,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -747151,6 +747172,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -747161,8 +747183,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -747407,6 +747429,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -747417,8 +747440,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -747663,6 +747686,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -747673,8 +747697,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -747919,6 +747943,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -747929,8 +747954,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -748175,6 +748200,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -748185,8 +748211,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -748431,6 +748457,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -748441,8 +748468,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -748687,6 +748714,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -748697,8 +748725,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -748943,6 +748971,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -748953,8 +748982,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -749199,6 +749228,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -749209,8 +749239,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -749455,6 +749485,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -749465,8 +749496,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -749711,6 +749742,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -749721,8 +749753,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -749967,6 +749999,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -749977,8 +750010,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -750223,6 +750256,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -750233,8 +750267,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -750479,6 +750513,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -750489,8 +750524,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -750735,6 +750770,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -750745,8 +750781,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -750991,6 +751027,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -751001,8 +751038,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -751247,6 +751284,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -751257,8 +751295,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -751503,6 +751541,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -751513,8 +751552,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -751759,6 +751798,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -751769,8 +751809,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -752015,6 +752055,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -752025,8 +752066,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -752271,6 +752312,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -752281,8 +752323,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -752527,6 +752569,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -752537,8 +752580,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -752783,6 +752826,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -752793,8 +752837,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -753039,6 +753083,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -753049,8 +753094,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -753295,6 +753340,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -753305,8 +753351,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -753551,6 +753597,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -753561,8 +753608,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -753807,6 +753854,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -753817,8 +753865,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -754063,6 +754111,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -754073,8 +754122,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -754319,6 +754368,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -754329,8 +754379,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -754575,6 +754625,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -754585,8 +754636,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -754831,6 +754882,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -754841,8 +754893,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -755087,6 +755139,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -755097,8 +755150,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -755343,6 +755396,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -755353,8 +755407,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -755599,6 +755653,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -755609,8 +755664,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -755855,6 +755910,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -755865,8 +755921,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -756111,6 +756167,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -756121,8 +756178,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -756367,6 +756424,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -756377,8 +756435,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -756623,6 +756681,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -756633,8 +756692,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -756879,6 +756938,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -756889,8 +756949,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -757135,6 +757195,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -757145,8 +757206,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -757391,6 +757452,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -757401,8 +757463,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -757647,6 +757709,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -757657,8 +757720,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -757903,6 +757966,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -757913,8 +757977,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -758159,6 +758223,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -758169,8 +758234,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -758415,6 +758480,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -758425,8 +758491,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -758671,6 +758737,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -758681,8 +758748,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -758927,6 +758994,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -758937,8 +759005,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -759183,6 +759251,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -759193,8 +759262,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -759439,6 +759508,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -759449,8 +759519,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -759695,6 +759765,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -759705,8 +759776,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -759951,6 +760022,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -759961,8 +760033,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -760207,6 +760279,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -760217,8 +760290,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -760463,6 +760536,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -760473,8 +760547,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -760719,6 +760793,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -760729,8 +760804,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -760975,6 +761050,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -760985,8 +761061,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -761231,6 +761307,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -761241,8 +761318,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -761487,6 +761564,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -761497,8 +761575,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -761743,6 +761821,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -761753,8 +761832,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -761999,6 +762078,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -762009,8 +762089,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -762255,6 +762335,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -762265,8 +762346,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -762511,6 +762592,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -762521,8 +762603,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -762767,6 +762849,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -762777,8 +762860,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -763023,6 +763106,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -763033,8 +763117,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -763279,6 +763363,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -763289,8 +763374,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -763535,6 +763620,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -763545,8 +763631,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -763791,6 +763877,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -763801,8 +763888,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -764047,6 +764134,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -764057,8 +764145,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -764303,6 +764391,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -764313,8 +764402,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -764559,6 +764648,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -764569,8 +764659,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -764815,6 +764905,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -764825,8 +764916,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -765071,6 +765162,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -765081,8 +765173,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -765327,6 +765419,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -765337,8 +765430,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -765583,6 +765676,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -765593,8 +765687,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -765839,6 +765933,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -765849,8 +765944,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -766095,6 +766190,7 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+      StochasticRounding: false
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -766105,8 +766201,8 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
-      TransposeA: 0
-      TransposeB: 1
+      TransposeA: false
+      TransposeB: true
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -767466,6 +767562,10 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+<<<<<<< HEAD
+=======
+      StochasticRounding: false
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -767476,8 +767576,13 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
+<<<<<<< HEAD
       TransposeA: 0
       TransposeB: 1
+=======
+      TransposeA: false
+      TransposeB: true
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -767728,6 +767833,10 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+<<<<<<< HEAD
+=======
+      StochasticRounding: false
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -767738,8 +767847,13 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
+<<<<<<< HEAD
       TransposeA: 0
       TransposeB: 1
+=======
+      TransposeA: false
+      TransposeB: true
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -767998,6 +768112,10 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+<<<<<<< HEAD
+=======
+      StochasticRounding: false
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -768008,8 +768126,13 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
+<<<<<<< HEAD
       TransposeA: 0
       TransposeB: 1
+=======
+      TransposeA: false
+      TransposeB: true
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -768275,6 +768398,10 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+<<<<<<< HEAD
+=======
+      StochasticRounding: false
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -768285,8 +768412,13 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
+<<<<<<< HEAD
       TransposeA: 0
       TransposeB: 1
+=======
+      TransposeA: false
+      TransposeB: true
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -768553,6 +768685,10 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+<<<<<<< HEAD
+=======
+      StochasticRounding: false
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -768563,8 +768699,13 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
+<<<<<<< HEAD
       TransposeA: 0
       TransposeB: 1
+=======
+      TransposeA: false
+      TransposeB: true
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -768830,6 +768971,10 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+<<<<<<< HEAD
+=======
+      StochasticRounding: false
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -768840,8 +768985,13 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
+<<<<<<< HEAD
       TransposeA: 0
       TransposeB: 1
+=======
+      TransposeA: false
+      TransposeB: true
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -769096,6 +769246,10 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+<<<<<<< HEAD
+=======
+      StochasticRounding: false
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -769106,8 +769260,13 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
+<<<<<<< HEAD
       TransposeA: 0
       TransposeB: 1
+=======
+      TransposeA: false
+      TransposeB: true
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -769359,6 +769518,10 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+<<<<<<< HEAD
+=======
+      StochasticRounding: false
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -769369,8 +769532,13 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
+<<<<<<< HEAD
       TransposeA: 0
       TransposeB: 1
+=======
+      TransposeA: false
+      TransposeB: true
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       UseBeta: true
       UseBias: 1
       UseE: false
@@ -769621,6 +769789,10 @@
       SetConstStrideBias: []
       SilentHighPrecisionAccumulate: false
       Sparse: 0
+<<<<<<< HEAD
+=======
+      StochasticRounding: false
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       StridedBatched: true
       SupportUserArgs: true
       TLUA: true
@@ -769631,8 +769803,13 @@
       TileAwareSelection: false
       TileB: 1
       TotalIndices: 4
+<<<<<<< HEAD
       TransposeA: 0
       TransposeB: 1
+=======
+      TransposeA: false
+      TransposeB: true
+>>>>>>> 0c91d36c (Offline-tuning for gfx942_80cu BBS_NN,NT,TN, F8NBS_TN and F8B8NBS_TN GridBased logics)
       UseBeta: true
       UseBias: 1
       UseE: false
