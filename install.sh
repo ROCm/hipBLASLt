@@ -403,7 +403,7 @@ tensile_tag=
 tensile_test_local_path=
 tensile_version=
 tensile_msgpack_backend=true
-build_tensile=false
+build_tensile=true
 update_cmake=true
 enable_gprof=false
 keep_build_tmp=false
@@ -504,7 +504,7 @@ while true; do
             tensile_test_local_path=${2}
             shift 2 ;;
         -n|--no_tensile|--no-tensile|--client-only)
-            build_tensile=true
+            build_tensile=false
             shift ;;
         --no-lazy-library-loading)
             tensile_no_lazy_library_loading=true
@@ -753,7 +753,7 @@ pushd .
   fi
 
   tensile_opt=""
-  if [[ "${build_tensile}" == true ]]; then
+  if [[ "${build_tensile}" == false ]]; then
     tensile_opt="${tensile_opt} -DTensile_SKIP_BUILD=ON"
   else
     if [[ -n "${tensile_logic}" ]]; then

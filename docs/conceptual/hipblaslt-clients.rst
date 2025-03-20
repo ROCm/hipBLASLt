@@ -141,7 +141,7 @@ Sometimes it is desirable to build or rebuild the clients without having to cond
 
 .. note::
 
-   For backwards compatibility with build scripts, ``-n``/``--client-only`` is an alias for ``--no-tensile``.
+   For backwards compatibility, ``--no-tensile`` may be used as an alias for ``-n``/``--client-only``.
 
 Internally, this passes the ``-DTensile_SKIP_BUILD=ON`` option to CMake. If you prefer to build hipBLASLt with CMake directly instead of through the install script, the same effect can be achieved with the following steps:
 
