@@ -1571,19 +1571,11 @@ class Solution(collections.abc.Mapping):
         state["StaggerUMapping"] = 0
         state["StaggerUStride"] = 0
 
-      if state["StaggerUStride"] == -1:
+      if state["StaggerUStride"] == -1 or state["StaggerUStride"] < (state["DepthU"] * bpeAB):
+        # (StaggerUStride) shoud be greater than or equal to (DepthU * bpeAB)
         state["StaggerUStride"] = state["DepthU"] * bpeAB
 
-      try:
-          staggerStrideShift = (int)(math.ceil(math.log(state["StaggerUStride"] / \
-                  (state["DepthU"] * bpeAB), 2)))
-      except ValueError: # i.e., StaggerUStride == 0
-          staggerStrideShift = 0
-      if staggerStrideShift < 0:
-        reject(state, printRejectionReason, "StaggerUStride=%u is less than size of DepthU=%u * BytesPerElement=%u" \
-          % (state["StaggerUStride"], state["DepthU"], bpeAB))
-      #print "staggerStrideShift=", staggerStrideShift, "depthu=", state["DepthU"]
-      state["_staggerStrideShift"] = staggerStrideShift
+      state["_staggerStrideShift"] = (int)(math.ceil(math.log(state["StaggerUStride"] / (state["DepthU"] * bpeAB), 2)))
 
       def calcLdsPad(lrvw: int, isaInfoMap: Dict[str, IsaInfo]) -> int:
         ldsPadA = state["LdsPadA"]
@@ -2714,6 +2706,21 @@ class Solution(collections.abc.Mapping):
         state["GroupLoadStore"] = 0
       else:
         state["NumElementsPerBatchStore"] = 16 if not state["ProblemType"]["DataType"].numBytes() == 8 else 1
+
+    # Mbsk prefetch optimization
+    if state["_GlobalAccumulation"] != 'MultipleBufferSingleKernel':
+        state["MbskPrefetchOpt"] = 0
+    elif state["MbskPrefetchOpt"] == -1:
+      numStoreElements = state["NumElementsPerThread"] // state["StoreVectorWidth"]
+      state["MbskPrefetchOpt"] = 1 if numStoreElements >= 4 else 0
+    if state["MbskPrefetchOpt"] == 1:
+      state["NumMbskPrefetchElements"] = 16
+      storeRegs = state["StoreVectorWidth"] * state["ProblemType"]["ComputeDataType"].numRegisters()
+      # exceed 16*4 = 64 VPGRs
+      if storeRegs > 4:
+        state["NumMbskPrefetchElements"] //= storeRegs // 4
+      if state["NumElementsPerBatchStore"] == 0 or state["NumElementsPerBatchStore"] > state["NumMbskPrefetchElements"]:
+          state["NumElementsPerBatchStore"] = state["NumMbskPrefetchElements"]
 
     if state["StoreRemapVectorWidth"] == -1:
       # use de_read_b64 as default in storeRemap to avoid bank conflict
