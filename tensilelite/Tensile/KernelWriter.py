@@ -87,7 +87,10 @@ class ABMatrixInfo(MatrixInfo):
   startVgprLocalWriteAddr: int   = -1
   numVgprGlobalReadOffsets: int  = -1
   startVgprGlobalReadOffset: int = -1
-
+  numVgprLocalReadSwapAddr: int  = -1
+  startVgprLocalReadSwapAddr: int= -1
+  numVgprLocalWriteSwapAddr: int  = -1
+  startVgprLocalWriteSwapAddr: int= -1
   numSgprGlobalReadIncs: int     = -1
 
 # States
@@ -1179,8 +1182,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
                                         })
         # if start to schedule localwrite, but still have localreads not scheduled yet,
         # reject to use 1LDSB, since it will write and read same lds buffer at same time.
-        if mfmaIndex > self.states.sync1LdsMfmaIndex and localReadItemsThisLoop and oneBufferScheduling:
-          self.states.overflowedResources = 5
+        #if mfmaIndex > self.states.sync1LdsMfmaIndex and localReadItemsThisLoop and oneBufferScheduling:
+          # TODO: can we remove this restriction?
+          #self.states.overflowedResources = 5
         for j in range(readLeft):
           if localReadItemsThisLoop:
             item = localReadItemsThisLoop.pop(0)
@@ -1979,10 +1983,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
       pfi = 1
       module.addComment1("prefetch: global -> local")
       module.add(self.openSumAtLeastUnroll(kernel, prefetch=True, isOptNLL=isOptNLL))
-      moduleTmp = self.directToLdsM0Update(kernel, 0, tensorParameters1st, usePlaceHolder=False)
+      moduleTmp = self.directToLdsM0Update(kernel, 0, tensorParameters1st)
       module.add(replaceHolder(moduleTmp, 0))
       module.add(self.globalReadDo(kernel, 0, tensorParameters1st))
-      moduleTmp = self.directToLdsM0Update(kernel, 0, tensorParameters2nd, usePlaceHolder=False)
+      moduleTmp = self.directToLdsM0Update(kernel, 0, tensorParameters2nd)
       module.add(replaceHolder(moduleTmp, 0))
       module.add(self.globalReadDo(kernel, 0, tensorParameters2nd))
       tPA = tensorParametersA
@@ -2340,8 +2344,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # unrolled loop: global read A, B
     # M0 update for directToLds
-    self.codes.dtlsM0UpdateA = self.directToLdsM0Update(kernel, 1, tensorParameters1st, usePlaceHolder=True)
-    self.codes.dtlsM0UpdateB = self.directToLdsM0Update(kernel, 1, tensorParameters2nd, usePlaceHolder=True)
+    self.codes.dtlsM0UpdateA = self.directToLdsM0Update(kernel, 1, tensorParameters1st)
+    self.codes.dtlsM0UpdateB = self.directToLdsM0Update(kernel, 1, tensorParameters2nd)
 
     g2lBufIdx1st = 0
     if grBA==True or (kernel["DirectToVgpr%s"%tc1] and isDTVGRSecondBuf):
@@ -3942,6 +3946,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.m.numVgprLocalReadAddr = 1 * self.states.rpla
     self.states.a.numVgprLocalWriteAddr = 0 if kernel["LocalWriteUseSgprA"] else 1 * self.states.rpla
     self.states.b.numVgprLocalWriteAddr = 0 if kernel["LocalWriteUseSgprB"] else 1 * self.states.rpla
+    self.states.a.numVgprLocalReadSwapAddr = 0
+    self.states.b.numVgprLocalReadSwapAddr = 0
+    self.states.a.numVgprLocalWriteSwapAddr = 0
+    self.states.b.numVgprLocalWriteSwapAddr = 0
 
     if self.states.archCaps["HasLDSGT64K"] and not kernel["LocalWriteUseSgprA"] :
       if (kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=131072:
@@ -3971,10 +3979,18 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if not (kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]):
       self.states.m.numVgprLocalWriteAddr = 0
     # do not allocate local write address register if DirectToVgpr is enabled
-    if kernel["DirectToVgprA"]:
+    if kernel["DirectToVgprA"] or kernel["DirectToLdsA"]:
       self.states.a.numVgprLocalWriteAddr = 0
-    if kernel["DirectToVgprB"]:
+    if kernel["DirectToVgprB"] or kernel["DirectToLdsB"]:
       self.states.b.numVgprLocalWriteAddr = 0
+
+    if kernel["StoreSwapAddr"]:
+      self.states.a.numVgprLocalReadSwapAddr = 1
+      self.states.b.numVgprLocalReadSwapAddr = 1
+      if not kernel["LocalWriteUseSgprA"]:
+        self.states.a.numVgprLocalWriteSwapAddr = 1
+      if not kernel["LocalWriteUseSgprB"]:
+        self.states.b.numVgprLocalWriteSwapAddr = 1
 
     ####################################
     # num vgprs: global read addresses
@@ -4318,6 +4334,20 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.startVgprAlphaTmp = vgprIdx
       vgprIdx += 4
 
+    # for swapping vgpr offsets of different lds buffers
+    if self.states.a.numVgprLocalReadSwapAddr > 0:
+      self.states.a.startVgprLocalReadSwapAddr = vgprIdx
+      vgprIdx += 1
+    if self.states.b.numVgprLocalReadSwapAddr > 0:
+      self.states.b.startVgprLocalReadSwapAddr = vgprIdx
+      vgprIdx += 1
+    if self.states.a.numVgprLocalWriteSwapAddr > 0:
+      self.states.a.startVgprLocalWriteSwapAddr = vgprIdx
+      vgprIdx += 1
+    if self.states.b.numVgprLocalWriteSwapAddr > 0:
+      self.states.b.startVgprLocalWriteSwapAddr = vgprIdx
+      vgprIdx += 1
+
     # TODO: Serial is always the first/last register in the pool so the store
     # code doesn't have to deal with fragmentation
     self.states.startVgprSerial = vgprIdx
@@ -4543,6 +4573,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.defineSgpr("LocalWriteAddrA", 1)
     if kernel["LocalWriteUseSgprB"]:
         self.defineSgpr("LocalWriteAddrB", 1)
+
+    # Allocate registers to swap between lds buffers
+    if kernel["StoreSwapAddr"]:
+      if kernel["LocalWriteUseSgprA"]:
+        self.defineSgpr("SwapA", 1)
+      if kernel["LocalWriteUseSgprB"]:
+        self.defineSgpr("SwapB", 1)
+
 
     if GSUAMBSK:
       self.defineSgpr("AddressTD", numSgprAddressD, align=2)
@@ -5212,7 +5250,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # mode: 0=prefetch, 1=unroll loop, 2=guardK
   ##############################################################################
   @abc.abstractmethod
-  def directToLdsM0Update(self, kernel, mode, tP, usePlaceHolder=False):
+  def directToLdsM0Update(self, kernel, mode, tP):
     return ""
 
   ##############################################################################

@@ -219,7 +219,8 @@ class LocalReadMFMA(LocalRead):
             highBits = 0
             for tIdx in range(0, numberMTilesPerWave):
                 offset_val = (tP["localReadOffset"]+MIWaveGroupShape[tile01]*tIdx) * tP["bpeDS"]
-                if (kernel["LdsBlockSizePerPad%s"%tc] != 0) and (kernel["LdsPad%s"%tc] != 0):
+                # Disable this calculation for DTL, since we are only doing padding with M0
+                if (kernel["LdsBlockSizePerPad%s"%tc] != 0) and (kernel["LdsPad%s"%tc] != 0) and not kernel["DirectToLds"]:
                     offset_val = offset_val + (offset_val // kernel["LdsBlockSizePerPad%s"%tc]) * kernel["LdsPad%s"%tc] * tP["bpeDS"]
                 paramList = []
                 paramList.append(int(offset_val))
