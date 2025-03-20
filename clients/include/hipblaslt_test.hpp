@@ -99,7 +99,7 @@
         if(SOL_COUNT == 0)                  \
         {                                   \
             FAIL() << "NO solution found!"; \
-            return;                         \
+            exit(EXIT_FAILURE);             \
         }                                   \
     } while(0)
 #else // GOOGLE_TEST
@@ -143,10 +143,10 @@ inline void hipblaslt_expect_status(hipblasStatus_t status, hipblasStatus_t expe
         {                                                                              \
             hipblaslt_cerr << "error: NO solution found! at " __FILE__ ":" << __LINE__ \
                            << std::endl;                                               \
-            return;                                                                    \
+            exit(EXIT_FAILURE);                                                                    \
         }                                                                              \
     } while(0)
-#endif // GOOGLE_TEST
+#endif
 
 #define CHECK_HIPBLASLT_ERROR2(STATUS) EXPECT_HIPBLAS_STATUS(STATUS, HIPBLAS_STATUS_SUCCESS)
 #define CHECK_HIPBLASLT_ERROR(STATUS) CHECK_HIPBLASLT_ERROR2(STATUS)
