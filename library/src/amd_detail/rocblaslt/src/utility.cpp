@@ -83,11 +83,11 @@ const char* hipDataType_to_string(hipDataType type)
 #endif
     case HIP_R_8I:
         return "R_8I";
-    case HIP_R_6F_E2M3:
+    case static_cast<hipDataType>(HIP_R_6F_E2M3):
         return "R_6F_E2M3";
-    case HIP_R_6F_E3M2:
+    case static_cast<hipDataType>(HIP_R_6F_E3M2):
         return "R_6F_E3M2";
-    case HIP_R_4F_E2M1:
+    case static_cast<hipDataType>(HIP_R_4F_E2M1):
         return "R_4F_E2M1";
     default:
         return "Invalid";
@@ -129,11 +129,11 @@ const char* hipDataType_to_bench_string(hipDataType type)
     case HIP_R_8F_E5M2:
         return "bf8_r";
 #endif
-    case HIP_R_6F_E2M3:
+    case static_cast<hipDataType>(HIP_R_6F_E2M3):
         return "f6_r";
-    case HIP_R_6F_E3M2:
+    case static_cast<hipDataType>(HIP_R_6F_E3M2):
         return "bf6_r";
-    case HIP_R_4F_E2M1:
+    case static_cast<hipDataType>(HIP_R_4F_E2M1):
         return "f4_r";
     default:
         return "invalid";

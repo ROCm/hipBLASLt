@@ -215,9 +215,9 @@ constexpr hipDataType string_to_hip_datatype(const std::string& value)
         value == "f16_r" || value == "h" ? HIP_R_16F  :
         value == "bf16_r"                ? HIP_R_16BF  :
         value == "i8_r" || value == "i8" ? HIP_R_8I  :
-        value == "f6_r"                  ? HIP_R_6F_E2M3 :
-        value == "bf6_r"                 ? HIP_R_6F_E3M2 :
-        value == "f4_r"                  ? HIP_R_4F_E2M1 :
+        value == "f6_r"                  ? static_cast<hipDataType>(HIP_R_6F_E2M3) :
+        value == "bf6_r"                 ? static_cast<hipDataType>(HIP_R_6F_E3M2) :
+        value == "f4_r"                  ? static_cast<hipDataType>(HIP_R_4F_E2M1) :
         value == "i32_r" || value == "i" ? HIP_R_32I  :
         HIPBLASLT_DATATYPE_INVALID;
 }

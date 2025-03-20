@@ -61,11 +61,11 @@ constexpr auto hipblaslt_type2datatype()
     if(std::is_same<T, hipblasLtInt8>{})
         return HIP_R_8I;
     if(std::is_same<T, hipblaslt_f6>{})
-        return HIP_R_6F_E2M3;
+        return static_cast<hipDataType>(HIP_R_6F_E2M3);
     if(std::is_same<T, hipblaslt_bf6>{})
-        return HIP_R_6F_E3M2;
+        return static_cast<hipDataType>(HIP_R_6F_E3M2);
     if(std::is_same<T, hipblaslt_f4>{})
-        return HIP_R_4F_E2M1;
+        return static_cast<hipDataType>(HIP_R_4F_E2M1);
 
     return HIP_R_16F; // testing purposes we default to f32 ex
 }
@@ -90,6 +90,13 @@ inline hipDataType computeTypeToRealDataType(hipblasComputeType_t ctype)
 
 inline std::size_t realDataTypeSize(hipDataType dtype)
 {
+    // These types were not defined in older versions of ROCm, so need to be handled specially here.
+    auto const dtype_int = static_cast<int>(dtype);
+    if(dtype_int == HIP_R_4F_E2M1 || dtype_int == HIP_R_6F_E2M3 || dtype_int == HIP_R_6F_E3M2)
+    {
+        return 1;
+    }
+
     static const std::map<hipDataType, std::size_t> dtypeMap{
         {HIP_R_32F, 4},
         {HIP_R_64F, 8},
@@ -111,9 +118,6 @@ inline std::size_t realDataTypeSize(hipDataType dtype)
         {HIP_R_8F_E4M3, 1},
         {HIP_R_8F_E5M2, 1},
 #endif
-        {HIP_R_6F_E2M3, 1},
-        {HIP_R_6F_E3M2, 1},
-        {HIP_R_4F_E2M1, 1},
     };
 
     return dtypeMap.at(dtype);
