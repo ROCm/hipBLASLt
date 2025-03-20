@@ -324,7 +324,8 @@ try
     std::vector<int64_t>  stride_a, stride_b, stride_c, stride_d, stride_e;
     std::vector<uint32_t> gsu_vector, wgm_vector;
     arg.init(); // set all defaults
-    const char* tuningEnv = getenv("HIPBLASLT_TUNING_FILE");
+    const char* tuningEnv          = getenv("HIPBLASLT_TUNING_FILE");
+    const char* tuningMaxWorkSpace = getenv("HIPBLASLT_TUNING_USER_MAX_WORKSPACE");
     if(tuningEnv)
     {
         bool tuning_success = tuning_path_compare_git_version(tuningEnv);
@@ -479,7 +480,7 @@ try
          "Cold Iterations to run before entering the timing loop")
 
         ("algo_method",
-         value<std::string>(&algo_method_str)->default_value(tuningEnv? "all" : "heuristic"),
+         value<std::string>(&algo_method_str)->default_value("heuristic"),
          "Use different algorithm search API. Options: heuristic, all, index.")
 
         ("solution_index",
@@ -571,7 +572,7 @@ try
          "C and D are stored in same memory")
 
         ("workspace",
-         value<size_t>(&arg.user_allocated_workspace)->default_value(128 * 1024 * 1024),
+         value<size_t>(&arg.user_allocated_workspace)->default_value(tuningEnv && tuningMaxWorkSpace ? atoi(tuningMaxWorkSpace) : 128 * 1024 * 1024),
          "Set fixed workspace memory size (bytes) instead of using hipblaslt managed memory")
 
         ("log_function_name",
@@ -664,11 +665,11 @@ try
     }
     else if(algo_method_str.compare("all") == 0)
     {
-        arg.algo_method = 1;
+        arg.algo_method = tuningEnv ? 0 : 1;
     }
     else if(algo_method_str.compare("index") == 0)
     {
-        arg.algo_method = tuningEnv ? 1 : 2;
+        arg.algo_method = tuningEnv ? 0 : 2;
     }
     else
     {

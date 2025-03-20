@@ -111,11 +111,11 @@ inline bool
 
 // Preload problem/solution mappings
 bool problem_override_from_file(rocblaslt_handle&                 handle,
-                                rocblaslt_matmul_preference&      pref,
                                 RocblasltContractionProblem&      problem,
                                 rocblaslt_matmul_desc&            matmul_desc,
                                 rocblaslt_matmul_heuristic_result heuristicResultsArray[],
-                                const std::string&                file_path)
+                                const std::string&                file_path,
+                                size_t                            max_workspace_bytes)
 {
 
     bool success = false;
@@ -133,15 +133,13 @@ bool problem_override_from_file(rocblaslt_handle&                 handle,
         TensileLite::ProblemOverride prob_key(RocblasltContractionProblem2ProblemOverride(problem));
         auto                         sol_iter = m_override.find(prob_key);
 
-        for(auto sol_idx = std::make_reverse_iterator(sol_iter.second);
-            !success && sol_idx != std::make_reverse_iterator(sol_iter.first);
-            sol_idx++)
+        for(auto sol_idx = sol_iter.first; !success && sol_idx != sol_iter.second; sol_idx++)
         {
             solutionIndex[0] = sol_idx->second;
 
             if(rocblaslt_status_success
                == getSolutionsFromIndex(
-                   handle, solutionIndex, overrideResults, pref->max_workspace_bytes))
+                   handle, solutionIndex, overrideResults, max_workspace_bytes))
             {
 
                 size_t required_workspace_size = 0;
@@ -157,7 +155,7 @@ bool problem_override_from_file(rocblaslt_handle&                 handle,
 
                     heuristicResult_copy(&heuristicResultsArray[0],
                                          &overrideResults[0],
-                                         pref->max_workspace_bytes,
+                                         max_workspace_bytes,
                                          required_workspace_size);
                     success = true;
                 }
@@ -183,9 +181,9 @@ bool problem_override_from_file_cpp(
     rocblaslt_handle&                               handle,
     rocblaslt::RocGemmType&                         gemmType,
     std::shared_ptr<void>                           gemmData,
-    size_t                                          workspaceSizeInBytes,
     std::vector<rocblaslt_matmul_heuristic_result>& heuristicResultsArray,
-    const std::string&                              file_path)
+    const std::string&                              file_path,
+    size_t                                          max_workspace_bytes)
 {
 
     bool success = false;
@@ -203,25 +201,26 @@ bool problem_override_from_file_cpp(
         TensileLite::ProblemOverride prob_key(TensileDataGemm2ProblemOverride(gemmData));
         auto                         sol_iter = m_override.find(prob_key);
 
-        for(auto sol_idx = std::make_reverse_iterator(sol_iter.second);
-            !success && sol_idx != std::make_reverse_iterator(sol_iter.first);
-            sol_idx++)
+        for(auto sol_idx = sol_iter.first; !success && sol_idx != sol_iter.second; sol_idx++)
         {
-            solutionIndex[0]        = sol_idx->second;
-            size_t maxWorkspaceSize = std::numeric_limits<size_t>::max();
+            solutionIndex[0] = sol_idx->second;
             if(rocblaslt_status_success
-               == getSolutionsFromIndex(handle, solutionIndex, overrideResults, maxWorkspaceSize))
+               == getSolutionsFromIndex(
+                   handle, solutionIndex, overrideResults, max_workspace_bytes))
             {
-                rocblaslt::RocTuningV2* tuning = nullptr;
+
+                size_t                  required_workspace_size = 0;
+                rocblaslt::RocTuningV2* tuning                  = nullptr;
+
                 if(rocblaslt_status_success
                    == isSolutionSupported(handle,
                                           static_cast<const rocblaslt::RocGemmType>(gemmType),
                                           gemmData,
                                           overrideResults[0].algo,
                                           tuning,
-                                          workspaceSizeInBytes))
+                                          required_workspace_size))
                 {
-                    overrideResults[0].workspaceSize = workspaceSizeInBytes;
+                    overrideResults[0].workspaceSize = required_workspace_size;
                     heuristicResultsArray.push_back(overrideResults[0]);
                     success = true;
                 }
@@ -1545,8 +1544,12 @@ rocblaslt_status
         bool               override_success = false;
         if(override.env_mode)
         {
-            override_success = problem_override_from_file(
-                handle, pref, prob, matmul_desc, heuristicResultsArray, override.file_path);
+            override_success = problem_override_from_file(handle,
+                                                          prob,
+                                                          matmul_desc,
+                                                          heuristicResultsArray,
+                                                          override.file_path,
+                                                          pref->max_workspace_bytes);
             if(override_success)
                 requestedAlgoCount--;
 
@@ -1780,7 +1783,7 @@ rocblaslt_status
     rocblaslt_algo_get_heuristic_cpp(rocblaslt_handle       handle,
                                      rocblaslt::RocGemmType gemmType,
                                      std::shared_ptr<void>  gemmData,
-                                     const int              workspaceBytes,
+                                     const size_t           maxWorkspaceBytes,
                                      const int              requestedAlgoCount,
                                      std::vector<rocblaslt_matmul_heuristic_result>& results)
 {
@@ -1805,7 +1808,7 @@ rocblaslt_status
         if(override.env_mode)
         {
             override_success = problem_override_from_file_cpp(
-                handle, gemmType, gemmData, workspaceBytes, override_result, override.file_path);
+                handle, gemmType, gemmData, override_result, override.file_path, maxWorkspaceBytes);
 
             log_api(__func__, "returnAlgoCount", override_success ? 1 : 0);
         }
@@ -1815,7 +1818,7 @@ rocblaslt_status
                 = getBestSolutions(handle,
                                    gemmType,
                                    gemmData,
-                                   workspaceBytes,
+                                   maxWorkspaceBytes,
                                    override_success ? requestedAlgoCount - 1 : requestedAlgoCount,
                                    results);
 
@@ -1834,10 +1837,10 @@ rocblaslt_status
         if(requestedAlgoCount > results.size())
         {
             std::vector<rocblaslt_matmul_heuristic_result> allSolutionsResults;
-            size_t                                         workspaceSizeInBytes = workspaceBytes;
+            size_t                                         workspaceSizeInBytes = 0;
             if(rocblaslt_status_success
                == getAllSolutions(
-                   gemmData, handle, gemmType, allSolutionsResults, workspaceSizeInBytes))
+                   gemmData, handle, gemmType, allSolutionsResults, maxWorkspaceBytes))
             {
                 int oriReturnAlgoCount = results.size();
                 for(int i = 0;
