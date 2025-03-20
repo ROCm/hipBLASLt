@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,6 +45,8 @@ namespace TensileLite
             return "ExperimentalDTree";
         case PerformanceMetric::ExperimentalStreamK:
             return "ExperimentalStreamK";
+        case PerformanceMetric::ExperimentalMLP:
+            return "ExperimentalMLP";
 
         case PerformanceMetric::Count:
         default:;
@@ -66,6 +68,8 @@ namespace TensileLite
             return "DTree";
         case PerformanceMetric::ExperimentalStreamK:
             return "StreamK";
+        case PerformanceMetric::ExperimentalMLP:
+            return "MLP";
 
         case PerformanceMetric::Count:
         default:;
@@ -106,6 +110,7 @@ namespace TensileLite
         registerTypeInfo<PerformanceMetric::DeviceEfficiency>();
         registerTypeInfo<PerformanceMetric::ExperimentalDTree>();
         registerTypeInfo<PerformanceMetric::ExperimentalStreamK>();
+        registerTypeInfo<PerformanceMetric::ExperimentalMLP>();
     }
 
     void PerformanceMetricTypeInfo::registerAllTypeInfoOnce()

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@
 #include <Tensile/AMDGPUPredicates.hpp>
 #include <Tensile/ContractionProblemPredicates.hpp>
 #include <Tensile/DecisionTreeLibrary.hpp>
+#include <Tensile/MLPClassificationLibrary.hpp>
 #include <Tensile/ExactLogicLibrary.hpp>
 #include <Tensile/FreeSizeLibrary.hpp>
 #include <Tensile/GranularitySelectionLibrary.hpp>
@@ -167,6 +168,10 @@ namespace TensileLite
 
         TENSILE_SERIALIZE_VECTOR(true, ExactSelectionTableEntry);
 
+        // TENSILE_SERIALIZE_VECTOR(true, float);
+        TENSILE_SERIALIZE_VECTOR(false, float);
+        TENSILE_SERIALIZE_VECTOR(false, TensileLite::Half);
+
         TENSILE_SERIALIZE_VECTOR(true,
                                  TensileLite::ExactLogicLibrary<TensileLite::ContractionProblemGemm,
                                                             TensileLite::ContractionSolution,
@@ -190,6 +195,8 @@ namespace TensileLite
             true, std::shared_ptr<TensileLite::MLFeatures::MLFeature<TensileLite::ContractionProblemGemm>>);
 
         TENSILE_SERIALIZE_VECTOR(false, std::shared_ptr<TensileLite::ContractionSolution>);
+
+        TENSILE_SERIALIZE_VECTOR(true, TensileLite::MLPClassification::ResBlock);
 
         template <typename Value, typename IO>
         struct SequenceTraits<std::vector<TensileLite::FreeSizeEntry<Value>>, IO>
@@ -219,6 +226,7 @@ namespace TensileLite
                   false>
         {
         };
+
 
         template <typename T, size_t N, typename IO>
         struct SequenceTraits<std::array<T, N>, IO>

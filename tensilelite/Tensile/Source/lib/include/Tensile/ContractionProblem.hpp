@@ -908,6 +908,9 @@ namespace TensileLite
             case ExperimentalOption::StreamK:
                 return PerformanceMetric::ExperimentalStreamK;
 
+            case ExperimentalOption::MLP:
+                return PerformanceMetric::ExperimentalMLP;
+
             default:
                 // warning?
                 return m_performanceMetric;

@@ -221,6 +221,46 @@ class DecisionTreeLibrary:
         self.nullValue = nullValue
 
 
+class MLPClassificationLibrary:
+    Tag = "MLPClassification"
+    StateKeys = [("type", "tag"), "table", "mlp", "problemFeatures"]
+
+    @classmethod
+    def FromOriginalState(cls, d, solutions):
+        origTable = d["table"]
+        table = []
+
+        try:
+            indexStart  = origTable[0]
+            indexOffset = origTable[1]
+            for index in range(indexStart, indexStart + indexOffset):
+                value = IndexSolutionLibrary(solutions[index])
+                table.append(value)
+        except KeyError:
+            pass
+
+        mlp = d["mlp"]
+        problem_features = d["problemFeatures"]
+        return cls(table, mlp, problem_features)
+
+    @property
+    def tag(self):
+        return self.__class__.Tag
+
+    def merge(self, other):
+        raise RuntimeError(
+            "MLPClassificationLibrary does not support merging."
+        )
+
+    def remapSolutionIndices(self, indexMap):
+        pass
+
+    def __init__(self, table, mlp, problem_features):
+        self.table = table
+        self.mlp = mlp
+        self.problemFeatures = problem_features
+
+
 class ProblemMapLibrary:
     Tag = "ProblemMap"
     StateKeys = [("type", "tag"), ("property", "mappingProperty"), ("map", "mapping")]
@@ -402,6 +442,12 @@ class MasterSolutionLibrary:
 
                     treeLib = DecisionTreeLibrary.FromOriginalState(lib, solutions)
                     library.rows.append({"predicate": predicate, "library": treeLib})
+            elif d["LibraryType"] == "MLPClassification":
+                predicate = Properties.Predicate(tag="TruePred")
+
+                regressionLib = MLPClassificationLibrary.FromOriginalState(d["Library"], solutions)
+                library = PredicateLibrary(tag="Problem")
+                library.rows.append({"predicate": predicate, "library": regressionLib})
             else:
                 assert 0 and "Unrecognized LibraryType."
 

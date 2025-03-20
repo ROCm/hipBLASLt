@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -54,6 +54,7 @@ namespace TensileLite
         None    = 0,
         DTree   = 1,
         StreamK = 2,
+        MLP     = 3,
         Count
     };
 
@@ -67,6 +68,7 @@ namespace TensileLite
         DeviceEfficiency,
         ExperimentalDTree,
         ExperimentalStreamK,
+        ExperimentalMLP,
         Count
     };
 
@@ -150,6 +152,11 @@ namespace TensileLite
     template <>
     struct PerformanceMetricInfo<PerformanceMetric::ExperimentalStreamK>
         : public BasePerformanceMetricInfo<PerformanceMetric::ExperimentalStreamK>
+    {
+    };
+    template <>
+    struct PerformanceMetricInfo<PerformanceMetric::ExperimentalMLP>
+        : public BasePerformanceMetricInfo<PerformanceMetric::ExperimentalMLP>
     {
     };
 

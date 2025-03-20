@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +47,16 @@ set(tensile_sources  ${tensile_sources}
     source/TensorDescriptor.cpp
     source/Tensile.cpp
     source/Utils.cpp
+    source/MLPNet.cpp
     )
+
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-ffast-math" CXX_FAST_MATH_FLAG_SUPPORTED)
+if(CXX_FAST_MATH_FLAG_SUPPORTED)
+    set_source_files_properties(source/MLPNet.cpp PROPERTIES COMPILE_FLAGS "-ffast-math")
+endif()
+
+
 if(TENSILE_USE_LLVM)
     if("$ENV{TENSILE_CLIENT_STATIC}" STREQUAL "" AND NOT TENSILE_CLIENT_STATIC)
         find_package(LLVM REQUIRED)
