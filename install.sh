@@ -44,7 +44,7 @@ function display_help()
   echo "    [-k|--relwithdebinfo] -DCMAKE_BUILD_TYPE=RelWithDebInfo"
   echo "    [--hip-clang] build library for amdgpu backend using amdclang"
   echo "    [--static] build static library"
-  echo "    [-n|--no-tensile] build hipBLASLt without Tensile GEMM libraries"
+  echo "    [-n|--client-only] build hipBLASLt without Tensile GEMM libraries"
   echo "    [--address-sanitizer] build with address sanitizer"
   echo "    [--codecoverage] build with code coverage profiling enabled"
   echo "    [--gprof] enable profiling functionality with GNU gprof"
@@ -426,7 +426,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,no-lazy-library-loading,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,no-compress,experimental,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker,logic-yaml-filter: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,no-lazy-library-loading,no_tensile,no-tensile,client-only,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture:,gprof,keep-build-tmp,no-compress,experimental,legacy_hipblas_direct,disable-hipblaslt-marker,enable-tensile-marker,logic-yaml-filter: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -503,7 +503,7 @@ while true; do
         -t|--test_local_path)
             tensile_test_local_path=${2}
             shift 2 ;;
-        -n|--no_tensile|--no-tensile)
+        -n|--no_tensile|--no-tensile|--client-only)
             build_tensile=true
             shift ;;
         --no-lazy-library-loading)

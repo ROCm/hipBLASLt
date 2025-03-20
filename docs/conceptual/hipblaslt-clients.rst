@@ -137,7 +137,13 @@ For more information, run the command with the ``--help`` option. The output of 
 Building clients with prebuilt libraries
 ========================================
 
-Sometimes it is desirable to build or rebuild the clients without having to conduct a full build of the library. This can be done by adding the ``-n``/``--no-tensile`` option to the install script. For example, ``./install.sh -c -a gfx942 -n`` will build the clients and host code, but will not build Tensile libraries. Internally, this passes the ``-DTensile_SKIP_BUILD=ON`` option to CMake. If you prefer to build hipBLASLt with CMake directly instead of through the install script, the same effect can be achieved with the following steps:
+Sometimes it is desirable to build or rebuild the clients without having to conduct a full build of the library. This can be done by adding the ``-n``/``--client-only`` option to the install script. For example, ``./install.sh -c -a gfx942 -n`` will build the clients and host code, but will not build Tensile libraries.
+
+.. note::
+
+   For backwards compatibility with build scripts, ``-n``/``--client-only`` is an alias for ``--no-tensile``.
+
+Internally, this passes the ``-DTensile_SKIP_BUILD=ON`` option to CMake. If you prefer to build hipBLASLt with CMake directly instead of through the install script, the same effect can be achieved with the following steps:
 
 .. code-block:: bash
 
