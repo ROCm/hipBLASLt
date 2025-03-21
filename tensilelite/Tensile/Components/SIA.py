@@ -816,7 +816,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
                     # Split into several dsStore32
                     syncEndExpandedNumIndex = len(itemsLWToSched)
 
-                    if u == (writer.states.lwEndMfmaIndex // writer.states.numMfmaPerIter):
+                    if writer.states.numMfmaPerIter and u == (writer.states.lwEndMfmaIndex // writer.states.numMfmaPerIter):
                         syncEndExpandedNumIndex = numLocalWriteModPerIter
                         syncEndExpandedNumIndex *= ((writer.states.syncPlrMfmaIndex % writer.states.numMfmaPerIter) / writer.states.numMfmaPerIter)
                         syncEndExpandedNumIndex = roundUp(syncEndExpandedNumIndex)
