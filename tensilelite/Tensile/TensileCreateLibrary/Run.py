@@ -444,9 +444,9 @@ def generateLogicDataAndSolutions(logicFiles, args, cxxCompiler):
                 k: lib.solutions[k]
                 for k in sorted(lib.solutions, key=lambda idx: lib.solutions[idx].srcName)
             }
-        for _, sol in lib.solutions.items():
-            sol.index = solnReIndex
-            solnReIndex += 1
+            for _, sol in lib.solutions.items():
+                sol.index = solnReIndex
+                solnReIndex += 1
 
     if args["GenSolTable"]:
         matchTable = {}
