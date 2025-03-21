@@ -1,4 +1,3 @@
-
 from os import name as os_name
 from os import environ
 from pathlib import Path
@@ -8,7 +7,7 @@ from subprocess import check_output, STDOUT, CalledProcessError, PIPE, run
 from typing import List
 
 from Tensile.Common import SemanticVersion, print1
-from .Validators import ToolchainDefaults
+from .Validators import ToolchainDefaults, validateToolchain
 
 def _invoke(args: List[str], desc: str=""):
   """Invokes a command with the provided arguments in a subprocess.
@@ -28,7 +27,6 @@ def _invoke(args: List[str], desc: str=""):
           f"Error with {desc}: {err.output}\n"
           f"Failed command: {' '.join(args)}"
       )
-  #print2(f"Output: {out}")
   return out
 
 
@@ -44,12 +42,15 @@ def _getVersion(executable: str, versionFlag: str, regex: str) -> str:
     Return:
         Executable version
     """
+    executable = validateToolchain(executable)
     args = f'"{executable}" "{versionFlag}"'
     try:
         output = run(args, stdout=PIPE, shell=True).stdout.decode().strip()
         match = search(regex, output, IGNORECASE)
-        result = match.group(1) if match else "<unknown>"
-        return SemanticVersion(*[int(c.split("-")[0]) for c in result.split(".")[:3]])
+        if match:
+            result = match.group(1)
+            return SemanticVersion(*[int(c.split("-")[0]) for c in result.split(".")[:3]])
+        raise Exception(f"No version from {output} matches regex {regex}")
     except Exception as e:
         raise RuntimeError(f"Failed to get version when calling {args}: {e}")
 
