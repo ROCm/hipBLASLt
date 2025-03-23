@@ -326,18 +326,17 @@ inline void logBench(const RocblasltContractionProblem& prob,
  */
 rocRoller::DataType hipDataType_to_rocRoller_type(hipDataType type)
 {
-    // FIXME: HIP currently does not have enums for F4 and F6, so
-    //        they are represented as constant integers. Should add
-    //        F4 and F6 to switch below when HIP defines enums for them
-    if(static_cast<int>(type) == HIP_R_6F_E2M3)
+    // Older versions of ROCm do not have these types defined,
+    // so they need to be handled specially.
+    if(static_cast<int>(type) == HIP_R_6F_E2M3_EXT)
     {
         return rocRoller::DataType::FP6;
     }
-    if(static_cast<int>(type) == HIP_R_6F_E3M2)
+    if(static_cast<int>(type) == HIP_R_6F_E3M2_EXT)
     {
         return rocRoller::DataType::BF6;
     }
-    if(static_cast<int>(type) == HIP_R_4F_E2M1)
+    if(static_cast<int>(type) == HIP_R_4F_E2M1_EXT)
     {
         return rocRoller::DataType::FP4;
     }
@@ -358,12 +357,6 @@ rocRoller::DataType hipDataType_to_rocRoller_type(hipDataType type)
         return rocRoller::DataType::FP8;
     case HIP_R_8F_E5M2:
         return rocRoller::DataType::BF8;
-    case HIP_R_6F_E2M3:
-        return rocRoller::DataType::FP6;
-    case HIP_R_6F_E3M2:
-        return rocRoller::DataType::BF6;
-    case HIP_R_4F_E2M1:
-        return rocRoller::DataType::FP4;
     default:
         return rocRoller::DataType::None;
     }

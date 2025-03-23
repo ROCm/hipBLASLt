@@ -304,13 +304,13 @@ Tout cast_from_type(void* in, hipDataType type, size_t index)
         return static_cast<Tout>((static_cast<int32_t*>(in))[index]);
     case HIP_R_8I:
         return static_cast<Tout>((static_cast<hipblasLtInt8*>(in))[index]);
-    case HIP_R_6F_E2M3:
+    case HIP_R_6F_E2M3_EXT:
         hipblaslt_cerr << "cast_from_type() does not support FP6" << std::endl;
         return 0;
-    case HIP_R_6F_E3M2:
+    case HIP_R_6F_E3M2_EXT:
         hipblaslt_cerr << "cast_from_type() does not support BF6" << std::endl;
         return 0;
-    case HIP_R_4F_E2M1:
+    case HIP_R_4F_E2M1_EXT:
         hipblaslt_cerr << "cast_from_type() does not support FP4" << std::endl;
         return 0;
     default:
@@ -356,13 +356,13 @@ void saturate_cast_to_type(void* dst, Tin src, hipDataType typeD, size_t indexD)
     case HIP_R_8I:
         static_cast<hipblasLtInt8*>(dst)[indexD] = saturate_cast<hipblasLtInt8>(src);
         return;
-    case HIP_R_6F_E2M3:
+    case HIP_R_6F_E2M3_EXT:
         hipblaslt_cerr << "cast_from_type() does not support FP6!" << std::endl;
         return;
-    case HIP_R_6F_E3M2:
+    case HIP_R_6F_E3M2_EXT:
         hipblaslt_cerr << "cast_from_type() does not support BF6!" << std::endl;
         return;
-    case HIP_R_4F_E2M1:
+    case HIP_R_4F_E2M1_EXT:
         hipblaslt_cerr << "cast_from_type() does not support FP4!" << std::endl;
         return;
     default:
@@ -1072,9 +1072,9 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
                 real_bias_type = HIP_R_16F;
         }
 #endif
-        else if((arg.a_type == HIP_R_6F_E2M3 && arg.b_type == HIP_R_6F_E2M3) ||
-                (arg.a_type == HIP_R_6F_E3M2 && arg.b_type == HIP_R_6F_E3M2) ||
-            (arg.a_type == HIP_R_4F_E2M1 && arg.b_type == HIP_R_4F_E2M1))
+        else if((arg.a_type == HIP_R_6F_E2M3_EXT && arg.b_type == HIP_R_6F_E2M3_EXT) ||
+                (arg.a_type == HIP_R_6F_E3M2_EXT && arg.b_type == HIP_R_6F_E3M2_EXT) ||
+            (arg.a_type == HIP_R_4F_E2M1_EXT && arg.b_type == HIP_R_4F_E2M1_EXT))
         {
             if(arg.d_type == HIP_R_32F || arg.d_type == HIP_R_16BF)
                 real_bias_type = HIP_R_16BF;

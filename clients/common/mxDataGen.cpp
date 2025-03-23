@@ -312,17 +312,17 @@ std::vector<float> generateMXInput(hipDataType dataType,
         DGen::DataGenerator<DGen::ocp_e4m3_mxfp8> dgen;
         return generateData<decltype(dgen), DGen::ocp_e4m3_mxfp8>(dgen, data, scale, sizes, strides, seed, opt, elementsPerMXBlock, isTranspose, isMatrixA);
     }
-    else if(static_cast<hipDataType>(dataType) == HIP_R_6F_E2M3)
+    else if(static_cast<hipDataType>(dataType) == HIP_R_6F_E2M3_EXT)
     {
         DGen::DataGenerator<DGen::ocp_e2m3_mxfp6> dgen;
         return generateData<decltype(dgen), DGen::ocp_e2m3_mxfp6>(dgen, data, scale, sizes, strides, seed, opt, elementsPerMXBlock, isTranspose, isMatrixA);
     }
-    else if(static_cast<hipDataType>(dataType) == HIP_R_6F_E3M2)
+    else if(static_cast<hipDataType>(dataType) == HIP_R_6F_E3M2_EXT)
     {
         DGen::DataGenerator<DGen::ocp_e3m2_mxfp6> dgen;
         return generateData<decltype(dgen), DGen::ocp_e3m2_mxfp6>(dgen, data, scale, sizes, strides, seed, opt, elementsPerMXBlock, isTranspose, isMatrixA);
     }
-    else if(static_cast<hipDataType>(dataType) == HIP_R_4F_E2M1)
+    else if(static_cast<hipDataType>(dataType) == HIP_R_4F_E2M1_EXT)
     {
         DGen::DataGenerator<DGen::ocp_e2m1_mxfp4> dgen;
         return generateData<decltype(dgen), DGen::ocp_e2m1_mxfp4>(dgen, data, scale, sizes, strides, seed, opt, elementsPerMXBlock, isTranspose, isMatrixA);

@@ -259,13 +259,13 @@ void hipblaslt_init_device(ABC                      abc,
         hipblaslt_init_device<hipblasLtInt8>(
             abc, init, is_nan, static_cast<hipblasLtInt8*>(A), M, N, lda, stride, batch_count);
         break;
-    case static_cast<hipDataType>(HIP_R_6F_E2M3):
+    case static_cast<hipDataType>(HIP_R_6F_E2M3_EXT):
         hipblaslt_cerr << "hip device initialization does NOT support FP6 yet" << std::endl;
         break;
-    case static_cast<hipDataType>(HIP_R_6F_E3M2):
+    case static_cast<hipDataType>(HIP_R_6F_E3M2_EXT):
         hipblaslt_cerr << "hip device initialization does NOT support BF6 yet" << std::endl;
         break;
-    case static_cast<hipDataType>(HIP_R_4F_E2M1):
+    case static_cast<hipDataType>(HIP_R_4F_E2M1_EXT):
         hipblaslt_cerr << "hip device initialization does NOT support FP4 yet" << std::endl;
         break;
     default:

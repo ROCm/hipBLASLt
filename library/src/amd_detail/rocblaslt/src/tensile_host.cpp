@@ -396,11 +396,11 @@ namespace
             return TensileLite::DataType::Int8;
         case HIP_R_32I:
             return TensileLite::DataType::Int32;
-        case HIP_R_6F_E2M3: // FIXME: fix this when tensile provide FP6 type
+        case HIP_R_6F_E2M3_EXT: // FIXME: fix this when tensile provide FP6 type
             return TensileLite::DataType::Float8;
-        case HIP_R_6F_E3M2: // FIXME: fix this when tensile provide BF6 type
+        case HIP_R_6F_E3M2_EXT: // FIXME: fix this when tensile provide BF6 type
             return TensileLite::DataType::Float8;
-        case HIP_R_4F_E2M1: // FIXME: fix this when tensile provide FP4 type
+        case HIP_R_4F_E2M1_EXT: // FIXME: fix this when tensile provide FP4 type
             return TensileLite::DataType::Float8;
         default:
             throw std::runtime_error("Unsupported type.");

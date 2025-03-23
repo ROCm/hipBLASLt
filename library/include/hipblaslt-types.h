@@ -94,11 +94,8 @@ typedef int32_t hipblasLtInt32;
 }
 #endif
 
-#if ((HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR < 4) \
-    || (HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR == 4 && HIP_VERSION_PATCH < 43480))
-int const HIP_R_6F_E2M3 = 31;
-int const HIP_R_6F_E3M2 = 32;
-int const HIP_R_4F_E2M1 = 33;
-#endif
+int const HIP_R_6F_E2M3_EXT = 31;
+int const HIP_R_6F_E3M2_EXT = 32;
+int const HIP_R_4F_E2M1_EXT = 33;
 
 #endif /* _HIPBLASLT_TYPES_H_ */

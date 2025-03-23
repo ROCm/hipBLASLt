@@ -527,7 +527,7 @@ double norm_check_general(char        norm_type,
                                                  static_cast<hipblasLtInt8*>(hCPU),
                                                  static_cast<hipblasLtInt8*>(hGPU),
                                                  batch_count);
-    case HIP_R_6F_E2M3:
+    case HIP_R_6F_E2M3_EXT:
         return norm_check_general<hipblaslt_f6>(norm_type,
                                                     M,
                                                     N,
@@ -536,7 +536,7 @@ double norm_check_general(char        norm_type,
                                                     static_cast<hipblaslt_f6*>(hCPU),
                                                     static_cast<hipblaslt_f6*>(hGPU),
                                                     batch_count);
-    case HIP_R_6F_E3M2:
+    case HIP_R_6F_E3M2_EXT:
         return norm_check_general<hipblaslt_bf6>(norm_type,
                                                     M,
                                                     N,
@@ -545,7 +545,7 @@ double norm_check_general(char        norm_type,
                                                     static_cast<hipblaslt_bf6*>(hCPU),
                                                     static_cast<hipblaslt_bf6*>(hGPU),
                                                     batch_count);
-    case HIP_R_4F_E2M1:
+    case HIP_R_4F_E2M1_EXT:
         return norm_check_general<hipblaslt_f4>(norm_type,
                                                     M,
                                                     N,
@@ -626,9 +626,9 @@ bool norm_check(double norm_error, hipDataType type)
     case HIP_R_8I:
         return norm_error < 0.01;
     // TODO: find a suitable rnom value for f6 and f4
-    case HIP_R_6F_E2M3:
-    case HIP_R_6F_E3M2:
-    case HIP_R_4F_E2M1:
+    case HIP_R_6F_E2M3_EXT:
+    case HIP_R_6F_E3M2_EXT:
+    case HIP_R_4F_E2M1_EXT:
         return norm_error < 0.5;
     default:
         return false;

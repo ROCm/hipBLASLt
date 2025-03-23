@@ -921,16 +921,16 @@ try
     arg.scaleD = scaleDFormat;
 
     // Validation for F4 and F6
-    if(arg.a_type == HIP_R_4F_E2M1 || 
-       arg.a_type == HIP_R_6F_E2M3 || 
-       arg.a_type == HIP_R_6F_E3M2 )
+    if(arg.a_type == HIP_R_4F_E2M1_EXT ||
+       arg.a_type == HIP_R_6F_E2M3_EXT ||
+       arg.a_type == HIP_R_6F_E3M2_EXT )
     {
        if(arg.scaleA != hipblaslt_scaling_format::Block)
            throw std::invalid_argument("scaleA must be block format for F4 and F6 types");
     }
-    if(arg.b_type == HIP_R_4F_E2M1 ||
-       arg.b_type == HIP_R_6F_E2M3 || 
-       arg.b_type == HIP_R_6F_E3M2 )
+    if(arg.b_type == HIP_R_4F_E2M1_EXT ||
+       arg.b_type == HIP_R_6F_E2M3_EXT ||
+       arg.b_type == HIP_R_6F_E3M2_EXT )
     {
        if(arg.scaleB != hipblaslt_scaling_format::Block)
            throw std::invalid_argument("scaleB must be block format for F4 and F6 types");
@@ -939,12 +939,12 @@ try
     // Block scaling only allows F8/F6/F4
     if(arg.scaleA == hipblaslt_scaling_format::Block)
     {
-        if(arg.a_type != HIP_R_8F_E4M3 && arg.a_type != HIP_R_8F_E5M2 && arg.a_type != HIP_R_4F_E2M1 && arg.a_type != HIP_R_6F_E2M3 && arg.a_type != HIP_R_6F_E3M2)
+        if(arg.a_type != HIP_R_8F_E4M3 && arg.a_type != HIP_R_8F_E5M2 && arg.a_type != HIP_R_4F_E2M1_EXT && arg.a_type != HIP_R_6F_E2M3_EXT && arg.a_type != HIP_R_6F_E3M2_EXT)
             throw std::invalid_argument("Invalid a_type for block scaling format: "s + hip_datatype_to_string(arg.a_type));
     }
     if(arg.scaleB == hipblaslt_scaling_format::Block)
     {
-        if(arg.b_type != HIP_R_8F_E4M3 && arg.b_type != HIP_R_8F_E5M2 && arg.b_type != HIP_R_4F_E2M1 && arg.b_type != HIP_R_6F_E2M3 && arg.b_type != HIP_R_6F_E3M2)
+        if(arg.b_type != HIP_R_8F_E4M3 && arg.b_type != HIP_R_8F_E5M2 && arg.b_type != HIP_R_4F_E2M1_EXT && arg.b_type != HIP_R_6F_E2M3_EXT && arg.b_type != HIP_R_6F_E3M2_EXT)
             throw std::invalid_argument("Invalid b_type for block scaling format: "s + hip_datatype_to_string(arg.b_type));
     }
     if(arg.scaleA == hipblaslt_scaling_format::Block || arg.scaleB == hipblaslt_scaling_format::Block)
