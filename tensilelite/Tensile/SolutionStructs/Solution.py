@@ -25,16 +25,12 @@
 import collections
 import math
 
-
-from .AsmStoreState import VectorDataTypes
-from .Activation import ActivationType
-
-from .CustomKernels import isCustomKernelConfig
-
 from enum import Enum
 from typing import List, Dict
 
-from .TensileInstructions import DataType, roundUpToNearestMultiple, fastdeepcopy
+from Tensile.AsmStoreState import VectorDataTypes
+from Tensile.Activation import ActivationType
+from Tensile.TensileInstructions import DataType, roundUpToNearestMultiple, fastdeepcopy
 from Tensile.KernelWriterBetaOnly import KernelWriterBetaOnly
 from Tensile.KernelWriterConversion import KernelWriterConversion
 from Tensile.KernelWriterActivationEnumHeader import KernelWriterActivationEnumHeader
@@ -50,6 +46,7 @@ from Tensile.Common import assignParameterWithDefault, IsaInfo, \
 from Tensile.Common.GlobalParameters import defaultSolution, \
                                             defaultInternalSupportParams, \
                                             internalParameters
+from Tensile.CustomKernels import isCustomKernelConfig
 from Tensile.SolutionStructs.Naming import getNameFull
 from Tensile.SolutionStructs.Problem import ProblemType
 from Tensile.Toolchain.Component import Assembler
