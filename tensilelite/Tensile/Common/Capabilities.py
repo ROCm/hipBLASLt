@@ -263,6 +263,7 @@ def makeIsaInfoMap(targetIsas: List[IsaVersion], cxxCompiler: str) -> Dict[IsaVe
     Returns:
         A map of ISA versions to capabilities.
     """
+    # TODO: Should we use rocIsa here or not?
     isaInfoMap = {}
     for v in targetIsas:
         asmCaps = initAsmCaps(v, cxxCompiler, False)

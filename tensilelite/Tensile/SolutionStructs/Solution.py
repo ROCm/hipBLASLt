@@ -25,11 +25,16 @@
 import collections
 import math
 
+
+from .AsmStoreState import VectorDataTypes
+from .Activation import ActivationType
+
+from .CustomKernels import isCustomKernelConfig
+
 from enum import Enum
 from typing import List, Dict
 
-from Tensile.TensileInstructions import DataType, roundUpToNearestMultiple
-from Tensile.TensileInstructions.Base import fastdeepcopy as deepcopy
+from .TensileInstructions import DataType, roundUpToNearestMultiple, fastdeepcopy
 from Tensile.KernelWriterBetaOnly import KernelWriterBetaOnly
 from Tensile.KernelWriterConversion import KernelWriterConversion
 from Tensile.KernelWriterActivationEnumHeader import KernelWriterActivationEnumHeader
@@ -267,16 +272,16 @@ class Solution(collections.abc.Mapping):
       if self["ProblemType"]["UseBias"]:
         for btype in self["ProblemType"]["BiasDataTypeList"]:
           state = {}
-          state["ProblemType"] = deepcopy(self["ProblemType"])
+          state["ProblemType"] = fastdeepcopy(self["ProblemType"])
           state["ProblemType"]["GroupedGemm"] = False
           state["ProblemType"]["BiasDataTypeList"] = []
-          state["ProblemType"]["BiasDataType"] = deepcopy(btype)
+          state["ProblemType"]["BiasDataType"] = fastdeepcopy(btype)
           state["KernelLanguage"] = "Source"
           state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
           self.betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
       else:
         state = {}
-        state["ProblemType"] = deepcopy(self["ProblemType"])
+        state["ProblemType"] = fastdeepcopy(self["ProblemType"])
         state["ProblemType"]["GroupedGemm"] = False
         state["KernelLanguage"] = "Source"
         state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
@@ -303,7 +308,7 @@ class Solution(collections.abc.Mapping):
           if self["ProblemType"]["Gradient"]:
             # If gradient + bias D, generates a normal GSU kernel for bias D = nullptr case
             state = {}
-            state["ProblemType"] = deepcopy(self["ProblemType"])
+            state["ProblemType"] = fastdeepcopy(self["ProblemType"])
             state["ProblemType"]["GroupedGemm"] = False
             state["ProblemType"]["UseBias"] = 0
             state["GenPGRPostKernels"] = genPGRPostKernels
@@ -315,10 +320,10 @@ class Solution(collections.abc.Mapping):
             self.conversionKernelObjects.append(KernelWriterConversion(state, vw, supportedArchs, self.isaInfoMap))
           for btype in typeList:
             state = {}
-            state["ProblemType"] = deepcopy(self["ProblemType"])
+            state["ProblemType"] = fastdeepcopy(self["ProblemType"])
             state["ProblemType"]["GroupedGemm"] = False
             state["ProblemType"]["BiasDataTypeList"] = []
-            state["ProblemType"]["BiasDataType"] = deepcopy(btype)
+            state["ProblemType"]["BiasDataType"] = fastdeepcopy(btype)
             state["GenPGRPostKernels"] = genPGRPostKernels
             state["KernelLanguage"] = "Source"
             state["GlobalSplitU"] = globalSplitU
@@ -328,7 +333,7 @@ class Solution(collections.abc.Mapping):
             self.conversionKernelObjects.append(KernelWriterConversion(state, vw, supportedArchs, self.isaInfoMap))
         else:
           state = {}
-          state["ProblemType"] = deepcopy(self["ProblemType"])
+          state["ProblemType"] = fastdeepcopy(self["ProblemType"])
           state["ProblemType"]["GroupedGemm"] = False
           state["GenPGRPostKernels"] = genPGRPostKernels
           state["KernelLanguage"] = "Source"
@@ -342,7 +347,7 @@ class Solution(collections.abc.Mapping):
     self.activationEnumHeaderObjects = []
     if self["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
       state = {}
-      state["ProblemType"] = deepcopy(self["ProblemType"])
+      state["ProblemType"] = fastdeepcopy(self["ProblemType"])
       state["ProblemType"]["GroupedGemm"] = False
       state["KernelLanguage"] = "Source"
       self.activationEnumHeaderObjects.append(KernelWriterActivationEnumHeader(state))
@@ -351,7 +356,7 @@ class Solution(collections.abc.Mapping):
     self.activationFunctionObjects = []
     if self["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
       state = {}
-      state["ProblemType"] = deepcopy(self["ProblemType"])
+      state["ProblemType"] = fastdeepcopy(self["ProblemType"])
       state["ProblemType"]["GroupedGemm"] = False
       state["KernelLanguage"] = "Source"
       state["Kernel"] = {"WavefrontSize": self["WavefrontSize"], "ISA": tuple(self["ISA"])}
@@ -363,7 +368,7 @@ class Solution(collections.abc.Mapping):
     self.activationOnlyKernelObjects = []
     if (self["ActivationFused"] == False) and (self["ProblemType"]["ActivationType"] != 'none') :
       state = {}
-      state["ProblemType"] = deepcopy(self["ProblemType"])
+      state["ProblemType"] = fastdeepcopy(self["ProblemType"])
       state["ProblemType"]["GroupedGemm"] = False
       state["ProblemType"]["UseBias"] = 0
       state["ProblemType"]["BiasDataTypeList"] = []
@@ -377,10 +382,10 @@ class Solution(collections.abc.Mapping):
     if self["ProblemType"]["Gradient"] and self["ProblemType"]["UseBias"]:
       for btype in self["ProblemType"]["BiasDataTypeList"]:
         state = {}
-        state["ProblemType"] = deepcopy(self["ProblemType"])
+        state["ProblemType"] = fastdeepcopy(self["ProblemType"])
         state["ProblemType"]["GroupedGemm"] = False
         state["ProblemType"]["BiasDataTypeList"] = []
-        state["ProblemType"]["BiasDataType"] = deepcopy(btype)
+        state["ProblemType"]["BiasDataType"] = fastdeepcopy(btype)
         self.reductionKernelObjects.append(KernelWriterReduction(state))
 
   ########################################

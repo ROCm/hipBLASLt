@@ -27,6 +27,8 @@ from typing import List, Optional
 from .Types import IsaVersion
 from .Utilities import locateExe
 
+import rocisa
+
 # Translate GPU targets to filter filenames in Tensile_LOGIC directory
 architectureMap = {
     "all": "_",
