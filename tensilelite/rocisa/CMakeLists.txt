@@ -30,16 +30,24 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
+if(DEFINED PYTHON_EXE AND PYTHON_EXE)
+    message(STATUS "Manually set Python to ${PYTHON_EXE}")
+else()
+    set(PYTHON_EXE python3)
+    set(PYTHON_VERSION 3)
+endif()
+
 # find nanobind
 execute_process(
-    COMMAND python3 -m nanobind --cmake_dir
+    COMMAND ${PYTHON_EXE} -m nanobind --cmake_dir
     OUTPUT_VARIABLE nanobind_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_VARIABLE error
     RESULT_VARIABLE result
 )
 if(result)
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E env python3 -m pip install nanobind
+        COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_EXE} -m pip install nanobind
         ERROR_VARIABLE error
         RESULT_VARIABLE result
     )
@@ -47,25 +55,19 @@ if(result)
         message(FATAL_ERROR "Failed to install nanobind via pip: ${error}")
     endif()
     execute_process(
-        COMMAND python3 -m nanobind --cmake_dir
+        COMMAND ${PYTHON_EXE} -m nanobind --cmake_dir
         OUTPUT_VARIABLE nanobind_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_VARIABLE error
         RESULT_VARIABLE result
     )
 endif()
 message(STATUS "Nanobind path: ${nanobind_DIR}")
-string(REPLACE "\n" "" nanobind_DIR "${nanobind_DIR}")
-
-if(DEFINED PYTHON_VERSION AND PYTHON_VERSION)
-    message(STATUS "Manually set Python version to ${PYTHON_VERSION}")
-else()
-    set(PYTHON_VERSION 3)
-endif()
 
 # Use cmake -Dpybind11_DIR=$(python3 -m nanobind --cmakedir) .. to set pybind dir
 # Use cmake -DCMAKE_PREFIX_PATH=$(python3 -m nanobind --cmake_dir) .. to set nanobind
 
-find_package(Python ${PYTHON_VERSION} COMPONENTS Interpreter Development REQUIRED)
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
 find_package(nanobind CONFIG REQUIRED HINTS ${nanobind_DIR})
 
 set(ROCISAINST_SOURCE src/instruction/instruction.cpp

@@ -44,7 +44,7 @@ ROCISA_DIR=$SCRIPT_DIR/../../rocisa
 ### Build rocisa
 # Currently the path to rocisa is fixed
 mkdir -p $WORKING_DIR/rocisa
-cmake -DCMAKE_CXX_COMPILER=$ROCM_PATH/bin/amdclang++ -DCMAKE_PREFIX_PATH=$(python3 -m nanobind --cmake_dir) -DCMAKE_BUILD_TYPE=Debug -DPYTHON_VERSION=$(python3 --version 2>&1 | cut -d ' ' -f 2) -S $ROCISA_DIR -B $WORKING_DIR/rocisa
+cmake -DCMAKE_CXX_COMPILER=$ROCM_PATH/bin/amdclang++ -DCMAKE_BUILD_TYPE=Debug -S $ROCISA_DIR -B $WORKING_DIR/rocisa
 cmake --build $WORKING_DIR/rocisa -j 8
 
 # Run Tensile
