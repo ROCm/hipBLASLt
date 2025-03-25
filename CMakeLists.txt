@@ -259,7 +259,7 @@ else()
       message(STATUS "rocIsa configuring done.")
     # endif()
     execute_process(
-      COMMAND make -j8
+      COMMAND cmake --build . -j 8
       WORKING_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build
       OUTPUT_VARIABLE output
       ERROR_VARIABLE error
