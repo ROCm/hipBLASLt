@@ -249,4 +249,4 @@ namespace rocisa
     std::string isaToGfx(const IsaVersion& arch);
     std::string getGlcBitName(bool hasGLCModifier);
     std::string getSlcBitName(bool hasGLCModifier);
-} // namespace base
+} // namespace rocisa
