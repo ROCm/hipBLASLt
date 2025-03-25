@@ -110,7 +110,7 @@ struct SolutionParameters
     bool loadLDSB  = true;
     bool storeLDSD = true;
 
-    bool prefetch          = false;
+    bool prefetch          = true;
     int  prefetchInFlight  = 2;
     int  prefetchLDSFactor = 2;
     bool betaInFma         = true;
@@ -247,11 +247,11 @@ inline std::string scaleModeOption(std::string                                ar
     switch(scale)
     {
     case RocblasltContractionProblem::ScalingFormat::Scalar:
-        return arg + " s";
+        return arg + " 1";
     case RocblasltContractionProblem::ScalingFormat::Vector:
-        return arg + " v";
+        return arg + " 2";
     case RocblasltContractionProblem::ScalingFormat::Block:
-        return arg + " b";
+        return arg + " 3";
     default:
         return "";
     }

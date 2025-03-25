@@ -290,6 +290,7 @@ std::vector<float> generateMXInput(hipDataType            dataType,
                                    void*                  scale,
                                    int                    rowSize,
                                    int                    colSize,
+                                   int                    stride,
                                    bool                   isTranspose,
                                    int const              scaleBlockRowSize,
                                    int const              scaleBlockColSize,
@@ -310,16 +311,9 @@ std::vector<float> generateMXInput(hipDataType            dataType,
 
     std::vector<int> sizes{rowSize, colSize};
     std::vector<int> strides;
-    if(!isTranspose)
-    {
-        strides.push_back(1);
-        strides.push_back(rowSize);
-    }
-    else
-    {
-        strides.push_back(colSize);
-        strides.push_back(1);
-    }
+
+    strides.push_back(1);
+    strides.push_back(stride);
 
     auto const elementsPerMXBlock = scaleBlockRowSize * scaleBlockColSize;
 

@@ -181,8 +181,8 @@ install_packages( )
 
   if [[ "${use_rocroller}" == true ]]; then
     library_dependencies_ubuntu+=( "rocm-llvm-dev" "libboost-container1.74-dev" "libzstd-dev" "libopenblas-dev" )
-    library_dependencies_centos8+=( "rocm-llvm-devel" "boost-container-1.75.0" "zstd" "openblas-devel" )
-    library_dependencies_sles+=( "rocm-llvm-devel" "libboost-container1.74-dev" "zstd" "openblas-devel" )
+    library_dependencies_centos8+=( "rocm-llvm-devel" "boost-container" "zstd" "openblas-devel" )
+    library_dependencies_sles+=( "rocm-llvm-devel" "libboost_container-devel" "zstd" "openblas-devel" )
   fi
 
   if [[ "${legacy_hipblas_direct}" == false ]]; then
@@ -633,7 +633,7 @@ if [[ "${build_hip_clang}" == true ]]; then
 fi
 
 # Use RocRoller
-if [[ ! ( "${ID}" == "rhel" && "${VERSION_ID}" == "9.1" ) && ( "${force_rocroller}" == true || ${gpu_architecture} == *"gfx950"* || ${gpu_architecture} == *"all"* ) ]]; then
+if [[ ! ( "${ID}" == "sles" ) && ! ( "${ID}" == "rhel" && "${VERSION_ID}" == "9.1" ) && ( "${force_rocroller}" == true || ${gpu_architecture} == *"gfx950"* || ${gpu_architecture} == *"all"* ) ]]; then
   use_rocroller=true
 fi
 
