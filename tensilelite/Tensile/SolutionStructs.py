@@ -1543,6 +1543,25 @@ class Solution(collections.abc.Mapping):
     elif state["WaveSeparateGlobalRead%s"%tc] == 2:
       state["LSP%s"%tc] = state["NumThreads"] // state["WavefrontSize"]
 
+    numBytesPerElement = state["ProblemType"]["DataType"].numBytes()
+    validWIPerLoad     = state["LSC%s"%tc] * state["LSP%s"%tc] // state["GlobalReadVectorWidth%s"%tc]
+    validBytesPerLoad  = state["LSC%s"%tc] * state["LSP%s"%tc] * numBytesPerElement
+    maxBytesPerLoad    = state["NumThreads"] * state["GlobalReadVectorWidth%s"%tc] * numBytesPerElement
+
+    if state["WaveSeparateGlobalRead%s"%tc] == 1:
+      validBytesPerLoad *= (state["NumThreads"] // state["WavefrontSize"])
+    elif state["WaveSeparateGlobalRead%s"%tc] == 2:
+      if state["ProblemType"]["TLU%s"%tc]:
+        validBytesPerLoad *= (state["DepthU"] // state["NumLoadsPerpendicular%s"%tc] // (state["NumThreads"] // state["WavefrontSize"]))
+      else:
+        validBytesPerLoad *= (state["MacroTile%s"%tc] // state["NumLoadsPerpendicular%s"%tc] // (state["NumThreads"] // state["WavefrontSize"]))
+
+    if (validBytesPerLoad > maxBytesPerLoad):
+      reject(state, "validBytesPerLoad > maxBytesPerLoad")
+      return False
+    if (state["LSC%s"%tc] * state["LSP%s"%tc] % state["GlobalReadVectorWidth%s"%tc] != 0):
+      reject(state, "state[LSC%s] * state[LSP%s] %% state[GlobalReadVectorWidth%s] != 0"%(tc, tc, tc))
+      return False
     return True
 
 
