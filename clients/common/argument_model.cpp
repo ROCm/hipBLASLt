@@ -25,7 +25,7 @@
  *******************************************************************************/
 
 #include "argument_model.hpp"
-#include "performance_monitor.hpp"
+#include "efficiency_monitor.hpp"
 
 // FLOPS/CLOCK/CU values for gfx942
 auto hipblaslt_get_flops_per_clock_per_cu_gfx942(hipDataType          inputType,
@@ -62,16 +62,16 @@ void ArgumentModel_log_efficiency(hipblaslt_internal_ostream& name_line,
                                   const Arguments&            arg,
                                   double                      hipblaslt_gflops)
 {
-    PerformanceMonitor& performance_monitor = getPerformanceMonitor();
-    if(!performance_monitor.enabled())
+    EfficiencyMonitor& efficiency_monitor = getEfficiencyMonitor();
+    if(!efficiency_monitor.enabled())
         return;
 
-    if(performance_monitor.getDeviceString() == "gfx942"
+    if(efficiency_monitor.getDeviceString() == "gfx942"
        && hipblaslt_get_flops_per_clock_per_cu_gfx942(arg.a_type, arg.compute_type) != 0)
     {
         double theoretical_gflops
             = hipblaslt_get_flops_per_clock_per_cu_gfx942(arg.a_type, arg.compute_type)
-              * performance_monitor.getCuCount() * performance_monitor.getLowestAverageSYSCLK()
+              * efficiency_monitor.getCuCount() * efficiency_monitor.getLowestAverageSYSCLK()
               * 0.001;
         name_line << ",efficiency";
         val_line << "," << (hipblaslt_gflops / theoretical_gflops) * 100;
@@ -82,58 +82,58 @@ void ArgumentModel_log_performance(hipblaslt_internal_ostream& name_line,
                                    hipblaslt_internal_ostream& val_line)
 {
 
-    PerformanceMonitor& performance_monitor = getPerformanceMonitor();
-    if(!performance_monitor.enabled())
+    EfficiencyMonitor& efficiency_monitor = getEfficiencyMonitor();
+    if(!efficiency_monitor.enabled())
         return;
 
-    if(getenv("HIPBLASLT_BENCH_PERF") != nullptr)
+    if(getenv("HIPBLASLT_BENCH_EFF") != nullptr)
     {
         name_line << ",total_gran";
-        val_line << "," << performance_monitor.getTotalGranularityValue();
+        val_line << "," << efficiency_monitor.getTotalGranularityValue();
 
         name_line << ",tiles_per_cu";
-        val_line << "," << performance_monitor.getTilesPerCuValue();
+        val_line << "," << efficiency_monitor.getTilesPerCuValue();
 
         name_line << ",num_cu's";
-        val_line << "," << performance_monitor.getCUs();
+        val_line << "," << efficiency_monitor.getCUs();
 
         name_line << ",tile_0_granularity";
-        val_line << "," << performance_monitor.getTile0Granularity();
+        val_line << "," << efficiency_monitor.getTile0Granularity();
 
         name_line << ",tile_1_granularity";
-        val_line << "," << performance_monitor.getTile1Granularity();
+        val_line << "," << efficiency_monitor.getTile1Granularity();
 
         name_line << ",cu_gran";
-        val_line << "," << performance_monitor.getCuGranularity();
+        val_line << "," << efficiency_monitor.getCuGranularity();
 
         name_line << ",wave_gran";
-        val_line << "," << performance_monitor.getWaveGranularity();
+        val_line << "," << efficiency_monitor.getWaveGranularity();
 
         name_line << ",mem_read_bytes";
-        val_line << "," << performance_monitor.getMemReadBytes();
+        val_line << "," << efficiency_monitor.getMemReadBytes();
 
         name_line << ",mem_write_bytes";
-        val_line << "," << performance_monitor.getMemWriteBytesD();
+        val_line << "," << efficiency_monitor.getMemWriteBytesD();
     }
 
-    if(!performance_monitor.detailedReport())
+    if(!efficiency_monitor.detailedReport())
     {
         name_line << ",lowest_avg_freq";
-        val_line << "," << performance_monitor.getLowestAverageSYSCLK();
+        val_line << "," << efficiency_monitor.getLowestAverageSYSCLK();
 
         name_line << ",lowest_median_freq";
-        val_line << "," << performance_monitor.getLowestMedianSYSCLK();
+        val_line << "," << efficiency_monitor.getLowestMedianSYSCLK();
     }
     else
     {
-        auto allAvgSYSCLK = performance_monitor.getAllAverageSYSCLK();
+        auto allAvgSYSCLK = efficiency_monitor.getAllAverageSYSCLK();
         for(int i = 0; i < allAvgSYSCLK.size(); i++)
         {
             name_line << ",avg_freq" << i;
             val_line << "," << allAvgSYSCLK[i];
         }
 
-        auto allMedianSYSCLK = performance_monitor.getAllMedianSYSCLK();
+        auto allMedianSYSCLK = efficiency_monitor.getAllMedianSYSCLK();
         for(int i = 0; i < allMedianSYSCLK.size(); i++)
         {
             name_line << ",median_freq" << i;
@@ -142,8 +142,8 @@ void ArgumentModel_log_performance(hipblaslt_internal_ostream& name_line,
     }
 
     name_line << ",avg_MCLK";
-    val_line << "," << performance_monitor.getAverageMEMCLK();
+    val_line << "," << efficiency_monitor.getAverageMEMCLK();
 
     name_line << ",median_MCLK";
-    val_line << "," << performance_monitor.getMedianMEMCLK();
+    val_line << "," << efficiency_monitor.getMedianMEMCLK();
 }

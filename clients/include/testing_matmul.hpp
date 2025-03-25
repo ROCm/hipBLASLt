@@ -39,7 +39,7 @@
 #include "hipblaslt_vector.hpp"
 #include "near.hpp"
 #include "norm.hpp"
-#include "performance_monitor.hpp"
+#include "efficiency_monitor.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
 #include <cstddef>
@@ -3217,7 +3217,7 @@ void testing_matmul_with_bias(const Arguments& arg,
             }
             if(!do_grouped_gemm)
             {
-                PerformanceMonitor& perf_monitor = getPerformanceMonitor();
+                EfficiencyMonitor& perf_monitor = getEfficiencyMonitor();
                 if(arg.use_ext)
                 {
                     for(int32_t b = 0; b < block_count; b++)
@@ -3367,7 +3367,7 @@ void testing_matmul_with_bias(const Arguments& arg,
             }
             else
             {
-                PerformanceMonitor& perf_monitor = getPerformanceMonitor();
+                EfficiencyMonitor& perf_monitor = getEfficiencyMonitor();
                 if(arg.use_user_args)
                 {
                     std::vector<unsigned char*> d_userArgsVec(block_count);

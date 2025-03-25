@@ -24,7 +24,7 @@
 #pragma once
 
 #include <vector>
-class PerformanceMonitor
+class EfficiencyMonitor
 {
 public:
     virtual bool enabled()        = 0;
@@ -54,5 +54,5 @@ public:
     virtual std::string         getDeviceString()          = 0;
 };
 
-PerformanceMonitor& getPerformanceMonitor();
-void                freePerformanceMonitor();
+EfficiencyMonitor& getEfficiencyMonitor();
+void                freeEfficiencyMonitor();

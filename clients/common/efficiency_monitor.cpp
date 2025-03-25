@@ -21,7 +21,7 @@
  *
  * ************************************************************************ */
 
-#include "performance_monitor.hpp"
+#include "efficiency_monitor.hpp"
 #include "hipblaslt-ext-op.h"
 
 #include <atomic>
@@ -94,23 +94,23 @@ inline std::string concatenate(Ts&&... vals)
 
 #endif
 
-class PerformanceMonitorImp : public PerformanceMonitor
+class EfficiencyMonitorImp : public EfficiencyMonitor
 {
 public:
     const double cHzToMHz = 0.000001;
     const double cMhzToHz = 1000000;
 
     // deleting copy constructor
-    PerformanceMonitorImp(const PerformanceMonitorImp& obj) = delete;
+    EfficiencyMonitorImp(const EfficiencyMonitorImp& obj) = delete;
 
 #ifndef _WIN32
 
     bool enabled()
     {
         static const char* env1_freq = getenv("HIPBLASLT_BENCH_FREQ");
-        static const char* env1_perf = getenv("HIPBLASLT_BENCH_PERF");
+        static const char* env1_eff = getenv("HIPBLASLT_BENCH_EFF");
         static const char* env2      = getenv("HIPBLASLT_BENCH_FREQ_ALL");
-        return env1_freq != nullptr || env1_perf != nullptr
+        return env1_freq != nullptr || env1_eff != nullptr
                || (env2 != nullptr && m_isMultiXCDSupported);
     }
 
@@ -120,12 +120,12 @@ public:
         return (env2 != nullptr && m_isMultiXCDSupported);
     }
 
-    PerformanceMonitorImp()
+    EfficiencyMonitorImp()
     {
         initThread();
     }
 
-    ~PerformanceMonitorImp()
+    ~EfficiencyMonitorImp()
     {
         m_stop = true;
         m_exit = true;
@@ -529,9 +529,9 @@ private:
     // not supporting windows for now
 
 public:
-    PerformanceMonitorImp() {}
+    EfficiencyMonitorImp() {}
 
-    ~PerformanceMonitorImp() {}
+    ~EfficiencyMonitorImp() {}
 
     void set_device_id(int deviceId) {}
 
@@ -635,22 +635,22 @@ public:
 #endif
 };
 
-static PerformanceMonitorImp* g_PerfMonitorInstance{nullptr};
+static EfficiencyMonitorImp* g_EffMonitorInstance{nullptr};
 
-PerformanceMonitor& getPerformanceMonitor()
+EfficiencyMonitor& getEfficiencyMonitor()
 {
-    if(g_PerfMonitorInstance == nullptr)
+    if(g_EffMonitorInstance == nullptr)
     {
-        g_PerfMonitorInstance = new PerformanceMonitorImp();
+        g_EffMonitorInstance = new EfficiencyMonitorImp();
     }
-    return *g_PerfMonitorInstance;
+    return *g_EffMonitorInstance;
 }
 
-void freePerformanceMonitor()
+void freeEfficiencyMonitor()
 {
-    if(g_PerfMonitorInstance != nullptr)
+    if(g_EffMonitorInstance != nullptr)
     {
-        delete g_PerfMonitorInstance;
-        g_PerfMonitorInstance = nullptr;
+        delete g_EffMonitorInstance;
+        g_EffMonitorInstance = nullptr;
     }
 }

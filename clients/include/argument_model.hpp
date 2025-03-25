@@ -27,7 +27,7 @@
 #pragma once
 
 #include "hipblaslt_arguments.hpp"
-#include "performance_monitor.hpp"
+#include "efficiency_monitor.hpp"
 #include <fstream>
 #include <string>
 
