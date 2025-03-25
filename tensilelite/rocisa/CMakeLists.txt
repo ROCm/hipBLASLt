@@ -76,7 +76,6 @@ set(ROCISAINST_SOURCE src/instruction/instruction.cpp
                       src/instruction/mem.cpp
                       src/instruction/mfma.cpp)
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
 nanobind_add_module(rocisa NOMINSIZE src/main.cpp
                                      src/base.cpp
                                      src/code.cpp
@@ -85,3 +84,4 @@ nanobind_add_module(rocisa NOMINSIZE src/main.cpp
                                      src/enum.cpp
                                      src/label.cpp
                                      ${ROCISAINST_SOURCE})
+target_include_directories(rocisa PRIVATE ${CMAKE_SOURCE_DIR}/include)
