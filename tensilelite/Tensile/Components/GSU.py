@@ -145,9 +145,9 @@ class GSU(Component):
         alphas = [False]
         betas = [False] # no beta variant
         edgeI = edges[0]
+        #edgeI = True  # set to True to disable vector stores
         alpha = alphas[0]
         beta = betas[0]
-        #edgeI = True  # set to True to disable vector stores
         gwvw = vectorWidths[edgeI]
         
         atomic = (kernel["GlobalSplitU"] > 1) and (kernel["_GlobalAccumulation"] != 'MultipleBuffer' and kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel')
@@ -338,7 +338,7 @@ class GSU(Component):
             assert numElementsPerBatch > 0, "numElementsPerBatch=0 for %s"%writer.states.kernelName
 
             # if no atomics and no edge, then write whole vectors
-            #if not atomic and not edge:
+            # if not atomic and not edge:
             #  numVectorsPerBatch = numElementsPerBatch / kernel["GlobalWriteVectorWidth"]
             #  #print "  NumVectorsPerBatch", numVectorsPerBatch
             #  numElementsPerBatch = numVectorsPerBatch * kernel["GlobalWriteVectorWidth"]
@@ -354,7 +354,7 @@ class GSU(Component):
                 print(writer.sgprPool.state())
             module.addComment1("edge=%d, allocate %u sgpr. perBatchTmpS=%u perBatchMaskS=%u perElementMaskS=%u elementsPerBatch=%u" %
                     (edgeI, numSgprs, ss.cfg.numTempSgprPerBatch, ss.cfg.numMaskSgprPerBatch, ss.cfg.numMaskSgprPerElement, numElementsPerBatch))
-            #kStr += "// storeStats, %d, %d, %d\n"% (edgeI, numSgprs, numElementsPerBatch)
+            # kStr += "// storeStats, %d, %d, %d\n"% (edgeI, numSgprs, numElementsPerBatch)
             # so if we don't have *GPR resources to handle a larger batch then need
             # to mark overflowedResources rather than generate a kernel that won't work.
 
@@ -369,21 +369,24 @@ class GSU(Component):
 
                 if kernel["MIArchVgpr"] and alpha and not kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
                     codeAccVgprRead = None
-                    #Only apply when 2 wave optimization features are enabled
+                    # Only apply when 2 wave optimization features are enabled
                     if (kernel["StorePriorityOpt"] or kernel["StoreSyncOpt"]) and beta:
                         self.alphaBeforeLoadC = True
-                    #When LSU>1, don't use the VGPRs from the endSum.
+                    # When LSU>1, don't use the VGPRs from the endSum.
                     if (kernel["LocalSplitU"] > 1):
                         codeMulAlpha = None
                 else:
                     codeMulAlpha = None
         
-                biasLocalBarrierInit = False
+                biasLocalBarrierInit = False                
+                # calculate address in workspace
+                module.add(self.computeWorkspaceSrd(writer, kernel))
+
                 for batchIdx in range(0, numBatches):
                     elementStartIdx = batchIdx * numElementsPerBatch
                     elementStopIdx = min(elementStartIdx + numElementsPerBatch, len(elements[edgeI]))
                     elementsThisBatch = elements[edgeI][elementStartIdx:elementStopIdx]
-                    #print("BATCH[%u/%u]: elements[edgeI][%u:%u] VGPRs=%u" % (batchIdx, numBatches, elementStartIdx, elementStopIdx,numVgprsPerElement ))
+                    # print("BATCH[%u/%u]: elements[edgeI][%u:%u] VGPRs=%u" % (batchIdx, numBatches, elementStartIdx, elementStopIdx,numVgprsPerElement ))
                     # elementVgprs can be large and should be perfectly tuned to the number of available
                     # VGPRS.    We do not want to accidentally overflow and grow the pool here:
 
@@ -394,14 +397,14 @@ class GSU(Component):
                     biasLocalBarrierInit = True
 
                 # synchronize GSUWG in reductionBatch. If is the last WG -> do reduction; else branch to GW_END
-                module.addselfAsm("// Reduction start\n")
+                module.addComment("Reduction start")
 
                 ss.firstBatch = True
                 for batchIdx in range(0, numBatches):
                     elementStartIdx = batchIdx * numElementsPerBatch
                     elementStopIdx = min(elementStartIdx + numElementsPerBatch, len(elements[edgeI]))
                     elementsThisBatch = elements[edgeI][elementStartIdx:elementStopIdx]
-                    #print("BATCH[%u/%u]: elements[edgeI][%u:%u] VGPRs=%u" % (batchIdx, numBatches, elementStartIdx, elementStopIdx,numVgprsPerElement ))
+                    # print("BATCH[%u/%u]: elements[edgeI][%u:%u] VGPRs=%u" % (batchIdx, numBatches, elementStartIdx, elementStopIdx,numVgprsPerElement ))
                     # elementVgprs can be large and should be perfectly tuned to the number of available
                     # VGPRS.    We do not want to accidentally overflow and grow the pool here:
 
@@ -410,7 +413,7 @@ class GSU(Component):
                             tmpVgpr, tmpVgprDynamic, cvtVgprStruct, \
                             elementSgprs, tmpSgpr, codeAccVgprRead, codeAccVgprWrite, endLabel))
 
-                module.addselfAsm("// Reduction end\n")
+                module.addComment("Reduction end")
 
                 ss.resetState()
 
@@ -428,7 +431,8 @@ class GSU(Component):
             (ss.optSingleColVgpr, ss.optSharedColVgpr, ss.optSGPRUsage, ss.optSrdIncForRow))
 
         if kernel["StoreSyncOpt"]:
-            writer._storeSyncOpt(module)
+            module.add(SSleep(kernel["StoreSyncOpt"] - 1, "optimization: sync and wait"))
+            module.add(SBarrier())
 
         # comment tt1, tt0, vc1, vc0
         # tt = thread tile, vc=vector component
@@ -444,7 +448,6 @@ class GSU(Component):
         # preventOverflow = True #(not isOptNLL)
         # ss.setupStoreElementsForBatch(kernel, gwvw, batchElements, batchElementSgprs, isOptNLL=False, factorDim=0, isWorkspace=True)
         ss.setupStoreElementsForBatchWihoutVgprCheckOut(kernel, gwvw, batchElements, batchElementSgprs, isOptNLL=True, factorDim=0, isWorkspace=True)
-        # ss.getStoreElementsInfoForBatch(kernel, batchElements)
 
         loadsIssued = 0
         storesIssued = 0
@@ -521,7 +524,6 @@ class GSU(Component):
             #  TODO: need to check this for loop
             isSingleKernel = (kernel["GlobalSplitU"] == 1 or kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or kernel["StreamK"] > 0
 
-
             # if storeBiasD == 1:
             #     module.add(addrCalc.emitLdChange(kernel, ss, 'Bias', edge, beta, mask, bufferOOB, (elementIdx == len(batchElements) - 1), tmpVgpr, tmpSgpr, addrBiasVgpr, addrBias, 0))
             # module.add(addrCalc.emitLdChange(kernel, ss, 'D', edge, beta, mask, bufferOOB, (elementIdx == len(batchElements) - 1), tmpVgpr, tmpSgpr, addrDVgpr, addrD, 0))
@@ -529,11 +531,12 @@ class GSU(Component):
             #     module.add(addrCalc.emitLdChange(kernel, ss, 'TD', edge, beta, mask, bufferOOB, (elementIdx == len(batchElements) - 1), tmpVgpr, tmpSgpr, addrCalc.addrGSUSyncVgprs, addrD, 0))
 
         if beta and kernel["StoreSyncOpt"]:
-            writer._storeSyncOpt(module)
+            module.add(SSleep(kernel["StoreSyncOpt"] - 1, "optimization: sync and wait"))
+            module.add(SBarrier())
     
         ########################################
         # AccVgpr read
-        module.addselfAsm("// accvgpr read\n")
+        module.addComment("accvgpr read")
         module.add(SWaitCnt(vmcnt=0, comment="Wait previous batch write over"))
         if codeAccVgprRead is not None and kernel["LocalSplitU"] == 1:
             regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
@@ -543,7 +546,7 @@ class GSU(Component):
                 for vi in range(0, gwvw):
                     # loop over registers within one scalar
                     for rIdx in range(0, regsPerScalar):
-                        module.add(replaceHolder(codeAccVgprRead.popFirstItem(), ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - writer.states.c.startVgprValu))
+                        module.add(replaceHolder(codeAccVgprRead.items().pop(0), ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - writer.states.c.startVgprValu))
         elif kernel["LocalSplitU"] > 1:
             # read from LSU VGPRs
             regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
@@ -560,8 +563,6 @@ class GSU(Component):
 
         ########################################
         # Write to workspace
-        module.add(self.computeWorkspaceSrd(writer, kernel))
-
         if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
             storeCodeGSUSK = Module("GroupLoadStore")
             storeWidth = kernel["StoreVectorWidth"]
@@ -569,7 +570,7 @@ class GSU(Component):
             rpv = bps / writer.states.bpr
             isGlc = True
             isSlc = True
-            isNT  = kernel["NonTemporalD"] & 0x4
+            isNT  = bool(kernel["NonTemporalD"] & 0x4)
             for elementIdx in range(0, len(batchElements)):
                 addrCalc = ss.elementAddr[elementIdx]
                 data = ss.elementData[elementIdx]
@@ -602,62 +603,6 @@ class GSU(Component):
                     # Column Block Shape has been written to LDS
                     # Now read back and write out to global memory
             module.add(storeCodeGSUSK)
-
-        # if (kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel'):
-        #     if writer.states.serializedStore:
-        #         module.add(SNop(0, "1 wait state required when next inst writes vgprs held by previous dwordx4 store inst"))
-            
-        #     ########################################
-        #     # Reduction
-        #     module.addSpaceLine()
-        #     SynchronizerEndlabelString = "Reduction_END%s%s" % ("_Beta" if beta else "", "_Edge" if edge else "" )
-        #     SynchronizerEndlabelComment = "Reduction_END"
-        #     SynchronizerEndlabel = Label(writer.labels.getNameInc(SynchronizerEndlabelString), SynchronizerEndlabelComment)
-        #     SynchronizerEndlabel = Label(writer.labels.getName(SynchronizerEndlabelString), SynchronizerEndlabelComment)
-
-        #     module.addselfAsm("// sourece store done, GSU:"+str(kernel["GlobalSplitU"])+"\n") #GSUSYNC
-        #     module.addSpaceLine()
-            
-        #     if batchIdx == 0:
-        #         module.add(SMovB32(sgpr(tmpS02), 0, "Init sgpr offset for interleaved wave load"))
-
-        #     module.add(self.GSUSynccodegen(kernel, writer, ss, batchIdx, tmpVgpr, tmpVgprDynamic, gwvw, batchElements,\
-        #                                 SynchronizerEndlabel, sumIdxGSUSYNC, addrCalc.globalOffset, addrCalc.addrDVgpr, tmpS02))
-
-        #     module.addselfAsm("// synchronizer store end\n")
-        #     module.addSpaceLine()
-        
-
-        # ########################################
-        # # AccVgpr write
-        # if codeAccVgprWrite is not None:
-        #     regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
-        #     # loop over store instructions within one batch
-        #     for elementIdx in range(0, len(batchElements)):
-        #         # loop over scalars within one store instruction
-        #         for vi in range(0, gwvw):
-        #             # loop over registers within one scalar
-        #             for rIdx in range(0, regsPerScalar):
-        #                 module.add(replaceHolder(codeAccVgprWrite.items().pop(0), ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - writer.states.c.startVgprValu))
-
-        #     if not kernel["MIArchVgpr"]:
-        #         module.add(SNop(1, "2 wait states required before reading vgpr"))
-
-        # if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
-        #     module.add(SynchronizerEndlabel)
-        #     module.addSpaceLine()
-            
-
-        # if edge and (not kernel["BufferStore"]): # atomic or
-        #     # subsequent batch must start with full exec mask
-        #     # BufferStore doesn't need exec since it used buffer range checking when
-        #     # possible
-        #     module.add(self.getEdgeMovInstType()(EXEC(), -1, "full mask -> exec"))
-
-        # if writer.db["ConservativeWaitCnt"] & 0x40:
-        #     module.add(SBarrier("debug"))
-        #     module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="ConservativeWaitCnt"))
-        #     module.add(SBarrier("debug"))
         
         # return registers to pool:
         lastDataD = -1
@@ -681,9 +626,6 @@ class GSU(Component):
 
         ss.firstBatch = False
         ss.checkInTempVgprC()
-        
-        # if writer.states.serializedStore:
-        #     module.add(SNop(0, "1 wait state required when next inst writes vgprs held by previous dwordx4 store inst"))
 
         return module
     
@@ -695,7 +637,8 @@ class GSU(Component):
             (ss.optSingleColVgpr, ss.optSharedColVgpr, ss.optSGPRUsage, ss.optSrdIncForRow))
 
         if kernel["StoreSyncOpt"]:
-            writer._storeSyncOpt(module)
+            module.add(SSleep(kernel["StoreSyncOpt"] - 1, "optimization: sync and wait"))
+            module.add(SBarrier())
 
         # comment tt1, tt0, vc1, vc0
         # tt = thread tile, vc=vector component
@@ -711,7 +654,6 @@ class GSU(Component):
         # preventOverflow = True #(not isOptNLL)
         # ss.setupStoreElementsForBatch(kernel, gwvw, batchElements, batchElementSgprs, isOptNLL=False, factorDim=0, isWorkspace=True)
         ss.setupStoreElementsForBatchWihoutVgprCheckOut(kernel, gwvw, batchElements, batchElementSgprs, isOptNLL=True, factorDim=0, isWorkspace=True)
-        # ss.getStoreElementsInfoForBatch(kernel, batchElements)
 
         loadsIssued = 0
         storesIssued = 0
@@ -795,71 +737,8 @@ class GSU(Component):
         #     #     module.add(addrCalc.emitLdChange(kernel, ss, 'TD', edge, beta, mask, bufferOOB, (elementIdx == len(batchElements) - 1), tmpVgpr, tmpSgpr, addrCalc.addrGSUSyncVgprs, addrD, 0))
 
         if beta and kernel["StoreSyncOpt"]:
-            writer._storeSyncOpt(module)
-    
-        ########################################
-        # AccVgpr read
-        # if codeAccVgprRead is not None and kernel["LocalSplitU"] == 1:
-        #     regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
-        #     # loop over store instructions within one batch
-        #     for elementIdx in range(0, len(batchElements)):
-        #         # loop over scalars within one store instruction
-        #         for vi in range(0, gwvw):
-        #             # loop over registers within one scalar
-        #             for rIdx in range(0, regsPerScalar):
-        #                 module.add(replaceHolder(codeAccVgprRead.items().pop(0), ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - writer.states.c.startVgprValu))
-        # elif kernel["LocalSplitU"] > 1:
-        #     # read from LSU VGPRs
-        #     regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
-        #     if ss.lsuStartVgprOffset > 0:
-        #         for elementIdx in range(0, len(batchElements)):
-        #             for vi in range(0, gwvw):
-        #                 for rIdx in range(0, regsPerScalar):
-        #                     idx = ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - writer.states.c.startVgprValu
-        #                     module.add(VMovB32(vgpr("ValuC+%u"%(idx)), vgpr("ValuC+%u"%(idx + ss.lsuStartVgprOffset)), "load from "+str(idx + ss.lsuStartVgprOffset)+" to "+str(idx) ))
-        #     ss.lsuStartVgprOffset += len(batchElements) * gwvw * regsPerScalar
-
-        #     if not kernel["MIArchVgpr"]:
-        #         module.add(SNop(1, "2 wait states required before reading vgpr"))
-
-        ########################################
-        # Write to workspace
-        # module.add(self.computeWorkspaceSrd(writer, kernel))
-
-        # if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":#GSUGSU
-        #     storeCodeGSUSK = Module("GroupLoadStore")
-        #     storeWidth = kernel["StoreVectorWidth"]
-        #     for elementIdx in range(0, len(batchElements)):
-        #         addrCalc = ss.elementAddr[elementIdx]
-        #         data = ss.elementData[elementIdx]
-        #         sumIdxGSUSYNC = ss.elementSumIdx[elementIdx]
-        
-        #         if batchIdx == 0 and elementIdx == 0:
-        #             addrDVgpr = addrCalc.addrDVgpr
-        #             storeCodeGSUSK.add(staticMultiply(vgpr(addrDVgpr), vgpr("Serial"), storeWidth * writer.states.bpeCinternal, tmpS01))
-        #             storeCodeGSUSK.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset for interleaved wave store"))
-        #             storeCodeGSUSK.addSpaceLine()
-        #         # else:
-        #         #     numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-        #         #     increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * writer.states.bpeCinternal
-        #         #     module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Increase sgpr offset for store"))
-
-        #         sumIdx = ss.elementSumIdx[elementIdx]
-        #         if not kernel["StoreRemapVectorWidth"]:                    
-        #             # Only GSU>1 MBSK write to workspace (GSU1 MBSK will write to output buffer)
-        #             # so we need wsOffset to coalesced store to workspace buffer
-        #             wsOffset = sgpr(tmpS01)
-        #             tmpStoreCode = writer.addStore(kernel, ss, 'D', addrCalc, sumIdx, tmpS01, edge, wsOffset, comment="store D %u" %sumIdx) #here
-        #             if kernel["GroupLoadStore"]:
-        #                 storeCodeGSUSK.add(tmpStoreCode)
-        #             else:
-        #                 storeCodeGSUSK.add(tmpStoreCode)
-        #         else:
-        #             rpe = writer.states.bpeCinternal // writer.states.bpr
-        #             storeCodeGSUSK.add(writer.storeRemapAddLocalWrite(kernel, ss, addrCalc, sumIdx*rpe))
-        #             # Column Block Shape has been written to LDS
-        #             # Now read back and write out to global memory
-        #     module.add(storeCodeGSUSK)
+            module.add(SSleep(kernel["StoreSyncOpt"] - 1, "optimization: sync and wait"))
+            module.add(SBarrier())
         
         # do we really need this?
         sumIdxGSUSYNC = ss.elementSumIdx[len(batchElements)-1]
@@ -872,13 +751,6 @@ class GSU(Component):
             ########################################
             # Reduction
             module.addSpaceLine()
-            # SynchronizerEndlabelString = "Reduction_END%s%s" % ("_Beta" if beta else "", "_Edge" if edge else "" )
-            # SynchronizerEndlabelComment = "Reduction_END"
-            # SynchronizerEndlabel = Label(writer.labels.getNameInc(SynchronizerEndlabelString), SynchronizerEndlabelComment)
-            # SynchronizerEndlabel = Label(writer.labels.getName(SynchronizerEndlabelString), SynchronizerEndlabelComment)
-
-            module.addselfAsm("// sourece store done, GSU:"+str(kernel["GlobalSplitU"])+"\n") #GSUSYNC
-            module.addSpaceLine()
 
             if batchIdx == 0:
                 module.add(SMovB32(sgpr(tmpS02), 0, "Init sgpr offset for interleaved wave load"))
@@ -886,11 +758,11 @@ class GSU(Component):
             module.add(self.GSUSynccodegenOpt(kernel, writer, ss, batchIdx, tmpVgpr, tmpVgprDynamic, gwvw, batchElements,\
                                         endLabel, sumIdxGSUSYNC, addrCalc.globalOffset, addrCalc.addrDVgpr, tmpS02))
 
-            module.addselfAsm("// synchronizer store end\n")        
+            module.addComment("synchronizer store end")        
 
         ########################################
         # AccVgpr write
-        module.addselfAsm("// accvgpr write\n")
+        module.addComment("accvgpr write")
         if codeAccVgprWrite is not None:
             regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
             if kernel["MIArchVgpr"] and kernel["LocalSplitU"] > 1:
@@ -903,7 +775,7 @@ class GSU(Component):
                 for vi in range(0, gwvw):
                     # loop over registers within one scalar
                     for rIdx in range(0, regsPerScalar):
-                        module.add(replaceHolder(codeAccVgprWrite.popFirstItem(), ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - writer.states.c.startVgprValu))
+                        module.add(replaceHolder(codeAccVgprWrite.items().pop(0), ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - writer.states.c.startVgprValu))
 
             if not kernel["MIArchVgpr"]:
                 module.add(SNop(1, "2 wait states required before reading vgpr"))
@@ -945,32 +817,9 @@ class GSU(Component):
         ss.firstBatch = False
         ss.checkInTempVgprC()
         
-        if writer.states.serializedStore:
-            module.add(SNop(0, "1 wait state required when next inst writes vgprs held by previous dwordx4 store inst"))
-
-        return module
-    
-    @abc.abstractmethod
-    def writePartials(self, writer, kernel, gsuPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct, endLabel):
-        pass
-    
-    def writePartialsCommon(self, writer, kernel, gsuPartialsLabel, vectorWidths, elements, tmpVgpr, cvtVgprStruct, endLabel):
-        module = Module("GSU Common writePartials")
-        module.add(gsuPartialsLabel)
-        edges = [False]
-        partialsLabels = {}
-        for edge in edges:
-            partialsLabels[edge] = Label(writer.labels.getNameInc("GW_Partials_E%u" % ( 1 if edge else 0)), comment="")
-
-        if False in edges and True in edges:
-            with self.allocTmpSgpr(4) as tmpSgprInfo:
-                module.add(writer.checkIsEdge(kernel, tmpSgprInfo, partialsLabels[True], partialsLabels[True]))
-
-        for edge in edges:
-            module.add(partialsLabels[edge])
-            # calculate GSUStartWGIdx here?
-            module.add(self.computeWorkspaceSrd(writer, kernel))
-            module.add(self.partialsWriteProcedure(writer, kernel, vectorWidths, elements, False, False, edge, tmpVgpr, cvtVgprStruct, endLabel))
+        # TODO: 2 waits have been executed after accvgpr write
+        # if writer.states.serializedStore:
+        #     module.add(SNop(0, "1 wait state required when next inst writes vgprs held by previous dwordx4 store inst"))
 
         return module
     
@@ -979,29 +828,20 @@ class GSU(Component):
 
         tmpSgpr = writer.sgprPool.checkOut(2, "GSUMappingTemp", preventOverflow=0)
 
-        # Base Address
-        # module.add(SMovB32(dst=sgpr("SrdD+0"), src=sgpr("AddressD+0"), comment="init SRD base address (lower)"))
-        # module.add(SMovB32(dst=sgpr("SrdD+1"), src=sgpr("AddressD+1"), comment="init SRD base address (upper) + other fields"))
-        # module.add(SMovB32(dst=sgpr("SrdD+2"), src="BufferOOB", comment=""))
-        # module.add(SMovB32(dst=sgpr("SrdD+3"), src="Srd127_96", comment="Set bits 127_96 in post-loop SRD"))
-
         # WS address calculation
-        # if kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
-        module.addComment1("store after Acc, "+"GSU: "+str(kernel["GlobalSplitU"]))
         module.addComment("calculate the starting WG index of GSU WGs")
         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr("NumWorkGroups1"), src1=sgpr("WorkGroup0"), comment="NumWorkGroups1*wg0"))
         module.add(SAndB32(dst=sgpr(tmpSgpr+1), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
         module.add(SAddU32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=sgpr("WorkGroup1"), comment="NumWorkGroups1*wg0+wg1"))
         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=sgpr(tmpSgpr+1), comment="(NumWorkGroups1*wg0+wg1)*GSU"))
-        module.add(SMulI32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1"), comment="BatchNumWG"))
-        module.add(SMulI32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("GSUStartWGIdx"), src1=sgpr("WorkGroup2"), comment="BatchNumWG"))
-        module.add(SMulI32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("GSUStartWGIdx"), src1=sgpr(tmpSgpr+1), comment="BatchNumWG"))
+        module.add(SMulI32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1"), comment="NumWgPerBatch"))
+        module.add(SMulI32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("GSUStartWGIdx"), src1=sgpr("WorkGroup2"), comment="NumWgPerBatch"))
+        module.add(SMulI32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("GSUStartWGIdx"), src1=sgpr(tmpSgpr+1), comment="NumWgPerBatch"))
         module.add(SAddU32(dst=sgpr("GSUStartWGIdx"), src0=sgpr("GSUStartWGIdx"), src1=sgpr(tmpSgpr), comment="starting WG index of each GSU WGs"))
-        module.add(SAddU32(dst=sgpr(tmpSgpr), src0=sgpr("GSUStartWGIdx"), src1=sgpr("GSUSumIdx"), comment="(NumWorkGroups0*wg1+wg0)*GSU+BatchNumWG+GSUSumIdx"))
+        module.add(SAddU32(dst=sgpr(tmpSgpr), src0=sgpr("GSUStartWGIdx"), src1=sgpr("GSUSumIdx"), comment="(NumWorkGroups0*wg1+wg0)*GSU+NumWgPerBatch+GSUSumIdx"))
         
         assert kernel["BufferStore"]
-        module.addSpaceLine()
-        # Adding offset to the base address of workspace buffer
+        module.addComment("add offset to the base address of workspace buffer")
         reductionOffset = kernel["MacroTile0"]*kernel["MacroTile1"]*writer.states.bpeCinternal
         module.add(SMulHIU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr), src1=hex(reductionOffset), comment="(MT0*MT1*bpeC)*WGIdx"))
         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=hex(reductionOffset), comment="(MT0*MT1*bpeC)*WGIdx"))
@@ -1010,241 +850,6 @@ class GSU(Component):
         module.addSpaceLine()
 
         writer.sgprPool.checkIn(tmpSgpr)
-
-        return module
-    
-    # TODO: changed to GSU
-    def partialsWriteProcedure(self, writer, kernel, vectorWidths, elements, alpha, beta, edge, tmpVgpr, cvtVgprStruct, endLabel):
-        module = Module("GSU Common partialsWriteProcedure")
-
-        # PreLoopVmcntCaseStr = ""
-        # # not generate Case 2 if StoreCInUnroll with StoreVectorWidth==1 (Case 2 will be same as Case 3)
-        # if self.canOptimizePreLoopLWVmcnt:
-        #     if beta:
-        #         self.currPreLoopVmcntCase = PreLoopVmcntCase.OrdNLL_B1_Store
-        #     elif edge or (kernel["StoreCInUnroll"] and kernel["StoreVectorWidth"]==1):
-        #         self.currPreLoopVmcntCase = PreLoopVmcntCase.OrdNLL_E1_Store
-        #     else:
-        #         self.currPreLoopVmcntCase = PreLoopVmcntCase.OptNLL_Store
-        #     PreLoopVmcntCaseStr = inst("s_mov_b32", sgpr("PreLoopLWVmcntCase"), hex(self.currPreLoopVmcntCase.value), \
-        #         "for optimizing next PreLoop LW vmcnt, set to Case%u"%self.currPreLoopVmcntCase.value)
-        #     # reset vmcnt if the dict has this key (OptNLL_Store, OrdNLL_E1_Store),
-        #     # OrdNLL_B1_Store is excluded
-        #     if self.currPreLoopVmcntCase in self.preLoopVmcntDict:
-        #         self.preLoopVmcntDict[self.currPreLoopVmcntCase] = 0
-
-        edgeI = edge
-        #edgeI = True    # set to True to disable vector stores
-        gwvw = vectorWidths[edgeI]
-        #print "globalWriteElements: edge=", edge, "beta=", beta, "atomic=", atomic
-
-        ########################################
-        # Calculate Vgprs for Write Batching
-        ########################################
-
-        vectorDataTypes = VectorDataTypes()
-        ss = StoreState(writer, kernel, gwvw, edge, beta, False, elements[edgeI], vectorDataTypes, dim=0, isWorkspace=True)
-
-        #print self.vgprPool.state()
-        # Use VGPR up to next occupancy threshold:
-        maxVgprs, _ = writer.getMaxRegsForOccupancy(kernel["NumThreads"], writer.vgprPool.size(), writer.sgprPool.size(), \
-            writer.getLdsSize(kernel), writer.agprPool.size(), writer.states.doubleVgpr)
-        if writer.states.serializedStore: # get aggressive when serializedStore is on; not necessarily exclusive to this parameter
-            # len(elements[edgeI])
-            # tl = []
-            # for i in range(self.vgprPool.size()-self.vgprPool.available(), maxVgprs):
-            #     tl.append(self.vgprPool.checkOut(1, "grow-pool up to next occupancy for GlobalWrite"))
-            # for t in tl:
-            #     self.vgprPool.checkIn(t)
-            writer.vgprPool.growPool(writer.vgprPool.size()-writer.vgprPool.available(), maxVgprs, 1, \
-                "grow-pool up to next occupancy for GlobalWrite")
-        # align = 1
-        # # align adjustment
-        # if ss.cfg.numVgprsPerAddr > 1:
-        #     align = max(align, ss.cfg.numVgprsPerAddr)
-        # if ss.cfg.numVgprPerValuC*gwvw > 1:
-        #     align = max(align, ss.cfg.numVgprPerValuC*gwvw)
-        # if int(ceil(ss.cfg.numVgprsPerDataPerVI * gwvw)) > 1:
-        #     align = max(align, int(ceil(ss.cfg.numVgprsPerDataPerVI * gwvw)))
-        numVgprAvailable = writer.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
-
-        # Grow the register pool if needed - we need enough regs for at least one element
-        # Unfortunate since this means the write logic is setting the VGPR requirement
-        # for the entire kernel but at least we have a functional kernel.
-        # Before growing the pool, see if we can shrink the write vector width instead?
-        # TODO : the vgprSerial is needed for-ever and if we grow here will split the
-        # range of the tmps.    Maybe want to move vgprSerial to first vgpr?
-
-        # TODO: Minimum elems for StoreRemap
-        # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
-        minElements = 1
-        if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
-            minElements = 2
-        elif kernel["ProblemType"]["DataType"].is8bitFloat():
-            # TODO STREAM-K check if needed
-            minElements = 4
-        minNeeded = minElements * ss.numVgprsPerElement
-
-        shrinkDb = 0
-        if shrinkDb:
-            print("numVgprAvailable=", numVgprAvailable, "minElements=", minElements, "minNeeded=", minNeeded)
-
-        if numVgprAvailable < minNeeded:
-            gwvwOrig = gwvw
-            currentOccupancy = writer.getOccupancy(kernel["NumThreads"], writer.getLdsSize(kernel), \
-                writer.vgprPool.size(), writer.sgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
-            futureOccupancy = writer.getOccupancy(kernel["NumThreads"], writer.getLdsSize(kernel), \
-                writer.vgprPool.size() - numVgprAvailable + minNeeded, writer.sgprPool.size(), writer.agprPool.size(), writer.states.doubleVgpr)
-
-            if shrinkDb:
-                print("currentOccupancy=%u futureOccupancy=%u VGPRs=%u numVgprAvail=%u vgprPerElem=%u" \
-                    % (currentOccupancy, futureOccupancy, writer.vgprPool.size(), \
-                    numVgprAvailable, minElements*ss.numVgprsPerElement))
-            if futureOccupancy > currentOccupancy:
-                if shrinkDb:
-                    print("warning: %s growing VGPR for GlobalWrite batching - this may bloat VGPR usage" % \
-                        (writer.states.kernelName))
-                    print("     numVgprAvailable=", numVgprAvailable, \
-                        "numVgprsPerElement=", ss.numVgprsPerElement, \
-                        "beta=", beta, "gwvw=", gwvw)
-            elif gwvw != gwvwOrig:
-                ss.gwvw = gwvw # make both representations consistent
-                if shrinkDb:
-                    print2("info: %s shrank gwvw from %u to %u but kept occupancy same=%u." \
-                        % (writer.states.kernelName, gwvwOrig, gwvw, currentOccupancy))
-
-            if numVgprAvailable < minElements*ss.numVgprsPerElement:
-                print2("info: growing pool += %d * %d for GlobalWrite\n" \
-                    % (minElements,ss.numVgprsPerElement))
-                print2(writer.vgprPool.state())
-                # tl = []
-                # for i in range(0,minElements):
-                #     tl.append(self.vgprPool.checkOut(numVgprsPerElement, "grow-pool for GlobalWrite"))
-                # for t in tl:
-                #     self.vgprPool.checkIn(t)
-                writer.vgprPool.growPool(0, minElements, ss.numVgprsPerElement, \
-                    "grow-pool for GlobalWrite")
-                numVgprAvailable = writer.vgprPool.available()
-                print2(writer.vgprPool.state())
-
-        # set atomicW after we potentially resize GWVW
-        # atomicW = min(gwvw, kernel["VectorAtomicWidth"])
-        atomicW = min(gwvw, writer.getVectorAtomicWidth(kernel))
-
-        # print("NumVgprAvailable", numVgprAvailable)
-        if ss.numVgprsPerElement:
-            numElementsPerBatch = numVgprAvailable // ss.numVgprsPerElement
-        else:
-            numElementsPerBatch = len(elements[edgeI]) # max, do 'em all
-
-        # assert(writer.states.numVgprValuC % gwvw == 0) # sanity check
-
-        numElementsPerBatch = numElementsPerBatch if not kernel["NumElementsPerBatchStore"] else min(kernel["NumElementsPerBatchStore"],numElementsPerBatch)
-
-        if shrinkDb:
-            print("NumElementsPerBatch=", numElementsPerBatch, "LimitedBySgprs=", ss.cfg.numElementsPerBatchLimitedBySgprs, \
-                "WARNING" if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch else "okay")
-        if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch:
-            numElementsPerBatch = ss.cfg.numElementsPerBatchLimitedBySgprs
-
-        # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
-        if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()):
-            # only do an even number of halves - since these share hi/lo pieces of some registers?
-            if numElementsPerBatch > 1:
-                numElementsPerBatch = int(numElementsPerBatch/2)*2
-            elif not kernel["EnableMatrixInstruction"]:
-                # (excluding MFMA+LSU case. It can work without an issue)
-                # The globalWriteBatch routine below can't handle odd elements per batch
-                # and 0 elements per batch is illegal.
-                # so if we don't have *GPR resources to handle a larger batch then need
-                # to mark overflowedResources rather than generate a kernel that won't work.
-                # It might be possible to fix globalWriteBatch to handle this case but these
-                # are likely to be low-performing so likely not worth optimizing.
-                if shrinkDb:
-                    print("WARNING: half requires at least two elements per batch")
-                self.overflowedResources = 3
-        #elif kernel["ProblemType"]["DataType"].is8bitFloat():
-        #    if numElementsPerBatch > 1:
-        #        numElementsPerBatch = int(numElementsPerBatch/4)*4
-
-        assert numElementsPerBatch > 0, "numElementsPerBatch=0 for %s"%writer.states.kernelName
-
-        #numElementsPerBatch=min(2,numElementsPerBatch) # hack to control number of batches
-        # if atomic and (ss.optSingleColVgpr or ss.optSharedColVgpr):
-        #     # hack to avoid re-using address vgpr across rows
-        #     # atomics need to perform several memory operations
-        #     # if the batch spans multiple rows, need multiple address vgpr
-        #     # which is not currently supported in the two opt*ColVgpr modes
-        #     firstRow = [e for e in elements[edgeI] if e[0]==0 and e[2]==0]
-        #     numElementsPerBatch=min(len(firstRow),numElementsPerBatch)
-
-        numBatches = max(1, ceilDivide(len(elements[edgeI]),numElementsPerBatch))
-
-        numSgprs = ss.cfg.numTempSgprPerBatch + ss.cfg.numMaskSgprPerBatch + ss.cfg.numMaskSgprPerElement * numElementsPerBatch
-
-        # TODO STREAM-K activation code
-
-        if writer.db["PrintStoreRegisterDb"]:
-            print("edgeI", edgeI, "NumBatches", numBatches, "NumElementsPerBatch", numElementsPerBatch, "numVgprsPerElement", ss.numVgprsPerElement, "len(elements[edgeI])", len(elements[edgeI]))
-            print("numSgprs=", numSgprs, "sgprPool.size()=", writer.sgprPool.size(), "numTempSgprPerBatch=", ss.cfg.numTempSgprPerBatch,
-                "numMaskSgprPerBatch=", ss.cfg.numMaskSgprPerBatch, "numMaskSgprPerElement=", ss.cfg.numMaskSgprPerElement)
-            print(writer.sgprPool.state())
-        module.addComment1("edge=%d, allocate %u sgpr. perBatchTmpS=%u perBatchMaskS=%u perElementMaskS=%u elementsPerBatch=%u" %
-            (edgeI, numSgprs, ss.cfg.numTempSgprPerBatch, ss.cfg.numMaskSgprPerBatch, ss.cfg.numMaskSgprPerElement, numElementsPerBatch))
-        #kStr += "// storeStats, %d, %d, %d\n"% (edgeI, numSgprs, numElementsPerBatch)
-        # so if we don't have *GPR resources to handle a larger batch then need
-        # to mark overflowedResources rather than generate a kernel that won't work.
-        with writer.allocTmpSgpr(numSgprs, 2) as tmpSgprRes:
-            tmpSgpr = tmpSgprRes.idx
-            elementSgprs = tmpSgpr + ss.cfg.numTempSgprPerBatch
-
-            codeAccVgprRead = deepcopy(writer.codes.accVgprRead) if writer.states.serializedStore else None
-            # TODO STREAM-K remove this?
-            useCodeMulAlpha = kernel["MIArchVgpr"] and alpha and not (kernel["GlobalSplitU"] > 1)
-            if useCodeMulAlpha: # do not set codeAccVgprRead=None if GSU>1
-                codeAccVgprRead = None
-
-            for batchIdx in range(0, numBatches):
-                elementStartIdx = batchIdx * numElementsPerBatch
-                elementStopIdx = min(elementStartIdx + numElementsPerBatch, len(elements[edgeI]))
-                elementsThisBatch = elements[edgeI][elementStartIdx:elementStopIdx]
-                #print("BATCH[%u/%u]: elements[edgeI][%u:%u] VGPRs=%u" % (batchIdx, numBatches, elementStartIdx, elementStopIdx,numVgprsPerElement ))
-                # elementVgprs can be large and should be perfectly tuned to the number of available
-                # VGPRS.    We do not want to accidentally overflow and grow the pool here:
-
-                module.add(self.partialsWriteBatch(writer, kernel, ss, batchIdx, alpha, beta, edge, gwvw, atomicW, \
-                        elementsThisBatch, writer.vgprs.addrD, writer.vgprs.addrC, \
-                        tmpVgpr, cvtVgprStruct, \
-                        elementSgprs, tmpSgpr, codeAccVgprRead))
-            # delay PreLoopVmcntCase code after globalWrite
-            # if self.canOptimizePreLoopLWVmcnt:
-            #     kStr += PreLoopVmcntCaseStr
-
-            # Set flag
-            # module.add(SWaitCnt(vmcnt=0, comment="wait for data store"))
-            # module.add(SBarrier(comment="store all data before setting flag"))
-            # module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr), src=sgpr("StreamKIdx"), shiftHex=log2(4), comment="flag offset based on CTA index"))
-            # with writer.allocTmpSgpr(1) as flagSgprRes:
-            #     flagSgpr = flagSgprRes.idx
-            #     skipFlagSet = Label(label=writer.labels.getNameInc("SK_SkipFlagSet"), comment="")
-            #     module.add(VReadfirstlaneB32(dst=sgpr(flagSgpr), src=vgpr("Serial"), comment="Wave 0 updates flags"))
-            #     module.add(SCmpEQU32(src0=sgpr(flagSgpr), src1=0, comment="Check for wave 0"))
-            #     module.add(SCBranchSCC0(labelName=skipFlagSet.getLabelName(), comment="Skip flag set"))
-            #     module.add(SMovB32(dst=sgpr(flagSgpr), src=1, comment="flag data"))
-            #     module.add(SStoreB32(src=sgpr(flagSgpr), base=sgpr("AddressFlags", 2), soffset=sgpr(tmpSgpr), smem=SMEMModifiers(glc=1), comment="set flag"))
-            #     module.add(skipFlagSet)
-            # module.add(SWaitCnt(lgkmcnt=0, comment="wait for flag")) # TODO just for testing
-
-        # TODO - if this is the last tile, don't need to jump to next instruction
-        # NOTE: in SR kernel, we need long branch since PRNG explodes the line of codes
-        if kernel["ProblemType"]["StochasticRounding"]: # in-device RND
-            with self.allocTmpSgpr(3) as tmpSgprInfo:
-                module.add(SLongBranchPositive(endLabel, tmpSgprInfo))
-        else:
-            module.add(SBranch(labelName=endLabel.getLabelName(), comment="jump to end"))
-
-        # Finish one write path, reset currPreLoopVmcntCase to Undefined
-        # self.currPreLoopVmcntCase = PreLoopVmcntCase.Undefined        
 
         return module
         
@@ -1465,16 +1070,19 @@ class GSU(Component):
 
         module.addComment("check done start")
 
-        #####################################synchronizer offset cal and set synchronizer#####################################
-        #####################################WaveId+WgId*WaveNum+WgNum*WaveNum*Batch
-        #####################################WgId+WaveId*WgNum+WgNum*WaveNum*Batch
-        module.addComment("synchronizer offset cal")
-
         tmpS01 = writer.sgprPool.checkOut(1, preventOverflow=False) #
         tmpS02 = writer.sgprPool.checkOut(1, preventOverflow=False) #
         tmpS03 = writer.sgprPool.checkOut(1, preventOverflow=False) #
-
+        tmpS04 = writer.sgprPool.checkOutAligned(2,2, preventOverflow=False) #
+        tmpS05 = writer.sgprPool.checkOutAligned(2,2, preventOverflow=False) #
+        tmpS06 = writer.sgprPool.checkOutAligned(4,4, preventOverflow=False) #overflow?
+        
+        reductionOffset = kernel["MacroTile0"]*kernel["MacroTile1"]*writer.states.bpeCinternal
+        #####################################synchronizer offset cal and set synchronizer#####################################
+        #####################################WaveId+WgId*WaveNum+WgNum*WaveNum*Batch#####################################
+        #####################################WgId+WaveId*WgNum+WgNum*WaveNum*Batch#####################################
         if batchIdx == 0:
+            module.addComment("synchronizer offset cal")
             module.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr("NumWorkGroups1"), src1=sgpr("NumWorkGroups0"), comment=""))
             module.add(SMulI32(dst=sgpr(tmpS02), src0=sgpr(tmpS03), src1=sgpr("WorkGroup2"), comment=""))
             module.add(SMulI32(dst=sgpr(tmpS01), src0=sgpr("WorkGroup1"), src1=sgpr("NumWorkGroups0"), comment=""))
@@ -1492,40 +1100,19 @@ class GSU(Component):
                 module.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr(tmpS03), src1=batchIdx, comment="this batch offset")) # WgNum*WaveNum*Batch
                 module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr(tmpS03))) # WaveId*WgNum+WgId + WgNum*WaveNum*Batch
             module.add(SLShiftLeftB32(dst=sgpr(tmpS01), src=sgpr(tmpS01), shiftHex=hex(2), comment="")) # atomic 32bits
-            #####################################set synchronizer
+            #####################################set synchronizer#####################################
             module.add(SAddU32(dst=sgpr("SrdSync+0"), src0=sgpr("Synchronizer+0"), src1=sgpr(tmpS01), comment="" ))
             module.add(SAddCU32(dst=sgpr("SrdSync+1"), src0=sgpr("Synchronizer+1"), src1=hex(0), comment="" ))
 
             module.add(SWaitCnt(waitAll=True, comment="wait store done before synchronizer start load and add"))
             module.add(SAndB32(dst=sgpr(tmpS02), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
             module.add(SSubU32(dst=sgpr(tmpS02), src0=sgpr(tmpS02), src1=hex(1), comment=""))
-            module.add(SAtomicDec(dst=sgpr(tmpS02), base=sgpr("SrdSync", 2), smem=SMEMModifiers(glc=1)))
-            module.addSpaceLine()
+            module.add(SAtomicDec(dst=sgpr(tmpS02), base=sgpr("SrdSync", 2), smem=SMEMModifiers(glc=True)))
             #####################################cal synchronizer sum offset#####################################
             module.addComment("synchronizer sum offset cal")
+            module.add(SMovB64(dst=sgpr(tmpS04,2), src=hex(reductionOffset), comment="MT0*MT1*bpeC"))
+            module.addSpaceLine()
 
-        tmpS04 = writer.sgprPool.checkOutAligned(2,2, preventOverflow=False) #
-        tmpS05 = writer.sgprPool.checkOutAligned(2,2, preventOverflow=False) #
-
-        # indices = list(range(0, kernel["ProblemType"]["NumIndicesC"]))
-        # numDim = len(indices)
-        # with writer.allocTmpSgpr(5) as tmpSgprInfo:
-        #     tmpSgpr = tmpSgprInfo.idx
-        #     module.addModuleAsFlatItems(writer.s_mul_u64_u32(sgpr(tmpSgpr+0), sgpr(tmpSgpr+1), sgpr("SizesFree+0"), 1, tmpVgpr.idx, "Free0"))
-        #     for i in range(1, numDim):
-        #         module.add(SSubU32(dst=sgpr(tmpSgpr+4), src0=sgpr("SizesFree+%u"%i), src1=1, comment="Free%u" % i))
-        #         module.add(SMulI32(dst=sgpr(tmpSgpr+4), src0=sgpr(tmpSgpr+4), src1=1, comment="Free%u" % i))
-        #         module.addModuleAsFlatItems(writer.s_mul_u64_u32(sgpr(tmpSgpr+2), sgpr(tmpSgpr+3), sgpr(tmpSgpr+4), sgpr("StrideC%s"%writer.states.indexChars[i]), tmpVgpr.idx, "Free%u" % i))
-        #         module.add(SAddU32(dst=sgpr(tmpSgpr+0), src0=sgpr(tmpSgpr+0), src1=sgpr(tmpSgpr+2), comment="Free%u" % i))
-        #         module.add(SAddCU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr+1), src1=sgpr(tmpSgpr+3), comment="Free%u" % i))
-
-        #     bpetmp = int(writer.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters()) # self.states.bpeCinternal
-
-            # module.add(SLShiftLeftB64(dst=sgpr(tmpS04,2), src=sgpr(tmpSgpr+0,2), shiftHex=log2(self.parentWriter.states.bpeCexternal), comment="scale by bpe"))
-        reductionOffset = kernel["MacroTile0"]*kernel["MacroTile1"]*writer.states.bpeCinternal
-        module.add(SMovB64(dst=sgpr(tmpS04,2), src=hex(reductionOffset), comment="MT0*MT1*bpeC"))
-
-        module.addSpaceLine()
         #####################################cal synchronizer sum start#####################################
         # no need to do because we have workspace start sgpr
         #####################################check synchronizer done#####################################
@@ -1535,28 +1122,23 @@ class GSU(Component):
 
             checkSyncCode.add(SWaitCnt(lgkmcnt=0, comment="Wait for synchronizer"))
             checkSyncCode.add(SCmpEQU32(src0=sgpr(tmpS02), src1=hex(1), comment=""))
-
-            # checkSyncCode.add(SCBranchSCC0(labelName = labelendname, comment = ""))
             checkSyncCode.add(writer.longBranchScc0(label=labelend, posNeg=1, comment="long branch sync"))
 
             checkSyncCode.addComment("check done end")
             checkSyncCode.addSpaceLine()
-            #####################################load buffer#####################################
-            checkSyncCode.addComment("buffer load start")
 
         SyncloadedData = 0
 
-        tmpS06 = writer.sgprPool.checkOutAligned(4,4, preventOverflow=False) #overflow?
-
         bufferOOB = tmpVgpr.idx + tmpVgpr.size - 1
-        module.add(VMovB32(dst=vgpr(bufferOOB), src="BufferOOB"))
-        reductionOffset = kernel["MacroTile0"]*kernel["MacroTile1"]*writer.states.bpeCinternal
-        module.add(SMulHIU32(dst=sgpr(tmpS06+1), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
-        module.add(SMulI32(dst=sgpr(tmpS06), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
-        module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr("AddressD+0"), src1=sgpr(tmpS06), comment="add lo to SRD"))
-        module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr("AddressD+1"), src1=sgpr(tmpS06+1), comment="add hi to SRD"))
-        module.add(SMovB32(sgpr(tmpS06+2), sgpr("SrdD+2"), ""))
-        module.add(SMovB32(sgpr(tmpS06+3), sgpr("SrdD+3"), ""))
+        if batchIdx == 0:
+            module.add(VMovB32(dst=vgpr(bufferOOB), src="BufferOOB"))
+            module.addComment("add offset to base workspace address")
+            module.add(SMulHIU32(dst=sgpr(tmpS06+1), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
+            module.add(SMulI32(dst=sgpr(tmpS06), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
+            module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr("AddressD+0"), src1=sgpr(tmpS06), comment="add lo to SRD"))
+            module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr("AddressD+1"), src1=sgpr(tmpS06+1), comment="add hi to SRD"))
+            module.add(SMovB32(sgpr(tmpS06+2), sgpr("SrdD+2"), ""))
+            module.add(SMovB32(sgpr(tmpS06+3), sgpr("SrdD+3"), ""))
 
         addr1 = sgpr(tmpS06, 4)
         addr0 = vgpr(vgproffset)
@@ -1564,12 +1146,12 @@ class GSU(Component):
         for elementIdx in range(0, len(batchElements)):
             mask     = ss.elementMask[elementIdx]
             addrCalc: AddrCalculation = ss.elementAddr[elementIdx]
+            addr0 = vgpr(addrCalc.addrDVgpr)
+
             SyncloadedData = 0
             SynchronizerAddSkiplabelString = "Synchronizer_read_add_skip"
             SynchronizerAddSkipComment = "Synchronizer read add skip"
             SynchronizerAddSkiplabel = Label(writer.labels.getNameInc(SynchronizerAddSkiplabelString), SynchronizerAddSkipComment)
-
-            addr0 = vgpr(addrCalc.addrDVgpr)
 
             GSUtotal = writer.getMBSKGSUTotal(kernel)
             SynchronizerAddEndlabel = [""] * GSUtotal
@@ -1579,82 +1161,59 @@ class GSU(Component):
                 SynchronizerAddEndComment = "Synchronizer read add end_"+str(idx+1)
                 SynchronizerAddEndlabel[idx] = Label(writer.labels.getNameInc(SynchronizerAddEndlabelString), SynchronizerAddEndComment)
 
-            # module.add(SMovB32(sgpr(tmpS06+0), sgpr("WSDstart+0"), "Move workspace start"))
-            # module.add(SMovB32(sgpr(tmpS06+1), sgpr("WSDstart+1"), "Move workspace start"))
-            
             if elementIdx == 0 and batchIdx == 0:
                 # Insert check synchronizer done code here for better scheduling
                 module.add(checkSyncCode)
 
+            #####################################load buffer#####################################
+            module.addComment("buffer load start")
             for times in range(elementIdx, elementIdx+1):
-                addrCalctmp: AddrCalculation = ss.elementAddr[times]
                 if batchIdx != 0 or elementIdx != 0:
                     storeWidth = kernel["StoreVectorWidth"]
-                    # numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-                    # increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * writer.states.bpeCinternal
                     increment = kernel["NumThreads"] * storeWidth * writer.states.bpeCinternal
                     module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset for load"))
                     module.add(SMulHIU32(dst=sgpr(tmpS06+1), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
                     module.add(SMulI32(dst=sgpr(tmpS06), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
                     module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr("AddressD+0"), src1=sgpr(tmpS06), comment="add lo to SRD"))
                     module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr("AddressD+1"), src1=sgpr(tmpS06+1), comment="add hi to SRD"))
-                # if ss.optSrdIncForRow and addrCalctmp.rowInc:
-                #     storeWidth = kernel["StoreVectorWidth"]
-                #     numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
-                #     increment = (kernel["WavefrontSize"] * numWaves) * storeWidth * writer.states.bpeCinternal
-                #     module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset for load"))
-                #     reductionOffset = kernel["MacroTile0"]*kernel["MacroTile1"]*writer.states.bpeCinternal
-                #     module.add(SMulHIU32(dst=sgpr(tmpS06+1), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
-                #     module.add(SMulI32(dst=sgpr(tmpS06), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
-                #     module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr("AddressD+0"), src1=sgpr(tmpS06), comment="add lo to SRD"))
-                #     module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr("AddressD+1"), src1=sgpr(tmpS06+1), comment="add hi to SRD"))
 
-            vgprstart = ss.elementSumIdx[elementIdx] #here
-            dataType     = kernel["ProblemType"]["DestDataType"]
+            vgprstart = ss.elementSumIdx[elementIdx]
+            dataType  = kernel["ProblemType"]["DestDataType"]
             if dataType.isDouble() or dataType.isSingleComplex():
                 vgprstart = vgprstart*2
             module.add(writer.chooseGlobalRead(True, bps, vgprstart, \
-                            addr0, addr1, soffset=sgpr(soffset), offset=0, glc=1, slc=1,\
+                            addr0, addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True,\
                             comment="load GSU D 0 "+str(vgprstart)))
             SyncloadedData += 1
 
             module.add(SAndB32(dst=sgpr("GSUSync"), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-
             SynchronizerlabelString = "Synchronizer_read_add"
             SynchronizerComment = "Synchronizer read add"
             Synchronizerlabel = Label(writer.labels.getNameInc(SynchronizerlabelString), SynchronizerComment)
-
             tmpVAdd = tmpVgprDynamic.idx
             GSUMvgpr = tmpVgpr.idx
-
             GSUP1 = GSUtotal-1
 
             for i in range(0,GSUP1):
                 module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1, comment="%u" % i))
 
-                module.add(SAddU32(dst=sgpr(tmpS06+0), \
-                                                src0=sgpr(tmpS06+0), \
-                                                src1=sgpr(tmpS04+0), \
-                                                comment="" ))
-                module.add(SAddCU32(dst=sgpr(tmpS06+1), \
-                                    src0=sgpr(tmpS06+1), \
-                                    src1=sgpr(tmpS04+1), \
-                                    comment="" ))
+                module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr(tmpS06+0), src1=sgpr(tmpS04+0), comment="" ))
+                module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr(tmpS06+1), src1=sgpr(tmpS04+1), comment="" ))
 
                 module.add(SCmpEQI32(src0=sgpr("GSUSync"), src1=0, comment=""))#GSUSync+GSUP1==GSU
                 module.add(SCBranchSCC1(labelName=SynchronizerAddEndlabel[i].getLabelName(), comment="SyncAddbranchhere"))
 
                 if(kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
                     module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
-                                addr0, addr1, soffset=0, offset=0, glc=1, slc=1, \
+                                addr0, addr1, soffset=0, offset=0, glc=True, slc=True, \
                                 comment="load GSU DD %u %u %u" % (bps, gwvw, kernel["ProblemType"]["DestDataType"].numRegisters())))
                 else:
                     module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*i, \
-                                addr0, addr1, soffset=sgpr(soffset), offset=0, glc=1, slc=1, \
+                                addr0, addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True, \
                                 comment="load GSU DD %u %u %u" % (bps, gwvw, kernel["ProblemType"]["DestDataType"].numRegisters())))
 
                 SyncloadedData += 1
-            module.addComment("buffer load end\n")
+            module.addComment("buffer load end")
 
             #####################################> GSUtotal reduction start#####################################
             module.addComment("buffer add start")
@@ -1665,7 +1224,8 @@ class GSU(Component):
             module.add(Synchronizerlabel)
 
             for i in range(0, GSUP1):
-                module.addSpaceLine()
+                if i != 0:
+                    module.addSpaceLine()
                 vmcnt = SyncloadedData = SyncloadedData -1
                 module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
 
@@ -1690,16 +1250,16 @@ class GSU(Component):
 
                 if(kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
                     module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
-                                vgpr(GSUMvgpr), addr1, soffset=0, offset=0, glc=1, slc=1, \
+                                vgpr(GSUMvgpr), addr1, soffset=0, offset=0, glc=True, slc=True, \
                                 comment="load GSU DD %u" % bps))
                 else:
                     module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*i, \
-                                vgpr(GSUMvgpr), addr1, soffset=sgpr(soffset), offset=0, glc=1, slc=1, \
+                                vgpr(GSUMvgpr), addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True, \
                                 comment="load GSU DD %u" % bps))
 
                 SyncloadedData += 1
 
-            module.addComment("buffer add end\n")
+            module.addComment("buffer add end")
 
             module.add(SCmpGtI32(src0=sgpr("GSUSync"), src1=hex(1-(GSUP1)), comment=""))
             module.add(SCBranchSCC1(labelName=Synchronizerlabel.getLabelName(), comment="Syncbranchhere"))
@@ -1711,7 +1271,8 @@ class GSU(Component):
 
                 vmcnt = k
                 for i in range(0, k):
-                    module.addSpaceLine()
+                    if i != 0:
+                        module.addSpaceLine()
                     vmcnt = vmcnt -1 if vmcnt > 0 else 0
                     module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
 
@@ -1729,7 +1290,7 @@ class GSU(Component):
 
             module.add(SynchronizerAddSkiplabel)
 
-            module.addComment("buffer add end2\n")
+            module.addComment("buffer add end2")
 
         writer.sgprPool.checkIn(tmpS06)
         writer.sgprPool.checkIn(tmpS05)
