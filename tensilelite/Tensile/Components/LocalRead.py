@@ -529,7 +529,7 @@ class LocalReadMFMA(LocalRead):
                                 incOffset = 0
                                 midIdx = numReadsPerUnroll // 2
                                 if rIdx >= midIdx:
-                                    if kernel["MatrixInstK"] > 32:
+                                    if  kernel["ProblemType"]["DataType"].is8bitFloat() and kernel["MatrixInstK"] > 32:
                                         if kernel["UnrollMajorLDS%s" % tP["tensorChar"]] == False:
                                             # TODO: why are these the offsets???
                                             if kernel["MatrixInstM"] == 32:
