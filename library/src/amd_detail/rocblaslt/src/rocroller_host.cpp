@@ -1,9 +1,9 @@
 #include "rocroller_host.hpp"
-#include "utility.hpp"
 #include "handle.h"
+#include "utility.hpp"
 
-#include <rocRoller/Operations/Command.hpp>
 #include <rocRoller/CommandSolution.hpp>
+#include <rocRoller/Operations/Command.hpp>
 #include <rocRoller/TensorDescriptor.hpp>
 
 using namespace rocRoller;
@@ -11,15 +11,15 @@ using namespace rocRoller;
 const int MAX_BITS_WORKGROUPTILE_M = 8;
 const int MAX_BITS_WORKGROUPTILE_N = 8;
 const int MAX_BITS_WORKGROUPTILE_K = 7;
-const int REQUIRED_MULTIPLE_M_N = 16;
-const int REQUIRED_MULTIPLE_K = 32;
+const int REQUIRED_MULTIPLE_M_N    = 16;
+const int REQUIRED_MULTIPLE_K      = 32;
 
 /**
  * @brief KernelType
- * 
+ *
  * All of the values required for different types of kernels.
  * This should not include any optimization flags.
- * 
+ *
  */
 struct KernelType
 {
@@ -45,9 +45,9 @@ struct KernelType
 
 /**
  * @brief WorkGroupTileSize
- * 
+ *
  * The size of a tile that will be executed by a work group.
- * 
+ *
  */
 struct WorkGroupTileSize
 {
@@ -58,9 +58,9 @@ struct WorkGroupTileSize
 
 /**
  * @brief MachineInstructionSize
- * 
+ *
  * The machine instruction that will be used for matrix multiplication operations
- * 
+ *
  */
 struct MachineInstructionSize
 {
@@ -72,11 +72,11 @@ struct MachineInstructionSize
 
 /**
  * @brief SolutionIndex Parameters
- * 
+ *
  * All of the parameters that are used to generated a unique solution index.
  * There can be multiple kernels of the same KernelType that have different
  * SolutionIndexParameters.
- * 
+ *
  */
 struct SolutionIndexParameters
 {
@@ -85,9 +85,9 @@ struct SolutionIndexParameters
 
 /**
  * @brief Solution Parameters
- * 
+ *
  * Everything needed to generate a kernel
- * 
+ *
  */
 struct SolutionParameters
 {
@@ -102,8 +102,8 @@ struct SolutionParameters
 
     // Number of wave tiles to execute per workgroup
     uint wavefrontSize  = 64;
-    int workgroupSizeX = 2 * wavefrontSize;
-    int workgroupSizeY = 2;
+    int  workgroupSizeX = 2 * wavefrontSize;
+    int  workgroupSizeY = 2;
 
     // Other options
     bool loadLDSA  = true;
@@ -130,14 +130,14 @@ struct SolutionParameters
 
 /**
  * @brief GemmKernel
- * 
+ *
  * Everything needed to launch a kernel
- * 
+ *
  */
 struct GemmKernel
 {
-    CommandPtr command;
-    CommandKernelPtr commandKernel;
+    CommandPtr                          command;
+    CommandKernelPtr                    commandKernel;
     std::shared_ptr<SolutionParameters> params;
 
     Operations::OperationTag tagTensorA;
@@ -154,9 +154,9 @@ struct GemmKernel
 
 /**
  * @brief RocRollerHandle
- * 
+ *
  * State that is needed for executing rocRoller kernels
- * 
+ *
  */
 struct RocRollerHandle
 {
@@ -170,10 +170,10 @@ struct RocRollerHandle
 
 /**
  * @brief Create a new rocRoller handle.
- * 
+ *
  * This should be done whenever a hipBLASLt handle is created.
- * 
- * @param handle 
+ *
+ * @param handle
  */
 void rocroller_create_handle(void** handle)
 {
@@ -182,10 +182,10 @@ void rocroller_create_handle(void** handle)
 
 /**
  * @brief Destroy a rocRoller handle
- * 
+ *
  * This should be done whenever a hipBLASLt handle is destroyed.
- * 
- * @param handle 
+ *
+ * @param handle
  */
 void rocroller_destroy_handle(void* handle)
 {
@@ -195,16 +195,19 @@ void rocroller_destroy_handle(void* handle)
 // Hash function for a SolutionIndexParameters
 // A hash function is used because we can only store a 64bit value in a
 // rocblaslt_matmul_algo data field for a solution index.
-namespace std {
+namespace std
+{
     template <>
-    struct hash<SolutionIndexParameters> {
-        std::size_t operator()(const SolutionIndexParameters& params) const {
-            size_t result = params.workgroupTile.k / REQUIRED_MULTIPLE_K;
-            unsigned int pos = MAX_BITS_WORKGROUPTILE_K;
+    struct hash<SolutionIndexParameters>
+    {
+        std::size_t operator()(const SolutionIndexParameters& params) const
+        {
+            size_t       result = params.workgroupTile.k / REQUIRED_MULTIPLE_K;
+            unsigned int pos    = MAX_BITS_WORKGROUPTILE_K;
             result |= ((params.workgroupTile.n / REQUIRED_MULTIPLE_M_N) << pos);
             pos += MAX_BITS_WORKGROUPTILE_N;
             result |= ((params.workgroupTile.m / REQUIRED_MULTIPLE_M_N) << pos);
- 
+
             AssertFatal(result < INT_MAX, "Solution Index is too large");
             // Set top bit indicating it is a rocRoller index
             result |= (1 << 31);
@@ -224,18 +227,22 @@ inline unsigned int mask(unsigned int numBits)
 SolutionIndexParameters indexToParameters(int index)
 {
     SolutionIndexParameters result;
-    unsigned int pos = 0;
+    unsigned int            pos = 0;
 
-    result.workgroupTile.k = ((index >> pos) & mask(MAX_BITS_WORKGROUPTILE_K)) * REQUIRED_MULTIPLE_K;
+    result.workgroupTile.k
+        = ((index >> pos) & mask(MAX_BITS_WORKGROUPTILE_K)) * REQUIRED_MULTIPLE_K;
     pos += MAX_BITS_WORKGROUPTILE_K;
-    result.workgroupTile.n = ((index >> pos) & mask(MAX_BITS_WORKGROUPTILE_N)) * REQUIRED_MULTIPLE_M_N;
+    result.workgroupTile.n
+        = ((index >> pos) & mask(MAX_BITS_WORKGROUPTILE_N)) * REQUIRED_MULTIPLE_M_N;
     pos += MAX_BITS_WORKGROUPTILE_N;
-    result.workgroupTile.m = ((index >> pos) & mask(MAX_BITS_WORKGROUPTILE_M)) * REQUIRED_MULTIPLE_M_N;
+    result.workgroupTile.m
+        = ((index >> pos) & mask(MAX_BITS_WORKGROUPTILE_M)) * REQUIRED_MULTIPLE_M_N;
 
     return result;
 }
 
-inline std::string scaleModeOption(std::string arg, RocblasltContractionProblem::ScalingFormat scale)
+inline std::string scaleModeOption(std::string                                arg,
+                                   RocblasltContractionProblem::ScalingFormat scale)
 {
     switch(scale)
     {
@@ -251,78 +258,77 @@ inline std::string scaleModeOption(std::string arg, RocblasltContractionProblem:
 }
 
 inline void logBench(const RocblasltContractionProblem& prob,
-                                        const int&     solutionIndex,
-                                        bool           flush,
-                                        const int32_t& rotatingBufferSize,
-                                        const int32_t& coldIterations,
-                                        const int32_t& hotIterations)
+                     const int&                         solutionIndex,
+                     bool                               flush,
+                     const int32_t&                     rotatingBufferSize,
+                     const int32_t&                     coldIterations,
+                     const int32_t&                     hotIterations)
 {
-    log_bench(
-        __func__,
-        "--api_method",
-        "c",
-        "-m",
-        prob.m,
-        "-n",
-        prob.n,
-        "-k",
-        prob.k,
-        "--lda",
-        prob.col_stride_a,
-        "--ldb",
-        prob.col_stride_b,
-        "--ldc",
-        prob.col_stride_c,
-        "--ldd",
-        prob.col_stride_d,
-        "--stride_a",
-        prob.batch_stride_a,
-        "--stride_b",
-        prob.batch_stride_b,
-        "--stride_c",
-        prob.batch_stride_c,
-        "--stride_d",
-        prob.batch_stride_d,
-        "--alpha",
-        *((float*)prob.alpha),
-        "--beta",
-        *((float*)prob.beta),
-        "--transA",
-        prob.trans_a == HIPBLAS_OP_T ? "T" : "N",
-        "--transB",
-        prob.trans_b == HIPBLAS_OP_T ? "T" : "N",
-        "--batch_count",
-        prob.batch_count,
-        scaleModeOption("--scaleA", prob.scaleAType),
-        scaleModeOption("--scaleB", prob.scaleBType),
-        "--a_type",
-        hipDataType_to_bench_string(prob.a_type),
-        "--b_type",
-        hipDataType_to_bench_string(prob.b_type),
-        "--c_type",
-        hipDataType_to_bench_string(prob.c_type),
-        "--d_type",
-        hipDataType_to_bench_string(prob.d_type),
-        "--compute_type",
-        "f32_r",
-        "--algo_method",
-        "index",
-        "--solution_index",
-        solutionIndex,
-        flush ? "--flush" : "",
-        "--rotating",
-        rotatingBufferSize,
-        "--cold_iters",
-        coldIterations,
-        "--iters",
-        hotIterations);
+    log_bench(__func__,
+              "--api_method",
+              "c",
+              "-m",
+              prob.m,
+              "-n",
+              prob.n,
+              "-k",
+              prob.k,
+              "--lda",
+              prob.col_stride_a,
+              "--ldb",
+              prob.col_stride_b,
+              "--ldc",
+              prob.col_stride_c,
+              "--ldd",
+              prob.col_stride_d,
+              "--stride_a",
+              prob.batch_stride_a,
+              "--stride_b",
+              prob.batch_stride_b,
+              "--stride_c",
+              prob.batch_stride_c,
+              "--stride_d",
+              prob.batch_stride_d,
+              "--alpha",
+              *((float*)prob.alpha),
+              "--beta",
+              *((float*)prob.beta),
+              "--transA",
+              prob.trans_a == HIPBLAS_OP_T ? "T" : "N",
+              "--transB",
+              prob.trans_b == HIPBLAS_OP_T ? "T" : "N",
+              "--batch_count",
+              prob.batch_count,
+              scaleModeOption("--scaleA", prob.scaleAType),
+              scaleModeOption("--scaleB", prob.scaleBType),
+              "--a_type",
+              hipDataType_to_bench_string(prob.a_type),
+              "--b_type",
+              hipDataType_to_bench_string(prob.b_type),
+              "--c_type",
+              hipDataType_to_bench_string(prob.c_type),
+              "--d_type",
+              hipDataType_to_bench_string(prob.d_type),
+              "--compute_type",
+              "f32_r",
+              "--algo_method",
+              "index",
+              "--solution_index",
+              solutionIndex,
+              flush ? "--flush" : "",
+              "--rotating",
+              rotatingBufferSize,
+              "--cold_iters",
+              coldIterations,
+              "--iters",
+              hotIterations);
 }
 
 /**
  * @brief Convert hipDataType to a rocRoller::Datatype
- * 
- * @param type 
- * @return rocRoller::DataType 
+ *
+ * @param type
+ * @return rocRoller::DataType
  */
 rocRoller::DataType hipDataType_to_rocRoller_type(hipDataType type)
 {
@@ -364,9 +370,9 @@ rocRoller::DataType hipDataType_to_rocRoller_type(hipDataType type)
 
 /**
  * @brief Convert a rocblaslt_compute_type to a rocRoller::DataType
- * 
- * @param type 
- * @return rocRoller::DataType 
+ *
+ * @param type
+ * @return rocRoller::DataType
  */
 rocRoller::DataType rocblaslt_compute_type_to_rocRoller_type(rocblaslt_compute_type type)
 {
@@ -398,24 +404,28 @@ rocRoller::DataType rocblaslt_compute_type_to_rocRoller_type(rocblaslt_compute_t
 
 /**
  * @brief Generate a KernelType from a RocblasltContractionProblem
- * 
- * 
- * @param prob 
- * @return kernelType 
+ *
+ *
+ * @param prob
+ * @return kernelType
  */
 KernelType genKernelType(const RocblasltContractionProblem& prob)
 {
     KernelType kernelType;
 
-    kernelType.typeA = hipDataType_to_rocRoller_type(prob.a_type);
-    kernelType.typeB = hipDataType_to_rocRoller_type(prob.b_type);
-    kernelType.typeC = hipDataType_to_rocRoller_type(prob.c_type);
-    kernelType.typeD = hipDataType_to_rocRoller_type(prob.d_type);
-    kernelType.typeAcc = rocblaslt_compute_type_to_rocRoller_type(prob.compute_type);
-    kernelType.transA = prob.trans_a;
-    kernelType.transB = prob.trans_b;
-    kernelType.scaleAMode = prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Block ? rocRoller::Operations::ScaleMode::Separate : rocRoller::Operations::ScaleMode::None;
-    kernelType.scaleBMode = prob.scaleBType == RocblasltContractionProblem::ScalingFormat::Block ? rocRoller::Operations::ScaleMode::Separate : rocRoller::Operations::ScaleMode::None;
+    kernelType.typeA      = hipDataType_to_rocRoller_type(prob.a_type);
+    kernelType.typeB      = hipDataType_to_rocRoller_type(prob.b_type);
+    kernelType.typeC      = hipDataType_to_rocRoller_type(prob.c_type);
+    kernelType.typeD      = hipDataType_to_rocRoller_type(prob.d_type);
+    kernelType.typeAcc    = rocblaslt_compute_type_to_rocRoller_type(prob.compute_type);
+    kernelType.transA     = prob.trans_a;
+    kernelType.transB     = prob.trans_b;
+    kernelType.scaleAMode = prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Block
+                                ? rocRoller::Operations::ScaleMode::Separate
+                                : rocRoller::Operations::ScaleMode::None;
+    kernelType.scaleBMode = prob.scaleBType == RocblasltContractionProblem::ScalingFormat::Block
+                                ? rocRoller::Operations::ScaleMode::Separate
+                                : rocRoller::Operations::ScaleMode::None;
     kernelType.scaleABlockRowSize = prob.scaleABlockRowSize;
     kernelType.scaleABlockColSize = prob.scaleABlockColSize;
     kernelType.scaleBBlockRowSize = prob.scaleBBlockRowSize;
@@ -424,39 +434,39 @@ KernelType genKernelType(const RocblasltContractionProblem& prob)
     return kernelType;
 }
 
-const std::vector<WorkGroupTileSize> possibleTileSizes =
-{ {256, 256, 64}, {256, 128, 64}, {128, 256, 64}, {256, 64, 64}, {64, 256, 64},
-  {128, 128, 64}, {256, 32, 64}, {32, 256, 64}, {128, 64, 64}, {64, 128, 64},
-  {256, 16, 128}, {16, 256, 128},  {128, 32, 64}, {32, 128, 64},
-  {64, 64, 64}, {64, 32, 64}, {32, 64, 64}, {64, 16, 128}, {16, 64, 128},
-  {32, 32, 64}, {32, 16, 128}, {16, 32, 128}, {16, 16, 128}};
+const std::vector<WorkGroupTileSize> possibleTileSizes = {
+    {256, 256, 64}, {256, 128, 64}, {128, 256, 64}, {256, 64, 64}, {64, 256, 64},  {128, 128, 64},
+    {256, 32, 64},  {32, 256, 64},  {128, 64, 64},  {64, 128, 64}, {256, 16, 128}, {16, 256, 128},
+    {128, 32, 64},  {32, 128, 64},  {64, 64, 64},   {64, 32, 64},  {32, 64, 64},   {64, 16, 128},
+    {16, 64, 128},  {32, 32, 64},   {32, 16, 128},  {16, 32, 128}, {16, 16, 128}};
 
 /**
  * @brief Choose the SolutionIndexParameters to use for a given problem
- * 
+ *
  * Examine the KernelType and problem size to determine the kernel to use
  * to compute the problem.
- * 
+ *
  * Return a list of SolutionIndexParameters, in sorted order, based on how many kernels are requested.
- * 
- * @param kernelType 
- * @param prob 
- * @return std::vector<SolutionIndexParameters> 
+ *
+ * @param kernelType
+ * @param prob
+ * @return std::vector<SolutionIndexParameters>
  */
-std::vector<SolutionIndexParameters> chooseSolutionIndexParameters(const KernelType& kernelType, const RocblasltContractionProblem& prob, int requestedAlgoCount)
+std::vector<SolutionIndexParameters> chooseSolutionIndexParameters(
+    const KernelType& kernelType, const RocblasltContractionProblem& prob, int requestedAlgoCount)
 {
     std::vector<SolutionIndexParameters> params;
 
-    for (auto const& wgt : possibleTileSizes)
+    for(auto const& wgt : possibleTileSizes)
     {
-        if ((requestedAlgoCount == -1) || (prob.m % wgt.m == 0 && prob.n % wgt.n == 0 && prob.k % (wgt.k * 2) == 0))
+        if((requestedAlgoCount == -1)
+           || (prob.m % wgt.m == 0 && prob.n % wgt.n == 0 && prob.k % (wgt.k * 2) == 0))
         {
             params.emplace_back(wgt);
 
-            if (kernelType.typeA == rocRoller::DataType::Half ||
-                kernelType.typeA == rocRoller::DataType::BFloat16 ||
-                kernelType.typeA == rocRoller::DataType::Float
-                )
+            if(kernelType.typeA == rocRoller::DataType::Half
+               || kernelType.typeA == rocRoller::DataType::BFloat16
+               || kernelType.typeA == rocRoller::DataType::Float)
             {
                 params.back().workgroupTile.k = 32;
             }
@@ -468,15 +478,17 @@ std::vector<SolutionIndexParameters> chooseSolutionIndexParameters(const KernelT
 
 /**
  * @brief Generate all of the solution parameters needed to create a kernel.
- * 
+ *
  * This should only take into account the KernelType and SolutionIndexParameters
  * when deciding on the rest of the parameters to use for the kernel.
- * 
- * @param kernelType 
- * @param solutionIndexParameters 
- * @return std::shared_ptr<SolutionParameters> 
+ *
+ * @param kernelType
+ * @param solutionIndexParameters
+ * @return std::shared_ptr<SolutionParameters>
  */
-std::shared_ptr<SolutionParameters> genSolutionParameters(const KernelType& kernelType, const SolutionIndexParameters& solutionIndexParameters)
+std::shared_ptr<SolutionParameters>
+    genSolutionParameters(const KernelType&              kernelType,
+                          const SolutionIndexParameters& solutionIndexParameters)
 {
     auto gemm = std::make_shared<SolutionParameters>();
 
@@ -485,34 +497,41 @@ std::shared_ptr<SolutionParameters> genSolutionParameters(const KernelType& kern
     gemm->workgroupTile = solutionIndexParameters.workgroupTile;
 
     // Choose the Machine Instruction to use
-    if (gemm->kernelType.typeA == rocRoller::DataType::Half || gemm->kernelType.typeA == rocRoller::DataType::BFloat16)
+    if(gemm->kernelType.typeA == rocRoller::DataType::Half
+       || gemm->kernelType.typeA == rocRoller::DataType::BFloat16)
     {
         gemm->machineInstruction = {32, 32, 8, 1};
     }
-    else if (gemm->kernelType.typeA == rocRoller::DataType::Float)
+    else if(gemm->kernelType.typeA == rocRoller::DataType::Float)
     {
         gemm->machineInstruction = {32, 32, 2, 1};
     }
     else
     {
-        if (gemm->workgroupTile.m % 32 == 0 && gemm->workgroupTile.n % 32 == 0)
+        if(gemm->workgroupTile.m % 32 == 0 && gemm->workgroupTile.n % 32 == 0)
             gemm->machineInstruction = {32, 32, 64, 1};
         else
             gemm->machineInstruction = {16, 16, 128, 1};
     }
 
-    if (gemm->workgroupTile.m / gemm->machineInstruction.m == 1)
+    if(gemm->workgroupTile.m / gemm->machineInstruction.m == 1)
         gemm->workgroupSizeX = gemm->wavefrontSize;
-    if (gemm->workgroupTile.n / gemm->machineInstruction.n == 1)
+    if(gemm->workgroupTile.n / gemm->machineInstruction.n == 1)
         gemm->workgroupSizeY = 1;
 
     // LDS can only be used for scaling data with certain workgroup tile sizes
     auto workgroupSize = gemm->workgroupSizeX * gemm->workgroupSizeY;
-    auto numScaleElementsA = gemm->workgroupTile.m * (gemm->workgroupTile.k / (gemm->kernelType.scaleABlockRowSize * gemm->kernelType.scaleABlockColSize));
-    auto numScaleElementsB = gemm->workgroupTile.n * (gemm->workgroupTile.k / (gemm->kernelType.scaleBBlockRowSize * gemm->kernelType.scaleBBlockColSize));
-    if (numScaleElementsA % workgroupSize != 0)
+    auto numScaleElementsA
+        = gemm->workgroupTile.m
+          * (gemm->workgroupTile.k
+             / (gemm->kernelType.scaleABlockRowSize * gemm->kernelType.scaleABlockColSize));
+    auto numScaleElementsB
+        = gemm->workgroupTile.n
+          * (gemm->workgroupTile.k
+             / (gemm->kernelType.scaleBBlockRowSize * gemm->kernelType.scaleBBlockColSize));
+    if(numScaleElementsA % workgroupSize != 0)
         gemm->loadLDSScaleA = false;
-    if (numScaleElementsB % workgroupSize != 0)
+    if(numScaleElementsB % workgroupSize != 0)
         gemm->loadLDSScaleB = false;
 
     return gemm;
@@ -520,14 +539,14 @@ std::shared_ptr<SolutionParameters> genSolutionParameters(const KernelType& kern
 
 /**
  * @brief Set the required conditions in order to run a provided kernel
- * 
- * @param gemmKernel 
+ *
+ * @param gemmKernel
  */
 void setPredicates(std::shared_ptr<GemmKernel> gemmKernel)
 {
 
-    auto command = gemmKernel->command;
-    auto commandKernel = gemmKernel->commandKernel;
+    auto command        = gemmKernel->command;
+    auto commandKernel  = gemmKernel->commandKernel;
     auto solutionParams = gemmKernel->params;
 
     using namespace rocRoller::Expression;
@@ -535,38 +554,35 @@ void setPredicates(std::shared_ptr<GemmKernel> gemmKernel)
 
     // predicate building blocks
     // A sizes
-    auto aSizes
-        = std::get<Operations::Tensor>(*(command->findTag(gemmKernel->tagTensorA))).sizes();
+    auto aSizes = std::get<Operations::Tensor>(*(command->findTag(gemmKernel->tagTensorA))).sizes();
     std::vector<ExpressionPtr> aSizeExps(aSizes.size());
     std::transform(aSizes.begin(), aSizes.end(), aSizeExps.begin(), [](auto arg) {
         return arg->expression();
     });
     // B sizes
-    auto bSizes
-        = std::get<Operations::Tensor>(*(command->findTag(gemmKernel->tagTensorB))).sizes();
+    auto bSizes = std::get<Operations::Tensor>(*(command->findTag(gemmKernel->tagTensorB))).sizes();
     std::vector<ExpressionPtr> bSizeExps(bSizes.size());
     std::transform(bSizes.begin(), bSizes.end(), bSizeExps.begin(), [](auto arg) {
         return arg->expression();
     });
 
     // parameters
-    auto unrollKExp = literal(params->unrollK);
-    auto workgroupTileMExp    = literal(solutionParams->workgroupTile.m);
-    auto workgroupTileNExp    = literal(solutionParams->workgroupTile.n);
-    auto workgroupTileKExp    = literal(solutionParams->workgroupTile.k);
-
+    auto unrollKExp        = literal(params->unrollK);
+    auto workgroupTileMExp = literal(solutionParams->workgroupTile.m);
+    auto workgroupTileNExp = literal(solutionParams->workgroupTile.n);
+    auto workgroupTileKExp = literal(solutionParams->workgroupTile.k);
 
     // constants
     auto zero = literal(0u);
     auto one  = literal(1u);
 
     // sanitize parameters
-    auto sanUnrollKExp = convert(DataType::UInt32,
-                                    conditional(unrollKExp <= zero, one, unrollKExp));
+    auto sanUnrollKExp
+        = convert(DataType::UInt32, conditional(unrollKExp <= zero, one, unrollKExp));
 
     // predicates
     std::stringstream ss;
-    auto unrollXPredicate = (aSizeExps[0] % workgroupTileMExp == zero);
+    auto              unrollXPredicate = (aSizeExps[0] % workgroupTileMExp == zero);
     ss << "M must be a multiple of workgroupTile.m=" << solutionParams->workgroupTile.m;
     setComment(unrollXPredicate, ss.str());
     commandKernel->addPredicate(unrollXPredicate);
@@ -579,7 +595,8 @@ void setPredicates(std::shared_ptr<GemmKernel> gemmKernel)
     ss.str("");
 
     auto unrollKPredicate = (aSizeExps[1] % (workgroupTileKExp * sanUnrollKExp) == zero);
-    ss << "K must be a multiple of workgroupTile.k=" << solutionParams->workgroupTile.k << " * unrollK=" << rocRoller::Expression::evaluate(sanUnrollKExp);
+    ss << "K must be a multiple of workgroupTile.k=" << solutionParams->workgroupTile.k
+       << " * unrollK=" << rocRoller::Expression::evaluate(sanUnrollKExp);
     setComment(unrollKPredicate, ss.str());
     commandKernel->addPredicate(unrollKPredicate);
     ss.str("");
@@ -587,9 +604,9 @@ void setPredicates(std::shared_ptr<GemmKernel> gemmKernel)
 
 std::string genScaleModeString(Operations::ScaleMode mode)
 {
-    if (mode == Operations::ScaleMode::Separate)
+    if(mode == Operations::ScaleMode::Separate)
         return "B";
-    if (mode == Operations::ScaleMode::SingleScale)
+    if(mode == Operations::ScaleMode::SingleScale)
         return "S";
     return "";
 }
@@ -597,31 +614,37 @@ std::string genScaleModeString(Operations::ScaleMode mode)
 std::string genKernelName(std::shared_ptr<SolutionParameters> gemm)
 {
     std::ostringstream rv;
-    rv << "RR_GEMM_" << (gemm->kernelType.transA == HIPBLAS_OP_N ? "N" : "T")  << (gemm->kernelType.transB == HIPBLAS_OP_N ? "N" : "T");
+    rv << "RR_GEMM_" << (gemm->kernelType.transA == HIPBLAS_OP_N ? "N" : "T")
+       << (gemm->kernelType.transB == HIPBLAS_OP_N ? "N" : "T");
 
     rv << "_";
-    for(auto const& t : {gemm->kernelType.typeA, gemm->kernelType.typeB, gemm->kernelType.typeC, gemm->kernelType.typeD, gemm->kernelType.typeAcc})
+    for(auto const& t : {gemm->kernelType.typeA,
+                         gemm->kernelType.typeB,
+                         gemm->kernelType.typeC,
+                         gemm->kernelType.typeD,
+                         gemm->kernelType.typeAcc})
         rv << toString(t) << "_";
 
-    if (gemm->kernelType.scaleAMode != Operations::ScaleMode::None)
+    if(gemm->kernelType.scaleAMode != Operations::ScaleMode::None)
         rv << "SA_" << genScaleModeString(gemm->kernelType.scaleAMode) << "_";
-    if (gemm->kernelType.scaleBMode != Operations::ScaleMode::None)
+    if(gemm->kernelType.scaleBMode != Operations::ScaleMode::None)
         rv << "SB_" << genScaleModeString(gemm->kernelType.scaleBMode) << "_";
 
     rv << "WGT_";
-    rocRoller::streamJoin(rv, std::vector{gemm->workgroupTile.m, gemm->workgroupTile.n, gemm->workgroupTile.k}, "x");
+    rocRoller::streamJoin(
+        rv, std::vector{gemm->workgroupTile.m, gemm->workgroupTile.n, gemm->workgroupTile.k}, "x");
 
     return rv.str();
 }
 
 /**
  * @brief Generate a GEMM Kernel
- * 
+ *
  * This involves creating the Command describing the KernelType
  * and setting all of the parameters.
- * 
- * @param gemm 
- * @return std::shared_ptr<GemmKernel> 
+ *
+ * @param gemm
+ * @return std::shared_ptr<GemmKernel>
  */
 std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> gemm)
 {
@@ -640,11 +663,11 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
 
     auto tagTensorA = command->addOperation(rocRoller::Operations::Tensor(
         2, dataTypeA, gemm->kernelType.transA == HIPBLAS_OP_N ? oneStridesN : oneStridesT)); // A
-    auto tagLoadA = command->addOperation(rocRoller::Operations::T_Load_Tiled(tagTensorA));
+    auto tagLoadA   = command->addOperation(rocRoller::Operations::T_Load_Tiled(tagTensorA));
 
     auto tagTensorB = command->addOperation(rocRoller::Operations::Tensor(
         2, dataTypeB, gemm->kernelType.transB == HIPBLAS_OP_N ? oneStridesN : oneStridesT)); // B
-    auto tagLoadB = command->addOperation(rocRoller::Operations::T_Load_Tiled(tagTensorB));
+    auto tagLoadB   = command->addOperation(rocRoller::Operations::T_Load_Tiled(tagTensorB));
 
     auto mulInputA = tagLoadA;
     auto mulInputB = tagLoadB;
@@ -660,72 +683,78 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
                 ShowValue(gemm->kernelType.scaleAMode));
 
     std::optional<Operations::OperationTag> tagTensorScaleA, tagLoadScaleA, tagBlockScaleA,
-                tagTensorScaleB, tagLoadScaleB, tagBlockScaleB;
+        tagTensorScaleB, tagLoadScaleB, tagBlockScaleB;
 
     if(gemm->kernelType.scaleAMode == Operations::ScaleMode::Separate)
     {
         tagTensorScaleA = command->addOperation(rocRoller::Operations::Tensor(
-            2, DataType::UInt8, gemm->kernelType.transA == HIPBLAS_OP_N ? oneStridesN : oneStridesT));
+            2,
+            DataType::UInt8,
+            gemm->kernelType.transA == HIPBLAS_OP_N ? oneStridesN : oneStridesT));
         tagLoadScaleA
             = command->addOperation(rocRoller::Operations::T_Load_Tiled(*tagTensorScaleA));
 
-        tagBlockScaleA = mulInputA = command->addOperation(
-            rocRoller::Operations::BlockScale(tagLoadA, 2, tagLoadScaleA, {gemm->kernelType.scaleABlockColSize, gemm->kernelType.scaleABlockRowSize}));
+        tagBlockScaleA = mulInputA = command->addOperation(rocRoller::Operations::BlockScale(
+            tagLoadA,
+            2,
+            tagLoadScaleA,
+            {gemm->kernelType.scaleABlockColSize, gemm->kernelType.scaleABlockRowSize}));
     }
 
     if(gemm->kernelType.scaleBMode == Operations::ScaleMode::Separate)
     {
         tagTensorScaleB = command->addOperation(rocRoller::Operations::Tensor(
-            2, DataType::UInt8, gemm->kernelType.transB == HIPBLAS_OP_N ? oneStridesN : oneStridesT));
+            2,
+            DataType::UInt8,
+            gemm->kernelType.transB == HIPBLAS_OP_N ? oneStridesN : oneStridesT));
         tagLoadScaleB
             = command->addOperation(rocRoller::Operations::T_Load_Tiled(*tagTensorScaleB));
 
-        tagBlockScaleB = mulInputB = command->addOperation(
-            rocRoller::Operations::BlockScale(tagLoadB, 2, tagLoadScaleB, {gemm->kernelType.scaleBBlockColSize, gemm->kernelType.scaleBBlockRowSize}));
+        tagBlockScaleB = mulInputB = command->addOperation(rocRoller::Operations::BlockScale(
+            tagLoadB,
+            2,
+            tagLoadScaleB,
+            {gemm->kernelType.scaleBBlockColSize, gemm->kernelType.scaleBBlockRowSize}));
     }
 
-    auto tagTensorC = command->addOperation(
-                rocRoller::Operations::Tensor(2, dataTypeC, oneStridesN)); // C
+    auto tagTensorC
+        = command->addOperation(rocRoller::Operations::Tensor(2, dataTypeC, oneStridesN)); // C
     auto tagLoadC = command->addOperation(rocRoller::Operations::T_Load_Tiled(tagTensorC));
 
     auto tagScalarAlpha
         = command->addOperation(rocRoller::Operations::Scalar(DataType::Float)); // alpha
-    auto tagLoadAlpha
-        = command->addOperation(rocRoller::Operations::T_Load_Scalar(tagScalarAlpha));
+    auto tagLoadAlpha = command->addOperation(rocRoller::Operations::T_Load_Scalar(tagScalarAlpha));
 
     auto tagScalarBeta
         = command->addOperation(rocRoller::Operations::Scalar(DataType::Float)); // beta
-    auto tagLoadBeta
-        = command->addOperation(rocRoller::Operations::T_Load_Scalar(tagScalarBeta));
+    auto tagLoadBeta = command->addOperation(rocRoller::Operations::T_Load_Scalar(tagScalarBeta));
 
-    auto tagAB = command->addOperation(
-        rocRoller::Operations::T_Mul(mulInputA, mulInputB)); // A * B
+    auto tagAB = command->addOperation(rocRoller::Operations::T_Mul(mulInputA, mulInputB)); // A * B
 
     rocRoller::Operations::T_Execute execute(command->getNextTag());
-    auto                             tagBetaC
-        = execute.addXOp(rocRoller::Operations::E_Mul(tagLoadBeta, tagLoadC)); // beta * C
+    auto tagBetaC = execute.addXOp(rocRoller::Operations::E_Mul(tagLoadBeta, tagLoadC)); // beta * C
 
-    auto tagAlphaAB = execute.addXOp(
-        rocRoller::Operations::E_Mul(tagLoadAlpha, tagAB)); // alpha * (A * B)
+    auto tagAlphaAB
+        = execute.addXOp(rocRoller::Operations::E_Mul(tagLoadAlpha, tagAB)); // alpha * (A * B)
 
     rocRoller::Operations::OperationTag tagStoreD;
     if(gemm->betaInFma)
     {
-        tagStoreD = execute.addXOp(rocRoller::Operations::E_Add(
-            tagBetaC, tagAlphaAB)); // beta * C + alpha * (A * B)
+        tagStoreD = execute.addXOp(
+            rocRoller::Operations::E_Add(tagBetaC, tagAlphaAB)); // beta * C + alpha * (A * B)
     }
     else
     {
-        tagStoreD = execute.addXOp(rocRoller::Operations::E_Add(
-            tagAlphaAB, tagBetaC)); // alpha * (A * B) + beta * C
+        tagStoreD = execute.addXOp(
+            rocRoller::Operations::E_Add(tagAlphaAB, tagBetaC)); // alpha * (A * B) + beta * C
     }
 
     command->addOperation(std::make_shared<rocRoller::Operations::Operation>(execute));
 
-    auto tagTensorD = command->addOperation(
-        rocRoller::Operations::Tensor(2, dataTypeD, oneStridesN)); // D
+    auto tagTensorD
+        = command->addOperation(rocRoller::Operations::Tensor(2, dataTypeD, oneStridesN)); // D
     Operations::OperationTag tagScalarSeed;
-    if (gemm->kernelType.typeAcc == gemm->kernelType.typeD)
+    if(gemm->kernelType.typeAcc == gemm->kernelType.typeD)
     {
         command->addOperation(rocRoller::Operations::T_Store_Tiled(tagStoreD, tagTensorD));
     }
@@ -735,18 +764,17 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
 
         auto cvtOp = rocRoller::Operations::T_Execute(command->getNextTag());
         // (SR)Convert( alpha * (A * B) + beta * C )
-        auto tagCvt
-            = cvtOp.addXOp(rocRoller::Operations::E_Cvt(tagStoreD, dataTypeD));
+        auto tagCvt = cvtOp.addXOp(rocRoller::Operations::E_Cvt(tagStoreD, dataTypeD));
         command->addOperation(std::move(cvtOp));
         command->addOperation(rocRoller::Operations::T_Store_Tiled(tagCvt, tagTensorD));
     }
 
     auto tagScratch = command->allocateTag();
     command->allocateArgument(VariableType(DataType::UInt32, PointerType::PointerGlobal),
-                                tagScratch,
-                                ArgumentType::Value,
-                                DataDirection::ReadWrite,
-                                rocRoller::SCRATCH);
+                              tagScratch,
+                              ArgumentType::Value,
+                              DataDirection::ReadWrite,
+                              rocRoller::SCRATCH);
 
     // -------------------------------------------------------------
     // Set the parameters
@@ -761,9 +789,10 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
                     >= gemm->machineInstruction.n * gemm->machineInstruction.k,
                 "Not enough elements (B).");
 
-    uint wavetilePerWavefrontM
-                = gemm->wavefrontSize * gemm->workgroupTile.m / gemm->machineInstruction.m / gemm->workgroupSizeX;
-    uint wavetilePerWavefrontN = gemm->workgroupTile.n / gemm->machineInstruction.n / gemm->workgroupSizeY;
+    uint wavetilePerWavefrontM = gemm->wavefrontSize * gemm->workgroupTile.m
+                                 / gemm->machineInstruction.m / gemm->workgroupSizeX;
+    uint wavetilePerWavefrontN
+        = gemm->workgroupTile.n / gemm->machineInstruction.n / gemm->workgroupSizeY;
 
     AssertFatal(wavetilePerWavefrontM > 0, "WaveTile size mismatch.");
     AssertFatal(wavetilePerWavefrontN > 0, "WaveTile size mismatch.");
@@ -786,7 +815,10 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
         auto macTileA = KernelGraph::CoordinateGraph::MacroTile(
             {gemm->workgroupTile.m, gemm->workgroupTile.k},
             LayoutType::MATRIX_A,
-            {gemm->machineInstruction.m, gemm->machineInstruction.n, gemm->machineInstruction.k, gemm->machineInstruction.b},
+            {gemm->machineInstruction.m,
+             gemm->machineInstruction.n,
+             gemm->machineInstruction.k,
+             gemm->machineInstruction.b},
             gemm->loadLDSA ? MemoryType::LDS : MemoryType::WAVE);
         params->setDimensionInfo(tagLoadA, macTileA);
     }
@@ -794,11 +826,15 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
     if(gemm->kernelType.scaleAMode == Operations::ScaleMode::Separate)
     {
         // TODO: verify the division of scale block size is correct
-        auto const scaleBlockSize = gemm->kernelType.scaleABlockRowSize * gemm->kernelType.scaleABlockColSize;
+        auto const scaleBlockSize
+            = gemm->kernelType.scaleABlockRowSize * gemm->kernelType.scaleABlockColSize;
         auto macTileAScale = KernelGraph::CoordinateGraph::MacroTile(
-            {gemm->workgroupTile.m, gemm->workgroupTile.k/(int)scaleBlockSize},
+            {gemm->workgroupTile.m, gemm->workgroupTile.k / (int)scaleBlockSize},
             LayoutType::MATRIX_A,
-            {gemm->machineInstruction.m, gemm->machineInstruction.n, gemm->machineInstruction.k / (int)scaleBlockSize, gemm->machineInstruction.b},
+            {gemm->machineInstruction.m,
+             gemm->machineInstruction.n,
+             gemm->machineInstruction.k / (int)scaleBlockSize,
+             gemm->machineInstruction.b},
             gemm->loadLDSScaleA ? MemoryType::LDS : MemoryType::WAVE);
         params->setDimensionInfo(*tagLoadScaleA, macTileAScale);
     }
@@ -807,7 +843,10 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
         auto macTileB = KernelGraph::CoordinateGraph::MacroTile(
             {gemm->workgroupTile.k, gemm->workgroupTile.n},
             LayoutType::MATRIX_B,
-            {gemm->machineInstruction.m, gemm->machineInstruction.n, gemm->machineInstruction.k, gemm->machineInstruction.b},
+            {gemm->machineInstruction.m,
+             gemm->machineInstruction.n,
+             gemm->machineInstruction.k,
+             gemm->machineInstruction.b},
             gemm->loadLDSB ? MemoryType::LDS : MemoryType::WAVE);
         params->setDimensionInfo(tagLoadB, macTileB);
     }
@@ -815,11 +854,15 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
     if(gemm->kernelType.scaleBMode == Operations::ScaleMode::Separate)
     {
         // TODO: verify the division of scale block size is correct
-        auto const scaleBlockSize = gemm->kernelType.scaleBBlockRowSize * gemm->kernelType.scaleBBlockColSize;
+        auto const scaleBlockSize
+            = gemm->kernelType.scaleBBlockRowSize * gemm->kernelType.scaleBBlockColSize;
         auto macTileBScale = KernelGraph::CoordinateGraph::MacroTile(
             {gemm->workgroupTile.k / (int)scaleBlockSize, gemm->workgroupTile.n},
             LayoutType::MATRIX_B,
-            {gemm->machineInstruction.m, gemm->machineInstruction.n, gemm->machineInstruction.k / (int)scaleBlockSize, gemm->machineInstruction.b},
+            {gemm->machineInstruction.m,
+             gemm->machineInstruction.n,
+             gemm->machineInstruction.k / (int)scaleBlockSize,
+             gemm->machineInstruction.b},
             gemm->loadLDSScaleB ? MemoryType::LDS : MemoryType::WAVE);
         params->setDimensionInfo(*tagLoadScaleB, macTileBScale);
     }
@@ -828,7 +871,10 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
         auto macTileC = KernelGraph::CoordinateGraph::MacroTile(
             {gemm->workgroupTile.m, gemm->workgroupTile.n},
             LayoutType::MATRIX_ACCUMULATOR,
-            {gemm->machineInstruction.m, gemm->machineInstruction.n, gemm->machineInstruction.k, gemm->machineInstruction.b});
+            {gemm->machineInstruction.m,
+             gemm->machineInstruction.n,
+             gemm->machineInstruction.k,
+             gemm->machineInstruction.b});
         params->setDimensionInfo(tagLoadC, macTileC);
     }
 
@@ -836,7 +882,10 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
         auto macTileD = KernelGraph::CoordinateGraph::MacroTile(
             {gemm->workgroupTile.m, gemm->workgroupTile.n},
             LayoutType::MATRIX_ACCUMULATOR,
-            {gemm->machineInstruction.m, gemm->machineInstruction.n, gemm->machineInstruction.k, gemm->machineInstruction.b},
+            {gemm->machineInstruction.m,
+             gemm->machineInstruction.n,
+             gemm->machineInstruction.k,
+             gemm->machineInstruction.b},
             gemm->storeLDSD ? MemoryType::WAVE_LDS : MemoryType::WAVE);
         params->setDimensionInfo(tagStoreD, macTileD);
     }
@@ -858,8 +907,9 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
             params->prefetchMixMemOps = true;
         }
 
-        if ((gemm->kernelType.scaleAMode == Operations::ScaleMode::Separate && !gemm->loadLDSScaleA) ||
-            (gemm->kernelType.scaleBMode == Operations::ScaleMode::Separate && !gemm->loadLDSScaleB))
+        if((gemm->kernelType.scaleAMode == Operations::ScaleMode::Separate && !gemm->loadLDSScaleA)
+           || (gemm->kernelType.scaleBMode == Operations::ScaleMode::Separate
+               && !gemm->loadLDSScaleB))
         {
             params->prefetchMixMemOps = false;
         }
@@ -877,16 +927,17 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
 
     params->setManualWorkgroupSize({workgroupSizeX, workgroupSizeY, 1});
     params->setManualWavefrontCount(
-                {static_cast<uint>(gemm->workgroupTile.m / gemm->machineInstruction.m / wavetilePerWavefrontM),
-                 static_cast<uint>(gemm->workgroupTile.n / gemm->machineInstruction.n / wavetilePerWavefrontN)});
-
+        {static_cast<uint>(gemm->workgroupTile.m / gemm->machineInstruction.m
+                           / wavetilePerWavefrontM),
+         static_cast<uint>(gemm->workgroupTile.n / gemm->machineInstruction.n
+                           / wavetilePerWavefrontN)});
 
     // -------------------------------------------------------------
     // Create CommandKernel
 
-    std::string kernelName = genKernelName(gemm);
-    auto context = Context::ForDefaultHipDevice(kernelName);
-    auto commandKernel = std::make_shared<CommandKernel>(command, kernelName);
+    std::string kernelName    = genKernelName(gemm);
+    auto        context       = Context::ForDefaultHipDevice(kernelName);
+    auto        commandKernel = std::make_shared<CommandKernel>(command, kernelName);
     commandKernel->setContext(context);
     commandKernel->setCommandParameters(params);
     commandKernel->generateKernel();
@@ -894,10 +945,10 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
     // -------------------------------------------------------------
     // Create GemmKernel
 
-    auto gemmKernel = std::make_shared<GemmKernel>();
-    gemmKernel->command = command;
+    auto gemmKernel           = std::make_shared<GemmKernel>();
+    gemmKernel->command       = command;
     gemmKernel->commandKernel = commandKernel;
-    gemmKernel->params = gemm;
+    gemmKernel->params        = gemm;
 
     gemmKernel->tagTensorA = tagTensorA;
     gemmKernel->tagTensorB = tagTensorB;
@@ -905,33 +956,33 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
     gemmKernel->tagTensorD = tagTensorD;
 
     gemmKernel->tagScalarAlpha = tagScalarAlpha;
-    gemmKernel->tagScalarBeta = tagScalarBeta;
+    gemmKernel->tagScalarBeta  = tagScalarBeta;
 
-    if (tagTensorScaleA)
+    if(tagTensorScaleA)
         gemmKernel->tagTensorScaleA = *tagTensorScaleA;
 
-    if (tagTensorScaleB)
+    if(tagTensorScaleB)
         gemmKernel->tagTensorScaleB = *tagTensorScaleB;
 
     setPredicates(gemmKernel);
 
     return gemmKernel;
-
 }
 
 /**
  * Generate a kernel from a given SolutionIndexParameters value.
  */
-rocblaslt_status genKernelFromSolutionIndexParameters(RocRollerHandle* rocroller_handle,
-                                                      KernelType kernelType,
-                                                      SolutionIndexParameters solutionIndexParameter,
-                                                      int solutionIndex,
-                                                      std::shared_ptr<GemmKernel>& kernel)
+rocblaslt_status
+    genKernelFromSolutionIndexParameters(RocRollerHandle*             rocroller_handle,
+                                         KernelType                   kernelType,
+                                         SolutionIndexParameters      solutionIndexParameter,
+                                         int                          solutionIndex,
+                                         std::shared_ptr<GemmKernel>& kernel)
 {
     auto params = genSolutionParameters(kernelType, solutionIndexParameter);
     try
     {
-        kernel = genGemmKernel(params);
+        kernel                                                        = genGemmKernel(params);
         rocroller_handle->generatedKernels[kernelType][solutionIndex] = kernel;
     }
     catch(const std::exception& e)
@@ -945,34 +996,35 @@ rocblaslt_status genKernelFromSolutionIndexParameters(RocRollerHandle* rocroller
 
 /**
  * @brief Find the best rocRoller kernels for a given problem
- * 
+ *
  * This mimics the functionality of getBestSolutions in tensile_host.cpp
- * 
+ *
  * For a given kernel type and problem, determines the SolutionIndexParameters
  * that should be used.
- * 
+ *
  * Checks to see if a kernel has already been generated for the chosen SolutionIndexParameters.
- * 
+ *
  * If it hasn't, a new kernel will be generated and stored in generatedKernels.
- * 
+ *
  * At the moment, only returns a single solution.
- * 
- * @param handle 
- * @param prob 
- * @param requestedAlgoCount 
- * @param heuristicResultsArray 
- * @param returnAlgoCount 
- * @return rocblaslt_status 
+ *
+ * @param handle
+ * @param prob
+ * @param requestedAlgoCount
+ * @param heuristicResultsArray
+ * @param returnAlgoCount
+ * @return rocblaslt_status
  */
-rocblaslt_status getRocRollerBestSolutions(rocblaslt_handle handle,
-                                           const RocblasltContractionProblem& prob,
-                                           int requestedAlgoCount,
-                                           rocblaslt_matmul_heuristic_result heuristicResultsArray[],
-                                           int* returnAlgoCount)
+rocblaslt_status
+    getRocRollerBestSolutions(rocblaslt_handle                   handle,
+                              const RocblasltContractionProblem& prob,
+                              int                                requestedAlgoCount,
+                              rocblaslt_matmul_heuristic_result  heuristicResultsArray[],
+                              int*                               returnAlgoCount)
 {
     RocRollerHandle* rocroller_handle = static_cast<RocRollerHandle*>(handle->rocroller_handle);
-    auto kernelType = genKernelType(prob);
-    int index;
+    auto             kernelType       = genKernelType(prob);
+    int              index;
 
     if(prob.bias != nullptr)
     {
@@ -986,9 +1038,8 @@ rocblaslt_status getRocRollerBestSolutions(rocblaslt_handle handle,
         return rocblaslt_status_invalid_value;
     }
 
-    if(auto scale_type = hipDataType_to_rocRoller_type(prob.scale_type); 
-            scale_type != rocRoller::DataType::None &&
-            scale_type != rocRoller::DataType::Float)
+    if(auto scale_type = hipDataType_to_rocRoller_type(prob.scale_type);
+       scale_type != rocRoller::DataType::None && scale_type != rocRoller::DataType::Float)
     {
         std::cerr << "rocRoller only supports F32 as scale type not " << scale_type << std::endl;
         return rocblaslt_status_invalid_value;
@@ -996,36 +1047,35 @@ rocblaslt_status getRocRollerBestSolutions(rocblaslt_handle handle,
 
     if(kernelType.typeAcc != rocRoller::DataType::Float)
     {
-        std::cerr << "rocRoller only supports F32 accumulation, not " << kernelType.typeAcc<< std::endl;
+        std::cerr << "rocRoller only supports F32 accumulation, not " << kernelType.typeAcc
+                  << std::endl;
         return rocblaslt_status_invalid_value;
     }
 
     auto existingKernelType = rocroller_handle->generatedKernels.find(kernelType);
-    if (existingKernelType == rocroller_handle->generatedKernels.end())
+    if(existingKernelType == rocroller_handle->generatedKernels.end())
     {
         rocroller_handle->generatedKernels[kernelType] = {};
     }
 
-    auto solutionIndexParameters = chooseSolutionIndexParameters(kernelType, prob, requestedAlgoCount);
-    
+    auto solutionIndexParameters
+        = chooseSolutionIndexParameters(kernelType, prob, requestedAlgoCount);
+
     int i = 0;
-    for (auto const& solutionIndexParameter : solutionIndexParameters)
+    for(auto const& solutionIndexParameter : solutionIndexParameters)
     {
-        if (requestedAlgoCount != -1 && i >= requestedAlgoCount)
+        if(requestedAlgoCount != -1 && i >= requestedAlgoCount)
             break;
 
         index = static_cast<int>(std::hash<SolutionIndexParameters>{}(solutionIndexParameter));
         auto existingSolutionIndex = rocroller_handle->generatedKernels[kernelType].find(index);
         // If kernel doesn't already exist, generate it
-        if (existingSolutionIndex == rocroller_handle->generatedKernels[kernelType].end())
+        if(existingSolutionIndex == rocroller_handle->generatedKernels[kernelType].end())
         {
             std::shared_ptr<GemmKernel> kernel;
-            auto status = genKernelFromSolutionIndexParameters(rocroller_handle,
-                                                 kernelType,
-                                                 solutionIndexParameter,
-                                                 index,
-                                                 kernel);
-            if (status != rocblaslt_status_success)
+            auto                        status = genKernelFromSolutionIndexParameters(
+                rocroller_handle, kernelType, solutionIndexParameter, index, kernel);
+            if(status != rocblaslt_status_success)
                 continue;
         }
 
@@ -1037,10 +1087,10 @@ rocblaslt_status getRocRollerBestSolutions(rocblaslt_handle handle,
         heuristicResultsArray[i].algo.max_workspace_bytes = 0;
         heuristicResultsArray[i].algo.fallback            = false;
         heuristicResultsArray[i].state                    = rocblaslt_status_success;
-        heuristicResultsArray[i].workspaceSize = 0;
+        heuristicResultsArray[i].workspaceSize            = 0;
         i++;
     }
-    
+
     *returnAlgoCount = i;
     for(; i < requestedAlgoCount; i++)
     {
@@ -1053,10 +1103,11 @@ rocblaslt_status getRocRollerBestSolutions(rocblaslt_handle handle,
 /**
  * Return all of the possible solutions for a KernelType
  */
-rocblaslt_status getAllSolutionsRocRoller(RocblasltContractionProblem&                    prob,
-                                          rocblaslt_handle                                handle,
-                                          std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
-                                          size_t                                          maxWorkSpaceBytes)
+rocblaslt_status
+    getAllSolutionsRocRoller(RocblasltContractionProblem&                    prob,
+                             rocblaslt_handle                                handle,
+                             std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+                             size_t                                          maxWorkSpaceBytes)
 {
     heuristicResults.resize(possibleTileSizes.size());
     int returnAlgoCount;
@@ -1066,16 +1117,17 @@ rocblaslt_status getAllSolutionsRocRoller(RocblasltContractionProblem&          
 /**
  * Return a list of heuristicResults for a given list of solution indices
  */
-void getRocRollerSolutionsFromIndex(rocblaslt_handle                                handle,
-                                    int                               solutionIndex,
-                                    std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
-                                    size_t                                          maxWorkSpaceBytes)
+void getRocRollerSolutionsFromIndex(
+    rocblaslt_handle                                handle,
+    int                                             solutionIndex,
+    std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+    size_t                                          maxWorkSpaceBytes)
 {
     rocblaslt_matmul_heuristic_result result;
     memset(&result, 0, sizeof(rocblaslt_matmul_heuristic_result));
     memset(result.algo.data, 0, sizeof(result.algo.data));
-    int* index              = (int*)(result.algo.data);
-    *index                  = solutionIndex;
+    int* index                      = (int*)(result.algo.data);
+    *index                          = solutionIndex;
     result.algo.max_workspace_bytes = maxWorkSpaceBytes;
     result.algo.fallback            = false;
     result.state                    = rocblaslt_status_success;
@@ -1085,13 +1137,13 @@ void getRocRollerSolutionsFromIndex(rocblaslt_handle                            
 
 /**
  * @brief Set the arguments to call a rocRoller kernel
- * 
- * @param gemm 
- * @param prob 
- * @return CommandArguments 
+ *
+ * @param gemm
+ * @param prob
+ * @return CommandArguments
  */
-CommandArguments createCommandArguments(std::shared_ptr<GemmKernel> gemm,
-                                const RocblasltContractionProblem& prob)
+CommandArguments createCommandArguments(std::shared_ptr<GemmKernel>        gemm,
+                                        const RocblasltContractionProblem& prob)
 {
     CommandArguments commandArgs = gemm->command->createArguments();
 
@@ -1100,11 +1152,11 @@ CommandArguments createCommandArguments(std::shared_ptr<GemmKernel> gemm,
     size_t K = prob.k;
 
     TensorDescriptor descA(gemm->params->kernelType.typeA,
-                            {M, K},
-                            gemm->params->kernelType.transA == HIPBLAS_OP_T ? "T" : "N");
+                           {M, K},
+                           gemm->params->kernelType.transA == HIPBLAS_OP_T ? "T" : "N");
     TensorDescriptor descB(gemm->params->kernelType.typeB,
-                            {K, N},
-                            gemm->params->kernelType.transB == HIPBLAS_OP_T ? "T" : "N");
+                           {K, N},
+                           gemm->params->kernelType.transB == HIPBLAS_OP_T ? "T" : "N");
 
     // TODO: Have to typecast void* pointer to something that CommandArgumentValue accepts
     setCommandTensorArg(commandArgs, gemm->tagTensorA, descA, (float*)nullptr);
@@ -1114,26 +1166,26 @@ CommandArguments createCommandArguments(std::shared_ptr<GemmKernel> gemm,
     {
         auto const scaleBlockSize = prob.scaleABlockRowSize * prob.scaleABlockColSize;
         // TODO: Datatype should be F8 E8M0
-        TensorDescriptor descAScale(gemm->params->kernelType.typeA, {size_t(M), size_t(K / scaleBlockSize)}, gemm->params->kernelType.transA == HIPBLAS_OP_T ? "T" : "N");
-        setCommandTensorArg(
-            commandArgs, gemm->tagTensorScaleA, descAScale, (float*)nullptr);
+        TensorDescriptor descAScale(gemm->params->kernelType.typeA,
+                                    {size_t(M), size_t(K / scaleBlockSize)},
+                                    gemm->params->kernelType.transA == HIPBLAS_OP_T ? "T" : "N");
+        setCommandTensorArg(commandArgs, gemm->tagTensorScaleA, descAScale, (float*)nullptr);
     }
     if(gemm->params->kernelType.scaleBMode == Operations::ScaleMode::Separate)
     {
         auto const scaleBlockSize = prob.scaleBBlockRowSize * prob.scaleBBlockColSize;
         // TODO: Datatype should be F8 E8M0
-        TensorDescriptor descBScale(gemm->params->kernelType.typeB, {size_t(K / scaleBlockSize), size_t(N)}, gemm->params->kernelType.transB == HIPBLAS_OP_T ? "T" : "N");
-        setCommandTensorArg(
-            commandArgs, gemm->tagTensorScaleB, descBScale, (float*)nullptr);
+        TensorDescriptor descBScale(gemm->params->kernelType.typeB,
+                                    {size_t(K / scaleBlockSize), size_t(N)},
+                                    gemm->params->kernelType.transB == HIPBLAS_OP_T ? "T" : "N");
+        setCommandTensorArg(commandArgs, gemm->tagTensorScaleB, descBScale, (float*)nullptr);
     }
 
     TensorDescriptor descC(gemm->params->kernelType.typeC, {M, N}, "N");
     setCommandTensorArg(commandArgs, gemm->tagTensorC, descC, (float*)nullptr);
 
-    commandArgs.setArgument(
-        gemm->tagScalarAlpha, ArgumentType::Value, *((float*)prob.alpha));
-    commandArgs.setArgument(
-        gemm->tagScalarBeta, ArgumentType::Value, *((float*)prob.beta));
+    commandArgs.setArgument(gemm->tagScalarAlpha, ArgumentType::Value, *((float*)prob.alpha));
+    commandArgs.setArgument(gemm->tagScalarBeta, ArgumentType::Value, *((float*)prob.beta));
 
     TensorDescriptor descD(gemm->params->kernelType.typeD, {M, N}, "N");
     setCommandTensorArg(commandArgs, gemm->tagTensorD, descD, (float*)nullptr);
@@ -1145,12 +1197,12 @@ CommandArguments createCommandArguments(std::shared_ptr<GemmKernel> gemm,
 
     if(gemm->params->kernelType.scaleAMode == Operations::ScaleMode::Separate)
     {
-	    commandArgs.setArgument(gemm->tagTensorScaleA, ArgumentType::Value, (uint8_t*)prob.scaleA);
+        commandArgs.setArgument(gemm->tagTensorScaleA, ArgumentType::Value, (uint8_t*)prob.scaleA);
     }
 
     if(gemm->params->kernelType.scaleBMode == Operations::ScaleMode::Separate)
     {
-	    commandArgs.setArgument(gemm->tagTensorScaleB, ArgumentType::Value, (uint8_t*)prob.scaleB);
+        commandArgs.setArgument(gemm->tagTensorScaleB, ArgumentType::Value, (uint8_t*)prob.scaleB);
     }
 
     return commandArgs;
@@ -1158,36 +1210,36 @@ CommandArguments createCommandArguments(std::shared_ptr<GemmKernel> gemm,
 
 /**
  * @brief Get a kernel based on the provided problem and algo.
- * 
- * @param handle 
+ *
+ * @param handle
  * @param prob
  * @param algo
  * @param kernel
- * @return rocblaslt_status 
+ * @return rocblaslt_status
  */
- rocblaslt_status getKernelFromAlgo(rocblaslt_handle             handle,
-                                     const RocblasltContractionProblem& prob,
-                                     const rocblaslt_matmul_algo*       algo,
-                                     std::shared_ptr<GemmKernel>& kernel)
+rocblaslt_status getKernelFromAlgo(rocblaslt_handle                   handle,
+                                   const RocblasltContractionProblem& prob,
+                                   const rocblaslt_matmul_algo*       algo,
+                                   std::shared_ptr<GemmKernel>&       kernel)
 {
     int* solutionIndex = (int*)algo->data;
 
-    if (solutionIndex == 0)
+    if(solutionIndex == 0)
         return rocblaslt_status_not_implemented;
 
     RocRollerHandle* rocroller_handle = static_cast<RocRollerHandle*>(handle->rocroller_handle);
-    auto kernelType = genKernelType(prob);
+    auto             kernelType       = genKernelType(prob);
 
     auto existingKernelType = rocroller_handle->generatedKernels.find(kernelType);
     // If KernelType doesn't exist yet, add an empty container for it to map.
-    if (existingKernelType == rocroller_handle->generatedKernels.end())
+    if(existingKernelType == rocroller_handle->generatedKernels.end())
     {
         rocroller_handle->generatedKernels[kernelType] = {};
         existingKernelType = rocroller_handle->generatedKernels.find(kernelType);
     }
 
     auto existingKernel = existingKernelType->second.find(*solutionIndex);
-    if (existingKernel != existingKernelType->second.end())
+    if(existingKernel != existingKernelType->second.end())
     {
         kernel = existingKernel->second;
         return rocblaslt_status_success;
@@ -1196,23 +1248,20 @@ CommandArguments createCommandArguments(std::shared_ptr<GemmKernel> gemm,
     {
         auto solutionIndexParameter = indexToParameters(*solutionIndex);
 
-        auto status = genKernelFromSolutionIndexParameters(rocroller_handle,
-                                                kernelType,
-                                                solutionIndexParameter,
-                                                *solutionIndex,
-                                                kernel);
+        auto status = genKernelFromSolutionIndexParameters(
+            rocroller_handle, kernelType, solutionIndexParameter, *solutionIndex, kernel);
         return status;
     }
 }
 
 rocblaslt_status isRocRollerSolutionSupported(rocblaslt_handle             handle,
-                                     RocblasltContractionProblem& prob,
-                                     rocblaslt_matmul_algo*       algo,
-                                     size_t*                      workspaceSizeInBytes)
+                                              RocblasltContractionProblem& prob,
+                                              rocblaslt_matmul_algo*       algo,
+                                              size_t*                      workspaceSizeInBytes)
 {
     std::shared_ptr<GemmKernel> kernel;
-    auto status = getKernelFromAlgo(handle, prob, algo, kernel);
-    if (status != rocblaslt_status_success)
+    auto                        status = getKernelFromAlgo(handle, prob, algo, kernel);
+    if(status != rocblaslt_status_success)
         return status;
 
     auto commandArgs = createCommandArguments(kernel, prob);
@@ -1228,12 +1277,12 @@ rocblaslt_status isRocRollerSolutionSupported(rocblaslt_handle             handl
 
 /**
  * @brief Execute a GEMM operation.
- * 
- * @param gemm 
- * @param prob 
- * @return rocblaslt_status 
+ *
+ * @param gemm
+ * @param prob
+ * @return rocblaslt_status
  */
-rocblaslt_status runGemmKernel(std::shared_ptr<GemmKernel> gemm,
+rocblaslt_status runGemmKernel(std::shared_ptr<GemmKernel>        gemm,
                                const RocblasltContractionProblem& prob)
 {
     auto commandArgs = createCommandArguments(gemm, prob);
@@ -1253,30 +1302,29 @@ rocblaslt_status runGemmKernel(std::shared_ptr<GemmKernel> gemm,
 
 /**
  * @brief Execute a contraction problem.
- * 
+ *
  * This mimics the behavior of runContractionProblem in tensile_host.cpp
- * 
+ *
  * If an algo has not been provided, call getRocRollerBestSolutions to find one.
- * 
+ *
  * Find the kernel to run in generatedKernels and execute it.
- * 
- * @param handle 
- * @param algo 
- * @param prob 
- * @return rocblaslt_status 
+ *
+ * @param handle
+ * @param algo
+ * @param prob
+ * @return rocblaslt_status
  */
-rocblaslt_status runRocRollerContractionProblem(rocblaslt_handle handle, const rocblaslt_matmul_algo* algo, const RocblasltContractionProblem& prob)
+rocblaslt_status runRocRollerContractionProblem(rocblaslt_handle                   handle,
+                                                const rocblaslt_matmul_algo*       algo,
+                                                const RocblasltContractionProblem& prob)
 {
     rocblaslt_matmul_heuristic_result heuristicResult;
     if(algo == nullptr)
     {
-        int returnAlgoCount;
-        auto status = getRocRollerBestSolutions(handle,
-                                           prob,
-                                           1,
-                                           &heuristicResult,
-                                           &returnAlgoCount);
-        if (status != rocblaslt_status_success)
+        int  returnAlgoCount;
+        auto status
+            = getRocRollerBestSolutions(handle, prob, 1, &heuristicResult, &returnAlgoCount);
+        if(status != rocblaslt_status_success)
             return status;
         if(returnAlgoCount == 0)
         {
@@ -1286,7 +1334,7 @@ rocblaslt_status runRocRollerContractionProblem(rocblaslt_handle handle, const r
     }
 
     int* solutionIndex = (int*)algo->data;
-    
+
     if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
     {
         // TODO: Fill in other parameters after merge with
@@ -1295,8 +1343,8 @@ rocblaslt_status runRocRollerContractionProblem(rocblaslt_handle handle, const r
     }
 
     std::shared_ptr<GemmKernel> kernel;
-    auto status = getKernelFromAlgo(handle, prob, algo, kernel);
-    if (status != rocblaslt_status_success)
+    auto                        status = getKernelFromAlgo(handle, prob, algo, kernel);
+    if(status != rocblaslt_status_success)
         return status;
 
     return runGemmKernel(kernel, prob);

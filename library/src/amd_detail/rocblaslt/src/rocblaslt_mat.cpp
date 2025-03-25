@@ -201,10 +201,10 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         scaleAlphaVec,
                                         matmul_descr->scaleAType,
                                         matmul_descr->scaleBType,
-					matmul_descr->scaleABlockRowSize,
-					matmul_descr->scaleABlockColSize,
-					matmul_descr->scaleBBlockRowSize,
-					matmul_descr->scaleBBlockColSize,
+                                        matmul_descr->scaleABlockRowSize,
+                                        matmul_descr->scaleABlockColSize,
+                                        matmul_descr->scaleBBlockRowSize,
+                                        matmul_descr->scaleBBlockColSize,
                                         bias_type,
                                         epilogue,
                                         amaxD,
@@ -358,10 +358,10 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                         scaleAlphaVec,
                                         matmul_descr->scaleAType,
                                         matmul_descr->scaleBType,
-					matmul_descr->scaleABlockRowSize,
-					matmul_descr->scaleABlockColSize,
-					matmul_descr->scaleBBlockRowSize,
-					matmul_descr->scaleBBlockColSize,
+                                        matmul_descr->scaleABlockRowSize,
+                                        matmul_descr->scaleABlockColSize,
+                                        matmul_descr->scaleBBlockRowSize,
+                                        matmul_descr->scaleBBlockColSize,
                                         bias_type,
                                         epilogue,
                                         amaxD,
@@ -505,10 +505,10 @@ rocblaslt_status
                                                       alpha[i],
                                                       matmul_descr[i]->scaleAType,
                                                       matmul_descr[i]->scaleBType,
-						      matmul_descr[i]->scaleABlockRowSize,
-						      matmul_descr[i]->scaleABlockColSize,
-						      matmul_descr[i]->scaleBBlockRowSize,
-						      matmul_descr[i]->scaleBBlockColSize,
+                                                      matmul_descr[i]->scaleABlockRowSize,
+                                                      matmul_descr[i]->scaleABlockColSize,
+                                                      matmul_descr[i]->scaleBBlockRowSize,
+                                                      matmul_descr[i]->scaleBBlockColSize,
                                                       E,
                                                       lde,
                                                       batch_stride_e,
@@ -650,10 +650,10 @@ rocblaslt_status
                                                        scaleAlpha_vec[i],
                                                        matmul_descr[i]->scaleAType,
                                                        matmul_descr[i]->scaleBType,
-						       matmul_descr[i]->scaleABlockRowSize,
-						       matmul_descr[i]->scaleABlockColSize,
-						       matmul_descr[i]->scaleBBlockRowSize,
-						       matmul_descr[i]->scaleBBlockColSize,
+                                                       matmul_descr[i]->scaleABlockRowSize,
+                                                       matmul_descr[i]->scaleABlockColSize,
+                                                       matmul_descr[i]->scaleBBlockRowSize,
+                                                       matmul_descr[i]->scaleBBlockColSize,
                                                        bias_type_vec[i],
                                                        epilogue_vec[i],
                                                        amaxD_vec[i],
@@ -883,58 +883,60 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
     {
         if constexpr(std::is_same<Epilogue, rocblaslt::RocGemmEpilogue>::value)
         {
-            status = rocblaslt_epilogue_valid_args(rocEpilogue.mode,
-                                                   m,
-                                                   n,
-                                                   problemtype.type_d,
-                                                   rocEpilogue.bias_data_type,
-                                                   inputs.aux,
-                                                   rocEpilogue.aux_ld,
-                                                   rocEpilogue.aux_stride,
-                                                   inputs.bias,
-                                                   inputs.scaleAlphaVec,
-                                                   inputs.alpha,
-                                                   RocblasltContractionProblem::ScalingFormat::None,  /* scaleAType */
-                                                   RocblasltContractionProblem::ScalingFormat::None,  /* scaleBType */
-						   0,  /* scaleABlockRowSize */
-						   0,  /* scaleABlockColSize */
-						   0,  /* scaleBBlockRowSize */
-						   0,  /* scaleBBlockColSize */
-                                                   E,
-                                                   lde,
-                                                   batch_stride_e,
-                                                   bias,
-                                                   bias_type,
-                                                   scaleAlphaVec,
-                                                   gradient);
+            status = rocblaslt_epilogue_valid_args(
+                rocEpilogue.mode,
+                m,
+                n,
+                problemtype.type_d,
+                rocEpilogue.bias_data_type,
+                inputs.aux,
+                rocEpilogue.aux_ld,
+                rocEpilogue.aux_stride,
+                inputs.bias,
+                inputs.scaleAlphaVec,
+                inputs.alpha,
+                RocblasltContractionProblem::ScalingFormat::None, /* scaleAType */
+                RocblasltContractionProblem::ScalingFormat::None, /* scaleBType */
+                0, /* scaleABlockRowSize */
+                0, /* scaleABlockColSize */
+                0, /* scaleBBlockRowSize */
+                0, /* scaleBBlockColSize */
+                E,
+                lde,
+                batch_stride_e,
+                bias,
+                bias_type,
+                scaleAlphaVec,
+                gradient);
         }
         else
         {
-            status = rocblaslt_epilogue_valid_args(rocEpilogue.mode,
-                                                   m,
-                                                   n,
-                                                   problemtype.type_d,
-                                                   rocEpilogue.bias_data_type,
-                                                   inputs.aux,
-                                                   rocEpilogue.aux_ld,
-                                                   rocEpilogue.aux_stride,
-                                                   inputs.bias,
-                                                   inputs.scaleAlphaVec,
-                                                   inputs.alpha,
-                                                   static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue.scaling_a_type),
-                                                   static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue.scaling_b_type),
-                                                   // TODO: these scale block sizes might need to be set
-						   0,  /* scaleABlockRowSize */
-						   0,  /* scaleABlockColSize */
-						   0,  /* scaleBBlockRowSize */
-						   0,  /* scaleBBlockColSize */
-                                                   E,
-                                                   lde,
-                                                   batch_stride_e,
-                                                   bias,
-                                                   bias_type,
-                                                   scaleAlphaVec,
-                                                   gradient);
+            status = rocblaslt_epilogue_valid_args(
+                rocEpilogue.mode,
+                m,
+                n,
+                problemtype.type_d,
+                rocEpilogue.bias_data_type,
+                inputs.aux,
+                rocEpilogue.aux_ld,
+                rocEpilogue.aux_stride,
+                inputs.bias,
+                inputs.scaleAlphaVec,
+                inputs.alpha,
+                static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue.scaling_a_type),
+                static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue.scaling_b_type),
+                // TODO: these scale block sizes might need to be set
+                0, /* scaleABlockRowSize */
+                0, /* scaleABlockColSize */
+                0, /* scaleBBlockRowSize */
+                0, /* scaleBBlockColSize */
+                E,
+                lde,
+                batch_stride_e,
+                bias,
+                bias_type,
+                scaleAlphaVec,
+                gradient);
         }
     }
     if(status != rocblaslt_status_continue)
@@ -961,131 +963,133 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
 
     if constexpr(std::is_same<Epilogue, rocblaslt::RocGemmEpilogue>::value)
     {
-        RocblasltContractionProblem problem{opA,
-                                            opB,
-                                            m,
-                                            n,
-                                            k,
-                                            alpha,
-                                            type_a,
-                                            A,
-                                            nullptr,
-                                            lda,
-                                            batch_stride_a,
-                                            type_b,
-                                            B,
-                                            nullptr,
-                                            ldb,
-                                            batch_stride_b,
-                                            beta,
-                                            type_c,
-                                            C,
-                                            nullptr,
-                                            ldc,
-                                            batch_stride_c,
-                                            type_d,
-                                            D,
-                                            nullptr,
-                                            ldd,
-                                            batch_stride_d,
-                                            E,
-                                            nullptr,
-                                            lde,
-                                            batch_stride_e,
-                                            num_batches_a,
-                                            strided_batch,
-                                            grouped_gemm,
-                                            gradient,
-                                            compute_type,
-                                            HIPBLASLT_DATATYPE_INVALID,
-                                            bias,
-                                            scaleA,
-                                            scaleB,
-                                            scaleC,
-                                            scaleD,
-                                            scaleE,
-                                            scaleAlphaVec,
-                                            RocblasltContractionProblem::ScalingFormat::None, /* scaleAType */  
-                                            RocblasltContractionProblem::ScalingFormat::None, /* scaleBType */
-					    0, /* scaleABlockRowSize */
-					    0, /* scaleABlockColSize */
-					    0, /* scaleBBlockRowSize */
-					    0, /* scaleBBlockColSize */
-                                            bias_type,
-                                            epilogue,
-                                            amaxD,
-                                            nullptr,
-                                            0,
-                                            0,
-                                            handle->Synchronizer,
-                                            /*TODO: support C++ API */
-                                            false,
-                                            false};
+        RocblasltContractionProblem problem{
+            opA,
+            opB,
+            m,
+            n,
+            k,
+            alpha,
+            type_a,
+            A,
+            nullptr,
+            lda,
+            batch_stride_a,
+            type_b,
+            B,
+            nullptr,
+            ldb,
+            batch_stride_b,
+            beta,
+            type_c,
+            C,
+            nullptr,
+            ldc,
+            batch_stride_c,
+            type_d,
+            D,
+            nullptr,
+            ldd,
+            batch_stride_d,
+            E,
+            nullptr,
+            lde,
+            batch_stride_e,
+            num_batches_a,
+            strided_batch,
+            grouped_gemm,
+            gradient,
+            compute_type,
+            HIPBLASLT_DATATYPE_INVALID,
+            bias,
+            scaleA,
+            scaleB,
+            scaleC,
+            scaleD,
+            scaleE,
+            scaleAlphaVec,
+            RocblasltContractionProblem::ScalingFormat::None, /* scaleAType */
+            RocblasltContractionProblem::ScalingFormat::None, /* scaleBType */
+            0, /* scaleABlockRowSize */
+            0, /* scaleABlockColSize */
+            0, /* scaleBBlockRowSize */
+            0, /* scaleBBlockColSize */
+            bias_type,
+            epilogue,
+            amaxD,
+            nullptr,
+            0,
+            0,
+            handle->Synchronizer,
+            /*TODO: support C++ API */
+            false,
+            false};
         return gemmCreate(problem, gemmData, gemmCount);
     }
     else
     {
-        RocblasltContractionProblem problem{opA,
-                                            opB,
-                                            m,
-                                            n,
-                                            k,
-                                            alpha,
-                                            type_a,
-                                            A,
-                                            nullptr,
-                                            lda,
-                                            batch_stride_a,
-                                            type_b,
-                                            B,
-                                            nullptr,
-                                            ldb,
-                                            batch_stride_b,
-                                            beta,
-                                            type_c,
-                                            C,
-                                            nullptr,
-                                            ldc,
-                                            batch_stride_c,
-                                            type_d,
-                                            D,
-                                            nullptr,
-                                            ldd,
-                                            batch_stride_d,
-                                            E,
-                                            nullptr,
-                                            lde,
-                                            batch_stride_e,
-                                            num_batches_a,
-                                            strided_batch,
-                                            grouped_gemm,
-                                            gradient,
-                                            compute_type,
-                                            HIPBLASLT_DATATYPE_INVALID,
-                                            bias,
-                                            scaleA,
-                                            scaleB,
-                                            scaleC,
-                                            scaleD,
-                                            scaleE,
-                                            scaleAlphaVec,
-                                            static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue.scaling_a_type),
-                                            static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue.scaling_b_type),
-                                            // TODO: these scale block sizes might need to be set
-					    0, /* scaleABlockRowSize */
-					    0, /* scaleABlockColSize */
-					    0, /* scaleBBlockRowSize */
-					    0, /* scaleBBlockColSize */
-                                            bias_type,
-                                            epilogue,
-                                            amaxD,
-                                            nullptr,
-                                            0,
-                                            0,
-                                            handle->Synchronizer,
-                                            /*TODO: support C++ API */
-                                            false,
-                                            false};
+        RocblasltContractionProblem problem{
+            opA,
+            opB,
+            m,
+            n,
+            k,
+            alpha,
+            type_a,
+            A,
+            nullptr,
+            lda,
+            batch_stride_a,
+            type_b,
+            B,
+            nullptr,
+            ldb,
+            batch_stride_b,
+            beta,
+            type_c,
+            C,
+            nullptr,
+            ldc,
+            batch_stride_c,
+            type_d,
+            D,
+            nullptr,
+            ldd,
+            batch_stride_d,
+            E,
+            nullptr,
+            lde,
+            batch_stride_e,
+            num_batches_a,
+            strided_batch,
+            grouped_gemm,
+            gradient,
+            compute_type,
+            HIPBLASLT_DATATYPE_INVALID,
+            bias,
+            scaleA,
+            scaleB,
+            scaleC,
+            scaleD,
+            scaleE,
+            scaleAlphaVec,
+            static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue.scaling_a_type),
+            static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue.scaling_b_type),
+            // TODO: these scale block sizes might need to be set
+            0, /* scaleABlockRowSize */
+            0, /* scaleABlockColSize */
+            0, /* scaleBBlockRowSize */
+            0, /* scaleBBlockColSize */
+            bias_type,
+            epilogue,
+            amaxD,
+            nullptr,
+            0,
+            0,
+            handle->Synchronizer,
+            /*TODO: support C++ API */
+            false,
+            false};
         return gemmCreate(problem, gemmData, gemmCount);
     }
 }
@@ -1303,58 +1307,62 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
         {
             if constexpr(std::is_same<Epilogue, rocblaslt::RocGemmEpilogue>::value)
             {
-                validArgs = rocblaslt_epilogue_valid_args(epilogue,
-                                                          m[i],
-                                                          n[i],
-                                                          problemtype[iIdx2].type_d,
-                                                          rocEpilogue[iIdx].bias_data_type,
-                                                          inputs[i].aux,
-                                                          rocEpilogue[iIdx].aux_ld,
-                                                          rocEpilogue[iIdx].aux_stride,
-                                                          inputs[i].bias,
-                                                          inputs[i].scaleAlphaVec,
-                                                          inputs[i].alpha,
-                                                          RocblasltContractionProblem::ScalingFormat::None,  /* scaleAType */  
-                                                          RocblasltContractionProblem::ScalingFormat::None,  /* scaleBType */
-							  0,  /* scaleABlockRowSize */
-							  0,  /* scaleABlockColSize */
-							  0,  /* scaleBBlockRowSize */
-							  0,  /* scaleBBlockColSize */
-                                                          E,
-                                                          lde,
-                                                          batch_stride_e,
-                                                          bias,
-                                                          bias_type,
-                                                          scaleAlphaVec,
-                                                          gradient);
+                validArgs = rocblaslt_epilogue_valid_args(
+                    epilogue,
+                    m[i],
+                    n[i],
+                    problemtype[iIdx2].type_d,
+                    rocEpilogue[iIdx].bias_data_type,
+                    inputs[i].aux,
+                    rocEpilogue[iIdx].aux_ld,
+                    rocEpilogue[iIdx].aux_stride,
+                    inputs[i].bias,
+                    inputs[i].scaleAlphaVec,
+                    inputs[i].alpha,
+                    RocblasltContractionProblem::ScalingFormat::None, /* scaleAType */
+                    RocblasltContractionProblem::ScalingFormat::None, /* scaleBType */
+                    0, /* scaleABlockRowSize */
+                    0, /* scaleABlockColSize */
+                    0, /* scaleBBlockRowSize */
+                    0, /* scaleBBlockColSize */
+                    E,
+                    lde,
+                    batch_stride_e,
+                    bias,
+                    bias_type,
+                    scaleAlphaVec,
+                    gradient);
             }
             else
             {
-                validArgs = rocblaslt_epilogue_valid_args(epilogue,
-                                                          m[i],
-                                                          n[i],
-                                                          problemtype[iIdx2].type_d,
-                                                          rocEpilogue[iIdx].bias_data_type,
-                                                          inputs[i].aux,
-                                                          rocEpilogue[iIdx].aux_ld,
-                                                          rocEpilogue[iIdx].aux_stride,
-                                                          inputs[i].bias,
-                                                          inputs[i].scaleAlphaVec,
-                                                          inputs[i].alpha,
-                                                          static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue[iIdx].scaling_a_type),
-                                                          static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue[iIdx].scaling_b_type),
-                                                          // TODO: these scale block sizes might need to be set
-							  0,  /* scaleABlockRowSize */
-							  0,  /* scaleABlockColSize */
-							  0,  /* scaleBBlockRowSize */
-							  0,  /* scaleBBlockColSize */
-                                                          E,
-                                                          lde,
-                                                          batch_stride_e,
-                                                          bias,
-                                                          bias_type,
-                                                          scaleAlphaVec,
-                                                          gradient);
+                validArgs = rocblaslt_epilogue_valid_args(
+                    epilogue,
+                    m[i],
+                    n[i],
+                    problemtype[iIdx2].type_d,
+                    rocEpilogue[iIdx].bias_data_type,
+                    inputs[i].aux,
+                    rocEpilogue[iIdx].aux_ld,
+                    rocEpilogue[iIdx].aux_stride,
+                    inputs[i].bias,
+                    inputs[i].scaleAlphaVec,
+                    inputs[i].alpha,
+                    static_cast<RocblasltContractionProblem::ScalingFormat>(
+                        rocEpilogue[iIdx].scaling_a_type),
+                    static_cast<RocblasltContractionProblem::ScalingFormat>(
+                        rocEpilogue[iIdx].scaling_b_type),
+                    // TODO: these scale block sizes might need to be set
+                    0, /* scaleABlockRowSize */
+                    0, /* scaleABlockColSize */
+                    0, /* scaleBBlockRowSize */
+                    0, /* scaleBBlockColSize */
+                    E,
+                    lde,
+                    batch_stride_e,
+                    bias,
+                    bias_type,
+                    scaleAlphaVec,
+                    gradient);
             }
         }
         if(validArgs != rocblaslt_status_continue)
@@ -1408,66 +1416,67 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
         int iIdx = (rocEpilogue.size() <= i) ? rocEpilogue.size() - 1 : i;
         if constexpr(std::is_same<Epilogue, rocblaslt::RocGemmEpilogue>::value)
         {
-            problems.push_back(RocblasltContractionProblem{opA,
-                                                           opB,
-                                                           m[i],
-                                                           n[i],
-                                                           k[i],
-                                                           alpha_vec[i],
-                                                           type_a,
-                                                           A_vec[i],
-                                                           nullptr,
-                                                           lda[i],
-                                                           strideA[i],
-                                                           type_b,
-                                                           B_vec[i],
-                                                           nullptr,
-                                                           ldb[i],
-                                                           strideB[i],
-                                                           beta_vec[i],
-                                                           type_c,
-                                                           C_vec[i],
-                                                           nullptr,
-                                                           ldc[i],
-                                                           strideC[i],
-                                                           type_d,
-                                                           D_vec[i],
-                                                           nullptr,
-                                                           ldd[i],
-                                                           strideD[i],
-                                                           E_vec[i],
-                                                           nullptr,
-                                                           lde_vec[i],
-                                                           batch_stride_e_vec[i],
-                                                           b[i],
-                                                           strided_batch,
-                                                           grouped_gemm,
-                                                           gradient_vec[i],
-                                                           compute_type,
-                                                           HIPBLASLT_DATATYPE_INVALID,
-                                                           bias_vec[i],
-                                                           scaleA_vec[i],
-                                                           scaleB_vec[i],
-                                                           scaleC_vec[i],
-                                                           scaleD_vec[i],
-                                                           scaleE_vec[i],
-                                                           scaleAlpha_vec[i],
-                                                           RocblasltContractionProblem::ScalingFormat::None, /* scaleAType */
-                                                           RocblasltContractionProblem::ScalingFormat::None, /* scaleBType */
-							   0, /* scaleABlockRowSize */
-							   0, /* scaleABlockColSize */
-							   0, /* scaleBBlockRowSize */
-							   0, /* scaleBBlockColSize */
-                                                           bias_type_vec[i],
-                                                           epilogue_vec[i],
-                                                           amaxD_vec[i],
-                                                           nullptr,
-                                                           0,
-                                                           0,
-                                                           handle->Synchronizer,
-                                                           /*TODO: support grouped gemm */
-                                                           false,
-                                                           false});
+            problems.push_back(RocblasltContractionProblem{
+                opA,
+                opB,
+                m[i],
+                n[i],
+                k[i],
+                alpha_vec[i],
+                type_a,
+                A_vec[i],
+                nullptr,
+                lda[i],
+                strideA[i],
+                type_b,
+                B_vec[i],
+                nullptr,
+                ldb[i],
+                strideB[i],
+                beta_vec[i],
+                type_c,
+                C_vec[i],
+                nullptr,
+                ldc[i],
+                strideC[i],
+                type_d,
+                D_vec[i],
+                nullptr,
+                ldd[i],
+                strideD[i],
+                E_vec[i],
+                nullptr,
+                lde_vec[i],
+                batch_stride_e_vec[i],
+                b[i],
+                strided_batch,
+                grouped_gemm,
+                gradient_vec[i],
+                compute_type,
+                HIPBLASLT_DATATYPE_INVALID,
+                bias_vec[i],
+                scaleA_vec[i],
+                scaleB_vec[i],
+                scaleC_vec[i],
+                scaleD_vec[i],
+                scaleE_vec[i],
+                scaleAlpha_vec[i],
+                RocblasltContractionProblem::ScalingFormat::None, /* scaleAType */
+                RocblasltContractionProblem::ScalingFormat::None, /* scaleBType */
+                0, /* scaleABlockRowSize */
+                0, /* scaleABlockColSize */
+                0, /* scaleBBlockRowSize */
+                0, /* scaleBBlockColSize */
+                bias_type_vec[i],
+                epilogue_vec[i],
+                amaxD_vec[i],
+                nullptr,
+                0,
+                0,
+                handle->Synchronizer,
+                /*TODO: support grouped gemm */
+                false,
+                false});
         }
         else
         {
@@ -1516,13 +1525,15 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle 
                                             scaleD_vec[i],
                                             scaleE_vec[i],
                                             scaleAlpha_vec[i],
-                                            static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue[iIdx].scaling_a_type),
-                                            static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue[iIdx].scaling_b_type),
+                                            static_cast<RocblasltContractionProblem::ScalingFormat>(
+                                                rocEpilogue[iIdx].scaling_a_type),
+                                            static_cast<RocblasltContractionProblem::ScalingFormat>(
+                                                rocEpilogue[iIdx].scaling_b_type),
                                             // TODO: these scale block sizes might need to be set
-					    0,  /* scaleABlockRowSize */
-					    0,  /* scaleABlockColSize */
-					    0,  /* scaleBBlockRowSize */
-					    0,  /* scaleBBlockColSize */
+                                            0, /* scaleABlockRowSize */
+                                            0, /* scaleABlockColSize */
+                                            0, /* scaleBBlockRowSize */
+                                            0, /* scaleBBlockColSize */
                                             bias_type_vec[i],
                                             epilogue_vec[i],
                                             amaxD_vec[i],

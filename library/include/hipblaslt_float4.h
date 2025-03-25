@@ -24,7 +24,6 @@
  *
  *******************************************************************************/
 
-
 #ifndef _HIPBLASLT_FLOAT4_H_
 #define _HIPBLASLT_FLOAT4_H_
 
@@ -37,16 +36,19 @@ struct HIPBLASLT_EXPORT hipblaslt_f4
 
     hipblaslt_f4() = default;
 
-    explicit hipblaslt_f4(uint8_t x): __x(x) {}
+    explicit hipblaslt_f4(uint8_t x)
+        : __x(x)
+    {
+    }
 
     operator _Float16() const
     {
         return _Float16(float(*this));
     }
-    operator float() const {
-        uint8_t val = __x & 0x0F; // Remove first four bits
-        static constexpr std::array<float, 16> values =
-        {
+    operator float() const
+    {
+        uint8_t                                val    = __x & 0x0F; // Remove first four bits
+        static constexpr std::array<float, 16> values = {
             0.0, // 0000
             0.5, // 0001
             1.0, // 0010
@@ -70,7 +72,6 @@ struct HIPBLASLT_EXPORT hipblaslt_f4
     };
 };
 
-
 #else // __cplusplus < 201103L || (!defined(__HCC__) && !defined(__HIPCC__))
 
 #define HIP_HOST_DEVICE __host__ __device__
@@ -79,7 +80,7 @@ struct HIPBLASLT_EXPORT hipblaslt_f4
 
 // TODO: HIP has implemented FP4 in the header below. However, currently there is no
 //       direct use of FP4 type, and we just create a new struct that provides
-//       conversion to float. In the future, we should inherit HIP's FP4 type to 
+//       conversion to float. In the future, we should inherit HIP's FP4 type to
 //       provide full functionalties when needed.
 // #include <hip/hip_ext_ocp.h>
 
@@ -89,16 +90,19 @@ struct HIPBLASLT_EXPORT hipblaslt_f4
 
     hipblaslt_f4() = default;
 
-    explicit hipblaslt_f4(uint8_t x): __x(x) {}
+    explicit hipblaslt_f4(uint8_t x)
+        : __x(x)
+    {
+    }
 
     operator _Float16() const
     {
         return _Float16(float(*this));
     }
-    operator float() const {
-        uint8_t val = __x & 0x0F; // Remove first four bits
-        static constexpr std::array<float, 16> values =
-        {
+    operator float() const
+    {
+        uint8_t                                val    = __x & 0x0F; // Remove first four bits
+        static constexpr std::array<float, 16> values = {
             0.0, // 0000
             0.5, // 0001
             1.0, // 0010

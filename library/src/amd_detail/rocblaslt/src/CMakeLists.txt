@@ -122,7 +122,7 @@ string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" GCC_VERSION "${GCC_OUTPUT}")
 message(STATUS "Extracted GCC Version: ${GCC_VERSION}")
 
 # Compare GCC version and set the flag conditionally if it's 7.5.0 or less
-if(${GCC_VERSION} VERSION_LESS "7.6.0")    
+if(${GCC_VERSION} VERSION_LESS "7.6.0")
     # Apply -ftemplate-depth=2048 to tensile_host.cpp if GCC_VERSION is less than 7.6.0 to avoid template recursion
     set_source_files_properties(src/amd_detail/rocblaslt/src/tensile_host.cpp PROPERTIES COMPILE_FLAGS "-ftemplate-depth=2048")
 endif()

@@ -445,11 +445,11 @@ rocblaslt_status rocblaslt_destroy(const rocblaslt_handle handle)
         return rocblaslt_status_invalid_value;
     }
     log_api(__func__, "handle", handle);
-    // Destruct
-    #ifdef USE_ROCROLLER
-    if (handle->rocroller_handle)
+// Destruct
+#ifdef USE_ROCROLLER
+    if(handle->rocroller_handle)
         rocroller_destroy_handle(handle->rocroller_handle);
-    #endif
+#endif
     try
     {
         delete handle;
@@ -949,8 +949,8 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
             case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT:
                 matmulDesc->scaleAType = RocblasltContractionProblem::ScalingFormat::Vector;
             case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER:
-                if(matmulAttr == ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER &&
-                   matmulDesc->scaleAType == RocblasltContractionProblem::ScalingFormat::None)
+                if(matmulAttr == ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER
+                   && matmulDesc->scaleAType == RocblasltContractionProblem::ScalingFormat::None)
                 {
                     matmulDesc->scaleAType = RocblasltContractionProblem::ScalingFormat::Scalar;
                 }
@@ -969,20 +969,23 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     memcpy(&mode, buf, sizeof(hipblasLtMatmulMatrixScale_t));
                     switch(mode)
                     {
-                        case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0:
-                            matmulDesc->scaleABlockRowSize = 32;
-                            matmulDesc->scaleABlockColSize = 1;
-                            matmulDesc->scaleAType = RocblasltContractionProblem::ScalingFormat::Block;
-                            break;
-                        case HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F:
-                            matmulDesc->scaleABlockRowSize = 1;
-                            matmulDesc->scaleABlockColSize = 1;
-                            matmulDesc->scaleAType = RocblasltContractionProblem::ScalingFormat::Scalar;
-                            break;
-                        case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3:
-                        default:
-                            log_error(__func__, "invalid A scale mode, currently only HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0 is supported", mode);
-                            return rocblaslt_status_invalid_value;
+                    case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0:
+                        matmulDesc->scaleABlockRowSize = 32;
+                        matmulDesc->scaleABlockColSize = 1;
+                        matmulDesc->scaleAType = RocblasltContractionProblem::ScalingFormat::Block;
+                        break;
+                    case HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F:
+                        matmulDesc->scaleABlockRowSize = 1;
+                        matmulDesc->scaleABlockColSize = 1;
+                        matmulDesc->scaleAType = RocblasltContractionProblem::ScalingFormat::Scalar;
+                        break;
+                    case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3:
+                    default:
+                        log_error(__func__,
+                                  "invalid A scale mode, currently only "
+                                  "HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0 is supported",
+                                  mode);
+                        return rocblaslt_status_invalid_value;
                     }
                 }
                 else
@@ -994,8 +997,8 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
             case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT:
                 matmulDesc->scaleBType = RocblasltContractionProblem::ScalingFormat::Vector;
             case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER:
-                if(matmulAttr == ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER &&
-                   matmulDesc->scaleBType == RocblasltContractionProblem::ScalingFormat::None)
+                if(matmulAttr == ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER
+                   && matmulDesc->scaleBType == RocblasltContractionProblem::ScalingFormat::None)
                 {
                     matmulDesc->scaleBType = RocblasltContractionProblem::ScalingFormat::Scalar;
                 }
@@ -1014,20 +1017,23 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     memcpy(&mode, buf, sizeof(hipblasLtMatmulMatrixScale_t));
                     switch(mode)
                     {
-                        case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0:
-                            matmulDesc->scaleBBlockRowSize = 1;
-                            matmulDesc->scaleBBlockColSize = 32;
-                            matmulDesc->scaleBType = RocblasltContractionProblem::ScalingFormat::Block;
-                            break;
-                        case HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F:
-                            matmulDesc->scaleBBlockRowSize = 1;
-                            matmulDesc->scaleBBlockColSize = 1;
-                            matmulDesc->scaleBType = RocblasltContractionProblem::ScalingFormat::Scalar;
-                            break;
-                        case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3:
-                        default:
-                            log_error(__func__, "invalid B scale mode, currently only HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0 is supported", mode);
-                            return rocblaslt_status_invalid_value;
+                    case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0:
+                        matmulDesc->scaleBBlockRowSize = 1;
+                        matmulDesc->scaleBBlockColSize = 32;
+                        matmulDesc->scaleBType = RocblasltContractionProblem::ScalingFormat::Block;
+                        break;
+                    case HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F:
+                        matmulDesc->scaleBBlockRowSize = 1;
+                        matmulDesc->scaleBBlockColSize = 1;
+                        matmulDesc->scaleBType = RocblasltContractionProblem::ScalingFormat::Scalar;
+                        break;
+                    case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3:
+                    default:
+                        log_error(__func__,
+                                  "invalid B scale mode, currently only "
+                                  "HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0 is supported",
+                                  mode);
+                        return rocblaslt_status_invalid_value;
                     }
                 }
                 else
@@ -1260,18 +1266,24 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 else
                 {
                     hipblasLtMatmulMatrixScale_t mode;
-                    if(matmulDesc->scaleABlockRowSize == 32 && matmulDesc->scaleABlockColSize == 1 && matmulDesc->scaleAType == RocblasltContractionProblem::ScalingFormat::Block)
+                    if(matmulDesc->scaleABlockRowSize == 32 && matmulDesc->scaleABlockColSize == 1
+                       && matmulDesc->scaleAType
+                              == RocblasltContractionProblem::ScalingFormat::Block)
                     {
                         mode = HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0;
                     }
-                    else if(matmulDesc->scaleAType == RocblasltContractionProblem::ScalingFormat::Scalar)
+                    else if(matmulDesc->scaleAType
+                            == RocblasltContractionProblem::ScalingFormat::Scalar)
                     {
                         mode = HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F;
                     }
                     else
                     {
-                            log_error(__func__, "invalid A scale mode, currently only HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0 is supported", mode);
-                            return rocblaslt_status_invalid_value;
+                        log_error(__func__,
+                                  "invalid A scale mode, currently only "
+                                  "HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0 is supported",
+                                  mode);
+                        return rocblaslt_status_invalid_value;
                     }
                     memcpy(buf, &mode, sizeof(uint32_t));
                 }
@@ -1298,18 +1310,24 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 else
                 {
                     hipblasLtMatmulMatrixScale_t mode;
-                    if(matmulDesc->scaleBBlockRowSize == 1 && matmulDesc->scaleBBlockColSize == 32 && matmulDesc->scaleBType == RocblasltContractionProblem::ScalingFormat::Block)
+                    if(matmulDesc->scaleBBlockRowSize == 1 && matmulDesc->scaleBBlockColSize == 32
+                       && matmulDesc->scaleBType
+                              == RocblasltContractionProblem::ScalingFormat::Block)
                     {
                         mode = HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0;
                     }
-                    else if(matmulDesc->scaleBType == RocblasltContractionProblem::ScalingFormat::Scalar)
+                    else if(matmulDesc->scaleBType
+                            == RocblasltContractionProblem::ScalingFormat::Scalar)
                     {
                         mode = HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F;
                     }
                     else
                     {
-                            log_error(__func__, "invalid B scale mode, currently only HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0 is supported", mode);
-                            return rocblaslt_status_invalid_value;
+                        log_error(__func__,
+                                  "invalid B scale mode, currently only "
+                                  "HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0 is supported",
+                                  mode);
+                        return rocblaslt_status_invalid_value;
                     }
                     memcpy(buf, &mode, sizeof(uint32_t));
                 }

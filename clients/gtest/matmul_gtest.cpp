@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,7 @@ namespace
     // matmul
     // ----------------------------------------------------------------------------
 
-    struct matmul_testing: hipblaslt_test_valid
+    struct matmul_testing : hipblaslt_test_valid
     {
         void operator()(const Arguments& arg)
         {
@@ -188,7 +188,6 @@ namespace
     }
     INSTANTIATE_TEST_CATEGORIES(matmul_test);
 
-
 #ifdef USE_ROCROLLER
     // ----------------------------------------------------------------------------
     // rocRoller
@@ -202,7 +201,8 @@ namespace
         }
     };
 
-    struct rocroller_predicate_test : RocBlasLt_Test<rocroller_predicate_test, rocroller_predicate_testing>
+    struct rocroller_predicate_test
+        : RocBlasLt_Test<rocroller_predicate_test, rocroller_predicate_testing>
     {
         static bool type_filter(const Arguments& arg)
         {
@@ -225,9 +225,7 @@ namespace
         // rocRoller has predicates that check the dimensions (M/N/K) must be
         // multiples of the work group sizes. This test set the K dimension
         // to not be a multiple, and thus we shall see failure.
-        EXPECT_FATAL_FAILURE(rocroller_predicate_testing{}(GetParam()), 
-            "NO solution found!"
-        );
+        EXPECT_FATAL_FAILURE(rocroller_predicate_testing{}(GetParam()), "NO solution found!");
     }
     INSTANTIATE_TEST_CATEGORIES(rocroller_predicate_test);
 #endif

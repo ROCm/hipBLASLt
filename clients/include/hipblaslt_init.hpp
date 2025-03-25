@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -205,7 +205,7 @@ inline void hipblaslt_init_sin(
 #pragma omp parallel for
         for(size_t j = 0; j < N; ++j)
         {
-            size_t offset = j * lda + i_batch * stride;
+            size_t offset      = j * lda + i_batch * stride;
             size_t offsetValue = j * M + i_batch * M * N;
             for(size_t i = 0; i < M; ++i)
                 A[i + offset] = static_cast<T>(sin(double(i + offsetValue))); //force cast to double
@@ -466,7 +466,7 @@ inline void hipblaslt_init_cos(
 #pragma omp parallel for
         for(size_t j = 0; j < N; ++j)
         {
-            size_t offset = j * lda + i_batch * stride;
+            size_t offset      = j * lda + i_batch * stride;
             size_t offsetValue = j * M + i_batch * M * N;
             for(size_t i = 0; i < M; ++i)
                 A[i + offset] = T(cos(double(i + offsetValue))); //force cast to double

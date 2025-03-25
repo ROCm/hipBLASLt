@@ -80,127 +80,127 @@
 #define INTERNAL_HIPHOSTMEM_SIZE 32768
 
 RocblasltContractionProblem::RocblasltContractionProblem(hipblasOperation_t     trans_a,
-                                                        hipblasOperation_t     trans_b,
-                                                        int64_t                m,
-                                                        int64_t                n,
-                                                        int64_t                k,
-                                                        const void*            alpha,
-                                                        hipDataType            a_type,
-                                                        const void*            A,
-                                                        const void* const*     batch_A,
-                                                        int64_t                ld_a,
-                                                        int64_t                batch_stride_a,
-                                                        hipDataType            b_type,
-                                                        const void*            B,
-                                                        const void* const*     batch_B,
-                                                        int64_t                ld_b,
-                                                        int64_t                batch_stride_b,
-                                                        const void*            beta,
-                                                        hipDataType            c_type,
-                                                        const void*            C,
-                                                        const void* const*     batch_C,
-                                                        int64_t                ld_c,
-                                                        int64_t                batch_stride_c,
-                                                        hipDataType            d_type,
-                                                        void*                  D,
-                                                        void* const*           batch_D,
-                                                        int64_t                ld_d,
-                                                        int64_t                batch_stride_d,
-                                                        void*                  E,
-                                                        void* const*           batch_E,
-                                                        int64_t                ld_e,
-                                                        int64_t                batch_stride_e,
-                                                        int64_t                batch_count,
-                                                        bool                   strided_batch,
-                                                        bool                   grouped_gemm,
-                                                        bool                   gradient,
-                                                        rocblaslt_compute_type compute_type,
-                                                        hipDataType            scale_type,
-                                                        const void*            bias,
-                                                        const void*            scaleA,
-                                                        const void*            scaleB,
-                                                        const void*            scaleC,
-                                                        const void*            scaleD,
-                                                        const void*            scaleE,
-                                                        const void*            scaleAlphaVec,
-                                                        ScalingFormat          scaleAType,
-                                                        ScalingFormat          scaleBType,
-                                                        size_t                 scaleABlockRowSize,
-                                                        size_t                 scaleABlockColSize,
-                                                        size_t                 scaleBBlockRowSize,
-                                                        size_t                 scaleBBlockColSize,
-                                                        hipDataType            bias_type,
-                                                        rocblaslt_epilogue     epilogue,
-                                                        void*                  amaxD,
-                                                        void*                  workspace,
-                                                        size_t                 workspaceSize,
-                                                        hipStream_t            stream,
-                                                        void*                  Synchronizer,
-                                                        bool                   swizzleA,
-                                                        bool                   swizzleB)
-        : trans_a(trans_a)
-        , trans_b(trans_b)
-        , m(m)
-        , n(n)
-        , k(k)
-        , alpha(alpha)
-        , a_type(a_type)
-        , A(A)
-        , batch_A(batch_A)
-        , row_stride_a(1)
-        , col_stride_a(ld_a)
-        , batch_stride_a(batch_stride_a)
-        , b_type(b_type)
-        , B(B)
-        , batch_B(batch_B)
-        , row_stride_b(1)
-        , col_stride_b(ld_b)
-        , batch_stride_b(batch_stride_b)
-        , beta(beta)
-        , c_type(c_type)
-        , C(C)
-        , batch_C(batch_C)
-        , row_stride_c(1)
-        , col_stride_c(ld_c)
-        , batch_stride_c(batch_stride_c)
-        , d_type(d_type)
-        , D(D)
-        , batch_D(batch_D)
-        , row_stride_d(1)
-        , col_stride_d(ld_d)
-        , batch_stride_d(batch_stride_d)
-        , E(E)
-        , batch_E(batch_E)
-        , row_stride_e(1)
-        , col_stride_e(ld_e)
-        , batch_stride_e(batch_stride_e)
-        , batch_count(batch_count)
-        , strided_batch(strided_batch)
-        , grouped_gemm(grouped_gemm)
-        , gradient(gradient)
-        , compute_type(compute_type)
-        , bias(bias)
-        , scaleA(scaleA)
-        , scaleB(scaleB)
-        , scaleC(scaleC)
-        , scaleD(scaleD)
-        , scaleE(scaleE)
-        , scaleAlphaVec(scaleAlphaVec)
-        , scaleAType(scaleAType)
-        , scaleBType(scaleBType)
-        , scaleABlockRowSize(scaleABlockRowSize)
-        , scaleABlockColSize(scaleABlockColSize)
-        , scaleBBlockRowSize(scaleBBlockRowSize)
-        , scaleBBlockColSize(scaleBBlockColSize)
-        , bias_type(bias_type)
-        , epilogue(epilogue)
-        , amaxD(amaxD)
-        , workspace(workspace)
-        , workspaceSize(workspaceSize)
-        , stream(stream)
-        , Synchronizer(Synchronizer)
-        , swizzleA(swizzleA)
-        , swizzleB(swizzleB)
+                                                         hipblasOperation_t     trans_b,
+                                                         int64_t                m,
+                                                         int64_t                n,
+                                                         int64_t                k,
+                                                         const void*            alpha,
+                                                         hipDataType            a_type,
+                                                         const void*            A,
+                                                         const void* const*     batch_A,
+                                                         int64_t                ld_a,
+                                                         int64_t                batch_stride_a,
+                                                         hipDataType            b_type,
+                                                         const void*            B,
+                                                         const void* const*     batch_B,
+                                                         int64_t                ld_b,
+                                                         int64_t                batch_stride_b,
+                                                         const void*            beta,
+                                                         hipDataType            c_type,
+                                                         const void*            C,
+                                                         const void* const*     batch_C,
+                                                         int64_t                ld_c,
+                                                         int64_t                batch_stride_c,
+                                                         hipDataType            d_type,
+                                                         void*                  D,
+                                                         void* const*           batch_D,
+                                                         int64_t                ld_d,
+                                                         int64_t                batch_stride_d,
+                                                         void*                  E,
+                                                         void* const*           batch_E,
+                                                         int64_t                ld_e,
+                                                         int64_t                batch_stride_e,
+                                                         int64_t                batch_count,
+                                                         bool                   strided_batch,
+                                                         bool                   grouped_gemm,
+                                                         bool                   gradient,
+                                                         rocblaslt_compute_type compute_type,
+                                                         hipDataType            scale_type,
+                                                         const void*            bias,
+                                                         const void*            scaleA,
+                                                         const void*            scaleB,
+                                                         const void*            scaleC,
+                                                         const void*            scaleD,
+                                                         const void*            scaleE,
+                                                         const void*            scaleAlphaVec,
+                                                         ScalingFormat          scaleAType,
+                                                         ScalingFormat          scaleBType,
+                                                         size_t                 scaleABlockRowSize,
+                                                         size_t                 scaleABlockColSize,
+                                                         size_t                 scaleBBlockRowSize,
+                                                         size_t                 scaleBBlockColSize,
+                                                         hipDataType            bias_type,
+                                                         rocblaslt_epilogue     epilogue,
+                                                         void*                  amaxD,
+                                                         void*                  workspace,
+                                                         size_t                 workspaceSize,
+                                                         hipStream_t            stream,
+                                                         void*                  Synchronizer,
+                                                         bool                   swizzleA,
+                                                         bool                   swizzleB)
+    : trans_a(trans_a)
+    , trans_b(trans_b)
+    , m(m)
+    , n(n)
+    , k(k)
+    , alpha(alpha)
+    , a_type(a_type)
+    , A(A)
+    , batch_A(batch_A)
+    , row_stride_a(1)
+    , col_stride_a(ld_a)
+    , batch_stride_a(batch_stride_a)
+    , b_type(b_type)
+    , B(B)
+    , batch_B(batch_B)
+    , row_stride_b(1)
+    , col_stride_b(ld_b)
+    , batch_stride_b(batch_stride_b)
+    , beta(beta)
+    , c_type(c_type)
+    , C(C)
+    , batch_C(batch_C)
+    , row_stride_c(1)
+    , col_stride_c(ld_c)
+    , batch_stride_c(batch_stride_c)
+    , d_type(d_type)
+    , D(D)
+    , batch_D(batch_D)
+    , row_stride_d(1)
+    , col_stride_d(ld_d)
+    , batch_stride_d(batch_stride_d)
+    , E(E)
+    , batch_E(batch_E)
+    , row_stride_e(1)
+    , col_stride_e(ld_e)
+    , batch_stride_e(batch_stride_e)
+    , batch_count(batch_count)
+    , strided_batch(strided_batch)
+    , grouped_gemm(grouped_gemm)
+    , gradient(gradient)
+    , compute_type(compute_type)
+    , bias(bias)
+    , scaleA(scaleA)
+    , scaleB(scaleB)
+    , scaleC(scaleC)
+    , scaleD(scaleD)
+    , scaleE(scaleE)
+    , scaleAlphaVec(scaleAlphaVec)
+    , scaleAType(scaleAType)
+    , scaleBType(scaleBType)
+    , scaleABlockRowSize(scaleABlockRowSize)
+    , scaleABlockColSize(scaleABlockColSize)
+    , scaleBBlockRowSize(scaleBBlockRowSize)
+    , scaleBBlockColSize(scaleBBlockColSize)
+    , bias_type(bias_type)
+    , epilogue(epilogue)
+    , amaxD(amaxD)
+    , workspace(workspace)
+    , workspaceSize(workspaceSize)
+    , stream(stream)
+    , Synchronizer(Synchronizer)
+    , swizzleA(swizzleA)
+    , swizzleB(swizzleB)
 {
     if(this->bias_type == HIPBLASLT_DATATYPE_INVALID)
     {
@@ -796,7 +796,7 @@ namespace
             coldIterations,
             "--iters",
             hotIterations);
-        
+
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             log_bench_from_str(s);
         if(rocblaslt::Debug::Instance().printLogAsMarker())
@@ -1425,9 +1425,12 @@ namespace
         tensileProblem.setParams().setBiasEnum(
             tensileUseBias(prob.epilogue) ? biasType : TensileLite::DataType::None);
 
-        tensileProblem.setUseScaleAB((prob.scaleA == nullptr && prob.scaleB == nullptr)
-                                         ? ""
-                                         : ((prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Vector) ? "Vector" : "Scalar"));
+        tensileProblem.setUseScaleAB(
+            (prob.scaleA == nullptr && prob.scaleB == nullptr)
+                ? ""
+                : ((prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Vector)
+                       ? "Vector"
+                       : "Scalar"));
         tensileProblem.setUseScaleCD(prob.scaleC != nullptr || prob.scaleD != nullptr);
         tensileProblem.setUseScaleAlphaVec(prob.scaleAlphaVec != nullptr);
         tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
@@ -1595,9 +1598,12 @@ namespace
         tensileProblem.setParams().setBiasEnum(
             tensileUseBias(prob.epilogue) ? biasType : TensileLite::DataType::None);
 
-        tensileProblem.setUseScaleAB((prob.scaleA == nullptr && prob.scaleB == nullptr)
-                                         ? ""
-                                         : ((prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Vector) ? "Vector" : "Scalar"));
+        tensileProblem.setUseScaleAB(
+            (prob.scaleA == nullptr && prob.scaleB == nullptr)
+                ? ""
+                : ((prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Vector)
+                       ? "Vector"
+                       : "Scalar"));
         tensileProblem.setUseScaleCD(prob.scaleC != nullptr || prob.scaleD != nullptr);
         tensileProblem.setUseScaleAlphaVec(prob.scaleAlphaVec != nullptr);
         tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
@@ -2298,10 +2304,10 @@ void initTensileGemmData(rocblaslt_handle       handle,
 #ifdef USE_ROCROLLER
 bool useRocRoller(rocblaslt_handle handle, const RocblasltContractionProblem& prob)
 {
-    return handle->useRocRoller == 1 ||
-           (handle->useRocRoller == -1 &&
-                (prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Block ||
-                 prob.scaleBType == RocblasltContractionProblem::ScalingFormat::Block));
+    return handle->useRocRoller == 1
+           || (handle->useRocRoller == -1
+               && (prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Block
+                   || prob.scaleBType == RocblasltContractionProblem::ScalingFormat::Block));
 }
 #endif
 
@@ -2317,10 +2323,10 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
-        #ifdef USE_ROCROLLER
-        if (useRocRoller(handle, prob))
+#ifdef USE_ROCROLLER
+        if(useRocRoller(handle, prob))
             return runRocRollerContractionProblem(handle, algo, prob);
-        #endif
+#endif
         std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
                                                library;
         std::shared_ptr<hipDeviceProp_t>       deviceProp;
@@ -2359,7 +2365,8 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         data->algoIndex    = *solutionIndex;
         data->inputs       = GetTensileInputs(prob);
 
-        if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) || rocblaslt::Debug::Instance().printLogAsMarker())
+        if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+           || rocblaslt::Debug::Instance().printLogAsMarker())
         {
             logBenchFromTensileDataGemm(data->problem,
                                         data->inputs,
@@ -2799,7 +2806,8 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         {
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
-            if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) || rocblaslt::Debug::Instance().printLogAsMarker())
+            if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+               || rocblaslt::Debug::Instance().printLogAsMarker())
             {
                 logBenchFromTensileDataGemm(data->problem,
                                             data->inputs,
@@ -2832,7 +2840,8 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                           "GG is initialized with useUserArgs = true, workspace has no arguments.");
                 return rocblaslt_status_not_initialized;
             }
-            if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) || rocblaslt::Debug::Instance().printLogAsMarker())
+            if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+               || rocblaslt::Debug::Instance().printLogAsMarker())
             {
                 logBenchFromTensileDataGemm(data->problem,
                                             data->inputs,
@@ -3166,10 +3175,11 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
                                   int*                               returnAlgoCount,
                                   size_t                             maxWorkSpaceBytes)
 {
-    #ifdef USE_ROCROLLER
-        if (useRocRoller(handle, prob))
-            return getRocRollerBestSolutions(handle, prob, requestedAlgoCount, heuristicResultsArray, returnAlgoCount);
-    #endif
+#ifdef USE_ROCROLLER
+    if(useRocRoller(handle, prob))
+        return getRocRollerBestSolutions(
+            handle, prob, requestedAlgoCount, heuristicResultsArray, returnAlgoCount);
+#endif
     std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
                                            library;
     std::shared_ptr<hipDeviceProp_t>       deviceProp;
@@ -3307,10 +3317,10 @@ rocblaslt_status getAllSolutions(RocblasltContractionProblem&                   
                                  std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
                                  size_t                                          maxWorkSpaceBytes)
 {
-    #ifdef USE_ROCROLLER
-    if (useRocRoller(handle, prob))
+#ifdef USE_ROCROLLER
+    if(useRocRoller(handle, prob))
         return getAllSolutionsRocRoller(prob, handle, heuristicResults, maxWorkSpaceBytes);
-    #endif
+#endif
     auto tensile_prob = ConstructTensileProblem(prob);
     return getAllSolutions(tensile_prob, handle, heuristicResults, maxWorkSpaceBytes);
 }
@@ -3385,15 +3395,15 @@ rocblaslt_status
     int  i                 = 0;
     for(auto index : solutionIndex)
     {
-        #ifdef USE_ROCROLLER
-        if (index < 0)
+#ifdef USE_ROCROLLER
+        if(index < 0)
         {
             isOutOfBound = false;
             getRocRollerSolutionsFromIndex(handle, index, heuristicResults, maxWorkSpaceBytes);
             continue;
         }
-    
-        #endif
+
+#endif
         isOutOfBound  = isOutOfBound && (index > lastSolutionIndex);
         auto solution = library->getSolutionByIndex(*hardware, index);
         if(!solution)
@@ -3571,10 +3581,10 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle             handle,
                                      rocblaslt_matmul_algo*       algo,
                                      size_t*                      workspaceSizeInBytes)
 {
-    #ifdef USE_ROCROLLER
-    if (useRocRoller(handle, prob))
+#ifdef USE_ROCROLLER
+    if(useRocRoller(handle, prob))
         return isRocRollerSolutionSupported(handle, prob, algo, workspaceSizeInBytes);
-    #endif
+#endif
     std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
     updateTensileProblem(prob, data->problem);
     rocblaslt::RocTuningV2* tuning = nullptr;

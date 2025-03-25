@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2024-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,26 +45,30 @@ void rocroller_destroy_handle(void* handle);
 
 void rocroller_create_handle(void** handle);
 
-rocblaslt_status getRocRollerBestSolutions(rocblaslt_handle handle,
-                                           const RocblasltContractionProblem& prob,
-                                           int requestedAlgoCount,
-                                           rocblaslt_matmul_heuristic_result heuristicResultsArray[],
-                                           int* returnAlgoCount);
+rocblaslt_status
+    getRocRollerBestSolutions(rocblaslt_handle                   handle,
+                              const RocblasltContractionProblem& prob,
+                              int                                requestedAlgoCount,
+                              rocblaslt_matmul_heuristic_result  heuristicResultsArray[],
+                              int*                               returnAlgoCount);
 
-rocblaslt_status getAllSolutionsRocRoller(RocblasltContractionProblem&                    prob,
-                                          rocblaslt_handle                                handle,
-                                          std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
-                                          size_t                                          maxWorkSpaceBytes);
+rocblaslt_status
+    getAllSolutionsRocRoller(RocblasltContractionProblem&                    prob,
+                             rocblaslt_handle                                handle,
+                             std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+                             size_t                                          maxWorkSpaceBytes);
 
-void getRocRollerSolutionsFromIndex(rocblaslt_handle                                handle,
-                          int                             solutionIndex,
-                          std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
-                          size_t                                          maxWorkSpaceBytes);
+void getRocRollerSolutionsFromIndex(
+    rocblaslt_handle                                handle,
+    int                                             solutionIndex,
+    std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+    size_t                                          maxWorkSpaceBytes);
 
 rocblaslt_status isRocRollerSolutionSupported(rocblaslt_handle             handle,
-                                     RocblasltContractionProblem& prob,
-                                     rocblaslt_matmul_algo*       algo,
-                                     size_t*                      workspaceSizeInBytes);
+                                              RocblasltContractionProblem& prob,
+                                              rocblaslt_matmul_algo*       algo,
+                                              size_t*                      workspaceSizeInBytes);
 
-rocblaslt_status runRocRollerContractionProblem(rocblaslt_handle handle, const rocblaslt_matmul_algo* algo, const RocblasltContractionProblem& prob);
-
+rocblaslt_status runRocRollerContractionProblem(rocblaslt_handle                   handle,
+                                                const rocblaslt_matmul_algo*       algo,
+                                                const RocblasltContractionProblem& prob);

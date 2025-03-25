@@ -38,11 +38,11 @@
 #include "hipblaslt_random.hpp"
 #include "hipblaslt_test.hpp"
 #include "hipblaslt_vector.hpp"
+#include "mxDataGen.hpp"
 #include "near.hpp"
 #include "norm.hpp"
 #include "unit.hpp"
 #include "utility.hpp"
-#include "mxDataGen.hpp"
 #include <cstddef>
 #include <functional>
 #include <hipblaslt/hipblaslt-ext-op.h>
@@ -723,7 +723,7 @@ auto _dgelu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
 // swish with beta=1
 auto _silu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
     using Tc = float;
-    Tc in_Tc   = static_cast<Tc>(in);
+    Tc in_Tc = static_cast<Tc>(in);
     return static_cast<decltype(in)>(in_Tc / (1.f + exp(-in_Tc)));
 };
 
@@ -1072,9 +1072,9 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
                 real_bias_type = HIP_R_16F;
         }
 #endif
-        else if((arg.a_type == HIP_R_6F_E2M3_EXT && arg.b_type == HIP_R_6F_E2M3_EXT) ||
-                (arg.a_type == HIP_R_6F_E3M2_EXT && arg.b_type == HIP_R_6F_E3M2_EXT) ||
-            (arg.a_type == HIP_R_4F_E2M1_EXT && arg.b_type == HIP_R_4F_E2M1_EXT))
+        else if((arg.a_type == HIP_R_6F_E2M3_EXT && arg.b_type == HIP_R_6F_E2M3_EXT)
+                || (arg.a_type == HIP_R_6F_E3M2_EXT && arg.b_type == HIP_R_6F_E3M2_EXT)
+                || (arg.a_type == HIP_R_4F_E2M1_EXT && arg.b_type == HIP_R_4F_E2M1_EXT))
         {
             if(arg.d_type == HIP_R_32F || arg.d_type == HIP_R_16BF)
                 real_bias_type = HIP_R_16BF;
@@ -1289,11 +1289,11 @@ void testing_matmul_with_bias(const Arguments& arg,
     std::vector<HipHostBuffer> hScaleAlphaVec, hScaleA, hScaleB, hScaleC, hScaleD, hScaleE,
         hAmaxD_gold, hAmaxD, hD_gold_epl, hD_gold_ScaleAlpha, hBias_gold_epl;
 
-   // These two vectors store the float values of MX data. mxDataGenerator
-   // can generate MX data and return the corresponding float values. The float
-   // values can be directly used for CPU verification (cblas_gemm) instead
-   // of converting the MX data to float again.
-   std::vector<std::vector<float>> refA, refB;
+    // These two vectors store the float values of MX data. mxDataGenerator
+    // can generate MX data and return the corresponding float values. The float
+    // values can be directly used for CPU verification (cblas_gemm) instead
+    // of converting the MX data to float again.
+    std::vector<std::vector<float>> refA, refB;
 
     std::vector<void*> alpha_in(gemm_count);
 
@@ -1456,7 +1456,6 @@ void testing_matmul_with_bias(const Arguments& arg,
                                                   sizeof(int64_t)),
                 HIPBLAS_STATUS_SUCCESS);
 
-
             EXPECT_HIPBLAS_STATUS(
                 hipblasLtMatrixLayoutSetAttribute(matB[i],
                                                   HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
@@ -1528,7 +1527,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                 epilogue_on[i] = true;
                 break;
             case hipblaslt_activation_type::swish:
-                epilogue[i] = HIPBLASLT_EPILOGUE_SWISH_EXT;
+                epilogue[i]    = HIPBLASLT_EPILOGUE_SWISH_EXT;
                 epilogue_on[i] = true;
                 break;
             default:
@@ -1617,7 +1616,7 @@ void testing_matmul_with_bias(const Arguments& arg,
         {
             dScaleA.emplace_back(Talpha, size_scaleAVec[i] * block_count, HMM);
         }
-        else if (arg.scaleA == hipblaslt_scaling_format::Block)
+        else if(arg.scaleA == hipblaslt_scaling_format::Block)
         {
             // For MX format, use uin8_t for the scale (E8M0)
             dScaleA.emplace_back(HIP_R_8U, size_scaleAVec[i] * block_count, HMM);
@@ -1674,7 +1673,7 @@ void testing_matmul_with_bias(const Arguments& arg,
         {
             hScaleA.emplace_back(Talpha, size_scaleAVec[i]);
         }
-        else if (arg.scaleA == hipblaslt_scaling_format::Block)
+        else if(arg.scaleA == hipblaslt_scaling_format::Block)
         {
             hScaleA.emplace_back(HIP_R_8U, size_scaleAVec[i]);
         }
@@ -1683,7 +1682,7 @@ void testing_matmul_with_bias(const Arguments& arg,
         {
             hScaleB.emplace_back(Talpha, size_scaleBVec[i]);
         }
-        else if (arg.scaleB == hipblaslt_scaling_format::Block)
+        else if(arg.scaleB == hipblaslt_scaling_format::Block)
         {
             hScaleB.emplace_back(HIP_R_8U, size_scaleBVec[i]);
         }
@@ -1711,100 +1710,115 @@ void testing_matmul_with_bias(const Arguments& arg,
         hipblaslt_seedrand();
 
 #ifdef USE_ROCROLLER
-	if(arg.scaleA == hipblaslt_scaling_format::Block)
-	{
-            if(arg.initialization != hipblaslt_initialization::hpl && arg.initialization != hipblaslt_initialization::trig_float)
+        if(arg.scaleA == hipblaslt_scaling_format::Block)
+        {
+            if(arg.initialization != hipblaslt_initialization::hpl
+               && arg.initialization != hipblaslt_initialization::trig_float)
             {
-                hipblaslt_cout << "Initialization of microscaling data only allows hpl and trig_float not "
-                               << hipblaslt_initialization2string(arg.initialization) << std::endl;
-                return ;
+                hipblaslt_cout
+                    << "Initialization of microscaling data only allows hpl and trig_float not "
+                    << hipblaslt_initialization2string(arg.initialization) << std::endl;
+                return;
             }
             if(arg.algo_method == 1)
             {
-                hipblaslt_cout <<  "MX data types do not support algorithm \"all\"" << std::endl;
+                hipblaslt_cout << "MX data types do not support algorithm \"all\"" << std::endl;
                 return;
             }
-            // For MX format, use mxDataGenerator to generate input data 
+            // For MX format, use mxDataGenerator to generate input data
             // (consists of data part and scale part)
             // TODO: mxDataGenerator can only generate data on CPU. Using
             //       GPU to generate data might be more efficient and avoid
             //       unnecessary hipMemCpy when CPU verification is not needed.
-       	    refA.emplace_back(
-              generateMXInput(TiA, hA[i].buf(), hScaleA[i].buf(), A_row[i], A_col[i], transA == HIPBLAS_OP_T,
-               arg.scaleABlockRowSize, arg.scaleABlockColSize, true, hipblaslt_initialization2string(arg.initialization)));
+            refA.emplace_back(generateMXInput(TiA,
+                                              hA[i].buf(),
+                                              hScaleA[i].buf(),
+                                              A_row[i],
+                                              A_col[i],
+                                              transA == HIPBLAS_OP_T,
+                                              arg.scaleABlockRowSize,
+                                              arg.scaleABlockColSize,
+                                              true,
+                                              hipblaslt_initialization2string(arg.initialization)));
             // Copy data and scale to device buffers
-	    CHECK_HIP_ERROR(synchronize(dA[i], hA[i], block_count));
-	    CHECK_HIP_ERROR(synchronize(dScaleA[i], hScaleA[i], block_count));
-            
+            CHECK_HIP_ERROR(synchronize(dA[i], hA[i], block_count));
+            CHECK_HIP_ERROR(synchronize(dScaleA[i], hScaleA[i], block_count));
         }
         else
         {
 #endif
             hipblaslt_init_device(ABC::A,
-                    arg.initialization,
-                    alpha_isnan_type(arg, Talpha),
-                    dA[i].buf(),
-                    A_row[i],
-                    A_col[i],
-                    lda[i],
-                    TiA,
-                    stride_a[i],
-                    num_batches[i]);
+                                  arg.initialization,
+                                  alpha_isnan_type(arg, Talpha),
+                                  dA[i].buf(),
+                                  A_row[i],
+                                  A_col[i],
+                                  lda[i],
+                                  TiA,
+                                  stride_a[i],
+                                  num_batches[i]);
 #ifdef USE_ROCROLLER
         }
-	if(arg.scaleB == hipblaslt_scaling_format::Block)
-	{
-            if(arg.initialization != hipblaslt_initialization::hpl && arg.initialization != hipblaslt_initialization::trig_float)
+        if(arg.scaleB == hipblaslt_scaling_format::Block)
+        {
+            if(arg.initialization != hipblaslt_initialization::hpl
+               && arg.initialization != hipblaslt_initialization::trig_float)
             {
-                hipblaslt_cout << "Initialization of microscaling data only allows hpl and trig_float not "
-                               << hipblaslt_initialization2string(arg.initialization) << std::endl;
-                return ;
+                hipblaslt_cout
+                    << "Initialization of microscaling data only allows hpl and trig_float not "
+                    << hipblaslt_initialization2string(arg.initialization) << std::endl;
+                return;
             }
             if(arg.algo_method == 1)
             {
-                hipblaslt_cout <<  "MX data types do not support algorithm \"all\"" << std::endl;
+                hipblaslt_cout << "MX data types do not support algorithm \"all\"" << std::endl;
                 return;
             }
-            // For MX format, use mxDataGenerator to generate 
+            // For MX format, use mxDataGenerator to generate
             // input data (consists of data part and scale part)
             // TODO: mxDataGenerator can only generate data on CPU. Using
             //       GPU to generate data might be more efficient and avoid
             //       unnecessary hipMemCpy when CPU verification is not needed.
-	    refB.emplace_back(
-               generateMXInput(TiB, hB[i].buf(), hScaleB[i].buf(), B_row[i], B_col[i], transB == HIPBLAS_OP_T,
-               arg.scaleBBlockRowSize, arg.scaleBBlockColSize, false, hipblaslt_initialization2string(arg.initialization)));
+            refB.emplace_back(generateMXInput(TiB,
+                                              hB[i].buf(),
+                                              hScaleB[i].buf(),
+                                              B_row[i],
+                                              B_col[i],
+                                              transB == HIPBLAS_OP_T,
+                                              arg.scaleBBlockRowSize,
+                                              arg.scaleBBlockColSize,
+                                              false,
+                                              hipblaslt_initialization2string(arg.initialization)));
             // Copy data and scale to device buffers
-	    CHECK_HIP_ERROR(synchronize(dB[i], hB[i], block_count));
-	    CHECK_HIP_ERROR(synchronize(dScaleB[i], hScaleB[i], block_count));
-	}
-	else
-	{
+            CHECK_HIP_ERROR(synchronize(dB[i], hB[i], block_count));
+            CHECK_HIP_ERROR(synchronize(dScaleB[i], hScaleB[i], block_count));
+        }
+        else
+        {
 #endif
-	    hipblaslt_init_device(ABC::B,
-		    arg.initialization,
-		    alpha_isnan_type(arg, Talpha),
-		    dB[i].buf(),
-		    B_row[i],
-		    B_col[i],
-		    ldb[i],
-		    TiB,
-		    stride_b[i],
-		    num_batches[i]);
+            hipblaslt_init_device(ABC::B,
+                                  arg.initialization,
+                                  alpha_isnan_type(arg, Talpha),
+                                  dB[i].buf(),
+                                  B_row[i],
+                                  B_col[i],
+                                  ldb[i],
+                                  TiB,
+                                  stride_b[i],
+                                  num_batches[i]);
 #ifdef USE_ROCROLLER
-	}
+        }
 #endif
-	hipblaslt_init_device(ABC::C,
-		arg.initialization,
-		beta_isnan_type(arg, Talpha),
-		dC[i].buf(),
-		M[i],
-		N[i],
-		ldc[i],
-		To,
-		stride_c[i],
-		num_batches[i]);
-
-
+        hipblaslt_init_device(ABC::C,
+                              arg.initialization,
+                              beta_isnan_type(arg, Talpha),
+                              dC[i].buf(),
+                              M[i],
+                              N[i],
+                              ldc[i],
+                              To,
+                              stride_c[i],
+                              num_batches[i]);
 
         // broadcast first block
         CHECK_HIP_ERROR(broadcast(dA[i], block_count));
@@ -1837,15 +1851,15 @@ void testing_matmul_with_bias(const Arguments& arg,
 
         if(arg.scaleA == hipblaslt_scaling_format::Scalar
            || arg.scaleA == hipblaslt_scaling_format::Vector)
-	    {
+        {
             hipblaslt_init(hScaleA[i].buf(), size_scaleAVec[i], 1, size_scaleAVec[i], Talpha);
-	    }
+        }
 
         if(arg.scaleB == hipblaslt_scaling_format::Scalar
            || arg.scaleB == hipblaslt_scaling_format::Vector)
-	    {
+        {
             hipblaslt_init(hScaleB[i].buf(), size_scaleBVec[i], 1, size_scaleBVec[i], Talpha);
-	    }
+        }
 
         if(arg.scaleC)
         {
@@ -2008,8 +2022,7 @@ void testing_matmul_with_bias(const Arguments& arg,
         }
         else if(arg.scaleA == hipblaslt_scaling_format::Block)
         {
-            hipblasLtMatmulDescAttributes_t attr
-	            = HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER;
+            hipblasLtMatmulDescAttributes_t attr = HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER;
 
             // Set up scale pointer
             void* scaleA_addr = (void*)(dScaleA[i].buf());
@@ -2023,7 +2036,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                 auto attr = HIPBLASLT_MATMUL_DESC_A_SCALE_MODE;
                 auto mode = HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0;
                 CHECK_HIPBLASLT_ERROR(
-                        hipblasLtMatmulDescSetAttribute(matmul[0][i], attr, &mode, sizeof(uint32_t)));
+                    hipblasLtMatmulDescSetAttribute(matmul[0][i], attr, &mode, sizeof(uint32_t)));
             }
             else
             {
@@ -2045,8 +2058,7 @@ void testing_matmul_with_bias(const Arguments& arg,
         }
         else if(arg.scaleB == hipblaslt_scaling_format::Block)
         {
-            hipblasLtMatmulDescAttributes_t attr
-	        = HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER;
+            hipblasLtMatmulDescAttributes_t attr = HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER;
 
             // Set up scale pointer
             void* scaleB_addr = (void*)(dScaleB[i].buf());
@@ -2060,7 +2072,7 @@ void testing_matmul_with_bias(const Arguments& arg,
                 auto attr = HIPBLASLT_MATMUL_DESC_B_SCALE_MODE;
                 auto mode = HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0;
                 CHECK_HIPBLASLT_ERROR(
-                        hipblasLtMatmulDescSetAttribute(matmul[0][i], attr, &mode, sizeof(uint32_t)));
+                    hipblasLtMatmulDescSetAttribute(matmul[0][i], attr, &mode, sizeof(uint32_t)));
             }
             else
             {
@@ -2955,7 +2967,6 @@ void testing_matmul_with_bias(const Arguments& arg,
         exit(EXIT_FAILURE);
     }
 
-
     // get CPU result
     if(arg.unit_check || arg.norm_check || arg.allclose_check)
     {
@@ -3016,44 +3027,44 @@ void testing_matmul_with_bias(const Arguments& arg,
                 {
                     // Note: for MX types, pass the reference float instead so there is
                     //       no need to convert them to float in cblas_gemm
-                    cblas_gemm(transA,
-                               transB,
-                               M[gemmIdx],
-                               N[gemmIdx],
-                               K[gemmIdx],
-                               alpha,
-                               isScaleAMXFormat ? 
-                               reinterpret_cast<char*>(refA[gemmIdx].data())
-                                   + stride_a[gemmIdx] * batchIdx * realDataTypeSize(HIP_R_32F) :
-                               hA[gemmIdx].as<char>()
-                                   + stride_a[gemmIdx] * batchIdx * realDataTypeSize(TiA),
-                               lda[gemmIdx],
-                               isScaleBMXFormat ? 
-                               reinterpret_cast<char*>(refB[gemmIdx].data())
-                                   + stride_b[gemmIdx] * batchIdx * realDataTypeSize(HIP_R_32F) :
-                               hB[gemmIdx].as<char>()
-                                   + stride_b[gemmIdx] * batchIdx * realDataTypeSize(TiB),
-                               ldb[gemmIdx],
-                               betaTemp,
-                               hD_gold_epl[gemmIdx].as<char>()
-                                   + stride_d[gemmIdx] * batchIdx * realDataTypeSize(Talpha),
-                               ldd[gemmIdx],
-                               arg.scaleAlpha_vector ? hScaleAlphaVec[gemmIdx].as<char>() + 0
-                                                     : nullptr,
-                               scaleAVec,
-                               scaleBVec,
-                               (void*)(&scale),
-                               (arg.scaleA == hipblaslt_scaling_format::Vector),
-                               (arg.scaleB == hipblaslt_scaling_format::Vector),
-                               isScaleAMXFormat ? HIP_R_32F : TiA,
-                               isScaleBMXFormat ? HIP_R_32F : TiB,
-                               Tc,
-                               Tc,
-                               isScaleAMXFormat ? HIP_R_32F : TciA,
-                               isScaleBMXFormat ? HIP_R_32F : TciB,
-                               false, 
-                               (arg.scaleA == hipblaslt_scaling_format::Block),
-                               (arg.scaleB == hipblaslt_scaling_format::Block));
+                    cblas_gemm(
+                        transA,
+                        transB,
+                        M[gemmIdx],
+                        N[gemmIdx],
+                        K[gemmIdx],
+                        alpha,
+                        isScaleAMXFormat
+                            ? reinterpret_cast<char*>(refA[gemmIdx].data())
+                                  + stride_a[gemmIdx] * batchIdx * realDataTypeSize(HIP_R_32F)
+                            : hA[gemmIdx].as<char>()
+                                  + stride_a[gemmIdx] * batchIdx * realDataTypeSize(TiA),
+                        lda[gemmIdx],
+                        isScaleBMXFormat
+                            ? reinterpret_cast<char*>(refB[gemmIdx].data())
+                                  + stride_b[gemmIdx] * batchIdx * realDataTypeSize(HIP_R_32F)
+                            : hB[gemmIdx].as<char>()
+                                  + stride_b[gemmIdx] * batchIdx * realDataTypeSize(TiB),
+                        ldb[gemmIdx],
+                        betaTemp,
+                        hD_gold_epl[gemmIdx].as<char>()
+                            + stride_d[gemmIdx] * batchIdx * realDataTypeSize(Talpha),
+                        ldd[gemmIdx],
+                        arg.scaleAlpha_vector ? hScaleAlphaVec[gemmIdx].as<char>() + 0 : nullptr,
+                        scaleAVec,
+                        scaleBVec,
+                        (void*)(&scale),
+                        (arg.scaleA == hipblaslt_scaling_format::Vector),
+                        (arg.scaleB == hipblaslt_scaling_format::Vector),
+                        isScaleAMXFormat ? HIP_R_32F : TiA,
+                        isScaleBMXFormat ? HIP_R_32F : TiB,
+                        Tc,
+                        Tc,
+                        isScaleAMXFormat ? HIP_R_32F : TciA,
+                        isScaleBMXFormat ? HIP_R_32F : TciB,
+                        false,
+                        (arg.scaleA == hipblaslt_scaling_format::Block),
+                        (arg.scaleB == hipblaslt_scaling_format::Block));
 
                     auto                        pos       = stride_d[gemmIdx] * batchIdx;
                     std::vector<HipHostBuffer>* hEInst    = arg.gradient ? &hE : &hE_gold;
@@ -3196,43 +3207,44 @@ void testing_matmul_with_bias(const Arguments& arg,
                 {
                     // Note: for MX types, pass the reference float instead so there is
                     //       no need to convert them to float in cblas_gemm
-                    cblas_gemm(transA,
-                               transB,
-                               M[gemmIdx],
-                               N[gemmIdx],
-                               K[gemmIdx],
-                               alpha,
-                               isScaleAMXFormat ?
-                               reinterpret_cast<char*>(refA[gemmIdx].data())
-                                   + stride_a[gemmIdx] * batchIdx * realDataTypeSize(HIP_R_32F) :
-                               hA[gemmIdx].as<char>()
-                                   + stride_a[gemmIdx] * batchIdx * realDataTypeSize(TiA),
-                               lda[gemmIdx],
-                               isScaleBMXFormat ? 
-                               reinterpret_cast<char*>(refB[gemmIdx].data())
-                                   + stride_a[gemmIdx] * batchIdx * realDataTypeSize(HIP_R_32F) :
-                               hB[gemmIdx].as<char>()
-                                   + stride_b[gemmIdx] * batchIdx * realDataTypeSize(TiB),
-                               ldb[gemmIdx],
-                               betaTemp,
-                               hD_gold[gemmIdx].as<char>()
-                                   + stride_d[gemmIdx] * batchIdx * realDataTypeSize(To),
-                               ldd[gemmIdx],
-                               nullptr,
-                               scaleAVec,
-                               scaleBVec,
-                               scaleDValue,
-                               (arg.scaleA == hipblaslt_scaling_format::Vector),
-                               (arg.scaleB == hipblaslt_scaling_format::Vector),
-                               isScaleAMXFormat ? HIP_R_32F : TiA,
-                               isScaleBMXFormat ? HIP_R_32F : TiB,
-                               To,
-                               Tc,
-                               isScaleAMXFormat ? HIP_R_32F : TciA,
-                               isScaleBMXFormat ? HIP_R_32F : TciB,
-                               false,
-                               (arg.scaleA == hipblaslt_scaling_format::Block),
-                               (arg.scaleB == hipblaslt_scaling_format::Block));
+                    cblas_gemm(
+                        transA,
+                        transB,
+                        M[gemmIdx],
+                        N[gemmIdx],
+                        K[gemmIdx],
+                        alpha,
+                        isScaleAMXFormat
+                            ? reinterpret_cast<char*>(refA[gemmIdx].data())
+                                  + stride_a[gemmIdx] * batchIdx * realDataTypeSize(HIP_R_32F)
+                            : hA[gemmIdx].as<char>()
+                                  + stride_a[gemmIdx] * batchIdx * realDataTypeSize(TiA),
+                        lda[gemmIdx],
+                        isScaleBMXFormat
+                            ? reinterpret_cast<char*>(refB[gemmIdx].data())
+                                  + stride_a[gemmIdx] * batchIdx * realDataTypeSize(HIP_R_32F)
+                            : hB[gemmIdx].as<char>()
+                                  + stride_b[gemmIdx] * batchIdx * realDataTypeSize(TiB),
+                        ldb[gemmIdx],
+                        betaTemp,
+                        hD_gold[gemmIdx].as<char>()
+                            + stride_d[gemmIdx] * batchIdx * realDataTypeSize(To),
+                        ldd[gemmIdx],
+                        nullptr,
+                        scaleAVec,
+                        scaleBVec,
+                        scaleDValue,
+                        (arg.scaleA == hipblaslt_scaling_format::Vector),
+                        (arg.scaleB == hipblaslt_scaling_format::Vector),
+                        isScaleAMXFormat ? HIP_R_32F : TiA,
+                        isScaleBMXFormat ? HIP_R_32F : TiB,
+                        To,
+                        Tc,
+                        isScaleAMXFormat ? HIP_R_32F : TciA,
+                        isScaleBMXFormat ? HIP_R_32F : TciB,
+                        false,
+                        (arg.scaleA == hipblaslt_scaling_format::Block),
+                        (arg.scaleB == hipblaslt_scaling_format::Block));
                 }
             }
         }

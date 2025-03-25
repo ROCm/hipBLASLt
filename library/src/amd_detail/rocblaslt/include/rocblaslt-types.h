@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -400,17 +400,18 @@ typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
  * \brief rocblaslt_matmul_algo holds the description of the matrix
  * multiplication algorithm.
  *******************************************************************************/
-typedef struct _rocblaslt_matmul_algo{
+typedef struct _rocblaslt_matmul_algo
+{
 #ifdef __cplusplus
-  uint8_t data[8] = {0}; // must match hipblasLtMatmulAlgo_t layout
-  bool fallback = false; // 
-  uint8_t data_pad[7] = {0}; // has uint8_t data[16] 
-  size_t max_workspace_bytes = 0;
+    uint8_t data[8]             = {0}; // must match hipblasLtMatmulAlgo_t layout
+    bool    fallback            = false; //
+    uint8_t data_pad[7]         = {0}; // has uint8_t data[16]
+    size_t  max_workspace_bytes = 0;
 #else
-  uint8_t data[8];
-  bool fallback;
-  uint8_t data_pad[7];
-  size_t max_workspace_bytes;
+    uint8_t data[8];
+    bool    fallback;
+    uint8_t data_pad[7];
+    size_t  max_workspace_bytes;
 #endif
 } rocblaslt_matmul_algo;
 
@@ -682,17 +683,17 @@ struct RocblasltContractionProblem
     bool   gradient;
 
     rocblaslt_compute_type compute_type;
-    hipDataType        scale_type;
+    hipDataType            scale_type;
 
-    const void*        bias;
-    const void*        scaleA;
-    const void*        scaleB;
-    const void*        scaleC;
-    const void*        scaleD;
-    const void*        scaleE;
-    const void*        scaleAlphaVec;
-    ScalingFormat      scaleAType;
-    ScalingFormat      scaleBType;
+    const void*   bias;
+    const void*   scaleA;
+    const void*   scaleB;
+    const void*   scaleC;
+    const void*   scaleD;
+    const void*   scaleE;
+    const void*   scaleAlphaVec;
+    ScalingFormat scaleAType;
+    ScalingFormat scaleBType;
 
     size_t             scaleABlockRowSize;
     size_t             scaleABlockColSize;
@@ -703,7 +704,6 @@ struct RocblasltContractionProblem
     void*              amaxD;
     void*              workspace;
     size_t             workspaceSize;
-
 
     hipStream_t stream;
     void*       Synchronizer;

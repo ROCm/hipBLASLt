@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,8 +32,7 @@
 #include <string_view>
 
 /*! \brief device matches pattern */
-inline
-bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
+inline bool gpu_arch_match(std::string_view gpu_arch, std::string_view pattern)
 {
     if(!pattern.length())
     {
