@@ -72,6 +72,7 @@ defaultBenchOptions = {"ProblemType": {
     "SolutionIndex": None, # Only works in AlgoMethod index
     "ApiMethod": "cpp",
     "RotatingBuffer": 512,
+    "Device": 0,
 }, "TuningParameters": {
     "SplitK": [0]
 }, "ProblemSizes": []}
@@ -122,6 +123,8 @@ def dataType2Bench(dataType):
         return "bf16_r"
     elif dataType == "S":
         return "f32_r"
+    elif dataType == "FP8N":
+        return "f8_fnuz_r"
     elif dataType == "FP8":
         return "f8_r"
     else:
@@ -218,6 +221,7 @@ def findExact(config):
         print("--Running size: %s"%(filename))
         command = [execBenchPath,
                 "--print_kernel_info",
+                "--device", str(config["TestConfig"]["Device"]),
                 "--transA", config["ProblemType"]["TransposeA"],
                 "--transB", config["ProblemType"]["TransposeB"],
                 "--a_type", aType,

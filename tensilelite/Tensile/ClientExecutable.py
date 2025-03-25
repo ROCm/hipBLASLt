@@ -29,7 +29,8 @@ from typing import Optional
 from pathlib import Path
 
 from . import SOURCE_PATH
-from .Common import globalParameters, print2, ClientExecutionLock, ensurePath, CLIENT_BUILD_DIR
+from Tensile.Common import print2, ClientExecutionLock, ensurePath, CLIENT_BUILD_DIR
+from Tensile.Common.GlobalParameters import globalParameters
 
 class CMakeEnvironment:
     def __init__(self, sourceDir, buildDir, **options):
@@ -69,12 +70,16 @@ def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cComp
                'CMAKE_CXX_COMPILER': os.path.join(globalParameters["ROCmBinPath"], cxxCompiler),
                'CMAKE_C_COMPILER': os.path.join(globalParameters["ROCmBinPath"], cCompiler)}
 
+    if "CCACHE_BASEDIR" in os.environ:
+        options.update({'CMAKE_C_COMPILER_LAUNCHER': 'ccache', 'CMAKE_CXX_COMPILER_LAUNCHER': 'ccache'})
+        print('Is Using CCACHE')
+
     return CMakeEnvironment(sourcedir, builddir, **options)
 
 
 buildEnv = None
 
-def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir):
+def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir: Path):
     if "PrebuiltClient" in globalParameters:
         return globalParameters["PrebuiltClient"]
 
@@ -86,4 +91,3 @@ def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir):
         buildEnv.build()
 
     return buildEnv.builtPath("client/tensile_client")
-

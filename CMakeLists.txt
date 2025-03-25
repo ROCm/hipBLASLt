@@ -162,12 +162,12 @@ else()
     if (NOT BUILD_ADDRESS_SANITIZER)
       #Set the AMDGPU_TARGETS with backward compatiblity
       rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-          TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx942;gfx1100;gfx1101;;gfx1200;gfx1201"
+          TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx942;gfx950;gfx1100;gfx1101;;gfx1200;gfx1201"
       )
     else()
       #build xnack-supported targets only
       rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-          TARGETS "gfx908:xnack+;gfx90a:xnack+;gfx942:xnack+"
+          TARGETS "gfx908:xnack+;gfx90a:xnack+;gfx942:xnack+;gfx950:xnack+"
       )
     endif()
 
@@ -235,6 +235,44 @@ else()
       virtualenv_install(${CMAKE_SOURCE_DIR}/tensilelite)
     endif()
     message(STATUS "Adding ${VIRTUALENV_HOME_DIR} to CMAKE_PREFIX_PATH")
+    # Copying rocisa to virtualenv & build
+    message(STATUS "Copy rocIsa to ${VIRTUALENV_HOME_DIR}")
+    set(ROCISA_VIRTUAL_DIR ${VIRTUALENV_HOME_DIR}/rocisa)
+    file(COPY ${CMAKE_SOURCE_DIR}/tensilelite/rocisa/include DESTINATION ${ROCISA_VIRTUAL_DIR})
+    file(COPY ${CMAKE_SOURCE_DIR}/tensilelite/rocisa/src DESTINATION ${ROCISA_VIRTUAL_DIR})
+    file(COPY ${CMAKE_SOURCE_DIR}/tensilelite/rocisa/CMakeLists.txt DESTINATION ${ROCISA_VIRTUAL_DIR})
+    file(MAKE_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build)
+    string(REPLACE "python" ";" PYTHONVERSION "${VIRTUALENV_PYTHON_EXENAME}")
+    list(GET PYTHONVERSION -1 PYTHONVERSION)
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -DPYTHON_VERSION=${PYTHONVERSION} ..
+      WORKING_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build
+      OUTPUT_VARIABLE output
+      ERROR_VARIABLE error
+      RESULT_VARIABLE result
+    )
+    # if(NOT ${result} EQUAL 0)
+      message(STATUS "Output: ${output}")
+      message(STATUS "Error: ${error}")
+      message(STATUS "Result: ${result}")
+    # else()
+      message(STATUS "rocIsa configuring done.")
+    # endif()
+    execute_process(
+      COMMAND make -j8
+      WORKING_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build
+      OUTPUT_VARIABLE output
+      ERROR_VARIABLE error
+      RESULT_VARIABLE result
+    )
+    if(NOT ${result} EQUAL 0)
+      message(STATUS "Output: ${output}")
+      message(STATUS "Error: ${error}")
+      message(FATAL_ERROR "Result: ${result}")
+    else()
+      message(STATUS "rocIsa building done.")
+      set(ENV{PYTHONPATH} "${VIRTUALENV_HOME_DIR}/rocisa/build/lib:$ENV{PYTHONPATH}")
+    endif()
     list(APPEND CMAKE_PREFIX_PATH ${VIRTUALENV_HOME_DIR})
     if (TENSILE_VERSION)
       find_package(Tensile ${TENSILE_VERSION} EXACT REQUIRED HIP LLVM OpenMP PATHS "${INSTALLED_TENSILE_PATH}")
@@ -351,8 +389,13 @@ if( NOT BUILD_CUDA )
     rocm_package_add_dependencies(DEPENDS "hipblas >= 0.50.0")
   else()
     set(hipblas_common_minimum 1.0.0)
+    if(BUILD_SHARED_LIBS)
     rocm_package_add_deb_dependencies(COMPONENT devel DEPENDS "hipblas-common-dev >= ${hipblas_common_minimum}")
     rocm_package_add_rpm_dependencies(COMPONENT devel DEPENDS "hipblas-common-devel >= ${hipblas_common_minimum}")
+    else()
+      rocm_package_add_deb_dependencies(COMPONENT devel DEPENDS "hipblas-common-static-dev >= ${hipblas_common_minimum}")
+      rocm_package_add_rpm_dependencies(COMPONENT devel DEPENDS "hipblas-common-static-devel >= ${hipblas_common_minimum}")
+    endif()
   endif()
 endif( )
 
@@ -385,7 +428,7 @@ set( HIPBLASLT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LI
 
 rocm_create_package(
     NAME ${package_name}
-    DESCRIPTION "Radeon Open Compute BLAS marshalling library"
+    DESCRIPTION "HIP library for GEMM operations with extended functionality"
     MAINTAINER "hipBLASLt Maintainer <hipblaslt-maintainer@amd.com>"
     LDCONFIG
     LDCONFIG_DIR ${HIPBLASLT_CONFIG_DIR}

@@ -20,7 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .TensileInstructions import Module, SAddI32, SEndpgm, fastdeepcopy
+from .TensileInstructions import Module, SAddI32, SEndpgm
 
 from dataclasses import dataclass, field
 
@@ -67,7 +67,11 @@ def _replaceActBranchLabel(module, labels):
     for item in module.items():
         if isinstance(item, Module):
             if "InsertActFunctionCallAddrCalc" in item.name:
-                labelLeft = labels[1:]
+                labelFirst = labels[0]
+                numUnderScores = labelFirst.count('_')
+                partFirst  = labelFirst.rpartition("_")
+                lastPostfix = partFirst[-1]
+                labelLeft  = labels[1:]
                 replaceLabel = False
                 for inst in item.items():
                     if isinstance(inst, SAddI32) and inst.comment == "target branch offset":
@@ -75,13 +79,22 @@ def _replaceActBranchLabel(module, labels):
                             replaceLabel = True
                             break
                 if replaceLabel:
-                    for inst in item.items():
+                    for idx in range(0, len(item.items())):
+                        inst = item.getItem(idx)
                         if isinstance(inst, SAddI32) and inst.comment == "target branch offset":
                             # The label is generated in the format of XXXX_1, XXXX_2
                             # and string.rpartition returns ('XXXX', '_', '1').
                             # We only need the first string.
-                            part = inst.srcs[0].rpartition("_")
-                            inst.srcs[0] = part[0]
+                            numUS = inst.srcs[0].count('_')
+                            if numUnderScores == numUS:
+                                part = inst.srcs[0].rpartition("_")
+                                inst.setSrc(0, part[0] + "_" + lastPostfix)
+                            elif numUnderScores == numUS - 1:
+                                part = inst.srcs[0].rpartition("_")
+                                inst.setSrc(0, part[0])
+                            else:
+                                assert 0, "Incorrect Activation Label"
+                            
             else:
                 _replaceActBranchLabel(item, labels)
 
