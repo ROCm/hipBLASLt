@@ -236,30 +236,30 @@ else()
     endif()
     message(STATUS "Adding ${VIRTUALENV_HOME_DIR} to CMAKE_PREFIX_PATH")
     # Copying rocisa to virtualenv & build
-    message(STATUS "Copy rocIsa to ${VIRTUALENV_HOME_DIR}")
-    set(ROCISA_VIRTUAL_DIR ${VIRTUALENV_HOME_DIR}/rocisa)
-    file(COPY ${CMAKE_SOURCE_DIR}/tensilelite/rocisa/include DESTINATION ${ROCISA_VIRTUAL_DIR})
-    file(COPY ${CMAKE_SOURCE_DIR}/tensilelite/rocisa/src DESTINATION ${ROCISA_VIRTUAL_DIR})
-    file(COPY ${CMAKE_SOURCE_DIR}/tensilelite/rocisa/CMakeLists.txt DESTINATION ${ROCISA_VIRTUAL_DIR})
-    file(MAKE_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build)
-    string(REPLACE "python" ";" PYTHONVERSION "${VIRTUALENV_PYTHON_EXENAME}")
-    list(GET PYTHONVERSION -1 PYTHONVERSION)
+    message(STATUS "Building rocIsa")
     execute_process(
-      COMMAND ${CMAKE_COMMAND} -DPYTHON_VERSION=${PYTHONVERSION} ..
+      COMMAND ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} -c "import sysconfig; print(sysconfig.get_paths()['purelib'])"
+      OUTPUT_VARIABLE VIRTUALENV_SITE_PATH
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    set(ROCISA_VIRTUAL_DIR ${VIRTUALENV_SITE_PATH}/rocisa)
+    file(MAKE_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build)
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -DPYTHON_EXE=${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ..
       WORKING_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build
       OUTPUT_VARIABLE output
       ERROR_VARIABLE error
       RESULT_VARIABLE result
     )
-    # if(NOT ${result} EQUAL 0)
+    if(NOT ${result} EQUAL 0)
       message(STATUS "Output: ${output}")
       message(STATUS "Error: ${error}")
       message(STATUS "Result: ${result}")
-    # else()
+    else()
       message(STATUS "rocIsa configuring done.")
-    # endif()
+    endif()
     execute_process(
-      COMMAND make -j8
+      COMMAND ${CMAKE_COMMAND} --build . -j 8
       WORKING_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build
       OUTPUT_VARIABLE output
       ERROR_VARIABLE error
@@ -271,7 +271,7 @@ else()
       message(FATAL_ERROR "Result: ${result}")
     else()
       message(STATUS "rocIsa building done.")
-      set(ENV{PYTHONPATH} "${VIRTUALENV_HOME_DIR}/rocisa/build/lib:$ENV{PYTHONPATH}")
+      set(ENV{PYTHONPATH} "${ROCISA_VIRTUAL_DIR}/build/lib:$ENV{PYTHONPATH}")
     endif()
     list(APPEND CMAKE_PREFIX_PATH ${VIRTUALENV_HOME_DIR})
     if (TENSILE_VERSION)
