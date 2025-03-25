@@ -92,18 +92,7 @@ namespace TensileLite
 
             if(solution)
             {
-                if(debug)
-                {
-                    std::cout << "hardwarePredicate:" << std::endl;
-                    solution->hardwarePredicate->debugEval(hardware, std::cout);
-                    std::cout << std::endl;
-                    std::cout << "problemPredicate:" << std::endl;
-                    solution->problemPredicate->debugEval(problem, std::cout);
-                    std::cout << std::endl;
-                }
-
-                if((*solution->hardwarePredicate)(hardware)
-                   && (*solution->problemPredicate)(problem))
+                if(solution->canSolve(problem, hardware))
                     return solution;
             }
             else if(debug)
@@ -181,8 +170,8 @@ namespace TensileLite
                         solution->problemPredicate->debugEval(problem, std::cout);
                 }
 
-                if((*solution->hardwarePredicate)(hardware)
-                   && softwarePredicate(searchType, (*solution), problem))
+                if(solution->canSolve(problem, hardware)
+                   && softwarePredicate(searchType, (*solution), problem)) 
                     useSolution = true;
             }
             else if(debug)

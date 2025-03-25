@@ -30,6 +30,7 @@
 
 #include <Tensile/AMDGPU.hpp>
 #include <Tensile/ContractionProblem.hpp>
+#include <Tensile/Task.hpp>
 #include <Tensile/Utils.hpp>
 
 #include <algorithm>
@@ -1175,22 +1176,10 @@ namespace TensileLite
             assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
             if(sizeMapping.streamK != 0)
             {
-                if(!inputs.ws)
-                {
-                    std::cerr << "\nstreamk warning: workspace not initialized, falling back to "
-                                 "data parallel mode"
-                              << std::endl;
-                    skGrid = tiles;
-                }
-                else if(inputs.workspaceSize < requiredWorkspaceSize(problem, hardware))
-                {
-                    std::cerr << "\nstreamk warning: insufficient workspace (given: "
-                              << inputs.workspaceSize
-                              << " required: " << requiredWorkspaceSize(problem, hardware)
-                              << "), falling back to data parallel mode" << std::endl;
+                const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
+                if(streamKDP)
                     skGrid = tiles;
                     //TODO Use heuristic to decide fallback to reduced grid instead of DP
-                }
                 else
                     skGrid = getSKGrid(problem, hardware, tiles);
                 rv.numWorkGroups.x = skGrid;
@@ -2064,6 +2053,20 @@ namespace TensileLite
         rv.codeObjectFile = codeObjectFilename.load();
 
         return rv;
+    }
+
+    bool ContractionSolution::canSolve(Problem const& problem, Hardware const& hardware) const
+    {
+        static const bool debug = Debug::Instance().printPredicateEvaluation();
+        Task task(hardware, problem, *this);
+        if(debug)
+        {
+            hardwarePredicate->debugEval(hardware, std::cout);
+            problemPredicate->debugEval(problem, std::cout);
+            taskPredicate->debugEval(task, std::cout);
+        }
+        return (*taskPredicate)(task) && (*problemPredicate)(problem)
+               && (*hardwarePredicate)(hardware);
     }
 
     std::string ContractionSolution::outputConversionKernelName(Problem const&           problem,
@@ -2953,7 +2956,7 @@ namespace TensileLite
             auto   tiles  = problem.getNumTiles(sizeMapping);
             size_t skGrid = getSKGrid(problem, hardware, tiles);
             // Get space required for partial tiles
-            if(tiles != skGrid || tiles % skGrid != 0)
+            if(tiles % skGrid != 0)
                 size += partialTileSize(skGrid);
         }
         else
@@ -2982,7 +2985,7 @@ namespace TensileLite
                         && (gsuMultiplier == 0))
                 {
                     size += problem.d().totalLogicalElements()
-                            * sizeMapping.workspaceSizePerElemBias * gsu;
+                            * problem.computeTypeElementSize() * gsu;
                 }
             }
 

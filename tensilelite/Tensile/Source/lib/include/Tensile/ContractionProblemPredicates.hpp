@@ -1503,104 +1503,111 @@ namespace TensileLite
                 }
             };
 
-            struct WorkspaceCheck : public Predicate_CRTP<WorkspaceCheck, ContractionProblemGemm>
-            {
-                enum
-                {
-                    HasIndex = true,
-                    HasValue = true
-                };
-#define MAX_GSU_WORKSPACE_SIZE 128 * 1024 * 1024
-                size_t             index;
-                std::array<int, 3> value;
+//             struct WorkspaceCheck : public Predicate_CRTP<WorkspaceCheck, ContractionProblemGemm>
+//             {
+//                 enum
+//                 {
+//                     HasIndex = true,
+//                     HasValue = true
+//                 };
+// #define MAX_GSU_WORKSPACE_SIZE 128 * 1024 * 1024
+//                 size_t             index;
+//                 std::array<int, 3> value;
 
-                WorkspaceCheck() = default;
-                WorkspaceCheck(size_t index, std::array<int, 3> value)
-                    : index(index)
-                    , value(value)
-                {
-                }
+//                 WorkspaceCheck() = default;
+//                 WorkspaceCheck(size_t index, std::array<int, 3> value)
+//                     : index(index)
+//                     , value(value)
+//                 {
+//                 }
 
-                static std::string Type()
-                {
-                    return "WorkspaceCheck";
-                }
+//                 static std::string Type()
+//                 {
+//                     return "WorkspaceCheck";
+//                 }
 
-                static size_t
-                    reductionSize(ContractionProblemGemm const& problem, int& elemC, int& elemBias)
-                {
-                    size_t reductionSize = 0;
-                    // 2d reduction
-                    if(problem.useGradient() && problem.useBias()
-                       && problem.getParams().biasEnum() != DataType::None)
-                    {
-                        if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (elemC == 0))
-                            reductionSize += problem.d().totalLogicalElements()
-                                             * problem.computeTypeElementSize();
-                        else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
-                        {
-                            reductionSize += problem.freeSizeA(0) * elemBias;
-                        }
-                        else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
-                        {
-                            reductionSize += problem.freeSizeB(0) * elemBias;
-                        }
-                    }
-                    return reductionSize;
-                }
+//                 static size_t
+//                     reductionSize(ContractionProblemGemm const& problem, int& elemC, int& elemBias)
+//                 {
+//                     size_t reductionSize = 0;
+//                     // 2d reduction
+//                     if(problem.useGradient() && problem.useBias()
+//                        && problem.getParams().biasEnum() != DataType::None)
+//                     {
+//                         if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (elemC == 0))
+//                             reductionSize += problem.d().totalLogicalElements()
+//                                              * problem.computeTypeElementSize();
+//                         else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
+//                         {
+//                             reductionSize += problem.freeSizeA(0) * elemBias;
+//                         }
+//                         else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
+//                         {
+//                             reductionSize += problem.freeSizeB(0) * elemBias;
+//                         }
+//                     }
+//                     return reductionSize;
+//                 }
 
-                virtual bool operator()(ContractionProblemGemm const& problem) const override
-                {
-                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
-                    int gsuMultiplier = gsu > 1 ? gsu : 0;
-                    int elemC         = value[0] * gsuMultiplier;
-                    int elemBias      = value[1] * gsuMultiplier;
-                    size_t rs         = reductionSize(problem, elemC, elemBias);
-                    if(problem.d().totalLogicalElements() * elemC > MAX_GSU_WORKSPACE_SIZE)
-                        return 0;
+//                 virtual bool operator()(ContractionProblemGemm const& problem) const override
+//                 {
+//                     // auto pHardware = hip::GetCurrentDevice();
+//                     // assert(pHardware != nullptr);
+//                     // Hardware const& hardware = *pHardware;
+//                     //  auto required
+//                     //     = task.solution.requiredWorkspaceSize(problem, hardware);
 
-                    if(problem.groupedGemm())
-                        return problem.workspaceSizeGroupedGemm() <= problem.workspaceSize();
-                    else
-                        return problem.d().totalLogicalElements() * elemC + rs
-                               <= problem.workspaceSize();
-                }
+//                     // std::cout<<" *** required "<<required<<std::endl;
+//                     int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+//                     int gsuMultiplier = gsu > 1 ? gsu : 0;
+//                     int elemC         = value[0] * gsuMultiplier;
+//                     int elemBias      = value[1] * gsuMultiplier;
+//                     size_t rs         = reductionSize(problem, elemC, elemBias);
+//                     if(problem.d().totalLogicalElements() * elemC > MAX_GSU_WORKSPACE_SIZE)
+//                         return 0;
 
-                virtual bool debugEval(ContractionProblemGemm const& problem,
-                                       std::ostream&                 stream) const override
-                {
-                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
-                    int gsuMultiplier = gsu > 1 ? gsu : 0;
-                    int elemC         = value[0] * gsuMultiplier;
-                    int elemBias      = value[1] * gsuMultiplier;
-                    size_t rs         = reductionSize(problem, elemC, elemBias);
+//                     if(problem.groupedGemm())
+//                         return problem.workspaceSizeGroupedGemm() <= problem.workspaceSize();
+//                     else
+//                         return problem.d().totalLogicalElements() * elemC + rs
+//                                <= problem.workspaceSize();
+//                 }
 
-                    if(problem.d().totalLogicalElements() * elemC > MAX_GSU_WORKSPACE_SIZE)
-                        return debugEvalCmp(problem,
-                                            stream,
-                                            "prob",
-                                            problem.d().totalLogicalElements() * elemC,
-                                            "<=",
-                                            "max gsu workspace size",
-                                            MAX_GSU_WORKSPACE_SIZE);
+//                 virtual bool debugEval(ContractionProblemGemm const& problem,
+//                                        std::ostream&                 stream) const override
+//                 {
+//                     int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+//                     int gsuMultiplier = gsu > 1 ? gsu : 0;
+//                     int elemC         = value[0] * gsuMultiplier;
+//                     int elemBias      = value[1] * gsuMultiplier;
+//                     size_t rs         = reductionSize(problem, elemC, elemBias);
 
-                    if(problem.groupedGemm())
-                        return debugEvalCmp(problem,
-                                            stream,
-                                            "prob",
-                                            problem.workspaceSizeGroupedGemm(),
-                                            "<=",
-                                            "max",
-                                            problem.workspaceSize());
-                    return debugEvalCmp(problem,
-                                        stream,
-                                        "prob",
-                                        problem.d().totalLogicalElements() * value[0] + rs,
-                                        "<=",
-                                        "max",
-                                        problem.workspaceSize());
-                }
-            };
+//                     if(problem.d().totalLogicalElements() * elemC > MAX_GSU_WORKSPACE_SIZE)
+//                         return debugEvalCmp(problem,
+//                                             stream,
+//                                             "prob",
+//                                             problem.d().totalLogicalElements() * elemC,
+//                                             "<=",
+//                                             "max gsu workspace size",
+//                                             MAX_GSU_WORKSPACE_SIZE);
+
+//                     if(problem.groupedGemm())
+//                         return debugEvalCmp(problem,
+//                                             stream,
+//                                             "prob",
+//                                             problem.workspaceSizeGroupedGemm(),
+//                                             "<=",
+//                                             "max",
+//                                             problem.workspaceSize());
+//                     return debugEvalCmp(problem,
+//                                         stream,
+//                                         "prob",
+//                                         problem.d().totalLogicalElements() * value[0] + rs,
+//                                         "<=",
+//                                         "max",
+//                                         problem.workspaceSize());
+//                 }
+//             };
 
             struct WorkgroupNumberCheck
                 : public Predicate_CRTP<WorkgroupNumberCheck, ContractionProblemGemm>

@@ -110,16 +110,7 @@ namespace TensileLite
 
                 auto rv = solutions.at(index);
 
-                if(debug)
-                {
-                    std::cout << "Exact match: " << rv->description();
-                    rv->problemPredicate->debugEval(problem, std::cout);
-                    std::cout << std::endl;
-                    rv->hardwarePredicate->debugEval(hardware, std::cout);
-                    std::cout << std::endl;
-                }
-
-                if((*rv->problemPredicate)(problem) && (*rv->hardwarePredicate)(hardware))
+                if(rv->canSolve(problem, hardware))
                 {
                     return rv;
                 }
@@ -144,8 +135,7 @@ namespace TensileLite
 
                 if(myPerformance > bestPerformance)
                 {
-                    if((*row.second->problemPredicate)(problem)
-                       && (*row.second->hardwarePredicate)(hardware))
+                    if(row.second->canSolve(problem, hardware))
                     {
                         bestPerformance = myPerformance;
                         bestSolution    = row.second;
@@ -188,8 +178,8 @@ namespace TensileLite
                     std::cout << row.second->description() << ": ";
                 }
 
-                if(softwarePredicate(searchType, *(row.second), problem)
-                   && (*row.second->hardwarePredicate)(hardware))
+                if(softwarePredicate(searchType, *(row.second), problem) 
+                   && row.second->canSolve(problem, hardware))
                 {
                     rv.insert(row.second);
 
