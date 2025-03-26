@@ -121,9 +121,9 @@ function(TensileCreateLibraryFiles
 
   # Parse incoming options
   if(Tensile_TENSILE_ROOT)
-    set(Script "${Tensile_TENSILE_ROOT}/bin/TensileCreateLibraryPy")
+    set(Script "${Tensile_TENSILE_ROOT}/bin/TensileCreateLibrary")
   else()
-    set(Script "${Tensile_ROOT}/bin/TensileCreateLibraryPy")
+    set(Script "${Tensile_ROOT}/bin/TensileCreateLibrary")
   endif()
 
   message(STATUS "Tensile script: ${Script}")
