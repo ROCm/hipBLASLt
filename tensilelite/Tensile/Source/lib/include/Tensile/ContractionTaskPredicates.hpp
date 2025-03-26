@@ -55,6 +55,8 @@ namespace TensileLite
                     HasValue = false
                 };
 
+#define MAX_GSU_WORKSPACE_SIZE 128 * 1024 * 1024
+
                 WorkspaceCheck() = default;
 
                 static std::string Type()
@@ -78,45 +80,45 @@ namespace TensileLite
                 virtual bool debugEval(Task const& task, std::ostream& stream) const override
                 {
 
-                    // size_t gsu           = task.problem.getParams().gsu() > 0 ? task.problem.getParams().gsu()
-                    //                                                     : sizeMapping.globalSplitU;
-                    // size_t gsuMultiplier = gsu > 1 ? gsu : 0;
-                    // const bool streamK = Debug::Instance().useExperimentalSelection() == 2;
-                    // const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
+                    size_t gsu           = task.problem.getParams().gsu() > 0 ? task.problem.getParams().gsu()
+                                                                        : task.solution.sizeMapping.globalSplitU;
+                    size_t gsuMultiplier = gsu > 1 ? gsu : 0;
+                    const bool streamK = Debug::Instance().useExperimentalSelection() == 2;
+                    const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
 
-                    // // if(task.problem.d().totalLogicalElements() * gsuMultiplier > MAX_GSU_WORKSPACE_SIZE)
-                    // //     return debugEvalCmp(task.problem,
-                    // //                         stream,
-                    // //                         "prob",
-                    // //                         task.problem.d().totalLogicalElements() * gsuMultiplier,
-                    // //                         "<=",
-                    // //                         "max gsu workspace size",
-                    // //                         MAX_GSU_WORKSPACE_SIZE);
+                    if(task.problem.d().totalLogicalElements() * gsuMultiplier > MAX_GSU_WORKSPACE_SIZE)
+                        return debugEvalCmp(task,
+                                            stream,
+                                            "prob",
+                                            task.problem.d().totalLogicalElements() * gsuMultiplier,
+                                            "<=",
+                                            "max gsu workspace size",
+                                            MAX_GSU_WORKSPACE_SIZE);
 
-                    // if(task.problem.groupedGemm())
-                    //     return debugEvalCmp(task.problem,
-                    //                         stream,
-                    //                         "prob",
-                    //                         task.problem.workspaceSizeGroupedGemm(),
-                    //                         "<=",
-                    //                         "max",
-                    //                         task.problem.workspaceSize());
-                    // if(streamK && streamKDP)
-                    //     return debugEvalCmp(task.problem,
-                    //                         stream,
-                    //                         "prob",
-                    //                         0,
-                    //                         "<=",
-                    //                         "max",
-                    //                         task.problem.workspaceSize());
+                    if(task.problem.groupedGemm())
+                        return debugEvalCmp(task,
+                                            stream,
+                                            "prob",
+                                            task.problem.workspaceSizeGroupedGemm(),
+                                            "<=",
+                                            "max",
+                                            task.problem.workspaceSize());
+                    if(streamK && streamKDP)
+                        return debugEvalCmp(task,
+                                            stream,
+                                            "prob",
+                                            0,
+                                            "<=",
+                                            "max",
+                                            task.problem.workspaceSize());
 
-                    // return debugEvalCmp(task.problem,
-                    //                     stream,
-                    //                     "prob",
-                    //                     task.solution.requiredWorkspaceSize(task.problem, task.hardware),
-                    //                     "<=",
-                    //                     "max",
-                    //                     task.problem.workspaceSize());
+                    return debugEvalCmp(task,
+                                        stream,
+                                        "prob",
+                                        task.solution.requiredWorkspaceSize(task.problem, task.hardware),
+                                        "<=",
+                                        "max",
+                                        task.problem.workspaceSize());
 
                 }
             };
