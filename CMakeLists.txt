@@ -190,9 +190,8 @@ else()
         find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
     endif( )
 
-    option( BUILD_WITH_TENSILE "Build full functionality which requires tensile?" ON )
+    option( Tensile_SKIP_BUILD "Skip building Tensile" OFF )
 
-    if( BUILD_WITH_TENSILE )
     # we will have expanded "all" for tensile to ensure consistency as we have local rules
     set( Tensile_ARCHITECTURE "${AMDGPU_TARGETS}" CACHE STRING "Tensile to use which architecture?" FORCE)
 
@@ -237,67 +236,23 @@ else()
       virtualenv_install(${CMAKE_SOURCE_DIR}/tensilelite)
     endif()
     message(STATUS "Adding ${VIRTUALENV_HOME_DIR} to CMAKE_PREFIX_PATH")
-    # Copying rocisa to virtualenv & build
-    message(STATUS "Copy rocIsa to ${VIRTUALENV_HOME_DIR}")
-    set(ROCISA_VIRTUAL_DIR ${VIRTUALENV_HOME_DIR}/rocisa)
-    file(COPY ${CMAKE_SOURCE_DIR}/tensilelite/rocisa/include DESTINATION ${ROCISA_VIRTUAL_DIR})
-    file(COPY ${CMAKE_SOURCE_DIR}/tensilelite/rocisa/src DESTINATION ${ROCISA_VIRTUAL_DIR})
-    file(COPY ${CMAKE_SOURCE_DIR}/tensilelite/rocisa/CMakeLists.txt DESTINATION ${ROCISA_VIRTUAL_DIR})
-    file(MAKE_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build)
-    string(REPLACE "python" ";" PYTHONVERSION "${VIRTUALENV_PYTHON_EXENAME}")
-    list(GET PYTHONVERSION -1 PYTHONVERSION)
-    execute_process(
-      COMMAND ${CMAKE_COMMAND} -DPYTHON_VERSION=${PYTHONVERSION} ..
-      WORKING_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build
-      OUTPUT_VARIABLE output
-      ERROR_VARIABLE error
-      RESULT_VARIABLE result
-    )
-    # if(NOT ${result} EQUAL 0)
-      message(STATUS "Output: ${output}")
-      message(STATUS "Error: ${error}")
-      message(STATUS "Result: ${result}")
-    # else()
-      message(STATUS "rocIsa configuring done.")
-    # endif()
-    execute_process(
-      COMMAND make -j8
-      WORKING_DIRECTORY ${ROCISA_VIRTUAL_DIR}/build
-      OUTPUT_VARIABLE output
-      ERROR_VARIABLE error
-      RESULT_VARIABLE result
-    )
-    if(NOT ${result} EQUAL 0)
-      message(STATUS "Output: ${output}")
-      message(STATUS "Error: ${error}")
-      message(FATAL_ERROR "Result: ${result}")
-    else()
-      message(STATUS "rocIsa building done.")
-      set(ENV{PYTHONPATH} "${VIRTUALENV_HOME_DIR}/rocisa/build/lib:$ENV{PYTHONPATH}")
-    endif()
     list(APPEND CMAKE_PREFIX_PATH ${VIRTUALENV_HOME_DIR})
     if (TENSILE_VERSION)
       find_package(Tensile ${TENSILE_VERSION} EXACT REQUIRED HIP LLVM OpenMP PATHS "${INSTALLED_TENSILE_PATH}")
     else()
       find_package(Tensile 4.33.0 EXACT REQUIRED HIP LLVM OpenMP PATHS "${INSTALLED_TENSILE_PATH}")
     endif()
-    endif()
 
     # setup hipblaslt defines used for both the library and clients
-    if( BUILD_WITH_TENSILE )
-        list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=1)
-        if(Tensile_SEPARATE_ARCHITECTURES)
-          list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=1)
-        else()
-          list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=0)
-        endif()
-        if(Tensile_NO_LAZY_LIBRARY_LOADING)
-          list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=0)
-        else()
-          list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=1)
-        endif()
+    if(Tensile_SEPARATE_ARCHITECTURES)
+      list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=1)
     else()
-        list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=0)
+      list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=0)
+    endif()
+    if(Tensile_NO_LAZY_LIBRARY_LOADING)
+      list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=0)
+    else()
+      list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=1)
     endif()
 endif()
 

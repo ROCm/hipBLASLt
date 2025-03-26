@@ -75,7 +75,6 @@ add_library(roc::hipblaslt ALIAS hipblaslt)
 
 # Target compile definitions
 if(NOT BUILD_CUDA)
-if( BUILD_WITH_TENSILE )
 
   if( BUILD_SHARED_LIBS )
     target_link_libraries( hipblaslt PRIVATE TensileHost )
@@ -106,10 +105,9 @@ if( BUILD_WITH_TENSILE )
   endif()
 
   target_compile_definitions(hipblaslt PRIVATE ${TENSILE_DEFINES} )
-endif()
 
-    target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument )
-    target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
+  target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument )
+  target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
 else()
     target_compile_definitions(hipblaslt PRIVATE __HIP_PLATFORM_NVIDIA__)
 endif()
