@@ -30,11 +30,10 @@
 
 #include <Tensile/AMDGPUPredicates.hpp>
 #include <Tensile/ContractionProblemPredicates.hpp>
-#include <Tensile/DecisionTreeLibrary.hpp>
-#include <Tensile/MLPClassificationLibrary.hpp>
 #include <Tensile/ExactLogicLibrary.hpp>
 #include <Tensile/FreeSizeLibrary.hpp>
 #include <Tensile/GranularitySelectionLibrary.hpp>
+#include <Tensile/MLPClassificationLibrary.hpp>
 #include <Tensile/PropertyMatching.hpp>
 
 #include <cstddef>
@@ -212,21 +211,6 @@ namespace TensileLite
                   false>
         {
         };
-
-        TENSILE_SERIALIZE_VECTOR(true, TensileLite::DecisionTree::Node);
-        // TENSILE_SERIALIZE_VECTOR(true,
-        //                          TensileLite::DecisionTreeLibrary<TensileLite::ContractionProblemGemm,
-        //                                                       TensileLite::ContractionSolution>::Tree);
-
-        template <typename Key, typename Value, typename ReturnValue, typename IO>
-        struct SequenceTraits<std::vector<TensileLite::DecisionTree::Tree<Key, Value, ReturnValue>>, IO>
-            : public DefaultSequenceTraits<
-                  std::vector<TensileLite::DecisionTree::Tree<Key, Value, ReturnValue>>,
-                  IO,
-                  false>
-        {
-        };
-
 
         template <typename T, size_t N, typename IO>
         struct SequenceTraits<std::array<T, N>, IO>

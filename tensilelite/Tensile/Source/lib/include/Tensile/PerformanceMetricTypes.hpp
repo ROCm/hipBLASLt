@@ -52,9 +52,8 @@ namespace TensileLite
     enum class ExperimentalOption : int
     {
         None    = 0,
-        DTree   = 1,
+        MLP     = 1,
         StreamK = 2,
-        MLP     = 3,
         Count
     };
 
@@ -66,9 +65,8 @@ namespace TensileLite
         Auto,
         CUEfficiency,
         DeviceEfficiency,
-        ExperimentalDTree,
-        ExperimentalStreamK,
         ExperimentalMLP,
+        ExperimentalStreamK,
         Count
     };
 
@@ -145,18 +143,13 @@ namespace TensileLite
     {
     };
     template <>
-    struct PerformanceMetricInfo<PerformanceMetric::ExperimentalDTree>
-        : public BasePerformanceMetricInfo<PerformanceMetric::ExperimentalDTree>
+    struct PerformanceMetricInfo<PerformanceMetric::ExperimentalMLP>
+        : public BasePerformanceMetricInfo<PerformanceMetric::ExperimentalMLP>
     {
     };
     template <>
     struct PerformanceMetricInfo<PerformanceMetric::ExperimentalStreamK>
         : public BasePerformanceMetricInfo<PerformanceMetric::ExperimentalStreamK>
-    {
-    };
-    template <>
-    struct PerformanceMetricInfo<PerformanceMetric::ExperimentalMLP>
-        : public BasePerformanceMetricInfo<PerformanceMetric::ExperimentalMLP>
     {
     };
 

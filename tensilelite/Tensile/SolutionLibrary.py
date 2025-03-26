@@ -175,52 +175,6 @@ class FreeSizeLibrary:
     def __init__(self, table):
         self.table = table
 
-class DecisionTreeLibrary:
-    Tag = "DecisionTree"
-    StateKeys = [("type", "tag"), "features", "trees", "nullValue"]
-
-    @classmethod
-    def FromOriginalState(cls, d, solutions):
-        features = d["features"]
-        origTrees = d["trees"]
-
-        trees = []
-
-        if "fallback" in d:
-            fallbackIndex = d["fallback"]
-            nullValue = SingleSolutionLibrary(solutions[fallbackIndex])
-        else:
-            raise RuntimeError(
-                "DecisionTree has no fallback; likely a legacy model which is not supported."
-            )
-
-        for tree in origTrees:
-            index = tree["solution"]
-            value = SingleSolutionLibrary(solutions[index])
-
-            entry = {"tree": tree["tree"], "value": value}
-            trees.append(entry)
-
-        return cls(features, trees, nullValue)
-
-    @property
-    def tag(self):
-        return self.__class__.Tag
-
-    def merge(self, other):
-        raise RuntimeError(
-            "DecisionTreeLibrary does not support merging; ensure each library row has a unique predicate"
-        )
-
-    def remapSolutionIndices(self, indexMap):
-        pass
-
-    def __init__(self, features, trees, nullValue):
-        self.features = features
-        self.trees = trees
-        self.nullValue = nullValue
-
-
 class MLPClassificationLibrary:
     Tag = "MLPClassification"
     StateKeys = [("type", "tag"), "table", "mlp", "problemFeatures"]
@@ -429,19 +383,6 @@ class MasterSolutionLibrary:
                 freesizeLib = FreeSizeLibrary.FromOriginalState(d["Library"], solutions)
                 library = PredicateLibrary(tag="Problem")
                 library.rows.append({"predicate": predicate, "library": freesizeLib})
-            elif d["LibraryType"] == "DecisionTree":
-                library = PredicateLibrary(tag="Problem")
-                for lib in d["Library"]:
-                    preds = lib["region"]
-                    predObjs = [Properties.Predicate.FromOriginalState(p) for p in preds]
-
-                    if len(predObjs) == 1:
-                        predicate = predObjs[0]
-                    else:
-                        predicate = Properties.Predicate.And(predObjs)
-
-                    treeLib = DecisionTreeLibrary.FromOriginalState(lib, solutions)
-                    library.rows.append({"predicate": predicate, "library": treeLib})
             elif d["LibraryType"] == "MLPClassification":
                 predicate = Properties.Predicate(tag="TruePred")
 
