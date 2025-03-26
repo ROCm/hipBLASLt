@@ -28,7 +28,7 @@ from rocisa.instruction import BufferAtomicAddF32, BufferAtomicCmpswapB32, \
   SCBranchSCC1, SCSelectB32, SCmpEQI32, SCmpEQU32, SCmpGtI32, SCmpLeI32, \
   SLShiftLeftB32, SLShiftLeftB64, SLShiftRightB32, SMovB32, SMovB64, SMulI32, \
   SNop, SOrB32, SOrB64, SOrSaveExecB32, SOrSaveExecB64, SSleep, SSubI32, SSubU32, \
-  SSwapPCB64, SWaitCnt, VAShiftRightI32, VAddCCOU32, VAddCOU32, VAddF32, VAddF64, \
+  SSwapPCB64, SWaitCnt, SWaitAlu, VAShiftRightI32, VAddCCOU32, VAddCOU32, VAddF32, VAddF64, \
   VAddI32, VAddPKF16, VAddPKF32, VAddU32, VBfeI32, VCmpEQU32, VCmpGEI32, VCmpGtU32, \
   VCmpNeU32, VCmpNeU64, VCndMaskB32, VCvtBF8toF32, VCvtF16toF32, VCvtF32toI32, \
   VCvtFP8toF32, VCvtI32toF32, VCvtPkBF8toF32, VCvtPkFP8toF32, VFmaF64, VFmaMixF32, \
@@ -1685,7 +1685,7 @@ class GlobalWriteBatchWriter:
                           comment="Pack with neighbor"))
       
       if self.kernel["ExpertSchedulingMode"] > 0:
-        packModule.add(SWaitCnt(va_vdst=0, comment="wait for writes to complete"))
+        packModule.add(SWaitAlu(va_vdst=0, comment="wait for writes to complete"))
 
       biasReductionModule = Module("biasReductionModule")
       if self.storeBiasD == 1:

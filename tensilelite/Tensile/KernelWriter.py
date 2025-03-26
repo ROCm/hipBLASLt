@@ -35,8 +35,8 @@ from rocisa.instruction import BufferLoadB128, BufferLoadB32, BufferLoadB64, \
   DSStoreB32, DSStoreB64, DSStoreB8, DSStoreInstruction, FlatLoadB128, FlatLoadB32, \
   FlatLoadB64, FlatStoreB128, FlatStoreB32, FlatStoreB64, Instruction, \
   MFMAInstruction, SBarrier, SBranch, SCBranchSCC0, SCBranchSCC1, SCmpLeU32, \
-  SMFMAInstruction, SNop, SSetPrior, SSubU32, SWaitCnt, VFmaMixF32, VMadMixF32, VMovB32, \
-  SLongBranchPositive
+  SMFMAInstruction, SNop, SSetPrior, SSetRegIMM32B32, SSubU32, SWaitCnt, SWaitAlu, \
+  SLongBranchPositive, VFmaMixF32, VMadMixF32, VMovB32
 
 from .TensileInstructions import Dump, RegisterPool, Assert
 from .KernelWriterModules import *
@@ -1641,8 +1641,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
           if i == numMfmaPerIter - 1:
             while packItems:
               iterCode.add(packItems.pop(0))
-          if kernel["ExpertSchedulingMode"] > 0:
-            iterCode.add(SWaitCnt(va_vdst=0, comment="wait for writes to complete"))
         else:
           if i == numMfmaPerIter - 1:
             while packItemsA:
@@ -2592,7 +2590,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
         if isSwapAndResetLwoIter: # ResetLroIter
           if kernel["ExpertSchedulingMode"] > 0:
-            pointerLWCode.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
+            pointerLWCode.add(SWaitAlu(vm_vsrc=0, comment="wait for local read to vgpr complete"))
 
           # local write for next iter, used to have local writes here
           pointerLWCode.addComment1("local write swap offsets a")
@@ -2602,7 +2600,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
         if isSwapLroIter: # ResetLroIter
           if kernel["ExpertSchedulingMode"] > 0:
-            pointerLRCode.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
+            pointerLRCode.add(SWaitAlu(vm_vsrc=0, comment="wait for local read to vgpr complete"))
           # Swap, reset, or increment the LRO:
           pointerLRCode.addComment1("local read swap offsets a")
           pointerLRCode.add(self.localReadSwapOffsets(kernel, expand, tensorParametersA))

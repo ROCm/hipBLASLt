@@ -29,7 +29,8 @@ from rocisa.code import KernelBody, Label, Macro, Module, RegSet, SrdUpperValue,
                         StructuredModule, TextBlock, ValueEndif, ValueIf, ValueSet, SignatureBase
 from rocisa.container import DSModifiers, SDWAModifiers, VOP3PModifiers, \
                       MUBUFModifiers, SMEMModifiers, EXEC, VCC, RegisterContainer, \
-                      DPPModifiers, vgpr, sgpr, accvgpr, mgpr, ContinuousRegister
+                      DPPModifiers, vgpr, sgpr, accvgpr, mgpr, ContinuousRegister, \
+                      HWRegContainer
 from rocisa.instruction import SGetPositivePCOffset, SLongBranchPositive, SCLongBranchScc0, SCLongBranchScc1, \
                         vectorStaticDivide, vectorStaticRemainder, vectorUInt32CeilDivideAndRemainder, \
                         vectorStaticDivideAndRemainder
@@ -61,8 +62,8 @@ from rocisa.instruction import BranchInstruction, BufferLoadB128, BufferLoadB32,
   SEndpgm, SFf1B32, SLShiftLeft2AddU32, SLShiftLeftB32, SLShiftLeftB64, SLShiftRightB32, \
   SLShiftRightB64, SLoadB32, SLoadB64, SMFMAInstruction, SMemLoadInstruction, SMinI32, \
   SMinU32, SMovB32, SMovB64, SMulHIU32, SMulI32, SNop, SOrB32, SOrSaveExecB32, \
-  SOrSaveExecB64, SSExtI16toI32, SSetPCB64, SSetPrior, SSubBU32, SSubI32, SSubU32, \
-  SWaitCnt, SXorB32, VAShiftRightI32, VAccvgprReadB32, VAccvgprWrite, VAccvgprWriteB32, \
+  SOrSaveExecB64, SSExtI16toI32, SSetPCB64, SSetRegIMM32B32, SSetPrior, SSubBU32, SSubI32, SSubU32, \
+  SWaitCnt, SWaitAlu, SXorB32, VAShiftRightI32, VAccvgprReadB32, VAccvgprWrite, VAccvgprWriteB32, \
   VAdd3U32, VAddCCOU32, VAddCOU32, VAddF32, VAddF64, VAddLShiftLeftU32, VAddU32, VAndB32, \
   VBfeU32, VCmpEQI32, VCmpEQU32, VCmpGEI32, VCmpGEU32, VCmpGtU32, VCmpLeI32, VCmpLtI32, \
   VCmpLtU32, VCmpUF32, VCmpXGeU32, VCmpXLtU32, VCmpXLtU64, VCndMaskB32, VCvtF16toF32, \
@@ -5648,12 +5649,12 @@ class KernelWriterAssembly(KernelWriter):
           # Generate local read address code only if DirectToVgpr is not enabled
           if not kernel["DirectToVgprA"] and not kernel["StoreSwapAddr"]:
             if kernel["ExpertSchedulingMode"] > 0:
-              oddIterCode.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
+              oddIterCode.add(SWaitAlu(vm_vsrc=0, comment="wait for local read to vgpr complete"))
             oddIterCode.add(self.localReadSwapOffsets(kernel, False, tPA))
           # Generate local read address code only if DirectToVgpr is not enabled
           if not kernel["DirectToVgprB"] and not kernel["StoreSwapAddr"]:
             if kernel["ExpertSchedulingMode"] > 0:
-              oddIterCode.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
+              oddIterCode.add(SWaitAlu(vm_vsrc=0, comment="wait for local read to vgpr complete"))
             oddIterCode.add(self.localReadSwapOffsets(kernel, False, tPB))
 
           if kernel["ProblemType"]["Sparse"]:
@@ -5670,7 +5671,7 @@ class KernelWriterAssembly(KernelWriter):
           if kernel["PrefetchGlobalRead"]==2:
             if not kernel["DirectToVgprA"] or not kernel["DirectToVgprB"]:
               if kernel["ExpertSchedulingMode"] > 0:
-                evenIterCode.add(SWaitCnt(vm_vsrc=0, comment="wait for local read to vgpr complete"))
+                evenIterCode.add(SWaitAlu(vm_vsrc=0, comment="wait for local read to vgpr complete"))
 
             # Generate local write address code only for PrefetchGlobalRead==2
             if not kernel["DirectToLdsA"]:
@@ -6879,7 +6880,7 @@ class KernelWriterAssembly(KernelWriter):
             prevAccIdx = accIdx
 
       if kernel["ExpertSchedulingMode"] > 0:
-        imod.add(SWaitCnt(va_vdst=0, comment="wait for the current iter's writes to complete"))
+        imod.add(SWaitAlu(va_vdst=0, comment="wait for the current iter's writes to complete"))
 
     # release register
     if kReg_first is not None: self.vgprPool.checkIn(kReg_first)
@@ -9002,7 +9003,7 @@ class KernelWriterAssembly(KernelWriter):
                   localWriteCVTCode.add(VMovB32(dst=vgpr(dst), src=vgpr(src), comment="another VGPR storing lshr 8-bit value"))
                   localWriteCVTCode.add(VLShiftRightB32(dst=vgpr(dst), shiftHex=hex(8), src=vgpr(dst), comment="G2L Vpgr >> 8"))
                   if kernel["ExpertSchedulingMode"] > 0:
-                    localWriteCVTCode.add(SWaitCnt(va_vdst=0, comment="wait for writes to complete"))
+                    localWriteCVTCode.add(SWaitAlu(va_vdst=0, comment="wait for writes to complete"))
 
             paramList = []
             numsOfRegister = []

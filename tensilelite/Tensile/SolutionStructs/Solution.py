@@ -27,7 +27,7 @@ import collections
 import math
 
 from enum import Enum
-from typing import List, Dict
+from typing import List, Dict, Literal
 
 from Tensile.AsmStoreState import VectorDataTypes
 from Tensile.Activation import ActivationType
@@ -1372,6 +1372,55 @@ class Solution(collections.abc.Mapping):
     if "ValidDepthU" in state:
       del state["ValidDepthU"]
 
+    # 0: Normal mode. Hardware applies all of the normal data dependency checks
+    # 1: Full expert mode (not suppoeted yet). Disable hardware checks against: VA_VDST, VA_SDST, VA_SSRC, VA_VCC, VM_VSRC and SA_SDST.
+    # 2: Disable only VA_VDST and VM_VSRC checks.
+    def evaluateExpertSchedulingMode() -> Literal[0, 1, 2]:
+      # Check if the current parameters is supported by the ExpertSchedulingMode
+      if not isaInfoMap[isa].archCaps["HasSchedMode"]: return 0
+      if state["ProblemType"]["Sparse"]: return 0
+      if state["ProblemType"]["DataType"].isSingle(): return 0
+
+      # parameters not tested yet:
+      supportedParameters = {
+        "EnableMatrixInstruction": state["EnableMatrixInstruction"],
+        "ScheduleIterAlg": state["ScheduleIterAlg"] == 3,
+        "WavefrontSize": state["WavefrontSize"] == 32,
+        "UnrollLoopSwapGlobalReadOrder": not state["UnrollLoopSwapGlobalReadOrder"],
+        "SuppressNoLoadLoop": not state["SuppressNoLoadLoop"],
+        "ScheduleGlobalRead": state["ScheduleGlobalRead"] == 1,
+        "ScheduleLocalWrite": state["ScheduleLocalWrite"] == 1,
+        "GlobalReadPerMfma": state["GlobalReadPerMfma"] == 1,
+        "InterleaveAlpha": not state["InterleaveAlpha"],
+        "DirectToVgprA": not state["DirectToVgprA"],
+        "DirectToLds": not state["DirectToLds"],
+        "UseSgprForGRO": state["UseSgprForGRO"] == -1,
+        "UseInstOffsetForGRO": not state["UseInstOffsetForGRO"],
+        "Use64bShadowLimit": state["Use64bShadowLimit"] == 1,
+        "StorePriorityOpt": not state["StorePriorityOpt"],
+        "StoreSyncOpt": not state["StoreSyncOpt"],
+        "GroupLoadStore": not state["GroupLoadStore"],
+        "StreamK": not state["StreamK"],
+        "StreamKAtomic": not state["StreamKAtomic"],
+        "StreamKXCCMapping": not state["StreamKXCCMapping"],
+        "DebugStreamK": not state["DebugStreamK"],
+        "WorkGroupReduction": not state["WorkGroupReduction"],
+        "ConvertAfterDS": not state["ConvertAfterDS"],
+        "ForceDisableShadowInit": not state["ForceDisableShadowInit"],
+      }
+      
+      for key, supported in supportedParameters.items():
+        if supported:
+          continue
+
+        print2(f"ExpertSchedulingMode not supported with {key}={state[key]}")
+        return 0
+
+      # Currently, only the mode that disables VA_VDST and VM_VSRC checks is supported.
+      return 2
+
+    state["ExpertSchedulingMode"] = evaluateExpertSchedulingMode()
+
   def depthUIteration(
       state,
       index,
@@ -2058,53 +2107,6 @@ class Solution(collections.abc.Mapping):
         if (((state["VectorWidthA"] * state["MIOutputVectorWidth"]) % state["StoreVectorWidth"]) != 0):
           reject(state, printRejectionReason, "MFMA non-SourceSwap mode doesn't support miovw(%u) with svw(%u)" % (state["VectorWidthA"]*state["MIOutputVectorWidth"], state["StoreVectorWidth"]))
           return
-
-    if state["ExpertSchedulingMode"] > 0:
-      if not globalParameters["ArchCaps"][isa]["HasSchedMode"]:
-        reject(state, "ExpertSchedulingMode not supported on this arch")
-        return
-
-      if state["ExpertSchedulingMode"] != 2:
-        reject(state, "ExpertSchedulingMode=%u not supported" % state["ExpertSchedulingMode"])
-        return
-
-      if state["ScheduleIterAlg"] != 3:
-        reject(state, "ExpertSchedulingMode is only supported when ScheduleIterAlg=3 for now")
-        return
-
-      # parameters not tested yet:
-      if state["ProblemType"]["DataType"].isSingle(): reject(state, "ExpertSchedulingMode is only supported when DataType!=Single"); return
-      if state["ProblemType"]["Sparse"] != 0: reject(state, "ExpertSchedulingMode is only supported when Sparse=0"); return
-      if state["WavefrontSize"] != 32: reject(state, "ExpertSchedulingMode is only supported when WavefrontSize=32"); return
-      if state["VectorStore"] != -1: reject(state, "ExpertSchedulingMode is only supported when VectorStore=-1"); return
-      if state["WaveSeparateGlobalReadA"] != 0: reject(state, "ExpertSchedulingMode is only supported when WaveSeparateGlobalReadA=0"); return
-      if state["WaveSeparateGlobalReadMetadata"] != 0: reject(state, "ExpertSchedulingMode is only supported when WaveSeparateGlobalReadMetadata=0"); return
-      if state["UnrollLoopSwapGlobalReadOrder"] != 0: reject(state, "ExpertSchedulingMode is only supported when UnrollLoopSwapGlobalReadOrder=0"); return
-      if state["SuppressNoLoadLoop"] != False: reject(state, "ExpertSchedulingMode is only supported when SuppressNoLoadLoop=False"); return
-      if state["ScheduleGlobalRead"] != 1: reject(state, "ExpertSchedulingMode is only supported when ScheduleGlobalRead=1"); return
-      if state["ScheduleLocalWrite"] != 1: reject(state, "ExpertSchedulingMode is only supported when ScheduleLocalWrite=1"); return
-      if state["GlobalReadPerMfma"] != 1: reject(state, "ExpertSchedulingMode is only supported when GlobalReadPerMfma=1"); return
-      if state["LocalWritePerMfma"] != -1: reject(state, "ExpertSchedulingMode is only supported when LocalWritePerMfma=-1"); return
-      if state["InterleaveAlpha"] != 0: reject(state, "ExpertSchedulingMode is only supported when InterleaveAlpha=0"); return
-      if state["OptNoLoadLoop"] != 1: reject(state, "ExpertSchedulingMode is only supported when OptNoLoadLoop=1"); return
-      if state["DirectToVgprA"] != False: reject(state, "ExpertSchedulingMode is only supported when DirectToVgprA=False"); return
-      if state["DirectToVgprSparseMetadata"] != False: reject(state, "ExpertSchedulingMode is only supported when DirectToVgprSparseMetadata=False"); return
-      if state["DirectToLds"] != False: reject(state, "ExpertSchedulingMode is only supported when DirectToLds=False"); return
-      if state["UseSgprForGRO"] != -1: reject(state, "ExpertSchedulingMode is only supported when UseSgprForGRO=-1"); return
-      if state["UseInstOffsetForGRO"] != 0: reject(state, "ExpertSchedulingMode is only supported when UseInstOffsetForGRO=0"); return
-      if state["MagicDivAlg"] != 2: reject(state, "ExpertSchedulingMode is only supported when MagicDivAlg=2"); return
-      if state["Use64bShadowLimit"] != 1: reject(state, "ExpertSchedulingMode is only supported when Use64bShadowLimit=1"); return
-      if state["StorePriorityOpt"] != False: reject(state, "ExpertSchedulingMode is only supported when StorePriorityOpt=False"); return
-      if state["StoreSyncOpt"] != 0: reject(state, "ExpertSchedulingMode is only supported when StoreSyncOpt=0"); return
-      if state["GroupLoadStore"] != False: reject(state, "ExpertSchedulingMode is only supported when GroupLoadStore=False"); return
-      if state["MIArchVgpr"] != False: reject(state, "ExpertSchedulingMode is only supported when MIArchVgpr=False"); return
-      if state["StreamK"] != 0: reject(state, "ExpertSchedulingMode is only supported when StreamK=0"); return
-      if state["StreamKAtomic"] != 0: reject(state, "ExpertSchedulingMode is only supported when StreamKAtomic=0"); return
-      if state["StreamKXCCMapping"] != 0: reject(state, "ExpertSchedulingMode is only supported when StreamKXCCMapping=0"); return
-      if state["DebugStreamK"] != 0: reject(state, "ExpertSchedulingMode is only supported when DebugStreamK=0"); return
-      if state["WorkGroupReduction"] != False: reject(state, "ExpertSchedulingMode is only supported when WorkGroupReduction=False"); return
-      if state["ConvertAfterDS"] != False: reject(state, "ExpertSchedulingMode is only supported when ConvertAfterDS=False"); return
-      if state["ForceDisableShadowInit"] != False: reject(state, "ExpertSchedulingMode is only supported when ForceDisableShadowInit=False"); return
 
     # LocalSplitU too large?
     # dot2: every NumWaveSplitK threads compute the same element.
