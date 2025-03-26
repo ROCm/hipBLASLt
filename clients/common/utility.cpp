@@ -274,13 +274,32 @@ hipblaslt_local_handle::hipblaslt_local_handle()
 hipblaslt_local_handle::hipblaslt_local_handle(const Arguments& arg)
     : hipblaslt_local_handle()
 {
-
+    if(arg.tensile_solution_selection_method >= 0)
+    {
+        auto sol_selec_env = getenv("TENSILE_SOLUTION_SELECTION_METHOD");
+        if(sol_selec_env)
+            m_sol_selec_saved_status = std::string(sol_selec_env);
+        m_sol_selec_env_set = true;
+#ifdef _WIN32
+        _putenv_s("TENSILE_SOLUTION_SELECTION_METHOD", std::to_string(arg.tensile_solution_selection_method).c_str());
+#else
+        setenv("TENSILE_SOLUTION_SELECTION_METHOD", std::to_string(arg.tensile_solution_selection_method).c_str(), true);
+#endif    
+    }
     // memory guard control, with multi-threading should not change values across threads
     d_vector_set_pad_length(arg.pad);
 }
 
 hipblaslt_local_handle::~hipblaslt_local_handle()
 {
+    if(m_sol_selec_env_set)
+    {
+#ifdef _WIN32
+        _putenv_s("TENSILE_SOLUTION_SELECTION_METHOD", m_sol_selec_saved_status.c_str());
+#else
+setenv("TENSILE_SOLUTION_SELECTION_METHOD", m_sol_selec_saved_status.c_str(), true);
+#endif  
+    }
     hipblasLtDestroy(m_handle);
 }
 
@@ -299,6 +318,7 @@ std::vector<void*> benchmark_allocation()
     }
     return ptrs;
 }
+
 int32_t hipblaslt_get_arch_major()
 {
     int             deviceId;
@@ -317,4 +337,15 @@ int32_t hipblaslt_get_arch_major()
     static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
     auto gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
     return stoi(gpu_arch_no_prefix) / 100;
+}
+
+void hipblaslt_print_version()
+{
+    int                    version;
+    char                   git_version[128];
+    hipblaslt_local_handle handle;
+    hipblasLtGetVersion(handle, &version);
+    hipblasLtGetGitRevision(handle, &git_version[0]);
+    hipblaslt_cout << "hipBLASLt version: " << version << std::endl;
+    hipblaslt_cout << "hipBLASLt git version: " << git_version << std::endl;
 }

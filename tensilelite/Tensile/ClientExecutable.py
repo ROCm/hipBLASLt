@@ -29,7 +29,8 @@ from typing import Optional
 from pathlib import Path
 
 from . import SOURCE_PATH
-from .Common import globalParameters, print2, ClientExecutionLock, ensurePath, CLIENT_BUILD_DIR
+from Tensile.Common import print2, ClientExecutionLock, ensurePath, CLIENT_BUILD_DIR
+from Tensile.Common.GlobalParameters import globalParameters
 
 def cmake_path(os_path):
     return (os_path.replace("\\", "/") if (os.name == "nt") else os_path)
@@ -94,7 +95,7 @@ def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cComp
 
 buildEnv = None
 
-def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir):
+def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir: Path):
     if "PrebuiltClient" in globalParameters:
         return globalParameters["PrebuiltClient"]
 
