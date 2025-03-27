@@ -96,7 +96,7 @@ namespace TensileLite
 
             // Test if the persistent kernel is eligible for the current hw and solution
             problem.checkPersistentKernelEligibility(solution, *m_hardware);
-            Task task(*m_hardware, m_problem, solution);
+            Task task(*m_hardware, problem, solution);
             if(!(*solution.problemPredicate)(problem) || !(*solution.taskPredicate)(task))
             {
                 m_reporter->report(ResultKey::Validation, "DID_NOT_SATISFY_ASSERTS");
