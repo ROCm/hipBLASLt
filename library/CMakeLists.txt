@@ -171,7 +171,7 @@ if(USE_ROCROLLER)
   FetchContent_Declare(
     rocRoller
     GIT_REPOSITORY https://github.com/ROCm/rocRoller.git
-    GIT_TAG 18af0af20fe90321ff2ade9401c033376267650a
+    GIT_TAG 61ba530e12270020b086da1a467d38b697aa2890
   )
   FetchContent_MakeAvailable(rocRoller)
 
