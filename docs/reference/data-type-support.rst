@@ -26,37 +26,37 @@ The input and output types map listed in the following table.
       - Description
 
     * 
-      - HIP_R_8I
+      - ``HIP_R_8I``
       - ``hipblasLtInt8``
       - 8-bit real signed integer.
 
     * 
-      - HIP_R_32I
+      - ``HIP_R_32I``
       - ``hipblasLtInt32``
       - 32-bit real signed integer.
 
     * 
-      - HIP_R_8F_E4M3_FNUZ
+      - ``HIP_R_8F_E4M3_FNUZ``
       - ``hipblaslt_f8_fnuz``
       - 8-bit real float8 precision floating-point
 
     * 
-      - HIP_R_8F_E5M2_FNUZ
+      - ``HIP_R_8F_E5M2_FNUZ``
       - ``hipblaslt_bf8_fnuz``
       - 8-bit real bfloat8 precision floating-point
 
     * 
-      - HIP_R_16F
+      - ``HIP_R_16F``
       - ``hipblasLtHalf``
       - 16-bit real half precision floating-point
 
     * 
-      - HIP_R_16BF
+      - ``HIP_R_16BF``
       - ``hipblasLtBfloat16``
       - 16-bit real bfloat16 precision floating-point
 
     * 
-      - HIP_R_32F
+      - ``HIP_R_32F``
       - ``hipblasLtFloat``
       - 32-bit real single precision floating-point
 
@@ -71,31 +71,31 @@ The compute types map listed in the following table.
       - Description
 
     * 
-      - HIPBLAS_COMPUTE_32I
+      - ``HIPBLAS_COMPUTE_32I``
       - 32-bit integer compute mode.
 
     * 
-      - HIPBLAS_COMPUTE_16F
+      - ``HIPBLAS_COMPUTE_16F``
       - 16-bit half precision floating-point compute mode.
 
     * 
-      - HIPBLAS_COMPUTE_32F
+      - ``HIPBLAS_COMPUTE_32F``
       - 32-bit singple precision floating-point compute mode.
 
     * 
-      - HIPBLAS_COMPUTE_64F
+      - ``HIPBLAS_COMPUTE_64F``
       - 64-bit double precision floating-point compute mode.
 
     * 
-      - HIPBLAS_COMPUTE_32F_FAST_16F
+      - ``HIPBLAS_COMPUTE_32F_FAST_16F``
       - Enables the library to utilize Tensor Cores with 32-bit float computation for matrices with 16-bit half precision input and output.
 
     * 
-      - HIPBLAS_COMPUTE_32F_FAST_TF32
+      - ``HIPBLAS_COMPUTE_32F_FAST_TF32``
       - Enables the library to utilize Tensor Cores with TF32 computation for matrices with 32-bit input and output.
 
     * 
-      - HIPBLAS_COMPUTE_32F_FAST_16BF
+      - ``HIPBLAS_COMPUTE_32F_FAST_16BF``
       - Enables the library to utilize Tensor Cores with 32-bit float computation for matrices with 16-bit bfloat16 precision input and output.
 
 
