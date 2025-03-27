@@ -20,7 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from ..Common import isaToGfx
+from ..Common.Architectures import isaToGfx
 from .Base import Item
 from .Enums import SignatureValueKind
 from .Formatting import slash, slash50, block, block3Line, blockNewLine, \
