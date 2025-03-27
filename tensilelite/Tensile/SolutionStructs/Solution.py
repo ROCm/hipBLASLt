@@ -1049,6 +1049,7 @@ class Solution(collections.abc.Mapping):
     state["AssignedDerivedParameters"] = False
 
     for s in Solution.InternalKeys:
+      if '_'+s not in state:
         state['_'+s] = state[s]
         #del state[s]
 
