@@ -628,7 +628,7 @@ namespace
             coldIterations,
             "--iters",
             hotIterations);
-        
+
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             log_bench_from_str(s);
         if(rocblaslt::Debug::Instance().printLogAsMarker())
@@ -1727,6 +1727,8 @@ namespace
             const char* env = getenv("HIPBLASLT_TENSILE_LIBPATH");
             if(env)
             {
+                std::cout << "rocblaslt info: Using HIPBLASLT_TENSILE_LIBPATH=" << env
+                          << std::endl;
                 path = env;
             }
             else
@@ -1769,6 +1771,9 @@ namespace
 
                 if(TestPath(path + "/" + processor))
                     path += "/" + processor;
+
+                std::cout << "rocblaslt info: HIPBLASLT_TENSILE_LIBPATH not set: Using " << path 
+                          << std::endl;
             }
 
             // only load modules for the current architecture
